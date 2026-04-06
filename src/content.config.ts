@@ -1,8 +1,9 @@
 import { defineCollection, z } from 'astro:content';
+import { glob } from 'astro/loaders';
 
 // Blog yazıları koleksiyonu
 const blogCollection = defineCollection({
-  type: 'content',
+  loader: glob({ pattern: '**/*.md', base: './src/content/blog' }),
   schema: z.object({
     title: z.string(),
     description: z.string(),
@@ -19,7 +20,7 @@ const blogCollection = defineCollection({
 
 // Tarihi yerler koleksiyonu
 const historicalSitesCollection = defineCollection({
-  type: 'content',
+  loader: glob({ pattern: '**/*.md', base: './src/content/tarihi-yerler' }),
   schema: z.object({
     title: z.string(),
     description: z.string(),
@@ -40,7 +41,7 @@ const historicalSitesCollection = defineCollection({
 
 // Etkinlikler koleksiyonu
 const eventsCollection = defineCollection({
-  type: 'content',
+  loader: glob({ pattern: '**/*.md', base: './src/content/etkinlikler' }),
   schema: z.object({
     title: z.string(),
     description: z.string(),
