@@ -1,0 +1,122 @@
+---
+import { Search, MapPin, Star, Users } from 'lucide-react';
+
+const heroFeatures = [
+  { icon: MapPin, label: '500+ Mekan', description: 'Onaylanmış mekan' },
+  { icon: Star, label: '4.8/5', description: 'Ortalama puan' },
+  { icon: Users, label: '50K+', description: 'Aktif kullanıcı' },
+];
+
+const popularSearches = [
+  'Göbeklitepe',
+  'Balıklıgöl',
+  'Ciğer Kebabı',
+  'Harran',
+  'Urfa Kalesi',
+  'Halfeti',
+];
+---
+
+<section class="relative min-h-[90vh] flex items-center overflow-hidden">
+  <!-- Background Image with Overlay -->
+  <div class="absolute inset-0">
+    <img 
+      src="/images/hero-gobeklitepe.jpg" 
+      alt="Göbeklitepe - Tarihin Sıfır Noktası"
+      class="w-full h-full object-cover"
+      loading="eager"
+    />
+    <div class="absolute inset-0 bg-gradient-to-r from-urfa-900/95 via-urfa-900/80 to-urfa-900/40" />
+  </div>
+  
+  <!-- Content -->
+  <div class="relative z-10 container-custom py-20">
+    <div class="max-w-3xl">
+      <!-- Badge -->
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm mb-6">
+        <span class="w-2 h-2 bg-isot-500 rounded-full animate-pulse" />
+        2029 Dünya Gastronomi Şehri Adayı
+      </div>
+      
+      <!-- Main Heading -->
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-bold text-white leading-tight">
+        Şanlıurfa'yı
+        <span class="block text-urfa-200">Keşfetmenin</span>
+        <span class="block">En İyi Yolu</span>
+      </h1>
+      
+      <!-- Subtitle -->
+      <p class="mt-6 text-lg sm:text-xl text-urfa-100 max-w-2xl leading-relaxed">
+        12.000 yıllık tarih, eşsiz lezzetler ve büyüleyici atmosfer. 
+        Şanlıurfa'nın en iyi mekanlarını, tarihi yerlerini ve gastronomik deneyimlerini keşfedin.
+      </p>
+      
+      <!-- Search Box -->
+      <div class="mt-10">
+        <form action="/arama" class="relative max-w-2xl">
+          <div class="relative flex items-center">
+            <Search className="absolute left-5 w-6 h-6 text-gray-400" />
+            <input 
+              type="search"
+              name="q"
+              placeholder="Mekan, tarihi yer veya yemek ara..."
+              class="w-full pl-14 pr-36 py-5 text-lg bg-white rounded-2xl shadow-2xl placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-urfa-500/20"
+            />
+            <button 
+              type="submit"
+              class="absolute right-2 px-6 py-3 bg-urfa-600 text-white font-medium rounded-xl hover:bg-urfa-700 transition-colors"
+            >
+              Ara
+            </button>
+          </div>
+        </form>
+        
+        <!-- Popular Searches -->
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+          <span class="text-white/70 text-sm">Popüler:</span>
+          {popularSearches.map((term) => (
+            <a 
+              href={`/arama?q=${encodeURIComponent(term)}`}
+              class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-full text-sm text-white/90 transition-colors"
+            >
+              {term}
+            </a>
+          ))}
+        </div>
+      </div>
+      
+      <!-- CTA Buttons -->
+      <div class="mt-10 flex flex-wrap gap-4">
+        <a href="/tarihi-yerler" class="btn-accent text-base px-8 py-4">
+          Tarihi Yerleri Keşfet
+        </a>
+        <a href="/gastronomi" class="btn bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm text-base px-8 py-4">
+          Gastronomi Rehberi
+        </a>
+      </div>
+    </div>
+    
+    <!-- Features -->
+    <div class="mt-16 grid grid-cols-3 gap-8 max-w-2xl">
+      {heroFeatures.map((feature) => (
+        <div class="text-center sm:text-left">
+          <div class="inline-flex items-center justify-center w-12 h-12 bg-white/10 rounded-xl mb-3">
+            <feature.icon className="w-6 h-6 text-white" />
+          </div>
+          <div class="text-2xl font-bold text-white">{feature.label}</div>
+          <div class="text-sm text-urfa-200">{feature.description}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+  
+  <!-- Scroll Indicator -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+    <a href="#featured" class="flex flex-col items-center text-white/70 hover:text-white transition-colors">
+      <span class="text-xs mb-2">Aşağı kaydır</span>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      </svg>
+    </a>
+  </div>
+</section>

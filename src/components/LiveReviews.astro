@@ -1,0 +1,70 @@
+---
+interface Props {
+  placeId: string;
+}
+
+const { placeId } = Astro.props;
+---
+
+<div id="live-reviews" data-place-id={placeId} class="hidden">
+  <div class="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg mb-4">
+    <span class="relative flex h-2 w-2">
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+    </span>
+    <span class="text-sm text-green-700 dark:text-green-400">
+      Canlı - Yeni yorumlar anlık görünecek
+    </span>
+  </div>
+</div>
+
+<div id="new-review-toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 hidden">
+  <div class="bg-urfa-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3">
+    <span class="relative flex h-2 w-2">
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+    </span>
+    <span>Yeni yorum eklendi!</span>
+    <button id="refresh-reviews" class="underline hover:no-underline">
+      Yenile
+    </button>
+  </div>
+</div>
+
+<script define:vars={{ placeId }}>
+  import { realtimeManager } from '../lib/realtime';
+  
+  const liveIndicator = document.getElementById('live-reviews');
+  const toast = document.getElementById('new-review-toast');
+  const refreshBtn = document.getElementById('refresh-reviews');
+  
+  // Show live indicator
+  if (liveIndicator) {
+    liveIndicator.classList.remove('hidden');
+  }
+  
+  // Subscribe to new reviews
+  const cleanup = realtimeManager.subscribeToReviews(placeId, (review) => {
+    // Show toast notification
+    if (toast) {
+      toast.classList.remove('hidden');
+      
+      // Auto-hide after 10 seconds
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 10000);
+    }
+    
+    // Play notification sound (optional)
+    // const audio = new Audio('/sounds/notification.mp3');
+    // audio.play().catch(() => {});
+  });
+  
+  // Refresh button
+  refreshBtn?.addEventListener('click', () => {
+    window.location.reload();
+  });
+  
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', cleanup);
+</script>

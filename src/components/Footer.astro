@@ -1,0 +1,211 @@
+---
+import { MapPin, Phone, Mail, Instagram, Facebook, Twitter, Youtube, Send } from 'lucide-react';
+
+const footerLinks = {
+  kesfet: [
+    { label: 'Tarihi Yerler', href: '/tarihi-yerler' },
+    { label: 'Restoranlar', href: '/places?category=restaurant' },
+    { label: 'Oteller', href: '/places?category=hotel' },
+    { label: 'Kafeler', href: '/places?category=cafe' },
+    { label: 'Müzeler', href: '/places?category=museum' },
+    { label: 'Etkinlikler', href: '/etkinlikler' },
+  ],
+  gastronomi: [
+    { label: 'Urfa Kebabı', href: '/gastronomi/urfa-kebabi' },
+    { label: 'Çiğ Köfte', href: '/gastronomi/cig-kofte' },
+    { label: 'İsot', href: '/gastronomi/isot' },
+    { label: 'Lahmacun', href: '/gastronomi/lahmacun' },
+    { label: 'Şıllık Tatlısı', href: '/gastronomi/sillik-tatlisi' },
+    { label: 'Tüm Lezzetler', href: '/gastronomi' },
+  ],
+  bilgi: [
+    { label: 'Hakkımızda', href: '/hakkinda' },
+    { label: 'Blog', href: '/blog' },
+    { label: 'SSS', href: '/sss' },
+    { label: 'İletişim', href: '/iletisim' },
+    { label: 'Reklam Ver', href: '/reklam' },
+    { label: 'İş Ortaklığı', href: '/is-ortakligi' },
+  ],
+  yasal: [
+    { label: 'Kullanım Koşulları', href: '/kullanim-kosullari' },
+    { label: 'Gizlilik Politikası', href: '/gizlilik-politikasi' },
+    { label: 'Çerez Politikası', href: '/cerez-politikasi' },
+    { label: 'KVKK Aydınlatma Metni', href: '/kvkk' },
+  ],
+};
+
+const socialLinks = [
+  { icon: Instagram, href: 'https://instagram.com/sanliurfa_com', label: 'Instagram' },
+  { icon: Facebook, href: 'https://facebook.com/sanliurfa.com', label: 'Facebook' },
+  { icon: Twitter, href: 'https://twitter.com/sanliurfa_com', label: 'Twitter' },
+  { icon: Youtube, href: 'https://youtube.com/sanliurfa_com', label: 'Youtube' },
+];
+
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="bg-urfa-900 dark:bg-gray-950 text-white">
+  <!-- Newsletter Section -->
+  <div class="border-b border-urfa-800 dark:border-gray-800">
+    <div class="container-custom py-12">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+        <div class="text-center lg:text-left">
+          <h3 class="text-2xl font-display font-bold">Şanlıurfa'yı Keşfet</h3>
+          <p class="mt-2 text-urfa-200">En yeni mekanlar, etkinlikler ve lezzetler için bültenimize abone ol.</p>
+        </div>
+        <form class="flex w-full max-w-md gap-2" action="/api/newsletter/subscribe" method="POST">
+          <input 
+            type="email" 
+            name="email"
+            placeholder="E-posta adresiniz"
+            required
+            class="flex-1 px-4 py-3 bg-urfa-800 dark:bg-gray-800 border border-urfa-700 dark:border-gray-600 rounded-lg text-white placeholder-urfa-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-urfa-500"
+          />
+          <button 
+            type="submit" 
+            class="px-6 py-3 bg-isot-600 hover:bg-isot-700 rounded-lg font-medium transition-colors flex items-center gap-2"
+          >
+            <Send className="w-4 h-4" />
+            <span class="hidden sm:inline">Abone Ol</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main Footer Content -->
+  <div class="container-custom py-12 lg:py-16">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+      <!-- Brand Column -->
+      <div class="col-span-2">
+        <a href="/" class="flex items-center space-x-2 mb-4">
+          <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-urfa-900 font-bold text-xl">
+            Ş
+          </div>
+          <span class="font-display font-bold text-xl">
+            Şanlıurfa<span class="text-urfa-300">.com</span>
+          </span>
+        </a>
+        <p class="text-urfa-200 dark:text-gray-300 text-sm mb-6 max-w-xs">
+          Şanlıurfa'nın en kapsamlı şehir rehberi. Tarihi yerler, mekanlar, gastronomi ve etkinlikler tek bir platformda.
+        </p>
+        
+        <!-- Contact Info -->
+        <div class="space-y-3 text-sm">
+          <a href="mailto:info@sanliurfa.com" class="flex items-center gap-2 text-urfa-200 dark:text-gray-300 hover:text-white dark:hover:text-white transition-colors">
+            <Mail className="w-4 h-4" />
+            info@sanliurfa.com
+          </a>
+          <a href="tel:+904141234567" class="flex items-center gap-2 text-urfa-200 dark:text-gray-300 hover:text-white dark:hover:text-white transition-colors">
+            <Phone className="w-4 h-4" />
+            +90 414 123 45 67
+          </a>
+          <div class="flex items-start gap-2 text-urfa-200 dark:text-gray-300">
+            <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>Haliliye, Şanlıurfa, Türkiye</span>
+          </div>
+        </div>
+        
+        <!-- Social Links -->
+        <div class="flex items-center gap-3 mt-6">
+          {socialLinks.map((social) => (
+            <a 
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-10 h-10 bg-urfa-800 dark:bg-gray-700 hover:bg-urfa-700 dark:hover:bg-gray-600 rounded-lg flex items-center justify-center transition-colors"
+              aria-label={social.label}
+            >
+              <social.icon className="w-5 h-5" />
+            </a>
+          ))}
+        </div>
+      </div>
+      
+      <!-- Links Columns -->
+      <div>
+        <h4 class="font-semibold text-white mb-4">Keşfet</h4>
+        <ul class="space-y-2">
+          {footerLinks.kesfet.map((link) => (
+            <li>
+              <a 
+                href={link.href}
+                class="text-sm text-urfa-200 dark:text-gray-300 hover:text-white dark:hover:text-white transition-colors"
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+      
+      <div>
+        <h4 class="font-semibold text-white mb-4">Gastronomi</h4>
+        <ul class="space-y-2">
+          {footerLinks.gastronomi.map((link) => (
+            <li>
+              <a 
+                href={link.href}
+                class="text-sm text-urfa-200 hover:text-white transition-colors"
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+      
+      <div>
+        <h4 class="font-semibold text-white mb-4">Bilgi</h4>
+        <ul class="space-y-2">
+          {footerLinks.bilgi.map((link) => (
+            <li>
+              <a 
+                href={link.href}
+                class="text-sm text-urfa-200 hover:text-white transition-colors"
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+      
+      <div>
+        <h4 class="font-semibold text-white mb-4">Yasal</h4>
+        <ul class="space-y-2">
+          {footerLinks.yasal.map((link) => (
+            <li>
+              <a 
+                href={link.href}
+                class="text-sm text-urfa-200 hover:text-white transition-colors"
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Bottom Bar -->
+  <div class="border-t border-urfa-800 dark:border-gray-800">
+    <div class="container-custom py-6">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-urfa-300 dark:text-gray-400">
+          &copy; {currentYear} Şanlıurfa.com. Tüm hakları saklıdır.
+        </p>
+        
+        <!-- Trust Badges -->
+        <div class="flex items-center gap-4">
+          <span class="text-xs text-urfa-400 dark:text-gray-500">Güvenilir</span>
+          <div class="flex items-center gap-2">
+            <img src="/icons/ssl-secure.svg" alt="SSL Secure" class="h-6 w-auto opacity-60" />
+            <img src="/icons/pci-compliant.svg" alt="PCI Compliant" class="h-6 w-auto opacity-60" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,257 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { MapPin, Star, Filter, Search, Grid3X3, List } from 'lucide-react';
+import Pagination from '../../components/Pagination.astro';
+import { query } from '../../lib/postgres';
+
+const ITEMS_PER_PAGE = 12;
+const currentPage = parseInt(Astro.url.searchParams.get('page') || '1');
+const queryParam = Astro.url.searchParams.get('q') || '';
+const categoryFilter = Astro.url.searchParams.get('category') || 'all';
+
+// Build SQL query
+let countSql = "SELECT COUNT(*) FROM places WHERE status = 'active'";
+let placesSql = "SELECT * FROM places WHERE status = 'active'";
+const values: any[] = [];
+let paramIndex = 1;
+
+if (categoryFilter !== 'all') {
+  countSql += ` AND category = $${paramIndex}`;
+  placesSql += ` AND category = $${paramIndex}`;
+  values.push(categoryFilter);
+  paramIndex++;
+}
+
+if (queryParam) {
+  countSql += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR address ILIKE $${paramIndex})`;
+  placesSql += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR address ILIKE $${paramIndex})`;
+  values.push(`%${queryParam}%`);
+  paramIndex++;
+}
+
+// Get count
+const countResult = await query(countSql, values);
+const count = parseInt(countResult.rows[0]?.count || '0');
+const totalPages = Math.ceil(count / ITEMS_PER_PAGE);
+const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+// Get places
+placesSql += ` ORDER BY rating DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+const placesResult = await query(placesSql, [...values, ITEMS_PER_PAGE, offset]);
+const places = placesResult.rows;
+
+const categories = [
+  { id: 'restaurant', label: 'Restoran' },
+  { id: 'cafe', label: 'Kafe' },
+  { id: 'hotel', label: 'Otel' },
+  { id: 'museum', label: 'Müze' },
+  { id: 'park', label: 'Park' },
+  { id: 'shopping', label: 'Alışveriş' },
+  { id: 'entertainment', label: 'Eğlence' },
+  { id: 'other', label: 'Diğer' },
+];
+
+const priceRangeSymbols = (range: number) => '₺'.repeat(range);
+
+const getCategoryLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    restaurant: 'Restoran',
+    cafe: 'Kafe',
+    hotel: 'Otel',
+    museum: 'Müze',
+    park: 'Park',
+    shopping: 'Alışveriş',
+    entertainment: 'Eğlence',
+    other: 'Diğer',
+  };
+  return labels[category] || category;
+};
+
+const seo = {
+  title: queryParam ? `"${queryParam}" - Mekanlar` : 'Mekanlar - Restoran, Otel, Kafe ve Daha Fazlası',
+  description: 'Şanlıurfa\'nın en iyi restoranları, otelleri, kafeleri ve müzelerini keşfedin. Kullanıcı yorumları ve puanlarıyla karşılaştırın.',
+};
+
+const searchParams = new URLSearchParams();
+if (categoryFilter !== 'all') searchParams.set('category', categoryFilter);
+if (queryParam) searchParams.set('q', queryParam);
+---
+
+<Layout seo={seo}>
+  <div class="page-header">
+    <div class="page-header-content">
+      <h1 class="page-header-title">Mekanlar</h1>
+      <p class="page-header-description">
+        Şanlıurfa'nın en iyi restoranlarından otellerine, kafelerinden müzelerine kadar tüm mekanları keşfedin.
+      </p>
+      
+      <div class="mt-8 max-w-2xl mx-auto">
+        <form action="/places" class="relative">
+          <input 
+            type="search"
+            name="q"
+            value={queryParam}
+            placeholder="Mekan ara..."
+            class="w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border border-white/20 focus:outline-none focus:border-white/40"
+          />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <div class="container-custom py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+      <aside class="lg:w-64 flex-shrink-0">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sticky top-24">
+          <div class="flex items-center gap-2 mb-4">
+            <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <h3 class="font-semibold dark:text-white">Filtreler</h3>
+          </div>
+          
+          <div class="space-y-2">
+            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Kategoriler</h4>
+            <a href="/places" class={`flex items-center justify-between p-2 rounded-lg transition-colors ${
+              categoryFilter === 'all' ? 'bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}>
+              <span class="text-sm text-gray-700 dark:text-gray-300">Tümü</span>
+            </a>
+            {categories.map((cat) => (
+              <a 
+                href={`/places?category=${cat.id}`}
+                class={`flex items-center justify-between p-2 rounded-lg transition-colors ${
+                  categoryFilter === cat.id ? 'bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                <span class="text-sm text-gray-700 dark:text-gray-300">{cat.label}</span>
+              </a>
+            ))}
+          </div>
+          
+          <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Fiyat Aralığı</h4>
+            <div class="space-y-2">
+              {[1, 2, 3, 4].map((price) => (
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    name="price" 
+                    value={price}
+                    class="rounded border-gray-300 text-urfa-600 focus:ring-urfa-500"
+                  />
+                  <span class="text-sm text-urfa-600 dark:text-urfa-400">{priceRangeSymbols(price)}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      </aside>
+      
+      <main class="flex-1">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            <span class="font-semibold text-gray-900 dark:text-white">{places?.length || 0}</span> mekan gösteriliyor
+            {count > 0 && <span class="text-gray-400 dark:text-gray-500"> / {count} toplam</span>}
+          </p>
+          
+          <div class="flex items-center gap-4">
+            <select class="input py-2 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+              <option value="recommended">Önerilen</option>
+              <option value="rating">Puana Göre</option>
+              <option value="reviews">Yorum Sayısına Göre</option>
+              <option value="newest">En Yeni</option>
+            </select>
+            
+            <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
+              <button class="p-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white" aria-label="Grid görünümü">
+                <Grid3X3 className="w-4 h-4" />
+              </button>
+              <button class="p-2 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white" aria-label="Liste görünümü">
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {places?.map((place) => (
+            <article class="card-hover bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
+              <a href={`/places/${place.slug}`}>
+                <div class="relative aspect-video overflow-hidden">
+                  <img 
+                    src={place.images?.[0] || '/images/placeholder-place.jpg'}
+                    alt={place.name}
+                    class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div class="absolute top-3 right-3">
+                    <span class="badge bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white">
+                      {priceRangeSymbols(place.price_range || 2)}
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="p-5">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 class="font-semibold text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
+                        {place.name}
+                      </h3>
+                      <div class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {place.address}
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-1 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-lg">
+                      <Star className="w-4 h-4 text-green-600 fill-current" />
+                      <span class="font-semibold text-green-700 dark:text-green-400">{place.rating || '4.5'}</span>
+                    </div>
+                  </div>
+                  
+                  <p class="text-gray-600 dark:text-gray-400 text-sm mt-3 line-clamp-2">
+                    {place.description}
+                  </p>
+                  
+                  <div class="flex flex-wrap gap-2 mt-4">
+                    <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full">
+                      {getCategoryLabel(place.category)}
+                    </span>
+                    {place.tags?.slice(0, 2).map((tag: string) => (
+                      <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-full">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  
+                  <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">
+                      {place.review_count || 0} değerlendirme
+                    </span>
+                    <span class="text-sm font-medium text-urfa-600 dark:text-urfa-400">
+                      Detaylar →
+                    </span>
+                  </div>
+                </div>
+              </a>
+            </article>
+          ))}
+        </div>
+        
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          baseUrl="/places"
+          searchParams={searchParams}
+        />
+        
+        {(!places || places.length === 0) && (
+          <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <Search className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Mekan bulunamadı</h3>
+            <p class="text-gray-600 dark:text-gray-400">Farklı filtrelerle tekrar deneyin.</p>
+          </div>
+        )}
+      </main>
+    </div>
+  </div>
+</Layout>

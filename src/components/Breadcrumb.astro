@@ -1,0 +1,57 @@
+---
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  items: BreadcrumbItem[];
+}
+
+const { items } = Astro.props;
+---
+
+<nav aria-label="Breadcrumb" class="py-4">
+  <ol class="flex items-center flex-wrap gap-2 text-sm">
+    <li>
+      <a href="/" class="text-gray-500 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
+        Ana Sayfa
+      </a>
+    </li>
+    {items.map((item, index) => (
+      <li class="flex items-center gap-2">
+        <span class="text-gray-400 dark:text-gray-500">/</span>
+        {item.href && index < items.length - 1 ? (
+          <a href={item.href} class="text-gray-500 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
+            {item.label}
+          </a>
+        ) : (
+          <span class="text-gray-900 dark:text-white font-medium" aria-current="page">
+            {item.label}
+          </span>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Ana Sayfa",
+      "item": "https://sanliurfa.com"
+    }
+    {items.map((item, index) => `,{
+      "@type": "ListItem",
+      "position": ${index + 2},
+      "name": "${item.label}",
+      "item": "https://sanliurfa.com${item.href || ''}"
+    }`).join('')}
+  ]
+}
+</script>

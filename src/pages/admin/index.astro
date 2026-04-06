@@ -1,0 +1,83 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+const user = Astro.locals.user;
+
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin');
+}
+
+// İstatistikler
+const [placesCount, usersCount, reviewsCount, messagesCount, pendingPlaces] = await Promise.all([
+  query("SELECT COUNT(*) FROM places"),
+  query("SELECT COUNT(*) FROM users"),
+  query("SELECT COUNT(*) FROM reviews"),
+  query("SELECT COUNT(*) FROM contact_messages WHERE status = 'new'"),
+  query("SELECT COUNT(*) FROM places WHERE status = 'pending'"),
+]);
+
+const stats = {
+  places: parseInt(placesCount.rows[0]?.count || '0'),
+  users: parseInt(usersCount.rows[0]?.count || '0'),
+  reviews: parseInt(reviewsCount.rows[0]?.count || '0'),
+  messages: parseInt(messagesCount.rows[0]?.count || '0'),
+  pending: parseInt(pendingPlaces.rows[0]?.count || '0'),
+};
+
+const seo = { title: 'Admin Panel - Şanlıurfa.com' };
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-100 dark:bg-gray-900 py-8">
+    <div class="container-custom">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">Admin Panel</h1>
+      
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+          <div class="text-3xl font-bold text-urfa-600">{stats.places}</div>
+          <div class="text-gray-600 dark:text-gray-400">Mekan</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+          <div class="text-3xl font-bold text-blue-600">{stats.users}</div>
+          <div class="text-gray-600 dark:text-gray-400">Kullanıcı</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+          <div class="text-3xl font-bold text-green-600">{stats.reviews}</div>
+          <div class="text-gray-600 dark:text-gray-400">Yorum</div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+          <div class="text-3xl font-bold text-red-600">{stats.messages}</div>
+          <div class="text-gray-600 dark:text-gray-400">Yeni Mesaj</div>
+        </div>
+      </div>
+      
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <a href="/admin/places" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Mekanlar</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.pending} onay bekleyen</p>
+        </a>
+        <a href="/admin/users" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Kullanıcılar</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kullanıcı yönetimi</p>
+        </a>
+        <a href="/admin/reviews" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Yorumlar</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Yorum moderasyonu</p>
+        </a>
+        <a href="/admin/blog" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Blog</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Blog yazıları</p>
+        </a>
+        <a href="/admin/events" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Etkinlikler</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Etkinlik yönetimi</p>
+        </a>
+        <a href="/admin/messages" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Mesajlar</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.messages} yeni mesaj</p>
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>

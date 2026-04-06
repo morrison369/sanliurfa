@@ -1,0 +1,198 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Calendar, User, Clock, ArrowLeft, Share2, Heart } from 'lucide-react';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import { query, queryOne } from '../../lib/postgres';
+
+const { slug } = Astro.params;
+
+const post = await queryOne(
+  `SELECT bp.*, u.full_name, u.bio, u.avatar_url 
+   FROM blog_posts bp 
+   LEFT JOIN users u ON bp.author_id = u.id 
+   WHERE bp.slug = $1 AND bp.is_published = true`,
+  [slug]
+);
+
+if (!post) {
+  return Astro.redirect('/blog');
+}
+
+const relatedResult = await query(
+  `SELECT id, title, slug, cover_image, category 
+   FROM blog_posts 
+   WHERE is_published = true AND category = $1 AND id != $2 
+   LIMIT 3`,
+  [post.category, post.id]
+);
+const relatedPosts = relatedResult.rows;
+
+const getCategoryLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    'genel': 'Genel', 'kultur-sanat': 'Kültür & Sanat', 'gastronomi': 'Gastronomi',
+    'tarih': 'Tarih', 'gezi-rehberi': 'Gezi Rehberi', 'etkinlik': 'Etkinlik', 'haber': 'Haber',
+  };
+  return labels[category] || category;
+};
+
+const calculateReadTime = (content: string) => {
+  const wordsPerMinute = 200;
+  return `${Math.ceil((content?.split(/\s+/).length || 0) / wordsPerMinute)} dk`;
+};
+
+const breadcrumbItems = [
+  { label: 'Ana Sayfa', href: '/' },
+  { label: 'Blog', href: '/blog' },
+  { label: getCategoryLabel(post.category), href: `/blog?category=${post.category}` },
+  { label: post.title, href: `/blog/${post.slug}` },
+];
+
+const seo = {
+  title: post.title,
+  description: post.excerpt,
+  image: post.cover_image,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <Breadcrumb items={breadcrumbItems} />
+      </div>
+    </div>
+    
+    <div class="relative h-[400px] lg:h-[500px]">
+      <img 
+        src={post.cover_image || '/images/placeholder-blog.jpg'}
+        alt={post.title}
+        class="w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      
+      <div class="absolute bottom-0 left-0 right-0">
+        <div class="container-custom py-8">
+          <span class="inline-block px-3 py-1 bg-urfa-600 text-white text-sm rounded-full mb-4">
+            {getCategoryLabel(post.category)}
+          </span>
+          <h1 class="text-3xl lg:text-5xl font-display font-bold text-white max-w-3xl">
+            {post.title}
+          </h1>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container-custom py-8">
+      <div class="grid lg:grid-cols-3 gap-8">
+        <article class="lg:col-span-2">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+            <div class="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-2">
+                <div class="w-10 h-10 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center text-urfa-600 dark:text-urfa-400 font-bold">
+                  {post.full_name?.charAt(0) || 'E'}
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-white text-sm">{post.full_name || 'Editör'}</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">Yazar</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 ml-auto">
+                <span class="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  {new Date(post.published_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>
+                <span class="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  {calculateReadTime(post.content)} okuma
+                </span>
+              </div>
+            </div>
+            
+            <div class="prose dark:prose-invert max-w-none">
+              {post.content}
+            </div>
+            
+            {post.tags && post.tags.length > 0 && (
+              <div class="flex flex-wrap gap-2 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                {post.tags.map((tag: string) => (
+                  <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            
+            <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <a href="/blog" class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+                Tüm Yazılar
+              </a>
+              <div class="flex items-center gap-2">
+                <button class="p-2 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors" aria-label="Beğen">
+                  <Heart className="w-5 h-5" />
+                </button>
+                <button class="p-2 text-gray-500 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors" aria-label="Paylaş">
+                  <Share2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mt-6">
+            <div class="flex items-start gap-4">
+              <div class="w-16 h-16 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center text-urfa-600 dark:text-urfa-400 text-xl font-bold">
+                {post.full_name?.charAt(0) || 'E'}
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 dark:text-white">{post.full_name || 'Editör'}</h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{post.bio || 'Şanlıurfa.com editörü'}</p>
+              </div>
+            </div>
+          </div>
+        </article>
+        
+        <aside class="space-y-6">
+          {relatedPosts && relatedPosts.length > 0 && (
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Benzer Yazılar</h3>
+              <div class="space-y-4">
+                {relatedPosts.map((related: any) => (
+                  <a href={`/blog/${related.slug}`} class="flex gap-3 group">
+                    <img 
+                      src={related.cover_image || '/images/placeholder-blog.jpg'} 
+                      alt={related.title}
+                      class="w-20 h-16 rounded-lg object-cover flex-shrink-0"
+                    />
+                    <div>
+                      <span class="text-xs text-urfa-600 dark:text-urfa-400">{getCategoryLabel(related.category)}</span>
+                      <h4 class="font-medium text-gray-900 dark:text-white text-sm group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors line-clamp-2">
+                        {related.title}
+                      </h4>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div class="bg-urfa-600 rounded-xl p-6 text-white">
+            <h3 class="font-semibold mb-2">Bültenimize Abone Olun</h3>
+            <p class="text-sm text-urfa-100 mb-4">En yeni yazılardan haberdar olun.</p>
+            <form action="/api/newsletter/subscribe" method="POST" class="space-y-2">
+              <input 
+                type="email"
+                name="email"
+                placeholder="E-posta adresiniz"
+                required
+                class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:border-white/40"
+              />
+              <button type="submit" class="w-full py-2 bg-white text-urfa-600 rounded-lg font-medium hover:bg-urfa-50 transition-colors">
+                Abone Ol
+              </button>
+            </form>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</Layout>

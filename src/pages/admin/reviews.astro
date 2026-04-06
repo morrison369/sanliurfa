@@ -1,0 +1,79 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+const user = Astro.locals.user;
+
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/reviews');
+}
+
+const result = await query(
+  `SELECT r.*, p.name as place_name, p.slug as place_slug, u.full_name as user_name
+   FROM reviews r 
+   JOIN places p ON r.place_id = p.id 
+   JOIN users u ON r.user_id = u.id 
+   WHERE r.is_moderated = false 
+   ORDER BY r.created_at DESC`
+);
+const pendingReviews = result.rows;
+
+const seo = { title: 'Yorum Moderasyonu - Admin' };
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-100 dark:bg-gray-900 py-8">
+    <div class="container-custom">
+      <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Yorum Moderasyonu</h1>
+        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">← Admin Panel</a>
+      </div>
+      
+      {pendingReviews.length > 0 ? (
+        <div class="space-y-4">
+          {pendingReviews.map((review) => (
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold text-gray-900 dark:text-white">{review.user_name}</span>
+                    <span class="text-gray-400">→</span>
+                    <a href={`/places/${review.place_slug}`} class="text-urfa-600 hover:underline">
+                      {review.place_name}
+                    </a>
+                  </div>
+                  <div class="flex items-center gap-1 text-yellow-500 my-2">
+                    {[...Array(5)].map((_, i) => (
+                      <svg class={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-gray-300'}`} viewBox="0 0 20 20">
+                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                      </svg>
+                    ))}
+                  </div>
+                  {review.title && <h4 class="font-medium text-gray-900 dark:text-white">{review.title}</h4>}
+                  <p class="text-gray-600 dark:text-gray-400 mt-1">{review.content}</p>
+                  <span class="text-sm text-gray-400">{new Date(review.created_at).toLocaleDateString('tr-TR')}</span>
+                </div>
+                <div class="flex gap-2">
+                  <form method="POST" action={`/api/reviews/${review.id}/approve`}>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                      Onayla
+                    </button>
+                  </form>
+                  <form method="POST" action={`/api/reviews/${review.id}/reject`}>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                      Reddet
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
+          <p class="text-gray-600 dark:text-gray-400">Onay bekleyen yorum bulunmuyor.</p>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

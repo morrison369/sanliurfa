@@ -1,0 +1,71 @@
+---
+interface Props {
+  data: any[];
+  filename: string;
+  format?: 'csv' | 'json';
+  columns?: { key: string; label: string }[];
+}
+
+const { data, filename, format = 'csv', columns } = Astro.props;
+
+const buttonId = `export-btn-${Math.random().toString(36).substr(2, 9)}`;
+---
+
+<button 
+  id={buttonId}
+  class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+  data-format={format}
+>
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+  </svg>
+  {format === 'csv' ? 'CSV İndir' : 'JSON İndir'}
+</button>
+
+<script define:vars={{ buttonId, data, filename, format, columns }}>
+  const btn = document.getElementById(buttonId);
+  
+  function convertToCSV(data, columns) {
+    if (data.length === 0) return '';
+    
+    const cols = columns || Object.keys(data[0]).map(key => ({ key, label: key }));
+    
+    const headers = cols.map(c => c.label).join(',');
+    const rows = data.map(row => 
+      cols.map(col => {
+        const value = row[col.key];
+        // Escape values containing commas or quotes
+        const stringValue = value === null || value === undefined ? '' : String(value);
+        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+          return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+        return stringValue;
+      }).join(',')
+    );
+    
+    return [headers, ...rows].join('\n');
+  }
+  
+  btn?.addEventListener('click', () => {
+    let content = '';
+    let mimeType = '';
+    let extension = '';
+    
+    if (format === 'csv') {
+      content = '\uFEFF' + convertToCSV(data, columns); // BOM for Excel UTF-8
+      mimeType = 'text/csv;charset=utf-8;';
+      extension = 'csv';
+    } else {
+      content = JSON.stringify(data, null, 2);
+      mimeType = 'application/json';
+      extension = 'json';
+    }
+    
+    const blob = new Blob([content], { type: mimeType });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}.${extension}`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
+</script>

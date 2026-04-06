@@ -1,0 +1,11 @@
+<!-- ThemeScript.astro - FOUC prevention for dark mode -->
+<script is:inline>
+  (function() {
+    const theme = localStorage.getItem('theme') || 'light';
+    if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  })();
+</script>

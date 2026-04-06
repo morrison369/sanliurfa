@@ -1,0 +1,315 @@
+/* Google Fonts - MUST be first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors - Urfa Theme */
+    --color-primary-50: 253 248 246;
+    --color-primary-100: 242 232 229;
+    --color-primary-200: 234 221 215;
+    --color-primary-300: 224 206 199;
+    --color-primary-400: 210 186 176;
+    --color-primary-500: 161 128 114;
+    --color-primary-600: 138 106 92;
+    --color-primary-700: 115 84 72;
+    --color-primary-800: 92 66 57;
+    --color-primary-900: 69 50 43;
+    
+    /* Accent - Isot Red */
+    --color-accent-50: 254 242 242;
+    --color-accent-100: 254 226 226;
+    --color-accent-200: 254 202 202;
+    --color-accent-300: 252 165 165;
+    --color-accent-400: 248 113 113;
+    --color-accent-500: 239 68 68;
+    --color-accent-600: 220 38 38;
+    --color-accent-700: 185 28 28;
+    --color-accent-800: 153 27 27;
+    --color-accent-900: 127 29 29;
+    
+    /* Semantic Colors */
+    --color-success: 34 197 94;
+    --color-warning: 251 191 36;
+    --color-error: 239 68 68;
+    --color-info: 59 130 246;
+    
+    /* Dark Mode Base */
+    color-scheme: light dark;
+  }
+  
+  .dark {
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-gray-200 dark:border-gray-700;
+  }
+  
+  html {
+    @apply scroll-smooth;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  
+  body {
+    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-display: swap;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  /* Container */
+  .container-custom {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+  
+  .btn-primary {
+    @apply btn bg-urfa-600 text-white hover:bg-urfa-700 focus:ring-urfa-500;
+  }
+  
+  .btn-accent {
+    @apply btn bg-isot-600 text-white hover:bg-isot-700 focus:ring-isot-500;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 focus:ring-gray-500;
+  }
+  
+  .btn-ghost {
+    @apply btn bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:ring-gray-500;
+  }
+  
+  .btn-outline {
+    @apply btn border-2 border-urfa-600 text-urfa-600 hover:bg-urfa-600 hover:text-white focus:ring-urfa-500;
+  }
+  
+  /* Cards */
+  .card {
+    @apply rounded-xl bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-900/5 dark:ring-gray-700/50 transition-shadow duration-200 hover:shadow-md dark:hover:shadow-gray-900/50;
+  }
+  
+  .card-hover {
+    @apply card hover:-translate-y-1 hover:shadow-lg;
+  }
+  
+  /* Forms */
+  .input {
+    @apply block w-full rounded-lg border-gray-300 dark:border-gray-700 px-4 py-3 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm focus:border-urfa-500 focus:ring-urfa-500 sm:text-sm dark:bg-gray-800;
+  }
+  
+  .input-error {
+    @apply input border-red-300 focus:border-red-500 focus:ring-red-500;
+  }
+  
+  .label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+  }
+  
+  /* Section Styles */
+  .section {
+    @apply py-12 sm:py-16 lg:py-20;
+  }
+  
+  .section-title {
+    @apply text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl;
+  }
+  
+  .section-subtitle {
+    @apply mt-4 text-lg text-gray-600 dark:text-gray-400;
+  }
+  
+  /* Gradient Overlays */
+  .gradient-overlay {
+    @apply absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent;
+  }
+  
+  .gradient-overlay-light {
+    @apply absolute inset-0 bg-gradient-to-r from-urfa-900/90 to-urfa-900/40;
+  }
+  
+  /* Rating Stars */
+  .star-rating {
+    @apply flex items-center space-x-0.5;
+  }
+  
+  .star-filled {
+    @apply text-yellow-400;
+  }
+  
+  .star-empty {
+    @apply text-gray-300;
+  }
+  
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  
+  .badge-primary {
+    @apply badge bg-urfa-100 dark:bg-urfa-900/30 text-urfa-800 dark:text-urfa-200;
+  }
+  
+  .badge-accent {
+    @apply badge bg-isot-100 dark:bg-isot-900/30 text-isot-800 dark:text-isot-200;
+  }
+  
+  .badge-success {
+    @apply badge bg-green-100 text-green-800;
+  }
+  
+  /* Navigation Active State */
+  .nav-link {
+    @apply relative px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors hover:text-gray-900 dark:hover:text-gray-100;
+  }
+  
+  .nav-link-active {
+    @apply nav-link text-urfa-600;
+  }
+  
+  /* Page Header */
+  .page-header {
+    @apply relative overflow-hidden bg-urfa-900 py-24 sm:py-32;
+  }
+  
+  .page-header-content {
+    @apply relative z-10 container-custom text-center;
+  }
+  
+  .page-header-title {
+    @apply text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl;
+  }
+  
+  .page-header-description {
+    @apply mx-auto mt-6 max-w-2xl text-lg text-urfa-100;
+  }
+}
+
+@layer utilities {
+  /* Text Balance */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Animation Delays */
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
+  
+  /* Aspect Ratios */
+  .aspect-4\/3 {
+    aspect-ratio: 4 / 3;
+  }
+  
+  .aspect-3\/2 {
+    aspect-ratio: 3 / 2;
+  }
+  
+  /* Line Clamp */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Focus Visible */
+  .focus-visible-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-urfa-500 focus-visible:ring-offset-2;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-gray-300 dark:bg-gray-600;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Selection */
+::selection {
+  @apply bg-urfa-200 text-urfa-900;
+}
+
+/* Typography Dark Mode */
+.dark .prose {
+  color: #e5e7eb;
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4,
+.dark .prose h5,
+.dark .prose h6 {
+  color: #f9fafb;
+}
+
+.dark .prose strong {
+  color: #f9fafb;
+}
+
+.dark .prose ul > li::marker {
+  color: #9ca3af;
+}
+
+.dark .prose ol > li::marker {
+  color: #9ca3af;
+}
+
+.dark .prose pre {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

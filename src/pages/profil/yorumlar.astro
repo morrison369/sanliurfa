@@ -1,0 +1,105 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Star, User, Settings, Heart, MessageSquare } from 'lucide-react';
+import { query } from '../../lib/postgres';
+
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect('/giris?redirect=/profil/yorumlar');
+}
+
+const result = await query(
+  `SELECT r.*, p.name as place_name, p.slug as place_slug
+   FROM reviews r 
+   JOIN places p ON r.place_id = p.id 
+   WHERE r.user_id = $1 
+   ORDER BY r.created_at DESC`,
+  [user.id]
+);
+const reviews = result.rows;
+
+const seo = {
+  title: 'Yorumlarım - Şanlıurfa.com',
+  description: 'Yaptığınız yorumları görüntüleyin.',
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="container-custom">
+      <div class="grid lg:grid-cols-4 gap-8">
+        <aside class="lg:col-span-1">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <nav class="space-y-1">
+                <a href="/profil" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <User className="w-4 h-4" />
+                  Profil
+                </a>
+                <a href="/profil/yorumlar" class="flex items-center gap-2 p-2 rounded-lg bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300">
+                  <MessageSquare className="w-4 h-4" />
+                  Yorumlarım ({reviews.length})
+                </a>
+                <a href="/profil/favoriler" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <Heart className="w-4 h-4" />
+                  Favorilerim
+                </a>
+                <a href="/profil/ayarlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <Settings className="w-4 h-4" />
+                  Ayarlar
+                </a>
+              </nav>
+            </div>
+          </div>
+        </aside>
+        
+        <main class="lg:col-span-3">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="font-display font-bold text-xl text-gray-900 dark:text-white mb-4">Yorumlarım</h2>
+            
+            {reviews.length > 0 ? (
+              <div class="space-y-4">
+                {reviews.map((review) => (
+                  <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <a href={`/places/${review.place_slug}`} class="font-semibold text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400">
+                          {review.place_name}
+                        </a>
+                        <div class="flex items-center gap-1 text-yellow-500 mt-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star className={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-gray-300 dark:text-gray-600'}`} />
+                          ))}
+                        </div>
+                      </div>
+                      <span class="text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(review.created_at).toLocaleDateString('tr-TR')}
+                      </span>
+                    </div>
+                    {review.title && (
+                      <h4 class="font-medium text-gray-900 dark:text-white mt-2">{review.title}</h4>
+                    )}
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">{review.content}</p>
+                    <div class="flex items-center gap-2 mt-2">
+                      <span class={`text-xs px-2 py-1 rounded ${review.is_approved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {review.is_approved ? 'Onaylandı' : 'Onay Bekliyor'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <MessageSquare className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Henüz yorum yok</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Ziyaret ettiğiniz mekanlar hakkında yorum yapın.</p>
+                <a href="/places" class="btn-primary">Mekanları Keşfet</a>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</Layout>

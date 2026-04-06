@@ -1,0 +1,176 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { Calendar, MapPin, Save, ArrowLeft } from 'lucide-react';
+
+const categories = [
+  { id: 'kultur-sanat', label: 'Kültür & Sanat' },
+  { id: 'gastronomi', label: 'Gastronomi' },
+  { id: 'tarih', label: 'Tarih' },
+  { id: 'muzik', label: 'Müzik' },
+  { id: 'spor', label: 'Spor' },
+  { id: 'egitim', label: 'Eğitim' },
+  { id: 'diger', label: 'Diğer' },
+];
+
+const errorMessage = Astro.url.searchParams.get('error');
+const errorMessages: Record<string, string> = {
+  'missing_fields': 'Başlık, açıklama, konum, tarih ve kategori zorunludur.',
+  'server_error': 'Bir hata oluştu. Lütfen tekrar deneyin.',
+};
+
+const seo = {
+  title: 'Yeni Etkinlik - Admin Panel',
+  description: 'Yeni etkinlik ekleme',
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Admin Header -->
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <a href="/admin/events" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              <ArrowLeft className="w-5 h-5" />
+            </a>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Yeni Etkinlik</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {errorMessage && (
+      <div class="container-custom py-4">
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
+          {errorMessages[errorMessage] || 'Bir hata oluştu.'}
+        </div>
+      </div>
+    )}
+    
+    <div class="container-custom py-8">
+      <form action="/api/events/create" method="POST" class="grid lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Basic Info -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel Bilgiler</h2>
+            <div class="space-y-4">
+              <div>
+                <label for="title" class="label dark:text-gray-300">Etkinlik Adı *</label>
+                <input 
+                  type="text" 
+                  id="title" 
+                  name="title" 
+                  required
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="Örn: Urfa Gastronomi Festivali"
+                />
+              </div>
+              
+              <div>
+                <label for="description" class="label dark:text-gray-300">Açıklama *</label>
+                <textarea 
+                  id="description" 
+                  name="description" 
+                  rows="5" 
+                  required
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+                  placeholder="Etkinlik hakkında detaylı bilgi..."
+                ></textarea>
+              </div>
+              
+              <div>
+                <label for="category" class="label dark:text-gray-300">Kategori *</label>
+                <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <option value="">Kategori seçin</option>
+                  {categories.map(cat => (
+                    <option value={cat.id}>{cat.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Date & Location -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Tarih ve Konum</h2>
+            <div class="space-y-4">
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="start_date" class="label dark:text-gray-300">Başlangıç Tarihi *</label>
+                  <input 
+                    type="datetime-local" 
+                    id="start_date" 
+                    name="start_date" 
+                    required
+                    class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label for="end_date" class="label dark:text-gray-300">Bitiş Tarihi</label>
+                  <input 
+                    type="datetime-local" 
+                    id="end_date" 
+                    name="end_date"
+                    class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label for="location" class="label dark:text-gray-300">Konum *</label>
+                <div class="relative">
+                  <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <input 
+                    type="text" 
+                    id="location" 
+                    name="location" 
+                    required
+                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="Örn: Balıklıgöl, Şanlıurfa"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <aside class="space-y-6">
+          <!-- Publish -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
+            <label class="flex items-center gap-2 mb-3">
+              <input type="checkbox" name="is_featured" class="rounded border-gray-300 text-urfa-600" />
+              <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan etkinlik</span>
+            </label>
+            <label for="status" class="label dark:text-gray-300">Durum</label>
+            <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
+              <option value="draft">Taslak</option>
+              <option value="published">Yayında</option>
+              <option value="cancelled">İptal Edildi</option>
+            </select>
+            <button type="submit" class="btn-primary w-full mt-4 flex items-center justify-center gap-2">
+              <Save className="w-4 h-4" />
+              Kaydet
+            </button>
+          </div>
+          
+          <!-- Image -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görsel</h3>
+            <input 
+              type="url" 
+              name="image"
+              class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="https://example.com/image.jpg"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Etkinlik görsel URL'si</p>
+          </div>
+        </aside>
+      </form>
+    </div>
+  </div>
+</Layout>

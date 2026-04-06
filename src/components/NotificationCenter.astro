@@ -1,0 +1,254 @@
+---
+import { Bell, Check, Trash2, X } from 'lucide-react';
+
+interface Props {
+  user: any;
+}
+
+const { user } = Astro.props;
+---
+
+{user && (
+  <div class="relative" id="notification-center">
+    <button 
+      id="notification-toggle"
+      class="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+      aria-label="Bildirimler"
+    >
+      <Bell className="w-5 h-5" />
+      <span 
+        id="notification-badge"
+        class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center hidden"
+      >
+        0
+      </span>
+    </button>
+    
+    <!-- Dropdown -->
+    <div 
+      id="notification-dropdown"
+      class="absolute right-0 top-full mt-2 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 hidden opacity-0 transition-opacity"
+    >
+      <div class="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+        <h3 class="font-semibold text-gray-900 dark:text-white">Bildirimler</h3>
+        <div class="flex items-center gap-2">
+          <button 
+            id="mark-all-read"
+            class="text-xs text-urfa-600 dark:text-urfa-400 hover:underline"
+          >
+            Tümünü Okundu İşaretle
+          </button>
+          <button 
+            id="close-notifications"
+            class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+      
+      <div 
+        id="notification-list"
+        class="max-h-96 overflow-y-auto"
+      >
+        <div class="p-4 text-center text-gray-500 dark:text-gray-400">
+          <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p>Bildirimler yükleniyor...</p>
+        </div>
+      </div>
+      
+      <div class="p-3 border-t border-gray-100 dark:border-gray-700 text-center">
+        <a 
+          href="/profil/bildirimler"
+          class="text-sm text-urfa-600 dark:text-urfa-400 hover:underline"
+        >
+          Tüm Bildirimleri Gör
+        </a>
+      </div>
+    </div>
+  </div>
+)}
+
+<script>
+  let notifications = [];
+  let unreadCount = 0;
+  
+  const toggle = document.getElementById('notification-toggle');
+  const dropdown = document.getElementById('notification-dropdown');
+  const badge = document.getElementById('notification-badge');
+  const list = document.getElementById('notification-list');
+  const closeBtn = document.getElementById('close-notifications');
+  const markAllBtn = document.getElementById('mark-all-read');
+  
+  function toggleDropdown() {
+    if (dropdown?.classList.contains('hidden')) {
+      dropdown.classList.remove('hidden');
+      setTimeout(() => dropdown.classList.remove('opacity-0'), 10);
+      loadNotifications();
+    } else {
+      dropdown?.classList.add('opacity-0');
+      setTimeout(() => dropdown?.classList.add('hidden'), 200);
+    }
+  }
+  
+  function closeDropdown() {
+    dropdown?.classList.add('opacity-0');
+    setTimeout(() => dropdown?.classList.add('hidden'), 200);
+  }
+  
+  async function loadNotifications() {
+    try {
+      const response = await fetch('/api/notifications');
+      const data = await response.json();
+      
+      notifications = data.data || [];
+      unreadCount = data.unreadCount || 0;
+      
+      updateBadge();
+      renderNotifications();
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+      if (list) {
+        list.innerHTML = `
+          <div class="p-4 text-center text-gray-500">
+            <p>Bildirimler yüklenemedi</p>
+          </div>
+        `;
+      }
+    }
+  }
+  
+  function updateBadge() {
+    if (badge) {
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+  }
+  
+  function renderNotifications() {
+    if (!list) return;
+    
+    if (notifications.length === 0) {
+      list.innerHTML = `
+        <div class="p-8 text-center text-gray-500">
+          <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p>Henüz bildirim yok</p>
+        </div>
+      `;
+      return;
+    }
+    
+    list.innerHTML = notifications.map(n => `
+      <div 
+        class="flex items-start gap-3 p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${n.is_read ? 'opacity-70' : 'bg-urfa-50/30 dark:bg-urfa-900/10'}"
+        data-notification-id="${n.id}"
+      >
+        <div class="flex-1 min-w-0 cursor-pointer" onclick="handleNotificationClick('${n.id}', '${n.type}', '${n.data ? JSON.stringify(n.data).replace(/"/g, '&quot;') : '{}'}')">
+          <p class="font-medium text-gray-900 dark:text-white text-sm">${n.title}</p>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-0.5">${n.message || ''}</p>
+          <p class="text-xs text-gray-400 mt-1">${new Date(n.created_at).toLocaleString('tr-TR')}</p>
+        </div>
+        <div class="flex flex-col gap-1">
+          ${!n.is_read ? `
+            <button 
+              class="p-1.5 text-urfa-600 dark:text-urfa-400 hover:bg-urfa-100 dark:hover:bg-urfa-900/30 rounded"
+              onclick="markAsRead('${n.id}')"
+              title="Okundu olarak işaretle"
+            >
+              <Check className="w-4 h-4" />
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  (window as any).markAsRead = async function(id: string) {
+    try {
+      const response = await fetch(`/api/notifications/${id}/read`, {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        const notification = notifications.find(n => n.id === id);
+        if (notification) {
+          notification.is_read = true;
+          unreadCount = Math.max(0, unreadCount - 1);
+          updateBadge();
+          renderNotifications();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
+  };
+  
+  (window as any).handleNotificationClick = async function(id: string, type: string, dataStr: string) {
+    // Mark as read
+    await (window as any).markAsRead(id);
+    
+    // Navigate based on type
+    const data = JSON.parse(dataStr || '{}');
+    
+    switch (type) {
+      case 'review_approved':
+      case 'review_rejected':
+        if (data.place_slug) {
+          window.location.href = `/places/${data.place_slug}`;
+        }
+        break;
+      case 'level_up':
+        window.location.href = '/profil';
+        break;
+      case 'badge_earned':
+        window.location.href = '/profil/rozetler';
+        break;
+      case 'place_approved':
+        if (data.place_slug) {
+          window.location.href = `/places/${data.place_slug}`;
+        }
+        break;
+      default:
+        window.location.href = '/profil/bildirimler';
+    }
+  };
+  
+  async function markAllAsRead() {
+    try {
+      const response = await fetch('/api/notifications/read-all', {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        notifications.forEach(n => n.is_read = true);
+        unreadCount = 0;
+        updateBadge();
+        renderNotifications();
+      }
+    } catch (error) {
+      console.error('Failed to mark all as read:', error);
+    }
+  }
+  
+  toggle?.addEventListener('click', toggleDropdown);
+  closeBtn?.addEventListener('click', closeDropdown);
+  markAllBtn?.addEventListener('click', markAllAsRead);
+  
+  // Close on click outside
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('#notification-center')) {
+      closeDropdown();
+    }
+  });
+  
+  // Initial load
+  loadNotifications();
+  
+  // Refresh every 30 seconds
+  setInterval(loadNotifications, 30000);
+</script>

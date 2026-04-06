@@ -1,0 +1,116 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const seo = {
+  title: 'Gizlilik Politikası - Şanlıurfa.com',
+  description: 'Şanlıurfa.com gizlilik politikası ve kişisel verilerin korunması hakkında bilgiler.',
+};
+
+const lastUpdated = '1 Nisan 2025';
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Page Header -->
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-12">
+        <h1 class="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white mb-4">
+          Gizlilik Politikası
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400">
+          Son Güncelleme: {lastUpdated}
+        </p>
+      </div>
+    </div>
+    
+    <div class="container-custom py-12">
+      <div class="max-w-3xl mx-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 md:p-12">
+          <div class="prose dark:prose-invert max-w-none">
+            <p class="lead">
+              Şanlıurfa.com olarak kullanıcılarımızın gizliliğini ciddiye alıyoruz. Bu gizlilik politikası, 
+              kişisel verilerinizin nasıl toplandığını, kullanıldığını ve korunduğunu açıklamaktadır.
+            </p>
+            
+            <h2>1. Toplanan Bilgiler</h2>
+            <p>
+              Hizmetlerimizi kullanırken aşağıdaki bilgileri toplayabiliriz:
+            </p>
+            <ul>
+              <li><strong>Hesap Bilgileri:</strong> Ad, soyad, e-posta adresi, profil fotoğrafı</li>
+              <li><strong>Kullanım Verileri:</strong> Ziyaret ettiğiniz sayfalar, tıklamalar, arama sorguları</li>
+              <li><strong>Konum Bilgileri:</strong> IP adresi, tarayıcı bilgileri, cihaz bilgileri</li>
+              <li><strong>İletişim Bilgileri:</strong> Bize gönderdiğiniz mesajlar ve geri bildirimler</li>
+            </ul>
+            
+            <h2>2. Bilgilerin Kullanımı</h2>
+            <p>
+              Topladığımız bilgileri aşağıdaki amaçlarla kullanırız:
+            </p>
+            <ul>
+              <li>Hesabınızın oluşturulması ve yönetimi</li>
+              <li>Hizmetlerimizin iyileştirilmesi ve kişiselleştirilmesi</li>
+              <li>Güvenlik önlemlerinin uygulanması</li>
+              <li>Yasal yükümlülüklerin yerine getirilmesi</li>
+              <li>Pazarlama ve promosyon iletişimleri (izninizle)</li>
+            </ul>
+            
+            <h2>3. Çerezler (Cookies)</h2>
+            <p>
+              Sitemizde çerezler kullanılmaktadır. Çerezler, tarayıcınız tarafından saklanan küçük metin dosyalarıdır. 
+              Kullandığımız çerez türleri:
+            </p>
+            <ul>
+              <li><strong>Zorunlu Çerezler:</strong> Site'nin çalışması için gerekli</li>
+              <li><strong>Analitik Çerezler:</strong> Site kullanımını analiz etmek için</li>
+              <li><strong>İşlevsellik Çerezleri:</strong> Tercihlerinizi hatırlamak için</li>
+              <li><strong>Hedefleme Çerezleri:</strong> Size özel içerik sunmak için</li>
+            </ul>
+            
+            <h2>4. Veri Güvenliği</h2>
+            <p>
+              Kişisel verilerinizin güvenliğini sağlamak için endüstri standardı güvenlik önlemleri kullanıyoruz. 
+              Ancak, internet üzerinden hiçbir veri iletiminin %100 güvenli olmadığını lütfen unutmayın.
+            </p>
+            
+            <h2>5. Veri Paylaşımı</h2>
+            <p>
+              Kişisel verilerinizi üçüncü taraflarla paylaşmıyoruz, ancak aşağıdaki durumlar istisnadır:
+            </p>
+            <ul>
+              <li>Yasal zorunluluk durumunda</li>
+              <li>Hizmet sağlayıcılarımızla (analiz, barındırma vb.)</li>
+              <li>İş transferi veya birleşme durumunda</li>
+            </ul>
+            
+            <h2>6. Haklarınız</h2>
+            <p>
+              KVKK kapsamında aşağıdaki haklara sahipsiniz:
+            </p>
+            <ul>
+              <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme</li>
+              <li>Kişisel verileriniz düzeltilmesini, silinmesini veya yok edilmesini isteme</li>
+              <li>İşlenen verilerin münhasıran otomatik sistemler vasıtasıyla analiz edilmesi nedeniyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme</li>
+              <li>Kişisel verilerinizin kanuna aykırı işlenmesi sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme</li>
+            </ul>
+            
+            <h2>7. İletişim</h2>
+            <p>
+              Gizlilik politikamız hakkında sorularınız için bize ulaşabilirsiniz:
+            </p>
+            <p>
+              <strong>E-posta:</strong> privacy@sanliurfa.com<br>
+              <strong>Adres:</strong> Haliliye, Şanlıurfa, Türkiye
+            </p>
+            
+            <h2>8. Değişiklikler</h2>
+            <p>
+              Bu gizlilik politikasını zaman zaman güncelleyebiliriz. Değişiklikler bu sayfada yayınlanacak ve 
+              önemli değişikliklerde e-posta ile bilgilendirileceksiniz.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,120 @@
+---
+import { Utensils, Flame, Clock, ChevronRight } from 'lucide-react';
+
+const foods = [
+  {
+    id: 'urfa-kebabi',
+    name: 'Urfa Kebabı',
+    description: 'Baharatlı kıymanın odun ateşinde pişirilmesiyle hazırlanan efsane lezzet.',
+    image: '/images/foods/urfa-kebabi.jpg',
+    isSpicy: false,
+    difficulty: 'Zor',
+    prepTime: '45 dk',
+  },
+  {
+    id: 'cig-kofte',
+    name: 'Çiğ Köfte',
+    description: 'İsot ve bulgurun karataşta yoğrulmasıyla yapılan geleneksel lezzet.',
+    image: '/images/foods/cig-kofte.jpg',
+    isSpicy: true,
+    difficulty: 'Çok Zor',
+    prepTime: '2 saat',
+  },
+  {
+    id: 'isot',
+    name: 'Urfa İsotu',
+    description: 'Güneşte kurutulmuş, yağda kavrulmuş eşsiz bir baharat.',
+    image: '/images/foods/isot.jpg',
+    isSpicy: true,
+    difficulty: 'Orta',
+    prepTime: '1 hafta',
+  },
+  {
+    id: 'sillik-tatlisi',
+    name: 'Şıllık Tatlısı',
+    description: 'Cevizli, kremalı geleneksel Urfa tatlısı.',
+    image: '/images/foods/sillik-tatlisi.jpg',
+    isSpicy: false,
+    difficulty: 'Orta',
+    prepTime: '1 saat',
+  },
+];
+---
+
+<section class="section bg-white dark:bg-gray-900">
+  <div class="container-custom">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+      <!-- Content -->
+      <div>
+        <span class="inline-flex items-center gap-2 text-isot-600 font-medium mb-2">
+          <Utensils className="w-5 h-5" />
+          Gastronomi
+        </span>
+        <h2 class="section-title dark:text-white">Şanlıurfa Mutfağı</h2>
+        <p class="section-subtitle dark:text-gray-400">
+          UNESCO Gastronomi Şehri adayı Şanlıurfa'nın dünyaca ünlü lezzetlerini keşfedin. 
+          Ciğer kebabından çiğ köfteye, isottan tatlılara kadar zengin mutfağımızı tanıyın.
+        </p>
+        
+        <div class="grid grid-cols-2 gap-4 mt-8">
+          <div class="p-4 bg-urfa-50 dark:bg-urfa-900/20 rounded-xl">
+            <div class="text-3xl font-bold text-urfa-600 dark:text-urfa-400">100+</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">Yöresel Yemek</div>
+          </div>
+          <div class="p-4 bg-isot-50 dark:bg-isot-900/20 rounded-xl">
+            <div class="text-3xl font-bold text-isot-600 dark:text-isot-400">50+</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">Restoran</div>
+          </div>
+        </div>
+        
+        <a href="/gastronomi" class="btn-primary inline-flex items-center gap-2 mt-8">
+          Gastronomi Rehberi
+          <ChevronRight className="w-4 h-4" />
+        </a>
+      </div>
+      
+      <!-- Food Grid -->
+      <div class="grid grid-cols-2 gap-4">
+        {foods.map((food, index) => (
+          <a 
+            href={`/gastronomi/${food.id}`}
+            class={`group relative overflow-hidden rounded-2xl ${index === 0 ? 'col-span-2' : ''}`}
+          >
+            <div class={`relative ${index === 0 ? 'aspect-[2/1]' : 'aspect-square'}`}>
+              <img 
+                src={food.image}
+                alt={food.name}
+                class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                loading="lazy"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+              
+              <!-- Spicy Badge -->
+              {food.isSpicy && (
+                <div class="absolute top-3 left-3">
+                  <span class="badge bg-isot-600 text-white flex items-center gap-1">
+                    <Flame className="w-3 h-3" />
+                    Acılı
+                  </span>
+                </div>
+              )}
+              
+              <!-- Content -->
+              <div class="absolute bottom-0 left-0 right-0 p-4">
+                <h3 class="font-display font-bold text-white text-lg">{food.name}</h3>
+                <p class="text-white/80 text-sm line-clamp-2">{food.description}</p>
+                <div class="flex items-center gap-3 mt-2 text-xs text-white/70">
+                  <span class="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {food.prepTime}
+                  </span>
+                  <span>{food.difficulty}</span>
+                </div>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

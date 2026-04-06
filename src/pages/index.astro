@@ -1,0 +1,57 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Hero from '../components/Hero.astro';
+import FeaturedPlaces from '../components/FeaturedPlaces.astro';
+import HistoricalSites from '../components/HistoricalSites.astro';
+import FoodGuide from '../components/FoodGuide.astro';
+import WeatherWidget from '../components/weather/WeatherWidget.astro';
+import Stats from '../components/Stats.astro';
+import CTASection from '../components/CTASection.astro';
+import LatestBlog from '../components/LatestBlog.astro';
+
+const seo = {
+  title: 'Şanlıurfa Şehir Rehberi - Tarihin Sıfır Noktası',
+  description: 'Şanlıurfa\'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, Harran, gastronomi ve daha fazlası. Mekanlar, yorumlar ve puanlama sistemi ile keşfedin.',
+  image: '/images/og-home.jpg',
+  schema: {
+    '@type': 'WebSite',
+    name: 'Şanlıurfa.com',
+    url: 'https://sanliurfa.com',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: 'https://sanliurfa.com/arama?q={search_term_string}',
+      'query-input': 'required name=search_term_string',
+    },
+  },
+};
+---
+
+<Layout seo={seo}>
+  <!-- Hero Section -->
+  <Hero />
+  
+  <!-- Weather Widget -->
+  <section class="bg-gray-50 dark:bg-gray-800 border-y border-gray-100 dark:border-gray-700">
+    <div class="container-custom py-6">
+      <WeatherWidget />
+    </div>
+  </section>
+  
+  <!-- Stats Section -->
+  <Stats />
+  
+  <!-- Featured Places -->
+  <FeaturedPlaces />
+  
+  <!-- Historical Sites -->
+  <HistoricalSites />
+  
+  <!-- Food Guide -->
+  <FoodGuide />
+  
+  <!-- Latest Blog Posts -->
+  <LatestBlog />
+  
+  <!-- CTA Section -->
+  <CTASection />
+</Layout>

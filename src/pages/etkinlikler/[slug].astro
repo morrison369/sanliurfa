@@ -1,0 +1,210 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Calendar, MapPin, Clock, ArrowLeft, Share2 } from 'lucide-react';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import { query, queryOne } from '../../lib/postgres';
+
+const { slug } = Astro.params;
+
+const event = await queryOne(
+  `SELECT e.*, u.full_name as creator_name 
+   FROM events e 
+   LEFT JOIN users u ON e.created_by = u.id 
+   WHERE e.slug = $1 AND e.status = 'published'`,
+  [slug]
+);
+
+if (!event) {
+  return Astro.redirect('/etkinlikler');
+}
+
+const relatedResult = await query(
+  `SELECT id, title, slug, image_url, start_date, location 
+   FROM events 
+   WHERE status = 'published' AND category = $1 AND id != $2 
+   AND start_date >= CURRENT_DATE 
+   LIMIT 3`,
+  [event.category, event.id]
+);
+const relatedEvents = relatedResult.rows;
+
+const getCategoryLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    'kultur-sanat': 'Kültür & Sanat', 'gastronomi': 'Gastronomi', 'muzik': 'Müzik',
+    'spor': 'Spor', 'egitim': 'Eğitim', 'diger': 'Diğer',
+  };
+  return labels[category] || category;
+};
+
+const isPast = new Date(event.start_date) < new Date();
+
+const breadcrumbItems = [
+  { label: 'Ana Sayfa', href: '/' },
+  { label: 'Etkinlikler', href: '/etkinlikler' },
+  { label: getCategoryLabel(event.category), href: `/etkinlikler?category=${event.category}` },
+  { label: event.title, href: `/etkinlikler/${event.slug}` },
+];
+
+const seo = {
+  title: `${event.title} - Şanlıurfa Etkinlikleri`,
+  description: event.description,
+  image: event.image_url,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <Breadcrumb items={breadcrumbItems} />
+      </div>
+    </div>
+    
+    <div class="relative h-[400px] lg:h-[500px]">
+      <img 
+        src={event.image_url || '/images/placeholder-event.jpg'}
+        alt={event.title}
+        class="w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      
+      <div class="absolute bottom-0 left-0 right-0">
+        <div class="container-custom py-8">
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span class="inline-block px-3 py-1 bg-urfa-600 text-white text-sm rounded-full">
+              {getCategoryLabel(event.category)}
+            </span>
+            {isPast && (
+              <span class="inline-block px-3 py-1 bg-gray-600 text-white text-sm rounded-full">
+                Geçmiş Etkinlik
+              </span>
+            )}
+          </div>
+          <h1 class="text-3xl lg:text-5xl font-display font-bold text-white max-w-3xl">
+            {event.title}
+          </h1>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container-custom py-8">
+      <div class="grid lg:grid-cols-3 gap-8">
+        <article class="lg:col-span-2">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+            <div class="grid sm:grid-cols-3 gap-4 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-urfa-600 dark:text-urfa-400" />
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Tarih</p>
+                  <p class="font-medium text-gray-900 dark:text-white">
+                    {new Date(event.start_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                  {event.end_date && event.end_date !== event.start_date && (
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                      - {new Date(event.end_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-urfa-600 dark:text-urfa-400" />
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Saat</p>
+                  <p class="font-medium text-gray-900 dark:text-white">
+                    {event.start_time || '10:00'}
+                  </p>
+                </div>
+              </div>
+              
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center">
+                  <MapPin className="w-6 h-6 text-urfa-600 dark:text-urfa-400" />
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Konum</p>
+                  <p class="font-medium text-gray-900 dark:text-white">{event.location}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="prose dark:prose-invert max-w-none">
+              <h2 class="text-2xl font-display font-bold text-gray-900 dark:text-white mb-4">Etkinlik Hakkında</h2>
+              <p class="text-gray-600 dark:text-gray-400 whitespace-pre-line">{event.description}</p>
+            </div>
+            
+            <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <a href="/etkinlikler" class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+                Tüm Etkinlikler
+              </a>
+              <button class="p-2 text-gray-500 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors" aria-label="Paylaş">
+                <Share2 className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </article>
+        
+        <aside class="space-y-6">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Etkinlik Bilgileri</h3>
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-500 dark:text-gray-400">Durum</span>
+                <span class={`font-medium ${isPast ? 'text-gray-500' : 'text-green-600'}`}>
+                  {isPast ? 'Tamamlandı' : 'Aktif'}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 dark:text-gray-400">Kategori</span>
+                <span class="font-medium text-gray-900 dark:text-white">{getCategoryLabel(event.category)}</span>
+              </div>
+              {event.creator_name && (
+                <div class="flex justify-between">
+                  <span class="text-gray-500 dark:text-gray-400">Organizatör</span>
+                  <span class="font-medium text-gray-900 dark:text-white">{event.creator_name}</span>
+                </div>
+              )}
+            </div>
+            
+            {!isPast && (
+              <button class="w-full mt-6 btn-primary">
+                Katılım İçin Bilgi Al
+              </button>
+            )}
+          </div>
+          
+          {relatedEvents && relatedEvents.length > 0 && (
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Benzer Etkinlikler</h3>
+              <div class="space-y-4">
+                {relatedEvents.map((related: any) => (
+                  <a href={`/etkinlikler/${related.slug}`} class="flex gap-3 group">
+                    <img 
+                      src={related.image_url || '/images/placeholder-event.jpg'} 
+                      alt={related.title}
+                      class="w-20 h-16 rounded-lg object-cover flex-shrink-0"
+                    />
+                    <div>
+                      <span class="text-xs text-urfa-600 dark:text-urfa-400">
+                        {new Date(related.start_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
+                      </span>
+                      <h4 class="font-medium text-gray-900 dark:text-white text-sm group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors line-clamp-2">
+                        {related.title}
+                      </h4>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">{related.location}</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </aside>
+      </div>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,233 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { Landmark, MapPin, Save, ArrowLeft, Clock, DollarSign } from 'lucide-react';
+
+const periods = [
+  { id: 'tunç-çağı', label: 'Tunç Çağı' },
+  { id: 'hitit', label: 'Hitit Dönemi' },
+  { id: 'asur', label: 'Asur Dönemi' },
+  { id: 'pers', label: 'Pers Dönemi' },
+  { id: 'hellenistik', label: 'Hellenistik Dönem' },
+  { id: 'roma', label: 'Roma Dönemi' },
+  { id: 'bizans', label: 'Bizans Dönemi' },
+  { id: 'islami', label: 'İslami Dönem' },
+  { id: 'osmanlı', label: 'Osmanlı Dönemi' },
+  { id: 'cumhuriyet', label: 'Cumhuriyet Dönemi' },
+];
+
+const errorMessage = Astro.url.searchParams.get('error');
+const errorMessages: Record<string, string> = {
+  'missing_fields': 'İsim, açıklama ve konum zorunludur.',
+  'server_error': 'Bir hata oluştu. Lütfen tekrar deneyin.',
+};
+
+const seo = {
+  title: 'Yeni Tarihi Yer - Admin Panel',
+  description: 'Yeni tarihi yer ekleme',
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Admin Header -->
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <a href="/admin/historical-sites" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              <ArrowLeft className="w-5 h-5" />
+            </a>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Yeni Tarihi Yer</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {errorMessage && (
+      <div class="container-custom py-4">
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
+          {errorMessages[errorMessage] || 'Bir hata oluştu.'}
+        </div>
+      </div>
+    )}
+    
+    <div class="container-custom py-8">
+      <form action="/api/historical-sites/create" method="POST" class="grid lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Basic Info -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel Bilgiler</h2>
+            <div class="space-y-4">
+              <div>
+                <label for="name" class="label dark:text-gray-300">Yer Adı *</label>
+                <input 
+                  type="text" 
+                  id="name" 
+                  name="name" 
+                  required
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="Örn: Göbeklitepe"
+                />
+              </div>
+              
+              <div>
+                <label for="short_description" class="label dark:text-gray-300">Kısa Açıklama</label>
+                <input 
+                  type="text" 
+                  id="short_description" 
+                  name="short_description"
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="Kısa tanıtım metni..."
+                />
+              </div>
+              
+              <div>
+                <label for="description" class="label dark:text-gray-300">Açıklama *</label>
+                <textarea 
+                  id="description" 
+                  name="description" 
+                  rows="5" 
+                  required
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+                  placeholder="Detaylı açıklama..."
+                ></textarea>
+              </div>
+              
+              <div>
+                <label for="period" class="label dark:text-gray-300">Tarihi Dönem</label>
+                <select id="period" name="period" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <option value="">Dönem seçin</option>
+                  {periods.map(p => (
+                    <option value={p.id}>{p.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Location -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Konum</h2>
+            <div class="space-y-4">
+              <div>
+                <label for="location" class="label dark:text-gray-300">Adres *</label>
+                <div class="relative">
+                  <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <input 
+                    type="text" 
+                    id="location" 
+                    name="location" 
+                    required
+                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="Örn: Örencik Mahallesi, Haliliye/Şanlıurfa"
+                  />
+                </div>
+              </div>
+              
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="latitude" class="label dark:text-gray-300">Enlem</label>
+                  <input 
+                    type="number" 
+                    id="latitude" 
+                    name="latitude"
+                    step="any"
+                    class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="37.2232"
+                  />
+                </div>
+                <div>
+                  <label for="longitude" class="label dark:text-gray-300">Boylam</label>
+                  <input 
+                    type="number" 
+                    id="longitude" 
+                    name="longitude"
+                    step="any"
+                    class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="38.9225"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Visit Info -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ziyaret Bilgileri</h2>
+            <div class="space-y-4">
+              <div>
+                <label for="opening_hours" class="label dark:text-gray-300">Çalışma Saatleri</label>
+                <div class="relative">
+                  <Clock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <input 
+                    type="text" 
+                    id="opening_hours" 
+                    name="opening_hours"
+                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="Örn: 08:00 - 18:00"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label for="entry_fee" class="label dark:text-gray-300">Giriş Ücreti</label>
+                <div class="relative">
+                  <DollarSign className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <input 
+                    type="text" 
+                    id="entry_fee" 
+                    name="entry_fee"
+                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="Örn: 50 TL veya Ücretsiz"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <aside class="space-y-6">
+          <!-- Publish -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
+            <div class="space-y-3">
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_unesco" class="rounded border-gray-300 text-blue-600" />
+                <span class="text-sm text-gray-700 dark:text-gray-300">UNESCO Mirası</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_featured" class="rounded border-gray-300 text-urfa-600" />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan yer</span>
+              </label>
+            </div>
+            <label for="status" class="label dark:text-gray-300 mt-4">Durum</label>
+            <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
+              <option value="draft">Taslak</option>
+              <option value="active">Aktif</option>
+              <option value="inactive">Pasif</option>
+            </select>
+            <button type="submit" class="btn-primary w-full mt-4 flex items-center justify-center gap-2">
+              <Save className="w-4 h-4" />
+              Kaydet
+            </button>
+          </div>
+          
+          <!-- Images -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görseller</h3>
+            <textarea 
+              name="images"
+              rows="3"
+              class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+              placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
+            ></textarea>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Virgülle ayırarak birden fazla görsel ekleyebilirsiniz</p>
+          </div>
+        </aside>
+      </form>
+    </div>
+  </div>
+</Layout>

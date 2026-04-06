@@ -1,0 +1,106 @@
+---
+import { Sun, Cloud, CloudRain, Wind, Droplets, Eye, Thermometer } from 'lucide-react';
+
+// Simulated weather data - Replace with real API call
+const weatherData = {
+  current: {
+    temp: 24,
+    feelsLike: 26,
+    condition: 'Güneşli',
+    icon: Sun,
+    humidity: 45,
+    windSpeed: 12,
+    visibility: 10,
+    uvIndex: 6,
+  },
+  forecast: [
+    { day: 'Pzt', icon: Sun, high: 26, low: 14 },
+    { day: 'Sal', icon: Cloud, high: 24, low: 13 },
+    { day: 'Çar', icon: CloudRain, high: 22, low: 12 },
+    { day: 'Per', icon: Sun, high: 25, low: 14 },
+    { day: 'Cum', icon: Sun, high: 27, low: 15 },
+  ],
+};
+---
+
+<div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+  <!-- Current Weather -->
+  <div class="flex items-center gap-4">
+    <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg">
+      <weatherData.current.icon className="w-8 h-8" />
+    </div>
+    <div>
+      <div class="flex items-baseline gap-2">
+        <span class="text-3xl font-bold text-gray-900 dark:text-white">{weatherData.current.temp}°C</span>
+        <span class="text-gray-500 dark:text-gray-400">{weatherData.current.condition}</span>
+      </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Hissedilen: {weatherData.current.feelsLike}°C
+      </p>
+    </div>
+  </div>
+  
+  <!-- Weather Details -->
+  <div class="flex items-center gap-6 text-sm">
+    <div class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+      <Droplets className="w-4 h-4 text-blue-500" />
+      <span>Nem: %{weatherData.current.humidity}</span>
+    </div>
+    <div class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+      <Wind className="w-4 h-4 text-gray-400" />
+      <span>Rüzgar: {weatherData.current.windSpeed} km/s</span>
+    </div>
+    <div class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+      <Eye className="w-4 h-4 text-gray-400" />
+      <span>Görüş: {weatherData.current.visibility} km</span>
+    </div>
+    <div class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+      <Thermometer className="w-4 h-4 text-orange-500" />
+      <span>UV: {weatherData.current.uvIndex}</span>
+    </div>
+  </div>
+  
+  <!-- Forecast -->
+  <div class="flex items-center gap-4">
+    {weatherData.forecast.map((day) => (
+      <div class="text-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{day.day}</div>
+        <day.icon className="w-5 h-5 mx-auto mb-1 text-gray-700 dark:text-gray-300" />
+        <div class="text-sm font-medium text-gray-900 dark:text-white">{day.high}°</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400">{day.low}°</div>
+      </div>
+    ))}
+  </div>
+  
+  <!-- Location -->
+  <div class="text-right hidden lg:block">
+    <div class="text-sm font-medium text-gray-900 dark:text-white">Şanlıurfa, TR</div>
+    <div class="text-xs text-gray-500 dark:text-gray-400">Güncel hava durumu</div>
+  </div>
+</div>
+
+<!-- Weather API Integration Script -->
+<script>
+  // TODO: Integrate with OpenWeatherMap or similar API
+  // API Key should be stored in environment variables
+  const WEATHER_API_KEY = import.meta.env.PUBLIC_WEATHER_API_KEY;
+  
+  async function fetchWeather() {
+    try {
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=Sanliurfa,TR&appid=${WEATHER_API_KEY}&units=metric&lang=tr`
+      );
+      const data = await response.json();
+      // Update UI with real data
+    } catch (error) {
+      console.error('Weather fetch error:', error);
+    }
+  }
+  
+  // Fetch weather on mount
+  if (WEATHER_API_KEY) {
+    fetchWeather();
+    // Update every 30 minutes
+    setInterval(fetchWeather, 30 * 60 * 1000);
+  }
+</script>

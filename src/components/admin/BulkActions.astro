@@ -1,0 +1,143 @@
+---
+interface Props {
+  itemType: string;
+  actions: { value: string; label: string; confirm?: boolean }[];
+}
+
+const { itemType, actions } = Astro.props;
+---
+
+<div class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
+  <input 
+    type="checkbox" 
+    id="select-all"
+    class="w-4 h-4 text-urfa-600 rounded border-gray-300 focus:ring-urfa-500"
+  />
+  <label for="select-all" class="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+    Tümünü Seç
+  </label>
+  
+  <span class="text-gray-300 dark:text-gray-600">|</span>
+  
+  <span id="selected-count" class="text-sm text-gray-600 dark:text-gray-400">
+    0 {itemType} seçildi
+  </span>
+  
+  <div class="flex-1"></div>
+  
+  <form id="bulk-action-form" class="flex items-center gap-2">
+    <select 
+      name="action" 
+      id="bulk-action-select"
+      class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+      required
+    >
+      <option value="">Toplu İşlem...</option>
+      {actions.map(action => (
+        <option value={action.value} data-confirm={action.confirm}>{action.label}</option>
+      ))}
+    </select>
+    <button 
+      type="submit"
+      id="bulk-action-btn"
+      disabled
+      class="px-4 py-2 bg-urfa-600 text-white text-sm rounded-lg hover:bg-urfa-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    >
+      Uygula
+    </button>
+  </form>
+</div>
+
+<script>
+  let selectedItems = new Set();
+  
+  const selectAllCheckbox = document.getElementById('select-all');
+  const itemCheckboxes = document.querySelectorAll('.bulk-select-item');
+  const selectedCountSpan = document.getElementById('selected-count');
+  const bulkActionForm = document.getElementById('bulk-action-form');
+  const bulkActionSelect = document.getElementById('bulk-action-select');
+  const bulkActionBtn = document.getElementById('bulk-action-btn');
+  
+  function updateUI() {
+    const count = selectedItems.size;
+    if (selectedCountSpan) {
+      selectedCountSpan.textContent = `${count} öğe seçildi`;
+    }
+    
+    if (bulkActionBtn) {
+      bulkActionBtn.disabled = count === 0 || !bulkActionSelect?.value;
+    }
+    
+    itemCheckboxes.forEach((checkbox) => {
+      const cb = checkbox;
+      cb.checked = selectedItems.has(cb.value);
+    });
+    
+    if (selectAllCheckbox) {
+      const allChecked = itemCheckboxes.length > 0 && Array.from(itemCheckboxes).every(cb => selectedItems.has(cb.value));
+      selectAllCheckbox.checked = allChecked;
+      selectAllCheckbox.indeterminate = selectedItems.size > 0 && !allChecked;
+    }
+  }
+  
+  selectAllCheckbox?.addEventListener('change', () => {
+    if (selectAllCheckbox.checked) {
+      itemCheckboxes.forEach(cb => selectedItems.add(cb.value));
+    } else {
+      selectedItems.clear();
+    }
+    updateUI();
+  });
+  
+  itemCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      const cb = checkbox;
+      if (cb.checked) {
+        selectedItems.add(cb.value);
+      } else {
+        selectedItems.delete(cb.value);
+      }
+      updateUI();
+    });
+  });
+  
+  bulkActionSelect?.addEventListener('change', updateUI);
+  
+  bulkActionForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const action = bulkActionSelect?.value;
+    const items = Array.from(selectedItems);
+    
+    if (!action || items.length === 0) return;
+    
+    const selectedOption = bulkActionSelect?.selectedOptions[0];
+    const needsConfirm = selectedOption?.dataset.confirm === 'true';
+    if (needsConfirm && !confirm(`Seçili ${items.length} öğe için "${action}" işlemi uygulanacak. Emin misiniz?`)) {
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/admin/bulk-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, items })
+      });
+      
+      if (response.ok) {
+        if (window.toast) {
+          window.toast.success('İşlem başarıyla tamamlandı');
+        }
+        selectedItems.clear();
+        updateUI();
+        window.location.reload();
+      } else {
+        throw new Error('İşlem başarısız');
+      }
+    } catch (error) {
+      if (window.toast) {
+        window.toast.error('Bir hata oluştu');
+      }
+    }
+  });
+</script>

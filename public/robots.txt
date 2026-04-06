@@ -1,0 +1,26 @@
+# robots.txt for sanliurfa.com
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://sanliurfa.com/sitemap-index.xml
+
+# Disallow admin paths
+Disallow: /admin/
+Disallow: /profil/
+Disallow: /api/
+Disallow: /giris
+Disallow: /kayit
+
+# Crawl rate
+Crawl-delay: 1
+
+# Allow specific bots
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /

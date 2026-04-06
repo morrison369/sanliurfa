@@ -1,0 +1,86 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Home, Search, MapPin, ArrowLeft } from 'lucide-react';
+
+const seo = {
+  title: 'Sayfa Bulunamadı - 404',
+  description: 'Aradığınız sayfa bulunamadı.',
+  noindex: true
+};
+
+const popularLinks = [
+  { name: 'Ana Sayfa', href: '/', icon: Home },
+  { name: 'Mekanlar', href: '/places', icon: MapPin },
+  { name: 'Tarihi Yerler', href: '/tarihi-yerler', icon: MapPin },
+  { name: 'Gastronomi', href: '/gastronomi', icon: MapPin },
+];
+---
+
+<Layout seo={seo} hideHeader={false} hideFooter={true}>
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-urfa-50">
+    <div class="container-custom py-20">
+      <div class="max-w-2xl mx-auto text-center">
+        <!-- 404 Illustration -->
+        <div class="relative mb-8">
+          <div class="text-9xl font-bold text-urfa-200 select-none">404</div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="w-32 h-32 bg-white rounded-full shadow-xl flex items-center justify-center">
+              <Search className="w-16 h-16 text-urfa-600" />
+            </div>
+          </div>
+        </div>
+        
+        <h1 class="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-4">
+          Sayfa Bulunamadı
+        </h1>
+        <p class="text-lg text-gray-600 mb-8">
+          Aradığınız sayfa taşınmış, silinmiş veya hiç var olmamış olabilir.
+          <br />Şanlıurfa'nın diğer güzelliklerini keşfetmeye ne dersiniz?
+        </p>
+        
+        <!-- Search Box -->
+        <form action="/arama" class="max-w-md mx-auto mb-12">
+          <div class="relative">
+            <input 
+              type="search"
+              name="q"
+              placeholder="Mekan veya yer ara..."
+              class="w-full pl-12 pr-4 py-4 bg-white rounded-xl shadow-sm border border-gray-200 focus:border-urfa-500 focus:ring-2 focus:ring-urfa-200 outline-none transition-all"
+            />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <button 
+              type="submit"
+              class="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-urfa-600 text-white rounded-lg hover:bg-urfa-700 transition-colors"
+            >
+              Ara
+            </button>
+          </div>
+        </form>
+        
+        <!-- Quick Links -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          {popularLinks.map(link => (
+            <a 
+              href={link.href}
+              class="flex flex-col items-center gap-2 p-4 bg-white rounded-xl shadow-sm border border-gray-200 hover:border-urfa-300 hover:shadow-md transition-all"
+            >
+              <div class="w-12 h-12 bg-urfa-100 rounded-lg flex items-center justify-center">
+                <link.icon className="w-6 h-6 text-urfa-600" />
+              </div>
+              <span class="font-medium text-gray-900">{link.name}</span>
+            </a>
+          ))}
+        </div>
+        
+        <!-- Back Button -->
+        <button 
+          onclick="history.back()"
+          class="inline-flex items-center gap-2 text-urfa-600 hover:text-urfa-700 font-medium"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Geri Dön
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>

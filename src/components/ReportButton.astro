@@ -1,0 +1,162 @@
+---
+interface Props {
+  type: 'place' | 'review' | 'user';
+  id: string;
+  reason?: string;
+}
+
+const { type, id, reason = '' } = Astro.props;
+
+const reportReasons = [
+  { value: 'inappropriate', label: 'Uygunsuz İçerik' },
+  { value: 'spam', label: 'Spam' },
+  { value: 'fake', label: 'Sahte/Sahtekarlık' },
+  { value: 'offensive', label: 'Hakaret/Ayrımcılık' },
+  { value: 'wrong_info', label: 'Yanlış Bilgi' },
+  { value: 'other', label: 'Diğer' },
+];
+---
+
+<div class="relative inline-block">
+  <button 
+    id={`report-btn-${type}-${id}`}
+    class="p-2 text-gray-400 hover:text-red-500 transition-colors"
+    title="Bildir"
+    aria-label="Bildir"
+  >
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+  </button>
+  
+  <!-- Report Modal -->
+  <div 
+    id={`report-modal-${type}-${id}`}
+    class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200"
+  >
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 transform scale-95 transition-transform duration-200">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Bildir</h3>
+          <button 
+            id={`report-close-${type}-${id}`}
+            class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Bu içeriği neden bildiriyorsunuz? Görüşleriniz bizim için önemli.
+        </p>
+        
+        <form id={`report-form-${type}-${id}`} class="space-y-4">
+          <input type="hidden" name="type" value={type} />
+          <input type="hidden" name="id" value={id} />
+          
+          <div class="space-y-2">
+            {reportReasons.map(r => (
+              <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
+                <input 
+                  type="radio" 
+                  name="reason" 
+                  value={r.value}
+                  required
+                  class="w-4 h-4 text-urfa-600 focus:ring-urfa-500"
+                />
+                <span class="text-gray-700 dark:text-gray-300">{r.label}</span>
+              </label>
+            ))}
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Açıklama (İsteğe bağlı)
+            </label>
+            <textarea
+              name="description"
+              rows="3"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-urfa-500"
+              placeholder="Detaylı bilgi verin..."
+            ></textarea>
+          </div>
+          
+          <div class="flex gap-3 pt-2">
+            <button 
+              type="button"
+              id={`report-cancel-${type}-${id}`}
+              class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              İptal
+            </button>
+            <button 
+              type="submit"
+              class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Bildir
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ type, id }}>
+  const btn = document.getElementById(`report-btn-${type}-${id}`);
+  const modal = document.getElementById(`report-modal-${type}-${id}`);
+  const closeBtn = document.getElementById(`report-close-${type}-${id}`);
+  const cancelBtn = document.getElementById(`report-cancel-${type}-${id}`);
+  const form = document.getElementById(`report-form-${type}-${id}`);
+  
+  function openModal() {
+    modal?.classList.remove('hidden');
+    setTimeout(() => {
+      modal?.classList.remove('opacity-0');
+      modal?.querySelector('.bg-white, .dark\\:bg-gray-800')?.classList.remove('scale-95');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+  }
+  
+  function closeModal() {
+    modal?.classList.add('opacity-0');
+    modal?.querySelector('.bg-white, .dark\\:bg-gray-800')?.classList.add('scale-95');
+    setTimeout(() => {
+      modal?.classList.add('hidden');
+    }, 200);
+    document.body.style.overflow = '';
+  }
+  
+  btn?.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', closeModal);
+  
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+  
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    
+    try {
+      // In a real app, send to API
+      // const response = await fetch('/api/report', { method: 'POST', body: JSON.stringify(data) });
+      
+      // Show success
+      if (window.toast) {
+        window.toast.success('Bildiriminiz alındı. Teşekkür ederiz.');
+      }
+      closeModal();
+      form.reset();
+    } catch (error) {
+      if (window.toast) {
+        window.toast.error('Bir hata oluştu. Lütfen tekrar deneyin.');
+      }
+    }
+  });
+</script>

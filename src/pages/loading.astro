@@ -1,0 +1,113 @@
+---
+// Yükleme sayfası - navigasyon sırasında gösterilir
+---
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yükleniyor... - Şanlıurfa.com</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f5f0ee 0%, #e8ddd8 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .loader-container {
+      text-align: center;
+    }
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: #a18072;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 40px;
+      font-weight: bold;
+      color: white;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #e8ddd8;
+      border-top-color: #a18072;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    h1 {
+      color: #45322b;
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    p {
+      color: #735448;
+      font-size: 16px;
+    }
+    .tips {
+      margin-top: 32px;
+      padding: 16px 24px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      max-width: 300px;
+    }
+    .tips h3 {
+      font-size: 14px;
+      color: #a18072;
+      margin-bottom: 8px;
+    }
+    .tips p {
+      font-size: 13px;
+      color: #735448;
+    }
+  </style>
+</head>
+<body>
+  <div class="loader-container">
+    <div class="logo">Ş</div>
+    <div class="spinner"></div>
+    <h1>Yükleniyor...</h1>
+    <p>Şanlıurfa'yı keşfetmeye hazırlanıyoruz</p>
+    
+    <div class="tips">
+      <h3>💡 Biliyor muydunuz?</h3>
+      <p id="random-tip">Göbeklitepe, dünyanın bilinen en eski tapınak kompleksidir.</p>
+    </div>
+  </div>
+  
+  <script>
+    const tips = [
+      'Göbeklitepe, dünyanın bilinen en eski tapınak kompleksidir.',
+      'Balıklıgöl\'deki balıklar kutsal kabul edilir.',
+      'Harran, dünyanın ilk üniversitesine ev sahipliği yapmıştır.',
+      'Urfa kebabı, odun ateşinde pişirilir.',
+      'Çiğ köfte UNESCO Somut Olmayan Kültür Mirası listesindedir.',
+      'Şanlıurfa 2029 Dünya Gastronomi Şehri adayıdır.'
+    ];
+    
+    const randomTip = tips[Math.floor(Math.random() * tips.length)];
+    document.getElementById('random-tip').textContent = randomTip;
+  </script>
+</body>
+</html>

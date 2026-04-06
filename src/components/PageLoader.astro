@@ -1,0 +1,105 @@
+---
+// Page transition loader component
+---
+
+<div 
+  id="page-loader" 
+  class="fixed inset-0 bg-white dark:bg-gray-900 z-[100] flex items-center justify-center transition-opacity duration-500 pointer-events-none opacity-0"
+>
+  <div class="text-center">
+    <!-- Şanlıurfa Logo Spinner -->
+    <div class="relative w-20 h-20 mx-auto mb-4">
+      <!-- Outer ring -->
+      <div class="absolute inset-0 border-4 border-urfa-200 dark:border-urfa-800 rounded-full"></div>
+      <!-- Spinning ring -->
+      <div class="absolute inset-0 border-4 border-urfa-600 border-t-transparent rounded-full animate-spin"></div>
+      <!-- Center icon -->
+      <div class="absolute inset-0 flex items-center justify-center">
+        <svg class="w-8 h-8 text-urfa-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+        </svg>
+      </div>
+    </div>
+    <p class="text-urfa-600 dark:text-urfa-400 font-medium animate-pulse">
+      Şanlıurfa yükleniyor...
+    </p>
+  </div>
+</div>
+
+<script>
+  // Page loader functionality
+  (function() {
+    const loader = document.getElementById('page-loader');
+    let isLoading = false;
+    
+    function showLoader() {
+      if (!loader || isLoading) return;
+      isLoading = true;
+      loader.classList.remove('opacity-0', 'pointer-events-none');
+      loader.classList.add('opacity-100');
+    }
+    
+    function hideLoader() {
+      if (!loader) return;
+      loader.classList.add('opacity-0', 'pointer-events-none');
+      loader.classList.remove('opacity-100');
+      setTimeout(() => {
+        isLoading = false;
+      }, 500);
+    }
+    
+    // Show loader on navigation
+    document.addEventListener('astro:before-preparation', showLoader);
+    
+    // Hide loader after navigation
+    document.addEventListener('astro:after-swap', hideLoader);
+    document.addEventListener('astro:page-load', hideLoader);
+    
+    // Handle link clicks for client-side navigation
+    document.addEventListener('click', (e) => {
+      const link = (e.target as HTMLElement).closest('a');
+      if (!link) return;
+      
+      const href = link.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || link.hasAttribute('download')) {
+        return;
+      }
+      
+      // Don't show loader for same-page anchors
+      if (href === window.location.pathname || href.startsWith(window.location.pathname + '#')) {
+        return;
+      }
+      
+      // Check if it's an external link
+      if (link.hostname !== window.location.hostname) {
+        return;
+      }
+      
+      showLoader();
+    });
+    
+    // Fallback: Hide loader if it stays visible too long
+    setTimeout(() => {
+      hideLoader();
+    }, 10000);
+    
+    // Handle form submissions
+    document.addEventListener('submit', (e) => {
+      const form = e.target as HTMLFormElement;
+      if (form.method === 'get') return; // Don't show for search forms
+      showLoader();
+    });
+    
+    // Handle popstate (back/forward buttons)
+    window.addEventListener('popstate', () => {
+      showLoader();
+    });
+    
+    // Ensure loader is hidden when page is fully loaded
+    if (document.readyState === 'complete') {
+      hideLoader();
+    } else {
+      window.addEventListener('load', hideLoader);
+    }
+  })();
+</script>

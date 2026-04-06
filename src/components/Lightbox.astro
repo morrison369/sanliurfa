@@ -1,0 +1,259 @@
+---
+interface Props {
+  images: string[];
+  alt?: string;
+  initialIndex?: number;
+}
+
+const { images, alt = '', initialIndex = 0 } = Astro.props;
+---
+
+<div id="lightbox" class="fixed inset-0 z-50 bg-black/95 hidden opacity-0 transition-opacity duration-300">
+  <!-- Close Button -->
+  <button 
+    id="lightbox-close" 
+    class="absolute top-4 right-4 p-2 text-white/80 hover:text-white z-50 transition-colors"
+    aria-label="Kapat"
+  >
+    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+  
+  <!-- Navigation -->
+  {images.length > 1 && (
+    <>
+      <button 
+        id="lightbox-prev" 
+        class="absolute left-4 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+        aria-label="Önceki"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <button 
+        id="lightbox-next" 
+        class="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+        aria-label="Sonraki"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </>
+  )}
+  
+  <!-- Main Image -->
+  <div class="absolute inset-0 flex items-center justify-center p-4 md:p-16">
+    <img 
+      id="lightbox-image"
+      src={images[initialIndex]}
+      alt={alt}
+      class="max-w-full max-h-full object-contain transition-transform duration-300"
+    />
+  </div>
+  
+  <!-- Thumbnails -->
+  {images.length > 1 && (
+    <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 p-2 bg-black/50 rounded-full overflow-x-auto max-w-[90vw]">
+      {images.map((img, i) => (
+        <button 
+          class="lightbox-thumb flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 border-transparent transition-colors"
+          data-index={i}
+          data-src={img}
+        >
+          <img src={img} alt="" class="w-full h-full object-cover" />
+        </button>
+      ))}
+    </div>
+  )}
+  
+  <!-- Counter -->
+  {images.length > 1 && (
+    <div class="absolute top-4 left-4 px-4 py-2 bg-black/50 text-white rounded-full text-sm">
+      <span id="lightbox-current">{initialIndex + 1}</span> / {images.length}
+    </div>
+  )}
+  
+  <!-- Zoom Controls -->
+  <div class="absolute bottom-4 right-4 flex gap-2">
+    <button 
+      id="lightbox-zoom-out" 
+      class="p-2 text-white/80 hover:text-white bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+      aria-label="Uzaklaştır"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+      </svg>
+    </button>
+    <button 
+      id="lightbox-zoom-in" 
+      class="p-2 text-white/80 hover:text-white bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+      aria-label="Yakınlaştır"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script define:vars={{ images }}>
+  // Lightbox functionality
+  let currentIndex = 0;
+  let zoomLevel = 1;
+  let lightbox: HTMLElement | null = null;
+  let lightboxImage: HTMLImageElement | null = null;
+  
+  function initLightbox() {
+    lightbox = document.getElementById('lightbox');
+    lightboxImage = document.getElementById('lightbox-image') as HTMLImageElement;
+    
+    if (!lightbox || !lightboxImage) return;
+    
+    // Triggers
+    document.querySelectorAll('[data-lightbox-trigger]').forEach(trigger => {
+      trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        const index = parseInt((e.currentTarget as HTMLElement).dataset.lightboxIndex || '0');
+        openLightbox(index);
+      });
+    });
+    
+    // Close
+    document.getElementById('lightbox-close')?.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+    
+    // Navigation
+    document.getElementById('lightbox-prev')?.addEventListener('click', () => navigate(-1));
+    document.getElementById('lightbox-next')?.addEventListener('click', () => navigate(1));
+    
+    // Thumbnails
+    document.querySelectorAll('.lightbox-thumb').forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        const index = parseInt((thumb as HTMLElement).dataset.index || '0');
+        goToImage(index);
+      });
+    });
+    
+    // Zoom
+    document.getElementById('lightbox-zoom-in')?.addEventListener('click', () => setZoom(zoomLevel + 0.25));
+    document.getElementById('lightbox-zoom-out')?.addEventListener('click', () => setZoom(zoomLevel - 0.25));
+    
+    // Keyboard
+    document.addEventListener('keydown', handleKeydown);
+    
+    // Touch/Swipe
+    let touchStartX = 0;
+    lightbox.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    
+    lightbox.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const diff = touchStartX - touchEndX;
+      if (Math.abs(diff) > 50) {
+        navigate(diff > 0 ? 1 : -1);
+      }
+    }, { passive: true });
+  }
+  
+  function openLightbox(index = 0) {
+    currentIndex = index;
+    updateImage();
+    lightbox?.classList.remove('hidden');
+    setTimeout(() => lightbox?.classList.remove('opacity-0'), 10);
+    document.body.style.overflow = 'hidden';
+    updateThumbnails();
+  }
+  
+  function closeLightbox() {
+    lightbox?.classList.add('opacity-0');
+    setTimeout(() => {
+      lightbox?.classList.add('hidden');
+      zoomLevel = 1;
+      updateZoom();
+    }, 300);
+    document.body.style.overflow = '';
+  }
+  
+  function navigate(direction: number) {
+    currentIndex = (currentIndex + direction + images.length) % images.length;
+    zoomLevel = 1;
+    updateZoom();
+    updateImage();
+    updateThumbnails();
+  }
+  
+  function goToImage(index: number) {
+    currentIndex = index;
+    zoomLevel = 1;
+    updateZoom();
+    updateImage();
+    updateThumbnails();
+  }
+  
+  function updateImage() {
+    if (lightboxImage) {
+      lightboxImage.src = images[currentIndex];
+      const counter = document.getElementById('lightbox-current');
+      if (counter) counter.textContent = String(currentIndex + 1);
+    }
+  }
+  
+  function updateThumbnails() {
+    document.querySelectorAll('.lightbox-thumb').forEach((thumb, i) => {
+      if (i === currentIndex) {
+        thumb.classList.add('border-white');
+        thumb.classList.remove('border-transparent');
+      } else {
+        thumb.classList.remove('border-white');
+        thumb.classList.add('border-transparent');
+      }
+    });
+  }
+  
+  function setZoom(level: number) {
+    zoomLevel = Math.max(0.5, Math.min(3, level));
+    updateZoom();
+  }
+  
+  function updateZoom() {
+    if (lightboxImage) {
+      lightboxImage.style.transform = `scale(${zoomLevel})`;
+    }
+  }
+  
+  function handleKeydown(e: KeyboardEvent) {
+    if (lightbox?.classList.contains('hidden')) return;
+    
+    switch (e.key) {
+      case 'Escape':
+        closeLightbox();
+        break;
+      case 'ArrowLeft':
+        navigate(-1);
+        break;
+      case 'ArrowRight':
+        navigate(1);
+        break;
+      case '+':
+      case '=':
+        setZoom(zoomLevel + 0.25);
+        break;
+      case '-':
+        setZoom(zoomLevel - 0.25);
+        break;
+    }
+  }
+  
+  // Initialize on load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLightbox);
+  } else {
+    initLightbox();
+  }
+</script>

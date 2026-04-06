@@ -1,0 +1,568 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { MapPin, Phone, Clock, Globe, Star, Heart, Navigation, Camera, Check, MessageSquare, User, Share2 } from 'lucide-react';
+import SocialShare from '../../components/SocialShare.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import Lightbox from '../../components/Lightbox.astro';
+import Map from '../../components/Map.astro';
+import RelatedContent from '../../components/RelatedContent.astro';
+import { query, queryOne } from '../../lib/postgres';
+
+const { slug } = Astro.params;
+const user = Astro.locals.user;
+
+const place = await queryOne('SELECT * FROM places WHERE slug = $1 AND status = $2', [slug, 'active']);
+
+if (!place) {
+  return Astro.redirect('/places');
+}
+
+// Yorumları çek
+const reviewsResult = await query(
+  `SELECT r.*, u.full_name, u.avatar_url 
+   FROM reviews r 
+   JOIN users u ON r.user_id = u.id 
+   WHERE r.place_id = $1 AND r.is_approved = true 
+   ORDER BY r.created_at DESC LIMIT 10`,
+  [place.id]
+);
+const reviews = reviewsResult.rows;
+
+// Kullanıcı bu mekan için yorum yapmış mı kontrol et
+let hasUserReviewed = false;
+if (user) {
+  const userReview = await queryOne(
+    'SELECT id FROM reviews WHERE place_id = $1 AND user_id = $2',
+    [place.id, user.id]
+  );
+  hasUserReviewed = !!userReview;
+}
+
+// Yakındaki mekanları çek
+const nearbyResult = await query(
+  "SELECT * FROM places WHERE status = 'active' AND id != $1 LIMIT 3",
+  [place.id]
+);
+const nearbyPlaces = nearbyResult.rows;
+
+const today = new Date().toLocaleDateString('tr-TR', { weekday: 'long' }).toLowerCase();
+
+const getCategoryLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    restaurant: 'Restoran',
+    cafe: 'Kafe',
+    hotel: 'Otel',
+    museum: 'Müze',
+    park: 'Park',
+    shopping: 'Alışveriş',
+    entertainment: 'Eğlence',
+    other: 'Diğer',
+  };
+  return labels[category] || category;
+};
+
+const priceRangeSymbols = (range: number) => '₺'.repeat(range);
+
+const breadcrumbItems = [
+  { label: 'Ana Sayfa', href: '/' },
+  { label: 'Mekanlar', href: '/places' },
+  { label: getCategoryLabel(place.category), href: `/places?category=${place.category}` },
+  { label: place.name, href: `/places/${place.slug}` },
+];
+
+const seo = {
+  title: `${place.name} - ${getCategoryLabel(place.category)}`,
+  description: place.short_description || place.description,
+  image: place.images?.[0],
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <Breadcrumb items={breadcrumbItems} />
+      </div>
+    </div>
+    
+    <div class="relative h-[400px] lg:h-[500px]">
+      <img 
+        src={place.images?.[0] || '/images/placeholder-place.jpg'}
+        alt={place.name}
+        class="w-full h-full object-cover"
+        loading="eager"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+      
+      <div class="absolute top-4 right-4 flex gap-2">
+        <button 
+          id="favorite-btn"
+          data-place-id={place.id}
+          class="p-3 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors" 
+          aria-label="Favorilere ekle"
+        >
+          <Heart className="w-5 h-5 text-gray-700 dark:text-gray-300" id="favorite-icon" />
+        </button>
+        <button 
+          id="share-btn"
+          class="p-3 bg-white/90 dark:bg-gray-800/90 rounded-full shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors" 
+          aria-label="Paylaş"
+        >
+          <Share2 className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+        </button>
+      </div>
+      
+      {place.images && place.images.length > 0 && (
+        <div class="absolute bottom-4 left-4 right-4">
+          <div class="flex gap-2">
+            {place.images.slice(0, 3).map((img: string, i: number) => (
+              <button 
+                class={`relative rounded-lg overflow-hidden ${i === 0 ? 'w-32 h-20' : 'w-20 h-20'} ring-2 ring-white cursor-pointer hover:opacity-90 transition-opacity`}
+                data-lightbox-trigger
+                data-lightbox-index={i}
+              >
+                <img src={img} alt={`${place.name} - ${i + 1}`} class="w-full h-full object-cover" loading="lazy" />
+              </button>
+            ))}
+            {place.images.length > 3 && (
+              <button 
+                class="w-20 h-20 bg-black/50 rounded-lg flex items-center justify-center text-white text-sm font-medium hover:bg-black/60 transition-colors"
+                data-lightbox-trigger
+                data-lightbox-index={3}
+              >
+                <Camera className="w-5 h-5 mr-1" />
+                +{place.images.length - 3}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {place.images && place.images.length > 0 && (
+        <Lightbox images={place.images} alt={place.name} />
+      )}
+    </div>
+    
+    <div class="container-custom py-8">
+      <div class="grid lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="badge-primary">{getCategoryLabel(place.category)}</span>
+                  {place.is_verified && (
+                    <span class="badge bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      Doğrulanmış
+                    </span>
+                  )}
+                </div>
+                <h1 class="text-3xl font-display font-bold text-gray-900 dark:text-white">{place.name}</h1>
+                <div class="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div class="flex items-center gap-1">
+                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    <span class="font-semibold text-gray-900 dark:text-white">{place.rating || '4.5'}</span>
+                    <span>({place.review_count || 0} değerlendirme)</span>
+                  </div>
+                  <span class="text-urfa-600 dark:text-urfa-400 font-medium">{priceRangeSymbols(place.price_range || 2)}</span>
+                </div>
+              </div>
+              {place.latitude && place.longitude && (
+                <a 
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn-primary flex items-center gap-2"
+                >
+                  <Navigation className="w-4 h-4" />
+                  Yol Tarifi
+                </a>
+              )}
+            </div>
+            
+            <p class="text-gray-600 dark:text-gray-400 mt-4">{place.description}</p>
+            
+            {place.tags && place.tags.length > 0 && (
+              <div class="flex flex-wrap gap-2 mt-4">
+                {place.tags.map((tag: string) => (
+                  <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {place.amenities && place.amenities.length > 0 && (
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Olanaklar</h2>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {place.amenities.map((amenity: string) => (
+                  <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                    <Check className="w-4 h-4 text-green-500" />
+                    {amenity}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {user && !hasUserReviewed && (
+            <div id="write-review" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Değerlendirme Yaz
+              </h2>
+              <form id="review-form" class="space-y-4">
+                <input type="hidden" name="place_id" value={place.id} />
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Puanınız</label>
+                  <div class="flex gap-1" id="rating-stars">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        type="button"
+                        data-rating={star}
+                        class="star-btn p-1 hover:scale-110 transition-transform"
+                      >
+                        <Star className="w-8 h-8 text-gray-300 dark:text-gray-600 star-icon" data-value={star} />
+                      </button>
+                    ))}
+                  </div>
+                  <input type="hidden" name="rating" id="rating-input" required />
+                  <p id="rating-error" class="text-red-500 text-sm mt-1 hidden">Lütfen puan seçin</p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Başlık (İsteğe bağlı)</label>
+                  <input
+                    type="text"
+                    name="title"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-urfa-500 focus:border-transparent"
+                    placeholder="Örn: Harika bir deneyimdi"
+                  />
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Yorumunuz *</label>
+                  <textarea
+                    name="content"
+                    rows="4"
+                    required
+                    minlength="10"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-urfa-500 focus:border-transparent resize-none"
+                    placeholder="Deneyiminizi paylaşın..."
+                  ></textarea>
+                  <p class="text-xs text-gray-500 mt-1">En az 10 karakter</p>
+                </div>
+                
+                <button type="submit" class="btn-primary w-full sm:w-auto">
+                  Yorum Gönder
+                </button>
+              </form>
+            </div>
+          )}
+          
+          {!user && (
+            <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-xl border border-urfa-200 dark:border-urfa-800 p-6 text-center">
+              <MessageSquare className="w-12 h-12 text-urfa-600 dark:text-urfa-400 mx-auto mb-3" />
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Değerlendirme Yaz</h3>
+              <p class="text-gray-600 dark:text-gray-400 mb-4">Yorum yapmak için giriş yapmanız gerekiyor.</p>
+              <a href={`/giris?redirect=/places/${place.slug}`} class="btn-primary">Giriş Yap</a>
+            </div>
+          )}
+          
+          {user && hasUserReviewed && (
+            <div class="bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800 p-6 text-center">
+              <Check className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-3" />
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Değerlendirme Yaptınız</h3>
+              <p class="text-gray-600 dark:text-gray-400">Bu mekan için zaten yorum yaptınız.</p>
+            </div>
+          )}
+          
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Değerlendirmeler ({place.review_count || 0})</h2>
+            </div>
+            
+            {reviews && reviews.length > 0 ? (
+              <div class="space-y-6" id="reviews-list">
+                {reviews.map((review: any) => (
+                  <div class="review-item border-b border-gray-200 dark:border-gray-700 last:border-0 pb-6 last:pb-0" data-review-id={review.id}>
+                    <div class="flex items-start gap-4">
+                      <div class="w-10 h-10 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center text-urfa-600 dark:text-urfa-400 font-bold flex-shrink-0">
+                        {review.avatar_url ? (
+                          <img src={review.avatar_url} alt={review.full_name} class="w-10 h-10 rounded-full object-cover" />
+                        ) : (
+                          <User className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
+                          <span class="font-medium text-gray-900 dark:text-white">
+                            {review.full_name || 'Anonim Kullanıcı'}
+                          </span>
+                          <span class="text-sm text-gray-500 dark:text-gray-400">
+                            {new Date(review.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-1 mb-2">
+                          {[...Array(5)].map((_, i) => (
+                            <Star className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300 dark:text-gray-600'}`} />
+                          ))}
+                        </div>
+                        {review.title && (
+                          <h4 class="font-medium text-gray-900 dark:text-white mb-1">{review.title}</h4>
+                        )}
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">{review.content}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <MessageSquare className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p class="text-gray-500 dark:text-gray-400 mb-2">Henüz değerlendirme bulunmuyor.</p>
+                <p class="text-sm text-gray-400 dark:text-gray-500">İlk değerlendirmeyi siz yapın!</p>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <aside class="space-y-6">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Paylaş</h3>
+            <SocialShare 
+              url={`https://sanliurfa.com/places/${place.slug}`}
+              title={place.name}
+              description={place.short_description || place.description}
+            />
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">İletişim</h3>
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-urfa-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">Adres</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">{place.address}</p>
+                </div>
+              </div>
+              {place.phone && (
+                <div class="flex items-start gap-3">
+                  <Phone className="w-5 h-5 text-urfa-600 flex-shrink-0" />
+                  <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">Telefon</p>
+                    <a href={`tel:${place.phone}`} class="text-sm text-urfa-600 dark:text-urfa-400 hover:underline">{place.phone}</a>
+                  </div>
+                </div>
+              )}
+              {place.website && (
+                <div class="flex items-start gap-3">
+                  <Globe className="w-5 h-5 text-urfa-600 flex-shrink-0" />
+                  <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">Web Sitesi</p>
+                    <a href={place.website} target="_blank" rel="noopener noreferrer" class="text-sm text-urfa-600 dark:text-urfa-400 hover:underline break-all">
+                      {place.website.replace('https://', '')}
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {place.latitude && place.longitude && (
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Konum</h3>
+              <Map 
+                latitude={place.latitude}
+                longitude={place.longitude}
+                name={place.name}
+                address={place.address}
+                height="200px"
+              />
+            </div>
+          )}
+          
+          {place.opening_hours && (
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <div class="flex items-center gap-2 mb-4">
+                <Clock className="w-5 h-5 text-urfa-600" />
+                <h3 class="font-semibold text-gray-900 dark:text-white">Çalışma Saatleri</h3>
+              </div>
+              <div class="space-y-2 text-sm">
+                {Object.entries(place.opening_hours).map(([day, hours]) => {
+                  const dayNames: { [key: string]: string } = {
+                    monday: 'Pazartesi', tuesday: 'Salı', wednesday: 'Çarşamba',
+                    thursday: 'Perşembe', friday: 'Cuma', saturday: 'Cumartesi', sunday: 'Pazar'
+                  };
+                  const isToday = day === today;
+                  return (
+                    <div class={`flex justify-between ${isToday ? 'text-urfa-600 dark:text-urfa-400 font-medium' : 'text-gray-600 dark:text-gray-400'}`}>
+                      <span>{dayNames[day]}</span>
+                      <span>{hours}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          
+          {nearbyPlaces && nearbyPlaces.length > 0 && (
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yakındaki Mekanlar</h3>
+              <div class="space-y-4">
+                {nearbyPlaces.map((nearby: any) => (
+                  <a href={`/places/${nearby.slug}`} class="flex gap-3 group">
+                    <img 
+                      src={nearby.images?.[0] || '/images/placeholder-place.jpg'} 
+                      alt={nearby.name}
+                      class="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                      loading="lazy"
+                    />
+                    <div class="min-w-0">
+                      <span class="text-xs text-urfa-600 dark:text-urfa-400">{getCategoryLabel(nearby.category)}</span>
+                      <h4 class="font-medium text-gray-900 dark:text-white text-sm group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors truncate">{nearby.name}</h4>
+                      <div class="flex items-center gap-1 text-xs text-gray-500">
+                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                        <span>{nearby.rating || '4.5'}</span>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </aside>
+      </div>
+    </div>
+  </div>
+  
+  <RelatedContent 
+    type="place"
+    currentId={place.id}
+    category={place.category}
+    tags={place.tags}
+    limit={3}
+  />
+</Layout>
+
+<script>
+  // Rating stars interaction
+  const ratingStars = document.getElementById('rating-stars');
+  const ratingInput = document.getElementById('rating-input') as HTMLInputElement;
+  const starBtns = document.querySelectorAll('.star-btn');
+  let selectedRating = 0;
+
+  starBtns.forEach((btn) => {
+    const starIcon = btn.querySelector('.star-icon');
+    const rating = parseInt(btn.dataset.rating || '0');
+
+    btn.addEventListener('mouseenter', () => updateStars(rating));
+    btn.addEventListener('click', () => {
+      selectedRating = rating;
+      ratingInput.value = rating.toString();
+      updateStars(rating);
+      document.getElementById('rating-error')?.classList.add('hidden');
+    });
+  });
+
+  ratingStars?.addEventListener('mouseleave', () => updateStars(selectedRating));
+
+  function updateStars(rating: number) {
+    starBtns.forEach((btn) => {
+      const starIcon = btn.querySelector('.star-icon');
+      const btnRating = parseInt(btn.dataset.rating || '0');
+      if (btnRating <= rating) {
+        starIcon?.classList.remove('text-gray-300', 'dark:text-gray-600');
+        starIcon?.classList.add('text-yellow-400', 'fill-current');
+      } else {
+        starIcon?.classList.remove('text-yellow-400', 'fill-current');
+        starIcon?.classList.add('text-gray-300', 'dark:text-gray-600');
+      }
+    });
+  }
+
+  // Review form
+  const reviewForm = document.getElementById('review-form') as HTMLFormElement;
+  reviewForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!selectedRating) {
+      document.getElementById('rating-error')?.classList.remove('hidden');
+      return;
+    }
+
+    const formData = new FormData(reviewForm);
+    const data = {
+      placeId: formData.get('place_id'),
+      rating: parseInt(formData.get('rating') as string),
+      title: formData.get('title') || '',
+      content: formData.get('content')
+    };
+
+    try {
+      const response = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Yorumunuz başarıyla eklendi!');
+        window.location.reload();
+      } else {
+        alert(result.error || 'Bir hata oluştu');
+      }
+    } catch (error) {
+      alert('Bağlantı hatası');
+    }
+  });
+
+  // Favorite button
+  const favoriteBtn = document.getElementById('favorite-btn');
+  const favoriteIcon = document.getElementById('favorite-icon');
+  let isFavorite = false;
+
+  favoriteBtn?.addEventListener('click', async () => {
+    const placeId = favoriteBtn.dataset.placeId;
+    try {
+      if (isFavorite) {
+        await fetch('/api/favorites', { 
+          method: 'DELETE', 
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ placeId })
+        });
+        favoriteIcon?.classList.remove('text-red-500', 'fill-current');
+        favoriteIcon?.classList.add('text-gray-700', 'dark:text-gray-300');
+        isFavorite = false;
+      } else {
+        await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ placeId })
+        });
+        favoriteIcon?.classList.remove('text-gray-700', 'dark:text-gray-300');
+        favoriteIcon?.classList.add('text-red-500', 'fill-current');
+        isFavorite = true;
+      }
+    } catch (error) {
+      alert('İşlem başarısız');
+    }
+  });
+
+  // Share button
+  document.getElementById('share-btn')?.addEventListener('click', async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: document.title, url: window.location.href });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link kopyalandı!');
+      }
+    } catch (error) {}
+  });
+</script>

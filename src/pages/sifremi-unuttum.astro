@@ -1,0 +1,97 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+
+const seo = {
+  title: 'Şifremi Unuttum - Şanlıurfa.com',
+  description: 'Şifrenizi sıfırlayın',
+  noindex: true
+};
+
+const success = Astro.url.searchParams.get('success');
+const error = Astro.url.searchParams.get('error');
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+        <div class="text-center mb-8">
+          <div class="mx-auto h-16 w-16 bg-urfa-100 dark:bg-urfa-900/30 rounded-2xl flex items-center justify-center mb-4">
+            <Mail className="w-8 h-8 text-urfa-600 dark:text-urfa-400" />
+          </div>
+          <h2 class="text-2xl font-display font-bold text-gray-900 dark:text-white">
+            Şifremi Unuttum
+          </h2>
+          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            E-posta adresinizi girin, şifre sıfırlama bağlantısını gönderelim.
+          </p>
+        </div>
+        
+        {success ? (
+          <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-6">
+            <div class="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p class="text-green-800 dark:text-green-300 font-medium">
+                  Bağlantı Gönderildi
+                </p>
+                <p class="text-green-700 dark:text-green-400 text-sm mt-1">
+                  E-posta adresinize şifre sıfırlama bağlantısı gönderdik. Lütfen gelen kutunuzu kontrol edin.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <form action="/api/auth/forgot-password" method="POST" class="space-y-6">
+            {error && (
+              <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                <div class="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p class="text-red-800 dark:text-red-300 font-medium">
+                      {error === 'email_not_found' ? 'E-posta adresi bulunamadı' : 'Bir hata oluştu'}
+                    </p>
+                    <p class="text-red-700 dark:text-red-400 text-sm mt-1">
+                      {error === 'email_not_found' 
+                        ? 'Bu e-posta adresiyle kayıtlı bir hesap bulunmuyor.' 
+                        : 'Lütfen tekrar deneyin.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div>
+              <label for="email" class="label dark:text-gray-300">E-posta Adresi</label>
+              <div class="relative mt-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="ornek@email.com"
+                />
+              </div>
+            </div>
+            
+            <button type="submit" class="btn-primary w-full flex justify-center">
+              Sıfırlama Bağlantısı Gönder
+            </button>
+          </form>
+        )}
+        
+        <div class="mt-6 text-center">
+          <a href="/giris" class="inline-flex items-center gap-2 text-sm text-urfa-600 dark:text-urfa-400 hover:text-urfa-500">
+            <ArrowLeft className="w-4 h-4" />
+            Giriş sayfasına dön
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

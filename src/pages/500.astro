@@ -1,0 +1,67 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { RefreshCw, Home, Mail } from 'lucide-react';
+
+const seo = {
+  title: 'Sunucu Hatası - 500',
+  description: 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
+  noindex: true
+};
+---
+
+<Layout seo={seo} hideHeader={false} hideFooter={true}>
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
+    <div class="container-custom py-20">
+      <div class="max-w-2xl mx-auto text-center">
+        <!-- Error Illustration -->
+        <div class="relative mb-8">
+          <div class="text-9xl font-bold text-red-200 select-none">500</div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="w-32 h-32 bg-white rounded-full shadow-xl flex items-center justify-center">
+              <RefreshCw className="w-16 h-16 text-red-500" />
+            </div>
+          </div>
+        </div>
+        
+        <h1 class="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-4">
+          Bir Hata Oluştu
+        </h1>
+        <p class="text-lg text-gray-600 mb-8">
+          Üzgünüz, bir şeyler yanlış gitti. Teknik ekibimiz konuyu inceliyor.
+          <br />Lütfen biraz sonra tekrar deneyin.
+        </p>
+        
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+          <button 
+            onclick="location.reload()"
+            class="btn-primary flex items-center gap-2"
+          >
+            <RefreshCw className="w-5 h-5" />
+            Sayfayı Yenile
+          </button>
+          <a href="/" class="btn-secondary flex items-center gap-2">
+            <Home className="w-5 h-5" />
+            Ana Sayfaya Dön
+          </a>
+        </div>
+        
+        <!-- Contact -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-md mx-auto">
+          <div class="flex items-center justify-center gap-2 text-gray-600 mb-2">
+            <Mail className="w-5 h-5" />
+            <span>Sorun devam ederse bize ulaşın</span>
+          </div>
+          <a href="mailto:destek@sanliurfa.com" class="text-urfa-600 hover:underline font-medium">
+            destek@sanliurfa.com
+          </a>
+        </div>
+        
+        <!-- Error ID (for debugging) -->
+        <p class="text-sm text-gray-400 mt-8">
+          Hata Kodu: <code class="bg-gray-100 px-2 py-1 rounded">500-ERR-{Math.random().toString(36).substr(2, 9).toUpperCase()}</code>
+        </p>
+      </div>
+    </div>
+  </div>
+</Layout>

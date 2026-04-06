@@ -1,0 +1,62 @@
+---
+interface Props {
+  points: number;
+  showProgress?: boolean;
+}
+
+const { points = 0, showProgress = true } = Astro.props;
+
+// Seviye hesapla
+function getLevel(points: number) {
+  if (points >= 10000) return { name: 'Efsanevi', color: 'bg-purple-600', next: 50000, icon: '👑' };
+  if (points >= 5000) return { name: 'Usta', color: 'bg-blue-600', next: 10000, icon: '🎖️' };
+  if (points >= 2500) return { name: 'Gezgin', color: 'bg-green-600', next: 5000, icon: '🌍' };
+  if (points >= 1000) return { name: 'Keşifçi', color: 'bg-urfa-600', next: 2500, icon: '🔍' };
+  if (points >= 500) return { name: 'Yeni Üye', color: 'bg-yellow-600', next: 1000, icon: '⭐' };
+  return { name: 'Başlangıç', color: 'bg-gray-600', next: 500, icon: '🌱' };
+}
+
+const level = getLevel(points);
+const progress = Math.min(100, ((points - (level.next / 2)) / (level.next - (level.next / 2))) * 100);
+---
+
+<div class="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm border border-gray-200">
+  <span class="text-xl">{level.icon}</span>
+  <div>
+    <span class={`inline-block w-2 h-2 rounded-full ${level.color} mr-1`}></span>
+    <span class="font-medium text-gray-900">{points} puan</span>
+    <span class="text-gray-500 text-sm">• {level.name}</span>
+  </div>
+  
+  {showProgress && (
+    <div class="ml-2 w-20">
+      <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <div class={`h-full ${level.color} rounded-full transition-all duration-500`} style={`width: ${progress}%`}></div>
+      </div>
+    </div>
+  )}
+</div>
+
+<script>
+  // Puan animasyonu
+  document.addEventListener('DOMContentLoaded', () => {
+    const badge = document.querySelector('[data-points-badge]');
+    if (badge) {
+      const points = parseInt(badge.dataset.points || '0');
+      animatePoints(badge, points);
+    }
+  });
+
+  function animatePoints(element: Element, target: number) {
+    let current = 0;
+    const increment = target / 20;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+      element.textContent = Math.floor(current).toLocaleString('tr-TR');
+    }, 50);
+  }
+</script>

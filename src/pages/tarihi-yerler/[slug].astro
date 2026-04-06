@@ -1,0 +1,166 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { MapPin, Clock, Ticket, Camera, Navigation, Share2, Heart, Star } from 'lucide-react';
+import { query, queryOne } from '../../lib/postgres';
+
+const { slug } = Astro.params;
+
+const site = await queryOne(
+  "SELECT * FROM historical_sites WHERE slug = $1 AND status = 'active'",
+  [slug]
+);
+
+if (!site) {
+  return Astro.redirect('/tarihi-yerler');
+}
+
+const nearbyResult = await query(
+  "SELECT id, name, slug, location FROM historical_sites WHERE status = 'active' AND id != $1 LIMIT 5",
+  [site.id]
+);
+const nearbySites = nearbyResult.rows;
+
+const seo = {
+  title: `${site.name} - ${site.short_description || 'Tarihi Yer'}`,
+  description: site.description,
+  image: site.images?.[0],
+};
+---
+
+<Layout seo={seo}>
+  <div class="dark:bg-gray-900">
+    <div class="relative h-[70vh] min-h-[600px]">
+      <div class="absolute inset-0">
+        <img src={site.images?.[0] || '/images/placeholder-historical.jpg'} alt={site.name} class="w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      </div>
+      
+      <div class="absolute bottom-0 left-0 right-0 container-custom pb-12">
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          {site.is_unesco && (
+            <span class="badge bg-blue-600 text-white flex items-center gap-1">
+              <Star className="w-3 h-3" />
+              UNESCO Dünya Mirası
+            </span>
+          )}
+          {site.is_featured && !site.is_unesco && (
+            <span class="badge bg-urfa-600 text-white">Öne Çıkan</span>
+          )}
+          <span class="badge bg-white/20 text-white">{site.period || 'Tarihi'}</span>
+        </div>
+        
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-display font-bold text-white dark:text-white mb-4">
+          {site.name}
+        </h1>
+        <p class="text-xl md:text-2xl text-urfa-100 font-medium">{site.short_description || site.location}</p>
+        
+        <div class="flex items-center gap-6 mt-6 text-white">
+          <div class="flex items-center gap-2">
+            <MapPin className="w-5 h-5" />
+            <span>{site.location}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="absolute top-4 right-4 flex gap-2">
+        <button class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+          <Heart className="w-6 h-6" />
+        </button>
+        <button class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+          <Share2 className="w-6 h-6" />
+        </button>
+      </div>
+    </div>
+    
+    <div class="container-custom py-12">
+      <div class="grid lg:grid-cols-3 gap-12">
+        <div class="lg:col-span-2 space-y-12">
+          <section>
+            <h2 class="text-3xl font-display font-bold text-gray-900 dark:text-white mb-4">Hakkında</h2>
+            <p class="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">{site.description}</p>
+          </section>
+          
+          {site.images && site.images.length > 1 && (
+            <section>
+              <h2 class="text-3xl font-display font-bold text-gray-900 dark:text-white mb-6">Galeri</h2>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {site.images.slice(1).map((img: string, i: number) => (
+                  <div class={`${i === 0 ? 'col-span-2 row-span-2' : ''} rounded-xl overflow-hidden`}>
+                    <img src={img} alt={`${site.name} ${i + 1}`} class="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+        
+        <aside class="space-y-6">
+          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-24">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Ziyaret Bilgileri</h3>
+            
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <Clock className="w-5 h-5 text-urfa-600 mt-0.5" />
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-white">Çalışma Saatleri</p>
+                  <p class="text-gray-600 dark:text-gray-400">{site.opening_hours || '08:00 - 18:00'}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start gap-3">
+                <Ticket className="w-5 h-5 text-urfa-600 mt-0.5" />
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-white">Giriş Ücreti</p>
+                  <p class="text-gray-600 dark:text-gray-400">{site.entry_fee || 'Ücretsiz'}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-urfa-600 mt-0.5" />
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-white">Konum</p>
+                  <p class="text-gray-600 dark:text-gray-400">{site.location}</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start gap-3">
+                <Camera className="w-5 h-5 text-urfa-600 mt-0.5" />
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-white">Fotoğraf</p>
+                  <p class="text-gray-600 dark:text-gray-400">Ücretsiz çekim yapılabilir</p>
+                </div>
+              </div>
+            </div>
+            
+            {site.latitude && site.longitude && (
+              <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+                <a 
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${site.latitude},${site.longitude}`}
+                  target="_blank"
+                  class="btn-primary w-full flex items-center justify-center gap-2"
+                >
+                  <Navigation className="w-5 h-5" />
+                  Yol Tarifi Al
+                </a>
+              </div>
+            )}
+          </div>
+          
+          {nearbySites && nearbySites.length > 0 && (
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Diğer Tarihi Yerler</h3>
+              <div class="space-y-3">
+                {nearbySites.map((place: any) => (
+                  <a href={`/tarihi-yerler/${place.slug}`} class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <span class="text-gray-700 dark:text-gray-300">{place.name}</span>
+                    <span class="text-sm text-urfa-600 dark:text-urfa-400">→</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </aside>
+      </div>
+    </div>
+  </div>
+</Layout>

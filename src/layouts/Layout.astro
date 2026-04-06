@@ -1,0 +1,184 @@
+---
+import SEO, { type Props as SEOProps } from '../components/SEO.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Toast from '../components/ui/Toast.astro';
+import PWARegister from '../components/PWARegister.astro';
+import ThemeScript from '../components/ThemeScript.astro';
+import DarkModeToggle from '../components/DarkModeToggle.astro';
+import PageLoader from '../components/PageLoader.astro';
+import '../styles/global.css';
+
+export interface Props {
+  seo?: SEOProps;
+  hideHeader?: boolean;
+  hideFooter?: boolean;
+  class?: string;
+}
+
+const { 
+  seo, 
+  hideHeader = false, 
+  hideFooter = false,
+  class: className = ''
+} = Astro.props;
+
+// Get current user if authenticated
+const user = null; // Will be populated from server
+---
+
+<!DOCTYPE html>
+<html lang="tr" dir="ltr" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    
+    <!-- Theme Script (FOUC prevention) -->
+    <ThemeScript />
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Theme Colors for Light/Dark -->
+    <meta name="theme-color" content="#a18072" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    <meta name="msapplication-TileColor" content="#a18072" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Şanlıurfa.com" />
+    
+    <!-- SEO -->
+    {seo && <SEO {...seo} />}
+    
+    <!-- RSS Feed -->
+    <link rel="alternate" type="application/rss+xml" title="Şanlıurfa.com Blog" href="/rss.xml" />
+    
+    <!-- Sitemap -->
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap-index.xml" />
+    
+    <!-- Preload Critical Fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" as="style" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&display=swap" />
+    
+    <!-- View Transitions -->
+    <meta name="view-transition" content="same-origin" />
+  </head>
+  
+  <body class={`min-h-screen flex flex-col transition-colors duration-300 ${className}`}>
+    <!-- Page Loader -->
+    <PageLoader />
+    
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-urfa-600 focus:text-white focus:rounded-lg">
+      Ana içeriğe geç
+    </a>
+    
+    {!hideHeader && <Header user={user} />}
+    
+    <!-- Theme Toggle (floating) -->
+    <div class="fixed top-24 right-4 z-40 hidden lg:block">
+      <DarkModeToggle />
+    </div>
+    
+    <main id="main-content" class="flex-1" role="main">
+      <slot />
+    </main>
+    
+    {!hideFooter && <Footer />}
+    
+    <!-- Toast Notifications -->
+    <Toast />
+    <script>
+      // Initialize toast container
+      if (typeof window !== 'undefined') {
+        import('../lib/toast').then(({ toast }) => {
+          window.toast = toast;
+        });
+      }
+    </script>
+    
+    <!-- PWA Registration -->
+    <PWARegister />
+    
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 shadow-lg transform translate-y-full transition-transform duration-300 z-50 hidden">
+      <div class="container-custom flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+          Deneyiminizi geliştirmek için çerezler kullanıyoruz. Daha fazla bilgi için 
+          <a href="/gizlilik-politikasi" class="text-urfa-600 dark:text-urfa-400 hover:underline">Gizlilik Politikası</a>'nı inceleyebilirsiniz.
+        </p>
+        <div class="flex gap-2">
+          <button id="cookie-decline" class="btn-secondary text-sm">Reddet</button>
+          <button id="cookie-accept" class="btn-primary text-sm">Kabul Et</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Back to Top Button -->
+    <button 
+      id="back-to-top" 
+      class="fixed bottom-6 right-6 bg-urfa-600 text-white p-3 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:bg-urfa-700 focus:outline-none focus:ring-2 focus:ring-urfa-500 z-40"
+      aria-label="Yukarı dön"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+      </svg>
+    </button>
+    
+    <!-- Scripts -->
+    <script>
+      // Back to top button
+      const backToTopBtn = document.getElementById('back-to-top');
+      
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 500) {
+          backToTopBtn?.classList.remove('opacity-0', 'invisible');
+          backToTopBtn?.classList.add('opacity-100', 'visible');
+        } else {
+          backToTopBtn?.classList.add('opacity-0', 'invisible');
+          backToTopBtn?.classList.remove('opacity-100', 'visible');
+        }
+      });
+      
+      backToTopBtn?.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      
+      // Cookie consent
+      const cookieConsent = document.getElementById('cookie-consent');
+      const cookieAccepted = localStorage.getItem('cookieConsent');
+      
+      if (!cookieAccepted) {
+        setTimeout(() => {
+          cookieConsent?.classList.remove('translate-y-full', 'hidden');
+        }, 2000);
+      }
+      
+      document.getElementById('cookie-accept')?.addEventListener('click', () => {
+        localStorage.setItem('cookieConsent', 'accepted');
+        cookieConsent?.classList.add('translate-y-full');
+        setTimeout(() => cookieConsent?.classList.add('hidden'), 300);
+      });
+      
+      document.getElementById('cookie-decline')?.addEventListener('click', () => {
+        localStorage.setItem('cookieConsent', 'declined');
+        cookieConsent?.classList.add('translate-y-full');
+        setTimeout(() => cookieConsent?.classList.add('hidden'), 300);
+      });
+    </script>
+    
+    <!-- Analytics (replace with your tracking code) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+  </body>
+</html>

@@ -1,0 +1,154 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { Landmark, Plus, Edit, Trash2, Eye, MapPin, Star } from 'lucide-react';
+import { query } from '../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/historical-sites');
+}
+
+const sitesResult = await query('SELECT * FROM historical_sites ORDER BY name ASC');
+const sites = sitesResult.rows;
+
+const statsResult = await query(
+  `SELECT 
+    COUNT(*) as total,
+    COUNT(*) FILTER (WHERE is_unesco = true) as unesco,
+    COUNT(*) FILTER (WHERE is_featured = true) as featured,
+    COUNT(*) FILTER (WHERE status = 'active') as active
+   FROM historical_sites`
+);
+const stats = statsResult.rows[0];
+
+const seo = {
+  title: 'Tarihi Yerler Yönetimi - Admin Panel',
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <a href="/admin" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">← Geri</a>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Tarihi Yerler</h1>
+          </div>
+          <a href="/admin/historical-sites/add" class="btn-primary flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Yeni Yer Ekle
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container-custom py-8">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+          <p class="text-sm text-gray-600 dark:text-gray-400">Toplam Yer</p>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+        </div>
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+          <p class="text-sm text-blue-700 dark:text-blue-400">UNESCO</p>
+          <p class="text-2xl font-bold text-blue-800 dark:text-blue-300">{stats.unesco}</p>
+        </div>
+        <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-xl p-4 border border-urfa-200 dark:border-urfa-800">
+          <p class="text-sm text-urfa-700 dark:text-urfa-400">Öne Çıkan</p>
+          <p class="text-2xl font-bold text-urfa-800 dark:text-urfa-300">{stats.featured}</p>
+        </div>
+        <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
+          <p class="text-sm text-green-700 dark:text-green-400">Aktif</p>
+          <p class="text-2xl font-bold text-green-800 dark:text-green-300">{stats.active}</p>
+        </div>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Yer</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Dönem</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Konum</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Durum</th>
+                <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sites?.map(site => (
+                <tr class="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <td class="py-4 px-4">
+                    <div class="flex items-start gap-3">
+                      <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Landmark className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-900 dark:text-white text-sm">{site.name}</p>
+                        {site.is_unesco && (
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded mt-1">
+                            <Star className="w-3 h-3" /> UNESCO
+                          </span>
+                        )}
+                        {site.is_featured && !site.is_unesco && (
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-urfa-100 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300 text-xs rounded mt-1">
+                            ⭐ Öne Çıkan
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-4 px-4">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">{site.period || '-'}</span>
+                  </td>
+                  <td class="py-4 px-4">
+                    <div class="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                      <MapPin className="w-4 h-4" />
+                      <span class="truncate max-w-[150px]">{site.location}</span>
+                    </div>
+                  </td>
+                  <td class="py-4 px-4">
+                    <span class={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                      site.status === 'active' 
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' 
+                        : site.status === 'draft'
+                        ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                        : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                    }`}>
+                      {site.status === 'active' ? 'Aktif' : site.status === 'draft' ? 'Taslak' : 'Pasif'}
+                    </span>
+                  </td>
+                  <td class="py-4 px-4">
+                    <div class="flex items-center justify-end gap-1">
+                      <a href={`/tarihi-yerler/${site.slug}`} target="_blank" class="p-2 text-gray-400 hover:text-urfa-600 transition-colors" title="Görüntüle">
+                        <Eye className="w-4 h-4" />
+                      </a>
+                      <a href={`/admin/historical-sites/edit/${site.id}`} class="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Düzenle">
+                        <Edit className="w-4 h-4" />
+                      </a>
+                      <form method="POST" action={`/api/historical-sites/${site.id}/delete`} class="inline" onsubmit="return confirm('Bu tarihi yeri silmek istediğinize emin misiniz?');">
+                        <button type="submit" class="p-2 text-gray-400 hover:text-red-600 transition-colors" title="Sil">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              
+              {(!sites || sites.length === 0) && (
+                <tr>
+                  <td colspan="5" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                    Henüz tarihi yer bulunmuyor.
+                    <a href="/admin/historical-sites/add" class="text-urfa-600 hover:underline ml-1">İlk yeri ekle</a>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

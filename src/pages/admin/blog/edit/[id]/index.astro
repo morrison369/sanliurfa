@@ -1,0 +1,124 @@
+---
+import Layout from '../../../../../layouts/Layout.astro';
+import { ArrowLeft, Save, Tag, User, Calendar } from 'lucide-react';
+import { query, queryOne } from '../../../../../lib/postgres';
+
+const { id } = Astro.params;
+
+const post = await queryOne('SELECT * FROM blog_posts WHERE id = $1', [id]);
+
+if (!post) {
+  return Astro.redirect('/admin/blog');
+}
+
+const categories = [
+  { id: 'genel', label: 'Genel' },
+  { id: 'kultur-sanat', label: 'Kültür & Sanat' },
+  { id: 'gastronomi', label: 'Gastronomi' },
+  { id: 'tarih', label: 'Tarih' },
+  { id: 'gezi-rehberi', label: 'Gezi Rehberi' },
+  { id: 'etkinlik', label: 'Etkinlik' },
+  { id: 'haber', label: 'Haber' },
+];
+
+const authorsResult = await query("SELECT id, full_name FROM users WHERE role = 'admin'");
+const authors = authorsResult.rows;
+
+const errorMessage = Astro.url.searchParams.get('error');
+const errorMessages: Record<string, string> = {
+  'missing_fields': 'Başlık, özet ve içerik alanları zorunludur.',
+  'server_error': 'Bir hata oluştu. Lütfen tekrar deneyin.',
+};
+
+const seo = {
+  title: `${post.title} - Blog Düzenle - Admin Panel`,
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <a href="/admin/blog" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              <ArrowLeft className="w-5 h-5" />
+            </a>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Blog Yazısı Düzenle</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {errorMessage && (
+      <div class="container-custom py-4">
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
+          {errorMessages[errorMessage] || 'Bir hata oluştu.'}
+        </div>
+      </div>
+    )}
+    
+    <div class="container-custom py-8">
+      <form action={`/api/blog/${id}/update`} method="POST" class="grid lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <label for="title" class="label dark:text-gray-300">Başlık *</label>
+            <input type="text" id="title" name="title" required class="input text-xl font-semibold dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={post.title} />
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <label for="excerpt" class="label dark:text-gray-300">Özet *</label>
+            <textarea id="excerpt" name="excerpt" rows="3" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none">{post.excerpt}</textarea>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <label for="content" class="label dark:text-gray-300">İçerik *</label>
+            <textarea id="content" name="content" rows="15" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white font-mono">{post.content}</textarea>
+          </div>
+        </div>
+        
+        <aside class="space-y-6">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
+            <label class="flex items-center gap-2 mb-3">
+              <input type="checkbox" name="is_featured" checked={post.is_featured} class="rounded border-gray-300 text-urfa-600" />
+              <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan yazı</span>
+            </label>
+            <label for="status" class="label dark:text-gray-300">Durum</label>
+            <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
+              <option value="draft" selected={post.is_published === false}>Taslak</option>
+              <option value="published" selected={post.is_published === true}>Yayında</option>
+            </select>
+            <button type="submit" class="btn-primary w-full mt-4 flex items-center justify-center gap-2">
+              <Save className="w-4 h-4" />
+              Kaydet
+            </button>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <label for="category" class="label dark:text-gray-300 flex items-center gap-2">
+              <Tag className="w-4 h-4" /> Kategori
+            </label>
+            <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-2">
+              {categories.map(cat => (
+                <option value={cat.id} selected={cat.id === post.category}>{cat.label}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <label for="author_id" class="label dark:text-gray-300 flex items-center gap-2">
+              <User className="w-4 h-4" /> Yazar
+            </label>
+            <select id="author_id" name="author_id" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-2">
+              {authors?.map(author => (
+                <option value={author.id} selected={author.id === post.author_id}>{author.full_name || author.id}</option>
+              ))}
+            </select>
+          </div>
+        </aside>
+      </form>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,35 @@
+---
+interface Props {
+  showCount?: boolean;
+}
+
+const { showCount = true } = Astro.props;
+---
+
+{showCount && (
+  <div 
+    id="online-users"
+    class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
+  >
+    <span class="relative flex h-2 w-2">
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+    </span>
+    <span id="online-count">...</span> çevrimiçi
+  </div>
+)}
+
+<script>
+  import { realtimeManager } from '../lib/realtime';
+  
+  const countElement = document.getElementById('online-count');
+  
+  if (countElement) {
+    const cleanup = realtimeManager.subscribeToOnlineUsers((count) => {
+      countElement.textContent = String(count);
+    });
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
+  }
+</script>

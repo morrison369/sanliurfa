@@ -1,0 +1,122 @@
+---
+// Toast bildirim sistemi
+---
+
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+
+<script>
+  interface ToastOptions {
+    message: string;
+    type?: 'success' | 'error' | 'warning' | 'info';
+    duration?: number;
+    action?: {
+      label: string;
+      onClick: () => void;
+    };
+  }
+
+  class ToastManager {
+    private container: HTMLElement;
+    private toasts: Set<HTMLElement> = new Set();
+
+    constructor() {
+      this.container = document.getElementById('toast-container')!;
+    }
+
+    show(options: ToastOptions) {
+      const toast = this.createToast(options);
+      this.container.appendChild(toast);
+      this.toasts.add(toast);
+
+      // Animate in
+      requestAnimationFrame(() => {
+        toast.classList.add('translate-y-0', 'opacity-100');
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      // Auto dismiss
+      if (options.duration !== 0) {
+        setTimeout(() => {
+          this.dismiss(toast);
+        }, options.duration || 5000);
+      }
+
+      return toast;
+    }
+
+    private createToast(options: ToastOptions): HTMLElement {
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-yellow-500',
+        info: 'bg-blue-500'
+      };
+      
+      const icons = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+      };
+
+      toast.className = `
+        ${colors[options.type || 'info']}
+        text-white px-6 py-4 rounded-xl shadow-lg
+        transform translate-y-2 opacity-0
+        transition-all duration-300 ease-out
+        min-w-[300px] max-w-md
+        flex items-start gap-3
+      `;
+
+      toast.innerHTML = `
+        <span class="text-xl flex-shrink-0">${icons[options.type || 'info']}</span>
+        <div class="flex-1">
+          <p class="font-medium">${options.message}</p>
+          ${options.action ? `
+            <button class="mt-2 text-sm underline hover:no-underline opacity-90">
+              ${options.action.label}
+            </button>
+          ` : ''}
+        </div>
+        <button class="text-white/70 hover:text-white flex-shrink-0" onclick="this.parentElement.remove()">
+          ✕
+        </button>
+      `;
+
+      if (options.action) {
+        const actionBtn = toast.querySelector('button');
+        actionBtn?.addEventListener('click', options.action.onClick);
+      }
+
+      return toast;
+    }
+
+    dismiss(toast: HTMLElement) {
+      toast.classList.add('translate-y-2', 'opacity-0');
+      setTimeout(() => {
+        toast.remove();
+        this.toasts.delete(toast);
+      }, 300);
+    }
+
+    success(message: string, duration?: number) {
+      return this.show({ message, type: 'success', duration });
+    }
+
+    error(message: string, duration?: number) {
+      return this.show({ message, type: 'error', duration });
+    }
+
+    warning(message: string, duration?: number) {
+      return this.show({ message, type: 'warning', duration });
+    }
+
+    info(message: string, duration?: number) {
+      return this.show({ message, type: 'info', duration });
+    }
+  }
+
+  // Global toast instance
+  (window as any).toast = new ToastManager();
+</script>

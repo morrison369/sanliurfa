@@ -1,0 +1,107 @@
+---
+interface Props {
+  latitude: number;
+  longitude: number;
+  name?: string;
+  address?: string;
+  height?: string;
+  zoom?: number;
+}
+
+const { 
+  latitude, 
+  longitude, 
+  name = '', 
+  address = '',
+  height = '300px',
+  zoom = 15
+} = Astro.props;
+
+const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
+---
+
+<div class="relative rounded-xl overflow-hidden" style={`height: ${height}`}>
+  <!-- Static Map Image (fallback/no-JS) -->
+  <a 
+    href={`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    class="block w-full h-full"
+  >
+    <img 
+      src={`https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=${zoom}&size=600x400&markers=color:red%7C${latitude},${longitude}&key=YOUR_API_KEY`}
+      alt={`${name} konumu`}
+      class="w-full h-full object-cover"
+      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+    />
+    
+    <!-- Fallback when no API key -->
+    <div class="hidden w-full h-full bg-gray-100 dark:bg-gray-800 items-center justify-center">
+      <div class="text-center p-6">
+        <div class="w-16 h-16 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-urfa-600 dark:text-urfa-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+        <p class="text-gray-900 dark:text-white font-medium mb-1">{name}</p>
+        {address && <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">{address}</p>}
+        <span class="text-urfa-600 dark:text-urfa-400 text-sm font-medium">
+          Google Maps'te Aç →
+        </span>
+      </div>
+    </div>
+  </a>
+  
+  <!-- Map Controls -->
+  <div class="absolute bottom-4 right-4 flex flex-col gap-2">
+    <a 
+      href={`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg text-gray-700 dark:text-gray-300 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors"
+      title="Yol Tarifi"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      </svg>
+    </a>
+    <button 
+      id={`copy-coords-${mapId}`}
+      class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg text-gray-700 dark:text-gray-300 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors"
+      title="Koordinatları Kopyala"
+      data-lat={latitude}
+      data-lng={longitude}
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script define:vars={{ mapId, latitude, longitude }}>
+  document.getElementById(`copy-coords-${mapId}`)?.addEventListener('click', async function() {
+    const coords = `${latitude}, ${longitude}`;
+    try {
+      await navigator.clipboard.writeText(coords);
+      
+      // Visual feedback
+      const originalHTML = this.innerHTML;
+      this.innerHTML = `<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+      
+      setTimeout(() => {
+        this.innerHTML = originalHTML;
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  });
+</script>
+
+<style>
+  /* Optional: Add OpenStreetMap integration via Leaflet */
+  .leaflet-container {
+    border-radius: 0.75rem;
+  }
+</style>

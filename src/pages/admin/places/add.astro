@@ -1,0 +1,329 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { MapPin, Upload, Clock, Phone, Globe, Mail } from 'lucide-react';
+
+const seo = {
+  title: 'Mekan Ekle - Admin Panel',
+  description: 'Yeni mekan ekle',
+  noindex: true
+};
+
+const categories = [
+  { id: 'restaurant', label: 'Restoran' },
+  { id: 'cafe', label: 'Kafe' },
+  { id: 'hotel', label: 'Otel' },
+  { id: 'museum', label: 'Müze' },
+  { id: 'park', label: 'Park' },
+  { id: 'shopping', label: 'Alışveriş' },
+  { id: 'entertainment', label: 'Eğlence' },
+  { id: 'other', label: 'Diğer' },
+];
+
+const amenitiesList = [
+  'Otopark', 'Wifi', 'Klima', 'Bahçe', 'Teras', 'Engelli Erişimi',
+  'Paket Servis', 'Rezervasyon', 'Canlı Müzik', 'Çocuk Oyun Alanı',
+  'Evcil Hayvan Dostu', 'Sigara İçilebilir Alan'
+];
+
+const days = [
+  { id: 'monday', label: 'Pazartesi' },
+  { id: 'tuesday', label: 'Salı' },
+  { id: 'wednesday', label: 'Çarşamba' },
+  { id: 'thursday', label: 'Perşembe' },
+  { id: 'friday', label: 'Cuma' },
+  { id: 'saturday', label: 'Cumartesi' },
+  { id: 'sunday', label: 'Pazar' },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Admin Header -->
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <a href="/admin" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              ← Geri
+            </a>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Yeni Mekan Ekle</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container-custom py-8">
+      <form action="/api/places/add" method="POST" class="grid lg:grid-cols-3 gap-8" enctype="multipart/form-data">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Basic Info -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel Bilgiler</h2>
+            <div class="space-y-4">
+              <div>
+                <label for="name" class="label dark:text-gray-300">Mekan Adı *</label>
+                <input 
+                  type="text" 
+                  id="name" 
+                  name="name" 
+                  required
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="Örn: Ciğerci Aziz Usta"
+                />
+              </div>
+              
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="category" class="label dark:text-gray-300">Kategori *</label>
+                  <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="">Kategori seçin</option>
+                    {categories.map(cat => (
+                      <option value={cat.id}>{cat.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label for="price_range" class="label dark:text-gray-300">Fiyat Aralığı</label>
+                  <select id="price_range" name="price_range" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <option value="1">₺ - Ucuz</option>
+                    <option value="2">₺₺ - Orta</option>
+                    <option value="3">₺₺₺ - Pahalı</option>
+                    <option value="4">₺₺₺₺ - Lüks</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label for="description" class="label dark:text-gray-300">Açıklama *</label>
+                <textarea 
+                  id="description" 
+                  name="description" 
+                  rows="4" 
+                  required
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+                  placeholder="Mekan hakkında detaylı açıklama..."
+                ></textarea>
+              </div>
+              
+              <div>
+                <label for="short_description" class="label dark:text-gray-300">Kısa Açıklama</label>
+                <input 
+                  type="text" 
+                  id="short_description" 
+                  name="short_description"
+                  maxlength="150"
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="Mekanın kısa özeti (150 karakter)"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <!-- Contact Info -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">İletişim Bilgileri</h2>
+            <div class="space-y-4">
+              <div>
+                <label for="address" class="label dark:text-gray-300">Adres *</label>
+                <div class="relative">
+                  <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <input 
+                    type="text" 
+                    id="address" 
+                    name="address" 
+                    required
+                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="Tam adres"
+                  />
+                </div>
+              </div>
+              
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="phone" class="label dark:text-gray-300">Telefon</label>
+                  <div class="relative">
+                    <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <input 
+                      type="tel" 
+                      id="phone" 
+                      name="phone"
+                      class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      placeholder="+90 414 123 45 67"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label for="email" class="label dark:text-gray-300">E-posta</label>
+                  <div class="relative">
+                    <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <input 
+                      type="email" 
+                      id="email" 
+                      name="email"
+                      class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      placeholder="info@ornek.com"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <label for="website" class="label dark:text-gray-300">Web Sitesi</label>
+                <div class="relative">
+                  <Globe className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <input 
+                    type="url" 
+                    id="website" 
+                    name="website"
+                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="https://www.ornek.com"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Opening Hours -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Çalışma Saatleri</h2>
+            <div class="space-y-3">
+              {days.map(day => (
+                <div class="flex items-center gap-4">
+                  <span class="w-24 text-sm text-gray-600 dark:text-gray-400">{day.label}</span>
+                  <input 
+                    type="text" 
+                    name={`opening_hours_${day.id}`}
+                    class="input flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="08:00 - 22:00 veya Kapalı"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <!-- Location -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Konum</h2>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label for="latitude" class="label dark:text-gray-300">Enlem</label>
+                <input 
+                  type="number" 
+                  id="latitude" 
+                  name="latitude"
+                  step="any"
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="37.1592"
+                />
+              </div>
+              <div>
+                <label for="longitude" class="label dark:text-gray-300">Boylam</label>
+                <input 
+                  type="number" 
+                  id="longitude" 
+                  name="longitude"
+                  step="any"
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="38.7965"
+                />
+              </div>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+              Koordinatları Google Maps'ten alabilirsiniz.
+            </p>
+          </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <aside class="space-y-6">
+          <!-- Publish -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
+            <div class="space-y-3">
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_featured" class="rounded border-gray-300 text-urfa-600" />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan mekan</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_verified" class="rounded border-gray-300 text-urfa-600" />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Doğrulanmış mekan</span>
+              </label>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <label for="status" class="label dark:text-gray-300">Durum</label>
+              <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
+                <option value="active">Aktif</option>
+                <option value="pending">Beklemede</option>
+                <option value="inactive">Pasif</option>
+              </select>
+            </div>
+            <div class="flex gap-2 mt-4">
+              <button type="submit" class="btn-primary flex-1">Kaydet</button>
+              <a href="/admin" class="btn-secondary">İptal</a>
+            </div>
+          </div>
+          
+          <!-- Images -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görseller</h3>
+            <div class="space-y-4">
+              <div>
+                <label for="cover_image" class="label dark:text-gray-300">Kapak Fotoğrafı</label>
+                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-urfa-500 transition-colors">
+                  <div class="space-y-1 text-center">
+                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                      <label for="cover_image" class="relative cursor-pointer rounded-md font-medium text-urfa-600 hover:text-urfa-500">
+                        <span>Dosya seç</span>
+                        <input id="cover_image" name="cover_image" type="file" accept="image/*" class="sr-only" />
+                      </label>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG up to 5MB</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <label for="gallery" class="label dark:text-gray-300">Galeri Fotoğrafları</label>
+                <input 
+                  type="file" 
+                  id="gallery" 
+                  name="gallery"
+                  accept="image/*"
+                  multiple
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white py-2"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Birden fazla seçebilirsiniz</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Amenities -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Olanaklar</h3>
+            <div class="space-y-2 max-h-64 overflow-y-auto">
+              {amenitiesList.map(amenity => (
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" name="amenities" value={amenity} class="rounded border-gray-300 text-urfa-600" />
+                  <span class="text-sm text-gray-700 dark:text-gray-300">{amenity}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          
+          <!-- Tags -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Etiketler</h3>
+            <input 
+              type="text" 
+              name="tags"
+              class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="Etiketleri virgülle ayırın"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Örn: ciğer kebabı, tarihi, aile</p>
+          </div>
+        </aside>
+      </form>
+    </div>
+  </div>
+</Layout>

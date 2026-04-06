@@ -1,0 +1,187 @@
+---
+interface Props {
+  placeId: string;
+  placeName: string;
+}
+
+const { placeId, placeName } = Astro.props;
+---
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6" data-review-form>
+  <h3 class="text-lg font-semibold text-gray-900 mb-4">Değerlendirme Yaz</h3>
+  
+  <form class="space-y-4" data-place-id={placeId}>
+    <!-- Rating -->
+    <div>
+      <label class="label block mb-2">Puanınız</label>
+      <div class="flex items-center gap-2" data-rating-input>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            type="button"
+            data-rating={star}
+            class="text-3xl text-gray-300 hover:text-yellow-400 transition-colors focus:outline-none"
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      <input type="hidden" name="rating" data-rating-value required />
+    </div>
+    
+    <!-- Title -->
+    <div>
+      <label for="review-title" class="label block mb-1">Başlık (Opsiyonel)</label>
+      <input
+        type="text"
+        id="review-title"
+        name="title"
+        class="input"
+        placeholder="Örn: Harika bir deneyim"
+      />
+    </div>
+    
+    <!-- Content -->
+    <div>
+      <label for="review-content" class="label block mb-1">Yorumunuz *</label>
+      <textarea
+        id="review-content"
+        name="content"
+        rows={4}
+        class="input resize-none"
+        placeholder={`${placeName} hakkında düşüncelerinizi paylaşın...`}
+        required
+        minlength="10"
+      ></textarea>
+      <p class="text-xs text-gray-500 mt-1">En az 10 karakter</p>
+    </div>
+    
+    <!-- Visit Date -->
+    <div>
+      <label for="visit-date" class="label block mb-1">Ziyaret Tarihi</label>
+      <input
+        type="date"
+        id="visit-date"
+        name="visit_date"
+        class="input"
+        max={new Date().toISOString().split('T')[0]}
+      />
+    </div>
+    
+    <!-- Submit -->
+    <div class="flex items-center justify-between pt-4">
+      <p class="text-sm text-gray-500">
+        <span class="text-yellow-500">+50 puan</span> kazanacaksınız
+      </p>
+      <button type="submit" class="btn-primary" data-submit-btn>
+        Gönder
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.querySelector('[data-review-form]');
+    if (!form) return;
+    
+    const ratingInput = form.querySelector('[data-rating-input]');
+    const ratingValue = form.querySelector('[data-rating-value]') as HTMLInputElement;
+    const stars = form.querySelectorAll('[data-rating]');
+    const submitBtn = form.querySelector('[data-submit-btn]') as HTMLButtonElement;
+    
+    let selectedRating = 0;
+    
+    // Rating selection
+    stars.forEach((star) => {
+      star.addEventListener('click', () => {
+        const rating = parseInt(star.getAttribute('data-rating') || '0');
+        selectedRating = rating;
+        ratingValue.value = String(rating);
+        
+        stars.forEach((s, i) => {
+          if (i < rating) {
+            s.classList.add('text-yellow-400');
+            s.classList.remove('text-gray-300');
+          } else {
+            s.classList.remove('text-yellow-400');
+            s.classList.add('text-gray-300');
+          }
+        });
+      });
+      
+      // Hover effect
+      star.addEventListener('mouseenter', () => {
+        const rating = parseInt(star.getAttribute('data-rating') || '0');
+        stars.forEach((s, i) => {
+          if (i < rating) {
+            s.classList.add('text-yellow-200');
+          } else {
+            s.classList.remove('text-yellow-200');
+          }
+        });
+      });
+    });
+    
+    ratingInput?.addEventListener('mouseleave', () => {
+      stars.forEach((s, i) => {
+        s.classList.remove('text-yellow-200');
+        if (i < selectedRating) {
+          s.classList.add('text-yellow-400');
+        } else {
+          s.classList.add('text-gray-300');
+        }
+      });
+    });
+    
+    // Form submission
+    const formElement = form.querySelector('form');
+    formElement?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (selectedRating === 0) {
+        (window as any).toast?.error('Lütfen bir puan seçin');
+        return;
+      }
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Gönderiliyor...';
+      
+      const formData = new FormData(formElement);
+      const data = {
+        place_id: formElement.getAttribute('data-place-id'),
+        rating: selectedRating,
+        title: formData.get('title'),
+        content: formData.get('content'),
+        visit_date: formData.get('visit_date')
+      };
+      
+      try {
+        const response = await fetch('/api/reviews/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          (window as any).toast?.success(`Yorumunuz eklendi! +${result.pointsEarned} puan kazandınız`);
+          formElement.reset();
+          selectedRating = 0;
+          ratingValue.value = '';
+          stars.forEach(s => {
+            s.classList.remove('text-yellow-400');
+            s.classList.add('text-gray-300');
+          });
+        } else {
+          (window as any).toast?.error(result.error || 'Bir hata oluştu');
+        }
+      } catch (error) {
+        (window as any).toast?.error('Bağlantı hatası. Lütfen tekrar deneyin.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Gönder';
+      }
+    });
+  });
+</script>

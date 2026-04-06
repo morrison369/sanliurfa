@@ -1,0 +1,128 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Heart, MapPin, Star, User, Settings } from 'lucide-react';
+import { query } from '../../lib/postgres';
+
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect('/giris?redirect=/profil/favoriler');
+}
+
+const result = await query(
+  `SELECT f.*, p.name as place_name, p.slug as place_slug, p.images as place_images, 
+          p.rating as place_rating, p.address as place_address
+   FROM favorites f 
+   JOIN places p ON f.place_id = p.id 
+   WHERE f.user_id = $1 
+   ORDER BY f.created_at DESC`,
+  [user.id]
+);
+const favorites = result.rows;
+
+const seo = {
+  title: 'Favorilerim - Şanlıurfa.com',
+  description: 'Favori mekanlarınızı görüntüleyin.',
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="container-custom">
+      <div class="grid lg:grid-cols-4 gap-8">
+        <aside class="lg:col-span-1">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <nav class="space-y-1">
+                <a href="/profil" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <User className="w-4 h-4" />
+                  Profil
+                </a>
+                <a href="/profil/yorumlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <Star className="w-4 h-4" />
+                  Yorumlarım
+                </a>
+                <a href="/profil/favoriler" class="flex items-center gap-2 p-2 rounded-lg bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300">
+                  <Heart className="w-4 h-4" />
+                  Favorilerim ({favorites.length})
+                </a>
+                <a href="/profil/ayarlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <Settings className="w-4 h-4" />
+                  Ayarlar
+                </a>
+              </nav>
+            </div>
+          </div>
+        </aside>
+        
+        <main class="lg:col-span-3">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="font-display font-bold text-xl text-gray-900 dark:text-white mb-4">Favorilerim</h2>
+            
+            {favorites.length > 0 ? (
+              <div class="space-y-4">
+                {favorites.map((fav) => (
+                  <div class="flex gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <img 
+                      src={fav.place_images?.[0] || '/images/placeholder-place.jpg'}
+                      alt={fav.place_name}
+                      class="w-24 h-24 rounded-lg object-cover flex-shrink-0"
+                    />
+                    <div class="flex-1 min-w-0">
+                      <a href={`/places/${fav.place_slug}`} class="font-semibold text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400">
+                        {fav.place_name}
+                      </a>
+                      <div class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {fav.place_address}
+                      </div>
+                      <div class="flex items-center gap-1 text-sm text-yellow-500 mt-2">
+                        <Star className="w-4 h-4 fill-current" />
+                        <span>{fav.place_rating || '4.5'}</span>
+                      </div>
+                    </div>
+                    <button 
+                      class="text-red-500 hover:text-red-600 self-start"
+                      data-favorite-id={fav.id}
+                      onclick="removeFavorite(this)"
+                    >
+                      <Heart className="w-5 h-5 fill-current" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <Heart className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Henüz favori yok</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Beğendiğiniz mekanları favorilere ekleyin.</p>
+                <a href="/places" class="btn-primary">Mekanları Keşfet</a>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    async function removeFavorite(btn: HTMLButtonElement) {
+      const id = btn.dataset.favoriteId;
+      if (!confirm('Favorilerden kaldırmak istediğinize emin misiniz?')) return;
+      
+      try {
+        const response = await fetch(`/api/favorites`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        
+        if (response.ok) {
+          btn.closest('.flex')?.remove();
+        }
+      } catch (error) {
+        alert('İşlem başarısız');
+      }
+    }
+  </script>
+</Layout>

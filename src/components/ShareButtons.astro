@@ -1,0 +1,87 @@
+---
+interface Props {
+  title: string;
+  url: string;
+  description?: string;
+}
+
+const { title, url, description = '' } = Astro.props;
+
+const encodedTitle = encodeURIComponent(title);
+const encodedUrl = encodeURIComponent(url);
+const encodedDesc = encodeURIComponent(description);
+
+const shareLinks = [
+  {
+    name: 'Twitter',
+    href: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
+    icon: '𝕏',
+    color: 'bg-black hover:bg-gray-800'
+  },
+  {
+    name: 'Facebook',
+    href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    icon: 'f',
+    color: 'bg-blue-600 hover:bg-blue-700'
+  },
+  {
+    name: 'WhatsApp',
+    href: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
+    icon: '💬',
+    color: 'bg-green-500 hover:bg-green-600'
+  },
+  {
+    name: 'Telegram',
+    href: `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`,
+    icon: '✈️',
+    color: 'bg-blue-400 hover:bg-blue-500'
+  },
+  {
+    name: 'LinkedIn',
+    href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+    icon: 'in',
+    color: 'bg-blue-700 hover:bg-blue-800'
+  },
+];
+---
+
+<div class="flex items-center gap-2">
+  <span class="text-sm text-gray-500">Paylaş:</span>
+  <div class="flex items-center gap-1">
+    {shareLinks.map(link => (
+      <a
+        href={link.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        class={`w-8 h-8 ${link.color} text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors`}
+        title={link.name}
+      >
+        {link.icon}
+      </a>
+    ))}
+    
+    <!-- Copy Link -->
+    <button
+      onclick="copyLink()"
+      class="w-8 h-8 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+      title="Linki kopyala"
+    >
+      📋
+    </button>
+  </div>
+</div>
+
+<script is:inline>
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      if (window.toast) {
+        window.toast.success('Link kopyalandı!');
+      } else {
+        alert('Link kopyalandı!');
+      }
+    } catch (err) {
+      console.error('Kopyalama hatası:', err);
+    }
+  }
+</script>

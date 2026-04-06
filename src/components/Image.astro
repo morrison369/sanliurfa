@@ -1,0 +1,58 @@
+---
+import { Picture } from 'astro:assets';
+
+interface Props {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  class?: string;
+  loading?: 'lazy' | 'eager';
+  decoding?: 'async' | 'sync' | 'auto';
+  formats?: ('avif' | 'webp' | 'jpeg' | 'png' | 'svg')[];
+  fallbackFormat?: 'jpeg' | 'png' | 'svg';
+  quality?: number;
+}
+
+const {
+  src,
+  alt,
+  width = 800,
+  height = 600,
+  class: className = '',
+  loading = 'lazy',
+  decoding = 'async',
+  formats = ['avif', 'webp'],
+  fallbackFormat = 'jpeg',
+  quality = 80
+} = Astro.props;
+
+// Remote image kontrolü
+const isRemote = src.startsWith('http');
+---
+
+{isRemote ? (
+  <img
+    src={src}
+    alt={alt}
+    width={width}
+    height={height}
+    class={className}
+    loading={loading}
+    decoding={decoding}
+    onerror="this.src='/images/placeholder.jpg'"
+  />
+) : (
+  <Picture
+    src={src}
+    alt={alt}
+    width={width}
+    height={height}
+    class={className}
+    formats={formats}
+    fallbackFormat={fallbackFormat}
+    quality={quality}
+    loading={loading}
+    decoding={decoding}
+  />
+)}

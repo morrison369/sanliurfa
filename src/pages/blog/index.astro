@@ -1,0 +1,234 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Calendar, User, Clock, Tag } from 'lucide-react';
+import Pagination from '../../components/Pagination.astro';
+import { query } from '../../lib/postgres';
+
+const ITEMS_PER_PAGE = 12;
+const currentPage = parseInt(Astro.url.searchParams.get('page') || '1');
+const categoryFilter = Astro.url.searchParams.get('category') || 'all';
+
+// Build SQL
+let countSql = "SELECT COUNT(*) FROM blog_posts WHERE is_published = true";
+let postsSql = `SELECT bp.*, u.full_name, u.avatar_url 
+                FROM blog_posts bp 
+                LEFT JOIN users u ON bp.author_id = u.id 
+                WHERE bp.is_published = true`;
+const values: any[] = [];
+let paramIndex = 1;
+
+if (categoryFilter !== 'all') {
+  countSql += ` AND category = $${paramIndex}`;
+  postsSql += ` AND bp.category = $${paramIndex}`;
+  values.push(categoryFilter);
+  paramIndex++;
+}
+
+const countResult = await query(countSql, values);
+const count = parseInt(countResult.rows[0]?.count || '0');
+const totalPages = Math.ceil(count / ITEMS_PER_PAGE);
+const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+postsSql += ` ORDER BY bp.is_featured DESC, bp.published_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+const postsResult = await query(postsSql, [...values, ITEMS_PER_PAGE, offset]);
+const posts = postsResult.rows;
+
+const categories = [
+  { id: 'all', label: 'Tümü' },
+  { id: 'gezi-rehberi', label: 'Gezi Rehberi' },
+  { id: 'gastronomi', label: 'Gastronomi' },
+  { id: 'tarih', label: 'Tarih' },
+  { id: 'kultur-sanat', label: 'Kültür & Sanat' },
+  { id: 'etkinlik', label: 'Etkinlikler' },
+  { id: 'haber', label: 'Haber' },
+];
+
+const getCategoryCount = async (catId: string) => {
+  if (catId === 'all') return count;
+  const result = await query('SELECT COUNT(*) FROM blog_posts WHERE is_published = true AND category = $1', [catId]);
+  return parseInt(result.rows[0]?.count || '0');
+};
+
+const categoryCounts: Record<string, number> = {};
+for (const cat of categories) {
+  categoryCounts[cat.id] = await getCategoryCount(cat.id);
+}
+
+const getCategoryLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    'genel': 'Genel', 'kultur-sanat': 'Kültür & Sanat', 'gastronomi': 'Gastronomi',
+    'tarih': 'Tarih', 'gezi-rehberi': 'Gezi Rehberi', 'etkinlik': 'Etkinlik', 'haber': 'Haber',
+  };
+  return labels[category] || category;
+};
+
+const calculateReadTime = (content: string) => {
+  const wordsPerMinute = 200;
+  const words = content?.split(/\s+/).length || 0;
+  return `${Math.ceil(words / wordsPerMinute)} dk`;
+};
+
+const showFeatured = currentPage === 1 && categoryFilter === 'all';
+const featuredPost = showFeatured ? posts?.find((p: any) => p.is_featured) : null;
+const regularPosts = posts?.filter((p: any) => p.id !== featuredPost?.id) || [];
+
+const seo = {
+  title: categoryFilter === 'all' ? 'Blog - Şanlıurfa Hakkında Her Şey' : `${getCategoryLabel(categoryFilter)} - Blog`,
+  description: 'Şanlıurfa hakkında en güncel yazılar, gezi rehberleri, gastronomi önerileri ve tarihi bilgiler.',
+};
+
+const searchParams = new URLSearchParams();
+if (categoryFilter !== 'all') searchParams.set('category', categoryFilter);
+---
+
+<Layout seo={seo}>
+  <div class="page-header">
+    <div class="page-header-content">
+      <span class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-white/90 text-sm mb-4">
+        <Tag className="w-4 h-4" />
+        Blog
+      </span>
+      <h1 class="page-header-title">Şanlıurfa'yı Keşfedin</h1>
+      <p class="page-header-description">
+        Gezi rehberleri, gastronomi önerileri, tarihi bilgiler ve daha fazlası.
+      </p>
+    </div>
+  </div>
+  
+  <div class="section bg-gray-50 dark:bg-gray-900">
+    <div class="container-custom">
+      <div class="flex flex-col lg:flex-row gap-8">
+        <aside class="lg:w-72 flex-shrink-0">
+          <div class="sticky top-24 space-y-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Kategoriler</h3>
+              <div class="space-y-1">
+                {categories.map((cat) => (
+                  <a 
+                    href={cat.id === 'all' ? '/blog' : `/blog?category=${cat.id}`}
+                    class={`flex items-center justify-between p-2 rounded-lg transition-colors ${
+                      categoryFilter === cat.id 
+                        ? 'bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300' 
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    <span>{cat.label}</span>
+                    <span class="text-sm text-gray-400">{categoryCounts[cat.id]}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+            
+            <div class="bg-urfa-600 rounded-xl p-6 text-white">
+              <h3 class="font-semibold mb-2">Bültenimize Abone Olun</h3>
+              <p class="text-sm text-urfa-100 mb-4">En yeni yazılardan ilk siz haberdar olun.</p>
+              <form action="/api/newsletter/subscribe" method="POST" class="space-y-2">
+                <input 
+                  type="email"
+                  name="email"
+                  placeholder="E-posta adresiniz"
+                  required
+                  class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:border-white/40"
+                />
+                <button type="submit" class="w-full py-2 bg-white text-urfa-600 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                  Abone Ol
+                </button>
+              </form>
+            </div>
+          </div>
+        </aside>
+        
+        <main class="flex-1">
+          {featuredPost && (
+            <article class="card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden mb-8">
+              <a href={`/blog/${featuredPost.slug}`} class="flex flex-col lg:flex-row">
+                <div class="lg:w-1/2 aspect-video lg:aspect-auto overflow-hidden">
+                  <img 
+                    src={featuredPost.cover_image || '/images/placeholder-blog.jpg'}
+                    alt={featuredPost.title}
+                    class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                    loading="eager"
+                  />
+                </div>
+                <div class="lg:w-1/2 p-6 lg:p-8 flex flex-col justify-center">
+                  <span class="badge-primary w-fit mb-3">{getCategoryLabel(featuredPost.category)}</span>
+                  <h2 class="text-2xl lg:text-3xl font-display font-bold text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors mb-3">
+                    {featuredPost.title}
+                  </h2>
+                  <p class="text-gray-600 dark:text-gray-400 mb-4">{featuredPost.excerpt}</p>
+                  
+                  <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center text-urfa-600 dark:text-urfa-400 text-xs font-bold">
+                        {featuredPost.full_name?.charAt(0) || 'E'}
+                      </div>
+                      <span>{featuredPost.full_name || 'Editör'}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {new Date(featuredPost.published_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      {calculateReadTime(featuredPost.content)}
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </article>
+          )}
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {regularPosts.map((post: any) => (
+              <article class="card-hover bg-white dark:bg-gray-800 rounded-xl overflow-hidden group">
+                <a href={`/blog/${post.slug}`}>
+                  <div class="relative aspect-video overflow-hidden">
+                    <img 
+                      src={post.cover_image || '/images/placeholder-blog.jpg'}
+                      alt={post.title}
+                      class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div class="absolute top-3 left-3">
+                      <span class="badge-primary">{getCategoryLabel(post.category)}</span>
+                    </div>
+                  </div>
+                  <div class="p-5">
+                    <h3 class="font-display font-bold text-lg text-gray-900 dark:text-white group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors line-clamp-2">
+                      {post.title}
+                    </h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mt-2 line-clamp-2">{post.excerpt}</p>
+                    
+                    <div class="flex items-center gap-4 mt-4 text-xs text-gray-500 dark:text-gray-400">
+                      <div class="flex items-center gap-1">
+                        <User className="w-3.5 h-3.5" />
+                        {post.full_name || 'Editör'}
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {new Date(post.published_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              </article>
+            ))}
+          </div>
+          
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            baseUrl="/blog"
+            searchParams={searchParams}
+          />
+          
+          {regularPosts.length === 0 && !featuredPost && (
+            <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+              Bu kategoride henüz yazı bulunmuyor.
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  </div>
+</Layout>

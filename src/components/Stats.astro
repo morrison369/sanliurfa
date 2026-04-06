@@ -1,0 +1,22 @@
+---
+const stats = [
+  { value: '12.000+', label: 'Yıllık Tarih', description: 'Göbeklitepe' },
+  { value: '500+', label: 'Kayıtlı Mekan', description: 'Restoran, Otel, Müze' },
+  { value: '100+', label: 'Yöresel Lezzet', description: 'Gastronomi' },
+  { value: '50K+', label: 'Mutlu Kullanıcı', description: 'Aktif Üye' },
+];
+---
+
+<section class="bg-urfa-900 py-16">
+  <div class="container-custom">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+      {stats.map((stat, index) => (
+        <div class="text-center" style={`animation-delay: ${index * 100}ms`}>
+          <div class="text-4xl lg:text-5xl font-bold text-white mb-2">{stat.value}</div>
+          <div class="text-urfa-200 font-medium">{stat.label}</div>
+          <div class="text-urfa-400 text-sm">{stat.description}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,68 @@
+---
+interface Props {
+  type?: 'card' | 'text' | 'image' | 'avatar' | 'button';
+  lines?: number;
+  class?: string;
+}
+
+const { type = 'text', lines = 1, class: className = '' } = Astro.props;
+---
+
+{type === 'card' && (
+  <div class={`bg-white rounded-xl overflow-hidden shadow-sm ${className}`}>
+    <div class="aspect-video bg-gray-200 animate-pulse" />
+    <div class="p-4 space-y-3">
+      <div class="h-6 bg-gray-200 rounded animate-pulse w-3/4" />
+      <div class="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
+      <div class="flex items-center gap-2 pt-2">
+        <div class="h-4 bg-gray-200 rounded animate-pulse w-20" />
+        <div class="h-4 bg-gray-200 rounded animate-pulse w-16" />
+      </div>
+    </div>
+  </div>
+)}
+
+{type === 'text' && (
+  <div class={`space-y-2 ${className}`}>
+    {Array.from({ length: lines }).map((_, i) => (
+      <div 
+        class="h-4 bg-gray-200 rounded animate-pulse"
+        style={`width: ${i === lines - 1 ? '60%' : '100%'}`}
+      />
+    ))}
+  </div>
+)}
+
+{type === 'image' && (
+  <div class={`bg-gray-200 animate-pulse rounded-lg ${className}`} />
+)}
+
+{type === 'avatar' && (
+  <div class={`bg-gray-200 rounded-full animate-pulse ${className}`} />
+)}
+
+{type === 'button' && (
+  <div class={`h-10 bg-gray-200 rounded-lg animate-pulse ${className}`} />
+)}
+
+<style>
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+  
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      #f0f0f0 25%,
+      #e0e0e0 50%,
+      #f0f0f0 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+</style>

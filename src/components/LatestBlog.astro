@@ -1,0 +1,96 @@
+---
+import { Calendar, User, Clock, ArrowRight } from 'lucide-react';
+import { query } from '../lib/postgres';
+
+const result = await query(
+  `SELECT bp.*, u.full_name 
+   FROM blog_posts bp 
+   LEFT JOIN users u ON bp.author_id = u.id 
+   WHERE bp.is_published = true 
+   ORDER BY bp.is_featured DESC, bp.published_at DESC 
+   LIMIT 3`
+);
+const posts = result.rows;
+
+const getCategoryLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    'genel': 'Genel', 'kultur-sanat': 'Kültür & Sanat', 'gastronomi': 'Gastronomi',
+    'tarih': 'Tarih', 'gezi-rehberi': 'Gezi Rehberi', 'etkinlik': 'Etkinlik', 'haber': 'Haber',
+  };
+  return labels[category] || category;
+};
+
+const calculateReadTime = (content: string) => {
+  return `${Math.ceil((content?.split(/\s+/).length || 0) / 200)} dk`;
+};
+---
+
+<section class="section bg-gray-50 dark:bg-gray-800">
+  <div class="container-custom">
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-10">
+      <div>
+        <span class="inline-flex items-center gap-2 text-urfa-600 font-medium mb-2">
+          <Clock className="w-5 h-5" />
+          Blog
+        </span>
+        <h2 class="section-title dark:text-white">Son Yazılar</h2>
+        <p class="section-subtitle max-w-2xl dark:text-gray-400">
+          Şanlıurfa hakkında en güncel bilgiler, gezi rehberleri ve gastronomi önerileri.
+        </p>
+      </div>
+      
+      <a href="/blog" class="btn-outline inline-flex items-center gap-2">
+        Tüm Yazılar
+        <ArrowRight className="w-4 h-4" />
+      </a>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {posts?.map((post) => (
+        <article class="card-hover group bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
+          <a href={`/blog/${post.slug}`}>
+            <div class="relative aspect-[16/10] overflow-hidden">
+              <img 
+                src={post.cover_image || '/images/placeholder-blog.jpg'}
+                alt={post.title}
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                loading="lazy"
+              />
+              <div class="absolute top-3 left-3">
+                <span class="badge-primary">{getCategoryLabel(post.category)}</span>
+              </div>
+            </div>
+            
+            <div class="p-5">
+              <h3 class="font-display font-bold text-lg text-gray-900 dark:text-white group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors line-clamp-2">
+                {post.title}
+              </h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm mt-2 line-clamp-2">{post.excerpt}</p>
+              
+              <div class="flex items-center gap-4 mt-4 text-xs text-gray-500 dark:text-gray-400">
+                <div class="flex items-center gap-1">
+                  <User className="w-3.5 h-3.5" />
+                  {post.full_name || 'Editör'}
+                </div>
+                <div class="flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {new Date(post.published_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
+                </div>
+                <div class="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  {calculateReadTime(post.content)}
+                </div>
+              </div>
+            </div>
+          </a>
+        </article>
+      ))}
+      
+      {(!posts || posts.length === 0) && (
+        <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
+          Henüz blog yazısı bulunmuyor.
+        </div>
+      )}
+    </div>
+  </div>
+</section>

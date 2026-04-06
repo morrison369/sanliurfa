@@ -1,0 +1,63 @@
+---
+import { Sun, Moon } from 'lucide-react';
+---
+
+<button 
+  id="theme-toggle" 
+  class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+  aria-label="Tema değiştir"
+>
+  <Sun id="sun-icon" className="w-5 h-5 text-gray-700" />
+  <Moon id="moon-icon" className="w-5 h-5 text-gray-700 hidden" />
+</button>
+
+<script>
+  // Theme management
+  const themeToggle = document.getElementById('theme-toggle');
+  const sunIcon = document.getElementById('sun-icon');
+  const moonIcon = document.getElementById('moon-icon');
+  const html = document.documentElement;
+  
+  // Check saved theme or system preference
+  const savedTheme = localStorage.getItem('theme');
+  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  function setTheme(dark: boolean) {
+    if (dark) {
+      html.classList.add('dark');
+      sunIcon?.classList.add('hidden');
+      moonIcon?.classList.remove('hidden');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      html.classList.remove('dark');
+      sunIcon?.classList.remove('hidden');
+      moonIcon?.classList.add('hidden');
+      localStorage.setItem('theme', 'light');
+    }
+  }
+  
+  // Initialize
+  if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
+    setTheme(true);
+  } else {
+    setTheme(false);
+  }
+  
+  // Toggle
+  themeToggle?.addEventListener('click', () => {
+    const isDark = html.classList.contains('dark');
+    setTheme(!isDark);
+  });
+  
+  // Listen for system changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (!localStorage.getItem('theme')) {
+      setTheme(e.matches);
+    }
+  });
+  
+  // Listen for theme changes from other toggles
+  window.addEventListener('themechange', (e: CustomEvent) => {
+    setTheme(e.detail.dark);
+  });
+</script>

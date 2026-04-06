@@ -1,0 +1,71 @@
+---
+interface Heading {
+  depth: number;
+  text: string;
+  slug: string;
+}
+
+interface Props {
+  headings: Heading[];
+  title?: string;
+}
+
+const { headings, title = 'İçindekiler' } = Astro.props;
+
+// Filter only h2 and h3
+const toc = headings.filter(h => h.depth >= 2 && h.depth <= 3);
+---
+
+{toc.length > 0 && (
+  <nav class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6 mb-8">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+      </svg>
+      {title}
+    </h2>
+    <ul class="space-y-2">
+      {toc.map(heading => (
+        <li class={heading.depth === 3 ? 'ml-4' : ''}>
+          <a 
+            href={`#${heading.slug}`}
+            class={`block text-sm transition-colors hover:text-urfa-600 dark:hover:text-urfa-400 ${
+              heading.depth === 2 
+                ? 'font-medium text-gray-900 dark:text-white' 
+                : 'text-gray-600 dark:text-gray-400'
+            }`}
+          >
+            {heading.text}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
+
+<script>
+  // Highlight active section on scroll
+  const observerOptions = {
+    root: null,
+    rootMargin: '-20% 0px -80% 0px',
+    threshold: 0
+  };
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.getAttribute('id');
+        document.querySelectorAll('nav a[href^="#"]').forEach(link => {
+          link.classList.remove('text-urfa-600', 'dark:text-urfa-400', 'font-medium');
+          if (link.getAttribute('href') === `#${id}`) {
+            link.classList.add('text-urfa-600', 'dark:text-urfa-400', 'font-medium');
+          }
+        });
+      }
+    });
+  }, observerOptions);
+  
+  document.querySelectorAll('h2[id], h3[id]').forEach(heading => {
+    observer.observe(heading);
+  });
+</script>

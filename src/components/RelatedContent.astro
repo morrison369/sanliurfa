@@ -1,0 +1,135 @@
+---
+import { ArrowRight } from 'lucide-react';
+import { query } from '../lib/postgres';
+
+interface Props {
+  type: 'place' | 'blog' | 'historical';
+  currentId: string;
+  tags?: string[];
+  category?: string;
+  limit?: number;
+}
+
+const { type, currentId, tags = [], category, limit = 3 } = Astro.props;
+
+let relatedItems: any[] = [];
+
+if (type === 'place') {
+  // Find places with similar category
+  let sql = "SELECT * FROM places WHERE status = 'active' AND id != $1";
+  const params: any[] = [currentId];
+  
+  if (category) {
+    sql += " AND category = $2";
+    params.push(category);
+  }
+  
+  sql += ` LIMIT $${params.length + 1}`;
+  params.push(limit);
+  
+  const result = await query(sql, params);
+  relatedItems = result.rows;
+  
+  // If not enough results, get more
+  if (relatedItems.length < limit) {
+    const moreResult = await query(
+      "SELECT * FROM places WHERE status = 'active' AND id != $1 AND id NOT IN (SELECT id FROM places WHERE id = ANY($2::uuid[])) LIMIT $3",
+      [currentId, relatedItems.map(i => i.id), limit - relatedItems.length]
+    );
+    relatedItems = [...relatedItems, ...moreResult.rows];
+  }
+} else if (type === 'blog') {
+  let sql = "SELECT * FROM blog_posts WHERE is_published = true AND id != $1";
+  const params: any[] = [currentId];
+  
+  if (category) {
+    sql += " AND category = $2";
+    params.push(category);
+  }
+  
+  sql += ` ORDER BY published_at DESC LIMIT $${params.length + 1}`;
+  params.push(limit);
+  
+  const result = await query(sql, params);
+  relatedItems = result.rows;
+} else if (type === 'historical') {
+  const result = await query(
+    "SELECT * FROM historical_sites WHERE status = 'active' AND id != $1 LIMIT $2",
+    [currentId, limit]
+  );
+  relatedItems = result.rows;
+}
+
+const getItemLink = (item: any) => {
+  switch (type) {
+    case 'historical':
+      return `/tarihi-yerler/${item.slug}`;
+    case 'blog':
+      return `/blog/${item.slug}`;
+    case 'place':
+    default:
+      return `/places/${item.slug}`;
+  }
+};
+
+const getItemImage = (item: any) => {
+  if (type === 'blog') {
+    return item.cover_image || '/images/placeholder-blog.jpg';
+  }
+  return item.images?.[0] || '/images/placeholder-place.jpg';
+};
+
+const titles = {
+  place: 'Benzer Mekanlar',
+  blog: 'İlgili Yazılar',
+  historical: 'Diğer Tarihi Yerler',
+};
+---
+
+{relatedItems.length > 0 && (
+  <section class="mt-12 pt-12 border-t border-gray-200 dark:border-gray-700">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-display font-bold text-gray-900 dark:text-white">{titles[type]}</h2>
+      <a 
+        href={type === 'place' ? '/places' : type === 'blog' ? '/blog' : '/tarihi-yerler'}
+        class="text-urfa-600 dark:text-urfa-400 hover:underline flex items-center gap-1"
+      >
+        Tümünü Gör <ArrowRight className="w-4 h-4" />
+      </a>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-6">
+      {relatedItems.map(item => (
+        <a 
+          href={getItemLink(item)}
+          class="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
+        >
+          <div class="aspect-video overflow-hidden">
+            <img 
+              src={getItemImage(item)}
+              alt={item.name || item.title}
+              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              loading="lazy"
+            />
+          </div>
+          <div class="p-4">
+            <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors line-clamp-1">
+              {item.name || item.title}
+            </h3>
+            {item.category && (
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 capitalize">{item.category}</p>
+            )}
+            {item.rating && (
+              <div class="flex items-center gap-1 mt-2">
+                <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <span class="text-sm text-gray-600 dark:text-gray-400">{item.rating}</span>
+              </div>
+            )}
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+)}

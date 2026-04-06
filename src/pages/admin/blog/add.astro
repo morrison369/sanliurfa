@@ -1,0 +1,292 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { FileText, Upload, Tag, Calendar, User, Eye, Save } from 'lucide-react';
+
+const seo = {
+  title: 'Yeni Blog Yazısı - Admin Panel',
+  description: 'Blog yazısı ekle',
+  noindex: true
+};
+
+const categories = [
+  'Gezi Rehberi',
+  'Gastronomi',
+  'Tarih',
+  'Kültür',
+  'Etkinlikler',
+  'Pratik Bilgiler',
+];
+
+const authors = [
+  { id: '1', name: 'Ahmet Yılmaz' },
+  { id: '2', name: 'Ayşe Kaya' },
+  { id: '3', name: 'Mehmet Demir' },
+];
+
+const isEdit = false;
+const post = null;
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Admin Header -->
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <a href="/admin/blog" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              ← Geri
+            </a>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">
+              {isEdit ? 'Yazıyı Düzenle' : 'Yeni Yazı'}
+            </h1>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn-secondary flex items-center gap-2">
+              <Eye className="w-4 h-4" />
+              Önizleme
+            </button>
+            <button type="submit" form="blog-form" class="btn-primary flex items-center gap-2">
+              <Save className="w-4 h-4" />
+              Yayınla
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container-custom py-8">
+      <form id="blog-form" action="/api/blog/create" method="POST" class="grid lg:grid-cols-3 gap-8" enctype="multipart/form-data">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Basic Info -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Yazı Bilgileri</h2>
+            
+            <div class="space-y-4">
+              <div>
+                <label for="title" class="label dark:text-gray-300">Başlık *</label>
+                <input 
+                  type="text" 
+                  id="title" 
+                  name="title" 
+                  required
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="Yazı başlığı"
+                  value={post?.title || ''}
+                />
+              </div>
+              
+              <div>
+                <label for="excerpt" class="label dark:text-gray-300">Özet *</label>
+                <textarea 
+                  id="excerpt" 
+                  name="excerpt" 
+                  rows="2" 
+                  required
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+                  placeholder="Yazının kısa özeti (150-200 karakter)"
+                  maxlength="200"
+                >{post?.excerpt || ''}</textarea>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">SEO için önemli, 150-200 karakter önerilir.</p>
+              </div>
+              
+              <div>
+                <label for="content" class="label dark:text-gray-300">İçerik *</label>
+                <textarea 
+                  id="content" 
+                  name="content" 
+                  rows="15" 
+                  required
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none font-mono"
+                  placeholder="Yazı içeriği... (HTML veya Markdown desteklenir)"
+                >{post?.content || ''}</textarea>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  HTML etiketleri desteklenir: &lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;img&gt;, vb.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- SEO -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">SEO Ayarları</h2>
+            
+            <div class="space-y-4">
+              <div>
+                <label for="meta_title" class="label dark:text-gray-300">Meta Başlık</label>
+                <input 
+                  type="text" 
+                  id="meta_title" 
+                  name="meta_title"
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="SEO başlığı (boş bırakılırsa yazı başlığı kullanılır)"
+                />
+              </div>
+              
+              <div>
+                <label for="meta_description" class="label dark:text-gray-300">Meta Açıklama</label>
+                <textarea 
+                  id="meta_description" 
+                  name="meta_description" 
+                  rows="2"
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+                  placeholder="SEO açıklaması (150-160 karakter)"
+                  maxlength="160"
+                ></textarea>
+              </div>
+              
+              <div>
+                <label for="slug" class="label dark:text-gray-300">URL Slug</label>
+                <div class="flex">
+                  <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
+                    /blog/
+                  </span>
+                  <input 
+                    type="text" 
+                    id="slug" 
+                    name="slug"
+                    class="input rounded-l-none dark:bg-gray-700 dark:border-gray-600 dark:text-white flex-1"
+                    placeholder="yazi-basligi"
+                  />
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Boş bırakılırsa başlıktan otomatik oluşturulur.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <aside class="space-y-6">
+          <!-- Publish Settings -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayın Ayarları</h3>
+            
+            <div class="space-y-4">
+              <div>
+                <label for="status" class="label dark:text-gray-300">Durum</label>
+                <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <option value="draft">Taslak</option>
+                  <option value="published">Yayınla</option>
+                  <option value="scheduled">Zamanla</option>
+                </select>
+              </div>
+              
+              <div>
+                <label for="published_at" class="label dark:text-gray-300">Yayın Tarihi</label>
+                <input 
+                  type="datetime-local" 
+                  id="published_at" 
+                  name="published_at"
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+              
+              <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_featured" class="rounded border-gray-300 text-urfa-600" />
+                <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan yazı</span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Author & Category -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yazar ve Kategori</h3>
+            
+            <div class="space-y-4">
+              <div>
+                <label for="author_id" class="label dark:text-gray-300">Yazar</label>
+                <select id="author_id" name="author_id" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  {authors.map(author => (
+                    <option value={author.id}>{author.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label for="category" class="label dark:text-gray-300">Kategori</label>
+                <select id="category" name="category" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  {categories.map(cat => (
+                    <option value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Cover Image -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Kapak Görseli</h3>
+            
+            <div class="space-y-4">
+              <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-urfa-500 transition-colors">
+                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  Görsel yüklemek için tıklayın veya sürükleyin
+                </p>
+                <input 
+                  type="file" 
+                  name="cover_image" 
+                  accept="image/*"
+                  class="hidden"
+                  id="cover-image-input"
+                />
+                <label 
+                  for="cover-image-input" 
+                  class="inline-block px-4 py-2 bg-urfa-600 text-white rounded-lg text-sm cursor-pointer hover:bg-urfa-700 transition-colors"
+                >
+                  Dosya Seç
+                </label>
+              </div>
+              
+              <div>
+                <label for="cover_image_url" class="label dark:text-gray-300">veya URL</label>
+                <input 
+                  type="url" 
+                  id="cover_image_url" 
+                  name="cover_image_url"
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  placeholder="https://..."
+                />
+              </div>
+            </div>
+          </div>
+          
+          <!-- Tags -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Etiketler</h3>
+            
+            <input 
+              type="text" 
+              name="tags"
+              class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="Etiketleri virgülle ayırın"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Örn: Göbeklitepe, Tarih, Gezi
+            </p>
+          </div>
+        </aside>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    // Auto-generate slug from title
+    const titleInput = document.getElementById('title');
+    const slugInput = document.getElementById('slug');
+    
+    titleInput?.addEventListener('input', (e) => {
+      if (!slugInput.value) {
+        const slug = e.target.value
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .substring(0, 60);
+        slugInput.value = slug;
+      }
+    });
+  </script>
+</Layout>

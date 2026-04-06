@@ -1,0 +1,127 @@
+---
+import Layout from '../../../../../layouts/Layout.astro';
+import { Calendar, MapPin, Save, ArrowLeft } from 'lucide-react';
+import { queryOne } from '../../../../../lib/postgres';
+
+const { id } = Astro.params;
+
+const event = await queryOne('SELECT * FROM events WHERE id = $1', [id]);
+
+if (!event) {
+  return Astro.redirect('/admin/events');
+}
+
+const categories = [
+  { id: 'kultur-sanat', label: 'Kültür & Sanat' },
+  { id: 'gastronomi', label: 'Gastronomi' },
+  { id: 'tarih', label: 'Tarih' },
+  { id: 'muzik', label: 'Müzik' },
+  { id: 'spor', label: 'Spor' },
+  { id: 'egitim', label: 'Eğitim' },
+  { id: 'diger', label: 'Diğer' },
+];
+
+const formatDateTimeLocal = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toISOString().slice(0, 16);
+};
+
+const seo = {
+  title: `${event.title} - Düzenle - Admin Panel`,
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <a href="/admin/events" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              <ArrowLeft className="w-5 h-5" />
+            </a>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Etkinlik Düzenle</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container-custom py-8">
+      <form action={`/api/events/${id}/update`} method="POST" class="grid lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel Bilgiler</h2>
+            <div class="space-y-4">
+              <div>
+                <label for="title" class="label dark:text-gray-300">Etkinlik Adı *</label>
+                <input type="text" id="title" name="title" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={event.title} />
+              </div>
+              <div>
+                <label for="description" class="label dark:text-gray-300">Açıklama *</label>
+                <textarea id="description" name="description" rows="5" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none">{event.description}</textarea>
+              </div>
+              <div>
+                <label for="category" class="label dark:text-gray-300">Kategori *</label>
+                <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  {categories.map(cat => (
+                    <option value={cat.id} selected={cat.id === event.category}>{cat.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Tarih ve Konum</h2>
+            <div class="space-y-4">
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="start_date" class="label dark:text-gray-300">Başlangıç Tarihi *</label>
+                  <input type="datetime-local" id="start_date" name="start_date" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={formatDateTimeLocal(event.start_date)} />
+                </div>
+                <div>
+                  <label for="end_date" class="label dark:text-gray-300">Bitiş Tarihi</label>
+                  <input type="datetime-local" id="end_date" name="end_date" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={event.end_date ? formatDateTimeLocal(event.end_date) : ''} />
+                </div>
+              </div>
+              <div>
+                <label for="location" class="label dark:text-gray-300">Konum *</label>
+                <div class="relative">
+                  <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <input type="text" id="location" name="location" required class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={event.location} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <aside class="space-y-6">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
+            <label class="flex items-center gap-2 mb-3">
+              <input type="checkbox" name="is_featured" checked={event.is_featured} class="rounded border-gray-300 text-urfa-600" />
+              <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan etkinlik</span>
+            </label>
+            <label for="status" class="label dark:text-gray-300">Durum</label>
+            <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
+              <option value="draft" selected={event.status === 'draft'}>Taslak</option>
+              <option value="published" selected={event.status === 'published'}>Yayında</option>
+              <option value="cancelled" selected={event.status === 'cancelled'}>İptal Edildi</option>
+            </select>
+            <button type="submit" class="btn-primary w-full mt-4 flex items-center justify-center gap-2">
+              <Save className="w-4 h-4" />
+              Kaydet
+            </button>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görsel</h3>
+            <input type="url" name="image" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={event.image_url || ''} placeholder="https://example.com/image.jpg" />
+            {event.image_url && <img src={event.image_url} alt="" class="mt-3 w-full h-32 object-cover rounded-lg" />}
+          </div>
+        </aside>
+      </form>
+    </div>
+  </div>
+</Layout>

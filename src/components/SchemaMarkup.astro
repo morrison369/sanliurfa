@@ -1,0 +1,76 @@
+---
+// Schema.org structured data component
+interface Props {
+  type: 'Organization' | 'LocalBusiness' | 'Place' | 'Article' | 'Event' | 'BreadcrumbList' | 'WebSite' | 'FAQPage';
+  data: Record<string, any>;
+}
+
+const { type, data } = Astro.props;
+
+const baseSchema = {
+  '@context': 'https://schema.org',
+  '@type': type,
+};
+
+const schema = { ...baseSchema, ...data };
+
+// Type-specific required fields
+switch (type) {
+  case 'Organization':
+    schema.name = schema.name || 'Şanlıurfa.com';
+    schema.url = schema.url || 'https://sanliurfa.com';
+    schema.logo = schema.logo || 'https://sanliurfa.com/logo.png';
+    break;
+    
+  case 'LocalBusiness':
+    schema.name = schema.name;
+    schema.address = {
+      '@type': 'PostalAddress',
+      streetAddress: schema.address?.street,
+      addressLocality: schema.address?.city || 'Şanlıurfa',
+      addressCountry: 'TR',
+    };
+    schema.geo = schema.geo ? {
+      '@type': 'GeoCoordinates',
+      latitude: schema.geo.lat,
+      longitude: schema.geo.lng,
+    } : undefined;
+    break;
+    
+  case 'Place':
+    schema.name = schema.name;
+    schema.description = schema.description;
+    break;
+    
+  case 'Article':
+    schema.headline = schema.headline;
+    schema.author = {
+      '@type': 'Person',
+      name: schema.author?.name,
+    };
+    schema.publisher = {
+      '@type': 'Organization',
+      name: 'Şanlıurfa.com',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://sanliurfa.com/logo.png',
+      },
+    };
+    schema.datePublished = schema.datePublished;
+    schema.dateModified = schema.dateModified || schema.datePublished;
+    break;
+    
+  case 'Event':
+    schema.name = schema.name;
+    schema.startDate = schema.startDate;
+    schema.endDate = schema.endDate;
+    schema.location = {
+      '@type': 'Place',
+      name: schema.location?.name,
+      address: schema.location?.address,
+    };
+    break;
+}
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />

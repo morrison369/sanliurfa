@@ -1,0 +1,154 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { FileText, Plus, Search, Edit, Trash2, Eye, User } from 'lucide-react';
+import { query } from '../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/blog');
+}
+
+const postsResult = await query(
+  `SELECT bp.*, u.full_name as author_name 
+   FROM blog_posts bp 
+   LEFT JOIN users u ON bp.author_id = u.id 
+   ORDER BY bp.created_at DESC`
+);
+const posts = postsResult.rows;
+
+const statsResult = await query(
+  `SELECT 
+    COUNT(*) as total,
+    COUNT(*) FILTER (WHERE is_published = true) as published,
+    COUNT(*) FILTER (WHERE is_published = false) as draft,
+    COUNT(*) FILTER (WHERE is_featured = true) as featured
+   FROM blog_posts`
+);
+const stats = statsResult.rows[0];
+
+const seo = {
+  title: 'Blog Yönetimi - Admin Panel',
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <a href="/admin" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">← Geri</a>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Blog Yönetimi</h1>
+          </div>
+          <a href="/admin/blog/add" class="btn-primary flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Yeni Yazı
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container-custom py-8">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+          <p class="text-sm text-gray-600 dark:text-gray-400">Toplam Yazı</p>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+        </div>
+        <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
+          <p class="text-sm text-green-700 dark:text-green-400">Yayında</p>
+          <p class="text-2xl font-bold text-green-800 dark:text-green-300">{stats.published}</p>
+        </div>
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
+          <p class="text-sm text-yellow-700 dark:text-yellow-400">Taslak</p>
+          <p class="text-2xl font-bold text-yellow-800 dark:text-yellow-300">{stats.draft}</p>
+        </div>
+        <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-xl p-4 border border-urfa-200 dark:border-urfa-800">
+          <p class="text-sm text-urfa-700 dark:text-urfa-400">Öne Çıkan</p>
+          <p class="text-2xl font-bold text-urfa-800 dark:text-urfa-300">{stats.featured}</p>
+        </div>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Yazı</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Yazar</th>
+                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Durum</th>
+                <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {posts.map(post => (
+                <tr class="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <td class="py-4 px-4">
+                    <div class="flex items-start gap-3">
+                      <div class="w-10 h-10 bg-urfa-100 dark:bg-urfa-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-urfa-600 dark:text-urfa-400" />
+                      </div>
+                      <div>
+                        <p class="font-medium text-gray-900 dark:text-white text-sm">{post.title}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{post.excerpt}</p>
+                        {post.is_featured && (
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-urfa-100 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300 text-xs rounded mt-1">
+                            ⭐ Öne Çıkan
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-4 px-4">
+                    <div class="flex items-center gap-2">
+                      <User className="w-4 h-4 text-gray-400" />
+                      <span class="text-sm text-gray-700 dark:text-gray-300">{post.author_name || '-'}</span>
+                    </div>
+                  </td>
+                  <td class="py-4 px-4">
+                    <span class={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                      post.is_published 
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' 
+                        : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                    }`}>
+                      {post.is_published ? 'Yayında' : 'Taslak'}
+                    </span>
+                    {post.published_at && (
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {new Date(post.published_at).toLocaleDateString('tr-TR')}
+                      </p>
+                    )}
+                  </td>
+                  <td class="py-4 px-4">
+                    <div class="flex items-center justify-end gap-1">
+                      <a href={`/blog/${post.slug}`} target="_blank" class="p-2 text-gray-400 hover:text-urfa-600 transition-colors" title="Görüntüle">
+                        <Eye className="w-4 h-4" />
+                      </a>
+                      <a href={`/admin/blog/edit/${post.id}`} class="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Düzenle">
+                        <Edit className="w-4 h-4" />
+                      </a>
+                      <form method="POST" action={`/api/blog/${post.id}/delete`} class="inline" onsubmit="return confirm('Bu yazıyı silmek istediğinize emin misiniz?');">
+                        <button type="submit" class="p-2 text-gray-400 hover:text-red-600 transition-colors" title="Sil">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              
+              {posts.length === 0 && (
+                <tr>
+                  <td colspan="4" class="py-8 text-center text-gray-500 dark:text-gray-400">
+                    Henüz blog yazısı bulunmuyor.
+                    <a href="/admin/blog/add" class="text-urfa-600 hover:underline ml-1">İlk yazıyı ekle</a>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

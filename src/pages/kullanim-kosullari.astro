@@ -1,0 +1,123 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const seo = {
+  title: 'Kullanım Koşulları - Şanlıurfa.com',
+  description: 'Şanlıurfa.com kullanım koşulları ve kuralları.',
+};
+
+const lastUpdated = '1 Nisan 2025';
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Page Header -->
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-12">
+        <h1 class="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white mb-4">
+          Kullanım Koşulları
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400">
+          Son Güncelleme: {lastUpdated}
+        </p>
+      </div>
+    </div>
+    
+    <div class="container-custom py-12">
+      <div class="max-w-3xl mx-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 md:p-12">
+          <div class="prose dark:prose-invert max-w-none">
+            <p class="lead">
+              Şanlıurfa.com'u kullanarak aşağıdaki kullanım koşullarını kabul etmiş sayılırsınız. 
+              Lütfen bu koşulları dikkatlice okuyun.
+            </p>
+            
+            <h2>1. Hizmet Kapsamı</h2>
+            <p>
+              Şanlıurfa.com, Şanlıurfa şehri hakkında bilgi sunan bir platformdur. Hizmetlerimiz şunları içerir:
+            </p>
+            <ul>
+              <li>Mekan listeleme ve arama</li>
+              <li>Kullanıcı değerlendirmeleri ve yorumlar</li>
+              <li>Blog yazıları ve rehberler</li>
+              <li>Etkinlik duyuruları</li>
+              <li>Kullanıcı hesapları ve sosyal özellikler</li>
+            </ul>
+            
+            <h2>2. Üyelik ve Hesap Güvenliği</h2>
+            <p>
+              Platformumuzu kullanmak için bir hesap oluşturmanız gerekebilir. Hesap güvenliği ile ilgili sorumluluklarınız:
+            </p>
+            <ul>
+              <li>Doğru ve güncel bilgiler sağlamak</li>
+              <li>Şifrenizi güvende tutmak ve kimseyle paylaşmamak</li>
+              <li>Hesabınızda gerçekleşen tüm aktivitelerden sorumlu olmak</li>
+              <li>Yetkisiz erişim durumunda bizi bilgilendirmek</li>
+            </ul>
+            
+            <h2>3. Kullanıcı İçerikleri</h2>
+            <p>
+              Platforma eklediğiniz içerikler (yorumlar, değerlendirmeler, fotoğraflar) ile ilgili kurallar:
+            </p>
+            <ul>
+              <li>İçerikleriniz gerçek ve doğru olmalıdır</li>
+              <li>Hakaret, ayrımcılık veya nefret söylemi içeremez</li>
+              <li>Telif hakkı olan materyalleri izinsiz kullanamazsınız</li>
+              <li>Spam veya yanlış bilgi yayamazsınız</li>
+              <li>Reklam veya promosyon amaçlı içerikler yönetici onayı gerektirir</li>
+            </ul>
+            
+            <h2>4. Fikri Mülkiyet</h2>
+            <p>
+              Şanlıurfa.com'un tüm içeriği, logosu, tasarımı ve yazılımı fikri mülkiyet koruması altındadır. 
+              İzinsiz kopyalama, dağıtma veya ticari kullanım yasaktır.
+            </p>
+            
+            <h2>5. Sorumluluk Sınırlamaları</h2>
+            <p>
+              Platformumuz "olduğu gibi" sunulmaktadır. Aşağıdaki durumlarda sorumluluk kabul etmeyiz:
+            </p>
+            <ul>
+              <li>Kullanıcılar tarafından sağlanan bilgilerin doğruluğu</li>
+              <li>Platformun kesintisiz veya hatasız çalışması</li>
+              <li>Üçüncü taraf bağlantıları ve içerikleri</li>
+              <li>Mekanlar hakkındaki kullanıcı değerlendirmeleri</li>
+            </ul>
+            
+            <h2>6. Hesap Sonlandırma</h2>
+            <p>
+              Aşağıdaki durumlarda hesabınızı askıya alabilir veya sonlandırabiliriz:
+            </p>
+            <ul>
+              <li>Kullanım koşullarının ihlali</li>
+              <li>Sahte veya yanıltıcı bilgi sağlama</li>
+              <li>Diğer kullanıcılara zarar verme girişimleri</li>
+              <li>Uzun süreli inaktivite</li>
+            </ul>
+            
+            <h2>7. Değişiklikler</h2>
+            <p>
+              Bu kullanım koşullarını zaman zaman güncelleyebiliriz. Önemli değişikliklerde e-posta ile bilgilendirme yapılacaktır. 
+              Değişikliklerden sonra platformu kullanmaya devam etmeniz, yeni koşulları kabul ettiğiniz anlamına gelir.
+            </p>
+            
+            <h2>8. Uygulanacak Hukuk</h2>
+            <p>
+              Bu kullanım koşulları Türkiye Cumhuriyeti yasalarına tabidir. 
+              Oluşabilecek uyuşmazlıklarda Şanlıurfa Mahkemeleri yetkilidir.
+            </p>
+            
+            <h2>9. İletişim</h2>
+            <p>
+              Kullanım koşulları hakkında sorularınız için:
+            </p>
+            <p>
+              <strong>E-posta:</strong> legal@sanliurfa.com<br>
+              <strong>Adres:</strong> Haliliye, Şanlıurfa, Türkiye
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

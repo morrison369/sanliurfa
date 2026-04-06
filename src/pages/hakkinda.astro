@@ -1,0 +1,159 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { MapPin, Users, Star, Award, Heart, Globe } from 'lucide-react';
+
+const seo = {
+  title: 'Hakkımızda - Şanlıurfa.com Ekibi',
+  description: 'Şanlıurfa.com, Şanlıurfa\'nın en kapsamlı şehir rehberi olarak 2025 yılında kurulmuştur. Amacımız şehri keşfetmenin en iyi yolunu sunmak.',
+};
+
+const values = [
+  {
+    icon: Heart,
+    title: 'Tutku',
+    description: 'Şanlıurfa\'ya olan sevgimizle her içeriği özenle hazırlıyoruz.',
+  },
+  {
+    icon: Users,
+    title: 'Topluluk',
+    description: 'Kullanıcılarımızın değerlendirmeleriyle daha iyi hizmet sunuyoruz.',
+  },
+  {
+    icon: Star,
+    title: 'Kalite',
+    description: 'Sadece en iyi mekanları ve deneyimleri öneriyoruz.',
+  },
+  {
+    icon: Globe,
+    title: 'Erişilebilirlik',
+    description: 'Şehrin tüm güzelliklerini herkese ulaştırmayı hedefliyoruz.',
+  },
+];
+
+const stats = [
+  { value: '500+', label: 'Mekan' },
+  { value: '50K+', label: 'Kullanıcı' },
+  { value: '10K+', label: 'Yorum' },
+  { value: '100+', label: 'Blog Yazısı' },
+];
+---
+
+<Layout seo={seo}>
+  <!-- Hero Section -->
+  <section class="relative py-24 bg-urfa-900 overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+      <img 
+        src="/images/historical/balikligol.jpg" 
+        alt=""
+        class="w-full h-full object-cover"
+      />
+    </div>
+    <div class="relative container-custom text-center">
+      <h1 class="text-4xl lg:text-6xl font-display font-bold text-white mb-6">
+        Hakkımızda
+      </h1>
+      <p class="text-xl text-urfa-100 max-w-2xl mx-auto">
+        Şanlıurfa'yı keşfetmenin en iyi yolunu sunmak için çalışıyoruz.
+      </p>
+    </div>
+  </section>
+  
+  <!-- Mission Section -->
+  <section class="section bg-white dark:bg-gray-900">
+    <div class="container-custom">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <span class="text-urfa-600 dark:text-urfa-400 font-medium">Misyonumuz</span>
+          <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 dark:text-white mt-2 mb-4">
+            Şanlıurfa'yı Dünyaya Tanıtmak
+          </h2>
+          <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+            Şanlıurfa.com, 2025 yılında Şanlıurfa'nın eşsiz güzelliklerini, 
+            tarihi zenginliklerini ve lezzetlerini daha geniş kitlelere ulaştırmak 
+            amacıyla kurulmuştur.
+          </p>
+          <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+            12.000 yıllık tarihe sahip bu kadim şehrin, Göbeklitepe'sinden 
+            Balıklıgölü'ne, Harran'ından Halfeti'sine kadar tüm değerlerini 
+            modern bir platformda bir araya getiriyoruz.
+          </p>
+          <p class="text-gray-600 leading-relaxed">
+            Amacımız, yerel halk ve ziyaretçiler için en güncel ve doğru bilgiyi 
+            sunarak, Şanlıurfa deneyimini en üst seviyeye çıkarmaktır.
+          </p>
+        </div>
+        <div class="relative">
+          <img 
+            src="/images/historical/gobeklitepe.jpg" 
+            alt="Göbeklitepe"
+            class="rounded-2xl shadow-2xl"
+          />
+          <div class="absolute -bottom-6 -right-6 bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 hidden lg:block">
+            <div class="text-4xl font-bold text-urfa-600 dark:text-urfa-400">2025</div>
+            <div class="text-gray-600 dark:text-gray-400">Kuruluş Yılı</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Stats Section -->
+  <section class="py-16 bg-urfa-50 dark:bg-gray-800">
+    <div class="container-custom">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        {stats.map((stat) => (
+          <div class="text-center">
+            <div class="text-4xl font-bold text-urfa-600 dark:text-urfa-400">{stat.value}</div>
+            <div class="text-gray-600 dark:text-gray-400 mt-1">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+  
+  <!-- Values Section -->
+  <section class="section bg-white dark:bg-gray-900">
+    <div class="container-custom">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <span class="text-urfa-600 dark:text-urfa-400 font-medium">Değerlerimiz</span>
+        <h2 class="section-title dark:text-white">Bizi Biz Yapanlar</h2>
+        <p class="section-subtitle dark:text-gray-400">
+          Her kararımızda ve her içeriğimizde önceliğimiz kullanıcılarımızdır.
+        </p>
+      </div>
+      
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {values.map((value) => (
+          <div class="text-center p-6 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-urfa-50 dark:hover:bg-urfa-900/20 transition-colors">
+            <div class="w-14 h-14 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <value.icon className="w-7 h-7 text-urfa-600 dark:text-urfa-400" />
+            </div>
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{value.title}</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">{value.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+  
+  <!-- CTA Section -->
+  <section class="section bg-urfa-900">
+    <div class="container-custom text-center">
+      <h2 class="text-3xl font-display font-bold text-white mb-4">
+        Bize Katılın
+      </h2>
+      <p class="text-urfa-100 max-w-xl mx-auto mb-8">
+        Şanlıurfa.com olarak büyüyen ekibimizin bir parçası olun veya 
+        mekanınızı platformumuza ekleyin.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/iletisim" class="btn-accent">
+          İletişime Geç
+        </a>
+        <a href="/places/ekle" class="btn bg-white/10 text-white hover:bg-white/20">
+          Mekan Ekle
+        </a>
+      </div>
+    </div>
+  </section>
+</Layout>

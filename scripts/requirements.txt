@@ -1,0 +1,44 @@
+# Şanlıurfa.com İçerik Çekme Scriptleri için Python Bağımlılıkları
+
+# HTTP istekleri
+requests>=2.31.0
+urllib3>=2.1.0
+
+# Web Scraping
+beautifulsoup4>=4.12.2
+lxml>=4.9.3
+html5lib>=1.1
+
+# Wikipedia API
+wikipedia-api>=0.6.0
+
+# JSON işleme
+jsonschema>=4.20.0
+
+# Görsel indirme
+pillow>=10.2.0
+
+# Veri işleme
+pandas>=2.1.4
+
+# Geopy - Koordinat işlemleri
+geopy>=2.4.1
+
+# Supabase Python Client
+supabase>=2.3.4
+
+# Progress bar
+tqdm>=4.66.1
+
+# Renkli çıktı
+colorama>=0.4.6
+
+# Python-dotenv
+dotenv-python>=0.0.1
+python-dotenv>=1.0.0
+
+# Web scraping için ek
+selenium>=4.16.0
+webdriver-manager>=4.0.1
+playwright>=1.40.0
+fake-useragent>=1.4.0

@@ -1,0 +1,108 @@
+---
+import { Award, Star, Trophy, Medal } from 'lucide-react';
+import { query, queryOne } from '../lib/postgres';
+
+interface Props {
+  userId: string;
+  compact?: boolean;
+}
+
+const { userId, compact = false } = Astro.props;
+
+// Fetch user badges
+const userBadgesResult = await query(
+  `SELECT ub.*, b.name, b.description, b.icon, b.color 
+   FROM user_badges ub 
+   JOIN badges b ON ub.badge_id = b.id 
+   WHERE ub.user_id = $1 
+   ORDER BY ub.earned_at DESC`,
+  [userId]
+);
+const userBadges = userBadgesResult.rows;
+
+// Fetch user level
+const userProfile = await queryOne('SELECT points, level FROM users WHERE id = $1', [userId]);
+
+const userLevel = await queryOne('SELECT * FROM user_levels WHERE level = $1', [userProfile?.level || 1]);
+---
+
+<div class={compact ? '' : 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6'}>
+  {!compact && (
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+      <Award className="w-5 h-5 text-yellow-500" />
+      Rozetler ve Seviye
+    </h3>
+  )}
+  
+  <!-- Level Info -->
+  {userLevel && (
+    <div class="flex items-center gap-4 mb-6 p-4 bg-gradient-to-r from-urfa-50 to-urfa-100 dark:from-urfa-900/20 dark:to-urfa-800/20 rounded-xl">
+      <div class="text-4xl">{userLevel.icon}</div>
+      <div class="flex-1">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-medium text-urfa-700 dark:text-urfa-400">Seviye {userLevel.level}</span>
+          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+        </div>
+        <h4 class="font-bold text-gray-900 dark:text-white">{userLevel.name}</h4>
+        <div class="mt-2">
+          <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+            <span>{userProfile?.points || 0} XP</span>
+            <span>{userLevel.max_points} XP</span>
+          </div>
+          <div class="h-2 bg-white dark:bg-gray-700 rounded-full overflow-hidden">
+            <div 
+              class="h-full bg-urfa-600 rounded-full transition-all"
+              style={`width: ${Math.min(100, ((userProfile?.points || 0) - userLevel.min_points) / (userLevel.max_points - userLevel.min_points) * 100)}%`}
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+  
+  <!-- Badges -->
+  {userBadges && userBadges.length > 0 ? (
+    <div class={compact ? 'flex flex-wrap gap-2' : 'grid grid-cols-2 sm:grid-cols-3 gap-3'}>
+      {userBadges.map((ub: any) => (
+        <div class="group relative" title={ub.description}>
+          <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+            <div 
+              class="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+              style={`background-color: ${ub.color}20; color: ${ub.color}`}
+            >
+              {ub.icon}
+            </div>
+            {!compact && (
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-gray-900 dark:text-white text-sm truncate">{ub.name}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {new Date(ub.earned_at).toLocaleDateString('tr-TR')}
+                </p>
+              </div>
+            )}
+          </div>
+          
+          <!-- Tooltip -->
+          <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-10">
+            {ub.description}
+            <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+      <Trophy className="w-8 h-8 mx-auto mb-2 opacity-50" />
+      <p class="text-sm">Henüz rozet kazanılmadı</p>
+    </div>
+  )}
+  
+  {!compact && (
+    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+      <a href="/profil/rozetler" class="text-sm text-urfa-600 dark:text-urfa-400 hover:underline flex items-center justify-center gap-1">
+        <Medal className="w-4 h-4" />
+        Tüm Rozetleri Gör
+      </a>
+    </div>
+  )}
+</div>

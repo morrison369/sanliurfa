@@ -1,0 +1,229 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Utensils, Flame, ChefHat, ArrowRight, Star, MapPin } from 'lucide-react';
+import { query } from '../../lib/postgres';
+
+const result = await query(
+  "SELECT * FROM places WHERE category = 'restaurant' AND status = 'active' ORDER BY rating DESC LIMIT 6"
+);
+const restaurants = result.rows;
+
+const countResult = await query(
+  "SELECT COUNT(*) FROM places WHERE category = 'restaurant' AND status = 'active'"
+);
+const restaurantCount = parseInt(countResult.rows[0]?.count || '0');
+
+const seo = {
+  title: 'Gastronomi Rehberi - Urfa Lezzetleri',
+  description: 'Şanlıurfa mutfağının eşsiz lezzetlerini keşfedin. Ciğer kebabı, çiğ köfte, isot ve daha fazlası.',
+};
+
+const featuredFoods = [
+  {
+    id: 'urfa-kebabi',
+    name: 'Urfa Kebabı',
+    description: 'Baharatlı kıymanın odun ateşinde pişirilmesiyle hazırlanan, dünyaca ünlü efsane lezzet.',
+    image: '/images/foods/urfa-kebabi.jpg',
+    isSpicy: false,
+    difficulty: 'Zor',
+    rating: 4.9,
+  },
+  {
+    id: 'cig-kofte',
+    name: 'Çiğ Köfte',
+    description: 'İsot ve bulgurun karataşta yoğrulmasıyla yapılan geleneksel lezzet. UNESCO Somut Olmayan Kültür Mirası.',
+    image: '/images/foods/cig-kofte.jpg',
+    isSpicy: true,
+    difficulty: 'Çok Zor',
+    rating: 4.8,
+  },
+  {
+    id: 'isot',
+    name: 'Urfa İsotu',
+    description: 'Güneşte kurutulmuş, yağda kavrulmuş, Şanlıurfa\'ya özgü eşsiz baharat.',
+    image: '/images/foods/isot.jpg',
+    isSpicy: true,
+    difficulty: 'Orta',
+    rating: 4.9,
+  },
+  {
+    id: 'sillik-tatlisi',
+    name: 'Şıllık Tatlısı',
+    description: 'Cevizli, kremalı geleneksel Urfa tatlısı. İnce hamur ve özel şerbetle hazırlanır.',
+    image: '/images/foods/sillik-tatlisi.jpg',
+    isSpicy: false,
+    difficulty: 'Zor',
+    rating: 4.7,
+  },
+];
+---
+
+<Layout seo={seo}>
+  <section class="relative py-24 lg:py-32 bg-gradient-to-br from-urfa-800 to-urfa-900 overflow-hidden">
+    <div class="absolute inset-0 opacity-10">
+      <img src="/images/foods/pattern.jpg" alt="" class="w-full h-full object-cover" />
+    </div>
+    <div class="relative container-custom">
+      <div class="max-w-3xl">
+        <span class="inline-flex items-center gap-2 px-4 py-2 bg-isot-500/20 rounded-full text-isot-300 text-sm mb-6">
+          <ChefHat className="w-4 h-4" />
+          2029 Gastronomi Şehri Adayı
+        </span>
+        <h1 class="text-4xl lg:text-6xl font-display font-bold text-white mb-6">
+          Şanlıurfa<br />
+          <span class="text-urfa-200">Gastronomi Rehberi</span>
+        </h1>
+        <p class="text-xl text-urfa-100 mb-8 leading-relaxed">
+          UNESCO Gastronomi Şehri adayı Şanlıurfa'nın dünyaca ünlü mutfağını keşfedin.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a href="#yemekler" class="btn-accent">
+            Lezzetleri Keşfet
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </a>
+          <a href="#restoranlar" class="btn bg-white/10 text-white hover:bg-white/20">
+            En İyi Restoranlar
+          </a>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+        <div class="text-center">
+          <div class="text-4xl font-bold text-white">100+</div>
+          <div class="text-urfa-200">Yöresel Yemek</div>
+        </div>
+        <div class="text-center">
+          <div class="text-4xl font-bold text-white">{restaurantCount}+</div>
+          <div class="text-urfa-200">Restoran</div>
+        </div>
+        <div class="text-center">
+          <div class="text-4xl font-bold text-white">12</div>
+          <div class="text-urfa-200">Yıllık Festival</div>
+        </div>
+        <div class="text-center">
+          <div class="text-4xl font-bold text-white">4.9</div>
+          <div class="text-urfa-200">Ortalama Puan</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section id="yemekler" class="section bg-white dark:bg-gray-900">
+    <div class="container-custom">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <span class="inline-flex items-center gap-2 text-isot-600 font-medium mb-2">
+          <Utensils className="w-5 h-5" />
+          Yöresel Lezzetler
+        </span>
+        <h2 class="section-title dark:text-white">Efsane Lezzetler</h2>
+        <p class="section-subtitle dark:text-gray-400">
+          Şanlıurfa mutfağının vazgeçilmez lezzetlerini keşfedin.
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {featuredFoods.map((food) => (
+          <article class="card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden group">
+            <a href={`/gastronomi/${food.id}`}>
+              <div class="relative aspect-square overflow-hidden">
+                <img 
+                  src={food.image}
+                  alt={food.name}
+                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                
+                {food.isSpicy && (
+                  <div class="absolute top-3 left-3">
+                    <span class="badge bg-isot-600 text-white flex items-center gap-1">
+                      <Flame className="w-3 h-3" />
+                      Acılı
+                    </span>
+                  </div>
+                )}
+                
+                <div class="absolute bottom-0 left-0 right-0 p-4">
+                  <h3 class="font-display font-bold text-xl text-white">{food.name}</h3>
+                  <div class="flex items-center gap-3 mt-2 text-sm text-white/80">
+                    <span class="flex items-center gap-1">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      {food.rating}
+                    </span>
+                    <span>•</span>
+                    <span>{food.difficulty}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="p-4">
+                <p class="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">{food.description}</p>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+  
+  <section id="restoranlar" class="section bg-gray-50 dark:bg-gray-800">
+    <div class="container-custom">
+      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-10">
+        <div>
+          <span class="inline-flex items-center gap-2 text-urfa-600 font-medium mb-2">
+            <ChefHat className="w-5 h-5" />
+            Restoranlar
+          </span>
+          <h2 class="section-title dark:text-white">En İyi Restoranlar</h2>
+          <p class="section-subtitle max-w-2xl dark:text-gray-400">
+            Usta ellerden çıkan, geleneksel tariflerle hazırlanan lezzetleri sunan en iyi restoranlar.
+          </p>
+        </div>
+        <a href="/places?category=restaurant" class="btn-outline inline-flex items-center gap-2">
+          Tüm Restoranları Gör
+          <ArrowRight className="w-4 h-4" />
+        </a>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {restaurants?.map((restaurant) => (
+          <article class="card-hover bg-white dark:bg-gray-800 rounded-xl overflow-hidden group">
+            <a href={`/places/${restaurant.slug}`}>
+              <div class="relative aspect-video overflow-hidden">
+                <img 
+                  src={restaurant.images?.[0] || '/images/placeholder-place.jpg'}
+                  alt={restaurant.name}
+                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
+                />
+                <div class="absolute top-3 right-3">
+                  <div class="flex items-center gap-1 bg-white/90 dark:bg-gray-800/90 px-2 py-1 rounded-lg">
+                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    <span class="font-semibold text-sm text-gray-900 dark:text-white">{restaurant.rating || '4.5'}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="p-5">
+                <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors">
+                  {restaurant.name}
+                </h3>
+                <p class="text-sm text-urfa-600 dark:text-urfa-400 mt-1 flex items-center gap-1">
+                  <MapPin className="w-3 h-3" />
+                  {restaurant.address}
+                </p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  {restaurant.review_count || 0} değerlendirme
+                </p>
+              </div>
+            </a>
+          </article>
+        ))}
+        
+        {(!restaurants || restaurants.length === 0) && (
+          <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
+            Henüz restoran bulunmuyor.
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+</Layout>
