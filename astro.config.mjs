@@ -11,6 +11,7 @@ export default defineConfig({
   output: 'server',
   adapter: node({
     mode: 'standalone',
+    port: 6000,
   }),
   integrations: [
     tailwind(),
