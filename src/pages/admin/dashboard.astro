@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AdminDashboard from '../../components/admin/AdminDashboard';
+
+const seo = {
+  title: 'Admin Dashboard - Şanlıurfa.com',
+  description: 'Sistem metrikleri ve performans monitoring',
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20">
+    <AdminDashboard client:load />
+  </div>
+</Layout>

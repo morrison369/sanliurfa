@@ -52,7 +52,7 @@ export const NAVIGATION = {
 export const SEO = {
   titleTemplate: '%s | Şanlıurfa.com',
   defaultTitle: 'Şanlıurfa.com - Tarihin Sıfır Noktası',
-  defaultDescription: 'Şanlıurfa şehir rehberi. Tarihi yerler, mekanlar, etkinlikler, gastronomi ve daha fazlası. Göbeklitepe, Balıklıgöl ve Şanlıurfa''nın tüm güzellikleri.',
+  defaultDescription: 'Şanlıurfa şehir rehberi. Tarihi yerler, mekanlar, etkinlikler, gastronomi ve daha fazlası. Göbeklitepe, Balıklıgöl ve Şanlıurfa\'nın tüm güzellikleri.',
   keywords: [
     'Şanlıurfa',
     'Göbeklitepe',

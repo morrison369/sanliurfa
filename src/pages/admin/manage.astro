@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AdminManager from '../../components/admin/AdminManager';
+
+const seo = {
+  title: 'Yönetim Paneli - Şanlıurfa.com',
+  description: 'Yerler, yorumlar, kullanıcıları yönet',
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20">
+    <AdminManager client:load />
+  </div>
+</Layout>

@@ -1,6 +1,18 @@
-// API: Mekan listesi (PostgreSQL)
+// API: Mekan listesi (PostgreSQL + Redis cache)
 import type { APIRoute } from 'astro';
 import { query, insert } from '../../../lib/postgres';
+import { getCache, setCache, deleteCache } from '../../../lib/cache';
+
+/**
+ * Generate cache key for places list query
+ */
+function generatePlacesCacheKey(category?: string | null, search?: string | null, limit = 20, offset = 0): string {
+  const parts = ['places:list'];
+  if (category) parts.push(`cat:${category}`);
+  if (search) parts.push(`search:${search.substring(0, 20)}`);
+  parts.push(`limit:${limit}`, `offset:${offset}`);
+  return parts.join(':');
+}
 
 export const GET: APIRoute = async ({ url }) => {
   try {
@@ -11,6 +23,21 @@ export const GET: APIRoute = async ({ url }) => {
     const offset = parseInt(params.get('offset') || '0');
     const featured = params.get('featured') === 'true';
 
+    // Generate cache key
+    const cacheKey = generatePlacesCacheKey(category, search, limit, offset);
+
+    // Try to get from cache (skip cache if featured=true for real-time results)
+    if (!featured) {
+      const cached = await getCache<{ data: any[]; count: number; pagination: any }>(cacheKey);
+      if (cached) {
+        return new Response(JSON.stringify(cached), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }
+        });
+      }
+    }
+
+    // Build query
     let sql = 'SELECT * FROM places WHERE status = $1';
     let countSql = 'SELECT COUNT(*) FROM places WHERE status = $1';
     const values: any[] = ['active'];
@@ -38,25 +65,33 @@ export const GET: APIRoute = async ({ url }) => {
     sql += ` ORDER BY rating DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     values.push(limit, offset);
 
+    // Fetch from database
     const [dataResult, countResult] = await Promise.all([
       query(sql, values),
-      query(countSql, values.slice(0, paramIndex - 1)),
+      query(countSql, values.slice(0, paramIndex - 1))
     ]);
 
     const count = parseInt(countResult.rows[0]?.count || '0');
 
-    return new Response(
-      JSON.stringify({ 
-        data: dataResult.rows, 
-        count,
-        pagination: {
-          limit,
-          offset,
-          hasMore: offset + limit < count
-        }
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    const responseData = {
+      data: dataResult.rows,
+      count,
+      pagination: {
+        limit,
+        offset,
+        hasMore: offset + limit < count
+      }
+    };
+
+    // Cache the result for 5 minutes
+    if (!featured) {
+      await setCache(cacheKey, responseData, 300);
+    }
+
+    return new Response(JSON.stringify(responseData), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }
+    });
   } catch (err) {
     console.error('Places fetch error:', err);
     return new Response(
@@ -66,15 +101,38 @@ export const GET: APIRoute = async ({ url }) => {
   }
 };
 
+/**
+ * Invalidate all places list caches when a new place is created
+ */
+async function invalidatePlacesListCache(): Promise<void> {
+  // Clear the main list caches by deleting pattern
+  // This is a simple approach - in production, you might want to be more selective
+  try {
+    // Delete common cache keys
+    const commonCaches = [
+      'places:list:*',
+      'places:list:cat:*',
+      'places:list:search:*'
+    ];
+
+    for (const pattern of commonCaches) {
+      await deleteCache(pattern);
+    }
+  } catch (error) {
+    console.warn('Failed to invalidate places cache:', error);
+    // Continue anyway - cache invalidation is not critical
+  }
+}
+
 // Create new place
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const body = await request.json();
-    
+
     // Check authentication
     if (!locals.isAdmin) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }), 
+        JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -83,8 +141,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       ...body,
       status: 'active',
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     });
+
+    // Invalidate places list cache
+    await invalidatePlacesListCache();
 
     return new Response(
       JSON.stringify({ data, message: 'Mekan başarıyla eklendi' }),

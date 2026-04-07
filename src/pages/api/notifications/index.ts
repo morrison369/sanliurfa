@@ -1,57 +1,33 @@
 import type { APIRoute } from 'astro';
-import { query } from '../../../lib/postgres';
+import { getUnreadNotifications } from '../../../lib/notifications-queue';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { recordRequest } from '../../../lib/metrics';
+import { logger } from '../../../lib/logging';
 
-// Get user notifications
-export const GET: APIRoute = async ({ locals }) => {
-  const user = locals.user;
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
-
-  try {
-    const dataResult = await query(
-      'SELECT * FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50',
-      [user.id]
-    );
-
-    const countResult = await query(
-      'SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = false',
-      [user.id]
-    );
-
-    return new Response(JSON.stringify({ 
-      data: dataResult.rows, 
-      unreadCount: parseInt(countResult.rows[0]?.count || '0') 
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
-};
-
-// Create notification (admin only)
-export const POST: APIRoute = async ({ request, locals }) => {
-  const user = locals.user;
-  if (!user || !locals.isAdmin) {
-    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
-  }
+export const GET: APIRoute = async ({ request, locals }) => {
+  const requestId = getRequestId({ request } as any);
+  const startTime = Date.now();
+  logger.setRequestId(requestId);
 
   try {
-    const body = await request.json();
-    const { user_id, type, title, message, data } = body;
+    if (!locals.user?.id) {
+      recordRequest('GET', '/api/notifications', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Kimlik dogrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    }
 
-    const result = await query(
-      'INSERT INTO notifications (user_id, type, title, message, data, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [user_id, type, title, message, JSON.stringify(data), new Date().toISOString()]
-    );
+    const url = new URL(request.url);
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
 
-    return new Response(JSON.stringify({ success: true, notification: result.rows[0] }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    const notifications = await getUnreadNotifications(locals.user.id, limit);
+
+    const duration = Date.now() - startTime;
+    recordRequest('GET', '/api/notifications', HttpStatus.OK, duration);
+
+    return apiResponse({ notifications, count: notifications.length }, HttpStatus.OK, requestId);
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    recordRequest('GET', '/api/notifications', HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    logger.error('Failed to get notifications', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Ichsel sunucu hatasi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

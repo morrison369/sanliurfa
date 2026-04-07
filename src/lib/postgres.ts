@@ -1,41 +1,131 @@
 import pg from 'pg';
 const { Pool } = pg;
+import { metricsCollector, performanceThresholds } from './metrics';
+import { logger } from './logging';
 
-// PostgreSQL bağlantı havuzu
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://sanliurfa_user:CHANGE_ME_DB_PASSWORD@localhost:5432/sanliurfa',
-  ssl: false,
+// Get DATABASE_URL from environment
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is required but not set');
+}
+
+// PostgreSQL connection pool
+export const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   max: 20,
+  min: 2,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
 });
 
-// Bağlantı hatalarını logla
 pool.on('error', (err) => {
   console.error('PostgreSQL pool error:', err);
 });
 
-// SQL sorgu fonksiyonu
+/**
+ * Update database pool status metrics
+ */
+export function updatePoolStatus(): void {
+  const poolState = (pool as any)._clients || [];
+  const idleCount = (pool as any)._idle ? (pool as any)._idle.length : 0;
+  const totalConnections = poolState.length;
+  const activeConnections = totalConnections - idleCount;
+  const waitingRequests = (pool as any)._waitingCount || 0;
+
+  metricsCollector.setPoolStatus({
+    totalConnections,
+    activeConnections,
+    idleConnections: idleCount,
+    waitingRequests
+  });
+}
+
+// Update pool status periodically
+setInterval(updatePoolStatus, 30000); // Every 30 seconds
+
+// ==================== QUERY HELPERS ====================
+
+/**
+ * Execute a SQL query with parameters (parameterized to prevent SQL injection)
+ */
 export async function query(text: string, params?: any[]) {
   const start = Date.now();
   try {
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
-    console.log('Executed query', { text: text.substring(0, 50), duration, rows: result.rowCount });
+
+    // Record query metrics
+    metricsCollector.recordQuery(text, duration, result.rowCount || undefined);
+
+    // Log slow queries
+    if (duration > performanceThresholds.slowQueryMs) {
+      const isSlow = duration > performanceThresholds.slowQueryMs;
+      const isVerySlow = duration > 1000;
+
+      if (isVerySlow) {
+        // Log very slow queries (> 1000ms) with warning level
+        metricsCollector.recordSlowOperation(
+          'query',
+          `Very slow query: ${text.substring(0, 100)}`,
+          duration,
+          { rows: result.rowCount, sql: text.substring(0, 200) },
+          new Error().stack
+        );
+        logger.warn('Very slow query detected', {
+          duration,
+          rows: result.rowCount,
+          query: text.substring(0, 100)
+        });
+      } else {
+        // Log moderately slow queries (> 100ms) at debug level
+        metricsCollector.recordSlowOperation(
+          'query',
+          `Slow query: ${text.substring(0, 100)}`,
+          duration,
+          { rows: result.rowCount }
+        );
+        logger.debug('Slow query detected', {
+          duration,
+          rows: result.rowCount,
+          query: text.substring(0, 100)
+        });
+      }
+    }
+
     return result;
   } catch (error) {
-    console.error('Query error', { text, error });
+    const duration = Date.now() - start;
+    metricsCollector.recordQuery(text, duration, undefined, error instanceof Error ? error.message : String(error));
+
+    logger.error('Query error', error instanceof Error ? error : new Error(String(error)), {
+      query: text.substring(0, 100),
+      duration
+    });
     throw error;
   }
 }
 
-// Tek satır getir
+/**
+ * Execute a query and return the first row or null
+ */
 export async function queryOne(text: string, params?: any[]) {
   const result = await query(text, params);
   return result.rows[0] || null;
 }
 
-// Transaction desteği
+/**
+ * Execute a query and return all rows
+ */
+export async function queryMany(text: string, params?: any[]) {
+  const result = await query(text, params);
+  return result.rows;
+}
+
+/**
+ * Execute a transaction with automatic rollback on error
+ */
 export async function transaction<T>(callback: (client: pg.PoolClient) => Promise<T>): Promise<T> {
   const client = await pool.connect();
   try {
@@ -51,181 +141,139 @@ export async function transaction<T>(callback: (client: pg.PoolClient) => Promis
   }
 }
 
-// ==================== AUTH (Basit Session-Based) ====================
+// ==================== TABLE SECURITY ====================
 
-import crypto from 'crypto';
+/**
+ * Allowed table names to prevent SQL injection via table parameter
+ */
+const ALLOWED_TABLES = new Set([
+  'users',
+  'places',
+  'blog_posts',
+  'reviews',
+  'comments',
+  'favorites',
+  'events',
+  'historical_sites',
+  'reservations',
+  'notifications',
+  'coupons',
+  'categories',
+  'tags',
+  'messages',
+  'points_history',
+  'badges',
+  'user_badges'
+]);
 
-// JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
-// Basit session store (production'da Redis kullanılmalı)
-const sessions = new Map<string, { userId: string; email: string; expires: Date }>();
-
-// Şifre hashleme
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password + JWT_SECRET).digest('hex');
-}
-
-// Token oluşturma
-function createToken(userId: string, email: string): string {
-  const token = crypto.randomBytes(32).toString('hex');
-  const expires = new Date();
-  expires.setHours(expires.getHours() + 24); // 24 saat
-  sessions.set(token, { userId, email, expires });
-  return token;
-}
-
-// Kullanıcı kayıt
-export async function signUp(email: string, password: string, fullName: string) {
-  try {
-    // Email kontrolü
-    const existing = await queryOne('SELECT id FROM users WHERE email = $1', [email]);
-    if (existing) {
-      return { data: null, error: { message: 'Email already registered' } };
-    }
-
-    // Kullanıcı oluştur
-    const passwordHash = hashPassword(password);
-    const result = await queryOne(
-      'INSERT INTO users (email, password_hash, full_name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, full_name, role',
-      [email, passwordHash, fullName, 'user']
-    );
-
-    return { data: { user: result }, error: null };
-  } catch (error: any) {
-    return { data: null, error: { message: error.message } };
+/**
+ * Validate that a table name is in the allowed list
+ * Throws if table is not allowed
+ */
+function assertTable(table: string): void {
+  if (!ALLOWED_TABLES.has(table)) {
+    throw new Error(`Invalid table name: ${table}. Allowed: ${Array.from(ALLOWED_TABLES).join(', ')}`);
   }
 }
 
-// Kullanıcı giriş
-export async function signIn(email: string, password: string) {
-  try {
-    const passwordHash = hashPassword(password);
-    const user = await queryOne(
-      'SELECT id, email, full_name, role FROM users WHERE email = $1 AND password_hash = $2',
-      [email, passwordHash]
-    );
+// ==================== GENERIC ORM HELPERS ====================
 
-    if (!user) {
-      return { data: null, error: { message: 'Invalid credentials' } };
-    }
-
-    const token = createToken(user.id, user.email);
-    return { data: { user, token, session: { token } }, error: null };
-  } catch (error: any) {
-    return { data: null, error: { message: error.message } };
-  }
-}
-
-// Çıkış
-export async function signOut(token?: string) {
-  if (token) {
-    sessions.delete(token);
-  }
-  return { error: null };
-}
-
-// Mevcut kullanıcı
-export async function getCurrentUser(token?: string) {
-  if (!token) return null;
-  
-  const session = sessions.get(token);
-  if (!session || session.expires < new Date()) {
-    sessions.delete(token);
-    return null;
-  }
-
-  const user = await queryOne(
-    'SELECT id, email, full_name, role, points, level, avatar_url FROM users WHERE id = $1',
-    [session.userId]
-  );
-  
-  return user;
-}
-
-// Session kontrolü
-export async function getSession(token?: string) {
-  if (!token) return { session: null, error: null };
-  
-  const session = sessions.get(token);
-  if (!session || session.expires < new Date()) {
-    sessions.delete(token);
-    return { session: null, error: null };
-  }
-
-  return { session: { user: { id: session.userId, email: session.email } }, error: null };
-}
-
-// ==================== DATABASE HELPERS ====================
-
-// Tablodan tüm verileri getir
+/**
+ * Get all rows from a table with pagination
+ */
 export async function getAll(table: string, options?: { limit?: number; offset?: number }) {
+  assertTable(table);
   const limit = options?.limit || 100;
   const offset = options?.offset || 0;
   const result = await query(`SELECT * FROM ${table} LIMIT $1 OFFSET $2`, [limit, offset]);
   return result.rows;
 }
 
-// ID'ye göre getir
+/**
+ * Get a single row by ID
+ */
 export async function getById(table: string, id: string) {
+  assertTable(table);
   return await queryOne(`SELECT * FROM ${table} WHERE id = $1`, [id]);
 }
 
-// Slug'a göre getir
+/**
+ * Get a single row by slug
+ */
 export async function getBySlug(table: string, slug: string) {
+  assertTable(table);
   return await queryOne(`SELECT * FROM ${table} WHERE slug = $1`, [slug]);
 }
 
-// Ekle
+/**
+ * Insert a new row
+ * WARNING: Column names are interpolated. Only use with trusted/validated column names.
+ */
 export async function insert(table: string, data: Record<string, any>) {
+  assertTable(table);
   const keys = Object.keys(data);
   const values = Object.values(data);
+
+  if (keys.length === 0) {
+    throw new Error('No data to insert');
+  }
+
   const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
-  
-  const result = await queryOne(
-    `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders}) RETURNING *`,
-    values
-  );
+  const result = await queryOne(`INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders}) RETURNING *`, values);
   return result;
 }
 
-// Güncelle
+/**
+ * Update a row by ID
+ * WARNING: Column names are interpolated. Only use with trusted/validated column names.
+ */
 export async function update(table: string, id: string, data: Record<string, any>) {
+  assertTable(table);
   const keys = Object.keys(data);
   const values = Object.values(data);
+
+  if (keys.length === 0) {
+    throw new Error('No data to update');
+  }
+
   const setClause = keys.map((k, i) => `${k} = $${i + 2}`).join(', ');
-  
-  const result = await queryOne(
-    `UPDATE ${table} SET ${setClause} WHERE id = $1 RETURNING *`,
-    [id, ...values]
-  );
+  const result = await queryOne(`UPDATE ${table} SET ${setClause} WHERE id = $1 RETURNING *`, [id, ...values]);
   return result;
 }
 
-// Sil
+/**
+ * Delete a row by ID
+ */
 export async function remove(table: string, id: string) {
+  assertTable(table);
   await query(`DELETE FROM ${table} WHERE id = $1`, [id]);
   return { success: true };
 }
 
 // ==================== BACKWARD COMPATIBILITY ====================
 
-// Eski Supabase client API'siyle uyumlu basit bir wrapper
+/**
+ * Supabase API shim for backward compatibility
+ */
 export const db = {
   from: (table: string) => ({
     select: async (columns = '*') => {
+      assertTable(table);
       const result = await query(`SELECT ${columns} FROM ${table}`);
       return { data: result.rows, error: null };
     },
     selectOne: async (columns = '*') => {
+      assertTable(table);
       const result = await queryOne(`SELECT ${columns} FROM ${table}`);
       return { data: result, error: null };
     },
     eq: async (column: string, value: any) => {
+      assertTable(table);
       const result = await query(`SELECT * FROM ${table} WHERE ${column} = $1`, [value]);
       return { data: result.rows, error: null };
     },
     eqOne: async (column: string, value: any) => {
+      assertTable(table);
       const result = await queryOne(`SELECT * FROM ${table} WHERE ${column} = $1`, [value]);
       return { data: result, error: null };
     },
@@ -243,10 +291,8 @@ export const db = {
     },
     delete: async () => {
       return { data: null, error: { message: 'Use remove() instead' } };
-    },
-  }),
+    }
+  })
 };
 
-// Pool export
-export { pool };
 export default pool;

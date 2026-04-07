@@ -1,6 +1,14 @@
-// API: Yorum işlemleri (PostgreSQL)
+// API: Yorum işlemleri (PostgreSQL + Redis cache)
 import type { APIRoute } from 'astro';
 import { query, queryOne, insert, update as updateDb } from '../../../lib/postgres';
+import { getCache, setCache, deleteCache } from '../../../lib/cache';
+
+/**
+ * Generate cache key for reviews
+ */
+function generateReviewsCacheKey(placeId: string, limit = 10, offset = 0): string {
+  return `reviews:place:${placeId}:limit:${limit}:offset:${offset}`;
+}
 
 // Get reviews for a place
 export const GET: APIRoute = async ({ url }) => {
@@ -16,36 +24,58 @@ export const GET: APIRoute = async ({ url }) => {
       );
     }
 
+    // Try to get from cache
+    const cacheKey = generateReviewsCacheKey(placeId, limit, offset);
+    const cached = await getCache<{
+      data: any[];
+      count: number;
+      avgRating: number;
+      totalReviews: number;
+      pagination: any;
+    }>(cacheKey);
+
+    if (cached) {
+      return new Response(JSON.stringify(cached), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }
+      });
+    }
+
     const [dataResult, countResult, ratingResult] = await Promise.all([
       query(
-        `SELECT r.*, u.full_name, u.avatar_url 
-         FROM reviews r 
-         JOIN users u ON r.user_id = u.id 
-         WHERE r.place_id = $1 
-         ORDER BY r.created_at DESC 
+        `SELECT r.*, u.full_name, u.avatar_url
+         FROM reviews r
+         JOIN users u ON r.user_id = u.id
+         WHERE r.place_id = $1
+         ORDER BY r.created_at DESC
          LIMIT $2 OFFSET $3`,
         [placeId, limit, offset]
       ),
       query('SELECT COUNT(*) FROM reviews WHERE place_id = $1', [placeId]),
-      query('SELECT rating FROM reviews WHERE place_id = $1', [placeId]),
+      query('SELECT rating FROM reviews WHERE place_id = $1', [placeId])
     ]);
 
     const count = parseInt(countResult.rows[0]?.count || '0');
     const ratings = ratingResult.rows;
-    const avgRating = ratings.length 
-      ? ratings.reduce((acc: number, r: any) => acc + r.rating, 0) / ratings.length 
+    const avgRating = ratings.length
+      ? ratings.reduce((acc: number, r: any) => acc + r.rating, 0) / ratings.length
       : 0;
 
-    return new Response(
-      JSON.stringify({ 
-        data: dataResult.rows, 
-        count,
-        avgRating: Math.round(avgRating * 10) / 10,
-        totalReviews: ratings.length,
-        pagination: { limit, offset, hasMore: offset + limit < count }
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    const responseData = {
+      data: dataResult.rows,
+      count,
+      avgRating: Math.round(avgRating * 10) / 10,
+      totalReviews: ratings.length,
+      pagination: { limit, offset, hasMore: offset + limit < count }
+    };
+
+    // Cache for 10 minutes
+    await setCache(cacheKey, responseData, 600);
+
+    return new Response(JSON.stringify(responseData), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }
+    });
   } catch (err) {
     console.error('Reviews fetch error:', err);
     return new Response(
@@ -54,6 +84,19 @@ export const GET: APIRoute = async ({ url }) => {
     );
   }
 };
+
+/**
+ * Invalidate all review caches for a place
+ */
+async function invalidateReviewsCache(placeId: string): Promise<void> {
+  try {
+    // Delete all review cache keys for this place
+    await deleteCache(`reviews:place:${placeId}:*`);
+  } catch (error) {
+    console.warn('Failed to invalidate reviews cache:', error);
+    // Continue anyway - cache invalidation is not critical
+  }
+}
 
 // Create review
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -103,17 +146,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
       content,
       title,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     });
 
     // Update place rating
     await updatePlaceRating(placeId);
 
     // Add points to user (10 puan)
-    await query(
-      'UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1',
-      [user.id]
-    );
+    await query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [user.id]);
+
+    // Invalidate reviews cache for this place
+    await invalidateReviewsCache(placeId);
 
     return new Response(
       JSON.stringify({ data, message: 'Yorumunuz başarıyla eklendi' }),

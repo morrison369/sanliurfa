@@ -1,32 +1,47 @@
-// API: Kullanıcı kaydı (PostgreSQL)
+// API: Kullanıcı kaydı (PostgreSQL + Validation + Logging)
 import type { APIRoute } from 'astro';
-import { signUp, signIn, createToken } from '../../../lib/auth';
+import { signUp, signIn } from '../../../lib/auth';
+import { validateWithSchema, commonSchemas } from '../../../lib/validation';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { logger } from '../../../lib/logging';
+import { recordRequest, isSlowRequest, metricsCollector } from '../../../lib/metrics';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
+  const requestId = getRequestId({ request } as any);
+  const startTime = Date.now();
+  logger.setRequestId(requestId);
+
   try {
-    const { email, password, fullName } = await request.json();
+    const body = await request.json();
 
-    if (!email || !password || !fullName) {
-      return new Response(
-        JSON.stringify({ error: 'Tüm alanlar gereklidir' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+    // Validate request body
+    const validation = validateWithSchema(body, commonSchemas.register);
+
+    if (!validation.valid) {
+      const duration = Date.now() - startTime;
+      recordRequest('POST', '/api/auth/register', HttpStatus.UNPROCESSABLE_ENTITY, duration);
+      logger.warn('Register validation failed', { errors: validation.errors });
+
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Validation failed',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        validation.errors,
+        requestId
       );
     }
 
-    if (password.length < 6) {
-      return new Response(
-        JSON.stringify({ error: 'Şifre en az 6 karakter olmalıdır' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
+    const { email, password, full_name: fullName } = validation.data;
 
+    // Attempt registration
     const { data, error } = await signUp(email, password, fullName);
 
     if (error) {
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      const duration = Date.now() - startTime;
+      recordRequest('POST', '/api/auth/register', HttpStatus.CONFLICT, duration, { error: error.message });
+      logger.logAuth('register', 'unknown', false, { email, reason: error.message, duration });
+
+      return apiError(ErrorCode.CONFLICT, error.message, HttpStatus.CONFLICT, undefined, requestId);
     }
 
     // Auto login after registration
@@ -37,23 +52,47 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         httpOnly: true,
         secure: import.meta.env.PROD,
         sameSite: 'strict',
-        maxAge: 60 * 60 * 24,
+        maxAge: 60 * 60 * 24
       });
     }
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
+    const duration = Date.now() - startTime;
+    recordRequest('POST', '/api/auth/register', HttpStatus.CREATED, duration);
+    logger.logAuth('register', data.user.id, true, { email: data.user.email, duration });
+
+    return apiResponse(
+      {
+        success: true,
         user: data.user,
-        message: 'Kayıt başarılı! Hoş geldiniz.' 
-      }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
+        message: 'Kayıt başarılı! Hoş geldiniz.'
+      },
+      HttpStatus.CREATED,
+      requestId
     );
   } catch (err) {
-    console.error('Register error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Kayıt işlemi sırasında bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    const duration = Date.now() - startTime;
+    recordRequest('POST', '/api/auth/register', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
+      error: err instanceof Error ? err.message : String(err)
+    });
+
+    if (isSlowRequest(duration)) {
+      metricsCollector.recordSlowOperation(
+        'request',
+        'Register endpoint slow',
+        duration,
+        { path: '/api/auth/register' },
+        err instanceof Error ? err.stack : undefined
+      );
+    }
+
+    logger.error('Register error', err instanceof Error ? err : new Error(String(err)), { duration });
+
+    return apiError(
+      ErrorCode.INTERNAL_ERROR,
+      'Kayıt işlemi sırasında bir hata oluştu',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      undefined,
+      requestId
     );
   }
 };

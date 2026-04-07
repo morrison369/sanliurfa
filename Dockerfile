@@ -1,44 +1,37 @@
-# Multi-stage build for production
-FROM node:22-alpine AS base
+# Build stage
+FROM node:18-alpine AS builder
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies
-COPY package.json package-lock.json* ./
-RUN npm ci --legacy-peer-deps
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
 
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Build the application
-ENV NODE_ENV=production
 RUN npm run build
 
-# Production image, copy all the files and run the app
-FROM base AS runner
+# Production stage
+FROM node:18-alpine
+
 WORKDIR /app
 
-ENV NODE_ENV=production
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 astro
+# Copy built app from builder
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
 
-# Copy built application
-COPY --from=builder --chown=astro:nodejs /app/dist ./dist
-COPY --from=builder --chown=astro:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=astro:nodejs /app/package.json ./package.json
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
-USER astro
+USER nodejs
 
 EXPOSE 3000
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
-CMD ["node", "./dist/server/entry.mjs"]
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "--enable-source-maps", "dist/index.js"]

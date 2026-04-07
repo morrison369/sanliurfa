@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AuditLogViewer from '../../components/admin/AuditLogViewer';
+
+const seo = {
+  title: 'Audit Logs - Şanlıurfa.com Admin',
+  description: 'Sistem aktivitesi ve değişiklikleri izle',
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20">
+    <AuditLogViewer client:load />
+  </div>
+</Layout>

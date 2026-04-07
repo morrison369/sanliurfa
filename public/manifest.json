@@ -1,103 +1,86 @@
 {
-  "name": "Şanlıurfa.com - Şehir Rehberi",
+  "name": "Şanlıurfa.com",
   "short_name": "Şanlıurfa",
-  "description": "Şanlıurfa'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, gastronomi ve daha fazlası.",
+  "description": "Şanlıurfa'nın rehberi - yerler, etkinlikler, rehberler",
   "start_url": "/",
   "display": "standalone",
-  "background_color":="#a18072",
-  "theme_color":"#a18072",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
   "orientation": "portrait-primary",
   "scope": "/",
-  "lang": "tr",
-  "dir": "ltr",
-  "categories": ["travel", "food", "lifestyle", "reference"],
   "icons": [
     {
-      "src": "/icons/icon-72x72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-128x128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-192x192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "maskable any"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable any"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/home.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Ana Sayfa"
+      "purpose": "any"
     },
     {
-      "src": "/screenshots/mobile.png",
-      "sizes": "750x1334",
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Mobil Görünüm"
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "Mekanlar",
-      "short_name": "Mekanlar",
-      "description": "Restoran ve otelleri keşfet",
-      "url": "/places",
-      "icons": [{ "src": "/icons/shortcut-places.png", "sizes": "96x96" }]
+      "name": "Yerleri Ara",
+      "short_name": "Ara",
+      "description": "Şanlıurfa'da yerler ara",
+      "url": "/search",
+      "icons": [
+        {
+          "src": "/icon-search-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
-      "name": "Tarihi Yerler",
-      "short_name": "Tarihi Yerler",
-      "description": "Göbeklitepe ve daha fazlası",
-      "url": "/tarihi-yerler",
-      "icons": [{ "src": "/icons/shortcut-historical.png", "sizes": "96x96" }]
+      "name": "Favorilerim",
+      "short_name": "Favoriler",
+      "description": "Kaydedilmiş yerlerim",
+      "url": "/favorites",
+      "icons": [
+        {
+          "src": "/icon-heart-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "categories": ["travel", "lifestyle"],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile-1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
     },
     {
-      "name": "Gastronomi",
-      "short_name": "Gastronomi",
-      "description": "Urfa lezzetleri",
-      "url": "/gastronomi",
-      "icons": [{ "src": "/icons/shortcut-food.png", "sizes": "96x96" }]
+      "src": "/screenshot-mobile-2.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop-1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
     }
   ]
 }

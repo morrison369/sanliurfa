@@ -1,0 +1,15 @@
+---
+import Layout from '../layouts/Layout.astro';
+import UserProfile from '../components/UserProfile';
+
+const seo = {
+  title: 'Profilim - Şanlıurfa.com',
+  description: 'Profil bilgileri, favorileri, aktivite geçmişi',
+};
+---
+
+<Layout seo={seo}>
+  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20 pb-12">
+    <UserProfile client:load />
+  </div>
+</Layout>

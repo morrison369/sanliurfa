@@ -1,0 +1,16 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import VendorDashboard from '../../components/VendorDashboard';
+
+const seo = {
+  title: 'İşletme Paneli',
+  description: 'İşletme bilgilerinizi yönetin',
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20 pb-12">
+    <VendorDashboard client:load />
+  </div>
+</Layout>

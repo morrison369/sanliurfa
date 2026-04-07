@@ -1,24 +1,32 @@
 import type { APIRoute } from 'astro';
-import { query } from '../../../lib/postgres';
+import { markAllAsRead } from '../../../lib/notifications-queue';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { recordRequest } from '../../../lib/metrics';
+import { logger } from '../../../lib/logging';
 
-// Mark all notifications as read
-export const POST: APIRoute = async ({ locals }) => {
-  const user = locals.user;
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+export const PUT: APIRoute = async ({ request, locals }) => {
+  const requestId = getRequestId({ request } as any);
+  const startTime = Date.now();
+  logger.setRequestId(requestId);
 
   try {
-    await query(
-      'UPDATE notifications SET is_read = true, read_at = $1 WHERE user_id = $2 AND is_read = false',
-      [new Date().toISOString(), user.id]
-    );
+    if (!locals.user?.id) {
+      recordRequest('PUT', '/api/notifications/read-all', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Kimlik dogrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    }
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    const count = await markAllAsRead(locals.user.id);
+
+    const duration = Date.now() - startTime;
+    recordRequest('PUT', '/api/notifications/read-all', HttpStatus.OK, duration);
+
+    logger.info('Marked all notifications as read', { userId: locals.user.id, count });
+
+    return apiResponse({ success: true, markedCount: count }, HttpStatus.OK, requestId);
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    recordRequest('PUT', '/api/notifications/read-all', HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    logger.error('Failed to mark all as read', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Ichsel sunucu hatasi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

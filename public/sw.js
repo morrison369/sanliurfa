@@ -1,132 +1,159 @@
-const CACHE_NAME = 'sanliurfa-v1';
-const STATIC_ASSETS = [
+/**
+ * Service Worker - PWA support
+ * - Offline caching
+ * - Push notifications
+ * - Background sync (future)
+ */
+
+const CACHE_VERSION = 'sanliurfa-v1';
+const RUNTIME_CACHE = 'sanliurfa-runtime';
+
+// Assets to cache on install
+const ASSETS_TO_CACHE = [
   '/',
-  '/places',
-  '/blog',
-  '/hakkinda',
-  '/iletisim',
-  '/manifest.json',
-  '/favicon.svg',
+  '/index.html',
+  '/manifest.json'
 ];
 
-// Install event - cache static assets
+// Install event - cache essential assets
 self.addEventListener('install', (event) => {
+  console.log('[SW] Install event');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches.open(CACHE_VERSION)
+      .then((cache) => {
+        console.log('[SW] Caching essential assets');
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// Activate event - cleanup old caches
 self.addEventListener('activate', (event) => {
+  console.log('[SW] Activate event');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_VERSION && cacheName !== RUNTIME_CACHE) {
+            console.log('[SW] Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch event - serve from cache or network
+// Fetch event - cache-first with network fallback
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') return;
+  // Skip API calls and external requests
+  if (url.pathname.startsWith('/api/') || url.origin !== self.location.origin) {
+    return;
+  }
 
-  // Skip API requests
-  if (url.pathname.startsWith('/api/')) return;
+  // HTML pages: network-first
+  if (request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const cloned = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, cloned));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
-  // Skip Supabase requests
-  if (url.hostname.includes('supabase')) return;
-
+  // Images, CSS, JS: cache-first
   event.respondWith(
-    caches.match(request).then((response) => {
-      // Return cached response if found
-      if (response) {
+    caches.match(request)
+      .then((response) => response || fetch(request))
+      .then((response) => {
+        if (response && (request.destination === 'image' || 
+            request.destination === 'style' || 
+            request.destination === 'script')) {
+          const cloned = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, cloned));
+        }
         return response;
-      }
-
-      // Otherwise fetch from network
-      return fetch(request).then((fetchResponse) => {
-        // Don't cache non-successful responses
-        if (!fetchResponse || fetchResponse.status !== 200) {
-          return fetchResponse;
+      })
+      .catch(() => {
+        // Fallback for offline
+        if (request.destination === 'image') {
+          return new Response(null, { status: 204 });
         }
-
-        // Cache images and static assets
-        if (request.destination === 'image' || request.destination === 'style' || request.destination === 'script') {
-          const responseToCache = fetchResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
-        }
-
-        return fetchResponse;
-      }).catch(() => {
-        // Return offline fallback for navigation requests
-        if (request.mode === 'navigate') {
-          return caches.match('/');
-        }
-        return new Response('Offline', { status: 503 });
-      });
-    })
+      })
   );
 });
 
 // Push notification event
 self.addEventListener('push', (event) => {
-  if (!event.data) return;
+  console.log('[SW] Push notification received');
+  
+  if (!event.data) {
+    console.log('[SW] Push event with no data');
+    return;
+  }
 
-  const data = event.data.json();
+  let notificationData = {};
+  try {
+    notificationData = event.data.json();
+  } catch (e) {
+    notificationData = { body: event.data.text() };
+  }
+
   const options = {
-    body: data.body,
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
-    tag: data.tag || 'notification',
-    requireInteraction: true,
-    data: data.data || {},
+    body: notificationData.body || '',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: notificationData.tag || 'notification',
+    requireInteraction: notificationData.requireInteraction || false,
+    data: notificationData.data || {},
+    actions: notificationData.actions || [],
+    ...notificationData
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    self.registration.showNotification(notificationData.title || 'Şanlıurfa', options)
   );
 });
 
 // Notification click event
 self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked', event.action);
   event.notification.close();
 
-  const { data } = event.notification;
-  let url = '/';
+  const urlToOpen = event.notification.data.url || '/';
+  const action = event.action;
 
-  if (data.place_slug) {
-    url = `/places/${data.place_slug}`;
-  } else if (data.type === 'notifications') {
-    url = '/profil/bildirimler';
+  if (action === 'close') {
+    return;
   }
 
   event.waitUntil(
-    clients.openWindow(url)
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // Check if window already open
+        for (let i = 0; i < clientList.length; i++) {
+          const client = clientList[i];
+          if (client.url === urlToOpen && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Open new window if not found
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
   );
 });
 
-// Background sync for offline form submissions
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-reviews') {
-    event.waitUntil(syncReviews());
-  }
+// Notification close event (for analytics)
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW] Notification dismissed');
 });
-
-async function syncReviews() {
-  // Get pending reviews from IndexedDB and submit them
-  // Implementation depends on your IndexedDB setup
-  console.log('Syncing pending reviews...');
-}

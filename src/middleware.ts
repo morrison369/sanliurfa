@@ -2,25 +2,22 @@
 import { defineMiddleware } from 'astro:middleware';
 import { verifyToken } from './lib/auth';
 import { queryOne } from './lib/postgres';
+import { checkRateLimit } from './lib/cache';
 
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
   '/', '/giris', '/kayit', '/places', '/tarihi-yerler', '/blog',
   '/gastronomi', '/arama', '/hakkinda', '/iletisim',
-  '/api/auth/login', '/api/auth/register', '/api/places',
+  '/api/auth/login', '/api/auth/register', '/api/places', '/api/health',
 ];
 
 // Admin only paths
 const ADMIN_PATHS = ['/admin'];
 
-interface RateLimitEntry {
-  count: number;
-  resetTime: number;
-}
-
-const rateLimitMap = new Map<string, RateLimitEntry>();
+// CORS configuration
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'https://sanliurfa.com').split(',').map(o => o.trim());
 const RATE_LIMIT = 100;
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000;
+const RATE_LIMIT_WINDOW = 15 * 60; // 15 minutes in seconds
 
 const securityHeaders = {
   'X-Content-Type-Options': 'nosniff',
@@ -29,19 +26,21 @@ const securityHeaders = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
 };
 
-async function checkRateLimit(ip: string): Promise<boolean> {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  
-  if (!entry || now > entry.resetTime) {
-    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return true;
+/**
+ * Extract client IP from request headers
+ * Handles proxy headers and prevents IP spoofing by using rightmost IP
+ */
+function getClientIP(request: Request): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const xRealIp = request.headers.get('x-real-ip');
+
+  if (forwarded) {
+    // x-forwarded-for can be comma-separated list; use rightmost (closest to our server)
+    const ips = forwarded.split(',').map(ip => ip.trim());
+    return ips[ips.length - 1] || 'unknown';
   }
-  
-  if (entry.count >= RATE_LIMIT) return false;
-  
-  entry.count++;
-  return true;
+
+  return xRealIp || 'unknown';
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -49,24 +48,38 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const pathname = url.pathname;
 
   // Check if path is public
-  const isPublicPath = PUBLIC_PATHS.some(path => 
-    pathname === path || pathname.startsWith(path + '/')
-  );
+  const isPublicPath = PUBLIC_PATHS.some(path => pathname === path || pathname.startsWith(path + '/'));
 
   // Check if path is admin only
-  const isAdminPath = ADMIN_PATHS.some(path => 
-    pathname === path || pathname.startsWith(path + '/')
-  );
+  const isAdminPath = ADMIN_PATHS.some(path => pathname === path || pathname.startsWith(path + '/'));
 
-  // Rate limiting for API
-  const clientIP = request.headers.get('x-forwarded-for') || 
-                   request.headers.get('x-real-ip') || 'unknown';
+  // Handle CORS preflight for API routes
+  if (pathname.startsWith('/api/') && request.method === 'OPTIONS') {
+    const origin = request.headers.get('Origin');
+    const corsHeaders: Record<string, string> = {};
 
-  if (pathname.startsWith('/api/') && !await checkRateLimit(clientIP)) {
-    return new Response(
-      JSON.stringify({ error: 'Rate limit exceeded' }),
-      { status: 429, headers: { 'Content-Type': 'application/json' } }
-    );
+    if (origin && CORS_ORIGINS.includes(origin)) {
+      corsHeaders['Access-Control-Allow-Origin'] = origin;
+      corsHeaders['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+      corsHeaders['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+      corsHeaders['Access-Control-Allow-Credentials'] = 'true';
+      corsHeaders['Access-Control-Max-Age'] = '86400';
+    }
+
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  // Rate limiting for API (using Redis)
+  const clientIP = getClientIP(request);
+
+  if (pathname.startsWith('/api/')) {
+    const isAllowed = await checkRateLimit(clientIP, RATE_LIMIT, RATE_LIMIT_WINDOW);
+    if (!isAllowed) {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded', retryAfter: RATE_LIMIT_WINDOW }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json', 'Retry-After': String(RATE_LIMIT_WINDOW) }
+      });
+    }
   }
 
   // Get token from cookies (using auth-token)
@@ -81,10 +94,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (token) {
     try {
       const tokenData = await verifyToken(token);
-      
-      if (tokenData && tokenData.id) {
+
+      if (tokenData && tokenData.userId) {
         // Get user from database
-        const user = await queryOne('SELECT id, email, full_name, role, avatar_url, points FROM users WHERE id = $1', [tokenData.id]);
+        const user = await queryOne('SELECT id, email, full_name, role, avatar_url, points FROM users WHERE id = $1', [tokenData.userId]);
 
         if (user) {
           context.locals.user = {
@@ -120,7 +133,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const response = await next();
-  
+
   // Add security headers
   Object.entries(securityHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
@@ -136,10 +149,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
     "connect-src 'self'",
     "frame-ancestors 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    "form-action 'self'"
   ].join('; ');
-  
+
   response.headers.set('Content-Security-Policy', csp);
+
+  // Add CORS headers for API routes if origin is allowed
+  if (pathname.startsWith('/api/')) {
+    const origin = request.headers.get('Origin');
+    if (origin && CORS_ORIGINS.includes(origin)) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      response.headers.set('Access-Control-Allow-Credentials', 'true');
+    }
+  }
 
   return response;
 });
