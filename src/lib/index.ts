@@ -846,3 +846,21 @@ export { BoardTrustStabilityBookV3, BoardTrustStabilityCoordinatorV3, BoardTrust
 
 // Phase 364: Policy Continuity Assurance Engine V3
 export { PolicyContinuityAssuranceBookV3, PolicyContinuityAssuranceEngineV3, PolicyContinuityAssuranceGateV3, PolicyContinuityAssuranceReporterV3, policyContinuityAssuranceBookV3, policyContinuityAssuranceEngineV3, policyContinuityAssuranceGateV3, policyContinuityAssuranceReporterV3 } from './policy-continuity-assurance-engine-v3';
+
+// Phase 365: Governance Recovery Assurance Router V4
+export { GovernanceRecoveryAssuranceBookV4, GovernanceRecoveryAssuranceScorerV4, GovernanceRecoveryAssuranceRouterV4, GovernanceRecoveryAssuranceReporterV4, governanceRecoveryAssuranceBookV4, governanceRecoveryAssuranceScorerV4, governanceRecoveryAssuranceRouterV4, governanceRecoveryAssuranceReporterV4 } from './governance-recovery-assurance-router-v4';
+
+// Phase 366: Policy Stability Continuity Harmonizer V4
+export { PolicyStabilityContinuityBookV4, PolicyStabilityContinuityHarmonizerV4, PolicyStabilityContinuityGateV4, PolicyStabilityContinuityReporterV4, policyStabilityContinuityBookV4, policyStabilityContinuityHarmonizerV4, policyStabilityContinuityGateV4, policyStabilityContinuityReporterV4 } from './policy-stability-continuity-harmonizer-v4';
+
+// Phase 367: Compliance Trust Recovery Mesh V4
+export { ComplianceTrustRecoveryMeshV4, ComplianceTrustRecoveryScorerV4, ComplianceTrustRecoveryRouterV4, ComplianceTrustRecoveryReporterV4, complianceTrustRecoveryMeshV4, complianceTrustRecoveryScorerV4, complianceTrustRecoveryRouterV4, complianceTrustRecoveryReporterV4 } from './compliance-trust-recovery-mesh-v4';
+
+// Phase 368: Trust Assurance Continuity Forecaster V4
+export { TrustAssuranceContinuityBookV4, TrustAssuranceContinuityForecasterV4, TrustAssuranceContinuityGateV4, TrustAssuranceContinuityReporterV4, trustAssuranceContinuityBookV4, trustAssuranceContinuityForecasterV4, trustAssuranceContinuityGateV4, trustAssuranceContinuityReporterV4 } from './trust-assurance-continuity-forecaster-v4';
+
+// Phase 369: Board Stability Trust Coordinator V4
+export { BoardStabilityTrustBookV4, BoardStabilityTrustCoordinatorV4, BoardStabilityTrustGateV4, BoardStabilityTrustReporterV4, boardStabilityTrustBookV4, boardStabilityTrustCoordinatorV4, boardStabilityTrustGateV4, boardStabilityTrustReporterV4 } from './board-stability-trust-coordinator-v4';
+
+// Phase 370: Policy Continuity Resilience Engine V4
+export { PolicyContinuityResilienceBookV4, PolicyContinuityResilienceEngineV4, PolicyContinuityResilienceGateV4, PolicyContinuityResilienceReporterV4, policyContinuityResilienceBookV4, policyContinuityResilienceEngineV4, policyContinuityResilienceGateV4, policyContinuityResilienceReporterV4 } from './policy-continuity-resilience-engine-v4';

@@ -208,9 +208,16 @@ Last updated: 2026-04-08
   - docs in `PHASE_359_364_GOVERNANCE_TRUST_CONTINUITY_V3.md`
   - `src/lib/index.ts` exports updated
   - `test:phase:latest` moved to `test:phase:359-364`
+- `T-035` Phase 365-370 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-recovery-assurance-suite-v4.test.ts`
+  - docs in `PHASE_365_370_GOVERNANCE_RECOVERY_ASSURANCE_V4.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:365-370`
 
 ## Open
-- `T-035` Phase 365-370 planning
+- `T-036` Phase 371-376 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
