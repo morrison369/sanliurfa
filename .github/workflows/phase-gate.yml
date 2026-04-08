@@ -1,0 +1,41 @@
+name: Phase Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  phase_check_tsconfig:
+    name: phase:check:tsconfig
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Phase Tsconfig Check
+        run: npm run phase:check:tsconfig
+
+  phase_gate_ci:
+    name: test:phase:gate:ci
+    runs-on: ubuntu-latest
+    needs: phase_check_tsconfig
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Run Phase Gate
+        run: npm run test:phase:gate:ci
