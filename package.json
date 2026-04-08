@@ -50,6 +50,7 @@
     "test:phase:419-424": "vitest run src/lib/__tests__/governance-stability-recovery-suite-v13.test.ts",
     "test:phase:425-430": "vitest run src/lib/__tests__/governance-continuity-recovery-suite-v14.test.ts",
     "test:phase:431-436": "vitest run src/lib/__tests__/governance-assurance-continuity-suite-v15.test.ts",
+    "test:phase:437-442": "vitest run src/lib/__tests__/governance-stability-continuity-suite-v16.test.ts",
     "test:phase:prev": "tsx scripts/phase-runner.ts prev",
     "test:phase:latest": "tsx scripts/phase-runner.ts latest",
     "test:phase:smoke": "npm run test:phase:prev && npm run test:phase:latest",

@@ -2,3 +2,4 @@
 
 - 2026-04-08 | `53d5cc4` | Phase 425-430: Governance Continuity & Recovery V14 + automation hardening
 - 2026-04-08 | `6f8f8ce` | Phase 431-436: Governance Assurance & Continuity V15 + release-note automation
+- 2026-04-08 | `2b9517b` | Chore: append phase changelog entry for 431-436
