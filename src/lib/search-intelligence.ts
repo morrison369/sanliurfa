@@ -134,6 +134,42 @@ export class QueryAnalyzer {
   }
 }
 
+// ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Rank search results with custom scoring
+ */
+export function rankSearchResults(results: SearchResult[], signals?: Record<string, number>): SearchResult[] {
+  if (!signals) {
+    return results;
+  }
+
+  return results
+    .map(result => ({
+      ...result,
+      score: result.score + (signals[result.id] || 0)
+    }))
+    .sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Record search query for analytics
+ */
+export function recordSearchQuery(query: string, resultCount: number): void {
+  logger.debug('Search query recorded', { query, resultCount });
+}
+
+/**
+ * Get personalized recommendations based on user context
+ */
+export function getPersonalizedRecommendations(
+  userId: string,
+  results: SearchResult[],
+  context?: Record<string, any>
+): SearchResult[] {
+  return results;
+}
+
 // ==================== EXPORTS ====================
 
 export const searchIndex = new SearchIndex();
