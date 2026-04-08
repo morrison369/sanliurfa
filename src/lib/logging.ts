@@ -1,5 +1,4 @@
 // Structured logging with request ID tracking
-import { randomUUID } from 'crypto';
 
 enum LogLevel {
   DEBUG = 'debug',
@@ -26,11 +25,14 @@ interface LogEntry {
  * Generate a unique request ID for tracking
  */
 export function generateRequestId(): string {
-  return randomUUID();
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 class Logger {
-  private isDevelopment = import.meta.env.DEV;
+  private isDevelopment = Boolean((import.meta as { env?: { DEV?: boolean } }).env?.DEV);
   private requestId: string | undefined;
 
   setRequestId(id: string): void {
