@@ -123,3 +123,21 @@ export { MarketplaceManager, APIListingManager, BillingCalculator, PartnerProgra
 
 // Phase 124: Developer Portal & Analytics
 export { DeveloperPortal, AnalyticsDashboard, DocumentationManager, SupportTicketing, IntegrationMarketplace, developerPortal, analyticsDashboard, documentationManager, supportTicketing, integrationMarketplace } from './developer-portal';
+
+// Phase 125: Vector Database & Embedding Infrastructure
+export { VectorStore, EmbeddingCache, SimilaritySearch, VectorIndexManager, vectorStore, embeddingCache, similaritySearch, vectorIndexManager } from './vector-db';
+
+// Phase 126: Production RAG System
+export { DocumentProcessor, SemanticRetriever, ContextAssembler, RAGPipeline, documentProcessor, semanticRetriever, contextAssembler, ragPipeline } from './rag-system';
+
+// Phase 127: LLM Integration & Orchestration
+export { LLMClient, PromptOptimizer, ResponseProcessor, CostTracker, llmClient, promptOptimizer, responseProcessor, costTracker } from './llm-integration';
+
+// Phase 128: Semantic Search Engine
+export { SemanticIndex, QueryExpander, RankingStrategy, SearchOptimizer, semanticIndex, queryExpander, rankingStrategy, searchOptimizer } from './semantic-search-engine';
+
+// Phase 129: Knowledge Graph & Entity Linking
+export { KnowledgeGraph, EntityLinker, RelationshipExtractor, GraphReasoner, knowledgeGraph, entityLinker, relationshipExtractor, graphReasoner } from './knowledge-graph';
+
+// Phase 130: Advanced AI Analytics & Monitoring
+export { EmbeddingAnalytics, RetrievalAnalytics, LLMMetrics, QualityMonitor, embeddingAnalytics, retrievalAnalytics, llmMetrics, qualityMonitor } from './ai-analytics';
