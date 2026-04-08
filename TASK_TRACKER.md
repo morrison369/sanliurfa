@@ -328,8 +328,13 @@ Last updated: 2026-04-09
   - tests: `src/lib/__tests__/governance-recovery-stability-suite-v23.test.ts`
   - docs: `PHASE_479_484_GOVERNANCE_RECOVERY_STABILITY_CONTINUITY_V23.md`
 
+- `T-055` Phase 485-490 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-recovery-suite-v24.test.ts`
+  - docs: `PHASE_485_490_GOVERNANCE_ASSURANCE_RECOVERY_CONTINUITY_V24.md`
+
 ## Open
-- `T-055` Phase 485-490 planning
+- `T-056` Phase 491-496 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
