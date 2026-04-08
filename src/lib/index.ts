@@ -159,3 +159,21 @@ export { EventRouter, ContentFilter, EventTransformer, RoutingRule, eventRouter,
 
 // Phase 136: Observability & Monitoring
 export { EventMetrics, ConsumerLagMonitor, EventTracer, DebugDashboard, eventMetrics, consumerLagMonitor, eventTracer, debugDashboard } from './event-observability';
+
+// Phase 137: Container Orchestration & Management
+export { KubernetesCluster, NodeManager, PodManager, ServiceRegistry, kubernetesCluster, nodeManager, podManager, serviceRegistry } from './container-orchestration';
+
+// Phase 138: GitOps & Infrastructure as Code
+export { GitOpsEngine, TerraformManager, HelmManager, DriftDetector, gitOpsEngine, terraformManager, helmManager, driftDetector } from './gitops-infrastructure';
+
+// Phase 139: Service Mesh & Network Intelligence
+export { ServiceMesh, TrafficPolicy, CircuitBreaker, ServiceDiscovery, serviceMesh, trafficPolicy, circuitBreaker, serviceDiscovery } from './service-mesh';
+
+// Phase 140: Deployment Pipelines & Release Management
+export { DeploymentPipeline, ReleaseOrchestrator, CanaryDeployment, DeploymentValidator, deploymentPipeline, releaseOrchestrator, canaryDeployment, deploymentValidator } from './deployment-pipelines';
+
+// Phase 141: Observability & Cost Management
+export { MetricsAggregator, CostAnalyzer, ResourceOptimizer, AlertingEngine, metricsAggregator, costAnalyzer, resourceOptimizer, alertingEngine } from './infrastructure-observability';
+
+// Phase 142: Infrastructure Automation & Self-Healing
+export { AutoScaler, SelfHealingController, InfrastructureAutomator, CapacityPlanner, autoScaler, selfHealingController, infrastructureAutomator, capacityPlanner } from './infrastructure-automation';
