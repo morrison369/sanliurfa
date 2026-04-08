@@ -71,17 +71,19 @@
 
 - `Phase 503-508 Governance Continuity Recovery & Assurance V27`: complete
 
+- `Phase 509-514 Governance Assurance Recovery & Stability V28`: complete
+
 ## Open Tasks
 - No open delivery tasks for `Phase 137-142`, `Phase 161-166`, `Phase 167-172`, `Phase 173-178`, `Phase 179-184`, `Phase 185-190`, `Phase 191-196`, `Phase 197-202`, `Phase 203-208`, `Phase 209-214`, `Phase 215-220`, `Phase 221-226`, `Phase 227-232`, `Phase 233-238`, `Phase 239-244`, `Phase 245-250`, `Phase 251-256`, `Phase 257-262`, `Phase 263-268`, `Phase 269-274`, `Phase 275-280`, `Phase 281-286`, `Phase 287-292`, `Phase 293-298`, `Phase 299-304`, `Phase 305-310`, `Phase 311-316`, `Phase 317-322`, `Phase 323-328`, `Phase 329-334`, `Phase 335-340`, `Phase 341-346`, `Phase 347-352`, or `Phase 353-358`.
-- Optional: Phase 509-514 scope definition and kickoff.
+- Optional: Phase 515-520 scope definition and kickoff.
 
 ## Next 6 Phases (Planned Scope)
-- `Phase 509`: Governance Assurance Recovery Router V28
-- `Phase 510`: Policy Continuity Assurance Harmonizer V28
-- `Phase 511`: Compliance Recovery Stability Mesh V28
-- `Phase 512`: Trust Assurance Continuity Forecaster V28
-- `Phase 513`: Board Recovery Stability Coordinator V28
-- `Phase 514`: Policy Assurance Recovery Engine V28
+- `Phase 515`: Governance Continuity Assurance Router V29
+- `Phase 516`: Policy Recovery Continuity Harmonizer V29
+- `Phase 517`: Compliance Stability Assurance Mesh V29
+- `Phase 518`: Trust Recovery Continuity Forecaster V29
+- `Phase 519`: Board Assurance Stability Coordinator V29
+- `Phase 520`: Policy Continuity Recovery Engine V29
 
 ## Checkpoint Rule
 - Every 2 phase blocks, record one short checkpoint note (risk, decision, outcome).
@@ -106,6 +108,8 @@
 - `Checkpoint 497-502`: V26 block delivered with recovery/assurance contract pattern and phase automation remained stable.
 
 - `Checkpoint 503-508`: V27 block delivered with continuity/recovery contract pattern and generator-assisted scaffolding.
+
+- `Checkpoint 509-514`: V28 block delivered with assurance/recovery contract pattern and changelog automation wired.
 
 ## Blockers
 - No active blocker.
