@@ -222,9 +222,16 @@ Last updated: 2026-04-08
   - docs in `PHASE_371_376_GOVERNANCE_ASSURANCE_CONTINUITY_V5.md`
   - `src/lib/index.ts` exports updated
   - `test:phase:latest` moved to `test:phase:371-376`
+- `T-037` Phase 377-382 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-continuity-assurance-suite-v6.test.ts`
+  - docs in `PHASE_377_382_GOVERNANCE_CONTINUITY_ASSURANCE_V6.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:377-382`
 
 ## Open
-- `T-037` Phase 377-382 planning
+- `T-038` Phase 383-388 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
