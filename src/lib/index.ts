@@ -33,3 +33,21 @@ export { InsightEngine, PredictiveAnalytics, AnomalyDetector, IntelligenceDashbo
 
 // Phase 94: Integration Management & API Marketplace
 export { IntegrationManager, ConnectionManager, IntegrationMarketplace, WebhookOrchestrator, MiddlewareManager, integrationManager, connectionManager, integrationMarketplace, webhookOrchestrator, middlewareManager } from './integration-platform';
+
+// Phase 95: Advanced Monitoring & Observability
+export { MetricsCollector, LogAggregator, DistributedTracing, ObservabilityDashboard, metricsCollector, logAggregator, distributedTracing, observabilityDashboard } from './advanced-monitoring';
+
+// Phase 96: Container & Infrastructure Orchestration
+export { ContainerManager, DeploymentManager, InfrastructureAsCode, AutoScaler, containerManager, deploymentManager, infrastructureAsCode, autoScaler } from './infrastructure-orchestration';
+
+// Phase 97: Advanced Security & Zero Trust
+export { ZeroTrustEngine, DeviceTrustManager, ThreatDetectionSystem, SecretManagement, zeroTrustEngine, deviceTrustManager, threatDetectionSystem, secretManagement } from './zero-trust-security';
+
+// Phase 98: Multi-tenancy & Data Isolation
+export { TenantManager, IsolationEnforcer, ComplianceManager, TenantIsolationMonitor, tenantManager, isolationEnforcer, complianceManager, tenantIsolationMonitor } from './multi-tenancy';
+
+// Phase 99: Disaster Recovery & Business Continuity
+export { BackupManager, RecoveryPlanner, FailoverManager, DisasterRecoveryOrchestrator, backupManager, recoveryPlanner, failoverManager, disasterRecoveryOrchestrator } from './disaster-recovery';
+
+// Phase 100: Enterprise Operations Control Center
+export { OperationsDashboard, IncidentManager, RunbookManager, SLOTracker, OnCallManager, operationsDashboard, incidentManager, runbookManager, sloTracker, onCallManager } from './operations-control';
