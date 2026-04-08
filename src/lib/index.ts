@@ -195,3 +195,21 @@ export { SLOManager, ErrorBudgetTracker, DeploymentGate, QualityMetricsValidator
 
 // Phase 148: Testing Analytics & Intelligence
 export { TestAnalyticsEngine, FlakinessDetector, TestPrioritizer, TestHealthMonitor, testAnalyticsEngine, flakinessDetector, testPrioritizer, testHealthMonitor } from './testing-analytics';
+
+// Phase 149: Distributed Tracing & Request Context
+export { TraceContext, SpanManager, TraceCollector, TraceExporter, traceContext, spanManager, traceCollector, traceExporter } from './distributed-tracing';
+
+// Phase 150: Metrics Correlation & Analytics
+export { MetricsCorrelator, TimeSeriesAnalyzer, RootCauseAnalyzer, CorrelationEngine, metricsCorrelator, timeSeriesAnalyzer, rootCauseAnalyzer, correlationEngine } from './metrics-correlation';
+
+// Phase 151: Anomaly Detection & Baselines
+export { AnomalyDetector, BaselineEstimator, AnomalyClassifier, DriftDetector, anomalyDetector, baselineEstimator, anomalyClassifier, driftDetector } from './anomaly-detection';
+
+// Phase 152: Intelligent Alerting System
+export { AlertManager, AlertRouter, AlertDeduplicator, DynamicThresholdManager, alertManager, alertRouter, alertDeduplicator, dynamicThresholdManager } from './intelligent-alerting';
+
+// Phase 153: Predictive Incident Management
+export { IncidentPredictor, MTTREstimator, RiskScorer, RecommendationEngine, incidentPredictor, mttrEstimator, riskScorer, recommendationEngine } from './predictive-incidents';
+
+// Phase 154: Runbook Automation & Response
+export { RunbookManager, IncidentResponder, AutomationExecutor, PostIncidentAnalyzer, runbookManager, incidentResponder, automationExecutor, postIncidentAnalyzer } from './runbook-automation';
