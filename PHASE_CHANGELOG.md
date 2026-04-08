@@ -11,3 +11,4 @@
 - 2026-04-08 | chore | `062b1e4` | Chore: fix rollup install peer-deps in phase gate
 - 2026-04-08 | chore | `0f7cbdc` | Chore: run phase gate workflow on Node 20
 - 2026-04-08 | chore | `fd8900d` | Chore: scope CI phase gate to latest phase test
+- 2026-04-08 | chore | `74b3b2f` | Chore: harden phase test/runtime config for CI
