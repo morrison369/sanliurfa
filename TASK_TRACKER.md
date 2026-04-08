@@ -243,9 +243,16 @@ Last updated: 2026-04-08
   - docs in `PHASE_389_394_GOVERNANCE_ASSURANCE_RECOVERY_V8.md`
   - `src/lib/index.ts` exports updated
   - `test:phase:latest` moved to `test:phase:389-394`
+- `T-040` Phase 395-400 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-stability-recovery-suite-v9.test.ts`
+  - docs in `PHASE_395_400_GOVERNANCE_STABILITY_RECOVERY_V9.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:395-400`
 
 ## Open
-- `T-040` Phase 395-400 planning
+- `T-041` Phase 401-406 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
