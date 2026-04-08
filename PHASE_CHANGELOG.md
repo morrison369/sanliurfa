@@ -6,3 +6,4 @@
 - 2026-04-08 | `f78529a` | Phase 443-448: Governance Continuity & Assurance V17 + PR workflow hardening
 - 2026-04-08 | phase | `aea8700` | Phase 449-454: Governance Stability Recovery V18 + Gate Automation
 - 2026-04-08 | chore | `d47005b` | Chore: make phase gate workflow install resilient on CI
+- 2026-04-08 | chore | `88d44e5` | Chore: keep phase tsconfig scoped to existing fixed entries
