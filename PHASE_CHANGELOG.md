@@ -7,3 +7,4 @@
 - 2026-04-08 | phase | `aea8700` | Phase 449-454: Governance Stability Recovery V18 + Gate Automation
 - 2026-04-08 | chore | `d47005b` | Chore: make phase gate workflow install resilient on CI
 - 2026-04-08 | chore | `88d44e5` | Chore: keep phase tsconfig scoped to existing fixed entries
+- 2026-04-08 | chore | `99a039b` | Chore: stabilize phase gate CI dependencies

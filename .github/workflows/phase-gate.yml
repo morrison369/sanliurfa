@@ -37,5 +37,7 @@ jobs:
           cache: npm
       - name: Install
         run: npm ci --legacy-peer-deps
+      - name: Ensure Rollup Linux Binary
+        run: npm i -D @rollup/rollup-linux-x64-gnu --no-save
       - name: Run Phase Gate
         run: npm run test:phase:gate:ci
