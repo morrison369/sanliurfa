@@ -19,7 +19,7 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Phase Tsconfig Check
         run: npm run phase:check:tsconfig
 
@@ -36,6 +36,6 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install
-        run: npm ci
+        run: npm ci --legacy-peer-deps
       - name: Run Phase Gate
         run: npm run test:phase:gate:ci
