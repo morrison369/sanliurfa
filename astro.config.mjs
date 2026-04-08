@@ -44,8 +44,5 @@ export default defineConfig({
     build: {
       cssCodeSplit: true,
     },
-    ssr: {
-      noExternal: ['@astrojs/internal-helpers'],
-    },
   },
 });

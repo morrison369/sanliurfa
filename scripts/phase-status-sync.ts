@@ -18,6 +18,27 @@ export function buildClosedTaskBlock(taskId: string, rangeLabel: string, testFil
   return `- \`${taskId}\` Phase ${rangeLabel} planning — closed\n  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)\n  - tests: \`${testFile}\`\n  - docs: \`${docFile}\``;
 }
 
+export function normalizeTrackerOpenHeaders(tracker: string): string {
+  const marker = '## Open';
+  const positions: number[] = [];
+  let offset = tracker.indexOf(marker);
+  while (offset !== -1) {
+    positions.push(offset);
+    offset = tracker.indexOf(marker, offset + marker.length);
+  }
+
+  if (positions.length <= 1) {
+    return tracker;
+  }
+
+  let updated = tracker;
+  for (let index = positions.length - 2; index >= 0; index -= 1) {
+    updated = `${updated.slice(0, positions[index])}${updated.slice(positions[index] + marker.length + 1)}`;
+  }
+
+  return updated.replace(/\n{3,}/g, '\n\n').trimEnd();
+}
+
 export function replaceOpenTask(
   tracker: string,
   currentTaskId: string,
@@ -35,15 +56,30 @@ export function replaceOpenTask(
   ].join('\n');
   const closed = buildClosedTaskBlock(currentTaskId, currentRangeLabel, testFile, docFile);
   const nextOpen = `## Open\n- \`${nextTaskId}\` Phase ${nextRangeLabel} planning\n  - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.\n  - Owner: engineering\n  - Status: ready`;
-  return tracker.replace(openBlock, `${closed}\n\n${nextOpen}`);
+  const replaced = tracker.replace(openBlock, `${closed}\n\n${nextOpen}`);
+  return normalizeTrackerOpenHeaders(replaced);
 }
 
 export function appendCompletedPhase(memory: string, completedTitle: string): string {
-  return memory.replace('## Open Tasks', `- \`${completedTitle}\`: complete\n\n## Open Tasks`);
+  const completedLine = `- \`${completedTitle}\`: complete`;
+  if (memory.includes(completedLine)) {
+    return memory;
+  }
+
+  return memory.replace('## Open Tasks', `${completedLine}\n\n## Open Tasks`);
 }
 
 export function replaceOptionalKickoff(memory: string, optionalKickoff: string): string {
-  return memory.replace(/- Optional: Phase .* scope definition and kickoff\./, `- Optional: ${optionalKickoff}.`);
+  const kickoffLine = `- Optional: ${optionalKickoff}.`;
+  if (memory.includes(kickoffLine)) {
+    return memory;
+  }
+
+  if (/- Optional: Phase .* scope definition and kickoff\./.test(memory)) {
+    return memory.replace(/- Optional: Phase .* scope definition and kickoff\./, kickoffLine);
+  }
+
+  return memory.replace('## Open Tasks', `## Open Tasks\n${kickoffLine}`);
 }
 
 export function replaceNextPhaseScope(memory: string, nextScopes: NextPhaseScope[]): string {
@@ -51,8 +87,31 @@ export function replaceNextPhaseScope(memory: string, nextScopes: NextPhaseScope
   return memory.replace(/## Next 6 Phases \(Planned Scope\)[\s\S]*?## Checkpoint Rule/, `## Next 6 Phases (Planned Scope)\n${rendered}\n\n## Checkpoint Rule`);
 }
 
+export function formatCheckpointLine(checkpoint: string): string {
+  const trimmed = checkpoint.trim();
+  const match = trimmed.match(/^Checkpoint\s+(\d+-\d+):\s*(.+)$/);
+  if (!match) {
+    return `- \`${trimmed}\``;
+  }
+
+  const [, range, message] = match;
+  return `- \`Checkpoint ${range}\`: ${message}`;
+}
+
 export function appendCheckpoint(memory: string, checkpoint: string): string {
-  return memory.replace('## Blockers', `- \`${checkpoint}\`\n\n## Blockers`);
+  const checkpointLine = formatCheckpointLine(checkpoint);
+  if (memory.includes(checkpointLine)) {
+    return memory;
+  }
+
+  return memory.replace('## Blockers', `${checkpointLine}\n\n## Blockers`);
+}
+
+export function normalizeMemoryFormatting(memory: string): string {
+  return memory
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/- \`Checkpoint (\d+-\d+):([^`]+)\`/g, (_whole, range, message) => `- \`Checkpoint ${range}\`:${message}`)
+    .trimEnd();
 }
 
 export function syncMemory(memory: string, config: MemorySyncConfig): string {
@@ -60,7 +119,7 @@ export function syncMemory(memory: string, config: MemorySyncConfig): string {
   updated = replaceOptionalKickoff(updated, config.optionalKickoff);
   updated = replaceNextPhaseScope(updated, config.nextScopes);
   updated = appendCheckpoint(updated, config.checkpoint);
-  return updated;
+  return normalizeMemoryFormatting(updated);
 }
 
 export function main(): void {
@@ -80,7 +139,7 @@ export function main(): void {
   if (mode === 'task') {
     const [currentTaskId, currentRange, nextTaskId, nextRange, testFile, docFile] = args;
     const updated = replaceOpenTask(source, currentTaskId, currentRange, nextTaskId, nextRange, testFile, docFile);
-    writeFileSync(resolvedPath, updated, 'utf8');
+    writeFileSync(resolvedPath, `${updated}\n`, 'utf8');
     return;
   }
 
@@ -91,7 +150,7 @@ export function main(): void {
       return { phase: Number(phase), title: titleParts.join(':') };
     });
     const updated = replaceNextPhaseScope(source, scopes);
-    writeFileSync(resolvedPath, updated, 'utf8');
+    writeFileSync(resolvedPath, `${normalizeMemoryFormatting(updated)}\n`, 'utf8');
     return;
   }
 
@@ -107,7 +166,7 @@ export function main(): void {
       nextScopes: scopes,
       checkpoint
     });
-    writeFileSync(resolvedPath, updated, 'utf8');
+    writeFileSync(resolvedPath, `${updated}\n`, 'utf8');
     return;
   }
 
