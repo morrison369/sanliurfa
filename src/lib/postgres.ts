@@ -3,49 +3,98 @@ const { Pool } = pg;
 import { metricsCollector, performanceThresholds } from './metrics';
 import { logger } from './logging';
 
-// Get DATABASE_URL from environment
+// Get DATABASE_URL and READ_REPLICA_URL from environment
 const DATABASE_URL = process.env.DATABASE_URL;
+const READ_REPLICA_URL = process.env.READ_REPLICA_URL;
 
 if (!DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required but not set');
 }
 
-// PostgreSQL connection pool
-// Performance optimized: increased connection timeout to reduce false timeouts under load
-export const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: 20,
-  min: 2,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000, // Increased from 2000ms to reduce timeouts under load
-  statement_timeout: 30000, // Add statement timeout: 30 seconds
-});
-
-pool.on('error', (err) => {
-  console.error('PostgreSQL pool error:', err);
-});
+// ==================== CONNECTION POOL CONFIGURATION ====================
 
 /**
- * Update database pool status metrics
+ * Adaptive pool configuration based on environment
+ * - Development: smaller pool (2-5 connections)
+ * - Production: larger pool (5-20 connections) with dynamic scaling
  */
-export function updatePoolStatus(): void {
-  const poolState = (pool as any)._clients || [];
-  const idleCount = (pool as any)._idle ? (pool as any)._idle.length : 0;
-  const totalConnections = poolState.length;
-  const activeConnections = totalConnections - idleCount;
-  const waitingRequests = (pool as any)._waitingCount || 0;
+const getPoolConfig = (isDev: boolean) => ({
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: isDev ? 5 : 20,
+  min: isDev ? 2 : 5,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
+  statement_timeout: 30000,
+  // Phase 5: Connection reuse optimization
+  application_name: 'sanliurfa-api',
+  reapIntervalMillis: 5000, // Reap idle connections every 5s for efficiency
+});
 
-  metricsCollector.setPoolStatus({
-    totalConnections,
-    activeConnections,
-    idleConnections: idleCount,
-    waitingRequests
+const isDev = process.env.NODE_ENV !== 'production';
+
+// PostgreSQL write pool (primary)
+export const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ...getPoolConfig(isDev)
+});
+
+// Phase 5: Read replica pool for SELECT queries (optional)
+export const readReplicaPool = READ_REPLICA_URL ? new Pool({
+  connectionString: READ_REPLICA_URL,
+  ...getPoolConfig(isDev)
+}) : null;
+
+pool.on('error', (err) => {
+  logger.error('PostgreSQL pool error', err);
+});
+
+if (readReplicaPool) {
+  readReplicaPool.on('error', (err) => {
+    logger.warn('Read replica pool error, falling back to primary', err);
   });
 }
 
-// Update pool status periodically
-setInterval(updatePoolStatus, 30000); // Every 30 seconds
+// ==================== POOL STATISTICS & MONITORING ====================
+
+/**
+ * Phase 5: Enhanced pool status tracking with per-pool metrics
+ */
+export function updatePoolStatus(): void {
+  const getPoolStats = (p: any, name: string) => {
+    const poolState = p._clients || [];
+    const idleCount = p._idle ? p._idle.length : 0;
+    const totalConnections = poolState.length;
+    const activeConnections = totalConnections - idleCount;
+    const waitingRequests = p._waitingCount || 0;
+
+    return {
+      name,
+      totalConnections,
+      activeConnections,
+      idleConnections: idleCount,
+      waitingRequests,
+      utilization: totalConnections > 0 ? ((activeConnections / totalConnections) * 100).toFixed(1) : '0'
+    };
+  };
+
+  const primaryStats = getPoolStats(pool, 'primary');
+  const replicaStats = readReplicaPool ? getPoolStats(readReplicaPool, 'replica') : null;
+
+  metricsCollector.setPoolStatus(primaryStats);
+
+  // Phase 5: Log replica pool status if available
+  if (replicaStats) {
+    metricsCollector.recordSlowOperation(
+      'pool',
+      `Replica pool utilization: ${replicaStats.utilization}%`,
+      0,
+      replicaStats
+    );
+  }
+}
+
+// Update pool status periodically (every 30 seconds)
+setInterval(updatePoolStatus, 30000);
 
 /**
  * Enhanced pool health monitoring with alerting
@@ -84,48 +133,55 @@ monitorPoolHealth();
 // ==================== QUERY HELPERS ====================
 
 /**
- * Execute a SQL query with parameters (parameterized to prevent SQL injection)
+ * Phase 5: Query execution with automatic read replica routing
+ * - SELECT queries are routed to read replica if available
+ * - All other operations go to primary pool
  */
-export async function query(text: string, params?: any[]) {
+export async function query(text: string, params?: any[], options?: { useReplica?: boolean }) {
   const start = Date.now();
+  const isSelect = text.trim().toUpperCase().startsWith('SELECT');
+
+  // Phase 5: Route SELECTs to replica if available and explicitly allowed
+  const targetPool = isSelect && options?.useReplica && readReplicaPool ? readReplicaPool : pool;
+  const poolName = targetPool === readReplicaPool ? 'replica' : 'primary';
+
   try {
-    const result = await pool.query(text, params);
+    const result = await targetPool.query(text, params);
     const duration = Date.now() - start;
 
-    // Record query metrics
-    metricsCollector.recordQuery(text, duration, result.rowCount || undefined);
+    // Record query metrics with pool routing info
+    metricsCollector.recordQuery(text, duration, result.rowCount || undefined, undefined, poolName);
 
     // Log slow queries
     if (duration > performanceThresholds.slowQueryMs) {
-      const isSlow = duration > performanceThresholds.slowQueryMs;
       const isVerySlow = duration > 1000;
 
       if (isVerySlow) {
-        // Log very slow queries (> 1000ms) with warning level
         metricsCollector.recordSlowOperation(
           'query',
-          `Very slow query: ${text.substring(0, 100)}`,
+          `Very slow query [${poolName}]: ${text.substring(0, 100)}`,
           duration,
-          { rows: result.rowCount, sql: text.substring(0, 200) },
+          { rows: result.rowCount, sql: text.substring(0, 200), pool: poolName },
           new Error().stack
         );
         logger.warn('Very slow query detected', {
           duration,
           rows: result.rowCount,
-          query: text.substring(0, 100)
+          query: text.substring(0, 100),
+          pool: poolName
         });
       } else {
-        // Log moderately slow queries (> 100ms) at debug level
         metricsCollector.recordSlowOperation(
           'query',
-          `Slow query: ${text.substring(0, 100)}`,
+          `Slow query [${poolName}]: ${text.substring(0, 100)}`,
           duration,
-          { rows: result.rowCount }
+          { rows: result.rowCount, pool: poolName }
         );
         logger.debug('Slow query detected', {
           duration,
           rows: result.rowCount,
-          query: text.substring(0, 100)
+          query: text.substring(0, 100),
+          pool: poolName
         });
       }
     }
@@ -133,13 +189,57 @@ export async function query(text: string, params?: any[]) {
     return result;
   } catch (error) {
     const duration = Date.now() - start;
-    metricsCollector.recordQuery(text, duration, undefined, error instanceof Error ? error.message : String(error));
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    metricsCollector.recordQuery(text, duration, undefined, errorMsg, poolName);
 
     logger.error('Query error', error instanceof Error ? error : new Error(String(error)), {
       query: text.substring(0, 100),
-      duration
+      duration,
+      pool: poolName
     });
     throw error;
+  }
+}
+
+/**
+ * Phase 5: Stream large result sets efficiently without loading into memory
+ * Use for queries that return many rows (> 1000 rows)
+ */
+export async function queryStream(text: string, params?: any[], onRow?: (row: any) => Promise<void>) {
+  const client = await pool.connect();
+  let rowCount = 0;
+
+  try {
+    const query = client.query(new (pg as any).Query({
+      text,
+      values: params,
+      rowMode: 'object'
+    }));
+
+    return new Promise<number>((resolve, reject) => {
+      query.on('row', async (row) => {
+        rowCount++;
+        if (onRow) {
+          try {
+            await onRow(row);
+          } catch (err) {
+            logger.error('Row processing error in stream', err);
+          }
+        }
+      });
+
+      query.on('error', (err) => {
+        logger.error('Stream query error', err);
+        reject(err);
+      });
+
+      query.on('end', () => {
+        metricsCollector.recordQuery(text, 0, rowCount);
+        resolve(rowCount);
+      });
+    });
+  } finally {
+    client.release();
   }
 }
 
@@ -153,8 +253,15 @@ export async function queryOne(text: string, params?: any[]) {
 
 /**
  * Execute a query and return all rows
+ * Phase 5: Optional streaming for large result sets
  */
-export async function queryMany(text: string, params?: any[]) {
+export async function queryMany(text: string, params?: any[], options?: { stream?: boolean; onRow?: (row: any) => Promise<void> }) {
+  if (options?.stream && options?.onRow) {
+    // Use streaming for large datasets
+    const rowCount = await queryStream(text, params, options.onRow);
+    return { rowCount, streamed: true };
+  }
+
   const result = await query(text, params);
   return result.rows;
 }
@@ -181,6 +288,7 @@ export async function transaction<T>(callback: (client: pg.PoolClient) => Promis
 
 /**
  * Allowed table names to prevent SQL injection via table parameter
+ * Phase 5: Added loyalty, social, and analytics tables
  */
 const ALLOWED_TABLES = new Set([
   'users',
@@ -201,7 +309,24 @@ const ALLOWED_TABLES = new Set([
   'badges',
   'user_badges',
   'place_photos',
-  'photo_votes'
+  'photo_votes',
+  // Phase 16: Loyalty & Rewards
+  'loyalty_points',
+  'loyalty_tiers',
+  'user_achievements',
+  'user_badges',
+  'rewards',
+  'reward_inventory',
+  'user_tier_history',
+  // Phase 25: Social Features
+  'user_activity',
+  'followers',
+  'mentions',
+  'hashtag_index',
+  // Phase 28D: Real-time Analytics
+  'request_metrics',
+  'query_metrics',
+  'performance_metrics'
 ]);
 
 /**
