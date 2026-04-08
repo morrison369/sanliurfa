@@ -231,3 +231,21 @@ export { ComplianceMapper, AuditTrailManager, PolicyManager, ComplianceReporter,
 
 // Phase 160: Security Incident Response & Forensics
 export { IncidentDetector, IncidentOrchestrator, ForensicAnalyzer, PostIncidentReviewer, incidentDetector, incidentOrchestrator, forensicAnalyzer, postIncidentReviewer } from './security-incidents';
+
+// Phase 161: Policy as Code & Definition
+export { PolicyDefinitionBuilder, PolicyVersionManager, PolicyTemplateLibrary, PolicyCompiler, policyDefinitionBuilder, policyVersionManager, policyTemplateLibrary, policyCompiler } from './policy-as-code';
+
+// Phase 162: Access Governance & Entitlement Management
+export { EntitlementManager, AccessReviewOrchestrator, PrivilegeEscalationMonitor, RoleHierarchyManager, entitlementManager, accessReviewOrchestrator, privilegeEscalationMonitor, roleHierarchyManager } from './access-governance';
+
+// Phase 163: Compliance Automation & Audit
+export { ComplianceAutomator, AuditAutomation, RemediationOrchestrator, ComplianceReportAutomation, complianceAutomator, auditAutomation, remediationOrchestrator, complianceReportAutomation } from './compliance-automation';
+
+// Phase 164: Decision Auditing & Logging
+export { DecisionAuditor, DecisionTraceability, ChangeImpactAnalyzer, DecisionReplayEngine, decisionAuditor, decisionTraceability, changeImpactAnalyzer, decisionReplayEngine } from './decision-audit';
+
+// Phase 165: Policy Analytics & Insights
+export { PolicyUsageAnalytics, AccessPatternAnalyzer, PolicyConflictDetector, PolicyRecommendationEngine, policyUsageAnalytics, accessPatternAnalyzer, policyConflictDetector, policyRecommendationEngine } from './policy-analytics';
+
+// Phase 166: Policy Enforcement & Remediation
+export { PolicyEnforcementEngine, AutoRemediationExecutor, PolicyExceptionManager, PolicyEvaluationCache, policyEnforcementEngine, autoRemediationExecutor, policyExceptionManager, policyEvaluationCache } from './policy-enforcement';
