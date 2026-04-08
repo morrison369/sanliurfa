@@ -177,3 +177,21 @@ export { MetricsAggregator, CostAnalyzer, ResourceOptimizer, AlertingEngine, met
 
 // Phase 142: Infrastructure Automation & Self-Healing
 export { AutoScaler, SelfHealingController, InfrastructureAutomator, CapacityPlanner, autoScaler, selfHealingController, infrastructureAutomator, capacityPlanner } from './infrastructure-automation';
+
+// Phase 143: Test Automation Frameworks
+export { VisualRegressionTester, ContractTester, MutationTestRunner, TestOrchestrator, visualRegressionTester, contractTester, mutationTestRunner, testOrchestrator } from './test-automation';
+
+// Phase 144: Coverage Analysis & Reporting
+export { CoverageAnalyzer, CoverageGates, CoverageTrendAnalyzer, CriticalPathAnalyzer, coverageAnalyzer, coverageGates, coverageTrendAnalyzer, criticalPathAnalyzer } from './coverage-analytics';
+
+// Phase 145: Chaos Engineering & Resilience Testing
+export { FailureInjector, ResilienceValidator, RecoveryAnalyzer, ChaosScenario, failureInjector, resilienceValidator, recoveryAnalyzer, chaosScenario } from './chaos-engineering';
+
+// Phase 146: Performance Testing & Load Generation
+export { LoadTestGenerator, StressTestRunner, PerformanceProfiler, MemoryAnalyzer, loadTestGenerator, stressTestRunner, performanceProfiler, memoryAnalyzer } from './performance-testing';
+
+// Phase 147: Quality Gates & SLOs
+export { SLOManager, ErrorBudgetTracker, DeploymentGate, QualityMetricsValidator, sloManager, errorBudgetTracker, deploymentGate, qualityMetricsValidator } from './quality-gates';
+
+// Phase 148: Testing Analytics & Intelligence
+export { TestAnalyticsEngine, FlakinessDetector, TestPrioritizer, TestHealthMonitor, testAnalyticsEngine, flakinessDetector, testPrioritizer, testHealthMonitor } from './testing-analytics';
