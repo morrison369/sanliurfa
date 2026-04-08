@@ -348,8 +348,13 @@ Last updated: 2026-04-09
   - tests: `src/lib/__tests__/governance-continuity-recovery-suite-v27.test.ts`
   - docs: `PHASE_503_508_GOVERNANCE_CONTINUITY_RECOVERY_ASSURANCE_V27.md`
 
+- `T-059` Phase 509-514 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-recovery-suite-v28.test.ts`
+  - docs: `PHASE_509_514_GOVERNANCE_ASSURANCE_RECOVERY_STABILITY_V28.md`
+
 ## Open
-- `T-059` Phase 509-514 planning
+- `T-060` Phase 515-520 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
