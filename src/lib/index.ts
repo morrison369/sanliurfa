@@ -141,3 +141,21 @@ export { KnowledgeGraph, EntityLinker, RelationshipExtractor, GraphReasoner, kno
 
 // Phase 130: Advanced AI Analytics & Monitoring
 export { EmbeddingAnalytics, RetrievalAnalytics, LLMMetrics, QualityMonitor, embeddingAnalytics, retrievalAnalytics, llmMetrics, qualityMonitor } from './ai-analytics';
+
+// Phase 131: Event Store & Event Sourcing
+export { EventStore, EventVersionManager, EventSnapshot, EventRecovery, eventStore, eventVersionManager, eventSnapshot, eventRecovery } from './event-store';
+
+// Phase 132: Message Broker Integration
+export { MessageBroker, StreamConsumer, ConsumerGroup, StreamMetrics, messageBroker, consumerGroup, streamMetrics } from './message-broker';
+
+// Phase 133: CQRS & Event-Driven Architecture
+export { CommandHandler, QueryHandler, EventHandler, SagaOrchestrator, commandHandler, queryHandler, eventHandler, sagaOrchestrator } from './cqrs-engine';
+
+// Phase 134: Stream Processing & Operators
+export { StatefulStreamProcessor, WindowOperator, StreamJoiner, BackpressureController, windowOperator, streamJoiner, backpressureController } from './stream-processor';
+
+// Phase 135: Advanced Event Routing & Filtering
+export { EventRouter, ContentFilter, EventTransformer, RoutingRule, eventRouter, contentFilter, eventTransformer, routingRule } from './event-router';
+
+// Phase 136: Observability & Monitoring
+export { EventMetrics, ConsumerLagMonitor, EventTracer, DebugDashboard, eventMetrics, consumerLagMonitor, eventTracer, debugDashboard } from './event-observability';
