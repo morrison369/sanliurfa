@@ -1,151 +1,107 @@
 /**
- * Loyalty Achievements API
- * Get and manage user achievements
+ * Achievements Endpoint
+ * GET: Retrieve user achievements (all, unviewed, or stats)
+ * POST: Mark achievement as viewed
  */
 
 import type { APIRoute } from 'astro';
-import {
-  getUserAchievements,
-  getUnviewedAchievements,
-  getAchievementStats,
-  markAchievementViewed
-} from '../../../lib/achievements';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { recordRequest } from '../../../lib/metrics';
+import { getUserAchievements, getUnviewedAchievements, getAchievementStats, markAchievementViewed } from '../../../lib/achievements';
 import { getCache, setCache } from '../../../lib/cache';
+import { apiResponse, apiError } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
+import { recordRequest } from '../../../lib/metrics';
 
-export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+export const GET: APIRoute = async ({ request, locals }) => {
   const startTime = Date.now();
-  logger.setRequestId(requestId);
+  const requestId = request.headers.get('x-request-id') || crypto.randomUUID();
 
   try {
     // Auth required
-    if (!locals.user?.id) {
-      recordRequest('GET', '/api/loyalty/achievements', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
-        HttpStatus.UNAUTHORIZED,
-        undefined,
-        requestId
-      );
+    if (!locals.user) {
+      const duration = Date.now() - startTime;
+      recordRequest('GET', '/api/loyalty/achievements', 401, duration);
+      return apiError('UNAUTHORIZED', 'Authentication required', 401, undefined, requestId);
     }
 
+    const url = new URL(request.url);
     const view = url.searchParams.get('view') || 'all';
     const userId = locals.user.id;
+
     let data;
 
-    // Route based on view parameter
-    if (view === 'unviewed') {
-      // Real-time unviewed count — no cache
-      data = await getUnviewedAchievements(userId);
-    } else if (view === 'stats') {
-      // Stats with caching
-      const cacheKey = `sanliurfa:achievements:stats:${userId}`;
-      const cached = await getCache(cacheKey);
-      if (cached) {
-        const duration = Date.now() - startTime;
-        recordRequest('GET', '/api/loyalty/achievements', HttpStatus.OK, duration);
-        return apiResponse(
-          { success: true, data: JSON.parse(cached), view },
-          HttpStatus.OK,
-          requestId
-        );
+    switch (view) {
+      case 'unviewed': {
+        // Real-time unviewed achievements (no cache)
+        data = await getUnviewedAchievements(userId);
+        break;
       }
 
-      data = await getAchievementStats(userId);
-      await setCache(cacheKey, JSON.stringify(data), 300);
-    } else {
-      // 'all' — calls internal cached function
-      data = await getUserAchievements(userId);
+      case 'stats': {
+        // Stats with caching (300s TTL)
+        const cacheKey = `sanliurfa:achievements:stats:${userId}`;
+        const cached = await getCache(cacheKey);
+        if (cached) {
+          data = cached;
+        } else {
+          data = await getAchievementStats(userId);
+          await setCache(cacheKey, data, 300);
+        }
+        break;
+      }
+
+      case 'all':
+      default: {
+        // All achievements (has internal caching: 1800s)
+        data = await getUserAchievements(userId);
+        break;
+      }
     }
 
     const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/loyalty/achievements', HttpStatus.OK, duration);
+    recordRequest('GET', '/api/loyalty/achievements', 200, duration);
 
-    return apiResponse(
-      { success: true, data, view },
-      HttpStatus.OK,
-      requestId
-    );
+    return apiResponse({ success: true, data }, 200, requestId);
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/loyalty/achievements', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error(
-      'Failed to get achievements',
-      error instanceof Error ? error : new Error(String(error))
-    );
-    return apiError(
-      ErrorCode.INTERNAL_ERROR,
-      'Failed to get achievements',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      undefined,
-      requestId
-    );
+    recordRequest('GET', '/api/loyalty/achievements', 500, duration);
+    logger.error('Failed to get achievements', error instanceof Error ? error : new Error(String(error)));
+    return apiError('INTERNAL_ERROR', 'Failed to retrieve achievements', 500, undefined, requestId);
   }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
   const startTime = Date.now();
-  logger.setRequestId(requestId);
+  const requestId = request.headers.get('x-request-id') || crypto.randomUUID();
 
   try {
     // Auth required
-    if (!locals.user?.id) {
-      recordRequest('POST', '/api/loyalty/achievements', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
-        HttpStatus.UNAUTHORIZED,
-        undefined,
-        requestId
-      );
+    if (!locals.user) {
+      const duration = Date.now() - startTime;
+      recordRequest('POST', '/api/loyalty/achievements', 401, duration);
+      return apiError('UNAUTHORIZED', 'Authentication required', 401, undefined, requestId);
     }
 
-    // Parse body
     const body = await request.json();
     const { userAchievementId } = body;
 
     // Validation
-    if (!userAchievementId) {
-      recordRequest('POST', '/api/loyalty/achievements', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'userAchievementId is required',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        undefined,
-        requestId
-      );
+    if (!userAchievementId || typeof userAchievementId !== 'string') {
+      const duration = Date.now() - startTime;
+      recordRequest('POST', '/api/loyalty/achievements', 422, duration);
+      return apiError('VALIDATION_ERROR', 'userAchievementId is required', 422, undefined, requestId);
     }
 
     // Mark as viewed
     await markAchievementViewed(userAchievementId, locals.user.id);
 
     const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/loyalty/achievements', HttpStatus.OK, duration);
-    logger.logMutation('mark_viewed', 'user_achievements', userAchievementId, locals.user.id);
+    recordRequest('POST', '/api/loyalty/achievements', 200, duration);
 
-    return apiResponse(
-      { success: true },
-      HttpStatus.OK,
-      requestId
-    );
+    return apiResponse({ success: true }, 200, requestId);
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/loyalty/achievements', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error(
-      'Failed to mark achievement as viewed',
-      error instanceof Error ? error : new Error(String(error))
-    );
-    return apiError(
-      ErrorCode.INTERNAL_ERROR,
-      'Failed to update achievement',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      undefined,
-      requestId
-    );
+    recordRequest('POST', '/api/loyalty/achievements', 500, duration);
+    logger.error('Failed to mark achievement viewed', error instanceof Error ? error : new Error(String(error)));
+    return apiError('INTERNAL_ERROR', 'Failed to update achievement', 500, undefined, requestId);
   }
 };

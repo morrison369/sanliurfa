@@ -39,7 +39,7 @@ export default function RewardsPanel() {
         throw new Error('Ödüller yüklenemedi');
       }
       const rewardsData = await rewardsResponse.json();
-      setRewards(rewardsData.data || []);
+      setRewards(rewardsData.data?.rewards || []);
 
       // Load user points
       const pointsResponse = await fetch('/api/loyalty/points');

@@ -1,6 +1,5 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import AdminLoyaltyPanel from '../../../components/AdminLoyaltyPanel';
 
 // Admin guard
 if (!Astro.locals.user || Astro.locals.user.role !== 'admin') {
@@ -9,18 +8,28 @@ if (!Astro.locals.user || Astro.locals.user.role !== 'admin') {
 ---
 
 <Layout title="Sadakat Yönetimi | Admin">
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="max-w-7xl mx-auto px-4 py-8">
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Sadakat & Ödül Yönetimi</h1>
-        <p class="text-gray-600 dark:text-gray-400 mt-2">
-          Ödül kataloğunu yönetin ve kullanıcılara puan/rozet verin
-        </p>
-      </div>
-
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
-        <AdminLoyaltyPanel client:load />
-      </div>
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Sadakat Yönetimi</h1>
+      <p class="text-gray-600 dark:text-gray-400">Ödüller, puanlar ve rozetleri yönetin</p>
     </div>
+
+    <div id="admin-loyalty-container"></div>
   </div>
+
+  <script>
+    // Placeholder for AdminLoyaltyPanel component
+    // Will be hydrated with React component
+    console.log('Admin Loyalty Panel Loading...');
+  </script>
 </Layout>
+
+<style>
+  :global(body) {
+    background-color: #f9fafb;
+  }
+
+  :global(.dark body) {
+    background-color: #111827;
+  }
+</style>
