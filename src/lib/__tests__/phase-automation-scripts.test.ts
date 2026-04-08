@@ -2,7 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { getPhaseScriptOrder, selectPhaseScript } from '../../../scripts/phase-runner';
 import { buildExpectedFiles } from '../../../scripts/update-phase-tsconfig';
 import { buildPhaseDoc, buildPhaseIndexEntry, buildPhaseScriptEntry, buildModuleExportBlock } from '../../../scripts/phase-block-generator';
-import { buildClosedTaskBlock, replaceNextPhaseScope, replaceOpenTask } from '../../../scripts/phase-status-sync';
+import {
+  appendCheckpoint,
+  appendCompletedPhase,
+  buildClosedTaskBlock,
+  replaceNextPhaseScope,
+  replaceOpenTask,
+  replaceOptionalKickoff,
+  syncMemory
+} from '../../../scripts/phase-status-sync';
 
 describe('phase-runner automation', () => {
   it('orders phase scripts by start range', () => {
@@ -182,5 +190,67 @@ describe('phase status sync helpers', () => {
 
     expect(updated).toContain('Phase 491');
     expect(updated).not.toContain('Old');
+  });
+
+  it('appends completed phase before open tasks', () => {
+    const memory = [
+      '## Completed Phases',
+      '- `Phase 485-490 Governance Assurance Recovery & Continuity V24`: complete',
+      '',
+      '## Open Tasks'
+    ].join('\n');
+
+    const updated = appendCompletedPhase(memory, 'Phase 491-496 Governance Stability Assurance & Continuity V25');
+    expect(updated).toContain('Phase 491-496 Governance Stability Assurance & Continuity V25');
+  });
+
+  it('replaces optional kickoff line', () => {
+    const memory = '- Optional: Phase 491-496 scope definition and kickoff.';
+    expect(replaceOptionalKickoff(memory, 'Phase 497-502 scope definition and kickoff')).toContain('Phase 497-502');
+  });
+
+  it('appends checkpoint before blockers', () => {
+    const memory = [
+      '## Checkpoint Notes',
+      '- `Checkpoint 485-490`: done',
+      '',
+      '## Blockers'
+    ].join('\n');
+
+    const updated = appendCheckpoint(memory, 'Checkpoint 491-496: V25 block delivered with stability/assurance contract pattern and warning cleanup maintained.');
+    expect(updated).toContain('Checkpoint 491-496');
+  });
+
+  it('syncs memory in one pass', () => {
+    const memory = [
+      '## Completed Phases',
+      '- `Phase 485-490 Governance Assurance Recovery & Continuity V24`: complete',
+      '',
+      '## Open Tasks',
+      '- Optional: Phase 491-496 scope definition and kickoff.',
+      '',
+      '## Next 6 Phases (Planned Scope)',
+      '- `Phase 491`: Old',
+      '',
+      '## Checkpoint Rule',
+      '## Checkpoint Notes',
+      '- `Checkpoint 485-490`: done',
+      '',
+      '## Blockers'
+    ].join('\n');
+
+    const updated = syncMemory(memory, {
+      completedTitle: 'Phase 491-496 Governance Stability Assurance & Continuity V25',
+      optionalKickoff: 'Phase 497-502 scope definition and kickoff',
+      nextScopes: [
+        { phase: 497, title: 'Governance Recovery Assurance Router V26' },
+        { phase: 498, title: 'Policy Stability Continuity Harmonizer V26' }
+      ],
+      checkpoint: 'Checkpoint 491-496: V25 block delivered with stability/assurance contract pattern and warning cleanup maintained.'
+    });
+
+    expect(updated).toContain('Phase 491-496 Governance Stability Assurance & Continuity V25');
+    expect(updated).toContain('Phase 497');
+    expect(updated).toContain('Checkpoint 491-496');
   });
 });

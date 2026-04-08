@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import type { Pool } from 'pg';
 import { getCache, setCache } from './cache';
 
 export interface WebhookMetrics {

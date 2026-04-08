@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import type { Pool } from 'pg';
 import { triggerWebhook } from './webhooks';
 
 export interface ReplayRequest {
