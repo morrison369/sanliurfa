@@ -69,3 +69,21 @@ export { SemanticSearch, PersonalizedRecommendations, RankingEngine, SearchAnaly
 
 // Phase 106: AI Governance, Ethics & Explainability
 export { ModelExplainability, BiasDetection, AIGovernance, ExplainableAI, modelExplainability, biasDetection, aiGovernance, explainableAI } from './ai-governance';
+
+// Phase 107: Advanced Data Connectors & Source Integration
+export { ConnectorRegistry, SourceManager, ConnectorFactory, ConnectionPoolManager, connectorRegistry, sourceManager, connectorFactory, connectionPoolManager } from './data-connectors';
+
+// Phase 108: Data Transformation & Enrichment
+export { TransformationEngine, FieldMapper, DataEnricher, RulesEngine, transformationEngine, fieldMapper, dataEnricher, rulesEngine } from './data-transformation';
+
+// Phase 109: Master Data Management & Entity Resolution
+export { MasterDataManager, DeduplicationEngine, EntityResolver, SlowlyChangingDimensionManager, masterDataManager, deduplicationEngine, entityResolver, slowlyChangingDimensionManager } from './master-data-management';
+
+// Phase 110: Data Quality & Validation Framework
+export { QualityRuleEngine, AnomalyDetector, DataProfiler, QualityScorecardManager, qualityRuleEngine, anomalyDetector, dataProfiler, qualityScorecard } from './data-quality';
+
+// Phase 111: Advanced Stream Analytics & Time-Window Processing
+export { StreamProcessor, WindowAggregator, StreamJoiner, StreamMetrics, streamProcessor, windowAggregator, streamJoiner, streamMetrics } from './stream-analytics';
+
+// Phase 112: Data Catalog & Lineage Tracking
+export { DataCatalog, BusinessGlossary, LineageTracker, ImpactAnalyzer, dataCatalog, businessGlossary, lineageTracker, impactAnalyzer } from './data-catalog';
