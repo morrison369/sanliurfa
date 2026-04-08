@@ -264,9 +264,16 @@ Last updated: 2026-04-08
   - docs in `PHASE_407_412_GOVERNANCE_RECOVERY_ASSURANCE_V11.md`
   - `src/lib/index.ts` exports updated
   - `test:phase:latest` moved to `test:phase:407-412`
+- `T-043` Phase 413-418 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-continuity-assurance-suite-v12.test.ts`
+  - docs in `PHASE_413_418_GOVERNANCE_CONTINUITY_ASSURANCE_V12.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:413-418`
 
 ## Open
-- `T-043` Phase 413-418 planning
+- `T-044` Phase 419-424 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
