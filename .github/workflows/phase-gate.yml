@@ -38,6 +38,6 @@ jobs:
       - name: Install
         run: npm ci --legacy-peer-deps
       - name: Ensure Rollup Linux Binary
-        run: npm i -D @rollup/rollup-linux-x64-gnu --no-save
+        run: npm i -D @rollup/rollup-linux-x64-gnu --no-save --legacy-peer-deps
       - name: Run Phase Gate
         run: npm run test:phase:gate:ci
