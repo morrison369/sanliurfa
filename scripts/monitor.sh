@@ -1,83 +1,103 @@
 #!/bin/bash
-# Monitoring Script
 
-SITE_URL="https://sanliurfa.com"
-WEBHOOK_URL="" # Slack/Discord webhook for alerts
+# Şanlıurfa.com Performance Monitoring Script
+# Tracks performance metrics and alerts on anomalies
 
-# Check site health
+MONITOR_LOG="monitoring-$(date +%Y%m%d).log"
+API_BASE="http://localhost:3000/api"
+ALERT_THRESHOLD_SLOW_REQUESTS=1.0  # >1% slow requests
+ALERT_THRESHOLD_ERROR_RATE=0.5     # >0.5% error rate
+ALERT_THRESHOLD_CACHE_HIT=70       # <70% cache hit rate
+
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a "$MONITOR_LOG"
+}
+
+alert() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] ⚠️  ALERT: $1" | tee -a "$MONITOR_LOG"
+}
+
 check_health() {
-    response=$(curl -s -o /dev/null -w "%{http_code}" "$SITE_URL/api/health")
+    log "Checking API health..."
     
-    if [ "$response" != "200" ]; then
-        echo "⚠️  Health check failed! Status: $response"
-        send_alert "Health check failed" "Site returned status $response"
+    HEALTH=$(curl -s "$API_BASE/health" 2>/dev/null)
+    if [ -z "$HEALTH" ]; then
+        alert "API health check failed - API not responding"
         return 1
     fi
     
-    echo "✅ Health check passed"
+    log "✓ API is healthy"
     return 0
 }
 
-# Check SSL certificate
- check_ssl() {
-    expiry=$(echo | openssl s_client -servername sanliurfa.com -connect sanliurfa.com:443 2>/dev/null | openssl x509 -noout -dates | grep notAfter | cut -d= -f2)
-    expiry_epoch=$(date -d "$expiry" +%s)
-    current_epoch=$(date +%s)
-    days_until_expiry=$(( (expiry_epoch - current_epoch) / 86400 ))
+check_performance() {
+    log "Fetching performance metrics..."
     
-    if [ $days_until_expiry -lt 7 ]; then
-        echo "⚠️  SSL expires in $days_until_expiry days!"
-        send_alert "SSL Expiring Soon" "Certificate expires in $days_until_expiry days"
-    else
-        echo "✅ SSL valid for $days_until_expiry days"
+    METRICS=$(curl -s "$API_BASE/performance" 2>/dev/null)
+    if [ -z "$METRICS" ]; then
+        alert "Could not fetch performance metrics"
+        return 1
+    fi
+    
+    # Extract metrics (simplified)
+    SLOW_REQUESTS=$(echo "$METRICS" | grep -o '"slowRequestRate":[^,}]*' | cut -d: -f2)
+    ERROR_RATE=$(echo "$METRICS" | grep -o '"errorRate":[^,}]*' | cut -d: -f2)
+    CACHE_HIT=$(echo "$METRICS" | grep -o '"cacheHitRate":[^,}]*' | cut -d: -f2)
+    
+    log "Slow Requests: ${SLOW_REQUESTS}%"
+    log "Error Rate: ${ERROR_RATE}%"
+    log "Cache Hit Rate: ${CACHE_HIT}%"
+    
+    # Check thresholds
+    if (( $(echo "$SLOW_REQUESTS > $ALERT_THRESHOLD_SLOW_REQUESTS" | bc -l) )); then
+        alert "High slow request rate: ${SLOW_REQUESTS}% (threshold: ${ALERT_THRESHOLD_SLOW_REQUESTS}%)"
+    fi
+    
+    if (( $(echo "$ERROR_RATE > $ALERT_THRESHOLD_ERROR_RATE" | bc -l) )); then
+        alert "High error rate: ${ERROR_RATE}% (threshold: ${ALERT_THRESHOLD_ERROR_RATE}%)"
+    fi
+    
+    if (( $(echo "$CACHE_HIT < $ALERT_THRESHOLD_CACHE_HIT" | bc -l) )); then
+        alert "Low cache hit rate: ${CACHE_HIT}% (threshold: ${ALERT_THRESHOLD_CACHE_HIT}%)"
     fi
 }
 
-# Check disk space
-check_disk() {
-    usage=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
+check_database() {
+    log "Checking database connection..."
     
-    if [ $usage -gt 80 ]; then
-        echo "⚠️  Disk usage at $usage%!"
-        send_alert "High Disk Usage" "Disk usage is at $usage%"
-    else
-        echo "✅ Disk usage at $usage%"
+    HEALTH=$(curl -s "$API_BASE/health/detailed" 2>/dev/null)
+    if [ -z "$HEALTH" ]; then
+        alert "Could not fetch detailed health info"
+        return 1
     fi
+    
+    # Check database status
+    if echo "$HEALTH" | grep -q '"database".*"disconnected"'; then
+        alert "Database connection lost!"
+        return 1
+    fi
+    
+    log "✓ Database is connected"
 }
 
-# Check memory
-check_memory() {
-    usage=$(free | grep Mem | awk '{printf("%.0f", $3/$2 * 100.0)}')
-    
-    if [ $usage -gt 90 ]; then
-        echo "⚠️  Memory usage at $usage%!"
-        send_alert "High Memory Usage" "Memory usage is at $usage%"
-    else
-        echo "✅ Memory usage at $usage%"
-    fi
+generate_report() {
+    log ""
+    log "════════════════════════════════════════"
+    log "📊 PERFORMANCE REPORT"
+    log "════════════════════════════════════════"
+    log "Time: $(date +'%Y-%m-%d %H:%M:%S')"
+    log "API Base: $API_BASE"
+    log "Log: $MONITOR_LOG"
+    log "════════════════════════════════════════"
 }
 
-# Send alert
-send_alert() {
-    title=$1
-    message=$2
-    
-    if [ ! -z "$WEBHOOK_URL" ]; then
-        curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"🚨 $title: $message\"}" \
-            $WEBHOOK_URL
-    fi
-    
-    # Log to file
-    echo "[$(date)] ALERT: $title - $message" >> /var/log/sanliurfa-alerts.log
-}
+# Main execution
+log "Starting performance monitoring..."
+generate_report
 
 # Run checks
-echo "🔍 Running monitoring checks..."
-echo "=============================="
-check_health
-check_ssl
-check_disk
-check_memory
-echo "=============================="
-echo "✅ Monitoring complete"
+check_health || exit 1
+check_database || exit 1
+check_performance
+
+log "✓ Monitoring cycle complete"
