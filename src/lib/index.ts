@@ -918,3 +918,21 @@ export { BoardAssuranceContinuityBookV7, BoardAssuranceContinuityCoordinatorV7, 
 
 // Phase 388: Policy Stability Assurance Engine V7
 export { PolicyStabilityAssuranceBookV7, PolicyStabilityAssuranceEngineV7, PolicyStabilityAssuranceGateV7, PolicyStabilityAssuranceReporterV7, policyStabilityAssuranceBookV7, policyStabilityAssuranceEngineV7, policyStabilityAssuranceGateV7, policyStabilityAssuranceReporterV7 } from './policy-stability-assurance-engine-v7';
+
+// Phase 389: Governance Assurance Recovery Router V8
+export { GovernanceAssuranceRecoveryBookV8, GovernanceAssuranceRecoveryScorerV8, GovernanceAssuranceRecoveryRouterV8, GovernanceAssuranceRecoveryReporterV8, governanceAssuranceRecoveryBookV8, governanceAssuranceRecoveryScorerV8, governanceAssuranceRecoveryRouterV8, governanceAssuranceRecoveryReporterV8 } from './governance-assurance-recovery-router-v8';
+
+// Phase 390: Policy Stability Continuity Harmonizer V8
+export { PolicyStabilityContinuityBookV8, PolicyStabilityContinuityHarmonizerV8, PolicyStabilityContinuityGateV8, PolicyStabilityContinuityReporterV8, policyStabilityContinuityBookV8, policyStabilityContinuityHarmonizerV8, policyStabilityContinuityGateV8, policyStabilityContinuityReporterV8 } from './policy-stability-continuity-harmonizer-v8';
+
+// Phase 391: Compliance Recovery Trust Mesh V8
+export { ComplianceRecoveryTrustMeshV8, ComplianceRecoveryTrustScorerV8, ComplianceRecoveryTrustRouterV8, ComplianceRecoveryTrustReporterV8, complianceRecoveryTrustMeshV8, complianceRecoveryTrustScorerV8, complianceRecoveryTrustRouterV8, complianceRecoveryTrustReporterV8 } from './compliance-recovery-trust-mesh-v8';
+
+// Phase 392: Trust Assurance Continuity Forecaster V8
+export { TrustAssuranceContinuityBookV8, TrustAssuranceContinuityForecasterV8, TrustAssuranceContinuityGateV8, TrustAssuranceContinuityReporterV8, trustAssuranceContinuityBookV8, trustAssuranceContinuityForecasterV8, trustAssuranceContinuityGateV8, trustAssuranceContinuityReporterV8 } from './trust-assurance-continuity-forecaster-v8';
+
+// Phase 393: Board Continuity Assurance Coordinator V8
+export { BoardContinuityAssuranceBookV8, BoardContinuityAssuranceCoordinatorV8, BoardContinuityAssuranceGateV8, BoardContinuityAssuranceReporterV8, boardContinuityAssuranceBookV8, boardContinuityAssuranceCoordinatorV8, boardContinuityAssuranceGateV8, boardContinuityAssuranceReporterV8 } from './board-continuity-assurance-coordinator-v8';
+
+// Phase 394: Policy Resilience Stability Engine V8
+export { PolicyResilienceStabilityBookV8, PolicyResilienceStabilityEngineV8, PolicyResilienceStabilityGateV8, PolicyResilienceStabilityReporterV8, policyResilienceStabilityBookV8, policyResilienceStabilityEngineV8, policyResilienceStabilityGateV8, policyResilienceStabilityReporterV8 } from './policy-resilience-stability-engine-v8';
