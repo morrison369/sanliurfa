@@ -1,5 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
+import AdminLoyaltyPanel from '../../../components/AdminLoyaltyPanel';
 
 // Admin guard
 if (!Astro.locals.user || Astro.locals.user.role !== 'admin') {
@@ -14,14 +15,8 @@ if (!Astro.locals.user || Astro.locals.user.role !== 'admin') {
       <p class="text-gray-600 dark:text-gray-400">Ödüller, puanlar ve rozetleri yönetin</p>
     </div>
 
-    <div id="admin-loyalty-container"></div>
+    <AdminLoyaltyPanel client:load />
   </div>
-
-  <script>
-    // Placeholder for AdminLoyaltyPanel component
-    // Will be hydrated with React component
-    console.log('Admin Loyalty Panel Loading...');
-  </script>
 </Layout>
 
 <style>
