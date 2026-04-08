@@ -1,8 +1,8 @@
 # Memory
 
 ## Current Phase
-- Active window: `Phase 371-376` (planned)
-- Last completed: `Phase 365-370 Governance Recovery, Assurance & Continuity V4`
+- Active window: `Phase 377-382` (planned)
+- Last completed: `Phase 371-376 Governance Assurance, Continuity & Resilience V5`
 
 ## Completed Phases (Recent)
 - `Phase 137-142 Advanced DevOps & Infrastructure`: complete
@@ -44,18 +44,19 @@
 - `Phase 353-358 Governance Continuity, Stability, Trust & Resilience V3`: complete
 - `Phase 359-364 Governance Trust, Continuity & Assurance V3`: complete
 - `Phase 365-370 Governance Recovery, Assurance & Continuity V4`: complete
+- `Phase 371-376 Governance Assurance, Continuity & Resilience V5`: complete
 
 ## Open Tasks
 - No open delivery tasks for `Phase 137-142`, `Phase 161-166`, `Phase 167-172`, `Phase 173-178`, `Phase 179-184`, `Phase 185-190`, `Phase 191-196`, `Phase 197-202`, `Phase 203-208`, `Phase 209-214`, `Phase 215-220`, `Phase 221-226`, `Phase 227-232`, `Phase 233-238`, `Phase 239-244`, `Phase 245-250`, `Phase 251-256`, `Phase 257-262`, `Phase 263-268`, `Phase 269-274`, `Phase 275-280`, `Phase 281-286`, `Phase 287-292`, `Phase 293-298`, `Phase 299-304`, `Phase 305-310`, `Phase 311-316`, `Phase 317-322`, `Phase 323-328`, `Phase 329-334`, `Phase 335-340`, `Phase 341-346`, `Phase 347-352`, or `Phase 353-358`.
-- Optional: Phase 371-376 scope definition and kickoff.
+- Optional: Phase 377-382 scope definition and kickoff.
 
 ## Next 6 Phases (Planned Scope)
-- `Phase 371`: Governance Assurance Continuity Router V5
-- `Phase 372`: Policy Recovery Stability Harmonizer V5
-- `Phase 373`: Compliance Continuity Trust Mesh V5
-- `Phase 374`: Trust Stability Assurance Forecaster V5
-- `Phase 375`: Board Continuity Stability Coordinator V5
-- `Phase 376`: Policy Assurance Resilience Engine V5
+- `Phase 377`: Governance Continuity Assurance Router V6
+- `Phase 378`: Policy Stability Recovery Harmonizer V6
+- `Phase 379`: Compliance Trust Continuity Mesh V6
+- `Phase 380`: Trust Assurance Stability Forecaster V6
+- `Phase 381`: Board Stability Continuity Coordinator V6
+- `Phase 382`: Policy Resilience Assurance Engine V6
 
 ## Blockers
 - No active blocker.
