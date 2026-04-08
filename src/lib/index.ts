@@ -51,3 +51,21 @@ export { BackupManager, RecoveryPlanner, FailoverManager, DisasterRecoveryOrches
 
 // Phase 100: Enterprise Operations Control Center
 export { OperationsDashboard, IncidentManager, RunbookManager, SLOTracker, OnCallManager, operationsDashboard, incidentManager, runbookManager, sloTracker, onCallManager } from './operations-control';
+
+// Phase 101: AI Agents & Autonomous Systems
+export { AgentManager, ConversationManager, TaskAutomation, AgentOrchestrator, agentManager, conversationManager, taskAutomation, agentOrchestrator } from './ai-agents';
+
+// Phase 102: Advanced Machine Learning Pipelines
+export { MLPipelineBuilder, FeatureEngineering, ModelRegistry, AutoML, mlPipelineBuilder, featureEngineering, modelRegistry, autoML } from './ml-pipelines';
+
+// Phase 103: Natural Language Processing & Understanding
+export { NLPProcessor, SentimentAnalyzer, EntityExtractor, ConversationAI, nlpProcessor, sentimentAnalyzer, entityExtractor, conversationAI } from './nlp-engine';
+
+// Phase 104: Generative AI & Content Creation
+export { ContentGenerator, PromptManager, RetrievalAugmentedGeneration, CreativeAIAssistant, contentGenerator, promptManager, rag, creativeAIAssistant } from './generative-ai';
+
+// Phase 105: AI-Powered Search & Recommendation
+export { SemanticSearch, PersonalizedRecommendations, RankingEngine, SearchAnalytics, semanticSearch, personalizedRecommendations, rankingEngine, searchAnalytics } from './semantic-intelligence';
+
+// Phase 106: AI Governance, Ethics & Explainability
+export { ModelExplainability, BiasDetection, AIGovernance, ExplainableAI, modelExplainability, biasDetection, aiGovernance, explainableAI } from './ai-governance';
