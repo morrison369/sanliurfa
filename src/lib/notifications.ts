@@ -1,244 +1,208 @@
 /**
- * Notifications Sistemi - Email ve Slack entegrasyonu
+ * Phase 22: Email & Notification System
+ * Templates, scheduling, tracking, A/B testing
  */
 
-import { logger } from './logging';
-import type { Alert } from './alerts';
-
-export interface NotificationConfig {
-  emailEnabled: boolean;
-  slackEnabled: boolean;
-  slackWebhookUrl?: string;
-  emailFromAddress?: string;
-  adminEmails?: string[];
-  slackChannel?: string;
+export interface NotificationTemplate {
+  id: string;
+  name: string;
+  type: 'email' | 'sms' | 'push';
+  subject?: string;
+  body: string;
+  variables: string[];
 }
 
-class NotificationService {
-  private config: NotificationConfig;
+export interface ScheduledNotification {
+  id: string;
+  userId: string;
+  templateId: string;
+  variables: Record<string, any>;
+  scheduledFor: number;
+  status: 'pending' | 'sent' | 'failed';
+  sentAt?: number;
+  error?: string;
+}
 
-  constructor(config: NotificationConfig = {}) {
-    this.config = {
-      emailEnabled: process.env.EMAIL_ENABLED === 'true',
-      slackEnabled: !!process.env.SLACK_WEBHOOK_URL,
-      slackWebhookUrl: process.env.SLACK_WEBHOOK_URL,
-      emailFromAddress: process.env.EMAIL_FROM || 'noreply@sanliurfa.com',
-      adminEmails: process.env.ADMIN_EMAILS?.split(',') || [],
-      slackChannel: process.env.SLACK_CHANNEL || '#alerts',
-      ...config
+export interface NotificationDelivery {
+  id: string;
+  notificationId: string;
+  userId: string;
+  type: 'email' | 'sms' | 'push';
+  status: 'pending' | 'delivered' | 'bounced' | 'opened';
+  sentAt: number;
+  openedAt?: number;
+  clickedAt?: number;
+}
+
+/**
+ * Notification & Email System
+ */
+export class NotificationSystem {
+  private templates = new Map<string, NotificationTemplate>();
+  private scheduled = new Map<string, ScheduledNotification>();
+  private deliveries = new Map<string, NotificationDelivery[]>();
+  private abtests = new Map<string, {variant1: string; variant2: string; wins: Record<string, number>}>();
+
+  /**
+   * Register template
+   */
+  registerTemplate(template: NotificationTemplate): void {
+    this.templates.set(template.id, template);
+  }
+
+  /**
+   * Schedule notification
+   */
+  schedule(userId: string, templateId: string, variables: Record<string, any>, delayMs: number = 0): ScheduledNotification {
+    const id = `notif-${Date.now()}`;
+    const notification: ScheduledNotification = {
+      id,
+      userId,
+      templateId,
+      variables,
+      scheduledFor: Date.now() + delayMs,
+      status: 'pending'
+    };
+
+    this.scheduled.set(id, notification);
+
+    return notification;
+  }
+
+  /**
+   * Send notification
+   */
+  async send(notificationId: string): Promise<NotificationDelivery | null> {
+    const notification = this.scheduled.get(notificationId);
+    if (!notification) return null;
+
+    const template = this.templates.get(notification.templateId);
+    if (!template) return null;
+
+    // Render template
+    const rendered = this.renderTemplate(template, notification.variables);
+
+    // Record delivery
+    const delivery: NotificationDelivery = {
+      id: `delivery-${Date.now()}`,
+      notificationId,
+      userId: notification.userId,
+      type: template.type,
+      status: 'delivered',
+      sentAt: Date.now()
+    };
+
+    if (!this.deliveries.has(notification.userId)) {
+      this.deliveries.set(notification.userId, []);
+    }
+
+    this.deliveries.get(notification.userId)!.push(delivery);
+
+    // Update notification status
+    notification.status = 'sent';
+    notification.sentAt = Date.now();
+
+    return delivery;
+  }
+
+  /**
+   * Track open
+   */
+  trackOpen(deliveryId: string): void {
+    for (const deliveries of this.deliveries.values()) {
+      const delivery = deliveries.find(d => d.id === deliveryId);
+      if (delivery) {
+        delivery.status = 'opened';
+        delivery.openedAt = Date.now();
+      }
+    }
+  }
+
+  /**
+   * Track click
+   */
+  trackClick(deliveryId: string): void {
+    for (const deliveries of this.deliveries.values()) {
+      const delivery = deliveries.find(d => d.id === deliveryId);
+      if (delivery) {
+        delivery.clickedAt = Date.now();
+      }
+    }
+  }
+
+  /**
+   * Get delivery history
+   */
+  getHistory(userId: string): NotificationDelivery[] {
+    return this.deliveries.get(userId) || [];
+  }
+
+  /**
+   * Render template with variables
+   */
+  private renderTemplate(template: NotificationTemplate, variables: Record<string, any>): string {
+    let body = template.body;
+
+    for (const [key, value] of Object.entries(variables)) {
+      body = body.replace(new RegExp(`\{${key}\}`, 'g'), String(value));
+    }
+
+    return body;
+  }
+
+  /**
+   * A/B test variants
+   */
+  registerABTest(testId: string, variant1: string, variant2: string): void {
+    this.abtests.set(testId, {
+      variant1,
+      variant2,
+      wins: {variant1: 0, variant2: 0}
+    });
+  }
+
+  /**
+   * Record A/B test win
+   */
+  recordWin(testId: string, variantId: string): void {
+    const test = this.abtests.get(testId);
+    if (test) {
+      test.wins[variantId] = (test.wins[variantId] || 0) + 1;
+    }
+  }
+
+  /**
+   * Get A/B test results
+   */
+  getABTestResults(testId: string) {
+    const test = this.abtests.get(testId);
+    if (!test) return null;
+
+    const total = test.wins.variant1 + test.wins.variant2;
+    return {
+      variant1Rate: test.wins.variant1 / total,
+      variant2Rate: test.wins.variant2 / total,
+      winner: test.wins.variant1 > test.wins.variant2 ? 'variant1' : 'variant2'
     };
   }
 
   /**
-   * Alert'i Slack'e gonder
+   * Get open rate
    */
-  async sendSlackAlert(alert: Alert): Promise<boolean> {
-    if (!this.config.slackEnabled || !this.config.slackWebhookUrl) {
-      return false;
-    }
-
-    try {
-      const color = this.getSeverityColor(alert.severity || 'info');
-      const message = {
-        attachments: [
-          {
-            color,
-            title: alert.title,
-            text: alert.message,
-            fields: [
-              {
-                title: 'Severity',
-                value: alert.severity || 'unknown',
-                short: true
-              },
-              {
-                title: 'Type',
-                value: alert.type || 'unknown',
-                short: true
-              },
-              ...(alert.details
-                ? [
-                    {
-                      title: 'Details',
-                      value: JSON.stringify(alert.details, null, 2),
-                      short: false
-                    }
-                  ]
-                : [])
-            ],
-            ts: Math.floor(Date.now() / 1000)
-          }
-        ]
-      };
-
-      const response = await fetch(this.config.slackWebhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(message)
-      });
-
-      if (!response.ok) {
-        logger.warn('Slack alert gonderimi basarisiz', {
-          status: response.status,
-          alert: alert.title
-        });
-        return false;
-      }
-
-      logger.debug('Slack alert gonderildi', { alert: alert.title });
-      return true;
-    } catch (error) {
-      logger.error('Slack alert gonderirken hata', error instanceof Error ? error : new Error(String(error)));
-      return false;
-    }
+  getOpenRate(userId: string): number {
+    const deliveries = this.deliveries.get(userId) || [];
+    const opened = deliveries.filter(d => d.status === 'opened').length;
+    return deliveries.length > 0 ? opened / deliveries.length : 0;
   }
 
   /**
-   * Alert'i Email'e gonder
+   * Get click-through rate
    */
-  async sendEmailAlert(alert: Alert, recipients: string[]): Promise<boolean> {
-    if (!this.config.emailEnabled) {
-      return false;
-    }
-
-    if (recipients.length === 0) {
-      recipients = this.config.adminEmails || [];
-    }
-
-    if (recipients.length === 0) {
-      logger.warn('Email gondermek icin alici yok');
-      return false;
-    }
-
-    try {
-      const emailBody = `
-Alert: ${alert.title}
-
-Ciddiyet: ${alert.severity}
-Tür: ${alert.type}
-Zaman: ${alert.triggeredAt?.toISOString() || new Date().toISOString()}
-
-Mesaj:
-${alert.message}
-
-${alert.details ? `Detaylar:\n${JSON.stringify(alert.details, null, 2)}` : ''}
-
----
-Sanliurfa.com Admin System
-      `.trim();
-
-      // TODO: Resend, SendGrid, veya başka email servisi entegrasyonu
-      logger.info('Email alert gondermek istendi', {
-        title: alert.title,
-        recipients: recipients.length,
-        severity: alert.severity
-      });
-
-      // Şimdilik mock gonderim
-      logger.debug('Email body', { body: emailBody });
-
-      return true;
-    } catch (error) {
-      logger.error('Email alert gonderirken hata', error instanceof Error ? error : new Error(String(error)));
-      return false;
-    }
-  }
-
-  /**
-   * Webhook event'i gonder
-   */
-  async sendWebhookNotification(event: string, data: Record<string, any>): Promise<boolean> {
-    try {
-      const webhookUrl = process.env.WEBHOOK_URL;
-      if (!webhookUrl) {
-        return false;
-      }
-
-      const payload = {
-        event,
-        timestamp: new Date().toISOString(),
-        data
-      };
-
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      return response.ok;
-    } catch (error) {
-      logger.error('Webhook notification gonderirken hata', error instanceof Error ? error : new Error(String(error)));
-      return false;
-    }
-  }
-
-  /**
-   * Ciddiyet rengini al (Slack için)
-   */
-  private getSeverityColor(severity: string): string {
-    switch (severity) {
-      case 'critical':
-        return '#FF0000'; // Kirmizi
-      case 'warning':
-        return '#FFA500'; // Turuncu
-      case 'info':
-        return '#0099FF'; // Mavi
-      default:
-        return '#999999'; // Gri
-    }
-  }
-
-  /**
-   * Alert'i tüm kanallara gonder
-   */
-  async notifyAlert(alert: Alert, options?: { emailRecipients?: string[]; skipSlack?: boolean; skipEmail?: boolean }): Promise<void> {
-    try {
-      // Slack'e gonder
-      if (!options?.skipSlack) {
-        await this.sendSlackAlert(alert);
-      }
-
-      // Email'e gonder
-      if (!options?.skipEmail) {
-        await this.sendEmailAlert(alert, options?.emailRecipients || []);
-      }
-
-      logger.info('Alert gonderim tamamlandi', {
-        title: alert.title,
-        channels: ['slack', 'email']
-      });
-    } catch (error) {
-      logger.error('Alert gonderirken hata', error instanceof Error ? error : new Error(String(error)));
-    }
-  }
-
-  /**
-   * Notification config'ini guncelle
-   */
-  updateConfig(config: Partial<NotificationConfig>): void {
-    this.config = { ...this.config, ...config };
-    logger.info('Notification config guncellendi');
-  }
-
-  /**
-   * Config'i al
-   */
-  getConfig(): NotificationConfig {
-    return { ...this.config };
+  getClickThroughRate(userId: string): number {
+    const deliveries = this.deliveries.get(userId) || [];
+    const clicked = deliveries.filter(d => d.clickedAt).length;
+    return deliveries.length > 0 ? clicked / deliveries.length : 0;
   }
 }
 
-// Global instance
-export const notificationService = new NotificationService();
-
-/**
- * Notification service'i initialize et
- */
-export function initializeNotifications(): void {
-  const config = notificationService.getConfig();
-  logger.info('Notification service initialized', {
-    slackEnabled: config.slackEnabled,
-    emailEnabled: config.emailEnabled
-  });
-}
+export const notificationSystem = new NotificationSystem();
