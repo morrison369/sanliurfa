@@ -313,8 +313,13 @@ Last updated: 2026-04-09
   - tests: `src/lib/__tests__/governance-assurance-continuity-suite-v20.test.ts`
   - docs: `PHASE_461_466_GOVERNANCE_ASSURANCE_CONTINUITY_V20.md`
 
+- `T-052` Phase 467-472 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-stability-recovery-suite-v21.test.ts`
+  - docs: `PHASE_467_472_GOVERNANCE_STABILITY_RECOVERY_CONTINUITY_V21.md`
+
 ## Open
-- `T-052` Phase 467-472 planning
+- `T-053` Phase 473-478 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
