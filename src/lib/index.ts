@@ -87,3 +87,21 @@ export { StreamProcessor, WindowAggregator, StreamJoiner, StreamMetrics, streamP
 
 // Phase 112: Data Catalog & Lineage Tracking
 export { DataCatalog, BusinessGlossary, LineageTracker, ImpactAnalyzer, dataCatalog, businessGlossary, lineageTracker, impactAnalyzer } from './data-catalog';
+
+// Phase 113: Enhanced Collaboration Engine
+export { CollaborationServer, OperationalTransform, ConflictResolver, SyncManager, collaborationServer, operationalTransform, conflictResolver, syncManager } from './collaboration-engine';
+
+// Phase 114: Multiplayer Document Editing
+export { DocumentManager, EditorSession, ContentVersioning, LockManager, documentManager, editorSession, contentVersioning, lockManager } from './document-editing';
+
+// Phase 115: Team Communication & Messaging
+export { ChannelManager, MessageFormatter, ThreadManager, MentionResolver, channelManager, messageFormatter, threadManager, mentionResolver } from './team-messaging';
+
+// Phase 116: Presence & Activity Tracking
+export { PresenceManager, TypingIndicator, ActivityMonitor, StatusTracker, presenceManager, typingIndicator, activityMonitor, statusTracker } from './presence-tracking';
+
+// Phase 117: Enhanced Notification System
+export { NotificationManager, ScheduledNotifications, NotificationPreferences, NotificationAggregator, notificationManager, scheduledNotifications, notificationPreferences, notificationAggregator } from './notification-system';
+
+// Phase 118: Collaborative Workflows & Task Management
+export { WorkflowCoordinator, TaskAssignment, CollaborativeBoard, TeamSync, workflowCoordinator, taskAssignment, collaborativeBoard, teamSync } from './collaborative-workflows';
