@@ -1,6 +1,6 @@
 # Task Tracker
 
-Last updated: 2026-04-08
+Last updated: 2026-04-09
 
 ## Closed
 - `Phase 137-142 Advanced DevOps & Infrastructure` — closed (completed and documented in `PHASE_137_142_ADVANCED_DEVOPS_INFRASTRUCTURE.md`)
@@ -297,9 +297,14 @@ Last updated: 2026-04-08
   - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
   - tests: `src/lib/__tests__/governance-continuity-assurance-suite-v17.test.ts`
   - docs: `PHASE_443_448_GOVERNANCE_CONTINUITY_ASSURANCE_V17.md`
+- `T-049` Phase 449-454 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-stability-recovery-suite-v18.test.ts`
+  - docs: `PHASE_449_454_GOVERNANCE_STABILITY_RECOVERY_V18.md`
+  - automation: added `test:phase:449-454` and synced phase index/trackers
 
 ## Open
-- `T-049` Phase 449-454 planning
+- `T-050` Phase 455-460 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready

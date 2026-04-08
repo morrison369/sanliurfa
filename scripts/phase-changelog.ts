@@ -15,12 +15,20 @@ function main(): void {
   const commitHash = runGit(['rev-parse', '--short', 'HEAD']);
   const subject = runGit(['log', '-1', '--pretty=%s']);
   const date = new Date().toISOString().slice(0, 10);
+  const isPhase = /^Phase\s+\d+-\d+:/.test(subject);
+  const isChore = /^Chore:/.test(subject);
+
+  if (!isPhase && !isChore) {
+    return;
+  }
+
+  const type = isPhase ? 'phase' : 'chore';
 
   if (!existsSync(outPath)) {
     writeFileSync(outPath, '# Phase Changelog\n\n', 'utf8');
   }
 
-  const line = `- ${date} | \`${commitHash}\` | ${subject}\n`;
+  const line = `- ${date} | ${type} | \`${commitHash}\` | ${subject}\n`;
   const existing = readFileSync(outPath, 'utf8');
   if (!existing.includes(line)) {
     appendFileSync(outPath, line, 'utf8');

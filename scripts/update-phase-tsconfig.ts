@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,8 +24,11 @@ export function buildVersionedEntries(libPath: string): string[] {
     });
 }
 
-export function buildExpectedFiles(existingFiles: string[], versionedEntries: string[]): string[] {
-  const fixedEntries = existingFiles.filter((entry) => !entry.match(/-v\d+\.ts$/));
+export function buildExpectedFiles(root: string, existingFiles: string[], versionedEntries: string[]): string[] {
+  const fixedEntries = existingFiles.filter((entry) => {
+    if (entry.match(/-v\d+\.ts$/)) return false;
+    return existsSync(resolve(root, entry));
+  });
   return [...fixedEntries, ...versionedEntries];
 }
 
@@ -38,7 +41,7 @@ export function main(): void {
 
   const currentFiles = tsconfig.files ?? [];
   const versionedEntries = buildVersionedEntries(libPath);
-  const expectedFiles = buildExpectedFiles(currentFiles, versionedEntries);
+  const expectedFiles = buildExpectedFiles(root, currentFiles, versionedEntries);
   const currentSerialized = JSON.stringify(currentFiles);
   const expectedSerialized = JSON.stringify(expectedFiles);
   const isDrifted = currentSerialized !== expectedSerialized;
