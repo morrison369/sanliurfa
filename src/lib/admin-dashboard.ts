@@ -2,7 +2,7 @@
  * Admin Dashboard Library
  * Dashboard widgets, metrics, and configuration
  */
-import { queryOne, queryMany, insert, update, delete as deleteQuery } from './postgres';
+import { queryOne, queryMany, insert, update } from './postgres';
 import { logger } from './logging';
 
 export async function getDashboardOverview(days: number = 30): Promise<any> {
