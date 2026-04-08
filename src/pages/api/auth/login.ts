@@ -4,6 +4,8 @@ import { signIn, createToken } from '../../../lib/auth';
 import { logger, generateRequestId } from '../../../lib/logging';
 import { getRequestId } from '../../../lib/api';
 import { recordRequest, isSlowRequest, metricsCollector } from '../../../lib/metrics';
+import { queryOne } from '../../../lib/postgres';
+import { setCache } from '../../../lib/cache';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const requestId = getRequestId({ request } as any);
@@ -32,6 +34,34 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       );
     }
 
+    // Check if user has 2FA enabled
+    const user2FA = await queryOne(
+      'SELECT two_factor_enabled FROM users WHERE id = $1',
+      [data.user.id]
+    );
+
+    if (user2FA?.two_factor_enabled) {
+      // 2FA is enabled - create temporary token that requires 2FA verification
+      const tempToken = await createToken(data.user.id, data.user.email, data.user.role);
+
+      // Mark this token as requiring 2FA verification
+      await setCache(`2fa:pending:${tempToken}`, true, 300); // 5 minute TTL for 2FA verification
+
+      const duration = Date.now() - startTime;
+      logger.info('Login successful, 2FA verification required', { userId: data.user.id, email });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          requiresTwoFactor: true,
+          tempToken: tempToken,
+          message: 'Kimlik doğrulama kodu gerekli'
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json', 'X-Request-ID': requestId } }
+      );
+    }
+
+    // 2FA not enabled - proceed with normal login
     // Set auth cookie (middleware auth-token bekliyor)
     if (data.token) {
       cookies.set('auth-token', data.token, {

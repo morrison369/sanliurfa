@@ -1,0 +1,15 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import NotificationsCenter from "../../components/NotificationsCenter";
+
+const { locals, redirect } = Astro;
+if (!locals.user) {
+  return redirect("/giris?redirect=/bildirimler");
+}
+---
+
+<Layout title="Bildirimler - Şanlıurfa.com">
+  <div class="max-w-2xl mx-auto px-4 py-8">
+    <NotificationsCenter client:load />
+  </div>
+</Layout>

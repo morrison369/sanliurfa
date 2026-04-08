@@ -1,99 +1,83 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { Calendar, User, Clock, Tag } from 'lucide-react';
+import { getBlogPosts, getBlogCategories } from '../../lib/blog';
 import Pagination from '../../components/Pagination.astro';
-import { query } from '../../lib/postgres';
 
 const ITEMS_PER_PAGE = 12;
-const currentPage = parseInt(Astro.url.searchParams.get('page') || '1');
-const categoryFilter = Astro.url.searchParams.get('category') || 'all';
+const currentPage = Math.max(1, parseInt(Astro.url.searchParams.get('page') || '1'));
+const categorySlug = Astro.url.searchParams.get('category');
 
-// Build SQL
-let countSql = "SELECT COUNT(*) FROM blog_posts WHERE is_published = true";
-let postsSql = `SELECT bp.*, u.full_name, u.avatar_url 
-                FROM blog_posts bp 
-                LEFT JOIN users u ON bp.author_id = u.id 
-                WHERE bp.is_published = true`;
-const values: any[] = [];
-let paramIndex = 1;
+let categories: any[] = [];
+let categoryId: number | undefined;
+let selectedCategory: any = null;
+let posts: any[] = [];
+let total = 0;
+let error = '';
 
-if (categoryFilter !== 'all') {
-  countSql += ` AND category = $${paramIndex}`;
-  postsSql += ` AND bp.category = $${paramIndex}`;
-  values.push(categoryFilter);
-  paramIndex++;
+try {
+  // Kategorileri getir
+  categories = await getBlogCategories();
+
+  // Seçili kategoriyi bul
+  if (categorySlug) {
+    selectedCategory = categories.find(c => c.slug === categorySlug);
+    categoryId = selectedCategory?.id;
+  }
+
+  // Blog yazılarını getir
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+  const result = await getBlogPosts({
+    status: 'published',
+    categoryId,
+    limit: ITEMS_PER_PAGE,
+    offset,
+    sort: 'recent'
+  });
+
+  posts = result.posts;
+  total = result.total;
+} catch (err) {
+  error = 'Blog yazıları yüklenirken hata oluştu';
+  console.error('Blog listing error:', err);
 }
 
-const countResult = await query(countSql, values);
-const count = parseInt(countResult.rows[0]?.count || '0');
-const totalPages = Math.ceil(count / ITEMS_PER_PAGE);
-const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
-postsSql += ` ORDER BY bp.is_featured DESC, bp.published_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-const postsResult = await query(postsSql, [...values, ITEMS_PER_PAGE, offset]);
-const posts = postsResult.rows;
-
-const categories = [
-  { id: 'all', label: 'Tümü' },
-  { id: 'gezi-rehberi', label: 'Gezi Rehberi' },
-  { id: 'gastronomi', label: 'Gastronomi' },
-  { id: 'tarih', label: 'Tarih' },
-  { id: 'kultur-sanat', label: 'Kültür & Sanat' },
-  { id: 'etkinlik', label: 'Etkinlikler' },
-  { id: 'haber', label: 'Haber' },
-];
-
-const getCategoryCount = async (catId: string) => {
-  if (catId === 'all') return count;
-  const result = await query('SELECT COUNT(*) FROM blog_posts WHERE is_published = true AND category = $1', [catId]);
-  return parseInt(result.rows[0]?.count || '0');
-};
-
-const categoryCounts: Record<string, number> = {};
-for (const cat of categories) {
-  categoryCounts[cat.id] = await getCategoryCount(cat.id);
-}
-
-const getCategoryLabel = (category: string) => {
-  const labels: Record<string, string> = {
-    'genel': 'Genel', 'kultur-sanat': 'Kültür & Sanat', 'gastronomi': 'Gastronomi',
-    'tarih': 'Tarih', 'gezi-rehberi': 'Gezi Rehberi', 'etkinlik': 'Etkinlik', 'haber': 'Haber',
-  };
-  return labels[category] || category;
-};
-
-const calculateReadTime = (content: string) => {
-  const wordsPerMinute = 200;
-  const words = content?.split(/\s+/).length || 0;
-  return `${Math.ceil(words / wordsPerMinute)} dk`;
-};
-
-const showFeatured = currentPage === 1 && categoryFilter === 'all';
-const featuredPost = showFeatured ? posts?.find((p: any) => p.is_featured) : null;
-const regularPosts = posts?.filter((p: any) => p.id !== featuredPost?.id) || [];
+// Featured post'u ilk sayfada göster
+const showFeatured = currentPage === 1 && !categorySlug;
+const featuredPost = showFeatured ? posts.find(p => p.isFeatured) : null;
+const regularPosts = posts.filter(p => p.id !== featuredPost?.id);
 
 const seo = {
-  title: categoryFilter === 'all' ? 'Blog - Şanlıurfa Hakkında Her Şey' : `${getCategoryLabel(categoryFilter)} - Blog`,
-  description: 'Şanlıurfa hakkında en güncel yazılar, gezi rehberleri, gastronomi önerileri ve tarihi bilgiler.',
+  title: selectedCategory
+    ? `${selectedCategory.name} - Blog | Şanlıurfa.com`
+    : 'Blog | Şanlıurfa.com',
+  description: selectedCategory?.description || 'Şanlıurfa hakkında makaleler, rehberler ve haberler',
 };
 
 const searchParams = new URLSearchParams();
-if (categoryFilter !== 'all') searchParams.set('category', categoryFilter);
+if (categorySlug) searchParams.set('category', categorySlug);
 ---
 
 <Layout seo={seo}>
   <div class="page-header">
     <div class="page-header-content">
-      <span class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-white/90 text-sm mb-4">
-        <Tag className="w-4 h-4" />
-        Blog
-      </span>
-      <h1 class="page-header-title">Şanlıurfa'yı Keşfedin</h1>
+      <h1 class="page-header-title">
+        {selectedCategory ? selectedCategory.name : 'Blog'}
+      </h1>
       <p class="page-header-description">
-        Gezi rehberleri, gastronomi önerileri, tarihi bilgiler ve daha fazlası.
+        {selectedCategory?.description || 'Şanlıurfa hakkında makaleler, rehberler ve haberler'}
       </p>
     </div>
   </div>
+
+  {error && (
+    <div class="section bg-red-50 dark:bg-red-900/20">
+      <div class="container-custom">
+        <p class="text-red-700 dark:text-red-300">{error}</p>
+      </div>
+    </div>
+  )}
   
   <div class="section bg-gray-50 dark:bg-gray-900">
     <div class="container-custom">
@@ -103,17 +87,28 @@ if (categoryFilter !== 'all') searchParams.set('category', categoryFilter);
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
               <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Kategoriler</h3>
               <div class="space-y-1">
+                <a
+                  href="/blog"
+                  class={`flex items-center justify-between p-2 rounded-lg transition-colors ${
+                    !categorySlug
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  <span>Tümü</span>
+                  <span class="text-sm text-gray-400">{total}</span>
+                </a>
                 {categories.map((cat) => (
-                  <a 
-                    href={cat.id === 'all' ? '/blog' : `/blog?category=${cat.id}`}
+                  <a
+                    href={`/blog?category=${cat.slug}`}
                     class={`flex items-center justify-between p-2 rounded-lg transition-colors ${
-                      categoryFilter === cat.id 
-                        ? 'bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300' 
+                      categorySlug === cat.slug
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                         : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    <span>{cat.label}</span>
-                    <span class="text-sm text-gray-400">{categoryCounts[cat.id]}</span>
+                    <span>{cat.name}</span>
+                    <span class="text-sm text-gray-400">{cat.postCount || 0}</span>
                   </a>
                 ))}
               </div>
@@ -142,35 +137,36 @@ if (categoryFilter !== 'all') searchParams.set('category', categoryFilter);
           {featuredPost && (
             <article class="card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden mb-8">
               <a href={`/blog/${featuredPost.slug}`} class="flex flex-col lg:flex-row">
-                <div class="lg:w-1/2 aspect-video lg:aspect-auto overflow-hidden">
-                  <img 
-                    src={featuredPost.cover_image || '/images/placeholder-blog.jpg'}
-                    alt={featuredPost.title}
-                    class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                    loading="eager"
-                  />
-                </div>
-                <div class="lg:w-1/2 p-6 lg:p-8 flex flex-col justify-center">
-                  <span class="badge-primary w-fit mb-3">{getCategoryLabel(featuredPost.category)}</span>
-                  <h2 class="text-2xl lg:text-3xl font-display font-bold text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors mb-3">
+                {featuredPost.featuredImage && (
+                  <div class="lg:w-1/2 aspect-video lg:aspect-auto overflow-hidden">
+                    <img
+                      src={featuredPost.featuredImage}
+                      alt={featuredPost.title}
+                      class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      loading="eager"
+                    />
+                  </div>
+                )}
+                <div class={`${featuredPost.featuredImage ? 'lg:w-1/2' : 'lg:w-full'} p-6 lg:p-8 flex flex-col justify-center`}>
+                  {featuredPost.categoryName && (
+                    <span class="badge-primary w-fit mb-3">{featuredPost.categoryName}</span>
+                  )}
+                  <h2 class="text-2xl lg:text-3xl font-display font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors mb-3">
                     {featuredPost.title}
                   </h2>
                   <p class="text-gray-600 dark:text-gray-400 mb-4">{featuredPost.excerpt}</p>
-                  
+
                   <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <div class="flex items-center gap-2">
-                      <div class="w-6 h-6 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center text-urfa-600 dark:text-urfa-400 text-xs font-bold">
-                        {featuredPost.full_name?.charAt(0) || 'E'}
+                    {featuredPost.authorName && (
+                      <div class="flex items-center gap-2">
+                        <span>{featuredPost.authorName}</span>
                       </div>
-                      <span>{featuredPost.full_name || 'Editör'}</span>
+                    )}
+                    <div class="flex items-center gap-1">
+                      📅 {new Date(featuredPost.publishedAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
                     </div>
                     <div class="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {new Date(featuredPost.published_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
-                    </div>
-                    <div class="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {calculateReadTime(featuredPost.content)}
+                      ⏱️ {featuredPost.readTimeMinutes} dk
                     </div>
                   </div>
                 </div>
@@ -182,31 +178,35 @@ if (categoryFilter !== 'all') searchParams.set('category', categoryFilter);
             {regularPosts.map((post: any) => (
               <article class="card-hover bg-white dark:bg-gray-800 rounded-xl overflow-hidden group">
                 <a href={`/blog/${post.slug}`}>
-                  <div class="relative aspect-video overflow-hidden">
-                    <img 
-                      src={post.cover_image || '/images/placeholder-blog.jpg'}
-                      alt={post.title}
-                      class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                    <div class="absolute top-3 left-3">
-                      <span class="badge-primary">{getCategoryLabel(post.category)}</span>
+                  {post.featuredImage && (
+                    <div class="relative aspect-video overflow-hidden">
+                      <img
+                        src={post.featuredImage}
+                        alt={post.title}
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      {post.categoryName && (
+                        <div class="absolute top-3 left-3">
+                          <span class="badge-primary">{post.categoryName}</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
                   <div class="p-5">
-                    <h3 class="font-display font-bold text-lg text-gray-900 dark:text-white group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors line-clamp-2">
+                    <h3 class="font-display font-bold text-lg text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
                       {post.title}
                     </h3>
                     <p class="text-gray-600 dark:text-gray-400 text-sm mt-2 line-clamp-2">{post.excerpt}</p>
-                    
+
                     <div class="flex items-center gap-4 mt-4 text-xs text-gray-500 dark:text-gray-400">
+                      {post.authorName && (
+                        <div class="flex items-center gap-1">
+                          👤 {post.authorName}
+                        </div>
+                      )}
                       <div class="flex items-center gap-1">
-                        <User className="w-3.5 h-3.5" />
-                        {post.full_name || 'Editör'}
-                      </div>
-                      <div class="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {new Date(post.published_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
+                        📅 {new Date(post.publishedAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
                       </div>
                     </div>
                   </div>
@@ -215,16 +215,18 @@ if (categoryFilter !== 'all') searchParams.set('category', categoryFilter);
             ))}
           </div>
           
-          <Pagination 
-            currentPage={currentPage}
-            totalPages={totalPages}
-            baseUrl="/blog"
-            searchParams={searchParams}
-          />
-          
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              baseUrl="/blog"
+              searchParams={searchParams}
+            />
+          )}
+
           {regularPosts.length === 0 && !featuredPost && (
             <div class="text-center py-12 text-gray-500 dark:text-gray-400">
-              Bu kategoride henüz yazı bulunmuyor.
+              {selectedCategory ? `${selectedCategory.name} kategorisinde henüz yazı bulunmuyor.` : 'Henüz blog yazısı bulunmuyor.'}
             </div>
           )}
         </main>

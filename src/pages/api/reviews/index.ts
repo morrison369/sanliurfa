@@ -2,6 +2,7 @@
 import type { APIRoute } from 'astro';
 import { query, queryOne, insert, update as updateDb } from '../../../lib/postgres';
 import { getCache, setCache, deleteCache } from '../../../lib/cache';
+import { logActivity } from '../../../lib/activity';
 
 /**
  * Generate cache key for reviews
@@ -41,9 +42,10 @@ export const GET: APIRoute = async ({ url }) => {
       });
     }
 
-    const [dataResult, countResult, ratingResult] = await Promise.all([
+    const [dataResult, countResult, statsResult] = await Promise.all([
       query(
-        `SELECT r.*, u.full_name, u.avatar_url
+        `SELECT r.id, r.title, r.content, r.rating, r.helpful_count, r.created_at,
+                u.full_name, u.avatar_url
          FROM reviews r
          JOIN users u ON r.user_id = u.id
          WHERE r.place_id = $1
@@ -51,21 +53,24 @@ export const GET: APIRoute = async ({ url }) => {
          LIMIT $2 OFFSET $3`,
         [placeId, limit, offset]
       ),
-      query('SELECT COUNT(*) FROM reviews WHERE place_id = $1', [placeId]),
-      query('SELECT rating FROM reviews WHERE place_id = $1', [placeId])
+      query('SELECT COUNT(*) as count FROM reviews WHERE place_id = $1', [placeId]),
+      query(
+        `SELECT COUNT(*) as total_reviews,
+                COALESCE(AVG(rating), 0) as avg_rating
+         FROM reviews WHERE place_id = $1`,
+        [placeId]
+      )
     ]);
 
     const count = parseInt(countResult.rows[0]?.count || '0');
-    const ratings = ratingResult.rows;
-    const avgRating = ratings.length
-      ? ratings.reduce((acc: number, r: any) => acc + r.rating, 0) / ratings.length
-      : 0;
+    const avgRating = parseFloat(statsResult.rows[0]?.avg_rating || '0');
+    const totalReviews = parseInt(statsResult.rows[0]?.total_reviews || '0');
 
     const responseData = {
       data: dataResult.rows,
       count,
       avgRating: Math.round(avgRating * 10) / 10,
-      totalReviews: ratings.length,
+      totalReviews,
       pagination: { limit, offset, hasMore: offset + limit < count }
     };
 
@@ -154,6 +159,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Add points to user (10 puan)
     await query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [user.id]);
+
+    // Log activity
+    const place = await queryOne('SELECT name FROM places WHERE id = $1', [placeId]);
+    await logActivity(user.id, 'review_created', 'place', placeId, {
+      placeName: place?.name || 'Mekan',
+      rating,
+      points: 10
+    });
 
     // Invalidate reviews cache for this place
     await invalidateReviewsCache(placeId);

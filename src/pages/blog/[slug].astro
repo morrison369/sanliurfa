@@ -1,56 +1,51 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { Calendar, User, Clock, ArrowLeft, Share2, Heart } from 'lucide-react';
 import Breadcrumb from '../../components/Breadcrumb.astro';
-import { query, queryOne } from '../../lib/postgres';
+import { getBlogPostBySlug, getBlogPosts } from '../../lib/blog';
 
 const { slug } = Astro.params;
 
-const post = await queryOne(
-  `SELECT bp.*, u.full_name, u.bio, u.avatar_url 
-   FROM blog_posts bp 
-   LEFT JOIN users u ON bp.author_id = u.id 
-   WHERE bp.slug = $1 AND bp.is_published = true`,
-  [slug]
-);
-
-if (!post) {
+if (!slug) {
   return Astro.redirect('/blog');
 }
 
-const relatedResult = await query(
-  `SELECT id, title, slug, cover_image, category 
-   FROM blog_posts 
-   WHERE is_published = true AND category = $1 AND id != $2 
-   LIMIT 3`,
-  [post.category, post.id]
-);
-const relatedPosts = relatedResult.rows;
+let post = null;
+let relatedPosts = [];
+let error = '';
 
-const getCategoryLabel = (category: string) => {
-  const labels: Record<string, string> = {
-    'genel': 'Genel', 'kultur-sanat': 'Kültür & Sanat', 'gastronomi': 'Gastronomi',
-    'tarih': 'Tarih', 'gezi-rehberi': 'Gezi Rehberi', 'etkinlik': 'Etkinlik', 'haber': 'Haber',
-  };
-  return labels[category] || category;
-};
+try {
+  post = await getBlogPostBySlug(slug);
 
-const calculateReadTime = (content: string) => {
-  const wordsPerMinute = 200;
-  return `${Math.ceil((content?.split(/\s+/).length || 0) / wordsPerMinute)} dk`;
-};
+  if (!post) {
+    return Astro.redirect('/blog');
+  }
+
+  // İlişkili yazıları getir (aynı kategorideki diğer yazılar)
+  if (post.categoryId) {
+    const result = await getBlogPosts({
+      status: 'published',
+      categoryId: post.categoryId,
+      limit: 3
+    });
+    relatedPosts = result.posts.filter(p => p.id !== post.id);
+  }
+} catch (err) {
+  error = 'Blog yazısı yüklenirken hata oluştu';
+  console.error('Blog detail error:', err);
+  return Astro.redirect('/blog');
+}
 
 const breadcrumbItems = [
   { label: 'Ana Sayfa', href: '/' },
   { label: 'Blog', href: '/blog' },
-  { label: getCategoryLabel(post.category), href: `/blog?category=${post.category}` },
+  post.categoryName ? { label: post.categoryName, href: `/blog?category=${post.categoryName?.toLowerCase().replace(/\s+/g, '-')}` } : null,
   { label: post.title, href: `/blog/${post.slug}` },
-];
+].filter(Boolean);
 
 const seo = {
-  title: post.title,
-  description: post.excerpt,
-  image: post.cover_image,
+  title: post.seoTitle || post.title,
+  description: post.seoDescription || post.excerpt,
+  image: post.featuredImage,
 };
 ---
 
@@ -62,48 +57,55 @@ const seo = {
       </div>
     </div>
     
-    <div class="relative h-[400px] lg:h-[500px]">
-      <img 
-        src={post.cover_image || '/images/placeholder-blog.jpg'}
-        alt={post.title}
-        class="w-full h-full object-cover"
-      />
-      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-      
-      <div class="absolute bottom-0 left-0 right-0">
-        <div class="container-custom py-8">
-          <span class="inline-block px-3 py-1 bg-urfa-600 text-white text-sm rounded-full mb-4">
-            {getCategoryLabel(post.category)}
-          </span>
-          <h1 class="text-3xl lg:text-5xl font-display font-bold text-white max-w-3xl">
-            {post.title}
-          </h1>
+    {post.featuredImage && (
+      <div class="relative h-[400px] lg:h-[500px]">
+        <img
+          src={post.featuredImage}
+          alt={post.title}
+          class="w-full h-full object-cover"
+        />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+
+        <div class="absolute bottom-0 left-0 right-0">
+          <div class="container-custom py-8">
+            {post.categoryName && (
+              <span class="inline-block px-3 py-1 bg-blue-600 text-white text-sm rounded-full mb-4">
+                {post.categoryName}
+              </span>
+            )}
+            <h1 class="text-3xl lg:text-5xl font-display font-bold text-white max-w-3xl">
+              {post.title}
+            </h1>
+          </div>
         </div>
       </div>
-    </div>
+    )}
     
     <div class="container-custom py-8">
       <div class="grid lg:grid-cols-3 gap-8">
         <article class="lg:col-span-2">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
             <div class="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-              <div class="flex items-center gap-2">
-                <div class="w-10 h-10 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center text-urfa-600 dark:text-urfa-400 font-bold">
-                  {post.full_name?.charAt(0) || 'E'}
+              {post.authorName && (
+                <div class="flex items-center gap-2">
+                  <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
+                    {post.authorName?.charAt(0) || 'E'}
+                  </div>
+                  <div>
+                    <p class="font-medium text-gray-900 dark:text-white text-sm">{post.authorName}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Yazar</p>
+                  </div>
                 </div>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white text-sm">{post.full_name || 'Editör'}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">Yazar</p>
-                </div>
-              </div>
+              )}
               <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 ml-auto">
                 <span class="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  {new Date(post.published_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  📅 {new Date(post.publishedAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
                 <span class="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  {calculateReadTime(post.content)} okuma
+                  ⏱️ {post.readTimeMinutes} dk okuma
+                </span>
+                <span class="flex items-center gap-1">
+                  👁️ {post.viewCount} görüntüleme
                 </span>
               </div>
             </div>
@@ -123,32 +125,33 @@ const seo = {
             )}
             
             <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <a href="/blog" class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
-                <ArrowLeft className="w-4 h-4" />
-                Tüm Yazılar
+              <a href="/blog" class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                ← Tüm Yazılar
               </a>
-              <div class="flex items-center gap-2">
-                <button class="p-2 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors" aria-label="Beğen">
-                  <Heart className="w-5 h-5" />
+              <div class="flex items-center gap-4">
+                <button class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-red-500 hover:text-red-500 transition-colors" onclick="toggleLike(event)">
+                  ❤️ Beğen
                 </button>
-                <button class="p-2 text-gray-500 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors" aria-label="Paylaş">
-                  <Share2 className="w-5 h-5" />
+                <button class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:text-blue-500 transition-colors" onclick="sharePost()">
+                  📤 Paylaş
                 </button>
               </div>
             </div>
           </div>
           
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mt-6">
-            <div class="flex items-start gap-4">
-              <div class="w-16 h-16 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center text-urfa-600 dark:text-urfa-400 text-xl font-bold">
-                {post.full_name?.charAt(0) || 'E'}
-              </div>
-              <div>
-                <h3 class="font-semibold text-gray-900 dark:text-white">{post.full_name || 'Editör'}</h3>
-                <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{post.bio || 'Şanlıurfa.com editörü'}</p>
+          {post.authorName && (
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mt-6">
+              <div class="flex items-start gap-4">
+                <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl font-bold">
+                  {post.authorName?.charAt(0) || 'E'}
+                </div>
+                <div>
+                  <h3 class="font-semibold text-gray-900 dark:text-white">{post.authorName}</h3>
+                  <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Şanlıurfa.com yazarı</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </article>
         
         <aside class="space-y-6">
@@ -158,14 +161,18 @@ const seo = {
               <div class="space-y-4">
                 {relatedPosts.map((related: any) => (
                   <a href={`/blog/${related.slug}`} class="flex gap-3 group">
-                    <img 
-                      src={related.cover_image || '/images/placeholder-blog.jpg'} 
-                      alt={related.title}
-                      class="w-20 h-16 rounded-lg object-cover flex-shrink-0"
-                    />
+                    {related.featuredImage && (
+                      <img
+                        src={related.featuredImage}
+                        alt={related.title}
+                        class="w-20 h-16 rounded-lg object-cover flex-shrink-0"
+                      />
+                    )}
                     <div>
-                      <span class="text-xs text-urfa-600 dark:text-urfa-400">{getCategoryLabel(related.category)}</span>
-                      <h4 class="font-medium text-gray-900 dark:text-white text-sm group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors line-clamp-2">
+                      {related.categoryName && (
+                        <span class="text-xs text-blue-600 dark:text-blue-400">{related.categoryName}</span>
+                      )}
+                      <h4 class="font-medium text-gray-900 dark:text-white text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
                         {related.title}
                       </h4>
                     </div>
@@ -196,3 +203,24 @@ const seo = {
     </div>
   </div>
 </Layout>
+
+<script>
+  function toggleLike(event: Event) {
+    const button = event.target as HTMLButtonElement;
+    button.classList.toggle('text-red-500');
+    button.classList.toggle('border-red-500');
+  }
+
+  function sharePost() {
+    if (navigator.share) {
+      navigator.share({
+        title: document.title,
+        url: window.location.href,
+      });
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      alert('Yazı linki panoya kopyalandı');
+    }
+  }
+</script>

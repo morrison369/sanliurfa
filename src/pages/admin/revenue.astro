@@ -1,0 +1,177 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { verifyToken } from '../../lib/auth';
+
+// Check authentication
+const token = Astro.cookies.get('auth-token')?.value;
+if (!token) {
+  return Astro.redirect('/giris');
+}
+
+const sessionData = await verifyToken(token);
+if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
+  return Astro.redirect('/?error=unauthorized');
+}
+
+// In a real implementation, we'd fetch data from /api/admin/revenue
+// For now, this is a template showing the structure
+---
+
+<Layout title="Gelir Yönetimi - Admin Panel">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
+    <div class="container max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">💰 Gelir Yönetimi</h1>
+        <p class="text-gray-600 dark:text-gray-400">Abonelik geliri, MRR ve çurluk oranı analitikleri</p>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total MRR -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Aylık Gelir (MRR)</h3>
+            <span class="text-2xl">📈</span>
+          </div>
+          <div class="text-3xl font-bold text-gray-900 dark:text-white" id="totalMRR">
+            $0.00
+          </div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Aktif aboneliklerden</p>
+        </div>
+
+        <!-- Active Subscriptions -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Aktif Abonelikler</h3>
+            <span class="text-2xl">👥</span>
+          </div>
+          <div class="text-3xl font-bold text-gray-900 dark:text-white" id="activeSubscriptions">
+            0
+          </div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Tüm katmanlar</p>
+        </div>
+
+        <!-- Churn Rate -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Çurluk Oranı (30g)</h3>
+            <span class="text-2xl">📉</span>
+          </div>
+          <div class="text-3xl font-bold text-red-600 dark:text-red-400" id="churnRate">
+            0%
+          </div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Kaybedilen abonelikler</p>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Toplam Gelir</h3>
+            <span class="text-2xl">💵</span>
+          </div>
+          <div class="text-3xl font-bold text-green-600 dark:text-green-400" id="totalRevenue">
+            $0.00
+          </div>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Tüm zamanlar</p>
+        </div>
+      </div>
+
+      <!-- Tiers Breakdown -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {['free', 'premium', 'pro'].map((tier) => (
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 capitalize">
+              {tier === 'free' && '🎁 Ücretsiz'}
+              {tier === 'premium' && '⭐ Premium'}
+              {tier === 'pro' && '👑 Pro'}
+            </h3>
+
+            {tier === 'free' && (
+              <div class="text-sm text-gray-600 dark:text-gray-300">
+                <p class="mb-4">Ücretli olmayan hesaplar. Ücretsiz özellikler sunarlar.</p>
+                <div class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  <span id="freeTierCount">0</span> kullanıcı
+                </div>
+              </div>
+            )}
+
+            {tier === 'premium' && (
+              <div class="text-sm text-gray-600 dark:text-gray-300">
+                <p class="mb-4">$2.99/ay fiyatlandırma.</p>
+                <div class="mb-4">
+                  <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <span id="premiumTierCount">0</span> aktif abone
+                  </div>
+                  <div class="text-lg text-orange-600 dark:text-orange-400 mt-2">
+                    <span id="premiumTierRevenue">$0.00</span>/ay
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {tier === 'pro' && (
+              <div class="text-sm text-gray-600 dark:text-gray-300">
+                <p class="mb-4">$5.99/ay fiyatlandırma.</p>
+                <div class="mb-4">
+                  <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <span id="proTierCount">0</span> aktif abone
+                  </div>
+                  <div class="text-lg text-green-600 dark:text-green-400 mt-2">
+                    <span id="proTierRevenue">$0.00</span>/ay
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <!-- Note -->
+      <div class="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+        <h3 class="font-semibold text-blue-900 dark:text-blue-200 mb-2">📊 Grafik Yükleniyor</h3>
+        <p class="text-sm text-blue-800 dark:text-blue-300">
+          Günlük gelir grafiği burada gösterilecek (Chart.js ile). Son 30 günün gelir trendini takip et.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Fetch revenue data
+    async function loadRevenueData() {
+      try {
+        const response = await fetch('/api/admin/revenue');
+        if (!response.ok) throw new Error('Failed to fetch revenue data');
+
+        const result = await response.json();
+        const { summary, byTier } = result.data;
+
+        // Update summary cards
+        document.getElementById('totalMRR')!.textContent = `$${summary.totalMRR.toFixed(2)}`;
+        document.getElementById('activeSubscriptions')!.textContent = summary.totalActiveSubscriptions.toString();
+        document.getElementById('churnRate')!.textContent = `${summary.churnRatePercent}%`;
+        document.getElementById('totalRevenue')!.textContent = `$${summary.totalRevenueAllTime.toFixed(2)}`;
+
+        // Update tier breakdowns
+        if (byTier.premium) {
+          document.getElementById('premiumTierCount')!.textContent = byTier.premium.count.toString();
+          document.getElementById('premiumTierRevenue')!.textContent = `$${byTier.premium.monthlyRevenue.toFixed(2)}`;
+        }
+
+        if (byTier.pro) {
+          document.getElementById('proTierCount')!.textContent = byTier.pro.count.toString();
+          document.getElementById('proTierRevenue')!.textContent = `$${byTier.pro.monthlyRevenue.toFixed(2)}`;
+        }
+      } catch (error) {
+        console.error('Error loading revenue data:', error);
+      }
+    }
+
+    // Load on page load
+    loadRevenueData();
+
+    // Refresh every 5 minutes
+    setInterval(loadRevenueData, 5 * 60 * 1000);
+  </script>
+</Layout>

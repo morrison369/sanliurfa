@@ -32,8 +32,8 @@ class TaskScheduler {
   }
 
   /**
-   * Simple cron pattern executor (minute ve hour'ı destekler)
-   * Örnek: "*/5" = her 5 dakikada bir, "0" = saat başında
+   * Simple cron pattern executor (minute ve hour destekler)
+   * Ornek: *\/5 = her 5 dakikada bir, 0 = saat basinda
    */
   private shouldRunTask(cronPattern: string): boolean {
     const now = new Date();

@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import UserSettings from '../components/UserSettings';
+
+// Require authentication
+if (!Astro.locals.user) {
+  return Astro.redirect('/giris');
+}
+---
+
+<Layout title="Ayarlar - Şanlıurfa">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Hesap Ayarları</h1>
+      <p class="text-gray-600 dark:text-gray-400">Profil bilgilerinizi ve tercihlerinizi yönetin</p>
+    </div>
+
+    <UserSettings client:load />
+  </div>
+</Layout>

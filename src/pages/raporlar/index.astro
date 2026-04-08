@@ -1,0 +1,21 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ReportManager from '../../components/ReportManager';
+
+// Auth check
+const userId = Astro.locals.user?.id;
+if (!userId) {
+  return Astro.redirect('/giris');
+}
+---
+
+<Layout title="Raporlar | Şanlıurfa">
+  <div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">Raporlar</h1>
+      <p class="text-gray-600">Raporları çalıştırın, dışa aktarın ve şablonları yönetin</p>
+    </div>
+
+    <ReportManager client:load />
+  </div>
+</Layout>

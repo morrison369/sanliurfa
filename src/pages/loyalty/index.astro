@@ -1,0 +1,60 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import LoyaltyDashboard from '../../components/LoyaltyDashboard';
+
+// Redirect if not authenticated
+if (!Astro.locals.user) {
+  return Astro.redirect('/giris');
+}
+---
+
+<Layout title="Sadakat Programı - Şanlıurfa">
+  <div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold mb-2">Sadakat Programı</h1>
+      <p class="text-gray-600">Puanlarınızı kazanın ve harika ödüllerle değerlendirin</p>
+    </div>
+
+    <LoyaltyDashboard client:load />
+
+    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
+        <h3 class="font-semibold mb-2 text-blue-900">🎯 Nasıl Kazanılır?</h3>
+        <ul class="text-sm text-gray-700 space-y-2">
+          <li>• Tesisler hakkında inceleme yazın</li>
+          <li>• Favori ekleyin ve paylaşın</li>
+          <li>• Diğer kullanıcıların incelemelerini beğenin</li>
+          <li>• İnsanları takip edin</li>
+        </ul>
+      </div>
+
+      <div class="bg-green-50 rounded-lg p-6 border border-green-200">
+        <h3 class="font-semibold mb-2 text-green-900">💎 Seviye Avantajları</h3>
+        <ul class="text-sm text-gray-700 space-y-2">
+          <li>• Bronz: %10 puan bonusu</li>
+          <li>• Gümüş: %20 puan bonusu</li>
+          <li>• Altın: %30 puan bonusu</li>
+          <li>• Platin: %50 puan bonusu</li>
+        </ul>
+      </div>
+
+      <div class="bg-purple-50 rounded-lg p-6 border border-purple-200">
+        <h3 class="font-semibold mb-2 text-purple-900">🎁 Ödüller</h3>
+        <ul class="text-sm text-gray-700 space-y-2">
+          <li>• Özel ayrıcalıklar</li>
+          <li>• Erken etkinlik erişimi</li>
+          <li>• Özel indirimler</li>
+          <li>• VIP öznitelikler</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-12 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-8">
+      <h2 class="text-2xl font-bold mb-4">Daha Fazla Puan Kazanın</h2>
+      <p class="mb-6">Şanlıurfa'da yeni mekanlar keşfedin ve puanlarınızı artırın. Her etkinlik ve inceleme sizi ödüllere daha yakın getiriyor.</p>
+      <a href="/mekanlar" class="inline-block px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition">
+        Mekanları Keşfedin
+      </a>
+    </div>
+  </div>
+</Layout>

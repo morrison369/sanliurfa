@@ -1,0 +1,21 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CollectionsManager from '../../components/CollectionsManager';
+
+// Get user from locals
+const user = Astro.locals.user;
+
+// Redirect to login if not authenticated
+if (!user) {
+  return Astro.redirect('/giris');
+}
+---
+
+<Layout title="Koleksiyonlarım - Şanlıurfa">
+  <div class="container mx-auto px-4 py-8 max-w-6xl">
+    <h1 class="text-4xl font-bold mb-2">Koleksiyonlarım</h1>
+    <p class="text-gray-600 mb-8">Mekanları organize edebileceğiniz kişisel listeleriniz</p>
+
+    <CollectionsManager client:load userId={user.id} />
+  </div>
+</Layout>

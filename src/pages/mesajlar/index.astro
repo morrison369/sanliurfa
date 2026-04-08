@@ -1,0 +1,21 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MessagingInbox from '../../components/MessagingInbox';
+
+// Redirect if not logged in
+if (!Astro.locals.user) {
+  return Astro.redirect('/giris');
+}
+---
+
+<Layout title="Mesajlar - Şanlıurfa Rehberi">
+  <div class="min-h-screen bg-gray-50">
+    <MessagingInbox client:load />
+  </div>
+</Layout>
+
+<style>
+  div :global(body) {
+    overflow: hidden;
+  }
+</style>

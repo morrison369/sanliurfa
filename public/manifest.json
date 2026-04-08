@@ -62,7 +62,7 @@
       ]
     }
   ],
-  "categories": ["travel", "lifestyle"],
+  "categories": ["travel", "lifestyle", "education"],
   "screenshots": [
     {
       "src": "/screenshot-mobile-1.png",
@@ -82,5 +82,15 @@
       "type": "image/png",
       "form_factor": "wide"
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/api/share",
+    "method": "POST",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

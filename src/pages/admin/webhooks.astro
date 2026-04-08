@@ -1,0 +1,107 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { isAdmin } from '../../lib/auth';
+
+// Check if user is admin
+const user = Astro.locals.user;
+if (!user || !user.isAdmin) {
+  return Astro.redirect('/giris');
+}
+---
+
+<Layout title="Webhook Yönetimi">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-lg p-6 space-y-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Webhook Yönetimi</h1>
+        <p class="text-gray-600">Webhooks oluşturun, test edin ve performansını takip edin</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+          <h3 class="font-semibold text-blue-900 mb-2">💡 Webhook Nedir?</h3>
+          <p class="text-sm text-blue-800">
+            Webhooks, belirli olaylar gerçekleştiğinde dış uygulamalara HTTP POST istekleri göndererek entegrasyonlar sağlar.
+          </p>
+        </div>
+
+        <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+          <h3 class="font-semibold text-green-900 mb-2">🔒 Güvenlik</h3>
+          <p class="text-sm text-green-800">
+            Her webhook isteği HMAC-SHA256 imzası ile doğrulanır. Secret sağlarsanız imza denetlenebilir.
+          </p>
+        </div>
+
+        <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+          <h3 class="font-semibold text-purple-900 mb-2">📊 İzleme</h3>
+          <p class="text-sm text-purple-800">
+            Teslim oranlarını, başarısız olayları ve performans metriklerini gerçek zamanlı izleyin.
+          </p>
+        </div>
+      </div>
+
+      <div class="border-t pt-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Webhook Ayarları</h2>
+        <div class="text-gray-600 space-y-2">
+          <p><strong>Desteklenen Olaylar:</strong></p>
+          <ul class="list-disc list-inside space-y-1 text-sm ml-2">
+            <li>place.created - Yeni mekan eklendiğinde</li>
+            <li>place.updated - Mekan güncellendiğinde</li>
+            <li>place.deleted - Mekan silindiğinde</li>
+            <li>review.created - Yeni değerlendirme eklendiğinde</li>
+            <li>review.deleted - Değerlendirme silindiğinde</li>
+            <li>user.registered - Yeni kullanıcı kaydolduğunda</li>
+            <li>user.blocked - Kullanıcı engellendiğinde</li>
+            <li>message.sent - Mesaj gönderildiğinde</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="border-t pt-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">API Referansı</h2>
+        <div class="bg-gray-50 rounded-lg p-4 space-y-4 font-mono text-sm">
+          <div>
+            <p class="font-semibold text-gray-900">POST /api/webhooks</p>
+            <p class="text-gray-600 text-xs mt-1">Yeni webhook oluştur</p>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-900">GET /api/webhooks</p>
+            <p class="text-gray-600 text-xs mt-1">Kullanıcının webhooklarını listele</p>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-900">DELETE /api/webhooks/{id}</p>
+            <p class="text-gray-600 text-xs mt-1">Webhook sil</p>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-900">GET /api/webhooks/analytics</p>
+            <p class="text-gray-600 text-xs mt-1">Analitik ve metrikler</p>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-900">POST /api/webhooks/test</p>
+            <p class="text-gray-600 text-xs mt-1">Webhook test et</p>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-900">POST /api/webhooks/retry</p>
+            <p class="text-gray-600 text-xs mt-1">Başarısız olayları yeniden gönder</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t pt-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">İmza Örneği</h2>
+        <div class="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto text-sm font-mono">
+          <code>{`// X-Signature header'ı HMAC-SHA256'dır
+const signature = HMAC-SHA256(JSON.stringify(body), secret);
+// İmzayı doğrula
+if (signature !== req.headers['x-signature']) {
+  reject('Invalid signature');
+}`}</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Styles for the admin page */
+  </style>
+</Layout>

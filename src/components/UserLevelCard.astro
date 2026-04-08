@@ -1,0 +1,106 @@
+---
+/**
+ * UserLevelCard Component
+ * Displays user level, XP progress, and badges
+ */
+
+interface Props {
+  level?: number;
+  points?: number;
+  badges?: any[];
+  username?: string;
+}
+
+const { level = 1, points = 0, badges = [], username = 'User' } = Astro.props;
+
+// Calculate level progress
+const LEVEL_THRESHOLDS = [0, 100, 300, 700, 1500, 3000, 6000, 12000, 25000, 50000];
+const currentThreshold = LEVEL_THRESHOLDS[level - 1] || 0;
+const nextThreshold = LEVEL_THRESHOLDS[level] || LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] + 50000;
+const pointsInLevel = points - currentThreshold;
+const pointsNeeded = nextThreshold - currentThreshold;
+const progressPercent = Math.min(100, (pointsInLevel / pointsNeeded) * 100);
+
+// Level colors
+const levelColors: Record<number, string> = {
+  1: 'from-gray-400 to-gray-500',
+  2: 'from-green-400 to-green-500',
+  3: 'from-blue-400 to-blue-500',
+  4: 'from-purple-400 to-purple-500',
+  5: 'from-pink-400 to-pink-500',
+  6: 'from-yellow-400 to-yellow-500',
+  7: 'from-red-400 to-red-500',
+  8: 'from-indigo-400 to-indigo-500',
+  9: 'from-teal-400 to-teal-500',
+  10: 'from-orange-400 to-orange-500',
+};
+
+const colorGradient = levelColors[level] || levelColors[1];
+---
+
+<div class="w-full max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+  <!-- Level Badge -->
+  <div class="flex items-center justify-center mb-6">
+    <div class={`w-24 h-24 rounded-full bg-gradient-to-br ${colorGradient} flex items-center justify-center shadow-lg`}>
+      <div class="text-center">
+        <div class="text-4xl font-bold text-white">{level}</div>
+        <div class="text-xs text-white opacity-90">Level</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Username -->
+  <h3 class="text-center text-xl font-semibold text-gray-900 dark:text-white mb-4">{username}</h3>
+
+  <!-- Points Display -->
+  <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+    <div class="flex justify-between items-center mb-2">
+      <span class="text-sm text-gray-600 dark:text-gray-300">Total Points</span>
+      <span class="text-lg font-bold text-gray-900 dark:text-white">{points.toLocaleString()}</span>
+    </div>
+    <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+      <span>{pointsInLevel.toLocaleString()} / {pointsNeeded.toLocaleString()}</span>
+      <span>{Math.round(progressPercent)}%</span>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="mt-3 w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+      <div
+        class={`bg-gradient-to-r ${colorGradient} h-full transition-all duration-300`}
+        style={`width: ${progressPercent}%`}
+      ></div>
+    </div>
+
+    <!-- Next Level Info -->
+    <div class="mt-3 text-center text-xs text-gray-600 dark:text-gray-300">
+      Next level: {(nextThreshold - points).toLocaleString()} points needed
+    </div>
+  </div>
+
+  <!-- Badges Section -->
+  {badges && badges.length > 0 && (
+    <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+      <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Badges ({badges.length})</h4>
+
+      <!-- Recent 3 Badges -->
+      <div class="flex flex-wrap gap-2 mb-3">
+        {badges.slice(0, 3).map((badge) => (
+          <div class="group relative">
+            <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors cursor-help">
+              {badge.icon || '🏅'}
+            </div>
+            <div class="invisible group-hover:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-600 text-white text-xs rounded whitespace-nowrap z-10">
+              {badge.name}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {badges.length > 3 && (
+        <div class="text-xs text-gray-600 dark:text-gray-300 text-center">
+          +{badges.length - 3} more badge{badges.length - 3 !== 1 ? 's' : ''}
+        </div>
+      )}
+    </div>
+  )}
+</div>

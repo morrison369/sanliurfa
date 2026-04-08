@@ -2,6 +2,7 @@
 import type { APIRoute } from 'astro';
 import { query, queryOne, insert, remove } from '../../../lib/postgres';
 import { getCache, setCache, deleteCache } from '../../../lib/cache';
+import { logActivity } from '../../../lib/activity';
 
 /**
  * Generate cache key for user favorites
@@ -102,6 +103,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Add points (5 puan)
     await query('UPDATE users SET points = COALESCE(points, 0) + 5 WHERE id = $1', [user.id]);
+
+    // Log activity
+    const place = await queryOne('SELECT name FROM places WHERE id = $1', [placeId]);
+    await logActivity(user.id, 'favorite_added', 'place', placeId, {
+      placeName: place?.name || 'Mekan',
+      points: 5
+    });
 
     // Invalidate user's favorites cache
     const cacheKey = generateFavoritesCacheKey(user.id);

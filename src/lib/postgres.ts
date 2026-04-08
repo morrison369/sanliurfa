@@ -11,13 +11,15 @@ if (!DATABASE_URL) {
 }
 
 // PostgreSQL connection pool
+// Performance optimized: increased connection timeout to reduce false timeouts under load
 export const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   max: 20,
   min: 2,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000, // Increased from 2000ms to reduce timeouts under load
+  statement_timeout: 30000, // Add statement timeout: 30 seconds
 });
 
 pool.on('error', (err) => {
@@ -44,6 +46,40 @@ export function updatePoolStatus(): void {
 
 // Update pool status periodically
 setInterval(updatePoolStatus, 30000); // Every 30 seconds
+
+/**
+ * Enhanced pool health monitoring with alerting
+ */
+function monitorPoolHealth(): void {
+  setInterval(() => {
+    const poolState = (pool as any)._clients || [];
+    const idleCount = (pool as any)._idle ? (pool as any)._idle.length : 0;
+    const totalConnections = poolState.length;
+    const activeConnections = totalConnections - idleCount;
+    const waitingRequests = (pool as any)._waitingCount || 0;
+
+    const utilization = (activeConnections / totalConnections) * 100;
+
+    if (utilization > 80) {
+      logger.warn('Connection pool high utilization', {
+        utilization: Math.round(utilization),
+        active: activeConnections,
+        idle: idleCount,
+        waiting: waitingRequests
+      });
+    }
+
+    if (waitingRequests > 5) {
+      logger.error('Connection pool saturation detected', {
+        waiting: waitingRequests,
+        utilization: Math.round(utilization)
+      });
+    }
+  }, 30000); // Check every 30 seconds
+}
+
+// Start pool health monitoring
+monitorPoolHealth();
 
 // ==================== QUERY HELPERS ====================
 
@@ -163,7 +199,9 @@ const ALLOWED_TABLES = new Set([
   'messages',
   'points_history',
   'badges',
-  'user_badges'
+  'user_badges',
+  'place_photos',
+  'photo_votes'
 ]);
 
 /**

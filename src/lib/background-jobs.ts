@@ -278,7 +278,9 @@ export const JobTypes = {
   GENERATE_REPORT: 'generate_report',
   SYNC_DATA: 'sync_data',
   CLEANUP: 'cleanup',
-  INDEX_SEARCH: 'index_search'
+  INDEX_SEARCH: 'index_search',
+  PROCESS_EMAIL_SEQUENCES: 'process_email_sequences',
+  SEND_SCHEDULED_CAMPAIGNS: 'send_scheduled_campaigns'
 } as const;
 
 /**
@@ -320,6 +322,51 @@ function setupDefaultHandlers(queue: BackgroundJobQueue): void {
     // Cleanup logic would go here
     return { cleaned: true };
   });
+
+  // Process email sequences
+  queue.registerHandler(JobTypes.PROCESS_EMAIL_SEQUENCES, async (payload) => {
+    try {
+      const { processSequenceQueue } = await import('./email-automation');
+      const result = await processSequenceQueue();
+      logger.info('Email sequences processed', { processed: result.processed, failed: result.failed });
+      return result;
+    } catch (error) {
+      logger.error('Failed to process email sequences', error instanceof Error ? error : new Error(String(error)));
+      return { processed: 0, failed: 0 };
+    }
+  });
+
+  // Send scheduled campaigns
+  queue.registerHandler(JobTypes.SEND_SCHEDULED_CAMPAIGNS, async (payload) => {
+    try {
+      const { queryMany, update } = await import('./postgres');
+
+      // Get campaigns scheduled for now
+      const scheduledCampaigns = await queryMany(
+        'SELECT id FROM email_campaigns WHERE status = $1 AND scheduled_at <= NOW()',
+        ['scheduled']
+      );
+
+      let sent = 0;
+      for (const campaign of scheduledCampaigns) {
+        try {
+          const { sendCampaign } = await import('./email-campaigns');
+          const result = await sendCampaign(campaign.id);
+          if (result) {
+            sent++;
+          }
+        } catch (error) {
+          logger.warn('Failed to send scheduled campaign', { campaignId: campaign.id });
+        }
+      }
+
+      logger.info('Scheduled campaigns sent', { count: sent });
+      return { sent };
+    } catch (error) {
+      logger.error('Failed to send scheduled campaigns', error instanceof Error ? error : new Error(String(error)));
+      return { sent: 0 };
+    }
+  });
 }
 
 /**
@@ -340,4 +387,39 @@ export function startJobProcessor(intervalMs: number = 5000, maxConcurrent: numb
   return setInterval(() => {
     process().catch(err => logger.error('Job processor error', err instanceof Error ? err : new Error(String(err))));
   }, intervalMs);
+}
+
+/**
+ * Start background automation jobs (sequences, scheduled campaigns, etc)
+ */
+export function startAutomationJobs(): {
+  sequenceProcessor: NodeJS.Timer;
+  campaignScheduler: NodeJS.Timer;
+} {
+  const queue = getJobQueue();
+
+  // Process email sequences every 10 minutes
+  const sequenceProcessor = setInterval(async () => {
+    try {
+      await queue.enqueue(JobTypes.PROCESS_EMAIL_SEQUENCES, {}, { priority: 7 });
+    } catch (error) {
+      logger.warn('Failed to enqueue sequence processing job', error instanceof Error ? error : new Error(String(error)));
+    }
+  }, 10 * 60 * 1000); // 10 minutes
+
+  // Send scheduled campaigns every 5 minutes
+  const campaignScheduler = setInterval(async () => {
+    try {
+      await queue.enqueue(JobTypes.SEND_SCHEDULED_CAMPAIGNS, {}, { priority: 8 });
+    } catch (error) {
+      logger.warn('Failed to enqueue scheduled campaign job', error instanceof Error ? error : new Error(String(error)));
+    }
+  }, 5 * 60 * 1000); // 5 minutes
+
+  logger.info('Automation jobs started', {
+    sequenceInterval: '10 minutes',
+    campaignInterval: '5 minutes'
+  });
+
+  return { sequenceProcessor, campaignScheduler };
 }

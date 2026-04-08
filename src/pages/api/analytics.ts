@@ -1,94 +1,47 @@
 import type { APIRoute } from 'astro';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../lib/api';
-import { getPopularPlaces, getWeeklySummary, getCategoryStats, getUserActivityAnalysis } from '../../lib/analytics';
-import { logger } from '../../lib/logging';
+import { queryOne, queryMany } from '../../lib/postgres';
 
-/**
- * GET /api/analytics - İstatistikleri getir
- * Query parametreleri:
- *   - type: popular | weekly | categories | user
- *   - userId: Kullanıcı analizi için (type=user)
- *   - days: Kaç gün gerisine bakılsın (default: 30)
- */
-export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
-  logger.setRequestId(requestId);
-
+export const GET: APIRoute = async ({ locals }) => {
   try {
-    const type = url.searchParams.get('type') || 'weekly';
-
-    switch (type) {
-      case 'popular':
-        const limit = parseInt(url.searchParams.get('limit') || '20');
-        const days = parseInt(url.searchParams.get('days') || '30');
-        const popular = await getPopularPlaces(Math.min(limit, 100), days);
-
-        return apiResponse(
-          {
-            type: 'popular_places',
-            period: `last_${days}_days`,
-            places: popular,
-            count: popular.length
-          },
-          HttpStatus.OK,
-          requestId
-        );
-
-      case 'weekly':
-        const weekly = await getWeeklySummary();
-        return apiResponse(
-          { type: 'weekly_summary', ...weekly },
-          HttpStatus.OK,
-          requestId
-        );
-
-      case 'categories':
-        const categories = await getCategoryStats();
-        return apiResponse(
-          {
-            type: 'category_stats',
-            categories,
-            count: categories.length
-          },
-          HttpStatus.OK,
-          requestId
-        );
-
-      case 'user':
-        if (!locals.user?.id) {
-          return apiError(
-            ErrorCode.UNAUTHORIZED,
-            'Giriş gerekli',
-            HttpStatus.UNAUTHORIZED,
-            undefined,
-            requestId
-          );
-        }
-
-        const analysis = await getUserActivityAnalysis(locals.user.id);
-        return apiResponse(
-          { type: 'user_activity', userId: locals.user.id, ...analysis },
-          HttpStatus.OK,
-          requestId
-        );
-
-      default:
-        return apiError(
-          ErrorCode.VALIDATION_ERROR,
-          'Bilinmeyen type: popular, weekly, categories, user',
-          HttpStatus.BAD_REQUEST,
-          undefined,
-          requestId
-        );
+    if (!locals.user?.isAdmin) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 });
     }
-  } catch (error) {
-    logger.error('Analytics alınırken hata', error instanceof Error ? error : new Error(String(error)));
-    return apiError(
-      ErrorCode.INTERNAL_ERROR,
-      'Analytics alınırken hata oluştu',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      undefined,
-      requestId
+
+    const totalUsers = await queryOne('SELECT COUNT(*) as count FROM users');
+    const totalReviews = await queryOne('SELECT COUNT(*) as count FROM reviews');
+    const totalPlaces = await queryOne('SELECT COUNT(*) as count FROM places');
+    const avgRating = await queryOne('SELECT AVG(rating) as avg FROM reviews');
+    const activeToday = await queryOne(
+      `SELECT COUNT(DISTINCT user_id) as count FROM user_activity WHERE created_at > NOW() - INTERVAL '24 hours'`
     );
+
+    const topPlaces = await queryMany(
+      `SELECT id, name, (SELECT AVG(rating) FROM reviews WHERE place_id = places.id) as avg_rating, 
+              (SELECT COUNT(*) FROM reviews WHERE place_id = places.id) as review_count 
+       FROM places ORDER BY avg_rating DESC LIMIT 5`
+    );
+
+    const topUsers = await queryMany(
+      `SELECT id, full_name, (SELECT COUNT(*) FROM reviews WHERE user_id = users.id) as review_count, points 
+       FROM users ORDER BY points DESC LIMIT 5`
+    );
+
+    return new Response(JSON.stringify({
+      success: true,
+      data: {
+        summary: {
+          totalUsers: parseInt(totalUsers?.count || '0'),
+          totalReviews: parseInt(totalReviews?.count || '0'),
+          totalPlaces: parseInt(totalPlaces?.count || '0'),
+          avgRating: parseFloat(avgRating?.avg || '0').toFixed(2),
+          activeToday: parseInt(activeToday?.count || '0')
+        },
+        topPlaces: topPlaces.rows || [],
+        topUsers: topUsers.rows || []
+      }
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } catch (error) {
+    console.error('Analytics error', error);
+    return new Response(JSON.stringify({ error: 'Failed' }), { status: 500 });
   }
 };

@@ -1,0 +1,16 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import SearchResults from "../../components/SearchResults";
+
+const query = Astro.url.searchParams.get("q") || "";
+---
+
+<Layout title="Arama - Şanlıurfa.com">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Arama</h1>
+      <p class="text-gray-600 dark:text-gray-400">Mekanları, kullanıcıları ve koleksiyonları bul</p>
+    </div>
+    <SearchResults client:load query={query} />
+  </div>
+</Layout>

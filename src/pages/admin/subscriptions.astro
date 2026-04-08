@@ -1,0 +1,42 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SubscriptionAdminDashboard from '../../components/SubscriptionAdminDashboard';
+
+// Check admin access
+if (!Astro.locals.isAdmin) {
+  return Astro.redirect('/admin');
+}
+---
+
+<Layout title="Abonelik Yönetimi - Admin - Şanlıurfa">
+  <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+        Abonelik Yönetimi
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        Tüm abonelik sistemi, ödemeler ve müşteri verilerini yönetin
+      </p>
+    </div>
+
+    <!-- Admin Dashboard Component -->
+    <SubscriptionAdminDashboard client:load />
+
+    <!-- Navigation Links -->
+    <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+      <a href="/admin" class="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition">
+        <h3 class="font-semibold text-gray-900 dark:text-white">← Admin Paneli</h3>
+      </a>
+      <a href="/admin/users" class="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition">
+        <h3 class="font-semibold text-gray-900 dark:text-white">Kullanıcılar</h3>
+      </a>
+      <a href="/admin/analytics" class="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition">
+        <h3 class="font-semibold text-gray-900 dark:text-white">Analitiği</h3>
+      </a>
+      <a href="/admin/logs" class="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-lg transition">
+        <h3 class="font-semibold text-gray-900 dark:text-white">Loglar</h3>
+      </a>
+    </div>
+  </div>
+</Layout>

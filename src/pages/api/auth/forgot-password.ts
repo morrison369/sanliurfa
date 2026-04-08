@@ -1,7 +1,8 @@
 // API: Şifre sıfırlama talebi (PostgreSQL)
-// NOT: E-posta gönderimi için Resend API key gerekli
+// NOTE: E-posta gönderimi için Resend API key gerekli
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../lib/postgres';
+import { sendEmail, getPasswordResetEmailHTML } from '../../../lib/email';
 import crypto from 'crypto';
 
 export const POST: APIRoute = async ({ request, redirect }) => {
@@ -32,9 +33,13 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       [resetToken, resetTokenExpires.toISOString(), user.id]
     );
 
-    // TODO: Send password reset email with Resend API
-    // const resetUrl = `${new URL(request.url).origin}/sifre-sifirla?token=${resetToken}`;
-    console.log(`Password reset token for ${email}: ${resetToken}`);
+    // Send password reset email
+    const resetUrl = `${new URL(request.url).origin}/sifre-sifirla?token=${resetToken}`;
+    await sendEmail({
+      to: email,
+      subject: 'Şifreni Sıfırla - Şanlıurfa.com',
+      html: getPasswordResetEmailHTML(user.full_name || 'Kullanıcı', resetUrl)
+    });
 
     return redirect('/sifremi-unuttum?success=email_sent');
   } catch (err) {

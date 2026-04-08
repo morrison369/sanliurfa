@@ -8,6 +8,7 @@
 import { pool } from './postgres';
 import { logger } from './logging';
 import { prefixKey, getCache, setCache, deleteCache } from './cache';
+import { fireAndForget } from './performance-optimizations';
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'action';
 
@@ -57,19 +58,22 @@ export async function createNotification(
     if (notificationId) {
       // Clear user notifications cache
       await deleteCache(prefixKey(`notifications:unread:${userId}`));
-      // Broadcast via WebSocket (handled by realtime module)
-      await broadcastNotification(userId, {
-        id: notificationId,
-        userId,
-        title,
-        message,
-        type,
-        icon: options?.icon,
-        actionUrl: options?.actionUrl,
-        actionLabel: options?.actionLabel,
-        read: false,
-        createdAt: new Date()
-      });
+      // Broadcast via WebSocket (optimized: fire-and-forget to avoid blocking)
+      fireAndForget(
+        broadcastNotification(userId, {
+          id: notificationId,
+          userId,
+          title,
+          message,
+          type,
+          icon: options?.icon,
+          actionUrl: options?.actionUrl,
+          actionLabel: options?.actionLabel,
+          read: false,
+          createdAt: new Date()
+        }),
+        'broadcastNotification'
+      );
     }
 
     return notificationId || null;

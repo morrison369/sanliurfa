@@ -2,7 +2,7 @@ import { pool } from './postgres';
 import { logger } from './logging';
 import { prefixKey, deleteCache } from './cache';
 
-export async function saveSear (userId: string, name: string, query: string, filters?: any): Promise<string | null> {
+export async function saveSearch(userId: string, name: string, query: string, filters?: any): Promise<string | null> {
   try {
     const result = await pool.query(
       `INSERT INTO saved_searches (user_id, name, query, filters) VALUES ($1, $2, $3, $4)

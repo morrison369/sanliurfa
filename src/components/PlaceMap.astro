@@ -1,0 +1,205 @@
+---
+/**
+ * PlaceMap Component
+ * Interactive Leaflet.js map for displaying places
+ */
+
+interface Props {
+  places?: any[];
+  centerLat?: number;
+  centerLng?: number;
+  zoom?: number;
+  height?: string;
+  showSearch?: boolean;
+  onPlaceSelect?: (place: any) => void;
+}
+
+import { MAP_CONFIG, getMarkerColor, formatPlacePopup } from '../lib/maps';
+
+const {
+  places = [],
+  centerLat = MAP_CONFIG.DEFAULT_CENTER.lat,
+  centerLng = MAP_CONFIG.DEFAULT_CENTER.lng,
+  zoom = MAP_CONFIG.DEFAULT_ZOOM,
+  height = '400px',
+  showSearch = false
+} = Astro.props;
+
+const mapId = Math.random().toString(36).substring(7);
+---
+
+<div class="w-full">
+  <!-- Search box (optional) -->
+  {showSearch && (
+    <div class="mb-4">
+      <input
+        type="text"
+        id={`search-${mapId}`}
+        placeholder="Yer ara..."
+        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500"
+      />
+    </div>
+  )}
+
+  <!-- Map container -->
+  <div
+    id={mapId}
+    style={{ height }}
+    class="w-full rounded-lg shadow-lg border border-gray-200 dark:border-gray-700"
+  ></div>
+</div>
+
+<script define:vars={{ mapId, centerLat, centerLng, zoom, places, showSearch }}>
+  // Load Leaflet from CDN
+  const loadLeaflet = async () => {
+    // Check if Leaflet is already loaded
+    if (window.L) {
+      return window.L;
+    }
+
+    // Load CSS
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+
+    // Load JS
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => resolve(window.L);
+      document.head.appendChild(script);
+    });
+  };
+
+  const initializeMap = async () => {
+    const L = await loadLeaflet();
+
+    // Create map
+    const map = L.map(mapId).setView([centerLat, centerLng], zoom);
+
+    // Add tile layer (OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Add markers for places
+    const markers = [];
+    places.forEach((place) => {
+      if (place.latitude && place.longitude) {
+        const color = getMarkerColor(place.category);
+
+        // Create custom marker
+        const markerHtml = `
+          <div style="
+            background-color: ${color};
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.2s;
+          " class="place-marker hover:scale-110">
+            ${place.name.substring(0, 3)}
+          </div>
+        `;
+
+        const customIcon = L.divIcon({
+          html: markerHtml,
+          className: 'custom-marker',
+          iconSize: [60, 32],
+          iconAnchor: [30, 32],
+          popupAnchor: [0, -32]
+        });
+
+        const marker = L.marker([place.latitude, place.longitude], { icon: customIcon })
+          .addTo(map)
+          .bindPopup(formatPlacePopup(place));
+
+        marker.on('click', function () {
+          // Dispatch custom event
+          const event = new CustomEvent('placeSelected', { detail: place });
+          document.dispatchEvent(event);
+        });
+
+        markers.push(marker);
+      }
+    });
+
+    // Fit bounds if multiple markers
+    if (markers.length > 1) {
+      const group = new L.featureGroup(markers);
+      map.fitBounds(group.getBounds().pad(0.1));
+    } else if (markers.length === 1) {
+      map.setView(markers[0].getLatLng(), zoom);
+    }
+
+    // Search functionality
+    if (showSearch) {
+      const searchInput = document.getElementById(`search-${mapId}`);
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const query = e.target.value.toLowerCase();
+          markers.forEach((marker) => {
+            const place = places.find((p) => p.latitude === marker.getLatLng().lat);
+            if (place && place.name.toLowerCase().includes(query)) {
+              marker.setOpacity(1);
+            } else {
+              marker.setOpacity(0.3);
+            }
+          });
+        });
+      }
+    }
+
+    return map;
+  };
+
+  // Initialize map when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeMap);
+  } else {
+    initializeMap();
+  }
+
+  // Helper functions
+  function getMarkerColor(category) {
+    const colors = {
+      'Gezi': '#FF6B6B',
+      'Yemek': '#FFD93D',
+      'Kültür': '#6BCB77',
+      'Etkinlik': '#4D96FF',
+      'Rehber': '#A445BB',
+      'default': '#FF9F43'
+    };
+    return colors[category] || colors['default'];
+  }
+
+  function formatPlacePopup(place) {
+    return `
+      <div class="p-2">
+        <h3 class="font-bold text-sm">${place.name}</h3>
+        <p class="text-xs text-gray-600">${place.category}</p>
+        ${place.rating ? `<p class="text-xs">⭐ ${place.rating.toFixed(1)}</p>` : ''}
+        <a href="/places/${place.slug}" class="text-blue-600 text-xs hover:underline">Detaylar →</a>
+      </div>
+    `;
+  }
+</script>
+
+<style>
+  :global(.custom-marker) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  :global(.leaflet-popup-content-wrapper) {
+    border-radius: 8px;
+  }
+</style>

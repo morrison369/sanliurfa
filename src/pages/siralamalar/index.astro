@@ -1,0 +1,14 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import LeaderboardsDisplay from "../../components/LeaderboardsDisplay";
+---
+
+<Layout title="Sıralamalar - Şanlıurfa.com">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Sıralamalar</h1>
+      <p class="text-gray-600 dark:text-gray-400">En aktif ve başarılı kullanıcılar</p>
+    </div>
+    <LeaderboardsDisplay client:load />
+  </div>
+</Layout>

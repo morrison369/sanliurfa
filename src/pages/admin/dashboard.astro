@@ -1,16 +1,97 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import AdminDashboard from '../../components/admin/AdminDashboard';
+import AdminDashboardOverview from '../../components/AdminDashboardOverview';
+import ModerationQueueManager from '../../components/ModerationQueueManager';
+import UserManagementTable from '../../components/UserManagementTable';
 
-const seo = {
-  title: 'Admin Dashboard - Şanlıurfa.com',
-  description: 'Sistem metrikleri ve performans monitoring',
-  noindex: true
-};
+const { locals } = Astro;
+
+// Redirect if not admin
+if (!locals.user || locals.user.role !== 'admin') {
+  return Astro.redirect('/');
+}
 ---
 
-<Layout seo={seo}>
-  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20">
-    <AdminDashboard client:load />
+<Layout title="Admin Dashboard | Şanlıurfa.com">
+  <div class="min-h-screen bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+      {/* Header */}
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        <p class="text-gray-600 mt-2">Platform yönetimi, moderasyon ve kullanıcı yönetimi</p>
+      </div>
+
+      {/* Tabs */}
+      <div class="mb-6">
+        <div class="border-b border-gray-200 flex gap-8">
+          <button
+            onclick="switchTab('overview')"
+            class="py-3 px-1 border-b-2 border-blue-600 text-blue-600 font-medium text-sm"
+            id="tab-overview"
+          >
+            Genel Bakış
+          </button>
+          <button
+            onclick="switchTab('moderation')"
+            class="py-3 px-1 border-b-2 border-transparent text-gray-600 font-medium text-sm hover:text-gray-900"
+            id="tab-moderation"
+          >
+            Moderasyon
+          </button>
+          <button
+            onclick="switchTab('users')"
+            class="py-3 px-1 border-b-2 border-transparent text-gray-600 font-medium text-sm hover:text-gray-900"
+            id="tab-users"
+          >
+            Kullanıcı Yönetimi
+          </button>
+        </div>
+      </div>
+
+      {/* Content Sections */}
+      <div id="overview-section">
+        <AdminDashboardOverview client:load />
+      </div>
+
+      <div id="moderation-section" class="hidden">
+        <div class="bg-white border border-gray-200 rounded-lg p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Moderasyon Kuyruğu</h2>
+          <ModerationQueueManager client:load />
+        </div>
+      </div>
+
+      <div id="users-section" class="hidden">
+        <div class="bg-white border border-gray-200 rounded-lg p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">Kullanıcı Yönetimi</h2>
+          <UserManagementTable client:load />
+        </div>
+      </div>
+    </div>
   </div>
+
+  <script>
+    function switchTab(tabName: string) {
+      // Hide all sections
+      document.getElementById('overview-section')?.classList.add('hidden');
+      document.getElementById('moderation-section')?.classList.add('hidden');
+      document.getElementById('users-section')?.classList.add('hidden');
+
+      // Remove active state from all tabs
+      document.getElementById('tab-overview')?.classList.remove('border-blue-600', 'text-blue-600');
+      document.getElementById('tab-moderation')?.classList.remove('border-blue-600', 'text-blue-600');
+      document.getElementById('tab-users')?.classList.remove('border-blue-600', 'text-blue-600');
+
+      document.getElementById('tab-overview')?.classList.add('border-transparent', 'text-gray-600');
+      document.getElementById('tab-moderation')?.classList.add('border-transparent', 'text-gray-600');
+      document.getElementById('tab-users')?.classList.add('border-transparent', 'text-gray-600');
+
+      // Show selected section and activate tab
+      const sectionId = `${tabName}-section`;
+      const tabId = `tab-${tabName}`;
+
+      document.getElementById(sectionId)?.classList.remove('hidden');
+      document.getElementById(tabId)?.classList.remove('border-transparent', 'text-gray-600');
+      document.getElementById(tabId)?.classList.add('border-blue-600', 'text-blue-600');
+    }
+  </script>
 </Layout>

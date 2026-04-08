@@ -1,0 +1,15 @@
+---
+import Layout from '../layouts/Layout.astro';
+import LeaderboardsDisplay from '../components/LeaderboardsDisplay';
+---
+
+<Layout title="Liderlik Tablosu - Şanlıurfa.com">
+  <div class="container-custom py-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">🏆 Liderlik Tablosu</h1>
+      <p class="text-gray-600 dark:text-gray-400 mt-2">Topluluğun en etkin üyelerini keşfet ve onlarla yarışa</p>
+    </div>
+
+    <LeaderboardsDisplay client:load currentUserId={Astro.locals.user?.id} />
+  </div>
+</Layout>

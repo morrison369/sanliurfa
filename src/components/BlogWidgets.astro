@@ -1,0 +1,193 @@
+---
+/**
+ * Blog Sidebar Widget'ları
+ * - En Çok Okunan Yazılar
+ * - Son Yazılar
+ * - Kategoriler
+ */
+
+import { getBlogPosts, getBlogCategories } from '../lib/blog';
+
+interface Props {
+  currentPostId?: number;
+  currentCategoryId?: number;
+}
+
+const { currentPostId, currentCategoryId } = Astro.props;
+
+let topPosts: any[] = [];
+let recentPosts: any[] = [];
+let categories: any[] = [];
+let error = '';
+
+try {
+  // En çok okunan yazıları getir
+  const result = await getBlogPosts({
+    status: 'published',
+    limit: 5,
+    sort: 'popular'
+  });
+  topPosts = result.posts.slice(0, 5);
+
+  // Son yazıları getir
+  const recentResult = await getBlogPosts({
+    status: 'published',
+    limit: 5,
+    sort: 'recent'
+  });
+  recentPosts = recentResult.posts.slice(0, 5);
+
+  // Kategorileri getir
+  categories = await getBlogCategories();
+} catch (err) {
+  error = 'Widget verileri yüklenirken hata oluştu';
+  console.error('Blog widgets error:', err);
+}
+---
+
+<aside class="space-y-6">
+  {error && (
+    <div class="p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg text-sm">
+      {error}
+    </div>
+  )}
+
+  <!-- En Çok Okunan Yazılar -->
+  {topPosts.length > 0 && (
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+      <h3 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        <span class="text-lg">🔥</span> En Çok Okunan
+      </h3>
+      <div class="space-y-3">
+        {topPosts.map((post: any) => (
+          <a
+            href={`/blog/${post.slug}`}
+            class={`block p-3 rounded-lg transition-colors ${
+              currentPostId === post.id
+                ? 'bg-blue-100 dark:bg-blue-900/30'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            <h4 class="font-medium text-sm text-gray-900 dark:text-white line-clamp-2 hover:text-blue-600">
+              {post.title}
+            </h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              👁️ {post.viewCount} görüntüleme
+            </p>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <!-- Son Yazılar -->
+  {recentPosts.length > 0 && (
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+      <h3 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        <span class="text-lg">📝</span> Son Yazılar
+      </h3>
+      <div class="space-y-3">
+        {recentPosts.map((post: any) => (
+          <a
+            href={`/blog/${post.slug}`}
+            class={`block p-3 rounded-lg transition-colors ${
+              currentPostId === post.id
+                ? 'bg-blue-100 dark:bg-blue-900/30'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            <h4 class="font-medium text-sm text-gray-900 dark:text-white line-clamp-2 hover:text-blue-600">
+              {post.title}
+            </h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              📅 {new Date(post.publishedAt).toLocaleDateString('tr-TR', { month: 'short', day: 'numeric' })}
+            </p>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <!-- Kategoriler -->
+  {categories.length > 0 && (
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+      <h3 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        <span class="text-lg">📂</span> Kategoriler
+      </h3>
+      <div class="space-y-2">
+        {categories.map((cat: any) => (
+          <a
+            href={`/blog?category=${cat.slug}`}
+            class={`flex items-center justify-between p-2 rounded-lg transition-colors ${
+              currentCategoryId === cat.id
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+          >
+            <span class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600">
+              {cat.name}
+            </span>
+            <span class="text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded">
+              {cat.postCount || 0}
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <!-- Newsletter Formu -->
+  <div class="bg-gradient-to-br from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 rounded-lg shadow p-6 text-white">
+    <h3 class="font-semibold mb-2 flex items-center gap-2">
+      <span class="text-lg">📧</span> Bültenimize Abone Olun
+    </h3>
+    <p class="text-sm text-blue-100 mb-4">
+      En yeni yazılardan ilk siz haberdar olun.
+    </p>
+    <form class="space-y-3" onsubmit="handleSubscribe(event)">
+      <input
+        type="email"
+        name="email"
+        placeholder="E-posta adresiniz"
+        required
+        class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:border-white/40"
+      />
+      <button
+        type="submit"
+        class="w-full py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
+      >
+        Abone Ol
+      </button>
+    </form>
+    <p class="text-xs text-blue-200 mt-3">
+      ✓ Spam göndermiş değiliz
+    </p>
+  </div>
+</aside>
+
+<script>
+  async function handleSubscribe(event: Event) {
+    event.preventDefault();
+    const form = event.target as HTMLFormElement;
+    const email = (form.querySelector('input[name="email"]') as HTMLInputElement).value;
+
+    try {
+      const response = await fetch('/api/blog/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Başarıyla abone oldunuz!');
+        form.reset();
+      } else {
+        alert(data.error || 'Abone olurken hata oluştu');
+      }
+    } catch (err) {
+      alert('Hata: ' + String(err));
+    }
+  }
+</script>

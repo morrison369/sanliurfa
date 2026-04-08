@@ -1,0 +1,181 @@
+---
+/**
+ * Blog Analitikleri Dashboardi
+ * İstatistikler, en çok okunan yazılar, kategori performansı
+ */
+
+import Layout from '../../../layouts/Layout.astro';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/login');
+}
+
+let analytics = null;
+let error = '';
+
+try {
+  const response = await fetch('http://localhost:3000/api/blog/analytics', {
+    headers: {
+      'Cookie': `auth-token=${Astro.cookies.get('auth-token')?.value || ''}`
+    }
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    analytics = data.data;
+  } else {
+    error = 'Analitikal veriler yüklenirken hata oluştu';
+  }
+} catch (err) {
+  error = 'Sunucu hatası: ' + String(err);
+}
+
+const seo = {
+  title: 'Blog Analitikleri - Yönetim Paneli',
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Header -->
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="container-custom py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <a href="/admin/blog" class="text-gray-600 dark:text-gray-400 hover:text-gray-900">
+              ← Geri
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Blog Analitikleri</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-custom py-8">
+      {error && (
+        <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {analytics && (
+        <>
+          <!-- Ana İstatistikler -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Toplam Yazı</p>
+              <p class="text-3xl font-bold text-gray-900 dark:text-white">{analytics.posts.total}</p>
+              <p class="text-xs text-gray-500 mt-2">📝 {analytics.posts.published} yayınlı, {analytics.posts.draft} taslak</p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Toplam Görüntüleme</p>
+              <p class="text-3xl font-bold text-blue-600">{analytics.posts.totalViews.toLocaleString('tr-TR')}</p>
+              <p class="text-xs text-gray-500 mt-2">⌀ {analytics.posts.avgViews} ort./yazı</p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Yorumlar</p>
+              <p class="text-3xl font-bold text-green-600">{analytics.comments.approved}</p>
+              <p class="text-xs text-gray-500 mt-2">⏳ {analytics.comments.pending} bekleme</p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Abone</p>
+              <p class="text-3xl font-bold text-purple-600">{analytics.subscribers.active}</p>
+              <p class="text-xs text-gray-500 mt-2">📧 {analytics.subscribers.total} toplam</p>
+            </div>
+          </div>
+
+          <!-- Engagement -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Okuyucu Katılımı</h3>
+              <div class="space-y-3">
+                <div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Benzersiz Okuyucu</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white">{analytics.engagement.uniqueReaders}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Ort. Okuma Süresi</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white">{analytics.engagement.avgReadTimeSeconds}s</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Ort. Scroll</p>
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white">{analytics.engagement.avgScrollPercentage}%</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- En Çok Okunan -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 lg:col-span-2">
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">En Çok Okunan Yazılar</h3>
+              <div class="space-y-3">
+                {analytics.topPosts.slice(0, 5).map((post: any) => (
+                  <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                    <div class="flex-1 min-w-0">
+                      <a href={`/blog/${post.slug}`} target="_blank" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 truncate">
+                        {post.title}
+                      </a>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">👁️ {post.views} • ❤️ {post.likes}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <!-- Kategori Performansı -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 mb-8">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Kategori Performansı</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-400">Kategori</th>
+                    <th class="px-4 py-2 text-right text-gray-600 dark:text-gray-400">Yazı</th>
+                    <th class="px-4 py-2 text-right text-gray-600 dark:text-gray-400">Görüntüleme</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                  {analytics.categories.map((cat: any) => (
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{cat.name}</td>
+                      <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{cat.postCount}</td>
+                      <td class="px-4 py-3 text-right font-semibold text-blue-600">{(cat.totalViews || 0).toLocaleString('tr-TR')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Son Yazılar -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Son Yazılar</h3>
+            <div class="space-y-2">
+              {analytics.recentPosts.map((post: any) => (
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                  <a href={`/blog/${post.slug}`} target="_blank" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600">
+                    {post.title}
+                  </a>
+                  <span class={`px-2 py-1 text-xs rounded font-medium ${
+                    post.status === 'published'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                      : post.status === 'draft'
+                      ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                  }`}>
+                    {post.status === 'published' ? '✓' : post.status === 'draft' ? '📋' : '🗑️'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+</Layout>

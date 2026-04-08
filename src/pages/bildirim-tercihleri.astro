@@ -1,0 +1,19 @@
+---
+import Layout from '../layouts/Layout.astro';
+import NotificationPreferencesManager from '../components/NotificationPreferencesManager';
+
+const { locals } = Astro;
+
+// Redirect if not authenticated
+if (!locals.user) {
+  return Astro.redirect('/giris');
+}
+---
+
+<Layout title="Bildirim Tercihleri | Şanlıurfa.com">
+  <div class="min-h-screen bg-gray-50">
+    <div class="max-w-3xl mx-auto px-4 py-8">
+      <NotificationPreferencesManager client:load />
+    </div>
+  </div>
+</Layout>

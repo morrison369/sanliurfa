@@ -8,6 +8,16 @@ interface UserData {
   createdAt: string;
 }
 
+interface ActivityItem {
+  id: number;
+  userId: string;
+  actionType: string;
+  referenceType?: string;
+  referenceId?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+}
+
 interface TabType {
   id: 'profile' | 'favorites' | 'activity' | 'settings' | 'security';
   label: string;
@@ -18,29 +28,89 @@ export default function UserProfile() {
   const [activeTab, setActiveTab] = useState<TabType['id']>('profile');
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [favorites, setFavorites] = useState<any[]>([]);
-  const [activity, setActivity] = useState<any[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
     loadUserData();
   }, []);
 
+  useEffect(() => {
+    if (activeTab === 'activity' && user) {
+      loadActivity();
+    }
+  }, [activeTab, user]);
+
   const loadUserData = async () => {
     try {
       setIsLoading(true);
-      // In real app, get from /api/auth/me or context
-      const userData = {
-        id: '123',
-        email: 'user@example.com',
-        fullName: 'Kullanıcı Adı',
-        role: 'user',
-        createdAt: new Date().toISOString()
-      };
-      setUser(userData);
+      const response = await fetch('/api/auth/me');
+      if (!response.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+      const userData = await response.json();
+      setUser({
+        id: userData.id,
+        email: userData.email,
+        fullName: userData.full_name,
+        role: userData.role,
+        createdAt: userData.created_at
+      });
     } catch (error) {
       console.error('Failed to load user data', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadActivity = async () => {
+    if (!user) return;
+    try {
+      const response = await fetch('/api/activity');
+      if (!response.ok) {
+        throw new Error('Failed to fetch activity');
+      }
+      const data = await response.json();
+      setActivity(data.data || []);
+    } catch (error) {
+      console.error('Failed to load activity', error);
+    }
+  };
+
+  const getActivityIcon = (actionType: string): string => {
+    switch (actionType) {
+      case 'review_created':
+        return '✍️';
+      case 'favorite_added':
+        return '❤️';
+      case 'badge_earned':
+        return '🏅';
+      case 'level_up':
+        return '⬆️';
+      case 'comment_posted':
+        return '💬';
+      case 'points_earned':
+        return '⭐';
+      default:
+        return '📌';
+    }
+  };
+
+  const getActivityDescription = (item: ActivityItem): string => {
+    switch (item.actionType) {
+      case 'review_created':
+        return `"${item.metadata?.placeName || 'bir yere'}" yorum yaptı`;
+      case 'favorite_added':
+        return `"${item.metadata?.placeName || 'bir yeri'}" favorilerine ekledi`;
+      case 'badge_earned':
+        return `"${item.metadata?.badgeName || 'Rozet'}" rozeti kazandı`;
+      case 'level_up':
+        return `Level ${item.metadata?.newLevel || '?'} oldu`;
+      case 'comment_posted':
+        return 'Blog yazısına yorum yaptı';
+      case 'points_earned':
+        return `${item.metadata?.points || 0} puan kazandı`;
+      default:
+        return 'Bir eylem gerçekleştirdi';
     }
   };
 
@@ -163,10 +233,40 @@ export default function UserProfile() {
       {/* Activity Tab */}
       {activeTab === 'activity' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <p className="text-lg mb-2">📊</p>
-            <p>Aktivite geçmişi boş</p>
-          </div>
+          {activity.length > 0 ? (
+            <div className="space-y-4">
+              {activity.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-start gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600"
+                >
+                  <span className="text-2xl">{getActivityIcon(item.actionType)}</span>
+                  <div className="flex-1">
+                    <p className="text-gray-900 dark:text-white font-medium">
+                      {getActivityDescription(item)}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {new Date(item.createdAt).toLocaleDateString('tr-TR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <p className="text-lg mb-2">📊</p>
+              <p>Henüz bir aktivite yok</p>
+              <a href="/arama" className="text-blue-600 hover:underline mt-2 block">
+                Yerleri keşfet ve yorum yazmaya başla →
+              </a>
+            </div>
+          )}
         </div>
       )}
 

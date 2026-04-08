@@ -1,0 +1,25 @@
+---
+/**
+ * Activity Feed Page
+ * Show personalized feed of activity from followed users
+ */
+
+import Layout from '../layouts/Layout.astro';
+import ActivityFeed from '../components/ActivityFeed';
+
+// Require authentication
+if (!Astro.locals.user) {
+  return Astro.redirect('/giris?redirect=/akis');
+}
+---
+
+<Layout title="Aktivite Akışı - Şanlıurfa.com">
+  <div class="container-custom py-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Aktivite Akışı</h1>
+      <p class="text-gray-600 dark:text-gray-400 mt-2">Takip ettiğin kullanıcıların aktivitelerini gör</p>
+    </div>
+
+    <ActivityFeed client:load userId={Astro.locals.user.id} />
+  </div>
+</Layout>

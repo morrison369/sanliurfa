@@ -1,0 +1,23 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import OLAPExplorer from '../../components/OLAPExplorer';
+
+// Admin-only access
+const userId = Astro.locals.user?.id;
+const isAdmin = Astro.locals.user?.role === 'admin';
+
+if (!userId || !isAdmin) {
+  return Astro.redirect('/giris');
+}
+---
+
+<Layout title="Veri Ambarı | Şanlıurfa">
+  <div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">Veri Ambarı & OLAP</h1>
+      <p class="text-gray-600">Çok boyutlu analitik sorgular ve veri keşfi</p>
+    </div>
+
+    <OLAPExplorer client:load />
+  </div>
+</Layout>

@@ -1,15 +1,19 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import NotificationsPage from '../components/NotificationsPage';
+import NotificationCenter from '../components/NotificationCenter';
 
-const seo = {
-  title: 'Bildirimler - Şanlıurfa.com',
-  description: 'Tüm bildirimlerinizi görüntüleyin',
-};
+const { locals } = Astro;
+
+// Redirect if not authenticated
+if (!locals.user) {
+  return Astro.redirect('/giris');
+}
 ---
 
-<Layout seo={seo}>
-  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20 pb-12">
-    <NotificationsPage client:load />
+<Layout title="Bildirimler | Şanlıurfa.com">
+  <div class="min-h-screen bg-gray-50">
+    <div class="max-w-2xl mx-auto px-4 py-8">
+      <NotificationCenter client:load />
+    </div>
   </div>
 </Layout>

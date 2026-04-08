@@ -1,0 +1,18 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CollectionDetail from '../../components/CollectionDetail';
+
+const { id } = Astro.params;
+const user = Astro.locals.user;
+
+// If no id, redirect to collections page
+if (!id) {
+  return Astro.redirect('/koleksiyonlar');
+}
+---
+
+<Layout title="Koleksiyon - Şanlıurfa">
+  <div class="container mx-auto px-4 py-8 max-w-6xl">
+    <CollectionDetail client:load collectionId={id} currentUserId={user?.id} isAdmin={user?.role === 'admin'} />
+  </div>
+</Layout>

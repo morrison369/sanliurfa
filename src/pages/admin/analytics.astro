@@ -1,0 +1,46 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AnalyticsPanel from '../../components/AnalyticsPanel';
+import AdminAnalyticsDashboard from '../../components/AdminAnalyticsDashboard';
+import AdminPerformanceDashboard from '../../components/AdminPerformanceDashboard';
+
+// Check admin access
+const user = Astro.locals.user;
+if (!user || user.role !== 'admin') {
+  return Astro.redirect('/giris');
+}
+
+const seo = {
+  title: 'Analitik - Admin',
+  description: 'Sistem analitikleri ve istatistikleri',
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20">
+    <div class="container-custom py-8">
+      <div class="mb-12">
+        <h1 class="text-4xl font-bold mb-2">Analitikler</h1>
+        <p class="text-gray-600 dark:text-gray-400">Platform-çapında istatistikler ve insights</p>
+      </div>
+
+      <div class="space-y-12">
+        <section>
+          <h2 class="text-2xl font-bold mb-6">Performance Monitoring</h2>
+          <AdminPerformanceDashboard client:load />
+        </section>
+        <hr class="dark:border-gray-700" />
+        <section>
+          <h2 class="text-2xl font-bold mb-6">Platform Analytics</h2>
+          <AdminAnalyticsDashboard client:load />
+        </section>
+        <hr class="dark:border-gray-700" />
+        <section>
+          <h2 class="text-2xl font-bold mb-6">System Metrics</h2>
+          <AnalyticsPanel client:load />
+        </section>
+      </div>
+    </div>
+  </div>
+</Layout>

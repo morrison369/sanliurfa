@@ -44,7 +44,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const scheduled = await queryMany('SELECT * FROM scheduled_reports WHERE enabled = true ORDER BY created_at DESC');
+    // Optimized: select specific report columns instead of SELECT *
+    const scheduled = await queryMany(
+      `SELECT id, name, report_type, frequency, next_run_at, last_run_at,
+              email_recipients, enabled, created_at, updated_at
+       FROM scheduled_reports WHERE enabled = true ORDER BY created_at DESC`
+    );
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/reports/schedule', HttpStatus.OK, duration);

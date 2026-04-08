@@ -1,0 +1,15 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import MyActivityLog from "../../components/MyActivityLog";
+
+const { locals, redirect } = Astro;
+if (!locals.user) {
+  return redirect("/giris?redirect=/aktivitelerim");
+}
+---
+
+<Layout title="Aktivitelerim - Sanliurfa.com">
+  <div class="max-w-2xl mx-auto px-4 py-8">
+    <MyActivityLog client:load />
+  </div>
+</Layout>

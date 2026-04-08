@@ -1,0 +1,20 @@
+---
+/**
+ * User Discovery & Search Page
+ * Browse and search for users
+ */
+
+import Layout from '../layouts/Layout.astro';
+import UserSearchResults from '../components/UserSearchResults';
+---
+
+<Layout title="Kullanıcıları Keşfet - Şanlıurfa.com">
+  <div class="container-custom py-8">
+    <div className="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Kullanıcıları Keşfet</h1>
+      <p class="text-gray-600 dark:text-gray-400 mt-2">Toplulumuzu keşfet ve diğer kullanıcılarla bağlantı kur</p>
+    </div>
+
+    <UserSearchResults client:load currentUserId={Astro.locals.user?.id} />
+  </div>
+</Layout>

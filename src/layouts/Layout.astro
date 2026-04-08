@@ -4,6 +4,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Toast from '../components/ui/Toast.astro';
 import PWARegister from '../components/PWARegister.astro';
+import PerformanceMonitor from '../components/PerformanceMonitor';
 import ThemeScript from '../components/ThemeScript.astro';
 import DarkModeToggle from '../components/DarkModeToggle.astro';
 import PageLoader from '../components/PageLoader.astro';
@@ -104,6 +105,9 @@ const user = null; // Will be populated from server
     
     <!-- PWA Registration -->
     <PWARegister />
+
+    <!-- Performance Monitoring -->
+    <PerformanceMonitor client:idle />
     
     <!-- Cookie Consent Banner -->
     <div id="cookie-consent" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 shadow-lg transform translate-y-full transition-transform duration-300 z-50 hidden">

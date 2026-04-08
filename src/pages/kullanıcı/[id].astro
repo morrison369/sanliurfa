@@ -1,0 +1,26 @@
+---
+/**
+ * Public User Profile Page
+ * Display user profile with stats, follower info, and activity
+ */
+
+import Layout from '../../layouts/Layout.astro';
+import UserPublicProfile from '../../components/UserPublicProfile';
+
+// Get user ID from URL
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/');
+}
+---
+
+<Layout title={`Kullanıcı Profili - Şanlıurfa.com`}>
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <a href="/" class="text-blue-600 dark:text-blue-400 hover:underline mb-4 inline-block">
+      ← Ana sayfaya dön
+    </a>
+
+    <UserPublicProfile client:load userId={id} currentUserId={Astro.locals.user?.id} />
+  </div>
+</Layout>

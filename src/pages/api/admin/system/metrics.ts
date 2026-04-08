@@ -1,0 +1,68 @@
+/**
+ * Admin System Metrics API
+ * GET: Get system-wide metrics and health
+ */
+
+import type { APIRoute } from 'astro';
+import { getSystemMetrics } from '../../../../lib/admin-dashboard';
+import { getModerationStats } from '../../../../lib/admin-moderation';
+import { getModerationQueue, getContentFlags } from '../../../../lib/admin-moderation';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { recordRequest } from '../../../../lib/metrics';
+import { logger } from '../../../../lib/logging';
+
+export const GET: APIRoute = async ({ request, locals }) => {
+  const requestId = getRequestId({ request } as any);
+  const startTime = Date.now();
+  logger.setRequestId(requestId);
+
+  try {
+    const user = locals.user;
+
+    if (!user || user.role !== 'admin') {
+      recordRequest('GET', '/api/admin/system/metrics', HttpStatus.FORBIDDEN, Date.now() - startTime);
+      return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
+    }
+
+    const [systemMetrics, modStats, pendingQueue, pendingFlags] = await Promise.all([
+      getSystemMetrics(),
+      getModerationStats(),
+      getModerationQueue('pending', 1),
+      getContentFlags('pending', 1)
+    ]);
+
+    const duration = Date.now() - startTime;
+    recordRequest('GET', '/api/admin/system/metrics', HttpStatus.OK, duration);
+
+    return apiResponse(
+      {
+        success: true,
+        data: {
+          system: systemMetrics,
+          moderation: modStats,
+          pendingWork: {
+            queueCount: (await getModerationQueue('pending', 1000))?.length || 0,
+            flagCount: (await getContentFlags('pending', 1000))?.length || 0
+          },
+          health: {
+            status: 'healthy',
+            timestamp: new Date().toISOString()
+          }
+        }
+      },
+      HttpStatus.OK,
+      requestId
+    );
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    recordRequest('GET', '/api/admin/system/metrics', HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    logger.error('Get system metrics failed', error instanceof Error ? error : new Error(String(error)));
+    return apiError(
+      ErrorCode.INTERNAL_ERROR,
+      'Sistem metrikleri alınırken bir hata oluştu',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      undefined,
+      requestId
+    );
+  }
+};

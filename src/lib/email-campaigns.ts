@@ -287,6 +287,227 @@ export async function getABTestResults(campaignId: string): Promise<{ variant_a:
 }
 
 /**
+ * Query users by segment type
+ */
+export async function querySegmentUsers(segment: SegmentType, filters?: Record<string, any>): Promise<Array<{ id: string; email: string }>> {
+  try {
+    let query = '';
+    let params: any[] = [];
+
+    switch (segment) {
+      case 'all_users':
+        query = 'SELECT id, email FROM users WHERE deleted_at IS NULL';
+        break;
+
+      case 'subscribers':
+        query = `
+          SELECT DISTINCT u.id, u.email
+          FROM users u
+          LEFT JOIN newsletter_subscribers ns ON u.id = ns.user_id
+          WHERE u.deleted_at IS NULL
+          AND (ns.status = 'active' OR u.email_verified = true)
+        `;
+        break;
+
+      case 'premium':
+        query = `
+          SELECT u.id, u.email
+          FROM users u
+          INNER JOIN memberships m ON u.id = m.user_id
+          WHERE u.deleted_at IS NULL
+          AND m.tier IN ('premium', 'pro')
+          AND m.status = 'active'
+          AND m.expires_at > NOW()
+        `;
+        break;
+
+      case 'inactive':
+        query = `
+          SELECT id, email
+          FROM users
+          WHERE deleted_at IS NULL
+          AND (last_login IS NULL OR last_login < NOW() - INTERVAL '30 days')
+        `;
+        break;
+
+      case 'custom':
+        if (!filters || !filters.userIds || !Array.isArray(filters.userIds)) {
+          return [];
+        }
+        query = 'SELECT id, email FROM users WHERE id = ANY($1)';
+        params = [filters.userIds];
+        break;
+
+      default:
+        return [];
+    }
+
+    const results = await queryMany(query, params);
+    return results.map((r: any) => ({
+      id: r.id,
+      email: r.email
+    }));
+  } catch (error) {
+    logger.error('Query segment users failed', error instanceof Error ? error : new Error(String(error)));
+    return [];
+  }
+}
+
+/**
+ * Send campaign to segment users
+ */
+export async function sendCampaign(campaignId: number | string, testMode: boolean = false): Promise<{ sent: number; failed: number } | null> {
+  try {
+    const campaign = await getCampaign(String(campaignId));
+
+    if (!campaign) {
+      logger.error('Campaign not found', { campaignId });
+      return null;
+    }
+
+    // Update campaign status to sending
+    await update('email_campaigns', { id: campaignId }, { status: 'sending' });
+
+    // Get segment users
+    const users = await querySegmentUsers(campaign.segment as SegmentType, campaign.segmentFilters);
+
+    if (users.length === 0) {
+      logger.warn('No users found for segment', { segment: campaign.segment, campaignId });
+      await update('email_campaigns', { id: campaignId }, { status: 'completed', send_count: 0 });
+      return { sent: 0, failed: 0 };
+    }
+
+    // In test mode, only send to first user (admin email)
+    const recipientEmails = testMode ? users.slice(0, 1).map(u => u.email) : users.map(u => u.email);
+
+    let sentCount = 0;
+    let failedCount = 0;
+
+    // Import sendEmail dynamically to avoid circular dependency
+    const { sendEmail } = await import('./email');
+    const { shouldNotify } = await import('./email-preferences');
+
+    // Send emails
+    for (const user of users) {
+      try {
+        // Check if user wants promotional emails
+        const canReceive = await shouldNotify(user.id, 'promotional');
+        if (!canReceive && !testMode) {
+          failedCount++;
+          continue;
+        }
+
+        const success = await sendEmail({
+          to: user.email,
+          subject: campaign.subject,
+          html: campaign.htmlContent
+        });
+
+        if (success) {
+          sentCount++;
+          // Track sent event
+          await trackCampaignEvent(Number(campaignId), user.id, 'sent');
+        } else {
+          failedCount++;
+        }
+      } catch (error) {
+        logger.error('Error sending to user', error instanceof Error ? error : new Error(String(error)), { userId: user.id });
+        failedCount++;
+      }
+
+      // Respect rate limits
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // Update campaign metrics
+    await update('email_campaigns', { id: campaignId }, {
+      status: 'completed',
+      send_count: sentCount
+    });
+
+    logger.info('Campaign send completed', { campaignId, sent: sentCount, failed: failedCount });
+
+    return { sent: sentCount, failed: failedCount };
+  } catch (error) {
+    logger.error('Send campaign failed', error instanceof Error ? error : new Error(String(error)));
+    await update('email_campaigns', { id: campaignId }, { status: 'failed' });
+    return null;
+  }
+}
+
+/**
+ * Schedule campaign for later sending
+ */
+export async function scheduleCampaign(campaignId: number | string, scheduledAt: Date): Promise<boolean> {
+  try {
+    const result = await update('email_campaigns', { id: campaignId }, {
+      status: 'scheduled',
+      scheduled_at: scheduledAt.toISOString()
+    });
+
+    if (result) {
+      logger.info('Campaign scheduled', { campaignId, scheduledAt });
+    }
+
+    return !!result;
+  } catch (error) {
+    logger.error('Schedule campaign failed', error instanceof Error ? error : new Error(String(error)));
+    return false;
+  }
+}
+
+/**
+ * Track campaign events (opens, clicks, unsubscribes)
+ */
+export async function trackCampaignEvent(campaignId: number, userId: string, eventType: string, linkUrl?: string): Promise<boolean> {
+  try {
+    const query = `
+      INSERT INTO campaign_tracking
+      (campaign_id, user_id, event_type, link_url, created_at)
+      VALUES ($1, $2, $3, $4, NOW())
+    `;
+
+    await queryOne(query, [campaignId, userId, eventType, linkUrl || null]);
+
+    // Update campaign metrics
+    const metricsUpdate: Record<string, any> = {};
+    if (eventType === 'open') {
+      metricsUpdate.open_count = 'open_count + 1';
+    } else if (eventType === 'click') {
+      metricsUpdate.click_count = 'click_count + 1';
+    } else if (eventType === 'unsubscribe') {
+      metricsUpdate.unsubscribe_count = 'unsubscribe_count + 1';
+    } else if (eventType === 'bounce') {
+      metricsUpdate.bounce_count = 'bounce_count + 1';
+    }
+
+    // Update metrics if needed
+    if (Object.keys(metricsUpdate).length > 0) {
+      const setClauses = Object.entries(metricsUpdate).map(([key, value]) => {
+        if (typeof value === 'string' && value.includes('+')) {
+          return `${key} = ${value}`;
+        }
+        return `${key} = $1`;
+      }).join(', ');
+
+      const updateQuery = `
+        UPDATE email_campaigns
+        SET ${setClauses}, updated_at = NOW()
+        WHERE id = $1
+      `;
+
+      await queryOne(updateQuery, [campaignId]);
+    }
+
+    logger.info('Campaign event tracked', { campaignId, userId, eventType });
+    return true;
+  } catch (error) {
+    logger.error('Track campaign event failed', error instanceof Error ? error : new Error(String(error)));
+    return false;
+  }
+}
+
+/**
  * Template library
  */
 export const EMAIL_TEMPLATES = {

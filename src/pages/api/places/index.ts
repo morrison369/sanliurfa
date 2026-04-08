@@ -38,7 +38,10 @@ export const GET: APIRoute = async ({ url }) => {
     }
 
     // Build query
-    let sql = 'SELECT * FROM places WHERE status = $1';
+    // Optimized: SELECT only necessary columns instead of SELECT * (reduces data transfer)
+    let sql = `SELECT id, name, category, rating, review_count, is_featured, latitude, longitude,
+                      thumbnail_url, avg_rating, status, created_at
+               FROM places WHERE status = $1`;
     let countSql = 'SELECT COUNT(*) FROM places WHERE status = $1';
     const values: any[] = ['active'];
     let paramIndex = 2;

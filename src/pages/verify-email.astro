@@ -1,0 +1,143 @@
+---
+/**
+ * Email verification page
+ * URL: /verify-email?token=xxx
+ * Shows status of email verification
+ */
+
+import Layout from '../layouts/Layout.astro';
+
+// Get token from URL
+const token = Astro.url.searchParams.get('token');
+
+// Verification status will be handled by client-side component
+---
+
+<Layout title="E-posta Doğrulama - Şanlıurfa.com">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
+      {token ? (
+        <>
+          <div class="text-center">
+            <div id="verification-status" class="mb-6">
+              <div class="animate-spin mx-auto w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full"></div>
+              <p class="mt-4 text-gray-600">E-posta doğrulanıyor...</p>
+            </div>
+            <div id="verification-result" class="hidden"></div>
+          </div>
+        </>
+      ) : (
+        <div class="text-center">
+          <div class="text-6xl mb-4">⚠️</div>
+          <h1 class="text-2xl font-bold text-gray-900 mb-4">Geçersiz Bağlantı</h1>
+          <p class="text-gray-600 mb-6">Doğrulama bağlantısı bulunamadı. Lütfen e-postanızdaki bağlantıyı kontrol edin.</p>
+          <a
+            href="/"
+            class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Ana Sayfaya Dön
+          </a>
+        </div>
+      )}
+    </div>
+  </div>
+
+  <script define:vars={{ token }}>
+    if (token) {
+      // Verify email with token
+      fetch(`/api/users/verify-email?token=${encodeURIComponent(token)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          const statusEl = document.getElementById('verification-status');
+          const resultEl = document.getElementById('verification-result');
+
+          if (statusEl && resultEl) {
+            statusEl.remove();
+
+            if (data.success) {
+              // Create success result
+              resultEl.innerHTML = '';
+
+              const emoji = document.createElement('div');
+              emoji.className = 'text-6xl mb-4';
+              emoji.textContent = '✅';
+              resultEl.appendChild(emoji);
+
+              const title = document.createElement('h1');
+              title.className = 'text-2xl font-bold text-green-600 mb-4';
+              title.textContent = 'Doğrulama Başarılı!';
+              resultEl.appendChild(title);
+
+              const desc = document.createElement('p');
+              desc.className = 'text-gray-600 mb-6';
+              desc.textContent = 'E-posta adresiniz başarıyla doğrulanmıştır.';
+              resultEl.appendChild(desc);
+
+              const link = document.createElement('a');
+              link.href = '/ayarlar';
+              link.className = 'inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors';
+              link.textContent = 'Ayarlarına Git';
+              resultEl.appendChild(link);
+            } else {
+              // Create error result
+              resultEl.innerHTML = '';
+
+              const emoji = document.createElement('div');
+              emoji.className = 'text-6xl mb-4';
+              emoji.textContent = '❌';
+              resultEl.appendChild(emoji);
+
+              const title = document.createElement('h1');
+              title.className = 'text-2xl font-bold text-red-600 mb-4';
+              title.textContent = 'Doğrulama Başarısız';
+              resultEl.appendChild(title);
+
+              const desc = document.createElement('p');
+              desc.className = 'text-gray-600 mb-6';
+              desc.textContent = data.error || 'E-posta doğrulanamadı. Bağlantı geçerli değil veya süresi dolmuş olabilir.';
+              resultEl.appendChild(desc);
+
+              const link = document.createElement('a');
+              link.href = '/';
+              link.className = 'inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors';
+              link.textContent = 'Ana Sayfaya Dön';
+              resultEl.appendChild(link);
+            }
+            resultEl.classList.remove('hidden');
+          }
+        })
+        .catch((err) => {
+          const statusEl = document.getElementById('verification-status');
+          const resultEl = document.getElementById('verification-result');
+
+          if (statusEl && resultEl) {
+            statusEl.remove();
+            resultEl.innerHTML = '';
+
+            const emoji = document.createElement('div');
+            emoji.className = 'text-6xl mb-4';
+            emoji.textContent = '⚠️';
+            resultEl.appendChild(emoji);
+
+            const title = document.createElement('h1');
+            title.className = 'text-2xl font-bold text-red-600 mb-4';
+            title.textContent = 'Bir Hata Oluştu';
+            resultEl.appendChild(title);
+
+            const desc = document.createElement('p');
+            desc.className = 'text-gray-600 mb-6';
+            desc.textContent = 'Lütfen daha sonra tekrar deneyin.';
+            resultEl.appendChild(desc);
+
+            const link = document.createElement('a');
+            link.href = '/';
+            link.className = 'inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors';
+            link.textContent = 'Ana Sayfaya Dön';
+            resultEl.appendChild(link);
+
+            resultEl.classList.remove('hidden');
+          }
+        });
+    }
+  </script>
+</Layout>

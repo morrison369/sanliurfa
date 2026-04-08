@@ -1,0 +1,53 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { SubscriptionManager } from '../components/SubscriptionManager';
+import BillingHistory from '../components/BillingHistory';
+
+// Require authentication
+if (!Astro.locals.user) {
+  return Astro.redirect('/giris');
+}
+---
+
+<Layout title="Abonelik Yönetimi - Şanlıurfa">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        Abonelik Yönetimi
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        Aktif aboneliğinizi yönetin, planı değiştirin veya ödeme geçmişini görüntüleyin
+      </p>
+    </div>
+
+    <!-- Subscription Manager -->
+    <div class="mb-12">
+      <SubscriptionManager client:load onUpgrade={() => window.location.href = '/fiyatlandirma'} />
+    </div>
+
+    <!-- Billing History -->
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+        Ödeme Geçmişi
+      </h2>
+      <BillingHistory client:load />
+    </div>
+
+    <!-- Help Section -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-2">
+        Yardıma İhtiyacınız var mı?
+      </h3>
+      <p class="text-blue-800 dark:text-blue-400 mb-4">
+        Aboneliğinizle ilgili sorularınız varsa, lütfen iletişim kurun.
+      </p>
+      <a
+        href="mailto:support@sanliurfa.com"
+        class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+      >
+        Destek E-postası Gönder →
+      </a>
+    </div>
+  </div>
+</Layout>

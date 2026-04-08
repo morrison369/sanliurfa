@@ -1,0 +1,68 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PricingPlans from '../components/PricingPlans';
+---
+
+<Layout title="Fiyatlandırma - Şanlıurfa">
+  <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+          Şanlıurfa'nın Gücünü Keşfet
+        </h1>
+        <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          Tüm kullanıcılar ücretsiz başlayabilir. Premium planlar daha fazla özellik açar.
+        </p>
+      </div>
+
+      <!-- Pricing Plans Component -->
+      <PricingPlans client:load />
+
+      <!-- FAQ Section -->
+      <div class="mt-20">
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white text-center mb-12">
+          Sık Sorulan Sorular
+        </h2>
+
+        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Planı ne zaman değiştirebilirim?
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              İstediğiniz zaman plan yükseltebilir veya düşürebilirsiniz. Değişiklik hemen uygulanır.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Ödeme yöntemi nedir?
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              Tüm ödemeler güvenli şekilde işlenir. Kredi kartı ve başka yöntemleri kabul ederiz.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Aboneliği iptal edebilir miyim?
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              Evet, dilediğiniz zaman aboneliği iptal edebilirsiniz. Ek ücret yoktur.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Ücretsiz plan limitlemesi var mı?
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              Ücretsiz planda temel özelliklere erişebilirsiniz. Premium özellikler sınırlıdır.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

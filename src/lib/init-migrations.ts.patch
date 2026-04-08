@@ -1,0 +1,5 @@
+--- Add webhook migration import
++++ import { migration_059_webhooks } from '../migrations/059_webhooks';
+
+--- Add to ALL_MIGRATIONS array before final bracket
++++ migration_059_webhooks

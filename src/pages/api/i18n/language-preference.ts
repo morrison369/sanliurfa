@@ -3,11 +3,11 @@
  */
 
 import type { APIRoute } from 'astro';
-import { update, queryOne } from '../../lib/postgres';
-import { validateWithSchema } from '../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../lib/api';
-import { recordRequest } from '../../lib/metrics';
-import { logger } from '../../lib/logging';
+import { update, queryOne } from '../../../lib/postgres';
+import { validateWithSchema } from '../../../lib/validation';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { recordRequest } from '../../../lib/metrics';
+import { logger } from '../../../lib/logging';
 
 const schema = {
   language: {

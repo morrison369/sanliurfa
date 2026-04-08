@@ -1,33 +1,52 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { FileText, Plus, Search, Edit, Trash2, Eye, User } from 'lucide-react';
-import { query } from '../../../lib/postgres';
+import { FileText, Plus, Edit, Trash2, Eye, User } from 'lucide-react';
+import { queryMany, queryOne } from '../../../lib/postgres';
 
 const user = Astro.locals.user;
 if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/giris?redirect=/admin/blog');
+  return Astro.redirect('/login');
 }
 
-const postsResult = await query(
-  `SELECT bp.*, u.full_name as author_name 
-   FROM blog_posts bp 
-   LEFT JOIN users u ON bp.author_id = u.id 
-   ORDER BY bp.created_at DESC`
-);
-const posts = postsResult.rows;
+// Tüm yazıları getir (taslak ve yayınlanan)
+let posts: any[] = [];
+let stats = { total: 0, published: 0, draft: 0, archived: 0 };
+let error = '';
 
-const statsResult = await query(
-  `SELECT 
-    COUNT(*) as total,
-    COUNT(*) FILTER (WHERE is_published = true) as published,
-    COUNT(*) FILTER (WHERE is_published = false) as draft,
-    COUNT(*) FILTER (WHERE is_featured = true) as featured
-   FROM blog_posts`
-);
-const stats = statsResult.rows[0];
+try {
+  const allPosts = await queryMany(`
+    SELECT bp.*, u.full_name as author_name
+    FROM blog_posts bp
+    LEFT JOIN users u ON bp.author_id = u.id
+    ORDER BY bp.created_at DESC
+  `);
+  posts = allPosts;
+
+  // İstatistikleri hesapla
+  const statsResult = await queryOne(`
+    SELECT
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE status = 'published') as published,
+      COUNT(*) FILTER (WHERE status = 'draft') as draft,
+      COUNT(*) FILTER (WHERE status = 'archived') as archived
+    FROM blog_posts
+  `);
+
+  if (statsResult) {
+    stats = {
+      total: parseInt(statsResult.total || '0'),
+      published: parseInt(statsResult.published || '0'),
+      draft: parseInt(statsResult.draft || '0'),
+      archived: parseInt(statsResult.archived || '0')
+    };
+  }
+} catch (err) {
+  error = 'Blog yazıları yüklenirken hata oluştu';
+  console.error('Blog admin error:', err);
+}
 
 const seo = {
-  title: 'Blog Yönetimi - Admin Panel',
+  title: 'Blog Yönetimi - Yönetim Paneli',
   noindex: true
 };
 ---
@@ -50,6 +69,12 @@ const seo = {
     </div>
     
     <div class="container-custom py-8">
+      {error && (
+        <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          {error}
+        </div>
+      )}
+
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
           <p class="text-sm text-gray-600 dark:text-gray-400">Toplam Yazı</p>
@@ -63,9 +88,9 @@ const seo = {
           <p class="text-sm text-yellow-700 dark:text-yellow-400">Taslak</p>
           <p class="text-2xl font-bold text-yellow-800 dark:text-yellow-300">{stats.draft}</p>
         </div>
-        <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-xl p-4 border border-urfa-200 dark:border-urfa-800">
-          <p class="text-sm text-urfa-700 dark:text-urfa-400">Öne Çıkan</p>
-          <p class="text-2xl font-bold text-urfa-800 dark:text-urfa-300">{stats.featured}</p>
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+          <p class="text-sm text-gray-600 dark:text-gray-400">Arşivlenmiş</p>
+          <p class="text-2xl font-bold text-gray-900 dark:text-white">{stats.archived}</p>
         </div>
       </div>
       
@@ -85,14 +110,14 @@ const seo = {
                 <tr class="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td class="py-4 px-4">
                     <div class="flex items-start gap-3">
-                      <div class="w-10 h-10 bg-urfa-100 dark:bg-urfa-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-5 h-5 text-urfa-600 dark:text-urfa-400" />
+                      <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
                       <div>
                         <p class="font-medium text-gray-900 dark:text-white text-sm">{post.title}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{post.excerpt}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{post.excerpt || 'Özet yok'}</p>
                         {post.is_featured && (
-                          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-urfa-100 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300 text-xs rounded mt-1">
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs rounded mt-1">
                             ⭐ Öne Çıkan
                           </span>
                         )}
@@ -107,11 +132,13 @@ const seo = {
                   </td>
                   <td class="py-4 px-4">
                     <span class={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                      post.is_published 
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' 
-                        : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                      post.status === 'published'
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                        : post.status === 'draft'
+                        ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                     }`}>
-                      {post.is_published ? 'Yayında' : 'Taslak'}
+                      {post.status === 'published' ? 'Yayında' : post.status === 'draft' ? 'Taslak' : 'Arşivlendi'}
                     </span>
                     {post.published_at && (
                       <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -121,27 +148,31 @@ const seo = {
                   </td>
                   <td class="py-4 px-4">
                     <div class="flex items-center justify-end gap-1">
-                      <a href={`/blog/${post.slug}`} target="_blank" class="p-2 text-gray-400 hover:text-urfa-600 transition-colors" title="Görüntüle">
-                        <Eye className="w-4 h-4" />
-                      </a>
+                      {post.status === 'published' && (
+                        <a href={`/blog/${post.slug}`} target="_blank" class="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Görüntüle">
+                          <Eye className="w-4 h-4" />
+                        </a>
+                      )}
                       <a href={`/admin/blog/edit/${post.id}`} class="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Düzenle">
                         <Edit className="w-4 h-4" />
                       </a>
-                      <form method="POST" action={`/api/blog/${post.id}/delete`} class="inline" onsubmit="return confirm('Bu yazıyı silmek istediğinize emin misiniz?');">
-                        <button type="submit" class="p-2 text-gray-400 hover:text-red-600 transition-colors" title="Sil">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </form>
+                      <button
+                        onclick={`deletePost(${post.id}, '${post.title}')`}
+                        class="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                        title="Sil"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
               ))}
-              
+
               {posts.length === 0 && (
                 <tr>
                   <td colspan="4" class="py-8 text-center text-gray-500 dark:text-gray-400">
                     Henüz blog yazısı bulunmuyor.
-                    <a href="/admin/blog/add" class="text-urfa-600 hover:underline ml-1">İlk yazıyı ekle</a>
+                    <a href="/admin/blog/add" class="text-blue-600 hover:underline ml-1">İlk yazıyı ekle</a>
                   </td>
                 </tr>
               )}
@@ -151,4 +182,31 @@ const seo = {
       </div>
     </div>
   </div>
+<script>
+  async function deletePost(id: number, title: string) {
+    const confirmed = confirm(`"${title}" başlıklı yazıyı silmek istediğinize emin misiniz?`);
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/blog/posts/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Yazı başarıyla silindi');
+        window.location.reload();
+      } else {
+        alert(data.error || 'Yazı silinirken hata oluştu');
+      }
+    } catch (err) {
+      alert('Yazı silinirken bir hata oluştu: ' + String(err));
+    }
+  }
+</script>
+
 </Layout>

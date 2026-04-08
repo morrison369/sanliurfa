@@ -1,196 +1,216 @@
 import type { APIRoute } from 'astro';
 
-const openapi = {
-  openapi: '3.1.0',
-  info: {
-    title: 'Şanlıurfa.com API',
-    version: '1.0.0',
-    description: 'Complete API documentation for Şanlıurfa.com platform',
-    contact: { name: 'Support', email: 'support@sanliurfa.com' }
+const openApiSpec = {
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Şanlıurfa.com API",
+    "description": "City guide and social platform API with webhooks, messaging, and analytics",
+    "version": "1.0.0"
   },
-  servers: [
-    { url: 'https://sanliurfa.com/api', description: 'Production' },
-    { url: 'https://staging.sanliurfa.com/api', description: 'Staging' },
-    { url: 'http://localhost:3000/api', description: 'Development' }
+  "servers": [
+    { "url": "https://sanliurfa.com" },
+    { "url": "http://localhost:4321" }
   ],
-  paths: {
-    '/auth/register': {
-      post: {
-        summary: 'Register new user',
-        tags: ['Authentication'],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  email: { type: 'string', format: 'email' },
-                  password: { type: 'string', minLength: 8 },
-                  fullName: { type: 'string' }
-                },
-                required: ['email', 'password', 'fullName']
+  "tags": [
+    { "name": "Webhooks", "description": "Webhook management and testing" },
+    { "name": "Health", "description": "System health checks" },
+    { "name": "Auth", "description": "Authentication" }
+  ],
+  "paths": {
+    "/api/webhooks": {
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "List user webhooks",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of webhooks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "format": "uuid" },
+                          "event": { "type": "string" },
+                          "url": { "type": "string", "format": "uri" },
+                          "active": { "type": "boolean" },
+                          "createdAt": { "type": "string", "format": "date-time" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Register new webhook",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["event", "url"],
+                "properties": {
+                  "event": { "type": "string", "example": "place.created" },
+                  "url": { "type": "string", "format": "uri" },
+                  "secret": { "type": "string", "description": "Optional secret for HMAC signature" }
+                }
               }
             }
           }
         },
-        responses: {
-          201: { description: 'User registered successfully' },
-          400: { description: 'Invalid input' },
-          409: { description: 'Email already registered' }
+        "responses": {
+          "201": { "description": "Webhook created" },
+          "400": { "description": "Validation error" },
+          "401": { "description": "Unauthorized" }
         }
       }
     },
-    '/auth/login': {
-      post: {
-        summary: 'Login user',
-        tags: ['Authentication'],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  email: { type: 'string', format: 'email' },
-                  password: { type: 'string' }
-                },
-                required: ['email', 'password']
-              }
-            }
+    "/api/webhooks/{id}": {
+      "delete": {
+        "tags": ["Webhooks"],
+        "summary": "Delete webhook",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
           }
-        },
-        responses: {
-          200: { description: 'Login successful' },
-          401: { description: 'Invalid credentials' }
-        }
-      }
-    },
-    '/places': {
-      get: {
-        summary: 'Get all places',
-        tags: ['Places'],
-        parameters: [
-          { name: 'category', in: 'query', schema: { type: 'string' } },
-          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
-          { name: 'offset', in: 'query', schema: { type: 'integer', default: 0 } }
         ],
-        responses: {
-          200: { description: 'Places list' }
+        "responses": {
+          "200": { "description": "Webhook deleted" },
+          "404": { "description": "Webhook not found" },
+          "401": { "description": "Unauthorized" }
         }
       }
     },
-    '/places/{id}': {
-      get: {
-        summary: 'Get place by ID',
-        tags: ['Places'],
-        parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'string' } }
-        ],
-        responses: {
-          200: { description: 'Place details' },
-          404: { description: 'Place not found' }
+    "/api/webhooks/analytics": {
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "Get webhook analytics and metrics",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Webhook metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "totalWebhooks": { "type": "integer" },
+                        "totalEvents": { "type": "integer" },
+                        "deliveredEvents": { "type": "integer" },
+                        "failedEvents": { "type": "integer" },
+                        "pendingEvents": { "type": "integer" },
+                        "successRate": { "type": "number" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
         }
       }
     },
-    '/reviews': {
-      post: {
-        summary: 'Create review',
-        tags: ['Reviews'],
-        security: [{ bearerAuth: [] }],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  placeId: { type: 'string' },
-                  rating: { type: 'integer', minimum: 1, maximum: 5 },
-                  comment: { type: 'string' }
-                },
-                required: ['placeId', 'rating', 'comment']
+    "/api/webhooks/test": {
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Test webhook with sample event",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["webhookId"],
+                "properties": {
+                  "webhookId": { "type": "string", "format": "uuid" },
+                  "testData": { "type": "object", "description": "Optional test payload" }
+                }
               }
             }
           }
         },
-        responses: {
-          201: { description: 'Review created' },
-          400: { description: 'Invalid input' },
-          401: { description: 'Unauthorized' }
+        "responses": {
+          "200": { "description": "Test webhook sent" },
+          "404": { "description": "Webhook not found" },
+          "401": { "description": "Unauthorized" }
         }
       }
     },
-    '/billing/checkout': {
-      post: {
-        summary: 'Create subscription checkout',
-        tags: ['Billing'],
-        security: [{ bearerAuth: [] }],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  tier: { type: 'string', enum: ['premium', 'pro'] },
-                  priceId: { type: 'string' }
-                },
-                required: ['tier', 'priceId']
+    "/api/webhooks/retry": {
+      "post": {
+        "tags": ["Webhooks"],
+        "summary": "Retry failed webhook events",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "eventId": { "type": "string", "format": "uuid", "description": "Retry specific event" },
+                  "webhookId": { "type": "string", "format": "uuid", "description": "Retry all failed for webhook" }
+                }
               }
             }
           }
         },
-        responses: {
-          200: { description: 'Checkout session created' },
-          401: { description: 'Unauthorized' }
+        "responses": {
+          "200": { "description": "Events queued for retry" },
+          "401": { "description": "Unauthorized" }
         }
       }
     },
-    '/admin/reports/generate': {
-      post: {
-        summary: 'Generate admin report',
-        tags: ['Admin'],
-        security: [{ bearerAuth: [] }],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  type: { type: 'string', enum: ['users', 'places', 'reviews', 'revenue', 'engagement'] },
-                  period: { type: 'string', enum: ['daily', 'weekly', 'monthly'] }
-                },
-                required: ['type', 'period']
-              }
-            }
-          }
-        },
-        responses: {
-          200: { description: 'Report generated' },
-          403: { description: 'Forbidden' }
+    "/api/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check",
+        "responses": {
+          "200": { "description": "System healthy" }
         }
       }
     }
   },
-  components: {
-    securitySchemes: {
-      bearerAuth: {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT'
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   }
 };
 
-export const GET: APIRoute = async ({ request }) => {
-  return new Response(JSON.stringify(openapi, null, 2), {
+export const GET: APIRoute = async () => {
+  return new Response(JSON.stringify(openApiSpec), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
+      'Cache-Control': 'public, max-age=3600'
     }
   });
 };

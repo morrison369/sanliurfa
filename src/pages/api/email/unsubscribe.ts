@@ -5,6 +5,8 @@
 
 import type { APIRoute } from 'astro';
 import { unsubscribeAll } from '../../../lib/email-preferences';
+import { queryOne } from '../../../lib/postgres';
+import { trackCampaignEvent } from '../../../lib/email-campaigns';
 import { validateWithSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
@@ -15,7 +17,7 @@ const schema = {
   token: { type: 'string' as const, required: false }
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, url }) => {
   const requestId = getRequestId({ request } as any);
   const startTime = Date.now();
   logger.setRequestId(requestId);
@@ -37,14 +39,24 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { email } = validation.data as { email: string; token?: string };
 
-    // For unsubscribe links, we typically would validate a token, but for now
-    // we'll do a simple lookup by email (in production, use a signed token)
-    // This is intentionally forgiving to comply with CAN-SPAM regulations
+    // Find user by email
+    const user = await queryOne('SELECT id FROM users WHERE email = $1', [email]);
+
+    if (user) {
+      // Unsubscribe from all notifications
+      await unsubscribeAll(user.id);
+
+      // Track campaign unsubscribe if campaign ID provided
+      const campaignId = url.searchParams.get('cid');
+      if (campaignId && user.id) {
+        await trackCampaignEvent(parseInt(campaignId, 10), user.id, 'unsubscribe');
+      }
+
+      logger.info('User unsubscribed', { userId: user.id, email });
+    }
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/email/unsubscribe', HttpStatus.OK, duration);
-
-    logger.info('Unsubscribe request processed', { email, duration });
 
     // Always return success for privacy/compliance (even if user not found)
     return apiResponse(
