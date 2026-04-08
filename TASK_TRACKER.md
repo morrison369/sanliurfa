@@ -293,9 +293,13 @@ Last updated: 2026-04-08
   - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
   - tests: `src/lib/__tests__/governance-stability-continuity-suite-v16.test.ts`
   - docs: `PHASE_437_442_GOVERNANCE_STABILITY_CONTINUITY_V16.md`
+- `T-048` Phase 443-448 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-continuity-assurance-suite-v17.test.ts`
+  - docs: `PHASE_443_448_GOVERNANCE_CONTINUITY_ASSURANCE_V17.md`
 
 ## Open
-- `T-048` Phase 443-448 planning
+- `T-049` Phase 449-454 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready

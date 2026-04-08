@@ -113,6 +113,16 @@ npm run phase:check:tsconfig
 npm run test:phase:smoke
 ```
 
+### PR Policy
+- `master` branch is protected; direct push is blocked.
+- Open a PR from a feature/phase branch and ensure required checks are green before merge.
+
+### Optional Local Hook
+```bash
+# one-time setup for local post-commit changelog automation
+git config core.hooksPath .githooks
+```
+
 ## 🚀 Deployment
 
 ### Docker ile

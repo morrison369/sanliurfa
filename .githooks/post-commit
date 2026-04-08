@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+if [ "$PHASE_HOOK_RUNNING" = "1" ]; then
+  exit 0
+fi
+
+export PHASE_HOOK_RUNNING=1
+
+npm run -s phase:changelog >/dev/null 2>&1 || exit 0
+git add PHASE_CHANGELOG.md >/dev/null 2>&1 || exit 0
+
+if ! git diff --cached --quiet -- PHASE_CHANGELOG.md; then
+  git commit --amend --no-edit >/dev/null 2>&1 || true
+fi
