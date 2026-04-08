@@ -17,6 +17,20 @@ describe('phase-runner automation', () => {
     ]);
   });
 
+  it('ignores non-range phase script keys', () => {
+    const scripts = {
+      'test:phase:latest': 'tsx scripts/phase-runner.ts latest',
+      'test:phase:prev': 'tsx scripts/phase-runner.ts prev',
+      'test:phase:419-424': 'vitest run a',
+      'test:phase:425-430': 'vitest run b'
+    };
+
+    expect(getPhaseScriptOrder(scripts)).toEqual([
+      'test:phase:419-424',
+      'test:phase:425-430'
+    ]);
+  });
+
   it('selects latest phase script', () => {
     const scripts = {
       'test:phase:413-418': 'vitest run c',

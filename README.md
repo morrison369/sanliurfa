@@ -101,6 +101,18 @@ npm run test:e2e
 npm run lighthouse
 ```
 
+### Phase Automation
+```bash
+# Sync versioned phase modules into tsconfig.phase.json
+npm run phase:sync:tsconfig
+
+# Check tsconfig.phase.json drift (CI-safe)
+npm run phase:check:tsconfig
+
+# Run previous + latest phase suites automatically
+npm run test:phase:smoke
+```
+
 ## 🚀 Deployment
 
 ### Docker ile
