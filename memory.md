@@ -1,8 +1,8 @@
 # Memory
 
 ## Current Phase
-- Active window: `Phase 467-472` (planned)
-- Last completed: `Phase 461-466 Governance Assurance & Continuity V20`
+- Active window: `Phase 527-532` (planned)
+- Last completed: `Phase 521-526 Governance Recovery Continuity & Assurance V30`
 
 ## Completed Phases (Recent)
 - `Phase 137-142 Advanced DevOps & Infrastructure`: complete
@@ -75,17 +75,19 @@
 
 - `Phase 515-520 Governance Continuity Assurance & Recovery V29`: complete
 
+- `Phase 521-526 Governance Recovery Continuity & Assurance V30`: complete
+
 ## Open Tasks
 - No open delivery tasks for `Phase 137-142`, `Phase 161-166`, `Phase 167-172`, `Phase 173-178`, `Phase 179-184`, `Phase 185-190`, `Phase 191-196`, `Phase 197-202`, `Phase 203-208`, `Phase 209-214`, `Phase 215-220`, `Phase 221-226`, `Phase 227-232`, `Phase 233-238`, `Phase 239-244`, `Phase 245-250`, `Phase 251-256`, `Phase 257-262`, `Phase 263-268`, `Phase 269-274`, `Phase 275-280`, `Phase 281-286`, `Phase 287-292`, `Phase 293-298`, `Phase 299-304`, `Phase 305-310`, `Phase 311-316`, `Phase 317-322`, `Phase 323-328`, `Phase 329-334`, `Phase 335-340`, `Phase 341-346`, `Phase 347-352`, or `Phase 353-358`.
-- Optional: Phase 521-526 scope definition and kickoff.
+- Optional: Phase 527-532 scope definition and kickoff.
 
 ## Next 6 Phases (Planned Scope)
-- `Phase 521`: Governance Recovery Continuity Router V30
-- `Phase 522`: Policy Assurance Recovery Harmonizer V30
-- `Phase 523`: Compliance Continuity Stability Mesh V30
-- `Phase 524`: Trust Assurance Recovery Forecaster V30
-- `Phase 525`: Board Continuity Assurance Coordinator V30
-- `Phase 526`: Policy Recovery Stability Engine V30
+- `Phase 527`: Governance Continuity Stability Router V31
+- `Phase 528`: Policy Recovery Assurance Harmonizer V31
+- `Phase 529`: Compliance Assurance Recovery Mesh V31
+- `Phase 530`: Trust Stability Continuity Forecaster V31
+- `Phase 531`: Board Recovery Continuity Coordinator V31
+- `Phase 532`: Policy Assurance Stability Engine V31
 
 ## Checkpoint Rule
 - Every 2 phase blocks, record one short checkpoint note (risk, decision, outcome).
@@ -114,6 +116,8 @@
 - `Checkpoint 509-514`: V28 block delivered with assurance/recovery contract pattern and changelog automation wired.
 
 - `Checkpoint 515-520`: V29 block delivered with continuity/assurance contract pattern and bootstrap wrapper fix.
+
+- `Checkpoint 521-526`: V30 block delivered with recovery/continuity contract pattern and dirty-workspace classification captured.
 
 ## Blockers
 - No active blocker.
