@@ -105,3 +105,21 @@ export { NotificationManager, ScheduledNotifications, NotificationPreferences, N
 
 // Phase 118: Collaborative Workflows & Task Management
 export { WorkflowCoordinator, TaskAssignment, CollaborativeBoard, TeamSync, workflowCoordinator, taskAssignment, collaborativeBoard, teamSync } from './collaborative-workflows';
+
+// Phase 119: GraphQL Engine & Query Language
+export { GraphQLSchema, QueryResolver, FieldResolver, BatchLoader, SchemaIntrospection, graphqlSchema, queryResolver, fieldResolver, batchLoader, schemaIntrospection } from './graphql-engine';
+
+// Phase 120: Advanced API Versioning & Evolution
+export { VersionManager, SchemaMigrator, DeprecationTracker, CompatibilityChecker, versionManager, schemaMigrator, deprecationTracker, compatibilityChecker } from './api-versioning';
+
+// Phase 121: SDK Generation & Management
+export { SDKGenerator, TypeScriptSDK, PythonSDK, GoSDK, LanguageTemplate, sdkGenerator, typeScriptSDK, pythonSDK, goSDK, languageTemplate } from './sdk-generation';
+
+// Phase 122: Advanced Rate Limiting & Quotas
+export { TieredQuotaManager, QuotaAllocationManager, BurstController, QuotaMetrics, tieredQuotaManager, quotaAllocation, burstController, quotaMetrics } from './advanced-quotas';
+
+// Phase 123: API Marketplace & Monetization
+export { MarketplaceManager, APIListingManager, BillingCalculator, PartnerProgram, marketplaceManager, apiListing, billingCalculator, partnerProgram } from './api-marketplace';
+
+// Phase 124: Developer Portal & Analytics
+export { DeveloperPortal, AnalyticsDashboard, DocumentationManager, SupportTicketing, IntegrationMarketplace, developerPortal, analyticsDashboard, documentationManager, supportTicketing, integrationMarketplace } from './developer-portal';
