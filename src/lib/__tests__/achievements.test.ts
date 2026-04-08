@@ -1,104 +1,131 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { getUserAchievements, getUnviewedAchievements, markAchievementViewed, getAchievementStats } from '../achievements';
 
-describe('Achievements System', () => {
-  describe('Achievement Definitions', () => {
-    it('should have required achievement properties', () => {
-      // Example achievement structure
-      const achievement = {
-        id: 'first_review',
-        title: 'First Review',
-        description: 'Leave your first review',
-        category: 'reviews',
-        icon: 'star',
-        rarity: 'common',
-        points: 10,
-        unlockCondition: { reviewCount: 1 }
-      };
+vi.mock('../postgres', () => ({
+  queryOne: vi.fn(),
+  queryMany: vi.fn(),
+  insert: vi.fn(),
+  query: vi.fn()
+}));
 
-      expect(achievement).toHaveProperty('id');
-      expect(achievement).toHaveProperty('title');
-      expect(achievement).toHaveProperty('description');
-      expect(achievement).toHaveProperty('unlockCondition');
-    });
+vi.mock('../cache', () => ({
+  getCache: vi.fn(),
+  setCache: vi.fn(),
+  deleteCache: vi.fn()
+}));
+
+vi.mock('../logging', () => ({
+  logger: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn()
+  }
+}));
+
+vi.mock('../loyalty-points', () => ({
+  awardPoints: vi.fn()
+}));
+
+describe('Achievements Library', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  describe('Achievement Unlock Conditions', () => {
-    it('should unlock "First Review" when reviewCount >= 1', () => {
-      const userStats = { reviewCount: 1 };
-      const condition = { reviewCount: 1 };
-      const unlocked = userStats.reviewCount >= condition.reviewCount;
-
-      expect(unlocked).toBe(true);
-    });
-
-    it('should unlock "Critic" when reviewCount >= 10', () => {
-      const userStats = { reviewCount: 10 };
-      const condition = { reviewCount: 10 };
-      const unlocked = userStats.reviewCount >= condition.reviewCount;
-
-      expect(unlocked).toBe(true);
-    });
-
-    it('should not unlock before condition is met', () => {
-      const userStats = { reviewCount: 5 };
-      const condition = { reviewCount: 10 };
-      const unlocked = userStats.reviewCount >= condition.reviewCount;
-
-      expect(unlocked).toBe(false);
-    });
-
-    it('should unlock tier achievements at correct points', () => {
+  describe('getUserAchievements', () => {
+    it('returns cached achievements', async () => {
+      const mockCache = await import('../cache');
       const achievements = [
-        { name: 'Bronze Member', pointsRequired: 1000 },
-        { name: 'Silver Member', pointsRequired: 5000 },
-        { name: 'Gold Member', pointsRequired: 10000 }
+        { id: '1', achievement_key: 'first_review', name: 'First Review', unlocked_at: new Date() }
       ];
 
-      const userPoints = 5000;
-      const unlockedAchievements = achievements.filter(a => userPoints >= a.pointsRequired);
+      mockCache.getCache.mockResolvedValueOnce(achievements);
 
-      expect(unlockedAchievements.length).toBe(2); // Bronze and Silver
-      expect(unlockedAchievements[0].name).toBe('Bronze Member');
-      expect(unlockedAchievements[1].name).toBe('Silver Member');
+      const result = await getUserAchievements('user-123');
+
+      expect(result).toEqual(achievements);
+      expect(mockCache.getCache).toHaveBeenCalledWith('sanliurfa:achievements:user:user-123');
+    });
+
+    it('queries database if not cached', async () => {
+      const mockCache = await import('../cache');
+      const mockDb = await import('../postgres');
+
+      mockCache.getCache.mockResolvedValueOnce(null);
+      mockDb.queryMany.mockResolvedValueOnce({
+        rows: [
+          { id: '1', achievement_key: 'first_review', name: 'First Review' }
+        ]
+      });
+
+      const result = await getUserAchievements('user-456');
+
+      expect(result).toHaveLength(1);
+      expect(mockDb.queryMany).toHaveBeenCalled();
+      expect(mockCache.setCache).toHaveBeenCalledWith(
+        'sanliurfa:achievements:user:user-456',
+        expect.any(Array),
+        1800
+      );
     });
   });
 
-  describe('Achievement Rarity', () => {
-    it('should categorize achievements by rarity', () => {
-      const rarities = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
-      const achievement = { rarity: 'epic' };
+  describe('getUnviewedAchievements', () => {
+    it('returns unviewed achievements only', async () => {
+      const mockDb = await import('../postgres');
+      mockDb.queryMany.mockResolvedValueOnce({
+        rows: [
+          { id: '2', achievement_key: 'five_reviews', viewed: false }
+        ]
+      });
 
-      expect(rarities).toContain(achievement.rarity);
-    });
+      const result = await getUnviewedAchievements('user-789');
 
-    it('should award different points based on rarity', () => {
-      const rarityPoints = {
-        common: 10,
-        uncommon: 25,
-        rare: 50,
-        epic: 100,
-        legendary: 250
-      };
-
-      expect(rarityPoints['epic']).toBe(100);
-      expect(rarityPoints['legendary']).toBeGreaterThan(rarityPoints['epic']);
+      expect(result).toHaveLength(1);
+      expect(mockDb.queryMany).toHaveBeenCalledWith(
+        expect.stringContaining('viewed = false'),
+        ['user-789']
+      );
     });
   });
 
-  describe('Gamification Event Hooks', () => {
-    it('should trigger on review creation', () => {
-      const events = ['onReviewCreated', 'onPhotoUploaded', 'onDailyLogin'];
-      expect(events).toContain('onReviewCreated');
-    });
+  describe('markAchievementViewed', () => {
+    it('marks achievement as viewed and clears cache', async () => {
+      const mockDb = await import('../postgres');
+      const mockCache = await import('../cache');
 
-    it('should trigger on photo upload', () => {
-      const events = ['onReviewCreated', 'onPhotoUploaded', 'onDailyLogin'];
-      expect(events).toContain('onPhotoUploaded');
-    });
+      mockDb.query.mockResolvedValueOnce({});
 
-    it('should trigger on daily login', () => {
-      const events = ['onReviewCreated', 'onPhotoUploaded', 'onDailyLogin'];
-      expect(events).toContain('onDailyLogin');
+      await markAchievementViewed('achievement-1', 'user-123');
+
+      expect(mockDb.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE user_achievements SET viewed = true'),
+        ['achievement-1', 'user-123']
+      );
+      expect(mockCache.deleteCache).toHaveBeenCalledWith('sanliurfa:achievements:user:user-123');
+    });
+  });
+
+  describe('getAchievementStats', () => {
+    it('returns achievement statistics', async () => {
+      const mockDb = await import('../postgres');
+      const mockCache = await import('../cache');
+
+      mockCache.getCache.mockResolvedValueOnce(null);
+      mockDb.queryOne
+        .mockResolvedValueOnce({ count: '5' }) // total unlocked
+        .mockResolvedValueOnce({ count: '20' }); // total available
+      mockDb.queryMany.mockResolvedValueOnce({
+        rows: [
+          { category: 'review', unlocked_count: '3', total_count: '10' }
+        ]
+      });
+
+      const result = await getAchievementStats('user-stats');
+
+      expect(result.total_unlocked).toBe(5);
+      expect(result.total_available).toBe(20);
+      expect(result.unlock_percentage).toBe(25);
+      expect(result.by_category).toHaveProperty('review');
     });
   });
 });

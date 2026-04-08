@@ -1,85 +1,125 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { getUserPoints, awardPoints, spendPoints } from '../loyalty-points';
 
-// Mock functions - in real tests these would test actual implementations
-describe('Loyalty Points System', () => {
+// Mock database and cache
+vi.mock('../postgres', () => ({
+  queryOne: vi.fn(),
+  queryMany: vi.fn(),
+  insert: vi.fn(),
+  update: vi.fn()
+}));
+
+vi.mock('../cache', () => ({
+  getCache: vi.fn(),
+  setCache: vi.fn(),
+  deleteCache: vi.fn()
+}));
+
+vi.mock('../logging', () => ({
+  logger: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn()
+  }
+}));
+
+describe('Loyalty Points Library', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('getUserPoints', () => {
+    it('returns cached points if available', async () => {
+      const mockCache = await import('../cache');
+      mockCache.getCache.mockResolvedValueOnce({
+        currentBalance: 100,
+        lifetimeEarned: 500,
+        lifetimeSpent: 400
+      });
+
+      const result = await getUserPoints('user-123');
+
+      expect(result.currentBalance).toBe(100);
+      expect(mockCache.getCache).toHaveBeenCalledWith('sanliurfa:loyalty:balance:user-123');
+    });
+
+    it('fetches from database if not cached', async () => {
+      const mockDb = await import('../postgres');
+      const mockCache = await import('../cache');
+
+      mockCache.getCache.mockResolvedValueOnce(null);
+      mockDb.queryOne.mockResolvedValueOnce({
+        current_balance: 200,
+        lifetime_earned: 600,
+        lifetime_spent: 400,
+        pending_points: 0,
+        last_earned_at: new Date()
+      });
+
+      const result = await getUserPoints('user-456');
+
+      expect(result.currentBalance).toBe(200);
+      expect(mockDb.queryOne).toHaveBeenCalled();
+      expect(mockCache.setCache).toHaveBeenCalled();
+    });
+  });
+
   describe('awardPoints', () => {
-    it('should create a point transaction with valid inputs', () => {
-      const userId = 'user-123';
-      const amount = 100;
-      const reason = 'Review created';
+    it('creates transaction and updates balance', async () => {
+      const mockDb = await import('../postgres');
+      const mockCache = await import('../cache');
 
-      // In real implementation:
-      // const result = await awardPoints(userId, amount, reason);
-      // expect(result.success).toBe(true);
-      // expect(result.transactionId).toBeTruthy();
+      mockDb.queryOne.mockResolvedValueOnce({ current_balance: 100 });
+      mockDb.insert.mockResolvedValueOnce({});
+      mockDb.update.mockResolvedValueOnce({});
 
-      expect(true).toBe(true); // Placeholder
+      const result = await awardPoints('user-789', 50, 'test award', 'test_type', 'ref-123');
+
+      expect(result).toBe(true);
+      expect(mockDb.insert).toHaveBeenCalledWith('loyalty_transactions', expect.objectContaining({
+        user_id: 'user-789',
+        points_amount: 50,
+        transaction_reason: 'test award'
+      }));
+      expect(mockCache.deleteCache).toHaveBeenCalledWith('sanliurfa:loyalty:balance:user-789');
     });
 
-    it('should reject negative amounts', () => {
-      const userId = 'user-123';
-      const amount = -100;
-      const reason = 'Invalid';
+    it('returns false on error', async () => {
+      const mockDb = await import('../postgres');
+      mockDb.queryOne.mockRejectedValueOnce(new Error('DB Error'));
 
-      // In real implementation:
-      // expect(() => awardPoints(userId, amount, reason)).toThrow();
+      const result = await awardPoints('user-error', 50, 'failed award');
 
-      expect(amount < 0).toBe(true);
-    });
-
-    it('should update user balance', () => {
-      const userId = 'user-123';
-      const initialBalance = 500;
-      const award = 100;
-      const expectedBalance = initialBalance + award;
-
-      expect(expectedBalance).toBe(600);
+      expect(result).toBe(false);
     });
   });
 
-  describe('Tier Progression', () => {
-    it('should promote user to Bronze tier at 1000 points', () => {
-      const points = 1000;
-      const expectedTier = 'bronze';
+  describe('spendPoints', () => {
+    it('checks balance before spending', async () => {
+      const mockDb = await import('../postgres');
+      mockDb.queryOne.mockResolvedValueOnce({ current_balance: 30 });
 
-      // Tier logic: 0-999: free, 1000-4999: bronze, etc.
-      const tier = points >= 1000 ? 'bronze' : 'free';
-      expect(tier).toBe(expectedTier);
+      const result = await spendPoints('user-low', 50, 'insufficient points');
+
+      expect(result).toBe(false);
+      expect(mockDb.insert).not.toHaveBeenCalled();
     });
 
-    it('should promote user to Silver tier at 5000 points', () => {
-      const points = 5000;
-      const expectedTier = 'silver';
+    it('spends points and updates balance', async () => {
+      const mockDb = await import('../postgres');
+      const mockCache = await import('../cache');
 
-      const tier = points >= 5000 ? 'silver' : (points >= 1000 ? 'bronze' : 'free');
-      expect(tier).toBe(expectedTier);
+      mockDb.queryOne.mockResolvedValueOnce({ current_balance: 200 });
+      mockDb.insert.mockResolvedValueOnce({});
+      mockDb.update.mockResolvedValueOnce({});
+
+      const result = await spendPoints('user-rich', 100, 'reward redemption', 'reward-456');
+
+      expect(result).toBe(true);
+      expect(mockDb.insert).toHaveBeenCalledWith('loyalty_transactions', expect.objectContaining({
+        transaction_type: 'spend',
+        points_amount: 100
+      }));
     });
-
-    it('should promote user to Gold tier at 10000 points', () => {
-      const points = 10000;
-      const expectedTier = 'gold';
-
-      const tier = points >= 10000 ? 'gold' : (points >= 5000 ? 'silver' : (points >= 1000 ? 'bronze' : 'free'));
-      expect(tier).toBe(expectedTier);
-    });
-  });
-});
-
-describe('Points Validation', () => {
-  it('should validate positive integer amounts', () => {
-    const validAmounts = [1, 10, 100, 1000, 10000];
-    validAmounts.forEach(amount => {
-      expect(amount > 0 && Number.isInteger(amount)).toBe(true);
-    });
-  });
-
-  it('should reject fractional amounts', () => {
-    const invalidAmount = 99.99;
-    expect(Number.isInteger(invalidAmount)).toBe(false);
-  });
-
-  it('should reject zero', () => {
-    const amount = 0;
-    expect(amount > 0).toBe(false);
   });
 });
