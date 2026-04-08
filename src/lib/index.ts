@@ -213,3 +213,21 @@ export { IncidentPredictor, MTTREstimator, RiskScorer, RecommendationEngine, inc
 
 // Phase 154: Runbook Automation & Response
 export { RunbookManager, IncidentResponder, AutomationExecutor, PostIncidentAnalyzer, runbookManager, incidentResponder, automationExecutor, postIncidentAnalyzer } from './runbook-automation';
+
+// Phase 155: Supply Chain Security
+export { DependencyScanner, VulnerabilityTracker, SBOMGenerator, LicenseCompliance, dependencyScanner, vulnerabilityTracker, sbomGenerator, licenseCompliance } from './supply-chain-security';
+
+// Phase 156: Threat Modeling & Risk Assessment
+export { ThreatModeler, AttackSurfaceAnalyzer, RiskAssessment, MitigationPlanner, threatModeler, attackSurfaceAnalyzer, riskAssessment, mitigationPlanner } from './threat-modeling';
+
+// Phase 157: Secrets Management & Rotation
+export { SecretsVault, SecretRotationManager, SecretInjector, SecretAuditor, secretsVault, secretRotationManager, secretInjector, secretAuditor } from './secrets-management';
+
+// Phase 158: Security Automation & Response
+export { SecurityScanOrchestrator, PolicyEnforcer, IncidentAutoResponder, SecurityCheckRunner, securityScanOrchestrator, policyEnforcer, incidentAutoResponder, securityCheckRunner } from './security-automation';
+
+// Phase 159: Compliance Frameworks & Standards
+export { ComplianceMapper, AuditTrailManager, PolicyManager, ComplianceReporter, complianceMapper, auditTrailManager, policyManager, complianceReporter } from './compliance-frameworks';
+
+// Phase 160: Security Incident Response & Forensics
+export { IncidentDetector, IncidentOrchestrator, ForensicAnalyzer, PostIncidentReviewer, incidentDetector, incidentOrchestrator, forensicAnalyzer, postIncidentReviewer } from './security-incidents';
