@@ -68,7 +68,8 @@ export function runBootstrapSteps(steps: WorktreeBootstrapStep[]): void {
 }
 
 export function parseBootstrapArgs(argv: string[]): WorktreeBootstrapOptions {
-  const [worktreePathArg, branchName, baseRefArg] = argv;
+  const positionalArgs = argv.filter((arg) => !arg.startsWith('--'));
+  const [worktreePathArg, branchName, baseRefArg] = positionalArgs;
   if (!worktreePathArg || !branchName) {
     throw new Error('Usage: tsx scripts/phase-worktree-bootstrap.ts <worktreePath> <branchName> [baseRef] [--skip-install]');
   }

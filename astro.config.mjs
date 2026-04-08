@@ -43,6 +43,13 @@ export default defineConfig({
   vite: {
     build: {
       cssCodeSplit: true,
+      rollupOptions: {
+        onwarn(warning, warn) {
+          if (warning.message?.includes('Generated an empty chunk')) return;
+          if (warning.message?.includes('@astrojs/internal-helpers/remote')) return;
+          warn(warning);
+        },
+      },
     },
   },
 });
