@@ -19,3 +19,4 @@
 - 2026-04-09 | phase | `b262c9b` | Phase 893-910: Governance Batch Delivery V92-V94
 - 2026-04-09 | chore | `96723bf` | Chore: keep stability route labels for assurance stability routers
 - 2026-04-09 | chore | `279be11` | Chore: drop cleanup note from phase changelog
+- 2026-04-09 | phase | `1fe6730` | Phase 911-928: Governance Batch Delivery V95-V97
