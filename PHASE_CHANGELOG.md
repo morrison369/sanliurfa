@@ -117,3 +117,4 @@
 - 2026-04-09 | phase | `a7823ca` | Phase 803-820: Governance Batch Delivery V77-V79
 - 2026-04-09 | chore | `b64f91a` | Chore: update phase changelog for 803-820
 - 2026-04-09 | chore | `482c788` | Chore: drop cleanup note from phase changelog
+- 2026-04-09 | phase | `8e22315` | Phase 821-838: Governance Batch Delivery V80-V82
