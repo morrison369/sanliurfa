@@ -111,8 +111,12 @@
     "phase:changelog:head": "npm exec -- tsx scripts/phase-changelog.ts HEAD",
     "phase:checks:wait": "npm exec -- tsx scripts/phase-check-wait.ts",
     "phase:env:check": "npm exec -- tsx scripts/phase-env.ts",
+    "phase:env:check:preferred": "npm exec -- tsx scripts/phase-node.ts run-tsx scripts/phase-env.ts",
+    "phase:node": "npm exec -- tsx scripts/phase-node.ts",
     "phase:prepare:block": "npm exec -- tsx scripts/phase-pipeline.ts",
+    "phase:prepare:block:preferred": "npm exec -- tsx scripts/phase-node.ts run-tsx scripts/phase-pipeline.ts",
     "phase:pr:open": "npm exec -- tsx scripts/phase-pr.ts open",
+    "phase:pr:open:file": "npm exec -- tsx scripts/phase-pr-open-file.ts",
     "phase:pr:view": "npm exec -- tsx scripts/phase-pr.ts view",
     "phase:sync:status": "npm exec -- tsx scripts/phase-status-sync.ts",
     "test:phase:gate": "npm run lint:phase && npm run test:phase:smoke && npm run build",
@@ -143,7 +147,8 @@
     "test:phase:731-736": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v65.test.ts",
     "test:phase:737-742": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v66.test.ts",
     "test:phase:743-748": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v67.test.ts",
-    "test:phase:749-754": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v68.test.ts"
+    "test:phase:749-754": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v68.test.ts",
+    "test:phase:755-760": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v69.test.ts"
   },
   "keywords": [
     "sanliurfa",

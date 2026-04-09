@@ -31,9 +31,11 @@ import {
 import { buildWorktreeBootstrapSteps, parseBootstrapArgs } from '../../../scripts/phase-worktree-bootstrap';
 import { buildChangelogLine, classifyCommit, parseArgs, upsertChangelogEntry } from '../../../scripts/phase-changelog';
 import { buildOpenArgs, buildViewArgs, parsePhasePrArgs } from '../../../scripts/phase-pr';
-import { buildPhasePipelineSteps, parsePhasePipelineArgs } from '../../../scripts/phase-pipeline';
+import { buildPhasePipelineEnv, buildPhasePipelineSteps, buildPipelineStepInvocation, parsePhasePipelineArgs, resolvePreferredTsxStep } from '../../../scripts/phase-pipeline';
 import { buildPrChecksArgs, checksPublished, parsePhaseCheckWaitArgs } from '../../../scripts/phase-check-wait';
 import { buildNodeVersionError, isSupportedNodeVersion, parseNodeVersion } from '../../../scripts/phase-env';
+import { buildPhaseNodeInvocation, compareSemver, parsePhaseNodeArgs } from '../../../scripts/phase-node';
+import { parsePhasePrOpenFileArgs } from '../../../scripts/phase-pr-open-file';
 import { hasMatchingMarkdownFiles } from '../content-loader-helpers';
 
 const sampleBlock: PhaseBlockConfig = {
@@ -475,6 +477,21 @@ describe('phase pr helpers', () => {
       'state,mergeCommit,url'
     ]);
   });
+
+  it('parses file-based PR open wrapper args', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'phase-pr-open-file-'));
+    try {
+      const titleFile = join(dir, 'title.txt');
+      const bodyFile = join(dir, 'body.md');
+      writeFileSync(titleFile, 'Phase 749-754: Governance Assurance Stability Continuity V68\n');
+      writeFileSync(bodyFile, 'summary\n');
+      const parsed = parsePhasePrOpenFileArgs(['titanai777/sanliurfa', 'master', 'phase-749-754', titleFile, bodyFile]);
+      expect(parsed.title).toBe('Phase 749-754: Governance Assurance Stability Continuity V68');
+      expect(parsed.body).toBe('summary\n');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('phase pipeline helpers', () => {
@@ -496,6 +513,44 @@ describe('phase pipeline helpers', () => {
       { command: 'npm', args: ['run', 'test:phase:smoke'] },
       { command: 'npm', args: ['run', 'build'] }
     ]);
+  });
+
+  it('injects preferred node into npm child environment', () => {
+    expect(buildPhasePipelineEnv({ PHASE_PREFERRED_NODE_EXE: 'C:/node.exe' }).npm_node_execpath).toBe('C:/node.exe');
+  });
+
+  it('maps repo-owned tsx steps for preferred node execution', () => {
+    expect(resolvePreferredTsxStep({ command: 'npm', args: ['run', 'phase:env:check'] })).toEqual({
+      script: 'scripts/phase-env.ts',
+      args: []
+    });
+    expect(resolvePreferredTsxStep({ command: 'npm', args: ['run', 'phase:check:tsconfig'] })).toEqual({
+      script: 'scripts/update-phase-tsconfig.ts',
+      args: ['--check']
+    });
+  });
+
+  it('rewrites npm steps to preferred node invocation', () => {
+    const invocation = buildPipelineStepInvocation(
+      { command: 'npm', args: ['run', 'build'] },
+      { PHASE_PREFERRED_NODE_EXE: 'C:/node.exe', APPDATA: 'C:/Users/Oguz/AppData/Roaming' }
+    );
+
+    expect(invocation.command).toBe('C:/node.exe');
+    expect(invocation.args[0]).toContain('npm-cli.js');
+    expect(invocation.args.slice(1)).toEqual(['run', 'build']);
+    expect(invocation.shell).toBe(false);
+  });
+
+  it('rewrites env-check to direct tsx under preferred node', () => {
+    const invocation = buildPipelineStepInvocation(
+      { command: 'npm', args: ['run', 'phase:env:check'] },
+      { PHASE_PREFERRED_NODE_EXE: 'C:/node.exe', APPDATA: 'C:/Users/Oguz/AppData/Roaming' }
+    );
+
+    expect(invocation.command).toBe('C:/node.exe');
+    expect(invocation.args[0]).toContain('tsx');
+    expect(invocation.args[1]).toBe('scripts/phase-env.ts');
   });
 });
 
@@ -539,6 +594,27 @@ describe('phase env helpers', () => {
 
   it('renders actionable node mismatch error', () => {
     expect(buildNodeVersionError('v22.12.0')).toContain('nvm use 22.13.0');
+  });
+});
+
+describe('phase node helpers', () => {
+  it('orders semver correctly', () => {
+    expect(compareSemver('v22.13.0', 'v22.22.0')).toBeLessThan(0);
+  });
+
+  it('parses preferred-node wrapper args', () => {
+    expect(parsePhaseNodeArgs(['run-script', 'phase:env:check']).target).toBe('phase:env:check');
+  });
+
+  it('builds npm-script invocation through preferred node', () => {
+    process.env.APPDATA = 'C:/Users/Oguz/AppData/Roaming';
+    const invocation = buildPhaseNodeInvocation({
+      mode: 'run-script',
+      target: 'phase:env:check',
+      args: []
+    });
+    expect(invocation.args).toContain('run');
+    expect(invocation.args).toContain('phase:env:check');
   });
 });
 

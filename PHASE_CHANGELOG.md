@@ -102,3 +102,4 @@
 - 2026-04-09 | chore | `fe4b24d` | Chore: fix phase pipeline positional arg parsing
 - 2026-04-09 | phase | `8fcadc3` | Phase 749-754: Governance Assurance Stability Continuity V68
 - 2026-04-09 | chore | `6fa1b27` | Chore: update phase changelog for 749-754
+- 2026-04-09 | phase | `821e90e` | Phase 755-760: Governance Recovery Assurance Continuity V69

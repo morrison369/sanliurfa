@@ -17,7 +17,9 @@
 - `npm run test:phase:smoke`: previous + latest phase suites.
 - `npm run test:phase:gate:ci`: phase tsconfig check, phase lint, smoke, Astro build.
 - `npm run phase:prepare:block -- --phase-script test:phase:<range>`: serialized phase gate wrapper; use this instead of manually chaining sync/check/smoke/build.
+- `npm run phase:prepare:block:preferred -- --phase-script test:phase:<range>`: runs the same pipeline through the preferred Node 22.x executable when the active shell version is behind.
 - `npm run phase:checks:wait -- <pr>`: waits for CI checks to publish, then watches them.
+- `npm run phase:pr:open:file -- <repo> <base> <head> <title-file> <body-file>`: npm-safe PR open wrapper when long flag forwarding is unreliable on Windows.
 - `npm run phase:sync:tsconfig`: refresh `tsconfig.phase.json` after phase file changes.
 
 ## Coding Style & Naming Conventions
