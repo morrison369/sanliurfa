@@ -13,6 +13,7 @@
 - Treat `origin/master` plus a clean `git worktree` as the only safe delivery base.
 - Do not trust a dirty local root worktree for phase status, docs, or tracker state.
 - If local root and `origin/master` disagree, use the clean worktree created from `origin/master`.
+- Use [docs/WORKTREE_SOURCE_OF_TRUTH.md](docs/WORKTREE_SOURCE_OF_TRUTH.md) as the binding policy reference.
 
 ## Build, Test, and Development Commands
 - `npm run dev`: local Astro server.
@@ -22,6 +23,8 @@
 - `npm run test:phase:785-790`: run one phase suite.
 - `npm run test:phase:range -- 947-952`: run one explicit phase range through the shared runner.
 - `npm run test:phase:batch -- 947-952 953-958 959-964`: run multiple explicit phase ranges sequentially.
+- `npm run phase:doctor`: check source-of-truth docs and changelog hygiene.
+- `npm run phase:changelog:normalize`: normalize malformed or duplicate phase changelog rows.
 - `npm run phase:generate:block:write -- scripts/phase-blocks/phase-803-808.json`: reliable write path for generator output on Windows/npm wrapper setups.
 - `npm run phase:prepare:block -- --phase-script test:phase:785-790`: serialized phase gate for one block.
 - `npm run phase:prepare:batch -- --phase-script test:phase:785-790 --phase-script test:phase:791-796`: serialized batch gate for multiple blocks.
@@ -49,6 +52,7 @@
 - Phase deliveries keep two commits by design:
 - `Phase <range>: ...`
 - `Chore: update phase changelog for <range>`
+- Normalize `PHASE_CHANGELOG.md` before PR open if `phase:doctor` reports drift.
 - Open PRs through the API-safe wrappers (`phase:pr:open:file`, `phase:pr:view`) and verify merge from remote state, not local fast-forward output.
 
 ## Environment & Ops Notes

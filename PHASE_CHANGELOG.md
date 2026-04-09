@@ -15,7 +15,6 @@
 - 2026-04-09 | chore | `498d9af` | Chore: update phase changelog for 875-892
 - 2026-04-09 | chore | `c68b242` | Chore: isolate runtime refresh cleanup
 - 2026-04-09 | chore | `bf60402` | Chore: refresh residual route cleanup verification
-- 2026-04-09 | phase | `505f706` | Phase 893-910: Governance Batch Delivery V92-V94
 - 2026-04-09 | phase | `b262c9b` | Phase 893-910: Governance Batch Delivery V92-V94
 - 2026-04-09 | chore | `96723bf` | Chore: keep stability route labels for assurance stability routers
 - 2026-04-09 | chore | `279be11` | Chore: drop cleanup note from phase changelog
@@ -37,10 +36,8 @@
 - 2026-04-09 | chore | `b56a317` | Chore: update phase changelog for 1001-1018
 - 2026-04-09 | chore | `33d7577` | Chore: refresh phase changelog for 1001-1018 after hash drift
 - 2026-04-09 | phase | `84e1045` | Phase 1019-1036: Governance Batch Delivery V113-V115 plus final root refresh
-- 2026-04-09 | phase | 84e1045 | Phase 1019-1036: Governance Batch Delivery V113-V115 plus final root refresh
 - 2026-04-09 | chore | `4e697ec` | Chore: update phase changelog for 1019-1036
 - 2026-04-09 | phase | `8d1a906` | Phase 1037-1054: Governance Batch Delivery V116-V118 plus inventory-only root decision
-- 2026-04-09 | phase | 8d1a906 | Phase 1037-1054: Governance Batch Delivery V116-V118 plus inventory-only root decision
 - 2026-04-09 | chore | `ff6260c` | Chore: update phase changelog for 1037-1054
 - 2026-04-09 | phase | `e173a6f` | Phase 1055-1072: Governance Batch Delivery V119-V121
 - 2026-04-09 | phase | 173a6f | Phase 1055-1072: Governance Batch Delivery V119-V121
@@ -62,14 +59,12 @@
 - 2026-04-09 | phase | `8e37eca` | Phase 1181-1198: Governance Batch Delivery V140-V142
 - 2026-04-09 | chore | `6457736` | Chore: update phase changelog for 1181-1198
 - 2026-04-09 | chore | `3580bfa` | Chore: finalize phase changelog for 1181-1198
-- 2026-04-09 | phase | `156da90` | Phase 1199-1216: Governance Batch Delivery V143-V145
 - 2026-04-09 | phase | `c8e0b0b` | Phase 1199-1216: Governance Batch Delivery V143-V145
 - 2026-04-09 | chore | `81375f3` | Chore: update phase changelog for 1199-1216
-- 2026-04-09 | phase | `f966989` | Phase 1217-1234: Governance Batch Delivery V146-V148
 - 2026-04-09 | phase | `d4023cb` | Phase 1217-1234: Governance Batch Delivery V146-V148
 - 2026-04-09 | chore | `f612693` | Chore: update phase changelog for 1217-1234
 - 2026-04-09 | phase | `1641cf2` | Phase 1235-1252: Governance Batch Delivery V149-V151
 - 2026-04-09 | chore | `2099921` | Chore: finalize phase changelog for 1235-1252
-- 2026-04-09 | phase | `8ddedd7` | Phase 1253-1270: Governance Batch Delivery V152-V154
 - 2026-04-09 | phase | `319eb6b` | Phase 1253-1270: Governance Batch Delivery V152-V154
 - 2026-04-09 | chore | `90c88d2` | Chore: update phase changelog for 1253-1270
+- 2026-04-09 | chore | `2d4a766` | Chore: harden source-of-truth and changelog operations

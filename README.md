@@ -94,12 +94,27 @@ npm run test:phase:range -- 947-952
 npm run test:phase:batch -- 947-952 953-958 959-964
 npm run test:phase:smoke
 npm run test:phase:gate:ci
+npm run phase:doctor
+npm run phase:changelog:normalize
 ```
 
 ## Clean Worktree Politikası
 - Teslimat tabanı her zaman `origin/master` üstünden açılmış temiz `git worktree` olmalı.
 - Kirli local root worktree phase tracker, changelog veya operasyon durumu için source of truth değildir.
 - Local shell Node sürümü repo politikasının altındaysa `:preferred` wrapper’larını kullanın.
+- Tekil `test:phase:<range>` scriptleri compatibility yüzeyidir; yeni operasyonda `test:phase:range`, `test:phase:batch` ve `phase:prepare:batch:preferred` kullanın.
+
+## Source Of Truth
+- Aktif operasyon için authoritative set:
+  - `README.md`
+  - `AGENTS.md`
+  - `PHASE_OPERATIONS_GUIDE.md`
+  - `docs/WORKTREE_SOURCE_OF_TRUTH.md`
+  - `PHASE_INDEX.md`
+  - `TASK_TRACKER.md`
+  - `memory.md`
+- Local root worktree bunlarla çelişiyorsa clean worktree + `origin/master` kazanır.
+- Dirty root yalnızca inventory/forensics yüzeyidir.
 
 ## Astro Operasyon Notları
 - Repo SSR-first çalışır: `output: "server"` ve `@astrojs/node` adapter.
@@ -110,6 +125,7 @@ npm run test:phase:gate:ci
 ## PR Politikası
 - `master` korumalıdır; doğrudan push yapılmaz.
 - Phase içeriği ile phase changelog iki ayrı commit olarak tutulur.
+- `PHASE_CHANGELOG.md` duplicate veya malformed satır taşıyorsa PR açmadan önce `npm run phase:changelog:normalize` çalıştırın.
 - Phase PR açarken API-first akışı tercih edin:
 ```bash
 npx tsx scripts/phase-pr.ts open --repo titanai777/sanliurfa --base master --head <branch> --title "..." --body-file <file>
@@ -124,3 +140,8 @@ npx tsx scripts/phase-pr.ts view --repo titanai777/sanliurfa --pr <number>
 npm run phase:generate:block:write -- scripts/phase-blocks/phase-947-952.json
 npm run phase:prepare:batch:preferred -- --phase-script test:phase:947-952 --phase-script test:phase:953-958 --phase-script test:phase:959-964
 ```
+
+## Root Worktree Notu
+- `D:\sanliurfa.com\sanliurfa` dirty veya eski bir branch üzerinde olabilir.
+- Bu durumda oradan delivery yapmayın.
+- Önce `git fetch origin`, sonra temiz worktree açın.
