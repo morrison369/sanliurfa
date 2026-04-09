@@ -839,7 +839,12 @@ Last updated: 2026-04-09
   - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v167.test.ts`
   - docs: `PHASE_1343_1348_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V167.md`
 
-- `T-157` Phase 1361-1366 planning
+- `T-157` Phase 1361-1366 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v170.test.ts`
+  - docs: `PHASE_1361_1366_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V170.md`
+
+- `T-158` Phase 1379-1384 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
