@@ -453,7 +453,7 @@ const seo = {
 <script is:inline>
   // Rating stars interaction
   const ratingStars = document.getElementById('rating-stars');
-  const ratingInput = document.getElementById('rating-input') as HTMLInputElement;
+  const ratingInput = document.getElementById('rating-input');
   const starBtns = document.querySelectorAll('.star-btn');
   let selectedRating = 0;
 
@@ -464,7 +464,9 @@ const seo = {
     btn.addEventListener('mouseenter', () => updateStars(rating));
     btn.addEventListener('click', () => {
       selectedRating = rating;
-      ratingInput.value = rating.toString();
+      if (ratingInput) {
+        ratingInput.value = rating.toString();
+      }
       updateStars(rating);
       document.getElementById('rating-error')?.classList.add('hidden');
     });
@@ -472,7 +474,7 @@ const seo = {
 
   ratingStars?.addEventListener('mouseleave', () => updateStars(selectedRating));
 
-  function updateStars(rating: number) {
+  function updateStars(rating) {
     starBtns.forEach((btn) => {
       const starIcon = btn.querySelector('.star-icon');
       const btnRating = parseInt(btn.dataset.rating || '0');
@@ -487,7 +489,7 @@ const seo = {
   }
 
   // Review form
-  const reviewForm = document.getElementById('review-form') as HTMLFormElement;
+  const reviewForm = document.getElementById('review-form');
   reviewForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!selectedRating) {
@@ -498,7 +500,7 @@ const seo = {
     const formData = new FormData(reviewForm);
     const data = {
       placeId: formData.get('place_id'),
-      rating: parseInt(formData.get('rating') as string),
+      rating: parseInt(String(formData.get('rating') || '0')),
       title: formData.get('title') || '',
       content: formData.get('content')
     };

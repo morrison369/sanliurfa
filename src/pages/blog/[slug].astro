@@ -205,8 +205,9 @@ const seo = {
 </Layout>
 
 <script is:inline>
-  function toggleLike(event: Event) {
-    const button = event.target as HTMLButtonElement;
+  function toggleLike(event) {
+    const button = event?.currentTarget || event?.target;
+    if (!(button instanceof HTMLElement)) return;
     button.classList.toggle('text-red-500');
     button.classList.toggle('border-red-500');
   }
