@@ -1040,6 +1040,24 @@
     "src/lib/governance-recovery-assurance-router-v175.ts",
     "src/lib/policy-assurance-continuity-engine-v175.ts",
     "src/lib/policy-continuity-stability-harmonizer-v175.ts",
-    "src/lib/trust-stability-continuity-forecaster-v175.ts"
+    "src/lib/trust-stability-continuity-forecaster-v175.ts",
+    "src/lib/board-stability-continuity-coordinator-v176.ts",
+    "src/lib/compliance-stability-continuity-mesh-v176.ts",
+    "src/lib/governance-assurance-stability-router-v176.ts",
+    "src/lib/policy-recovery-assurance-engine-v176.ts",
+    "src/lib/policy-recovery-continuity-harmonizer-v176.ts",
+    "src/lib/trust-assurance-recovery-forecaster-v176.ts",
+    "src/lib/board-recovery-stability-coordinator-v177.ts",
+    "src/lib/compliance-assurance-recovery-mesh-v177.ts",
+    "src/lib/governance-recovery-assurance-router-v177.ts",
+    "src/lib/policy-assurance-continuity-engine-v177.ts",
+    "src/lib/policy-continuity-stability-harmonizer-v177.ts",
+    "src/lib/trust-stability-continuity-forecaster-v177.ts",
+    "src/lib/board-stability-continuity-coordinator-v178.ts",
+    "src/lib/compliance-stability-continuity-mesh-v178.ts",
+    "src/lib/governance-assurance-stability-router-v178.ts",
+    "src/lib/policy-recovery-assurance-engine-v178.ts",
+    "src/lib/policy-recovery-continuity-harmonizer-v178.ts",
+    "src/lib/trust-assurance-recovery-forecaster-v178.ts"
   ]
 }
