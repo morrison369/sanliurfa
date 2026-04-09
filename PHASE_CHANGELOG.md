@@ -106,3 +106,5 @@
 - 2026-04-09 | chore | `7801fc5` | Chore: update phase changelog for 755-760
 - 2026-04-09 | phase | `3f64c78` | Phase 761-766: Governance Assurance Stability Continuity V70
 - 2026-04-09 | chore | `ca1fd39` | Chore: update phase changelog for 761-766
+- 2026-04-09 | phase | `26536d1` | Phase 767-772: Governance Recovery Assurance Continuity V71
+- 2026-04-09 | chore | `e8bbc25` | Chore: update phase changelog for 767-772

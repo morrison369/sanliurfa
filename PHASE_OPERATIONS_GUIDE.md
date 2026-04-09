@@ -70,6 +70,7 @@ npm run phase:pr:view -- titanai777/sanliurfa <pr-number>
 - Avoid route collisions in `src/pages/`.
 - Keep content loader/schema changes paired with `src/content/` updates.
 - `astro-compress` exclusions must target the emitted `sw.js` service worker file.
+- Do not run concurrent `build` or `test:phase:gate:ci` commands in the same worktree; Astro `.astro/` content sync can race on file renames.
 
 ## Dirty Workspace Cleanup Order
 Do not operate phase deliveries in the dirty root worktree.
