@@ -31,6 +31,9 @@ import {
 import { buildWorktreeBootstrapSteps, parseBootstrapArgs } from '../../../scripts/phase-worktree-bootstrap';
 import { buildChangelogLine, classifyCommit, parseArgs, upsertChangelogEntry } from '../../../scripts/phase-changelog';
 import { buildOpenArgs, buildViewArgs, parsePhasePrArgs } from '../../../scripts/phase-pr';
+import { buildPhasePipelineSteps, parsePhasePipelineArgs } from '../../../scripts/phase-pipeline';
+import { buildPrChecksArgs, checksPublished, parsePhaseCheckWaitArgs } from '../../../scripts/phase-check-wait';
+import { buildNodeVersionError, isSupportedNodeVersion, parseNodeVersion } from '../../../scripts/phase-env';
 import { hasMatchingMarkdownFiles } from '../content-loader-helpers';
 
 const sampleBlock: PhaseBlockConfig = {
@@ -471,6 +474,71 @@ describe('phase pr helpers', () => {
       '--json',
       'state,mergeCommit,url'
     ]);
+  });
+});
+
+describe('phase pipeline helpers', () => {
+  it('parses optional phase script', () => {
+    expect(parsePhasePipelineArgs(['--phase-script', 'test:phase:731-736']).phaseScript).toBe('test:phase:731-736');
+  });
+
+  it('parses positional phase script for npm wrapper forwarding', () => {
+    expect(parsePhasePipelineArgs(['test:phase:743-748']).phaseScript).toBe('test:phase:743-748');
+  });
+
+  it('builds serialized phase steps', () => {
+    expect(buildPhasePipelineSteps({ phaseScript: 'test:phase:731-736' })).toEqual([
+      { command: 'npm', args: ['run', 'phase:env:check'] },
+      { command: 'npm', args: ['run', 'phase:sync:tsconfig'] },
+      { command: 'npm', args: ['run', 'phase:check:tsconfig'] },
+      { command: 'npm', args: ['run', 'test:phase:731-736'] },
+      { command: 'npm', args: ['run', 'lint:phase'] },
+      { command: 'npm', args: ['run', 'test:phase:smoke'] },
+      { command: 'npm', args: ['run', 'build'] }
+    ]);
+  });
+});
+
+describe('phase check wait helpers', () => {
+  it('parses repo and timing overrides', () => {
+    const parsed = parsePhaseCheckWaitArgs(['44', '--repo', 'titanai777/sanliurfa', '--poll-ms', '2000', '--timeout-ms', '90000']);
+    expect(parsed).toEqual({
+      prNumber: 44,
+      repo: 'titanai777/sanliurfa',
+      pollMs: 2000,
+      timeoutMs: 90000
+    });
+  });
+
+  it('builds gh pr checks args', () => {
+    expect(buildPrChecksArgs({ prNumber: 44, repo: 'titanai777/sanliurfa', pollMs: 5000, timeoutMs: 180000 }, true)).toEqual([
+      'pr',
+      'checks',
+      '44',
+      '--repo',
+      'titanai777/sanliurfa',
+      '--watch'
+    ]);
+  });
+
+  it('detects unpublished and published checks', () => {
+    expect(checksPublished('no checks reported on the branch')).toBe(false);
+    expect(checksPublished('phase:check:tsconfig\tpass\t20s')).toBe(true);
+  });
+});
+
+describe('phase env helpers', () => {
+  it('parses semver node versions', () => {
+    expect(parseNodeVersion('v22.13.0')).toEqual({ major: 22, minor: 13, patch: 0 });
+  });
+
+  it('enforces repo node floor', () => {
+    expect(isSupportedNodeVersion('v22.13.0')).toBe(true);
+    expect(isSupportedNodeVersion('v22.12.0')).toBe(false);
+  });
+
+  it('renders actionable node mismatch error', () => {
+    expect(buildNodeVersionError('v22.12.0')).toContain('nvm use 22.13.0');
   });
 });
 
