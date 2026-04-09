@@ -2,9 +2,10 @@ name: Phase Gate
 
 on:
   pull_request:
+    branches:
+      - master
   push:
     branches:
-      - main
       - master
 
 jobs:
@@ -59,7 +60,7 @@ jobs:
       - name: Ensure Rollup Linux Binary
         run: npm i -D @rollup/rollup-linux-x64-gnu --no-save --legacy-peer-deps
       - name: Run Phase Gate
-        run: npm run env:contract:check:ci && npm run typecheck:app && npm run phase:check:tsconfig && npm run lint:phase && npm run test:phase:latest && npm run build
+        run: npm run env:contract:check:ci && npm run security:secrets:scan && npm run typecheck:app && npm run phase:check:tsconfig && npm run lint:phase && npm run test:phase:latest && npm run build
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
           READ_REPLICA_URL: ""

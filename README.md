@@ -98,8 +98,10 @@ npm run phase:doctor
 npm run phase:changelog:normalize
 npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts
 npm run repo:stabilize:check
+npm run security:secrets:scan
 npm run governance:imports:check
 npm run db:drift:check
+npm run db:test:bootstrap
 npm run env:contract:check
 npm run env:contract:check:ci
 npm run migrate:status
@@ -115,6 +117,7 @@ npm run test:e2e:full
 - Repo stabilizasyon runbook: `docs/REPO_STABILIZATION_RUNBOOK.md`
 - Release gate: `docs/RELEASE_GATES.md`
 - Webhook güvenlik politikası: `docs/WEBHOOK_SECURITY_POLICY.md`
+- Script envanteri ve deprecate politikası: `docs/SCRIPT_INVENTORY.md`
 - 7 günlük uygulama planı: `docs/SEVEN_DAY_EXECUTION_PLAN.md`
 
 ## Clean Worktree Politikası

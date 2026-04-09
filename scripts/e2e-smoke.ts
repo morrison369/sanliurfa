@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 
 const BASE_URL = process.env.SMOKE_BASE_URL ?? 'http://127.0.0.1:1111';
 const STARTUP_TIMEOUT_MS = 90_000;
+const PERF_P95_BUDGET_MS = Number.parseInt(process.env.SMOKE_MAX_MS ?? '2000', 10);
 
 async function isServerReady(url: string): Promise<boolean> {
   try {
@@ -43,11 +44,16 @@ async function waitForServer(url: string): Promise<void> {
 }
 
 async function assertPath(path: string): Promise<void> {
+  const started = Date.now();
   const response = await fetch(`${BASE_URL}${path}`);
+  const durationMs = Date.now() - started;
   if (response.status >= 500) {
     throw new Error(`Smoke path failed: ${path} -> ${response.status}`);
   }
-  console.log(`smoke-ok ${path} -> ${response.status}`);
+  if (durationMs > PERF_P95_BUDGET_MS) {
+    throw new Error(`Smoke performance budget exceeded: ${path} -> ${durationMs}ms (limit=${PERF_P95_BUDGET_MS}ms)`);
+  }
+  console.log(`smoke-ok ${path} -> ${response.status} (${durationMs}ms)`);
 }
 
 async function main(): Promise<void> {

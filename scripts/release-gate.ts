@@ -17,8 +17,10 @@ function runOptional(step: string, command: string): void {
 function main(): void {
   run('Environment contract (local)', 'npm run env:contract:check');
   run('Repository stabilization checks', 'npm run repo:stabilize:check');
+  run('Security secret scan', 'npm run security:secrets:scan');
   run('Governance import guard', 'npm run governance:imports:check');
   run('DB drift check', 'npm run db:drift:check');
+  runOptional('DB test bootstrap', 'npm run db:test:bootstrap');
   runOptional('Migration status', 'npm run migrate:status');
   run('Migration dry-run', 'npm run migrate:dry-run');
   run('Phase doctor', 'npm run phase:doctor');

@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [master]
   pull_request:
-    branches: [main, master, develop]
+    branches: [master]
 
 jobs:
   test:
@@ -47,11 +47,19 @@ jobs:
       - name: Repo stabilization check
         run: npm run repo:stabilize:check
 
+      - name: Security secret scan
+        run: npm run security:secrets:scan
+
       - name: Governance import guard
         run: npm run governance:imports:check
 
       - name: DB drift check
         run: npm run db:drift:check
+
+      - name: Bootstrap test DB
+        run: npm run db:test:bootstrap
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
       
       - name: Typecheck app scope
         run: npm run typecheck:app
@@ -75,6 +83,10 @@ jobs:
 
       - name: Migration dry-run
         run: npm run migrate:dry-run
+
+      - name: Typecheck experimental advisory
+        continue-on-error: true
+        run: npm run typecheck:experimental
 
       - name: Release gate
         run: npm run release:gate
