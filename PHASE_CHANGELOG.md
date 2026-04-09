@@ -126,3 +126,5 @@
 - 2026-04-09 | phase | `2e4eee5` | Phase 857-874: Governance Batch Delivery V86-V88
 - 2026-04-09 | chore | `bf3bf89` | Chore: update phase changelog for 857-874
 - 2026-04-09 | chore | `b57defb` | Chore: refresh webhook surface cleanup verification
+- 2026-04-09 | phase | `09a8fe2` | Phase 875-892: Governance Batch Delivery V89-V91
+- 2026-04-09 | chore | `498d9af` | Chore: update phase changelog for 875-892

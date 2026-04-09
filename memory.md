@@ -1,8 +1,8 @@
 # Memory
 
 ## Current Phase
-- Active window: `Phase 875-880` (planned)
-- Last completed: `Phase 869-874 Governance Assurance Stability & Continuity V88`
+- Active window: `Phase 893-898` (planned)
+- Last completed: `Phase 887-892 Governance Recovery Assurance & Continuity V91`
 
 ## Astro Invariants
 - SSR-first runtime: `output: "server"` with `@astrojs/node` standalone adapter.
@@ -189,18 +189,21 @@
 - `Phase 857-862 Governance Assurance Stability & Continuity V86`: complete
 - `Phase 863-868 Governance Recovery Assurance & Continuity V87`: complete
 - `Phase 869-874 Governance Assurance Stability & Continuity V88`: complete
+- `Phase 875-880 Governance Recovery Assurance & Continuity V89`: complete
+- `Phase 881-886 Governance Assurance Stability & Continuity V90`: complete
+- `Phase 887-892 Governance Recovery Assurance & Continuity V91`: complete
 
 ## Open Tasks
 - No open delivery tasks for `Phase 137-142`, `Phase 161-166`, `Phase 167-172`, `Phase 173-178`, `Phase 179-184`, `Phase 185-190`, `Phase 191-196`, `Phase 197-202`, `Phase 203-208`, `Phase 209-214`, `Phase 215-220`, `Phase 221-226`, `Phase 227-232`, `Phase 233-238`, `Phase 239-244`, `Phase 245-250`, `Phase 251-256`, `Phase 257-262`, `Phase 263-268`, `Phase 269-274`, `Phase 275-280`, `Phase 281-286`, `Phase 287-292`, `Phase 293-298`, `Phase 299-304`, `Phase 305-310`, `Phase 311-316`, `Phase 317-322`, `Phase 323-328`, `Phase 329-334`, `Phase 335-340`, `Phase 341-346`, `Phase 347-352`, or `Phase 353-358`.
-- Optional: Phase 875-880 scope definition and kickoff.
+- Optional: Phase 893-898 scope definition and kickoff.
 
 ## Next 6 Phases (Planned Scope)
-- `Phase 875`: Governance Recovery Assurance Router V89
-- `Phase 876`: Policy Continuity Stability Harmonizer V89
-- `Phase 877`: Compliance Assurance Recovery Mesh V89
-- `Phase 878`: Trust Stability Continuity Forecaster V89
-- `Phase 879`: Board Recovery Stability Coordinator V89
-- `Phase 880`: Policy Assurance Continuity Engine V89
+- `Phase 893`: Governance Assurance Stability Router V92
+- `Phase 894`: Policy Recovery Continuity Harmonizer V92
+- `Phase 895`: Compliance Stability Continuity Mesh V92
+- `Phase 896`: Trust Assurance Recovery Forecaster V92
+- `Phase 897`: Board Stability Continuity Coordinator V92
+- `Phase 898`: Policy Recovery Assurance Engine V92
 
 ## Checkpoint Rule
 - Every 2 phase blocks, record one short checkpoint note (risk, decision, outcome).
@@ -347,6 +350,12 @@
 - `Checkpoint 863-868`: V87 block delivered with recovery assurance continuity pattern and latest smoke advanced cleanly.
 
 - `Checkpoint 869-874`: V88 block delivered with assurance stability continuity pattern and preferred-node batch gate remained stable.
+
+- `Checkpoint 875-880`: V89 block delivered with recovery assurance continuity pattern and batch release flow remained serial-safe.
+
+- `Checkpoint 881-886`: V90 block delivered with assurance stability continuity pattern and latest smoke advanced cleanly.
+
+- `Checkpoint 887-892`: V91 block delivered with recovery assurance continuity pattern and preferred-node batch gate remained stable.
 
 ## Blockers
 - No active blocker.
