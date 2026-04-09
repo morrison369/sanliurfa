@@ -654,7 +654,22 @@ Last updated: 2026-04-09
   - tests: `src/lib/__tests__/governance-assurance-stability-suite-v88.test.ts`
   - docs: `PHASE_869_874_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V88.md`
 
-- `T-120` Phase 875-880 planning
+- `T-120` Phase 875-880 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v89.test.ts`
+  - docs: `PHASE_875_880_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V89.md`
+
+- `T-121` Phase 881-886 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v90.test.ts`
+  - docs: `PHASE_881_886_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V90.md`
+
+- `T-122` Phase 887-892 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v91.test.ts`
+  - docs: `PHASE_887_892_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V91.md`
+
+- `T-123` Phase 893-898 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
