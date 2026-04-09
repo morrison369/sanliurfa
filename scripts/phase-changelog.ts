@@ -1,4 +1,4 @@
-import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -33,14 +33,24 @@ export function buildChangelogLine(date: string, type: 'phase' | 'chore', hash: 
   return `- ${date} | ${type} | \`${hash}\` | ${subject}`;
 }
 
-export function appendChangelogEntry(existing: string, line: string): string {
+export function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function upsertChangelogEntry(existing: string, line: string, type: 'phase' | 'chore', subject: string): string {
   const normalized = existing.endsWith('\n') ? existing : `${existing}\n`;
+  const lines = normalized.split('\n');
+  const matcherPattern = '^\\- \\d{4}-\\d{2}-\\d{2} \\| ' + type + ' \\| `[^`]+` \\| ' + escapeRegExp(subject) + '$';
+  const matcher = new RegExp(matcherPattern);
+  const filtered = lines.filter((existingLine) => existingLine.length === 0 || !matcher.test(existingLine));
+  const updated = filtered.join('\n').replace(/\n{3,}/g, '\n\n');
+  const finalWithNewline = updated.endsWith('\n') ? updated : `${updated}\n`;
   const entry = `${line}\n`;
-  if (normalized.includes(entry)) {
-    return normalized;
+  if (finalWithNewline.includes(entry)) {
+    return finalWithNewline;
   }
 
-  return `${normalized}${entry}`;
+  return `${finalWithNewline}${entry}`;
 }
 
 export interface PhaseChangelogOptions {
@@ -74,10 +84,10 @@ export function main(): void {
 
   const existing = readFileSync(options.outPath, 'utf8');
   const line = buildChangelogLine(options.date, type, commit.hash, commit.subject);
-  const updated = appendChangelogEntry(existing, line);
+  const updated = upsertChangelogEntry(existing, line, type, commit.subject);
 
   if (updated !== existing) {
-    appendFileSync(options.outPath, `${line}\n`, 'utf8');
+    writeFileSync(options.outPath, updated, 'utf8');
   }
 }
 

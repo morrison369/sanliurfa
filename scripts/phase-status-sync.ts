@@ -8,6 +8,8 @@ export interface NextPhaseScope {
 }
 
 export interface MemorySyncConfig {
+  currentPhase: string;
+  lastCompleted: string;
   completedTitle: string;
   optionalKickoff: string;
   nextScopes: NextPhaseScope[];
@@ -69,6 +71,14 @@ export function appendCompletedPhase(memory: string, completedTitle: string): st
   return memory.replace('## Open Tasks', `${completedLine}\n\n## Open Tasks`);
 }
 
+export function replaceCurrentPhaseWindow(memory: string, currentPhase: string): string {
+  return memory.replace(/- Active window: `Phase .*` \(planned\)/, `- Active window: \`${currentPhase}\` (planned)`);
+}
+
+export function replaceLastCompletedPhase(memory: string, lastCompleted: string): string {
+  return memory.replace(/- Last completed: `Phase .*`/, `- Last completed: \`${lastCompleted}\``);
+}
+
 export function replaceOptionalKickoff(memory: string, optionalKickoff: string): string {
   const kickoffLine = `- Optional: ${optionalKickoff}.`;
   if (memory.includes(kickoffLine)) {
@@ -115,7 +125,9 @@ export function normalizeMemoryFormatting(memory: string): string {
 }
 
 export function syncMemory(memory: string, config: MemorySyncConfig): string {
-  let updated = appendCompletedPhase(memory, config.completedTitle);
+  let updated = replaceCurrentPhaseWindow(memory, config.currentPhase);
+  updated = replaceLastCompletedPhase(updated, config.lastCompleted);
+  updated = appendCompletedPhase(updated, config.completedTitle);
   updated = replaceOptionalKickoff(updated, config.optionalKickoff);
   updated = replaceNextPhaseScope(updated, config.nextScopes);
   updated = appendCheckpoint(updated, config.checkpoint);
@@ -129,7 +141,7 @@ export function main(): void {
     process.stdout.write('Usage:\n');
     process.stdout.write('  tsx scripts/phase-status-sync.ts task <trackerPath> <currentTaskId> <currentRange> <nextTaskId> <nextRange> <testFile> <docFile>\n');
     process.stdout.write('  tsx scripts/phase-status-sync.ts scope <memoryPath> <phase:title;phase:title;...>\n');
-    process.stdout.write('  tsx scripts/phase-status-sync.ts memory <memoryPath> <completedTitle> <optionalKickoff> <phase:title;phase:title;...> <checkpoint>\n');
+    process.stdout.write('  tsx scripts/phase-status-sync.ts memory <memoryPath> <currentPhase> <lastCompleted> <completedTitle> <optionalKickoff> <phase:title;phase:title;...> <checkpoint>\n');
     return;
   }
 
@@ -155,12 +167,14 @@ export function main(): void {
   }
 
   if (mode === 'memory') {
-    const [completedTitle, optionalKickoff, serializedScopes = '', checkpoint] = args;
+    const [currentPhase, lastCompleted, completedTitle, optionalKickoff, serializedScopes = '', checkpoint] = args;
     const scopes = serializedScopes.split(';').filter(Boolean).map((item) => {
       const [phase, ...titleParts] = item.split(':');
       return { phase: Number(phase), title: titleParts.join(':') };
     });
     const updated = syncMemory(source, {
+      currentPhase,
+      lastCompleted,
       completedTitle,
       optionalKickoff,
       nextScopes: scopes,

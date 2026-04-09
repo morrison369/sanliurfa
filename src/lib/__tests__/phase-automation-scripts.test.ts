@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
@@ -21,13 +21,16 @@ import {
   buildClosedTaskBlock,
   formatCheckpointLine,
   normalizeTrackerOpenHeaders,
+  replaceCurrentPhaseWindow,
+  replaceLastCompletedPhase,
   replaceNextPhaseScope,
   replaceOpenTask,
   replaceOptionalKickoff,
   syncMemory
 } from '../../../scripts/phase-status-sync';
 import { buildWorktreeBootstrapSteps, parseBootstrapArgs } from '../../../scripts/phase-worktree-bootstrap';
-import { appendChangelogEntry, buildChangelogLine, classifyCommit, parseArgs } from '../../../scripts/phase-changelog';
+import { buildChangelogLine, classifyCommit, parseArgs, upsertChangelogEntry } from '../../../scripts/phase-changelog';
+import { hasMatchingMarkdownFiles } from '../content-loader-helpers';
 
 const sampleBlock: PhaseBlockConfig = {
   start: 515,
@@ -251,6 +254,10 @@ describe('phase status sync helpers', () => {
 
   it('appends completed phase before open tasks', () => {
     const memory = [
+      '## Current Phase',
+      '- Active window: `Phase 515-520` (planned)',
+      '- Last completed: `Phase 509-514 Governance Assurance Recovery & Stability V28`',
+      '',
       '## Completed Phases',
       '- `Phase 509-514 Governance Assurance Recovery & Stability V28`: complete',
       '',
@@ -264,6 +271,16 @@ describe('phase status sync helpers', () => {
   it('replaces optional kickoff line', () => {
     const memory = '- Optional: Phase 509-514 scope definition and kickoff.';
     expect(replaceOptionalKickoff(memory, 'Phase 515-520 scope definition and kickoff')).toContain('Phase 515-520');
+  });
+
+  it('replaces current phase window', () => {
+    const memory = '- Active window: `Phase 521-526` (planned)';
+    expect(replaceCurrentPhaseWindow(memory, 'Phase 527-532')).toContain('Phase 527-532');
+  });
+
+  it('replaces last completed phase', () => {
+    const memory = '- Last completed: `Phase 521-526 Governance Recovery Continuity & Assurance V30`';
+    expect(replaceLastCompletedPhase(memory, 'Phase 527-532 Governance Continuity Stability & Assurance V31')).toContain('Phase 527-532');
   });
 
   it('formats checkpoint line consistently', () => {
@@ -284,6 +301,10 @@ describe('phase status sync helpers', () => {
 
   it('syncs memory in one pass', () => {
     const memory = [
+      '## Current Phase',
+      '- Active window: `Phase 515-520` (planned)',
+      '- Last completed: `Phase 509-514 Governance Assurance Recovery & Stability V28`',
+      '',
       '## Completed Phases',
       '- `Phase 509-514 Governance Assurance Recovery & Stability V28`: complete',
       '',
@@ -301,6 +322,8 @@ describe('phase status sync helpers', () => {
     ].join('\n');
 
     const updated = syncMemory(memory, {
+      currentPhase: 'Phase 521-526',
+      lastCompleted: 'Phase 515-520 Governance Continuity Assurance & Recovery V29',
       completedTitle: 'Phase 515-520 Governance Continuity Assurance & Recovery V29',
       optionalKickoff: 'Phase 521-526 scope definition and kickoff',
       nextScopes: [
@@ -311,6 +334,7 @@ describe('phase status sync helpers', () => {
     });
 
     expect(updated).toContain('Phase 515-520 Governance Continuity Assurance & Recovery V29');
+    expect(updated).toContain('Active window: `Phase 521-526` (planned)');
     expect(updated).toContain('Phase 521');
     expect(updated).toContain('Checkpoint 515-520');
   });
@@ -362,13 +386,27 @@ describe('phase changelog helpers', () => {
     );
   });
 
-  it('appends unique changelog entries once', () => {
+  it('upserts unique changelog entries once', () => {
     const initial = '# Phase Changelog\n\n';
     const line = '- 2026-04-09 | phase | `abc1234` | Phase 515-520: Governance Continuity Assurance Recovery V29';
-    const once = appendChangelogEntry(initial, line);
-    const twice = appendChangelogEntry(once, line);
+    const once = upsertChangelogEntry(initial, line, 'phase', 'Phase 515-520: Governance Continuity Assurance Recovery V29');
+    const twice = upsertChangelogEntry(once, line, 'phase', 'Phase 515-520: Governance Continuity Assurance Recovery V29');
     expect(once).toContain(line);
     expect(twice).toBe(once);
+  });
+
+  it('replaces older changelog entry for the same phase subject', () => {
+    const initial = [
+      '# Phase Changelog',
+      '',
+      '- 2026-04-08 | phase | `old1234` | Phase 521-526: Governance Recovery Continuity Assurance V30',
+      ''
+    ].join('\n');
+    const line = '- 2026-04-09 | phase | `new5678` | Phase 521-526: Governance Recovery Continuity Assurance V30';
+    const updated = upsertChangelogEntry(initial, line, 'phase', 'Phase 521-526: Governance Recovery Continuity Assurance V30');
+
+    expect(updated).toContain('new5678');
+    expect(updated).not.toContain('old1234');
   });
 
   it('parses ref and out args', () => {
@@ -376,5 +414,28 @@ describe('phase changelog helpers', () => {
     const parsed = parseArgs(['--ref', 'HEAD~1', '--out', 'tmp/PHASE_CHANGELOG.md']);
     expect(parsed.ref).toBe('HEAD~1');
     expect(parsed.outPath).toBe(join(cwd, 'tmp/PHASE_CHANGELOG.md'));
+  });
+});
+
+describe('content loader helpers', () => {
+  it('returns false when markdown files are absent', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'content-loader-empty-'));
+    try {
+      expect(hasMatchingMarkdownFiles(dir)).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('returns true when nested markdown files exist', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'content-loader-md-'));
+    try {
+      const nested = join(dir, 'nested');
+      mkdirSync(nested, { recursive: true });
+      writeFileSync(join(nested, 'entry.md'), '# demo\n');
+      expect(hasMatchingMarkdownFiles(dir)).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
