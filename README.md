@@ -96,6 +96,7 @@ npm run test:phase:smoke
 npm run test:phase:gate:ci
 npm run phase:doctor
 npm run phase:changelog:normalize
+npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts
 ```
 
 ## Clean Worktree Politikası

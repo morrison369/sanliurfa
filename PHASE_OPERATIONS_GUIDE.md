@@ -6,6 +6,7 @@
 - Do not run parallel Astro build or gate commands inside one worktree.
 - Do not use a dirty local root worktree as a phase source of truth; use it only for residual diff inventory.
 - Run `npm run phase:doctor` whenever source-of-truth docs or changelog behavior changed.
+- `phase:doctor:advisory` is now a required green check in CI despite the legacy job name.
 - Keep [STALE_WORKTREE.md](STALE_WORKTREE.md), [ROOT_INVENTORY_ONLY_POLICY.md](ROOT_INVENTORY_ONLY_POLICY.md), and [docs/ACTIVE_DOCS.md](docs/ACTIVE_DOCS.md) aligned.
 - Keep [ARCHITECTURE.md](ARCHITECTURE.md), [docs/DEPENDENCY_TRIAGE.md](docs/DEPENDENCY_TRIAGE.md), and [docs/SCRIPT_SURFACE_POLICY.md](docs/SCRIPT_SURFACE_POLICY.md) aligned with operator reality.
 
