@@ -15,7 +15,7 @@
       "reportMessage": "Governance assurance stability routed",
       "mode": "router",
       "signalFields": ["governanceAssurance", "stabilityCoverage", "routerCost"],
-      "routeLabels": ["assurance-priority", "assurance-balanced", "assurance-review"]
+      "routeLabels": ["stability-priority", "stability-balanced", "stability-review"]
     },
     {
       "phase": 906,

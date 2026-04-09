@@ -49,11 +49,11 @@ describe('Phase 905: Governance Assurance Stability Router V94', () => {
 
   it('routes governance assurance stability', () => {
     const result = governanceAssuranceStabilityRouterV94.route({ signalId: 'p905c', governanceAssurance: 88, stabilityCoverage: 84, routerCost: 20 });
-    expect(result).toBe('assurance-balanced');
+    expect(result).toBe('stability-balanced');
   });
 
   it('reports governance assurance stability route', () => {
-    const report = governanceAssuranceStabilityReporterV94.report('p905a', 'assurance-balanced');
+    const report = governanceAssuranceStabilityReporterV94.report('p905a', 'stability-balanced');
     expect(report).toContain('p905a');
   });
 });

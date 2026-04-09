@@ -26,9 +26,9 @@ class GovernanceAssuranceStabilityRouterV92 {
       signal.governanceAssurance,
       85,
       70,
-      'assurance-priority',
-      'assurance-balanced',
-      'assurance-review'
+      'stability-priority',
+      'stability-balanced',
+      'stability-review'
     );
   }
 }
