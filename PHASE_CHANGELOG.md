@@ -21,3 +21,4 @@
 - 2026-04-09 | chore | `279be11` | Chore: drop cleanup note from phase changelog
 - 2026-04-09 | phase | `8d94f51` | Phase 911-928: Governance Batch Delivery V95-V97
 - 2026-04-09 | chore | `e4f355d` | Chore: refresh phase changelog for 911-928 after rebase
+- 2026-04-09 | chore | `29d1ef8` | Chore: drop residual cleanup note from phase changelog
