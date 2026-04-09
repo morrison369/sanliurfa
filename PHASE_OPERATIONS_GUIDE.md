@@ -1,81 +1,32 @@
 # Phase Operations Guide
 
-## Purpose
-This file standardizes the repo's phase delivery flow so worktree, PR creation, merge verification, and Astro build behavior are handled consistently.
+## Baseline
+- Work from a clean `git worktree` created from `origin/master`.
+- Use Node `22.13.0+`; `.nvmrc` is authoritative.
+- Do not run parallel Astro build or gate commands inside one worktree.
 
-## Phase Branch Flow
-1. Create a clean worktree from `origin/master`.
-2. Run `npm ci` in the worktree.
-3. Generate or update the phase block.
-4. Run the serialized wrapper first so `phase:sync:tsconfig` and `phase:check:tsconfig` cannot race:
+## Standard Delivery Flow
+1. Generate the phase block files and exports.
+2. Update `package.json`, `PHASE_INDEX.md`, `TASK_TRACKER.md`, `memory.md`, and `tsconfig.phase.json`.
+3. Run one of:
    - `npm run phase:prepare:block -- --phase-script test:phase:<range>`
-5. Commit the phase block.
-6. Run `npm run phase:changelog:head` and commit the changelog update.
+   - `npm run phase:prepare:batch -- --phase-script test:phase:<range-a> --phase-script test:phase:<range-b>`
+4. Commit phase content.
+5. Run `npm run phase:changelog:head`, then commit the changelog update.
+6. Push the branch, open the PR, wait for checks, merge, and verify remote merge state.
 
-## Commit Standard
-- Keep two commits per phase branch:
-  - `Phase <range>: ...`
-  - `Chore: update phase changelog for <range>`
-- Do not fold changelog edits into the phase commit. The split keeps delivery diffs and audit metadata separate.
+## Locking Rules
+- `phase:prepare:block`, `phase:prepare:batch`, `test:phase:gate`, and `test:phase:gate:ci` take a worktree lock through `.phase-worktree.lock`.
+- If a prior run crashes, inspect the lock file before removing it.
+- Treat an existing live lock as an operational error, not a retry signal.
 
-## Check Wait Flow
-CI checks can take a few seconds to publish after PR creation. Use the wrapper below instead of calling `gh pr checks` directly:
+## PR and Merge Policy
+- Keep phase content and changelog as two separate commits.
+- Open PRs with `npm run phase:pr:open:file -- <repo> <base> <head> <title-file> <body-file>`.
+- Wait for checks with `npm run phase:checks:wait -- <pr> --repo titanai777/sanliurfa`.
+- Verify merge with `npm run phase:pr:view -- titanai777/sanliurfa <pr>`.
 
-```bash
-npm run phase:checks:wait -- <pr-number> --repo titanai777/sanliurfa
-```
-
-The wrapper polls until checks exist, then hands off to `gh pr checks --watch`.
-
-## Environment Gate
-- Repo target: Node `22.13.0+` and `<23`.
-- Run `npm run phase:env:check` directly or via `phase:prepare:block` before delivery commands.
-- If the shell is below the target, switch with `nvm use 22.13.0` before `npm ci`.
-- If the shell cannot switch cleanly, use the preferred-node wrapper:
-  - `npm run phase:env:check:preferred`
-  - `npm run phase:prepare:block:preferred -- --phase-script test:phase:<range>`
-
-## PR Flow
-Use API-first PR creation because `gh pr create` can intermittently return false negatives for fresh phase branches.
-
-```bash
-npx tsx scripts/phase-pr.ts open \
-  --repo titanai777/sanliurfa \
-  --base master \
-  --head <branch> \
-  --title "Phase <range>: ..." \
-  --body-file <pr-body-file>
-```
-
-After merge attempts, treat remote PR state as authoritative:
-
-```bash
-npx tsx scripts/phase-pr.ts view --repo titanai777/sanliurfa --pr <number>
-```
-
-For npm-safe PR creation without long quoted flags, use file-based inputs:
-
-```bash
-npm run phase:pr:open:file -- titanai777/sanliurfa master <branch> PR_TITLE.txt PR_BODY.md
-```
-
-For npm-safe merge verification without long flags, positional view args are supported:
-
-```bash
-npm run phase:pr:view -- titanai777/sanliurfa <pr-number>
-```
-
-## Astro Constraints
-- SSR-first runtime with `@astrojs/node` standalone adapter.
-- Avoid route collisions in `src/pages/`.
-- Keep content loader/schema changes paired with `src/content/` updates.
-- `astro-compress` exclusions must target the emitted `sw.js` service worker file.
-- Do not run concurrent `build` or `test:phase:gate:ci` commands in the same worktree; Astro `.astro/` content sync can race on file renames.
-
-## Dirty Workspace Cleanup Order
-Do not operate phase deliveries in the dirty root worktree.
-Recommended cleanup order:
-1. `cleanup/dirty-webhook-surface`
-2. runtime pages
-3. runtime libs
-4. remaining phase/backfill artifacts
+## Astro-Specific Guardrails
+- The repo is SSR-first with `@astrojs/node`.
+- Avoid route collisions and keep content collection loader/schema changes paired.
+- Build and gate wrappers are serialized because `.astro/` and `dist/` artifacts are not concurrency-safe.

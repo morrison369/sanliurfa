@@ -112,3 +112,5 @@
 - 2026-04-09 | chore | `cfd17d9` | Chore: update phase changelog for 773-778
 - 2026-04-09 | phase | `c3bc993` | Phase 779-784: Governance Recovery Assurance Continuity V73
 - 2026-04-09 | chore | `c40222e` | Chore: update phase changelog for 779-784
+- 2026-04-09 | phase | `4249f4d` | Phase 785-802: Governance Batch Delivery V74-V76
+- 2026-04-09 | chore | `9467327` | Chore: update phase changelog for 785-802

@@ -112,15 +112,18 @@
     "phase:checks:wait": "npm exec -- tsx scripts/phase-check-wait.ts",
     "phase:env:check": "npm exec -- tsx scripts/phase-env.ts",
     "phase:env:check:preferred": "npm exec -- tsx scripts/phase-node.ts run-tsx scripts/phase-env.ts",
+    "phase:lock:show": "type .phase-worktree.lock",
     "phase:node": "npm exec -- tsx scripts/phase-node.ts",
     "phase:prepare:block": "npm exec -- tsx scripts/phase-pipeline.ts",
     "phase:prepare:block:preferred": "npm exec -- tsx scripts/phase-node.ts run-tsx scripts/phase-pipeline.ts",
+    "phase:prepare:batch": "npm exec -- tsx scripts/phase-release.ts",
+    "phase:prepare:batch:preferred": "npm exec -- tsx scripts/phase-node.ts run-tsx scripts/phase-release.ts",
     "phase:pr:open": "npm exec -- tsx scripts/phase-pr.ts open",
     "phase:pr:open:file": "npm exec -- tsx scripts/phase-pr-open-file.ts",
     "phase:pr:view": "npm exec -- tsx scripts/phase-pr.ts view",
     "phase:sync:status": "npm exec -- tsx scripts/phase-status-sync.ts",
-    "test:phase:gate": "npm run lint:phase && npm run test:phase:smoke && npm run build",
-    "test:phase:gate:ci": "npm run phase:check:tsconfig && npm run lint:phase && npm run test:phase:smoke && npm run build",
+    "test:phase:gate": "npm exec -- tsx scripts/phase-gate-ci.ts",
+    "test:phase:gate:ci": "npm exec -- tsx scripts/phase-gate-ci.ts --ci",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -152,7 +155,10 @@
     "test:phase:761-766": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v70.test.ts",
     "test:phase:767-772": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v71.test.ts",
     "test:phase:773-778": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v72.test.ts",
-    "test:phase:779-784": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v73.test.ts"
+    "test:phase:779-784": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v73.test.ts",
+    "test:phase:785-790": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v74.test.ts",
+    "test:phase:791-796": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v75.test.ts",
+    "test:phase:797-802": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v76.test.ts"
   },
   "keywords": [
     "sanliurfa",
@@ -163,6 +169,9 @@
   ],
   "author": "Sanliurfa.com",
   "license": "MIT",
+  "engines": {
+    "node": ">=22.13.0 <23"
+  },
   "dependencies": {
     "@astrojs/mdx": "^5.0.3",
     "@astrojs/node": "^10.0.4",

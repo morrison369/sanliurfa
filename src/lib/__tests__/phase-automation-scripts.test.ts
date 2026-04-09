@@ -36,6 +36,9 @@ import { buildPrChecksArgs, checksPublished, parsePhaseCheckWaitArgs } from '../
 import { buildNodeVersionError, isSupportedNodeVersion, parseNodeVersion } from '../../../scripts/phase-env';
 import { buildPhaseNodeInvocation, compareSemver, parsePhaseNodeArgs } from '../../../scripts/phase-node';
 import { parsePhasePrOpenFileArgs } from '../../../scripts/phase-pr-open-file';
+import { acquirePhaseLock, buildPhaseLockError, getPhaseLockPath, readPhaseLock, releasePhaseLock } from '../../../scripts/phase-lock';
+import { buildPhaseGateSteps, parsePhaseGateArgs } from '../../../scripts/phase-gate-ci';
+import { buildPhaseReleaseSteps, parsePhaseReleaseArgs } from '../../../scripts/phase-release';
 import { hasMatchingMarkdownFiles } from '../content-loader-helpers';
 
 const sampleBlock: PhaseBlockConfig = {
@@ -623,6 +626,74 @@ describe('phase node helpers', () => {
     });
     expect(invocation.args).toContain('run');
     expect(invocation.args).toContain('phase:env:check');
+  });
+});
+
+describe('phase lock helpers', () => {
+  it('creates and releases a worktree lock', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'phase-lock-'));
+    try {
+      const lockPath = acquirePhaseLock('phase-test', dir);
+      expect(getPhaseLockPath(dir)).toBe(lockPath);
+      expect(readPhaseLock(lockPath)?.operation).toBe('phase-test');
+      releasePhaseLock(lockPath);
+      expect(readPhaseLock(lockPath)).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('renders a helpful lock error message', () => {
+    expect(
+      buildPhaseLockError('D:/repo/.phase-worktree.lock', {
+        pid: 12,
+        operation: 'phase-gate-ci',
+        startedAt: '2026-04-09T00:00:00.000Z',
+        cwd: 'D:/repo'
+      })
+    ).toContain('phase-gate-ci');
+  });
+});
+
+describe('phase gate helpers', () => {
+  it('parses ci flag', () => {
+    expect(parsePhaseGateArgs(['--ci']).ci).toBe(true);
+    expect(parsePhaseGateArgs([]).ci).toBe(false);
+  });
+
+  it('builds gate steps with optional tsconfig check', () => {
+    expect(buildPhaseGateSteps({ ci: true })[0]).toEqual({ command: 'npm', args: ['run', 'phase:check:tsconfig'] });
+    expect(buildPhaseGateSteps({ ci: false })[0]).toEqual({ command: 'npm', args: ['run', 'lint:phase'] });
+  });
+});
+
+describe('phase release helpers', () => {
+  it('parses repeated phase-script args', () => {
+    expect(
+      parsePhaseReleaseArgs(['--phase-script', 'test:phase:785-790', '--phase-script', 'test:phase:791-796']).phaseScripts
+    ).toEqual(['test:phase:785-790', 'test:phase:791-796']);
+  });
+
+  it('parses positional phase scripts for npm wrapper compatibility', () => {
+    expect(parsePhaseReleaseArgs(['test:phase:785-790', 'test:phase:791-796']).phaseScripts).toEqual([
+      'test:phase:785-790',
+      'test:phase:791-796'
+    ]);
+  });
+
+  it('builds serialized batch release steps', () => {
+    expect(
+      buildPhaseReleaseSteps({ phaseScripts: ['test:phase:785-790', 'test:phase:791-796'] })
+    ).toEqual([
+      { command: 'npm', args: ['run', 'phase:env:check'] },
+      { command: 'npm', args: ['run', 'phase:sync:tsconfig'] },
+      { command: 'npm', args: ['run', 'phase:check:tsconfig'] },
+      { command: 'npm', args: ['run', 'test:phase:785-790'] },
+      { command: 'npm', args: ['run', 'test:phase:791-796'] },
+      { command: 'npm', args: ['run', 'lint:phase'] },
+      { command: 'npm', args: ['run', 'test:phase:smoke'] },
+      { command: 'npm', args: ['run', 'build'] }
+    ]);
   });
 });
 
