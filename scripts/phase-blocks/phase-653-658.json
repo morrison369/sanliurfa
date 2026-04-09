@@ -1,0 +1,72 @@
+{
+  "start": 653,
+  "end": 658,
+  "version": 52,
+  "docFile": "PHASE_653_658_GOVERNANCE_CONTINUITY_RECOVERY_ASSURANCE_V52.md",
+  "testFile": "src/lib/__tests__/governance-continuity-recovery-suite-v52.test.ts",
+  "title": "Governance Continuity Recovery & Assurance V52",
+  "modules": [
+    {
+      "phase": 653,
+      "title": "Governance Continuity Recovery Router V52",
+      "fileName": "governance-continuity-recovery-router-v52.ts",
+      "exportBase": "GovernanceContinuityRecovery",
+      "reportLabel": "Governance continuity recovery",
+      "reportMessage": "Governance continuity recovery routed",
+      "mode": "router",
+      "signalFields": ["governanceContinuity", "recoveryDepth", "routerCost"],
+      "routeLabels": ["recovery-priority", "recovery-balanced", "recovery-review"]
+    },
+    {
+      "phase": 654,
+      "title": "Policy Stability Assurance Harmonizer V52",
+      "fileName": "policy-stability-assurance-harmonizer-v52.ts",
+      "exportBase": "PolicyStabilityAssurance",
+      "reportLabel": "Policy stability assurance",
+      "reportMessage": "Policy stability assurance harmonized",
+      "mode": "harmonizer",
+      "signalFields": ["policyStability", "assuranceCoverage", "harmonizerCost"]
+    },
+    {
+      "phase": 655,
+      "title": "Compliance Recovery Continuity Mesh V52",
+      "fileName": "compliance-recovery-continuity-mesh-v52.ts",
+      "exportBase": "ComplianceRecoveryContinuity",
+      "reportLabel": "Compliance recovery continuity",
+      "reportMessage": "Compliance recovery continuity routed",
+      "mode": "router",
+      "signalFields": ["complianceRecovery", "continuityDepth", "meshCost"],
+      "routeLabels": ["continuity-priority", "continuity-balanced", "continuity-review"]
+    },
+    {
+      "phase": 656,
+      "title": "Trust Stability Recovery Forecaster V52",
+      "fileName": "trust-stability-recovery-forecaster-v52.ts",
+      "exportBase": "TrustStabilityRecovery",
+      "reportLabel": "Trust stability recovery",
+      "reportMessage": "Trust stability recovery forecasted",
+      "mode": "forecaster",
+      "signalFields": ["trustStability", "recoveryDepth", "forecastCost"]
+    },
+    {
+      "phase": 657,
+      "title": "Board Continuity Assurance Coordinator V52",
+      "fileName": "board-continuity-assurance-coordinator-v52.ts",
+      "exportBase": "BoardContinuityAssurance",
+      "reportLabel": "Board continuity assurance",
+      "reportMessage": "Board continuity assurance coordinated",
+      "mode": "coordinator",
+      "signalFields": ["boardContinuity", "assuranceCoverage", "coordinationCost"]
+    },
+    {
+      "phase": 658,
+      "title": "Policy Recovery Stability Engine V52",
+      "fileName": "policy-recovery-stability-engine-v52.ts",
+      "exportBase": "PolicyRecoveryStability",
+      "reportLabel": "Policy recovery stability",
+      "reportMessage": "Policy recovery stability evaluated",
+      "mode": "engine",
+      "signalFields": ["policyRecovery", "stabilityCoverage", "engineCost"]
+    }
+  ]
+}
