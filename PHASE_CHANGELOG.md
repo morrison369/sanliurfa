@@ -27,4 +27,5 @@
 - 2026-04-08 | phase | `208b173` | Phase 515-520: Governance Continuity Assurance Recovery V29
 - 2026-04-08 | phase | `1cf442d` | Phase 521-526: Governance Recovery Continuity Assurance V30
 - 2026-04-08 | chore | `5fff56b` | Chore: normalize phase changelog for 521-526
-- 2026-04-09 | phase | `e8fd40e` | Phase 527-532: Governance Continuity Stability Assurance V31
+- 2026-04-09 | phase | `2791831` | Phase 527-532: Governance Continuity Stability Assurance V31
+- 2026-04-09 | chore | `d976219` | Chore: update phase changelog for 527-532
