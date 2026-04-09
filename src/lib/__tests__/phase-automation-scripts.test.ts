@@ -506,6 +506,21 @@ describe('phase changelog helpers', () => {
     expect(normalized.match(/Phase 1019-1036: Governance Batch Delivery V113-V115/g)?.length).toBe(1);
   });
 
+  it('drops malformed placeholder phase rows during normalization', () => {
+    const changelog = [
+      '# Phase Changelog',
+      '',
+      '- 2026-04-09 | phase | `84e1045` | Phase 1019-1036: Governance Batch Delivery V113-V115',
+      '- 2026-04-09 | phase | $phaseHash | Phase 1019-1036: Governance Batch Delivery V113-V115',
+      ''
+    ].join('\n');
+
+    const normalized = normalizeChangelog(changelog);
+    expect(normalized).toContain('`84e1045`');
+    expect(normalized).not.toContain('$phaseHash');
+    expect(normalized.match(/Phase 1019-1036: Governance Batch Delivery V113-V115/g)?.length).toBe(1);
+  });
+
   it('reports changelog drift through phase doctor', () => {
     const dir = mkdtempSync(join(tmpdir(), 'phase-doctor-'));
     try {
@@ -515,7 +530,7 @@ describe('phase changelog helpers', () => {
       writeFileSync(join(dir, 'docs', 'WORKTREE_SOURCE_OF_TRUTH.md'), '# policy\n', 'utf8');
       writeFileSync(
         join(dir, 'PHASE_CHANGELOG.md'),
-        '# Phase Changelog\n\n- 2026-04-09 | phase | abc1234 | Phase 1019-1036: Governance Batch Delivery V113-V115\n- 2026-04-09 | phase | `84e1045` | Phase 1019-1036: Governance Batch Delivery V113-V115\n',
+        '# Phase Changelog\n\n- 2026-04-09 | phase | abc1234 | Phase 1019-1036: Governance Batch Delivery V113-V115\n- 2026-04-09 | phase | $phaseHash | Phase 1019-1036: Governance Batch Delivery V113-V115\n- 2026-04-09 | phase | `84e1045` | Phase 1019-1036: Governance Batch Delivery V113-V115\n',
         'utf8'
       );
 

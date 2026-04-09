@@ -1,8 +1,8 @@
 # Memory
 
 ## Current Phase
-- Active window: `Phase 1289-1294` (planned)
-- Last completed: `Phase 1283-1288 Governance Recovery Assurance & Continuity V157`
+- Active window: `Phase 1307-1312` (planned)
+- Last completed: `Phase 1301-1306 Governance Recovery Assurance & Continuity V160`
 
 ## Astro Invariants
 - SSR-first runtime: `output: "server"` with `@astrojs/node` standalone adapter.
@@ -552,3 +552,11 @@
 - `Phase 1283-1288 Governance Recovery Assurance & Continuity V157`: complete
 
 - `Checkpoint 1271-1288`: V155-V157 batch delivered cleanly and inventory-only root policy remained unchanged.
+
+- `Phase 1289-1294 Governance Recovery Assurance & Continuity V158`: complete
+
+- `Phase 1295-1300 Governance Assurance Stability & Continuity V159`: complete
+
+- `Phase 1301-1306 Governance Recovery Assurance & Continuity V160`: complete
+
+- `Checkpoint 1289-1306`: V158-V160 batch delivered cleanly, phase doctor advisory remained non-blocking, and inventory-only root policy remained unchanged.
