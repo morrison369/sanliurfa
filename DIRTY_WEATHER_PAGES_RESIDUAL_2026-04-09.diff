@@ -1,0 +1,9 @@
+WeatherWidget.astro | residual dirty diff not replayed because import.meta.env requires bundled script semantics
+admin/blog/comments.astro | origin/master already contains validated is:inline + plain JS form
+admin/blog/index.astro | origin/master already contains validated is:inline + plain JS form
+admin/dashboard.astro | origin/master already contains validated is:inline + plain JS form
+blog/[slug].astro | origin/master already contains validated is:inline + plain JS form
+places/[slug].astro | origin/master already contains validated is:inline + plain JS form
+profil/favoriler.astro | origin/master already contains validated is:inline + plain JS form
+sifre-sifirla.astro | origin/master already contains validated is:inline + plain JS form
+sosyal/index.astro | origin/master already contains validated is:inline + plain JS form
