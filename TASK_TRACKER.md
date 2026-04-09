@@ -528,8 +528,13 @@ Last updated: 2026-04-09
   - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v63.test.ts`
   - docs: `PHASE_719_724_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V63.md`
 
+- `T-095` Phase 725-730 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v64.test.ts`
+  - docs: `PHASE_725_730_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V64.md`
+
 ## Open
-- `T-095` Phase 725-730 planning
+- `T-096` Phase 731-736 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
