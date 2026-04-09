@@ -1,0 +1,127 @@
+diff --git a/src/lib/__tests__/governance-policy.test.ts b/src/lib/__tests__/governance-policy.test.ts
+index dbf9c36..213bcc6 100644
+--- a/src/lib/__tests__/governance-policy.test.ts
++++ b/src/lib/__tests__/governance-policy.test.ts
+@@ -5,40 +5,19 @@
+  */
+ 
+ import { describe, it, expect } from 'vitest';
+-import {
+-  policyDefinitionBuilder,
+-  policyVersionManager,
+-  policyTemplateLibrary,
+-  policyCompiler,
+-  entitlementManager,
+-  accessReviewOrchestrator,
+-  privilegeEscalationMonitor,
+-  roleHierarchyManager,
+-  complianceAutomator,
+-  auditAutomation,
+-  remediationOrchestrator,
+-  complianceReportAutomation,
+-  decisionAuditor,
+-  decisionTraceability,
+-  changeImpactAnalyzer,
+-  decisionReplayEngine,
+-  policyUsageAnalytics,
+-  accessPatternAnalyzer,
+-  policyConflictDetector,
+-  policyRecommendationEngine,
+-  policyEnforcementEngine,
+-  autoRemediationExecutor,
+-  policyExceptionManager,
+-  policyEvaluationCache
+-} from '../index';
++import { policyDefinitionBuilder, policyVersionManager, policyTemplateLibrary, policyCompiler } from '../policy-as-code';
++import { entitlementManager, accessReviewOrchestrator, privilegeEscalationMonitor, roleHierarchyManager } from '../access-governance';
++import { complianceAutomator, auditAutomation, remediationOrchestrator, complianceReportAutomation } from '../compliance-automation';
++import { decisionAuditor, decisionTraceability, changeImpactAnalyzer, decisionReplayEngine } from '../decision-audit';
++import { policyUsageAnalytics, accessPatternAnalyzer, policyConflictDetector, policyRecommendationEngine } from '../policy-analytics';
++import { policyEnforcementEngine, autoRemediationExecutor, policyExceptionManager, policyEvaluationCache } from '../policy-enforcement';
+ 
+ // Phase 161: Policy as Code & Definition
+ describe('Phase 161: Policy as Code & Definition', () => {
+   it('should build and compile policies', () => {
+-    const { policyId, build } = policyDefinitionBuilder.buildPolicy('access-control', 'Control user access');
+-    const policy = build()
+-      .addRule({ role: 'admin' }, 'allow-all', 'allow')
+-      .build();
++    const { policyId, addRule, build } = policyDefinitionBuilder.buildPolicy('access-control', 'Control user access');
++    addRule({ role: 'admin' }, 'allow-all', 'allow');
++    const policy = build();
+ 
+     expect(policy).toBeDefined();
+     expect(policy.name).toBe('access-control');
+@@ -46,8 +25,9 @@ describe('Phase 161: Policy as Code & Definition', () => {
+   });
+ 
+   it('should manage policy versions and compare', () => {
+-    const { build } = policyDefinitionBuilder.buildPolicy('test-policy', 'Test');
+-    const policy = build().addRule({ role: 'user' }, 'limited-access', 'deny').build();
++    const { addRule, build } = policyDefinitionBuilder.buildPolicy('test-policy', 'Test');
++    addRule({ role: 'user' }, 'limited-access', 'deny');
++    const policy = build();
+ 
+     const v2 = policyVersionManager.createVersion(policy);
+     expect(v2.version).toBe(2);
+@@ -72,8 +52,9 @@ describe('Phase 161: Policy as Code & Definition', () => {
+   });
+ 
+   it('should compile policies with validation', () => {
+-    const { build } = policyDefinitionBuilder.buildPolicy('compile-test', 'Test');
+-    const policy = build().addRule({ status: 'active' }, 'grant-access', 'allow').build();
++    const { addRule, build } = policyDefinitionBuilder.buildPolicy('compile-test', 'Test');
++    addRule({ status: 'active' }, 'grant-access', 'allow');
++    const policy = build();
+ 
+     const compiled = policyCompiler.compilePolicy(policy);
+     expect(compiled.policyId).toBe(policy.policyId);
+diff --git a/src/lib/marketing-automation.ts b/src/lib/marketing-automation.ts
+index 98de089..56fbda1 100644
+--- a/src/lib/marketing-automation.ts
++++ b/src/lib/marketing-automation.ts
+@@ -113,7 +113,7 @@ export class TemplateEngine {
+     if (!template) return '';
+     let rendered = template.content;
+     for (const variable of template.variables) {
+-      const pattern = new RegExp(, 'g');
++      const pattern = new RegExp(`{{\\s*${variable}\\s*}}`, 'g');
+       rendered = rendered.replace(pattern, String(data[variable] || ''));
+     }
+     return rendered;
+diff --git a/src/lib/postgres.ts b/src/lib/postgres.ts
+index d3318cf..285e168 100644
+--- a/src/lib/postgres.ts
++++ b/src/lib/postgres.ts
+@@ -413,6 +413,9 @@ export async function remove(table: string, id: string) {
+   return { success: true };
+ }
+ 
++// Compatibility alias for modules importing `delete` from this file.
++export { remove as delete };
++
+ // ==================== BACKWARD COMPATIBILITY ====================
+ 
+ /**
+diff --git a/src/migrations/032_user_blocking.ts b/src/migrations/032_user_blocking.ts
+index 0f92a45..a4dd822 100644
+--- a/src/migrations/032_user_blocking.ts
++++ b/src/migrations/032_user_blocking.ts
+@@ -26,7 +26,7 @@ export const migration_032_user_blocking: Migration = {
+       CREATE INDEX IF NOT EXISTS idx_user_blocks_created ON user_blocks(created_at DESC);
+     `);
+ 
+-    -- User mutes - hides user's content from feed without blocking messaging
++    // User mutes - hides user's content from feed without blocking messaging
+     await pool.query(`
+       CREATE TABLE IF NOT EXISTS user_mutes (
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+@@ -41,7 +41,7 @@ export const migration_032_user_blocking: Migration = {
+       CREATE INDEX IF NOT EXISTS idx_user_mutes_muted ON user_mutes(muted_id);
+     `);
+ 
+-    -- Blocked message attempts - audit log of attempts to message blocked users
++    // Blocked message attempts - audit log of attempts to message blocked users
+     await pool.query(`
+       CREATE TABLE IF NOT EXISTS blocked_message_attempts (
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

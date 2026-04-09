@@ -5,40 +5,19 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import {
-  policyDefinitionBuilder,
-  policyVersionManager,
-  policyTemplateLibrary,
-  policyCompiler,
-  entitlementManager,
-  accessReviewOrchestrator,
-  privilegeEscalationMonitor,
-  roleHierarchyManager,
-  complianceAutomator,
-  auditAutomation,
-  remediationOrchestrator,
-  complianceReportAutomation,
-  decisionAuditor,
-  decisionTraceability,
-  changeImpactAnalyzer,
-  decisionReplayEngine,
-  policyUsageAnalytics,
-  accessPatternAnalyzer,
-  policyConflictDetector,
-  policyRecommendationEngine,
-  policyEnforcementEngine,
-  autoRemediationExecutor,
-  policyExceptionManager,
-  policyEvaluationCache
-} from '../index';
+import { policyDefinitionBuilder, policyVersionManager, policyTemplateLibrary, policyCompiler } from '../policy-as-code';
+import { entitlementManager, accessReviewOrchestrator, privilegeEscalationMonitor, roleHierarchyManager } from '../access-governance';
+import { complianceAutomator, auditAutomation, remediationOrchestrator, complianceReportAutomation } from '../compliance-automation';
+import { decisionAuditor, decisionTraceability, changeImpactAnalyzer, decisionReplayEngine } from '../decision-audit';
+import { policyUsageAnalytics, accessPatternAnalyzer, policyConflictDetector, policyRecommendationEngine } from '../policy-analytics';
+import { policyEnforcementEngine, autoRemediationExecutor, policyExceptionManager, policyEvaluationCache } from '../policy-enforcement';
 
 // Phase 161: Policy as Code & Definition
 describe('Phase 161: Policy as Code & Definition', () => {
   it('should build and compile policies', () => {
-    const { policyId, build } = policyDefinitionBuilder.buildPolicy('access-control', 'Control user access');
-    const policy = build()
-      .addRule({ role: 'admin' }, 'allow-all', 'allow')
-      .build();
+    const { policyId, addRule, build } = policyDefinitionBuilder.buildPolicy('access-control', 'Control user access');
+    addRule({ role: 'admin' }, 'allow-all', 'allow');
+    const policy = build();
 
     expect(policy).toBeDefined();
     expect(policy.name).toBe('access-control');
@@ -46,8 +25,9 @@ describe('Phase 161: Policy as Code & Definition', () => {
   });
 
   it('should manage policy versions and compare', () => {
-    const { build } = policyDefinitionBuilder.buildPolicy('test-policy', 'Test');
-    const policy = build().addRule({ role: 'user' }, 'limited-access', 'deny').build();
+    const { addRule, build } = policyDefinitionBuilder.buildPolicy('test-policy', 'Test');
+    addRule({ role: 'user' }, 'limited-access', 'deny');
+    const policy = build();
 
     const v2 = policyVersionManager.createVersion(policy);
     expect(v2.version).toBe(2);
@@ -72,8 +52,9 @@ describe('Phase 161: Policy as Code & Definition', () => {
   });
 
   it('should compile policies with validation', () => {
-    const { build } = policyDefinitionBuilder.buildPolicy('compile-test', 'Test');
-    const policy = build().addRule({ status: 'active' }, 'grant-access', 'allow').build();
+    const { addRule, build } = policyDefinitionBuilder.buildPolicy('compile-test', 'Test');
+    addRule({ status: 'active' }, 'grant-access', 'allow');
+    const policy = build();
 
     const compiled = policyCompiler.compilePolicy(policy);
     expect(compiled.policyId).toBe(policy.policyId);

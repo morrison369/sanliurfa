@@ -413,6 +413,9 @@ export async function remove(table: string, id: string) {
   return { success: true };
 }
 
+// Compatibility alias for modules importing `delete` from this module.
+export { remove as delete };
+
 // ==================== BACKWARD COMPATIBILITY ====================
 
 /**
