@@ -22,6 +22,7 @@
 - `npm run phase:pr:open:file -- <repo> <base> <head> <title-file> <body-file>`: npm-safe PR open wrapper when long flag forwarding is unreliable on Windows.
 - `npm run phase:pr:view -- <repo> <pr-number>`: npm-safe PR merge-status wrapper for Windows positional arg forwarding.
 - `npm run phase:sync:tsconfig`: refresh `tsconfig.phase.json` after phase file changes.
+- Do not run two Astro build/gate chains in parallel inside the same worktree; `.astro/` content sync is not concurrency-safe.
 
 ## Coding Style & Naming Conventions
 - TypeScript and Astro, 2-space indentation, Prettier-compatible output.

@@ -1,8 +1,8 @@
 # Memory
 
 ## Current Phase
-- Active window: `Phase 767-772` (planned)
-- Last completed: `Phase 761-766 Governance Assurance Stability & Continuity V70`
+- Active window: `Phase 773-778` (planned)
+- Last completed: `Phase 767-772 Governance Recovery Assurance & Continuity V71`
 
 ## Astro Invariants
 - SSR-first runtime: `output: "server"` with `@astrojs/node` standalone adapter.
@@ -163,17 +163,19 @@
 
 - `Phase 761-766 Governance Assurance Stability & Continuity V70`: complete
 
+- `Phase 767-772 Governance Recovery Assurance & Continuity V71`: complete
+
 ## Open Tasks
 - No open delivery tasks for `Phase 137-142`, `Phase 161-166`, `Phase 167-172`, `Phase 173-178`, `Phase 179-184`, `Phase 185-190`, `Phase 191-196`, `Phase 197-202`, `Phase 203-208`, `Phase 209-214`, `Phase 215-220`, `Phase 221-226`, `Phase 227-232`, `Phase 233-238`, `Phase 239-244`, `Phase 245-250`, `Phase 251-256`, `Phase 257-262`, `Phase 263-268`, `Phase 269-274`, `Phase 275-280`, `Phase 281-286`, `Phase 287-292`, `Phase 293-298`, `Phase 299-304`, `Phase 305-310`, `Phase 311-316`, `Phase 317-322`, `Phase 323-328`, `Phase 329-334`, `Phase 335-340`, `Phase 341-346`, `Phase 347-352`, or `Phase 353-358`.
-- Optional: Phase 767-772 scope definition and kickoff.
+- Optional: Phase 773-778 scope definition and kickoff.
 
 ## Next 6 Phases (Planned Scope)
-- `Phase 767`: Governance Recovery Assurance Router V71
-- `Phase 768`: Policy Continuity Stability Harmonizer V71
-- `Phase 769`: Compliance Assurance Recovery Mesh V71
-- `Phase 770`: Trust Stability Continuity Forecaster V71
-- `Phase 771`: Board Recovery Stability Coordinator V71
-- `Phase 772`: Policy Assurance Continuity Engine V71
+- `Phase 773`: Governance Assurance Stability Router V72
+- `Phase 774`: Policy Recovery Continuity Harmonizer V72
+- `Phase 775`: Compliance Stability Continuity Mesh V72
+- `Phase 776`: Trust Assurance Recovery Forecaster V72
+- `Phase 777`: Board Stability Continuity Coordinator V72
+- `Phase 778`: Policy Recovery Assurance Engine V72
 
 ## Checkpoint Rule
 - Every 2 phase blocks, record one short checkpoint note (risk, decision, outcome).
@@ -284,6 +286,8 @@
 - `Checkpoint 755-760`: V69 block delivered with recovery assurance continuity pattern and preferred-node wrappers added.
 
 - `Checkpoint 761-766`: V70 block delivered with assurance stability continuity pattern and npm-safe PR view wrapper restored.
+
+- `Checkpoint 767-772`: V71 block delivered with recovery assurance continuity pattern and no-parallel-build rule documented.
 
 ## Blockers
 - No active blocker.
