@@ -33,6 +33,7 @@ import { buildChangelogLine, classifyCommit, parseArgs, upsertChangelogEntry } f
 import { findDoctorIssues } from '../../../scripts/phase-doctor';
 import { normalizeChangelog, parseChangelogLine } from '../../../scripts/phase-changelog-normalize';
 import { buildScriptSurfaceReport, renderScriptSurfaceReport } from '../../../scripts/phase-scripts-report';
+import { renderDependencyTriage, summarizeAudit } from '../../../scripts/dependency-triage';
 import { buildOpenArgs, buildViewArgs, parsePhasePrArgs } from '../../../scripts/phase-pr';
 import { buildPhasePipelineEnv, buildPhasePipelineSteps, buildPipelineStepInvocation, parsePhasePipelineArgs, resolvePreferredTsxStep } from '../../../scripts/phase-pipeline';
 import { buildPrChecksArgs, checksPublished, parsePhaseCheckWaitArgs } from '../../../scripts/phase-check-wait';
@@ -180,6 +181,28 @@ describe('phase script surface report', () => {
     expect(report.compatibilityPhaseScripts).toEqual(['test:phase:947-952', 'test:phase:953-958']);
     expect(report.runnerScripts).toContain('test:phase:range');
     expect(renderScriptSurfaceReport(report)).toContain('compatibilityPhaseScripts=2');
+    expect(renderScriptSurfaceReport(report)).toContain('policy=runner-first');
+    expect(report.firstCompatibilityScript).toBe('test:phase:947-952');
+    expect(report.lastCompatibilityScript).toBe('test:phase:953-958');
+  });
+});
+
+describe('dependency triage helpers', () => {
+  it('summarizes direct and transitive audit buckets', () => {
+    const summary = summarizeAudit({
+      metadata: { vulnerabilities: { total: 3 } },
+      vulnerabilities: {
+        xlsx: { severity: 'high', isDirect: true, fixAvailable: false },
+        vite: { severity: 'high', isDirect: false, fixAvailable: true },
+        yaml: { severity: 'moderate', isDirect: false, fixAvailable: { name: '@astrojs/check' } }
+      }
+    });
+
+    expect(summary.total).toBe(3);
+    expect(summary.high).toEqual(['vite', 'xlsx']);
+    expect(summary.direct).toEqual(['xlsx']);
+    expect(summary.transitive).toEqual(['vite', 'yaml']);
+    expect(renderDependencyTriage(summary)).toContain('policy=runtime-first');
   });
 });
 
@@ -426,9 +449,12 @@ describe('phase doctor', () => {
       writeFileSync(join(dir, 'README.md'), '# README\n## Clean Worktree Politikası\nphase:scripts:report\n');
       writeFileSync(join(dir, 'STALE_WORKTREE.md'), '# stale\n');
       writeFileSync(join(dir, 'ROOT_INVENTORY_ONLY_POLICY.md'), '# policy\n');
+      writeFileSync(join(dir, 'ARCHITECTURE.md'), '# architecture\n');
       mkdirSync(join(dir, 'docs'), { recursive: true });
       writeFileSync(join(dir, 'docs', 'WORKTREE_SOURCE_OF_TRUTH.md'), '# truth\n');
       writeFileSync(join(dir, 'docs', 'ACTIVE_DOCS.md'), '# docs\n');
+      writeFileSync(join(dir, 'docs', 'DEPENDENCY_TRIAGE.md'), '# deps\n');
+      writeFileSync(join(dir, 'docs', 'SCRIPT_SURFACE_POLICY.md'), '# scripts\n');
       writeFileSync(
         join(dir, 'package.json'),
         JSON.stringify({ scripts: { 'test:phase:range': 'x', 'test:phase:batch': 'y', 'phase:doctor': 'z', 'phase:prepare:block': 'a', 'phase:prepare:block:preferred': 'b', 'phase:prepare:batch': 'c' } })
@@ -590,9 +616,16 @@ describe('phase changelog helpers', () => {
     const dir = mkdtempSync(join(tmpdir(), 'phase-doctor-'));
     try {
       mkdirSync(join(dir, 'docs'), { recursive: true });
-      writeFileSync(join(dir, 'README.md'), '## Clean Worktree Politikası\n', 'utf8');
+      writeFileSync(join(dir, 'README.md'), '## Clean Worktree Politikası\nphase:scripts:report\ndeps:audit:triage\nARCHITECTURE.md\n', 'utf8');
+      writeFileSync(join(dir, 'STALE_WORKTREE.md'), '# stale\n', 'utf8');
+      writeFileSync(join(dir, 'ROOT_INVENTORY_ONLY_POLICY.md'), '# policy\n', 'utf8');
+      writeFileSync(join(dir, 'ARCHITECTURE.md'), '# architecture\n', 'utf8');
       writeFileSync(join(dir, 'PHASE_OPERATIONS_GUIDE.md'), '# guide\n', 'utf8');
       writeFileSync(join(dir, 'docs', 'WORKTREE_SOURCE_OF_TRUTH.md'), '# policy\n', 'utf8');
+      writeFileSync(join(dir, 'docs', 'ACTIVE_DOCS.md'), '# docs\n', 'utf8');
+      writeFileSync(join(dir, 'docs', 'DEPENDENCY_TRIAGE.md'), '# deps\n', 'utf8');
+      writeFileSync(join(dir, 'docs', 'SCRIPT_SURFACE_POLICY.md'), '# scripts\n', 'utf8');
+      writeFileSync(join(dir, 'package.json'), JSON.stringify({ scripts: { 'test:phase:range': 'x', 'test:phase:batch': 'y', 'phase:doctor': 'z', 'phase:prepare:block': 'a', 'phase:prepare:block:preferred': 'b', 'phase:prepare:batch': 'c' } }), 'utf8');
       writeFileSync(
         join(dir, 'PHASE_CHANGELOG.md'),
         '# Phase Changelog\n\n- 2026-04-09 | phase | abc1234 | Phase 1019-1036: Governance Batch Delivery V113-V115\n- 2026-04-09 | phase | $phaseHash | Phase 1019-1036: Governance Batch Delivery V113-V115\n- 2026-04-09 | phase | `84e1045` | Phase 1019-1036: Governance Batch Delivery V113-V115\n',

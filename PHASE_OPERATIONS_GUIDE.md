@@ -7,6 +7,7 @@
 - Do not use a dirty local root worktree as a phase source of truth; use it only for residual diff inventory.
 - Run `npm run phase:doctor` whenever source-of-truth docs or changelog behavior changed.
 - Keep [STALE_WORKTREE.md](STALE_WORKTREE.md), [ROOT_INVENTORY_ONLY_POLICY.md](ROOT_INVENTORY_ONLY_POLICY.md), and [docs/ACTIVE_DOCS.md](docs/ACTIVE_DOCS.md) aligned.
+- Keep [ARCHITECTURE.md](ARCHITECTURE.md), [docs/DEPENDENCY_TRIAGE.md](docs/DEPENDENCY_TRIAGE.md), and [docs/SCRIPT_SURFACE_POLICY.md](docs/SCRIPT_SURFACE_POLICY.md) aligned with operator reality.
 
 ## Standard Delivery Flow
 1. Generate the phase block files and exports.
@@ -51,8 +52,10 @@
   - `phase:prepare:batch:preferred`
 - Treat single `test:phase:<range>` entries as compatibility surface for generated phase blocks, not the primary operator interface.
 - Review the current surface with `npm run phase:scripts:report` before changing package scripts.
+- Use `docs/SCRIPT_SURFACE_POLICY.md` as the repo-level rule for compatibility vs runner-first commands.
 
 ## Astro-Specific Guardrails
 - The repo is SSR-first with `@astrojs/node`.
 - Avoid route collisions and keep content collection loader/schema changes paired.
 - Build and gate wrappers are serialized because `.astro/` and `dist/` artifacts are not concurrency-safe.
+- Use `ARCHITECTURE.md` as the runtime source for Astro invariants; keep this guide focused on phase operations.

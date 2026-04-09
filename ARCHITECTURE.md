@@ -1,74 +1,58 @@
-# Architecture Guide
+# Architecture
 
-Comprehensive system design for Şanlıurfa.com.
+This repository is an Astro SSR application with a separate phase-delivery operations layer. Treat them as two systems that share one repo.
 
-## System Overview
+## Delivery Model
+- Authoritative delivery surface: clean `git worktree` from `origin/master`
+- Non-authoritative local surface: dirty root worktree, inventory only
+- Operational policy references:
+  - `STALE_WORKTREE.md`
+  - `ROOT_INVENTORY_ONLY_POLICY.md`
+  - `docs/WORKTREE_SOURCE_OF_TRUTH.md`
 
-Enterprisefeatures: Real-time analytics (SSE), social feed, loyalty system, subscriptions, moderation.
+## Application Runtime
+- Framework: Astro SSR
+- Output mode: `server`
+- Adapter: `@astrojs/node`
+- UI islands: React where needed, Astro pages/layouts for route delivery
+- Shared logic: `src/lib/`
+- Content collections: `src/content/` + `src/content.config.ts`
 
-Tech: Astro 6.1 + React 19, Node.js/TypeScript, PostgreSQL, Redis, Stripe, SSE.
+## Astro Invariants
+- Do not create route collisions like `src/pages/x.ts` and `src/pages/x/index.ts`.
+- Do not run parallel Astro build or phase-gate chains in the same worktree.
+- Do not convert scripts using `import.meta.env` into `is:inline`; that bypasses Astro/Vite transforms.
+- Treat `sw.js` as the emitted PWA worker artifact when adjusting compression or exclusion rules.
+- Pair content collection loader and schema changes; `src/content/` and `src/content.config.ts` move together.
 
-## Layers
+## Operational Runtime
+- Phase delivery is runner-first:
+  - `test:phase:range`
+  - `test:phase:batch`
+  - `phase:prepare:block:preferred`
+  - `phase:prepare:batch:preferred`
+  - `phase:doctor`
+- `test:phase:<range>` entries are compatibility surface for generated blocks, not the preferred operator API.
 
-- Presentation: Astro SSR + React components
-- API: TypeScript routes, validation, metrics
-- Business Logic: Auth, loyalty, social, subscriptions
-- Data Access: PostgreSQL + Redis
+## State Files
+- Active metadata:
+  - `PHASE_INDEX.md`
+  - `TASK_TRACKER.md`
+  - `memory.md`
+  - `PHASE_CHANGELOG.md`
+- `PHASE_CHANGELOG.md` records phase rows only. Changelog maintenance chores do not belong in the changelog.
 
-## Real-time (SSE)
+## Dependency Policy
+- Dependency upgrades do not ship inside routine phase-delivery PRs.
+- Use `npm run deps:audit:triage` and `docs/DEPENDENCY_TRIAGE.md` to classify risk before any dependency PR.
+- Runtime dependency fixes come before dev-only tooling fixes.
 
-Two streams:
-1. Social Feed: 15s polling, activity stream
-2. Analytics: 5s metrics, 30s KPIs
-
-Client manager handles reconnection with exponential backoff.
-
-## Loyalty System
-
-Points → Tiers → Achievements → Rewards
-
-Gamification hooks auto-unlock achievements on user actions.
-
-Admin panel: manage rewards, manual awards, view statistics.
-
-## Social Features
-
-Activity feed, hashtags, mentions, leaderboards.
-
-All cached with Redis (sanliurfa: namespace).
-
-## Auth & Caching
-
-JWT + bcrypt + Redis sessions (24h sliding window).
-
-Redis keys: sanliurfa:places, loyalty:balance, etc.
-
-Cache invalidation on mutations.
-
-## Rate Limiting
-
-100 req/15min default, 5 attempts/15min for auth.
-
-Redis-backed with in-memory fallback.
-
-## Feature Gating
-
-Tiers: Free, Premium, Business.
-
-Stripe integration with webhook HMAC verification.
-
-## Monitoring
-
-Structured logging, slow query detection (>1000ms),
-metrics aggregation (error rate, P95 latency).
-
-## Security
-
-Parameterized SQL, input sanitization,
-httpOnly cookies, HMAC webhook verification.
-
-## Deployment
-
-Docker for dev, PM2 + Nginx for prod on CentOS Web Panel.
-
-Last Updated: 2026-04-08
+## Build And Gate Boundary
+- Build/gate correctness is validated through:
+  - `npm run phase:doctor`
+  - `npm run test:phase:gate:ci`
+  - `npm run build`
+- CI required checks stay minimal and deterministic:
+  - `phase:check:tsconfig`
+  - `test:phase:gate:ci`
+- Advisory checks may expand, but required checks should remain stable unless there is a clear failure mode they need to cover.

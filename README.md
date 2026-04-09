@@ -118,12 +118,14 @@ npm run phase:changelog:normalize
 - Local root worktree bunlarla çelişiyorsa clean worktree + `origin/master` kazanır.
 - Dirty root yalnızca inventory/forensics yüzeyidir.
 - Aktif operasyon dosyalarının kısa listesi için `docs/ACTIVE_DOCS.md` kullanın.
+- Mimari sabitler için `ARCHITECTURE.md` kullanın.
 
 ## Astro Operasyon Notları
 - Repo SSR-first çalışır: `output: "server"` ve `@astrojs/node` adapter.
 - Route collision üretmeyin: `src/pages/x.ts` ile `src/pages/x/index.ts` aynı anda yaşamamalı.
 - Content collection değişikliklerinde `src/content.config.ts` ve `src/content/` birlikte ele alınmalı.
 - PWA build çıktısında service worker dosyası `sw.js` olarak üretilir; build araçlarını buna göre konfigüre edin.
+- `import.meta.env` kullanan bundled scriptleri keyfi `is:inline` yapmayın.
 
 ## PR Politikası
 - `master` korumalıdır; doğrudan push yapılmaz.
@@ -142,6 +144,7 @@ npx tsx scripts/phase-pr.ts view --repo titanai777/sanliurfa --pr <number>
 - PR açmadan önce `npm run phase:doctor` çalıştırın.
 - Changelog hygiene için `npm run phase:changelog:normalize` kullanın.
 - Script yüzeyi raporu için `npm run phase:scripts:report` kullanın.
+- Dependency risk özeti için `npm run deps:audit:triage` kullanın.
 - Dated cleanup ve verification raporları root yerine `docs/archive/cleanup/` altında tutulmalıdır.
 
 ## Önerilen Batch Akışı
