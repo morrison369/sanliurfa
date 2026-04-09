@@ -1,0 +1,72 @@
+{
+  "start": 605,
+  "end": 610,
+  "version": 44,
+  "docFile": "PHASE_605_610_GOVERNANCE_CONTINUITY_STABILITY_ASSURANCE_V44.md",
+  "testFile": "src/lib/__tests__/governance-continuity-stability-suite-v44.test.ts",
+  "title": "Governance Continuity Stability & Assurance V44",
+  "modules": [
+    {
+      "phase": 605,
+      "title": "Governance Continuity Stability Router V44",
+      "fileName": "governance-continuity-stability-router-v44.ts",
+      "exportBase": "GovernanceContinuityStability",
+      "reportLabel": "Governance continuity stability",
+      "reportMessage": "Governance continuity stability routed",
+      "mode": "router",
+      "signalFields": ["governanceContinuity", "stabilityCoverage", "routerCost"],
+      "routeLabels": ["stability-priority", "stability-balanced", "stability-review"]
+    },
+    {
+      "phase": 606,
+      "title": "Policy Recovery Assurance Harmonizer V44",
+      "fileName": "policy-recovery-assurance-harmonizer-v44.ts",
+      "exportBase": "PolicyRecoveryAssurance",
+      "reportLabel": "Policy recovery assurance",
+      "reportMessage": "Policy recovery assurance harmonized",
+      "mode": "harmonizer",
+      "signalFields": ["policyRecovery", "assuranceCoverage", "harmonizerCost"]
+    },
+    {
+      "phase": 607,
+      "title": "Compliance Assurance Continuity Mesh V44",
+      "fileName": "compliance-assurance-continuity-mesh-v44.ts",
+      "exportBase": "ComplianceAssuranceContinuity",
+      "reportLabel": "Compliance assurance continuity",
+      "reportMessage": "Compliance assurance continuity routed",
+      "mode": "router",
+      "signalFields": ["complianceAssurance", "continuityDepth", "meshCost"],
+      "routeLabels": ["continuity-priority", "continuity-balanced", "continuity-review"]
+    },
+    {
+      "phase": 608,
+      "title": "Trust Stability Assurance Forecaster V44",
+      "fileName": "trust-stability-assurance-forecaster-v44.ts",
+      "exportBase": "TrustStabilityAssurance",
+      "reportLabel": "Trust stability assurance",
+      "reportMessage": "Trust stability assurance forecasted",
+      "mode": "forecaster",
+      "signalFields": ["trustStability", "assuranceCoverage", "forecastCost"]
+    },
+    {
+      "phase": 609,
+      "title": "Board Recovery Continuity Coordinator V44",
+      "fileName": "board-recovery-continuity-coordinator-v44.ts",
+      "exportBase": "BoardRecoveryContinuity",
+      "reportLabel": "Board recovery continuity",
+      "reportMessage": "Board recovery continuity coordinated",
+      "mode": "coordinator",
+      "signalFields": ["boardRecovery", "continuityDepth", "coordinationCost"]
+    },
+    {
+      "phase": 610,
+      "title": "Policy Assurance Recovery Engine V44",
+      "fileName": "policy-assurance-recovery-engine-v44.ts",
+      "exportBase": "PolicyAssuranceRecovery",
+      "reportLabel": "Policy assurance recovery",
+      "reportMessage": "Policy assurance recovery evaluated",
+      "mode": "engine",
+      "signalFields": ["policyAssurance", "recoveryDepth", "engineCost"]
+    }
+  ]
+}
