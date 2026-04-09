@@ -123,3 +123,4 @@
 - 2026-04-09 | phase | `72cf158` | Phase 839-856: Governance Batch Delivery V83-V85
 - 2026-04-09 | chore | `13e8c50` | Chore: update phase changelog for 839-856
 - 2026-04-09 | chore | `42acf13` | Chore: isolate runtime libs cleanup
+- 2026-04-09 | phase | `310ff8e` | Phase 857-874: Governance Batch Delivery V86-V88
