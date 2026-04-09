@@ -39,11 +39,16 @@ export function normalizeChangelog(content: string): string {
   const lastPhaseBySubject = new Map<string, ParsedChangelogLine>();
   const phasePlaceholderPrefix = '__PHASE__';
   const rewritten = lines.map((line) => {
+    const sanitized = line.replace(/[\u0000-\u001f\u007f]/g, '');
     if (
       /^\s*-\s+\d{4}-\d{2}-\d{2}\s+\|\s+phase\s+\|\s+\$[A-Za-z_][A-Za-z0-9_]*\s+\|\s+Phase \d+-\d+:/.test(
-        line.replace(/[\u0000-\u001f\u007f]/g, '')
+        sanitized
       )
     ) {
+      return '';
+    }
+
+    if (/^\s*-\s+\d{4}-\d{2}-\d{2}\s+\|\s+chore\s+\|\s+.+\|\s+Chore:\s+(update|normalize|finalize|refresh)\s+phase changelog\b/i.test(sanitized)) {
       return '';
     }
 

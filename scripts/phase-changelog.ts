@@ -25,6 +25,7 @@ export function readCommitMeta(ref: string): GitCommitMeta {
 
 export function classifyCommit(subject: string): 'phase' | 'chore' | null {
   if (/^Phase\s+\d+-\d+:/.test(subject)) return 'phase';
+  if (/^Chore:\s+(update|normalize|finalize|refresh)\s+phase changelog\b/i.test(subject)) return null;
   if (/^Chore:/.test(subject)) return 'chore';
   return null;
 }
