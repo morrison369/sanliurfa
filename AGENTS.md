@@ -1,57 +1,47 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Core app code is under `src/`.
-- `src/pages/`: Astro routes and API handlers (including `src/pages/api/`).
-- `src/components/`, `src/layouts/`, `src/styles/`: UI composition and styling.
-- `src/lib/`: domain logic, governance libraries, shared utilities.
-- `src/lib/__tests__/`: phase-focused Vitest suites.
-- `public/`: static files and PWA assets.
-- `scripts/`: operational utilities (migrate, checks, deploy).
-
-Phase delivery artifacts are tracked at repo root:
-- `PHASE_*.md`, `PHASE_INDEX.md`, `memory.md`, `TASK_TRACKER.md`.
+- `src/pages/`: Astro SSR routes and `src/pages/api/` handlers.
+- `src/components/`, `src/layouts/`, `src/styles/`: UI composition.
+- `src/lib/`: shared logic and phase libraries; tests live in `src/lib/__tests__/`.
+- `src/content/`: content collections; keep loader and schema changes aligned.
+- `public/`: static assets, manifest, PWA files.
+- `scripts/`: phase automation, migration, deploy, and repo ops utilities.
+- Root docs: `PHASE_*.md`, `PHASE_INDEX.md`, `TASK_TRACKER.md`, `memory.md`.
 
 ## Build, Test, and Development Commands
-- `npm run dev`: run Astro dev server.
-- `npm run build`: production build to `dist/`.
-- `npm run preview`: preview built output.
-- `npm run lint`: `astro check` + TypeScript no-emit.
-- `npm run test:unit`: run all unit tests.
-- `npm run test:phase:311-316`: run current phase regression quickly.
-- `npm run test:e2e`: run Playwright tests.
-
-Recommended local gate for phase work:
-`npm run test:unit -- <phase-test-file> && npm run build`
+- `npm run dev`: Astro dev server.
+- `npm run build`: SSR production build to `dist/`.
+- `npm run lint`: `astro check` plus TypeScript no-emit.
+- `npm run test:unit`: Vitest suite.
+- `npm run test:phase:smoke`: previous + latest phase suites.
+- `npm run test:phase:gate:ci`: phase tsconfig check, phase lint, smoke, Astro build.
+- `npm run phase:sync:tsconfig`: refresh `tsconfig.phase.json` after phase file changes.
 
 ## Coding Style & Naming Conventions
-- TypeScript + Astro strict mode.
-- 2-space indentation; keep formatting Prettier-compatible.
-- Prefer descriptive `kebab-case` for `src/lib` modules.
-- Keep phase modules small and composable (store/scorer/gate/reporter pattern).
-- Test files use `*.test.ts` and live in `src/lib/__tests__/`.
+- TypeScript and Astro, 2-space indentation, Prettier-compatible output.
+- Use `kebab-case` for files in `src/lib/` and `PascalCase` exports.
+- Keep phase modules pure where possible; avoid direct infra imports unless the contract requires them.
+- Tests stay in `src/lib/__tests__/` and use `*.test.ts` naming.
+
+## Astro Rules
+- This repo is SSR-first: `output: 'server'` with `@astrojs/node` standalone adapter.
+- Do not create route collisions like `src/pages/x.ts` and `src/pages/x/index.ts` together.
+- Treat `src/content.config.ts` as coupled to `src/content/`; loader/schema updates must ship together.
+- PWA output currently builds `sw.js`; keep compression exclusions aligned to the emitted file name.
 
 ## Testing Guidelines
-- Each phase block ships with 24 unit tests (6 modules x 4 tests).
-- Test categories per module: store/add, compute/score, gate/route, report.
-- For changed phase blocks, run only relevant suite first, then full build.
+- Each phase block delivers 6 libs and 24 Vitest assertions.
+- Run the block-specific suite first, then `npm run test:phase:gate:ci` before PR.
+- For repo ops changes, extend `src/lib/__tests__/phase-automation-scripts.test.ts` when touching automation scripts.
 
 ## Commit & Pull Request Guidelines
-- Use milestone-style commit titles: `Phase 311-316: <short title>`.
-- One logical delivery per commit (code + tests + docs + trackers).
-- PR must include:
-  - affected phase range,
-  - commands executed,
-  - test/build results,
-  - any known warnings not addressed.
+- Use milestone-style commits: `Phase 671-676: ...` or `Chore: ...`.
+- Prefer API-first PR creation for phase branches: `tsx scripts/phase-pr.ts open ...`.
+- Verify merge completion from remote state, not local fast-forward behavior: `tsx scripts/phase-pr.ts view --repo titanai777/sanliurfa --pr <n>`.
+- PR body should list scope, verification commands, and any intentionally deferred warnings.
 
-## Phase Workflow (Required)
-For every new phase range:
-1. Add 6 `src/lib` modules.
-2. Add one 24-test suite in `src/lib/__tests__/`.
-3. Export modules from `src/lib/index.ts`.
-4. Add `PHASE_<range>_*.md` and register in `PHASE_INDEX.md`.
-5. Update `memory.md` and `TASK_TRACKER.md`.
-6. Keep `tsconfig.phase.json` scoped (`include: []` + explicit phase `files` list).
-7. Prefer pure phase modules; avoid direct infra imports (`logger`, `postgres`) unless phase contract requires them.
-8. Verify with `npm run test:phase:gate:ci` before handoff.
+## Environment & Ops Notes
+- Use Node `22.13.0` or newer 22.x for local work and CI parity.
+- Keep `npm` cache repo-local via `.npmrc`; do not rely on another project’s cache path.
+- Use clean `git worktree` branches for deliveries; do not develop phase blocks in the dirty root worktree.

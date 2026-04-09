@@ -102,6 +102,8 @@
     "phase:bootstrap:worktree:noinstall": "tsx scripts/phase-worktree-bootstrap.ts --skip-install",
     "phase:changelog": "tsx scripts/phase-changelog.ts",
     "phase:changelog:head": "tsx scripts/phase-changelog.ts HEAD",
+    "phase:pr:open": "tsx scripts/phase-pr.ts open",
+    "phase:pr:view": "tsx scripts/phase-pr.ts view",
     "phase:sync:status": "tsx scripts/phase-status-sync.ts",
     "test:phase:gate": "npm run lint:phase && npm run test:phase:smoke && npm run build",
     "test:phase:gate:ci": "npm run phase:check:tsconfig && npm run lint:phase && npm run test:phase:smoke && npm run build",

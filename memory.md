@@ -4,6 +4,12 @@
 - Active window: `Phase 689-694` (planned)
 - Last completed: `Phase 683-688 Governance Recovery Assurance & Continuity V57`
 
+## Astro Invariants
+- SSR-first runtime: `output: "server"` with `@astrojs/node` standalone adapter.
+- Do not create route collisions such as `src/pages/x.ts` and `src/pages/x/index.ts`.
+- Keep `src/content.config.ts` and `src/content/` changes in the same change set.
+- Target the emitted `sw.js` file when configuring PWA build exclusions.
+
 ## Completed Phases (Recent)
 - `Phase 137-142 Advanced DevOps & Infrastructure`: complete
 - `Phase 143-148 Advanced Testing & QA`: complete

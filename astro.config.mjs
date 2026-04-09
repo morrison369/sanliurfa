@@ -29,7 +29,7 @@ export default defineConfig({
       JavaScript: true,
       Image: false,
       SVG: true,
-      Exclude: ['.*service-worker\\.js$'],
+      Exclude: ['.*service-worker\\.js$', '.*sw\\.js$'],
     }),
   ],
   image: {
