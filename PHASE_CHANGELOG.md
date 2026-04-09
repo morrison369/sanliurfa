@@ -16,3 +16,5 @@
 - 2026-04-09 | chore | `498d9af` | Chore: update phase changelog for 875-892
 - 2026-04-09 | chore | `c68b242` | Chore: isolate runtime refresh cleanup
 - 2026-04-09 | chore | `bf60402` | Chore: refresh residual route cleanup verification
+- 2026-04-09 | phase | `505f706` | Phase 893-910: Governance Batch Delivery V92-V94
+- 2026-04-09 | phase | `b262c9b` | Phase 893-910: Governance Batch Delivery V92-V94
