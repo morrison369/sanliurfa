@@ -79,6 +79,7 @@
     "test:phase:593-598": "vitest run --pool=threads --environment node src/lib/__tests__/governance-stability-recovery-suite-v42.test.ts",
     "test:phase:599-604": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-continuity-suite-v43.test.ts",
     "test:phase:605-610": "vitest run --pool=threads --environment node src/lib/__tests__/governance-continuity-stability-suite-v44.test.ts",
+    "test:phase:611-616": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-recovery-suite-v45.test.ts",
     "test:phase:prev": "tsx scripts/phase-runner.ts prev",
     "test:phase:latest": "tsx scripts/phase-runner.ts latest",
     "test:phase:smoke": "npm run test:phase:prev && npm run test:phase:latest",
