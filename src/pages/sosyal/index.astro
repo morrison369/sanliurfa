@@ -60,7 +60,7 @@ const initialTag = Astro.url.searchParams.get('tag');
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     {
       // Tab switching logic
       const tabButtons = document.querySelectorAll('[data-tab-btn]');
@@ -94,7 +94,7 @@ const initialTag = Astro.url.searchParams.get('tag');
 
       // If hashtag tab is selected via initialTag, switch to it
       if (document.location.search.includes('tag=')) {
-        const hashtagBtn = document.querySelector('[data-tab-btn="hashtag"]') as HTMLButtonElement;
+        const hashtagBtn = document.querySelector('[data-tab-btn="hashtag"]');
         if (hashtagBtn) {
           hashtagBtn.click();
         }

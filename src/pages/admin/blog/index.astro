@@ -182,8 +182,8 @@ const seo = {
       </div>
     </div>
   </div>
-<script>
-  async function deletePost(id: number, title: string) {
+<script is:inline>
+  async function deletePost(id, title) {
     const confirmed = confirm(`"${title}" başlıklı yazıyı silmek istediğinize emin misiniz?`);
     if (!confirmed) return;
 

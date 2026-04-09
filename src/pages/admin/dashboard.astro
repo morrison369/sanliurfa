@@ -69,8 +69,8 @@ if (!locals.user || locals.user.role !== 'admin') {
     </div>
   </div>
 
-  <script>
-    function switchTab(tabName: string) {
+  <script is:inline>
+    function switchTab(tabName) {
       // Hide all sections
       document.getElementById('overview-section')?.classList.add('hidden');
       document.getElementById('moderation-section')?.classList.add('hidden');

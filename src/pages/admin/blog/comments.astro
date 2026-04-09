@@ -199,8 +199,8 @@ const seo = {
   </div>
 </Layout>
 
-<script>
-  async function approveComment(id: number) {
+<script is:inline>
+  async function approveComment(id) {
     const response = await fetch(`/api/blog/comments/${id}/approve`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' }
@@ -214,7 +214,7 @@ const seo = {
     }
   }
 
-  async function rejectComment(id: number) {
+  async function rejectComment(id) {
     const response = await fetch(`/api/blog/comments/${id}/reject`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' }
@@ -228,7 +228,7 @@ const seo = {
     }
   }
 
-  async function deleteComment(id: number) {
+  async function deleteComment(id) {
     if (!confirm('Bu yorumu silmek istediğinize emin misiniz?')) return;
 
     const response = await fetch(`/api/blog/comments/${id}`, {
