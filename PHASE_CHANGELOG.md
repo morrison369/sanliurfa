@@ -39,4 +39,5 @@
 - 2026-04-09 | chore | `e9cde99` | Chore: update phase changelog for 551-556
 - 2026-04-09 | phase | `31b914a` | Phase 557-562: Governance Assurance Stability Continuity V36
 - 2026-04-09 | chore | `a369597` | Chore: update phase changelog for 557-562
-- 2026-04-09 | phase | `f007f16` | Phase 563-568: Governance Recovery Continuity Assurance V37
+- 2026-04-09 | phase | `79883d2` | Phase 563-568: Governance Recovery Continuity Assurance V37
+- 2026-04-09 | chore | `7f7f815` | Chore: update phase changelog for 563-568
