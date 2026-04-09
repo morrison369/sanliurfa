@@ -7,6 +7,7 @@
 
 ## Standard Delivery Flow
 1. Generate the phase block files and exports.
+   - Preferred write path: `npm run phase:generate:block:write -- scripts/phase-blocks/phase-803-808.json`
 2. Update `package.json`, `PHASE_INDEX.md`, `TASK_TRACKER.md`, `memory.md`, and `tsconfig.phase.json`.
 3. Run one of:
    - `npm run phase:prepare:block -- --phase-script test:phase:<range>`
@@ -19,6 +20,7 @@
 - `phase:prepare:block`, `phase:prepare:batch`, `test:phase:gate`, and `test:phase:gate:ci` take a worktree lock through `.phase-worktree.lock`.
 - If a prior run crashes, inspect the lock file before removing it.
 - Treat an existing live lock as an operational error, not a retry signal.
+- Validate lock behavior through `src/lib/__tests__/phase-automation-scripts.test.ts` when changing lock or gate logic.
 
 ## PR and Merge Policy
 - Keep phase content and changelog as two separate commits.

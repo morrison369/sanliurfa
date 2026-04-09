@@ -39,6 +39,8 @@ import { parsePhasePrOpenFileArgs } from '../../../scripts/phase-pr-open-file';
 import { acquirePhaseLock, buildPhaseLockError, getPhaseLockPath, readPhaseLock, releasePhaseLock } from '../../../scripts/phase-lock';
 import { buildPhaseGateSteps, parsePhaseGateArgs } from '../../../scripts/phase-gate-ci';
 import { buildPhaseReleaseSteps, parsePhaseReleaseArgs } from '../../../scripts/phase-release';
+import { parsePhaseBlockGeneratorArgs } from '../../../scripts/phase-block-generator';
+import { parsePhaseBlockWriterArgs } from '../../../scripts/phase-block-writer';
 import { hasMatchingMarkdownFiles } from '../content-loader-helpers';
 
 const sampleBlock: PhaseBlockConfig = {
@@ -148,6 +150,23 @@ describe('tsconfig phase automation', () => {
 });
 
 describe('phase block generator helpers', () => {
+  it('parses generator args with write flag in any position', () => {
+    expect(parsePhaseBlockGeneratorArgs(['scripts/phase-blocks/phase-803-808.json', '--write'])).toEqual({
+      configPath: 'scripts/phase-blocks/phase-803-808.json',
+      shouldWrite: true
+    });
+    expect(parsePhaseBlockGeneratorArgs(['--write', 'scripts/phase-blocks/phase-803-808.json'])).toEqual({
+      configPath: 'scripts/phase-blocks/phase-803-808.json',
+      shouldWrite: true
+    });
+  });
+
+  it('parses dedicated writer args', () => {
+    expect(parsePhaseBlockWriterArgs(['scripts/phase-blocks/phase-803-808.json']).configPath).toBe(
+      'scripts/phase-blocks/phase-803-808.json'
+    );
+  });
+
   it('renders phase script entry', () => {
     expect(buildPhaseScriptEntry(515, 520, sampleBlock.testFile)).toContain('test:phase:515-520');
   });
@@ -652,6 +671,39 @@ describe('phase lock helpers', () => {
         cwd: 'D:/repo'
       })
     ).toContain('phase-gate-ci');
+  });
+
+  it('fails on a live second lock acquisition in the same worktree', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'phase-lock-live-'));
+    try {
+      const lockPath = acquirePhaseLock('phase-gate-ci', dir);
+      expect(() => acquirePhaseLock('phase-release', dir)).toThrow(/already locked/);
+      releasePhaseLock(lockPath);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('clears stale lock metadata before taking a new lock', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'phase-lock-stale-'));
+    try {
+      const lockPath = getPhaseLockPath(dir);
+      writeFileSync(
+        lockPath,
+        JSON.stringify({
+          pid: 999999,
+          operation: 'phase-gate-ci',
+          startedAt: '2026-04-09T00:00:00.000Z',
+          cwd: dir
+        })
+      );
+
+      const freshLock = acquirePhaseLock('phase-release', dir);
+      expect(readPhaseLock(freshLock)?.operation).toBe('phase-release');
+      releasePhaseLock(freshLock);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 
