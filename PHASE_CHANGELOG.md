@@ -27,3 +27,4 @@
 - 2026-04-09 | phase | `b96d37e` | Phase 947-964: Governance Batch Delivery V101-V103
 - 2026-04-09 | phase | `b96d37e` | Phase 947-964: Governance Batch Delivery V101-V103 plus ops cleanup
 - 2026-04-09 | chore | `680aae1` | Chore: update phase changelog for 947-964
+- 2026-04-09 | phase | `f927cc8` | Phase 965-982: Governance Batch Delivery V104-V106 plus residual root refresh
