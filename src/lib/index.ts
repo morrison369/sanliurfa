@@ -1692,3 +1692,21 @@ export { BoardRecoveryStabilityBookV50, BoardRecoveryStabilityCoordinatorV50, Bo
 
 // Phase 646: Policy Assurance Continuity Engine V50
 export { PolicyAssuranceContinuityBookV50, PolicyAssuranceContinuityEngineV50, PolicyAssuranceContinuityGateV50, PolicyAssuranceContinuityReporterV50, policyAssuranceContinuityBookV50, policyAssuranceContinuityEngineV50, policyAssuranceContinuityGateV50, policyAssuranceContinuityReporterV50 } from './policy-assurance-continuity-engine-v50';
+
+// Phase 647: Governance Assurance Stability Router V51
+export { GovernanceAssuranceStabilityBookV51, GovernanceAssuranceStabilityScorerV51, GovernanceAssuranceStabilityRouterV51, GovernanceAssuranceStabilityReporterV51, governanceAssuranceStabilityBookV51, governanceAssuranceStabilityScorerV51, governanceAssuranceStabilityRouterV51, governanceAssuranceStabilityReporterV51 } from './governance-assurance-stability-router-v51';
+
+// Phase 648: Policy Recovery Continuity Harmonizer V51
+export { PolicyRecoveryContinuityBookV51, PolicyRecoveryContinuityHarmonizerV51, PolicyRecoveryContinuityGateV51, PolicyRecoveryContinuityReporterV51, policyRecoveryContinuityBookV51, policyRecoveryContinuityHarmonizerV51, policyRecoveryContinuityGateV51, policyRecoveryContinuityReporterV51 } from './policy-recovery-continuity-harmonizer-v51';
+
+// Phase 649: Compliance Stability Continuity Mesh V51
+export { ComplianceStabilityContinuityBookV51, ComplianceStabilityContinuityScorerV51, ComplianceStabilityContinuityRouterV51, ComplianceStabilityContinuityReporterV51, complianceStabilityContinuityBookV51, complianceStabilityContinuityScorerV51, complianceStabilityContinuityRouterV51, complianceStabilityContinuityReporterV51 } from './compliance-stability-continuity-mesh-v51';
+
+// Phase 650: Trust Assurance Recovery Forecaster V51
+export { TrustAssuranceRecoveryBookV51, TrustAssuranceRecoveryForecasterV51, TrustAssuranceRecoveryGateV51, TrustAssuranceRecoveryReporterV51, trustAssuranceRecoveryBookV51, trustAssuranceRecoveryForecasterV51, trustAssuranceRecoveryGateV51, trustAssuranceRecoveryReporterV51 } from './trust-assurance-recovery-forecaster-v51';
+
+// Phase 651: Board Stability Continuity Coordinator V51
+export { BoardStabilityContinuityBookV51, BoardStabilityContinuityCoordinatorV51, BoardStabilityContinuityGateV51, BoardStabilityContinuityReporterV51, boardStabilityContinuityBookV51, boardStabilityContinuityCoordinatorV51, boardStabilityContinuityGateV51, boardStabilityContinuityReporterV51 } from './board-stability-continuity-coordinator-v51';
+
+// Phase 652: Policy Recovery Assurance Engine V51
+export { PolicyRecoveryAssuranceBookV51, PolicyRecoveryAssuranceEngineV51, PolicyRecoveryAssuranceGateV51, PolicyRecoveryAssuranceReporterV51, policyRecoveryAssuranceBookV51, policyRecoveryAssuranceEngineV51, policyRecoveryAssuranceGateV51, policyRecoveryAssuranceReporterV51 } from './policy-recovery-assurance-engine-v51';
