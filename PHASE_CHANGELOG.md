@@ -73,3 +73,5 @@
 - 2026-04-09 | chore | `5f3ad9b` | Chore: normalize phase changelog for 1271-1288
 - 2026-04-09 | chore | `c9a7853` | Chore: remove malformed phase changelog row for 1271-1288
 - 2026-04-09 | phase | `558b265` | Phase 1289-1306: Governance Batch Delivery V158-V160 plus changelog normalize fix
+- 2026-04-09 | phase | `c121be8` | Phase 1289-1306: Governance Batch Delivery V158-V160 plus changelog normalize fix
+- 2026-04-09 | chore | `77a33bb` | Chore: update phase changelog for 1289-1306
