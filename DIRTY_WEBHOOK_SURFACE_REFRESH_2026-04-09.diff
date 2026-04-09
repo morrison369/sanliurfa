@@ -1,0 +1,46 @@
+diff --git a/src/lib/webhook-analytics.ts b/src/lib/webhook-analytics.ts
+index f5ca37e..1105964 100644
+--- a/src/lib/webhook-analytics.ts
++++ b/src/lib/webhook-analytics.ts
+@@ -1,4 +1,4 @@
+-import { Pool } from 'pg';
++import type { Pool } from 'pg';
+ import { getCache, setCache } from './cache';
+diff --git a/src/lib/webhook-audit.ts b/src/lib/webhook-audit.ts
+index 53bf04f..ae8431e 100644
+--- a/src/lib/webhook-audit.ts
++++ b/src/lib/webhook-audit.ts
+@@ -1,4 +1,4 @@
+-import { Pool } from 'pg';
++import type { Pool } from 'pg';
+diff --git a/src/lib/webhook-filters.ts b/src/lib/webhook-filters.ts
+index 6242877..bdd972b 100644
+--- a/src/lib/webhook-filters.ts
++++ b/src/lib/webhook-filters.ts
+@@ -1,4 +1,4 @@
+-import { Pool } from 'pg';
++import type { Pool } from 'pg';
+ import { getCache, setCache, deleteCache } from './cache';
+diff --git a/src/lib/webhook-logs.ts b/src/lib/webhook-logs.ts
+index a40339f..ec598cd 100644
+--- a/src/lib/webhook-logs.ts
++++ b/src/lib/webhook-logs.ts
+@@ -1,4 +1,4 @@
+-import { Pool } from 'pg';
++import type { Pool } from 'pg';
+diff --git a/src/lib/webhook-replay.ts b/src/lib/webhook-replay.ts
+index 342205f..b5a7c63 100644
+--- a/src/lib/webhook-replay.ts
++++ b/src/lib/webhook-replay.ts
+@@ -1,4 +1,4 @@
+-import { Pool } from 'pg';
++import type { Pool } from 'pg';
+ import { triggerWebhook } from './webhooks';
+diff --git a/src/lib/webhook-templates.ts b/src/lib/webhook-templates.ts
+index 4e3c1b4..19b5675 100644
+--- a/src/lib/webhook-templates.ts
++++ b/src/lib/webhook-templates.ts
+@@ -1,4 +1,4 @@
+-import { Pool } from 'pg';
++import type { Pool } from 'pg';
+ import { getCache, setCache, deleteCache } from './cache';
