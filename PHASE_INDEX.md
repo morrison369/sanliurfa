@@ -2,6 +2,15 @@
 
 This index is the canonical map for active phase reports and archived operational records.
 
+## Active Operational Docs
+- `README.md`
+- `AGENTS.md`
+- `PHASE_OPERATIONS_GUIDE.md`
+- `STALE_WORKTREE.md`
+- `ROOT_INVENTORY_ONLY_POLICY.md`
+- `docs/ACTIVE_DOCS.md`
+- `docs/WORKTREE_SOURCE_OF_TRUTH.md`
+
 ## Active Root-Level Phase Reports
 Active governance delivery reports remain at repo root from V3 onward.
 
@@ -129,6 +138,7 @@ Active governance delivery reports remain at repo root from V3 onward.
 - `docs/archive/phases/legacy/README.md`
 
 ## Archived Cleanup And Residual Verification
+- `docs/archive/README.md`
 - `docs/archive/cleanup/2026-04-09/README.md`
 - `PHASE_1073_1078_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V122.md`
 - `PHASE_1079_1084_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V123.md`

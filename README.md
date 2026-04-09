@@ -110,11 +110,14 @@ npm run phase:changelog:normalize
   - `AGENTS.md`
   - `PHASE_OPERATIONS_GUIDE.md`
   - `docs/WORKTREE_SOURCE_OF_TRUTH.md`
+  - `STALE_WORKTREE.md`
+  - `ROOT_INVENTORY_ONLY_POLICY.md`
   - `PHASE_INDEX.md`
   - `TASK_TRACKER.md`
   - `memory.md`
 - Local root worktree bunlarla çelişiyorsa clean worktree + `origin/master` kazanır.
 - Dirty root yalnızca inventory/forensics yüzeyidir.
+- Aktif operasyon dosyalarının kısa listesi için `docs/ACTIVE_DOCS.md` kullanın.
 
 ## Astro Operasyon Notları
 - Repo SSR-first çalışır: `output: "server"` ve `@astrojs/node` adapter.
@@ -134,6 +137,12 @@ npx tsx scripts/phase-pr.ts open --repo titanai777/sanliurfa --base master --hea
 ```bash
 npx tsx scripts/phase-pr.ts view --repo titanai777/sanliurfa --pr <number>
 ```
+
+## Operasyon Hijyeni
+- PR açmadan önce `npm run phase:doctor` çalıştırın.
+- Changelog hygiene için `npm run phase:changelog:normalize` kullanın.
+- Script yüzeyi raporu için `npm run phase:scripts:report` kullanın.
+- Dated cleanup ve verification raporları root yerine `docs/archive/cleanup/` altında tutulmalıdır.
 
 ## Önerilen Batch Akışı
 ```bash

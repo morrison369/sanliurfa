@@ -1,7 +1,8 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { normalizeChangelog, parseChangelogLine } from './phase-changelog-normalize';
+import { buildScriptSurfaceReport } from './phase-scripts-report';
 
 export interface DoctorIssue {
   level: 'warn' | 'fail';
@@ -12,8 +13,22 @@ function readText(root: string, relativePath: string): string {
   return readFileSync(resolve(root, relativePath), 'utf8');
 }
 
+function listRootMarkdownFiles(root: string): string[] {
+  return readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .map((entry) => entry.name);
+}
+
 export function findDoctorIssues(root: string = process.cwd()): DoctorIssue[] {
   const issues: DoctorIssue[] = [];
+
+  if (!existsSync(resolve(root, 'STALE_WORKTREE.md'))) {
+    issues.push({ level: 'fail', message: 'Missing STALE_WORKTREE.md in repo root.' });
+  }
+
+  if (!existsSync(resolve(root, 'ROOT_INVENTORY_ONLY_POLICY.md'))) {
+    issues.push({ level: 'fail', message: 'Missing ROOT_INVENTORY_ONLY_POLICY.md in repo root.' });
+  }
 
   if (!existsSync(resolve(root, 'PHASE_OPERATIONS_GUIDE.md'))) {
     issues.push({ level: 'fail', message: 'Missing PHASE_OPERATIONS_GUIDE.md in repo root.' });
@@ -23,11 +38,37 @@ export function findDoctorIssues(root: string = process.cwd()): DoctorIssue[] {
     issues.push({ level: 'fail', message: 'Missing docs/WORKTREE_SOURCE_OF_TRUTH.md.' });
   }
 
+  if (!existsSync(resolve(root, 'docs/ACTIVE_DOCS.md'))) {
+    issues.push({ level: 'fail', message: 'Missing docs/ACTIVE_DOCS.md.' });
+  }
+
   if (existsSync(resolve(root, 'README.md'))) {
     const readme = readText(root, 'README.md');
     if (!readme.includes('Clean Worktree Politikası')) {
       issues.push({ level: 'warn', message: 'README.md is missing the clean worktree policy section.' });
     }
+    if (!readme.includes('phase:scripts:report')) {
+      issues.push({ level: 'warn', message: 'README.md is missing the phase:scripts:report command.' });
+    }
+  }
+
+  if (existsSync(resolve(root, 'package.json'))) {
+    const packageJson = JSON.parse(readText(root, 'package.json')) as { scripts?: Record<string, string> };
+    const report = buildScriptSurfaceReport(packageJson.scripts ?? {});
+    if (report.runnerScripts.length < 6) {
+      issues.push({ level: 'warn', message: 'Runner-first phase scripts are incomplete.' });
+    }
+  }
+
+  const rootMarkdownFiles = listRootMarkdownFiles(root);
+  const datedRootCleanupFiles = rootMarkdownFiles.filter((name) =>
+    /(?:DIRTY_|ROOT_.*_VERIFICATION_|.*_REFRESH_)\d{4}-\d{2}-\d{2}/.test(name)
+  );
+  if (datedRootCleanupFiles.length > 0) {
+    issues.push({
+      level: 'warn',
+      message: `Root contains dated cleanup docs that should be archived: ${datedRootCleanupFiles.join(', ')}`
+    });
   }
 
   if (existsSync(resolve(root, 'PHASE_CHANGELOG.md'))) {
