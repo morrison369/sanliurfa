@@ -39,6 +39,7 @@ import { parsePhasePrOpenFileArgs } from '../../../scripts/phase-pr-open-file';
 import { acquirePhaseLock, buildPhaseLockError, getPhaseLockPath, readPhaseLock, releasePhaseLock } from '../../../scripts/phase-lock';
 import { buildPhaseGateSteps, parsePhaseGateArgs } from '../../../scripts/phase-gate-ci';
 import { buildPhaseReleaseSteps, parsePhaseReleaseArgs } from '../../../scripts/phase-release';
+import { ensureScriptExists, parsePhaseTestArgs, toScriptName } from '../../../scripts/phase-test';
 import { parsePhaseBlockGeneratorArgs } from '../../../scripts/phase-block-generator';
 import { parsePhaseBlockWriterArgs } from '../../../scripts/phase-block-writer';
 import { hasMatchingMarkdownFiles } from '../content-loader-helpers';
@@ -129,6 +130,36 @@ describe('phase-runner automation', () => {
     };
 
     expect(() => selectPhaseScript('prev', scripts)).toThrow(/No previous phase script found/);
+  });
+});
+
+describe('phase-test automation', () => {
+  it('parses single range mode', () => {
+    expect(parsePhaseTestArgs(['range', '947-952'])).toEqual({
+      mode: 'range',
+      ranges: ['947-952']
+    });
+  });
+
+  it('parses batch mode with multiple ranges', () => {
+    expect(parsePhaseTestArgs(['batch', '947-952', '953-958', '959-964'])).toEqual({
+      mode: 'batch',
+      ranges: ['947-952', '953-958', '959-964']
+    });
+  });
+
+  it('normalizes range into script name', () => {
+    expect(toScriptName('947-952')).toBe('test:phase:947-952');
+  });
+
+  it('rejects invalid ranges', () => {
+    expect(() => toScriptName('latest')).toThrow(/Invalid phase range/);
+  });
+
+  it('rejects unknown phase scripts', () => {
+    expect(() => ensureScriptExists('test:phase:947-952', { 'test:phase:941-946': 'vitest run' })).toThrow(
+      /Unknown phase script/
+    );
   });
 });
 

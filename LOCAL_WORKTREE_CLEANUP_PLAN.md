@@ -3,6 +3,11 @@
 ## Goal
 Reduce unrelated diffs in future phase branches without losing any in-progress work.
 
+## Source Of Truth Rule
+- A dirty local root worktree is not a delivery baseline.
+- Use `origin/master` plus a clean worktree for all phase, cleanup, and release branches.
+- Keep the dirty root only as a reference surface until each bucket is isolated or archived.
+
 ## Step 1: Baseline Snapshot
 ```bash
 git status --short > cleanup-status-before.txt

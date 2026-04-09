@@ -101,6 +101,8 @@
     "test:phase:725-730": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v64.test.ts",
     "test:phase:prev": "npm exec -- tsx scripts/phase-runner.ts prev",
     "test:phase:latest": "npm exec -- tsx scripts/phase-runner.ts latest",
+    "test:phase:range": "npm exec -- tsx scripts/phase-test.ts range",
+    "test:phase:batch": "npm exec -- tsx scripts/phase-test.ts batch",
     "test:phase:smoke": "npm run test:phase:prev && npm run test:phase:latest",
     "phase:sync:tsconfig": "npm exec -- tsx scripts/update-phase-tsconfig.ts",
     "phase:check:tsconfig": "npm exec -- tsx scripts/update-phase-tsconfig.ts --check",
@@ -183,7 +185,10 @@
     "test:phase:923-928": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v97.test.ts",
     "test:phase:929-934": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v98.test.ts",
     "test:phase:935-940": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v99.test.ts",
-    "test:phase:941-946": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v100.test.ts"
+    "test:phase:941-946": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v100.test.ts",
+    "test:phase:947-952": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v101.test.ts",
+    "test:phase:953-958": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v102.test.ts",
+    "test:phase:959-964": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v103.test.ts"
   },
   "keywords": [
     "sanliurfa",

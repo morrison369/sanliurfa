@@ -7,6 +7,12 @@
 - `src/content/` with `src/content.config.ts`: content collections; loader and schema edits must ship together.
 - `public/`: static assets and PWA files.
 - Root phase records: `PHASE_*.md`, `PHASE_INDEX.md`, `TASK_TRACKER.md`, `memory.md`, `PHASE_CHANGELOG.md`.
+- Archived phase and cleanup notes live under `docs/archive/`.
+
+## Source Of Truth
+- Treat `origin/master` plus a clean `git worktree` as the only safe delivery base.
+- Do not trust a dirty local root worktree for phase status, docs, or tracker state.
+- If local root and `origin/master` disagree, use the clean worktree created from `origin/master`.
 
 ## Build, Test, and Development Commands
 - `npm run dev`: local Astro server.
@@ -14,6 +20,8 @@
 - `npm run lint`: `astro check` plus `tsc --noEmit`.
 - `npm run test:unit`: full Vitest run.
 - `npm run test:phase:785-790`: run one phase suite.
+- `npm run test:phase:range -- 947-952`: run one explicit phase range through the shared runner.
+- `npm run test:phase:batch -- 947-952 953-958 959-964`: run multiple explicit phase ranges sequentially.
 - `npm run phase:generate:block:write -- scripts/phase-blocks/phase-803-808.json`: reliable write path for generator output on Windows/npm wrapper setups.
 - `npm run phase:prepare:block -- --phase-script test:phase:785-790`: serialized phase gate for one block.
 - `npm run phase:prepare:batch -- --phase-script test:phase:785-790 --phase-script test:phase:791-796`: serialized batch gate for multiple blocks.

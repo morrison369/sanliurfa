@@ -4,6 +4,7 @@
 - Work from a clean `git worktree` created from `origin/master`.
 - Use Node `22.13.0+`; `.nvmrc` is authoritative.
 - Do not run parallel Astro build or gate commands inside one worktree.
+- Do not use a dirty local root worktree as a phase source of truth; use it only for residual diff inventory.
 
 ## Standard Delivery Flow
 1. Generate the phase block files and exports.
@@ -12,6 +13,8 @@
 3. Run one of:
    - `npm run phase:prepare:block -- --phase-script test:phase:<range>`
    - `npm run phase:prepare:batch -- --phase-script test:phase:<range-a> --phase-script test:phase:<range-b>`
+   - `npm run test:phase:range -- <range>`
+   - `npm run test:phase:batch -- <range-a> <range-b> <range-c>`
 4. Commit phase content.
 5. Run `npm run phase:changelog:head`, then commit the changelog update.
 6. Push the branch, open the PR, wait for checks, merge, and verify remote merge state.
@@ -24,9 +27,15 @@
 
 ## PR and Merge Policy
 - Keep phase content and changelog as two separate commits.
+- Cleanup verification PRs must not append cleanup-only rows to `PHASE_CHANGELOG.md`.
 - Open PRs with `npm run phase:pr:open:file -- <repo> <base> <head> <title-file> <body-file>`.
 - Wait for checks with `npm run phase:checks:wait -- <pr> --repo titanai777/sanliurfa`.
 - Verify merge with `npm run phase:pr:view -- titanai777/sanliurfa <pr>`.
+
+## Documentation Hygiene
+- Keep active operational docs in root only when they are part of the current delivery surface.
+- Move historical phase reports and dated cleanup verification notes under `docs/archive/`.
+- `PHASE_INDEX.md` is the canonical map for both active root docs and archived locations.
 
 ## Astro-Specific Guardrails
 - The repo is SSR-first with `@astrojs/node`.
