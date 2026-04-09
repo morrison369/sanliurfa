@@ -1,0 +1,16 @@
+{
+  "start": 959,
+  "end": 964,
+  "version": 103,
+  "docFile": "PHASE_959_964_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V103.md",
+  "testFile": "src/lib/__tests__/governance-recovery-assurance-suite-v103.test.ts",
+  "title": "Governance Recovery Assurance & Continuity V103",
+  "modules": [
+    { "phase": 959, "title": "Governance Recovery Assurance Router V103", "fileName": "governance-recovery-assurance-router-v103.ts", "exportBase": "GovernanceRecoveryAssurance", "reportLabel": "Governance recovery assurance", "reportMessage": "Governance recovery assurance routed", "mode": "router", "signalFields": ["governanceRecovery", "assuranceCoverage", "routerCost"], "routeLabels": ["recovery-priority", "recovery-balanced", "recovery-review"] },
+    { "phase": 960, "title": "Policy Continuity Stability Harmonizer V103", "fileName": "policy-continuity-stability-harmonizer-v103.ts", "exportBase": "PolicyContinuityStability", "reportLabel": "Policy continuity stability", "reportMessage": "Policy continuity stability harmonized", "mode": "harmonizer", "signalFields": ["policyContinuity", "stabilityDepth", "harmonizerCost"] },
+    { "phase": 961, "title": "Compliance Assurance Recovery Mesh V103", "fileName": "compliance-assurance-recovery-mesh-v103.ts", "exportBase": "ComplianceAssuranceRecovery", "reportLabel": "Compliance assurance recovery", "reportMessage": "Compliance assurance recovery routed", "mode": "router", "signalFields": ["complianceAssurance", "recoveryCoverage", "meshCost"], "routeLabels": ["assurance-priority", "assurance-balanced", "assurance-review"] },
+    { "phase": 962, "title": "Trust Stability Continuity Forecaster V103", "fileName": "trust-stability-continuity-forecaster-v103.ts", "exportBase": "TrustStabilityContinuity", "reportLabel": "Trust stability continuity", "reportMessage": "Trust stability continuity forecasted", "mode": "forecaster", "signalFields": ["trustStability", "continuityDepth", "forecastCost"] },
+    { "phase": 963, "title": "Board Recovery Stability Coordinator V103", "fileName": "board-recovery-stability-coordinator-v103.ts", "exportBase": "BoardRecoveryStability", "reportLabel": "Board recovery stability", "reportMessage": "Board recovery stability coordinated", "mode": "coordinator", "signalFields": ["boardRecovery", "stabilityCoverage", "coordinationCost"] },
+    { "phase": 964, "title": "Policy Assurance Continuity Engine V103", "fileName": "policy-assurance-continuity-engine-v103.ts", "exportBase": "PolicyAssuranceContinuity", "reportLabel": "Policy assurance continuity", "reportMessage": "Policy assurance continuity evaluated", "mode": "engine", "signalFields": ["policyAssurance", "continuityDepth", "engineCost"] }
+  ]
+}

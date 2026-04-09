@@ -24,3 +24,6 @@
 - 2026-04-09 | chore | `29d1ef8` | Chore: drop residual cleanup note from phase changelog
 - 2026-04-09 | phase | `f0e2c8f` | Phase 929-946: Governance Batch Delivery V98-V100
 - 2026-04-09 | chore | `d117b3e` | Chore: refresh phase changelog for 929-946 after rebase
+- 2026-04-09 | phase | `b96d37e` | Phase 947-964: Governance Batch Delivery V101-V103
+- 2026-04-09 | phase | `b96d37e` | Phase 947-964: Governance Batch Delivery V101-V103 plus ops cleanup
+- 2026-04-09 | chore | `680aae1` | Chore: update phase changelog for 947-964
