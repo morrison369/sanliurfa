@@ -57,3 +57,4 @@
 - 2026-04-09 | chore | `35d66fe` | Chore: update phase changelog for 1127-1144
 - 2026-04-09 | phase | `9dba96f` | Phase 1145-1162: Governance Batch Delivery V134-V136
 - 2026-04-09 | chore | `0110898` | Chore: update phase changelog for 1145-1162
+- 2026-04-09 | phase | `370fd2e` | Phase 1163-1180: Governance Batch Delivery V137-V139
