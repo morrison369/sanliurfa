@@ -97,7 +97,17 @@ npm run test:phase:gate:ci
 npm run phase:doctor
 npm run phase:changelog:normalize
 npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts
+npm run repo:stabilize:check
+npm run release:gate
+npm run test:e2e:smoke
 ```
+
+## Release ve Stabilizasyon
+- API geçiş politikası: `docs/API_LEGACY_POLICY.md`
+- Repo stabilizasyon runbook: `docs/REPO_STABILIZATION_RUNBOOK.md`
+- Release gate: `docs/RELEASE_GATES.md`
+- Webhook güvenlik politikası: `docs/WEBHOOK_SECURITY_POLICY.md`
+- 7 günlük uygulama planı: `docs/SEVEN_DAY_EXECUTION_PLAN.md`
 
 ## Clean Worktree Politikası
 - Teslimat tabanı her zaman `origin/master` üstünden açılmış temiz `git worktree` olmalı.

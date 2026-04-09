@@ -3,12 +3,13 @@ import Layout from '../../layouts/Layout.astro';
 import AdminDashboardOverview from '../../components/AdminDashboardOverview';
 import ModerationQueueManager from '../../components/ModerationQueueManager';
 import UserManagementTable from '../../components/UserManagementTable';
+import { requireAdminRedirectPath } from '../../lib/admin-guard';
 
 const { locals } = Astro;
 
-// Redirect if not admin
-if (!locals.user || locals.user.role !== 'admin') {
-  return Astro.redirect('/');
+const redirectPath = requireAdminRedirectPath(locals.user);
+if (redirectPath) {
+  return Astro.redirect(redirectPath);
 }
 ---
 

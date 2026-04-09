@@ -6,10 +6,29 @@ import { logger } from './logging';
 // Get DATABASE_URL and READ_REPLICA_URL from environment
 const DATABASE_URL = process.env.DATABASE_URL;
 const READ_REPLICA_URL = process.env.READ_REPLICA_URL;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+function parsePositiveInt(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) {
+    return fallback;
+  }
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`${name} must be a positive integer`);
+  }
+  return parsed;
+}
 
 if (!DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required but not set');
 }
+
+const QUERY_TIMEOUT_MS = parsePositiveInt('DB_QUERY_TIMEOUT_MS', 30000);
+const POOL_MAX_DEV = parsePositiveInt('DB_POOL_MAX_DEV', 5);
+const POOL_MAX_PROD = parsePositiveInt('DB_POOL_MAX_PROD', 20);
+const POOL_MIN_DEV = parsePositiveInt('DB_POOL_MIN_DEV', 2);
+const POOL_MIN_PROD = parsePositiveInt('DB_POOL_MIN_PROD', 5);
 
 // ==================== CONNECTION POOL CONFIGURATION ====================
 
@@ -19,18 +38,19 @@ if (!DATABASE_URL) {
  * - Production: larger pool (5-20 connections) with dynamic scaling
  */
 const getPoolConfig = (isDev: boolean) => ({
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: isDev ? 5 : 20,
-  min: isDev ? 2 : 5,
+  ssl: NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: isDev ? POOL_MAX_DEV : POOL_MAX_PROD,
+  min: isDev ? POOL_MIN_DEV : POOL_MIN_PROD,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
-  statement_timeout: 30000,
+  statement_timeout: QUERY_TIMEOUT_MS,
+  query_timeout: QUERY_TIMEOUT_MS,
   // Phase 5: Connection reuse optimization
   application_name: 'sanliurfa-api',
   reapIntervalMillis: 5000, // Reap idle connections every 5s for efficiency
 });
 
-const isDev = process.env.NODE_ENV !== 'production';
+const isDev = NODE_ENV !== 'production';
 
 // PostgreSQL write pool (primary)
 export const pool = new Pool({
