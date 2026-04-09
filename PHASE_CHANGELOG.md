@@ -71,3 +71,4 @@
 - 2026-04-09 | phase | `4ee2c0e` | Phase 1271-1288: Governance Batch Delivery V155-V157 plus phase doctor advisory CI
 - 2026-04-09 | phase | $phaseHash | Phase 1271-1288: Governance Batch Delivery V155-V157 plus phase doctor advisory CI
 - 2026-04-09 | chore | `2abde4f` | Chore: update phase changelog for 1271-1288
+- 2026-04-09 | chore | `5f3ad9b` | Chore: normalize phase changelog for 1271-1288
