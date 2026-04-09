@@ -85,7 +85,7 @@ export function runGh(args: string[]): string {
   const result = spawnSync('gh', args, {
     cwd: process.cwd(),
     encoding: 'utf8',
-    shell: process.platform === 'win32'
+    shell: false
   });
 
   if (result.status !== 0) {
