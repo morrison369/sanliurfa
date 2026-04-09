@@ -99,3 +99,4 @@
 - 2026-04-09 | chore | `5c215db` | Chore: harden phase pipeline and check wait flow
 - 2026-04-09 | phase | `957a5a4` | Phase 731-748: Governance Batch Delivery V65-V67
 - 2026-04-09 | chore | `94cc4ab` | Chore: update phase changelog for 731-748
+- 2026-04-09 | chore | `fe4b24d` | Chore: fix phase pipeline positional arg parsing

@@ -14,7 +14,7 @@ export interface PipelineStep {
 export function parsePhasePipelineArgs(argv: string[]): PhasePipelineOptions {
   const index = argv.indexOf('--phase-script');
   const explicit = index >= 0 ? argv[index + 1] : undefined;
-  const positional = argv.find((arg, argIndex) => argIndex !== index + 1 && !arg.startsWith('--'));
+  const positional = argv.find((arg, argIndex) => !(index >= 0 && argIndex === index + 1) && !arg.startsWith('--'));
   const phaseScript = explicit ?? positional;
   return { phaseScript };
 }
