@@ -97,4 +97,5 @@
 - 2026-04-09 | phase | `d496c4f` | Phase 725-730: Governance Assurance Stability Continuity V64
 - 2026-04-09 | chore | `c3e670b` | Chore: update phase changelog for 725-730
 - 2026-04-09 | chore | `5c215db` | Chore: harden phase pipeline and check wait flow
-- 2026-04-09 | phase | `eae3beb` | Phase 731-748: Governance Batch Delivery V65-V67
+- 2026-04-09 | phase | `957a5a4` | Phase 731-748: Governance Batch Delivery V65-V67
+- 2026-04-09 | chore | `94cc4ab` | Chore: update phase changelog for 731-748
