@@ -1,9 +1,55 @@
+import { existsSync, readdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
+function hasMatchingMarkdownFiles(baseDir: string): boolean {
+  if (!existsSync(baseDir)) {
+    return false;
+  }
+
+  const queue = [baseDir];
+  while (queue.length > 0) {
+    const currentDir = queue.pop();
+    if (!currentDir) {
+      continue;
+    }
+
+    for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        queue.push(resolve(currentDir, entry.name));
+        continue;
+      }
+
+      if (entry.isFile() && entry.name.endsWith('.md')) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function globWhenFilesExist(pattern: string, baseDir: string) {
+  const loader = glob({ pattern, base: baseDir });
+
+  return {
+    name: `conditional-${loader.name}:${baseDir}`,
+    async load(context: Parameters<typeof loader.load>[0]) {
+      const absoluteBaseDir = resolve(fileURLToPath(context.config.root), baseDir);
+      if (!hasMatchingMarkdownFiles(absoluteBaseDir)) {
+        return;
+      }
+
+      await loader.load(context);
+    },
+  };
+}
+
 // Blog yazıları koleksiyonu
 const blogCollection = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/blog' }),
+  loader: globWhenFilesExist('**/*.md', './src/content/blog'),
   schema: z.object({
     title: z.string(),
     description: z.string(),
@@ -20,7 +66,7 @@ const blogCollection = defineCollection({
 
 // Tarihi yerler koleksiyonu
 const historicalSitesCollection = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/tarihi-yerler' }),
+  loader: globWhenFilesExist('**/*.md', './src/content/tarihi-yerler'),
   schema: z.object({
     title: z.string(),
     description: z.string(),
@@ -41,7 +87,7 @@ const historicalSitesCollection = defineCollection({
 
 // Etkinlikler koleksiyonu
 const eventsCollection = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/etkinlikler' }),
+  loader: globWhenFilesExist('**/*.md', './src/content/etkinlikler'),
   schema: z.object({
     title: z.string(),
     description: z.string(),
