@@ -2,7 +2,6 @@
 - 2026-04-09 | chore | `9467327` | Chore: update phase changelog for 785-802
 - 2026-04-09 | phase | `a7823ca` | Phase 803-820: Governance Batch Delivery V77-V79
 - 2026-04-09 | chore | `b64f91a` | Chore: update phase changelog for 803-820
-- 2026-04-09 | chore | `482c788` | Chore: drop cleanup note from phase changelog
 - 2026-04-09 | phase | `02cf182` | Phase 821-838: Governance Batch Delivery V80-V82
 - 2026-04-09 | chore | `f10b0c5` | Chore: update phase changelog for 821-838
 - 2026-04-09 | chore | `8153e92` | Chore: remove TS syntax from inline runtime pages scripts
@@ -19,4 +18,4 @@
 - 2026-04-09 | phase | `505f706` | Phase 893-910: Governance Batch Delivery V92-V94
 - 2026-04-09 | phase | `b262c9b` | Phase 893-910: Governance Batch Delivery V92-V94
 - 2026-04-09 | chore | `96723bf` | Chore: keep stability route labels for assurance stability routers
-- 2026-04-09 | chore | `2c8363d` | Chore: refresh weather and pages cleanup verification
+- 2026-04-09 | chore | `279be11` | Chore: drop cleanup note from phase changelog
