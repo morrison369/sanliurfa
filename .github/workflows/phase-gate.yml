@@ -8,6 +8,23 @@ on:
       - master
 
 jobs:
+  phase_doctor_advisory:
+    name: phase:doctor:advisory
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - name: Install
+        run: npm ci --legacy-peer-deps
+      - name: Phase Doctor Advisory
+        run: npm run phase:doctor
+
   phase_check_tsconfig:
     name: phase:check:tsconfig
     runs-on: ubuntu-latest
