@@ -35,6 +35,9 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
+
+      - name: Repo stabilization check
+        run: npm run repo:stabilize:check
       
       - name: Lint code
         run: npm run lint
@@ -46,6 +49,11 @@ jobs:
       
       - name: Run unit tests
         run: npm run test:unit
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+
+      - name: Release gate
+        run: npm run release:gate
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
       

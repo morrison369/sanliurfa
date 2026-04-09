@@ -1,0 +1,21 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import SearchResults from "../../components/SearchResults";
+
+const query = Astro.url.searchParams.get("q") || "";
+---
+
+<Layout title="Gelişmiş Arama - Şanlıurfa.com">
+  <Fragment slot="head">
+    <link rel="canonical" href="https://sanliurfa.com/arama/gelismis" />
+  </Fragment>
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Gelişmiş Arama</h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        Mekan, etkinlik ve içerikleri filtrelerle daha hızlı bulun.
+      </p>
+    </div>
+    <SearchResults client:load query={query} />
+  </div>
+</Layout>

@@ -38,6 +38,32 @@ export async function requestEventReplay(
 
     const event = eventRes.rows[0];
 
+    // Idempotency guard: avoid duplicate replay queue for same event+webhook.
+    const existingReplay = await pool.query(
+      `SELECT id, webhook_id, event_id, status, event_type, event_data, requested_at, completed_at, error_message
+       FROM webhook_replays
+       WHERE webhook_id = $1 AND event_id = $2
+       AND status IN ('pending', 'completed')
+       ORDER BY requested_at DESC
+       LIMIT 1`,
+      [webhookId, eventId]
+    );
+
+    if (existingReplay.rows.length > 0) {
+      const replay = existingReplay.rows[0];
+      return {
+        id: replay.id,
+        webhookId: replay.webhook_id,
+        eventId: replay.event_id,
+        status: replay.status,
+        eventType: replay.event_type,
+        eventData: replay.event_data,
+        requestedAt: replay.requested_at,
+        completedAt: replay.completed_at || undefined,
+        errorMessage: replay.error_message || undefined,
+      };
+    }
+
     // Create replay request
     const replayRes = await pool.query(
       `INSERT INTO webhook_replays

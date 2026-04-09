@@ -1,8 +1,19 @@
-## Phase Range
-- Example: `Phase 359-364`
+## Scope
+- Phase range or domain (`api-legacy`, `runtime-security`, `governance`, `e2e-ci`)
 
-## Commands Run
-- Example: `npm run test:phase:gate:ci`
+## Risk
+- User-facing impact:
+- Data risk:
+- Security impact:
 
-## Result Summary
-- Example: `lint:phase ✅, phase smoke ✅, build ✅`
+## Rollback Plan
+- Exact command or revert strategy:
+- Recovery ETA:
+
+## Validation Evidence
+- Commands run:
+- Key outputs:
+
+## Observability Impact
+- New logs/metrics/alerts:
+- Dashboard or panel updates:

@@ -12,6 +12,25 @@ export interface AuditLog {
   createdAt: string;
 }
 
+function sanitizeForAudit(payload: unknown): unknown {
+  if (payload == null) {
+    return payload;
+  }
+
+  const raw = JSON.stringify(payload);
+  if (raw.length > 8192) {
+    return { truncated: true, length: raw.length };
+  }
+
+  const redacted = raw
+    .replace(/"authorization"\s*:\s*"[^"]*"/gi, '"authorization":"[REDACTED]"')
+    .replace(/"token"\s*:\s*"[^"]*"/gi, '"token":"[REDACTED]"')
+    .replace(/"password"\s*:\s*"[^"]*"/gi, '"password":"[REDACTED]"')
+    .replace(/"secret"\s*:\s*"[^"]*"/gi, '"secret":"[REDACTED]"');
+
+  return JSON.parse(redacted);
+}
+
 /**
  * Log webhook action
  */
@@ -36,8 +55,8 @@ export async function logWebhookAction(
         action,
         resourceType,
         resourceId,
-        JSON.stringify(changes),
-        JSON.stringify(metadata)
+        JSON.stringify(sanitizeForAudit(changes)),
+        JSON.stringify(sanitizeForAudit(metadata))
       ]
     );
   } catch (error) {

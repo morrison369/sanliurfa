@@ -35,8 +35,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: 'npx astro dev --port 1111 --host 127.0.0.1',
     url: 'http://localhost:1111',
     reuseExistingServer: !process.env.CI,
+    env: {
+      DATABASE_URL:
+        process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/sanliurfa_test',
+      READ_REPLICA_URL: process.env.READ_REPLICA_URL ?? '',
+    },
   },
 });

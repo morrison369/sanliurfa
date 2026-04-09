@@ -145,9 +145,16 @@ export async function getWebhookMetrics(pool: Pool, userId?: string): Promise<We
       ? Math.round((deliveredEvents / totalEvents) * 100 * 100) / 100
       : 0;
 
-    const avgDeliveryTime = deliveredEvents > 0
-      ? Math.round(Math.random() * 500 + 50) // Placeholder calculation
-      : 0;
+    const avgDeliveryRes = await pool.query(
+      `SELECT COALESCE(AVG(EXTRACT(EPOCH FROM (updated_at - created_at)) * 1000), 0) as avg_ms
+       FROM webhook_events we
+       JOIN webhooks w ON we.webhook_id = w.id
+       WHERE we.status = 'delivered'
+       ${userId ? 'AND w.user_id = $1' : ''}`,
+      params
+    );
+
+    const avgDeliveryTime = Math.round(Number(avgDeliveryRes.rows[0]?.avg_ms || 0));
 
     const metrics: WebhookMetrics = {
       totalWebhooks,

@@ -3,7 +3,8 @@
  * Offline destek, cache, push notifications
  */
 
-const CACHE_NAME = 'sanliurfa-v1';
+const CACHE_VERSION = '2026-04-10';
+const CACHE_NAME = `sanliurfa-${CACHE_VERSION}`;
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -30,7 +31,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName.startsWith('sanliurfa-') && cacheName !== CACHE_NAME) {
             console.log('Service Worker: Eski cache siliniyor:', cacheName);
             return caches.delete(cacheName);
           }
@@ -45,6 +46,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  if (request.method !== 'GET') {
+    return;
+  }
 
   // API istekleri - network first
   if (url.pathname.startsWith('/api/')) {
@@ -84,7 +89,7 @@ self.addEventListener('fetch', (event) => {
           return caches.match('/offline.html');
         }
         // HTML sayfalarını cache'e ekle
-        if (request.headers.get('accept').includes('text/html')) {
+        if (request.headers.get('accept')?.includes('text/html')) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(request, responseClone);
