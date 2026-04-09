@@ -31,6 +31,9 @@ The wrapper polls until checks exist, then hands off to `gh pr checks --watch`.
 - Repo target: Node `22.13.0+` and `<23`.
 - Run `npm run phase:env:check` directly or via `phase:prepare:block` before delivery commands.
 - If the shell is below the target, switch with `nvm use 22.13.0` before `npm ci`.
+- If the shell cannot switch cleanly, use the preferred-node wrapper:
+  - `npm run phase:env:check:preferred`
+  - `npm run phase:prepare:block:preferred -- --phase-script test:phase:<range>`
 
 ## PR Flow
 Use API-first PR creation because `gh pr create` can intermittently return false negatives for fresh phase branches.
@@ -48,6 +51,12 @@ After merge attempts, treat remote PR state as authoritative:
 
 ```bash
 npx tsx scripts/phase-pr.ts view --repo titanai777/sanliurfa --pr <number>
+```
+
+For npm-safe PR creation without long quoted flags, use file-based inputs:
+
+```bash
+npm run phase:pr:open:file -- titanai777/sanliurfa master <branch> PR_TITLE.txt PR_BODY.md
 ```
 
 ## Astro Constraints
