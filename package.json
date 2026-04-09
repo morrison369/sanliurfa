@@ -188,7 +188,10 @@
     "test:phase:941-946": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v100.test.ts",
     "test:phase:947-952": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v101.test.ts",
     "test:phase:953-958": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v102.test.ts",
-    "test:phase:959-964": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v103.test.ts"
+    "test:phase:959-964": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v103.test.ts",
+    "test:phase:965-970": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v104.test.ts",
+    "test:phase:971-976": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v105.test.ts",
+    "test:phase:977-982": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v106.test.ts"
   },
   "keywords": [
     "sanliurfa",
