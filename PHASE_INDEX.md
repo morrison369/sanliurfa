@@ -130,3 +130,6 @@ Active governance delivery reports remain at repo root from V3 onward.
 
 ## Archived Cleanup And Residual Verification
 - `docs/archive/cleanup/2026-04-09/README.md`
+- `PHASE_1073_1078_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V122.md`
+- `PHASE_1079_1084_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V123.md`
+- `PHASE_1085_1090_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V124.md`
