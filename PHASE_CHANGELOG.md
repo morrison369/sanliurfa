@@ -39,3 +39,4 @@
 - 2026-04-09 | phase | `84e1045` | Phase 1019-1036: Governance Batch Delivery V113-V115 plus final root refresh
 - 2026-04-09 | phase | 84e1045 | Phase 1019-1036: Governance Batch Delivery V113-V115 plus final root refresh
 - 2026-04-09 | chore | `4e697ec` | Chore: update phase changelog for 1019-1036
+- 2026-04-09 | phase | `8d1a906` | Phase 1037-1054: Governance Batch Delivery V116-V118 plus inventory-only root decision
