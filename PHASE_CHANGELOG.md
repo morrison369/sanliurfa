@@ -61,4 +61,4 @@
 - 2026-04-09 | chore | `5c52fd4` | Chore: update phase changelog for 1163-1180
 - 2026-04-09 | phase | `8e37eca` | Phase 1181-1198: Governance Batch Delivery V140-V142
 - 2026-04-09 | chore | `6457736` | Chore: update phase changelog for 1181-1198
-- 2026-04-09 | chore | `14a5afa` | Chore: normalize phase changelog for 1181-1198
+- 2026-04-09 | chore | `3580bfa` | Chore: finalize phase changelog for 1181-1198
