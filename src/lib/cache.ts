@@ -154,3 +154,26 @@ export async function checkRateLimit(key: string, limit: number, windowSeconds: 
     return true; // Allow on error (fail-open)
   }
 }
+
+/**
+ * Legacy compatibility facade used by older modules (`import { redis } from './cache'`).
+ * It forwards any method call to the underlying Redis client lazily.
+ */
+export const redis = new Proxy(
+  {},
+  {
+    get(_target, propKey) {
+      if (typeof propKey !== 'string') {
+        return undefined;
+      }
+      return async (...args: any[]) => {
+        const c = await getRedisClient();
+        const fn = (c as any)[propKey];
+        if (typeof fn !== 'function') {
+          throw new Error(`Redis method not found: ${propKey}`);
+        }
+        return fn.apply(c, args);
+      };
+    }
+  }
+) as any;
