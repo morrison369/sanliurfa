@@ -59,6 +59,12 @@ For npm-safe PR creation without long quoted flags, use file-based inputs:
 npm run phase:pr:open:file -- titanai777/sanliurfa master <branch> PR_TITLE.txt PR_BODY.md
 ```
 
+For npm-safe merge verification without long flags, positional view args are supported:
+
+```bash
+npm run phase:pr:view -- titanai777/sanliurfa <pr-number>
+```
+
 ## Astro Constraints
 - SSR-first runtime with `@astrojs/node` standalone adapter.
 - Avoid route collisions in `src/pages/`.
