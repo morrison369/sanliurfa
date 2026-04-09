@@ -6,7 +6,7 @@
 import { query, queryMany, queryOne } from './postgres';
 import { logReportExecution } from './business-analytics';
 import { logger } from './logging';
-import ExcelJS from 'exceljs';
+import { generateExcelBuffer } from './report-export';
 
 interface ReportFilters {
   startDate?: string;
@@ -62,35 +62,6 @@ function toJSON(headers: string[], rows: any[][]): string {
 /**
  * Excel export is write-only. We do not parse untrusted workbook input here.
  */
-async function toExcel(headers: string[], rows: any[][], sheetName: string = 'Report'): Promise<Buffer> {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet(sheetName.slice(0, 31) || 'Report');
-
-  worksheet.addRow(headers);
-  rows.forEach(row => worksheet.addRow(row));
-  worksheet.views = [{ state: 'frozen', ySplit: 1 }];
-
-  const headerRow = worksheet.getRow(1);
-  headerRow.font = { bold: true };
-
-  const columnWidths = headers.map((header, index) => {
-    const maxCellLength = rows.reduce((max, row) => {
-      const value = row[index] ?? '';
-      return Math.max(max, String(value).length);
-    }, String(header).length);
-
-    return { width: Math.min(Math.max(maxCellLength + 2, 12), 40) };
-  });
-
-  worksheet.columns = worksheet.columns.map((column, index) => ({
-    ...column,
-    width: columnWidths[index]?.width ?? 16
-  }));
-
-  const buffer = await workbook.xlsx.writeBuffer();
-  return Buffer.from(buffer);
-}
-
 /**
  * Collect business metrics data
  */
@@ -319,7 +290,7 @@ export async function executeReport(
         fileExtension = 'json';
         break;
       case 'excel':
-        buffer = await toExcel(exportData.headers, exportData.rows, reportType);
+        buffer = await generateExcelBuffer(exportData.headers, exportData.rows, reportType);
         contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         fileExtension = 'xlsx';
         break;

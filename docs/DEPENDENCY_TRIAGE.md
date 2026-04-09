@@ -20,6 +20,7 @@ This repository keeps dependency upgrades separate from phase delivery.
   - Severity: `resolved`
   - Type: former direct runtime dependency
   - Action taken: removed from the runtime path and replaced with write-only `exceljs` export generation
+  - Guardrail: validate workbook generation through `src/lib/__tests__/report-engine-excel-smoke.test.ts`
 
 ## Dev-Only Priorities
 - `basic-ftp`
