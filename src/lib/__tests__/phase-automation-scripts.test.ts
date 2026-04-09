@@ -30,6 +30,7 @@ import {
 } from '../../../scripts/phase-status-sync';
 import { buildWorktreeBootstrapSteps, parseBootstrapArgs } from '../../../scripts/phase-worktree-bootstrap';
 import { buildChangelogLine, classifyCommit, parseArgs, upsertChangelogEntry } from '../../../scripts/phase-changelog';
+import { buildOpenArgs, buildViewArgs, parsePhasePrArgs } from '../../../scripts/phase-pr';
 import { hasMatchingMarkdownFiles } from '../content-loader-helpers';
 
 const sampleBlock: PhaseBlockConfig = {
@@ -419,6 +420,57 @@ describe('phase changelog helpers', () => {
   it('parses positional ref for npm wrapper compatibility', () => {
     const parsed = parseArgs(['HEAD']);
     expect(parsed.ref).toBe('HEAD');
+  });
+});
+
+describe('phase pr helpers', () => {
+  it('parses open command with inline body', () => {
+    const parsed = parsePhasePrArgs([
+      'open',
+      '--repo', 'titanai777/sanliurfa',
+      '--base', 'master',
+      '--head', 'batch-phase-689',
+      '--title', 'Phase 689-694: Governance Assurance Stability Continuity V58',
+      '--body', 'summary'
+    ]);
+
+    expect(parsed.mode).toBe('open');
+    expect(parsed.open?.repo).toBe('titanai777/sanliurfa');
+    expect(parsed.open?.head).toBe('batch-phase-689');
+    expect(parsed.open?.body).toBe('summary');
+  });
+
+  it('builds gh api args for open', () => {
+    expect(
+      buildOpenArgs({
+        repo: 'titanai777/sanliurfa',
+        base: 'master',
+        head: 'batch-phase-689',
+        title: 'Phase 689-694: Governance Assurance Stability Continuity V58',
+        body: 'summary'
+      })
+    ).toEqual([
+      'api',
+      'repos/titanai777/sanliurfa/pulls',
+      '-f', 'title=Phase 689-694: Governance Assurance Stability Continuity V58',
+      '-f', 'head=batch-phase-689',
+      '-f', 'base=master',
+      '-f', 'body=summary'
+    ]);
+  });
+
+  it('parses view command and builds gh view args', () => {
+    const parsed = parsePhasePrArgs(['view', '--repo', 'titanai777/sanliurfa', '--pr', '42']);
+    expect(parsed.view?.prNumber).toBe(42);
+    expect(buildViewArgs(parsed.view!)).toEqual([
+      'pr',
+      'view',
+      '42',
+      '--repo',
+      'titanai777/sanliurfa',
+      '--json',
+      'state,mergeCommit,url'
+    ]);
   });
 });
 
