@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Loyalty & Rewards System', () => {
-  let userId: string;
-  let authToken: string;
+  let userId = '';
+  let authToken = '';
 
   test.beforeAll(async ({ browser }) => {
     // Setup: Create test user and get auth token
@@ -103,8 +103,8 @@ test.describe('Loyalty & Rewards System', () => {
 });
 
 test.describe('Admin Loyalty Management', () => {
-  let adminToken: string;
-  let testUserId: string;
+  let adminToken = '';
+  let testUserId = '';
 
   test.beforeAll(async ({ browser }) => {
     // This would need admin user setup in test database

@@ -1,0 +1,7 @@
+diff --git a/e2e/2fa.spec.ts b/e2e/2fa.spec.ts
+diff --git a/e2e/loyalty.spec.ts b/e2e/loyalty.spec.ts
+diff --git a/e2e/messaging.spec.ts b/e2e/messaging.spec.ts
+diff --git a/e2e/privacy.spec.ts b/e2e/privacy.spec.ts
+diff --git a/public/service-worker.js b/public/service-worker.js
+diff --git a/vitest.config.ts b/vitest.config.ts
+diff --git a/astro.config.mjs b/astro.config.mjs

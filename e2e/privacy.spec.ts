@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Privacy & Data Management', () => {
-  let authToken: string;
-  let userId: string;
-  let testUserId: string;
+  let authToken = '';
+  let userId = '';
+  let testUserId = '';
 
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext();
@@ -16,7 +16,7 @@ test.describe('Privacy & Data Management', () => {
     await page.fill('input[name="fullName"]', 'Privacy Tester');
     await page.click('button:has-text("Kayıt Ol")');
     await page.waitForURL('**/');
-    authToken = await page.evaluate(() => localStorage.getItem('auth-token'));
+    authToken = (await page.evaluate(() => localStorage.getItem('auth-token'))) ?? '';
 
     await context.close();
   });

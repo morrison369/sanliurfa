@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Two-Factor Authentication', () => {
-  let authToken: string;
+  let authToken = '';
   let userEmail: string;
   const password = 'TestPassword123!';
 
@@ -17,7 +17,7 @@ test.describe('Two-Factor Authentication', () => {
     await page.fill('input[name="fullName"]', '2FA Tester');
     await page.click('button:has-text("Kayıt Ol")');
     await page.waitForURL('**/');
-    authToken = await page.evaluate(() => localStorage.getItem('auth-token'));
+    authToken = (await page.evaluate(() => localStorage.getItem('auth-token'))) ?? '';
 
     await context.close();
   });
