@@ -45,4 +45,5 @@
 - 2026-04-09 | chore | `88d9cc3` | Chore: update phase changelog for 569-574
 - 2026-04-09 | phase | `5352530` | Phase 575-580: Governance Continuity Assurance Recovery V39
 - 2026-04-09 | chore | `b29c2c9` | Chore: update phase changelog for 575-580
-- 2026-04-09 | phase | `c4aaf7b` | Phase 581-586: Governance Recovery Assurance Continuity V40
+- 2026-04-09 | phase | `cabe98a` | Phase 581-586: Governance Recovery Assurance Continuity V40
+- 2026-04-09 | chore | `cc1bfe9` | Chore: update phase changelog for 581-586
