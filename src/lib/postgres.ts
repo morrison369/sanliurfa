@@ -276,14 +276,19 @@ export async function queryOne(text: string, params?: any[]) {
  * Phase 5: Optional streaming for large result sets
  */
 export async function queryMany(text: string, params?: any[], options?: { stream?: boolean; onRow?: (row: any) => Promise<void> }) {
+  const attachRowsCompat = <T extends any[]>(rows: T): T & { rows: T } => {
+    // Backward compatibility: some call-sites expect an array, others expect { rows }.
+    return Object.assign(rows, { rows });
+  };
+
   if (options?.stream && options?.onRow) {
-    // Use streaming for large datasets
-    const rowCount = await queryStream(text, params, options.onRow);
-    return { rowCount, streamed: true };
+    // Stream mode intentionally returns empty array but keeps `rows` compatibility.
+    await queryStream(text, params, options.onRow);
+    return attachRowsCompat([]);
   }
 
   const result = await query(text, params);
-  return result.rows;
+  return attachRowsCompat(result.rows);
 }
 
 /**
@@ -410,7 +415,7 @@ export async function insert(table: string, data: Record<string, any>) {
  * Update a row by ID
  * WARNING: Column names are interpolated. Only use with trusted/validated column names.
  */
-export async function update(table: string, id: string, data: Record<string, any>) {
+export async function update(table: string, idOrWhere: string | Record<string, any>, data: Record<string, any>) {
   assertTable(table);
   const keys = Object.keys(data);
   const values = Object.values(data);
@@ -420,7 +425,26 @@ export async function update(table: string, id: string, data: Record<string, any
   }
 
   const setClause = keys.map((k, i) => `${k} = $${i + 2}`).join(', ');
-  const result = await queryOne(`UPDATE ${table} SET ${setClause} WHERE id = $1 RETURNING *`, [id, ...values]);
+  let whereClause = 'id = $1';
+  let whereParams: any[] = [];
+
+  if (typeof idOrWhere === 'string') {
+    whereParams = [idOrWhere];
+  } else {
+    const whereEntries = Object.entries(idOrWhere);
+    if (whereEntries.length === 0) {
+      throw new Error('No where condition provided');
+    }
+    whereClause = whereEntries
+      .map(([column], idx) => `${column} = $${idx + 1}`)
+      .join(' AND ');
+    whereParams = whereEntries.map(([, value]) => value);
+  }
+
+  const result = await queryOne(
+    `UPDATE ${table} SET ${setClause} WHERE ${whereClause} RETURNING *`,
+    [...whereParams, ...values]
+  );
   return result;
 }
 

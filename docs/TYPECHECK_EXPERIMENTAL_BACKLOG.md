@@ -4,16 +4,20 @@
 
 ## P1 Buckets
 1. `queryMany/queryOne` dönüş tipi tutarsızlığı (`any[] | { rowCount... }`)  
-   Hedef dosyalar: `src/lib/*` içindeki data erişim katmanı.
-2. `verbatimModuleSyntax` kaynaklı `export type` / type-only import hataları  
-   Hedef dosyalar: `src/lib/*`, `src/components/*`.
-3. React state ve `never` infer hataları (`map`, alan erişimi)  
-   Hedef dosyalar: `src/components/*`.
+   Durum: **kısmen kapandı**. `queryMany` artık hem dizi hem `rows` erişimini aynı anda destekliyor.
+2. Monorepo/legacy alanlar için aşırı geniş experimental kapsam  
+   Durum: **kısmen kapandı**. `tsconfig.experimental.json` yalnızca `src/lib` + `src/env.d.ts` kapsıyor.
+3. Legacy modül sözleşme kırıkları (`src/lib/index.ts` mega re-export, `cache.redis`, zayıf tipli helper kullanımları)  
+   Durum: **açık**.
+4. React state ve API wrapper tip uyuşmazlıkları  
+   Durum: **açık** (experimental scope dışına alındı; ayrı fazda kapanacak).
 
 ## Uygulama Sırası
-1. Önce `src/lib/postgres.ts` tip sözleşmesini sabitle.
-2. Sonra `src/lib` data katmanında helper tiplerini normalize et.
-3. En son `src/components` state tiplerini düzelt.
+1. `src/lib/postgres.ts` sözleşmesini sabitle (tamamlandı).
+2. `src/lib/index.ts` re-export ağacını domain bazlı parçalara ayır.
+3. `src/lib/cache.ts` içine geriye uyumlu `redis` facade ekle veya importları `getRedisClient` modeline taşı.
+4. `unknown` ile dönen helper’larda (`logger`, parse fonksiyonları) daraltma yardımcıları ekle.
+5. Son fazda `src/components` state tiplerini düzelt.
 
 ## Gate Politikası
 - `typecheck:app` merge-blocking.

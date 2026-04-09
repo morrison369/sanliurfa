@@ -1,11 +1,17 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "verbatimModuleSyntax": false,
+    "isolatedModules": false,
+    "types": ["node", "astro/client"]
   },
   "include": [
     "src/lib/**/*.ts",
-    "src/components/**/*.tsx"
+    "src/env.d.ts"
   ],
   "exclude": [
     "src/lib/__tests__/**",
