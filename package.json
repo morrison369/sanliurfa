@@ -135,7 +135,7 @@
     "test:phase:gate:ci": "npm exec -- tsx scripts/phase-gate-ci.ts --ci",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:smoke": "playwright test e2e/2fa.spec.ts e2e/loyalty.spec.ts e2e/messaging.spec.ts --project=chromium --retries=1",
+    "test:e2e:smoke": "npm exec -- tsx scripts/e2e-smoke.ts",
     "test:e2e:ui": "playwright test --ui",
     "test": "npm run test:unit && npm run test:e2e",
     "lighthouse": "lhci autorun",
