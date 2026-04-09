@@ -574,7 +574,13 @@ Last updated: 2026-04-09
   - docs: `PHASE_773_778_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V72.md`
 
 ## Open
-- `T-104` Phase 779-784 planning
+- `T-104` Phase 779-784 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v73.test.ts`
+  - docs: `PHASE_779_784_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V73.md`
+
+## Open
+- `T-105` Phase 785-790 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
