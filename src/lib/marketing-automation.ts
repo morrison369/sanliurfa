@@ -101,6 +101,10 @@ export class TemplateEngine {
   private templates = new Map<string, { content: string; variables: string[] }>();
   private vendorTemplates = new Map<string, Set<string>>();
 
+  private escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   createTemplate(name: string, content: string, variables: string[]): string {
     const templateId = 'template-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     this.templates.set(templateId, { content, variables });
@@ -113,7 +117,8 @@ export class TemplateEngine {
     if (!template) return '';
     let rendered = template.content;
     for (const variable of template.variables) {
-      const pattern = new RegExp(, 'g');
+      const escapedVariable = this.escapeRegExp(variable);
+      const pattern = new RegExp(`{{\\s*${escapedVariable}\\s*}}`, 'g');
       rendered = rendered.replace(pattern, String(data[variable] || ''));
     }
     return rendered;

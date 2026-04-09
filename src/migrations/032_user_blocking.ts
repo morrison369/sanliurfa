@@ -26,7 +26,7 @@ export const migration_032_user_blocking: Migration = {
       CREATE INDEX IF NOT EXISTS idx_user_blocks_created ON user_blocks(created_at DESC);
     `);
 
-    -- User mutes - hides user's content from feed without blocking messaging
+    // User mutes - hides user's content from feed without blocking messaging
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_mutes (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -41,7 +41,7 @@ export const migration_032_user_blocking: Migration = {
       CREATE INDEX IF NOT EXISTS idx_user_mutes_muted ON user_mutes(muted_id);
     `);
 
-    -- Blocked message attempts - audit log of attempts to message blocked users
+    // Blocked message attempts - audit log of attempts to message blocked users
     await pool.query(`
       CREATE TABLE IF NOT EXISTS blocked_message_attempts (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
