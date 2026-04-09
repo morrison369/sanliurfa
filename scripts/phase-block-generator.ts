@@ -33,6 +33,11 @@ export interface GeneratedPhaseFiles {
   modules: Record<string, string>;
 }
 
+export interface ParsedPhaseBlockGeneratorArgs {
+  configPath?: string;
+  shouldWrite: boolean;
+}
+
 export function buildPhaseScriptEntry(start: number, end: number, testFile: string): string {
   return `\"test:phase:${start}-${end}\": \"vitest run --pool=threads --environment node ${testFile}\"`;
 }
@@ -231,9 +236,19 @@ export function loadPhaseBlockConfig(configPath: string): PhaseBlockConfig {
   return JSON.parse(readFileSync(resolve(configPath), 'utf8')) as PhaseBlockConfig;
 }
 
+export function parsePhaseBlockGeneratorArgs(argv: string[]): ParsedPhaseBlockGeneratorArgs {
+  const shouldWrite = argv.includes('--write') || argv.includes('write');
+  const configPath = argv.find((value) => value !== '--write' && value !== 'write');
+  return {
+    configPath,
+    shouldWrite
+  };
+}
+
 export function main(): void {
-  const configArg = process.argv[2];
-  const shouldWrite = process.argv.includes('--write');
+  const parsed = parsePhaseBlockGeneratorArgs(process.argv.slice(2));
+  const configArg = parsed.configPath;
+  const shouldWrite = parsed.shouldWrite;
   if (!configArg) {
     process.stdout.write('Usage: tsx scripts/phase-block-generator.ts <config.json> [--write]\n');
     return;

@@ -105,6 +105,7 @@
     "phase:sync:tsconfig": "npm exec -- tsx scripts/update-phase-tsconfig.ts",
     "phase:check:tsconfig": "npm exec -- tsx scripts/update-phase-tsconfig.ts --check",
     "phase:generate:block": "npm exec -- tsx scripts/phase-block-generator.ts",
+    "phase:generate:block:write": "npm exec -- tsx scripts/phase-block-writer.ts",
     "phase:bootstrap:worktree": "npm exec -- tsx scripts/phase-worktree-bootstrap.ts",
     "phase:bootstrap:worktree:noinstall": "npm exec -- tsx scripts/phase-worktree-bootstrap.ts --skip-install",
     "phase:changelog": "npm exec -- tsx scripts/phase-changelog.ts",
@@ -158,7 +159,10 @@
     "test:phase:779-784": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v73.test.ts",
     "test:phase:785-790": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v74.test.ts",
     "test:phase:791-796": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v75.test.ts",
-    "test:phase:797-802": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v76.test.ts"
+    "test:phase:797-802": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v76.test.ts",
+    "test:phase:803-808": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v77.test.ts",
+    "test:phase:809-814": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v78.test.ts",
+    "test:phase:815-820": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v79.test.ts"
   },
   "keywords": [
     "sanliurfa",
