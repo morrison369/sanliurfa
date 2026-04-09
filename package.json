@@ -139,7 +139,10 @@
     "backup": "./scripts/backup.sh",
     "deploy": "./scripts/deploy.sh",
     "analyze": "node scripts/analyze-bundle.js",
-    "check": "node scripts/final-check.js"
+    "check": "node scripts/final-check.js",
+    "test:phase:731-736": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v65.test.ts",
+    "test:phase:737-742": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v66.test.ts",
+    "test:phase:743-748": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v67.test.ts"
   },
   "keywords": [
     "sanliurfa",
