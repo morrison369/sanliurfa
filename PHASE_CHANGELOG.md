@@ -48,3 +48,5 @@
 - 2026-04-09 | phase | `add91e7` | Phase 1361-1378: Governance Batch Delivery V170-V172
 - 2026-04-09 | chore | `75a21bb` | Chore: remediate dependency audit high-severity issues
 - 2026-04-09 | chore | `d54588a` | Chore: remediate Astro tooling dependency audit chain
+- 2026-04-09 | phase | `03871df` | Phase 1379-1396: Governance Batch Delivery V173-V175
+
