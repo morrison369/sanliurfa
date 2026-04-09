@@ -61,7 +61,13 @@ export function captureException(error: Error, context?: Record<string, any>): v
  */
 export function captureMessage(message: string, level: 'fatal' | 'error' | 'warning' | 'info' = 'info'): void {
   try {
-    logger.log(`${level.toUpperCase()}: ${message}`);
+    if (level === 'fatal' || level === 'error') {
+      logger.error(message, { level });
+    } else if (level === 'warning') {
+      logger.warn(message, { level });
+    } else {
+      logger.info(message, { level });
+    }
     // Sentry.captureMessage(message, level);
   } catch (e) {
     logger.error('Failed to capture message', e instanceof Error ? e : new Error(String(e)));

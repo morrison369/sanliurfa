@@ -27,9 +27,10 @@ interface PerformanceMetrics {
 export function collectPerformanceMetrics(): PerformanceMetrics {
   const navTiming = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
   const paintEntries = performance.getEntriesByType('paint');
+  const navStart = navTiming?.startTime ?? 0;
 
   const metrics: PerformanceMetrics = {
-    navigationStart: navTiming?.navigationStart || 0,
+    navigationStart: navStart,
     responseEnd: navTiming?.responseEnd || 0,
     domInteractive: navTiming?.domInteractive || 0,
     domComplete: navTiming?.domComplete || 0,
@@ -44,8 +45,8 @@ export function collectPerformanceMetrics(): PerformanceMetrics {
   });
 
   if (navTiming) {
-    metrics.ttfb = navTiming.responseStart - navTiming.navigationStart;
-    metrics.dcl = navTiming.domContentLoadedEventEnd - navTiming.navigationStart;
+    metrics.ttfb = navTiming.responseStart - navStart;
+    metrics.dcl = navTiming.domContentLoadedEventEnd - navStart;
   }
 
   return metrics;

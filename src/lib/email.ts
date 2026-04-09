@@ -3,7 +3,7 @@
  * Queue-based email sending with templates
  */
 
-import { insert, queryMany, query } from './postgres';
+import { insert, queryMany, query, queryOne } from './postgres';
 import { logger } from './logging';
 
 export interface EmailTemplate {
@@ -161,8 +161,22 @@ export async function sendEmailViaService(email: any): Promise<boolean> {
 /**
  * Send email directly (used for password reset, verification, etc.)
  */
-export async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+type SendEmailPayload = { to: string; subject: string; html: string };
+
+export async function sendEmail(to: string, subject: string, html: string): Promise<boolean>;
+export async function sendEmail(payload: SendEmailPayload): Promise<boolean>;
+export async function sendEmail(
+  toOrPayload: string | SendEmailPayload,
+  subjectArg?: string,
+  htmlArg?: string
+): Promise<boolean> {
+  const payload: SendEmailPayload =
+    typeof toOrPayload === 'string'
+      ? { to: toOrPayload, subject: subjectArg || '', html: htmlArg || '' }
+      : toOrPayload;
+
   try {
+    const { to, subject, html } = payload;
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
     const FROM_EMAIL = process.env.MAIL_FROM || 'noreply@sanliurfa.com';
 
@@ -194,7 +208,10 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
     logger.info('Email sent successfully', { to, subject });
     return true;
   } catch (error) {
-    logger.error('Failed to send email', error instanceof Error ? error : new Error(String(error)), { to, subject });
+    logger.error('Failed to send email', error instanceof Error ? error : new Error(String(error)), {
+      to: payload.to,
+      subject: payload.subject
+    });
     return false;
   }
 }

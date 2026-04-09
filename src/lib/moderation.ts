@@ -183,7 +183,7 @@ export async function updateReportStatus(
   resolutionNote?: string
 ): Promise<Report> {
   try {
-    const updates = [newStatus];
+    const updates: any[] = [newStatus];
     let query_str = `UPDATE reports SET status = $1`;
 
     let paramIndex = 2;

@@ -63,7 +63,7 @@ export function prefixKey(key: string): string {
 /**
  * Get cached value with namespaced key
  */
-export async function getCache<T>(key: string): Promise<T | null> {
+export async function getCache<T = any>(key: string): Promise<T | null> {
   try {
     if (!isRedisAvailable()) {
       return null;

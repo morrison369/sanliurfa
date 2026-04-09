@@ -25,13 +25,14 @@ export interface QueryMetric {
   isSlow: boolean;
   rowCount?: number;
   error?: string;
+  source?: string;
 }
 
 /**
  * Slow operation record
  */
 export interface SlowOperationMetric {
-  type: 'query' | 'request' | 'cache';
+  type: 'query' | 'request' | 'cache' | 'pool';
   message: string;
   duration: number;
   timestamp: number;
@@ -124,7 +125,7 @@ class MetricsCollector {
   /**
    * Record a database query metric
    */
-  recordQuery(query: string, duration: number, rowCount?: number, error?: string): void {
+  recordQuery(query: string, duration: number, rowCount?: number, error?: string, source?: string): void {
     const isSlow = duration > performanceThresholds.slowQueryMs;
     this.queryMetrics.push({
       query: query.substring(0, 200), // Truncate long queries
@@ -132,7 +133,8 @@ class MetricsCollector {
       timestamp: Date.now(),
       isSlow,
       rowCount,
-      error
+      error,
+      source
     });
   }
 
@@ -140,7 +142,7 @@ class MetricsCollector {
    * Record a slow operation (query, request, or cache)
    */
   recordSlowOperation(
-    type: 'query' | 'request' | 'cache',
+    type: 'query' | 'request' | 'cache' | 'pool',
     message: string,
     duration: number,
     context?: Record<string, any>,

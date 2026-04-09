@@ -397,7 +397,7 @@ export async function getBySlug(table: string, slug: string) {
  * Insert a new row
  * WARNING: Column names are interpolated. Only use with trusted/validated column names.
  */
-export async function insert(table: string, data: Record<string, any>) {
+export async function insert(table: string, data: Record<string, any>, _legacyReturningFlag?: boolean) {
   assertTable(table);
   const keys = Object.keys(data);
   const values = Object.values(data);
@@ -415,7 +415,12 @@ export async function insert(table: string, data: Record<string, any>) {
  * Update a row by ID
  * WARNING: Column names are interpolated. Only use with trusted/validated column names.
  */
-export async function update(table: string, idOrWhere: string | Record<string, any>, data: Record<string, any>) {
+export async function update(
+  table: string,
+  idOrWhere: string | Record<string, any>,
+  data: Record<string, any>,
+  idColumn: string = 'id'
+) {
   assertTable(table);
   const keys = Object.keys(data);
   const values = Object.values(data);
@@ -425,7 +430,7 @@ export async function update(table: string, idOrWhere: string | Record<string, a
   }
 
   const setClause = keys.map((k, i) => `${k} = $${i + 2}`).join(', ');
-  let whereClause = 'id = $1';
+  let whereClause = `${idColumn} = $1`;
   let whereParams: any[] = [];
 
   if (typeof idOrWhere === 'string') {

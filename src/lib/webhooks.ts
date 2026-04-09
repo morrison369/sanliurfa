@@ -120,6 +120,11 @@ export async function processPendingWebhooks(maxRetries: number = 3): Promise<vo
  */
 async function deliverWebhook(event: any): Promise<void> {
   try {
+    const signal =
+      typeof AbortSignal !== 'undefined' && typeof (AbortSignal as any).timeout === 'function'
+        ? (AbortSignal as any).timeout(5000)
+        : undefined;
+
     const response = await fetch(event.url, {
       method: 'POST',
       headers: {
@@ -127,7 +132,7 @@ async function deliverWebhook(event: any): Promise<void> {
         'X-Webhook-Signature': generateSignature(event.data, event.secret)
       },
       body: event.data,
-      timeout: 5000
+      signal
     });
 
     if (response.ok) {

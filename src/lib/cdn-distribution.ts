@@ -217,7 +217,7 @@ export const EDGE_CACHE_POLICIES: EdgeCachePolicy[] = [
  * Build cache control header based on policy
  */
 export function buildCacheControlHeader(policy: EdgeCachePolicy): string {
-  const parts = [policy.cacheControl];
+  const parts: string[] = [policy.cacheControl];
 
   if (policy.maxAge > 0) {
     parts.push(`max-age=${policy.maxAge}`);

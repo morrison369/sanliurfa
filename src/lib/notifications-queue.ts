@@ -10,7 +10,7 @@ import { logger } from './logging';
 import { prefixKey, getCache, setCache, deleteCache } from './cache';
 import { fireAndForget } from './performance-optimizations';
 
-export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'action';
+export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'action' | 'comment';
 
 export interface Notification {
   id: string;

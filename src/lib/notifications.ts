@@ -205,4 +205,14 @@ export class NotificationSystem {
   }
 }
 
+// Legacy compatibility service for modules importing `notificationService`.
+export const notificationService = {
+  async notifyAlert(alert: { severity?: string; message?: string }) {
+    const level = alert?.severity || 'warning';
+    // Keep behavior minimal and non-blocking until full notification bridge is implemented.
+    console.warn(`notificationService.notifyAlert[${level}]`, alert?.message || 'alert');
+    return true;
+  }
+};
+
 export const notificationSystem = new NotificationSystem();
