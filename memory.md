@@ -1,8 +1,8 @@
 # Memory
 
 ## Current Phase
-- Active window: `Phase 1091-1096` (planned)
-- Last completed: `Phase 1085-1090 Governance Recovery Assurance & Continuity V124`
+- Active window: `Phase 1109-1114` (planned)
+- Last completed: `Phase 1103-1108 Governance Assurance Stability & Continuity V127`
 
 ## Astro Invariants
 - SSR-first runtime: `output: "server"` with `@astrojs/node` standalone adapter.
@@ -445,6 +445,12 @@
 
 - `Checkpoint 1001-1006`: V110 block delivered with assurance stability continuity pattern and batch release flow remained serial-safe.
 
+- `Phase 1091-1096 Governance Assurance Stability & Continuity V125`: complete
+
+- `Phase 1097-1102 Governance Recovery Assurance & Continuity V126`: complete
+
+- `Phase 1103-1108 Governance Assurance Stability & Continuity V127`: complete
+
 ## Blockers
 - No active blocker.
 - Resolved:
@@ -458,3 +464,6 @@
 - updated `src/lib/index.ts` exports
 - phase documentation added and indexed in `PHASE_INDEX.md`
 - commit message follows phase format: `Phase XXX-YYY: <title>`
+
+
+- `Checkpoint 1091-1108`: V125-V127 batch delivered cleanly and inventory-only root policy remained unchanged.

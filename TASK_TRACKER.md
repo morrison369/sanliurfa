@@ -764,7 +764,12 @@ Last updated: 2026-04-09
   - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v122.test.ts`
   - docs: `PHASE_1073_1078_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V122.md`
 
-- `T-142` Phase 1091-1096 planning
+- `T-142` Phase 1091-1096 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v125.test.ts`
+  - docs: `PHASE_1091_1096_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V125.md`
+
+- `T-143` Phase 1109-1114 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
