@@ -1,8 +1,8 @@
 # Memory
 
 ## Current Phase
-- Active window: `Phase 1109-1114` (planned)
-- Last completed: `Phase 1103-1108 Governance Assurance Stability & Continuity V127`
+- Active window: `Phase 1127-1132` (planned)
+- Last completed: `Phase 1121-1126 Governance Recovery Assurance & Continuity V130`
 
 ## Astro Invariants
 - SSR-first runtime: `output: "server"` with `@astrojs/node` standalone adapter.
@@ -451,6 +451,12 @@
 
 - `Phase 1103-1108 Governance Assurance Stability & Continuity V127`: complete
 
+- `Phase 1109-1114 Governance Recovery Assurance & Continuity V128`: complete
+
+- `Phase 1115-1120 Governance Assurance Stability & Continuity V129`: complete
+
+- `Phase 1121-1126 Governance Recovery Assurance & Continuity V130`: complete
+
 ## Blockers
 - No active blocker.
 - Resolved:
@@ -467,3 +473,6 @@
 
 
 - `Checkpoint 1091-1108`: V125-V127 batch delivered cleanly and inventory-only root policy remained unchanged.
+
+
+- `Checkpoint 1109-1126`: V128-V130 batch delivered cleanly and inventory-only root policy remained unchanged.
