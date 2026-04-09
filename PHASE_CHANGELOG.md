@@ -68,3 +68,4 @@
 - 2026-04-09 | phase | `f966989` | Phase 1217-1234: Governance Batch Delivery V146-V148
 - 2026-04-09 | phase | `d4023cb` | Phase 1217-1234: Governance Batch Delivery V146-V148
 - 2026-04-09 | chore | `f612693` | Chore: update phase changelog for 1217-1234
+- 2026-04-09 | phase | `5cec7e9` | Phase 1235-1252: Governance Batch Delivery V149-V151
