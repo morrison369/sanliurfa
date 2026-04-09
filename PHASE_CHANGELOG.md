@@ -28,6 +28,6 @@
 - 2026-04-09 | phase | `b96d37e` | Phase 947-964: Governance Batch Delivery V101-V103 plus ops cleanup
 - 2026-04-09 | chore | `680aae1` | Chore: update phase changelog for 947-964
 - 2026-04-09 | phase | `230844d` | Phase 965-982: Governance Batch Delivery V104-V106 plus residual root refresh
-- 2026-04-09 | phase | 927cc8 | Phase 965-982: Governance Batch Delivery V104-V106 plus residual root refresh
 - 2026-04-09 | chore | `1344fed` | Chore: update phase changelog for 965-982
 - 2026-04-09 | chore | `76b3d26` | Chore: refresh phase changelog for 965-982 after hash drift
+- 2026-04-09 | phase | `64b9744` | Phase 983-1000: Governance Batch Delivery V107-V109 plus governance backfill refresh
