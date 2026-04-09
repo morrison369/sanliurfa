@@ -1,8 +1,8 @@
 # Memory
 
 ## Current Phase
-- Active window: `Phase 1343-1348` (planned)
-- Last completed: `Phase 1337-1342 Governance Recovery Assurance & Continuity V166`
+- Active window: `Phase 1361-1366` (planned)
+- Last completed: `Phase 1355-1360 Governance Recovery Assurance & Continuity V169`
 
 ## Astro Invariants
 - SSR-first runtime: `output: "server"` with `@astrojs/node` standalone adapter.
