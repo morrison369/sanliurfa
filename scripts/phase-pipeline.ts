@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
+import { withPhaseLock } from './phase-lock';
 
 export interface PhasePipelineOptions {
   phaseScript?: string;
@@ -132,12 +133,16 @@ export function runPipelineStep(step: PipelineStep): void {
   }
 }
 
-export function main(): void {
-  const options = parsePhasePipelineArgs(process.argv.slice(2));
+export function executePhasePipeline(options: PhasePipelineOptions): void {
   const steps = buildPhasePipelineSteps(options);
   for (const step of steps) {
     runPipelineStep(step);
   }
+}
+
+export function main(): void {
+  const options = parsePhasePipelineArgs(process.argv.slice(2));
+  withPhaseLock('phase-pipeline', () => executePhasePipeline(options));
 }
 
 const currentFile = fileURLToPath(import.meta.url);
