@@ -69,7 +69,7 @@ if (!locals.user || locals.user.role !== 'admin') {
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     function switchTab(tabName: string) {
       // Hide all sections
       document.getElementById('overview-section')?.classList.add('hidden');

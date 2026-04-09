@@ -105,7 +105,7 @@ const seo = {
     </div>
   </div>
   
-  <script>
+  <script is:inline>
     async function removeFavorite(btn: HTMLButtonElement) {
       const id = btn.dataset.favoriteId;
       if (!confirm('Favorilerden kaldırmak istediğinize emin misiniz?')) return;

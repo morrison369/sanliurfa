@@ -60,7 +60,7 @@ const initialTag = Astro.url.searchParams.get('tag');
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     {
       // Tab switching logic
       const tabButtons = document.querySelectorAll('[data-tab-btn]');

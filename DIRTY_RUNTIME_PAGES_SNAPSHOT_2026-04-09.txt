@@ -1,0 +1,11 @@
+ M src/pages/admin/blog/comments.astro
+ M src/pages/admin/blog/index.astro
+ M src/pages/admin/dashboard.astro
+ D src/pages/api/search.ts
+ D src/pages/api/trending.ts
+ D src/pages/arama.astro
+ M src/pages/blog/[slug].astro
+ M src/pages/places/[slug].astro
+ M src/pages/profil/favoriler.astro
+ M src/pages/sifre-sifirla.astro
+ M src/pages/sosyal/index.astro

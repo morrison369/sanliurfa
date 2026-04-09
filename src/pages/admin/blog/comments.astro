@@ -199,7 +199,7 @@ const seo = {
   </div>
 </Layout>
 
-<script>
+<script is:inline>
   async function approveComment(id: number) {
     const response = await fetch(`/api/blog/comments/${id}/approve`, {
       method: 'PATCH',
