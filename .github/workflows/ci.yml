@@ -63,6 +63,9 @@ jobs:
       
       - name: Typecheck app scope
         run: npm run typecheck:app
+
+      - name: Typecheck experimental exclude budget
+        run: npm run typecheck:experimental:exclude:guard
       
       - name: Build
         run: npm run build
@@ -84,8 +87,7 @@ jobs:
       - name: Migration dry-run
         run: npm run migrate:dry-run
 
-      - name: Typecheck experimental advisory
-        continue-on-error: true
+      - name: Typecheck experimental
         run: npm run typecheck:experimental
 
       - name: Release gate

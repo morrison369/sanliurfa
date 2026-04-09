@@ -26,6 +26,8 @@ function main(): void {
   run('Phase doctor', 'npm run phase:doctor');
   run('Dependency triage', 'npm run deps:audit:triage');
   run('TypeScript app gate', 'npm run typecheck:app');
+  run('TypeScript experimental exclude budget gate', 'npm run typecheck:experimental:exclude:guard');
+  run('TypeScript experimental gate', 'npm run typecheck:experimental');
   run('TypeScript governance gate', 'npm run phase:check:tsconfig');
   run('Critical unit smoke', 'npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts');
   run('E2E smoke', 'npm run test:e2e:smoke');

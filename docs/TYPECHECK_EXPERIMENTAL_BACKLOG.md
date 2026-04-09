@@ -21,4 +21,10 @@
 
 ## Gate Politikası
 - `typecheck:app` merge-blocking.
-- `typecheck:experimental` CI'da advisory, backlog kapatıldığında blocking moda alınır.
+- `typecheck:experimental` merge-blocking.
+- `typecheck:experimental:exclude:guard` merge-blocking.
+
+## Exclude Budget
+- Budget dosyası: `config/experimental-exclude-budget.json`
+- Kural: `tsconfig.experimental.json` içindeki `exclude` listesi bütçeyi aşamaz.
+- Amaç: yeni teknik borcun gate altından sessizce büyümesini engellemek.
