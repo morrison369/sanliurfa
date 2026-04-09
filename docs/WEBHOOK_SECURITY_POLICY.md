@@ -3,6 +3,7 @@
 ## Baseline Controls
 1. Signature verification is mandatory for external webhook providers.
 2. Replay queue must enforce idempotency by `(webhook_id, event_id)` for pending/completed statuses.
+2.1 DB-side partial unique index is required to guarantee idempotency under concurrent requests.
 3. Audit payloads must redact sensitive fields (`authorization`, `token`, `password`, `secret`).
 4. Oversized payloads are truncated before persistence.
 

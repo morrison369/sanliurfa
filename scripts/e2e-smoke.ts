@@ -3,11 +3,20 @@ import { spawn } from 'node:child_process';
 const BASE_URL = process.env.SMOKE_BASE_URL ?? 'http://127.0.0.1:1111';
 const STARTUP_TIMEOUT_MS = 90_000;
 
+async function isServerReady(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, { method: 'GET' });
+    return response.ok || response.status < 500;
+  } catch {
+    return false;
+  }
+}
+
 function startServer() {
   const command =
     process.platform === 'win32'
-      ? 'npx.cmd astro dev --port 1111 --host 127.0.0.1'
-      : 'npx astro dev --port 1111 --host 127.0.0.1';
+      ? 'npx.cmd astro dev --port 1111 --host 127.0.0.1 --strictPort'
+      : 'npx astro dev --port 1111 --host 127.0.0.1 --strictPort';
   const env = {
     ...process.env,
     DATABASE_URL:
@@ -25,13 +34,8 @@ function startServer() {
 async function waitForServer(url: string): Promise<void> {
   const start = Date.now();
   while (Date.now() - start < STARTUP_TIMEOUT_MS) {
-    try {
-      const response = await fetch(url, { method: 'GET' });
-      if (response.ok || response.status < 500) {
-        return;
-      }
-    } catch {
-      // keep polling
+    if (await isServerReady(url)) {
+      return;
     }
     await new Promise((resolve) => setTimeout(resolve, 1500));
   }
@@ -47,21 +51,25 @@ async function assertPath(path: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const child = startServer();
+  const readyProbe = `${BASE_URL}/giris`;
+  const reuseExistingServer = await isServerReady(readyProbe);
+  const child = reuseExistingServer ? null : startServer();
   let failed = false;
 
   try {
-    await waitForServer(`${BASE_URL}/giris`);
+    if (!reuseExistingServer) {
+      await waitForServer(readyProbe);
+    }
     await assertPath('/giris');
     await assertPath('/kayit');
   } catch (error) {
     failed = true;
     throw error;
   } finally {
-    if (!child.killed) {
+    if (child && !child.killed) {
       child.kill('SIGTERM');
     }
-    if (process.platform === 'win32') {
+    if (child && process.platform === 'win32') {
       const killer = spawn('taskkill', ['/pid', String(child.pid), '/f', '/t'], {
         stdio: 'ignore',
         shell: true,

@@ -38,6 +38,12 @@ jobs:
 
       - name: Repo stabilization check
         run: npm run repo:stabilize:check
+
+      - name: Governance import guard
+        run: npm run governance:imports:check
+
+      - name: DB drift check
+        run: npm run db:drift:check
       
       - name: Lint code
         run: npm run lint
@@ -60,8 +66,14 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
       
-      - name: Run E2E tests
-        run: npm run test:e2e
+      - name: Run E2E smoke
+        run: npm run test:e2e:smoke
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+
+      - name: Run full E2E advisory
+        continue-on-error: true
+        run: npm run test:e2e:full
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
 

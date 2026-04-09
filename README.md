@@ -98,8 +98,11 @@ npm run phase:doctor
 npm run phase:changelog:normalize
 npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts
 npm run repo:stabilize:check
+npm run governance:imports:check
+npm run db:drift:check
 npm run release:gate
 npm run test:e2e:smoke
+npm run test:e2e:full
 ```
 
 ## Release ve Stabilizasyon
