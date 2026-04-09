@@ -9,6 +9,8 @@ interface PackageJson {
 export interface ScriptSurfaceReport {
   compatibilityPhaseScripts: string[];
   runnerScripts: string[];
+  firstCompatibilityScript: string | null;
+  lastCompatibilityScript: string | null;
 }
 
 export function buildScriptSurfaceReport(scripts: Record<string, string>): ScriptSurfaceReport {
@@ -35,7 +37,9 @@ export function buildScriptSurfaceReport(scripts: Record<string, string>): Scrip
 
   return {
     compatibilityPhaseScripts,
-    runnerScripts
+    runnerScripts,
+    firstCompatibilityScript: compatibilityPhaseScripts[0] ?? null,
+    lastCompatibilityScript: compatibilityPhaseScripts[compatibilityPhaseScripts.length - 1] ?? null
   };
 }
 
@@ -43,7 +47,9 @@ export function renderScriptSurfaceReport(report: ScriptSurfaceReport): string {
   return [
     'phase-scripts-report',
     `compatibilityPhaseScripts=${report.compatibilityPhaseScripts.length}`,
-    `runnerScripts=${report.runnerScripts.join(', ') || 'none'}`
+    `compatibilityRange=${report.firstCompatibilityScript ?? 'none'}..${report.lastCompatibilityScript ?? 'none'}`,
+    `runnerScripts=${report.runnerScripts.join(', ') || 'none'}`,
+    'policy=runner-first; test:phase:<range> entries are compatibility-only'
   ].join('\n');
 }
 

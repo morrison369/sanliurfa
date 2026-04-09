@@ -44,3 +44,4 @@
 - 2026-04-09 | chore | `fdc01a7` | Chore: harden root source-of-truth and archive cleanup docs
 - 2026-04-09 | phase | `eea6762` | Phase 1325-1342: Governance Batch Delivery V164-V166
 - 2026-04-09 | phase | `852e48c` | Phase 1343-1360: Governance Batch Delivery V167-V169
+- 2026-04-09 | chore | `e522bc6` | Chore: harden dependency triage and architecture docs

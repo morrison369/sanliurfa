@@ -42,6 +42,18 @@ export function findDoctorIssues(root: string = process.cwd()): DoctorIssue[] {
     issues.push({ level: 'fail', message: 'Missing docs/ACTIVE_DOCS.md.' });
   }
 
+  if (!existsSync(resolve(root, 'ARCHITECTURE.md'))) {
+    issues.push({ level: 'fail', message: 'Missing ARCHITECTURE.md in repo root.' });
+  }
+
+  if (!existsSync(resolve(root, 'docs/DEPENDENCY_TRIAGE.md'))) {
+    issues.push({ level: 'fail', message: 'Missing docs/DEPENDENCY_TRIAGE.md.' });
+  }
+
+  if (!existsSync(resolve(root, 'docs/SCRIPT_SURFACE_POLICY.md'))) {
+    issues.push({ level: 'fail', message: 'Missing docs/SCRIPT_SURFACE_POLICY.md.' });
+  }
+
   if (existsSync(resolve(root, 'README.md'))) {
     const readme = readText(root, 'README.md');
     if (!readme.includes('Clean Worktree Politikası')) {
@@ -49,6 +61,12 @@ export function findDoctorIssues(root: string = process.cwd()): DoctorIssue[] {
     }
     if (!readme.includes('phase:scripts:report')) {
       issues.push({ level: 'warn', message: 'README.md is missing the phase:scripts:report command.' });
+    }
+    if (!readme.includes('deps:audit:triage')) {
+      issues.push({ level: 'warn', message: 'README.md is missing the deps:audit:triage command.' });
+    }
+    if (!readme.includes('ARCHITECTURE.md')) {
+      issues.push({ level: 'warn', message: 'README.md is missing the architecture reference.' });
     }
   }
 

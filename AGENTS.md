@@ -28,6 +28,7 @@
 - `npm run phase:doctor`: check source-of-truth docs and changelog hygiene.
 - `npm run phase:changelog:normalize`: normalize malformed or duplicate phase changelog rows.
 - `npm run phase:scripts:report`: show runner-first vs compatibility script surface.
+- `npm run deps:audit:triage`: summarize actionable dependency risk buckets before any dependency PR.
 - `npm run phase:changelog -- --ref <commit>`: append one canonical changelog row for an explicit commit ref.
 - `npm run phase:generate:block:write -- scripts/phase-blocks/phase-803-808.json`: reliable write path for generator output on Windows/npm wrapper setups.
 - `npm run phase:prepare:block -- --phase-script test:phase:785-790`: serialized phase gate for one block.
@@ -44,7 +45,11 @@
 - This repo is SSR-first: `output: "server"` with `@astrojs/node`.
 - Do not create route collisions such as `src/pages/x.ts` and `src/pages/x/index.ts`.
 - `sw.js` is the emitted PWA worker; keep build exclusions aligned to that filename.
+- Do not inline bundled scripts that rely on `import.meta.env`.
 - Never run parallel Astro build or gate chains in the same worktree.
+
+## Architecture Reference
+- Use `ARCHITECTURE.md` for runtime invariants and the separation between Astro application rules and phase delivery rules.
 
 ## Testing Guidelines
 - Each phase block ships with 6 libs and 24 Vitest assertions.
