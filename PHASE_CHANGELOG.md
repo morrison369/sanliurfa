@@ -31,3 +31,5 @@
 - 2026-04-09 | chore | `1344fed` | Chore: update phase changelog for 965-982
 - 2026-04-09 | chore | `76b3d26` | Chore: refresh phase changelog for 965-982 after hash drift
 - 2026-04-09 | phase | `64b9744` | Phase 983-1000: Governance Batch Delivery V107-V109 plus governance backfill refresh
+- 2026-04-09 | phase | 64b9744 | Phase 983-1000: Governance Batch Delivery V107-V109 plus governance backfill refresh
+- 2026-04-09 | chore | `27deafc` | Chore: update phase changelog for 983-1000
