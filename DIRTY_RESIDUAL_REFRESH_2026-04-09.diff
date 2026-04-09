@@ -1,0 +1,6 @@
+HANDOFF_NOTES.md | safe canonical tracking section kept
+astro.config.mjs | stale diff, not replayed because master has stronger sw.js exclusion
+WeatherWidget/admin/blog/admin/dashboard/blog slug/place slug/profile/reset/social | stale inline diff, not replayed
+src/pages/api/search.ts | already removed on master in favor of directory route
+src/pages/api/trending.ts | already removed on master in favor of directory route
+src/pages/arama.astro | already removed on master in favor of directory route
