@@ -17,9 +17,10 @@
    - `npm run test:phase:range -- <range>`
    - `npm run test:phase:batch -- <range-a> <range-b> <range-c>`
 4. Commit phase content.
-5. Run `npm run phase:changelog:head`, then commit the changelog update.
-6. If `phase:doctor` reports changelog drift, run `npm run phase:changelog:normalize` and commit the cleanup before PR open.
-7. Push the branch, open the PR, wait for checks, merge, and verify remote merge state.
+5. Capture the phase commit hash and run `npm run phase:changelog -- --ref <phase-commit>`, then commit the changelog update.
+6. Do not append changelog-maintenance chore rows for `update/normalize/finalize/refresh phase changelog`.
+7. If `phase:doctor` reports changelog drift, run `npm run phase:changelog:normalize` and commit the cleanup before PR open.
+8. Push the branch, open the PR, wait for checks, merge, and verify remote merge state.
 
 ## Locking Rules
 - `phase:prepare:block`, `phase:prepare:batch`, `test:phase:gate`, and `test:phase:gate:ci` take a worktree lock through `.phase-worktree.lock`.

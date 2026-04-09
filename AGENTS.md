@@ -25,6 +25,7 @@
 - `npm run test:phase:batch -- 947-952 953-958 959-964`: run multiple explicit phase ranges sequentially.
 - `npm run phase:doctor`: check source-of-truth docs and changelog hygiene.
 - `npm run phase:changelog:normalize`: normalize malformed or duplicate phase changelog rows.
+- `npm run phase:changelog -- --ref <commit>`: append one canonical changelog row for an explicit commit ref.
 - `npm run phase:generate:block:write -- scripts/phase-blocks/phase-803-808.json`: reliable write path for generator output on Windows/npm wrapper setups.
 - `npm run phase:prepare:block -- --phase-script test:phase:785-790`: serialized phase gate for one block.
 - `npm run phase:prepare:batch -- --phase-script test:phase:785-790 --phase-script test:phase:791-796`: serialized batch gate for multiple blocks.
@@ -52,7 +53,8 @@
 - Phase deliveries keep two commits by design:
 - `Phase <range>: ...`
 - `Chore: update phase changelog for <range>`
-- Normalize `PHASE_CHANGELOG.md` before PR open if `phase:doctor` reports drift.
+- Append the phase row with `npm run phase:changelog -- --ref <phase-commit>`.
+- Do not append changelog-maintenance chore rows; normalize `PHASE_CHANGELOG.md` before PR open if `phase:doctor` reports drift.
 - Open PRs through the API-safe wrappers (`phase:pr:open:file`, `phase:pr:view`) and verify merge from remote state, not local fast-forward output.
 
 ## Environment & Ops Notes

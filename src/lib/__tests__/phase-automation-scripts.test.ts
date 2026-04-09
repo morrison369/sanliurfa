@@ -438,6 +438,7 @@ describe('phase changelog helpers', () => {
   it('classifies phase and chore commits', () => {
     expect(classifyCommit('Phase 515-520: Governance Continuity Assurance Recovery V29')).toBe('phase');
     expect(classifyCommit('Chore: append phase changelog entry for 515-520')).toBe('chore');
+    expect(classifyCommit('Chore: update phase changelog for 515-520')).toBe(null);
     expect(classifyCommit('Fix: unrelated')).toBe(null);
   });
 
@@ -519,6 +520,22 @@ describe('phase changelog helpers', () => {
     expect(normalized).toContain('`84e1045`');
     expect(normalized).not.toContain('$phaseHash');
     expect(normalized.match(/Phase 1019-1036: Governance Batch Delivery V113-V115/g)?.length).toBe(1);
+  });
+
+  it('drops changelog-maintenance chore rows during normalization', () => {
+    const changelog = [
+      '# Phase Changelog',
+      '',
+      '- 2026-04-09 | phase | `84e1045` | Phase 1019-1036: Governance Batch Delivery V113-V115',
+      '- 2026-04-09 | chore | `4e697ec` | Chore: update phase changelog for 1019-1036',
+      '- 2026-04-09 | chore | `2d4a766` | Chore: harden source-of-truth and changelog operations',
+      ''
+    ].join('\n');
+
+    const normalized = normalizeChangelog(changelog);
+    expect(normalized).toContain('Phase 1019-1036: Governance Batch Delivery V113-V115');
+    expect(normalized).toContain('Chore: harden source-of-truth and changelog operations');
+    expect(normalized).not.toContain('Chore: update phase changelog for 1019-1036');
   });
 
   it('reports changelog drift through phase doctor', () => {
