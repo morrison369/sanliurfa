@@ -5,10 +5,10 @@ This repository keeps dependency upgrades separate from phase delivery.
 ## Current Audit Baseline
 - Last verified on: `2026-04-09`
 - Command: `npm audit --json`
-- Result: `5` known vulnerabilities
+- Result: `0` known vulnerabilities
 - Severity split:
   - `0` high
-  - `5` moderate
+  - `0` moderate
 
 ## Runtime Priorities
 - `vite`
@@ -28,9 +28,8 @@ This repository keeps dependency upgrades separate from phase delivery.
   - Action taken: pinned via override to the patched `5.2.1` line
 
 - `@astrojs/check` / `@astrojs/language-server` / YAML chain
-  - Severity: `moderate`
-  - Status: suggested fix points to a semver-major downgrade path in `npm audit`
-  - Action: do not apply `npm audit fix --force`; re-evaluate only with a tested Astro toolchain upgrade plan
+  - Severity: `resolved`
+  - Action taken: upgraded `@astrojs/check` and pinned patched YAML chain packages with overrides
 
 ## Operating Rules
 - Do not mix dependency upgrades with phase delivery PRs.
