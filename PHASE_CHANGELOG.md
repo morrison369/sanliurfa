@@ -40,4 +40,4 @@
 - 2026-04-09 | phase | `4ee2c0e` | Phase 1271-1288: Governance Batch Delivery V155-V157 plus phase doctor advisory CI
 - 2026-04-09 | chore | `c9a7853` | Chore: remove malformed phase changelog row for 1271-1288
 - 2026-04-09 | phase | `c121be8` | Phase 1289-1306: Governance Batch Delivery V158-V160 plus changelog normalize fix
-- 2026-04-09 | phase | `13575ad` | Phase 1307-1324: Governance Batch Delivery V161-V163 plus changelog policy hardening
+- 2026-04-09 | phase | `cee4bf2` | Phase 1307-1324: Governance Batch Delivery V161-V163 plus changelog policy hardening
