@@ -16,6 +16,8 @@
 - `npm run test:unit`: Vitest suite.
 - `npm run test:phase:smoke`: previous + latest phase suites.
 - `npm run test:phase:gate:ci`: phase tsconfig check, phase lint, smoke, Astro build.
+- `npm run phase:prepare:block -- --phase-script test:phase:<range>`: serialized phase gate wrapper; use this instead of manually chaining sync/check/smoke/build.
+- `npm run phase:checks:wait -- <pr>`: waits for CI checks to publish, then watches them.
 - `npm run phase:sync:tsconfig`: refresh `tsconfig.phase.json` after phase file changes.
 
 ## Coding Style & Naming Conventions
@@ -32,11 +34,14 @@
 
 ## Testing Guidelines
 - Each phase block delivers 6 libs and 24 Vitest assertions.
-- Run the block-specific suite first, then `npm run test:phase:gate:ci` before PR.
+- Run the block-specific suite first, then `npm run phase:prepare:block -- --phase-script test:phase:<range>` before PR.
 - For repo ops changes, extend `src/lib/__tests__/phase-automation-scripts.test.ts` when touching automation scripts.
 
 ## Commit & Pull Request Guidelines
 - Use milestone-style commits: `Phase 671-676: ...` or `Chore: ...`.
+- Phase deliveries keep two commits on purpose:
+  - `Phase <range>: ...`
+  - `Chore: update phase changelog for <range>`
 - Prefer API-first PR creation for phase branches: `tsx scripts/phase-pr.ts open ...`.
 - Verify merge completion from remote state, not local fast-forward behavior: `tsx scripts/phase-pr.ts view --repo titanai777/sanliurfa --pr <n>`.
 - PR body should list scope, verification commands, and any intentionally deferred warnings.

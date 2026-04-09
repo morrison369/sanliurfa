@@ -7,12 +7,30 @@ This file standardizes the repo's phase delivery flow so worktree, PR creation, 
 1. Create a clean worktree from `origin/master`.
 2. Run `npm ci` in the worktree.
 3. Generate or update the phase block.
-4. Run:
-   - `npm run test:phase:<range>`
-   - `npm run test:phase:smoke`
-   - `npm run test:phase:gate:ci`
+4. Run the serialized wrapper first so `phase:sync:tsconfig` and `phase:check:tsconfig` cannot race:
+   - `npm run phase:prepare:block -- --phase-script test:phase:<range>`
 5. Commit the phase block.
 6. Run `npm run phase:changelog:head` and commit the changelog update.
+
+## Commit Standard
+- Keep two commits per phase branch:
+  - `Phase <range>: ...`
+  - `Chore: update phase changelog for <range>`
+- Do not fold changelog edits into the phase commit. The split keeps delivery diffs and audit metadata separate.
+
+## Check Wait Flow
+CI checks can take a few seconds to publish after PR creation. Use the wrapper below instead of calling `gh pr checks` directly:
+
+```bash
+npm run phase:checks:wait -- <pr-number> --repo titanai777/sanliurfa
+```
+
+The wrapper polls until checks exist, then hands off to `gh pr checks --watch`.
+
+## Environment Gate
+- Repo target: Node `22.13.0+` and `<23`.
+- Run `npm run phase:env:check` directly or via `phase:prepare:block` before delivery commands.
+- If the shell is below the target, switch with `nvm use 22.13.0` before `npm ci`.
 
 ## PR Flow
 Use API-first PR creation because `gh pr create` can intermittently return false negatives for fresh phase branches.
@@ -37,10 +55,6 @@ npx tsx scripts/phase-pr.ts view --repo titanai777/sanliurfa --pr <number>
 - Avoid route collisions in `src/pages/`.
 - Keep content loader/schema changes paired with `src/content/` updates.
 - `astro-compress` exclusions must target the emitted `sw.js` service worker file.
-
-## Node Version
-- Local and CI target: Node `22.13.0`.
-- `.nvmrc` and GitHub workflows should stay aligned to that version.
 
 ## Dirty Workspace Cleanup Order
 Do not operate phase deliveries in the dirty root worktree.

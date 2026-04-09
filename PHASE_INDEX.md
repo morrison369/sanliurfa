@@ -113,3 +113,6 @@ This index is the canonical map for phase reports and their locations.
 
 ## Rule
 - When adding a phase report, add it here in the same commit.
+- `PHASE_731_736_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V65.md`
+- `PHASE_737_742_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V66.md`
+- `PHASE_743_748_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V67.md`
