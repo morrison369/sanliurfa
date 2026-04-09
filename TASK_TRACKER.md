@@ -468,8 +468,13 @@ Last updated: 2026-04-09
   - tests: `src/lib/__tests__/governance-assurance-stability-suite-v51.test.ts`
   - docs: `PHASE_647_652_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V51.md`
 
+- `T-083` Phase 653-658 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-continuity-recovery-suite-v52.test.ts`
+  - docs: `PHASE_653_658_GOVERNANCE_CONTINUITY_RECOVERY_ASSURANCE_V52.md`
+
 ## Open
-- `T-083` Phase 653-658 planning
+- `T-084` Phase 659-664 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
