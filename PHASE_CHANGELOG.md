@@ -116,4 +116,4 @@
 - 2026-04-09 | chore | `9467327` | Chore: update phase changelog for 785-802
 - 2026-04-09 | phase | `a7823ca` | Phase 803-820: Governance Batch Delivery V77-V79
 - 2026-04-09 | chore | `b64f91a` | Chore: update phase changelog for 803-820
-- 2026-04-09 | chore | `e04fde6` | Chore: refresh dirty webhook cleanup verification
+- 2026-04-09 | chore | `482c788` | Chore: drop cleanup note from phase changelog
