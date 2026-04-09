@@ -17,7 +17,7 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME).then((cache) => {
       console.log('Service Worker: Cache oluşturuluyor');
       return cache.addAll(STATIC_ASSETS).catch(() => {
-        console.warn('Service Worker: Bazı assets cache'e eklenemedi');
+        console.warn("Service Worker: Bazi assets cache'e eklenemedi");
       });
     })
   );
