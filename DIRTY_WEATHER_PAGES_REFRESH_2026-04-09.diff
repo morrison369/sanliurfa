@@ -1,0 +1,9 @@
+WeatherWidget.astro | stale unsafe diff, not replayed because import.meta.env requires bundled script semantics
+admin/blog/comments.astro | master already contains validated is:inline + plain JS form
+admin/blog/index.astro | master already contains validated is:inline + plain JS form
+admin/dashboard.astro | master already contains validated is:inline + plain JS form
+blog/[slug].astro | master already contains validated is:inline + plain JS form
+places/[slug].astro | master already contains validated is:inline + plain JS form
+profil/favoriler.astro | master already contains validated is:inline + plain JS form
+sifre-sifirla.astro | master already contains validated is:inline + plain JS form
+sosyal/index.astro | master already contains validated is:inline + plain JS form
