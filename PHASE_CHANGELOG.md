@@ -69,3 +69,5 @@
 - 2026-04-09 | chore | `90c88d2` | Chore: update phase changelog for 1253-1270
 - 2026-04-09 | chore | `2d4a766` | Chore: harden source-of-truth and changelog operations
 - 2026-04-09 | phase | `4ee2c0e` | Phase 1271-1288: Governance Batch Delivery V155-V157 plus phase doctor advisory CI
+- 2026-04-09 | phase | $phaseHash | Phase 1271-1288: Governance Batch Delivery V155-V157 plus phase doctor advisory CI
+- 2026-04-09 | chore | `2abde4f` | Chore: update phase changelog for 1271-1288
