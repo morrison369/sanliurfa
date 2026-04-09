@@ -30,6 +30,8 @@ import {
 } from '../../../scripts/phase-status-sync';
 import { buildWorktreeBootstrapSteps, parseBootstrapArgs } from '../../../scripts/phase-worktree-bootstrap';
 import { buildChangelogLine, classifyCommit, parseArgs, upsertChangelogEntry } from '../../../scripts/phase-changelog';
+import { findDoctorIssues } from '../../../scripts/phase-doctor';
+import { normalizeChangelog, parseChangelogLine } from '../../../scripts/phase-changelog-normalize';
 import { buildOpenArgs, buildViewArgs, parsePhasePrArgs } from '../../../scripts/phase-pr';
 import { buildPhasePipelineEnv, buildPhasePipelineSteps, buildPipelineStepInvocation, parsePhasePipelineArgs, resolvePreferredTsxStep } from '../../../scripts/phase-pipeline';
 import { buildPrChecksArgs, checksPublished, parsePhaseCheckWaitArgs } from '../../../scripts/phase-check-wait';
@@ -478,6 +480,51 @@ describe('phase changelog helpers', () => {
   it('parses positional ref for npm wrapper compatibility', () => {
     const parsed = parseArgs(['HEAD']);
     expect(parsed.ref).toBe('HEAD');
+  });
+
+  it('parses malformed phase changelog lines and extracts the hash', () => {
+    expect(parseChangelogLine('- 2026-04-09 | phase | 84e1045 | Phase 1019-1036: Governance Batch Delivery V113-V115')).toEqual({
+      date: '2026-04-09',
+      type: 'phase',
+      hash: '84e1045',
+      subject: 'Phase 1019-1036: Governance Batch Delivery V113-V115'
+    });
+  });
+
+  it('normalizes duplicate phase rows by keeping the latest phase line', () => {
+    const changelog = [
+      '# Phase Changelog',
+      '',
+      '- 2026-04-09 | phase | `abc1234` | Phase 1019-1036: Governance Batch Delivery V113-V115',
+      '- 2026-04-09 | phase | 84e1045 | Phase 1019-1036: Governance Batch Delivery V113-V115',
+      ''
+    ].join('\n');
+
+    const normalized = normalizeChangelog(changelog);
+    expect(normalized).toContain('`84e1045`');
+    expect(normalized).not.toContain('abc1234');
+    expect(normalized.match(/Phase 1019-1036: Governance Batch Delivery V113-V115/g)?.length).toBe(1);
+  });
+
+  it('reports changelog drift through phase doctor', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'phase-doctor-'));
+    try {
+      mkdirSync(join(dir, 'docs'), { recursive: true });
+      writeFileSync(join(dir, 'README.md'), '## Clean Worktree Politikası\n', 'utf8');
+      writeFileSync(join(dir, 'PHASE_OPERATIONS_GUIDE.md'), '# guide\n', 'utf8');
+      writeFileSync(join(dir, 'docs', 'WORKTREE_SOURCE_OF_TRUTH.md'), '# policy\n', 'utf8');
+      writeFileSync(
+        join(dir, 'PHASE_CHANGELOG.md'),
+        '# Phase Changelog\n\n- 2026-04-09 | phase | abc1234 | Phase 1019-1036: Governance Batch Delivery V113-V115\n- 2026-04-09 | phase | `84e1045` | Phase 1019-1036: Governance Batch Delivery V113-V115\n',
+        'utf8'
+      );
+
+      const issues = findDoctorIssues(dir);
+      expect(issues.some((issue) => issue.message.includes('not normalized'))).toBe(true);
+      expect(issues.some((issue) => issue.message.includes('Duplicate phase changelog subjects'))).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

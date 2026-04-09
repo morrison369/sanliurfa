@@ -5,6 +5,7 @@
 - Use Node `22.13.0+`; `.nvmrc` is authoritative.
 - Do not run parallel Astro build or gate commands inside one worktree.
 - Do not use a dirty local root worktree as a phase source of truth; use it only for residual diff inventory.
+- Run `npm run phase:doctor` whenever source-of-truth docs or changelog behavior changed.
 
 ## Standard Delivery Flow
 1. Generate the phase block files and exports.
@@ -17,7 +18,8 @@
    - `npm run test:phase:batch -- <range-a> <range-b> <range-c>`
 4. Commit phase content.
 5. Run `npm run phase:changelog:head`, then commit the changelog update.
-6. Push the branch, open the PR, wait for checks, merge, and verify remote merge state.
+6. If `phase:doctor` reports changelog drift, run `npm run phase:changelog:normalize` and commit the cleanup before PR open.
+7. Push the branch, open the PR, wait for checks, merge, and verify remote merge state.
 
 ## Locking Rules
 - `phase:prepare:block`, `phase:prepare:batch`, `test:phase:gate`, and `test:phase:gate:ci` take a worktree lock through `.phase-worktree.lock`.
@@ -36,6 +38,15 @@
 - Keep active operational docs in root only when they are part of the current delivery surface.
 - Move historical phase reports and dated cleanup verification notes under `docs/archive/`.
 - `PHASE_INDEX.md` is the canonical map for both active root docs and archived locations.
+- `README.md`, `AGENTS.md`, `PHASE_OPERATIONS_GUIDE.md`, and `docs/WORKTREE_SOURCE_OF_TRUTH.md` must not drift on source-of-truth policy.
+
+## Script Surface Policy
+- Prefer runner-based commands:
+  - `test:phase:range`
+  - `test:phase:batch`
+  - `phase:prepare:block:preferred`
+  - `phase:prepare:batch:preferred`
+- Treat single `test:phase:<range>` entries as compatibility surface for generated phase blocks, not the primary operator interface.
 
 ## Astro-Specific Guardrails
 - The repo is SSR-first with `@astrojs/node`.
