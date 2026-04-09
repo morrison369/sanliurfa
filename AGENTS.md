@@ -20,6 +20,7 @@
 - `npm run phase:prepare:block:preferred -- --phase-script test:phase:<range>`: runs the same pipeline through the preferred Node 22.x executable when the active shell version is behind.
 - `npm run phase:checks:wait -- <pr>`: waits for CI checks to publish, then watches them.
 - `npm run phase:pr:open:file -- <repo> <base> <head> <title-file> <body-file>`: npm-safe PR open wrapper when long flag forwarding is unreliable on Windows.
+- `npm run phase:pr:view -- <repo> <pr-number>`: npm-safe PR merge-status wrapper for Windows positional arg forwarding.
 - `npm run phase:sync:tsconfig`: refresh `tsconfig.phase.json` after phase file changes.
 
 ## Coding Style & Naming Conventions

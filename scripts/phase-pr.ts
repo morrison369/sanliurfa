@@ -51,8 +51,9 @@ export function parsePhasePrArgs(argv: string[]): ParsedPhasePrCommand {
     };
   }
 
-  const repo = readValue('--repo');
-  const prRaw = readValue('--pr');
+  const positional = rest.filter((value, index) => value && !value.startsWith('--') && !(index > 0 && rest[index - 1].startsWith('--')));
+  const repo = readValue('--repo') ?? positional[0];
+  const prRaw = readValue('--pr') ?? positional[1];
   if (!repo || !prRaw) {
     throw new Error('Usage: tsx scripts/phase-pr.ts view --repo <owner/name> --pr <number>');
   }

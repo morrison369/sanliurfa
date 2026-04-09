@@ -478,6 +478,14 @@ describe('phase pr helpers', () => {
     ]);
   });
 
+  it('parses positional view args for npm wrapper compatibility', () => {
+    const parsed = parsePhasePrArgs(['view', 'titanai777/sanliurfa', '53']);
+    expect(parsed.view).toEqual({
+      repo: 'titanai777/sanliurfa',
+      prNumber: 53
+    });
+  });
+
   it('parses file-based PR open wrapper args', () => {
     const dir = mkdtempSync(join(tmpdir(), 'phase-pr-open-file-'));
     try {
