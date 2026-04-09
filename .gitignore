@@ -37,6 +37,7 @@ lighthouse-report.json
 
 # Cache
 .cache/
+.npm-cache/
 *.tsbuildinfo
 
 # Temporary files
