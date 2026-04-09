@@ -118,6 +118,7 @@ npm run test:e2e:full
 - Release gate: `docs/RELEASE_GATES.md`
 - Webhook güvenlik politikası: `docs/WEBHOOK_SECURITY_POLICY.md`
 - Script envanteri ve deprecate politikası: `docs/SCRIPT_INVENTORY.md`
+- Experimental typecheck kapanış planı: `docs/TYPECHECK_EXPERIMENTAL_BACKLOG.md`
 - 7 günlük uygulama planı: `docs/SEVEN_DAY_EXECUTION_PLAN.md`
 
 ## Clean Worktree Politikası
