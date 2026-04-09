@@ -1,0 +1,72 @@
+{
+  "start": 587,
+  "end": 592,
+  "version": 41,
+  "docFile": "PHASE_587_592_GOVERNANCE_ASSURANCE_CONTINUITY_STABILITY_V41.md",
+  "testFile": "src/lib/__tests__/governance-assurance-continuity-suite-v41.test.ts",
+  "title": "Governance Assurance Continuity & Stability V41",
+  "modules": [
+    {
+      "phase": 587,
+      "title": "Governance Assurance Continuity Router V41",
+      "fileName": "governance-assurance-continuity-router-v41.ts",
+      "exportBase": "GovernanceAssuranceContinuity",
+      "reportLabel": "Governance assurance continuity",
+      "reportMessage": "Governance assurance continuity routed",
+      "mode": "router",
+      "signalFields": ["governanceAssurance", "continuityDepth", "routerCost"],
+      "routeLabels": ["continuity-priority", "continuity-balanced", "continuity-review"]
+    },
+    {
+      "phase": 588,
+      "title": "Policy Recovery Stability Harmonizer V41",
+      "fileName": "policy-recovery-stability-harmonizer-v41.ts",
+      "exportBase": "PolicyRecoveryStability",
+      "reportLabel": "Policy recovery stability",
+      "reportMessage": "Policy recovery stability harmonized",
+      "mode": "harmonizer",
+      "signalFields": ["policyRecovery", "stabilityCoverage", "harmonizerCost"]
+    },
+    {
+      "phase": 589,
+      "title": "Compliance Continuity Assurance Mesh V41",
+      "fileName": "compliance-continuity-assurance-mesh-v41.ts",
+      "exportBase": "ComplianceContinuityAssurance",
+      "reportLabel": "Compliance continuity assurance",
+      "reportMessage": "Compliance continuity assurance routed",
+      "mode": "router",
+      "signalFields": ["complianceContinuity", "assuranceCoverage", "meshCost"],
+      "routeLabels": ["assurance-priority", "assurance-balanced", "assurance-review"]
+    },
+    {
+      "phase": 590,
+      "title": "Trust Stability Recovery Forecaster V41",
+      "fileName": "trust-stability-recovery-forecaster-v41.ts",
+      "exportBase": "TrustStabilityRecovery",
+      "reportLabel": "Trust stability recovery",
+      "reportMessage": "Trust stability recovery forecasted",
+      "mode": "forecaster",
+      "signalFields": ["trustStability", "recoveryDepth", "forecastCost"]
+    },
+    {
+      "phase": 591,
+      "title": "Board Assurance Recovery Coordinator V41",
+      "fileName": "board-assurance-recovery-coordinator-v41.ts",
+      "exportBase": "BoardAssuranceRecovery",
+      "reportLabel": "Board assurance recovery",
+      "reportMessage": "Board assurance recovery coordinated",
+      "mode": "coordinator",
+      "signalFields": ["boardAssurance", "recoveryDepth", "coordinationCost"]
+    },
+    {
+      "phase": 592,
+      "title": "Policy Continuity Stability Engine V41",
+      "fileName": "policy-continuity-stability-engine-v41.ts",
+      "exportBase": "PolicyContinuityStability",
+      "reportLabel": "Policy continuity stability",
+      "reportMessage": "Policy continuity stability evaluated",
+      "mode": "engine",
+      "signalFields": ["policyContinuity", "stabilityCoverage", "engineCost"]
+    }
+  ]
+}
