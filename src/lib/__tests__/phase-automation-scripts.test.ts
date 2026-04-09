@@ -415,6 +415,11 @@ describe('phase changelog helpers', () => {
     expect(parsed.ref).toBe('HEAD~1');
     expect(parsed.outPath).toBe(join(cwd, 'tmp/PHASE_CHANGELOG.md'));
   });
+
+  it('parses positional ref for npm wrapper compatibility', () => {
+    const parsed = parseArgs(['HEAD']);
+    expect(parsed.ref).toBe('HEAD');
+  });
 });
 
 describe('content loader helpers', () => {

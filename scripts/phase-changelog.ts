@@ -62,9 +62,10 @@ export interface PhaseChangelogOptions {
 export function parseArgs(argv: string[]): PhaseChangelogOptions {
   const outIndex = argv.indexOf('--out');
   const refIndex = argv.indexOf('--ref');
+  const positionalRef = argv.find((arg) => !arg.startsWith('--') && arg !== argv[outIndex + 1] && arg !== argv[refIndex + 1]);
   return {
     outPath: resolve(process.cwd(), outIndex >= 0 ? argv[outIndex + 1] : 'PHASE_CHANGELOG.md'),
-    ref: refIndex >= 0 ? argv[refIndex + 1] : 'HEAD',
+    ref: refIndex >= 0 ? argv[refIndex + 1] : positionalRef || 'HEAD',
     date: new Date().toISOString().slice(0, 10)
   };
 }
