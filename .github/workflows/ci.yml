@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, master, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [main, master, develop]
 
 jobs:
   test:
@@ -36,6 +36,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Environment contract check (CI)
+        run: npm run env:contract:check:ci
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          READ_REPLICA_URL: ""
+          PUBLIC_SITE_URL: http://127.0.0.1:1111
+          PORT: "1111"
+
       - name: Repo stabilization check
         run: npm run repo:stabilize:check
 
@@ -45,23 +53,35 @@ jobs:
       - name: DB drift check
         run: npm run db:drift:check
       
-      - name: Lint code
-        run: npm run lint
+      - name: Typecheck app scope
+        run: npm run typecheck:app
       
       - name: Build
         run: npm run build
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          PUBLIC_SITE_URL: http://127.0.0.1:1111
+          PORT: "1111"
       
       - name: Run unit tests
         run: npm run test:unit
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
 
+      - name: Migration status
+        run: npm run migrate:status
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+
+      - name: Migration dry-run
+        run: npm run migrate:dry-run
+
       - name: Release gate
         run: npm run release:gate
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          PUBLIC_SITE_URL: http://127.0.0.1:1111
+          PORT: "1111"
       
       - name: Install Playwright browsers
         run: npx playwright install --with-deps

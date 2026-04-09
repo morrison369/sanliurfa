@@ -5,12 +5,25 @@ function run(step: string, command: string): void {
   execSync(command, { stdio: 'inherit' });
 }
 
+function runOptional(step: string, command: string): void {
+  try {
+    run(step, command);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`[release-gate] advisory step failed: ${step} (${message})`);
+  }
+}
+
 function main(): void {
+  run('Environment contract (local)', 'npm run env:contract:check');
   run('Repository stabilization checks', 'npm run repo:stabilize:check');
   run('Governance import guard', 'npm run governance:imports:check');
   run('DB drift check', 'npm run db:drift:check');
+  runOptional('Migration status', 'npm run migrate:status');
+  run('Migration dry-run', 'npm run migrate:dry-run');
   run('Phase doctor', 'npm run phase:doctor');
   run('Dependency triage', 'npm run deps:audit:triage');
+  run('TypeScript app gate', 'npm run typecheck:app');
   run('TypeScript governance gate', 'npm run phase:check:tsconfig');
   run('Critical unit smoke', 'npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts');
   run('E2E smoke', 'npm run test:e2e:smoke');

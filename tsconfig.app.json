@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/pages/api/legacy/*.ts",
+    "src/lib/api-legacy.ts",
+    "src/lib/metrics.ts",
+    "scripts/release-gate.ts",
+    "scripts/e2e-smoke.ts",
+    "scripts/governance-import-guard.ts",
+    "scripts/db-drift-check.ts",
+    "scripts/env-contract-check.ts",
+    "scripts/migration-dry-run.ts",
+    "scripts/phase-doctor.ts",
+    "scripts/dependency-triage.ts",
+    "scripts/repo-stabilization-check.ts",
+    "scripts/update-phase-tsconfig.ts"
+  ]
+}

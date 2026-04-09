@@ -100,6 +100,11 @@ npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts
 npm run repo:stabilize:check
 npm run governance:imports:check
 npm run db:drift:check
+npm run env:contract:check
+npm run env:contract:check:ci
+npm run migrate:status
+npm run migrate:dry-run
+npm run typecheck:app
 npm run release:gate
 npm run test:e2e:smoke
 npm run test:e2e:full
@@ -136,10 +141,16 @@ npm run test:e2e:full
 
 ## Astro Operasyon Notları
 - Repo SSR-first çalışır: `output: "server"` ve `@astrojs/node` adapter.
+- `npm run dev:1111` öncesi port temizliği otomatik yapılır (`scripts/ensure-port-free.ps1`) ve `--strictPort` kullanılır.
 - Route collision üretmeyin: `src/pages/x.ts` ile `src/pages/x/index.ts` aynı anda yaşamamalı.
 - Content collection değişikliklerinde `src/content.config.ts` ve `src/content/` birlikte ele alınmalı.
 - PWA build çıktısında service worker dosyası `sw.js` olarak üretilir; build araçlarını buna göre konfigüre edin.
 - `import.meta.env` kullanan bundled scriptleri keyfi `is:inline` yapmayın.
+
+## Typecheck Scope Ayrımı
+- `tsconfig.app.json`: merge-blocking kritik runtime/gate yüzeyi.
+- `tsconfig.experimental.json`: geniş/deneysel modül alanı.
+- CI blocking typecheck `npm run typecheck:app` ile yapılır.
 
 ## PR Politikası
 - `master` korumalıdır; doğrudan push yapılmaz.
