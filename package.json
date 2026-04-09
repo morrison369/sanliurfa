@@ -115,6 +115,7 @@
     "phase:changelog:normalize": "npm exec -- tsx scripts/phase-changelog-normalize.ts",
     "phase:checks:wait": "npm exec -- tsx scripts/phase-check-wait.ts",
     "phase:doctor": "npm exec -- tsx scripts/phase-doctor.ts",
+    "phase:scripts:report": "npm exec -- tsx scripts/phase-scripts-report.ts",
     "phase:env:check": "npm exec -- tsx scripts/phase-env.ts",
     "phase:env:check:preferred": "npm exec -- tsx scripts/phase-node.ts run-tsx scripts/phase-env.ts",
     "phase:lock:show": "type .phase-worktree.lock",

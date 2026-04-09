@@ -14,6 +14,8 @@
 - Do not trust a dirty local root worktree for phase status, docs, or tracker state.
 - If local root and `origin/master` disagree, use the clean worktree created from `origin/master`.
 - Use [docs/WORKTREE_SOURCE_OF_TRUTH.md](docs/WORKTREE_SOURCE_OF_TRUTH.md) as the binding policy reference.
+- Use [STALE_WORKTREE.md](STALE_WORKTREE.md) as the visible root warning.
+- Use [ROOT_INVENTORY_ONLY_POLICY.md](ROOT_INVENTORY_ONLY_POLICY.md) for the dirty-root boundary.
 
 ## Build, Test, and Development Commands
 - `npm run dev`: local Astro server.
@@ -25,6 +27,7 @@
 - `npm run test:phase:batch -- 947-952 953-958 959-964`: run multiple explicit phase ranges sequentially.
 - `npm run phase:doctor`: check source-of-truth docs and changelog hygiene.
 - `npm run phase:changelog:normalize`: normalize malformed or duplicate phase changelog rows.
+- `npm run phase:scripts:report`: show runner-first vs compatibility script surface.
 - `npm run phase:changelog -- --ref <commit>`: append one canonical changelog row for an explicit commit ref.
 - `npm run phase:generate:block:write -- scripts/phase-blocks/phase-803-808.json`: reliable write path for generator output on Windows/npm wrapper setups.
 - `npm run phase:prepare:block -- --phase-script test:phase:785-790`: serialized phase gate for one block.
@@ -62,3 +65,4 @@
 - Keep `npm` cache repo-local through `.npmrc`.
 - Do phase delivery work in clean `git worktree` branches, not in the dirty root worktree.
 - If the active shell is below policy, use the `:preferred` wrappers instead of forcing a partial local run.
+- Archive dated cleanup and verification files under `docs/archive/cleanup/` instead of leaving them in repo root.

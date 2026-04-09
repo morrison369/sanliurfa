@@ -20,6 +20,9 @@
 - `AGENTS.md`
 - `PHASE_OPERATIONS_GUIDE.md`
 - `docs/WORKTREE_SOURCE_OF_TRUTH.md`
+- `STALE_WORKTREE.md`
+- `ROOT_INVENTORY_ONLY_POLICY.md`
+- `docs/ACTIVE_DOCS.md`
 
 These documents define the operational source-of-truth policy together.
 

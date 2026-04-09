@@ -32,6 +32,7 @@ import { buildWorktreeBootstrapSteps, parseBootstrapArgs } from '../../../script
 import { buildChangelogLine, classifyCommit, parseArgs, upsertChangelogEntry } from '../../../scripts/phase-changelog';
 import { findDoctorIssues } from '../../../scripts/phase-doctor';
 import { normalizeChangelog, parseChangelogLine } from '../../../scripts/phase-changelog-normalize';
+import { buildScriptSurfaceReport, renderScriptSurfaceReport } from '../../../scripts/phase-scripts-report';
 import { buildOpenArgs, buildViewArgs, parsePhasePrArgs } from '../../../scripts/phase-pr';
 import { buildPhasePipelineEnv, buildPhasePipelineSteps, buildPipelineStepInvocation, parsePhasePipelineArgs, resolvePreferredTsxStep } from '../../../scripts/phase-pipeline';
 import { buildPrChecksArgs, checksPublished, parsePhaseCheckWaitArgs } from '../../../scripts/phase-check-wait';
@@ -162,6 +163,23 @@ describe('phase-test automation', () => {
     expect(() => ensureScriptExists('test:phase:947-952', { 'test:phase:941-946': 'vitest run' })).toThrow(
       /Unknown phase script/
     );
+  });
+});
+
+describe('phase script surface report', () => {
+  it('summarizes compatibility and runner scripts', () => {
+    const report = buildScriptSurfaceReport({
+      'test:phase:947-952': 'vitest run a',
+      'test:phase:953-958': 'vitest run b',
+      'test:phase:range': 'tsx scripts/phase-test.ts range',
+      'test:phase:batch': 'tsx scripts/phase-test.ts batch',
+      'phase:prepare:batch:preferred': 'tsx scripts/phase-release.ts',
+      'phase:doctor': 'tsx scripts/phase-doctor.ts'
+    });
+
+    expect(report.compatibilityPhaseScripts).toEqual(['test:phase:947-952', 'test:phase:953-958']);
+    expect(report.runnerScripts).toContain('test:phase:range');
+    expect(renderScriptSurfaceReport(report)).toContain('compatibilityPhaseScripts=2');
   });
 });
 
@@ -398,6 +416,36 @@ describe('phase status sync helpers', () => {
     expect(updated).toContain('Active window: `Phase 521-526` (planned)');
     expect(updated).toContain('Phase 521');
     expect(updated).toContain('Checkpoint 515-520');
+  });
+});
+
+describe('phase doctor', () => {
+  it('warns when dated cleanup docs remain in repo root', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'phase-doctor-root-'));
+    try {
+      writeFileSync(join(dir, 'README.md'), '# README\n## Clean Worktree Politikası\nphase:scripts:report\n');
+      writeFileSync(join(dir, 'STALE_WORKTREE.md'), '# stale\n');
+      writeFileSync(join(dir, 'ROOT_INVENTORY_ONLY_POLICY.md'), '# policy\n');
+      mkdirSync(join(dir, 'docs'), { recursive: true });
+      writeFileSync(join(dir, 'docs', 'WORKTREE_SOURCE_OF_TRUTH.md'), '# truth\n');
+      writeFileSync(join(dir, 'docs', 'ACTIVE_DOCS.md'), '# docs\n');
+      writeFileSync(
+        join(dir, 'package.json'),
+        JSON.stringify({ scripts: { 'test:phase:range': 'x', 'test:phase:batch': 'y', 'phase:doctor': 'z', 'phase:prepare:block': 'a', 'phase:prepare:block:preferred': 'b', 'phase:prepare:batch': 'c' } })
+      );
+      writeFileSync(join(dir, 'DIRTY_ROOT_FINAL_REFRESH_2026-04-09.md'), '# dated\n');
+
+      expect(findDoctorIssues(dir)).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            level: 'warn',
+            message: expect.stringContaining('Root contains dated cleanup docs')
+          })
+        ])
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

@@ -6,6 +6,7 @@
 - Do not run parallel Astro build or gate commands inside one worktree.
 - Do not use a dirty local root worktree as a phase source of truth; use it only for residual diff inventory.
 - Run `npm run phase:doctor` whenever source-of-truth docs or changelog behavior changed.
+- Keep [STALE_WORKTREE.md](STALE_WORKTREE.md), [ROOT_INVENTORY_ONLY_POLICY.md](ROOT_INVENTORY_ONLY_POLICY.md), and [docs/ACTIVE_DOCS.md](docs/ACTIVE_DOCS.md) aligned.
 
 ## Standard Delivery Flow
 1. Generate the phase block files and exports.
@@ -40,6 +41,7 @@
 - Move historical phase reports and dated cleanup verification notes under `docs/archive/`.
 - `PHASE_INDEX.md` is the canonical map for both active root docs and archived locations.
 - `README.md`, `AGENTS.md`, `PHASE_OPERATIONS_GUIDE.md`, and `docs/WORKTREE_SOURCE_OF_TRUTH.md` must not drift on source-of-truth policy.
+- `STALE_WORKTREE.md` and `ROOT_INVENTORY_ONLY_POLICY.md` are mandatory visible guards in repo root.
 
 ## Script Surface Policy
 - Prefer runner-based commands:
@@ -48,6 +50,7 @@
   - `phase:prepare:block:preferred`
   - `phase:prepare:batch:preferred`
 - Treat single `test:phase:<range>` entries as compatibility surface for generated phase blocks, not the primary operator interface.
+- Review the current surface with `npm run phase:scripts:report` before changing package scripts.
 
 ## Astro-Specific Guardrails
 - The repo is SSR-first with `@astrojs/node`.
