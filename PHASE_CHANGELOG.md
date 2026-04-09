@@ -120,3 +120,5 @@
 - 2026-04-09 | phase | `02cf182` | Phase 821-838: Governance Batch Delivery V80-V82
 - 2026-04-09 | chore | `f10b0c5` | Chore: update phase changelog for 821-838
 - 2026-04-09 | chore | `8153e92` | Chore: remove TS syntax from inline runtime pages scripts
+- 2026-04-09 | phase | `72cf158` | Phase 839-856: Governance Batch Delivery V83-V85
+- 2026-04-09 | chore | `13e8c50` | Chore: update phase changelog for 839-856
