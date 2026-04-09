@@ -46,3 +46,4 @@
 - 2026-04-09 | phase | `852e48c` | Phase 1343-1360: Governance Batch Delivery V167-V169
 - 2026-04-09 | chore | `e522bc6` | Chore: harden dependency triage and architecture docs
 - 2026-04-09 | phase | `add91e7` | Phase 1361-1378: Governance Batch Delivery V170-V172
+- 2026-04-09 | chore | `75a21bb` | Chore: remediate dependency audit high-severity issues

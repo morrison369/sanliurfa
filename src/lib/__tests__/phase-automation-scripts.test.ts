@@ -204,6 +204,21 @@ describe('dependency triage helpers', () => {
     expect(summary.transitive).toEqual(['vite', 'yaml']);
     expect(renderDependencyTriage(summary)).toContain('policy=runtime-first');
   });
+
+  it('renders a clean high-severity summary after dependency remediation', () => {
+    const summary = summarizeAudit({
+      metadata: { vulnerabilities: { total: 2 } },
+      vulnerabilities: {
+        '@astrojs/check': { severity: 'moderate', isDirect: true, fixAvailable: true },
+        yaml: { severity: 'moderate', isDirect: false, fixAvailable: { name: '@astrojs/check' } }
+      }
+    });
+
+    expect(summary.high).toEqual([]);
+    expect(summary.noFixAvailable).toEqual([]);
+    expect(renderDependencyTriage(summary)).toContain('high=none');
+    expect(renderDependencyTriage(summary)).toContain('noFixAvailable=none');
+  });
 });
 
 describe('tsconfig phase automation', () => {

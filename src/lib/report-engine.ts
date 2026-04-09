@@ -6,7 +6,7 @@
 import { query, queryMany, queryOne } from './postgres';
 import { logReportExecution } from './business-analytics';
 import { logger } from './logging';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 interface ReportFilters {
   startDate?: string;
@@ -60,14 +60,35 @@ function toJSON(headers: string[], rows: any[][]): string {
 }
 
 /**
- * Excel format generator using XLSX
+ * Excel export is write-only. We do not parse untrusted workbook input here.
  */
-function toExcel(headers: string[], rows: any[][], sheetName: string = 'Report'): Buffer {
-  const worksheetData = [headers, ...rows];
-  const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-  return XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+async function toExcel(headers: string[], rows: any[][], sheetName: string = 'Report'): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet(sheetName.slice(0, 31) || 'Report');
+
+  worksheet.addRow(headers);
+  rows.forEach(row => worksheet.addRow(row));
+  worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true };
+
+  const columnWidths = headers.map((header, index) => {
+    const maxCellLength = rows.reduce((max, row) => {
+      const value = row[index] ?? '';
+      return Math.max(max, String(value).length);
+    }, String(header).length);
+
+    return { width: Math.min(Math.max(maxCellLength + 2, 12), 40) };
+  });
+
+  worksheet.columns = worksheet.columns.map((column, index) => ({
+    ...column,
+    width: columnWidths[index]?.width ?? 16
+  }));
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buffer);
 }
 
 /**
@@ -298,7 +319,7 @@ export async function executeReport(
         fileExtension = 'json';
         break;
       case 'excel':
-        buffer = toExcel(exportData.headers, exportData.rows, reportType);
+        buffer = await toExcel(exportData.headers, exportData.rows, reportType);
         contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         fileExtension = 'xlsx';
         break;
