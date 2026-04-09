@@ -624,7 +624,22 @@ Last updated: 2026-04-09
   - tests: `src/lib/__tests__/governance-assurance-stability-suite-v82.test.ts`
   - docs: `PHASE_833_838_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V82.md`
 
-- `T-114` Phase 839-844 planning
+- `T-114` Phase 839-844 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v83.test.ts`
+  - docs: `PHASE_839_844_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V83.md`
+
+- `T-115` Phase 845-850 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v84.test.ts`
+  - docs: `PHASE_845_850_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V84.md`
+
+- `T-116` Phase 851-856 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v85.test.ts`
+  - docs: `PHASE_851_856_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V85.md`
+
+- `T-117` Phase 857-862 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
