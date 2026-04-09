@@ -684,7 +684,22 @@ Last updated: 2026-04-09
   - tests: `src/lib/__tests__/governance-assurance-stability-suite-v94.test.ts`
   - docs: `PHASE_905_910_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V94.md`
 
-- `T-126` Phase 911-916 planning
+- `T-126` Phase 911-916 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v95.test.ts`
+  - docs: `PHASE_911_916_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V95.md`
+
+- `T-127` Phase 917-922 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v96.test.ts`
+  - docs: `PHASE_917_922_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V96.md`
+
+- `T-128` Phase 923-928 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v97.test.ts`
+  - docs: `PHASE_923_928_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V97.md`
+
+- `T-129` Phase 929-934 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
