@@ -97,6 +97,7 @@ vi.mock('../../../lib/multi-tenant', () => ({
 describe('API contract hardening', () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.unstubAllGlobals();
     vi.clearAllMocks();
     queryMock.mockResolvedValue({ rows: [], rowCount: 0 });
     queryOneMock.mockResolvedValue(null);
@@ -143,6 +144,24 @@ describe('API contract hardening', () => {
     expect(sendMessageMock).not.toHaveBeenCalled();
   });
 
+  it('rejects non-json content type for messages POST', async () => {
+    const { POST } = await import('../messages/[conversationId].ts');
+    const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111', {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain' },
+      body: 'hello'
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { conversationId: '11111111-1111-1111-1111-111111111111' },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(sendMessageMock).not.toHaveBeenCalled();
+  });
+
   it('rejects invalid tenant member role', async () => {
     const { POST } = await import('../tenants/[tenantId]/members.ts');
     queryOneMock.mockResolvedValueOnce({ owner_id: '11111111-1111-1111-1111-111111111111' });
@@ -163,6 +182,27 @@ describe('API contract hardening', () => {
     } as any);
 
     expect(response.status).toBe(422);
+    expect(addTenantMemberMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid tenant id before membership mutations', async () => {
+    const { POST } = await import('../tenants/[tenantId]/members.ts');
+    const request = new Request('https://example.com/api/tenants/not-a-uuid/members', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        user_id: '22222222-2222-2222-2222-222222222222',
+        role: 'member'
+      })
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { tenantId: 'not-a-uuid' },
+    } as any);
+
+    expect(response.status).toBe(400);
     expect(addTenantMemberMock).not.toHaveBeenCalled();
   });
 
@@ -205,6 +245,37 @@ describe('API contract hardening', () => {
 
     expect(response.status).toBe(404);
     expect(createUserSessionMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects oauth callback when provider returns no email and no linked account exists', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: 'access-token' }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'provider-user' }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { GET } = await import('../auth/oauth/callback.ts');
+    verifyOAuthStateMock.mockResolvedValue({
+      provider_key: 'google',
+      redirect_uri: 'https://example.com/api/auth/oauth/callback'
+    });
+    getOAuthProviderMock.mockResolvedValue({
+      provider_key: 'google',
+      client_id: 'client-id',
+      client_secret: 'client-secret',
+      authorization_url: 'https://example.com/oauth/authorize',
+      token_url: 'https://example.com/oauth/token',
+      userinfo_url: 'https://example.com/oauth/userinfo'
+    });
+
+    const request = new Request('https://example.com/api/auth/oauth/callback?code=abc&state=state-1');
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(linkOAuthAccountMock).not.toHaveBeenCalled();
   });
 
   it('rejects stripe webhook without signature header', async () => {
