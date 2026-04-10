@@ -3,7 +3,7 @@
  * Manage user relationships and social connections
  */
 
-import { query, queryOne, queryMany } from './postgres';
+import { query, queryOne, queryRows } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { createNotification } from './notifications-queue';
 import { logger } from './logging';
@@ -120,7 +120,7 @@ export async function getFollowers(userId: string, limit: number = 50): Promise<
       return cached;
     }
 
-    const result = await queryMany(
+    const result = await queryRows(
       `SELECT
         u.id,
         u.full_name,
@@ -138,7 +138,7 @@ export async function getFollowers(userId: string, limit: number = 50): Promise<
       [userId, limit]
     );
 
-    const followers = result.rows.map((row: any) => ({
+    const followers = result.map((row: any) => ({
       id: row.id,
       full_name: row.full_name,
       username: row.username,
@@ -173,7 +173,7 @@ export async function getFollowing(userId: string, limit: number = 50): Promise<
       return cached;
     }
 
-    const result = await queryMany(
+    const result = await queryRows(
       `SELECT
         u.id,
         u.full_name,
@@ -191,7 +191,7 @@ export async function getFollowing(userId: string, limit: number = 50): Promise<
       [userId, limit]
     );
 
-    const following = result.rows.map((row: any) => ({
+    const following = result.map((row: any) => ({
       id: row.id,
       full_name: row.full_name,
       username: row.username,
@@ -226,7 +226,7 @@ export async function getMutualFriends(userId: string, limit: number = 50): Prom
       return cached;
     }
 
-    const result = await queryMany(
+    const result = await queryRows(
       `SELECT DISTINCT
         u.id,
         u.full_name,
@@ -250,7 +250,7 @@ export async function getMutualFriends(userId: string, limit: number = 50): Prom
       [userId, limit]
     );
 
-    const friends = result.rows.map((row: any) => ({
+    const friends = result.map((row: any) => ({
       id: row.id,
       full_name: row.full_name,
       username: row.username,

@@ -3,7 +3,7 @@
  * Points, levels, badges, and leaderboard management
  */
 
-import { query, queryOne, queryMany, update } from './postgres';
+import { query, queryOne, queryRows, update } from './postgres';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 import { logger } from './logging';
 import { checkCommonAchievements } from './achievements';
@@ -55,7 +55,7 @@ export async function awardPoints(
  */
 export async function getPointsHistory(userId: string, limit: number = 20): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       `SELECT id, amount, type, description, reference_id, created_at
        FROM points_transactions
        WHERE user_id = $1
@@ -146,7 +146,7 @@ export async function getBadgeDefinitions(): Promise<any[]> {
     const cached = await getCache<any[]>(cacheKey);
     if (cached) return cached;
 
-    const badges = await queryMany('SELECT * FROM badge_definitions ORDER BY category, id');
+    const badges = await queryRows('SELECT * FROM badge_definitions ORDER BY category, id');
     await setCache(cacheKey, badges, 3600); // Cache 1 hour
     return badges;
   } catch (error) {
@@ -164,7 +164,7 @@ export async function getUserBadges(userId: string): Promise<any[]> {
     const cached = await getCache<any[]>(cacheKey);
     if (cached) return cached;
 
-    const badges = await queryMany(
+    const badges = await queryRows(
       `SELECT ub.*, bd.name, bd.description, bd.icon, bd.category
        FROM user_badges ub
        JOIN badge_definitions bd ON ub.badge_type = bd.badge_type
@@ -299,7 +299,7 @@ export async function getLeaderboard(
       dateFilter = `AND pt.created_at >= NOW() - INTERVAL '30 days'`;
     }
 
-    const leaderboard = await queryMany(
+    const leaderboard = await queryRows(
       `SELECT
         u.id,
         u.full_name,

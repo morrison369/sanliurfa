@@ -4,7 +4,7 @@
  */
 
 import { getCache, setCache } from './cache';
-import { queryMany } from './postgres';
+import { queryRows } from './postgres';
 import { logger } from './logging';
 
 // Constants
@@ -48,7 +48,7 @@ export async function getNearbyPlaces(
     if (cached) return cached;
 
     // Get all places with coordinates
-    const places = await queryMany(
+    const places = await queryRows(
       `SELECT id, name, slug, latitude, longitude, category, rating, address
        FROM places
        WHERE latitude IS NOT NULL AND longitude IS NOT NULL
@@ -87,7 +87,7 @@ export async function getPlacesByCategory(
     const cached = await getCache<any[]>(cacheKey);
     if (cached) return cached;
 
-    const places = await queryMany(
+    const places = await queryRows(
       `SELECT id, name, slug, latitude, longitude, category, rating, address, description
        FROM places
        WHERE category = $1
@@ -115,7 +115,7 @@ export async function getAllPlacesForMap(limit: number = 500): Promise<any[]> {
     const cached = await getCache<any[]>(cacheKey);
     if (cached) return cached;
 
-    const places = await queryMany(
+    const places = await queryRows(
       `SELECT id, name, slug, latitude, longitude, category, rating
        FROM places
        WHERE latitude IS NOT NULL AND longitude IS NOT NULL

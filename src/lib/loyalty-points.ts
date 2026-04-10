@@ -2,7 +2,7 @@
  * Loyalty Points Library
  * Points earning, spending, and transaction management
  */
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -123,7 +123,7 @@ export async function spendPoints(userId: string, points: number, reason: string
 
 export async function getPointsHistory(userId: string, limit: number = 50): Promise<any[]> {
   try {
-    const history = await queryMany(`
+    const history = await queryRows(`
       SELECT
         id,
         transaction_type,
@@ -146,7 +146,7 @@ export async function getPointsHistory(userId: string, limit: number = 50): Prom
 
 export async function getEarningRules(): Promise<any[]> {
   try {
-    const rules = await queryMany(`
+    const rules = await queryRows(`
       SELECT * FROM earning_rules
       WHERE is_active = true
       ORDER BY rule_name

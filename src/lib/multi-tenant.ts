@@ -3,7 +3,7 @@
  * Tenant context, data isolation, white-label features
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 import crypto from 'crypto';
@@ -207,7 +207,7 @@ export async function updateTenantBranding(
 
 export async function getTenantMembers(tenantId: string): Promise<TenantMember[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       'SELECT * FROM tenant_members WHERE tenant_id = $1 ORDER BY joined_at DESC',
       [tenantId]
     );
@@ -435,7 +435,7 @@ export async function getTenantAuditLogs(
   limit: number = 100
 ): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       'SELECT * FROM tenant_audit_logs WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2',
       [tenantId, limit]
     );

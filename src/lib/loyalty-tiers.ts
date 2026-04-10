@@ -2,7 +2,7 @@
  * Loyalty Tiers Library
  * Tier system management, progression, and benefits
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { deleteCache, getCache, setCache } from './cache';
 
@@ -164,7 +164,7 @@ export async function getTierList(): Promise<any[]> {
     let tiers = await getCache(cacheKey);
 
     if (!tiers) {
-      tiers = await queryMany(`
+      tiers = await queryRows(`
         SELECT
           id,
           tier_key,
@@ -308,7 +308,7 @@ export async function processAnnualReset(userId: string): Promise<boolean> {
 
 export async function getUserTierHistory(userId: string, limit: number = 20): Promise<any[]> {
   try {
-    const history = await queryMany(`
+    const history = await queryRows(`
       SELECT
         th.*,
         pt.tier_name as previous_tier_name,

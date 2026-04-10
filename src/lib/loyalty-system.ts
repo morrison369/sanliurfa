@@ -3,7 +3,7 @@
  * Points management, tier progression, and balance tracking
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { createNotification } from './notifications-queue';
 import { logger } from './logging';
@@ -221,9 +221,9 @@ export async function getAllLoyaltyTiers(): Promise<LoyaltyTier[]> {
     const cached = await getCache<LoyaltyTier[]>(cacheKey);
     if (cached) return cached;
 
-    const tiers = await queryMany('SELECT * FROM loyalty_tiers ORDER BY tier_level ASC');
-    await setCache(cacheKey, tiers.rows, 3600);
-    return tiers.rows;
+    const tiers = await queryRows('SELECT * FROM loyalty_tiers ORDER BY tier_level ASC');
+    await setCache(cacheKey, tiers, 3600);
+    return tiers;
   } catch (error) {
     logger.error('Failed to get loyalty tiers', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -292,7 +292,7 @@ export async function getTransactionHistory(
   offset: number = 0
 ): Promise<{ transactions: LoyaltyTransaction[]; total: number }> {
   try {
-    const transactions = await queryMany(
+    const transactions = await queryRows(
       `SELECT * FROM loyalty_transactions
        WHERE user_id = $1
        ORDER BY created_at DESC
@@ -306,7 +306,7 @@ export async function getTransactionHistory(
     );
 
     return {
-      transactions: transactions.rows,
+      transactions,
       total: parseInt(countResult?.total || '0')
     };
   } catch (error) {
@@ -325,9 +325,9 @@ export async function getPointsEarningRules(): Promise<any[]> {
     const cached = await getCache<any[]>(cacheKey);
     if (cached) return cached;
 
-    const rules = await queryMany('SELECT * FROM points_earning_rules WHERE enabled = true');
-    await setCache(cacheKey, rules.rows, 3600);
-    return rules.rows;
+    const rules = await queryRows('SELECT * FROM points_earning_rules WHERE enabled = true');
+    await setCache(cacheKey, rules, 3600);
+    return rules;
   } catch (error) {
     logger.error('Failed to get earning rules', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -359,13 +359,13 @@ export async function getPointsForActivity(activityType: string, baseMultiplier:
 export async function getActiveBonusCampaigns(): Promise<any[]> {
   try {
     const now = new Date().toISOString();
-    const campaigns = await queryMany(
+    const campaigns = await queryRows(
       `SELECT * FROM bonus_point_campaigns
        WHERE status = 'active' AND start_date <= $1 AND end_date >= $1
        ORDER BY bonus_multiplier DESC`,
       [now]
     );
-    return campaigns.rows;
+    return campaigns;
   } catch (error) {
     logger.error('Failed to get bonus campaigns', error instanceof Error ? error : new Error(String(error)));
     throw error;

@@ -3,7 +3,7 @@
  * Blog yazıları, kategoriler, yorumlar ve arama
  */
 
-import { queryMany, queryOne, insert, update } from './postgres';
+import { queryRows, queryOne, query, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 
@@ -67,7 +67,7 @@ export async function getBlogCategories(): Promise<BlogCategory[]> {
       return cached;
     }
 
-    const result = await queryMany(
+    const result = await queryRows(
       `SELECT id, name, slug, description, icon, order_index as "orderIndex",
               (SELECT COUNT(*) FROM blog_posts WHERE category_id = blog_categories.id AND status = 'published') as "postCount"
        FROM blog_categories ORDER BY order_index ASC`
@@ -134,7 +134,7 @@ export async function getBlogPosts(options: {
     query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
-    const posts = await queryMany(query, params);
+    const posts = await queryRows(query, params);
 
     // Toplam sayı
     let countQuery = 'SELECT COUNT(*) as total FROM blog_posts WHERE status = $1';
@@ -272,7 +272,7 @@ export async function updateBlogPost(id: number, data: Partial<BlogPost>): Promi
     // Etiketleri güncelle
     if (data.tags) {
       await deleteCache(`sanliurfa:blog:post_tags:${id}`);
-      await queryMany(`DELETE FROM blog_post_tags WHERE post_id = $1`, [id]);
+      await query(`DELETE FROM blog_post_tags WHERE post_id = $1`, [id]);
       await addTagsToPost(id, data.tags);
     }
 
@@ -292,7 +292,7 @@ export async function updateBlogPost(id: number, data: Partial<BlogPost>): Promi
  */
 export async function deleteBlogPost(id: number): Promise<boolean> {
   try {
-    await queryMany('DELETE FROM blog_posts WHERE id = $1', [id]);
+    await query('DELETE FROM blog_posts WHERE id = $1', [id]);
     await deleteCachePattern('sanliurfa:blog:*');
 
     logger.info('Blog yazısı silindi', { postId: id });
@@ -308,7 +308,7 @@ export async function deleteBlogPost(id: number): Promise<boolean> {
  */
 export async function searchBlogPosts(query: string, limit: number = 20): Promise<BlogPost[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT bp.*, bc.name as category_name, u.full_name as author_name,
               array_agg(DISTINCT bt.name) FILTER (WHERE bt.name IS NOT NULL) as tags
        FROM blog_posts bp
@@ -340,7 +340,7 @@ export async function getBlogComments(postId: number, approved: boolean = true):
   try {
     const status = approved ? 'approved' : 'pending';
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT * FROM blog_comments
        WHERE post_id = $1 AND status = $2 AND parent_comment_id IS NULL
        ORDER BY created_at DESC`,
@@ -459,7 +459,7 @@ function calculateReadTime(content: string): number {
  */
 export async function getBlogPostRevisions(postId: number): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       `SELECT id, post_id, title, editor_id, change_summary, created_at
        FROM blog_post_revisions
        WHERE post_id = $1
@@ -485,7 +485,7 @@ export async function savePostRevision(
     const post = await queryOne('SELECT title, content FROM blog_posts WHERE id = $1', [postId]);
     if (!post) return;
 
-    await queryMany(
+    await query(
       `INSERT INTO blog_post_revisions (post_id, title, content, editor_id, change_summary)
        VALUES ($1, $2, $3, $4, $5)`,
       [postId, post.title, post.content, editorId, changeSummary || 'Manual edit']
