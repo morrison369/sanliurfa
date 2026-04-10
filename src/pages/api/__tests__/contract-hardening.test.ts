@@ -1051,7 +1051,7 @@ describe('API contract hardening', () => {
     expect(response.status).toBe(200);
     expect(payloadText).toContain('"received":true');
     expect(queryOneMock).toHaveBeenCalledWith(
-      expect.stringContaining('SELECT id, status FROM webhook_deliveries'),
+      expect.stringContaining('SELECT id, status, retry_count, last_tried_at'),
       ['evt_1']
     );
     expect(queryOneMock).toHaveBeenCalledWith(
@@ -1125,9 +1125,40 @@ describe('API contract hardening', () => {
     expect(deleteCacheMock).toHaveBeenCalledTimes(2);
   });
 
+  it('defers retry when stripe delivery backoff window has not elapsed yet', async () => {
+    const { POST } = await import('../webhooks/stripe.ts');
+    queryOneMock.mockResolvedValueOnce({
+      id: 'delivery-1',
+      status: 'processing',
+      retry_count: 1,
+      last_tried_at: new Date().toISOString()
+    });
+
+    const request = new Request('https://example.com/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig' },
+      body: JSON.stringify({ id: 'evt_1' })
+    });
+
+    const response = await POST({ request } as any);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.data.received).toBe(true);
+    expect(payload.data.duplicate).toBe(true);
+    expect(payload.data.retryDelayed).toBe(true);
+    expect(payload.data.retryAfterSeconds).toBeGreaterThan(0);
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+
   it('retries an existing incomplete stripe delivery before completing it', async () => {
     const { POST } = await import('../webhooks/stripe.ts');
-    queryOneMock.mockResolvedValueOnce({ id: 'delivery-1', status: 'processing' });
+    queryOneMock.mockResolvedValueOnce({
+      id: 'delivery-1',
+      status: 'processing',
+      retry_count: 1,
+      last_tried_at: new Date(Date.now() - (3 * 60 * 1000)).toISOString()
+    });
 
     const request = new Request('https://example.com/api/webhooks/stripe', {
       method: 'POST',
@@ -1146,5 +1177,30 @@ describe('API contract hardening', () => {
       expect.stringContaining("SET status = 'completed'"),
       ['delivery-1', JSON.stringify({ received: true })]
     );
+  });
+
+  it('stops retrying stripe delivery when retry budget is exhausted', async () => {
+    const { POST } = await import('../webhooks/stripe.ts');
+    queryOneMock.mockResolvedValueOnce({
+      id: 'delivery-1',
+      status: 'failed',
+      retry_count: 8,
+      last_tried_at: new Date(Date.now() - (20 * 60 * 1000)).toISOString()
+    });
+
+    const request = new Request('https://example.com/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig' },
+      body: JSON.stringify({ id: 'evt_1' })
+    });
+
+    const response = await POST({ request } as any);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.data.duplicate).toBe(true);
+    expect(payload.data.retryDelayed).toBe(true);
+    expect(payload.data.exhausted).toBe(true);
+    expect(queryMock).not.toHaveBeenCalled();
   });
 });

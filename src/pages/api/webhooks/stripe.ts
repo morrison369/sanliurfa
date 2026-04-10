@@ -12,6 +12,7 @@ import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { emailOnSubscriptionCreated, emailOnPaymentSuccess, emailOnSubscriptionCancelled } from '../../../lib/subscription-email-integration';
 import { apiError, apiResponse, ErrorCode, HttpStatus, getRequestId } from '../../../lib/api';
+import { decideWebhookRetry } from '../../../lib/webhook-delivery-policy';
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   try {
@@ -212,7 +213,11 @@ export const POST: APIRoute = async ({ request }) => {
     // Verify webhook signature
     const event = await verifyWebhookSignature(rawBody, signature);
     const existingDelivery = await queryOne(
-      `SELECT id, status FROM webhook_deliveries WHERE stripe_event_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      `SELECT id, status, retry_count, last_tried_at
+       FROM webhook_deliveries
+       WHERE stripe_event_id = $1
+       ORDER BY created_at DESC
+       LIMIT 1`,
       [event.id]
     );
 
@@ -220,6 +225,26 @@ export const POST: APIRoute = async ({ request }) => {
       recordRequest('POST', '/api/webhooks/stripe', HttpStatus.OK, Date.now() - startTime);
       logger.info('Duplicate Stripe webhook ignored', { eventType: event.type, eventId: event.id });
       return apiResponse({ received: true, duplicate: true }, HttpStatus.OK, requestId);
+    }
+
+    const retryDecision = decideWebhookRetry(existingDelivery);
+    if (existingDelivery?.id && !retryDecision.shouldProcess) {
+      recordRequest('POST', '/api/webhooks/stripe', HttpStatus.OK, Date.now() - startTime);
+      logger.info('Stripe webhook retry deferred', {
+        eventType: event.type,
+        eventId: event.id,
+        deliveryId: existingDelivery.id,
+        retryAfterSeconds: retryDecision.retryAfterSeconds,
+        exhausted: retryDecision.exhausted === true,
+      });
+
+      return apiResponse({
+        received: true,
+        duplicate: true,
+        retryDelayed: true,
+        exhausted: retryDecision.exhausted === true,
+        retryAfterSeconds: retryDecision.retryAfterSeconds,
+      }, HttpStatus.OK, requestId);
     }
 
     const delivery = existingDelivery || await queryOne(
