@@ -120,6 +120,7 @@ export interface AdminDashboardOverviewData extends DashboardOverviewResponse['d
 export type AdminSystemMetricsData = SystemMetricsResponse['data']['data'];
 export type AdminDeploymentStatusData = DeploymentStatusResponse['data']['data'];
 export type AdminArtifactHealthData = ArtifactHealthResponse['data']['data'];
+export type AdminDashboardOverviewResponseData = DashboardOverviewResponse['data'];
 export type AdminSubscriptionUsersListData = SubscriptionUsersGetResponse['data'];
 export type AdminSubscriptionUsersMutationData = SubscriptionUsersPostResponse['data'];
 export type AdminMessageStatusMutationData = MessageStatusPostResponse['data'];

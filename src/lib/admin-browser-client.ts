@@ -1,5 +1,6 @@
 import type {
   AdminAuditLogsData,
+  AdminDashboardOverviewResponseData,
   AdminPerformanceOptimizationData,
 } from '../types/admin-api';
 
@@ -45,4 +46,8 @@ export async function fetchAdminPerformanceOptimization(): Promise<AdminPerforma
     '/api/admin/performance/optimization'
   );
   return payload.data.data;
+}
+
+export async function fetchAdminDashboardOverview(days: number): Promise<AdminDashboardOverviewResponseData> {
+  return fetchJson<AdminDashboardOverviewResponseData>(`/api/admin/dashboard/overview?days=${days}`);
 }

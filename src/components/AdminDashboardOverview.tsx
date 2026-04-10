@@ -1,42 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   classifyIntegrationStatus,
   classifyNightlyStatus,
   classifyReleaseGateStatus,
 } from '../lib/admin-status';
-import type { AdminDashboardOverviewData } from '../types/admin-api';
 import { AdminOpsAuditCard, ArtifactHealthCard, IntegrationVerificationCard, ModerationStatsCard, NightlyTrendCard, OperationalSnapshotCard, PerformanceOptimizationCard, ReleaseGateCard } from './admin-dashboard/DetailCards';
 import { CoreMetricsGrid } from './admin-dashboard/CoreMetricsGrid';
+import { useAdminDashboardOverview } from '../hooks/useAdminDashboardOverview';
 
 export default function AdminDashboardOverview() {
-  const [data, setData] = useState<AdminDashboardOverviewData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState(30);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`/api/admin/dashboard/overview?days=${period}`);
-        const json = await res.json();
-
-        if (!json.success) {
-          setError(json.error || 'Veri alınırken bir hata oluştu');
-          return;
-        }
-
-        setData(json.data);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [period]);
+  const { data, loading, error } = useAdminDashboardOverview(period);
 
   if (loading) {
     return (
