@@ -8,8 +8,12 @@ Artifact health sinyali su yuzeylerde kullanilir:
 
 - `GET /api/health`
 - `GET /api/health/detailed`
+- `GET /api/performance`
+- `GET /api/admin/performance/optimization`
 - `GET /api/admin/dashboard/overview`
 - `GET /api/admin/system/metrics`
+- `GET /api/admin/system/artifact-health`
+- `GET /api/admin/deployment/status`
 - Admin dashboard `Artifact Health` karti
 
 Takip edilen artifact gruplari:
@@ -108,6 +112,7 @@ Kullanilan fonksiyon:
 - `classifyArtifactFreshnessStatus`
 - `buildArtifactHealth`
 - `getArtifactHealthSnapshot`
+- `getAdminArtifactHealthSnapshot`
 
 Bu dokuman ile helper mantigi drift etmemelidir. Esik degisirse:
 

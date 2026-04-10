@@ -25,6 +25,17 @@ const artifactHealthChecksSchema = {
   required: ['releaseGate', 'nightlyRegression', 'nightlyE2E'],
 };
 
+const adminArtifactHealthSnapshotSchema = {
+  type: 'object',
+  properties: {
+    releaseGate: artifactHealthEntrySchema,
+    nightlyRegression: artifactHealthEntrySchema,
+    nightlyE2E: artifactHealthEntrySchema,
+    performanceOps: artifactHealthEntrySchema,
+  },
+  required: ['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps'],
+};
+
 const openApiSpec = {
   openapi: '3.1.0',
   info: {
@@ -584,13 +595,7 @@ const openApiSpec = {
                         success: { type: 'boolean' },
                         data: {
                           type: 'object',
-                          properties: {
-                            releaseGate: artifactHealthEntrySchema,
-                            nightlyRegression: artifactHealthEntrySchema,
-                            nightlyE2E: artifactHealthEntrySchema,
-                            performanceOps: artifactHealthEntrySchema,
-                          },
-                          required: ['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps'],
+                          ...adminArtifactHealthSnapshotSchema,
                         },
                       },
                       required: ['success', 'data'],
@@ -670,14 +675,7 @@ const openApiSpec = {
                               required: ['resend', 'analytics', 'summary'],
                             },
                             artifactHealth: {
-                              type: 'object',
-                              properties: {
-                                releaseGate: artifactHealthEntrySchema,
-                                nightlyRegression: artifactHealthEntrySchema,
-                                nightlyE2E: artifactHealthEntrySchema,
-                                performanceOps: artifactHealthEntrySchema,
-                              },
-                              required: ['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps'],
+                              ...adminArtifactHealthSnapshotSchema,
                             },
                             timestamp: { type: 'string', format: 'date-time' },
                           },
