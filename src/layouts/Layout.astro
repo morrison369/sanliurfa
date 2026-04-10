@@ -24,6 +24,12 @@ const {
   class: className = ''
 } = Astro.props;
 
+const effectiveSeo: SEOProps = seo ?? {
+  title: 'Şanlıurfa.com',
+  description: 'Şanlıurfa şehir rehberi - Tarihi yerler, mekanlar, etkinlikler ve daha fazlası.',
+  canonicalUrl: `https://sanliurfa.com${Astro.url.pathname}`
+};
+
 // Get current user if authenticated
 const user = null; // Will be populated from server
 const rawGoogleAnalyticsId =
@@ -61,7 +67,7 @@ const hasGoogleAnalytics =
     <meta name="apple-mobile-web-app-title" content="Şanlıurfa.com" />
     
     <!-- SEO -->
-    {seo && <SEO {...seo} />}
+    <SEO {...effectiveSeo} />
     
     <!-- RSS Feed -->
     <link rel="alternate" type="application/rss+xml" title="Şanlıurfa.com Blog" href="/rss.xml" />

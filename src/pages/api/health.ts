@@ -17,7 +17,24 @@ interface HealthStatus {
       status: 'up' | 'down';
       responseTime?: number;
     };
+    integrations: {
+      resend: {
+        configured: boolean;
+      };
+      analytics: {
+        configured: boolean;
+      };
+    };
   };
+}
+
+function hasNonPlaceholder(value: string | undefined, placeholders: RegExp[] = []): boolean {
+  if (!value || value.trim().length === 0) {
+    return false;
+  }
+
+  const normalized = value.trim();
+  return !placeholders.some((pattern) => pattern.test(normalized));
 }
 
 /**
@@ -31,6 +48,11 @@ export const GET: APIRoute = async ({ request }) => {
     let dbResponseTime = 0;
     let redisStatus: 'up' | 'down' = 'down';
     let redisResponseTime = 0;
+    const resendConfigured = hasNonPlaceholder(process.env.RESEND_API_KEY, [/^re_x+$/i, /^YOUR_/i]);
+    const analyticsConfigured = hasNonPlaceholder(
+      process.env.PUBLIC_GOOGLE_ANALYTICS_ID || process.env.GOOGLE_ANALYTICS_ID,
+      [/^G-XXXXXXXXXX$/i, /^G-X+$/i, /^YOUR_/i]
+    );
 
     // Check database
     try {
@@ -65,6 +87,8 @@ export const GET: APIRoute = async ({ request }) => {
       overallStatus = 'unhealthy';
     } else if (redisStatus === 'down') {
       overallStatus = 'degraded';
+    } else if (process.env.NODE_ENV === 'production' && (!resendConfigured || !analyticsConfigured)) {
+      overallStatus = 'degraded';
     }
 
     const uptime = Math.floor(process.uptime());
@@ -82,6 +106,14 @@ export const GET: APIRoute = async ({ request }) => {
         redis: {
           status: redisStatus,
           ...(redisResponseTime && { responseTime: redisResponseTime })
+        },
+        integrations: {
+          resend: {
+            configured: resendConfigured
+          },
+          analytics: {
+            configured: analyticsConfigured
+          }
         }
       }
     };
