@@ -2,6 +2,10 @@
 
 ## 📊 Mevcut Durum Analizi
 
+### 🌐 Dil Politikası
+- Site yalnızca Türkçe yayın yapacak (TR-only).
+- Çok dilli (i18n) genişleme önerilmez.
+
 ### ✅ Güçlü Yönler
 - Modern teknoloji stack (Astro 6, Node 22, PostgreSQL 16)
 - Cloudflare CDN + SSL (Hızlı ve güvenli)
@@ -157,15 +161,6 @@ Cloudflare Dashboard:
 - Instagram feed entegrasyonu
 - Otomatik sosyal medya paylaşımı
 
-### 7. Çok Dilli Destek (i18n)
-**Öncelik:** 🟡🟡⚪⚪⚪ (2/5)
-
-- İngilizce versiyon
-- Arapça versiyon (turistler için)
-- Dil seçici
-
----
-
 ## 🟢 GELECEK ÖZELLİKLER (3-6 Ay)
 
 ### 8. E-ticaret / Rezervasyon
@@ -204,8 +199,7 @@ Cloudflare Dashboard:
 | 6 | Arama fonksiyonu | 4 saat | 🟡 Orta |
 | 7 | Harita entegrasyonu | 3 saat | 🟡 Orta |
 | 8 | PWA | 6 saat | 🟢 Düşük |
-| 9 | Çok dilli destek | 8 saat | 🟢 Düşük |
-| 10 | E-ticaret | 40 saat | 🟢 Gelecek |
+| 9 | E-ticaret | 40 saat | 🟢 Gelecek |
 
 ---
 
