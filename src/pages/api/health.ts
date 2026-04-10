@@ -1,11 +1,10 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../lib/api';
-import { buildArtifactHealth, classifyIntegrationStatus, classifyOverallOpsStatus, classifyThresholdStatus } from '../../lib/admin-status';
+import { classifyIntegrationStatus, classifyOverallOpsStatus, classifyThresholdStatus } from '../../lib/admin-status';
 import { pool } from '../../lib/postgres';
 import { getRedisClient, isRedisAvailable } from '../../lib/cache';
 import { getRuntimeIntegrationSettings } from '../../lib/runtime-integration-settings';
-import { getNightlyOpsSummary } from '../../lib/nightly-ops-summary';
-import { getReleaseGateSummary } from '../../lib/release-gate-summary';
+import { getArtifactHealthSnapshot } from '../../lib/artifact-health';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'blocked';
@@ -57,10 +56,9 @@ export const GET: APIRoute = async ({ request }) => {
     let dbResponseTime = 0;
     let redisStatus: 'up' | 'down' = 'down';
     let redisResponseTime = 0;
-    const [integrationSettings, releaseGate, nightly] = await Promise.all([
+    const [integrationSettings, artifactHealth] = await Promise.all([
       getRuntimeIntegrationSettings(),
-      getReleaseGateSummary(),
-      getNightlyOpsSummary()
+      getArtifactHealthSnapshot()
     ]);
     const resendConfigured = Boolean(integrationSettings.resendApiKey);
     const analyticsConfigured = Boolean(integrationSettings.analyticsId);
@@ -135,23 +133,7 @@ export const GET: APIRoute = async ({ request }) => {
             configured: analyticsConfigured
           }
         },
-        artifacts: {
-          releaseGate: buildArtifactHealth({
-            kind: 'releaseGate',
-            available: releaseGate.available,
-            generatedAt: releaseGate.generatedAt
-          }),
-          nightlyRegression: buildArtifactHealth({
-            kind: 'nightlyRegression',
-            available: nightly.regression.available,
-            generatedAt: nightly.regression.generatedAt
-          }),
-          nightlyE2E: buildArtifactHealth({
-            kind: 'nightlyE2E',
-            available: nightly.e2e.available,
-            generatedAt: nightly.e2e.generatedAt
-          })
-        }
+        artifacts: artifactHealth
       }
     };
 

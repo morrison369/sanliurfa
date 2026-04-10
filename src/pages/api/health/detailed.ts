@@ -1,10 +1,9 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { buildArtifactHealth, classifyOverallOpsStatus, classifyThresholdStatus } from '../../../lib/admin-status';
+import { classifyOverallOpsStatus, classifyThresholdStatus } from '../../../lib/admin-status';
 import { pool } from '../../../lib/postgres';
 import { getRedisClient, isRedisAvailable } from '../../../lib/cache';
-import { getNightlyOpsSummary } from '../../../lib/nightly-ops-summary';
-import { getReleaseGateSummary } from '../../../lib/release-gate-summary';
+import { getArtifactHealthSnapshot } from '../../../lib/artifact-health';
 
 interface DetailedHealth {
   status: 'healthy' | 'degraded' | 'blocked';
@@ -76,10 +75,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     let redisStatus: 'up' | 'down' = 'down';
     let redisResponseTime = 0;
     let redisError: string | undefined;
-    const [releaseGate, nightly] = await Promise.all([
-      getReleaseGateSummary(),
-      getNightlyOpsSummary()
-    ]);
+    const artifactHealth = await getArtifactHealthSnapshot();
 
     // Check database
     try {
@@ -157,23 +153,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           ...(redisResponseTime && { responseTime: redisResponseTime }),
           ...(redisError && { error: redisError })
         },
-        artifacts: {
-          releaseGate: buildArtifactHealth({
-            kind: 'releaseGate',
-            available: releaseGate.available,
-            generatedAt: releaseGate.generatedAt
-          }),
-          nightlyRegression: buildArtifactHealth({
-            kind: 'nightlyRegression',
-            available: nightly.regression.available,
-            generatedAt: nightly.regression.generatedAt
-          }),
-          nightlyE2E: buildArtifactHealth({
-            kind: 'nightlyE2E',
-            available: nightly.e2e.available,
-            generatedAt: nightly.e2e.generatedAt
-          })
-        }
+        artifacts: artifactHealth
       }
     };
 

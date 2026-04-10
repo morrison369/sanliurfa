@@ -10,7 +10,6 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import {
-  buildArtifactHealth,
   classifyIntegrationStatus,
   classifyNightlyStatus,
   classifyOverallOpsStatus,
@@ -18,6 +17,7 @@ import {
 } from '../../../../lib/admin-status';
 import { getNightlyOpsSummary } from '../../../../lib/nightly-ops-summary';
 import { getReleaseGateSummary } from '../../../../lib/release-gate-summary';
+import { getArtifactHealthSnapshot } from '../../../../lib/artifact-health';
 import {
   getRuntimeIntegrationSettings,
   verifyRuntimeIntegrationSettings
@@ -56,6 +56,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
       getReleaseGateSummary(),
       getNightlyOpsSummary()
     ]);
+    const artifactHealth = await getArtifactHealthSnapshot({
+      includePerformanceOps: true,
+      performanceOpsGeneratedAt: performanceOptimization?.generatedAt ?? null
+    });
     const integrationVerification = await verifyRuntimeIntegrationSettings(integrationSettings);
     const configuredCount =
       Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
@@ -102,28 +106,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           },
           operational,
           performanceOptimization,
-          artifactHealth: {
-            releaseGate: buildArtifactHealth({
-              kind: 'releaseGate',
-              available: releaseGate.available,
-              generatedAt: releaseGate.generatedAt
-            }),
-            nightlyRegression: buildArtifactHealth({
-              kind: 'nightlyRegression',
-              available: nightly.regression.available,
-              generatedAt: nightly.regression.generatedAt
-            }),
-            nightlyE2E: buildArtifactHealth({
-              kind: 'nightlyE2E',
-              available: nightly.e2e.available,
-              generatedAt: nightly.e2e.generatedAt
-            }),
-            performanceOps: buildArtifactHealth({
-              kind: 'performanceOps',
-              available: Boolean(performanceOptimization?.generatedAt),
-              generatedAt: performanceOptimization?.generatedAt ?? null
-            })
-          },
+          artifactHealth,
           releaseGate,
           nightly,
           statusSummary: {
