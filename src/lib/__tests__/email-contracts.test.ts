@@ -7,6 +7,7 @@ const updateMock = vi.fn();
 const queryMock = vi.fn();
 const getCacheMock = vi.fn();
 const setCacheMock = vi.fn();
+const shouldNotifyMock = vi.fn();
 
 vi.mock('../postgres', () => ({
   queryOne: queryOneMock,
@@ -28,6 +29,10 @@ vi.mock('../logging', () => ({
     error: vi.fn(),
     debug: vi.fn()
   }
+}));
+
+vi.mock('../email-preferences', () => ({
+  shouldNotify: shouldNotifyMock
 }));
 
 describe('Email contracts hardening', () => {
@@ -160,5 +165,54 @@ describe('Email contracts hardening', () => {
       'Queued email is missing recipient_email',
       'queue-1'
     ]);
+  });
+
+  it('should filter malformed segment user rows instead of returning invalid recipients', async () => {
+    queryRowsMock.mockResolvedValue([
+      { id: 'user-1', email: 'user1@example.com' },
+      { id: null, email: 'missing-id@example.com' },
+      { id: 'user-3', email: null }
+    ]);
+
+    const { querySegmentUsers } = await import('../email-campaigns');
+    const users = await querySegmentUsers('all_users');
+
+    expect(users).toEqual([{ id: 'user-1', email: 'user1@example.com' }]);
+  });
+
+  it('should keep campaign metrics at zero instead of producing NaN when no sends exist', async () => {
+    queryOneMock.mockResolvedValue({
+      id: 'campaign-1',
+      name: 'Launch',
+      subject: 'Subject',
+      from_name: 'Ops',
+      from_email: 'ops@example.com',
+      html_content: '<p>Hello</p>',
+      text_content: 'Hello',
+      segment: 'all_users',
+      segment_filters: null,
+      scheduled_at: null,
+      status: 'draft',
+      send_count: 0,
+      open_count: 4,
+      click_count: 2,
+      unsubscribe_count: 1,
+      bounce_count: 1,
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z'
+    });
+
+    const { getCampaignMetrics } = await import('../email-campaigns');
+    const metrics = await getCampaignMetrics('campaign-1');
+
+    expect(metrics).toEqual(expect.objectContaining({
+      sendCount: 0,
+      deliveryRate: 0,
+      openRate: 0,
+      clickRate: 0,
+      unsubscribeRate: 0,
+      bounceRate: 0,
+      conversionRate: 0
+    }));
   });
 });

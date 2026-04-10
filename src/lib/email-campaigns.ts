@@ -130,7 +130,7 @@ export async function getCampaignMetrics(campaignId: string): Promise<CampaignMe
       clickRate: campaign.sendCount > 0 ? (campaign.clickCount / campaign.sendCount) * 100 : 0,
       unsubscribeRate: campaign.sendCount > 0 ? (campaign.unsubscribeCount / campaign.sendCount) * 100 : 0,
       bounceRate: campaign.sendCount > 0 ? (campaign.bounceCount / campaign.sendCount) * 100 : 0,
-      conversionRate: campaign.clickCount > 0 ? (campaign.clickCount / campaign.sendCount) * 100 : 0,
+      conversionRate: campaign.sendCount > 0 ? (campaign.clickCount / campaign.sendCount) * 100 : 0,
       topLinks: [],
       topRegions: []
     };
@@ -253,10 +253,12 @@ export async function querySegmentUsers(segment: SegmentType, filters?: Record<s
     }
 
     const results = await queryRows(query, params);
-    return results.map((r: any) => ({
-      id: r.id,
-      email: r.email
-    }));
+    return results
+      .filter((r: any) => typeof r?.id === 'string' && typeof r?.email === 'string')
+      .map((r: any) => ({
+        id: r.id,
+        email: r.email
+      }));
   } catch (error) {
     logger.error('Query segment users failed', error instanceof Error ? error : new Error(String(error)));
     return [];

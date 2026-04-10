@@ -91,6 +91,7 @@ type CompatChannel = {
 };
 
 const realtimeChannels = new Set<CompatChannel>();
+const MAX_CHANNEL_HANDLERS = 25;
 
 function buildRealtimePayload(payload: Partial<RealtimePayload>): RealtimePayload {
   return {
@@ -103,6 +104,21 @@ function buildRealtimePayload(payload: Partial<RealtimePayload>): RealtimePayloa
   };
 }
 
+function normalizeFilter(filter: Record<string, any> | null): string {
+  if (!filter) {
+    return '';
+  }
+
+  return JSON.stringify(
+    Object.keys(filter)
+      .sort()
+      .reduce<Record<string, any>>((acc, key) => {
+        acc[key] = filter[key];
+        return acc;
+      }, {})
+  );
+}
+
 function createCompatChannel(name: string): CompatChannel {
   const handlers: ChannelHandler[] = [];
   let subscribed = false;
@@ -110,6 +126,30 @@ function createCompatChannel(name: string): CompatChannel {
   const channel: CompatChannel = {
     name,
     on: (type, filter, callback) => {
+      const normalizedFilter =
+        typeof filter === 'function' ? null : filter;
+      const normalizedCallback =
+        typeof filter === 'function' ? filter as RealtimeHandler : callback;
+
+      if (!normalizedCallback) {
+        return channel;
+      }
+
+      const duplicate = handlers.some(handler =>
+        handler.type === type &&
+        handler.callback === normalizedCallback &&
+        normalizeFilter(handler.filter) === normalizeFilter(normalizedFilter)
+      );
+
+      if (duplicate) {
+        return channel;
+      }
+
+      if (handlers.length >= MAX_CHANNEL_HANDLERS) {
+        logger.warn('Supabase compat channel handler cap reached', { name, type });
+        return channel;
+      }
+
       if (typeof filter === 'function') {
         handlers.push({ type, filter: null, callback: filter as RealtimeHandler });
       } else if (callback) {

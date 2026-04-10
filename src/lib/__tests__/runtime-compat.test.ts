@@ -103,4 +103,34 @@ describe('Runtime compat hardening', () => {
 
     expect(events).toEqual(['UPDATE']);
   });
+
+  it('should not duplicate the same compat handler and should cap handler growth', async () => {
+    process.env.DATABASE_URL ||= 'postgresql://postgres:postgres@127.0.0.1:5432/sanliurfa';
+    const { notifyRealtime, supabase } = await import('../supabase');
+    const events: string[] = [];
+    const callback = (payload: any) => {
+      events.push(payload.eventType);
+    };
+
+    const channel = supabase.channel('dedupe-test');
+    channel.on('postgres_changes', { table: 'places' }, callback);
+    channel.on('postgres_changes', { table: 'places' }, callback);
+
+    for (let index = 0; index < 30; index++) {
+      channel.on('postgres_changes', { table: 'places' }, payload => {
+        events.push(`${payload.eventType}:${index}`);
+      });
+    }
+
+    channel.subscribe();
+    await new Promise(resolve => queueMicrotask(resolve));
+
+    notifyRealtime('places', { eventType: 'INSERT', new: { id: 'place-1' } });
+
+    expect(events[0]).toBe('INSERT');
+    expect(events).toHaveLength(25);
+    expect(events.filter(event => event === 'INSERT')).toHaveLength(1);
+
+    channel.unsubscribe();
+  });
 });
