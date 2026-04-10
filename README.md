@@ -88,7 +88,10 @@ sanliurfa/
 
 ```bash
 npm run test:unit
+npm run test:critical
 npm run test:e2e
+npm run test:regression:unit
+npm run test:regression:e2e
 npm run phase:sync:tsconfig
 npm run test:phase:range -- 947-952
 npm run test:phase:batch -- 947-952 953-958 959-964
@@ -116,6 +119,7 @@ npm run test:e2e:full
 - API geçiş politikası: `docs/API_LEGACY_POLICY.md`
 - Repo stabilizasyon runbook: `docs/REPO_STABILIZATION_RUNBOOK.md`
 - Release gate: `docs/RELEASE_GATES.md`
+- Live status snapshot: `docs/STATUS_LIVE.md`
 - Webhook güvenlik politikası: `docs/WEBHOOK_SECURITY_POLICY.md`
 - Script envanteri ve deprecate politikası: `docs/SCRIPT_INVENTORY.md`
 - Experimental typecheck kapanış planı: `docs/TYPECHECK_EXPERIMENTAL_BACKLOG.md`

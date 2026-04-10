@@ -26,6 +26,9 @@ const generateOAuthStateMock = vi.fn();
 const linkOAuthAccountMock = vi.fn();
 const getOAuthAccountByProviderMock = vi.fn();
 const createUserSessionMock = vi.fn();
+const requestEventReplayMock = vi.fn();
+const getReplayHistoryMock = vi.fn();
+const cancelReplayMock = vi.fn();
 const createTenantMock = vi.fn();
 const getTenantBySlugMock = vi.fn();
 const getTenantBrandingMock = vi.fn();
@@ -54,6 +57,7 @@ vi.mock('../../../lib/messages', () => ({
 vi.mock('../../../lib/postgres', () => ({
   queryOne: queryOneMock,
   query: queryMock,
+  pool: { query: queryMock },
   insert: vi.fn(),
   update: updateDbMock,
 }));
@@ -102,6 +106,12 @@ vi.mock('../../../lib/security', () => ({
   createUserSession: createUserSessionMock,
 }));
 
+vi.mock('../../../lib/webhook-replay', () => ({
+  requestEventReplay: requestEventReplayMock,
+  getReplayHistory: getReplayHistoryMock,
+  cancelReplay: cancelReplayMock,
+}));
+
 vi.mock('../../../lib/multi-tenant', () => ({
   createTenant: createTenantMock,
   getTenantBySlug: getTenantBySlugMock,
@@ -139,6 +149,17 @@ describe('API contract hardening', () => {
     generateOAuthStateMock.mockResolvedValue('state-token');
     getOAuthAccountByProviderMock.mockResolvedValue(null);
     createUserSessionMock.mockResolvedValue({ session_token: 'session-token' });
+    requestEventReplayMock.mockResolvedValue({
+      id: 'replay-1',
+      webhookId: 'webhook-1',
+      eventId: 'event-1',
+      status: 'pending',
+      eventType: 'invoice.payment_failed',
+      eventData: {},
+      requestedAt: new Date().toISOString()
+    });
+    getReplayHistoryMock.mockResolvedValue([]);
+    cancelReplayMock.mockResolvedValue(true);
     verifyWebhookSignatureMock.mockResolvedValue({ id: 'evt_1', type: 'invoice.payment_failed', data: { object: { id: 'in_1', subscription: 'sub_1' } } });
   });
 
@@ -1095,6 +1116,76 @@ describe('API contract hardening', () => {
       'tier-pro',
       expect.any(Date)
     );
+  });
+
+  it('rejects webhook replay POST when content-type is not json', async () => {
+    const { POST } = await import('../webhooks/replay.ts');
+    const request = new Request('https://example.com/api/webhooks/replay', {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain' },
+      body: 'noop'
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(requestEventReplayMock).not.toHaveBeenCalled();
+  });
+
+  it('rate limits webhook replay POST endpoint', async () => {
+    const { POST } = await import('../webhooks/replay.ts');
+    checkRateLimitMock.mockResolvedValueOnce(false);
+    const request = new Request('https://example.com/api/webhooks/replay', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ webhookId: 'webhook-1', eventId: 'event-1' })
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(429);
+    expect(requestEventReplayMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects webhook retry POST when content-type is not json', async () => {
+    const { POST } = await import('../webhooks/retry.ts');
+    const request = new Request('https://example.com/api/webhooks/retry', {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain' },
+      body: 'noop'
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+
+  it('rate limits webhook retry POST endpoint', async () => {
+    const { POST } = await import('../webhooks/retry.ts');
+    checkRateLimitMock.mockResolvedValueOnce(false);
+    const request = new Request('https://example.com/api/webhooks/retry', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({})
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(429);
+    expect(queryMock).not.toHaveBeenCalled();
   });
 
   it('keeps message delete idempotent for same participant conversation', async () => {

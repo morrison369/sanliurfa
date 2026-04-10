@@ -3,6 +3,8 @@ import { pool } from '../../../lib/postgres';
 import { retryFailedWebhooks } from '../../../lib/webhook-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
+import { enforceRateLimitPolicy, getClientIpAddress } from '../../../lib/sensitive-endpoint-policy';
+import { recordRequest } from '../../../lib/metrics';
 
 /**
  * POST /api/webhooks/retry
@@ -10,10 +12,12 @@ import { logger } from '../../../lib/logging';
  */
 export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
+  const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
+      recordRequest('POST', '/api/webhooks/retry', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
         'Authentication required',
@@ -23,7 +27,46 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const body = await request.json();
+    const rateLimitResponse = await enforceRateLimitPolicy({
+      request,
+      requestId,
+      key: `webhook:retry:post:${getClientIpAddress(request)}:${locals.user.id}`,
+      limit: 15,
+      windowSeconds: 60,
+      message: 'Too many webhook retry requests'
+    });
+
+    if (rateLimitResponse) {
+      recordRequest('POST', '/api/webhooks/retry', HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return rateLimitResponse;
+    }
+
+    const contentType = request.headers.get('content-type') || '';
+    if (!contentType.toLowerCase().includes('application/json')) {
+      recordRequest('POST', '/api/webhooks/retry', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Content-Type must be application/json',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      recordRequest('POST', '/api/webhooks/retry', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Invalid JSON payload',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
     const { eventId, webhookId } = body;
 
     let retryCount = 0;
@@ -38,6 +81,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
 
       if (eventRes.rows.length === 0) {
+        recordRequest('POST', '/api/webhooks/retry', HttpStatus.NOT_FOUND, Date.now() - startTime);
         return apiError(
           ErrorCode.NOT_FOUND,
           'Failed event not found',
@@ -56,6 +100,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
 
       if (webhookRes.rows.length === 0) {
+        recordRequest('POST', '/api/webhooks/retry', HttpStatus.NOT_FOUND, Date.now() - startTime);
         return apiError(
           ErrorCode.NOT_FOUND,
           'Webhook not found',
@@ -85,6 +130,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       count: retryCount
     });
 
+    recordRequest('POST', '/api/webhooks/retry', HttpStatus.OK, Date.now() - startTime);
     return apiResponse(
       {
         success: true,
@@ -98,6 +144,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Failed to retry webhooks', error instanceof Error ? error : new Error(String(error)));
+    recordRequest('POST', '/api/webhooks/retry', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
     return apiError(
       ErrorCode.INTERNAL_ERROR,
       'Failed to retry webhooks',

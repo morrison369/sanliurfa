@@ -8,6 +8,11 @@ import { pool } from './postgres';
 import { logger } from './logging';
 import { fetchWithTimeout } from './http';
 import { getCache, setCache } from './cache';
+import {
+  WEBHOOK_RETRY_MAX_ATTEMPTS,
+  getWebhookNextRetryAt,
+  calculateWebhookRetryBackoffSeconds,
+} from './webhook-delivery-policy';
 
 export interface WebhookDeliveryJob {
   id: string;
@@ -29,9 +34,7 @@ export interface WebhookDeliveryJob {
  * Webhook queue manager with retry and DLQ support
  */
 export class WebhookQueue {
-  private readonly maxRetries = 5;
-  private readonly initialBackoff = 60; // seconds
-  private readonly maxBackoff = 3600; // 1 hour
+  private readonly maxRetries = WEBHOOK_RETRY_MAX_ATTEMPTS;
   private readonly timeout = 30000; // 30 seconds
 
   /**
@@ -160,11 +163,8 @@ export class WebhookQueue {
    */
   async scheduleRetry(job: any, error?: string): Promise<void> {
     const nextRetryCount = job.retry_count + 1;
-    const backoffSeconds = Math.min(
-      this.initialBackoff * Math.pow(2, job.retry_count),
-      this.maxBackoff
-    );
-    const nextRetryAt = new Date(Date.now() + backoffSeconds * 1000);
+    const backoffSeconds = calculateWebhookRetryBackoffSeconds(job.retry_count);
+    const nextRetryAt = getWebhookNextRetryAt(job.retry_count);
 
     try {
       await pool.query(

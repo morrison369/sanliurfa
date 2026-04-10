@@ -61,8 +61,8 @@ jobs:
         run: npm run typecheck:app
       - name: Typecheck experimental exclude guard
         run: npm run typecheck:experimental:exclude:guard
-      - name: Contract hardening smoke
-        run: npm exec -- vitest run src/pages/api/__tests__/contract-hardening.test.ts src/lib/__tests__/email-contracts.test.ts
+      - name: Critical contracts and security smoke
+        run: npm run test:critical
 
   full_gate:
     name: full-gate

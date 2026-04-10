@@ -47,6 +47,11 @@ export function calculateWebhookRetryBackoffSeconds(retryCount: number): number 
   return Math.min(backoff, WEBHOOK_RETRY_MAX_SECONDS);
 }
 
+export function getWebhookNextRetryAt(retryCount: number, now: Date = new Date()): Date {
+  const delaySeconds = calculateWebhookRetryBackoffSeconds(retryCount);
+  return new Date(now.getTime() + (delaySeconds * 1000));
+}
+
 export function decideWebhookRetry(
   delivery: WebhookDeliveryRetryState | null | undefined,
   now: Date = new Date()
