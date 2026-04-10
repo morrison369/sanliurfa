@@ -3,6 +3,7 @@
  * Warehouse management, inventory tracking, stock movements, location management
  */
 
+import { deterministicNumber } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -144,7 +145,7 @@ export class InventoryOptimizer {
    * Analyze inventory turnover
    */
   analyzeTurnover(sku: string, period: string): { turnover: number; daysInStock: number } {
-    const turnover = Math.random() * 10 + 1; // Simulated turnover rate
+    const turnover = deterministicNumber(`inventory-turnover:${sku}:${period}`, 1, 11, 2);
     const daysInStock = Math.round(365 / turnover);
 
     return {

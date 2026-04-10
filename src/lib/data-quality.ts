@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logging';
+import { deterministicBoolean } from './deterministic';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -232,10 +233,10 @@ export class AnomalyDetector {
     const values = data.map(r => r[field]);
     const anomalies: Record<string, any>[] = [];
 
-    // Simulate pattern detection
     const commonValue = values[0];
     for (let i = 0; i < values.length; i++) {
-      if (values[i] !== commonValue && Math.random() > 0.95) {
+      const seed = `pattern:${field}:${i}:${String(values[i])}:${String(commonValue)}`;
+      if (values[i] !== commonValue && deterministicBoolean(seed, 0.95)) {
         anomalies.push({
           index: i,
           value: values[i],

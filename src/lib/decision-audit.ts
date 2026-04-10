@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { deterministicBoolean } from './deterministic';
 
 interface DecisionRecord {
   decisionId: string;
@@ -189,8 +190,8 @@ class ChangeImpactAnalyzer {
 
 class DecisionReplayEngine {
   private replay(decisionRecord: DecisionRecord, currentPolicy: any): 'same' | 'different' {
-    // Simulate re-evaluation with current policy
-    return Math.random() > 0.85 ? 'different' : 'same';
+    const seed = `decision-replay:${decisionRecord.decisionId}:${decisionRecord.policyId}:${JSON.stringify(currentPolicy ?? {})}`;
+    return deterministicBoolean(seed, 0.85) ? 'different' : 'same';
   }
 
   replayDecision(decisionId: string, decisionRecord: DecisionRecord, currentPolicy: any): { decisionId: string; originalDecision: string; replayedDecision: string; changed: boolean } {

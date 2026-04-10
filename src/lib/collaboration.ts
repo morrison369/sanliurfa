@@ -3,6 +3,7 @@
  * Multiplayer editing, operational transformation, presence detection, conflict resolution
  */
 
+import { deterministicId, pickDeterministic } from './deterministic';
 import { logger } from './logging';
 
 // ==================== OPERATIONAL TRANSFORMATION ====================
@@ -28,11 +29,12 @@ export class OperationalTransformation {
    * Apply local change
    */
   applyLocalChange(userId: string, change: Omit<DocumentChange, 'id' | 'timestamp' | 'version'>): DocumentChange {
+    const version = this.history.length;
     const documented: DocumentChange = {
       ...change,
-      id: `change-${Date.now()}-${Math.random()}`,
+      id: deterministicId('change', `${userId}:${change.path}:${version}`, version + 1),
       timestamp: Date.now(),
-      version: this.history.length
+      version
     };
 
     this.history.push(documented);
@@ -128,7 +130,7 @@ export class PresenceManager {
         username: userId,
         cursorPosition: { x: 0, y: 0 },
         lastActive: Date.now(),
-        color: this.generateUserColor()
+        color: this.generateUserColor(userId)
       };
     }
 
@@ -189,9 +191,9 @@ export class PresenceManager {
   /**
    * Generate consistent color for user
    */
-  private generateUserColor(): string {
+  private generateUserColor(userId: string): string {
     const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
-    return colors[Math.floor(Math.random() * colors.length)];
+    return pickDeterministic(colors, `presence:${userId}`);
   }
 }
 

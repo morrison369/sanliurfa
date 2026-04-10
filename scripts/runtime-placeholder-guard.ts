@@ -71,7 +71,13 @@ const FILES = [
   'src/lib/payout-engine.ts',
   'src/lib/ml-pipelines.ts',
   'src/lib/nlp-engine.ts',
-  'src/lib/personalization-engine.ts'
+  'src/lib/personalization-engine.ts',
+  'src/lib/collaboration.ts',
+  'src/lib/decision-audit.ts',
+  'src/lib/escalation-management.ts',
+  'src/lib/data-quality.ts',
+  'src/lib/inventory-warehouse.ts',
+  'src/lib/marketing-automation.ts'
 ];
 
 const PATTERNS = [

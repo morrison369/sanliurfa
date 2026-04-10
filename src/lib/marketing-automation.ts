@@ -3,6 +3,7 @@
  * Campaign management, email/SMS marketing, notification automation, user engagement
  */
 
+import { deterministicBoolean, deterministicId, deterministicInt } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -39,9 +40,15 @@ export class CampaignManager {
   private campaignMetrics = new Map<string, CampaignMetrics>();
   private vendorCampaigns = new Map<string, Set<string>>();
   private schedules = new Map<string, number>();
+  private campaignCount = 0;
 
   createCampaign(campaign: Omit<Campaign, 'id' | 'status'>): Campaign {
-    const campaignId = 'campaign-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    this.campaignCount++;
+    const campaignId = deterministicId(
+      'campaign',
+      `${campaign.name}:${campaign.type}:${campaign.target}`,
+      this.campaignCount
+    );
     const fullCampaign: Campaign = { ...campaign, id: campaignId, status: 'draft' };
     this.campaigns.set(campaignId, fullCampaign);
     const vendorId = campaign.target.split(':')[0];
@@ -69,7 +76,9 @@ export class CampaignManager {
       campaign.status = 'sent';
       this.schedules.delete(campaignId);
       const metrics = this.campaignMetrics.get(campaignId);
-      if (metrics) metrics.sent = Math.floor(Math.random() * 10000) + 1000;
+      if (metrics) {
+        metrics.sent = deterministicInt(`campaign-sent:${campaignId}:${campaign.target}:${campaign.type}`, 1000, 10999);
+      }
       logger.info('Campaign sent', { campaignId, type: campaign.type });
     }
   }
@@ -100,13 +109,15 @@ export class CampaignManager {
 export class TemplateEngine {
   private templates = new Map<string, { content: string; variables: string[] }>();
   private vendorTemplates = new Map<string, Set<string>>();
+  private templateCount = 0;
 
   private escapeRegExp(value: string): string {
     return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   createTemplate(name: string, content: string, variables: string[]): string {
-    const templateId = 'template-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    this.templateCount++;
+    const templateId = deterministicId('template', `${name}:${content}:${variables.join(',')}`, this.templateCount);
     this.templates.set(templateId, { content, variables });
     logger.debug('Template created', { templateId, name, variables: variables.length });
     return templateId;
@@ -163,7 +174,8 @@ export class EngagementAutomation {
     logger.debug('Engagement action triggered', { userId, action: rule.action });
     this.stats.actionsExecuted++;
     if (rule.action === 'send_offer' || rule.action === 'send_reminder') {
-      if (Math.random() > 0.7) {
+      const seed = `engagement:${rule.action}:${userId}:${this.stats.actionsExecuted}`;
+      if (deterministicBoolean(seed, 0.7)) {
         this.stats.conversionRate = (this.stats.actionsExecuted * 0.15) / (this.stats.actionsExecuted || 1);
       }
     }
