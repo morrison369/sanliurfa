@@ -4,7 +4,7 @@
  */
 
 import { logger } from './logging';
-import { createHmac } from 'crypto';
+import { createHmac, randomBytes } from 'crypto';
 
 // ==================== API VERSIONING ====================
 
@@ -140,7 +140,7 @@ export class APIKeyManager {
    * Generate new API key
    */
   generateKey(userId: string, name: string, permissions: string[], rateLimit: number = 100): APIKey {
-    const key = `sk_${Math.random().toString(36).substring(2, 32)}`;
+    const key = `sk_${randomBytes(24).toString('hex')}`;
     const keyHash = createHmac('sha256', 'api-key-salt').update(key).digest('hex');
 
     const apiKey: APIKey = {

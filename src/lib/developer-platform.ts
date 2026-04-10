@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logging';
+import { randomBytes } from 'crypto';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -197,7 +198,7 @@ export class APIKeyManager {
    * Generate key hash
    */
   private generateKeyHash(): string {
-    return 'sk_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    return `sk_${randomBytes(24).toString('hex')}`;
   }
 }
 

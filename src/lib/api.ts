@@ -1,6 +1,7 @@
 // API utilities for standardized responses and request validation
 
 import type { APIContext } from 'astro';
+import { randomUUID } from 'crypto';
 
 /**
  * Standard API response envelope
@@ -243,7 +244,7 @@ export function sanitizeInput(input: string): string {
  * Extract request ID or generate one
  */
 export function getRequestId(context: APIContext): string {
-  return context.request.headers.get('x-request-id') || `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return context.request.headers.get('x-request-id') || `req-${randomUUID()}`;
 }
 
 /**

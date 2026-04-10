@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logging';
+import { randomUUID } from 'crypto';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -45,7 +46,7 @@ export class DistributedLock {
       this.locks.delete(key); // Expired lock, remove it
     }
 
-    const token = 'token-' + Math.random().toString(36).substr(2, 9);
+    const token = `token-${randomUUID()}`;
     const lock: Lock = {
       key,
       token,
@@ -128,6 +129,7 @@ export class DistributedLock {
 export class CacheWarmer {
   private jobs = new Map<string, CacheWarmJob>();
   private schedules = new Map<string, NodeJS.Timeout>();
+  private scheduleCounter = 0;
 
   /**
    * Register warm job
@@ -181,7 +183,7 @@ export class CacheWarmer {
    * Schedule warm
    */
   scheduleWarm(cacheKey: string, intervalMs: number): string {
-    const scheduleId = 'schedule-' + Math.random().toString(36).substr(2, 9);
+    const scheduleId = `schedule-${++this.scheduleCounter}`;
 
     const interval = setInterval(() => {
       this.warmKey(cacheKey);

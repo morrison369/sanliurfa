@@ -37,6 +37,7 @@ export class JobQueue {
   private queue: Job[] = [];
   private handlers = new Map<string, (payload: any) => Promise<any>>();
   private results = new Map<string, JobResult>();
+  private jobCounter = 0;
 
   /**
    * Register handler for job type
@@ -50,7 +51,7 @@ export class JobQueue {
    * Enqueue job
    */
   enqueue(type: string, payload: any, options?: { priority?: JobPriority; delay?: number; maxAttempts?: number }): string {
-    const jobId = 'job-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const jobId = `job-${Date.now()}-${++this.jobCounter}`;
 
     const job: Job = {
       id: jobId,

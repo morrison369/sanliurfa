@@ -25,7 +25,15 @@ const FILES = [
   'src/lib/crm-sales-pipeline.ts',
   'src/lib/customer-health.ts',
   'src/lib/performance-testing.ts',
-  'src/lib/test-automation.ts'
+  'src/lib/test-automation.ts',
+  'src/lib/advanced-rate-limit.ts',
+  'src/lib/api-gateway.ts',
+  'src/lib/api-documentation.ts',
+  'src/lib/developer-platform.ts',
+  'src/lib/distributed-cache.ts',
+  'src/lib/event-bus.ts',
+  'src/lib/job-queue.ts',
+  'src/lib/api.ts'
 ];
 
 const PATTERNS = [

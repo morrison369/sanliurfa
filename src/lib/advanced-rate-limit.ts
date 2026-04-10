@@ -24,6 +24,7 @@ export interface RateLimitResult {
  */
 export class SlidingWindowLimiter {
   private config: RateLimitConfig;
+  private requestCounter = 0;
 
   constructor(config: RateLimitConfig) {
     this.config = {
@@ -68,7 +69,8 @@ export class SlidingWindowLimiter {
       }
 
       // Add current request
-      await redis.zadd(key, now, `${now}-${Math.random()}`);
+      this.requestCounter++;
+      await redis.zadd(key, now, `${now}-${this.requestCounter}`);
       await redis.expire(key, Math.ceil(this.config.windowSizeMs / 1000));
 
       return {

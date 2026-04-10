@@ -115,12 +115,13 @@ export class MessageQueue {
   private queues = new Map<string, QueuedMessage<any>[]>();
   private dlq = new Map<string, QueuedMessage<any>[]>(); // Dead Letter Queue
   private stats = new Map<string, { processed: number; failed: number }>();
+  private messageCounter = 0;
 
   /**
    * Enqueue message
    */
   enqueue<T>(queueName: string, message: T, priority: number = 0): string {
-    const id = `msg-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const id = `msg-${Date.now()}-${++this.messageCounter}`;
     const queued: QueuedMessage<T> = {
       id,
       payload: message,
