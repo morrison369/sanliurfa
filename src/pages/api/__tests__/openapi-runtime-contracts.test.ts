@@ -14,12 +14,17 @@ describe('openapi runtime contracts', () => {
     expect(body.paths['/api/admin/performance/optimization']).toBeDefined();
 
     const healthStatusEnum = body.paths['/api/health'].get.responses['200'].content['application/json'].schema.properties.data.properties.status.enum;
+    const healthArtifactSchema =
+      body.paths['/api/health'].get.responses['200'].content['application/json'].schema.properties.data.properties.checks.properties.artifacts;
     const detailedStatusEnum = body.paths['/api/health/detailed'].get.responses['200'].content['application/json'].schema.properties.data.properties.status.enum;
     const oauthStatusEnum = body.paths['/api/performance'].get.responses['200'].content['application/json'].schema.properties.data.properties.serviceLevelObjectives.properties.oauth.properties.status.enum;
     const detailedArtifactSchema =
       body.paths['/api/health/detailed'].get.responses['200'].content['application/json'].schema.properties.data.properties.checks.properties.artifacts;
 
     expect(healthStatusEnum).toEqual(['healthy', 'degraded', 'blocked']);
+    expect(healthArtifactSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E']);
+    expect(healthArtifactSchema.properties.releaseGate.properties.available.type).toBe('boolean');
+    expect(healthArtifactSchema.properties.releaseGate.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(detailedStatusEnum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(oauthStatusEnum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(detailedArtifactSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E']);

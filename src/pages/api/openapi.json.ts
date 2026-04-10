@@ -248,8 +248,41 @@ const openApiSpec = {
                               },
                               required: ['resend', 'analytics'],
                             },
+                            artifacts: {
+                              type: 'object',
+                              properties: {
+                                releaseGate: {
+                                  type: 'object',
+                                  properties: {
+                                    available: { type: 'boolean' },
+                                    status: healthStatusSchema,
+                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
+                                  },
+                                  required: ['available', 'status', 'generatedAt'],
+                                },
+                                nightlyRegression: {
+                                  type: 'object',
+                                  properties: {
+                                    available: { type: 'boolean' },
+                                    status: healthStatusSchema,
+                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
+                                  },
+                                  required: ['available', 'status', 'generatedAt'],
+                                },
+                                nightlyE2E: {
+                                  type: 'object',
+                                  properties: {
+                                    available: { type: 'boolean' },
+                                    status: healthStatusSchema,
+                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
+                                  },
+                                  required: ['available', 'status', 'generatedAt'],
+                                },
+                              },
+                              required: ['releaseGate', 'nightlyRegression', 'nightlyE2E'],
+                            },
                           },
-                          required: ['database', 'redis', 'integrations'],
+                          required: ['database', 'redis', 'integrations', 'artifacts'],
                         },
                       },
                       required: ['status', 'uptime', 'timestamp', 'version', 'checks'],

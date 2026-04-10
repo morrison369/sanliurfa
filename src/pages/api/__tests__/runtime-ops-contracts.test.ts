@@ -4,6 +4,8 @@ const poolQueryMock = vi.fn();
 const getRedisClientMock = vi.fn();
 const isRedisAvailableMock = vi.fn();
 const getRuntimeIntegrationSettingsMock = vi.fn();
+const getNightlyOpsSummaryMock = vi.fn();
+const getReleaseGateSummaryMock = vi.fn();
 const updatePoolStatusMock = vi.fn();
 const loggerMock = {
   setRequestId: vi.fn(),
@@ -34,6 +36,14 @@ vi.mock('../../../lib/cache', () => ({
 
 vi.mock('../../../lib/runtime-integration-settings', () => ({
   getRuntimeIntegrationSettings: getRuntimeIntegrationSettingsMock,
+}));
+
+vi.mock('../../../lib/nightly-ops-summary', () => ({
+  getNightlyOpsSummary: getNightlyOpsSummaryMock,
+}));
+
+vi.mock('../../../lib/release-gate-summary', () => ({
+  getReleaseGateSummary: getReleaseGateSummaryMock,
 }));
 
 vi.mock('../../../lib/metrics', () => ({
@@ -67,6 +77,26 @@ describe('runtime ops contracts', () => {
     getRuntimeIntegrationSettingsMock.mockResolvedValue({
       resendApiKey: '',
       analyticsId: '',
+    });
+    getReleaseGateSummaryMock.mockResolvedValue({
+      available: true,
+      generatedAt: '2026-04-10T08:00:00.000Z',
+      finalStatus: 'passed',
+      failedStepCount: 0,
+    });
+    getNightlyOpsSummaryMock.mockResolvedValue({
+      regression: {
+        available: true,
+        generatedAt: '2026-04-10T07:00:00.000Z',
+        outcome: 'success',
+        successRatePercent: 100,
+      },
+      e2e: {
+        available: false,
+        generatedAt: null,
+        outcome: 'missing',
+        successRatePercent: null,
+      },
     });
 
     getPerformanceStatsMock.mockReturnValue({
@@ -156,6 +186,16 @@ describe('runtime ops contracts', () => {
     expect(body.data.checks.database.status).toBe('up');
     expect(body.data.checks.redis.status).toBe('up');
     expect(body.data.checks.integrations.resend.configured).toBe(false);
+    expect(body.data.checks.artifacts.releaseGate).toEqual({
+      available: true,
+      generatedAt: '2026-04-10T08:00:00.000Z',
+      status: 'healthy',
+    });
+    expect(body.data.checks.artifacts.nightlyE2E).toEqual({
+      available: false,
+      generatedAt: null,
+      status: 'blocked',
+    });
   });
 
   it('returns degraded health status in production when integrations are incomplete', async () => {
