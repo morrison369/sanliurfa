@@ -10,6 +10,39 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
+const TENANT_SLUG_REGEX = /^[a-z0-9-]{3,50}$/;
+
+async function parseJsonBody(request: Request, requestId: string, startTime: number) {
+  const contentType = request.headers.get('content-type') || '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    recordRequest('POST', '/api/tenants', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+    return {
+      response: apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Content-Type application/json olmalı',
+        HttpStatus.BAD_REQUEST,
+        { contentType },
+        requestId
+      )
+    };
+  }
+
+  try {
+    return { body: await request.json() };
+  } catch {
+    recordRequest('POST', '/api/tenants', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+    return {
+      response: apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçersiz JSON body',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      )
+    };
+  }
+}
+
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
   const startTime = Date.now();
@@ -82,11 +115,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const body = await request.json();
-    const { name, slug, description } = body;
+    const parsed = await parseJsonBody(request, requestId, startTime);
+    if (parsed.response) {
+      return parsed.response;
+    }
+
+    const { name, slug, description } = parsed.body as {
+      name?: unknown;
+      slug?: unknown;
+      description?: unknown;
+    };
+
+    const normalizedName = typeof name === 'string' ? name.trim() : '';
+    const normalizedSlug = typeof slug === 'string' ? slug.trim().toLowerCase() : '';
 
     // Validate input
-    if (!name || !slug) {
+    if (!normalizedName || !normalizedSlug) {
       recordRequest('POST', '/api/tenants', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
@@ -97,8 +141,30 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    if (!TENANT_SLUG_REGEX.test(normalizedSlug)) {
+      recordRequest('POST', '/api/tenants', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Invalid slug format',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        { slug: normalizedSlug },
+        requestId
+      );
+    }
+
+    if (description !== undefined && description !== null && typeof description !== 'string') {
+      recordRequest('POST', '/api/tenants', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'description must be a string',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        undefined,
+        requestId
+      );
+    }
+
     // Check if slug already exists
-    const existing = await getTenantBySlug(slug);
+    const existing = await getTenantBySlug(normalizedSlug);
     if (existing) {
       recordRequest('POST', '/api/tenants', HttpStatus.CONFLICT, Date.now() - startTime);
       return apiError(
@@ -111,7 +177,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Create tenant
-    const tenant = await createTenant(name, slug, locals.user.id, description);
+    const normalizedDescription = typeof description === 'string' ? description.trim() : undefined;
+    const tenant = await createTenant(normalizedName, normalizedSlug, locals.user.id, normalizedDescription);
 
     if (!tenant) {
       recordRequest('POST', '/api/tenants', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);

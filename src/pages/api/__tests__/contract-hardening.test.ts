@@ -24,6 +24,11 @@ const getOAuthProviderMock = vi.fn();
 const linkOAuthAccountMock = vi.fn();
 const getOAuthAccountByProviderMock = vi.fn();
 const createUserSessionMock = vi.fn();
+const createTenantMock = vi.fn();
+const getTenantBySlugMock = vi.fn();
+const getTenantBrandingMock = vi.fn();
+const updateTenantBrandingMock = vi.fn();
+const getTenantMembersMock = vi.fn();
 const addTenantMemberMock = vi.fn();
 const removeTenantMemberMock = vi.fn();
 const logTenantAuditMock = vi.fn();
@@ -94,6 +99,11 @@ vi.mock('../../../lib/security', () => ({
 }));
 
 vi.mock('../../../lib/multi-tenant', () => ({
+  createTenant: createTenantMock,
+  getTenantBySlug: getTenantBySlugMock,
+  getTenantBranding: getTenantBrandingMock,
+  updateTenantBranding: updateTenantBrandingMock,
+  getTenantMembers: getTenantMembersMock,
   addTenantMember: addTenantMemberMock,
   removeTenantMember: removeTenantMemberMock,
   logTenantAudit: logTenantAuditMock,
@@ -109,6 +119,11 @@ describe('API contract hardening', () => {
     getConversationsMock.mockResolvedValue([]);
     getOrCreateConversationMock.mockResolvedValue({ id: 'conversation-1' });
     markConversationReadMock.mockResolvedValue(undefined);
+    createTenantMock.mockResolvedValue({ id: 'tenant-1' });
+    getTenantBySlugMock.mockResolvedValue(null);
+    getTenantBrandingMock.mockResolvedValue(null);
+    updateTenantBrandingMock.mockResolvedValue(true);
+    getTenantMembersMock.mockResolvedValue([]);
     updateDbMock.mockResolvedValue({});
     isUserBlockedMock.mockResolvedValue(false);
     addTenantMemberMock.mockResolvedValue({ id: 'member-1' });
@@ -395,6 +410,132 @@ describe('API contract hardening', () => {
     } as any);
 
     expect(response.status).toBe(403);
+  });
+
+  it('rejects non-json tenant create payload', async () => {
+    const { POST } = await import('../tenants/index.ts');
+    const request = new Request('https://example.com/api/tenants', {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain' },
+      body: 'hello'
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(createTenantMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid tenant create JSON', async () => {
+    const { POST } = await import('../tenants/index.ts');
+    const request = new Request('https://example.com/api/tenants', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{bad-json'
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(createTenantMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid tenant slug format on tenant create', async () => {
+    const { POST } = await import('../tenants/index.ts');
+    const request = new Request('https://example.com/api/tenants', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'Tenant A', slug: 'Bad Slug!' })
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(422);
+    expect(getTenantBySlugMock).not.toHaveBeenCalled();
+    expect(createTenantMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid tenant id before tenant detail lookup', async () => {
+    const { GET } = await import('../tenants/[tenantId].ts');
+    const request = new Request('https://example.com/api/tenants/not-a-uuid');
+
+    const response = await GET({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { tenantId: 'not-a-uuid' },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(queryOneMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid tenant id before tenant patch', async () => {
+    const { PATCH } = await import('../tenants/[tenantId].ts');
+    const request = new Request('https://example.com/api/tenants/not-a-uuid', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: 'x' })
+    });
+
+    const response = await PATCH({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { tenantId: 'not-a-uuid' },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(queryOneMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-json tenant patch payload', async () => {
+    const { PATCH } = await import('../tenants/[tenantId].ts');
+    const request = new Request('https://example.com/api/tenants/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', {
+      method: 'PATCH',
+      headers: { 'content-type': 'text/plain' },
+      body: 'hello'
+    });
+
+    const response = await PATCH({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { tenantId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(queryOneMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-object branding in tenant patch payload', async () => {
+    const { PATCH } = await import('../tenants/[tenantId].ts');
+    queryOneMock.mockResolvedValueOnce({
+      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      owner_id: '11111111-1111-1111-1111-111111111111',
+      slug: 'tenant-a'
+    });
+
+    const request = new Request('https://example.com/api/tenants/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ branding: 'invalid' })
+    });
+
+    const response = await PATCH({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { tenantId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' },
+    } as any);
+
+    expect(response.status).toBe(422);
+    expect(updateDbMock).not.toHaveBeenCalled();
   });
 
   it('rejects invalid tenant member role', async () => {
