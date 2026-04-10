@@ -118,7 +118,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       return apiError(ErrorCode.INVALID_INPUT, 'Backup ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
-    const result = simulateBackup(id);
+    const result = await simulateBackup(id);
 
     if (result.status === 'failed') {
       recordRequest('POST', '/api/admin/deployment/backup', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);

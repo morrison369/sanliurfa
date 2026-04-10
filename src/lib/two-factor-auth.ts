@@ -6,6 +6,7 @@
 import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
+import { sendEmail } from './email';
 import crypto from 'crypto';
 import { createHmac } from 'crypto';
 
@@ -28,6 +29,14 @@ interface TwoFASession {
   method_id: string;
   verified_at: Date | null;
   expires_at: Date;
+}
+
+function generateVerificationCode(): string {
+  return crypto.randomInt(100000, 1000000).toString();
+}
+
+function getVerificationCacheKey(methodId: string): string {
+  return `sanliurfa:2fa:verification:${methodId}`;
 }
 
 // TOTP secret generation (32 chars base32)
@@ -149,11 +158,81 @@ export async function create2FAMethod(userId: string, methodType: 'totp' | 'emai
     });
 
     await deleteCache(`sanliurfa:user:2fa:${userId}`);
+
+    if (methodType === 'email' || methodType === 'sms') {
+      await send2FAVerificationCode(
+        withVerificationTarget(
+          toTwoFAMethodRecord(result),
+          methodType,
+          methodIdentifier
+        )
+      );
+    }
+
     logger.info('2FA method created', { userId, methodType });
     return result;
   } catch (error) {
     logger.error('Failed to create 2FA method', error instanceof Error ? error : new Error(String(error)));
     return null;
+  }
+}
+
+function toTwoFAMethodRecord(method: unknown): TwoFAMethod {
+  const record = method as Record<string, unknown>;
+
+  return {
+    id: String(record.id),
+    user_id: String(record.user_id),
+    method_type: record.method_type as TwoFAMethod['method_type'],
+    method_identifier: String(record.method_identifier || ''),
+    secret_key: String(record.secret_key || ''),
+    is_verified: Boolean(record.is_verified),
+    is_primary: Boolean(record.is_primary),
+    is_active: Boolean(record.is_active),
+    backup_codes: Array.isArray(record.backup_codes) ? (record.backup_codes as string[]) : []
+  };
+}
+
+function withVerificationTarget(method: TwoFAMethod, methodType: 'email' | 'sms', methodIdentifier: string): TwoFAMethod {
+  return {
+    ...method,
+    method_type: methodType,
+    method_identifier: methodIdentifier || method.method_identifier
+  };
+}
+
+async function send2FAVerificationCode(method: TwoFAMethod): Promise<void> {
+  const code = generateVerificationCode();
+  const payload = JSON.stringify({
+    userId: method.user_id,
+    methodId: method.id,
+    methodType: method.method_type,
+    code,
+    generatedAt: new Date().toISOString()
+  });
+
+  await setCache(getVerificationCacheKey(method.id), payload, 600);
+
+  if (method.method_type === 'email') {
+    await sendEmail(
+      method.method_identifier,
+      'Şanlıurfa.com 2FA Doğrulama Kodu',
+      `<p>İki faktörlü doğrulama kodunuz: <strong>${code}</strong></p><p>Bu kod 10 dakika boyunca geçerlidir.</p>`
+    );
+    logger.info('2FA email verification code sent', { userId: method.user_id, methodId: method.id });
+    return;
+  }
+
+  if (method.method_type === 'sms') {
+    await insert('sms_messages', {
+      user_id: method.user_id,
+      phone_number: method.method_identifier,
+      content: `Sanliurfa.com doğrulama kodunuz: ${code}`,
+      status: 'queued',
+      provider: 'internal',
+      created_at: new Date().toISOString()
+    });
+    logger.info('2FA SMS verification code queued', { userId: method.user_id, methodId: method.id });
   }
 }
 
@@ -197,8 +276,12 @@ export async function verify2FAMethod(methodId: string, code: string): Promise<b
       return isValid;
     }
 
-    // Email/SMS verification handled separately (code sent externally)
-    return true;
+    const isValid = await verify2FAVerificationCode(method.user_id, methodId, code);
+    if (isValid) {
+      await update('user_2fa_methods', { id: methodId }, { is_verified: true });
+      await deleteCache(`sanliurfa:user:2fa:${method.user_id}`);
+    }
+    return isValid;
   } catch (error) {
     logger.error('Failed to verify 2FA method', error instanceof Error ? error : new Error(String(error)));
     return false;
@@ -300,8 +383,7 @@ export async function verify2FASession(sessionToken: string, code: string): Prom
     if (session.method_type === 'totp') {
       isValid = verifyTOTP(session.secret_key, code);
     } else if (session.method_type === 'email' || session.method_type === 'sms') {
-      // Verify against sent code (from email/SMS service)
-      isValid = await verify2FAVerificationCode(session.user_id, code);
+      isValid = await verify2FAVerificationCode(session.user_id, session.method_id, code);
     }
 
     if (isValid) {
@@ -318,10 +400,29 @@ export async function verify2FASession(sessionToken: string, code: string): Prom
   }
 }
 
-async function verify2FAVerificationCode(userId: string, code: string): Promise<boolean> {
-  // This would integrate with email/SMS service to verify sent codes
-  // For now, returning false - implement with your email/SMS provider
-  return false;
+async function verify2FAVerificationCode(userId: string, methodId: string, code: string): Promise<boolean> {
+  try {
+    const cached = await getCache(getVerificationCacheKey(methodId));
+    if (!cached) {
+      return false;
+    }
+
+    const payload = JSON.parse(cached) as {
+      userId: string;
+      methodId: string;
+      code: string;
+    };
+
+    if (payload.userId !== userId || payload.methodId !== methodId || payload.code !== code) {
+      return false;
+    }
+
+    await deleteCache(getVerificationCacheKey(methodId));
+    return true;
+  } catch (error) {
+    logger.error('Failed to verify 2FA verification code', error instanceof Error ? error : new Error(String(error)));
+    return false;
+  }
 }
 
 async function recordFailedAttempt(sessionId: string, userId: string): Promise<void> {

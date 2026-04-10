@@ -3,7 +3,10 @@
  * Handles staging environment and database backup automation
  */
 
+import fs from 'fs/promises';
+import path from 'path';
 import { logger } from './logging';
+import { queryRows } from './postgres';
 
 export interface DeploymentEnvironment {
   name: 'development' | 'staging' | 'production';
@@ -37,6 +40,9 @@ export interface BackupResult {
   error?: string;
   duration_seconds: number;
 }
+
+const UPLOAD_DIR = process.env.UPLOAD_DIR || 'public/uploads/photos';
+const STORAGE_TYPE = process.env.STORAGE_TYPE || 'local';
 
 const deploymentEnvironments: Record<string, DeploymentEnvironment> = {
   development: {
@@ -179,9 +185,9 @@ export function updateBackupConfig(id: string, updates: Partial<BackupConfig>): 
 }
 
 /**
- * Simulate backup operation
+ * Build a live backup preview based on current database and local upload state
  */
-export function simulateBackup(configId: string): BackupResult {
+export async function simulateBackup(configId: string): Promise<BackupResult> {
   const config = backupConfigs.find(b => b.id === configId);
 
   if (!config) {
@@ -197,25 +203,128 @@ export function simulateBackup(configId: string): BackupResult {
   }
 
   const startTime = Date.now();
-  const tables = ['users', 'places', 'reviews', 'memberships', 'vendor_profiles'];
-  const sizeBytes = Math.floor(Math.random() * 1000000000) + 500000000; // 500MB - 1.5GB
+  const timestamp = new Date().toISOString();
 
-  const result: BackupResult = {
-    id: `backup_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    size_bytes: sizeBytes,
-    status: 'success',
-    tables_backed_up: tables,
-    duration_seconds: Math.floor((Date.now() - startTime) / 1000)
-  };
+  try {
+    const tableStats = await queryRows(
+      `SELECT
+         tablename,
+         pg_total_relation_size(format('%I.%I', schemaname, tablename))::bigint AS size_bytes
+       FROM pg_tables
+       WHERE schemaname = current_schema()
+       ORDER BY size_bytes DESC`
+    );
 
-  config.last_backup = result.timestamp;
-  const nextScheduleTime = config.schedule === 'hourly' ? 3600000 : config.schedule === 'daily' ? 86400000 : 604800000;
-  config.next_backup = new Date(Date.now() + nextScheduleTime).toISOString();
+    const tables = tableStats.map((row) => String((row as Record<string, unknown>).tablename || ''));
+    const databaseSize = tableStats.reduce((sum, row) => sum + Number((row as Record<string, unknown>).size_bytes || 0), 0);
 
-  logger.info('Backup completed', { configId, sizeBytes, status: result.status });
+    let uploadsSize = 0;
+    let status: BackupResult['status'] = 'success';
+    let error: string | undefined;
 
-  return result;
+    if (config.include_uploads) {
+      const uploadPreview = await getUploadBackupSize(config.destination);
+      uploadsSize = uploadPreview.sizeBytes;
+
+      if (uploadPreview.warning) {
+        status = 'partial';
+        error = uploadPreview.warning;
+      }
+    }
+
+    const result: BackupResult = {
+      id: `backup_${Date.now()}`,
+      timestamp,
+      size_bytes: databaseSize + uploadsSize,
+      status,
+      tables_backed_up: tables,
+      error,
+      duration_seconds: Math.max(1, Math.round((Date.now() - startTime) / 1000))
+    };
+
+    config.last_backup = result.timestamp;
+    const nextScheduleTime = config.schedule === 'hourly' ? 3600000 : config.schedule === 'daily' ? 86400000 : 604800000;
+    config.next_backup = new Date(Date.now() + nextScheduleTime).toISOString();
+
+    logger.info('Backup preview completed', {
+      configId,
+      sizeBytes: result.size_bytes,
+      status: result.status,
+      tables: result.tables_backed_up.length
+    });
+
+    return result;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+
+    logger.error('Backup preview failed', error instanceof Error ? error : new Error(message), { configId });
+
+    return {
+      id: `backup_${Date.now()}`,
+      timestamp,
+      size_bytes: 0,
+      status: 'failed',
+      tables_backed_up: [],
+      error: message,
+      duration_seconds: Math.max(1, Math.round((Date.now() - startTime) / 1000))
+    };
+  }
+}
+
+async function getUploadBackupSize(destination: BackupConfig['destination']): Promise<{ sizeBytes: number; warning?: string }> {
+  if (STORAGE_TYPE !== 'local') {
+    return {
+      sizeBytes: 0,
+      warning: `Upload artefacts are managed by ${STORAGE_TYPE}; live byte preview is not available in backup dry-run`
+    };
+  }
+
+  if (destination === 's3' && (!process.env.AWS_ACCESS_KEY_ID || !process.env.S3_BUCKET)) {
+    return {
+      sizeBytes: 0,
+      warning: 'S3 destination is selected but AWS credentials or bucket settings are not configured'
+    };
+  }
+
+  if (destination === 'gcs' && !process.env.GCS_BUCKET) {
+    return {
+      sizeBytes: 0,
+      warning: 'GCS destination is selected but GCS_BUCKET is not configured'
+    };
+  }
+
+  const uploadRoot = path.join(process.cwd(), UPLOAD_DIR);
+
+  try {
+    const stat = await fs.stat(uploadRoot);
+    if (!stat.isDirectory()) {
+      return { sizeBytes: 0, warning: `Upload path is not a directory: ${uploadRoot}` };
+    }
+
+    return { sizeBytes: await calculateDirectorySize(uploadRoot) };
+  } catch {
+    return { sizeBytes: 0, warning: `Upload directory not found: ${uploadRoot}` };
+  }
+}
+
+async function calculateDirectorySize(targetPath: string): Promise<number> {
+  const entries = await fs.readdir(targetPath, { withFileTypes: true });
+  let total = 0;
+
+  for (const entry of entries) {
+    const fullPath = path.join(targetPath, entry.name);
+    if (entry.isDirectory()) {
+      total += await calculateDirectorySize(fullPath);
+      continue;
+    }
+
+    if (entry.isFile()) {
+      const stat = await fs.stat(fullPath);
+      total += stat.size;
+    }
+  }
+
+  return total;
 }
 
 /**
@@ -225,7 +334,7 @@ export function getDeploymentChecklist(): Record<string, boolean> {
   return {
     'Environment variables configured': !!process.env.DATABASE_URL && !!process.env.REDIS_URL,
     'SSL enabled': process.env.NODE_ENV === 'production',
-    'Database migrated': true, // Assume true if app is running
+    'Database migrated': true,
     'Backups configured': getEnabledBackups().length > 0,
     'Monitoring enabled': true,
     'Error logging configured': true,
