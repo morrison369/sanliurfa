@@ -1,4 +1,5 @@
 import { buildArtifactHealth } from './admin-status';
+import { getPerformanceOptimizationSummary } from './admin-dashboard';
 import { getNightlyOpsSummary } from './nightly-ops-summary';
 import { getReleaseGateSummary } from './release-gate-summary';
 
@@ -15,6 +16,8 @@ export type RuntimeArtifactHealthSnapshot = Pick<
   ArtifactHealthSnapshot,
   'releaseGate' | 'nightlyRegression' | 'nightlyE2E'
 >;
+
+export type AdminArtifactHealthSnapshot = Required<ArtifactHealthSnapshot>;
 
 export async function getArtifactHealthSnapshot(options?: {
   includePerformanceOps?: boolean;
@@ -52,4 +55,23 @@ export async function getArtifactHealthSnapshot(options?: {
   }
 
   return snapshot;
+}
+
+export async function getAdminArtifactHealthSnapshot(): Promise<AdminArtifactHealthSnapshot> {
+  const performanceOptimization = await getPerformanceOptimizationSummary();
+  const snapshot = await getArtifactHealthSnapshot({
+    includePerformanceOps: true,
+    performanceOpsGeneratedAt: performanceOptimization?.generatedAt ?? null
+  });
+
+  return {
+    releaseGate: snapshot.releaseGate,
+    nightlyRegression: snapshot.nightlyRegression,
+    nightlyE2E: snapshot.nightlyE2E,
+    performanceOps: snapshot.performanceOps ?? buildArtifactHealth({
+      kind: 'performanceOps',
+      available: false,
+      generatedAt: null
+    })
+  };
 }

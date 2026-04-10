@@ -19,7 +19,7 @@ import { logger } from '../../../../lib/logging';
 import { getNightlyOpsSummary } from '../../../../lib/nightly-ops-summary';
 import { getReleaseGateSummary } from '../../../../lib/release-gate-summary';
 import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
-import { getArtifactHealthSnapshot } from '../../../../lib/artifact-health';
+import { getAdminArtifactHealthSnapshot } from '../../../../lib/artifact-health';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -45,10 +45,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       getNightlyOpsSummary(),
       getReleaseGateSummary()
     ]);
-    const artifactHealth = await getArtifactHealthSnapshot({
-      includePerformanceOps: true,
-      performanceOpsGeneratedAt: performanceOptimization?.generatedAt ?? null
-    });
+    const artifactHealth = await getAdminArtifactHealthSnapshot();
     const configuredCount =
       Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
     const integrationStatus = classifyIntegrationStatus({

@@ -2,8 +2,7 @@ import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
-import { getArtifactHealthSnapshot } from '../../../../lib/artifact-health';
-import { getPerformanceOptimizationSummary } from '../../../../lib/admin-dashboard';
+import { getAdminArtifactHealthSnapshot } from '../../../../lib/artifact-health';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -18,11 +17,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const performanceOptimization = await getPerformanceOptimizationSummary();
-    const artifactHealth = await getArtifactHealthSnapshot({
-      includePerformanceOps: true,
-      performanceOpsGeneratedAt: performanceOptimization?.generatedAt ?? null
-    });
+    const artifactHealth = await getAdminArtifactHealthSnapshot();
 
     recordRequest('GET', '/api/admin/system/artifact-health', HttpStatus.OK, Date.now() - startTime);
 
