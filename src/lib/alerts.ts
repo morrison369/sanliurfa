@@ -5,7 +5,7 @@
  */
 
 import { pool } from './postgres';
-import { metricsCollector } from './metrics';
+import { metricsCollector, type AggregatedMetrics } from './metrics';
 import { logger } from './logging';
 
 export type AlertSeverity = 'info' | 'warning' | 'critical';
@@ -16,7 +16,10 @@ export type AlertType =
   | 'cache_miss_spike'
   | 'rate_limit_exceeded'
   | 'suspicious_activity'
-  | 'pool_saturation';
+  | 'pool_saturation'
+  | 'oauth_callback_slo_breach'
+  | 'webhook_ingestion_slo_breach'
+  | 'webhook_duplicate_spike';
 
 export interface Alert {
   id?: string;
@@ -176,6 +179,120 @@ export async function checkPerformance(): Promise<void> {
       details: {
         cacheHitRate: metrics.cacheHitRate,
         totalRequests: metrics.totalRequests
+      }
+    });
+  }
+
+  await checkCriticalFlowSlo(metrics);
+}
+
+function toPercent(numerator: number, denominator: number): number {
+  if (denominator <= 0) {
+    return 0;
+  }
+
+  return Math.round((numerator / denominator) * 100);
+}
+
+function p95Duration(metrics: Array<{ duration: number }>): number {
+  if (metrics.length === 0) {
+    return 0;
+  }
+
+  const sorted = [...metrics].sort((a, b) => a.duration - b.duration);
+  return sorted[Math.floor(sorted.length * 0.95)]?.duration ?? 0;
+}
+
+async function hasRecentActiveAlert(type: AlertType, cooldownMinutes: number): Promise<boolean> {
+  try {
+    await createAlertsTable();
+    const result = await pool.query(
+      `SELECT id
+       FROM alerts
+       WHERE type = $1
+         AND resolved_at IS NULL
+         AND triggered_at >= NOW() - ($2 * INTERVAL '1 minute')
+       LIMIT 1`,
+      [type, cooldownMinutes]
+    );
+
+    return result.rows.length > 0;
+  } catch (error) {
+    logger.error('Recent alert sorgusu basarisiz', error instanceof Error ? error : new Error(String(error)));
+    return false;
+  }
+}
+
+async function checkCriticalFlowSlo(metrics: AggregatedMetrics): Promise<void> {
+  const oauthCallbackMetrics = metricsCollector.getEndpointMetrics('GET', '/api/auth/oauth/callback');
+  const oauthSampleSize = oauthCallbackMetrics.length;
+  if (oauthSampleSize >= 10) {
+    const oauthErrorCount = oauthCallbackMetrics.filter((metric) => metric.statusCode >= 400).length;
+    const oauthErrorRate = toPercent(oauthErrorCount, oauthSampleSize);
+
+    if (oauthErrorRate > 2 && !(await hasRecentActiveAlert('oauth_callback_slo_breach', 20))) {
+      await recordAlert({
+        type: 'oauth_callback_slo_breach',
+        severity: oauthErrorRate > 5 ? 'critical' : 'warning',
+        title: `OAuth callback SLO ihlali: %${oauthErrorRate} hata`,
+        message: `OAuth callback hata oranı hedefin üstünde. Örnek: ${oauthSampleSize} istek, hata: ${oauthErrorCount}.`,
+        details: {
+          sampleSize: oauthSampleSize,
+          errorCount: oauthErrorCount,
+          errorRatePercent: oauthErrorRate,
+          targetMaxErrorRatePercent: 2
+        }
+      });
+    }
+  }
+
+  const webhookStripeMetrics = metricsCollector.getEndpointMetrics('POST', '/api/webhooks/stripe');
+  const webhookSampleSize = webhookStripeMetrics.length;
+  if (webhookSampleSize < 10) {
+    return;
+  }
+
+  const webhookErrorCount = webhookStripeMetrics.filter((metric) => metric.statusCode >= 400).length;
+  const webhookErrorRate = toPercent(webhookErrorCount, webhookSampleSize);
+  const webhookP95 = p95Duration(webhookStripeMetrics);
+  const duplicateCount = webhookStripeMetrics.filter((metric) => metric.error === 'duplicate_delivery').length;
+  const duplicateRate = toPercent(duplicateCount, webhookSampleSize);
+  const retryDeferredCount = webhookStripeMetrics.filter((metric) => metric.error === 'retry_deferred').length;
+  const retryExhaustedCount = webhookStripeMetrics.filter((metric) => metric.error === 'retry_exhausted').length;
+
+  if ((webhookErrorRate > 1 || webhookP95 > 1500 || retryExhaustedCount > 0) &&
+      !(await hasRecentActiveAlert('webhook_ingestion_slo_breach', 20))) {
+    await recordAlert({
+      type: 'webhook_ingestion_slo_breach',
+      severity: webhookErrorRate > 3 || webhookP95 > 2500 || retryExhaustedCount > 0 ? 'critical' : 'warning',
+      title: `Webhook SLO ihlali: hata %${webhookErrorRate}, p95 ${webhookP95}ms`,
+      message: `Stripe webhook ingestion hedefleri aşıldı (hata<=%1, p95<=1500ms).`,
+      details: {
+        sampleSize: webhookSampleSize,
+        errorRatePercent: webhookErrorRate,
+        p95DurationMs: webhookP95,
+        duplicateCount,
+        duplicateRatePercent: duplicateRate,
+        retryDeferredCount,
+        retryExhaustedCount,
+        targets: {
+          maxErrorRatePercent: 1,
+          maxP95DurationMs: 1500
+        }
+      }
+    });
+  }
+
+  if (duplicateRate > 30 && !(await hasRecentActiveAlert('webhook_duplicate_spike', 30))) {
+    await recordAlert({
+      type: 'webhook_duplicate_spike',
+      severity: duplicateRate > 50 ? 'warning' : 'info',
+      title: `Webhook duplicate oranı yükseldi: %${duplicateRate}`,
+      message: `Stripe webhook duplicate oranı beklenenden yüksek.`,
+      details: {
+        sampleSize: webhookSampleSize,
+        duplicateCount,
+        duplicateRatePercent: duplicateRate
       }
     });
   }

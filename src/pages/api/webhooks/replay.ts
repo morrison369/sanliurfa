@@ -56,6 +56,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Webhook ID and Event ID required', HttpStatus.BAD_REQUEST);
     }
 
+    const duplicateBurstResponse = await enforceRateLimitPolicy({
+      request,
+      requestId,
+      key: `webhook:replay:fingerprint:${getClientIpAddress(request)}:${locals.user.id}:${webhookId}:${eventId}`,
+      limit: 1,
+      windowSeconds: 20,
+      message: 'Duplicate replay request detected. Please wait before retrying.',
+    });
+
+    if (duplicateBurstResponse) {
+      recordRequest('POST', '/api/webhooks/replay', HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return duplicateBurstResponse;
+    }
+
     const replayRequest = await requestEventReplay(pool, webhookId, eventId, locals.user.id);
 
     logger.info('Event replay requested', {

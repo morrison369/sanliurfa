@@ -66,8 +66,18 @@ async function main(): Promise<void> {
     if (!reuseExistingServer) {
       await waitForServer(readyProbe);
     }
-    await assertPath('/giris');
-    await assertPath('/kayit');
+    const canaryPaths = [
+      '/',
+      '/giris',
+      '/kayit',
+      '/hakkinda',
+      '/robots.txt',
+      '/api/version',
+    ];
+
+    for (const path of canaryPaths) {
+      await assertPath(path);
+    }
   } catch (error) {
     failed = true;
     throw error;

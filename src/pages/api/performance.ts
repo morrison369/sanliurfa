@@ -33,6 +33,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const webhookDuplicateCount = webhookStripeMetrics.filter((metric) => metric.error === 'duplicate_delivery').length;
     const webhookSuccessCount = webhookStripeMetrics.filter((metric) => metric.statusCode >= 200 && metric.statusCode < 400).length;
     const webhookErrorCount = webhookStripeMetrics.filter((metric) => metric.statusCode >= 400).length;
+    const webhookErrorRatePercent = webhookStripeMetrics.length > 0
+      ? Math.round((webhookErrorCount / webhookStripeMetrics.length) * 100)
+      : 0;
+    const oauthCallbackErrorRatePercent = oauthCallbackMetrics.length > 0
+      ? Math.round((oauthCallbackMetrics.filter((metric) => metric.statusCode >= 400).length / oauthCallbackMetrics.length) * 100)
+      : 0;
     const webhookP95Duration = webhookStripeMetrics.length > 0
       ? [...webhookStripeMetrics].sort((a, b) => a.duration - b.duration)[Math.floor(webhookStripeMetrics.length * 0.95)].duration
       : 0;
@@ -66,9 +72,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
           oauth: {
             authorizeRequests: oauthAuthorizeMetrics.length,
             callbackRequests: oauthCallbackMetrics.length,
-            callbackErrorRatePercent: oauthCallbackMetrics.length > 0
-              ? Math.round((oauthCallbackMetrics.filter((metric) => metric.statusCode >= 400).length / oauthCallbackMetrics.length) * 100)
-              : 0
+            callbackErrorRatePercent: oauthCallbackErrorRatePercent,
+            status: oauthCallbackErrorRatePercent > 5 ? 'critical' : oauthCallbackErrorRatePercent > 2 ? 'warning' : 'healthy'
           },
           webhookIngestion: {
             requests: webhookStripeMetrics.length,
@@ -83,10 +88,16 @@ export const GET: APIRoute = async ({ request, locals }) => {
               maxP95DurationMs: 1500
             },
             actual: {
-              errorRatePercent: webhookStripeMetrics.length > 0
-                ? Math.round((webhookErrorCount / webhookStripeMetrics.length) * 100)
+              errorRatePercent: webhookErrorRatePercent,
+              duplicateRatePercent: webhookStripeMetrics.length > 0
+                ? Math.round((webhookDuplicateCount / webhookStripeMetrics.length) * 100)
                 : 0
-            }
+            },
+            status: webhookErrorRatePercent > 3 || webhookP95Duration > 2500 || webhookRetryExhaustedCount > 0
+              ? 'critical'
+              : webhookErrorRatePercent > 1 || webhookP95Duration > 1500
+                ? 'warning'
+                : 'healthy'
           }
         },
         slowestQueries: slowQueries.map(q => ({

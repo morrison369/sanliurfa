@@ -68,6 +68,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const { eventId, webhookId } = body;
+    const fingerprint = eventId ? `event:${eventId}` : webhookId ? `webhook:${webhookId}` : 'all';
+    const duplicateBurstResponse = await enforceRateLimitPolicy({
+      request,
+      requestId,
+      key: `webhook:retry:fingerprint:${getClientIpAddress(request)}:${locals.user.id}:${fingerprint}`,
+      limit: 1,
+      windowSeconds: 20,
+      message: 'Duplicate retry request detected. Please wait before retrying.'
+    });
+
+    if (duplicateBurstResponse) {
+      recordRequest('POST', '/api/webhooks/retry', HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return duplicateBurstResponse;
+    }
 
     let retryCount = 0;
 
