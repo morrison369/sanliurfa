@@ -221,6 +221,8 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.performanceOptimization.recommendations.total).toBe(4);
     expect(body.data.data.performanceOptimization.metrics.slowRequestRate).toBe(14);
     expect(body.data.data.performanceOptimization.slowOperations[0].type).toBe('query');
+    expect(body.data.data.artifactHealth.releaseGate.available).toBe(true);
+    expect(body.data.data.artifactHealth.performanceOps.generatedAt).toBe('2026-04-10T03:00:00.000Z');
   });
 
   it('returns system metrics with health and operational summary', async () => {

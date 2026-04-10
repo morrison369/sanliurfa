@@ -101,6 +101,24 @@ export const GET: APIRoute = async ({ request, locals }) => {
           },
           operational,
           performanceOptimization,
+          artifactHealth: {
+            releaseGate: {
+              available: releaseGate.available,
+              generatedAt: releaseGate.generatedAt
+            },
+            nightlyRegression: {
+              available: nightly.regression.available,
+              generatedAt: nightly.regression.generatedAt
+            },
+            nightlyE2E: {
+              available: nightly.e2e.available,
+              generatedAt: nightly.e2e.generatedAt
+            },
+            performanceOps: {
+              available: Boolean(performanceOptimization?.generatedAt),
+              generatedAt: performanceOptimization?.generatedAt ?? null
+            }
+          },
           releaseGate,
           nightly,
           statusSummary: {

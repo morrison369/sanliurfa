@@ -72,6 +72,12 @@ interface DashboardData {
       timestamp: string;
     }>;
   };
+  artifactHealth?: {
+    releaseGate: { available: boolean; generatedAt: string | null };
+    nightlyRegression: { available: boolean; generatedAt: string | null };
+    nightlyE2E: { available: boolean; generatedAt: string | null };
+    performanceOps: { available: boolean; generatedAt: string | null };
+  };
   releaseGate?: {
     available: boolean;
     generatedAt: string | null;
@@ -417,6 +423,42 @@ export default function AdminDashboardOverview() {
               <div className="text-xs text-gray-500 truncate">
                 {data.performanceOptimization.slowOperations[0]?.message || 'Yavaş operasyon kaydı yok'}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {data.artifactHealth && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-900 mb-4">Artifact Health</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Release Gate</div>
+              <div className="text-sm font-semibold text-gray-900">
+                {data.artifactHealth.releaseGate.available ? 'var' : 'yok'}
+              </div>
+              <div className="text-xs text-gray-500">{data.artifactHealth.releaseGate.generatedAt || 'Henüz yok'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Nightly Regression</div>
+              <div className="text-sm font-semibold text-gray-900">
+                {data.artifactHealth.nightlyRegression.available ? 'var' : 'yok'}
+              </div>
+              <div className="text-xs text-gray-500">{data.artifactHealth.nightlyRegression.generatedAt || 'Henüz yok'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Nightly E2E</div>
+              <div className="text-sm font-semibold text-gray-900">
+                {data.artifactHealth.nightlyE2E.available ? 'var' : 'yok'}
+              </div>
+              <div className="text-xs text-gray-500">{data.artifactHealth.nightlyE2E.generatedAt || 'Henüz yok'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Performance Ops</div>
+              <div className="text-sm font-semibold text-gray-900">
+                {data.artifactHealth.performanceOps.available ? 'var' : 'yok'}
+              </div>
+              <div className="text-xs text-gray-500">{data.artifactHealth.performanceOps.generatedAt || 'Henüz yok'}</div>
             </div>
           </div>
         </div>
