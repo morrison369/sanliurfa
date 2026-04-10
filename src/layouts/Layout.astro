@@ -34,7 +34,9 @@ const effectiveSeo: SEOProps = seo ?? {
 const user = null; // Will be populated from server
 const rawGoogleAnalyticsId =
   import.meta.env.PUBLIC_GOOGLE_ANALYTICS_ID ||
+  import.meta.env.GA_TRACKING_ID ||
   process.env.GOOGLE_ANALYTICS_ID ||
+  process.env.GA_TRACKING_ID ||
   '';
 const googleAnalyticsId = rawGoogleAnalyticsId.trim();
 const hasGoogleAnalytics =

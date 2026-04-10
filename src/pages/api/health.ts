@@ -50,7 +50,7 @@ export const GET: APIRoute = async ({ request }) => {
     let redisResponseTime = 0;
     const resendConfigured = hasNonPlaceholder(process.env.RESEND_API_KEY, [/^re_x+$/i, /^YOUR_/i]);
     const analyticsConfigured = hasNonPlaceholder(
-      process.env.PUBLIC_GOOGLE_ANALYTICS_ID || process.env.GOOGLE_ANALYTICS_ID,
+      process.env.PUBLIC_GOOGLE_ANALYTICS_ID || process.env.GOOGLE_ANALYTICS_ID || process.env.GA_TRACKING_ID,
       [/^G-XXXXXXXXXX$/i, /^G-X+$/i, /^YOUR_/i]
     );
 
