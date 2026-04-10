@@ -269,6 +269,13 @@ describe('runtime ops contracts', () => {
       generatedAt: null,
       status: 'blocked',
     });
+    expect(body.data.artifactHealthSummary).toEqual({
+      overall: 'blocked',
+      healthyCount: 2,
+      degradedCount: 0,
+      blockedCount: 1,
+      total: 3,
+    });
   });
 
   it('returns blocked webhook ingestion status when retry exhaustion is present', async () => {

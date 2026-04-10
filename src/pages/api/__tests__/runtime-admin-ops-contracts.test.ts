@@ -234,6 +234,13 @@ describe('runtime admin ops contracts', () => {
       generatedAt: null,
       status: 'blocked',
     });
+    expect(body.data.data.artifactHealthSummary).toEqual({
+      overall: 'blocked',
+      healthyCount: 2,
+      degradedCount: 0,
+      blockedCount: 1,
+      total: 3,
+    });
     expect(body.data.data.slowOperations[0].type).toBe('query');
     expect(body.data.data.slowOperations[0].message).toBe('reviews query exceeded threshold');
     expect(recordRequestMock).toHaveBeenCalledWith(

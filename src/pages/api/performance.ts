@@ -4,7 +4,7 @@ import { classifyThresholdStatus } from '../../lib/admin-status';
 import { metricsCollector } from '../../lib/metrics';
 import { updatePoolStatus } from '../../lib/postgres';
 import { logger } from '../../lib/logging';
-import { getArtifactHealthSnapshot } from '../../lib/artifact-health';
+import { getArtifactHealthSnapshot, summarizeArtifactHealth } from '../../lib/artifact-health';
 
 /**
  * GET /api/performance - Get detailed performance metrics (admin only)
@@ -42,6 +42,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       Promise.resolve(metricsCollector.getEndpointMetrics('GET', '/api/auth/oauth/callback')),
       Promise.resolve(metricsCollector.getEndpointMetrics('POST', '/api/webhooks/stripe'))
     ]);
+    const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
     const webhookRetryDeferredCount = webhookStripeMetrics.filter((metric) => metric.error === 'retry_deferred').length;
     const webhookRetryExhaustedCount = webhookStripeMetrics.filter((metric) => metric.error === 'retry_exhausted').length;
     const webhookDuplicateCount = webhookStripeMetrics.filter((metric) => metric.error === 'duplicate_delivery').length;
@@ -119,6 +120,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           }
         },
         artifactHealth,
+        artifactHealthSummary,
         slowestQueries: slowQueries.map(q => ({
           duration: `${q.duration}ms`,
           rowCount: q.rowCount,

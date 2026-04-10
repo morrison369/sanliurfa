@@ -84,8 +84,8 @@ export async function getAdminArtifactHealthSnapshot(): Promise<AdminArtifactHea
   };
 }
 
-export function summarizeArtifactHealth(snapshot: AdminArtifactHealthSnapshot): ArtifactHealthSummary {
-  const entries = Object.values(snapshot);
+export function summarizeArtifactHealth(snapshot: ArtifactHealthSnapshot): ArtifactHealthSummary {
+  const entries = Object.values(snapshot).filter((entry): entry is ArtifactHealthEntry => Boolean(entry));
   const levels = entries.map((entry) => entry.status);
 
   return {

@@ -458,6 +458,7 @@ const openApiSpec = {
                             required: ['oauth', 'webhookIngestion'],
                           },
                         artifactHealth: artifactHealthChecksSchema,
+                        artifactHealthSummary: adminArtifactHealthSummarySchema,
                         slowestQueries: {
                           type: 'array',
                           items: {
@@ -486,7 +487,7 @@ const openApiSpec = {
                           },
                         },
                       },
-                      required: ['timestamp', 'summary', 'serviceLevelObjectives', 'artifactHealth', 'slowestQueries', 'slowOperations'],
+                      required: ['timestamp', 'summary', 'serviceLevelObjectives', 'artifactHealth', 'artifactHealthSummary', 'slowestQueries', 'slowOperations'],
                     },
                   },
                   required: ['data'],
@@ -558,6 +559,7 @@ const openApiSpec = {
                                 items: { type: 'string' },
                               },
                               artifactHealth: artifactHealthChecksSchema,
+                              artifactHealthSummary: adminArtifactHealthSummarySchema,
                               slowOperations: {
                                 type: 'array',
                                 items: {
@@ -573,7 +575,7 @@ const openApiSpec = {
                             },
                             timestamp: { type: 'string', format: 'date-time' },
                           },
-                            required: ['recommendations', 'metrics', 'cacheStrategies', 'indexSuggestions', 'artifactHealth', 'slowOperations', 'timestamp'],
+                            required: ['recommendations', 'metrics', 'cacheStrategies', 'indexSuggestions', 'artifactHealth', 'artifactHealthSummary', 'slowOperations', 'timestamp'],
                           },
                       },
                       required: ['success', 'data'],
