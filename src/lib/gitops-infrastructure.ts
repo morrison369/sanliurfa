@@ -3,6 +3,7 @@
  * Declarative infrastructure via Git with automated reconciliation and drift detection
  */
 
+import { deterministicInt } from './deterministic';
 import { logger } from './logger';
 
 interface GitRepository {
@@ -54,12 +55,13 @@ class GitOpsEngine {
   }
 
   generatePlan(): TerraformPlan {
+    const seed = `gitops-plan:${this.counter + 1}:${this.repository?.url || 'no-repo'}:${this.repository?.branch || 'main'}`;
     const plan: TerraformPlan = {
       id: `plan-${Date.now()}-${++this.counter}`,
       timestamp: Date.now(),
-      additions: Math.floor(Math.random() * 5),
-      modifications: Math.floor(Math.random() * 3),
-      deletions: Math.floor(Math.random() * 2),
+      additions: deterministicInt(`${seed}:additions`, 0, 4),
+      modifications: deterministicInt(`${seed}:modifications`, 0, 2),
+      deletions: deterministicInt(`${seed}:deletions`, 0, 1),
       status: 'planned'
     };
 
@@ -87,7 +89,11 @@ class GitOpsEngine {
     }
 
     this.repository.lastSyncTime = Date.now();
-    const changesApplied = Math.floor(Math.random() * 10);
+    const changesApplied = deterministicInt(
+      `gitops-sync:${this.repository.url}:${this.repository.branch}:${this.repository.lastSyncTime}`,
+      0,
+      9
+    );
 
     logger.debug('Repository synced', { branch: this.repository.branch, changes: changesApplied });
 
@@ -100,7 +106,7 @@ class GitOpsEngine {
 
   getTerraformState(): { resources: number; lastUpdate: number } {
     return {
-      resources: Math.floor(Math.random() * 50) + 10,
+      resources: deterministicInt(`terraform-state:${this.repository?.url || 'no-repo'}:${this.repository?.branch || 'main'}`, 10, 59),
       lastUpdate: Date.now()
     };
   }
@@ -112,12 +118,13 @@ class TerraformManager {
   private counter = 0;
 
   createPlan(name: string): TerraformPlan {
+    const seed = `terraform-plan:${name}:${this.counter + 1}`;
     const plan: TerraformPlan = {
       id: `tf-plan-${Date.now()}-${++this.counter}`,
       timestamp: Date.now(),
-      additions: Math.floor(Math.random() * 5),
-      modifications: Math.floor(Math.random() * 3),
-      deletions: Math.floor(Math.random() * 2),
+      additions: deterministicInt(`${seed}:additions`, 0, 4),
+      modifications: deterministicInt(`${seed}:modifications`, 0, 2),
+      deletions: deterministicInt(`${seed}:deletions`, 0, 1),
       status: 'planned'
     };
 

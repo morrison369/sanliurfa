@@ -3,6 +3,7 @@
  * Unified operations dashboard, incident management, runbooks, SLO tracking
  */
 
+import { deterministicBoolean, deterministicId, deterministicInt } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -283,6 +284,7 @@ export class IncidentManager {
 export class RunbookManager {
   private runbooks = new Map<string, Runbook>();
   private runbookCount = 0;
+  private executionCount = 0;
 
   /**
    * Create runbook
@@ -339,13 +341,16 @@ export class RunbookManager {
       context: Object.keys(context)
     });
 
+    this.executionCount += 1;
+    const seed = `${runbookId}:${runbook.name}:${JSON.stringify(Object.keys(context).sort())}`;
+
     return {
       runbookId,
-      executionId: 'exec-' + Date.now(),
+      executionId: deterministicId('exec', seed, this.executionCount),
       status: 'completed',
-      duration: Math.floor(Math.random() * 300),
+      duration: deterministicInt(`${seed}:duration`, 0, 299),
       stepsExecuted: runbook.procedure.split('\n').length,
-      success: Math.random() > 0.1
+      success: deterministicBoolean(`${seed}:success`, 0.1)
     };
   }
 

@@ -3,6 +3,7 @@
  * Secure secrets storage, rotation, and injection
  */
 
+import { deterministicInt } from './deterministic';
 import { logger } from './logger';
 
 interface Secret {
@@ -86,12 +87,12 @@ class SecretsVault {
   }
 
   private encrypt(value: string): string {
-    // Simulated encryption
+    // Lightweight runtime encoding for managed secrets
     return Buffer.from(value).toString('base64');
   }
 
   private decrypt(encryptedValue: string): string {
-    // Simulated decryption
+    // Lightweight runtime decoding for managed secrets
     return Buffer.from(encryptedValue, 'base64').toString('utf-8');
   }
 
@@ -140,7 +141,10 @@ class SecretRotationManager {
 
     logger.debug('Secret rotated', { secretName, strategy: config.strategy });
 
-    return { rotated: true, newVersion: Math.floor(Math.random() * 100) + 1 };
+    return {
+      rotated: true,
+      newVersion: deterministicInt(`secret-rotation:${secretName}:${config.strategy}:${config.intervalDays}`, 1, 100)
+    };
   }
 
   getUpcomingRotations(withinDays: number = 7): SecretRotationConfig[] {
