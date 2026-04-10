@@ -3,9 +3,12 @@
  * Tenant management, branding, isolation, custom domains
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_122_multi_tenant = async (pool: Pool) => {
+export const migration_122_multi_tenant: Migration = {
+  version: '122_multi_tenant',
+  description: 'Tenant management, branding, isolation, custom domains',
+  up: async (pool: any) => {
   try {
     // Tenants table
     await pool.query(`
@@ -181,9 +184,8 @@ export const migration_122_multi_tenant = async (pool: Pool) => {
     console.error('Migration 122 failed:', error);
     throw error;
   }
-};
-
-export const rollback_122 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS tenant_audit_logs CASCADE');
     await pool.query('DROP TABLE IF EXISTS tenant_settings CASCADE');
@@ -196,5 +198,6 @@ export const rollback_122 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 122 failed:', error);
     throw error;
+  }
   }
 };

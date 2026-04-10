@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany } from '../../../../lib/postgres';
+import { queryRows } from '../../../../lib/postgres';
 import { createCampaign } from '../../../../lib/email-marketing';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       params.push(status);
     }
 
-    const campaigns = await queryMany(`
+    const campaigns = await queryRows(`
       SELECT id, name, campaign_type, status,
         send_count, open_count, click_count, conversion_count,
         bounce_count, unsubscribe_count, complaint_count,

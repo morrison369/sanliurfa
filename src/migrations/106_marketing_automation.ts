@@ -3,9 +3,12 @@
  * Automated workflows and drip campaigns
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_106_marketing_automation = async (pool: Pool) => {
+export const migration_106_marketing_automation: Migration = {
+  version: '106_marketing_automation',
+  description: 'Automated workflows and drip campaigns',
+  up: async (pool: any) => {
   try {
     // Automation workflows
     await pool.query(`
@@ -136,9 +139,8 @@ export const migration_106_marketing_automation = async (pool: Pool) => {
     console.error('Migration 106 failed:', error);
     throw error;
   }
-};
-
-export const rollback_106 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS email_subscriber_preferences CASCADE');
     await pool.query('DROP TABLE IF EXISTS drip_emails CASCADE');
@@ -150,5 +152,6 @@ export const rollback_106 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 106 failed:', error);
     throw error;
+  }
   }
 };

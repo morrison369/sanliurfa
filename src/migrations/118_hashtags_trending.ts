@@ -3,9 +3,12 @@
  * Hashtag management, trending tracking, hashtag analytics
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_118_hashtags_trending = async (pool: Pool) => {
+export const migration_118_hashtags_trending: Migration = {
+  version: '118_hashtags_trending',
+  description: 'Hashtag management, trending tracking, hashtag analytics',
+  up: async (pool: any) => {
   try {
     // Hashtags
     await pool.query(`
@@ -101,9 +104,8 @@ export const migration_118_hashtags_trending = async (pool: Pool) => {
     console.error('Migration 118 failed:', error);
     throw error;
   }
-};
-
-export const rollback_118 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS trending_places CASCADE');
     await pool.query('DROP TABLE IF EXISTS trending_analytics CASCADE');
@@ -113,5 +115,6 @@ export const rollback_118 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 118 failed:', error);
     throw error;
+  }
   }
 };

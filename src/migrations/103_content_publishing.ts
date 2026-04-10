@@ -3,9 +3,12 @@
  * Content versioning, workflows, and publishing
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_103_content_publishing = async (pool: Pool) => {
+export const migration_103_content_publishing: Migration = {
+  version: '103_content_publishing',
+  description: 'Content versioning, workflows, and publishing',
+  up: async (pool: any) => {
   try {
     // Content versions/revisions
     await pool.query(`
@@ -117,9 +120,8 @@ export const migration_103_content_publishing = async (pool: Pool) => {
     console.error('Migration 103 failed:', error);
     throw error;
   }
-};
-
-export const rollback_103 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS content_templates CASCADE');
     await pool.query('DROP TABLE IF EXISTS content_audit_trail CASCADE');
@@ -130,5 +132,6 @@ export const rollback_103 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 103 failed:', error);
     throw error;
+  }
   }
 };

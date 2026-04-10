@@ -3,9 +3,12 @@
  * Content repository and management
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_101_content_library = async (pool: Pool) => {
+export const migration_101_content_library: Migration = {
+  version: '101_content_library',
+  description: 'Content repository and management',
+  up: async (pool: any) => {
   try {
     // Content items/articles
     await pool.query(`
@@ -129,9 +132,8 @@ export const migration_101_content_library = async (pool: Pool) => {
     console.error('Migration 101 failed:', error);
     throw error;
   }
-};
-
-export const rollback_101 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS content_analytics CASCADE');
     await pool.query('DROP TABLE IF EXISTS content_comments CASCADE');
@@ -142,5 +144,6 @@ export const rollback_101 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 101 failed:', error);
     throw error;
+  }
   }
 };

@@ -3,9 +3,12 @@
  * Video metadata, transcoding jobs, quality variants
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_116_video_processing = async (pool: Pool) => {
+export const migration_116_video_processing: Migration = {
+  version: '116_video_processing',
+  description: 'Video metadata, transcoding jobs, quality variants',
+  up: async (pool: any) => {
   try {
     // Video metadata
     await pool.query(`
@@ -124,9 +127,8 @@ export const migration_116_video_processing = async (pool: Pool) => {
     console.error('Migration 116 failed:', error);
     throw error;
   }
-};
-
-export const rollback_116 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS video_streaming_settings CASCADE');
     await pool.query('DROP TABLE IF EXISTS video_captions CASCADE');
@@ -137,5 +139,6 @@ export const rollback_116 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 116 failed:', error);
     throw error;
+  }
   }
 };

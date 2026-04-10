@@ -3,9 +3,12 @@
  * File uploads, storage, and media processing
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_102_file_management = async (pool: Pool) => {
+export const migration_102_file_management: Migration = {
+  version: '102_file_management',
+  description: 'File uploads, storage, and media processing',
+  up: async (pool: any) => {
   try {
     // File storage registry
     await pool.query(`
@@ -119,9 +122,8 @@ export const migration_102_file_management = async (pool: Pool) => {
     console.error('Migration 102 failed:', error);
     throw error;
   }
-};
-
-export const rollback_102 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS file_access_logs CASCADE');
     await pool.query('DROP TABLE IF EXISTS media_processing_jobs CASCADE');
@@ -132,5 +134,6 @@ export const rollback_102 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 102 failed:', error);
     throw error;
+  }
   }
 };

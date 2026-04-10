@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { queryMany } from '../../../lib/postgres';
+import { queryRows } from '../../../lib/postgres';
 
 export const GET: APIRoute = async ({ locals, url }) => {
   try {
@@ -9,7 +9,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
 
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
 
-    const recommendations = await queryMany(
+    const recommendations = await queryRows(
       `SELECT u.id, u.full_name, u.avatar_url, u.level, u.points,
               (SELECT COUNT(*) FROM reviews WHERE user_id = u.id) as review_count
        FROM users u
@@ -23,7 +23,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
 
     return new Response(JSON.stringify({
       success: true,
-      data: recommendations.rows || []
+      data: recommendations
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
     console.error('Recommendations error', error);

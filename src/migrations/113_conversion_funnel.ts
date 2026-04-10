@@ -3,9 +3,12 @@
  * Track user progression through defined funnels
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_113_conversion_funnel = async (pool: Pool) => {
+export const migration_113_conversion_funnel: Migration = {
+  version: '113_conversion_funnel',
+  description: 'Track user progression through defined funnels',
+  up: async (pool: any) => {
   try {
     // Funnel definitions
     await pool.query(`
@@ -112,9 +115,8 @@ export const migration_113_conversion_funnel = async (pool: Pool) => {
     console.error('Migration 113 failed:', error);
     throw error;
   }
-};
-
-export const rollback_113 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS funnel_analytics CASCADE');
     await pool.query('DROP TABLE IF EXISTS funnel_step_completions CASCADE');
@@ -124,5 +126,6 @@ export const rollback_113 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 113 failed:', error);
     throw error;
+  }
   }
 };

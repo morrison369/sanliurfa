@@ -3,9 +3,12 @@
  * Track user paths and interactions through the app
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_112_user_journey = async (pool: Pool) => {
+export const migration_112_user_journey: Migration = {
+  version: '112_user_journey',
+  description: 'Track user paths and interactions through the app',
+  up: async (pool: any) => {
   try {
     // User journey sessions (tracking user paths)
     await pool.query(`
@@ -125,9 +128,8 @@ export const migration_112_user_journey = async (pool: Pool) => {
     console.error('Migration 112 failed:', error);
     throw error;
   }
-};
-
-export const rollback_112 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS user_behavior_patterns CASCADE');
     await pool.query('DROP TABLE IF EXISTS journey_paths CASCADE');
@@ -137,5 +139,6 @@ export const rollback_112 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 112 failed:', error);
     throw error;
+  }
   }
 };

@@ -3,9 +3,12 @@
  * API rate limiting, IP whitelist/blacklist, and DDoS protection
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_109_rate_limiting = async (pool: Pool) => {
+export const migration_109_rate_limiting: Migration = {
+  version: '109_rate_limiting',
+  description: 'API rate limiting, IP whitelist/blacklist, and DDoS protection',
+  up: async (pool: any) => {
   try {
     // API rate limit rules
     await pool.query(`
@@ -147,9 +150,8 @@ export const migration_109_rate_limiting = async (pool: Pool) => {
     console.error('Migration 109 failed:', error);
     throw error;
   }
-};
-
-export const rollback_109 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS ddos_attempts CASCADE');
     await pool.query('DROP TABLE IF EXISTS ip_blacklist CASCADE');
@@ -160,5 +162,6 @@ export const rollback_109 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 109 failed:', error);
     throw error;
+  }
   }
 };

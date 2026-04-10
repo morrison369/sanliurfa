@@ -3,9 +3,12 @@
  * OAuth 2.0 / OpenID Connect integration with multiple providers
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_107_oauth_support = async (pool: Pool) => {
+export const migration_107_oauth_support: Migration = {
+  version: '107_oauth_support',
+  description: 'OAuth 2.0 / OpenID Connect integration with multiple providers',
+  up: async (pool: any) => {
   try {
     // OAuth provider configurations
     await pool.query(`
@@ -92,9 +95,8 @@ export const migration_107_oauth_support = async (pool: Pool) => {
     console.error('Migration 107 failed:', error);
     throw error;
   }
-};
-
-export const rollback_107 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS oauth_states CASCADE');
     await pool.query('DROP TABLE IF EXISTS user_oauth_accounts CASCADE');
@@ -103,5 +105,6 @@ export const rollback_107 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 107 failed:', error);
     throw error;
+  }
   }
 };

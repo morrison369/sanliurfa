@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, insert } from '../../../../lib/postgres';
+import { queryRows, insert } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const templates = await queryMany(`
+    const templates = await queryRows(`
       SELECT id, name, slug, template_type, subject_line, preview_text,
         is_system_template, is_active, usage_count, created_at, updated_at
       FROM email_templates

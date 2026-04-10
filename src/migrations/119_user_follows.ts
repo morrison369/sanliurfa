@@ -3,9 +3,12 @@
  * User follow relationships, follow requests, social graph analytics
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_119_user_follows = async (pool: Pool) => {
+export const migration_119_user_follows: Migration = {
+  version: '119_user_follows',
+  description: 'User follow relationships, follow requests, social graph analytics',
+  up: async (pool: any) => {
   try {
     // User follows (followers/following)
     await pool.query(`
@@ -76,9 +79,8 @@ export const migration_119_user_follows = async (pool: Pool) => {
     console.error('Migration 119 failed:', error);
     throw error;
   }
-};
-
-export const rollback_119 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS user_social_stats CASCADE');
     await pool.query('DROP TABLE IF EXISTS follow_requests CASCADE');
@@ -87,5 +89,6 @@ export const rollback_119 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 119 failed:', error);
     throw error;
+  }
   }
 };

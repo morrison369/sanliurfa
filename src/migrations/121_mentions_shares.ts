@@ -3,9 +3,12 @@
  * User mentions, content sharing, social distribution
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_121_mentions_shares = async (pool: Pool) => {
+export const migration_121_mentions_shares: Migration = {
+  version: '121_mentions_shares',
+  description: 'User mentions, content sharing, social distribution',
+  up: async (pool: any) => {
   try {
     // User mentions
     await pool.query(`
@@ -99,9 +102,8 @@ export const migration_121_mentions_shares = async (pool: Pool) => {
     console.error('Migration 121 failed:', error);
     throw error;
   }
-};
-
-export const rollback_121 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS mention_notifications CASCADE');
     await pool.query('DROP TABLE IF EXISTS share_analytics CASCADE');
@@ -111,5 +113,6 @@ export const rollback_121 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 121 failed:', error);
     throw error;
+  }
   }
 };

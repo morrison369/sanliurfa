@@ -3,9 +3,12 @@
  * Star-schema dimension tables, fact table, and OLAP aggregates
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_126_data_warehouse = async (pool: Pool) => {
+export const migration_126_data_warehouse: Migration = {
+  version: '126_data_warehouse',
+  description: 'Star-schema dimension tables, fact table, and OLAP aggregates',
+  up: async (pool: any) => {
   try {
     // Date dimension (calendar + fiscal hierarchies)
     await pool.query(`
@@ -122,9 +125,8 @@ export const migration_126_data_warehouse = async (pool: Pool) => {
     console.error('Migration 126 failed:', error);
     throw error;
   }
-};
-
-export const rollback_126 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS olap_aggregates CASCADE');
     await pool.query('DROP TABLE IF EXISTS fact_place_activity CASCADE');
@@ -135,5 +137,6 @@ export const rollback_126 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 126 failed:', error);
     throw error;
+  }
   }
 };

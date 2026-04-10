@@ -3,9 +3,12 @@
  * Multi-channel notifications (push, SMS, email), delivery tracking, preferences
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_123_notification_channels = async (pool: Pool) => {
+export const migration_123_notification_channels: Migration = {
+  version: '123_notification_channels',
+  description: 'Multi-channel notifications (push, SMS, email), delivery tracking, preferences',
+  up: async (pool: any) => {
   try {
     // Notification channels (push, email, SMS)
     await pool.query(`
@@ -200,9 +203,8 @@ export const migration_123_notification_channels = async (pool: Pool) => {
     console.error('Migration 123 failed:', error);
     throw error;
   }
-};
-
-export const rollback_123 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS notification_digests CASCADE');
     await pool.query('DROP TABLE IF EXISTS notification_preferences CASCADE');
@@ -216,5 +218,6 @@ export const rollback_123 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 123 failed:', error);
     throw error;
+  }
   }
 };

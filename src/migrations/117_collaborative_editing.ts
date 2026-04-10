@@ -3,9 +3,12 @@
  * Real-time collaboration, edit history, conflict resolution
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_117_collaborative_editing = async (pool: Pool) => {
+export const migration_117_collaborative_editing: Migration = {
+  version: '117_collaborative_editing',
+  description: 'Real-time collaboration, edit history, conflict resolution',
+  up: async (pool: any) => {
   try {
     // Collaboration sessions
     await pool.query(`
@@ -142,9 +145,8 @@ export const migration_117_collaborative_editing = async (pool: Pool) => {
     console.error('Migration 117 failed:', error);
     throw error;
   }
-};
-
-export const rollback_117 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS collaboration_comments CASCADE');
     await pool.query('DROP TABLE IF EXISTS edit_conflicts CASCADE');
@@ -156,5 +158,6 @@ export const rollback_117 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 117 failed:', error);
     throw error;
+  }
   }
 };

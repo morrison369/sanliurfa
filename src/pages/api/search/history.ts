@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, query } from '../../../lib/postgres';
+import { queryRows, query } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const limit = 50;
 
     // Get search history
-    const history = await queryMany(
+    const history = await queryRows(
       `SELECT id, query, filters, results_count, created_at
        FROM user_searches
        WHERE user_id = $1

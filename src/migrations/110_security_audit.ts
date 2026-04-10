@@ -3,9 +3,12 @@
  * Suspicious activity detection, device tracking, and encryption key management
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_110_security_audit = async (pool: Pool) => {
+export const migration_110_security_audit: Migration = {
+  version: '110_security_audit',
+  description: 'Suspicious activity detection, device tracking, and encryption key management',
+  up: async (pool: any) => {
   try {
     // Security events log (audit trail)
     await pool.query(`
@@ -174,9 +177,8 @@ export const migration_110_security_audit = async (pool: Pool) => {
     console.error('Migration 110 failed:', error);
     throw error;
   }
-};
-
-export const rollback_110 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS login_history CASCADE');
     await pool.query('DROP TABLE IF EXISTS encrypted_fields CASCADE');
@@ -188,5 +190,6 @@ export const rollback_110 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 110 failed:', error);
     throw error;
+  }
   }
 };

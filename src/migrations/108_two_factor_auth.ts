@@ -3,9 +3,12 @@
  * Support for TOTP, email, and SMS-based 2FA
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_108_two_factor_auth = async (pool: Pool) => {
+export const migration_108_two_factor_auth: Migration = {
+  version: '108_two_factor_auth',
+  description: 'Support for TOTP, email, and SMS-based 2FA',
+  up: async (pool: any) => {
   try {
     // 2FA methods per user
     await pool.query(`
@@ -108,9 +111,8 @@ export const migration_108_two_factor_auth = async (pool: Pool) => {
     console.error('Migration 108 failed:', error);
     throw error;
   }
-};
-
-export const rollback_108 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS two_fa_recovery_codes CASCADE');
     await pool.query('DROP TABLE IF EXISTS two_fa_verification_attempts CASCADE');
@@ -120,5 +122,6 @@ export const rollback_108 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 108 failed:', error);
     throw error;
+  }
   }
 };

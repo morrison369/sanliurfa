@@ -3,9 +3,12 @@
  * User cohorts and retention tracking
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_111_cohort_analysis = async (pool: Pool) => {
+export const migration_111_cohort_analysis: Migration = {
+  version: '111_cohort_analysis',
+  description: 'User cohorts and retention tracking',
+  up: async (pool: any) => {
   try {
     // User cohorts (grouped by signup date, properties, behavior)
     await pool.query(`
@@ -94,9 +97,8 @@ export const migration_111_cohort_analysis = async (pool: Pool) => {
     console.error('Migration 111 failed:', error);
     throw error;
   }
-};
-
-export const rollback_111 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS cohort_metrics CASCADE');
     await pool.query('DROP TABLE IF EXISTS retention_cohorts CASCADE');
@@ -106,5 +108,6 @@ export const rollback_111 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 111 failed:', error);
     throw error;
+  }
   }
 };

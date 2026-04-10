@@ -3,9 +3,12 @@
  * Real-time dashboards, KPI tracking, data warehousing, business metrics
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_125_advanced_analytics = async (pool: Pool) => {
+export const migration_125_advanced_analytics: Migration = {
+  version: '125_advanced_analytics',
+  description: 'Real-time dashboards, KPI tracking, data warehousing, business metrics',
+  up: async (pool: any) => {
   try {
     // KPI Definitions
     await pool.query(`
@@ -236,9 +239,8 @@ export const migration_125_advanced_analytics = async (pool: Pool) => {
     console.error('Migration 125 failed:', error);
     throw error;
   }
-};
-
-export const rollback_125 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS warehouse_dimensions CASCADE');
     await pool.query('DROP TABLE IF EXISTS export_templates CASCADE');
@@ -255,5 +257,6 @@ export const rollback_125 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 125 failed:', error);
     throw error;
+  }
   }
 };

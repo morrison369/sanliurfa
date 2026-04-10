@@ -3,9 +3,12 @@
  * User segmentation for targeted marketing
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_105_user_segments = async (pool: Pool) => {
+export const migration_105_user_segments: Migration = {
+  version: '105_user_segments',
+  description: 'User segmentation for targeted marketing',
+  up: async (pool: any) => {
   try {
     // User segments/groups
     await pool.query(`
@@ -119,9 +122,8 @@ export const migration_105_user_segments = async (pool: Pool) => {
     console.error('Migration 105 failed:', error);
     throw error;
   }
-};
-
-export const rollback_105 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS ab_test_results CASCADE');
     await pool.query('DROP TABLE IF EXISTS ab_test_variants CASCADE');
@@ -132,5 +134,6 @@ export const rollback_105 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 105 failed:', error);
     throw error;
+  }
   }
 };

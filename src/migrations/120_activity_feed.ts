@@ -3,9 +3,12 @@
  * User activity tracking, feed generation, content distribution
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_120_activity_feed = async (pool: Pool) => {
+export const migration_120_activity_feed: Migration = {
+  version: '120_activity_feed',
+  description: 'User activity tracking, feed generation, content distribution',
+  up: async (pool: any) => {
   try {
     // User activities (feed events)
     await pool.query(`
@@ -85,9 +88,8 @@ export const migration_120_activity_feed = async (pool: Pool) => {
     console.error('Migration 120 failed:', error);
     throw error;
   }
-};
-
-export const rollback_120 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS activity_interactions CASCADE');
     await pool.query('DROP TABLE IF EXISTS activity_feeds CASCADE');
@@ -96,5 +98,6 @@ export const rollback_120 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 120 failed:', error);
     throw error;
+  }
   }
 };

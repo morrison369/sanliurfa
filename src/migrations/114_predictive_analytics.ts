@@ -3,9 +3,12 @@
  * ML predictions, churn risk, LTV, trends forecasting
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_114_predictive_analytics = async (pool: Pool) => {
+export const migration_114_predictive_analytics: Migration = {
+  version: '114_predictive_analytics',
+  description: 'ML predictions, churn risk, LTV, trends forecasting',
+  up: async (pool: any) => {
   try {
     // ML predictions (churn, LTV, engagement)
     await pool.query(`
@@ -151,9 +154,8 @@ export const migration_114_predictive_analytics = async (pool: Pool) => {
     console.error('Migration 114 failed:', error);
     throw error;
   }
-};
-
-export const rollback_114 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS anomalies CASCADE');
     await pool.query('DROP TABLE IF EXISTS user_recommendations CASCADE');
@@ -164,5 +166,6 @@ export const rollback_114 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 114 failed:', error);
     throw error;
+  }
   }
 };

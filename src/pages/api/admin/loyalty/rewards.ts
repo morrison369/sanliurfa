@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, insert } from '../../../../lib/postgres';
+import { queryRows, insert } from '../../../../lib/postgres';
 import { getCache, setCache, deleteCache } from '../../../../lib/cache';
 import { apiResponse, apiError } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
@@ -31,15 +31,15 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Get all rewards (active + inactive)
-    const rewards = await queryMany('SELECT * FROM rewards ORDER BY is_active DESC, display_order ASC');
+    const rewards = await queryRows('SELECT * FROM rewards ORDER BY is_active DESC, display_order ASC');
 
     // Cache for 2 minutes
-    await setCache(cacheKey, rewards.rows || [], 120);
+    await setCache(cacheKey, rewards, 120);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/loyalty/rewards', 200, duration);
 
-    return apiResponse({ success: true, data: rewards.rows || [] }, 200, requestId);
+    return apiResponse({ success: true, data: rewards }, 200, requestId);
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/loyalty/rewards', 500, duration);

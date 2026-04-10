@@ -3,9 +3,12 @@
  * Email campaigns and campaign management
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_104_marketing_campaigns = async (pool: Pool) => {
+export const migration_104_marketing_campaigns: Migration = {
+  version: '104_marketing_campaigns',
+  description: 'Email campaigns and campaign management',
+  up: async (pool: any) => {
   try {
     // Email campaigns
     await pool.query(`
@@ -132,9 +135,8 @@ export const migration_104_marketing_campaigns = async (pool: Pool) => {
     console.error('Migration 104 failed:', error);
     throw error;
   }
-};
-
-export const rollback_104 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS campaign_links CASCADE');
     await pool.query('DROP TABLE IF EXISTS campaign_recipients CASCADE');
@@ -145,5 +147,6 @@ export const rollback_104 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 104 failed:', error);
     throw error;
+  }
   }
 };

@@ -3,9 +3,12 @@
  * Trending algorithms, recommendation engine, content discovery
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_124_trending_recommendations = async (pool: Pool) => {
+export const migration_124_trending_recommendations: Migration = {
+  version: '124_trending_recommendations',
+  description: 'Trending algorithms, recommendation engine, content discovery',
+  up: async (pool: any) => {
   try {
     // Trending scores (hourly, daily, weekly)
     await pool.query(`
@@ -185,9 +188,8 @@ export const migration_124_trending_recommendations = async (pool: Pool) => {
     console.error('Migration 124 failed:', error);
     throw error;
   }
-};
-
-export const rollback_124 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS discovery_feeds CASCADE');
     await pool.query('DROP TABLE IF EXISTS trending_keywords CASCADE');
@@ -200,5 +202,6 @@ export const rollback_124 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 124 failed:', error);
     throw error;
+  }
   }
 };

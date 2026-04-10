@@ -3,9 +3,12 @@
  * S3 integration, file metadata, CDN cache management
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_115_s3_file_storage = async (pool: Pool) => {
+export const migration_115_s3_file_storage: Migration = {
+  version: '115_s3_file_storage',
+  description: 'S3 integration, file metadata, CDN cache management',
+  up: async (pool: any) => {
   try {
     // S3 file registry
     await pool.query(`
@@ -115,9 +118,8 @@ export const migration_115_s3_file_storage = async (pool: Pool) => {
     console.error('Migration 115 failed:', error);
     throw error;
   }
-};
-
-export const rollback_115 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS file_variants CASCADE');
     await pool.query('DROP TABLE IF EXISTS cdn_cache_settings CASCADE');
@@ -127,5 +129,6 @@ export const rollback_115 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 115 failed:', error);
     throw error;
+  }
   }
 };
