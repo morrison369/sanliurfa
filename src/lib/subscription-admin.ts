@@ -5,6 +5,7 @@
 
 import { query, queryOne, queryRows, insert, update as updateDb } from './postgres';
 import { logger } from './logging';
+import { createRefundForInvoice } from './stripe-client';
 
 /**
  * Get subscription analytics
@@ -70,6 +71,16 @@ export async function getSubscriptionAnalytics(): Promise<{
        FROM subscriptions`
     );
 
+    const lifetimeValueResult = await queryOne(
+      `SELECT COALESCE(AVG(customer_total), 0) as average_lifetime_value
+       FROM (
+         SELECT user_id, SUM(amount) as customer_total
+         FROM billing_history
+         WHERE payment_status = 'paid'
+         GROUP BY user_id
+       ) customer_revenue`
+    );
+
     return {
       totalSubscriptions: totalResult?.count || 0,
       activeSubscriptions: activeResult?.count || 0,
@@ -77,7 +88,7 @@ export async function getSubscriptionAnalytics(): Promise<{
       byTier,
       mrr: parseFloat(mrrResult?.mrr || 0),
       arr: parseFloat(arrResult?.arr || 0),
-      averageLifetimeValue: 0, // TODO: Calculate from billing history
+      averageLifetimeValue: parseFloat(lifetimeValueResult?.average_lifetime_value || 0),
       churnRate: parseFloat(churnResult?.churn_rate || 0),
     };
   } catch (error) {
@@ -195,7 +206,10 @@ export async function processRefund(
 ): Promise<boolean> {
   try {
     const refundRequest = await queryOne(
-      'SELECT id, user_id, amount FROM refund_requests WHERE id = $1',
+      `SELECT r.id, r.user_id, r.amount, r.billing_id, b.subscription_id, b.currency, b.stripe_invoice_id
+       FROM refund_requests r
+       JOIN billing_history b ON r.billing_id = b.id
+       WHERE r.id = $1`,
       [refundRequestId]
     );
 
@@ -213,14 +227,35 @@ export async function processRefund(
     });
 
     if (approve) {
+      if (refundRequest.stripe_invoice_id) {
+        const stripeRefund = await createRefundForInvoice(refundRequest.stripe_invoice_id, Number(refundRequest.amount));
+
+        await updateDb('billing_history', refundRequest.billing_id, {
+          payment_status: 'refunded'
+        });
+
+        await insert('subscription_events', {
+          subscription_id: refundRequest.subscription_id,
+          user_id: refundRequest.user_id,
+          event_type: 'refund_processed',
+          amount: refundRequest.amount,
+          currency: refundRequest.currency || 'TRY',
+          reason: notes || 'Admin refund',
+          metadata: JSON.stringify({
+            refundRequestId,
+            stripeRefundId: stripeRefund.id,
+            stripeInvoiceId: refundRequest.stripe_invoice_id
+          }),
+          created_at: new Date().toISOString(),
+        });
+      }
+
       logger.info('Refund approved', {
         refundId: refundRequestId,
         userId: refundRequest.user_id,
         amount: refundRequest.amount,
         admin: adminId,
       });
-
-      // TODO: Process actual refund via Stripe
     }
 
     return true;

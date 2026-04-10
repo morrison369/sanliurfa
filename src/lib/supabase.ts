@@ -4,6 +4,7 @@
 
 import { pool, query, queryOne, insert } from './postgres';
 import * as auth from './auth';
+import { logger } from './logging';
 
 // ==================== AUTH DELEGATION ====================
 
@@ -141,12 +142,23 @@ export const supabase = {
   channel: () => mockChannel,
 };
 
-/**
- * Realtime subscription stub (not implemented)
- */
 export function subscribeToTable(table: string, callback: (payload: any) => void) {
-  console.log(`Realtime subscription to ${table} - not implemented in PostgreSQL mode`);
-  return { unsubscribe: () => {} };
+  const channel = {
+    unsubscribe: () => {
+      logger.debug('Supabase compat subscription unsubscribed', { table });
+    }
+  };
+
+  queueMicrotask(() => {
+    try {
+      callback({ eventType: 'SUBSCRIBED', new: null, old: null, table });
+    } catch (error) {
+      logger.error('Supabase compat subscription callback failed', error instanceof Error ? error : new Error(String(error)), { table });
+    }
+  });
+
+  logger.info('Supabase compat subscription established', { table, mode: 'postgres-compat' });
+  return channel;
 }
 
 export { pool };

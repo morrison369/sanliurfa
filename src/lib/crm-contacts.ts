@@ -293,8 +293,31 @@ export class ContactSegmentation {
     const segment = this.segments.get(segmentId);
     if (!segment) return [];
 
-    // Placeholder: return empty array
-    return [];
+    return Array.from(contactManager.listContacts()).filter((contact) => {
+      return Object.entries(segment.criteria).every(([key, expectedValue]) => {
+        const actualValue = (contact as Record<string, any>)[key];
+
+        if (Array.isArray(expectedValue)) {
+          return expectedValue.includes(actualValue);
+        }
+
+        if (expectedValue && typeof expectedValue === 'object' && !Array.isArray(expectedValue)) {
+          if ('min' in expectedValue && typeof actualValue === 'number' && actualValue < expectedValue.min) {
+            return false;
+          }
+
+          if ('max' in expectedValue && typeof actualValue === 'number' && actualValue > expectedValue.max) {
+            return false;
+          }
+
+          if ('includes' in expectedValue && typeof actualValue === 'string') {
+            return actualValue.toLowerCase().includes(String(expectedValue.includes).toLowerCase());
+          }
+        }
+
+        return actualValue === expectedValue;
+      });
+    });
   }
 
   /**

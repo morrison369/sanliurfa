@@ -16,19 +16,17 @@ export function FileManager() {
 
     setUploading(true);
     try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('is_public', 'false');
+
       const response = await fetch('/api/files/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: file.name,
-          file_type: file.type,
-          file_size: file.size
-        })
+        body: formData
       });
 
       const data = await response.json();
       if (data.success) {
-        // In production, upload file to S3 using signed URL
         setFiles([...files, data.data]);
       }
     } catch (error) {
@@ -66,6 +64,11 @@ export function FileManager() {
               <div>
                 <p className="font-medium">{file.original_filename}</p>
                 <p className="text-sm text-gray-500">{(file.file_size_bytes / 1024 / 1024).toFixed(2)} MB</p>
+                {file.public_url && (
+                  <a href={file.public_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline">
+                    Dosyayı aç
+                  </a>
+                )}
               </div>
               <button className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
                 Detaylar

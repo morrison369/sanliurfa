@@ -6,7 +6,6 @@
 import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
-import crypto from 'crypto';
 
 interface S3File {
   id: string;
@@ -234,13 +233,12 @@ export async function scanFileVirus(fileId: string): Promise<boolean> {
   }
 }
 
-export function generateUploadSignature(bucket: string, key: string, expiresInSeconds: number = 3600): any {
-  // In production, use AWS SDK to generate signed URL
-  // This is a placeholder
+export function buildManagedFileUrls(publicUrl: string, storageProvider: 'local' | 'supabase' | 's3' = 'local') {
   return {
-    bucket: bucket,
-    key: key,
-    signed_url: `https://${bucket}.s3.amazonaws.com/${key}?expires=${Date.now() + expiresInSeconds * 1000}`,
-    expires_at: new Date(Date.now() + expiresInSeconds * 1000)
+    storage_provider: storageProvider,
+    upload_mode: 'server-managed',
+    public_url: publicUrl,
+    s3_url: publicUrl,
+    cdn_url: publicUrl
   };
 }

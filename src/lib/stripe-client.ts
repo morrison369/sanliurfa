@@ -227,3 +227,37 @@ export async function getInvoicePdfUrl(invoiceId: string): Promise<string | null
     return null;
   }
 }
+
+/**
+ * Create refund from Stripe invoice payment
+ */
+export async function createRefundForInvoice(invoiceId: string, amount?: number): Promise<Stripe.Refund> {
+  try {
+    const stripe = getStripeClient();
+    const invoice = (await stripe.invoices.retrieve(invoiceId, {
+      expand: ['payment_intent']
+    })) as Stripe.Invoice & {
+      payment_intent?: string | Stripe.PaymentIntent | null;
+    };
+
+    const paymentIntent =
+      typeof invoice.payment_intent === 'string'
+        ? await stripe.paymentIntents.retrieve(invoice.payment_intent)
+        : invoice.payment_intent;
+
+    if (!paymentIntent?.id) {
+      throw new Error(`Invoice ${invoiceId} does not have a refundable payment intent`);
+    }
+
+    return await stripe.refunds.create({
+      payment_intent: paymentIntent.id,
+      ...(typeof amount === 'number' && amount > 0 ? { amount: Math.round(amount * 100) } : {})
+    });
+  } catch (error) {
+    logger.error('Failed to create refund for invoice', error instanceof Error ? error : new Error(String(error)), {
+      invoiceId,
+      amount
+    });
+    throw error;
+  }
+}
