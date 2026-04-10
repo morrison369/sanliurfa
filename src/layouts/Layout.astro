@@ -17,15 +17,22 @@ export interface Props {
   class?: string;
 }
 
-const { 
-  seo, 
-  hideHeader = false, 
+const {
+  seo,
+  hideHeader = false,
   hideFooter = false,
   class: className = ''
 } = Astro.props;
 
 // Get current user if authenticated
 const user = null; // Will be populated from server
+const rawGoogleAnalyticsId =
+  import.meta.env.PUBLIC_GOOGLE_ANALYTICS_ID ||
+  process.env.GOOGLE_ANALYTICS_ID ||
+  '';
+const googleAnalyticsId = rawGoogleAnalyticsId.trim();
+const hasGoogleAnalytics =
+  /^G-[A-Z0-9]+$/i.test(googleAnalyticsId) && googleAnalyticsId !== 'G-XXXXXXXXXX';
 ---
 
 <!DOCTYPE html>
@@ -176,13 +183,16 @@ const user = null; // Will be populated from server
       });
     </script>
     
-    <!-- Analytics (replace with your tracking code) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
-    </script>
+    {hasGoogleAnalytics && (
+      <>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}></script>
+        <script define:vars={{ googleAnalyticsId }}>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', googleAnalyticsId);
+        </script>
+      </>
+    )}
   </body>
 </html>

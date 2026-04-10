@@ -27,3 +27,5 @@
 - `release:gate` mevcut shell env’i ile çalışır.
 - `release:gate:local` sırasıyla `.env.production`, `.env.local`, `.env` dosyalarını yükler.
 - `db:test:bootstrap` önce hedef `DATABASE_URL` bağlantısını dener; bağlantı varsa DB yaratmaya çalışmaz.
+- Google Analytics scripti yalnızca geçerli bir `PUBLIC_GOOGLE_ANALYTICS_ID` veya `GOOGLE_ANALYTICS_ID` verildiğinde render edilir.
+- Placeholder değerler (`G-XXXXXXXXXX`) artefact içine yazılmaz.
