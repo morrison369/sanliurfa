@@ -26,3 +26,4 @@ Kural:
 1. Yeni blocking kararlar phase workflow içine eklenmez.
 2. Legacy phase komutları ancak manuel operasyon veya arşiv doğrulaması için çalıştırılır.
 3. Dokümanlar aktif gate için önce `ci.yml` ve `release:gate` akışını referans vermelidir.
+4. Stale `test:phase:<range>` manifest kayıtları aktif compatibility yüzeyinde tutulmaz; temizlemek için `npm run phase:compat:prune-stale` kullanılır.
