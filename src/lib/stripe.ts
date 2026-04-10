@@ -83,7 +83,7 @@ export async function createSubscription(
       customer: customerId,
       items: [{ price: priceId }],
       payment_behavior: 'default_incomplete',
-      expansion: ['latest_invoice.payment_intent']
+      expand: ['latest_invoice.payment_intent']
     });
 
     const paymentIntent = (subscription.latest_invoice as any)?.payment_intent;

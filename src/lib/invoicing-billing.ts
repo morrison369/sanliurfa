@@ -31,7 +31,7 @@ export interface LineItem {
   taxable: boolean;
 }
 
-export interface BillingCycle {
+export interface BillingCycleRecord {
   id: string;
   customerId: string;
   frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
@@ -113,11 +113,11 @@ export class InvoiceGenerator {
 
 // ==================== BILLING CYCLE ====================
 
-export class BillingCycle {
-  private cycles = new Map<string, BillingCycle>();
+export class BillingCycleManager {
+  private cycles = new Map<string, BillingCycleRecord>();
 
-  createCycle(cycle: Omit<BillingCycle, 'id'>): BillingCycle {
-    const fullCycle: BillingCycle = {
+  createCycle(cycle: Omit<BillingCycleRecord, 'id'>): BillingCycleRecord {
+    const fullCycle: BillingCycleRecord = {
       ...cycle,
       id: 'cycle-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
     };
@@ -128,11 +128,11 @@ export class BillingCycle {
     return fullCycle;
   }
 
-  getCycle(cycleId: string): BillingCycle | null {
+  getCycle(cycleId: string): BillingCycleRecord | null {
     return this.cycles.get(cycleId) || null;
   }
 
-  listCycles(customerId: string): BillingCycle[] {
+  listCycles(customerId: string): BillingCycleRecord[] {
     return Array.from(this.cycles.values()).filter(c => c.customerId === customerId);
   }
 
@@ -205,5 +205,7 @@ export class PaymentReconciliation {
 // ==================== EXPORTS ====================
 
 export const invoiceGenerator = new InvoiceGenerator();
-export const billingCycle = new BillingCycle();
+export const billingCycle = new BillingCycleManager();
 export const paymentReconciliation = new PaymentReconciliation();
+
+export type BillingCycle = BillingCycleRecord;

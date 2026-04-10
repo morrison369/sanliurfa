@@ -330,6 +330,10 @@ const ALLOWED_TABLES = new Set([
   'categories',
   'tags',
   'messages',
+  'memberships',
+  'subscriptions',
+  'billing_history',
+  'vendor_profiles',
   'points_history',
   'badges',
   'user_badges',
@@ -351,7 +355,8 @@ const ALLOWED_TABLES = new Set([
   // Phase 28D: Real-time Analytics
   'request_metrics',
   'query_metrics',
-  'performance_metrics'
+  'performance_metrics',
+  'onboarding_progress'
 ]);
 
 /**

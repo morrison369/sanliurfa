@@ -3,7 +3,7 @@
  * Handles vendor registration and setup process
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryMany, insert, update } from './postgres';
 import { logger } from './logging';
 
 export interface VendorProfile {
@@ -34,6 +34,39 @@ export interface VendorOnboardingStep {
   name: string;
   completed: boolean;
   data: Record<string, any>;
+}
+
+const ONBOARDING_STEP_NAMES: Record<number, string> = {
+  1: 'business-profile',
+  2: 'contact-details',
+  3: 'location',
+  4: 'branding',
+  5: 'verification'
+};
+
+function mapVendorProfileRow(result: any): VendorProfile {
+  return {
+    vendorId: result.id,
+    userId: result.user_id,
+    businessName: result.business_name,
+    businessPhone: result.business_phone,
+    businessEmail: result.business_email,
+    businessWebsite: result.business_website,
+    address: result.address,
+    city: result.city,
+    district: result.district,
+    latitude: result.latitude,
+    longitude: result.longitude,
+    businessCategory: result.business_category,
+    businessType: result.business_type,
+    description: result.description,
+    logo: result.logo,
+    banner: result.banner,
+    isVerified: result.is_verified,
+    verificationStatus: result.verification_status,
+    createdAt: result.created_at,
+    updatedAt: result.updated_at
+  };
 }
 
 /**
@@ -69,28 +102,7 @@ export async function createVendorProfile(userId: string, profile: Partial<Vendo
 
     logger.info('Vendor profile created', { userId, businessName: profile.businessName });
 
-    return {
-      vendorId: result.id,
-      userId: result.user_id,
-      businessName: result.business_name,
-      businessPhone: result.business_phone,
-      businessEmail: result.business_email,
-      businessWebsite: result.business_website,
-      address: result.address,
-      city: result.city,
-      district: result.district,
-      latitude: result.latitude,
-      longitude: result.longitude,
-      businessCategory: result.business_category,
-      businessType: result.business_type,
-      description: result.description,
-      logo: result.logo,
-      banner: result.banner,
-      isVerified: result.is_verified,
-      verificationStatus: result.verification_status,
-      createdAt: result.created_at,
-      updatedAt: result.updated_at
-    };
+    return mapVendorProfileRow(result);
   } catch (error) {
     logger.error('Create vendor profile failed', error instanceof Error ? error : new Error(String(error)));
     return null;
@@ -108,28 +120,7 @@ export async function getVendorProfileByUserId(userId: string): Promise<VendorPr
       return null;
     }
 
-    return {
-      vendorId: result.id,
-      userId: result.user_id,
-      businessName: result.business_name,
-      businessPhone: result.business_phone,
-      businessEmail: result.business_email,
-      businessWebsite: result.business_website,
-      address: result.address,
-      city: result.city,
-      district: result.district,
-      latitude: result.latitude,
-      longitude: result.longitude,
-      businessCategory: result.business_category,
-      businessType: result.business_type,
-      description: result.description,
-      logo: result.logo,
-      banner: result.banner,
-      isVerified: result.is_verified,
-      verificationStatus: result.verification_status,
-      createdAt: result.created_at,
-      updatedAt: result.updated_at
-    };
+    return mapVendorProfileRow(result);
   } catch (error) {
     logger.error('Get vendor profile failed', error instanceof Error ? error : new Error(String(error)));
     return null;
@@ -168,28 +159,7 @@ export async function updateVendorProfile(vendorId: string, updates: Partial<Ven
 
     logger.info('Vendor profile updated', { vendorId });
 
-    return {
-      vendorId: result.id,
-      userId: result.user_id,
-      businessName: result.business_name,
-      businessPhone: result.business_phone,
-      businessEmail: result.business_email,
-      businessWebsite: result.business_website,
-      address: result.address,
-      city: result.city,
-      district: result.district,
-      latitude: result.latitude,
-      longitude: result.longitude,
-      businessCategory: result.business_category,
-      businessType: result.business_type,
-      description: result.description,
-      logo: result.logo,
-      banner: result.banner,
-      isVerified: result.is_verified,
-      verificationStatus: result.verification_status,
-      createdAt: result.created_at,
-      updatedAt: result.updated_at
-    };
+    return mapVendorProfileRow(result);
   } catch (error) {
     logger.error('Update vendor profile failed', error instanceof Error ? error : new Error(String(error)));
     return null;
@@ -230,6 +200,7 @@ export async function getOnboardingProgress(userId: string): Promise<VendorOnboa
 
     return results.map((r: any) => ({
       step: r.step,
+      name: ONBOARDING_STEP_NAMES[r.step] || `step-${r.step}`,
       completed: !!r.data,
       data: r.data ? JSON.parse(r.data) : {}
     }));
@@ -244,15 +215,14 @@ export async function getOnboardingProgress(userId: string): Promise<VendorOnboa
  */
 export async function completeOnboarding(userId: string): Promise<boolean> {
   try {
-    const query = `
+    const sql = `
       UPDATE users
       SET vendor_onboarded = true, updated_at = NOW()
       WHERE id = $1
     `;
 
-    const result = await queryOne(query, [userId]);
-
-    if (!result) {
+    const result = await query(sql, [userId]);
+    if ((result.rowCount || 0) === 0) {
       return false;
     }
 
@@ -287,28 +257,7 @@ export async function getPendingVerifications(limit: number = 10): Promise<Vendo
       ['pending', limit]
     );
 
-    return results.map((r: any) => ({
-      vendorId: r.id,
-      userId: r.user_id,
-      businessName: r.business_name,
-      businessPhone: r.business_phone,
-      businessEmail: r.business_email,
-      businessWebsite: r.business_website,
-      address: r.address,
-      city: r.city,
-      district: r.district,
-      latitude: r.latitude,
-      longitude: r.longitude,
-      businessCategory: r.business_category,
-      businessType: r.business_type,
-      description: r.description,
-      logo: r.logo,
-      banner: r.banner,
-      isVerified: r.is_verified,
-      verificationStatus: r.verification_status,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at
-    }));
+    return results.map((r: any) => mapVendorProfileRow(r));
   } catch (error) {
     logger.error('Get pending verifications failed', error instanceof Error ? error : new Error(String(error)));
     return [];
