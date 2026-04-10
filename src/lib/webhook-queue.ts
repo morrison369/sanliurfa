@@ -5,6 +5,7 @@
 
 import { pool } from './postgres';
 import { logger } from './logging';
+import { fetchWithTimeout } from './http';
 import { getCache, setCache } from './cache';
 
 export interface WebhookDeliveryJob {
@@ -101,21 +102,15 @@ export class WebhookQueue {
       const payload = typeof job.payload === 'string' ? JSON.parse(job.payload) : job.payload;
       const headers = typeof job.headers === 'string' ? JSON.parse(job.headers) : (job.headers || {});
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
       try {
-        const response = await fetch(job.url, {
+        const response = await fetchWithTimeout(job.url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...headers
           },
-          body: JSON.stringify(payload),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
+          body: JSON.stringify(payload)
+        }, this.timeout);
 
         if (response.ok) {
           // Success
@@ -141,8 +136,6 @@ export class WebhookQueue {
           }
         }
       } catch (error) {
-        clearTimeout(timeoutId);
-
         const errorMsg = error instanceof Error ? error.message : String(error);
 
         if (job.retry_count < this.maxRetries) {

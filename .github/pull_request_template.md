@@ -13,7 +13,17 @@
 ## Validation Evidence
 - Commands run:
 - Key outputs:
+- `typecheck:app`:
+- `typecheck:experimental`:
+- `typecheck:experimental:exclude:guard`:
+- `release:gate`:
 
 ## Observability Impact
 - New logs/metrics/alerts:
 - Dashboard or panel updates:
+
+## Typecheck Debt Checklist
+- [ ] `tsconfig.experimental.json` exclude list size increased mi? Artış varsa gerekçe yazıldı mı?
+- [ ] Yeni `src/lib/*.ts` dosyası exclude'a eklendi mi? Eklendiyse neden?
+- [ ] Exclude budget düşürüldü mü (mümkünse)?
+- [ ] Domain bazlı en az 1 unit + 1 smoke doğrulaması eklendi/çalıştırıldı mı?

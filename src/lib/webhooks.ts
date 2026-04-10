@@ -5,6 +5,7 @@
 
 import { query, queryOne, insert, queryMany } from './postgres';
 import { logger } from './logging';
+import { fetchWithTimeout } from './http';
 
 export interface WebhookEvent {
   id: string;
@@ -120,20 +121,14 @@ export async function processPendingWebhooks(maxRetries: number = 3): Promise<vo
  */
 async function deliverWebhook(event: any): Promise<void> {
   try {
-    const signal =
-      typeof AbortSignal !== 'undefined' && typeof (AbortSignal as any).timeout === 'function'
-        ? (AbortSignal as any).timeout(5000)
-        : undefined;
-
-    const response = await fetch(event.url, {
+    const response = await fetchWithTimeout(event.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Webhook-Signature': generateSignature(event.data, event.secret)
       },
-      body: event.data,
-      signal
-    });
+      body: event.data
+    }, 5000);
 
     if (response.ok) {
       await query(

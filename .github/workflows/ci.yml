@@ -90,6 +90,9 @@ jobs:
       - name: Typecheck experimental
         run: npm run typecheck:experimental
 
+      - name: Typecheck weekly report
+        run: npm run typecheck:experimental:report
+
       - name: Release gate
         run: npm run release:gate
         env:

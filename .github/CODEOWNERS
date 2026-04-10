@@ -1,0 +1,11 @@
+# Default owner
+* @titanai777
+
+# Critical runtime and release gates
+/src/lib/ @titanai777
+/scripts/release-gate.ts @titanai777
+/scripts/experimental-exclude-guard.ts @titanai777
+/config/experimental-exclude-budget.json @titanai777
+/tsconfig.experimental.json @titanai777
+/package.json @titanai777
+

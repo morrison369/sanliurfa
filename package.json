@@ -31,6 +31,7 @@
     "typecheck:app": "tsc --noEmit -p tsconfig.app.json",
     "typecheck:experimental": "tsc --noEmit -p tsconfig.experimental.json",
     "typecheck:experimental:exclude:guard": "npm exec -- tsx scripts/experimental-exclude-guard.ts",
+    "typecheck:experimental:report": "npm exec -- tsx scripts/weekly-typecheck-report.ts",
     "lint:phase": "tsc --noEmit -p tsconfig.phase.json",
     "test:unit": "vitest run",
     "test:phase:311-316": "vitest run src/lib/__tests__/governance-continuity-recovery-stability.test.ts",

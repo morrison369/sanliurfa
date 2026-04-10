@@ -9,8 +9,9 @@ import { pool } from './postgres';
 import { logger } from './logging';
 import { prefixKey, getCache, setCache, deleteCache } from './cache';
 import { fireAndForget } from './performance-optimizations';
+import type { InAppNotificationType } from './notification-types';
 
-export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'action' | 'comment';
+export type NotificationType = InAppNotificationType;
 
 export interface Notification {
   id: string;
