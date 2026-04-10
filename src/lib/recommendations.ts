@@ -2,7 +2,7 @@
  * Recommendations Engine
  * Personalized place and content recommendations
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getTrendingPlaces as getTrendingPlacesFromSocial } from './social-interactions';
 
@@ -11,7 +11,7 @@ export const getPersonalizedRecommendations = getRecommendationsForUser;
 
 export async function getRecommendationsForUser(userId: string, limit: number = 10): Promise<any[]> {
   try {
-    const recs = await queryMany(`
+    const recs = await queryRows(`
       SELECT ur.*, p.name, p.category, p.rating, p.review_count
       FROM user_recommendations ur
       JOIN places p ON ur.recommended_place_id = p.id
@@ -48,7 +48,7 @@ export async function generateRecommendations(userId: string): Promise<void> {
     const radius = prefs.distance_radius_km || 10;
 
     // Get user's liked places (collaborative filtering basis)
-    const likedPlaces = await queryMany(
+    const likedPlaces = await queryRows(
       'SELECT place_id FROM place_likes WHERE user_id = $1 LIMIT 5',
       [userId]
     );
@@ -72,7 +72,7 @@ export async function generateRecommendations(userId: string): Promise<void> {
     whereClause += ' AND id NOT IN (SELECT place_id FROM place_likes WHERE user_id = $' + (params.length + 1) + ')';
     params.push(userId);
 
-    const recommendations = await queryMany(`
+    const recommendations = await queryRows(`
       SELECT
         id,
         (rating * 0.3 + (review_count::float / 100) * 0.3 + RANDOM() * 0.4) as score
@@ -105,7 +105,7 @@ export async function generateRecommendations(userId: string): Promise<void> {
 export async function updateTrendingPlaces(): Promise<void> {
   try {
     // Calculate trending score for each place
-    const places = await queryMany(`
+    const places = await queryRows(`
       SELECT
         p.id,
         COUNT(DISTINCT pl.id) as like_count,
@@ -150,7 +150,7 @@ export async function getSimilarPlaces(placeId: string, limit: number = 5): Prom
     const place = await queryOne('SELECT category, price_range FROM places WHERE id = $1', [placeId]);
     if (!place) return [];
 
-    const similar = await queryMany(`
+    const similar = await queryRows(`
       SELECT id, name, category, price_range, rating, review_count
       FROM places
       WHERE id != $1 AND category = $2 AND (price_range = $3 OR price_range IS NULL)

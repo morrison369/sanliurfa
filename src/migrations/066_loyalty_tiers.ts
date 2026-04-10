@@ -3,9 +3,12 @@
  * Tier progression and tier-specific benefits
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_066_loyalty_tiers = async (pool: Pool) => {
+export const migration_066_loyalty_tiers: Migration = {
+  version: '066_loyalty_tiers',
+  description: 'Tier progression and tier-specific benefits',
+  up: async (pool: any) => {
   try {
     // Loyalty tier definitions
     await pool.query(`
@@ -87,9 +90,8 @@ export const migration_066_loyalty_tiers = async (pool: Pool) => {
     console.error('Migration 066 failed:', error);
     throw error;
   }
-};
-
-export const rollback_066 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS tier_redemption_limits CASCADE');
     await pool.query('DROP TABLE IF EXISTS tier_benefits CASCADE');
@@ -99,5 +101,6 @@ export const rollback_066 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 066 failed:', error);
     throw error;
+  }
   }
 };

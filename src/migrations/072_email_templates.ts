@@ -3,9 +3,12 @@
  * Reusable email templates for transactional and marketing emails
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_072_email_templates = async (pool: Pool) => {
+export const migration_072_email_templates: Migration = {
+  version: '072_email_templates',
+  description: 'Reusable email templates for transactional and marketing emails',
+  up: async (pool: any) => {
   try {
     // Email templates
     await pool.query(`
@@ -81,9 +84,8 @@ export const migration_072_email_templates = async (pool: Pool) => {
     console.error('Migration 072 failed:', error);
     throw error;
   }
-};
-
-export const rollback_072 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS template_test_sends CASCADE');
     await pool.query('DROP TABLE IF EXISTS email_template_versions CASCADE');
@@ -92,5 +94,6 @@ export const rollback_072 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 072 failed:', error);
     throw error;
+  }
   }
 };

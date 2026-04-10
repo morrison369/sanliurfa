@@ -3,9 +3,12 @@
  * Review quality scoring, helpful votes, sentiment analysis
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_070_review_sentiment = async (pool: Pool) => {
+export const migration_070_review_sentiment: Migration = {
+  version: '070_review_sentiment',
+  description: 'Review quality scoring, helpful votes, sentiment analysis',
+  up: async (pool: any) => {
   try {
     // Helpful votes on reviews
     await pool.query(`
@@ -99,9 +102,8 @@ export const migration_070_review_sentiment = async (pool: Pool) => {
     console.error('Migration 070 failed:', error);
     throw error;
   }
-};
-
-export const rollback_070 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS review_highlights CASCADE');
     await pool.query('DROP TABLE IF EXISTS review_trends CASCADE');
@@ -111,5 +113,6 @@ export const rollback_070 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 070 failed:', error);
     throw error;
+  }
   }
 };

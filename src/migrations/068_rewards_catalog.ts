@@ -3,9 +3,12 @@
  * Rewards catalog, redemption tracking, and reward fulfillment
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_068_rewards_catalog = async (pool: Pool) => {
+export const migration_068_rewards_catalog: Migration = {
+  version: '068_rewards_catalog',
+  description: 'Rewards catalog, redemption tracking, and reward fulfillment',
+  up: async (pool: any) => {
   try {
     // Rewards catalog
     await pool.query(`
@@ -132,9 +135,8 @@ export const migration_068_rewards_catalog = async (pool: Pool) => {
     console.error('Migration 068 failed:', error);
     throw error;
   }
-};
-
-export const rollback_068 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS points_marketplace_transactions CASCADE');
     await pool.query('DROP TABLE IF EXISTS discount_codes CASCADE');
@@ -145,5 +147,6 @@ export const rollback_068 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 068 failed:', error);
     throw error;
+  }
   }
 };

@@ -3,9 +3,12 @@
  * Email queue management and delivery tracking
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_074_email_queue = async (pool: Pool) => {
+export const migration_074_email_queue: Migration = {
+  version: '074_email_queue',
+  description: 'Email queue management and delivery tracking',
+  up: async (pool: any) => {
   try {
     // Email queue
     await pool.query(`
@@ -217,9 +220,8 @@ export const migration_074_email_queue = async (pool: Pool) => {
     console.error('Migration 074 failed:', error);
     throw error;
   }
-};
-
-export const rollback_074 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS email_validations CASCADE');
     await pool.query('DROP TABLE IF EXISTS email_engagement CASCADE');
@@ -232,5 +234,6 @@ export const rollback_074 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 074 failed:', error);
     throw error;
+  }
   }
 };

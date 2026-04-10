@@ -2,7 +2,7 @@
  * Push Notifications Library
  * Web push subscriptions and delivery
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export async function subscribeToPushNotifications(
@@ -31,7 +31,14 @@ export async function subscribeToPushNotifications(
     const stats = await queryOne('SELECT id FROM push_subscription_stats WHERE user_id = $1', [userId]);
     if (stats) {
       await update('push_subscription_stats', { user_id: userId }, {
-        total_subscriptions: (await queryMany('SELECT COUNT(*) FROM push_subscriptions WHERE user_id = $1 AND is_active = true', [userId])).length,
+        total_subscriptions: parseInt(
+          (
+            await queryOne(
+              'SELECT COUNT(*) as count FROM push_subscriptions WHERE user_id = $1 AND is_active = true',
+              [userId]
+            )
+          )?.count || '0'
+        ),
         updated_at: new Date()
       });
     } else {
@@ -84,7 +91,7 @@ export async function getPushSubscriptions(userId: string, activeOnly: boolean =
 
     query += ' ORDER BY created_at DESC';
 
-    const subscriptions = await queryMany(query, params);
+    const subscriptions = await queryRows(query, params);
     return subscriptions;
   } catch (error) {
     logger.error('Failed to get push subscriptions', error instanceof Error ? error : new Error(String(error)));

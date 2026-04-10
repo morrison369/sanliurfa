@@ -3,7 +3,7 @@
  * Manage blocked and muted users
  */
 
-import { query, queryOne, queryMany } from './postgres';
+import { query, queryOne, queryRows } from './postgres';
 import { deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -128,7 +128,7 @@ export async function isUserBlocked(blockerId: string, blockedId: string): Promi
  */
 export async function getBlockedUsers(blockerId: string, limit: number = 50, offset: number = 0): Promise<any[]> {
   try {
-    const result = await queryMany(
+    const result = await queryRows(
       `SELECT
         ub.id, ub.blocked_id, ub.reason, ub.created_at,
         u.full_name, u.username, u.avatar_url, u.level, u.points
@@ -140,7 +140,7 @@ export async function getBlockedUsers(blockerId: string, limit: number = 50, off
       [blockerId, limit, offset]
     );
 
-    return result.rows.map((row: any) => ({
+    return result.map((row: any) => ({
       block_id: row.id,
       blocked_user: {
         id: row.blocked_id,
@@ -166,12 +166,12 @@ export async function getBlockedUsers(blockerId: string, limit: number = 50, off
  */
 export async function getBlockedByUsers(userId: string): Promise<string[]> {
   try {
-    const result = await queryMany(
+    const result = await queryRows(
       'SELECT blocker_id FROM user_blocks WHERE blocked_id = $1',
       [userId]
     );
 
-    return result.rows.map((row: any) => row.blocker_id);
+    return result.map((row: any) => row.blocker_id);
   } catch (error) {
     logger.error('Failed to get blocked by users', error instanceof Error ? error : new Error(String(error)), {
       userId
@@ -302,7 +302,7 @@ export async function recordBlockedMessageAttempt(senderId: string, recipientId:
  */
 export async function getMutedUsers(muterId: string, limit: number = 50, offset: number = 0): Promise<any[]> {
   try {
-    const result = await queryMany(
+    const result = await queryRows(
       `SELECT
         um.id, um.muted_id, um.reason, um.created_at,
         u.full_name, u.username, u.avatar_url, u.level, u.points
@@ -314,7 +314,7 @@ export async function getMutedUsers(muterId: string, limit: number = 50, offset:
       [muterId, limit, offset]
     );
 
-    return result.rows.map((row: any) => ({
+    return result.map((row: any) => ({
       mute_id: row.id,
       muted_user: {
         id: row.muted_id,

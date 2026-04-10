@@ -3,9 +3,12 @@
  * User achievements, badges, and gamification elements
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_067_loyalty_achievements = async (pool: Pool) => {
+export const migration_067_loyalty_achievements: Migration = {
+  version: '067_loyalty_achievements',
+  description: 'User achievements, badges, and gamification elements',
+  up: async (pool: any) => {
   try {
     // Achievement definitions
     await pool.query(`
@@ -125,9 +128,8 @@ export const migration_067_loyalty_achievements = async (pool: Pool) => {
     console.error('Migration 067 failed:', error);
     throw error;
   }
-};
-
-export const rollback_067 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS user_challenge_progress CASCADE');
     await pool.query('DROP TABLE IF EXISTS loyalty_challenges CASCADE');
@@ -139,5 +141,6 @@ export const rollback_067 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 067 failed:', error);
     throw error;
+  }
   }
 };

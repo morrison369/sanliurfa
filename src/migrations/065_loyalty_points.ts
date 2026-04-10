@@ -3,9 +3,12 @@
  * User points tracking and point transactions
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_065_loyalty_points = async (pool: Pool) => {
+export const migration_065_loyalty_points: Migration = {
+  version: '065_loyalty_points',
+  description: 'User points tracking and point transactions',
+  up: async (pool: any) => {
   try {
     // User loyalty points balance
     await pool.query(`
@@ -103,9 +106,8 @@ export const migration_065_loyalty_points = async (pool: Pool) => {
     console.error('Migration 065 failed:', error);
     throw error;
   }
-};
-
-export const rollback_065 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS bonus_point_campaigns CASCADE');
     await pool.query('DROP TABLE IF EXISTS points_earning_rules CASCADE');
@@ -115,5 +117,6 @@ export const rollback_065 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 065 failed:', error);
     throw error;
+  }
   }
 };

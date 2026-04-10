@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany } from '../../../lib/postgres';
+import { queryRows } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -59,10 +59,10 @@ export const GET: APIRoute = async ({ request, url }) => {
       LIMIT $1
     `;
 
-    const result = await queryMany(sql, [limit]);
+    const result = await queryRows(sql, [limit]);
 
     // Format response with ranks
-    const leaderboard = result.rows.map((row: any, index: number) => ({
+    const leaderboard = result.map((row: any, index: number) => ({
       rank: index + 1,
       id: row.id,
       full_name: row.full_name,

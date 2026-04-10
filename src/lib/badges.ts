@@ -2,12 +2,12 @@
  * Badges Library
  * Badge system for user achievements
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export async function getAllBadges(): Promise<any[]> {
   try {
-    const badges = await queryMany(`
+    const badges = await queryRows(`
       SELECT * FROM badges
       WHERE is_active = true
       ORDER BY badge_category, display_order ASC
@@ -21,7 +21,7 @@ export async function getAllBadges(): Promise<any[]> {
 
 export async function getUserBadges(userId: string): Promise<any[]> {
   try {
-    const badges = await queryMany(`
+    const badges = await queryRows(`
       SELECT
         b.*,
         ub.earned_at,
@@ -109,7 +109,7 @@ export async function getUserBadgeCount(userId: string): Promise<number> {
 
 export async function getBadgeProgress(userId: string): Promise<any[]> {
   try {
-    const progress = await queryMany(`
+    const progress = await queryRows(`
       SELECT
         a.achievement_key,
         a.achievement_name,

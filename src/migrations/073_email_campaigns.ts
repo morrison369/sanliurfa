@@ -3,9 +3,12 @@
  * Complete email marketing campaign infrastructure
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_073_email_campaigns = async (pool: Pool) => {
+export const migration_073_email_campaigns: Migration = {
+  version: '073_email_campaigns',
+  description: 'Complete email marketing campaign infrastructure',
+  up: async (pool: any) => {
   try {
     // Email campaigns
     await pool.query(`
@@ -193,9 +196,8 @@ export const migration_073_email_campaigns = async (pool: Pool) => {
     console.error('Migration 073 failed:', error);
     throw error;
   }
-};
-
-export const rollback_073 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS campaign_subscribers CASCADE');
     await pool.query('DROP TABLE IF EXISTS campaign_variants CASCADE');
@@ -208,5 +210,6 @@ export const rollback_073 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 073 failed:', error);
     throw error;
+  }
   }
 };

@@ -3,9 +3,12 @@
  * Review flagging, moderation queue, actions tracking
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_071_review_moderation = async (pool: Pool) => {
+export const migration_071_review_moderation: Migration = {
+  version: '071_review_moderation',
+  description: 'Review flagging, moderation queue, actions tracking',
+  up: async (pool: any) => {
   try {
     // Review flags/reports
     await pool.query(`
@@ -107,9 +110,8 @@ export const migration_071_review_moderation = async (pool: Pool) => {
     console.error('Migration 071 failed:', error);
     throw error;
   }
-};
-
-export const rollback_071 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS review_verification CASCADE');
     await pool.query('DROP TABLE IF EXISTS review_spam_patterns CASCADE');
@@ -119,5 +121,6 @@ export const rollback_071 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 071 failed:', error);
     throw error;
+  }
   }
 };

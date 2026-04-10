@@ -5,20 +5,20 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, queryOne } from '../../lib/postgres';
+import { queryRows } from '../../lib/postgres';
 
 export const GET: APIRoute = async () => {
   try {
     // Tüm yayınlanmış yazıları getir
-    const posts = await queryMany(`
-      SELECT id, slug, published_at, updated_at, view_count
+    const posts = await queryRows(`
+      SELECT id, slug, title, published_at, updated_at, view_count
       FROM blog_posts
       WHERE status = 'published'
       ORDER BY published_at DESC
     `);
 
     // Tüm kategorileri getir
-    const categories = await queryMany(`
+    const categories = await queryRows(`
       SELECT slug, created_at
       FROM blog_categories
       ORDER BY created_at DESC

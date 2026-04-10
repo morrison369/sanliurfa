@@ -2,7 +2,7 @@
  * Admin Dashboard Library
  * Dashboard widgets, metrics, and configuration
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export async function getDashboardOverview(days: number = 30): Promise<any> {
@@ -80,7 +80,7 @@ export async function getDashboardOverview(days: number = 30): Promise<any> {
 
 export async function getAdminDashboardWidgets(adminId: string): Promise<any[]> {
   try {
-    const widgets = await queryMany(`
+    const widgets = await queryRows(`
       SELECT * FROM admin_dashboard_widgets
       WHERE admin_id = $1
       ORDER BY position_order ASC
@@ -170,7 +170,7 @@ export async function getSystemMetrics(): Promise<any> {
 
 export async function getRecentActivity(limit: number = 20): Promise<any[]> {
   try {
-    const activities = await queryMany(`
+    const activities = await queryRows(`
       SELECT
         'moderation' as type,
         admin_id as actor_id,

@@ -3,9 +3,12 @@
  * Business owner responses to user reviews
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_069_review_responses = async (pool: Pool) => {
+export const migration_069_review_responses: Migration = {
+  version: '069_review_responses',
+  description: 'Business owner responses to user reviews',
+  up: async (pool: any) => {
   try {
     // Review responses from place owners
     await pool.query(`
@@ -79,9 +82,8 @@ export const migration_069_review_responses = async (pool: Pool) => {
     console.error('Migration 069 failed:', error);
     throw error;
   }
-};
-
-export const rollback_069 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS response_notifications CASCADE');
     await pool.query('DROP TABLE IF EXISTS response_ratings CASCADE');
@@ -90,5 +92,6 @@ export const rollback_069 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 069 failed:', error);
     throw error;
+  }
   }
 };
