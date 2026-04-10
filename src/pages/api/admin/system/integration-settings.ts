@@ -3,6 +3,7 @@ import { apiError, apiResponse, ErrorCode, getRequestId, HttpStatus } from '../.
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 import { logAdminAction } from '../../../../lib/admin-users';
+import { withAdminOpsReadAccess, withAdminOpsWriteAccess } from '../../../../lib/admin-ops-access';
 import {
   getRuntimeIntegrationSettings,
   saveRuntimeIntegrationSetting,
@@ -93,39 +94,47 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.user || locals.user.role !== 'admin') {
-      recordRequest('GET', '/api/admin/system/integration-settings', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
-
-    const url = new URL(request.url);
-    const includeVerification = url.searchParams.get('includeVerification') === '1';
-    const settings = await getRuntimeIntegrationSettings(true);
-    const verification = includeVerification
-      ? await verifyRuntimeIntegrationSettings(settings)
-      : undefined;
-    recordRequest('GET', '/api/admin/system/integration-settings', HttpStatus.OK, Date.now() - startTime);
-
-    return apiResponse(
-      {
-        success: true,
-        data: {
-          resend: {
-            configured: Boolean(settings.resendApiKey),
-            source: settings.source.resendApiKey,
-            maskedValue: maskSecret(settings.resendApiKey)
-          },
-          analytics: {
-            configured: Boolean(settings.analyticsId),
-            source: settings.source.analyticsId,
-            maskedValue: settings.analyticsId
-          },
-          verification
-        }
+    return await withAdminOpsReadAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/system/integration-settings',
+      requestId,
+      startTime,
+      onDenied: (_response, statusCode, duration) => {
+        recordRequest('GET', '/api/admin/system/integration-settings', statusCode, duration);
       },
-      HttpStatus.OK,
-      requestId
-    );
+      onSuccess: (_response, duration) => {
+        recordRequest('GET', '/api/admin/system/integration-settings', HttpStatus.OK, duration);
+      }
+    }, async () => {
+      const url = new URL(request.url);
+      const includeVerification = url.searchParams.get('includeVerification') === '1';
+      const settings = await getRuntimeIntegrationSettings(true);
+      const verification = includeVerification
+        ? await verifyRuntimeIntegrationSettings(settings)
+        : undefined;
+
+      return apiResponse(
+        {
+          success: true,
+          data: {
+            resend: {
+              configured: Boolean(settings.resendApiKey),
+              source: settings.source.resendApiKey,
+              maskedValue: maskSecret(settings.resendApiKey)
+            },
+            analytics: {
+              configured: Boolean(settings.analyticsId),
+              source: settings.source.analyticsId,
+              maskedValue: settings.analyticsId
+            },
+            verification
+          }
+        },
+        HttpStatus.OK,
+        requestId
+      );
+    });
   } catch (error) {
     logger.error('Integration settings GET failed', error instanceof Error ? error : new Error(String(error)));
     recordRequest(
@@ -150,124 +159,114 @@ export const PUT: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.user || locals.user.role !== 'admin') {
-      recordRequest('PUT', '/api/admin/system/integration-settings', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
-
-    const contentType = request.headers.get('content-type') || '';
-    if (!contentType.toLowerCase().includes('application/json')) {
-      recordRequest(
-        'PUT',
-        '/api/admin/system/integration-settings',
-        HttpStatus.BAD_REQUEST,
-        Date.now() - startTime
-      );
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Content-Type must be application/json',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
-
-    const payload = (await request.json()) as Record<string, unknown>;
-    const resendApiKey = asOptionalString(payload.resendApiKey);
-    const analyticsId = normalizeAnalyticsId(asOptionalString(payload.analyticsId));
-    const changedKeys: Array<'resendApiKey' | 'analyticsId'> = [];
-
-    if (resendApiKey === undefined && analyticsId === undefined) {
-      recordRequest(
-        'PUT',
-        '/api/admin/system/integration-settings',
-        HttpStatus.BAD_REQUEST,
-        Date.now() - startTime
-      );
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'En az bir alan gönderilmelidir (resendApiKey veya analyticsId)',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
-
-    const validationError = validatePayload({ resendApiKey, analyticsId });
-    if (validationError) {
-      recordRequest(
-        'PUT',
-        '/api/admin/system/integration-settings',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        Date.now() - startTime
-      );
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        validationError.message,
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        {
-          field: validationError.field
-        },
-        requestId
-      );
-    }
-
-    if (resendApiKey !== undefined) {
-      await saveRuntimeIntegrationSetting({
-        settingKey: 'resendApiKey',
-        value: resendApiKey,
-        adminId: locals.user.id
-      });
-      changedKeys.push('resendApiKey');
-    }
-
-    if (analyticsId !== undefined) {
-      await saveRuntimeIntegrationSetting({
-        settingKey: 'analyticsId',
-        value: analyticsId,
-        adminId: locals.user.id
-      });
-      changedKeys.push('analyticsId');
-    }
-
-    const settings = await getRuntimeIntegrationSettings(true);
-    await logAdminAction(
-      locals.user.id,
-      locals.user.id,
-      'update_integration_settings',
-      {
-        updatedKeys: changedKeys,
-        resendConfigured: Boolean(settings.resendApiKey),
-        analyticsConfigured: Boolean(settings.analyticsId),
-        source: settings.source
+    return await withAdminOpsWriteAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/system/integration-settings',
+      requestId,
+      startTime,
+      onDenied: (_response, statusCode, duration) => {
+        recordRequest('PUT', '/api/admin/system/integration-settings', statusCode, duration);
       },
-      {
-        requestId,
-        ipAddress: getClientIp(request),
-        userAgent: request.headers.get('user-agent') || undefined
+      onSuccess: (response, duration) => {
+        recordRequest('PUT', '/api/admin/system/integration-settings', response.status, duration);
       }
-    );
-    recordRequest('PUT', '/api/admin/system/integration-settings', HttpStatus.OK, Date.now() - startTime);
+    }, async () => {
+      const contentType = request.headers.get('content-type') || '';
+      if (!contentType.toLowerCase().includes('application/json')) {
+        return apiError(
+          ErrorCode.VALIDATION_ERROR,
+          'Content-Type must be application/json',
+          HttpStatus.BAD_REQUEST,
+          undefined,
+          requestId
+        );
+      }
 
-    return apiResponse(
-      {
-        success: true,
-        data: {
-          resend: {
-            configured: Boolean(settings.resendApiKey),
-            source: settings.source.resendApiKey,
-            maskedValue: maskSecret(settings.resendApiKey)
+      const payload = (await request.json()) as Record<string, unknown>;
+      const resendApiKey = asOptionalString(payload.resendApiKey);
+      const analyticsId = normalizeAnalyticsId(asOptionalString(payload.analyticsId));
+      const changedKeys: Array<'resendApiKey' | 'analyticsId'> = [];
+
+      if (resendApiKey === undefined && analyticsId === undefined) {
+        return apiError(
+          ErrorCode.VALIDATION_ERROR,
+          'En az bir alan gönderilmelidir (resendApiKey veya analyticsId)',
+          HttpStatus.BAD_REQUEST,
+          undefined,
+          requestId
+        );
+      }
+
+      const validationError = validatePayload({ resendApiKey, analyticsId });
+      if (validationError) {
+        return apiError(
+          ErrorCode.VALIDATION_ERROR,
+          validationError.message,
+          HttpStatus.UNPROCESSABLE_ENTITY,
+          {
+            field: validationError.field
           },
-          analytics: {
-            configured: Boolean(settings.analyticsId),
-            source: settings.source.analyticsId,
-            maskedValue: settings.analyticsId
-          }
+          requestId
+        );
+      }
+
+      if (resendApiKey !== undefined) {
+        await saveRuntimeIntegrationSetting({
+          settingKey: 'resendApiKey',
+          value: resendApiKey,
+          adminId: locals.user!.id
+        });
+        changedKeys.push('resendApiKey');
+      }
+
+      if (analyticsId !== undefined) {
+        await saveRuntimeIntegrationSetting({
+          settingKey: 'analyticsId',
+          value: analyticsId,
+          adminId: locals.user!.id
+        });
+        changedKeys.push('analyticsId');
+      }
+
+      const settings = await getRuntimeIntegrationSettings(true);
+      await logAdminAction(
+        locals.user!.id,
+        locals.user!.id,
+        'update_integration_settings',
+        {
+          updatedKeys: changedKeys,
+          resendConfigured: Boolean(settings.resendApiKey),
+          analyticsConfigured: Boolean(settings.analyticsId),
+          source: settings.source
+        },
+        {
+          requestId,
+          ipAddress: getClientIp(request),
+          userAgent: request.headers.get('user-agent') || undefined
         }
-      },
-      HttpStatus.OK,
-      requestId
-    );
+      );
+
+      return apiResponse(
+        {
+          success: true,
+          data: {
+            resend: {
+              configured: Boolean(settings.resendApiKey),
+              source: settings.source.resendApiKey,
+              maskedValue: maskSecret(settings.resendApiKey)
+            },
+            analytics: {
+              configured: Boolean(settings.analyticsId),
+              source: settings.source.analyticsId,
+              maskedValue: settings.analyticsId
+            }
+          }
+        },
+        HttpStatus.OK,
+        requestId
+      );
+    });
   } catch (error) {
     if (locals.user?.id) {
       await logAdminAction(

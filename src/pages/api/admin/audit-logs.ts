@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { getAuditLogs, getUserActivitySummary, getResourceHistory, findSuspiciousActivity } from '../../../lib/audit';
+import { readAdminOpsAuditEntries } from '../../../lib/admin-ops-audit';
 import { logger } from '../../../lib/logging';
 
 /**
@@ -28,6 +29,27 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
   try {
     const query = url.searchParams;
+    const source = query.get('source') || 'default';
+
+    if (source === 'admin-ops') {
+      const limit = Math.min(parseInt(query.get('limit') || '50'), 500);
+      const offset = parseInt(query.get('offset') || '0');
+      const entries = readAdminOpsAuditEntries()
+        .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
+        .slice(offset, offset + limit);
+
+      return apiResponse(
+        {
+          logs: entries,
+          source,
+          count: entries.length,
+          limit,
+          offset
+        },
+        HttpStatus.OK,
+        requestId
+      );
+    }
 
     // Özet modu
     if (query.get('summary') === 'true') {

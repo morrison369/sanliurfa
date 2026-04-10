@@ -97,6 +97,7 @@ async function main(): Promise<void> {
     runOptional('Phase doctor', 'npm run phase:doctor');
     run('Dependency triage', 'npm run deps:audit:triage');
     run('TypeScript app gate', 'npm run typecheck:app');
+    run('Generated admin API types drift check', 'npm run types:admin:drift:check');
     run('TypeScript experimental exclude prohibition gate', 'npm run typecheck:experimental:exclude:guard');
     run('TypeScript experimental gate', 'npm run typecheck:experimental');
     run('TypeScript weekly report', 'npm run typecheck:experimental:report');

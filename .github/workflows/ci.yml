@@ -63,6 +63,8 @@ jobs:
         run: npm run db:test:bootstrap
       - name: Typecheck app scope
         run: npm run typecheck:app
+      - name: Generated admin API types drift check
+        run: npm run types:admin:drift:check
       - name: Critical observability guard
         run: npm run observability:critical:check
       - name: Typecheck experimental exclude guard
@@ -140,11 +142,15 @@ jobs:
         run: npm ci
       - name: Release gate
         run: npm run release:gate
+      - name: Apply ops retention
+        if: always()
+        run: npm run ops:retention:apply
       - name: Upload weekly typecheck report
         uses: actions/upload-artifact@v4
         with:
           name: weekly-typecheck-report
           path: docs/reports/weekly-typecheck-report.md
+          retention-days: 14
       - name: Upload release gate summary
         if: always()
         uses: actions/upload-artifact@v4
@@ -152,6 +158,7 @@ jobs:
           name: release-gate-summary
           path: docs/reports/release-gate-summary.json
           if-no-files-found: ignore
+          retention-days: 14
       - name: Upload performance ops summary
         if: always()
         uses: actions/upload-artifact@v4
@@ -159,6 +166,7 @@ jobs:
           name: performance-ops-summary
           path: docs/reports/performance-ops-summary.json
           if-no-files-found: ignore
+          retention-days: 14
 
   e2e_smoke_advisory:
     name: e2e-smoke-advisory

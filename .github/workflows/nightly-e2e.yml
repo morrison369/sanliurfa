@@ -59,6 +59,7 @@ jobs:
             test-results
             nightly-e2e.log
           if-no-files-found: ignore
+          retention-days: 14
       - name: Upload performance ops summary
         if: always()
         uses: actions/upload-artifact@v4
@@ -66,11 +67,16 @@ jobs:
           name: nightly-performance-ops-summary
           path: docs/reports/performance-ops-summary.json
           if-no-files-found: ignore
+          retention-days: 14
 
       - name: Write performance ops summary
         if: always()
         continue-on-error: true
         run: npm exec -- tsx scripts/write-performance-ops-summary.ts
+      - name: Apply ops retention
+        if: always()
+        continue-on-error: true
+        run: npm run ops:retention:apply
 
       - name: Write nightly e2e summary
         if: always()

@@ -136,7 +136,25 @@ const seo = {
       degraded: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
       blocked: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
     };
+    const STORAGE_KEY = 'runtime-monitor-history-v1';
     const history = [];
+
+    function loadHistory() {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          history.splice(0, history.length, ...parsed.slice(0, 20));
+        }
+      } catch {}
+    }
+
+    function persistHistory() {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 20)));
+      } catch {}
+    }
 
     function formatPayload(payload) {
       return JSON.stringify(payload, null, 2);
@@ -182,7 +200,8 @@ const seo = {
       const overall = blockedCount > 0 ? 'blocked' : degradedCount > 0 ? 'degraded' : 'healthy';
       const refreshedAt = new Date().toISOString();
       history.unshift({ overall, blockedCount, degradedCount, refreshedAt });
-      history.splice(5);
+      history.splice(20);
+      persistHistory();
 
       if (statusLine) {
         statusLine.textContent = `Genel durum: ${overall}. Healthy: ${results.filter((item) => item.status === 'healthy').length}, degraded: ${degradedCount}, blocked: ${blockedCount}.`;
@@ -192,12 +211,21 @@ const seo = {
       }
       if (trendLine) {
         trendLine.textContent = history
+          .slice(0, 5)
           .map((entry) => `${entry.refreshedAt.slice(11, 19)} ${entry.overall} (d:${entry.degradedCount} b:${entry.blockedCount})`)
           .join(' | ');
       }
     }
 
     document.getElementById('refresh-runtime-monitor')?.addEventListener('click', refreshRuntimeMonitor);
+    loadHistory();
+    const trendLine = document.getElementById('runtime-monitor-trend');
+    if (trendLine && history.length > 0) {
+      trendLine.textContent = history
+        .slice(0, 5)
+        .map((entry) => `${entry.refreshedAt.slice(11, 19)} ${entry.overall} (d:${entry.degradedCount} b:${entry.blockedCount})`)
+        .join(' | ');
+    }
     refreshRuntimeMonitor();
     window.setInterval(refreshRuntimeMonitor, 60000);
   </script>

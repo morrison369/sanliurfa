@@ -3,7 +3,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { getAdminArtifactHealthSnapshot, summarizeArtifactHealth } from '../../../../lib/artifact-health';
-import { ensureAdminOpsReadAccess, logAdminOpsRead } from '../../../../lib/admin-ops-access';
+import { withAdminOpsReadAccess } from '../../../../lib/admin-ops-access';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -11,38 +11,34 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    const accessResponse = ensureAdminOpsReadAccess({
+    return await withAdminOpsReadAccess({
       request,
       locals,
       endpoint: '/api/admin/system/artifact-health',
       requestId,
-      startTime
-    });
-    if (accessResponse) {
-      const statusCode = accessResponse.status;
-      recordRequest('GET', '/api/admin/system/artifact-health', statusCode, Date.now() - startTime);
-      logAdminOpsRead({ endpoint: '/api/admin/system/artifact-health', request, locals, statusCode, duration: Date.now() - startTime });
-      return accessResponse;
-    }
-
-    const artifactHealth = await getAdminArtifactHealthSnapshot();
-    const summary = summarizeArtifactHealth(artifactHealth);
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/admin/system/artifact-health', HttpStatus.OK, duration);
-    logAdminOpsRead({ endpoint: '/api/admin/system/artifact-health', request, locals, statusCode: HttpStatus.OK, duration });
-
-    return apiResponse(
-      {
-        success: true,
-        data: {
-          summary,
-          artifacts: artifactHealth
-        }
+      startTime,
+      onDenied: (_response, statusCode, duration) => {
+        recordRequest('GET', '/api/admin/system/artifact-health', statusCode, duration);
       },
-      HttpStatus.OK,
-      requestId
-    );
+      onSuccess: (_response, duration) => {
+        recordRequest('GET', '/api/admin/system/artifact-health', HttpStatus.OK, duration);
+      }
+    }, async () => {
+      const artifactHealth = await getAdminArtifactHealthSnapshot();
+      const summary = summarizeArtifactHealth(artifactHealth);
+
+      return apiResponse(
+        {
+          success: true,
+          data: {
+            summary,
+            artifacts: artifactHealth
+          }
+        },
+        HttpStatus.OK,
+        requestId
+      );
+    });
   } catch (error) {
     recordRequest(
       'GET',

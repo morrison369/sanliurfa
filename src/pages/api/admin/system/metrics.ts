@@ -20,7 +20,7 @@ import { getNightlyOpsSummary } from '../../../../lib/nightly-ops-summary';
 import { getReleaseGateSummary } from '../../../../lib/release-gate-summary';
 import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
 import { getAdminArtifactHealthSnapshot, summarizeArtifactHealth } from '../../../../lib/artifact-health';
-import { ensureAdminOpsReadAccess, logAdminOpsRead } from '../../../../lib/admin-ops-access';
+import { withAdminOpsReadAccess } from '../../../../lib/admin-ops-access';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -28,100 +28,94 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    const accessResponse = ensureAdminOpsReadAccess({
+    return await withAdminOpsReadAccess({
       request,
       locals,
       endpoint: '/api/admin/system/metrics',
       requestId,
-      startTime
-    });
-    if (accessResponse) {
-      const statusCode = accessResponse.status;
-      recordRequest('GET', '/api/admin/system/metrics', statusCode, Date.now() - startTime);
-      logAdminOpsRead({ endpoint: '/api/admin/system/metrics', request, locals, statusCode, duration: Date.now() - startTime });
-      return accessResponse;
-    }
-
-    const [systemMetrics, modStats, pendingQueue, pendingFlags, integrationSettings, operational, performanceOptimization, nightly, releaseGate] = await Promise.all([
-      getSystemMetrics(),
-      getModerationStats(),
-      getModerationQueue('pending', 1),
-      getContentFlags('pending', 1),
-      getRuntimeIntegrationSettings(),
-      getOperationalSnapshot(7),
-      getPerformanceOptimizationSummary(),
-      getNightlyOpsSummary(),
-      getReleaseGateSummary()
-    ]);
-    const artifactHealth = await getAdminArtifactHealthSnapshot();
-    const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
-    const configuredCount =
-      Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
-    const integrationStatus = classifyIntegrationStatus({
-      configuredCount,
-      total: 2
-    });
-    const regressionStatus = classifyNightlyStatus(nightly.regression);
-    const e2eStatus = classifyNightlyStatus(nightly.e2e);
-    const releaseGateStatus = classifyReleaseGateStatus(releaseGate);
-    const overallStatus = classifyOverallOpsStatus([
-      integrationStatus,
-      regressionStatus,
-      e2eStatus,
-      releaseGateStatus
-    ]);
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/admin/system/metrics', HttpStatus.OK, duration);
-    logAdminOpsRead({ endpoint: '/api/admin/system/metrics', request, locals, statusCode: HttpStatus.OK, duration });
-
-    return apiResponse(
-      {
-        success: true,
-        data: {
-          system: systemMetrics,
-          moderation: modStats,
-          pendingWork: {
-            queueCount: (await getModerationQueue('pending', 1000))?.length || 0,
-            flagCount: (await getContentFlags('pending', 1000))?.length || 0
-          },
-          health: {
-            status: integrationStatus,
-            timestamp: new Date().toISOString(),
-            integrations: {
-              resend: {
-                configured: Boolean(integrationSettings.resendApiKey),
-                source: integrationSettings.source.resendApiKey
-              },
-              analytics: {
-                configured: Boolean(integrationSettings.analyticsId),
-                source: integrationSettings.source.analyticsId
-              },
-              summary: {
-                configuredCount,
-                total: 2,
-                fullyConfigured: configuredCount === 2
-              }
-            }
-          },
-          operational,
-          performanceOptimization,
-          artifactHealth,
-          artifactHealthSummary,
-          nightly,
-          releaseGate,
-          statusSummary: {
-            integrations: integrationStatus,
-            regression: regressionStatus,
-            e2e: e2eStatus,
-            releaseGate: releaseGateStatus,
-            overall: overallStatus
-          }
-        }
+      startTime,
+      onDenied: (_response, statusCode, duration) => {
+        recordRequest('GET', '/api/admin/system/metrics', statusCode, duration);
       },
-      HttpStatus.OK,
-      requestId
-    );
+      onSuccess: (_response, duration) => {
+        recordRequest('GET', '/api/admin/system/metrics', HttpStatus.OK, duration);
+      }
+    }, async () => {
+      const [systemMetrics, modStats, integrationSettings, operational, performanceOptimization, nightly, releaseGate] = await Promise.all([
+        getSystemMetrics(),
+        getModerationStats(),
+        getRuntimeIntegrationSettings(),
+        getOperationalSnapshot(7),
+        getPerformanceOptimizationSummary(),
+        getNightlyOpsSummary(),
+        getReleaseGateSummary()
+      ]);
+      const artifactHealth = await getAdminArtifactHealthSnapshot();
+      const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
+      const configuredCount =
+        Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
+      const integrationStatus = classifyIntegrationStatus({
+        configuredCount,
+        total: 2
+      });
+      const regressionStatus = classifyNightlyStatus(nightly.regression);
+      const e2eStatus = classifyNightlyStatus(nightly.e2e);
+      const releaseGateStatus = classifyReleaseGateStatus(releaseGate);
+      const overallStatus = classifyOverallOpsStatus([
+        integrationStatus,
+        regressionStatus,
+        e2eStatus,
+        releaseGateStatus
+      ]);
+
+      return apiResponse(
+        {
+          success: true,
+          data: {
+            system: systemMetrics,
+            moderation: modStats,
+            pendingWork: {
+              queueCount: (await getModerationQueue('pending', 1000))?.length || 0,
+              flagCount: (await getContentFlags('pending', 1000))?.length || 0
+            },
+            health: {
+              status: integrationStatus,
+              timestamp: new Date().toISOString(),
+              integrations: {
+                resend: {
+                  configured: Boolean(integrationSettings.resendApiKey),
+                  source: integrationSettings.source.resendApiKey
+                },
+                analytics: {
+                  configured: Boolean(integrationSettings.analyticsId),
+                  source: integrationSettings.source.analyticsId
+                },
+                summary: {
+                  configuredCount,
+                  total: 2,
+                  fullyConfigured: configuredCount === 2
+                }
+              }
+            },
+            operational,
+            performanceOptimization,
+            artifactHealth,
+            artifactHealthSummary,
+            nightly,
+            releaseGate,
+            statusSummary: {
+              integrations: integrationStatus,
+              regression: regressionStatus,
+              e2e: e2eStatus,
+              releaseGate: releaseGateStatus,
+              overall: overallStatus
+            }
+          }
+        },
+        HttpStatus.OK,
+        requestId
+      );
+    });
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/system/metrics', HttpStatus.INTERNAL_SERVER_ERROR, duration);

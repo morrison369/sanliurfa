@@ -9,7 +9,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
 import { getAdminArtifactHealthSnapshot, summarizeArtifactHealth } from '../../../../lib/artifact-health';
-import { ensureAdminOpsReadAccess, logAdminOpsRead } from '../../../../lib/admin-ops-access';
+import { withAdminOpsReadAccess } from '../../../../lib/admin-ops-access';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -17,70 +17,66 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    const accessResponse = ensureAdminOpsReadAccess({
+    return await withAdminOpsReadAccess({
       request,
       locals,
       endpoint: '/api/admin/deployment/status',
       requestId,
-      startTime
-    });
-    if (accessResponse) {
-      const statusCode = accessResponse.status;
-      recordRequest('GET', '/api/admin/deployment/status', statusCode, Date.now() - startTime);
-      logAdminOpsRead({ endpoint: '/api/admin/deployment/status', request, locals, statusCode, duration: Date.now() - startTime });
-      return accessResponse;
-    }
-
-    const environment = getCurrentEnvironment();
-    const [readiness, checklist, integrationSettings] = await Promise.all([
-      getReadinessStatusRuntime(),
-      getDeploymentChecklistRuntime(),
-      getRuntimeIntegrationSettings()
-    ]);
-    const artifactHealth = await getAdminArtifactHealthSnapshot();
-    const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
-    const configuredCount = Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/admin/deployment/status', HttpStatus.OK, duration);
-    logAdminOpsRead({ endpoint: '/api/admin/deployment/status', request, locals, statusCode: HttpStatus.OK, duration });
-
-    return apiResponse(
-      {
-        success: true,
-        data: {
-          environment: {
-            name: environment.name,
-            url: environment.url,
-            logLevel: environment.logLevel,
-            sslEnabled: environment.sslEnabled,
-            maintenanceMode: environment.maintenanceMode
-          },
-          readiness,
-          checklist,
-          integrations: {
-            resend: {
-              configured: Boolean(integrationSettings.resendApiKey),
-              source: integrationSettings.source.resendApiKey
-            },
-            analytics: {
-              configured: Boolean(integrationSettings.analyticsId),
-              source: integrationSettings.source.analyticsId
-            },
-            summary: {
-              configuredCount,
-              total: 2,
-              fullyConfigured: configuredCount === 2
-            }
-          },
-          artifactHealth,
-          artifactHealthSummary,
-          timestamp: new Date().toISOString()
-        }
+      startTime,
+      onDenied: (_response, statusCode, duration) => {
+        recordRequest('GET', '/api/admin/deployment/status', statusCode, duration);
       },
-      HttpStatus.OK,
-      requestId
-    );
+      onSuccess: (_response, duration) => {
+        recordRequest('GET', '/api/admin/deployment/status', HttpStatus.OK, duration);
+      }
+    }, async () => {
+      const environment = getCurrentEnvironment();
+      const [readiness, checklist, integrationSettings] = await Promise.all([
+        getReadinessStatusRuntime(),
+        getDeploymentChecklistRuntime(),
+        getRuntimeIntegrationSettings()
+      ]);
+      const artifactHealth = await getAdminArtifactHealthSnapshot();
+      const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
+      const configuredCount = Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
+
+      return apiResponse(
+        {
+          success: true,
+          data: {
+            environment: {
+              name: environment.name,
+              url: environment.url,
+              logLevel: environment.logLevel,
+              sslEnabled: environment.sslEnabled,
+              maintenanceMode: environment.maintenanceMode
+            },
+            readiness,
+            checklist,
+            integrations: {
+              resend: {
+                configured: Boolean(integrationSettings.resendApiKey),
+                source: integrationSettings.source.resendApiKey
+              },
+              analytics: {
+                configured: Boolean(integrationSettings.analyticsId),
+                source: integrationSettings.source.analyticsId
+              },
+              summary: {
+                configuredCount,
+                total: 2,
+                fullyConfigured: configuredCount === 2
+              }
+            },
+            artifactHealth,
+            artifactHealthSummary,
+            timestamp: new Date().toISOString()
+          }
+        },
+        HttpStatus.OK,
+        requestId
+      );
+    });
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/deployment/status', HttpStatus.INTERNAL_SERVER_ERROR, duration);
