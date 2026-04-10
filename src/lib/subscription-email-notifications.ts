@@ -4,7 +4,7 @@
  * email_templates ve email_queue tablolarını kullanır
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { createNotification } from './notifications-queue';
 import { getCache, setCache, deleteCache } from './cache';
@@ -504,7 +504,7 @@ export async function getEmailLogs(
   offset: number = 0
 ) {
   try {
-    const logs = await queryMany(
+    const logs = await queryRows(
       'SELECT * FROM email_sent_logs WHERE user_id = $1 ORDER BY sent_at DESC LIMIT $2 OFFSET $3',
       [userId, limit, offset]
     );

@@ -3,7 +3,7 @@
  * Track and enforce usage quotas for limited premium features
  */
 
-import { queryOne, queryMany, update as updateDb } from './postgres';
+import { queryOne, queryRows, update as updateDb } from './postgres';
 import { getActiveSubscription } from './subscription-management';
 import { logger } from './logging';
 
@@ -237,7 +237,7 @@ export async function resetUsage(userId: string, feature: QuotaFeature): Promise
  */
 export async function getUserUsage(userId: string): Promise<UsageRecord[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, user_id, feature_name, limit_value, current_usage, reset_date, created_at, updated_at
        FROM feature_access
        WHERE user_id = $1

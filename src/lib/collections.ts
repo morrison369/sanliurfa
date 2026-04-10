@@ -3,7 +3,7 @@
  * User-curated lists of places
  */
 
-import { query, queryOne, queryMany } from './postgres';
+import { query, queryOne, queryRows } from './postgres';
 import { deleteCache, deleteCachePattern } from './cache';
 import { logger } from './logging';
 
@@ -165,7 +165,7 @@ export async function deleteCollection(collectionId: string, userId: string): Pr
  */
 export async function getUserCollections(userId: string, limit: number = 50): Promise<PlaceCollection[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT c.*, COUNT(f.id) as follower_count
        FROM place_collections c
        LEFT JOIN collection_followers f ON c.id = f.collection_id
@@ -176,7 +176,7 @@ export async function getUserCollections(userId: string, limit: number = 50): Pr
       [userId, limit]
     );
 
-    return results.rows;
+    return results;
   } catch (error) {
     logger.error('Failed to get user collections', error instanceof Error ? error : new Error(String(error)), {
       userId
@@ -212,7 +212,7 @@ export async function getCollectionWithItems(
     }
 
     // Get items
-    const items = await queryMany(
+    const items = await queryRows(
       `SELECT ci.*, p.name as place_name, p.image as place_image, p.category as place_category, p.average_rating as place_rating
        FROM collection_items ci
        JOIN places p ON ci.place_id = p.id
@@ -223,7 +223,7 @@ export async function getCollectionWithItems(
 
     return {
       collection,
-      items: items.rows
+      items: items
     };
   } catch (error) {
     logger.error('Failed to get collection with items', error instanceof Error ? error : new Error(String(error)), {
@@ -401,7 +401,7 @@ export async function unfollowCollection(collectionId: string, userId: string): 
  */
 export async function getPublicCollections(limit: number = 20, offset: number = 0): Promise<PlaceCollection[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT c.*, COUNT(f.id) as follower_count
        FROM place_collections c
        LEFT JOIN collection_followers f ON c.id = f.collection_id
@@ -412,7 +412,7 @@ export async function getPublicCollections(limit: number = 20, offset: number = 
       [limit, offset]
     );
 
-    return results.rows;
+    return results;
   } catch (error) {
     logger.error(
       'Failed to get public collections',

@@ -3,7 +3,7 @@
  * Track and optimize conversion funnels
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 
@@ -61,7 +61,7 @@ export async function listFunnels(): Promise<any[]> {
       return JSON.parse(cached);
     }
 
-    const funnels = await queryMany(
+    const funnels = await queryRows(
       'SELECT * FROM conversion_funnels WHERE is_active = true ORDER BY created_at DESC',
       []
     );
@@ -154,7 +154,7 @@ export async function getFunnelAnalytics(funnelId: string, days: number = 30): P
     const funnel = await getFunnelById(funnelId);
     if (!funnel) return null;
 
-    const entries = await queryMany(
+    const entries = await queryRows(
       'SELECT * FROM funnel_entries WHERE funnel_id = $1 AND entered_at >= $2',
       [funnelId, since]
     );

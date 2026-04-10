@@ -6,7 +6,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryOne, update, queryMany } from '../../../../lib/postgres';
+import { queryOne, update, queryRows } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
@@ -52,7 +52,7 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Yorumu sil
-    await queryMany(
+    await queryRows(
       'DELETE FROM blog_comments WHERE id = $1 OR parent_comment_id = $1',
       [commentId]
     );

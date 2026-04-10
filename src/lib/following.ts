@@ -3,7 +3,7 @@
  * User-to-user following relationships with caching
  */
 
-import { query, queryOne, queryMany, insert } from './postgres';
+import { query, queryOne, queryRows, insert } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -114,7 +114,7 @@ export async function getFollowers(userId: string, limit: number = 50, offset: n
       return cached;
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         u.id,
         u.full_name,
@@ -132,7 +132,7 @@ export async function getFollowers(userId: string, limit: number = 50, offset: n
       [userId, limit, offset]
     );
 
-    const followers: FollowUser[] = results.rows.map((row: any) => ({
+    const followers: FollowUser[] = results.map((row: any) => ({
       id: row.id,
       full_name: row.full_name,
       username: row.username,
@@ -166,7 +166,7 @@ export async function getFollowing(userId: string, limit: number = 50, offset: n
       return cached;
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         u.id,
         u.full_name,
@@ -184,7 +184,7 @@ export async function getFollowing(userId: string, limit: number = 50, offset: n
       [userId, limit, offset]
     );
 
-    const following: FollowUser[] = results.rows.map((row: any) => ({
+    const following: FollowUser[] = results.map((row: any) => ({
       id: row.id,
       full_name: row.full_name,
       username: row.username,

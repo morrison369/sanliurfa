@@ -1,7 +1,7 @@
 /**
  * Direct Messages
  */
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 
@@ -22,7 +22,7 @@ export async function getConversations(userId: string, limit = 50, offset = 0) {
   const cacheKey = `sanliurfa:conversations:${userId}:inbox:${limit}:${offset}`;
   const cached = await getCache(cacheKey);
   if (cached) return JSON.parse(cached);
-  const convos = await queryMany(
+  const convos = await queryRows(
     `SELECT c.*, u.full_name, u.avatar_url, dm.content, dm.created_at as msg_time,
             COUNT(CASE WHEN dm.read_at IS NULL AND dm.sender_id != $1 THEN 1 END) as unread
      FROM conversations c
@@ -41,7 +41,7 @@ export async function getConversations(userId: string, limit = 50, offset = 0) {
 export async function getMessages(conversationId: string, userId: string, limit = 50) {
   const convo = await queryOne('SELECT participant_a, participant_b FROM conversations WHERE id = $1', [conversationId]);
   if (!convo || (convo.participant_a !== userId && convo.participant_b !== userId)) throw new Error('Unauthorized');
-  return queryMany('SELECT * FROM direct_messages WHERE conversation_id = $1 ORDER BY created_at ASC LIMIT $2', [conversationId, limit]);
+  return queryRows('SELECT * FROM direct_messages WHERE conversation_id = $1 ORDER BY created_at ASC LIMIT $2', [conversationId, limit]);
 }
 
 export async function sendMessage(conversationId: string, senderId: string, content: string) {

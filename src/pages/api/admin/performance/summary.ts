@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, queryOne } from '../../../../lib/postgres';
+import { queryRows, queryOne } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ locals }) => {
     `).catch(() => null);
 
     // Get page-level performance
-    const pagePerformance = await queryMany(`
+    const pagePerformance = await queryRows(`
       SELECT
         url,
         COUNT(*) as samples,
@@ -55,7 +55,7 @@ export const GET: APIRoute = async ({ locals }) => {
     `).catch(() => ({ rows: [] }));
 
     // Get connection type distribution
-    const connectionStats = await queryMany(`
+    const connectionStats = await queryRows(`
       SELECT
         connection_type,
         COUNT(*) as count,
@@ -97,8 +97,8 @@ export const GET: APIRoute = async ({ locals }) => {
       recommendations.push('Cache hit ratio below target - review Redis TTLs and invalidation logic');
     }
 
-    if (pagePerformance.rows.some((p: any) => p.lcp_violations > 0)) {
-      recommendations.push(`${pagePerformance.rows.filter((p: any) => p.lcp_violations > 0).length} pages have LCP violations`);
+    if (pagePerformance.some((p: any) => p.lcp_violations > 0)) {
+      recommendations.push(`${pagePerformance.filter((p: any) => p.lcp_violations > 0).length} pages have LCP violations`);
     }
 
     return apiResponse(
@@ -107,8 +107,8 @@ export const GET: APIRoute = async ({ locals }) => {
         data: {
           performance: {
             stats: performanceStats,
-            pages: pagePerformance.rows,
-            connectionTypes: connectionStats.rows,
+            pages: pagePerformance,
+            connectionTypes: connectionStats,
             database: {
               activeConnections: dbStats?.active_connections || 0,
               cacheHitRatio: cacheHitRatio.toFixed(2) + '%'

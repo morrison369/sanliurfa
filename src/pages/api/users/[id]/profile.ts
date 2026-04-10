@@ -6,7 +6,7 @@
 import type { APIRoute } from 'astro';
 import { getUserProfile } from '../../../../lib/users';
 import { getFollowerStats, isFollowing } from '../../../../lib/followers';
-import { queryOne, queryMany } from '../../../../lib/postgres';
+import { queryOne, queryRows } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
@@ -69,7 +69,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     }
 
     // Get recent activity (last 5 comments and reviews)
-    const recentActivity = await queryMany(
+    const recentActivity = await queryRows(
       `(SELECT 'comment' as type, id, content, created_at FROM comments WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 3)
        UNION ALL
        (SELECT 'review' as type, id, content, created_at FROM reviews WHERE user_id = $1 ORDER BY created_at DESC LIMIT 3)

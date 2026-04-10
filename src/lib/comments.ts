@@ -3,7 +3,7 @@
  * Threaded comments with helpful/unhelpful voting
  */
 
-import { query, queryOne, queryMany, insert } from './postgres';
+import { query, queryOne, queryRows, insert } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -94,7 +94,7 @@ export async function getComments(
       return cached;
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         c.id,
         c.user_id,
@@ -122,7 +122,7 @@ export async function getComments(
       [targetType, targetId, userId || 'NULL', limit]
     );
 
-    const comments: Comment[] = results.rows.map((row: any) => ({
+    const comments: Comment[] = results.map((row: any) => ({
       id: row.id,
       user_id: row.user_id,
       user_name: row.user_name,

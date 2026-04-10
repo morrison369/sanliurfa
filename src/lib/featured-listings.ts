@@ -3,7 +3,7 @@
  * Premium featured listing system with analytics and scheduling
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 import { logger } from './logging';
 
@@ -126,7 +126,7 @@ export async function getActiveFeaturedListings(limit: number = 10, offset: numb
     if (cached) return cached;
 
     const now = new Date().toISOString();
-    const result = await queryMany(
+    const result = await queryRows(
       `SELECT
         fl.*,
         p.name as place_name,
@@ -150,7 +150,7 @@ export async function getActiveFeaturedListings(limit: number = 10, offset: numb
     );
 
     const data = {
-      listings: result.rows,
+      listings: result,
       total: parseInt(countResult?.total || '0')
     };
 
@@ -172,15 +172,15 @@ export async function getUserFeaturedListings(userId: string): Promise<FeaturedL
     const cached = await getCache<FeaturedListing[]>(cacheKey);
     if (cached) return cached;
 
-    const listings = await queryMany(
+    const listings = await queryRows(
       `SELECT * FROM featured_listings
        WHERE user_id = $1
        ORDER BY created_at DESC`,
       [userId]
     );
 
-    await setCache(cacheKey, listings.rows, 300);
-    return listings.rows;
+    await setCache(cacheKey, listings, 300);
+    return listings;
   } catch (error) {
     logger.error('Failed to get user featured listings', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -275,7 +275,7 @@ export async function getFeaturedListingAnalytics(
     fromDate.setDate(fromDate.getDate() - days);
 
     // Get daily metrics
-    const metrics = await queryMany(
+    const metrics = await queryRows(
       `SELECT * FROM featured_listing_metrics
        WHERE featured_listing_id = $1 AND date >= $2
        ORDER BY date DESC`,
@@ -291,7 +291,7 @@ export async function getFeaturedListingAnalytics(
       conversion_rate: 0
     };
 
-    metrics.rows.forEach((m: any) => {
+    metrics.forEach((m: any) => {
       summary.total_views += m.views || 0;
       summary.total_clicks += m.clicks || 0;
       summary.total_conversions += m.conversions || 0;
@@ -306,7 +306,7 @@ export async function getFeaturedListingAnalytics(
 
     return {
       summary,
-      daily_metrics: metrics.rows
+      daily_metrics: metrics
     };
   } catch (error) {
     logger.error('Failed to get featured listing analytics', error instanceof Error ? error : new Error(String(error)));

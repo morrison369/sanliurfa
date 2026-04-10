@@ -3,7 +3,7 @@
  * Aggregate user activity and engagement metrics
  */
 
-import { queryOne, queryMany } from './postgres';
+import { queryOne, queryRows } from './postgres';
 import { getCache, setCache } from './cache';
 import { logger } from './logging';
 
@@ -182,7 +182,7 @@ export async function getActivityTrends(userId: string): Promise<ActivityStats |
  */
 export async function getUserTopRatedPlaces(userId: string, limit: number = 5) {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         p.id,
         p.name,
@@ -197,7 +197,7 @@ export async function getUserTopRatedPlaces(userId: string, limit: number = 5) {
       [userId, limit]
     );
 
-    return results.rows;
+    return results;
   } catch (error) {
     logger.error('Failed to get top rated places', error instanceof Error ? error : new Error(String(error)), {
       userId

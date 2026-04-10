@@ -3,7 +3,7 @@
  * TOTP, Email, SMS, and recovery codes for 2FA
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 import crypto from 'crypto';
@@ -166,7 +166,7 @@ export async function get2FAMethods(userId: string): Promise<TwoFAMethod[]> {
       return JSON.parse(cached);
     }
 
-    const methods = await queryMany(
+    const methods = await queryRows(
       'SELECT id, user_id, method_type, method_identifier, is_verified, is_primary, is_active, created_at, updated_at FROM user_2fa_methods WHERE user_id = $1 ORDER BY is_primary DESC, created_at ASC',
       [userId]
     );

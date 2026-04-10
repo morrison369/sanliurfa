@@ -3,7 +3,7 @@
  * OAuth 2.0 / OpenID Connect integration with multiple providers
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 import crypto from 'crypto';
@@ -69,7 +69,7 @@ export async function listOAuthProviders(): Promise<OAuthProvider[]> {
       return JSON.parse(cached);
     }
 
-    const providers = await queryMany(
+    const providers = await queryRows(
       'SELECT * FROM oauth_providers WHERE is_enabled = true ORDER BY provider_name ASC',
       []
     );
@@ -157,7 +157,7 @@ export async function getUserOAuthAccounts(userId: string): Promise<OAuthAccount
       return JSON.parse(cached);
     }
 
-    const accounts = await queryMany(
+    const accounts = await queryRows(
       'SELECT * FROM user_oauth_accounts WHERE user_id = $1 ORDER BY is_primary DESC, created_at ASC',
       [userId]
     );

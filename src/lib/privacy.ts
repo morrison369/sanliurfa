@@ -3,7 +3,7 @@
  * User privacy settings, blocking, muting, and account deletion
  */
 
-import { query, queryOne, queryMany, insert, update as updateDb } from './postgres';
+import { query, queryOne, queryRows, insert, update as updateDb } from './postgres';
 import { deleteCache, deleteCachePattern } from './cache';
 import { logger } from './logging';
 
@@ -209,7 +209,7 @@ export async function isUserBlocked(userId: string, blockedByUserId: string): Pr
  */
 export async function getBlockedUsers(userId: string): Promise<BlockedUser[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, blocked_user_id, reason, blocked_at
        FROM blocked_users
        WHERE user_id = $1
@@ -217,7 +217,7 @@ export async function getBlockedUsers(userId: string): Promise<BlockedUser[]> {
       [userId]
     );
 
-    return results.rows.map((row: any) => ({
+    return results.map((row: any) => ({
       id: row.id,
       blocked_user_id: row.blocked_user_id,
       reason: row.reason,

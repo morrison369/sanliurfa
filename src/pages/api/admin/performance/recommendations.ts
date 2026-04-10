@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, queryOne } from '../../../../lib/postgres';
+import { queryRows, queryOne } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ locals }) => {
 
     // Check for missing indexes
     try {
-      const unusedIndexes = await queryMany(`
+      const unusedIndexes = await queryRows(`
         SELECT schemaname, tablename, indexname
         FROM pg_stat_user_indexes
         WHERE idx_scan = 0 AND idx_tup_read = 0
@@ -40,14 +40,14 @@ export const GET: APIRoute = async ({ locals }) => {
         LIMIT 5
       `);
 
-      if (unusedIndexes.rows && unusedIndexes.rows.length > 0) {
+      if (unusedIndexes && unusedIndexes.length > 0) {
         recommendations.push({
           priority: 'medium',
           category: 'Database Indexes',
-          title: `${unusedIndexes.rows.length} Unused Indexes Found`,
-          description: `Found ${unusedIndexes.rows.length} indexes that are never used. Removing them will free up disk space and speed up writes.`,
+          title: `${unusedIndexes.length} Unused Indexes Found`,
+          description: `Found ${unusedIndexes.length} indexes that are never used. Removing them will free up disk space and speed up writes.`,
           estimatedImpact: 'Medium - Improves write performance',
-          action: `DROP INDEX IF EXISTS ${unusedIndexes.rows.map((r: any) => r.indexname).join(', ')};`
+          action: `DROP INDEX IF EXISTS ${unusedIndexes.map((r: any) => r.indexname).join(', ')};`
         });
       }
     } catch (e) {
@@ -56,7 +56,7 @@ export const GET: APIRoute = async ({ locals }) => {
 
     // Check for large tables without indexes
     try {
-      const largeUnindexedTables = await queryMany(`
+      const largeUnindexedTables = await queryRows(`
         SELECT schemaname, tablename, pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
         FROM pg_tables
         WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
@@ -67,7 +67,7 @@ export const GET: APIRoute = async ({ locals }) => {
         LIMIT 5
       `);
 
-      if (largeUnindexedTables.rows && largeUnindexedTables.rows.length > 0) {
+      if (largeUnindexedTables && largeUnindexedTables.length > 0) {
         recommendations.push({
           priority: 'high',
           category: 'Database Indexes',
@@ -108,7 +108,7 @@ export const GET: APIRoute = async ({ locals }) => {
 
     // Check query performance
     try {
-      const slowQueries = await queryMany(`
+      const slowQueries = await queryRows(`
         SELECT query, mean_time, calls
         FROM pg_stat_statements
         WHERE mean_time > 100
@@ -116,13 +116,13 @@ export const GET: APIRoute = async ({ locals }) => {
         LIMIT 5
       `);
 
-      if (slowQueries.rows && slowQueries.rows.length > 0) {
-        const avgTime = slowQueries.rows.reduce((sum: number, q: any) => sum + q.mean_time, 0) / slowQueries.rows.length;
+      if (slowQueries && slowQueries.length > 0) {
+        const avgTime = slowQueries.reduce((sum: number, q: any) => sum + q.mean_time, 0) / slowQueries.length;
         recommendations.push({
           priority: avgTime > 500 ? 'high' : 'medium',
           category: 'Query Performance',
-          title: `${slowQueries.rows.length} Slow Queries Detected`,
-          description: `Found ${slowQueries.rows.length} queries with avg execution time > 100ms. Optimize these queries with appropriate indexes and query refactoring.`,
+          title: `${slowQueries.length} Slow Queries Detected`,
+          description: `Found ${slowQueries.length} queries with avg execution time > 100ms. Optimize these queries with appropriate indexes and query refactoring.`,
           estimatedImpact: 'High - Significant response time improvement',
           action: 'Use EXPLAIN ANALYZE to identify bottlenecks and add missing indexes'
         });
