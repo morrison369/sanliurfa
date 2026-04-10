@@ -19,6 +19,11 @@ interface DashboardData {
     resend: { configured: boolean; source: 'env' | 'admin' | 'none' };
     analytics: { configured: boolean; source: 'env' | 'admin' | 'none' };
     summary?: { configuredCount: number; total: number; fullyConfigured: boolean };
+    verification?: {
+      resend: { status: string; message: string; checkedAt: string };
+      analytics: { status: string; message: string; checkedAt: string };
+      summary: { healthy: boolean; checkedAt: string };
+    };
   };
   operational?: {
     oauth: {
@@ -182,6 +187,9 @@ export default function AdminDashboardOverview() {
             <div className="text-xs text-gray-500">
               Durum: {data.integrations?.summary?.fullyConfigured ? 'healthy' : 'degraded'}
             </div>
+            <div className="text-xs text-gray-500">
+              Doğrulama: {data.integrations?.verification?.summary?.healthy ? 'verified' : 'review'}
+            </div>
           </div>
         </div>
       </div>
@@ -243,6 +251,27 @@ export default function AdminDashboardOverview() {
                   : 'Veri yok'}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {data.integrations?.verification && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-900 mb-4">Entegrasyon Doğrulama</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs text-gray-500 mb-1">RESEND</div>
+              <div className="text-xl font-bold text-gray-900">{data.integrations.verification.resend.status}</div>
+              <div className="text-xs text-gray-500">{data.integrations.verification.resend.message}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Analytics</div>
+              <div className="text-xl font-bold text-gray-900">{data.integrations.verification.analytics.status}</div>
+              <div className="text-xs text-gray-500">{data.integrations.verification.analytics.message}</div>
+            </div>
+          </div>
+          <div className="text-xs text-gray-500 mt-3">
+            Son kontrol: {data.integrations.verification.summary.checkedAt}
           </div>
         </div>
       )}

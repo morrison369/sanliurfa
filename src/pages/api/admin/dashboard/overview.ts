@@ -9,7 +9,10 @@ import { getModerationStats } from '../../../../lib/admin-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
-import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
+import {
+  getRuntimeIntegrationSettings,
+  verifyRuntimeIntegrationSettings
+} from '../../../../lib/runtime-integration-settings';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -41,6 +44,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       getRuntimeIntegrationSettings(),
       getOperationalSnapshot(Math.min(days, 30))
     ]);
+    const integrationVerification = await verifyRuntimeIntegrationSettings(integrationSettings);
     const configuredCount =
       Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
 
@@ -67,7 +71,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
               configuredCount,
               total: 2,
               fullyConfigured: configuredCount === 2
-            }
+            },
+            verification: integrationVerification
           },
           operational,
           period: days

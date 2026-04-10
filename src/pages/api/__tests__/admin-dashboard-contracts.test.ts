@@ -8,6 +8,7 @@ const getModerationStatsMock = vi.fn();
 const getModerationQueueMock = vi.fn();
 const getContentFlagsMock = vi.fn();
 const getRuntimeIntegrationSettingsMock = vi.fn();
+const verifyRuntimeIntegrationSettingsMock = vi.fn();
 const loggerMock = {
   setRequestId: vi.fn(),
   error: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock('../../../lib/admin-moderation', () => ({
 
 vi.mock('../../../lib/runtime-integration-settings', () => ({
   getRuntimeIntegrationSettings: getRuntimeIntegrationSettingsMock,
+  verifyRuntimeIntegrationSettings: verifyRuntimeIntegrationSettingsMock,
 }));
 
 vi.mock('../../../lib/logging', () => ({
@@ -84,6 +86,11 @@ describe('admin dashboard contracts', () => {
         analyticsId: 'none',
       },
     });
+    verifyRuntimeIntegrationSettingsMock.mockResolvedValue({
+      resend: { status: 'verified', message: 'ok', checkedAt: '2026-04-10T00:00:00.000Z' },
+      analytics: { status: 'not_configured', message: 'missing', checkedAt: '2026-04-10T00:00:00.000Z' },
+      summary: { healthy: false, checkedAt: '2026-04-10T00:00:00.000Z' },
+    });
   });
 
   it('rejects unauthorized admin dashboard overview access', async () => {
@@ -114,6 +121,8 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.integrations.analytics.source).toBe('none');
     expect(body.data.data.integrations.summary.configuredCount).toBe(1);
     expect(body.data.data.integrations.summary.fullyConfigured).toBe(false);
+    expect(body.data.data.integrations.verification.summary.healthy).toBe(false);
+    expect(body.data.data.integrations.verification.resend.status).toBe('verified');
     expect(body.data.data.operational.oauth.callback.sampleSize).toBe(12);
     expect(body.data.data.operational.search.topQueries[0].query).toBe('urfa');
   });

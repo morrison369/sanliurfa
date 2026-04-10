@@ -145,6 +145,13 @@ jobs:
         with:
           name: weekly-typecheck-report
           path: docs/reports/weekly-typecheck-report.md
+      - name: Upload release gate summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-gate-summary
+          path: docs/reports/release-gate-summary.json
+          if-no-files-found: ignore
 
   e2e_smoke_advisory:
     name: e2e-smoke-advisory

@@ -86,12 +86,47 @@ jobs:
             const failingSummary = failCandidates.length > 0
               ? ['## Top Failing Tests', ...failCandidates.map((line) => `- ${line}`)].join('\n')
               : '## Top Failing Tests\n- No failing tests captured from log';
+            let releaseGateSummary = '## Latest Release Gate Summary\n- No recent release gate artifact found';
+            try {
+              const { data: workflowRuns } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'ci.yml',
+                status: 'completed',
+                per_page: 20
+              });
+              const latestSuccessfulFullGate = (workflowRuns.workflow_runs || []).find((run) => {
+                const branch = String(run.head_branch || '');
+                const conclusion = String(run.conclusion || '').toLowerCase();
+                return conclusion === 'success' && (branch === 'main' || branch === 'master');
+              });
+              if (latestSuccessfulFullGate) {
+                const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: latestSuccessfulFullGate.id
+                });
+                const releaseGateArtifact = (artifacts.artifacts || []).find(
+                  (artifact) => artifact.name === 'release-gate-summary'
+                );
+                releaseGateSummary = [
+                  '## Latest Release Gate Summary',
+                  `- Run: ${latestSuccessfulFullGate.html_url}`,
+                  `- Branch: ${latestSuccessfulFullGate.head_branch}`,
+                  `- Artifact: ${releaseGateArtifact ? `${releaseGateArtifact.name} (${releaseGateArtifact.updated_at || 'updated_at yok'})` : 'release-gate-summary bulunamadı'}`
+                ].join('\n');
+              }
+            } catch (error) {
+              releaseGateSummary = `## Latest Release Gate Summary\n- Artifact metadata unavailable: ${error?.message || 'unknown error'}`;
+            }
             const body = [
               '## Nightly E2E',
               `- Outcome: ${process.env.E2E_OUTCOME}`,
               `- Run: ${process.env.RUN_URL}`,
               '',
-              failingSummary
+              failingSummary,
+              '',
+              releaseGateSummary
             ].join('\n');
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
