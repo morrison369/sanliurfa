@@ -60,6 +60,63 @@ jobs:
             nightly-e2e.log
           if-no-files-found: ignore
 
+      - name: Write nightly e2e summary
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          E2E_OUTCOME: ${{ steps.e2e.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const e2eLog = fs.existsSync('nightly-e2e.log')
+              ? fs.readFileSync('nightly-e2e.log', 'utf8')
+              : '';
+            const topFailures = e2eLog
+              .split('\n')
+              .map((line) => line.trim())
+              .filter((line) =>
+                line.startsWith('FAIL') ||
+                line.startsWith('×') ||
+                line.startsWith('Error:') ||
+                line.includes('failed')
+              )
+              .slice(0, 8);
+            let recentOutcomes = [];
+            let successRatePercent = null;
+            try {
+              const { data: workflowRuns } = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'nightly-e2e.yml',
+                per_page: 20
+              });
+              recentOutcomes = (workflowRuns.workflow_runs || [])
+                .filter((run) => run.status === 'completed' && run.conclusion)
+                .map((run) => String(run.conclusion).toLowerCase())
+                .slice(0, 7);
+              if (recentOutcomes.length > 0) {
+                const successCount = recentOutcomes.filter((outcome) => outcome === 'success').length;
+                successRatePercent = Math.round((successCount / recentOutcomes.length) * 100);
+              }
+            } catch {}
+
+            const summary = {
+              available: true,
+              kind: 'e2e',
+              generatedAt: new Date().toISOString(),
+              outcome: process.env.E2E_OUTCOME || 'missing',
+              successRatePercent,
+              recentOutcomes,
+              topFailures
+            };
+            fs.mkdirSync(path.join(process.cwd(), 'docs', 'reports'), { recursive: true });
+            fs.writeFileSync(
+              path.join(process.cwd(), 'docs', 'reports', 'nightly-e2e-summary.json'),
+              `${JSON.stringify(summary, null, 2)}\n`,
+              'utf8'
+            );
+
       - name: Resolve latest successful full gate run
         if: always()
         id: release_gate_run
@@ -108,6 +165,9 @@ jobs:
             const e2eLog = fs.existsSync('nightly-e2e.log')
               ? fs.readFileSync('nightly-e2e.log', 'utf8')
               : '';
+            const nightlySummary = fs.existsSync('docs/reports/nightly-e2e-summary.json')
+              ? JSON.parse(fs.readFileSync('docs/reports/nightly-e2e-summary.json', 'utf8'))
+              : null;
             const failCandidates = e2eLog
               .split('\n')
               .map((line) => line.trim())
@@ -192,7 +252,15 @@ jobs:
             } catch (error) {
               trendSummary = `## Trend\n- Workflow trend unavailable: ${error?.message || 'unknown error'}`;
             }
-            const finalBody = [body, '', trendSummary].join('\n');
+            const nightlySummaryBlock = nightlySummary
+              ? [
+                  '## Nightly Summary',
+                  `- Outcome: ${nightlySummary.outcome}`,
+                  `- Success rate: ${nightlySummary.successRatePercent ?? 'unknown'}%`,
+                  `- Recent outcomes: ${(nightlySummary.recentOutcomes || []).join(', ') || 'yok'}`
+                ].join('\n')
+              : '## Nightly Summary\n- Summary file unavailable';
+            const finalBody = [body, '', nightlySummaryBlock, '', trendSummary].join('\n');
             if (existing) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,

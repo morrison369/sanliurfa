@@ -52,6 +52,26 @@ interface DashboardData {
       status: 'passed' | 'failed';
     }>;
   };
+  nightly?: {
+    regression: {
+      available: boolean;
+      kind: 'regression';
+      generatedAt: string | null;
+      outcome: string;
+      successRatePercent: number | null;
+      recentOutcomes: string[];
+      topFailures: string[];
+    };
+    e2e: {
+      available: boolean;
+      kind: 'e2e';
+      generatedAt: string | null;
+      outcome: string;
+      successRatePercent: number | null;
+      recentOutcomes: string[];
+      topFailures: string[];
+    };
+  };
 }
 
 export default function AdminDashboardOverview() {
@@ -327,6 +347,40 @@ export default function AdminDashboardOverview() {
               </div>
             </details>
           )}
+        </div>
+      )}
+
+      {data.nightly && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-900 mb-4">Nightly Trend</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-lg border border-gray-200 p-4">
+              <div className="text-xs text-gray-500 mb-1">Regression</div>
+              <div className="text-xl font-bold text-gray-900">{data.nightly.regression.outcome}</div>
+              <div className="text-xs text-gray-500">
+                Success rate: {data.nightly.regression.successRatePercent ?? 'yok'}%
+              </div>
+              <div className="text-xs text-gray-500">
+                Son run: {data.nightly.regression.generatedAt || 'Henüz yok'}
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                Failure: {data.nightly.regression.topFailures[0] || 'yok'}
+              </div>
+            </div>
+            <div className="rounded-lg border border-gray-200 p-4">
+              <div className="text-xs text-gray-500 mb-1">E2E</div>
+              <div className="text-xl font-bold text-gray-900">{data.nightly.e2e.outcome}</div>
+              <div className="text-xs text-gray-500">
+                Success rate: {data.nightly.e2e.successRatePercent ?? 'yok'}%
+              </div>
+              <div className="text-xs text-gray-500">
+                Son run: {data.nightly.e2e.generatedAt || 'Henüz yok'}
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                Failure: {data.nightly.e2e.topFailures[0] || 'yok'}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

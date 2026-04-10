@@ -9,6 +9,7 @@ import { getModerationStats } from '../../../../lib/admin-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { getNightlyOpsSummary } from '../../../../lib/nightly-ops-summary';
 import { getReleaseGateSummary } from '../../../../lib/release-gate-summary';
 import {
   getRuntimeIntegrationSettings,
@@ -38,13 +39,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const url = new URL(request.url);
     const days = Math.min(parseInt(url.searchParams.get('days') || '30'), 365);
 
-    const [overview, metrics, modStats, integrationSettings, operational, releaseGate] = await Promise.all([
+    const [overview, metrics, modStats, integrationSettings, operational, releaseGate, nightly] = await Promise.all([
       getDashboardOverview(days),
       getSystemMetrics(),
       getModerationStats(),
       getRuntimeIntegrationSettings(),
       getOperationalSnapshot(Math.min(days, 30)),
-      getReleaseGateSummary()
+      getReleaseGateSummary(),
+      getNightlyOpsSummary()
     ]);
     const integrationVerification = await verifyRuntimeIntegrationSettings(integrationSettings);
     const configuredCount =
@@ -78,6 +80,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           },
           operational,
           releaseGate,
+          nightly,
           period: days
         }
       },

@@ -10,6 +10,7 @@ const getContentFlagsMock = vi.fn();
 const getRuntimeIntegrationSettingsMock = vi.fn();
 const verifyRuntimeIntegrationSettingsMock = vi.fn();
 const getReleaseGateSummaryMock = vi.fn();
+const getNightlyOpsSummaryMock = vi.fn();
 const loggerMock = {
   setRequestId: vi.fn(),
   error: vi.fn(),
@@ -42,6 +43,10 @@ vi.mock('../../../lib/runtime-integration-settings', () => ({
 
 vi.mock('../../../lib/release-gate-summary', () => ({
   getReleaseGateSummary: getReleaseGateSummaryMock,
+}));
+
+vi.mock('../../../lib/nightly-ops-summary', () => ({
+  getNightlyOpsSummary: getNightlyOpsSummaryMock,
 }));
 
 vi.mock('../../../lib/logging', () => ({
@@ -112,6 +117,26 @@ describe('admin dashboard contracts', () => {
         },
       ],
     });
+    getNightlyOpsSummaryMock.mockResolvedValue({
+      regression: {
+        available: true,
+        kind: 'regression',
+        generatedAt: '2026-04-10T01:00:00.000Z',
+        outcome: 'success',
+        successRatePercent: 86,
+        recentOutcomes: ['success', 'success', 'failure'],
+        topFailures: ['FAIL auth-contracts'],
+      },
+      e2e: {
+        available: true,
+        kind: 'e2e',
+        generatedAt: '2026-04-10T02:00:00.000Z',
+        outcome: 'failure',
+        successRatePercent: 57,
+        recentOutcomes: ['failure', 'success', 'failure'],
+        topFailures: ['Error: timeout on /giris'],
+      },
+    });
   });
 
   it('rejects unauthorized admin dashboard overview access', async () => {
@@ -147,6 +172,8 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.releaseGate.finalStatus).toBe('passed');
     expect(body.data.data.releaseGate.failedStepCount).toBe(0);
     expect(body.data.data.releaseGate.steps[0].step).toBe('TypeScript app gate');
+    expect(body.data.data.nightly.regression.successRatePercent).toBe(86);
+    expect(body.data.data.nightly.e2e.outcome).toBe('failure');
     expect(body.data.data.operational.oauth.callback.sampleSize).toBe(12);
     expect(body.data.data.operational.search.topQueries[0].query).toBe('urfa');
   });
