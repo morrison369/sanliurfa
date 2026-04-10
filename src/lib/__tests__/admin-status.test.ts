@@ -4,7 +4,8 @@ import {
   classifyThresholdStatus,
   classifyIntegrationStatus,
   classifyNightlyStatus,
-  classifyReleaseGateStatus
+  classifyReleaseGateStatus,
+  classifyArtifactFreshnessStatus
 } from '../admin-status';
 
 describe('admin status helpers', () => {
@@ -33,5 +34,25 @@ describe('admin status helpers', () => {
     expect(classifyOverallOpsStatus(['healthy', 'healthy'])).toBe('healthy');
     expect(classifyOverallOpsStatus(['healthy', 'degraded'])).toBe('degraded');
     expect(classifyOverallOpsStatus(['healthy', 'blocked'])).toBe('blocked');
+  });
+
+  it('classifies artifact freshness deterministically', () => {
+    expect(classifyArtifactFreshnessStatus({
+      available: false,
+      generatedAt: null,
+      degradedAfterHours: 24
+    })).toBe('blocked');
+
+    expect(classifyArtifactFreshnessStatus({
+      available: true,
+      generatedAt: new Date(Date.now() - (48 * 60 * 60 * 1000)).toISOString(),
+      degradedAfterHours: 24
+    })).toBe('degraded');
+
+    expect(classifyArtifactFreshnessStatus({
+      available: true,
+      generatedAt: new Date().toISOString(),
+      degradedAfterHours: 24
+    })).toBe('healthy');
   });
 });

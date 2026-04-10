@@ -82,3 +82,25 @@ export function classifyOverallOpsStatus(levels: AdminStatusLevel[]): AdminStatu
 
   return 'healthy';
 }
+
+export function classifyArtifactFreshnessStatus(options: {
+  available: boolean;
+  generatedAt: string | null;
+  degradedAfterHours: number;
+}): AdminStatusLevel {
+  if (!options.available || !options.generatedAt) {
+    return 'blocked';
+  }
+
+  const generatedAtMs = Date.parse(options.generatedAt);
+  if (!Number.isFinite(generatedAtMs)) {
+    return 'blocked';
+  }
+
+  const ageHours = (Date.now() - generatedAtMs) / (1000 * 60 * 60);
+  if (ageHours > options.degradedAfterHours) {
+    return 'degraded';
+  }
+
+  return 'healthy';
+}

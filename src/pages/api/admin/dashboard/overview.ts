@@ -10,6 +10,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import {
+  classifyArtifactFreshnessStatus,
   classifyIntegrationStatus,
   classifyNightlyStatus,
   classifyOverallOpsStatus,
@@ -104,19 +105,39 @@ export const GET: APIRoute = async ({ request, locals }) => {
           artifactHealth: {
             releaseGate: {
               available: releaseGate.available,
-              generatedAt: releaseGate.generatedAt
+              generatedAt: releaseGate.generatedAt,
+              status: classifyArtifactFreshnessStatus({
+                available: releaseGate.available,
+                generatedAt: releaseGate.generatedAt,
+                degradedAfterHours: 24
+              })
             },
             nightlyRegression: {
               available: nightly.regression.available,
-              generatedAt: nightly.regression.generatedAt
+              generatedAt: nightly.regression.generatedAt,
+              status: classifyArtifactFreshnessStatus({
+                available: nightly.regression.available,
+                generatedAt: nightly.regression.generatedAt,
+                degradedAfterHours: 36
+              })
             },
             nightlyE2E: {
               available: nightly.e2e.available,
-              generatedAt: nightly.e2e.generatedAt
+              generatedAt: nightly.e2e.generatedAt,
+              status: classifyArtifactFreshnessStatus({
+                available: nightly.e2e.available,
+                generatedAt: nightly.e2e.generatedAt,
+                degradedAfterHours: 36
+              })
             },
             performanceOps: {
               available: Boolean(performanceOptimization?.generatedAt),
-              generatedAt: performanceOptimization?.generatedAt ?? null
+              generatedAt: performanceOptimization?.generatedAt ?? null,
+              status: classifyArtifactFreshnessStatus({
+                available: Boolean(performanceOptimization?.generatedAt),
+                generatedAt: performanceOptimization?.generatedAt ?? null,
+                degradedAfterHours: 24
+              })
             }
           },
           releaseGate,

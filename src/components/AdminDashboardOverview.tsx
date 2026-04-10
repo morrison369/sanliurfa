@@ -73,10 +73,10 @@ interface DashboardData {
     }>;
   };
   artifactHealth?: {
-    releaseGate: { available: boolean; generatedAt: string | null };
-    nightlyRegression: { available: boolean; generatedAt: string | null };
-    nightlyE2E: { available: boolean; generatedAt: string | null };
-    performanceOps: { available: boolean; generatedAt: string | null };
+    releaseGate: { available: boolean; generatedAt: string | null; status: AdminStatusLevel };
+    nightlyRegression: { available: boolean; generatedAt: string | null; status: AdminStatusLevel };
+    nightlyE2E: { available: boolean; generatedAt: string | null; status: AdminStatusLevel };
+    performanceOps: { available: boolean; generatedAt: string | null; status: AdminStatusLevel };
   };
   releaseGate?: {
     available: boolean;
@@ -437,6 +437,7 @@ export default function AdminDashboardOverview() {
               <div className="text-sm font-semibold text-gray-900">
                 {data.artifactHealth.releaseGate.available ? 'var' : 'yok'}
               </div>
+              <div className={`text-xs ${statusTone(data.artifactHealth.releaseGate.status)}`}>{data.artifactHealth.releaseGate.status}</div>
               <div className="text-xs text-gray-500">{data.artifactHealth.releaseGate.generatedAt || 'Henüz yok'}</div>
             </div>
             <div>
@@ -444,6 +445,7 @@ export default function AdminDashboardOverview() {
               <div className="text-sm font-semibold text-gray-900">
                 {data.artifactHealth.nightlyRegression.available ? 'var' : 'yok'}
               </div>
+              <div className={`text-xs ${statusTone(data.artifactHealth.nightlyRegression.status)}`}>{data.artifactHealth.nightlyRegression.status}</div>
               <div className="text-xs text-gray-500">{data.artifactHealth.nightlyRegression.generatedAt || 'Henüz yok'}</div>
             </div>
             <div>
@@ -451,6 +453,7 @@ export default function AdminDashboardOverview() {
               <div className="text-sm font-semibold text-gray-900">
                 {data.artifactHealth.nightlyE2E.available ? 'var' : 'yok'}
               </div>
+              <div className={`text-xs ${statusTone(data.artifactHealth.nightlyE2E.status)}`}>{data.artifactHealth.nightlyE2E.status}</div>
               <div className="text-xs text-gray-500">{data.artifactHealth.nightlyE2E.generatedAt || 'Henüz yok'}</div>
             </div>
             <div>
@@ -458,6 +461,7 @@ export default function AdminDashboardOverview() {
               <div className="text-sm font-semibold text-gray-900">
                 {data.artifactHealth.performanceOps.available ? 'var' : 'yok'}
               </div>
+              <div className={`text-xs ${statusTone(data.artifactHealth.performanceOps.status)}`}>{data.artifactHealth.performanceOps.status}</div>
               <div className="text-xs text-gray-500">{data.artifactHealth.performanceOps.generatedAt || 'Henüz yok'}</div>
             </div>
           </div>
