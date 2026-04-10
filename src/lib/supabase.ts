@@ -2,7 +2,7 @@
 // This provides backward compatibility for code using Supabase-style API
 // Actual database operations delegate to postgres.ts
 
-import { pool, query, queryOne, insert } from './postgres';
+import { pool, query, queryOne, queryRows, insert } from './postgres';
 import * as auth from './auth';
 import { logger } from './logging';
 
@@ -62,8 +62,8 @@ export async function getSession(token?: string) {
   return { session: { user: { id: sessionData.userId, email: sessionData.email } }, error: null };
 }
 
-// ==================== SUPABASE CLIENT MOCK ====================
-// Provides Supabase-style API for backward compatibility
+// ==================== SUPABASE CLIENT COMPAT ====================
+// Provides a minimal Supabase-style API surface for backward compatibility
 
 const mockChannel = {
   on: () => mockChannel,
@@ -83,8 +83,8 @@ export const supabase = {
     select: (columns = '*') => ({
       eq: async (col: string, val: any) => {
         try {
-          const result = await query(`SELECT ${columns} FROM ${table} WHERE ${col} = $1`, [val]);
-          return { data: result.rows, error: null };
+          const result = await queryRows(`SELECT ${columns} FROM ${table} WHERE ${col} = $1`, [val]);
+          return { data: result, error: null };
         } catch (error) {
           return { data: null, error };
         }

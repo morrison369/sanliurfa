@@ -95,13 +95,42 @@ describe('Phase 56: Returns & Reverse Logistics', () => {
 
 describe('Phase 57: Supply Chain Analytics & Optimization', () => {
   it('should analyze costs', () => {
+    supplyChainMetrics.recordMetric({
+      period: 'Q1-2026',
+      leadTime: 12,
+      inventoryTurnover: 4.2,
+      fulfillmentRate: 95.5,
+      costPerUnit: 140
+    });
+    supplierAnalytics.recordSupplierMetric('supplier-1', {
+      supplierId: 'supplier-1',
+      onTimeDelivery: 82,
+      qualityScore: 84,
+      costCompetitiveness: 78,
+      reliability: 80
+    });
+
     const recommendations = optimizationEngine.analyzeCosts('Q1-2026');
     expect(Array.isArray(recommendations)).toBe(true);
+    expect(recommendations.length).toBeGreaterThan(0);
   });
 
   it('should detect bottlenecks', () => {
     const bottlenecks = optimizationEngine.detectBottlenecks('wh-1');
     expect(Array.isArray(bottlenecks)).toBe(true);
+    expect(bottlenecks.length).toBeGreaterThan(0);
+  });
+
+  it('should simulate scenarios deterministically', () => {
+    const result = optimizationEngine.simulateScenario({
+      leadTimeReductionDays: 3,
+      inventoryReductionPercent: 12,
+      fulfillmentImpactPercent: -2,
+      supplierDiversification: 2
+    });
+
+    expect(result.costSavings).toBeGreaterThan(0);
+    expect(result.riskLevel).toBeGreaterThanOrEqual(0);
   });
 });
 

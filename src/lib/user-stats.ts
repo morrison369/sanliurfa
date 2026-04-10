@@ -21,6 +21,7 @@ export interface UserStats {
   badgesEarned: number;
   joinDate: string;
   lastActiveAt?: string;
+  rankingPercentile?: number;
 }
 
 export interface RatingsTrend {
@@ -251,16 +252,54 @@ export async function getUserContributionScore(userId: string): Promise<number> 
  */
 export async function getUserRankingPercentile(userId: string): Promise<number> {
   try {
-    const userScore = await getUserContributionScore(userId);
-
     const result = await queryOne(
-      `SELECT COUNT(*) as count FROM users
-       WHERE points < (SELECT points FROM users WHERE id = $1)`,
+      `WITH user_scores AS (
+         SELECT
+           u.id,
+           (
+             COALESCE(reviews.review_count, 0) * 10 +
+             COALESCE(followers.follower_count, 0) * 5 +
+             COALESCE(collections.collection_count, 0) * 20 +
+             COALESCE(favorites.favorite_count, 0) * 2 +
+             FLOOR(COALESCE(u.points, 0) / 10.0) +
+             COALESCE(u.level, 1) * 50
+           ) AS contribution_score
+         FROM users u
+         LEFT JOIN (
+           SELECT user_id, COUNT(*) AS review_count
+           FROM reviews
+           GROUP BY user_id
+         ) reviews ON reviews.user_id = u.id
+         LEFT JOIN (
+           SELECT following_id AS user_id, COUNT(*) AS follower_count
+           FROM followers
+           GROUP BY following_id
+         ) followers ON followers.user_id = u.id
+         LEFT JOIN (
+           SELECT user_id, COUNT(*) AS collection_count
+           FROM place_collections
+           GROUP BY user_id
+         ) collections ON collections.user_id = u.id
+         LEFT JOIN (
+           SELECT user_id, COUNT(*) AS favorite_count
+           FROM favorites
+           GROUP BY user_id
+         ) favorites ON favorites.user_id = u.id
+       ),
+       target_user AS (
+         SELECT contribution_score
+         FROM user_scores
+         WHERE id = $1
+       )
+       SELECT
+         (SELECT COUNT(*) FROM user_scores) AS total_users,
+         (SELECT COUNT(*) FROM user_scores WHERE contribution_score <= (SELECT contribution_score FROM target_user)) AS users_behind`,
       [userId]
     );
 
-    const totalUsers = await queryOne('SELECT COUNT(*) as count FROM users');
-    const percentile = totalUsers ? Math.round(((result?.count || 0) / (totalUsers.count || 1)) * 100) : 0;
+    const totalUsers = Number(result?.total_users || 0);
+    const usersBehind = Number(result?.users_behind || 0);
+    const percentile = totalUsers > 0 ? Math.round((usersBehind / totalUsers) * 100) : 0;
 
     return percentile;
   } catch (error) {

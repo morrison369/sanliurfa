@@ -15,6 +15,7 @@ interface UserStats {
   joinDate: string;
   lastActiveAt?: string;
   trends?: ActivityStats;
+  rankingPercentile?: number;
 }
 
 interface ActivityStats {
@@ -80,8 +81,7 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
         setBadges(badgesData.data || []);
       }
 
-      // Calculate ranking percentile (mock for now, would come from API)
-      setRankingPercentile(Math.floor(Math.random() * 100) + 1);
+      setRankingPercentile(Number(statsData.data?.rankingPercentile || 0));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     } finally {

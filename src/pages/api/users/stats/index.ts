@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserStats, getActivityTrends } from '../../../../lib/user-stats';
+import { getUserStats, getActivityTrends, getUserRankingPercentile } from '../../../../lib/user-stats';
 import { apiResponse, apiError, HttpStatus } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 
@@ -23,12 +23,14 @@ export const GET: APIRoute = async (context) => {
     }
 
     const trends = await getActivityTrends(userId);
+    const rankingPercentile = await getUserRankingPercentile(userId);
 
     return apiResponse(context, HttpStatus.OK, {
       success: true,
       data: {
         ...stats,
-        trends
+        trends,
+        rankingPercentile
       }
     });
   } catch (error) {

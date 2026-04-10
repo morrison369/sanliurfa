@@ -5,6 +5,11 @@
 
 import { logger } from './logging';
 
+function round(value: number, digits: number = 2): number {
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
+}
+
 // ==================== TYPES & INTERFACES ====================
 
 export interface SupplyChainMetrics {
@@ -57,25 +62,59 @@ export class SupplyChainMetrics {
     return this.metrics.get(period) || null;
   }
 
+  getLatestMetrics(): SupplyChainMetrics | null {
+    const entries = Array.from(this.metrics.values());
+    return entries.length > 0 ? entries[entries.length - 1] : null;
+  }
+
+  getAllMetrics(): SupplyChainMetrics[] {
+    return Array.from(this.metrics.values());
+  }
+
   /**
    * Calculate average lead time
    */
   calculateLeadTime(sku: string): number {
-    return Math.round(Math.random() * 14 + 2); // 2-16 days
+    const metrics = this.getAllMetrics();
+    if (metrics.length === 0) {
+      return 0;
+    }
+
+    return round(metrics.reduce((sum, metric) => sum + metric.leadTime, 0) / metrics.length);
   }
 
   /**
    * Get inventory turnover
    */
   getInventoryTurnover(sku: string, period: string): number {
-    return Math.round(Math.random() * 10 * 100) / 100;
+    const periodMetrics = this.getMetrics(period);
+    if (periodMetrics) {
+      return periodMetrics.inventoryTurnover;
+    }
+
+    const metrics = this.getAllMetrics();
+    if (metrics.length === 0) {
+      return 0;
+    }
+
+    return round(metrics.reduce((sum, metric) => sum + metric.inventoryTurnover, 0) / metrics.length);
   }
 
   /**
    * Get fulfillment rate
    */
   getFulfillmentRate(period: string): number {
-    return Math.round((Math.random() * 5 + 95) * 100) / 100; // 95-100%
+    const periodMetrics = this.getMetrics(period);
+    if (periodMetrics) {
+      return periodMetrics.fulfillmentRate;
+    }
+
+    const metrics = this.getAllMetrics();
+    if (metrics.length === 0) {
+      return 0;
+    }
+
+    return round(metrics.reduce((sum, metric) => sum + metric.fulfillmentRate, 0) / metrics.length);
   }
 }
 
@@ -153,26 +192,43 @@ export class SupplierAnalytics {
 // ==================== OPTIMIZATION ENGINE ====================
 
 export class OptimizationEngine {
+  constructor(
+    private metricsRegistry: SupplyChainMetrics,
+    private supplierRegistry: SupplierAnalytics
+  ) {}
+
   /**
    * Analyze costs
    */
   analyzeCosts(period: string): OptimizationRecommendation[] {
     const recommendations: OptimizationRecommendation[] = [];
+    const metrics = this.metricsRegistry.getMetrics(period) || this.metricsRegistry.getLatestMetrics();
+    const supplierScores = this.supplierRegistry.compareSuppliers('all');
+    const bestSupplierScore = supplierScores[0]?.score || 0;
 
-    if (Math.random() > 0.5) {
+    if (metrics && metrics.costPerUnit > 100) {
       recommendations.push({
         type: 'cost',
         description: 'Consolidate shipments to reduce carrier costs',
-        impact: '10-15% reduction',
+        impact: `${Math.max(5, Math.round(metrics.costPerUnit * 0.08))}% reduction`,
         effort: 'low'
       });
     }
 
-    if (Math.random() > 0.6) {
+    if (metrics && metrics.fulfillmentRate < 97) {
       recommendations.push({
-        type: 'cost',
-        description: 'Negotiate volume discounts with suppliers',
-        impact: '5-8% reduction',
+        type: 'efficiency',
+        description: 'Rebalance safety stock to recover fulfillment rate',
+        impact: `${round(100 - metrics.fulfillmentRate)}% service improvement`,
+        effort: 'medium'
+      });
+    }
+
+    if (supplierScores.length > 0 && bestSupplierScore < 85) {
+      recommendations.push({
+        type: 'quality',
+        description: 'Renegotiate supplier SLAs and introduce quality scorecards',
+        impact: `${Math.max(5, 90 - bestSupplierScore)} point supplier uplift`,
         effort: 'medium'
       });
     }
@@ -185,13 +241,18 @@ export class OptimizationEngine {
    */
   detectBottlenecks(warehouseId?: string): BottleneckReport[] {
     const reports: BottleneckReport[] = [];
+    const metrics = this.metricsRegistry.getLatestMetrics();
 
-    if (Math.random() > 0.6) {
+    if (!metrics) {
+      return reports;
+    }
+
+    if (metrics.leadTime > 10 || metrics.fulfillmentRate < 96) {
       reports.push({
         location: warehouseId || 'Main Warehouse',
-        severity: 'medium',
-        affectedSKUs: Math.floor(Math.random() * 50) + 10,
-        delayDays: Math.floor(Math.random() * 5) + 1
+        severity: metrics.leadTime > 14 || metrics.fulfillmentRate < 94 ? 'high' : 'medium',
+        affectedSKUs: Math.max(5, Math.round(metrics.inventoryTurnover * 3)),
+        delayDays: Math.max(1, Math.round(metrics.leadTime - 7))
       });
     }
 
@@ -222,9 +283,35 @@ export class OptimizationEngine {
    * Simulate scenario
    */
   simulateScenario(changes: Record<string, any>): { costSavings: number; riskLevel: number } {
+    const metrics = this.metricsRegistry.getLatestMetrics();
+    const baselineCostPerUnit = metrics?.costPerUnit || 0;
+    const leadTimeReductionDays = Number(changes.leadTimeReductionDays || 0);
+    const inventoryReductionPercent = Number(changes.inventoryReductionPercent || 0);
+    const fulfillmentImpactPercent = Number(changes.fulfillmentImpactPercent || 0);
+    const supplierDiversification = Number(changes.supplierDiversification || 0);
+
+    const costSavings = round(
+      baselineCostPerUnit * Math.max(0, inventoryReductionPercent / 100) * 100 +
+      Math.max(0, leadTimeReductionDays) * 500 +
+      Math.max(0, supplierDiversification) * 250
+    );
+
+    const riskLevel = Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round(
+          Math.max(0, inventoryReductionPercent - 20) * 1.5 +
+          Math.max(0, -fulfillmentImpactPercent) * 4 +
+          Math.max(0, (metrics?.leadTime || 0) - 10) * 2 -
+          Math.max(0, supplierDiversification) * 3
+        )
+      )
+    );
+
     return {
-      costSavings: Math.round(Math.random() * 20000 + 5000),
-      riskLevel: Math.round(Math.random() * 50)
+      costSavings,
+      riskLevel
     };
   }
 
@@ -259,4 +346,4 @@ export class OptimizationEngine {
 
 export const supplyChainMetrics = new SupplyChainMetrics();
 export const supplierAnalytics = new SupplierAnalytics();
-export const optimizationEngine = new OptimizationEngine();
+export const optimizationEngine = new OptimizationEngine(supplyChainMetrics, supplierAnalytics);
