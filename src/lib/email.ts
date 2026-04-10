@@ -3,7 +3,7 @@
  * Queue-based email sending with templates
  */
 
-import { insert, queryMany, query, queryOne } from './postgres';
+import { insert, queryRows, query, queryOne } from './postgres';
 import { logger } from './logging';
 
 export interface EmailTemplate {
@@ -82,7 +82,7 @@ export async function queueEmail(
  */
 export async function getPendingEmails(limit: number = 50): Promise<any[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT * FROM email_queue
        WHERE status = 'pending' AND retry_count < max_retries
        ORDER BY created_at ASC
@@ -90,7 +90,7 @@ export async function getPendingEmails(limit: number = 50): Promise<any[]> {
       [limit]
     );
 
-    return results.rows || [];
+    return results;
   } catch (error) {
     logger.error('Failed to get pending emails', error instanceof Error ? error : new Error(String(error)));
     return [];

@@ -3,7 +3,7 @@
  * Following-based, trending, and popular feeds
  */
 
-import { queryMany } from './postgres';
+import { queryRows } from './postgres';
 import { getCache, setCache } from './cache';
 import { logger } from './logging';
 
@@ -54,7 +54,7 @@ export async function getPersonalizedFeed(
 
 export async function getFollowingFeed(userId: string, limit: number = 50): Promise<FeedItem[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         r.id,
         'review' as type,
@@ -76,7 +76,7 @@ export async function getFollowingFeed(userId: string, limit: number = 50): Prom
       [userId, limit]
     );
 
-    return results.rows.map((row: any) => ({
+    return results.map((row: any) => ({
       id: row.id,
       type: row.type,
       user_id: row.user_id,
@@ -102,7 +102,7 @@ export async function getTrendingFeed(limit: number = 50): Promise<FeedItem[]> {
     const cached = await getCache<FeedItem[]>(cacheKey);
     if (cached) return cached;
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         r.id,
         'review' as type,
@@ -124,7 +124,7 @@ export async function getTrendingFeed(limit: number = 50): Promise<FeedItem[]> {
       [limit]
     );
 
-    const feed = results.rows.map((row: any) => ({
+    const feed = results.map((row: any) => ({
       id: row.id,
       type: row.type,
       user_id: row.user_id,
@@ -153,7 +153,7 @@ export async function getPopularFeed(limit: number = 50): Promise<FeedItem[]> {
     const cached = await getCache<FeedItem[]>(cacheKey);
     if (cached) return cached;
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         r.id,
         'review' as type,
@@ -174,7 +174,7 @@ export async function getPopularFeed(limit: number = 50): Promise<FeedItem[]> {
       [limit]
     );
 
-    const feed = results.rows.map((row: any) => ({
+    const feed = results.map((row: any) => ({
       id: row.id,
       type: row.type,
       user_id: row.user_id,
@@ -203,7 +203,7 @@ export async function getRecentFeed(limit: number = 50): Promise<FeedItem[]> {
     const cached = await getCache<FeedItem[]>(cacheKey);
     if (cached) return cached;
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         r.id,
         'review' as type,
@@ -224,7 +224,7 @@ export async function getRecentFeed(limit: number = 50): Promise<FeedItem[]> {
       [limit]
     );
 
-    const feed = results.rows.map((row: any) => ({
+    const feed = results.map((row: any) => ({
       id: row.id,
       type: row.type,
       user_id: row.user_id,

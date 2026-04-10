@@ -2,7 +2,7 @@
  * Content Management Library
  * Content creation, management, and publishing
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 
@@ -145,7 +145,7 @@ export async function publishContent(contentId: string, userId: string): Promise
 
 export async function getUserContent(userId: string, limit: number = 20): Promise<any[]> {
   try {
-    const content = await queryMany(`
+    const content = await queryRows(`
       SELECT
         id,
         title,
@@ -205,7 +205,7 @@ export async function getPublishedContent(category?: string, limit: number = 20)
     query += ` ORDER BY published_at DESC LIMIT $${params.length + 1}`;
     params.push(limit);
 
-    const content = await queryMany(query, params);
+    const content = await queryRows(query, params);
     await setCache(cacheKey, JSON.stringify(content), 3600);
     return content;
   } catch (error) {
@@ -252,7 +252,7 @@ export async function recordContentView(contentId: string, userId?: string): Pro
 
 export async function getContentVersions(contentId: string): Promise<any[]> {
   try {
-    return await queryMany(`
+    return await queryRows(`
       SELECT
         version_number,
         title,
@@ -272,7 +272,7 @@ export async function getContentVersions(contentId: string): Promise<any[]> {
 
 export async function getContentAuditTrail(contentId: string, limit: number = 50): Promise<any[]> {
   try {
-    return await queryMany(`
+    return await queryRows(`
       SELECT
         id,
         action_type,

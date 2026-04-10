@@ -3,7 +3,7 @@
  * Core email sending, queue management, and template rendering
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export interface EmailMessage {
@@ -68,7 +68,7 @@ export async function enqueueEmail(email: EmailMessage): Promise<string> {
  */
 export async function getPendingEmails(limit: number = 100): Promise<QueuedEmail[]> {
   try {
-    const emails = await queryMany(`
+    const emails = await queryRows(`
       SELECT id, recipient_email, subject, status, delivery_attempts, sent_at, last_error, created_at
       FROM email_queue
       WHERE status = 'pending' AND delivery_attempts < max_attempts
