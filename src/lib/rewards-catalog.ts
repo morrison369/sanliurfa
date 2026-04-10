@@ -3,6 +3,7 @@
  * Browse, redeem, and track rewards
  */
 
+import { randomBytes } from 'node:crypto';
 import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 import { redeemPoints } from './loyalty-system';
@@ -33,6 +34,14 @@ export interface RewardRedemption {
   redemption_code?: string;
   fulfilled_at?: string;
   created_at: string;
+}
+
+export function generateCatalogRedemptionCode(): string {
+  return `RWD-${Date.now()}-${randomBytes(5).toString('hex').toUpperCase()}`;
+}
+
+export function generateCatalogDiscountCode(): string {
+  return `DSCNT-${Date.now()}-${randomBytes(5).toString('hex').toUpperCase()}`;
 }
 
 /**
@@ -147,7 +156,7 @@ export async function redeemReward(
     await redeemPoints(userId, reward.points_cost, `Reward redeemed: ${reward.reward_name}`, rewardId);
 
     // Generate redemption code
-    const redemptionCode = `RWD-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    const redemptionCode = generateCatalogRedemptionCode();
 
     // Create redemption record
     const redemption = await insert('reward_redemptions', {
@@ -301,7 +310,7 @@ export async function generateDiscountCode(
   validDays: number = 30
 ): Promise<{ code: string }> {
   try {
-    const code = `DSCNT-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    const code = generateCatalogDiscountCode();
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + validDays);
 

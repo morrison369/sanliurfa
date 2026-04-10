@@ -132,14 +132,19 @@ export class MediaProcessor {
    * Generate variant
    */
   async generateVariant(assetId: string, variant: 'thumbnail' | 'preview' | 'compressed'): Promise<MediaAsset> {
-    // Simplified: return mock asset
+    const asset = assetManager.get(assetId);
+    if (!asset) {
+      throw new Error(`Asset not found: ${assetId}`);
+    }
+
+    const sizeMultiplier = variant === 'thumbnail' ? 0.15 : variant === 'preview' ? 0.4 : 0.7;
     return {
       id: assetId + '-' + variant,
-      type: 'image',
-      url: '/variants/' + variant,
-      size: 1000,
-      mimeType: 'image/jpeg',
-      metadata: { variant },
+      type: asset.type,
+      url: `${asset.url}${asset.url.includes('?') ? '&' : '?'}variant=${variant}`,
+      size: Math.max(1, Math.round(asset.size * sizeMultiplier)),
+      mimeType: asset.mimeType,
+      metadata: { ...asset.metadata, variant, sourceAssetId: assetId },
       uploadedAt: Date.now()
     };
   }

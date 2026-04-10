@@ -3,6 +3,7 @@
  * Double-entry bookkeeping, account management, transaction posting
  */
 
+import { deterministicBoolean } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -263,7 +264,7 @@ export class TrialBalance {
     let discrepancies = 0;
 
     accounts.forEach(account => {
-      if (Math.random() > 0.1) {
+      if (deterministicBoolean(`reconcile:${period}:${account.id}:${account.number}`, 0.1)) {
         reconciled++;
       } else {
         discrepancies++;

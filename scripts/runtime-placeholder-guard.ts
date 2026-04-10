@@ -77,7 +77,14 @@ const FILES = [
   'src/lib/escalation-management.ts',
   'src/lib/data-quality.ts',
   'src/lib/inventory-warehouse.ts',
-  'src/lib/marketing-automation.ts'
+  'src/lib/marketing-automation.ts',
+  'src/lib/geo-intelligence.ts',
+  'src/lib/general-ledger.ts',
+  'src/lib/hr-recruitment.ts',
+  'src/lib/infrastructure-orchestration.ts',
+  'src/lib/rewards.ts',
+  'src/lib/rewards-catalog.ts',
+  'src/lib/content-pipeline.ts'
 ];
 
 const PATTERNS = [

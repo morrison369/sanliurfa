@@ -3,6 +3,7 @@
  * Proximity search, geofencing, location clustering, heatmaps
  */
 
+import { deterministicInt } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -223,10 +224,15 @@ export class LocationAnalytics {
       }));
     }
 
-    // Simple k-means: select k random points as initial centroids
     const centroids: GeoPoint[] = [];
+    const usedIndices = new Set<number>();
     for (let i = 0; i < k; i++) {
-      centroids.push(points[Math.floor(Math.random() * points.length)]);
+      let index = deterministicInt(`geo-cluster:${points.length}:${k}:${i}`, 0, points.length - 1);
+      while (usedIndices.has(index)) {
+        index = (index + 1) % points.length;
+      }
+      usedIndices.add(index);
+      centroids.push(points[index]);
     }
 
     const clusters: GeoPoint[][] = Array(k).fill(null).map(() => []);

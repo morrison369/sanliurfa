@@ -3,6 +3,7 @@
  * Container management, infrastructure as code, deployment automation, resource scaling
  */
 
+import { deterministicBoolean, deterministicNumber } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -122,7 +123,7 @@ export class ContainerManager {
     for (let i = 0; i < (limit || 10); i++) {
       logs.push({
         timestamp: Date.now() - i * 1000,
-        level: Math.random() > 0.1 ? 'info' : 'warn',
+        level: deterministicBoolean(`container-log:${containerId}:${i}`, 0.1) ? 'info' : 'warn',
         message: `Container log entry ${i}`
       });
     }
@@ -346,7 +347,7 @@ export class AutoScaler {
    * Evaluate scaling
    */
   evaluateScaling(metric: string, threshold: number): boolean {
-    const currentValue = Math.random() * 100;
+    const currentValue = deterministicNumber(`scale:${metric}:${threshold}`, 0, 100, 2);
     const needsScaling = currentValue > threshold;
 
     logger.debug('Scaling evaluation', {

@@ -2,9 +2,14 @@
  * Rewards Library
  * Rewards catalog, redemption, and inventory management
  */
+import { randomBytes } from 'node:crypto';
 import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { deleteCache, getCache, setCache } from './cache';
+
+export function generateRewardRedemptionCode(): string {
+  return `RWD-${Date.now()}-${randomBytes(5).toString('hex').toUpperCase()}`;
+}
 
 export async function getRewardsCatalog(filters?: { category?: string; tier?: string }): Promise<any[]> {
   try {
@@ -89,7 +94,7 @@ export async function redeemReward(userId: string, rewardId: string): Promise<{ 
       return { success: false, error: 'Insufficient points' };
     }
 
-    const redemptionCode = `RWD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    const redemptionCode = generateRewardRedemptionCode();
 
     await insert('reward_redemptions', {
       user_id: userId,

@@ -3,6 +3,7 @@
  * Job postings, applications, candidate tracking, offers
  */
 
+import { deterministicNumber } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -270,7 +271,12 @@ export class CandidateManager {
     let score = 0;
     score += candidate.yearsExperience * 5;
     score += candidate.skills.length * 10;
-    score += Math.random() * 20;
+    score += deterministicNumber(
+      `candidate-score:${candidateId}:${candidate.skills.join(',')}:${candidate.yearsExperience}`,
+      0,
+      20,
+      2
+    );
 
     return Math.min(100, score);
   }
