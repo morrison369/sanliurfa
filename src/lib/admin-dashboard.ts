@@ -6,7 +6,7 @@ import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { metricsCollector } from './metrics';
 import { getSearchTrends } from './analytics';
-import { suggestIndexes, getSlowQueries, CACHE_STRATEGIES } from './performance-optimizer';
+import { getPerformanceOpsSummary } from './performance-ops-summary';
 
 function toPercent(numerator: number, denominator: number): number {
   if (denominator <= 0) {
@@ -267,81 +267,7 @@ export async function getOperationalSnapshot(days: number = 7): Promise<any> {
 }
 
 export async function getPerformanceOptimizationSummary(): Promise<any> {
-  try {
-    const slowQueries = getSlowQueries(100);
-    const indexSuggestions = await suggestIndexes();
-    const requestMetrics = metricsCollector.getMetrics();
-    const slowOperations = metricsCollector.getSlowOperations(5);
-
-    const recommendations = {
-      slowQueries: slowQueries.length > 5,
-      slowRequests: requestMetrics.slowRequestRate > 10,
-      cacheHitRate: requestMetrics.cacheHitRate < 50,
-      indexes: indexSuggestions.length > 0
-    };
-
-    return {
-      generatedAt: new Date().toISOString(),
-      recommendations: {
-        total:
-          Number(recommendations.slowQueries) +
-          Number(recommendations.slowRequests) +
-          Number(recommendations.cacheHitRate) +
-          Number(recommendations.indexes),
-        highPriority:
-          Number(recommendations.slowQueries) +
-          Number(recommendations.slowRequests),
-        mediumPriority:
-          Number(recommendations.cacheHitRate) +
-          Number(recommendations.indexes)
-      },
-      metrics: {
-        slowQueriesCount: slowQueries.length,
-        slowRequestRate: requestMetrics.slowRequestRate,
-        cacheHitRate: requestMetrics.cacheHitRate,
-        avgRequestDuration: requestMetrics.avgDuration,
-        p95Duration: requestMetrics.p95Duration
-      },
-      cacheStrategies: {
-        count: Object.keys(CACHE_STRATEGIES).length
-      },
-      indexSuggestions: {
-        count: indexSuggestions.length,
-        top: indexSuggestions.slice(0, 3)
-      },
-      slowOperations: slowOperations.map((op) => ({
-        type: op.type,
-        message: op.message,
-        duration: op.duration,
-        timestamp: new Date(op.timestamp).toISOString()
-      }))
-    };
-  } catch (error) {
-    logger.error('Failed to get performance optimization summary', error instanceof Error ? error : new Error(String(error)));
-    return {
-      generatedAt: new Date().toISOString(),
-      recommendations: {
-        total: 0,
-        highPriority: 0,
-        mediumPriority: 0
-      },
-      metrics: {
-        slowQueriesCount: 0,
-        slowRequestRate: 0,
-        cacheHitRate: 0,
-        avgRequestDuration: 0,
-        p95Duration: 0
-      },
-      cacheStrategies: {
-        count: Object.keys(CACHE_STRATEGIES).length
-      },
-      indexSuggestions: {
-        count: 0,
-        top: []
-      },
-      slowOperations: []
-    };
-  }
+  return getPerformanceOpsSummary();
 }
 
 export async function getRecentActivity(limit: number = 20): Promise<any[]> {

@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { logger } from './logging';
+import type { PerformanceOpsSummary } from './performance-ops-summary';
 
 export type NightlyOpsSummary = {
   available: boolean;
@@ -10,6 +11,7 @@ export type NightlyOpsSummary = {
   successRatePercent: number | null;
   recentOutcomes: string[];
   topFailures: string[];
+  performanceOptimization?: PerformanceOpsSummary | null;
 };
 
 function createDefaultSummary(kind: 'regression' | 'e2e'): NightlyOpsSummary {
@@ -20,7 +22,8 @@ function createDefaultSummary(kind: 'regression' | 'e2e'): NightlyOpsSummary {
     outcome: 'missing',
     successRatePercent: null,
     recentOutcomes: [],
-    topFailures: []
+    topFailures: [],
+    performanceOptimization: null
   };
 }
 
@@ -37,7 +40,10 @@ async function readSummaryFile(fileName: string, kind: 'regression' | 'e2e'): Pr
       outcome: typeof parsed.outcome === 'string' ? parsed.outcome : 'missing',
       successRatePercent: typeof parsed.successRatePercent === 'number' ? parsed.successRatePercent : null,
       recentOutcomes: Array.isArray(parsed.recentOutcomes) ? parsed.recentOutcomes.map((item) => String(item)) : [],
-      topFailures: Array.isArray(parsed.topFailures) ? parsed.topFailures.map((item) => String(item)) : []
+      topFailures: Array.isArray(parsed.topFailures) ? parsed.topFailures.map((item) => String(item)) : [],
+      performanceOptimization: parsed.performanceOptimization && typeof parsed.performanceOptimization === 'object'
+        ? parsed.performanceOptimization as PerformanceOpsSummary
+        : null
     };
   } catch (error) {
     logger.warn('Nightly ops summary could not be read', {

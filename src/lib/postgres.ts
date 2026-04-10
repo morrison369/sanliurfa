@@ -237,19 +237,19 @@ export async function queryStream(text: string, params?: any[], onRow?: (row: an
     }));
 
     return new Promise<number>((resolve, reject) => {
-      query.on('row', async (row) => {
+      query.on('row', async (row: any) => {
         rowCount++;
         if (onRow) {
           try {
             await onRow(row);
-          } catch (err) {
-            logger.error('Row processing error in stream', err);
+          } catch (err: unknown) {
+            logger.error('Row processing error in stream', err instanceof Error ? err : new Error(String(err)));
           }
         }
       });
 
-      query.on('error', (err) => {
-        logger.error('Stream query error', err);
+      query.on('error', (err: unknown) => {
+        logger.error('Stream query error', err instanceof Error ? err : new Error(String(err)));
         reject(err);
       });
 

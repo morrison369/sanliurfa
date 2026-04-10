@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { logger } from './logging';
+import type { PerformanceOpsSummary } from './performance-ops-summary';
 
 export type ReleaseGateStepResult = {
   step: string;
@@ -17,6 +18,7 @@ export type ReleaseGateSummary = {
   advisoryFailedSteps: string[];
   failedStepCount: number;
   steps: ReleaseGateStepResult[];
+  performanceOptimization?: PerformanceOpsSummary | null;
 };
 
 const defaultSummary: ReleaseGateSummary = {
@@ -26,7 +28,8 @@ const defaultSummary: ReleaseGateSummary = {
   blockingFailedSteps: [],
   advisoryFailedSteps: [],
   failedStepCount: 0,
-  steps: []
+  steps: [],
+  performanceOptimization: null
 };
 
 export async function getReleaseGateSummary(): Promise<ReleaseGateSummary> {
@@ -46,7 +49,10 @@ export async function getReleaseGateSummary(): Promise<ReleaseGateSummary> {
       blockingFailedSteps,
       advisoryFailedSteps,
       failedStepCount: blockingFailedSteps.length + advisoryFailedSteps.length,
-      steps
+      steps,
+      performanceOptimization: parsed.performanceOptimization && typeof parsed.performanceOptimization === 'object'
+        ? parsed.performanceOptimization as PerformanceOpsSummary
+        : null
     };
   } catch (error) {
     logger.warn('Release gate summary could not be read', {

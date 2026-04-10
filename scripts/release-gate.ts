@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { getPerformanceOpsSummary } from '../src/lib/performance-ops-summary';
 
 type StepResult = {
   step: string;
@@ -43,9 +44,10 @@ function runOptional(step: string, command: string): void {
   }
 }
 
-function writeSummary(finalStatus: 'passed' | 'failed'): void {
+async function writeSummary(finalStatus: 'passed' | 'failed'): Promise<void> {
   const reportPath = resolve(process.cwd(), 'docs/reports/release-gate-summary.json');
   mkdirSync(resolve(process.cwd(), 'docs/reports'), { recursive: true });
+  const performanceOptimization = await getPerformanceOpsSummary();
   writeFileSync(
     reportPath,
     `${JSON.stringify(
@@ -54,7 +56,8 @@ function writeSummary(finalStatus: 'passed' | 'failed'): void {
         finalStatus,
         blockingFailedSteps: stepResults.filter((step) => !step.advisory && step.status === 'failed').map((step) => step.step),
         advisoryFailedSteps: stepResults.filter((step) => step.advisory && step.status === 'failed').map((step) => step.step),
-        steps: stepResults
+        steps: stepResults,
+        performanceOptimization
       },
       null,
       2
@@ -63,7 +66,7 @@ function writeSummary(finalStatus: 'passed' | 'failed'): void {
   );
 }
 
-function main(): void {
+async function main(): Promise<void> {
   try {
     run('Environment contract (local)', 'npm run env:contract:check');
     run('Repository stabilization checks', 'npm run repo:stabilize:check');
@@ -98,10 +101,10 @@ function main(): void {
     run('Build', 'npm run build');
     run('Performance budget check', 'npm run performance:budget:check');
     run('SEO artifacts check', 'npm run seo:artifacts:check');
-    writeSummary('passed');
+    await writeSummary('passed');
     console.log('\n[release-gate] OK');
   } catch (error) {
-    writeSummary('failed');
+    await writeSummary('failed');
     throw error;
   }
 }

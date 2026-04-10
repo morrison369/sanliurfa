@@ -1,7 +1,7 @@
 // Redis Caching Layer with Namespacing
 import { createClient } from 'redis';
 
-const redisUrl = process.env.REDIS_URL || import.meta.env.REDIS_URL || 'redis://localhost:6379';
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 const KEY_PREFIX = process.env.REDIS_KEY_PREFIX || 'sanliurfa:';
 
 let client: ReturnType<typeof createClient> | null = null;

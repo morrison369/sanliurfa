@@ -100,6 +100,11 @@ jobs:
           NODE
           cat migration-summary.md >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Write performance ops summary
+        if: always()
+        continue-on-error: true
+        run: npm run performance:ops:summary:write
+
       - name: Write nightly regression summary
         if: always()
         uses: actions/github-script@v7
@@ -143,7 +148,10 @@ jobs:
               outcome: process.env.REGRESSION_OUTCOME || 'missing',
               successRatePercent,
               recentOutcomes,
-              topFailures
+              topFailures,
+              performanceOptimization: fs.existsSync(path.join(process.cwd(), 'docs', 'reports', 'performance-ops-summary.json'))
+                ? JSON.parse(fs.readFileSync(path.join(process.cwd(), 'docs', 'reports', 'performance-ops-summary.json'), 'utf8'))
+                : null
             };
             fs.mkdirSync(path.join(process.cwd(), 'docs', 'reports'), { recursive: true });
             fs.writeFileSync(
@@ -234,6 +242,8 @@ jobs:
                   `- Branch: ${process.env.RELEASE_GATE_RUN_BRANCH || 'bilinmiyor'}`,
                   `- Final status: ${releaseGate.finalStatus || 'missing'}`,
                   `- Generated at: ${releaseGate.generatedAt || 'bilinmiyor'}`,
+                  `- Performance recommendations: ${releaseGate.performanceOptimization?.recommendations?.total ?? 'unknown'}`,
+                  `- Slow request rate: ${releaseGate.performanceOptimization?.metrics?.slowRequestRate ?? 'unknown'}%`,
                   ...blocking,
                   ...advisory,
                   ...stepPreview
@@ -294,7 +304,10 @@ jobs:
                   '## Nightly Summary',
                   `- Outcome: ${nightlySummary.outcome}`,
                   `- Success rate: ${nightlySummary.successRatePercent ?? 'unknown'}%`,
-                  `- Recent outcomes: ${(nightlySummary.recentOutcomes || []).join(', ') || 'yok'}`
+                  `- Recent outcomes: ${(nightlySummary.recentOutcomes || []).join(', ') || 'yok'}`,
+                  `- Performance recommendations: ${nightlySummary.performanceOptimization?.recommendations?.total ?? 'unknown'}`,
+                  `- Slow request rate: ${nightlySummary.performanceOptimization?.metrics?.slowRequestRate ?? 'unknown'}%`,
+                  `- Cache hit rate: ${nightlySummary.performanceOptimization?.metrics?.cacheHitRate ?? 'unknown'}%`
                 ].join('\n')
               : '## Nightly Summary\n- Summary file unavailable';
             const finalIssueBody = [body, '', nightlySummaryBlock, '', trendSummary].join('\n');
