@@ -6,6 +6,7 @@
 import { pool } from '../src/lib/postgres';
 import { v4 as uuidv4 } from 'uuid';
 import bcryptjs from 'bcryptjs';
+import { deterministicInt, deterministicNumber } from '../src/lib/deterministic';
 
 const PLACES_COUNT = 100;
 const USERS_COUNT = 50;
@@ -49,8 +50,8 @@ async function seedDatabase() {
     const places = [];
     for (let i = 0; i < PLACES_COUNT; i++) {
       const placeId = uuidv4();
-      const category = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
-      const district = DISTRICTS[Math.floor(Math.random() * DISTRICTS.length)];
+      const category = CATEGORIES[deterministicInt(`seed-place-category:${i}`, 0, CATEGORIES.length - 1)];
+      const district = DISTRICTS[deterministicInt(`seed-place-district:${i}`, 0, DISTRICTS.length - 1)];
 
       await pool.query(
         `INSERT INTO places (id, name, description, category, district, latitude, longitude, rating, created_at)
@@ -61,9 +62,9 @@ async function seedDatabase() {
           `Description for place ${i + 1}`,
           category,
           district,
-          37.1592 + Math.random() * 0.1,
-          38.7969 + Math.random() * 0.1,
-          Math.floor(Math.random() * 5) + 1
+          deterministicNumber(`seed-place-lat:${i}`, 37.1592, 37.2592, 6),
+          deterministicNumber(`seed-place-lng:${i}`, 38.7969, 38.8969, 6),
+          deterministicInt(`seed-place-rating:${i}`, 1, 5)
         ]
       );
 
@@ -74,11 +75,12 @@ async function seedDatabase() {
     // Seed reviews
     console.log('⭐ Creating reviews...');
     let reviewCount = 0;
-    for (const placeId of places) {
+    for (let placeIndex = 0; placeIndex < places.length; placeIndex++) {
+      const placeId = places[placeIndex];
       for (let i = 0; i < REVIEWS_PER_PLACE; i++) {
         const reviewId = uuidv4();
-        const userId = users[Math.floor(Math.random() * users.length)];
-        const rating = Math.floor(Math.random() * 5) + 1;
+        const userId = users[deterministicInt(`seed-review-user:${placeIndex}:${i}`, 0, users.length - 1)];
+        const rating = deterministicInt(`seed-review-rating:${placeIndex}:${i}`, 1, 5);
 
         await pool.query(
           `INSERT INTO reviews (id, place_id, user_id, rating, comment, created_at)
@@ -100,9 +102,10 @@ async function seedDatabase() {
     // Seed favorites
     console.log('❤️ Creating favorites...');
     let favoriteCount = 0;
-    for (const userId of users.slice(0, 10)) {
+    for (let userIndex = 0; userIndex < Math.min(10, users.length); userIndex++) {
+      const userId = users[userIndex];
       for (let i = 0; i < 10; i++) {
-        const placeId = places[Math.floor(Math.random() * places.length)];
+        const placeId = places[deterministicInt(`seed-favorite-place:${userIndex}:${i}`, 0, places.length - 1)];
 
         try {
           await pool.query(
