@@ -7,6 +7,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { logger } from './logging';
 import { queryRows } from './postgres';
+import { getRuntimeIntegrationSettings } from './runtime-integration-settings';
 
 export interface DeploymentEnvironment {
   name: 'development' | 'staging' | 'production';
@@ -347,6 +348,27 @@ export function getDeploymentChecklist(): Record<string, boolean> {
 }
 
 /**
+ * Get deployment checklist with runtime integration settings (env + admin panel)
+ */
+export async function getDeploymentChecklistRuntime(): Promise<Record<string, boolean>> {
+  const integrationSettings = await getRuntimeIntegrationSettings();
+
+  return {
+    'Environment variables configured': !!process.env.DATABASE_URL && !!process.env.REDIS_URL,
+    'SSL enabled': process.env.NODE_ENV === 'production',
+    'Database migrated': true,
+    'Backups configured': getEnabledBackups().length > 0,
+    'Monitoring enabled': true,
+    'Error logging configured': true,
+    'Rate limiting enabled': true,
+    'CORS configured': !!process.env.CORS_ORIGINS,
+    'Email service configured': !!integrationSettings.resendApiKey,
+    'Stripe configured': !!process.env.STRIPE_SECRET_KEY,
+    'Redis configured': !!process.env.REDIS_URL
+  };
+}
+
+/**
  * Get readiness status
  */
 export function getReadinessStatus(): {
@@ -355,6 +377,22 @@ export function getReadinessStatus(): {
   readyPercentage: number;
 } {
   const checks = getDeploymentChecklist();
+  const passedChecks = Object.values(checks).filter(Boolean).length;
+  const totalChecks = Object.keys(checks).length;
+
+  return {
+    ready: passedChecks === totalChecks,
+    checks,
+    readyPercentage: Math.round((passedChecks / totalChecks) * 100)
+  };
+}
+
+export async function getReadinessStatusRuntime(): Promise<{
+  ready: boolean;
+  checks: Record<string, boolean>;
+  readyPercentage: number;
+}> {
+  const checks = await getDeploymentChecklistRuntime();
   const passedChecks = Object.values(checks).filter(Boolean).length;
   const totalChecks = Object.keys(checks).length;
 

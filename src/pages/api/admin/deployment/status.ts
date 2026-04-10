@@ -3,7 +3,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getCurrentEnvironment, getReadinessStatus, getDeploymentChecklist } from '../../../../lib/deployment';
+import { getCurrentEnvironment, getReadinessStatusRuntime, getDeploymentChecklistRuntime } from '../../../../lib/deployment';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
@@ -20,8 +20,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     const environment = getCurrentEnvironment();
-    const readiness = getReadinessStatus();
-    const checklist = getDeploymentChecklist();
+    const [readiness, checklist] = await Promise.all([
+      getReadinessStatusRuntime(),
+      getDeploymentChecklistRuntime()
+    ]);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/deployment/status', HttpStatus.OK, duration);
