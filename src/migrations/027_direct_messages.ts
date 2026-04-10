@@ -3,10 +3,13 @@
  * User-to-user messaging system (conversations + direct_messages)
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_027_direct_messages = async (pool: Pool) => {
-  try {
+export const migration_027_direct_messages: Migration = {
+  version: '027_direct_messages',
+  description: 'Direct messaging conversations, messages, and deletions',
+  up: async (pool: any) => {
+    try {
     // Conversations table (two-way unique)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS conversations (
@@ -78,22 +81,22 @@ export const migration_027_direct_messages = async (pool: Pool) => {
       ON conversation_deletions(user_id, deleted_at DESC)
     `);
 
-    console.log('✓ Migration 027 completed: Direct messaging tables created');
-  } catch (error) {
-    console.error('Migration 027 failed:', error);
-    throw error;
-  }
-};
+      console.log('✓ Migration 027 completed: Direct messaging tables created');
+    } catch (error) {
+      console.error('Migration 027 failed:', error);
+      throw error;
+    }
+  },
+  down: async (pool: any) => {
+    try {
+      await pool.query('DROP TABLE IF EXISTS conversation_deletions CASCADE');
+      await pool.query('DROP TABLE IF EXISTS direct_messages CASCADE');
+      await pool.query('DROP TABLE IF EXISTS conversations CASCADE');
 
-export const rollback_027 = async (pool: Pool) => {
-  try {
-    await pool.query('DROP TABLE IF EXISTS conversation_deletions CASCADE');
-    await pool.query('DROP TABLE IF EXISTS direct_messages CASCADE');
-    await pool.query('DROP TABLE IF EXISTS conversations CASCADE');
-
-    console.log('✓ Migration 027 rolled back');
-  } catch (error) {
-    console.error('Rollback 027 failed:', error);
-    throw error;
+      console.log('✓ Migration 027 rolled back');
+    } catch (error) {
+      console.error('Rollback 027 failed:', error);
+      throw error;
+    }
   }
 };

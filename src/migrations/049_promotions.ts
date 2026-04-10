@@ -3,8 +3,11 @@
  * Allow place owners to create and manage promotional offers
  */
 
-export const migration_049_promotions = {
-  name: '049_promotions',
+import type { Migration } from '../lib/migrations';
+
+export const migration_049_promotions: Migration = {
+  version: '049_promotions',
+  description: 'Business promotions and coupon management',
   async up(pool: any) {
     // Promotions table
     await pool.query(`

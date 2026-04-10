@@ -3,8 +3,11 @@
  * Track and aggregate business metrics for place owners
  */
 
-export const migration_050_business_analytics = {
-  name: '050_business_analytics',
+import type { Migration } from '../lib/migrations';
+
+export const migration_050_business_analytics: Migration = {
+  version: '050_business_analytics',
+  description: 'Business analytics snapshots and review intelligence',
   async up(pool: any) {
     // Daily analytics snapshots for performance
     await pool.query(`

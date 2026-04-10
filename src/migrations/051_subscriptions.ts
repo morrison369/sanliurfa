@@ -3,8 +3,11 @@
  * Implement tiered subscription model for users and place owners
  */
 
-export const migration_051_subscriptions = {
-  name: '051_subscriptions',
+import type { Migration } from '../lib/migrations';
+
+export const migration_051_subscriptions: Migration = {
+  version: '051_subscriptions',
+  description: 'Tiered subscriptions, billing history, and feature access',
   async up(pool: any) {
     // Subscription tiers definition
     await pool.query(`

@@ -3,10 +3,13 @@
  * Add tables for admin logs and subscription event tracking
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_053_subscription_admin = async (pool: Pool) => {
-  try {
+export const migration_053_subscription_admin: Migration = {
+  version: '053_subscription_admin',
+  description: 'Subscription admin audit, events, refunds, and webhook deliveries',
+  up: async (pool: any) => {
+    try {
     // Admin activity logs (audit trail)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS admin_subscription_logs (
@@ -124,23 +127,23 @@ export const migration_053_subscription_admin = async (pool: Pool) => {
       ON webhook_deliveries(event_type, created_at DESC)
     `);
 
-    console.log('✓ Migration 053 completed: Admin subscription tools created');
-  } catch (error) {
-    console.error('Migration 053 failed:', error);
-    throw error;
-  }
-};
+      console.log('✓ Migration 053 completed: Admin subscription tools created');
+    } catch (error) {
+      console.error('Migration 053 failed:', error);
+      throw error;
+    }
+  },
+  down: async (pool: any) => {
+    try {
+      await pool.query('DROP TABLE IF EXISTS webhook_deliveries CASCADE');
+      await pool.query('DROP TABLE IF EXISTS refund_requests CASCADE');
+      await pool.query('DROP TABLE IF EXISTS subscription_events CASCADE');
+      await pool.query('DROP TABLE IF EXISTS admin_subscription_logs CASCADE');
 
-export const rollback_053 = async (pool: Pool) => {
-  try {
-    await pool.query('DROP TABLE IF EXISTS webhook_deliveries CASCADE');
-    await pool.query('DROP TABLE IF EXISTS refund_requests CASCADE');
-    await pool.query('DROP TABLE IF EXISTS subscription_events CASCADE');
-    await pool.query('DROP TABLE IF EXISTS admin_subscription_logs CASCADE');
-
-    console.log('✓ Migration 053 rolled back');
-  } catch (error) {
-    console.error('Rollback 053 failed:', error);
-    throw error;
+      console.log('✓ Migration 053 rolled back');
+    } catch (error) {
+      console.error('Rollback 053 failed:', error);
+      throw error;
+    }
   }
 };

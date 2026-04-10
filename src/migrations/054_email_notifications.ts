@@ -3,10 +3,13 @@
  * Add email template and notification tracking tables
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_054_email_notifications = async (pool: Pool) => {
-  try {
+export const migration_054_email_notifications: Migration = {
+  version: '054_email_notifications',
+  description: 'Email templates, queueing, sent logs, and unsubscribe tokens',
+  up: async (pool: any) => {
+    try {
     // Email templates
     await pool.query(`
       CREATE TABLE IF NOT EXISTS email_templates (
@@ -141,24 +144,24 @@ export const migration_054_email_notifications = async (pool: Pool) => {
       ON email_unsubscribe_tokens(user_id)
     `);
 
-    console.log('✓ Migration 054 completed: Email notification tables created');
-  } catch (error) {
-    console.error('Migration 054 failed:', error);
-    throw error;
-  }
-};
+      console.log('✓ Migration 054 completed: Email notification tables created');
+    } catch (error) {
+      console.error('Migration 054 failed:', error);
+      throw error;
+    }
+  },
+  down: async (pool: any) => {
+    try {
+      await pool.query('DROP TABLE IF EXISTS email_unsubscribe_tokens CASCADE');
+      await pool.query('DROP TABLE IF EXISTS email_queue CASCADE');
+      await pool.query('DROP TABLE IF EXISTS email_sent_logs CASCADE');
+      await pool.query('DROP TABLE IF EXISTS email_preferences CASCADE');
+      await pool.query('DROP TABLE IF EXISTS email_templates CASCADE');
 
-export const rollback_054 = async (pool: Pool) => {
-  try {
-    await pool.query('DROP TABLE IF EXISTS email_unsubscribe_tokens CASCADE');
-    await pool.query('DROP TABLE IF EXISTS email_queue CASCADE');
-    await pool.query('DROP TABLE IF EXISTS email_sent_logs CASCADE');
-    await pool.query('DROP TABLE IF EXISTS email_preferences CASCADE');
-    await pool.query('DROP TABLE IF EXISTS email_templates CASCADE');
-
-    console.log('✓ Migration 054 rolled back');
-  } catch (error) {
-    console.error('Rollback 054 failed:', error);
-    throw error;
+      console.log('✓ Migration 054 rolled back');
+    } catch (error) {
+      console.error('Rollback 054 failed:', error);
+      throw error;
+    }
   }
 };

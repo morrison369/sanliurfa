@@ -3,8 +3,11 @@
  * Creates email_preferences table for user notification settings
  */
 
-export const migration_013_email_preferences = {
-  name: '013_email_preferences',
+import type { Migration } from '../lib/migrations';
+
+export const migration_013_email_preferences: Migration = {
+  version: '013_email_preferences',
+  description: 'Email preferences table for user notification settings',
   async up(pool: any) {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS email_preferences (

@@ -3,10 +3,13 @@
  * Add tables for advanced search, collections, and analytics
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_052_premium_features = async (pool: Pool) => {
-  try {
+export const migration_052_premium_features: Migration = {
+  version: '052_premium_features',
+  description: 'Premium feature tables for search, collections, analytics, and support',
+  up: async (pool: any) => {
+    try {
     // Saved searches (Advanced Search feature - Basic+)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS saved_searches (
@@ -149,25 +152,25 @@ export const migration_052_premium_features = async (pool: Pool) => {
       ON support_messages(ticket_id, created_at DESC)
     `);
 
-    console.log('✓ Migration 052 completed: Premium features tables created');
-  } catch (error) {
-    console.error('Migration 052 failed:', error);
-    throw error;
-  }
-};
+      console.log('✓ Migration 052 completed: Premium features tables created');
+    } catch (error) {
+      console.error('Migration 052 failed:', error);
+      throw error;
+    }
+  },
+  down: async (pool: any) => {
+    try {
+      await pool.query('DROP TABLE IF EXISTS support_messages CASCADE');
+      await pool.query('DROP TABLE IF EXISTS support_tickets CASCADE');
+      await pool.query('DROP TABLE IF EXISTS place_analytics CASCADE');
+      await pool.query('DROP TABLE IF EXISTS collection_places CASCADE');
+      await pool.query('DROP TABLE IF EXISTS collections CASCADE');
+      await pool.query('DROP TABLE IF EXISTS saved_searches CASCADE');
 
-export const rollback_052 = async (pool: Pool) => {
-  try {
-    await pool.query('DROP TABLE IF EXISTS support_messages CASCADE');
-    await pool.query('DROP TABLE IF EXISTS support_tickets CASCADE');
-    await pool.query('DROP TABLE IF EXISTS place_analytics CASCADE');
-    await pool.query('DROP TABLE IF EXISTS collection_places CASCADE');
-    await pool.query('DROP TABLE IF EXISTS collections CASCADE');
-    await pool.query('DROP TABLE IF EXISTS saved_searches CASCADE');
-
-    console.log('✓ Migration 052 rolled back');
-  } catch (error) {
-    console.error('Rollback 052 failed:', error);
-    throw error;
+      console.log('✓ Migration 052 rolled back');
+    } catch (error) {
+      console.error('Rollback 052 failed:', error);
+      throw error;
+    }
   }
 };

@@ -130,6 +130,7 @@
     "security:secrets:scan": "npm exec -- tsx scripts/security-secrets-scan.ts",
     "governance:http:timeout:check": "npm exec -- tsx scripts/http-timeout-guard.ts",
     "governance:cache:redis:check": "npm exec -- tsx scripts/cache-redis-import-guard.ts",
+    "governance:querymany:usage:check": "npm exec -- tsx scripts/querymany-usage-guard.ts",
     "governance:querymany:check": "npm exec -- tsx scripts/querymany-rows-guard.ts",
     "governance:migrations:contract:check": "npm exec -- tsx scripts/migration-contract-guard.ts",
     "env:contract:check": "npm exec -- tsx scripts/env-contract-check.ts",
