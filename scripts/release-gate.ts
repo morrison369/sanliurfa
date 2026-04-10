@@ -22,7 +22,7 @@ function main(): void {
   run('Governance import guard', 'npm run governance:imports:check');
   run('Governance logging guard', 'npm run governance:logging:check');
   run('Governance cache redis guard', 'npm run governance:cache:redis:check');
-  run('Governance queryMany usage guard', 'npm run governance:querymany:usage:check');
+  run('Governance queryMany prohibition guard', 'npm run governance:querymany:usage:check');
   run('Governance queryMany guard', 'npm run governance:querymany:check');
   run('Governance migration contract guard', 'npm run governance:migrations:contract:check');
   run('DB drift check', 'npm run db:drift:check');

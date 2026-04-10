@@ -47,8 +47,8 @@ npm run release:gate:local
 - Legacy guard’lar:
   - `governance:logging:check`: `logger.debug/info/warn/error` çağrılarında 1-3 argüman sözleşmesini zorunlu tutar
   - `governance:cache:redis:check`: `redis` proxy import’larında artışı bütçe ile sınırlar
-  - `governance:querymany:usage:check`: ham `queryMany(` kullanımını mevcut bütçede dondurur
-  - `governance:querymany:check`: `queryMany(...).rows` kalıbını yasaklar
+  - `governance:querymany:usage:check`: ham `queryMany(` kullanımını tamamen yasaklar
+  - `governance:querymany:check`: `queryMany(...).rows` kalıbını tamamen yasaklar
   - `governance:migrations:contract:check`: migration kontrat drift’ini bütçe ile sınırlar
 
 ## CI Enforcement

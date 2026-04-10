@@ -1,10 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, join, extname, relative } from 'node:path';
 
-type QueryManyBudget = {
-  max_legacy_usages: number;
-};
-
 const SCAN_EXTENSIONS = new Set(['.ts', '.tsx', '.astro']);
 const LEGACY_PATTERN = /\bqueryMany\s*\(/g;
 
@@ -27,14 +23,9 @@ function collectFiles(dir: string): string[] {
   return files;
 }
 
-function loadBudget(path: string): QueryManyBudget {
-  return JSON.parse(readFileSync(path, 'utf8')) as QueryManyBudget;
-}
-
 function main(): void {
   const root = process.cwd();
   const srcDir = resolve(root, 'src');
-  const budget = loadBudget(resolve(root, 'config', 'querymany-usage-budget.json'));
   const offenders: string[] = [];
 
   for (const file of collectFiles(srcDir)) {
@@ -48,16 +39,16 @@ function main(): void {
     }
   }
 
-  if (offenders.length > budget.max_legacy_usages) {
+  if (offenders.length > 0) {
     throw new Error(
       [
-        `legacy queryMany usage budget exceeded (${offenders.length}/${budget.max_legacy_usages})`,
+        `deprecated queryMany usage detected (${offenders.length})`,
         ...offenders.slice(0, 50).map((file) => `- ${file}`)
       ].join('\n')
     );
   }
 
-  console.log(`querymany-usage-guard: OK (legacy_usages=${offenders.length}/${budget.max_legacy_usages})`);
+  console.log('querymany-usage-guard: OK (legacy_usages=0)');
 }
 
 main();
