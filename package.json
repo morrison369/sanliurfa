@@ -148,6 +148,7 @@
     "test:phase:gate:ci": "npm exec -- tsx scripts/phase-gate-ci.ts --ci",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:pwa": "npm exec -- tsx scripts/pwa-browser-smoke.ts",
     "test:e2e:smoke": "npm exec -- tsx scripts/e2e-smoke.ts",
     "test:e2e:full": "playwright test",
     "test:e2e:ui": "playwright test --ui",

@@ -40,8 +40,9 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     env: {
       DATABASE_URL:
-        process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/sanliurfa_test',
+        process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@127.0.0.1:5432/sanliurfa',
       READ_REPLICA_URL: process.env.READ_REPLICA_URL ?? '',
+      REDIS_URL: process.env.REDIS_URL ?? 'redis://127.0.0.1:6379',
     },
   },
 });
