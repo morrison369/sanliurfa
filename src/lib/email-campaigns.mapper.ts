@@ -1,5 +1,25 @@
 import type { EmailCampaign } from './email-campaigns.types';
 
+function parseSegmentFilters(value: unknown): Record<string, any> | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  if (typeof value === 'object') {
+    return value as Record<string, any>;
+  }
+
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
 export function mapEmailCampaignRow(result: Record<string, any>): EmailCampaign {
   return {
     id: result.id,
@@ -10,7 +30,7 @@ export function mapEmailCampaignRow(result: Record<string, any>): EmailCampaign 
     htmlContent: result.html_content,
     textContent: result.text_content,
     segment: result.segment,
-    segmentFilters: result.segment_filters ? JSON.parse(result.segment_filters) : undefined,
+    segmentFilters: parseSegmentFilters(result.segment_filters),
     scheduledAt: result.scheduled_at,
     status: result.status,
     sendCount: result.send_count,

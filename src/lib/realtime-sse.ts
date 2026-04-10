@@ -59,6 +59,9 @@ class RealtimeManager {
   private unreadCount = 0;
   private notificationCount = 0;
   private latestNotifications: Notification[] = [];
+  private latestAnalyticsMetrics: RealtimeData['metricsPayload'] | null = null;
+  private latestAnalyticsKPI: RealtimeData['kpiPayload'] | null = null;
+  private latestFeedPayload: RealtimeData['feedPayload'] | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000;
@@ -86,7 +89,7 @@ class RealtimeManager {
     this.disconnected = false;
     this.clearReconnectTimer('presence');
     if (this.eventSource) {
-      this.eventSource.close();
+      return;
     }
 
     try {
@@ -103,6 +106,8 @@ class RealtimeManager {
 
       this.eventSource.addEventListener('error', () => {
         console.warn('SSE connection error, attempting reconnect...');
+        this.eventSource?.close();
+        this.eventSource = null;
         this.reconnect();
       });
 
@@ -253,7 +258,7 @@ class RealtimeManager {
     this.disconnected = false;
     this.clearReconnectTimer('message');
     if (this.messageEventSource) {
-      this.messageEventSource.close();
+      return;
     }
 
     try {
@@ -270,6 +275,8 @@ class RealtimeManager {
 
       this.messageEventSource.addEventListener('error', () => {
         console.warn('Message SSE connection error, attempting reconnect...');
+        this.messageEventSource?.close();
+        this.messageEventSource = null;
         this.reconnectMessages();
       });
 
@@ -349,7 +356,7 @@ class RealtimeManager {
     this.disconnected = false;
     this.clearReconnectTimer('notification');
     if (this.notificationEventSource) {
-      this.notificationEventSource.close();
+      return;
     }
 
     try {
@@ -366,6 +373,8 @@ class RealtimeManager {
 
       this.notificationEventSource.addEventListener('error', () => {
         console.warn('Notification SSE connection error, attempting reconnect...');
+        this.notificationEventSource?.close();
+        this.notificationEventSource = null;
         this.reconnectNotifications();
       });
 
@@ -445,7 +454,7 @@ class RealtimeManager {
     this.disconnected = false;
     this.clearReconnectTimer('analytics');
     if (this.analyticsEventSource) {
-      this.analyticsEventSource.close();
+      return;
     }
 
     try {
@@ -462,6 +471,8 @@ class RealtimeManager {
 
       this.analyticsEventSource.addEventListener('error', () => {
         console.warn('Analytics SSE connection error, attempting reconnect...');
+        this.analyticsEventSource?.close();
+        this.analyticsEventSource = null;
         this.reconnectAnalytics();
       });
 
@@ -484,12 +495,14 @@ class RealtimeManager {
 
       case 'metrics':
         if (data.metricsPayload) {
+          this.latestAnalyticsMetrics = data.metricsPayload;
           this.emit('analyticsMetrics', data.metricsPayload);
         }
         break;
 
       case 'kpi':
         if (data.kpiPayload) {
+          this.latestAnalyticsKPI = data.kpiPayload;
           this.emit('analyticsKPI', data.kpiPayload);
         }
         break;
@@ -529,6 +542,9 @@ class RealtimeManager {
    * Subscribe to analytics metrics updates
    */
   onAnalyticsMetrics(callback: (metrics: any) => void): () => void {
+    if (this.latestAnalyticsMetrics) {
+      return this.subscribe('analyticsMetrics', callback, this.latestAnalyticsMetrics);
+    }
     return this.subscribe('analyticsMetrics', callback);
   }
 
@@ -536,6 +552,9 @@ class RealtimeManager {
    * Subscribe to analytics KPI updates
    */
   onAnalyticsKPI(callback: (kpi: any) => void): () => void {
+    if (this.latestAnalyticsKPI) {
+      return this.subscribe('analyticsKPI', callback, this.latestAnalyticsKPI);
+    }
     return this.subscribe('analyticsKPI', callback);
   }
 
@@ -546,7 +565,7 @@ class RealtimeManager {
     this.disconnected = false;
     this.clearReconnectTimer('feed');
     if (this.feedEventSource) {
-      this.feedEventSource.close();
+      return;
     }
 
     try {
@@ -563,6 +582,8 @@ class RealtimeManager {
 
       this.feedEventSource.addEventListener('error', () => {
         console.warn('Feed SSE connection error, attempting reconnect...');
+        this.feedEventSource?.close();
+        this.feedEventSource = null;
         this.reconnectFeed();
       });
 
@@ -585,6 +606,7 @@ class RealtimeManager {
 
       case 'feed_update':
         if (data.feedPayload) {
+          this.latestFeedPayload = data.feedPayload;
           this.emit('feedUpdate', data.feedPayload);
         }
         break;
@@ -641,6 +663,9 @@ class RealtimeManager {
    * Subscribe to feed updates
    */
   onFeedUpdate(callback: (data: { activities: any[]; count: number }) => void): () => void {
+    if (this.latestFeedPayload) {
+      return this.subscribe('feedUpdate', callback, this.latestFeedPayload);
+    }
     return this.subscribe('feedUpdate', callback);
   }
 

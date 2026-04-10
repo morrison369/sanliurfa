@@ -146,4 +146,73 @@ describe('Realtime SSE lifecycle hardening', () => {
       }
     ]);
   });
+
+  it('should replay the latest analytics and feed snapshots to late subscribers', async () => {
+    const { realtimeManager } = await import('../realtime-sse');
+    const metricsPayloads: Array<{ errorRate: number }> = [];
+    const feedPayloads: Array<{ count: number }> = [];
+
+    realtimeManager.connectToAnalytics();
+    realtimeManager.connectToFeed();
+
+    FakeEventSource.instances[0].emit('message', {
+      data: JSON.stringify({
+        type: 'metrics',
+        metricsPayload: { errorRate: 1.5 }
+      })
+    });
+    FakeEventSource.instances[1].emit('message', {
+      data: JSON.stringify({
+        type: 'feed_update',
+        feedPayload: { activities: [{ id: 'a-1' }], count: 1 }
+      })
+    });
+
+    const unsubscribeMetrics = realtimeManager.onAnalyticsMetrics(metrics => {
+      metricsPayloads.push({ errorRate: metrics.errorRate });
+    });
+    const unsubscribeFeed = realtimeManager.onFeedUpdate(feed => {
+      feedPayloads.push({ count: feed.count });
+    });
+
+    unsubscribeMetrics();
+    unsubscribeFeed();
+    realtimeManager.disconnect();
+
+    expect(metricsPayloads).toEqual([{ errorRate: 1.5 }]);
+    expect(feedPayloads).toEqual([{ count: 1 }]);
+  });
+
+  it('should enforce listener cap and avoid opening duplicate event sources', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { realtimeManager } = await import('../realtime-sse');
+    const deliveries: number[] = [];
+    const unsubscribers: Array<() => void> = [];
+
+    realtimeManager.connectToAnalytics();
+    realtimeManager.connectToAnalytics();
+    expect(FakeEventSource.instances).toHaveLength(1);
+
+    for (let index = 0; index < 30; index++) {
+      unsubscribers.push(
+        realtimeManager.onAnalyticsMetrics(() => {
+          deliveries.push(index);
+        })
+      );
+    }
+
+    FakeEventSource.instances[0].emit('message', {
+      data: JSON.stringify({
+        type: 'metrics',
+        metricsPayload: { errorRate: 2.1 }
+      })
+    });
+
+    unsubscribers.forEach(unsubscribe => unsubscribe());
+    realtimeManager.disconnect();
+
+    expect(deliveries).toHaveLength(25);
+    expect(warnSpy).toHaveBeenCalledWith('Listener cap reached for analyticsMetrics');
+    warnSpy.mockRestore();
+  });
 });

@@ -11,7 +11,14 @@ export async function getEmailTemplate(templateName: string): Promise<EmailTempl
     const cacheKey = `sanliurfa:email:template:${templateName}`;
     const cached = await getCache(cacheKey);
     if (cached) {
-      return JSON.parse(cached);
+      try {
+        return JSON.parse(cached);
+      } catch (error) {
+        logger.warn('Email template cache parse failed, falling back to database', {
+          templateName,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
     }
 
     const template = await queryOne(
