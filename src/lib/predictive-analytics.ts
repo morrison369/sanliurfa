@@ -3,7 +3,7 @@
  * ML predictions, churn risk, LTV, trend forecasting
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 
@@ -108,7 +108,7 @@ export async function forecastTrend(metricName: string, horizonDays: number = 30
   try {
     // Get historical data
     const since = new Date(Date.now() - 90 * 24 * 3600000);
-    const historicalData = await queryMany(
+    const historicalData = await queryRows(
       `SELECT * FROM trend_forecasts WHERE metric_name = $1 AND forecast_date >= $2 ORDER BY forecast_date ASC LIMIT 90`,
       [metricName, since]
     );
@@ -146,7 +146,7 @@ export async function detectAnomalies(metricName: string, threshold: number = 2.
   try {
     // Get recent data
     const since = new Date(Date.now() - 30 * 24 * 3600000);
-    const data = await queryMany(
+    const data = await queryRows(
       `SELECT * FROM trend_forecasts WHERE metric_name = $1 AND forecast_date >= $2 ORDER BY forecast_date DESC LIMIT 30`,
       [metricName, since]
     );
@@ -195,7 +195,7 @@ export async function getRecommendations(userId: string): Promise<any[]> {
       return JSON.parse(cached);
     }
 
-    const recommendations = await queryMany(
+    const recommendations = await queryRows(
       'SELECT * FROM user_recommendations WHERE user_id = $1 AND expires_at > NOW() ORDER BY score DESC LIMIT 10',
       [userId]
     );
@@ -231,7 +231,7 @@ export async function getHighRiskUsers(limit: number = 50): Promise<any[]> {
       return JSON.parse(cached);
     }
 
-    const users = await queryMany(
+    const users = await queryRows(
       'SELECT * FROM user_predictions WHERE churn_risk_level = $1 ORDER BY churn_probability DESC LIMIT $2',
       ['high', limit]
     );
@@ -247,7 +247,7 @@ export async function getHighRiskUsers(limit: number = 50): Promise<any[]> {
 export async function getModelPerformanceMetrics(): Promise<any> {
   try {
     // Get predictions with outcomes
-    const predictions = await queryMany(
+    const predictions = await queryRows(
       `SELECT COUNT(*) as total,
               SUM(CASE WHEN churn_probability > 0.5 AND actual_churn = true THEN 1 ELSE 0 END) as true_positives,
               SUM(CASE WHEN churn_probability > 0.5 AND actual_churn = false THEN 1 ELSE 0 END) as false_positives,

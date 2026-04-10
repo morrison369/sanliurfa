@@ -3,7 +3,7 @@
  * Admin functions for subscription management and analytics
  */
 
-import { query, queryOne, queryMany, insert, update as updateDb } from './postgres';
+import { query, queryOne, queryRows, insert, update as updateDb } from './postgres';
 import { logger } from './logging';
 
 /**
@@ -34,7 +34,7 @@ export async function getSubscriptionAnalytics(): Promise<{
     );
 
     // By tier
-    const byTierResults = await queryMany(
+    const byTierResults = await queryRows(
       `SELECT st.display_name, COUNT(*) as count
        FROM subscriptions s
        JOIN subscription_tiers st ON s.tier_id = st.id
@@ -251,7 +251,7 @@ export async function getRefundRequests(status?: string): Promise<any[]> {
 
     sql += ` ORDER BY r.created_at DESC LIMIT 100`;
 
-    return await queryMany(sql, params);
+    return await queryRows(sql, params);
   } catch (error) {
     logger.error('Failed to get refund requests', error instanceof Error ? error : new Error(String(error)));
     return [];
@@ -280,7 +280,7 @@ export async function getSubscriptionEvents(userId?: string, limit: number = 100
     sql += ` ORDER BY se.created_at DESC LIMIT $${paramCount}`;
     params.push(limit);
 
-    return await queryMany(sql, params);
+    return await queryRows(sql, params);
   } catch (error) {
     logger.error('Failed to get subscription events', error instanceof Error ? error : new Error(String(error)));
     return [];
@@ -308,7 +308,7 @@ export async function getAdminLogs(adminId?: string, limit: number = 100): Promi
     sql += ` ORDER BY asl.created_at DESC LIMIT $${paramCount}`;
     params.push(limit);
 
-    return await queryMany(sql, params);
+    return await queryRows(sql, params);
   } catch (error) {
     logger.error('Failed to get admin logs', error instanceof Error ? error : new Error(String(error)));
     return [];
@@ -382,7 +382,7 @@ export async function getUserSubscriptionDetails(userId: string): Promise<any> {
       return null;
     }
 
-    const billingHistory = await queryMany(
+    const billingHistory = await queryRows(
       `SELECT * FROM billing_history WHERE subscription_id = $1 ORDER BY created_at DESC LIMIT 10`,
       [subscription.id]
     );

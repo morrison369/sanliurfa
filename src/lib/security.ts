@@ -3,7 +3,7 @@
  * Audit logging, session management, device tracking, and data encryption
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 import crypto from 'crypto';
@@ -76,7 +76,7 @@ async function checkSuspiciousPattern(userId: string | null, eventType: string, 
   try {
     // Check for multiple failed login attempts
     if (eventType === 'login_failed') {
-      const failedLogins = await queryMany(
+      const failedLogins = await queryRows(
         'SELECT COUNT(*) as count FROM login_history WHERE user_id = $1 AND is_successful = false AND created_at > NOW() - INTERVAL \'30 minutes\'',
         [userId]
       );
@@ -88,7 +88,7 @@ async function checkSuspiciousPattern(userId: string | null, eventType: string, 
 
     // Check for unusual IP addresses
     if (userId) {
-      const recentIPs = await queryMany(
+      const recentIPs = await queryRows(
         'SELECT DISTINCT ip_address FROM login_history WHERE user_id = $1 AND created_at > NOW() - INTERVAL \'7 days\' LIMIT 10',
         [userId]
       );
@@ -131,7 +131,7 @@ export async function getSuspiciousActivities(userId: string, limit: number = 20
       return JSON.parse(cached);
     }
 
-    const events = await queryMany(
+    const events = await queryRows(
       'SELECT * FROM security_events WHERE user_id = $1 AND is_suspicious = true ORDER BY created_at DESC LIMIT $2',
       [userId, limit]
     );
@@ -165,7 +165,7 @@ export async function getSecurityEvents(userId: string | null, eventType?: strin
     query += ` ORDER BY created_at DESC LIMIT $${params.length + 1}`;
     params.push(limit);
 
-    const events = await queryMany(query, params);
+    const events = await queryRows(query, params);
     return events;
   } catch (error) {
     logger.error('Failed to get security events', error instanceof Error ? error : new Error(String(error)));
@@ -229,7 +229,7 @@ export async function getUserSessions(userId: string): Promise<UserSession[]> {
       return JSON.parse(cached);
     }
 
-    const sessions = await queryMany(
+    const sessions = await queryRows(
       'SELECT * FROM user_sessions WHERE user_id = $1 AND invalidated_at IS NULL ORDER BY last_activity_at DESC',
       [userId]
     );
@@ -463,7 +463,7 @@ export async function logFailedLoginAttempt(email: string, ipAddress: string, re
 // Get login history
 export async function getLoginHistory(userId: string, limit: number = 20): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       'SELECT * FROM login_history WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2',
       [userId, limit]
     );

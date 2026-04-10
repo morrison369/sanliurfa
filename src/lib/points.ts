@@ -3,7 +3,7 @@
  * Manage user points and reward achievements
  */
 
-import { queryOne, queryMany, insert, query } from './postgres';
+import { queryOne, queryRows, insert, query } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -168,7 +168,7 @@ export async function getUserPoints(userId: string): Promise<UserPoints | null> 
  */
 export async function getPointsHistory(userId: string, limit: number = 50): Promise<PointsTransaction[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, user_id, points_earned, action, action_id, description, created_at
        FROM user_points_transactions
        WHERE user_id = $1
@@ -204,7 +204,7 @@ export async function getRewardLevels(): Promise<RewardLevel[]> {
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, name, points_required, badge_emoji, description, benefits
        FROM reward_levels
        ORDER BY points_required ASC`,
@@ -242,7 +242,7 @@ export async function getUserRewards(userId: string): Promise<RewardLevel[]> {
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT rl.id, rl.name, rl.points_required, rl.badge_emoji, rl.description, rl.benefits
        FROM user_reward_achievements ura
        JOIN reward_levels rl ON ura.reward_level_id = rl.id
@@ -276,7 +276,7 @@ export async function getUserRewards(userId: string): Promise<RewardLevel[]> {
 async function checkAndAwardRewards(userId: string, totalPoints: number): Promise<void> {
   try {
     // Get all reward levels
-    const levels = await queryMany(
+    const levels = await queryRows(
       `SELECT id, points_required FROM reward_levels ORDER BY points_required ASC`,
       []
     );
@@ -322,7 +322,7 @@ export async function getPointsLeaderboard(limit: number = 20): Promise<any[]> {
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT u.id, u.full_name, u.username, u.avatar_url, up.total_points
        FROM user_points up
        JOIN users u ON up.user_id = u.id

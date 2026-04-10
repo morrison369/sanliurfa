@@ -3,7 +3,7 @@
  * Hashtags, follows, activity feed, mentions, shares
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 import { batchInsert, fireAndForget } from './performance-optimizations';
@@ -44,7 +44,7 @@ export async function getTrendingHashtags(limit: number = 20, period: string = '
       return JSON.parse(cached);
     }
 
-    const hashtags = await queryMany(
+    const hashtags = await queryRows(
       'SELECT * FROM hashtags WHERE is_trending = true ORDER BY trending_rank ASC LIMIT $1',
       [limit]
     );
@@ -134,7 +134,7 @@ export async function unfollowUser(followerUserId: string, followingUserId: stri
 
 export async function getFollowers(userId: string, limit: number = 50): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       `SELECT u.* FROM users u
        INNER JOIN user_follows uf ON u.id = uf.follower_user_id
        WHERE uf.following_user_id = $1
@@ -150,7 +150,7 @@ export async function getFollowers(userId: string, limit: number = 50): Promise<
 
 export async function getFollowing(userId: string, limit: number = 50): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       `SELECT u.* FROM users u
        INNER JOIN user_follows uf ON u.id = uf.following_user_id
        WHERE uf.follower_user_id = $1
@@ -243,7 +243,7 @@ export async function getUserFeed(userId: string, limit: number = 50): Promise<a
       return JSON.parse(cached);
     }
 
-    const feed = await queryMany(
+    const feed = await queryRows(
       `SELECT af.*, ua.activity_type, ua.object_type, ua.object_id, ua.object_title, u.full_name, u.avatar_url
        FROM activity_feeds af
        JOIN user_activities ua ON af.activity_id = ua.id
@@ -271,7 +271,7 @@ export async function getTrendingPlaces(limit: number = 20, period: string = 'da
       return JSON.parse(cached);
     }
 
-    const places = await queryMany(
+    const places = await queryRows(
       `SELECT p.*, tp.trending_score, tp.view_count, tp.review_count
        FROM places p
        LEFT JOIN trending_places tp ON p.id = tp.place_id
@@ -312,7 +312,7 @@ export async function mentionUser(mentionedUserId: string, byUserId: string, con
 
 export async function getUserMentions(userId: string, limit: number = 50): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       `SELECT * FROM user_mentions WHERE mentioned_user_id = $1 ORDER BY is_read ASC, created_at DESC LIMIT $2`,
       [userId, limit]
     );

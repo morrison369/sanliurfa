@@ -3,7 +3,7 @@
  * Trending algorithms, recommendation engine, content discovery
  */
 
-import { queryOne, queryMany, insert, update, query } from './postgres';
+import { queryOne, queryRows, insert, update, query } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 
@@ -79,7 +79,7 @@ export async function getTrendingScores(
       return JSON.parse(cached);
     }
 
-    const scores = await queryMany(
+    const scores = await queryRows(
       `SELECT * FROM trending_scores
        WHERE entity_type = $1 AND period = $2 AND valid_until > NOW()
        ORDER BY score DESC
@@ -179,7 +179,7 @@ function getValidUntilDate(period: string): Date {
 export async function generateUserRecommendations(userId: string, limit: number = 10): Promise<UserRecommendation[]> {
   try {
     // Get user interests
-    const interests = await queryMany(
+    const interests = await queryRows(
       'SELECT interest_category, interest_score FROM user_interests WHERE user_id = $1 ORDER BY interest_score DESC LIMIT 5',
       [userId]
     );
@@ -192,7 +192,7 @@ export async function generateUserRecommendations(userId: string, limit: number 
     const categories = interests.map((i: any) => i.interest_category);
 
     // Get popular content in user's interest categories
-    const recommendations = await queryMany(
+    const recommendations = await queryRows(
       `SELECT DISTINCT
          'content' as recommendation_type,
          cp.content_type as recommended_entity_type,
@@ -222,7 +222,7 @@ export async function generateUserRecommendations(userId: string, limit: number 
 
 export async function getTrendingRecommendations(limit: number = 10): Promise<UserRecommendation[]> {
   try {
-    const trending = await queryMany(
+    const trending = await queryRows(
       `SELECT DISTINCT
          'trending' as recommendation_type,
          ts.entity_type as recommended_entity_type,
@@ -284,7 +284,7 @@ export async function getUserRecommendations(userId: string, limit: number = 20)
       return JSON.parse(cached);
     }
 
-    const recommendations = await queryMany(
+    const recommendations = await queryRows(
       `SELECT * FROM user_recommendations
        WHERE user_id = $1 AND expires_at > NOW()
        ORDER BY relevance_score DESC
@@ -346,7 +346,7 @@ export async function trackUserInterest(userId: string, category: string, weight
 
 export async function getUserInterests(userId: string): Promise<UserInterest[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       'SELECT * FROM user_interests WHERE user_id = $1 ORDER BY interest_score DESC',
       [userId]
     );
@@ -426,7 +426,7 @@ export async function getPopularContent(
   try {
     const sortColumn = sortBy === 'engagement' ? 'engagement_rate' : 'virality_score';
 
-    return await queryMany(
+    return await queryRows(
       `SELECT * FROM content_popularity
        WHERE content_type = $1
        ORDER BY ${sortColumn} DESC
@@ -453,7 +453,7 @@ export async function getTrendingKeywords(period: 'hourly' | 'daily' | 'weekly',
       return JSON.parse(cached);
     }
 
-    const keywords = await queryMany(
+    const keywords = await queryRows(
       `SELECT * FROM trending_keywords
        WHERE period = $1
        ORDER BY trend_score DESC
@@ -483,7 +483,7 @@ export async function getDiscoveryFeed(userId: string, limit: number = 50): Prom
       return JSON.parse(cached);
     }
 
-    const feed = await queryMany(
+    const feed = await queryRows(
       `SELECT * FROM discovery_feeds
        WHERE user_id = $1
        ORDER BY position ASC, created_at DESC
