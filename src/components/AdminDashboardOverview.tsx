@@ -85,6 +85,10 @@ interface DashboardData {
       advisory: boolean;
       status: 'passed' | 'failed';
     }>;
+    performanceOptimization?: {
+      recommendations: { total: number; highPriority: number; mediumPriority: number };
+      metrics: { slowRequestRate: number; cacheHitRate: number };
+    } | null;
   };
   nightly?: {
     regression: {
@@ -95,6 +99,10 @@ interface DashboardData {
       successRatePercent: number | null;
       recentOutcomes: string[];
       topFailures: string[];
+      performanceOptimization?: {
+        recommendations: { total: number; highPriority: number; mediumPriority: number };
+        metrics: { slowRequestRate: number; cacheHitRate: number };
+      } | null;
     };
     e2e: {
       available: boolean;
@@ -104,6 +112,10 @@ interface DashboardData {
       successRatePercent: number | null;
       recentOutcomes: string[];
       topFailures: string[];
+      performanceOptimization?: {
+        recommendations: { total: number; highPriority: number; mediumPriority: number };
+        metrics: { slowRequestRate: number; cacheHitRate: number };
+      } | null;
     };
   };
   statusSummary?: {
@@ -451,6 +463,9 @@ export default function AdminDashboardOverview() {
           <div className="text-xs text-gray-500 mt-3">
             Blocking: {data.releaseGate.blockingFailedSteps[0] || 'yok'} • Advisory: {data.releaseGate.advisoryFailedSteps[0] || 'yok'}
           </div>
+          <div className="text-xs text-gray-500 mt-2">
+            Perf: {data.releaseGate.performanceOptimization?.recommendations.total ?? 'yok'} öneri • Slow request %{data.releaseGate.performanceOptimization?.metrics.slowRequestRate ?? 'yok'} • Cache %{data.releaseGate.performanceOptimization?.metrics.cacheHitRate ?? 'yok'}
+          </div>
           {data.releaseGate.steps && data.releaseGate.steps.length > 0 && (
             <details className="mt-4">
               <summary className="cursor-pointer text-sm font-medium text-gray-700">
@@ -487,6 +502,9 @@ export default function AdminDashboardOverview() {
               <div className="text-xs text-gray-500 mt-2">
                 Failure: {data.nightly.regression.topFailures[0] || 'yok'}
               </div>
+              <div className="text-xs text-gray-500 mt-2">
+                Perf: {data.nightly.regression.performanceOptimization?.recommendations.total ?? 'yok'} öneri • Slow request %{data.nightly.regression.performanceOptimization?.metrics.slowRequestRate ?? 'yok'}
+              </div>
             </div>
             <div className="rounded-lg border border-gray-200 p-4">
               <div className="text-xs text-gray-500 mb-1">E2E</div>
@@ -499,6 +517,9 @@ export default function AdminDashboardOverview() {
               </div>
               <div className="text-xs text-gray-500 mt-2">
                 Failure: {data.nightly.e2e.topFailures[0] || 'yok'}
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                Perf: {data.nightly.e2e.performanceOptimization?.recommendations.total ?? 'yok'} öneri • Slow request %{data.nightly.e2e.performanceOptimization?.metrics.slowRequestRate ?? 'yok'}
               </div>
             </div>
           </div>

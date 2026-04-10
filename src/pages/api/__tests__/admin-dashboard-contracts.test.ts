@@ -134,6 +134,10 @@ describe('admin dashboard contracts', () => {
       blockingFailedSteps: [],
       advisoryFailedSteps: [],
       failedStepCount: 0,
+      performanceOptimization: {
+        recommendations: { total: 4, highPriority: 2, mediumPriority: 2 },
+        metrics: { slowRequestRate: 14, cacheHitRate: 42 },
+      },
       steps: [
         {
           step: 'TypeScript app gate',
@@ -152,6 +156,10 @@ describe('admin dashboard contracts', () => {
         successRatePercent: 86,
         recentOutcomes: ['success', 'success', 'failure'],
         topFailures: ['FAIL auth-contracts'],
+        performanceOptimization: {
+          recommendations: { total: 4, highPriority: 2, mediumPriority: 2 },
+          metrics: { slowRequestRate: 14, cacheHitRate: 42 },
+        },
       },
       e2e: {
         available: true,
@@ -161,6 +169,10 @@ describe('admin dashboard contracts', () => {
         successRatePercent: 57,
         recentOutcomes: ['failure', 'success', 'failure'],
         topFailures: ['Error: timeout on /giris'],
+        performanceOptimization: {
+          recommendations: { total: 3, highPriority: 1, mediumPriority: 2 },
+          metrics: { slowRequestRate: 9, cacheHitRate: 48 },
+        },
       },
     });
   });
@@ -197,9 +209,12 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.integrations.verification.resend.status).toBe('verified');
     expect(body.data.data.releaseGate.finalStatus).toBe('passed');
     expect(body.data.data.releaseGate.failedStepCount).toBe(0);
+    expect(body.data.data.releaseGate.performanceOptimization.recommendations.total).toBe(4);
     expect(body.data.data.releaseGate.steps[0].step).toBe('TypeScript app gate');
     expect(body.data.data.nightly.regression.successRatePercent).toBe(86);
+    expect(body.data.data.nightly.regression.performanceOptimization.metrics.slowRequestRate).toBe(14);
     expect(body.data.data.nightly.e2e.outcome).toBe('failure');
+    expect(body.data.data.nightly.e2e.performanceOptimization.recommendations.total).toBe(3);
     expect(body.data.data.statusSummary.overall).toBe('degraded');
     expect(body.data.data.operational.oauth.callback.sampleSize).toBe(12);
     expect(body.data.data.operational.search.topQueries[0].query).toBe('urfa');
