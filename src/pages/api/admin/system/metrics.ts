@@ -6,6 +6,7 @@
 import type { APIRoute } from 'astro';
 import { getSystemMetrics, getOperationalSnapshot, getPerformanceOptimizationSummary } from '../../../../lib/admin-dashboard';
 import {
+  classifyArtifactFreshnessStatus,
   classifyIntegrationStatus,
   classifyNightlyStatus,
   classifyOverallOpsStatus,
@@ -94,6 +95,44 @@ export const GET: APIRoute = async ({ request, locals }) => {
           },
           operational,
           performanceOptimization,
+          artifactHealth: {
+            releaseGate: {
+              available: releaseGate.available,
+              generatedAt: releaseGate.generatedAt,
+              status: classifyArtifactFreshnessStatus({
+                available: releaseGate.available,
+                generatedAt: releaseGate.generatedAt,
+                degradedAfterHours: 24
+              })
+            },
+            nightlyRegression: {
+              available: nightly.regression.available,
+              generatedAt: nightly.regression.generatedAt,
+              status: classifyArtifactFreshnessStatus({
+                available: nightly.regression.available,
+                generatedAt: nightly.regression.generatedAt,
+                degradedAfterHours: 36
+              })
+            },
+            nightlyE2E: {
+              available: nightly.e2e.available,
+              generatedAt: nightly.e2e.generatedAt,
+              status: classifyArtifactFreshnessStatus({
+                available: nightly.e2e.available,
+                generatedAt: nightly.e2e.generatedAt,
+                degradedAfterHours: 36
+              })
+            },
+            performanceOps: {
+              available: Boolean(performanceOptimization?.generatedAt),
+              generatedAt: performanceOptimization?.generatedAt ?? null,
+              status: classifyArtifactFreshnessStatus({
+                available: Boolean(performanceOptimization?.generatedAt),
+                generatedAt: performanceOptimization?.generatedAt ?? null,
+                degradedAfterHours: 24
+              })
+            }
+          },
           nightly,
           releaseGate,
           statusSummary: {

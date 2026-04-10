@@ -252,6 +252,8 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.operational.webhook.stripe.p95DurationMs).toBe(250);
     expect(body.data.data.performanceOptimization.indexSuggestions.count).toBe(3);
     expect(body.data.data.performanceOptimization.cacheStrategies.count).toBe(2);
+    expect(body.data.data.artifactHealth.releaseGate.status).toBe('healthy');
+    expect(body.data.data.artifactHealth.performanceOps.status).toBe('healthy');
   });
 
   it('returns release gate summary via dedicated admin endpoint', async () => {
