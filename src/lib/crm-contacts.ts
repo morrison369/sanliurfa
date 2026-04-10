@@ -287,7 +287,7 @@ export class ContactSegmentation {
   }
 
   /**
-   * Get segment contacts (placeholder)
+   * Get contacts that match a segment's live criteria
    */
   getSegmentContacts(segmentId: string): Contact[] {
     const segment = this.segments.get(segmentId);

@@ -3,13 +3,12 @@
  */
 
 import type { APIRoute } from 'astro';
-import { sendEmail, getEmailVerificationHTML } from '../../../lib/email';
+import { requestEmailVerification } from '../../../lib/email';
 import { queryOne } from '../../../lib/postgres';
 import { validateWithSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
-import { createToken } from '../../../lib/auth';
 
 const schema = {
   email: { type: 'string' as const, required: true, pattern: '^[^@]+@[^@]+\\.[^@]+$' }
@@ -21,7 +20,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    // Check authentication
     if (!locals.user?.id) {
       recordRequest('POST', '/api/email/send-verification', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
@@ -42,26 +40,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const { email } = validation.data as { email: string };
-
-    // Get user info
-    const user = await queryOne('SELECT id, full_name FROM users WHERE id = $1', [locals.user.id]);
+    const user = await queryOne('SELECT id, email, full_name FROM users WHERE id = $1', [locals.user.id]);
 
     if (!user) {
       recordRequest('POST', '/api/email/send-verification', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(ErrorCode.NOT_FOUND, 'User not found', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
-    // Create verification token
-    const verifyToken = createToken(user.id, email, 'user');
-    const verifyLink = `https://sanliurfa.com/verify-email?token=${verifyToken}`;
+    if (email.toLowerCase() !== String(user.email || '').toLowerCase()) {
+      recordRequest('POST', '/api/email/send-verification', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.INVALID_INPUT,
+        'Verification can only be sent to the current account email',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
 
-    const html = getEmailVerificationHTML(user.full_name || 'Kullanıcı', verifyLink);
-
-    const sent = await sendEmail({
-      to: email,
-      subject: 'E-posta Adresini Doğrula - Şanlıurfa.com',
-      html
-    });
+    const sent = await requestEmailVerification(user.id, email, user.full_name || 'Kullanıcı');
 
     if (!sent) {
       recordRequest('POST', '/api/email/send-verification', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);

@@ -63,6 +63,19 @@ export interface PayrollRun {
   createdAt: number;
 }
 
+export interface Paycheck {
+  grossPay: number;
+  deductions: number;
+  netPay: number;
+  benefitDeductions: number;
+  taxWithholding: number;
+  payrollTax: number;
+  currency: string;
+  payFrequency: PayFrequency;
+  annualizedSalary: number;
+  period: string;
+}
+
 // ==================== SALARY MANAGER ====================
 
 export class SalaryManager {
@@ -371,16 +384,70 @@ export class PayrollManager {
     return this.payrollRuns.get(runId) || null;
   }
 
+  private getPeriodsPerYear(payFrequency: PayFrequency): number {
+    switch (payFrequency) {
+      case 'weekly':
+        return 52;
+      case 'biweekly':
+        return 26;
+      case 'monthly':
+        return 12;
+      case 'annual':
+        return 1;
+      default:
+        return 12;
+    }
+  }
+
+  private roundCurrency(value: number): number {
+    return Math.round(value * 100) / 100;
+  }
+
   /**
    * Calculate paycheck
    */
-  calculatePaycheck(employeeId: string, period: string): { grossPay: number; deductions: number; netPay: number } {
-    // Placeholder: would need salary and benefit data
-    const grossPay = 5000; // Example
-    const deductions = 1000; // Example taxes + benefits
-    const netPay = grossPay - deductions;
+  calculatePaycheck(employeeId: string, period: string): Paycheck {
+    const salary = salaryManager.getSalary(employeeId);
 
-    return { grossPay, deductions, netPay };
+    if (!salary) {
+      return {
+        grossPay: 0,
+        deductions: 0,
+        netPay: 0,
+        benefitDeductions: 0,
+        taxWithholding: 0,
+        payrollTax: 0,
+        currency: 'USD',
+        payFrequency: 'monthly',
+        annualizedSalary: 0,
+        period
+      };
+    }
+
+    const annualizedSalary = salaryManager.calculateAnnualSalary(employeeId);
+    const periodsPerYear = this.getPeriodsPerYear(salary.payFrequency);
+    const grossPay = this.roundCurrency(annualizedSalary / periodsPerYear);
+    const monthlyBenefits = benefitsManager
+      .getEmployeeBenefits(employeeId)
+      .reduce((sum, benefit) => sum + benefit.employeeContribution, 0);
+    const benefitDeductions = this.roundCurrency((monthlyBenefits * 12) / periodsPerYear);
+    const taxWithholding = this.roundCurrency(grossPay * 0.15);
+    const payrollTax = this.roundCurrency(grossPay * 0.0765);
+    const deductions = this.roundCurrency(benefitDeductions + taxWithholding + payrollTax);
+    const netPay = this.roundCurrency(Math.max(grossPay - deductions, 0));
+
+    return {
+      grossPay,
+      deductions,
+      netPay,
+      benefitDeductions,
+      taxWithholding,
+      payrollTax,
+      currency: salary.currency,
+      payFrequency: salary.payFrequency,
+      annualizedSalary,
+      period
+    };
   }
 
   /**
@@ -398,7 +465,23 @@ export class PayrollManager {
    * Generate paystub
    */
   generatePaystub(employeeId: string, period: string): string {
-    return `paystub-${employeeId}-${period}.pdf`;
+    const paycheck = this.calculatePaycheck(employeeId, period);
+
+    return [
+      'Paystub',
+      `Employee: ${employeeId}`,
+      `Period: ${period}`,
+      `Currency: ${paycheck.currency}`,
+      `Pay Frequency: ${paycheck.payFrequency}`,
+      `Annualized Salary: ${paycheck.annualizedSalary.toFixed(2)}`,
+      `Gross Pay: ${paycheck.grossPay.toFixed(2)}`,
+      `Tax Withholding: ${paycheck.taxWithholding.toFixed(2)}`,
+      `Payroll Tax: ${paycheck.payrollTax.toFixed(2)}`,
+      `Benefit Deductions: ${paycheck.benefitDeductions.toFixed(2)}`,
+      `Total Deductions: ${paycheck.deductions.toFixed(2)}`,
+      `Net Pay: ${paycheck.netPay.toFixed(2)}`,
+      `Generated At: ${new Date().toISOString()}`
+    ].join('\n');
   }
 }
 

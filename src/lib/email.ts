@@ -3,6 +3,7 @@
  * Queue-based email sending with templates
  */
 
+import crypto from 'crypto';
 import { insert, queryRows, query, queryOne } from './postgres';
 import { logger } from './logging';
 
@@ -10,6 +11,16 @@ export interface EmailTemplate {
   subject: string;
   html: string;
 }
+
+export interface EmailVerificationResult {
+  userId: string;
+  email: string;
+  verifiedAt: string;
+}
+
+type EmailQueueSchemaMode = 'legacy' | 'delivery';
+
+let emailQueueSchemaModePromise: Promise<EmailQueueSchemaMode> | null = null;
 
 const TEMPLATES: { [key: string]: (data: any) => EmailTemplate } = {
   welcome: (data) => ({
@@ -32,11 +43,99 @@ const TEMPLATES: { [key: string]: (data: any) => EmailTemplate } = {
     html: `<h1>Mekanınız İncelendi</h1><p>${data.reviewerName}, ${data.placeName} için şu incelemeyi yaptı: "${data.reviewPreview}"</p><p><a href="${data.reviewUrl}">İncelemeyi Oku</a></p>`
   }),
 
-  weekly_digest: (data) => ({
+  weekly_digest: () => ({
     subject: 'Haftalık Özet - Şanlıurfa.com',
     html: `<h1>Bu Hafta Neler Oldu?</h1><p>En beğenilen incelemeler ve takip ettiklerinizin aktiviteleri...</p>`
   })
 };
+
+function getSiteUrl(): string {
+  return (process.env.PUBLIC_SITE_URL || process.env.SITE_URL || 'https://sanliurfa.com').replace(/\/+$/, '');
+}
+
+function stripHtmlTags(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function parseQueuedEmailData(value: unknown): Record<string, any> {
+  if (!value) return {};
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === 'object' ? parsed as Record<string, any> : {};
+    } catch {
+      return {};
+    }
+  }
+
+  return typeof value === 'object' ? value as Record<string, any> : {};
+}
+
+async function getEmailQueueSchemaMode(): Promise<EmailQueueSchemaMode> {
+  if (!emailQueueSchemaModePromise) {
+    emailQueueSchemaModePromise = (async () => {
+      const columns = await queryRows(
+        `SELECT column_name
+         FROM information_schema.columns
+         WHERE table_schema = current_schema()
+           AND table_name = 'email_queue'`
+      );
+
+      const columnNames = new Set(
+        columns
+          .map((column) => String((column as Record<string, unknown>).column_name || ''))
+          .filter(Boolean)
+      );
+
+      return columnNames.has('html_content') || columnNames.has('delivery_attempts')
+        ? 'delivery'
+        : 'legacy';
+    })().catch((error) => {
+      emailQueueSchemaModePromise = null;
+      logger.warn('Failed to detect email_queue schema mode, falling back to legacy mode', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return 'legacy';
+    });
+  }
+
+  return emailQueueSchemaModePromise;
+}
+
+function renderQueuedEmail(email: Record<string, any>): { subject: string; html: string } {
+  const queueSubject = typeof email.subject === 'string' && email.subject.trim()
+    ? email.subject.trim()
+    : 'Şanlıurfa.com bildirimi';
+
+  if (typeof email.html_content === 'string' && email.html_content.trim()) {
+    return { subject: queueSubject, html: email.html_content };
+  }
+
+  const templateType = typeof email.template_type === 'string' ? email.template_type : '';
+  const templateData = parseQueuedEmailData(email.data);
+  const template = templateType ? TEMPLATES[templateType] : undefined;
+
+  if (template) {
+    const rendered = template(templateData);
+    return {
+      subject: queueSubject || rendered.subject,
+      html: rendered.html
+    };
+  }
+
+  if (typeof email.plain_text_content === 'string' && email.plain_text_content.trim()) {
+    return {
+      subject: queueSubject,
+      html: `<pre>${email.plain_text_content}</pre>`
+    };
+  }
+
+  return {
+    subject: queueSubject,
+    html: `<p>${queueSubject}</p>`
+  };
+}
 
 /**
  * Queue an email to be sent
@@ -54,18 +153,36 @@ export async function queueEmail(
     }
 
     const { subject, html } = template(data);
+    const schemaMode = await getEmailQueueSchemaMode();
 
-    await insert('email_queue', {
-      recipient_email: recipientEmail,
-      recipient_user_id: recipientUserId || null,
-      template_type: templateType,
-      subject: subject,
-      data: JSON.stringify(data),
-      status: 'pending',
-      retry_count: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    });
+    if (schemaMode === 'delivery') {
+      await insert('email_queue', {
+        recipient_email: recipientEmail,
+        recipient_id: recipientUserId || null,
+        subject,
+        html_content: html,
+        plain_text_content: stripHtmlTags(html),
+        message_type: templateType,
+        priority: 5,
+        status: 'pending',
+        delivery_attempts: 0,
+        metadata: JSON.stringify(data),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    } else {
+      await insert('email_queue', {
+        recipient_email: recipientEmail,
+        recipient_user_id: recipientUserId || null,
+        template_type: templateType,
+        subject,
+        data: JSON.stringify(data),
+        status: 'pending',
+        retry_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    }
 
     logger.info('Email queued', { recipientEmail, templateType });
   } catch (error) {
@@ -82,13 +199,24 @@ export async function queueEmail(
  */
 export async function getPendingEmails(limit: number = 50): Promise<any[]> {
   try {
-    const results = await queryRows(
-      `SELECT * FROM email_queue
-       WHERE status = 'pending' AND retry_count < max_retries
-       ORDER BY created_at ASC
-       LIMIT $1`,
-      [limit]
-    );
+    const schemaMode = await getEmailQueueSchemaMode();
+    const results = schemaMode === 'delivery'
+      ? await queryRows(
+          `SELECT * FROM email_queue
+           WHERE status = 'pending'
+             AND delivery_attempts < max_attempts
+             AND (scheduled_for IS NULL OR scheduled_for <= NOW())
+           ORDER BY priority DESC, created_at ASC
+           LIMIT $1`,
+          [limit]
+        )
+      : await queryRows(
+          `SELECT * FROM email_queue
+           WHERE status = 'pending' AND retry_count < max_retries
+           ORDER BY created_at ASC
+           LIMIT $1`,
+          [limit]
+        );
 
     return results;
   } catch (error) {
@@ -119,16 +247,41 @@ export async function markEmailSent(emailId: string): Promise<void> {
  */
 export async function markEmailFailed(emailId: string, errorMessage: string): Promise<void> {
   try {
-    const email = await query('SELECT retry_count, max_retries FROM email_queue WHERE id = $1', [emailId]);
-    const retryCount = (email.rows?.[0]?.retry_count || 0) + 1;
-    const maxRetries = email.rows?.[0]?.max_retries || 3;
+    const schemaMode = await getEmailQueueSchemaMode();
 
-    const newStatus = retryCount >= maxRetries ? 'failed' : 'pending';
+    if (schemaMode === 'delivery') {
+      const email = await queryOne(
+        'SELECT delivery_attempts, max_attempts FROM email_queue WHERE id = $1',
+        [emailId]
+      );
+      const retryCount = Number(email?.delivery_attempts || 0) + 1;
+      const maxRetries = Number(email?.max_attempts || 5);
+      const newStatus = retryCount >= maxRetries ? 'failed' : 'pending';
 
-    await query(
-      'UPDATE email_queue SET status = $1, retry_count = $2, error_message = $3, updated_at = NOW() WHERE id = $4',
-      [newStatus, retryCount, errorMessage, emailId]
-    );
+      await query(
+        `UPDATE email_queue
+         SET status = $1,
+             delivery_attempts = $2,
+             last_error = $3,
+             last_attempt_at = NOW(),
+             updated_at = NOW()
+         WHERE id = $4`,
+        [newStatus, retryCount, errorMessage, emailId]
+      );
+    } else {
+      const email = await queryOne(
+        'SELECT retry_count, max_retries FROM email_queue WHERE id = $1',
+        [emailId]
+      );
+      const retryCount = Number(email?.retry_count || 0) + 1;
+      const maxRetries = Number(email?.max_retries || 3);
+      const newStatus = retryCount >= maxRetries ? 'failed' : 'pending';
+
+      await query(
+        'UPDATE email_queue SET status = $1, retry_count = $2, error_message = $3, updated_at = NOW() WHERE id = $4',
+        [newStatus, retryCount, errorMessage, emailId]
+      );
+    }
   } catch (error) {
     logger.error('Failed to mark email failed', error instanceof Error ? error : new Error(String(error)), {
       emailId
@@ -138,22 +291,29 @@ export async function markEmailFailed(emailId: string, errorMessage: string): Pr
 }
 
 /**
- * Send email via SMTP (placeholder - would use Resend or similar)
+ * Send a queued email using the configured provider
  */
 export async function sendEmailViaService(email: any): Promise<boolean> {
   try {
-    logger.info('Email would be sent', {
-      to: email.recipient_email,
-      subject: email.subject,
-      template: email.template_type
-    });
+    const queuedEmail = email as Record<string, any>;
+    const { subject, html } = renderQueuedEmail(queuedEmail);
+    const success = await sendEmail(queuedEmail.recipient_email, subject, html);
 
-    // In production, integrate with Resend, SendGrid, or SMTP
-    // For now, mark as sent immediately
-    await markEmailSent(email.id);
-    return true;
+    if (success) {
+      await markEmailSent(String(queuedEmail.id));
+      return true;
+    }
+
+    await markEmailFailed(String(queuedEmail.id), 'Email provider delivery failed');
+    return false;
   } catch (error) {
-    logger.error('Failed to send email', error instanceof Error ? error : new Error(String(error)));
+    const normalizedError = error instanceof Error ? error : new Error(String(error));
+    logger.error('Failed to send email', normalizedError);
+
+    if (email?.id) {
+      await markEmailFailed(String(email.id), normalizedError.message);
+    }
+
     return false;
   }
 }
@@ -178,11 +338,11 @@ export async function sendEmail(
   try {
     const { to, subject, html } = payload;
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const FROM_EMAIL = process.env.MAIL_FROM || 'noreply@sanliurfa.com';
+    const FROM_EMAIL = process.env.MAIL_FROM || process.env.FROM_EMAIL || 'noreply@sanliurfa.com';
 
     if (!RESEND_API_KEY) {
       logger.warn('RESEND_API_KEY not configured, email not sent', { to, subject });
-      return true; // Don't fail in development
+      return true;
     }
 
     const response = await fetch('https://api.resend.com/emails', {
@@ -196,7 +356,8 @@ export async function sendEmail(
         to,
         subject,
         html
-      })
+      }),
+      signal: AbortSignal.timeout(15000)
     });
 
     if (!response.ok) {
@@ -232,9 +393,10 @@ export function getPasswordResetEmailHTML(resetLink: string, expiryHours: number
 /**
  * Generate email verification HTML
  */
-export function getEmailVerificationHTML(verificationLink: string): string {
+export function getEmailVerificationHTML(verificationLink: string, fullName?: string): string {
   return `
     <h1>E-posta Doğrulama</h1>
+    <p>Merhaba ${fullName || 'Kullanıcı'},</p>
     <p>E-posta adresinizi doğrulamak için aşağıdaki bağlantıya tıklayın:</p>
     <p><a href="${verificationLink}">E-postayı Doğrula</a></p>
   `;
@@ -275,13 +437,33 @@ export function getSubscriptionEmailHTML(placeName: string): string {
 /**
  * Request email verification
  */
-export async function requestEmailVerification(userId: string, email: string): Promise<boolean> {
+export async function requestEmailVerification(userId: string, email: string, fullName?: string): Promise<boolean> {
   try {
-    // Generate verification token and send email
-    const verificationToken = Math.random().toString(36).substring(2, 15);
-    const verificationLink = `https://sanliurfa.com/verify-email?token=${verificationToken}`;
-    const html = getEmailVerificationHTML(verificationLink);
-    
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationLink = `${getSiteUrl()}/verify-email?token=${verificationToken}`;
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const currentUser = await queryOne(
+      'SELECT id, email, full_name FROM users WHERE id = $1',
+      [userId]
+    );
+
+    await query(
+      `UPDATE users
+       SET email_verification_token = $1,
+           email_verification_token_expires = $2
+       WHERE id = $3`,
+      [verificationToken, expiresAt, userId]
+    );
+
+    await insert('email_verification_history', {
+      user_id: userId,
+      old_email: currentUser?.email || email,
+      new_email: email,
+      verification_status: 'pending',
+      created_at: new Date().toISOString()
+    });
+
+    const html = getEmailVerificationHTML(verificationLink, fullName || currentUser?.full_name);
     return await sendEmail(email, 'E-posta Doğrulama', html);
   } catch (error) {
     logger.error('Failed to request email verification', error instanceof Error ? error : new Error(String(error)));
@@ -294,7 +476,6 @@ export async function requestEmailVerification(userId: string, email: string): P
  */
 export async function isEmailVerified(userId: string): Promise<boolean> {
   try {
-    // Check in users table email_verified column
     const result = await queryOne(
       'SELECT email_verified FROM users WHERE id = $1',
       [userId]
@@ -309,14 +490,50 @@ export async function isEmailVerified(userId: string): Promise<boolean> {
 /**
  * Verify email with token
  */
-export async function verifyEmailWithToken(token: string): Promise<boolean> {
+export async function verifyEmailWithToken(token: string): Promise<EmailVerificationResult | null> {
   try {
-    // In production, validate token and mark email as verified
-    // For now, just return true
-    logger.info('Email verified with token', { token });
-    return true;
+    const user = await queryOne(
+      `SELECT id, email
+       FROM users
+       WHERE email_verification_token = $1
+         AND email_verification_token_expires > NOW()`,
+      [token]
+    );
+
+    if (!user) {
+      return null;
+    }
+
+    const verifiedAt = new Date().toISOString();
+
+    await query(
+      `UPDATE users
+       SET email_verified = true,
+           email_verified_at = $1,
+           email_verification_token = NULL,
+           email_verification_token_expires = NULL
+       WHERE id = $2`,
+      [verifiedAt, user.id]
+    );
+
+    await insert('email_verification_history', {
+      user_id: user.id,
+      old_email: user.email,
+      new_email: user.email,
+      verification_status: 'verified',
+      verified_at: verifiedAt,
+      created_at: verifiedAt
+    });
+
+    logger.info('Email verified with token', { userId: user.id, email: user.email });
+
+    return {
+      userId: String(user.id),
+      email: String(user.email),
+      verifiedAt
+    };
   } catch (error) {
     logger.error('Failed to verify email', error instanceof Error ? error : new Error(String(error)));
-    return false;
+    return null;
   }
 }
