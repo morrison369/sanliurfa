@@ -9,6 +9,12 @@ type DeploymentStatusResponse =
   paths['/api/admin/deployment/status']['get']['responses']['200']['content']['application/json'];
 type ArtifactHealthResponse =
   paths['/api/admin/system/artifact-health']['get']['responses']['200']['content']['application/json'];
+type SubscriptionUsersGetResponse =
+  paths['/api/admin/subscriptions/users']['get']['responses']['200']['content']['application/json'];
+type SubscriptionUsersPostResponse =
+  paths['/api/admin/subscriptions/users']['post']['responses']['200']['content']['application/json'];
+type MessageStatusPostResponse =
+  paths['/api/admin/messages/{id}/status']['post']['responses']['200']['content']['application/json'];
 
 export interface IntegrationVerificationState {
   status: string;
@@ -110,6 +116,9 @@ export interface AdminDashboardOverviewData extends DashboardOverviewResponse['d
 export type AdminSystemMetricsData = SystemMetricsResponse['data']['data'];
 export type AdminDeploymentStatusData = DeploymentStatusResponse['data']['data'];
 export type AdminArtifactHealthData = ArtifactHealthResponse['data']['data'];
+export type AdminSubscriptionUsersListData = SubscriptionUsersGetResponse['data'];
+export type AdminSubscriptionUsersMutationData = SubscriptionUsersPostResponse['data'];
+export type AdminMessageStatusMutationData = MessageStatusPostResponse['data'];
 
 export interface AdminDashboardOverviewLegacyShape {
   overview: {

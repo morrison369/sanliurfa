@@ -18,6 +18,8 @@ describe('openapi runtime contracts', () => {
     expect(body.paths['/api/admin/system/metrics']).toBeDefined();
     expect(body.paths['/api/admin/system/integration-settings']).toBeDefined();
     expect(body.paths['/api/admin/audit-logs']).toBeDefined();
+    expect(body.paths['/api/admin/subscriptions/users']).toBeDefined();
+    expect(body.paths['/api/admin/messages/{id}/status']).toBeDefined();
 
     const healthStatusEnum = body.paths['/api/health'].get.responses['200'].content['application/json'].schema.properties.data.properties.status.enum;
     const healthArtifactSchema =
@@ -54,6 +56,12 @@ describe('openapi runtime contracts', () => {
       body.paths['/api/admin/system/integration-settings'].put.responses['200'].content['application/json'].schema.properties.data.properties.data;
     const adminAuditLogsSchema =
       body.paths['/api/admin/audit-logs'].get.responses['200'].content['application/json'].schema.properties.data.properties;
+    const adminSubscriptionsGetSchema =
+      body.paths['/api/admin/subscriptions/users'].get.responses['200'].content['application/json'].schema.properties.data;
+    const adminSubscriptionsPostSchema =
+      body.paths['/api/admin/subscriptions/users'].post.responses['200'].content['application/json'].schema.properties.data;
+    const adminMessageStatusSchema =
+      body.paths['/api/admin/messages/{id}/status'].post.responses['200'].content['application/json'].schema.properties.data;
 
     expect(healthStatusEnum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(healthArtifactSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E']);
@@ -91,6 +99,12 @@ describe('openapi runtime contracts', () => {
     expect(integrationSettingsPutSchema.required).toEqual(['resend', 'analytics']);
     expect(adminAuditLogsSchema.logs.items.anyOf[0].required).toContain('requestId');
     expect(adminAuditLogsSchema.summary.required).toEqual(['generatedAt', 'windowHours', 'total', 'deniedCount', 'rateLimitedCount', 'writeCount', 'readCount', 'lastDeniedAt']);
+    expect(adminAuditLogsSchema.filters.required).toEqual(['requestId', 'startDate', 'endDate']);
+    expect(adminAuditLogsSchema.totalFiltered.type).toBe('integer');
+    expect(adminSubscriptionsGetSchema.properties.users.items.required).toEqual(['id', 'email', 'full_name', 'subscription_id', 'tier', 'status', 'created_at']);
+    expect(adminSubscriptionsGetSchema.required).toEqual(['success', 'users', 'count']);
+    expect(adminSubscriptionsPostSchema.anyOf).toHaveLength(2);
+    expect(adminMessageStatusSchema.required).toEqual(['success']);
     expect(detailedArtifactSchema.properties.releaseGate.required).toEqual(['available', 'status', 'generatedAt']);
     expect(detailedArtifactSchema.properties.releaseGate.properties.available.type).toBe('boolean');
     expect(detailedArtifactSchema.properties.releaseGate.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);

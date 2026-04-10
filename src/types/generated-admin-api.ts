@@ -10,7 +10,15 @@ export interface paths {
         /** Admin audit logs and admin ops audit sink */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    endDate?: string;
+                    format?: "csv";
+                    limit?: number;
+                    offset?: number;
+                    requestId?: string;
+                    source?: string;
+                    startDate?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -25,9 +33,16 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                count?: number;
-                                limit?: number;
-                                logs?: ({
+                                count: number;
+                                filters?: {
+                                    /** Format: date-time */
+                                    endDate: string | null;
+                                    requestId: string | null;
+                                    /** Format: date-time */
+                                    startDate: string | null;
+                                };
+                                limit: number;
+                                logs: ({
                                     actorKey: string;
                                     details?: {
                                         [key: string]: unknown;
@@ -48,8 +63,8 @@ export interface paths {
                                 } | {
                                     [key: string]: unknown;
                                 })[];
-                                offset?: number;
-                                source?: string;
+                                offset: number;
+                                source: string;
                                 summary?: {
                                     deniedCount: number;
                                     /** Format: date-time */
@@ -62,8 +77,10 @@ export interface paths {
                                     windowHours: number;
                                     writeCount: number;
                                 };
+                                totalFiltered?: number;
                             };
                         };
+                        "text/csv": string;
                     };
                 };
                 /** @description Validation error */
@@ -449,6 +466,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/messages/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Update contact message status */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** @enum {string} */
+                        status: "new" | "read" | "replied" | "archived";
+                    };
+                };
+            };
+            responses: {
+                /** @description Message status updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Validation error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/performance/optimization": {
         parameters: {
             query?: never;
@@ -550,6 +637,151 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/subscriptions/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List users with subscriptions */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                    search?: string;
+                    status?: string;
+                    tier?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Subscription users list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                count: number;
+                                success: boolean;
+                                users: {
+                                    /** Format: date-time */
+                                    created_at: string | null;
+                                    email: string | null;
+                                    full_name: string | null;
+                                    id: string;
+                                    status: string | null;
+                                    subscription_id: string | null;
+                                    tier: string | null;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Manage user subscription actions */
+        post: {
+            parameters: {
+                query: {
+                    action: "change_tier" | "get_details";
+                    userId: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        newTierId?: string;
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Subscription management result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                message: string;
+                                success: boolean;
+                            } | {
+                                data: {
+                                    [key: string]: unknown;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid payload or action */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Resource not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation error */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;

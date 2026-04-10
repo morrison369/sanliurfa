@@ -145,6 +145,95 @@ export const adminOpsAuditSummarySchema = {
   required: ['generatedAt', 'windowHours', 'total', 'deniedCount', 'rateLimitedCount', 'writeCount', 'readCount', 'lastDeniedAt'],
 };
 
+export const adminOpsAuditFiltersSchema = {
+  type: 'object',
+  properties: {
+    requestId: { type: ['string', 'null'] },
+    startDate: { type: ['string', 'null'], format: 'date-time' },
+    endDate: { type: ['string', 'null'], format: 'date-time' },
+  },
+  required: ['requestId', 'startDate', 'endDate'],
+};
+
+export const adminAuditLogsDataSchema = {
+  type: 'object',
+  properties: {
+    logs: {
+      type: 'array',
+      items: {
+        anyOf: [
+          adminOpsAuditEntrySchema,
+          { type: 'object', additionalProperties: true },
+        ],
+      },
+    },
+    source: { type: 'string' },
+    count: { type: 'integer' },
+    totalFiltered: { type: 'integer' },
+    limit: { type: 'integer' },
+    offset: { type: 'integer' },
+    summary: adminOpsAuditSummarySchema,
+    filters: adminOpsAuditFiltersSchema,
+  },
+  required: ['logs', 'source', 'count', 'limit', 'offset'],
+};
+
+export const subscriptionUserListEntrySchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    email: { type: ['string', 'null'] },
+    full_name: { type: ['string', 'null'] },
+    subscription_id: { type: ['string', 'null'] },
+    tier: { type: ['string', 'null'] },
+    status: { type: ['string', 'null'] },
+    created_at: { type: ['string', 'null'], format: 'date-time' },
+  },
+  required: ['id', 'email', 'full_name', 'subscription_id', 'tier', 'status', 'created_at'],
+};
+
+export const subscriptionUsersListDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    users: {
+      type: 'array',
+      items: subscriptionUserListEntrySchema,
+    },
+    count: { type: 'integer' },
+  },
+  required: ['success', 'users', 'count'],
+};
+
+export const subscriptionUsersMutationDataSchema = {
+  anyOf: [
+    {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        message: { type: 'string' },
+      },
+      required: ['success', 'message'],
+    },
+    {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        data: { type: 'object', additionalProperties: true },
+      },
+      required: ['success', 'data'],
+    },
+  ],
+};
+
+export const adminMessageStatusMutationDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+  },
+  required: ['success'],
+};
+
 export const adminStatusSummarySchema = {
   type: 'object',
   properties: {

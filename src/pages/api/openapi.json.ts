@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import {
+  adminAuditLogsDataSchema,
   adminArtifactHealthSnapshotSchema,
   adminArtifactHealthSummarySchema,
+  adminMessageStatusMutationDataSchema,
   adminOpsAuditEntrySchema,
   adminOpsAuditSummarySchema,
   adminStatusSummarySchema,
@@ -13,6 +15,8 @@ import {
   nightlySummarySchema,
   performanceOptimizationSummarySchema,
   releaseGateSummarySchema,
+  subscriptionUsersListDataSchema,
+  subscriptionUsersMutationDataSchema,
 } from '../../lib/api-schemas/ops';
 
 const openApiSpec = {
@@ -680,6 +684,15 @@ const openApiSpec = {
         tags: ['Health'],
         summary: 'Admin audit logs and admin ops audit sink',
         security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'source', in: 'query', schema: { type: 'string' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+          { name: 'offset', in: 'query', schema: { type: 'integer' } },
+          { name: 'requestId', in: 'query', schema: { type: 'string' } },
+          { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date-time' } },
+          { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date-time' } },
+          { name: 'format', in: 'query', schema: { type: 'string', enum: ['csv'] } },
+        ],
         responses: {
           '200': {
             description: 'Audit logs',
@@ -688,25 +701,129 @@ const openApiSpec = {
                 schema: {
                   type: 'object',
                   properties: {
-                    data: {
-                      type: 'object',
-                      properties: {
-                        logs: {
-                          type: 'array',
-                          items: {
-                            anyOf: [
-                              adminOpsAuditEntrySchema,
-                              { type: 'object', additionalProperties: true },
-                            ],
-                          },
-                        },
-                        source: { type: 'string' },
-                        count: { type: 'integer' },
-                        limit: { type: 'integer' },
-                        offset: { type: 'integer' },
-                        summary: adminOpsAuditSummarySchema,
-                      },
-                    },
+                    data: adminAuditLogsDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+              'text/csv': {
+                schema: {
+                  type: 'string',
+                },
+              },
+            },
+          },
+          '400': { description: 'Validation error' },
+          '403': { description: 'Admin access required' },
+        },
+      },
+    },
+    '/api/admin/subscriptions/users': {
+      get: {
+        tags: ['Health'],
+        summary: 'List users with subscriptions',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'search', in: 'query', schema: { type: 'string' } },
+          { name: 'tier', in: 'query', schema: { type: 'string' } },
+          { name: 'status', in: 'query', schema: { type: 'string' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Subscription users list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: subscriptionUsersListDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+      post: {
+        tags: ['Health'],
+        summary: 'Manage user subscription actions',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'userId', in: 'query', required: true, schema: { type: 'string' } },
+          { name: 'action', in: 'query', required: true, schema: { type: 'string', enum: ['change_tier', 'get_details'] } },
+        ],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  newTierId: { type: 'string' },
+                  reason: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Subscription management result',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: subscriptionUsersMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '400': { description: 'Invalid payload or action' },
+          '403': { description: 'Admin access required' },
+          '404': { description: 'Resource not found' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/messages/{id}/status': {
+      post: {
+        tags: ['Health'],
+        summary: 'Update contact message status',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                properties: {
+                  status: { type: 'string', enum: ['new', 'read', 'replied', 'archived'] },
+                },
+                required: ['status'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Message status updated',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: adminMessageStatusMutationDataSchema,
                   },
                   required: ['data'],
                 },
@@ -715,6 +832,7 @@ const openApiSpec = {
           },
           '400': { description: 'Validation error' },
           '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
         },
       },
     },
