@@ -44,6 +44,34 @@ interface DashboardData {
       topQueries: Array<{ query: string; count: number }>;
     };
   };
+  performanceOptimization?: {
+    generatedAt: string;
+    recommendations: {
+      total: number;
+      highPriority: number;
+      mediumPriority: number;
+    };
+    metrics: {
+      slowQueriesCount: number;
+      slowRequestRate: number;
+      cacheHitRate: number;
+      avgRequestDuration: number;
+      p95Duration: number;
+    };
+    cacheStrategies: {
+      count: number;
+    };
+    indexSuggestions: {
+      count: number;
+      top: string[];
+    };
+    slowOperations: Array<{
+      type: string;
+      message: string;
+      duration: number;
+      timestamp: string;
+    }>;
+  };
   releaseGate?: {
     available: boolean;
     generatedAt: string | null;
@@ -332,6 +360,50 @@ export default function AdminDashboardOverview() {
                 {data.operational.search.topQueries?.[0]
                   ? `${data.operational.search.topQueries[0].query} (${data.operational.search.topQueries[0].count})`
                   : 'Veri yok'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {data.performanceOptimization && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-900 mb-4">Performans Optimizasyonu</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Öneriler</div>
+              <div className="text-xl font-bold text-gray-900">{data.performanceOptimization.recommendations.total}</div>
+              <div className="text-xs text-gray-500">
+                High: {data.performanceOptimization.recommendations.highPriority} • Medium: {data.performanceOptimization.recommendations.mediumPriority}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Yavaş Query / Request</div>
+              <div className="text-xl font-bold text-gray-900">
+                {data.performanceOptimization.metrics.slowQueriesCount} / %{data.performanceOptimization.metrics.slowRequestRate}
+              </div>
+              <div className="text-xs text-gray-500">
+                Avg: {data.performanceOptimization.metrics.avgRequestDuration}ms • p95: {data.performanceOptimization.metrics.p95Duration}ms
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Cache / Index</div>
+              <div className="text-xl font-bold text-gray-900">
+                %{data.performanceOptimization.metrics.cacheHitRate} / {data.performanceOptimization.indexSuggestions.count}
+              </div>
+              <div className="text-xs text-gray-500">
+                Strategy: {data.performanceOptimization.cacheStrategies.count}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Son Yavaş Operasyon</div>
+              <div className="text-sm font-semibold text-gray-900">
+                {data.performanceOptimization.slowOperations[0]
+                  ? `${data.performanceOptimization.slowOperations[0].type} • ${data.performanceOptimization.slowOperations[0].duration}ms`
+                  : 'yok'}
+              </div>
+              <div className="text-xs text-gray-500 truncate">
+                {data.performanceOptimization.slowOperations[0]?.message || 'Yavaş operasyon kaydı yok'}
               </div>
             </div>
           </div>

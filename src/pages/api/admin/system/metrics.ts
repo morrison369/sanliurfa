@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSystemMetrics, getOperationalSnapshot } from '../../../../lib/admin-dashboard';
+import { getSystemMetrics, getOperationalSnapshot, getPerformanceOptimizationSummary } from '../../../../lib/admin-dashboard';
 import {
   classifyIntegrationStatus,
   classifyNightlyStatus,
@@ -33,13 +33,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const [systemMetrics, modStats, pendingQueue, pendingFlags, integrationSettings, operational, nightly, releaseGate] = await Promise.all([
+    const [systemMetrics, modStats, pendingQueue, pendingFlags, integrationSettings, operational, performanceOptimization, nightly, releaseGate] = await Promise.all([
       getSystemMetrics(),
       getModerationStats(),
       getModerationQueue('pending', 1),
       getContentFlags('pending', 1),
       getRuntimeIntegrationSettings(),
       getOperationalSnapshot(7),
+      getPerformanceOptimizationSummary(),
       getNightlyOpsSummary(),
       getReleaseGateSummary()
     ]);
@@ -92,6 +93,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
             }
           },
           operational,
+          performanceOptimization,
           nightly,
           releaseGate,
           statusSummary: {

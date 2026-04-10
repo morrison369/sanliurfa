@@ -4,6 +4,7 @@ const recordRequestMock = vi.fn();
 const getDashboardOverviewMock = vi.fn();
 const getSystemMetricsMock = vi.fn();
 const getOperationalSnapshotMock = vi.fn();
+const getPerformanceOptimizationSummaryMock = vi.fn();
 const getModerationStatsMock = vi.fn();
 const getModerationQueueMock = vi.fn();
 const getContentFlagsMock = vi.fn();
@@ -28,6 +29,7 @@ vi.mock('../../../lib/admin-dashboard', () => ({
   getDashboardOverview: getDashboardOverviewMock,
   getSystemMetrics: getSystemMetricsMock,
   getOperationalSnapshot: getOperationalSnapshotMock,
+  getPerformanceOptimizationSummary: getPerformanceOptimizationSummaryMock,
 }));
 
 vi.mock('../../../lib/admin-moderation', () => ({
@@ -76,6 +78,30 @@ describe('admin dashboard contracts', () => {
       oauth: { callback: { sampleSize: 12, errorRatePercent: 1 } },
       webhook: { stripe: { sampleSize: 15, errorRatePercent: 0, p95DurationMs: 250, duplicateRatePercent: 0 } },
       search: { periodDays: 7, totalTopSearches: 21, topQueries: [{ query: 'urfa', count: 9 }] },
+    });
+    getPerformanceOptimizationSummaryMock.mockResolvedValue({
+      generatedAt: '2026-04-10T03:00:00.000Z',
+      recommendations: { total: 4, highPriority: 2, mediumPriority: 2 },
+      metrics: {
+        slowQueriesCount: 6,
+        slowRequestRate: 14,
+        cacheHitRate: 42,
+        avgRequestDuration: 220,
+        p95Duration: 780,
+      },
+      cacheStrategies: { count: 2 },
+      indexSuggestions: {
+        count: 3,
+        top: ['CREATE INDEX idx_reviews_place_id ON reviews(place_id)'],
+      },
+      slowOperations: [
+        {
+          type: 'query',
+          message: 'reviews query exceeded threshold',
+          duration: 1200,
+          timestamp: '2026-04-10T03:00:00.000Z',
+        },
+      ],
     });
     getModerationStatsMock.mockResolvedValue({
       queue: { pending: 2, inReview: 1 },
@@ -177,6 +203,9 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.statusSummary.overall).toBe('degraded');
     expect(body.data.data.operational.oauth.callback.sampleSize).toBe(12);
     expect(body.data.data.operational.search.topQueries[0].query).toBe('urfa');
+    expect(body.data.data.performanceOptimization.recommendations.total).toBe(4);
+    expect(body.data.data.performanceOptimization.metrics.slowRequestRate).toBe(14);
+    expect(body.data.data.performanceOptimization.slowOperations[0].type).toBe('query');
   });
 
   it('returns system metrics with health and operational summary', async () => {
@@ -202,6 +231,8 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.statusSummary.releaseGate).toBe('healthy');
     expect(body.data.data.statusSummary.overall).toBe('degraded');
     expect(body.data.data.operational.webhook.stripe.p95DurationMs).toBe(250);
+    expect(body.data.data.performanceOptimization.indexSuggestions.count).toBe(3);
+    expect(body.data.data.performanceOptimization.cacheStrategies.count).toBe(2);
   });
 
   it('returns release gate summary via dedicated admin endpoint', async () => {
