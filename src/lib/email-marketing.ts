@@ -3,7 +3,7 @@
  * Campaign creation, management, and subscriber handling
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export interface Campaign {
@@ -105,7 +105,7 @@ export async function getUserCampaigns(
     const statusFilter = status ? 'AND status = $2' : '';
     const params = status ? [userId, status, limit, offset] : [userId, limit, offset];
 
-    const campaigns = await queryMany(`
+    const campaigns = await queryRows(`
       SELECT * FROM email_campaigns
       WHERE user_id = $1 ${statusFilter}
       ORDER BY created_at DESC
@@ -261,7 +261,7 @@ export async function addTargetingRule(
  */
 export async function getCampaignTargetingRules(campaignId: string): Promise<any[]> {
   try {
-    const rules = await queryMany(`
+    const rules = await queryRows(`
       SELECT * FROM campaign_targeting_rules
       WHERE campaign_id = $1
       ORDER BY created_at ASC
@@ -313,7 +313,7 @@ export async function getCampaignSubscribers(
   offset: number = 0,
 ): Promise<any[]> {
   try {
-    const subscribers = await queryMany(`
+    const subscribers = await queryRows(`
       SELECT * FROM campaign_subscribers
       WHERE campaign_id = $1
       ORDER BY created_at DESC

@@ -3,7 +3,7 @@
  * Campaign analytics, engagement metrics, and reporting
  */
 
-import { query, queryOne, queryMany } from './postgres';
+import { query, queryOne, queryRows } from './postgres';
 import { logger } from './logging';
 
 export interface CampaignMetrics {
@@ -119,7 +119,7 @@ export async function getDailyMetrics(
   daysBack: number = 30,
 ): Promise<CampaignMetrics[]> {
   try {
-    const metrics = await queryMany(`
+    const metrics = await queryRows(`
       SELECT
         campaign_id, metric_date,
         sends, opens, clicks, conversions, bounces, unsubscribes, complaints,
@@ -156,7 +156,7 @@ export async function getEngagementTimeline(
   hours: number = 24,
 ): Promise<any[]> {
   try {
-    const timeline = await queryMany(`
+    const timeline = await queryRows(`
       SELECT
         DATE_TRUNC('hour', created_at) as hour,
         engagement_type,
@@ -184,7 +184,7 @@ export async function getEngagementTimeline(
  */
 export async function getTopLinks(campaignId: string, limit: number = 10): Promise<any[]> {
   try {
-    const links = await queryMany(`
+    const links = await queryRows(`
       SELECT
         link_url, COUNT(*) as click_count
       FROM email_engagement
@@ -208,7 +208,7 @@ export async function getTopLinks(campaignId: string, limit: number = 10): Promi
  */
 export async function getEngagementByDevice(campaignId: string): Promise<any[]> {
   try {
-    const devices = await queryMany(`
+    const devices = await queryRows(`
       SELECT
         device_type,
         COUNT(CASE WHEN engagement_type = 'open' THEN 1 END) as opens,
@@ -232,7 +232,7 @@ export async function getEngagementByDevice(campaignId: string): Promise<any[]> 
  */
 export async function getGeographicEngagement(campaignId: string): Promise<any[]> {
   try {
-    const geographic = await queryMany(`
+    const geographic = await queryRows(`
       SELECT
         country, city,
         COUNT(CASE WHEN engagement_type = 'open' THEN 1 END) as opens,
@@ -290,7 +290,7 @@ export async function getDeliveryStats(campaignId: string): Promise<any> {
  */
 export async function getUnsubscribeReasons(campaignId: string): Promise<any[]> {
   try {
-    const reasons = await queryMany(`
+    const reasons = await queryRows(`
       SELECT
         COUNT(*) as count
       FROM email_engagement
@@ -311,7 +311,7 @@ export async function getUnsubscribeReasons(campaignId: string): Promise<any[]> 
  */
 export async function compareCampaigns(campaignIds: string[]): Promise<any[]> {
   try {
-    const comparisons = await queryMany(`
+    const comparisons = await queryRows(`
       SELECT
         id, name,
         send_count, open_count, click_count, conversion_count,
@@ -348,7 +348,7 @@ export async function compareCampaigns(campaignIds: string[]): Promise<any[]> {
  */
 export async function getSubscriberSegments(campaignId: string): Promise<any[]> {
   try {
-    const segments = await queryMany(`
+    const segments = await queryRows(`
       SELECT
         CASE
           WHEN opened_at IS NOT NULL AND clicked_at IS NOT NULL THEN 'highly_engaged'

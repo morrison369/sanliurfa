@@ -3,7 +3,7 @@
  * Create, manage, and track email marketing campaigns
  */
 
-import { queryMany, queryOne, insert, update } from './postgres';
+import { queryRows, queryOne, insert, update } from './postgres';
 import { logger } from './logging';
 
 export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'failed';
@@ -142,7 +142,7 @@ export async function getCampaign(campaignId: string): Promise<EmailCampaign | n
  */
 export async function getAllCampaigns(limit: number = 50): Promise<EmailCampaign[]> {
   try {
-    const results = await queryMany('SELECT * FROM email_campaigns ORDER BY created_at DESC LIMIT $1', [limit]);
+    const results = await queryRows('SELECT * FROM email_campaigns ORDER BY created_at DESC LIMIT $1', [limit]);
 
     return results.map((r: any) => ({
       id: r.id,
@@ -342,7 +342,7 @@ export async function querySegmentUsers(segment: SegmentType, filters?: Record<s
         return [];
     }
 
-    const results = await queryMany(query, params);
+    const results = await queryRows(query, params);
     return results.map((r: any) => ({
       id: r.id,
       email: r.email

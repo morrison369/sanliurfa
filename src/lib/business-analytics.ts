@@ -3,7 +3,7 @@
  * Generate insights and metrics for place owners
  */
 
-import { query, queryOne, queryMany, insert } from './postgres';
+import { query, queryOne, queryRows, insert } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -75,7 +75,7 @@ export async function getPlaceAnalytics(placeId: string, days: number = 30): Pro
       [placeId]
     );
 
-    const ratingDist = await queryMany(
+    const ratingDist = await queryRows(
       `SELECT CAST(rating as INTEGER) as rating, COUNT(*) as count
        FROM reviews WHERE place_id = $1
        GROUP BY CAST(rating as INTEGER) ORDER BY rating DESC`,
@@ -130,7 +130,7 @@ export async function getPlaceAnalytics(placeId: string, days: number = 30): Pro
  */
 export async function getVisitorStats(placeId: string, startDate: string, endDate: string): Promise<VisitorStats[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         DATE(created_at) as date,
         COUNT(*) as visitor_count,
@@ -169,7 +169,7 @@ export async function getReviewAnalysis(placeId: string): Promise<ReviewAnalysis
       [placeId]
     );
 
-    const recentReviews = await queryMany(
+    const recentReviews = await queryRows(
       `SELECT id, user_id, rating, comment, created_at FROM reviews
        WHERE place_id = $1 ORDER BY created_at DESC LIMIT 5`,
       [placeId]
@@ -238,14 +238,14 @@ export async function getPromotionPerformance(promotionId: string): Promise<Prom
  */
 export async function getEventStats(placeId: string): Promise<any> {
   try {
-    const events = await queryMany(
+    const events = await queryRows(
       `SELECT id, title, start_date, attendee_count, capacity
        FROM events WHERE place_id = $1 AND start_date > NOW()
        ORDER BY start_date ASC`,
       [placeId]
     );
 
-    const pastEvents = await queryMany(
+    const pastEvents = await queryRows(
       `SELECT id, title, start_date, attendee_count, capacity
        FROM events WHERE place_id = $1 AND start_date <= NOW()
        ORDER BY start_date DESC LIMIT 10`,
@@ -345,7 +345,7 @@ export async function getPlaceDailyMetrics(placeId: string, days: number = 30): 
       return JSON.parse(cached);
     }
 
-    const metrics = await queryMany(`
+    const metrics = await queryRows(`
       SELECT
         date,
         view_count,
@@ -410,7 +410,7 @@ export async function getDashboardOverview(placeId: string): Promise<any | null>
  */
 export async function getTopPerformingPlaces(limit: number = 10): Promise<any[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         p.id,
         p.title,
@@ -559,7 +559,7 @@ export async function defineKPI(
  */
 export async function getKPIs(isActive: boolean = true): Promise<KPIDefinition[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, key, name, description, formula, unit, target_value, alert_threshold, category, owner_id, is_active
        FROM kpi_definitions
        WHERE is_active = $1
@@ -610,7 +610,7 @@ export async function getKPITrend(
   days: number = 30
 ): Promise<KPIValue[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, kpi_id, value, target_value, period_date, period_type, is_final
        FROM kpi_values
        WHERE kpi_id = $1 AND period_type = $2 AND period_date >= NOW()::DATE - INTERVAL '1 day' * $3
@@ -683,7 +683,7 @@ export async function recordBusinessMetrics(
  */
 export async function getBusinessMetrics(startDate: string, endDate: string): Promise<BusinessMetrics[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT * FROM business_metrics
        WHERE metric_date BETWEEN $1 AND $2
        ORDER BY metric_date DESC`,
@@ -739,7 +739,7 @@ export async function createDashboard(
  */
 export async function getUserDashboards(userId: string): Promise<Dashboard[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, name, description, owner_id, is_public, layout, widgets, refresh_interval, created_at, updated_at
        FROM dashboards
        WHERE owner_id = $1 OR is_public = true
@@ -839,7 +839,7 @@ export async function createReport(
  */
 export async function getReports(userId: string, isActive: boolean = true): Promise<Report[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, name, description, owner_id, report_type, metric_ids, filters, schedule, next_run_at, format, recipients, is_active, created_at, updated_at
        FROM reports
        WHERE owner_id = $1 AND is_active = $2
@@ -927,7 +927,7 @@ export async function createMetricAlert(
  */
 export async function checkMetricAlerts(): Promise<void> {
   try {
-    const alerts = await queryMany(
+    const alerts = await queryRows(
       `SELECT ma.id, ma.kpi_id, ma.threshold_value, ma.condition, ma.notify_users, kv.value
        FROM metric_alerts ma
        JOIN kpi_values kv ON ma.kpi_id = kv.kpi_id
@@ -984,7 +984,7 @@ export async function createDataSegment(
  */
 export async function getDataSegments(segment_type?: string): Promise<any[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       segment_type
         ? `SELECT id, name, description, segment_type, filters, member_count, last_updated, created_at
            FROM data_segments

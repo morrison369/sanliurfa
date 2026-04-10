@@ -3,7 +3,7 @@
  * Trigger-based drip campaigns for user engagement
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { sendEmail } from './email';
 import { logger } from './logging';
 
@@ -102,7 +102,7 @@ export async function enrollInSequence(userId: string, triggerType: SequenceTrig
 export async function processSequenceQueue(): Promise<{ processed: number; failed: number }> {
   try {
     // Get all pending enrollments
-    const enrollments = await queryMany(`
+    const enrollments = await queryRows(`
       SELECT
         ese.id,
         ese.user_id,
@@ -391,7 +391,7 @@ export async function getSequence(sequenceId: number): Promise<EmailSequence | n
  */
 export async function getSequenceSteps(sequenceId: number): Promise<SequenceStep[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       'SELECT id, sequence_id, step_number, subject, html_content, delay_minutes, created_at FROM email_sequence_steps WHERE sequence_id = $1 ORDER BY step_number ASC',
       [sequenceId]
     );
@@ -416,7 +416,7 @@ export async function getSequenceSteps(sequenceId: number): Promise<SequenceStep
  */
 export async function getUserEnrollments(userId: string): Promise<SequenceEnrollment[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       'SELECT id, user_id, sequence_id, current_step, status, next_send_at, enrolled_at, completed_at FROM email_sequence_enrollments WHERE user_id = $1',
       [userId]
     );

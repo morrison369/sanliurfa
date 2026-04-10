@@ -3,7 +3,7 @@
  * Campaign creation, targeting, and performance tracking
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 import { logger } from './logging';
 
@@ -114,15 +114,15 @@ export async function getUserCampaigns(userId: string): Promise<MarketingCampaig
     const cached = await getCache<MarketingCampaign[]>(cacheKey);
     if (cached) return cached;
 
-    const campaigns = await queryMany(
+    const campaigns = await queryRows(
       `SELECT * FROM marketing_campaigns
        WHERE user_id = $1
        ORDER BY created_at DESC`,
       [userId]
     );
 
-    await setCache(cacheKey, campaigns.rows, 300);
-    return campaigns.rows;
+    await setCache(cacheKey, campaigns, 300);
+    return campaigns;
   } catch (error) {
     logger.error('Failed to get user campaigns', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -226,13 +226,13 @@ export async function pauseCampaign(id: string, userId: string): Promise<Marketi
  */
 export async function getCampaignTargeting(campaignId: string): Promise<any[]> {
   try {
-    const targeting = await queryMany(
+    const targeting = await queryRows(
       `SELECT * FROM campaign_targeting
        WHERE campaign_id = $1
        ORDER BY created_at ASC`,
       [campaignId]
     );
-    return targeting.rows;
+    return targeting;
   } catch (error) {
     logger.error('Failed to get campaign targeting', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -304,7 +304,7 @@ export async function getCampaignPerformance(
     fromDate.setDate(fromDate.getDate() - days);
 
     // Get daily metrics
-    const metrics = await queryMany(
+    const metrics = await queryRows(
       `SELECT * FROM campaign_performance
        WHERE campaign_id = $1 AND date >= $2
        ORDER BY date DESC`,
@@ -323,7 +323,7 @@ export async function getCampaignPerformance(
       roi: 0
     };
 
-    metrics.rows.forEach((m: any) => {
+    metrics.forEach((m: any) => {
       summary.total_impressions += m.impressions || 0;
       summary.total_clicks += m.clicks || 0;
       summary.total_conversions += m.conversions || 0;
@@ -343,7 +343,7 @@ export async function getCampaignPerformance(
 
     return {
       summary,
-      daily_metrics: metrics.rows
+      daily_metrics: metrics
     };
   } catch (error) {
     logger.error('Failed to get campaign performance', error instanceof Error ? error : new Error(String(error)));

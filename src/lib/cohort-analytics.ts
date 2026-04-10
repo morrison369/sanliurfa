@@ -3,7 +3,7 @@
  * User cohort management and retention tracking
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 
@@ -61,7 +61,7 @@ export async function listCohorts(limit: number = 50): Promise<any[]> {
       return JSON.parse(cached);
     }
 
-    const cohorts = await queryMany(
+    const cohorts = await queryRows(
       'SELECT * FROM user_cohorts WHERE is_active = true ORDER BY created_at DESC LIMIT $1',
       [limit]
     );
@@ -102,7 +102,7 @@ export async function addUserToCohort(cohortId: string, userId: string): Promise
 
 export async function getCohortMembers(cohortId: string, limit: number = 100): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       'SELECT * FROM cohort_members WHERE cohort_id = $1 ORDER BY joined_at DESC LIMIT $2',
       [cohortId, limit]
     );
@@ -121,7 +121,7 @@ export async function getRetentionCurve(cohortId: string): Promise<any[]> {
       return JSON.parse(cached);
     }
 
-    const retention = await queryMany(
+    const retention = await queryRows(
       'SELECT * FROM retention_cohorts WHERE cohort_id = $1 ORDER BY week_number ASC',
       [cohortId]
     );
@@ -143,7 +143,7 @@ export async function calculateRetention(cohortId: string, weekNumber: number): 
     const totalUsers = cohortMembers.length;
 
     // Get active users in this week
-    const activeUsers = await queryMany(
+    const activeUsers = await queryRows(
       `SELECT COUNT(DISTINCT user_id) as count FROM request_metrics
        WHERE user_id IN (SELECT user_id FROM cohort_members WHERE cohort_id = $1)
        AND EXTRACT(WEEK FROM timestamp) = $2`,
@@ -181,7 +181,7 @@ export async function getCohortMetrics(cohortId: string, days: number = 30): Pro
     }
 
     const since = new Date(Date.now() - days * 24 * 3600000);
-    const metrics = await queryMany(
+    const metrics = await queryRows(
       'SELECT * FROM cohort_metrics WHERE cohort_id = $1 AND metric_date >= $2 ORDER BY metric_date DESC',
       [cohortId, since.toISOString().split('T')[0]]
     );
