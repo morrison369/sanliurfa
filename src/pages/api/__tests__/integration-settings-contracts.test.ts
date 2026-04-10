@@ -129,6 +129,8 @@ describe('integration settings contracts', () => {
     } as any);
 
     expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.error.details.field).toBe('resendApiKey');
     expect(saveRuntimeIntegrationSettingMock).not.toHaveBeenCalled();
   });
 
@@ -150,6 +152,8 @@ describe('integration settings contracts', () => {
     } as any);
 
     expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.error.details.field).toBe('analyticsId');
     expect(saveRuntimeIntegrationSettingMock).not.toHaveBeenCalled();
   });
 

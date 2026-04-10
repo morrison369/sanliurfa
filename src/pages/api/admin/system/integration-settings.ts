@@ -30,16 +30,27 @@ function asOptionalString(value: unknown): string | undefined {
   return undefined;
 }
 
+type IntegrationValidationFailure = {
+  field: 'resendApiKey' | 'analyticsId';
+  message: string;
+};
+
 function validatePayload(payload: {
   resendApiKey?: string;
   analyticsId?: string;
-}): string | null {
+}): IntegrationValidationFailure | null {
   if (payload.resendApiKey !== undefined && payload.resendApiKey && !isValidResendKey(payload.resendApiKey)) {
-    return 'Geçersiz RESEND API key formatı';
+    return {
+      field: 'resendApiKey',
+      message: 'Geçersiz RESEND API key formatı'
+    };
   }
 
   if (payload.analyticsId !== undefined && payload.analyticsId && !isValidAnalyticsId(payload.analyticsId)) {
-    return 'Geçersiz Google Analytics ID formatı';
+    return {
+      field: 'analyticsId',
+      message: 'Geçersiz Google Analytics ID formatı'
+    };
   }
 
   return null;
@@ -168,9 +179,11 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       );
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        validationError,
+        validationError.message,
         HttpStatus.UNPROCESSABLE_ENTITY,
-        undefined,
+        {
+          field: validationError.field
+        },
         requestId
       );
     }

@@ -177,7 +177,13 @@ const seo = {
         : 'text-sm text-green-600 dark:text-green-400';
     }
 
-    function applyServerValidationMessage(payload, message) {
+    function applyServerValidationMessage(payload, message, result) {
+      const field = result?.error?.details?.field;
+      if (field === 'resendApiKey' || field === 'analyticsId') {
+        setFieldError(field, message);
+        return;
+      }
+
       if ('resendApiKey' in payload) {
         setFieldError('resendApiKey', message);
         return;
@@ -209,7 +215,7 @@ const seo = {
         if (!response.ok) {
           const message = result?.error?.message || 'Kayıt başarısız';
           if (response.status === 422) {
-            applyServerValidationMessage(payload, message);
+            applyServerValidationMessage(payload, message, result);
           }
           throw new Error(message);
         }
