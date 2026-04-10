@@ -33,7 +33,7 @@ const seo = {
         </button>
       </div>
 
-      <div class="grid gap-4 md:grid-cols-6">
+      <div class="grid gap-4 md:grid-cols-8">
         <input id="audit-endpoint" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="endpoint filtre" />
         <input id="audit-actor" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="actorKey filtre" />
         <input id="audit-request-id" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="requestId filtre" />
@@ -49,6 +49,21 @@ const seo = {
           <option value="error">error</option>
         </select>
         <input id="audit-status" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="status code" />
+        <input id="audit-start-date" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" type="datetime-local" />
+        <input id="audit-end-date" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" type="datetime-local" />
+      </div>
+
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          Tarih alanları server-side filtre uygular. Diğer alanlar yüklü kayıtlar üzerinde lokal filtrelenir.
+        </p>
+        <button
+          id="export-admin-audit-csv"
+          class="inline-flex items-center justify-center rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-urfa-600 hover:text-urfa-700 dark:border-gray-700 dark:text-gray-200"
+          type="button"
+        >
+          CSV İndir
+        </button>
       </div>
 
       <div id="audit-summary" class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
@@ -80,6 +95,22 @@ const seo = {
 
   <script>
     const allEntries = [];
+
+    function getServerFilterQuery() {
+      const params = new URLSearchParams();
+      params.set('source', 'admin-ops');
+      params.set('limit', '100');
+
+      const requestId = document.getElementById('audit-request-id')?.value?.trim();
+      const startDate = document.getElementById('audit-start-date')?.value;
+      const endDate = document.getElementById('audit-end-date')?.value;
+
+      if (requestId) params.set('requestId', requestId);
+      if (startDate) params.set('startDate', new Date(startDate).toISOString());
+      if (endDate) params.set('endDate', new Date(endDate).toISOString());
+
+      return params;
+    }
 
     function renderRows(entries) {
       const tbody = document.getElementById('audit-rows');
@@ -133,21 +164,31 @@ const seo = {
     }
 
     async function loadAudit() {
-      const response = await fetch('/api/admin/audit-logs?source=admin-ops&limit=100', { credentials: 'same-origin' });
+      const response = await fetch(`/api/admin/audit-logs?${getServerFilterQuery().toString()}`, { credentials: 'same-origin' });
       const payload = await response.json();
       allEntries.splice(0, allEntries.length, ...((payload.data?.logs || []).slice(0, 100)));
       const summary = document.getElementById('audit-summary');
       if (summary && payload.data?.summary) {
-        summary.textContent = `Son ${payload.data.summary.windowHours} saatte toplam ${payload.data.summary.total} kayıt. Denied: ${payload.data.summary.deniedCount}. Rate limit: ${payload.data.summary.rateLimitedCount}.`;
+        summary.textContent = `Server filtresi sonrası ${payload.data.totalFiltered ?? payload.data.count} kayıt. Son ${payload.data.summary.windowHours} saatte toplam ${payload.data.summary.total} kayıt. Denied: ${payload.data.summary.deniedCount}. Rate limit: ${payload.data.summary.rateLimitedCount}.`;
       }
       applyFilters();
+    }
+
+    function exportAuditCsv() {
+      const params = getServerFilterQuery();
+      params.set('format', 'csv');
+      window.location.href = `/api/admin/audit-logs?${params.toString()}`;
     }
 
     ['audit-endpoint', 'audit-actor', 'audit-request-id', 'audit-mode', 'audit-outcome', 'audit-status'].forEach((id) => {
       document.getElementById(id)?.addEventListener('input', applyFilters);
       document.getElementById(id)?.addEventListener('change', applyFilters);
     });
+    ['audit-start-date', 'audit-end-date'].forEach((id) => {
+      document.getElementById(id)?.addEventListener('change', loadAudit);
+    });
     document.getElementById('refresh-admin-audit')?.addEventListener('click', loadAudit);
+    document.getElementById('export-admin-audit-csv')?.addEventListener('click', exportAuditCsv);
     loadAudit();
   </script>
 </Layout>

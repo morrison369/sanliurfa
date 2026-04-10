@@ -6,6 +6,49 @@ import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { withAdminOpsReadAccess } from '../../../lib/admin-ops-access';
 
+function parseOptionalDate(value: string | null): Date | undefined {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed : undefined;
+}
+
+function escapeCsvCell(value: unknown): string {
+  const normalized = value == null ? '' : typeof value === 'object' ? JSON.stringify(value) : String(value);
+  return `"${normalized.replace(/"/g, '""')}"`;
+}
+
+function buildAdminOpsAuditCsv(entries: ReturnType<typeof readAdminOpsAuditEntries>): string {
+  const header = [
+    'timestamp',
+    'endpoint',
+    'method',
+    'mode',
+    'outcome',
+    'statusCode',
+    'actorKey',
+    'requestId',
+    'userId',
+    'ipAddress',
+    'duration'
+  ];
+
+  const rows = entries.map((entry) => [
+    entry.timestamp,
+    entry.endpoint,
+    entry.method,
+    entry.mode,
+    entry.outcome,
+    entry.statusCode,
+    entry.actorKey,
+    entry.requestId ?? '',
+    entry.userId ?? '',
+    entry.ipAddress,
+    entry.duration
+  ]);
+
+  return [header, ...rows].map((row) => row.map(escapeCsvCell).join(',')).join('\n');
+}
+
 /**
  * GET /api/admin/audit-logs - Audit loglarını listele
  * Query parametreleri:
@@ -45,20 +88,46 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
         const limit = Math.min(parseInt(query.get('limit') || '50'), 500);
         const offset = parseInt(query.get('offset') || '0');
         const requestIdFilter = query.get('requestId')?.trim();
-        const entries = readAdminOpsAuditEntries()
+        const startDate = parseOptionalDate(query.get('startDate'));
+        const endDate = parseOptionalDate(query.get('endDate'));
+        const format = query.get('format')?.trim().toLowerCase();
+        const filteredEntries = readAdminOpsAuditEntries()
           .filter((entry) => !requestIdFilter || entry.requestId === requestIdFilter)
+          .filter((entry) => {
+            const timestamp = new Date(entry.timestamp).getTime();
+            if (!Number.isFinite(timestamp)) return false;
+            if (startDate && timestamp < startDate.getTime()) return false;
+            if (endDate && timestamp > endDate.getTime()) return false;
+            return true;
+          })
           .sort((left, right) => right.timestamp.localeCompare(left.timestamp))
-          .slice(offset, offset + limit);
+        const entries = filteredEntries.slice(offset, offset + limit);
         const summary = summarizeAdminOpsAudit(24);
+
+        if (format === 'csv') {
+          return new Response(buildAdminOpsAuditCsv(entries), {
+            status: HttpStatus.OK,
+            headers: {
+              'Content-Type': 'text/csv; charset=utf-8',
+              'Content-Disposition': 'attachment; filename="admin-ops-audit.csv"',
+            },
+          });
+        }
 
         return apiResponse(
           {
             logs: entries,
             source,
             count: entries.length,
+            totalFiltered: filteredEntries.length,
             limit,
             offset,
-            summary
+            summary,
+            filters: {
+              requestId: requestIdFilter || null,
+              startDate: startDate?.toISOString() ?? null,
+              endDate: endDate?.toISOString() ?? null,
+            }
           },
           HttpStatus.OK,
           requestId

@@ -6,6 +6,7 @@ const resolveAlertMock = vi.fn();
 const validateWithSchemaMock = vi.fn();
 const queryRowsMock = vi.fn();
 const queryOneMock = vi.fn();
+const queryMock = vi.fn();
 const updateMock = vi.fn();
 const runSecurityAuditMock = vi.fn();
 const generateAuditReportHTMLMock = vi.fn();
@@ -22,6 +23,8 @@ const reportToCSVMock = vi.fn();
 const reportToJSONMock = vi.fn();
 const approveVendorMock = vi.fn();
 const rejectVendorMock = vi.fn();
+const getUserSubscriptionDetailsMock = vi.fn();
+const changeUserTierMock = vi.fn();
 const loggerMock = {
   setRequestId: vi.fn(),
   error: vi.fn(),
@@ -88,6 +91,7 @@ vi.mock('../../../lib/validation', () => ({
 vi.mock('../../../lib/postgres', () => ({
   queryRows: queryRowsMock,
   queryOne: queryOneMock,
+  query: queryMock,
   update: updateMock,
   insert: vi.fn(),
 }));
@@ -117,6 +121,12 @@ vi.mock('../../../lib/reporting', () => ({
 vi.mock('../../../lib/vendor-onboarding', () => ({
   approveVendor: approveVendorMock,
   rejectVendor: rejectVendorMock,
+}));
+
+vi.mock('../../../lib/subscription-admin', () => ({
+  getUserSubscriptionDetails: getUserSubscriptionDetailsMock,
+  changeUserTier: changeUserTierMock,
+  logAdminAction: vi.fn(),
 }));
 
 vi.mock('../../../lib/logging', () => ({
@@ -171,6 +181,13 @@ describe('admin write access contracts', () => {
     reportToJSONMock.mockReturnValue('{"ok":true}');
     approveVendorMock.mockResolvedValue(true);
     rejectVendorMock.mockResolvedValue(true);
+    getUserSubscriptionDetailsMock.mockResolvedValue({
+      userId: '12345678-1234-1234-1234-123456789012',
+      tier: 'gold',
+      status: 'active',
+    });
+    changeUserTierMock.mockResolvedValue(true);
+    queryMock.mockResolvedValue(undefined);
   });
 
   it('rejects unauthorized alert mutation', async () => {
@@ -374,5 +391,86 @@ describe('admin write access contracts', () => {
 
     expect(response.status).toBe(200);
     expect(rejectVendorMock).toHaveBeenCalledWith('vendor-1', 'Belgeler eksik ve kriterleri karşılamıyor.');
+  });
+
+  it('lists subscription users for admins via standardized read access', async () => {
+    queryRowsMock.mockResolvedValueOnce([
+      {
+        id: 'user-1',
+        email: 'user@example.com',
+        full_name: 'User One',
+        subscription_id: 'sub-1',
+        tier: 'Gold',
+        status: 'active',
+        created_at: '2026-04-10T00:00:00.000Z',
+      },
+    ]);
+
+    const { GET } = await import('../admin/subscriptions/users.ts');
+    const request = new Request('https://example.com/api/admin/subscriptions/users?status=active&limit=20');
+
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: { isAdmin: true, user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.count).toBe(1);
+    expect(body.data.users[0].email).toBe('user@example.com');
+  });
+
+  it('changes subscription tier for admins via standardized write access', async () => {
+    queryOneMock.mockResolvedValueOnce({ id: 'tier-1' });
+
+    const { POST } = await import('../admin/subscriptions/users.ts');
+    const request = new Request('https://example.com/api/admin/subscriptions/users?userId=12345678-1234-1234-1234-123456789012&action=change_tier', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ newTierId: '87654321-4321-4321-4321-210987654321', reason: 'upgrade' }),
+    });
+
+    validateWithSchemaMock.mockReturnValueOnce({
+      valid: true,
+      data: { newTierId: '87654321-4321-4321-4321-210987654321', reason: 'upgrade' },
+      errors: [],
+    });
+
+    const response = await POST({
+      request,
+      url: new URL(request.url),
+      locals: { isAdmin: true, user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    expect(changeUserTierMock).toHaveBeenCalledWith(
+      'admin-1',
+      '12345678-1234-1234-1234-123456789012',
+      '87654321-4321-4321-4321-210987654321',
+      'upgrade'
+    );
+  });
+
+  it('updates contact message status for admins via standardized write access', async () => {
+    const { POST } = await import('../admin/messages/[id]/status.ts');
+    const formData = new FormData();
+    formData.set('status', 'replied');
+    const request = new Request('https://example.com/api/admin/messages/msg-1/status', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const response = await POST({
+      request,
+      params: { id: 'msg-1' },
+      locals: { isAdmin: true, user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    expect(queryMock).toHaveBeenCalledTimes(1);
+    expect(queryMock.mock.calls[0][0]).toContain('UPDATE contact_messages');
+    expect(queryMock.mock.calls[0][1][0]).toBe('replied');
+    expect(queryMock.mock.calls[0][1][2]).toBe('msg-1');
   });
 });

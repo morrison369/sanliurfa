@@ -130,4 +130,30 @@ describe('admin audit contracts', () => {
     expect(body.data.logs).toHaveLength(1);
     expect(body.data.logs[0].requestId).toBe('req-2');
   });
+
+  it('filters admin ops audit sink by date range', async () => {
+    const { GET } = await import('../admin/audit-logs.ts');
+    const request = new Request('https://example.com/api/admin/audit-logs?source=admin-ops&startDate=2026-04-10T00:00:00.000Z&endDate=2026-04-10T00:00:59.999Z');
+    const response = await GET({ request, url: new URL(request.url), locals: { isAdmin: true, user: { id: 'admin-1', role: 'admin' } } } as any);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.logs).toHaveLength(1);
+    expect(body.data.logs[0].requestId).toBe('req-1');
+    expect(body.data.totalFiltered).toBe(1);
+    expect(body.data.filters.startDate).toBe('2026-04-10T00:00:00.000Z');
+  });
+
+  it('exports admin ops audit sink as csv', async () => {
+    const { GET } = await import('../admin/audit-logs.ts');
+    const request = new Request('https://example.com/api/admin/audit-logs?source=admin-ops&format=csv');
+    const response = await GET({ request, url: new URL(request.url), locals: { isAdmin: true, user: { id: 'admin-1', role: 'admin' } } } as any);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('text/csv');
+    const body = await response.text();
+    expect(body).toContain('"timestamp","endpoint","method"');
+    expect(body).toContain('/api/admin/system/integration-settings');
+    expect(body).toContain('req-1');
+  });
 });
