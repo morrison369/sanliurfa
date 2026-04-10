@@ -38,6 +38,14 @@ interface DashboardData {
       topQueries: Array<{ query: string; count: number }>;
     };
   };
+  releaseGate?: {
+    available: boolean;
+    generatedAt: string | null;
+    finalStatus: 'passed' | 'failed' | 'missing';
+    blockingFailedSteps: string[];
+    advisoryFailedSteps: string[];
+    failedStepCount: number;
+  };
 }
 
 export default function AdminDashboardOverview() {
@@ -272,6 +280,29 @@ export default function AdminDashboardOverview() {
           </div>
           <div className="text-xs text-gray-500 mt-3">
             Son kontrol: {data.integrations.verification.summary.checkedAt}
+          </div>
+        </div>
+      )}
+
+      {data.releaseGate && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-900 mb-4">Release Gate</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Durum</div>
+              <div className="text-xl font-bold text-gray-900">{data.releaseGate.finalStatus}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Hata Sayısı</div>
+              <div className="text-xl font-bold text-gray-900">{data.releaseGate.failedStepCount}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Son Üretim</div>
+              <div className="text-sm text-gray-900">{data.releaseGate.generatedAt || 'Henüz yok'}</div>
+            </div>
+          </div>
+          <div className="text-xs text-gray-500 mt-3">
+            Blocking: {data.releaseGate.blockingFailedSteps[0] || 'yok'} • Advisory: {data.releaseGate.advisoryFailedSteps[0] || 'yok'}
           </div>
         </div>
       )}
