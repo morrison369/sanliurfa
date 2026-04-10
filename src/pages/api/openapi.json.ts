@@ -5,6 +5,26 @@ const healthStatusSchema = {
   enum: ['healthy', 'degraded', 'blocked'],
 };
 
+const artifactHealthEntrySchema = {
+  type: 'object',
+  properties: {
+    available: { type: 'boolean' },
+    status: healthStatusSchema,
+    generatedAt: { type: ['string', 'null'], format: 'date-time' },
+  },
+  required: ['available', 'status', 'generatedAt'],
+};
+
+const artifactHealthChecksSchema = {
+  type: 'object',
+  properties: {
+    releaseGate: artifactHealthEntrySchema,
+    nightlyRegression: artifactHealthEntrySchema,
+    nightlyE2E: artifactHealthEntrySchema,
+  },
+  required: ['releaseGate', 'nightlyRegression', 'nightlyE2E'],
+};
+
 const openApiSpec = {
   openapi: '3.1.0',
   info: {
@@ -249,37 +269,7 @@ const openApiSpec = {
                               required: ['resend', 'analytics'],
                             },
                             artifacts: {
-                              type: 'object',
-                              properties: {
-                                releaseGate: {
-                                  type: 'object',
-                                  properties: {
-                                    available: { type: 'boolean' },
-                                    status: healthStatusSchema,
-                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
-                                  },
-                                  required: ['available', 'status', 'generatedAt'],
-                                },
-                                nightlyRegression: {
-                                  type: 'object',
-                                  properties: {
-                                    available: { type: 'boolean' },
-                                    status: healthStatusSchema,
-                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
-                                  },
-                                  required: ['available', 'status', 'generatedAt'],
-                                },
-                                nightlyE2E: {
-                                  type: 'object',
-                                  properties: {
-                                    available: { type: 'boolean' },
-                                    status: healthStatusSchema,
-                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
-                                  },
-                                  required: ['available', 'status', 'generatedAt'],
-                                },
-                              },
-                              required: ['releaseGate', 'nightlyRegression', 'nightlyE2E'],
+                              ...artifactHealthChecksSchema,
                             },
                           },
                           required: ['database', 'redis', 'integrations', 'artifacts'],
@@ -367,37 +357,7 @@ const openApiSpec = {
                               required: ['status'],
                             },
                             artifacts: {
-                              type: 'object',
-                              properties: {
-                                releaseGate: {
-                                  type: 'object',
-                                  properties: {
-                                    available: { type: 'boolean' },
-                                    status: healthStatusSchema,
-                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
-                                  },
-                                  required: ['available', 'status', 'generatedAt'],
-                                },
-                                nightlyRegression: {
-                                  type: 'object',
-                                  properties: {
-                                    available: { type: 'boolean' },
-                                    status: healthStatusSchema,
-                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
-                                  },
-                                  required: ['available', 'status', 'generatedAt'],
-                                },
-                                nightlyE2E: {
-                                  type: 'object',
-                                  properties: {
-                                    available: { type: 'boolean' },
-                                    status: healthStatusSchema,
-                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
-                                  },
-                                  required: ['available', 'status', 'generatedAt'],
-                                },
-                              },
-                              required: ['releaseGate', 'nightlyRegression', 'nightlyE2E'],
+                              ...artifactHealthChecksSchema,
                             },
                           },
                           required: ['database', 'redis', 'artifacts'],

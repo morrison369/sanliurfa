@@ -1,11 +1,13 @@
 # Artifact Freshness Policy
 
-Bu dokuman, admin panel ve admin API tarafinda gorunen artifact health sinyalinin nasil uretildigini tanimlar.
+Bu dokuman, runtime health, admin API ve admin panel tarafinda gorunen artifact health sinyalinin nasil uretildigini tanimlar.
 
 ## Kapsam
 
 Artifact health sinyali su yuzeylerde kullanilir:
 
+- `GET /api/health`
+- `GET /api/health/detailed`
 - `GET /api/admin/dashboard/overview`
 - `GET /api/admin/system/metrics`
 - Admin dashboard `Artifact Health` karti
@@ -99,10 +101,13 @@ Nightly summary dosyasi:
 Kod tarafindaki siniflandirma helper'i:
 
 - `src/lib/admin-status.ts`
+- `src/lib/artifact-health.ts`
 
 Kullanilan fonksiyon:
 
 - `classifyArtifactFreshnessStatus`
+- `buildArtifactHealth`
+- `getArtifactHealthSnapshot`
 
 Bu dokuman ile helper mantigi drift etmemelidir. Esik degisirse:
 

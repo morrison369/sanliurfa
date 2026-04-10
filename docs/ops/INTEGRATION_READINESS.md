@@ -14,6 +14,7 @@ Bu dokuman, kod tarafinda otomatiklestirilemeyen ama release kalitesini dogrudan
 Notlar:
 - Placeholder degerler (`re_xxx`, `G-XXXXXXXXXX`, `YOUR_*`) readiness sayilmaz.
 - `GET /api/health` endpoint'i bu alanlari `checks.integrations` altinda gorunur kilacak sekilde guncellenmistir.
+- `GET /api/health` ve `GET /api/health/detailed` endpoint'leri artifact freshness ozetini de `checks.artifacts` altinda gorunur kilacak sekilde guncellenmistir.
 - Env'de bu alanlar bos olsa bile admin panelden girilen global degerler runtime'da otomatik kullanilir.
 - Admin panelde gorunen artifact freshness sinyali icin `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` dosyasina bak.
 
