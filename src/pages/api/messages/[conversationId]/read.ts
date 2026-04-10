@@ -6,9 +6,13 @@
 
 import type { APIRoute } from 'astro';
 import { markConversationRead } from '../../../../lib/messages';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, validators } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+
+function isValidUuid(value: string | undefined): value is string {
+  return typeof value === 'string' && validators.uuid(value);
+}
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
   const requestId = getRequestId({ request } as any);
@@ -25,6 +29,17 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
         ErrorCode.AUTH_REQUIRED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
+        undefined,
+        requestId
+      );
+    }
+
+    if (!isValidUuid(conversationId)) {
+      recordRequest('POST', `/api/messages/${conversationId ?? 'unknown'}/read`, HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçersiz konuşma kimliği',
+        HttpStatus.BAD_REQUEST,
         undefined,
         requestId
       );

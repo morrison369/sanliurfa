@@ -1,9 +1,66 @@
 import type { APIRoute } from 'astro';
 import { getConversations, getOrCreateConversation } from '../../../lib/messages';
 import { queryOne } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, validators } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
+
+function parseLimit(rawLimit: string | null): number | null {
+  if (rawLimit === null) {
+    return 50;
+  }
+
+  const parsed = Number.parseInt(rawLimit, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return null;
+  }
+
+  return Math.min(parsed, 100);
+}
+
+function parseOffset(rawOffset: string | null): number | null {
+  if (rawOffset === null) {
+    return 0;
+  }
+
+  const parsed = Number.parseInt(rawOffset, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+
+  return parsed;
+}
+
+async function parseJsonBody(request: Request, requestId: string, startTime: number) {
+  const contentType = request.headers.get('content-type') || '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    recordRequest('POST', '/api/messages', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+    return {
+      response: apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Content-Type application/json olmalı',
+        HttpStatus.BAD_REQUEST,
+        { contentType },
+        requestId
+      )
+    };
+  }
+
+  try {
+    return { body: await request.json() };
+  } catch {
+    recordRequest('POST', '/api/messages', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+    return {
+      response: apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçersiz JSON body',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      )
+    };
+  }
+}
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
   const requestId = getRequestId({ request } as any);
@@ -16,8 +73,19 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const limit = parseInt(url.searchParams.get('limit') || '50', 10);
-    const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+    const limit = parseLimit(url.searchParams.get('limit'));
+    const offset = parseOffset(url.searchParams.get('offset'));
+
+    if (limit === null || offset === null) {
+      recordRequest('GET', '/api/messages', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Invalid pagination parameters',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
 
     const convos = await getConversations(locals.user.id, limit, offset);
     const duration = Date.now() - startTime;
@@ -43,12 +111,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const body = await request.json();
-    const { recipient_id } = body;
+    const parsed = await parseJsonBody(request, requestId, startTime);
+    if (parsed.response) {
+      return parsed.response;
+    }
 
-    if (!recipient_id) {
+    const { recipient_id } = parsed.body as { recipient_id?: unknown };
+
+    if (typeof recipient_id !== 'string' || !validators.uuid(recipient_id)) {
       recordRequest('POST', '/api/messages', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'recipient_id required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Valid recipient_id required', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+
+    if (recipient_id === locals.user.id) {
+      recordRequest('POST', '/api/messages', HttpStatus.CONFLICT, Date.now() - startTime);
+      return apiError(ErrorCode.CONFLICT, 'Cannot create conversation with yourself', HttpStatus.CONFLICT, undefined, requestId);
     }
 
     const recipient = await queryOne('SELECT id FROM users WHERE id = $1', [recipient_id]);

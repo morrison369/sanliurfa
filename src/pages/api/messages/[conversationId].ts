@@ -143,7 +143,10 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    const statusCode = error instanceof Error && error.message.includes('Access denied') ? HttpStatus.FORBIDDEN : HttpStatus.INTERNAL_SERVER_ERROR;
+    const statusCode =
+      error instanceof Error && (error.message.includes('Access denied') || error.message.includes('Unauthorized'))
+        ? HttpStatus.FORBIDDEN
+        : HttpStatus.INTERNAL_SERVER_ERROR;
     recordRequest('GET', `/api/messages/${params.conversationId ?? 'unknown'}`, statusCode, duration);
 
     if (error instanceof Error && error.message.includes('not found')) {
@@ -156,7 +159,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    if (error instanceof Error && error.message.includes('Access denied')) {
+    if (error instanceof Error && (error.message.includes('Access denied') || error.message.includes('Unauthorized'))) {
       return apiError(
         ErrorCode.FORBIDDEN,
         'Bu konuşmaya erişim izniniz yok',
@@ -312,7 +315,10 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    const statusCode = error instanceof Error && error.message.includes('Access denied') ? HttpStatus.FORBIDDEN : HttpStatus.INTERNAL_SERVER_ERROR;
+    const statusCode =
+      error instanceof Error && (error.message.includes('Access denied') || error.message.includes('Unauthorized'))
+        ? HttpStatus.FORBIDDEN
+        : HttpStatus.INTERNAL_SERVER_ERROR;
     recordRequest('POST', `/api/messages/${params.conversationId ?? 'unknown'}`, statusCode, duration);
 
     if (error instanceof Error && error.message.includes('not found')) {
@@ -325,7 +331,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    if (error instanceof Error && error.message.includes('Access denied')) {
+    if (error instanceof Error && (error.message.includes('Access denied') || error.message.includes('Unauthorized'))) {
       return apiError(
         ErrorCode.FORBIDDEN,
         'Bu konuşmaya erişim izniniz yok',

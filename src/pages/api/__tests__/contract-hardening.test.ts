@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 process.env.DATABASE_URL ||= 'postgresql://postgres:postgres@127.0.0.1:5432/sanliurfa';
 
 const getMessagesMock = vi.fn();
+const getConversationsMock = vi.fn();
+const getOrCreateConversationMock = vi.fn();
 const sendMessageMock = vi.fn();
 const markConversationReadMock = vi.fn();
 const queryOneMock = vi.fn();
@@ -36,6 +38,8 @@ const loggerMock = {
 
 vi.mock('../../../lib/messages', () => ({
   getMessages: getMessagesMock,
+  getConversations: getConversationsMock,
+  getOrCreateConversation: getOrCreateConversationMock,
   sendMessage: sendMessageMock,
   markConversationRead: markConversationReadMock,
 }));
@@ -102,6 +106,9 @@ describe('API contract hardening', () => {
     vi.resetAllMocks();
     queryMock.mockResolvedValue({ rows: [], rowCount: 0 });
     queryOneMock.mockResolvedValue(null);
+    getConversationsMock.mockResolvedValue([]);
+    getOrCreateConversationMock.mockResolvedValue({ id: 'conversation-1' });
+    markConversationReadMock.mockResolvedValue(undefined);
     updateDbMock.mockResolvedValue({});
     isUserBlockedMock.mockResolvedValue(false);
     addTenantMemberMock.mockResolvedValue({ id: 'member-1' });
@@ -142,6 +149,103 @@ describe('API contract hardening', () => {
     expect(getMessagesMock).not.toHaveBeenCalled();
   });
 
+  it('rejects invalid inbox limit before listing conversations', async () => {
+    const { GET } = await import('../messages/index.ts');
+    const request = new Request('https://example.com/api/messages?limit=0');
+
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(getConversationsMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid inbox offset before listing conversations', async () => {
+    const { GET } = await import('../messages/index.ts');
+    const request = new Request('https://example.com/api/messages?offset=-1');
+
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(getConversationsMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-json content type for inbox conversation create', async () => {
+    const { POST } = await import('../messages/index.ts');
+    const request = new Request('https://example.com/api/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain' },
+      body: 'hello'
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(getOrCreateConversationMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid JSON for inbox conversation create', async () => {
+    const { POST } = await import('../messages/index.ts');
+    const request = new Request('https://example.com/api/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{bad-json'
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(getOrCreateConversationMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid recipient id for inbox conversation create', async () => {
+    const { POST } = await import('../messages/index.ts');
+    const request = new Request('https://example.com/api/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ recipient_id: 'bad-recipient' })
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(queryOneMock).not.toHaveBeenCalled();
+    expect(getOrCreateConversationMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects self-recipient conversation create', async () => {
+    const { POST } = await import('../messages/index.ts');
+    const request = new Request('https://example.com/api/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ recipient_id: '11111111-1111-1111-1111-111111111111' })
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(409);
+    expect(getOrCreateConversationMock).not.toHaveBeenCalled();
+  });
+
   it('rejects invalid JSON for messages POST', async () => {
     const { POST } = await import('../messages/[conversationId].ts');
     const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111', {
@@ -158,6 +262,20 @@ describe('API contract hardening', () => {
 
     expect(response.status).toBe(400);
     expect(sendMessageMock).not.toHaveBeenCalled();
+  });
+
+  it('maps unauthorized service access to forbidden in messages GET', async () => {
+    const { GET } = await import('../messages/[conversationId].ts');
+    getMessagesMock.mockRejectedValueOnce(new Error('Unauthorized'));
+
+    const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111');
+    const response = await GET({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { conversationId: '11111111-1111-1111-1111-111111111111' },
+    } as any);
+
+    expect(response.status).toBe(403);
   });
 
   it('rejects invalid before cursor for messages GET', async () => {
@@ -249,6 +367,34 @@ describe('API contract hardening', () => {
 
     expect(response.status).toBe(403);
     expect(sendMessageMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid conversation id for mark-read endpoint', async () => {
+    const { POST } = await import('../messages/[conversationId]/read.ts');
+    const request = new Request('https://example.com/api/messages/not-a-uuid/read', { method: 'POST' });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { conversationId: 'not-a-uuid' },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(markConversationReadMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects mark-read when user has no access to conversation', async () => {
+    const { POST } = await import('../messages/[conversationId]/read.ts');
+    markConversationReadMock.mockRejectedValueOnce(new Error('Access denied'));
+
+    const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111/read', { method: 'POST' });
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { conversationId: '11111111-1111-1111-1111-111111111111' },
+    } as any);
+
+    expect(response.status).toBe(403);
   });
 
   it('rejects invalid tenant member role', async () => {
