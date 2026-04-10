@@ -214,4 +214,38 @@ describe('integration settings contracts', () => {
       }),
     );
   });
+
+  it('normalizes lowercase analytics id before save', async () => {
+    getRuntimeIntegrationSettingsMock.mockResolvedValueOnce({
+      resendApiKey: '',
+      analyticsId: 'G-LOWER123',
+      source: {
+        resendApiKey: 'none',
+        analyticsId: 'admin',
+      },
+    });
+
+    const { PUT } = await import('../admin/system/integration-settings.ts');
+    const request = new Request('https://example.com/api/admin/system/integration-settings', {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        analyticsId: 'g-lower123',
+      }),
+    });
+
+    const response = await PUT({
+      request,
+      locals: { user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    expect(saveRuntimeIntegrationSettingMock).toHaveBeenCalledWith({
+      settingKey: 'analyticsId',
+      value: 'G-LOWER123',
+      adminId: 'admin-1',
+    });
+  });
 });

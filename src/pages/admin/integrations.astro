@@ -170,6 +170,23 @@ const seo = {
       return null;
     }
 
+    function normalizeAnalyticsInput(value) {
+      if (!value) {
+        return '';
+      }
+
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return '';
+      }
+
+      if (/^g-/i.test(trimmed)) {
+        return `G-${trimmed.slice(2).toUpperCase()}`;
+      }
+
+      return trimmed.toUpperCase();
+    }
+
     function setMessage(text, isError = false) {
       messageBox.textContent = text;
       messageBox.className = isError
@@ -247,7 +264,10 @@ const seo = {
     analyticsButton?.addEventListener('click', async () => {
       try {
         clearFieldErrors();
-        const analyticsId = analyticsInput?.value?.trim();
+        const analyticsId = normalizeAnalyticsInput(analyticsInput?.value);
+        if (analyticsInput) {
+          analyticsInput.value = analyticsId;
+        }
         const validationError = validateInput('analyticsId', analyticsId);
         if (validationError) {
           setFieldError('analyticsId', validationError);

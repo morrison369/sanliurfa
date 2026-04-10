@@ -30,6 +30,23 @@ function asOptionalString(value: unknown): string | undefined {
   return undefined;
 }
 
+function normalizeAnalyticsId(value: string | undefined): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const normalized = value.trim();
+  if (!normalized) {
+    return '';
+  }
+
+  if (/^g-/i.test(normalized)) {
+    return `G-${normalized.slice(2).toUpperCase()}`;
+  }
+
+  return normalized.toUpperCase();
+}
+
 type IntegrationValidationFailure = {
   field: 'resendApiKey' | 'analyticsId';
   message: string;
@@ -150,7 +167,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
 
     const payload = (await request.json()) as Record<string, unknown>;
     const resendApiKey = asOptionalString(payload.resendApiKey);
-    const analyticsId = asOptionalString(payload.analyticsId);
+    const analyticsId = normalizeAnalyticsId(asOptionalString(payload.analyticsId));
     const changedKeys: Array<'resendApiKey' | 'analyticsId'> = [];
 
     if (resendApiKey === undefined && analyticsId === undefined) {
