@@ -3,10 +3,13 @@
  * Add privacy controls and data management
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_057_privacy_settings = async (pool: Pool) => {
-  try {
+export const migration_057_privacy_settings: Migration = {
+  version: '057_privacy_settings',
+  description: 'Privacy controls and data management settings',
+  up: async (pool: any) => {
+    try {
     // User privacy settings
     await pool.query(`
       CREATE TABLE IF NOT EXISTS privacy_settings (
@@ -80,10 +83,9 @@ export const migration_057_privacy_settings = async (pool: Pool) => {
     console.error('Migration 057 failed:', error);
     throw error;
   }
-};
-
-export const rollback_057 = async (pool: Pool) => {
-  try {
+  },
+  down: async (pool: any) => {
+    try {
     await pool.query('DROP TABLE IF EXISTS muted_users CASCADE');
     await pool.query('DROP TABLE IF EXISTS data_deletion_requests CASCADE');
     await pool.query('DROP TABLE IF EXISTS blocked_users CASCADE');
@@ -93,5 +95,6 @@ export const rollback_057 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 057 failed:', error);
     throw error;
+  }
   }
 };

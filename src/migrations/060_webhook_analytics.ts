@@ -3,10 +3,13 @@
  * Add columns for better webhook tracking and analytics
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_060_webhook_analytics = async (pool: Pool) => {
-  try {
+export const migration_060_webhook_analytics: Migration = {
+  version: '060_webhook_analytics',
+  description: 'Webhook analytics columns and delivery tracking',
+  up: async (pool: any) => {
+    try {
     // Add analytics columns to webhook_events
     await pool.query(`
       ALTER TABLE webhook_events
@@ -40,10 +43,9 @@ export const migration_060_webhook_analytics = async (pool: Pool) => {
     console.error('Migration 060 failed:', error);
     throw error;
   }
-};
-
-export const rollback_060 = async (pool: Pool) => {
-  try {
+  },
+  down: async (pool: any) => {
+    try {
     // Remove analytics columns
     await pool.query(`
       ALTER TABLE webhook_events
@@ -67,5 +69,6 @@ export const rollback_060 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 060 failed:', error);
     throw error;
+  }
   }
 };

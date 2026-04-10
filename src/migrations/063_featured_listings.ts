@@ -3,10 +3,13 @@
  * Premium featured listing system for places with analytics and scheduling
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_063_featured_listings = async (pool: Pool) => {
-  try {
+export const migration_063_featured_listings: Migration = {
+  version: '063_featured_listings',
+  description: 'Featured listings scheduling and analytics',
+  up: async (pool: any) => {
+    try {
     // Featured listings table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS featured_listings (
@@ -96,10 +99,9 @@ export const migration_063_featured_listings = async (pool: Pool) => {
     console.error('Migration 063 failed:', error);
     throw error;
   }
-};
-
-export const rollback_063 = async (pool: Pool) => {
-  try {
+  },
+  down: async (pool: any) => {
+    try {
     await pool.query('DROP TABLE IF EXISTS featured_listing_clicks CASCADE');
     await pool.query('DROP TABLE IF EXISTS featured_listing_metrics CASCADE');
     await pool.query('DROP TABLE IF EXISTS featured_listings CASCADE');
@@ -107,5 +109,6 @@ export const rollback_063 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 063 failed:', error);
     throw error;
+  }
   }
 };

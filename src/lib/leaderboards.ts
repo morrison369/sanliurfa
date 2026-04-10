@@ -2,12 +2,12 @@
  * Leaderboards Library
  * Leaderboard calculations and management
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export async function getLeaderboard(leaderboardType: string, limit: number = 100, period: string = 'all_time'): Promise<any[]> {
   try {
-    const users = await queryMany(`
+    const users = await queryRows(`
       SELECT
         lb.rank,
         lb.score,
@@ -81,7 +81,7 @@ export async function updateLeaderboard(leaderboardType: string, period: string 
 
     if (!query) return;
 
-    const rankings = await queryMany(query);
+    const rankings = await queryRows(query);
 
     for (let i = 0; i < rankings.length; i++) {
       const user = rankings[i];

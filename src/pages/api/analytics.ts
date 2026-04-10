@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { queryOne, queryMany } from '../../lib/postgres';
+import { queryOne, queryRows } from '../../lib/postgres';
 
 export const GET: APIRoute = async ({ locals }) => {
   try {
@@ -15,13 +15,13 @@ export const GET: APIRoute = async ({ locals }) => {
       `SELECT COUNT(DISTINCT user_id) as count FROM user_activity WHERE created_at > NOW() - INTERVAL '24 hours'`
     );
 
-    const topPlaces = await queryMany(
+    const topPlaces = await queryRows(
       `SELECT id, name, (SELECT AVG(rating) FROM reviews WHERE place_id = places.id) as avg_rating, 
               (SELECT COUNT(*) FROM reviews WHERE place_id = places.id) as review_count 
        FROM places ORDER BY avg_rating DESC LIMIT 5`
     );
 
-    const topUsers = await queryMany(
+    const topUsers = await queryRows(
       `SELECT id, full_name, (SELECT COUNT(*) FROM reviews WHERE user_id = users.id) as review_count, points 
        FROM users ORDER BY points DESC LIMIT 5`
     );
@@ -36,8 +36,8 @@ export const GET: APIRoute = async ({ locals }) => {
           avgRating: parseFloat(avgRating?.avg || '0').toFixed(2),
           activeToday: parseInt(activeToday?.count || '0')
         },
-        topPlaces: topPlaces.rows || [],
-        topUsers: topUsers.rows || []
+        topPlaces,
+        topUsers
       }
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {

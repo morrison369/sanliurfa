@@ -3,10 +3,13 @@
  * Add TOTP-based 2FA support with backup codes
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_056_two_factor_auth = async (pool: Pool) => {
-  try {
+export const migration_056_two_factor_auth: Migration = {
+  version: '056_two_factor_auth',
+  description: 'Two-factor authentication support with trusted devices and audit',
+  up: async (pool: any) => {
+    try {
     // Add 2FA columns to users table
     await pool.query(`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT false;
@@ -54,10 +57,9 @@ export const migration_056_two_factor_auth = async (pool: Pool) => {
     console.error('Migration 056 failed:', error);
     throw error;
   }
-};
-
-export const rollback_056 = async (pool: Pool) => {
-  try {
+  },
+  down: async (pool: any) => {
+    try {
     await pool.query('DROP TABLE IF EXISTS two_factor_audit CASCADE');
     await pool.query('DROP TABLE IF EXISTS trusted_devices CASCADE');
     await pool.query('ALTER TABLE users DROP COLUMN IF EXISTS last_2fa_at');
@@ -69,5 +71,6 @@ export const rollback_056 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 056 failed:', error);
     throw error;
+  }
   }
 };

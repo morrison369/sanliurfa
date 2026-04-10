@@ -3,10 +3,13 @@
  * Marketing campaign management with targeting, performance tracking, and automation
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_064_marketing_campaigns = async (pool: Pool) => {
-  try {
+export const migration_064_marketing_campaigns: Migration = {
+  version: '064_marketing_campaigns',
+  description: 'Marketing campaigns, targeting, and performance tracking',
+  up: async (pool: any) => {
+    try {
     // Marketing campaigns table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS marketing_campaigns (
@@ -123,10 +126,9 @@ export const migration_064_marketing_campaigns = async (pool: Pool) => {
     console.error('Migration 064 failed:', error);
     throw error;
   }
-};
-
-export const rollback_064 = async (pool: Pool) => {
-  try {
+  },
+  down: async (pool: any) => {
+    try {
     await pool.query('DROP TABLE IF EXISTS campaign_events CASCADE');
     await pool.query('DROP TABLE IF EXISTS campaign_budgets CASCADE');
     await pool.query('DROP TABLE IF EXISTS campaign_targeting CASCADE');
@@ -136,5 +138,6 @@ export const rollback_064 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 064 failed:', error);
     throw error;
+  }
   }
 };

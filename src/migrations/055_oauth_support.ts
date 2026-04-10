@@ -3,10 +3,13 @@
  * Add OAuth provider columns to users table
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_055_oauth_support = async (pool: Pool) => {
-  try {
+export const migration_055_oauth_support: Migration = {
+  version: '055_oauth_support',
+  description: 'OAuth provider columns and oauth link records',
+  up: async (pool: any) => {
+    try {
     // Add OAuth columns to users table
     await pool.query(`
       ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);
@@ -51,10 +54,9 @@ export const migration_055_oauth_support = async (pool: Pool) => {
     console.error('Migration 055 failed:', error);
     throw error;
   }
-};
-
-export const rollback_055 = async (pool: Pool) => {
-  try {
+  },
+  down: async (pool: any) => {
+    try {
     await pool.query('DROP TABLE IF EXISTS oauth_links CASCADE');
     await pool.query('ALTER TABLE users DROP COLUMN IF EXISTS oauth_provider');
     await pool.query('ALTER TABLE users DROP COLUMN IF EXISTS oauth_verified');
@@ -66,5 +68,6 @@ export const rollback_055 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 055 failed:', error);
     throw error;
+  }
   }
 };

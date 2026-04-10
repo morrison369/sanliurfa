@@ -3,10 +3,13 @@
  * Event replay, templates, and audit logging
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_062_webhook_advanced = async (pool: Pool) => {
-  try {
+export const migration_062_webhook_advanced: Migration = {
+  version: '062_webhook_advanced',
+  description: 'Webhook replay, templates, and audit logging',
+  up: async (pool: any) => {
+    try {
     // Webhook replays table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS webhook_replays (
@@ -92,10 +95,9 @@ export const migration_062_webhook_advanced = async (pool: Pool) => {
     console.error('Migration 062 failed:', error);
     throw error;
   }
-};
-
-export const rollback_062 = async (pool: Pool) => {
-  try {
+  },
+  down: async (pool: any) => {
+    try {
     await pool.query('DROP TABLE IF EXISTS webhook_replays CASCADE');
     await pool.query('DROP TABLE IF EXISTS webhook_templates CASCADE');
     await pool.query('DROP TABLE IF EXISTS webhook_audit_logs CASCADE');
@@ -103,5 +105,6 @@ export const rollback_062 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 062 failed:', error);
     throw error;
+  }
   }
 };

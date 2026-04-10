@@ -3,10 +3,13 @@
  * Track client-side performance metrics for monitoring
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_058_performance_metrics = async (pool: Pool) => {
-  try {
+export const migration_058_performance_metrics: Migration = {
+  version: '058_performance_metrics',
+  description: 'Client-side performance metrics tracking',
+  up: async (pool: any) => {
+    try {
     // Client performance metrics table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS client_performance_metrics (
@@ -35,14 +38,14 @@ export const migration_058_performance_metrics = async (pool: Pool) => {
     console.error('Migration 058 failed:', error);
     throw error;
   }
-};
-
-export const rollback_058 = async (pool: Pool) => {
-  try {
+  },
+  down: async (pool: any) => {
+    try {
     await pool.query('DROP TABLE IF EXISTS client_performance_metrics CASCADE');
     console.log('✓ Migration 058 rolled back');
   } catch (error) {
     console.error('Rollback 058 failed:', error);
     throw error;
+  }
   }
 };

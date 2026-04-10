@@ -3,7 +3,7 @@
  * Log and retrieve user actions for activity feed
  */
 
-import { insert, queryMany } from './postgres';
+import { insert, queryRows } from './postgres';
 import { getCache, setCache } from './cache';
 import { logger } from './logging';
 
@@ -62,7 +62,7 @@ export async function getUserActivity(userId: string, limit: number = 20): Promi
     }
 
     // Query from database
-    const results = await queryMany(
+    const results = await queryRows<any>(
       `SELECT
         id,
         user_id,

@@ -3,7 +3,7 @@
  * Track user achievements and unlock badges
  */
 
-import { query, queryOne, queryMany, insert } from './postgres';
+import { query, queryOne, queryRows, insert } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { awardPoints } from './loyalty-system';
 import { createNotification } from './notifications-queue';
@@ -39,9 +39,9 @@ export async function getAllAchievements(): Promise<Achievement[]> {
     const cached = await getCache<Achievement[]>(cacheKey);
     if (cached) return cached;
 
-    const achievements = await queryMany('SELECT * FROM achievements ORDER BY category, rarity DESC');
-    await setCache(cacheKey, achievements.rows, 3600);
-    return achievements.rows;
+    const achievements = await queryRows<Achievement>('SELECT * FROM achievements ORDER BY category, rarity DESC');
+    await setCache(cacheKey, achievements, 3600);
+    return achievements;
   } catch (error) {
     logger.error('Failed to get achievements', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -129,7 +129,7 @@ export async function getUserAchievements(userId: string): Promise<(UserAchievem
     const cached = await getCache<(UserAchievement & Achievement)[]>(cacheKey);
     if (cached) return cached;
 
-    const achievements = await queryMany(
+    const achievements = await queryRows<UserAchievement & Achievement>(
       `SELECT ua.*, a.achievement_key, a.name, a.description, a.icon_url, a.category, a.points_reward, a.rarity
        FROM user_achievements ua
        JOIN achievements a ON ua.achievement_id = a.id
@@ -139,8 +139,8 @@ export async function getUserAchievements(userId: string): Promise<(UserAchievem
     );
 
     // Extended TTL: 1800s (30 min) instead of 600s - achievements change infrequently
-    await setCache(cacheKey, achievements.rows, 1800);
-    return achievements.rows;
+    await setCache(cacheKey, achievements, 1800);
+    return achievements;
   } catch (error) {
     logger.error('Failed to get user achievements', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -152,7 +152,7 @@ export async function getUserAchievements(userId: string): Promise<(UserAchievem
  */
 export async function getUnviewedAchievements(userId: string): Promise<(UserAchievement & Achievement)[]> {
   try {
-    const achievements = await queryMany(
+    const achievements = await queryRows<UserAchievement & Achievement>(
       `SELECT ua.*, a.achievement_key, a.name, a.description, a.icon_url, a.category, a.points_reward, a.rarity
        FROM user_achievements ua
        JOIN achievements a ON ua.achievement_id = a.id
@@ -160,7 +160,7 @@ export async function getUnviewedAchievements(userId: string): Promise<(UserAchi
        ORDER BY ua.unlocked_at DESC`,
       [userId]
     );
-    return achievements.rows;
+    return achievements;
   } catch (error) {
     logger.error('Failed to get unviewed achievements', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -203,7 +203,7 @@ export async function getAchievementStats(userId: string): Promise<{
       'SELECT COUNT(*) as count FROM achievements WHERE hidden = false'
     );
 
-    const byCategory = await queryMany(`
+    const byCategory = await queryRows<any>(`
       SELECT
         a.category,
         COUNT(ua.id) as unlocked_count,
@@ -221,7 +221,7 @@ export async function getAchievementStats(userId: string): Promise<{
       total_unlocked: unlocked,
       total_available: total,
       unlock_percentage: total > 0 ? Math.round((unlocked / total) * 100) : 0,
-      by_category: byCategory.rows.reduce((acc: any, row: any) => {
+      by_category: byCategory.reduce((acc: any, row: any) => {
         acc[row.category] = {
           unlocked: parseInt(row.unlocked_count || '0'),
           total: parseInt(row.total_count || '0')

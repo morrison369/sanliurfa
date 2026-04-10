@@ -3,10 +3,13 @@
  * Event-driven webhooks for external integrations
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_059_webhooks = async (pool: Pool) => {
-  try {
+export const migration_059_webhooks: Migration = {
+  version: '059_webhooks',
+  description: 'Webhook registrations and delivery events',
+  up: async (pool: any) => {
+    try {
     // Webhooks table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS webhooks (
@@ -51,15 +54,15 @@ export const migration_059_webhooks = async (pool: Pool) => {
     console.error('Migration 059 failed:', error);
     throw error;
   }
-};
-
-export const rollback_059 = async (pool: Pool) => {
-  try {
+  },
+  down: async (pool: any) => {
+    try {
     await pool.query('DROP TABLE IF EXISTS webhook_events CASCADE');
     await pool.query('DROP TABLE IF EXISTS webhooks CASCADE');
     console.log('✓ Migration 059 rolled back');
   } catch (error) {
     console.error('Rollback 059 failed:', error);
     throw error;
+  }
   }
 };

@@ -3,10 +3,13 @@
  * Add filtering and advanced configuration for webhooks
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_061_webhook_filters_settings = async (pool: Pool) => {
-  try {
+export const migration_061_webhook_filters_settings: Migration = {
+  version: '061_webhook_filters_settings',
+  description: 'Webhook filters and advanced settings',
+  up: async (pool: any) => {
+    try {
     // Webhook filters table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS webhook_filters (
@@ -53,15 +56,15 @@ export const migration_061_webhook_filters_settings = async (pool: Pool) => {
     console.error('Migration 061 failed:', error);
     throw error;
   }
-};
-
-export const rollback_061 = async (pool: Pool) => {
-  try {
+  },
+  down: async (pool: any) => {
+    try {
     await pool.query('DROP TABLE IF EXISTS webhook_filters CASCADE');
     await pool.query('DROP TABLE IF EXISTS webhook_settings CASCADE');
     console.log('✓ Migration 061 rolled back');
   } catch (error) {
     console.error('Rollback 061 failed:', error);
     throw error;
+  }
   }
 };

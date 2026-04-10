@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getPlaceAnalytics } from '../../../lib/analytics';
-import { queryMany } from '../../../lib/postgres';
+import { queryRows } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const endDate = new Date();
     const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
 
-    const places = await queryMany('SELECT id FROM places WHERE user_id = $1 LIMIT 10', [locals.user.id]);
+    const places = await queryRows<{ id: string }>('SELECT id FROM places WHERE user_id = $1 LIMIT 10', [locals.user.id]);
     const analyticsData: any = {};
     for (const place of places) {
       const { metrics, summary } = await getPlaceAnalytics(place.id, startDate, endDate);
