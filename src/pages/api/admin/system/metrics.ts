@@ -5,7 +5,12 @@
 
 import type { APIRoute } from 'astro';
 import { getSystemMetrics, getOperationalSnapshot } from '../../../../lib/admin-dashboard';
-import { classifyIntegrationStatus, classifyNightlyStatus, classifyReleaseGateStatus } from '../../../../lib/admin-status';
+import {
+  classifyIntegrationStatus,
+  classifyNightlyStatus,
+  classifyOverallOpsStatus,
+  classifyReleaseGateStatus
+} from '../../../../lib/admin-status';
 import { getModerationStats } from '../../../../lib/admin-moderation';
 import { getModerationQueue, getContentFlags } from '../../../../lib/admin-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
@@ -44,6 +49,15 @@ export const GET: APIRoute = async ({ request, locals }) => {
       configuredCount,
       total: 2
     });
+    const regressionStatus = classifyNightlyStatus(nightly.regression);
+    const e2eStatus = classifyNightlyStatus(nightly.e2e);
+    const releaseGateStatus = classifyReleaseGateStatus(releaseGate);
+    const overallStatus = classifyOverallOpsStatus([
+      integrationStatus,
+      regressionStatus,
+      e2eStatus,
+      releaseGateStatus
+    ]);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/system/metrics', HttpStatus.OK, duration);
@@ -82,9 +96,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
           releaseGate,
           statusSummary: {
             integrations: integrationStatus,
-            regression: classifyNightlyStatus(nightly.regression),
-            e2e: classifyNightlyStatus(nightly.e2e),
-            releaseGate: classifyReleaseGateStatus(releaseGate)
+            regression: regressionStatus,
+            e2e: e2eStatus,
+            releaseGate: releaseGateStatus,
+            overall: overallStatus
           }
         }
       },

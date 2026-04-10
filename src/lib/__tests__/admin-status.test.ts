@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  classifyOverallOpsStatus,
+  classifyThresholdStatus,
   classifyIntegrationStatus,
   classifyNightlyStatus,
   classifyReleaseGateStatus
@@ -22,5 +24,14 @@ describe('admin status helpers', () => {
     expect(classifyReleaseGateStatus({ available: false, finalStatus: 'missing', failedStepCount: 0 })).toBe('blocked');
     expect(classifyReleaseGateStatus({ available: true, finalStatus: 'failed', failedStepCount: 1 })).toBe('degraded');
     expect(classifyReleaseGateStatus({ available: true, finalStatus: 'passed', failedStepCount: 0 })).toBe('healthy');
+  });
+
+  it('classifies threshold and overall ops states deterministically', () => {
+    expect(classifyThresholdStatus({ blockedWhen: true, degradedWhen: true })).toBe('blocked');
+    expect(classifyThresholdStatus({ blockedWhen: false, degradedWhen: true })).toBe('degraded');
+    expect(classifyThresholdStatus({ blockedWhen: false, degradedWhen: false })).toBe('healthy');
+    expect(classifyOverallOpsStatus(['healthy', 'healthy'])).toBe('healthy');
+    expect(classifyOverallOpsStatus(['healthy', 'degraded'])).toBe('degraded');
+    expect(classifyOverallOpsStatus(['healthy', 'blocked'])).toBe('blocked');
   });
 });

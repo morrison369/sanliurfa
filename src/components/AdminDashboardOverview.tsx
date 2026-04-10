@@ -78,6 +78,13 @@ interface DashboardData {
       topFailures: string[];
     };
   };
+  statusSummary?: {
+    integrations: AdminStatusLevel;
+    regression: AdminStatusLevel;
+    e2e: AdminStatusLevel;
+    releaseGate: AdminStatusLevel;
+    overall: AdminStatusLevel;
+  };
 }
 
 export default function AdminDashboardOverview() {
@@ -173,7 +180,22 @@ export default function AdminDashboardOverview() {
       </div>
 
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <AlertCircle className="w-5 h-5 text-slate-700" />
+            <h3 className="font-medium text-gray-700">Ops Durumu</h3>
+          </div>
+          <div className="space-y-1">
+            <div className={`text-2xl font-bold ${statusTone(data.statusSummary?.overall || 'blocked')}`}>
+              {data.statusSummary?.overall || 'blocked'}
+            </div>
+            <div className="text-xs text-gray-500">
+              Release: {releaseGateLevel} • Reg: {nightlyRegressionLevel} • E2E: {nightlyE2eLevel}
+            </div>
+          </div>
+        </div>
+
         {/* Users Card */}
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-3 mb-3">

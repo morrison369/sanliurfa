@@ -55,3 +55,30 @@ export function classifyReleaseGateStatus(options: {
 
   return 'healthy';
 }
+
+export function classifyThresholdStatus(options: {
+  blockedWhen: boolean;
+  degradedWhen: boolean;
+}): AdminStatusLevel {
+  if (options.blockedWhen) {
+    return 'blocked';
+  }
+
+  if (options.degradedWhen) {
+    return 'degraded';
+  }
+
+  return 'healthy';
+}
+
+export function classifyOverallOpsStatus(levels: AdminStatusLevel[]): AdminStatusLevel {
+  if (levels.includes('blocked')) {
+    return 'blocked';
+  }
+
+  if (levels.includes('degraded')) {
+    return 'degraded';
+  }
+
+  return 'healthy';
+}

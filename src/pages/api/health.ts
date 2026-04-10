@@ -1,11 +1,12 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../lib/api';
+import { classifyIntegrationStatus, classifyOverallOpsStatus, classifyThresholdStatus } from '../../lib/admin-status';
 import { pool } from '../../lib/postgres';
 import { getRedisClient, isRedisAvailable } from '../../lib/cache';
 import { getRuntimeIntegrationSettings } from '../../lib/runtime-integration-settings';
 
 interface HealthStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: 'healthy' | 'degraded' | 'blocked';
   uptime: number;
   timestamp: string;
   version: string;
@@ -72,14 +73,23 @@ export const GET: APIRoute = async ({ request }) => {
     }
 
     // Determine overall status
-    let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    if (dbStatus === 'down') {
-      overallStatus = 'unhealthy';
-    } else if (redisStatus === 'down') {
-      overallStatus = 'degraded';
-    } else if (process.env.NODE_ENV === 'production' && (!resendConfigured || !analyticsConfigured)) {
-      overallStatus = 'degraded';
-    }
+    const integrationStatus = classifyIntegrationStatus({
+      configuredCount: Number(resendConfigured) + Number(analyticsConfigured),
+      total: 2
+    });
+    const databaseStatus = classifyThresholdStatus({
+      blockedWhen: dbStatus === 'down',
+      degradedWhen: false
+    });
+    const cacheStatus = classifyThresholdStatus({
+      blockedWhen: false,
+      degradedWhen: redisStatus === 'down'
+    });
+    const overallStatus = classifyOverallOpsStatus(
+      process.env.NODE_ENV === 'production'
+        ? [databaseStatus, cacheStatus, integrationStatus]
+        : [databaseStatus, cacheStatus]
+    );
 
     const uptime = Math.floor(process.uptime());
 
@@ -109,7 +119,7 @@ export const GET: APIRoute = async ({ request }) => {
     };
 
     // Return appropriate status code based on health
-    const statusCode = overallStatus === 'unhealthy' ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.OK;
+    const statusCode = overallStatus === 'blocked' ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.OK;
 
     return apiResponse(healthData, statusCode, requestId);
   } catch (error) {

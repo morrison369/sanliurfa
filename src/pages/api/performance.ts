@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../lib/api';
+import { classifyThresholdStatus } from '../../lib/admin-status';
 import { metricsCollector } from '../../lib/metrics';
 import { updatePoolStatus } from '../../lib/postgres';
 import { logger } from '../../lib/logging';
@@ -42,6 +43,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const webhookP95Duration = webhookStripeMetrics.length > 0
       ? [...webhookStripeMetrics].sort((a, b) => a.duration - b.duration)[Math.floor(webhookStripeMetrics.length * 0.95)].duration
       : 0;
+    const oauthStatus = classifyThresholdStatus({
+      blockedWhen: oauthCallbackErrorRatePercent > 5,
+      degradedWhen: oauthCallbackErrorRatePercent > 2
+    });
+    const webhookStatus = classifyThresholdStatus({
+      blockedWhen: webhookErrorRatePercent > 3 || webhookP95Duration > 2500 || webhookRetryExhaustedCount > 0,
+      degradedWhen: webhookErrorRatePercent > 1 || webhookP95Duration > 1500
+    });
 
     logger.info('Performance metrics retrieved', {
       slowQueryCount: perfStats.slowQueryCount,
@@ -73,7 +82,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
             authorizeRequests: oauthAuthorizeMetrics.length,
             callbackRequests: oauthCallbackMetrics.length,
             callbackErrorRatePercent: oauthCallbackErrorRatePercent,
-            status: oauthCallbackErrorRatePercent > 5 ? 'critical' : oauthCallbackErrorRatePercent > 2 ? 'warning' : 'healthy'
+            status: oauthStatus
           },
           webhookIngestion: {
             requests: webhookStripeMetrics.length,
@@ -93,11 +102,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
                 ? Math.round((webhookDuplicateCount / webhookStripeMetrics.length) * 100)
                 : 0
             },
-            status: webhookErrorRatePercent > 3 || webhookP95Duration > 2500 || webhookRetryExhaustedCount > 0
-              ? 'critical'
-              : webhookErrorRatePercent > 1 || webhookP95Duration > 1500
-                ? 'warning'
-                : 'healthy'
+            status: webhookStatus
           }
         },
         slowestQueries: slowQueries.map(q => ({

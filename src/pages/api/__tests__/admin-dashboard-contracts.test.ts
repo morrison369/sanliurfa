@@ -174,6 +174,7 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.releaseGate.steps[0].step).toBe('TypeScript app gate');
     expect(body.data.data.nightly.regression.successRatePercent).toBe(86);
     expect(body.data.data.nightly.e2e.outcome).toBe('failure');
+    expect(body.data.data.statusSummary.overall).toBe('degraded');
     expect(body.data.data.operational.oauth.callback.sampleSize).toBe(12);
     expect(body.data.data.operational.search.topQueries[0].query).toBe('urfa');
   });
@@ -199,6 +200,7 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.statusSummary.regression).toBe('healthy');
     expect(body.data.data.statusSummary.e2e).toBe('degraded');
     expect(body.data.data.statusSummary.releaseGate).toBe('healthy');
+    expect(body.data.data.statusSummary.overall).toBe('degraded');
     expect(body.data.data.operational.webhook.stripe.p95DurationMs).toBe(250);
   });
 

@@ -9,6 +9,12 @@ import { getModerationStats } from '../../../../lib/admin-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import {
+  classifyIntegrationStatus,
+  classifyNightlyStatus,
+  classifyOverallOpsStatus,
+  classifyReleaseGateStatus
+} from '../../../../lib/admin-status';
 import { getNightlyOpsSummary } from '../../../../lib/nightly-ops-summary';
 import { getReleaseGateSummary } from '../../../../lib/release-gate-summary';
 import {
@@ -51,6 +57,20 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const integrationVerification = await verifyRuntimeIntegrationSettings(integrationSettings);
     const configuredCount =
       Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
+    const integrationStatus = classifyIntegrationStatus({
+      configuredCount,
+      total: 2,
+      verificationHealthy: integrationVerification.summary.healthy
+    });
+    const releaseGateStatus = classifyReleaseGateStatus(releaseGate);
+    const regressionStatus = classifyNightlyStatus(nightly.regression);
+    const e2eStatus = classifyNightlyStatus(nightly.e2e);
+    const overallStatus = classifyOverallOpsStatus([
+      integrationStatus,
+      releaseGateStatus,
+      regressionStatus,
+      e2eStatus
+    ]);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/dashboard/overview', HttpStatus.OK, duration);
@@ -81,6 +101,13 @@ export const GET: APIRoute = async ({ request, locals }) => {
           operational,
           releaseGate,
           nightly,
+          statusSummary: {
+            integrations: integrationStatus,
+            regression: regressionStatus,
+            e2e: e2eStatus,
+            releaseGate: releaseGateStatus,
+            overall: overallStatus
+          },
           period: days
         }
       },
