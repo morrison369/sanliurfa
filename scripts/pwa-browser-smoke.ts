@@ -55,6 +55,7 @@ async function main(): Promise<void> {
     }
 
     const context = await browser.newContext();
+    await context.grantPermissions(['notifications'], { origin: BASE_URL });
     const page = await context.newPage();
 
     const manifestResponse = await page.request.get(`${BASE_URL}/manifest.json`);
@@ -84,6 +85,29 @@ async function main(): Promise<void> {
 
     await page.goto(BASE_URL);
     await page.waitForLoadState('networkidle');
+
+    const pwaCapabilities = await page.evaluate(async () => {
+      const notificationPermission =
+        'Notification' in window ? await Notification.requestPermission() : 'unsupported';
+
+      return {
+        hasManifestLink: Boolean(document.querySelector('link[rel="manifest"]')),
+        notificationPermission,
+        serviceWorkerSupported: 'serviceWorker' in navigator,
+      };
+    });
+
+    if (!pwaCapabilities.hasManifestLink) {
+      throw new Error('PWA DOM capability check failed');
+    }
+
+    if (!pwaCapabilities.serviceWorkerSupported) {
+      throw new Error('service worker API unsupported in browser smoke');
+    }
+
+    if (pwaCapabilities.notificationPermission !== 'granted') {
+      throw new Error(`notification permission check failed: ${pwaCapabilities.notificationPermission}`);
+    }
 
     const serviceWorkerRegistered = await page.waitForFunction(async () => {
       if (!('serviceWorker' in navigator)) {
