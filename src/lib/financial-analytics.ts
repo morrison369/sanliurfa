@@ -35,7 +35,7 @@ export interface CashFlowAnalysis {
   endingCash: number;
 }
 
-export interface FinancialHealth {
+export interface FinancialHealthSnapshot {
   score: number;
   trend: 'improving' | 'declining' | 'stable';
   issues: string[];
@@ -321,11 +321,11 @@ export class CashFlowAnalyzer {
 
 // ==================== FINANCIAL HEALTH ====================
 
-export class FinancialHealth {
+export class FinancialHealthAnalyzer {
   /**
    * Calculate health
    */
-  calculateHealth(asOfDate: number): FinancialHealth {
+  calculateHealth(asOfDate: number): FinancialHealthSnapshot {
     const score = Math.random() * 40 + 60; // 60-100
     const trend: 'improving' | 'declining' | 'stable' = ['improving', 'declining', 'stable'][Math.floor(Math.random() * 3)] as any;
     const issues: string[] = [];
@@ -382,6 +382,6 @@ export class FinancialHealth {
 const financialMetrics = new FinancialMetrics();
 const profitabilityAnalyzer = new ProfitabilityAnalyzer();
 const cashFlowAnalyzer = new CashFlowAnalyzer();
-const financialHealth = new FinancialHealth();
+const financialHealth = new FinancialHealthAnalyzer();
 
 export { financialMetrics, profitabilityAnalyzer, cashFlowAnalyzer, financialHealth };

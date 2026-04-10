@@ -303,18 +303,18 @@ class RAGPipeline {
     return context;
   }
 
-  processAndRetrieve(
+  async processAndRetrieve(
     query: string,
     documentId: string,
     documentContent: string,
     options: any = {}
-  ): RAGResponse['context'] {
+  ): Promise<RAGResponse['context']> {
     const chunks = this.processor.processDocument(documentId, documentContent, {
       chunkSize: options.chunkSize || 512,
       overlapRatio: options.overlapRatio || 0.2
     });
 
-    return this.retrieve(query, chunks, options).then(ctx => ctx);
+    return this.retrieve(query, chunks, options);
   }
 
   formatAnswer(context: AssembledContext, answer: string): RAGResponse {

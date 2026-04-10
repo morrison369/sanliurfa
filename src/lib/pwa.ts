@@ -11,10 +11,23 @@ export interface PushSubscription {
   auth: string;
 }
 
+type InstallPromptEvent = Event & {
+  prompt?: () => Promise<void>;
+  userChoice?: Promise<{ outcome: string }>;
+};
+
+function isBrowser(): boolean {
+  return typeof window !== 'undefined' && typeof navigator !== 'undefined';
+}
+
 /**
  * Register service worker
  */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (!isBrowser()) {
+    return null;
+  }
+
   if (!('serviceWorker' in navigator)) {
     console.warn('[PWA] Service Worker not supported');
     return null;
@@ -37,6 +50,10 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
  */
 export async function subscribeToPush(vapidPublicKey: string): Promise<PushSubscription | null> {
   try {
+    if (!isBrowser()) {
+      return null;
+    }
+
     const registration = await navigator.serviceWorker.ready;
     
     const subscription = await registration.pushManager.subscribe({
@@ -72,6 +89,10 @@ export async function subscribeToPush(vapidPublicKey: string): Promise<PushSubsc
  */
 export async function unsubscribeFromPush(): Promise<boolean> {
   try {
+    if (!isBrowser()) {
+      return false;
+    }
+
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
     
@@ -97,6 +118,10 @@ export async function unsubscribeFromPush(): Promise<boolean> {
  */
 export async function isPushSubscribed(): Promise<boolean> {
   try {
+    if (!isBrowser()) {
+      return false;
+    }
+
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
     return !!subscription;
@@ -109,6 +134,10 @@ export async function isPushSubscribed(): Promise<boolean> {
  * Request notification permission
  */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
+  if (!isBrowser()) {
+    return 'denied';
+  }
+
   if (!('Notification' in window)) {
     console.warn('[PWA] Notifications not supported');
     return 'denied';
@@ -134,12 +163,16 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 export function setupInstallPrompt(
   onPromptReady: (prompt: Event) => void,
   onInstallSuccess: () => void
-): void {
-  let deferredPrompt: Event | null = null;
+): () => Promise<void> {
+  let deferredPrompt: InstallPromptEvent | null = null;
+
+  if (!isBrowser()) {
+    return async () => {};
+  }
 
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
-    deferredPrompt = e;
+    deferredPrompt = e as InstallPromptEvent;
     console.log('[PWA] Install prompt ready');
     onPromptReady(e);
   });
@@ -151,20 +184,24 @@ export function setupInstallPrompt(
   });
 
   // Return function to show prompt
-  return (async () => {
+  return async () => {
     if (deferredPrompt) {
-      (deferredPrompt as any).prompt?.();
-      const { outcome } = await (deferredPrompt as any).userChoice;
+      await deferredPrompt.prompt?.();
+      const { outcome } = (await deferredPrompt.userChoice) ?? { outcome: 'dismissed' };
       console.log(`[PWA] Install prompt response: ${outcome}`);
       deferredPrompt = null;
     }
-  }) as any;
+  };
 }
 
 /**
  * Detect if running as installed app
  */
 export function isInstalledApp(): boolean {
+  if (!isBrowser()) {
+    return false;
+  }
+
   // Check if running in standalone mode
   if (window.matchMedia('(display-mode: standalone)').matches) {
     return true;
@@ -176,7 +213,7 @@ export function isInstalledApp(): boolean {
 }
 
 // Helper: VAPID key conversion
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
     .replace(/\-/g, '+')
@@ -188,7 +225,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);
   }
-  return outputArray;
+  return outputArray.buffer;
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer | null): string {

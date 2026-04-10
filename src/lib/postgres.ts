@@ -356,7 +356,8 @@ const ALLOWED_TABLES = new Set([
   'request_metrics',
   'query_metrics',
   'performance_metrics',
-  'onboarding_progress'
+  'onboarding_progress',
+  'user_reputation'
 ]);
 
 /**

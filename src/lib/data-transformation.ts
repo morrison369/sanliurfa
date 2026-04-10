@@ -158,8 +158,9 @@ export class FieldMapper {
     if (!mappingConfig) return data;
 
     const mapped: Record<string, any> = {};
+    const configuredMapping = mappingConfig.mapping as Record<string, string>;
 
-    for (const [targetField, sourceField] of Object.entries(mappingConfig.mapping)) {
+    for (const [targetField, sourceField] of Object.entries(configuredMapping)) {
       mapped[targetField] = data[sourceField];
     }
 

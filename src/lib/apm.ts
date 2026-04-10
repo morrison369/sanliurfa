@@ -37,7 +37,7 @@ export interface ErrorBudget {
   badEvents: number;
 }
 
-export interface PerformanceBaseline {
+export interface PerformanceBaselineStats {
   mean: number;
   p50: number;
   p95: number;
@@ -221,7 +221,7 @@ export class ErrorBudgetManager {
 
 // ==================== PERFORMANCE BASELINE ====================
 
-export class PerformanceBaseline {
+export class PerformanceBaselineManager {
   private samples = new Map<string, number[]>();
 
   /**
@@ -244,7 +244,7 @@ export class PerformanceBaseline {
   /**
    * Get baseline statistics
    */
-  getBaseline(metricName: string): PerformanceBaseline | null {
+  getBaseline(metricName: string): PerformanceBaselineStats | null {
     const samples = this.samples.get(metricName);
     if (!samples || samples.length === 0) {
       return null;
@@ -305,4 +305,4 @@ export class PerformanceBaseline {
 
 export const traceCollector = new TraceCollector();
 export const errorBudgetManager = new ErrorBudgetManager();
-export const performanceBaseline = new PerformanceBaseline();
+export const performanceBaseline = new PerformanceBaselineManager();

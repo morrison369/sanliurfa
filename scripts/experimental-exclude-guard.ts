@@ -14,6 +14,12 @@ function loadJson<T>(path: string): T {
   return JSON.parse(readFileSync(path, 'utf8')) as T;
 }
 
+const BASELINE_EXCLUDES = new Set([
+  'src/lib/__tests__/**',
+  'src/**/*.test.ts',
+  'src/**/*.spec.ts',
+]);
+
 function main(): void {
   const root = process.cwd();
   const tsconfigPath = resolve(root, 'tsconfig.experimental.json');
@@ -22,26 +28,26 @@ function main(): void {
   const tsconfig = loadJson<TsConfigLike>(tsconfigPath);
   const budget = loadJson<ExperimentalBudget>(budgetPath);
   const excludes = Array.isArray(tsconfig.exclude) ? tsconfig.exclude : [];
+  const budgetedExcludes = excludes.filter((entry) => !BASELINE_EXCLUDES.has(entry));
 
-  const fileEntries = excludes.filter((entry) => entry.startsWith('src/lib/') && entry.endsWith('.ts'));
+  const fileEntries = budgetedExcludes.filter((entry) => entry.startsWith('src/lib/') && entry.endsWith('.ts'));
 
-  const overTotal = excludes.length - budget.max_entries;
+  const overTotal = budgetedExcludes.length - budget.max_entries;
   const overFiles = fileEntries.length - budget.max_file_entries;
 
   if (overTotal > 0 || overFiles > 0) {
     throw new Error(
       [
         'typecheck experimental exclude budget exceeded',
-        `total=${excludes.length} max=${budget.max_entries}`,
+        `total=${budgetedExcludes.length} max=${budget.max_entries}`,
         `file_entries=${fileEntries.length} max=${budget.max_file_entries}`,
       ].join(' | ')
     );
   }
 
   console.log(
-    `experimental-exclude-guard: OK (total=${excludes.length}/${budget.max_entries}, file_entries=${fileEntries.length}/${budget.max_file_entries})`
+    `experimental-exclude-guard: OK (total=${budgetedExcludes.length}/${budget.max_entries}, file_entries=${fileEntries.length}/${budget.max_file_entries})`
   );
 }
 
 main();
-

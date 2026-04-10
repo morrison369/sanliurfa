@@ -28,7 +28,7 @@ interface RetrievalMetrics {
   latencyP99: number;
 }
 
-interface LLMMetrics {
+interface LLMMetricsRecord {
   model: string;
   timestamp: number;
   requestCount: number;
@@ -233,8 +233,8 @@ class RetrievalAnalytics {
   }
 }
 
-class LLMMetrics {
-  private metrics: LLMMetrics[] = [];
+class LLMMetricsMonitor {
+  private metrics: LLMMetricsRecord[] = [];
 
   recordMetrics(config: {
     model: string;
@@ -244,7 +244,7 @@ class LLMMetrics {
     costUSD: number;
     errorCount?: number;
     cacheHits?: number;
-  }): LLMMetrics {
+  }): LLMMetricsRecord {
     const avgLatency = config.latencies.length > 0
       ? config.latencies.reduce((a, b) => a + b, 0) / config.latencies.length
       : 0;
@@ -257,7 +257,7 @@ class LLMMetrics {
       ? (config.cacheHits || 0) / config.requestCount
       : 0;
 
-    const metric: LLMMetrics = {
+    const metric: LLMMetricsRecord = {
       model: config.model,
       timestamp: Date.now(),
       requestCount: config.requestCount,
@@ -327,7 +327,7 @@ class LLMMetrics {
       .sort((a, b) => a.time - b.time);
   }
 
-  getMetrics(model: string, limit: number = 100): LLMMetrics[] {
+  getMetrics(model: string, limit: number = 100): LLMMetricsRecord[] {
     return this.metrics
       .filter(m => m.model === model)
       .slice(-limit);
@@ -421,7 +421,7 @@ class QualityMonitor {
 
 export const embeddingAnalytics = new EmbeddingAnalytics();
 export const retrievalAnalytics = new RetrievalAnalytics();
-export const llmMetrics = new LLMMetrics();
+export const llmMetrics = new LLMMetricsMonitor();
 export const qualityMonitor = new QualityMonitor();
 
-export { EmbeddingMetrics, RetrievalMetrics, LLMMetrics, QualityAlert };
+export type { EmbeddingMetrics, RetrievalMetrics, LLMMetricsRecord as LLMMetrics, QualityAlert };

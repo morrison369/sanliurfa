@@ -8,6 +8,12 @@ function loadJson<T>(path: string): T {
   return JSON.parse(readFileSync(path, 'utf8')) as T;
 }
 
+const BASELINE_EXCLUDES = new Set([
+  'src/lib/__tests__/**',
+  'src/**/*.test.ts',
+  'src/**/*.spec.ts',
+]);
+
 function main(): void {
   const root = process.cwd();
   const tsconfigPath = resolve(root, 'tsconfig.experimental.json');
@@ -18,14 +24,17 @@ function main(): void {
   const tsconfig = loadJson<TsConfig>(tsconfigPath);
   const budget = loadJson<Budget>(budgetPath);
   const excludes = Array.isArray(tsconfig.exclude) ? tsconfig.exclude : [];
-  const fileExcludes = excludes.filter((entry) => entry.startsWith('src/lib/') && entry.endsWith('.ts'));
+  const budgetedExcludes = excludes.filter((entry) => !BASELINE_EXCLUDES.has(entry));
+  const fileExcludes = budgetedExcludes.filter((entry) => entry.startsWith('src/lib/') && entry.endsWith('.ts'));
+  const baselineExcludes = excludes.filter((entry) => BASELINE_EXCLUDES.has(entry));
 
   const lines = [
     '# Weekly Typecheck Report',
     '',
     '## Experimental Exclude Budget',
-    `- Total entries: ${excludes.length}/${budget.max_entries}`,
+    `- Total entries: ${budgetedExcludes.length}/${budget.max_entries}`,
     `- File entries: ${fileExcludes.length}/${budget.max_file_entries}`,
+    `- Baseline test excludes: ${baselineExcludes.length}`,
     '',
     '## Current Excluded Files',
     ...fileExcludes.map((file) => `- ${file}`),

@@ -4,6 +4,7 @@
  */
 
 import { runMigrations } from './migrations';
+import type { Migration } from './migrations';
 import { logger } from './logging';
 import { initializeDefaultEmailTemplates } from './subscription-email-notifications';
 import { migration_001_initial_schema } from '../migrations/001_initial_schema';
@@ -247,6 +248,40 @@ const ALL_MIGRATIONS = [
   migration_126_data_warehouse
 ];
 
+type LegacyMigration =
+  | Migration
+  | {
+      name?: string;
+      version?: string;
+      description?: string;
+      up?: (pool: any) => Promise<void>;
+      down?: (pool: any) => Promise<void>;
+    }
+  | ((pool: any) => Promise<void>);
+
+function normalizeMigration(migration: LegacyMigration, index: number): Migration {
+  if (typeof migration === 'function') {
+    const version = `legacy_${String(index + 1).padStart(3, '0')}`;
+    return {
+      version,
+      description: `${version} auto-normalized migration`,
+      up: migration,
+      down: async () => {}
+    };
+  }
+
+  const legacyName = 'name' in migration ? migration.name : undefined;
+
+  return {
+    version: migration.version || legacyName || `legacy_${String(index + 1).padStart(3, '0')}`,
+    description: migration.description || legacyName || `Legacy migration ${index + 1}`,
+    up: migration.up || (async () => {}),
+    down: migration.down || (async () => {})
+  };
+}
+
+const NORMALIZED_MIGRATIONS: Migration[] = ALL_MIGRATIONS.map(normalizeMigration);
+
 let migrationsInitialized = false;
 
 /**
@@ -260,7 +295,7 @@ export async function initializeMigrations(): Promise<void> {
   try {
     migrationsInitialized = true;
     logger.info('Migrasyonlar başlatılıyor...');
-    await runMigrations(ALL_MIGRATIONS);
+    await runMigrations(NORMALIZED_MIGRATIONS);
     logger.info('Migrasyonlar başarıyla tamamlandı');
 
     // Initialize default email templates

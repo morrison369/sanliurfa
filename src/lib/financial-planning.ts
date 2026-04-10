@@ -40,7 +40,7 @@ export interface Scenario {
   projectedResult: Record<string, number>;
 }
 
-export interface CostOptimization {
+export interface CostOptimizationOpportunity {
   category: string;
   currentCost: number;
   potential: number;
@@ -351,12 +351,12 @@ export class ScenarioPlanner {
 
 // ==================== COST OPTIMIZATION ====================
 
-export class CostOptimization {
+export class CostOptimizationAnalyzer {
   /**
    * Analyze costs
    */
-  analyzeCosts(period: string): CostOptimization[] {
-    const optimizations: CostOptimization[] = [];
+  analyzeCosts(period: string): CostOptimizationOpportunity[] {
+    const optimizations: CostOptimizationOpportunity[] = [];
 
     const categories = ['Personnel', 'Operations', 'Marketing', 'Technology'];
 
@@ -381,8 +381,8 @@ export class CostOptimization {
   /**
    * Identify reduction opportunities
    */
-  identifyReductionOpportunities(): CostOptimization[] {
-    const opportunities: CostOptimization[] = [];
+  identifyReductionOpportunities(): CostOptimizationOpportunity[] {
+    const opportunities: CostOptimizationOpportunity[] = [];
 
     if (Math.random() > 0.4) {
       opportunities.push({
@@ -422,14 +422,14 @@ export class CostOptimization {
   /**
    * Estimate savings
    */
-  estimateSavings(optimizations: CostOptimization[]): number {
+  estimateSavings(optimizations: CostOptimizationOpportunity[]): number {
     return optimizations.reduce((sum, opt) => sum + opt.potential, 0);
   }
 
   /**
    * Prioritize reductions
    */
-  prioritizeReductions(): CostOptimization[] {
+  prioritizeReductions(): CostOptimizationOpportunity[] {
     const optimizations = this.identifyReductionOpportunities();
 
     return optimizations.sort((a, b) => {
@@ -444,6 +444,6 @@ export class CostOptimization {
 const budgetPlanner = new BudgetPlanner();
 const financialForecaster = new FinancialForecaster();
 const scenarioPlanner = new ScenarioPlanner();
-const costOptimization = new CostOptimization();
+const costOptimization = new CostOptimizationAnalyzer();
 
 export { budgetPlanner, financialForecaster, scenarioPlanner, costOptimization };

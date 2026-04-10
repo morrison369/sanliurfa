@@ -1,6 +1,6 @@
 # Typecheck Experimental Backlog
 
-`npm run typecheck:experimental` halen çok sayıda hata üretir; bu dosya kapanış sırasını tanımlar.
+`npm run typecheck:experimental` artık yeşil; bu dosya kalıcı kalite eşiğini ve borcun tekrar büyümemesini tanımlar.
 
 ## P1 Buckets
 1. `queryMany/queryOne` dönüş tipi tutarsızlığı (`any[] | { rowCount... }`)  
@@ -27,5 +27,5 @@
 ## Exclude Budget
 - Budget dosyası: `config/experimental-exclude-budget.json`
 - Kural: `tsconfig.experimental.json` içindeki `exclude` listesi bütçeyi aşamaz.
-- Aktif hedef: `max_entries=14`, `max_file_entries=11`
+- Aktif hedef: `max_entries=0`, `max_file_entries=0`
 - Amaç: yeni teknik borcun gate altından sessizce büyümesini engellemek.

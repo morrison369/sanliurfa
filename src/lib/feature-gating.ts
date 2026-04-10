@@ -136,8 +136,7 @@ export async function hasFeatureAccess(
     return tierLevel >= requiredTier;
   } catch (error) {
     logger.error('Error checking feature access', error instanceof Error ? error : new Error(String(error)));
-    // Default to free tier on error
-    return PREMIUM_FEATURES[feature].minTier === 0;
+    return false;
   }
 }
 

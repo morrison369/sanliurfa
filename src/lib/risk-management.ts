@@ -241,9 +241,7 @@ export class ControlManager {
 
     const byType: Record<string, number> = {};
     controls.forEach(c => {
-      if (!byType[c.type]) {
-        byType[c.type] = [];
-      }
+      byType[c.type] = c.effectiveness;
     });
 
     return { avgEffectiveness: Math.round(avgEffectiveness), byType };
