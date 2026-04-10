@@ -1,8 +1,8 @@
 # Weekly Typecheck Report
 
 ## Experimental Exclude Budget
-- Total entries: 27/27
-- File entries: 24/24
+- Total entries: 24/24
+- File entries: 21/21
 
 ## Current Excluded Files
 - src/lib/index.ts
@@ -23,9 +23,6 @@
 - src/lib/reputation.ts
 - src/lib/risk-management.ts
 - src/lib/runbook-automation.ts
-- src/lib/scheduler.ts
-- src/lib/search.ts
-- src/lib/sentry.ts
 - src/lib/stripe-client.ts
 - src/lib/stripe.ts
 - src/lib/vendor-onboarding.ts

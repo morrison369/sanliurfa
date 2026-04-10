@@ -1,69 +1,151 @@
 /**
- * Sentry error tracking integration
+ * Sentry error tracking integration.
+ * This module stays compile-safe when `@sentry/astro` is not installed.
  */
+
+type SentryLevel = 'fatal' | 'error' | 'warning' | 'info' | 'debug';
+
+type SentryUser = {
+  id: string;
+  email?: string;
+  username?: string;
+};
+
+type SentryScopeContext = Record<string, unknown>;
+
+type SentryEvent = {
+  exception?: unknown;
+  tags?: Record<string, string>;
+};
+
+type SentryHint = {
+  originalException?: unknown;
+};
+
+type SentryBreadcrumb = {
+  message: string;
+  category?: string;
+  level: SentryLevel;
+  data?: SentryScopeContext;
+  timestamp: number;
+};
+
+type SentryTransaction = {
+  setStatus: (status: string) => void;
+  finish: () => void;
+};
+
+type SentrySdk = {
+  Replay?: new (config: Record<string, unknown>) => unknown;
+  init?: (config: Record<string, unknown>) => void;
+  captureMessage?: (message: string, level?: SentryLevel, context?: Record<string, unknown>) => void;
+  captureException?: (error: Error, context?: Record<string, unknown>) => void;
+  setUser?: (user: SentryUser | null) => void;
+  addBreadcrumb?: (breadcrumb: SentryBreadcrumb) => void;
+  setTag?: (key: string, value: string) => void;
+  startTransaction?: (context: { op: string; name: string }) => SentryTransaction;
+};
 
 export interface SentryConfig {
   dsn?: string;
   environment?: 'production' | 'staging' | 'development';
   tracesSampleRate?: number;
-  beforeSend?: (event: any) => any;
+  beforeSend?: (event: SentryEvent) => SentryEvent | null;
+}
+
+const loadSentryModule = new Function('specifier', 'return import(specifier);') as (specifier: string) => Promise<SentrySdk>;
+
+let sentrySdkPromise: Promise<SentrySdk | null> | null = null;
+
+function getEnvValue(name: string): string | undefined {
+  if (typeof process !== 'undefined' && process.env[name]) {
+    return process.env[name];
+  }
+
+  if (typeof import.meta !== 'undefined' && import.meta.env && name in import.meta.env) {
+    const value = import.meta.env[name as keyof ImportMetaEnv];
+    return typeof value === 'string' ? value : undefined;
+  }
+
+  return undefined;
+}
+
+function getRuntimeEnvironment(): 'production' | 'staging' | 'development' {
+  const env = getEnvValue('NODE_ENV') ?? getEnvValue('MODE') ?? 'development';
+  return env === 'production' || env === 'staging' ? env : 'development';
+}
+
+async function getSentrySdk(): Promise<SentrySdk | null> {
+  if (!sentrySdkPromise) {
+    sentrySdkPromise = loadSentryModule('@sentry/astro').catch(() => null);
+  }
+
+  return sentrySdkPromise;
+}
+
+function createNoopTransaction(): SentryTransaction {
+  return {
+    setStatus: () => undefined,
+    finish: () => undefined
+  };
 }
 
 /**
  * Initialize Sentry
  */
 export async function initializeSentry(config: SentryConfig = {}): Promise<void> {
-  const {
-    dsn = import.meta.env.PUBLIC_SENTRY_DSN || '',
-    environment = import.meta.env.MODE as any || 'development',
-    tracesSampleRate = environment === 'production' ? 0.1 : 1.0,
-    beforeSend
-  } = config;
+  const environment = config.environment ?? getRuntimeEnvironment();
+  const dsn = config.dsn ?? getEnvValue('PUBLIC_SENTRY_DSN') ?? getEnvValue('SENTRY_DSN') ?? '';
+  const tracesSampleRate = config.tracesSampleRate ?? (environment === 'production' ? 0.1 : 1.0);
 
   if (!dsn) {
     console.log('[Sentry] Not initialized (missing DSN)');
     return;
   }
 
-  try {
-    const Sentry = await import('@sentry/astro');
+  const sdk = await getSentrySdk();
+  if (!sdk?.init) {
+    console.warn('[Sentry] SDK not available, running without external tracking');
+    return;
+  }
 
-    Sentry.init({
+  try {
+    sdk.init({
       dsn,
       environment,
       tracesSampleRate,
-      integrations: [
-        new Sentry.Replay({
-          maskAllText: true,
-          blockAllMedia: true
-        })
-      ],
+      integrations: sdk.Replay
+        ? [
+            new sdk.Replay({
+              maskAllText: true,
+              blockAllMedia: true
+            })
+          ]
+        : [],
       replaysSessionSampleRate: 0.1,
       replaysOnErrorSampleRate: 1.0,
-      beforeSend: (event, hint) => {
-        // Filter out errors based on custom logic
+      beforeSend: (event: SentryEvent, hint: SentryHint) => {
         if (event.exception) {
-          const error = hint.originalException;
+          const originalError = hint.originalException;
 
-          // Ignore network errors from certain domains
-          if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+          if (originalError instanceof TypeError && originalError.message.includes('Failed to fetch')) {
             return null;
           }
 
-          // Ignore 4xx errors (likely user errors)
-          if (event.tags?.['http.status_code']) {
-            const status = parseInt(event.tags['http.status_code']);
+          const statusCode = event.tags?.['http.status_code'];
+          if (statusCode) {
+            const status = Number.parseInt(statusCode, 10);
             if (status >= 400 && status < 500) {
               return null;
             }
           }
         }
 
-        return beforeSend ? beforeSend(event) : event;
+        return config.beforeSend ? config.beforeSend(event) : event;
       }
     });
 
-    console.log('[Sentry] Initialized with DSN:', dsn);
+    console.log('[Sentry] Initialized');
   } catch (error) {
     console.error('[Sentry] Initialization failed:', error);
   }
@@ -72,20 +154,19 @@ export async function initializeSentry(config: SentryConfig = {}): Promise<void>
 /**
  * Capture exception
  */
-export function captureException(error: Error | string, context?: Record<string, any>): void {
-  try {
-    const Sentry = require('@sentry/astro');
+export function captureException(error: Error | string, context?: SentryScopeContext): void {
+  void getSentrySdk().then((sdk) => {
+    const normalizedError = typeof error === 'string' ? new Error(error) : error;
 
-    if (typeof error === 'string') {
-      Sentry.captureMessage(error, 'error');
-    } else {
-      Sentry.captureException(error, {
+    if (sdk?.captureException) {
+      sdk.captureException(normalizedError, {
         contexts: context ? { app: context } : undefined
       });
+      return;
     }
-  } catch (e) {
-    console.error('[Sentry] Failed to capture exception:', e);
-  }
+
+    console.error('[Sentry] SDK unavailable, exception fallback:', normalizedError, context);
+  });
 }
 
 /**
@@ -93,47 +174,46 @@ export function captureException(error: Error | string, context?: Record<string,
  */
 export function captureMessage(
   message: string,
-  level: 'fatal' | 'error' | 'warning' | 'info' | 'debug' = 'error',
-  context?: Record<string, any>
+  level: SentryLevel = 'error',
+  context?: SentryScopeContext
 ): void {
-  try {
-    const Sentry = require('@sentry/astro');
+  void getSentrySdk().then((sdk) => {
+    if (sdk?.captureMessage) {
+      sdk.captureMessage(message, level, {
+        contexts: context ? { app: context } : undefined
+      });
+      return;
+    }
 
-    Sentry.captureMessage(message, level, {
-      contexts: context ? { app: context } : undefined
-    });
-  } catch (e) {
-    console.error('[Sentry] Failed to capture message:', e);
-  }
+    const logMethod = level === 'fatal' || level === 'error' ? console.error : console.info;
+    logMethod('[Sentry] SDK unavailable, message fallback:', message, context);
+  });
 }
 
 /**
  * Set user context
  */
 export function setUser(userId: string, email?: string, username?: string): void {
-  try {
-    const Sentry = require('@sentry/astro');
+  void getSentrySdk().then((sdk) => {
+    if (!sdk?.setUser) {
+      return;
+    }
 
-    Sentry.setUser({
+    sdk.setUser({
       id: userId,
       email,
       username
     });
-  } catch (e) {
-    console.error('[Sentry] Failed to set user:', e);
-  }
+  });
 }
 
 /**
  * Clear user context
  */
 export function clearUser(): void {
-  try {
-    const Sentry = require('@sentry/astro');
-    Sentry.setUser(null);
-  } catch (e) {
-    console.error('[Sentry] Failed to clear user:', e);
-  }
+  void getSentrySdk().then((sdk) => {
+    sdk?.setUser?.(null);
+  });
 }
 
 /**
@@ -142,37 +222,33 @@ export function clearUser(): void {
 export function addBreadcrumb(
   message: string,
   category?: string,
-  level: 'fatal' | 'error' | 'warning' | 'info' | 'debug' = 'info',
-  data?: Record<string, any>
+  level: SentryLevel = 'info',
+  data?: SentryScopeContext
 ): void {
-  try {
-    const Sentry = require('@sentry/astro');
-
-    Sentry.addBreadcrumb({
+  void getSentrySdk().then((sdk) => {
+    sdk?.addBreadcrumb?.({
       message,
       category,
       level,
       data,
       timestamp: Date.now() / 1000
     });
-  } catch (e) {
-    console.error('[Sentry] Failed to add breadcrumb:', e);
-  }
+  });
 }
 
 /**
  * Set tags for filtering
  */
 export function setTags(tags: Record<string, string>): void {
-  try {
-    const Sentry = require('@sentry/astro');
+  void getSentrySdk().then((sdk) => {
+    if (!sdk?.setTag) {
+      return;
+    }
 
     Object.entries(tags).forEach(([key, value]) => {
-      Sentry.setTag(key, value);
+      sdk.setTag?.(key, value);
     });
-  } catch (e) {
-    console.error('[Sentry] Failed to set tags:', e);
-  }
+  });
 }
 
 /**
@@ -180,28 +256,26 @@ export function setTags(tags: Record<string, string>): void {
  */
 export async function withSentry<T>(
   fn: () => Promise<T>,
-  context?: { operation?: string; [key: string]: any }
+  context?: { operation?: string; name?: string; [key: string]: unknown }
 ): Promise<T | null> {
-  try {
-    const Sentry = require('@sentry/astro');
-    const transaction = Sentry.startTransaction({
-      op: context?.operation || 'operation',
-      name: context?.name || 'Unknown'
-    });
+  const sdk = await getSentrySdk();
+  const transaction = sdk?.startTransaction?.({
+    op: context?.operation ?? 'operation',
+    name: context?.name ?? 'Unknown'
+  }) ?? createNoopTransaction();
 
-    try {
-      const result = await fn();
-      transaction.finish();
-      return result;
-    } catch (error) {
-      transaction.setStatus('error');
-      transaction.finish();
-      throw error;
-    }
+  try {
+    const result = await fn();
+    transaction.finish();
+    return result;
   } catch (error) {
+    transaction.setStatus('error');
+    transaction.finish();
+
     if (context?.operation) {
       addBreadcrumb(`Failed: ${context.operation}`, 'error');
     }
+
     captureException(error instanceof Error ? error : new Error(String(error)), context);
     return null;
   }
@@ -210,33 +284,33 @@ export async function withSentry<T>(
 /**
  * Performance monitoring
  */
-export function profileOperation<T>(
-  operationName: string,
-  fn: () => T
-): T {
-  try {
-    const Sentry = require('@sentry/astro');
-    const transaction = Sentry.startTransaction({
-      op: 'operation',
-      name: operationName
-    });
+export function profileOperation<T>(operationName: string, fn: () => T): T {
+  const start = performance.now();
 
-    const start = performance.now();
+  return withProfileTransaction(operationName, () => {
     const result = fn();
     const duration = performance.now() - start;
 
-    transaction.finish();
-
     if (duration > 1000) {
-      addBreadcrumb(
-        `Slow operation: ${operationName}`,
-        'performance',
-        'warning',
-        { duration_ms: Math.round(duration) }
-      );
+      addBreadcrumb(`Slow operation: ${operationName}`, 'performance', 'warning', {
+        duration_ms: Math.round(duration)
+      });
     }
 
     return result;
+  });
+}
+
+function withProfileTransaction<T>(operationName: string, fn: () => T): T {
+  void getSentrySdk().then((sdk) => {
+    sdk?.startTransaction?.({
+      op: 'operation',
+      name: operationName
+    }).finish();
+  });
+
+  try {
+    return fn();
   } catch (error) {
     captureException(error instanceof Error ? error : new Error(String(error)), {
       operation: operationName
@@ -249,9 +323,12 @@ export function profileOperation<T>(
  * Setup global error handler
  */
 export function setupGlobalErrorHandler(): void {
-  // Handle uncaught errors
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   window.addEventListener('error', (event) => {
-    captureException(event.error, {
+    captureException(event.error instanceof Error ? event.error : new Error(String(event.message)), {
       type: 'uncaught_error',
       message: event.message,
       filename: event.filename,
@@ -260,7 +337,6 @@ export function setupGlobalErrorHandler(): void {
     });
   });
 
-  // Handle unhandled promise rejections
   window.addEventListener('unhandledrejection', (event) => {
     captureException(
       event.reason instanceof Error ? event.reason : new Error(String(event.reason)),

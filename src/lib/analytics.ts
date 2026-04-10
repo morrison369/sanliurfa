@@ -230,6 +230,28 @@ export async function getPlatformStats(days: number): Promise<any> {
   }
 }
 
+export async function calculateDailyStats(date: Date = new Date()): Promise<any> {
+  const targetDate = new Date(date);
+  const dayStart = new Date(targetDate);
+  dayStart.setHours(0, 0, 0, 0);
+
+  try {
+    const stats = await getPlatformStats(1);
+    logger.info('Daily stats calculated', {
+      date: dayStart.toISOString().split('T')[0],
+      totalSessions: stats.totalSessions,
+      uniqueUsers: stats.uniqueUsers,
+      totalConversions: stats.totalConversions
+    });
+    return stats;
+  } catch (error) {
+    logger.error('Failed to calculate daily stats', error instanceof Error ? error : new Error(String(error)), {
+      date: dayStart.toISOString().split('T')[0]
+    });
+    throw error;
+  }
+}
+
 export async function getTrendingPlacesByViews(days: number, limit: number): Promise<any[]> {
   try {
     const startDate = new Date();

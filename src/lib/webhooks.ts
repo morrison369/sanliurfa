@@ -116,6 +116,29 @@ export async function processPendingWebhooks(maxRetries: number = 3): Promise<vo
   }
 }
 
+export async function retryFailedDeliveries(maxRetries: number = 3): Promise<number> {
+  try {
+    const retryableEvents = await queryMany(
+      `SELECT id
+       FROM webhook_events
+       WHERE status = 'failed' AND attempts < $1
+       AND (next_retry_at IS NULL OR next_retry_at <= NOW())`,
+      [maxRetries]
+    );
+
+    const retryCount = retryableEvents.rows.length;
+    if (retryCount === 0) {
+      return 0;
+    }
+
+    await processPendingWebhooks(maxRetries);
+    return retryCount;
+  } catch (error) {
+    logger.error('Failed to retry webhook deliveries', error instanceof Error ? error : new Error(String(error)));
+    return 0;
+  }
+}
+
 /**
  * Deliver webhook to endpoint
  */

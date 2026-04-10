@@ -30,6 +30,19 @@ export interface SearchResult {
   executionTime: number;
 }
 
+const getNonEmptyResultTypes = (results: SearchResult): string[] => {
+  const resultBuckets = [
+    ['places', results.places],
+    ['reviews', results.reviews],
+    ['blogPosts', results.blogPosts],
+    ['events', results.events]
+  ] as const;
+
+  return resultBuckets
+    .filter(([, items]) => items.length > 0)
+    .map(([name]) => name);
+};
+
 /**
  * Yerler ara
  */
@@ -239,7 +252,7 @@ export async function search(filters: SearchFilters): Promise<SearchResult> {
     await setCache(cacheKey, JSON.stringify(results), 300);
 
     // Arama geçmişine ekle
-    await recordSearch(filters.query, results.total, Object.keys(results).filter(k => results[k as keyof SearchResult].length > 0));
+    await recordSearch(filters.query, results.total, getNonEmptyResultTypes(results));
 
     logger.debug('Arama yapıldı', {
       query: filters.query,

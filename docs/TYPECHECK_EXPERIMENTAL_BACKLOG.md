@@ -27,5 +27,5 @@
 ## Exclude Budget
 - Budget dosyası: `config/experimental-exclude-budget.json`
 - Kural: `tsconfig.experimental.json` içindeki `exclude` listesi bütçeyi aşamaz.
-- Aktif hedef: `max_entries=27`, `max_file_entries=24`
+- Aktif hedef: `max_entries=24`, `max_file_entries=21`
 - Amaç: yeni teknik borcun gate altından sessizce büyümesini engellemek.
