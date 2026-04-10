@@ -45,6 +45,12 @@ interface DashboardData {
     blockingFailedSteps: string[];
     advisoryFailedSteps: string[];
     failedStepCount: number;
+    steps?: Array<{
+      step: string;
+      command: string;
+      advisory: boolean;
+      status: 'passed' | 'failed';
+    }>;
   };
 }
 
@@ -304,6 +310,23 @@ export default function AdminDashboardOverview() {
           <div className="text-xs text-gray-500 mt-3">
             Blocking: {data.releaseGate.blockingFailedSteps[0] || 'yok'} • Advisory: {data.releaseGate.advisoryFailedSteps[0] || 'yok'}
           </div>
+          {data.releaseGate.steps && data.releaseGate.steps.length > 0 && (
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm font-medium text-gray-700">
+                Step Detayları ({data.releaseGate.steps.length})
+              </summary>
+              <div className="mt-3 space-y-2">
+                {data.releaseGate.steps.slice(0, 10).map((step) => (
+                  <div key={`${step.step}-${step.command}`} className="rounded-lg border border-gray-200 p-3 text-xs">
+                    <div className="font-medium text-gray-900">
+                      {step.step} • {step.status} {step.advisory ? '(advisory)' : '(blocking)'}
+                    </div>
+                    <div className="mt-1 break-all text-gray-500">{step.command}</div>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
         </div>
       )}
     </div>

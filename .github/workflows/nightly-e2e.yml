@@ -60,12 +60,47 @@ jobs:
             nightly-e2e.log
           if-no-files-found: ignore
 
+      - name: Resolve latest successful full gate run
+        if: always()
+        id: release_gate_run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: workflowRuns } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ci.yml',
+              status: 'completed',
+              per_page: 20
+            });
+            const latestSuccessfulFullGate = (workflowRuns.workflow_runs || []).find((run) => {
+              const branch = String(run.head_branch || '');
+              const conclusion = String(run.conclusion || '').toLowerCase();
+              return conclusion === 'success' && (branch === 'main' || branch === 'master');
+            });
+            core.setOutput('run_id', latestSuccessfulFullGate ? String(latestSuccessfulFullGate.id) : '');
+            core.setOutput('run_url', latestSuccessfulFullGate ? String(latestSuccessfulFullGate.html_url) : '');
+            core.setOutput('run_branch', latestSuccessfulFullGate ? String(latestSuccessfulFullGate.head_branch) : '');
+
+      - name: Download latest release gate summary artifact
+        if: always() && steps.release_gate_run.outputs.run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.release_gate_run.outputs.run_id }}
+          name: release-gate-summary
+          path: latest-release-gate
+
       - name: Open or update nightly issue
         if: always()
         uses: actions/github-script@v7
         env:
           E2E_OUTCOME: ${{ steps.e2e.outcome }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RELEASE_GATE_RUN_URL: ${{ steps.release_gate_run.outputs.run_url }}
+          RELEASE_GATE_RUN_BRANCH: ${{ steps.release_gate_run.outputs.run_branch }}
         with:
           script: |
             const fs = require('fs');
@@ -88,36 +123,31 @@ jobs:
               : '## Top Failing Tests\n- No failing tests captured from log';
             let releaseGateSummary = '## Latest Release Gate Summary\n- No recent release gate artifact found';
             try {
-              const { data: workflowRuns } = await github.rest.actions.listWorkflowRuns({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: 'ci.yml',
-                status: 'completed',
-                per_page: 20
-              });
-              const latestSuccessfulFullGate = (workflowRuns.workflow_runs || []).find((run) => {
-                const branch = String(run.head_branch || '');
-                const conclusion = String(run.conclusion || '').toLowerCase();
-                return conclusion === 'success' && (branch === 'main' || branch === 'master');
-              });
-              if (latestSuccessfulFullGate) {
-                const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  run_id: latestSuccessfulFullGate.id
-                });
-                const releaseGateArtifact = (artifacts.artifacts || []).find(
-                  (artifact) => artifact.name === 'release-gate-summary'
-                );
+              const summaryPath = 'latest-release-gate/release-gate-summary.json';
+              if (fs.existsSync(summaryPath)) {
+                const releaseGate = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+                const blocking = Array.isArray(releaseGate.blockingFailedSteps) && releaseGate.blockingFailedSteps.length > 0
+                  ? releaseGate.blockingFailedSteps.map((step) => `- Blocking: ${step}`)
+                  : ['- Blocking: yok'];
+                const advisory = Array.isArray(releaseGate.advisoryFailedSteps) && releaseGate.advisoryFailedSteps.length > 0
+                  ? releaseGate.advisoryFailedSteps.map((step) => `- Advisory: ${step}`)
+                  : ['- Advisory: yok'];
+                const stepPreview = Array.isArray(releaseGate.steps) && releaseGate.steps.length > 0
+                  ? releaseGate.steps.slice(0, 5).map((step) => `- ${step.step}: ${step.status}${step.advisory ? ' (advisory)' : ''}`)
+                  : ['- Step preview: yok'];
                 releaseGateSummary = [
                   '## Latest Release Gate Summary',
-                  `- Run: ${latestSuccessfulFullGate.html_url}`,
-                  `- Branch: ${latestSuccessfulFullGate.head_branch}`,
-                  `- Artifact: ${releaseGateArtifact ? `${releaseGateArtifact.name} (${releaseGateArtifact.updated_at || 'updated_at yok'})` : 'release-gate-summary bulunamadı'}`
+                  `- Run: ${process.env.RELEASE_GATE_RUN_URL || 'bilinmiyor'}`,
+                  `- Branch: ${process.env.RELEASE_GATE_RUN_BRANCH || 'bilinmiyor'}`,
+                  `- Final status: ${releaseGate.finalStatus || 'missing'}`,
+                  `- Generated at: ${releaseGate.generatedAt || 'bilinmiyor'}`,
+                  ...blocking,
+                  ...advisory,
+                  ...stepPreview
                 ].join('\n');
               }
             } catch (error) {
-              releaseGateSummary = `## Latest Release Gate Summary\n- Artifact metadata unavailable: ${error?.message || 'unknown error'}`;
+              releaseGateSummary = `## Latest Release Gate Summary\n- Summary unavailable: ${error?.message || 'unknown error'}`;
             }
             const body = [
               '## Nightly E2E',

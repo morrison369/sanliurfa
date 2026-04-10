@@ -103,7 +103,14 @@ describe('admin dashboard contracts', () => {
       blockingFailedSteps: [],
       advisoryFailedSteps: [],
       failedStepCount: 0,
-      steps: [],
+      steps: [
+        {
+          step: 'TypeScript app gate',
+          command: 'npm run typecheck:app',
+          advisory: false,
+          status: 'passed',
+        },
+      ],
     });
   });
 
@@ -139,6 +146,7 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.integrations.verification.resend.status).toBe('verified');
     expect(body.data.data.releaseGate.finalStatus).toBe('passed');
     expect(body.data.data.releaseGate.failedStepCount).toBe(0);
+    expect(body.data.data.releaseGate.steps[0].step).toBe('TypeScript app gate');
     expect(body.data.data.operational.oauth.callback.sampleSize).toBe(12);
     expect(body.data.data.operational.search.topQueries[0].query).toBe('urfa');
   });
