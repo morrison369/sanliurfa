@@ -11,10 +11,8 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { saveFile } from '../../../lib/file-storage';
 
-// TODO: Configure storage settings
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const UPLOAD_DIR = process.env.PHOTO_UPLOAD_DIR || 'public/uploads/photos';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);

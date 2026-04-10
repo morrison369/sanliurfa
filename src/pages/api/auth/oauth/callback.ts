@@ -95,7 +95,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       extractBrowser(userAgent),
       extractOS(userAgent),
       ipAddress,
-      'unknown', // TODO: Get location from IP
+      extractLocation(request.headers),
       false
     );
 
@@ -122,11 +122,10 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
 async function exchangeCodeForToken(provider: any, code: string, redirectUri: string): Promise<any> {
   try {
-    // In production, use provider SDK (like google-auth-library)
-    // For now, simplified implementation
     const response = await fetch(provider.token_url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      signal: AbortSignal.timeout(10000),
       body: new URLSearchParams({
         code: code,
         client_id: provider.client_id,
@@ -135,6 +134,11 @@ async function exchangeCodeForToken(provider: any, code: string, redirectUri: st
         grant_type: 'authorization_code'
       }).toString()
     });
+
+    if (!response.ok) {
+      logger.warn('OAuth token exchange rejected', { status: response.status, provider: provider.provider_key });
+      return null;
+    }
 
     const data = await response.json();
     return {
@@ -151,8 +155,14 @@ async function exchangeCodeForToken(provider: any, code: string, redirectUri: st
 async function getUserInfoFromProvider(provider: any, accessToken: string): Promise<any> {
   try {
     const response = await fetch(provider.userinfo_url, {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10000)
     });
+
+    if (!response.ok) {
+      logger.warn('OAuth user info request rejected', { status: response.status, provider: provider.provider_key });
+      return null;
+    }
 
     const data = await response.json();
 
@@ -183,4 +193,24 @@ function extractOS(userAgent: string): string {
   if (userAgent.includes('Android')) return 'Android';
   if (userAgent.includes('iOS') || userAgent.includes('iPhone')) return 'iOS';
   return 'Unknown';
+}
+
+function extractLocation(headers: Headers): string {
+  const city =
+    headers.get('x-vercel-ip-city') ||
+    headers.get('cf-ipcity') ||
+    headers.get('x-appengine-city') ||
+    '';
+  const region =
+    headers.get('x-vercel-ip-country-region') ||
+    headers.get('cf-region-code') ||
+    '';
+  const country =
+    headers.get('x-vercel-ip-country') ||
+    headers.get('cf-ipcountry') ||
+    headers.get('x-appengine-country') ||
+    '';
+
+  const parts = [city, region, country].map((part) => part?.trim()).filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : 'unknown';
 }

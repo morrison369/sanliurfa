@@ -5,6 +5,7 @@
 - Lokal doğrulama için varsayılan stack:
   - PostgreSQL: `postgresql://postgres:postgres@127.0.0.1:5432/sanliurfa`
   - Redis: `redis://127.0.0.1:6379`
+  - Dosya depolama: `STORAGE_TYPE=local`
 
 ## File Roles
 - `.env.example`
@@ -29,3 +30,5 @@
 - `db:test:bootstrap` önce hedef `DATABASE_URL` bağlantısını dener; bağlantı varsa DB yaratmaya çalışmaz.
 - Google Analytics scripti yalnızca geçerli bir `PUBLIC_GOOGLE_ANALYTICS_ID` veya `GOOGLE_ANALYTICS_ID` verildiğinde render edilir.
 - Placeholder değerler (`G-XXXXXXXXXX`) artefact içine yazılmaz.
+- Dosya depolama için desteklenen backend'ler `local` ve `supabase` yüzeyidir. `s3` seçimi bu repoda açık hata ile reddedilir.
+- Ana sayfa hava durumu widget'ı Open-Meteo üzerinden gerçek veri çeker; ek API anahtarı gerektirmez ve erişim yoksa güvenli fallback render eder.
