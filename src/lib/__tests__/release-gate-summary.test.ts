@@ -20,11 +20,21 @@ describe('release gate summary reader', () => {
   });
 
   it('returns missing fallback when summary file is absent', async () => {
-    const summary = await getReleaseGateSummary();
+    const previous = await readBackup();
+    await rm(summaryPath, { force: true });
 
-    expect(summary.available).toBe(false);
-    expect(summary.finalStatus).toBe('missing');
-    expect(summary.performanceOptimization).toBeNull();
+    try {
+      const summary = await getReleaseGateSummary();
+
+      expect(summary.available).toBe(false);
+      expect(summary.finalStatus).toBe('missing');
+      expect(summary.performanceOptimization).toBeNull();
+    } finally {
+      if (previous !== null) {
+        await mkdir(reportsDir, { recursive: true });
+        await writeFile(summaryPath, previous, 'utf8');
+      }
+    }
   });
 
   it('reads embedded performance optimization summary when file is present', async () => {

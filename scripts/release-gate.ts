@@ -45,9 +45,16 @@ function runOptional(step: string, command: string): void {
 }
 
 async function writeSummary(finalStatus: 'passed' | 'failed'): Promise<void> {
-  const reportPath = resolve(process.cwd(), 'docs/reports/release-gate-summary.json');
-  mkdirSync(resolve(process.cwd(), 'docs/reports'), { recursive: true });
+  const reportsDir = resolve(process.cwd(), 'docs/reports');
+  const reportPath = resolve(reportsDir, 'release-gate-summary.json');
+  const performanceReportPath = resolve(reportsDir, 'performance-ops-summary.json');
+  mkdirSync(reportsDir, { recursive: true });
   const performanceOptimization = await getPerformanceOpsSummary();
+  writeFileSync(
+    performanceReportPath,
+    `${JSON.stringify(performanceOptimization, null, 2)}\n`,
+    'utf8'
+  );
   writeFileSync(
     reportPath,
     `${JSON.stringify(

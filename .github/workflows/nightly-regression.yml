@@ -103,7 +103,7 @@ jobs:
       - name: Write performance ops summary
         if: always()
         continue-on-error: true
-        run: npm run performance:ops:summary:write
+        run: npm exec -- tsx scripts/write-performance-ops-summary.ts
 
       - name: Write nightly regression summary
         if: always()

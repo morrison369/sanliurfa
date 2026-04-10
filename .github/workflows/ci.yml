@@ -152,6 +152,13 @@ jobs:
           name: release-gate-summary
           path: docs/reports/release-gate-summary.json
           if-no-files-found: ignore
+      - name: Upload performance ops summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-ops-summary
+          path: docs/reports/performance-ops-summary.json
+          if-no-files-found: ignore
 
   e2e_smoke_advisory:
     name: e2e-smoke-advisory
