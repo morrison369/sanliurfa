@@ -36,6 +36,18 @@ const adminArtifactHealthSnapshotSchema = {
   required: ['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps'],
 };
 
+const adminArtifactHealthSummarySchema = {
+  type: 'object',
+  properties: {
+    overall: healthStatusSchema,
+    healthyCount: { type: 'integer' },
+    degradedCount: { type: 'integer' },
+    blockedCount: { type: 'integer' },
+    total: { type: 'integer' },
+  },
+  required: ['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total'],
+};
+
 const openApiSpec = {
   openapi: '3.1.0',
   info: {
@@ -595,7 +607,11 @@ const openApiSpec = {
                         success: { type: 'boolean' },
                         data: {
                           type: 'object',
-                          ...adminArtifactHealthSnapshotSchema,
+                          properties: {
+                            summary: adminArtifactHealthSummarySchema,
+                            artifacts: adminArtifactHealthSnapshotSchema,
+                          },
+                          required: ['summary', 'artifacts'],
                         },
                       },
                       required: ['success', 'data'],

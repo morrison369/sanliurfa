@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
-import { getAdminArtifactHealthSnapshot } from '../../../../lib/artifact-health';
+import { getAdminArtifactHealthSnapshot, summarizeArtifactHealth } from '../../../../lib/artifact-health';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -18,13 +18,17 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     const artifactHealth = await getAdminArtifactHealthSnapshot();
+    const summary = summarizeArtifactHealth(artifactHealth);
 
     recordRequest('GET', '/api/admin/system/artifact-health', HttpStatus.OK, Date.now() - startTime);
 
     return apiResponse(
       {
         success: true,
-        data: artifactHealth
+        data: {
+          summary,
+          artifacts: artifactHealth
+        }
       },
       HttpStatus.OK,
       requestId

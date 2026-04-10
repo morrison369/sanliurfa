@@ -1,4 +1,4 @@
-import { buildArtifactHealth } from './admin-status';
+import { buildArtifactHealth, classifyOverallOpsStatus, type AdminStatusLevel } from './admin-status';
 import { getPerformanceOptimizationSummary } from './admin-dashboard';
 import { getNightlyOpsSummary } from './nightly-ops-summary';
 import { getReleaseGateSummary } from './release-gate-summary';
@@ -18,6 +18,14 @@ export type RuntimeArtifactHealthSnapshot = Pick<
 >;
 
 export type AdminArtifactHealthSnapshot = Required<ArtifactHealthSnapshot>;
+
+export type ArtifactHealthSummary = {
+  overall: AdminStatusLevel;
+  healthyCount: number;
+  degradedCount: number;
+  blockedCount: number;
+  total: number;
+};
 
 export async function getArtifactHealthSnapshot(options?: {
   includePerformanceOps?: boolean;
@@ -73,5 +81,18 @@ export async function getAdminArtifactHealthSnapshot(): Promise<AdminArtifactHea
       available: false,
       generatedAt: null
     })
+  };
+}
+
+export function summarizeArtifactHealth(snapshot: AdminArtifactHealthSnapshot): ArtifactHealthSummary {
+  const entries = Object.values(snapshot);
+  const levels = entries.map((entry) => entry.status);
+
+  return {
+    overall: classifyOverallOpsStatus(levels),
+    healthyCount: entries.filter((entry) => entry.status === 'healthy').length,
+    degradedCount: entries.filter((entry) => entry.status === 'degraded').length,
+    blockedCount: entries.filter((entry) => entry.status === 'blocked').length,
+    total: entries.length
   };
 }

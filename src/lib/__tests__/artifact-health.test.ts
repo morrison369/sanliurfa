@@ -98,4 +98,23 @@ describe('artifact health snapshot', () => {
       status: 'healthy',
     });
   });
+
+  it('summarizes admin artifact health deterministically', async () => {
+    const { summarizeArtifactHealth } = await import('../artifact-health');
+
+    const result = summarizeArtifactHealth({
+      releaseGate: { available: true, generatedAt: '2026-04-10T08:00:00.000Z', status: 'healthy' },
+      nightlyRegression: { available: true, generatedAt: '2026-04-10T07:00:00.000Z', status: 'degraded' },
+      nightlyE2E: { available: false, generatedAt: null, status: 'blocked' },
+      performanceOps: { available: true, generatedAt: '2026-04-10T06:00:00.000Z', status: 'healthy' },
+    });
+
+    expect(result).toEqual({
+      overall: 'blocked',
+      healthyCount: 2,
+      degradedCount: 1,
+      blockedCount: 1,
+      total: 4,
+    });
+  });
 });

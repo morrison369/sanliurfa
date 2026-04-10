@@ -282,10 +282,12 @@ describe('admin dashboard contracts', () => {
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body.data.data.releaseGate.available).toBe(true);
-    expect(body.data.data.releaseGate.status).toBe('healthy');
-    expect(body.data.data.nightlyRegression.status).toBe('healthy');
-    expect(body.data.data.nightlyE2E.status).toBe('healthy');
-    expect(body.data.data.performanceOps.generatedAt).toBe('2026-04-10T03:00:00.000Z');
+    expect(body.data.data.summary.overall).toBe('healthy');
+    expect(body.data.data.summary.healthyCount).toBe(4);
+    expect(body.data.data.artifacts.releaseGate.available).toBe(true);
+    expect(body.data.data.artifacts.releaseGate.status).toBe('healthy');
+    expect(body.data.data.artifacts.nightlyRegression.status).toBe('healthy');
+    expect(body.data.data.artifacts.nightlyE2E.status).toBe('healthy');
+    expect(body.data.data.artifacts.performanceOps.generatedAt).toBe('2026-04-10T03:00:00.000Z');
   });
 });

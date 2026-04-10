@@ -42,8 +42,10 @@ describe('openapi runtime contracts', () => {
     expect(detailedArtifactSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E']);
     expect(optimizationArtifactSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E']);
     expect(optimizationArtifactSchema.properties.releaseGate.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
-    expect(adminArtifactHealthSchema.performanceOps.properties.available.type).toBe('boolean');
-    expect(adminArtifactHealthSchema.performanceOps.properties.generatedAt.type).toEqual(['string', 'null']);
+    expect(adminArtifactHealthSchema.summary.required).toEqual(['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total']);
+    expect(adminArtifactHealthSchema.summary.properties.overall.enum).toEqual(['healthy', 'degraded', 'blocked']);
+    expect(adminArtifactHealthSchema.artifacts.properties.performanceOps.properties.available.type).toBe('boolean');
+    expect(adminArtifactHealthSchema.artifacts.properties.performanceOps.properties.generatedAt.type).toEqual(['string', 'null']);
     expect(deploymentArtifactHealthSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps']);
     expect(deploymentArtifactHealthSchema.properties.performanceOps.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(detailedArtifactSchema.properties.releaseGate.required).toEqual(['available', 'status', 'generatedAt']);
