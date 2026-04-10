@@ -125,6 +125,7 @@
     "repo:stabilize:check": "npm exec -- tsx scripts/repo-stabilization-check.ts",
     "governance:imports:check": "npm exec -- tsx scripts/governance-import-guard.ts",
     "governance:logging:check": "npm exec -- tsx scripts/logging-signature-guard.ts",
+    "governance:runtime:placeholders:check": "npm exec -- tsx scripts/runtime-placeholder-guard.ts",
     "db:drift:check": "npm exec -- tsx scripts/db-drift-check.ts",
     "db:test:bootstrap": "npm exec -- tsx scripts/db-test-bootstrap.ts",
     "security:secrets:scan": "npm exec -- tsx scripts/security-secrets-scan.ts",

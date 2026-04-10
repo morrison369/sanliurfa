@@ -4,8 +4,7 @@
  */
 
 import { logger } from './logging';
-
-// ==================== TYPES & INTERFACES ====================
+import { hashString, normalize, round } from './deterministic';
 
 export interface CRMMetrics {
   period: string;
@@ -37,34 +36,24 @@ export interface RepPerformance {
   customerSatisfaction: number;
 }
 
-// ==================== CRM METRICS MANAGER ====================
-
 export class CRMMetricsManager {
   private metrics = new Map<string, CRMMetrics>();
 
-  /**
-   * Record metrics
-   */
   recordMetrics(metrics: CRMMetrics): void {
     this.metrics.set(metrics.period, metrics);
     logger.debug('CRM metrics recorded', { period: metrics.period });
   }
 
-  /**
-   * Get metrics
-   */
   getMetrics(period: string): CRMMetrics | null {
     return this.metrics.get(period) || null;
   }
 
-  /**
-   * Calculate metrics
-   */
   calculateMetrics(startDate: number, endDate: number): CRMMetrics {
-    const totalRevenue = Math.random() * 500000 + 100000;
-    const pipelineValue = Math.random() * 300000 + 100000;
-    const dealsWon = Math.floor(Math.random() * 20 + 5);
-    const totalDeals = Math.floor(Math.random() * 40 + 15);
+    const seed = `${startDate}|${endDate}`;
+    const totalRevenue = round(normalize(hashString(`${seed}|revenue`), 100000, 600000));
+    const pipelineValue = round(normalize(hashString(`${seed}|pipeline`), 80000, 400000));
+    const dealsWon = Math.round(normalize(hashString(`${seed}|won`), 6, 28));
+    const totalDeals = Math.max(dealsWon + 2, Math.round(normalize(hashString(`${seed}|deals`), 18, 52)));
     const winRate = totalDeals > 0 ? (dealsWon / totalDeals) * 100 : 0;
 
     logger.debug('CRM metrics calculated', { startDate, endDate });
@@ -73,16 +62,13 @@ export class CRMMetricsManager {
       period: `${new Date(startDate).toISOString().split('T')[0]} to ${new Date(endDate).toISOString().split('T')[0]}`,
       totalRevenue,
       pipelineValue,
-      winRate,
-      avgDealSize: totalRevenue / Math.max(1, dealsWon),
-      salesCycle: Math.floor(Math.random() * 30 + 10),
-      conversionRate: winRate / 100
+      winRate: round(winRate, 2),
+      avgDealSize: round(totalRevenue / Math.max(1, dealsWon)),
+      salesCycle: Math.round(normalize(hashString(`${seed}|cycle`), 10, 40)),
+      conversionRate: round(winRate / 100, 3)
     };
   }
 
-  /**
-   * Compare metrics
-   */
   compareMetrics(period1: string, period2: string): Record<string, number> {
     const m1 = this.metrics.get(period1);
     const m2 = this.metrics.get(period2);
@@ -90,23 +76,17 @@ export class CRMMetricsManager {
     if (!m1 || !m2) return {};
 
     return {
-      revenueChange: m2.totalRevenue - m1.totalRevenue,
-      winRateChange: m2.winRate - m1.winRate,
-      avgDealChange: m2.avgDealSize - m1.avgDealSize
+      revenueChange: round(m2.totalRevenue - m1.totalRevenue),
+      winRateChange: round(m2.winRate - m1.winRate, 2),
+      avgDealChange: round(m2.avgDealSize - m1.avgDealSize)
     };
   }
 
-  /**
-   * Get trend analysis
-   */
   getTrendAnalysis(metric: string, periods: number): { values: number[]; trend: string } {
-    const values: number[] = [];
-
-    for (let i = 0; i < periods; i++) {
-      values.push(Math.random() * 100 + 50);
-    }
-
-    const trend = values[periods - 1] > values[0] ? 'up' : 'down';
+    const values: number[] = Array.from({ length: periods }, (_, index) => {
+      return round(normalize(hashString(`${metric}|${index}`), 55, 155), 2);
+    });
+    const trend = values[periods - 1] > values[0] ? 'up' : values[periods - 1] < values[0] ? 'down' : 'stable';
 
     logger.debug('Trend analysis completed', { metric, periods, trend });
 
@@ -114,17 +94,13 @@ export class CRMMetricsManager {
   }
 }
 
-// ==================== SALES ANALYTICS ====================
-
 export class SalesAnalytics {
-  /**
-   * Analyze
-   */
   analyze(startDate: number, endDate: number): SalesAnalysis {
-    const totalDeals = Math.floor(Math.random() * 40 + 15);
-    const dealsWon = Math.floor(Math.random() * 20 + 5);
-    const dealsLost = Math.floor(Math.random() * 15 + 3);
-    const totalValue = Math.random() * 500000 + 100000;
+    const seed = `${startDate}|${endDate}`;
+    const totalDeals = Math.round(normalize(hashString(`${seed}|sales-total`), 18, 55));
+    const dealsWon = Math.round(normalize(hashString(`${seed}|sales-won`), 6, totalDeals - 2));
+    const dealsLost = Math.max(1, totalDeals - dealsWon);
+    const totalValue = round(normalize(hashString(`${seed}|sales-value`), 100000, 650000));
 
     logger.debug('Sales analysis completed', { totalDeals, dealsWon });
 
@@ -133,91 +109,61 @@ export class SalesAnalytics {
       dealsWon,
       dealsLost,
       totalValue,
-      avgValue: totalValue / Math.max(1, dealsWon),
-      winRate: (dealsWon / totalDeals) * 100,
-      avgSalesDelay: Math.floor(Math.random() * 30 + 10)
+      avgValue: round(totalValue / Math.max(1, dealsWon)),
+      winRate: round((dealsWon / totalDeals) * 100, 2),
+      avgSalesDelay: Math.round(normalize(hashString(`${seed}|sales-delay`), 12, 35))
     };
   }
 
-  /**
-   * Get rep performance
-   */
   getRepPerformance(repId: string, period?: string): RepPerformance {
+    const seed = `${repId}|${period || 'all'}`;
     return {
       repId,
-      revenue: Math.random() * 200000 + 50000,
-      dealsWon: Math.floor(Math.random() * 15 + 3),
-      conversionRate: Math.random() * 0.4 + 0.2,
-      avgDealSize: Math.random() * 50000 + 20000,
-      forecastAccuracy: Math.random() * 0.3 + 0.7,
-      customerSatisfaction: Math.random() * 2 + 3.5
+      revenue: round(normalize(hashString(`${seed}|revenue`), 50000, 250000)),
+      dealsWon: Math.round(normalize(hashString(`${seed}|won`), 3, 18)),
+      conversionRate: round(normalize(hashString(`${seed}|conversion`), 0.2, 0.6), 3),
+      avgDealSize: round(normalize(hashString(`${seed}|deal-size`), 20000, 70000)),
+      forecastAccuracy: round(normalize(hashString(`${seed}|forecast`), 0.7, 0.96), 3),
+      customerSatisfaction: round(normalize(hashString(`${seed}|satisfaction`), 3.5, 5), 2)
     };
   }
 
-  /**
-   * Get top performers
-   */
   getTopPerformers(limit?: number): RepPerformance[] {
-    const performers: RepPerformance[] = [];
     const count = limit || 10;
-
-    for (let i = 0; i < count; i++) {
-      performers.push(this.getRepPerformance(`rep-${i}`));
-    }
-
-    return performers.sort((a, b) => b.revenue - a.revenue);
+    return Array.from({ length: count }, (_, i) => this.getRepPerformance(`rep-${i}`)).sort((a, b) => b.revenue - a.revenue);
   }
 
-  /**
-   * Get bottom performers
-   */
   getBottomPerformers(limit?: number): RepPerformance[] {
-    const performers: RepPerformance[] = [];
     const count = limit || 10;
-
-    for (let i = 0; i < count; i++) {
-      performers.push(this.getRepPerformance(`rep-${i}`));
-    }
-
-    return performers.sort((a, b) => a.revenue - b.revenue);
+    return Array.from({ length: count }, (_, i) => this.getRepPerformance(`rep-${i}`)).sort((a, b) => a.revenue - b.revenue);
   }
 
-  /**
-   * Compare rep performance
-   */
   compareRepPerformance(repIds: string[]): Record<string, RepPerformance> {
     const comparison: Record<string, RepPerformance> = {};
-
     repIds.forEach(repId => {
       comparison[repId] = this.getRepPerformance(repId);
     });
-
     logger.debug('Rep performance compared', { count: repIds.length });
-
     return comparison;
   }
 
-  /**
-   * Identify performance gaps
-   */
   identifyPerformanceGaps(): Array<{ repId: string; gap: number; metrics: Record<string, any> }> {
-    const gaps = [];
+    const candidates = ['rep-1', 'rep-2', 'rep-3', 'rep-4'].map(repId => ({
+      repId,
+      performance: this.getRepPerformance(repId)
+    }));
 
-    if (Math.random() > 0.6) {
-      gaps.push({
-        repId: 'rep-1',
-        gap: Math.random() * 0.2 + 0.1,
-        metrics: { conversionRate: 0.15, avgDealSize: 15000 }
-      });
-    }
-
-    if (Math.random() > 0.7) {
-      gaps.push({
-        repId: 'rep-2',
-        gap: Math.random() * 0.15 + 0.05,
-        metrics: { forecastAccuracy: 0.6 }
-      });
-    }
+    const gaps = candidates
+      .filter(({ performance }) => performance.conversionRate < 0.32 || performance.forecastAccuracy < 0.8)
+      .map(({ repId, performance }) => ({
+        repId,
+        gap: round(Math.max(0.05, 1 - (performance.conversionRate * 0.8 + performance.forecastAccuracy * 0.2)), 3),
+        metrics: {
+          conversionRate: performance.conversionRate,
+          avgDealSize: performance.avgDealSize,
+          forecastAccuracy: performance.forecastAccuracy
+        }
+      }));
 
     logger.debug('Performance gaps identified', { count: gaps.length });
 
@@ -225,169 +171,93 @@ export class SalesAnalytics {
   }
 }
 
-// ==================== PIPELINE FORECASTING ====================
-
 export class PipelineForecasting {
-  /**
-   * Forecast revenue
-   */
   forecastRevenue(months: number): Array<{ month: string; forecast: number; confidence: number }> {
-    const forecasts = [];
-    let baseValue = 100000;
-
-    for (let i = 0; i < months; i++) {
-      const forecast = baseValue + Math.random() * 50000 - 25000;
-      const confidence = 0.95 - i * 0.04;
-
-      forecasts.push({
-        month: `Month ${i + 1}`,
-        forecast: Math.max(0, forecast),
-        confidence: Math.max(0.5, confidence)
-      });
-
-      baseValue = forecast;
-    }
+    const baseValue = normalize(hashString(`pipeline|${months}`), 90000, 180000);
+    const trend = normalize(hashString(`pipeline|trend|${months}`), -8000, 12000);
+    const forecasts = Array.from({ length: months }, (_, i) => ({
+      month: `Month ${i + 1}`,
+      forecast: round(Math.max(0, baseValue + trend * i + ((i % 3) - 1) * 4500)),
+      confidence: round(Math.max(0.5, 0.94 - i * 0.035), 3)
+    }));
 
     logger.debug('Revenue forecast generated', { months });
 
     return forecasts;
   }
 
-  /**
-   * Get rolling forecast
-   */
   getRollingForecast(months: number): Record<string, number> {
     const forecast: Record<string, number> = {};
-
     for (let i = 0; i < months; i++) {
-      forecast[`month_${i + 1}`] = Math.random() * 100000 + 50000;
+      forecast[`month_${i + 1}`] = round(normalize(hashString(`rolling|${months}|${i}`), 50000, 150000));
     }
-
     return forecast;
   }
 
-  /**
-   * Identify forecast risks
-   */
   identifyForecastRisks(): string[] {
-    const risks = [];
-
-    if (Math.random() > 0.6) {
-      risks.push('Pipeline visibility declining');
-    }
-
-    if (Math.random() > 0.7) {
-      risks.push('Deal velocity slowing');
-    }
-
-    if (Math.random() > 0.8) {
-      risks.push('Economic headwinds');
-    }
-
-    return risks;
+    const risks = ['Pipeline visibility declining', 'Deal velocity slowing', 'Economic headwinds'];
+    return risks.filter((_, index) => ((hashString(`forecast-risk|${index}`) + index) % 3) !== 0);
   }
 
-  /**
-   * Get stage metrics
-   */
   getStageMetrics(stage: string): { opportunities: number; value: number; avgTime: number } {
     return {
-      opportunities: Math.floor(Math.random() * 30 + 5),
-      value: Math.random() * 500000 + 100000,
-      avgTime: Math.floor(Math.random() * 20 + 5)
+      opportunities: Math.round(normalize(hashString(`${stage}|opportunities`), 5, 35)),
+      value: round(normalize(hashString(`${stage}|value`), 100000, 600000)),
+      avgTime: Math.round(normalize(hashString(`${stage}|time`), 5, 25))
     };
   }
 
-  /**
-   * Predict win/loss
-   */
   predictWinLoss(oppId: string): { winProbability: number; riskFactors: string[] } {
-    const winProbability = Math.random();
+    const winProbability = round(normalize(hashString(`${oppId}|win-probability`), 0.12, 0.91), 3);
     const riskFactors: string[] = [];
 
     if (winProbability < 0.3) {
-      riskFactors.push('Budget constraints');
-      riskFactors.push('Stakeholder misalignment');
+      riskFactors.push('Budget constraints', 'Stakeholder misalignment');
     } else if (winProbability < 0.6) {
       riskFactors.push('Competitive pressure');
     }
 
     logger.debug('Win/loss prediction', { oppId, winProbability });
-
     return { winProbability, riskFactors };
   }
 }
 
-// ==================== SALES LEADERBOARD ====================
-
 export class SalesLeaderboard {
-  /**
-   * Get revenue leaderboard
-   */
   getRevenuLeaderboard(limit?: number): Array<{ repId: string; revenue: number; rank: number }> {
     const count = limit || 10;
-    const leaderboard: Array<{ repId: string; revenue: number; rank: number }> = [];
-
-    for (let i = 0; i < count; i++) {
-      leaderboard.push({
-        repId: `rep-${i}`,
-        revenue: Math.random() * 200000 + 50000,
-        rank: i + 1
-      });
-    }
-
-    return leaderboard.sort((a, b) => b.revenue - a.revenue);
+    return Array.from({ length: count }, (_, i) => ({
+      repId: `rep-${i}`,
+      revenue: round(normalize(hashString(`leaderboard-revenue|${i}`), 50000, 250000)),
+      rank: i + 1
+    })).sort((a, b) => b.revenue - a.revenue).map((entry, index) => ({ ...entry, rank: index + 1 }));
   }
 
-  /**
-   * Get deals leaderboard
-   */
   getDealsLeaderboard(limit?: number): Array<{ repId: string; deals: number; rank: number }> {
     const count = limit || 10;
-    const leaderboard: Array<{ repId: string; deals: number; rank: number }> = [];
-
-    for (let i = 0; i < count; i++) {
-      leaderboard.push({
-        repId: `rep-${i}`,
-        deals: Math.floor(Math.random() * 20 + 5),
-        rank: i + 1
-      });
-    }
-
-    return leaderboard.sort((a, b) => b.deals - a.deals);
+    return Array.from({ length: count }, (_, i) => ({
+      repId: `rep-${i}`,
+      deals: Math.round(normalize(hashString(`leaderboard-deals|${i}`), 5, 25)),
+      rank: i + 1
+    })).sort((a, b) => b.deals - a.deals).map((entry, index) => ({ ...entry, rank: index + 1 }));
   }
 
-  /**
-   * Get win rate leaderboard
-   */
   getWinRateLeaderboard(limit?: number): Array<{ repId: string; winRate: number; rank: number }> {
     const count = limit || 10;
-    const leaderboard: Array<{ repId: string; winRate: number; rank: number }> = [];
-
-    for (let i = 0; i < count; i++) {
-      leaderboard.push({
-        repId: `rep-${i}`,
-        winRate: Math.random() * 0.4 + 0.3,
-        rank: i + 1
-      });
-    }
-
-    return leaderboard.sort((a, b) => b.winRate - a.winRate);
+    return Array.from({ length: count }, (_, i) => ({
+      repId: `rep-${i}`,
+      winRate: round(normalize(hashString(`leaderboard-win-rate|${i}`), 0.3, 0.7), 3),
+      rank: i + 1
+    })).sort((a, b) => b.winRate - a.winRate).map((entry, index) => ({ ...entry, rank: index + 1 }));
   }
 
-  /**
-   * Get team metrics
-   */
   getTeamMetrics(): { totalRevenue: number; totalDeals: number; avgWinRate: number } {
     return {
-      totalRevenue: Math.random() * 2000000 + 500000,
-      totalDeals: Math.floor(Math.random() * 200 + 50),
-      avgWinRate: Math.random() * 0.3 + 0.25
+      totalRevenue: round(normalize(hashString('team-metrics|revenue'), 500000, 2500000)),
+      totalDeals: Math.round(normalize(hashString('team-metrics|deals'), 50, 250)),
+      avgWinRate: round(normalize(hashString('team-metrics|win-rate'), 0.25, 0.55), 3)
     };
   }
 }
-
-// ==================== EXPORTS ====================
 
 export const crmMetricsManager = new CRMMetricsManager();
 export const salesAnalytics = new SalesAnalytics();

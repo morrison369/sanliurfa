@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { deterministicId, hashString, normalize } from './deterministic';
 
 interface SecurityScan {
   scanId: string;
@@ -49,7 +50,7 @@ class SecurityScanOrchestrator {
 
     for (const scanType of scanTypes) {
       const scan: SecurityScan = {
-        scanId: `scan-${target}-${scanType}-${Date.now()}`,
+        scanId: deterministicId('scan', `${target}|${scanType}`, this.counter++),
         type: scanType,
         target,
         startTime: Date.now(),
@@ -62,7 +63,6 @@ class SecurityScanOrchestrator {
 
       totalFindings += scan.findings.length;
       results.push(scan);
-
       this.scans.set(scan.scanId, scan);
     }
 
@@ -97,7 +97,7 @@ class PolicyEnforcer {
 
   definePolicy(policy: Omit<SecurityPolicy, 'policyId'>): SecurityPolicy {
     const defined: SecurityPolicy = {
-      policyId: `policy-${Date.now()}-${++this.counter}`,
+      policyId: deterministicId('policy', policy.name, ++this.counter),
       ...policy
     };
 
@@ -117,9 +117,11 @@ class PolicyEnforcer {
 
     const violations: string[] = [];
 
-    policy.rules.forEach(rule => {
-      // Simulate rule evaluation
-      if (Math.random() > 0.7) {
+    policy.rules.forEach((rule, index) => {
+      const severityWeight = { low: 1, medium: 2, high: 3, critical: 4 }[rule.severity];
+      const signal = hashString(`${policyName}|${target || 'global'}|${rule.rule}|${rule.action}|${index}`);
+      const threshold = severityWeight >= 3 ? 2 : 4;
+      if (signal % (threshold + severityWeight) === 0) {
         violations.push(`Violation: ${rule.rule}`);
       }
     });
@@ -145,7 +147,6 @@ class IncidentAutoResponder {
   async respond(incidentType: string, targetResource: string): Promise<{ initiated: boolean; actions: RemediationAction[] }> {
     const actions: RemediationAction[] = [];
 
-    // Determine response based on incident type
     if (incidentType === 'malware-detected') {
       actions.push(
         { actionId: `action-${++this.counter}`, type: 'quarantine', target: targetResource, status: 'in_progress' },
@@ -187,12 +188,14 @@ class SecurityCheckRunner {
   private counter = 0;
 
   runCheck(checkName: string, checkFunction: () => boolean): SecurityCheckResult {
+    const passed = checkFunction();
+    const seed = hashString(checkName);
     const result: SecurityCheckResult = {
-      checkId: `check-${Date.now()}-${++this.counter}`,
+      checkId: deterministicId('check', checkName, ++this.counter),
       checkName,
-      status: checkFunction() ? 'passed' : 'failed',
-      findings: Math.floor(Math.random() * 5),
-      severity: Math.random() > 0.7 ? 'critical' : Math.random() > 0.4 ? 'high' : 'medium'
+      status: passed ? 'passed' : 'failed',
+      findings: passed ? Math.round(normalize(seed, 0, 2)) : Math.round(normalize(seed, 1, 5)),
+      severity: passed ? 'low' : seed % 5 === 0 ? 'critical' : seed % 3 === 0 ? 'high' : 'medium'
     };
 
     this.results.push(result);
@@ -207,7 +210,7 @@ class SecurityCheckRunner {
     let failed = 0;
 
     checkNames.forEach(checkName => {
-      const result = this.runCheck(checkName, () => Math.random() > 0.3);
+      const result = this.runCheck(checkName, () => hashString(`scheduled|${checkName}`) % 4 !== 0);
       if (result.status === 'passed') {
         passed++;
       } else {

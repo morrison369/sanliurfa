@@ -4,8 +4,7 @@
  */
 
 import { logger } from './logging';
-
-// ==================== TYPES & INTERFACES ====================
+import { deterministicId, hashString, normalize } from './deterministic';
 
 export type VerificationMethod = 'mfa' | 'biometric' | 'hardware_key' | 'behavioral';
 export type AccessDecision = 'allow' | 'deny' | 'challenge';
@@ -42,17 +41,19 @@ export interface ThreatAlert {
   createdAt: number;
 }
 
-// ==================== ZERO TRUST ENGINE ====================
-
 export class ZeroTrustEngine {
   private accessRequests = new Map<string, AccessRequest>();
   private requestCount = 0;
 
-  /**
-   * Verify identity
-   */
   verifyIdentity(userId: string, method: VerificationMethod): boolean {
-    const success = Math.random() > 0.05; // 95% success rate
+    const methodWeight = {
+      biometric: 0.92,
+      hardware_key: 0.95,
+      mfa: 0.88,
+      behavioral: 0.8
+    }[method];
+    const score = normalize(hashString(`${userId}|${method}|identity`), 0.6, 1);
+    const success = score <= methodWeight;
 
     logger.info('Identity verification attempted', {
       userId,
@@ -63,24 +64,20 @@ export class ZeroTrustEngine {
     return success;
   }
 
-  /**
-   * Evaluate access request
-   */
   evaluateAccessRequest(
     request: Omit<AccessRequest, 'id' | 'createdAt'>
   ): AccessRequest {
-    const id = 'req-' + Date.now() + '-' + this.requestCount++;
-
-    // Simple policy: deny unless explicitly allowed
+    const id = deterministicId('req', `${request.userId}|${request.resource}|${request.action}`, this.requestCount++);
+    const trustScore = this.calculateTrustScore(request.userId);
     const decision: AccessDecision = request.resource.startsWith('admin')
-      ? 'deny'
-      : 'allow';
+      ? trustScore >= 85 ? 'challenge' : 'deny'
+      : trustScore >= 60 ? 'allow' : 'challenge';
 
     const newRequest: AccessRequest = {
       ...request,
       id,
       decision,
-      reason: decision === 'allow' ? 'Verified identity' : 'Admin resource access denied',
+      reason: decision === 'allow' ? 'Verified identity and acceptable trust score' : decision === 'challenge' ? 'Additional verification required' : 'Admin resource access denied',
       createdAt: Date.now()
     };
 
@@ -95,11 +92,8 @@ export class ZeroTrustEngine {
     return newRequest;
   }
 
-  /**
-   * Calculate trust score
-   */
   calculateTrustScore(userId: string): number {
-    const score = Math.random() * 100;
+    const score = normalize(hashString(`${userId}|trust-score`), 25, 98);
 
     logger.debug('Trust score calculated', {
       userId,
@@ -109,16 +103,15 @@ export class ZeroTrustEngine {
     return score;
   }
 
-  /**
-   * Enforce access policy
-   */
   enforceAccessPolicy(
     userId: string,
     resource: string,
     action: string
   ): AccessDecision {
     const trustScore = this.calculateTrustScore(userId);
-    const decision: AccessDecision = trustScore > 50 ? 'allow' : 'challenge';
+    const decision: AccessDecision = resource.startsWith('admin')
+      ? trustScore >= 85 ? 'challenge' : 'deny'
+      : trustScore > 60 ? 'allow' : 'challenge';
 
     logger.info('Access policy enforced', {
       userId,
@@ -131,9 +124,6 @@ export class ZeroTrustEngine {
     return decision;
   }
 
-  /**
-   * Get access log
-   */
   getAccessLog(userId: string, limit?: number): AccessRequest[] {
     let requests = Array.from(this.accessRequests.values()).filter(
       r => r.userId === userId
@@ -147,17 +137,12 @@ export class ZeroTrustEngine {
   }
 }
 
-// ==================== DEVICE TRUST MANAGER ====================
-
 export class DeviceTrustManager {
   private devices = new Map<string, Record<string, any>>();
   private deviceCount = 0;
 
-  /**
-   * Register device
-   */
   registerDevice(device: Record<string, any>): string {
-    const id = 'device-' + Date.now() + '-' + this.deviceCount++;
+    const id = deterministicId('device', `${device.type || 'unknown'}|${device.osVersion || 'n/a'}`, this.deviceCount++);
 
     this.devices.set(id, {
       ...device,
@@ -175,14 +160,11 @@ export class DeviceTrustManager {
     return id;
   }
 
-  /**
-   * Verify device
-   */
   verifyDevice(deviceId: string): boolean {
     const device = this.devices.get(deviceId);
     if (!device) return false;
 
-    const verified = Math.random() > 0.1; // 90% success rate
+    const verified = normalize(hashString(`${deviceId}|${device.type || 'unknown'}|device-verify`), 0, 1) <= 0.9;
 
     if (verified) {
       device.trustLevel = 'verified';
@@ -197,9 +179,6 @@ export class DeviceTrustManager {
     return verified;
   }
 
-  /**
-   * Update device health
-   */
   updateDeviceHealth(deviceId: string, health: Record<string, any>): void {
     const device = this.devices.get(deviceId);
     if (device) {
@@ -209,9 +188,6 @@ export class DeviceTrustManager {
     }
   }
 
-  /**
-   * Quarantine device
-   */
   quarantineDevice(deviceId: string, reason: string): void {
     const device = this.devices.get(deviceId);
     if (device) {
@@ -221,9 +197,6 @@ export class DeviceTrustManager {
     }
   }
 
-  /**
-   * Get device compliance
-   */
   getDeviceCompliance(deviceId: string): Record<string, any> {
     return {
       deviceId,
@@ -237,17 +210,19 @@ export class DeviceTrustManager {
   }
 }
 
-// ==================== THREAT DETECTION SYSTEM ====================
-
 export class ThreatDetectionSystem {
   private alerts = new Map<string, ThreatAlert>();
   private alertCount = 0;
 
-  /**
-   * Analyze activity
-   */
   analyzeActivity(activity: Record<string, any>): ThreatLevel {
-    const threatLevel: ThreatLevel = Math.random() > 0.95 ? 'critical' : 'low';
+    const score =
+      (activity.failedAttempts || 0) * 12 +
+      (activity.geoVelocityRisk ? 30 : 0) +
+      (activity.elevatedPrivileges ? 25 : 0) +
+      (activity.offHours ? 10 : 0) +
+      (String(activity.type || '').includes('admin') ? 15 : 0);
+    const threatLevel: ThreatLevel =
+      score >= 70 ? 'critical' : score >= 45 ? 'high' : score >= 20 ? 'medium' : 'low';
 
     logger.debug('Activity analyzed', {
       activityType: activity.type,
@@ -257,20 +232,24 @@ export class ThreatDetectionSystem {
     return threatLevel;
   }
 
-  /**
-   * Detect anomaly
-   */
   detectAnomaly(userId: string, action: string): ThreatAlert | null {
-    const hasAnomaly = Math.random() > 0.9; // 10% chance
+    const actionScore =
+      (action.includes('elevate') ? 35 : 0) +
+      (action.includes('delete') ? 25 : 0) +
+      (action.includes('export') ? 20 : 0) +
+      (action.includes('failed') ? 25 : 0) +
+      Math.round(normalize(hashString(`${userId}|${action}|anomaly`), 0, 15));
+    const hasAnomaly = actionScore >= 35;
 
     if (!hasAnomaly) return null;
 
-    const id = 'alert-' + Date.now() + '-' + this.alertCount++;
+    const id = deterministicId('alert', `${userId}|${action}`, this.alertCount++);
+    const level: ThreatLevel = actionScore >= 70 ? 'critical' : actionScore >= 50 ? 'high' : 'medium';
 
     const alert: ThreatAlert = {
       id,
       type: 'suspicious_activity',
-      level: 'medium',
+      level,
       description: `Suspicious activity detected for user ${userId}: ${action}`,
       affectedResource: userId,
       detectedAt: Date.now(),
@@ -288,18 +267,12 @@ export class ThreatDetectionSystem {
     return alert;
   }
 
-  /**
-   * Get active threat alerts
-   */
   getActiveThreatAlerts(): ThreatAlert[] {
     return Array.from(this.alerts.values()).filter(
-      a => Date.now() - a.detectedAt < 3600000 // Last hour
+      a => Date.now() - a.detectedAt < 3600000
     );
   }
 
-  /**
-   * Remediate threat
-   */
   remediateThreat(alertId: string): void {
     const alert = this.alerts.get(alertId);
     if (alert) {
@@ -311,15 +284,21 @@ export class ThreatDetectionSystem {
     }
   }
 
-  /**
-   * Get threat intelligence
-   */
   getThreatIntelligence(): Record<string, any> {
     return {
       activeThreats: this.alerts.size,
       criticalCount: Array.from(this.alerts.values()).filter(a => a.level === 'critical').length,
       highCount: Array.from(this.alerts.values()).filter(a => a.level === 'high').length,
-      averageThreatLevel: 'low',
+      averageThreatLevel:
+        this.alerts.size === 0
+          ? 'low'
+          : Array.from(this.alerts.values()).some(a => a.level === 'critical')
+            ? 'critical'
+            : Array.from(this.alerts.values()).some(a => a.level === 'high')
+              ? 'high'
+              : Array.from(this.alerts.values()).some(a => a.level === 'medium')
+                ? 'medium'
+                : 'low',
       lastUpdate: Date.now(),
       threatTrends: {
         bruteForce: 2,
@@ -331,23 +310,17 @@ export class ThreatDetectionSystem {
   }
 }
 
-// ==================== SECRET MANAGEMENT ====================
-
 export class SecretManagement {
   private secrets = new Map<string, Record<string, any>>();
   private secretCount = 0;
-  private accessLog: Record<string, any>[] = [];
 
-  /**
-   * Store secret
-   */
   storeSecret(name: string, value: string, ttl?: number): string {
-    const id = 'secret-' + Date.now() + '-' + this.secretCount++;
+    const id = deterministicId('secret', name, this.secretCount++);
 
     const secret = {
       id,
       name,
-      value: Buffer.from(value).toString('base64'), // Simple encoding
+      value: Buffer.from(value).toString('base64'),
       ttl: ttl || 86400,
       expiresAt: ttl ? Date.now() + ttl * 1000 : null,
       createdAt: Date.now()
@@ -363,9 +336,6 @@ export class SecretManagement {
     return id;
   }
 
-  /**
-   * Retrieve secret
-   */
   retrieveSecret(secretId: string): string | null {
     const secret = this.secrets.get(secretId);
     if (!secret) return null;
@@ -380,9 +350,6 @@ export class SecretManagement {
     return Buffer.from(secret.value, 'base64').toString();
   }
 
-  /**
-   * Rotate secret
-   */
   rotateSecret(secretId: string): void {
     const secret = this.secrets.get(secretId);
     if (secret) {
@@ -391,9 +358,6 @@ export class SecretManagement {
     }
   }
 
-  /**
-   * Audit secret access
-   */
   auditSecretAccess(secretId: string): Record<string, any>[] {
     const secret = this.secrets.get(secretId);
     if (!secret) return [];
@@ -412,8 +376,6 @@ export class SecretManagement {
     ];
   }
 }
-
-// ==================== EXPORTS ====================
 
 export const zeroTrustEngine = new ZeroTrustEngine();
 export const deviceTrustManager = new DeviceTrustManager();

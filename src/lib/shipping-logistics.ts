@@ -4,8 +4,7 @@
  */
 
 import { logger } from './logging';
-
-// ==================== TYPES & INTERFACES ====================
+import { deterministicId, hashString, normalize, pickDeterministic, round } from './deterministic';
 
 export type CarrierType = 'ground' | 'express' | 'overnight' | 'international';
 export type ShipmentStatus = 'pending' | 'picked' | 'shipped' | 'in_transit' | 'delivered' | 'failed';
@@ -43,52 +42,41 @@ export interface DeliveryUpdate {
   details: string;
 }
 
-// ==================== SHIPPING CARRIER ====================
-
 export class ShippingCarrier {
   private carriers = new Map<string, CarrierConfig>();
-  private rates: ShippingRate[] = [];
+  private shipmentCount = 0;
 
-  /**
-   * Register carrier
-   */
   registerCarrier(config: CarrierConfig): void {
     this.carriers.set(config.name, config);
     logger.debug('Carrier registered', { name: config.name });
   }
 
-  /**
-   * Get available services
-   */
   getAvailableServices(origin: string, destination: string, weight: number): ShippingRate[] {
     return Array.from(this.carriers.values())
       .filter(c => c.enabled)
-      .map(carrier => ({
-        carrier: carrier.name,
-        serviceType: (
-          ['ground', 'express', 'overnight', 'international'] as CarrierType[]
-        )[Math.floor(Math.random() * 4)],
-        weight,
-        distance: Math.random() * 3000,
-        cost: this.calculateRate(carrier.name, weight, Math.random() * 3000)
-      }));
+      .map(carrier => {
+        const seed = `${carrier.name}|${origin}|${destination}|${weight}`;
+        const distance = round(normalize(hashString(`${seed}|distance`), 45, 3000), 2);
+        return {
+          carrier: carrier.name,
+          serviceType: pickDeterministic(['ground', 'express', 'overnight', 'international'] as CarrierType[], seed),
+          weight,
+          distance,
+          cost: this.calculateRate(carrier.name, weight, distance)
+        };
+      });
   }
 
-  /**
-   * Calculate shipping rate
-   */
   calculateRate(carrier: string, weight: number, distance: number): number {
+    const carrierMultiplier = 1 + normalize(hashString(`${carrier}|multiplier`), 0, 0.2);
     const baseRate = 5;
     const weightCost = weight * 0.5;
     const distanceCost = distance * 0.02;
-    return Math.round((baseRate + weightCost + distanceCost) * 100) / 100;
+    return round((baseRate + weightCost + distanceCost) * carrierMultiplier, 2);
   }
 
-  /**
-   * Create shipment
-   */
   createShipment(shipment: Omit<Shipment, 'trackingNumber'>): Shipment {
-    const trackingNumber = 'TRK' + Date.now() + Math.random().toString(36).substr(2, 9);
+    const trackingNumber = deterministicId('trk', `${shipment.id}|${shipment.orderId}|${shipment.carrier}`, this.shipmentCount++);
     const fullShipment: Shipment = {
       ...shipment,
       trackingNumber
@@ -99,9 +87,6 @@ export class ShippingCarrier {
     return fullShipment;
   }
 
-  /**
-   * Generate shipping label
-   */
   generateLabel(shipmentId: string): string {
     const labelUrl = `/labels/${shipmentId}.pdf`;
     logger.debug('Shipping label generated', { shipmentId, url: labelUrl });
@@ -109,14 +94,9 @@ export class ShippingCarrier {
   }
 }
 
-// ==================== DELIVERY TRACKER ====================
-
 export class DeliveryTracker {
   private updates = new Map<string, DeliveryUpdate[]>();
 
-  /**
-   * Track shipment
-   */
   trackShipment(trackingNumber: string): DeliveryUpdate | null {
     for (const updates of this.updates.values()) {
       const update = updates.find(u => u.shipmentId === trackingNumber);
@@ -125,9 +105,6 @@ export class DeliveryTracker {
     return null;
   }
 
-  /**
-   * Record delivery update
-   */
   recordUpdate(update: DeliveryUpdate): void {
     if (!this.updates.has(update.shipmentId)) {
       this.updates.set(update.shipmentId, []);
@@ -137,36 +114,25 @@ export class DeliveryTracker {
     logger.debug('Delivery update recorded', { shipmentId: update.shipmentId, status: update.status });
   }
 
-  /**
-   * Estimate delivery date
-   */
   estimateDelivery(shipmentId: string): number {
-    return Date.now() + 5 * 24 * 60 * 60 * 1000; // 5 days from now
+    return Date.now() + Math.round(normalize(hashString(`${shipmentId}|eta`), 3, 7)) * 24 * 60 * 60 * 1000;
   }
 
-  /**
-   * Get delivery history
-   */
   getDeliveryHistory(shipmentId: string): DeliveryUpdate[] {
     return this.updates.get(shipmentId) || [];
   }
 
-  /**
-   * Optimize route
-   */
   optimizeRoute(shipmentIds: string[]): string[] {
     return [...shipmentIds].sort();
   }
 }
 
-// ==================== LOGISTICS PLANNER ====================
-
 export class LogisticsPlanner {
-  /**
-   * Plan shipment
-   */
+  private shipmentCount = 0;
+  private consolidationCount = 0;
+
   planShipment(orderId: string, items: any[]): Shipment {
-    const shipmentId = 'ship-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const shipmentId = deterministicId('ship', `${orderId}|${items.length}`, this.shipmentCount++);
 
     return {
       id: shipmentId,
@@ -174,37 +140,26 @@ export class LogisticsPlanner {
       status: 'pending',
       carrier: 'Standard Carrier',
       trackingNumber: '',
-      estimatedDelivery: Date.now() + 7 * 24 * 60 * 60 * 1000
+      estimatedDelivery: Date.now() + Math.round(normalize(hashString(`${orderId}|delivery`), 3, 9)) * 24 * 60 * 60 * 1000
     };
   }
 
-  /**
-   * Consolidate shipments
-   */
   consolidateShipments(orderIds: string[]): string {
-    const consolidatedId = 'consolidated-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const consolidatedId = deterministicId('consolidated', orderIds.slice().sort().join('|'), this.consolidationCount++);
     logger.debug('Shipments consolidated', { count: orderIds.length, consolidatedId });
     return consolidatedId;
   }
 
-  /**
-   * Optimize cost
-   */
   optimizeCost(shipmentOptions: ShippingRate[]): ShippingRate {
     return shipmentOptions.reduce((lowest, current) =>
       current.cost < lowest.cost ? current : lowest
     );
   }
 
-  /**
-   * Estimate shipment cost
-   */
   estimateCost(shipmentId: string): number {
-    return Math.round(Math.random() * 100 + 20);
+    return round(normalize(hashString(`${shipmentId}|cost`), 20, 120), 2);
   }
 }
-
-// ==================== EXPORTS ====================
 
 export const shippingCarrier = new ShippingCarrier();
 export const deliveryTracker = new DeliveryTracker();

@@ -4,8 +4,7 @@
  */
 
 import { logger } from './logging';
-
-// ==================== TYPES & INTERFACES ====================
+import { hashString, normalize, round } from './deterministic';
 
 export interface SuccessMetrics {
   period: string;
@@ -33,14 +32,9 @@ export interface ExpansionAnalysis {
   timeFrame: string;
 }
 
-// ==================== SUCCESS METRICS MANAGER ====================
-
 export class SuccessMetricsManager {
   private metricsHistory: SuccessMetrics[] = [];
 
-  /**
-   * Record metrics
-   */
   recordMetrics(metrics: SuccessMetrics): void {
     this.metricsHistory.push(metrics);
     logger.info('Success metrics recorded', {
@@ -51,31 +45,28 @@ export class SuccessMetricsManager {
     });
   }
 
-  /**
-   * Get metrics
-   */
   getMetrics(period: string): SuccessMetrics | null {
     return this.metricsHistory.find(m => m.period === period) || null;
   }
 
-  /**
-   * Calculate metrics
-   */
   calculateMetrics(startDate: number, endDate: number): SuccessMetrics {
     const period = `${new Date(startDate).toISOString().split('T')[0]}_${new Date(endDate).toISOString().split('T')[0]}`;
+    const seed = `${startDate}|${endDate}`;
+    const totalCustomers = Math.round(normalize(hashString(`${seed}|total`), 180, 320));
+    const healthyCustomers = Math.round(normalize(hashString(`${seed}|healthy`), Math.round(totalCustomers * 0.55), Math.round(totalCustomers * 0.8)));
+    const churnedCustomers = Math.round(normalize(hashString(`${seed}|churned`), 8, Math.max(9, totalCustomers * 0.12)));
+    const atRiskCustomers = Math.max(0, totalCustomers - healthyCustomers - churnedCustomers);
+
     return {
       period,
-      totalCustomers: 250,
-      healthyCustomers: 180,
-      atRiskCustomers: 50,
-      churnedCustomers: 20,
-      netRetentionRate: 110
+      totalCustomers,
+      healthyCustomers,
+      atRiskCustomers,
+      churnedCustomers,
+      netRetentionRate: round(normalize(hashString(`${seed}|nrr`), 96, 118), 2)
     };
   }
 
-  /**
-   * Compare metrics
-   */
   compareMetrics(period1: string, period2: string): Record<string, any> {
     const metrics1 = this.getMetrics(period1);
     const metrics2 = this.getMetrics(period2);
@@ -94,9 +85,6 @@ export class SuccessMetricsManager {
     };
   }
 
-  /**
-   * Get trend analysis
-   */
   getTrendAnalysis(metric: string, periods: number): { values: number[]; trend: string } {
     const recentMetrics = this.metricsHistory.slice(-periods);
     const values: number[] = [];
@@ -129,32 +117,23 @@ export class SuccessMetricsManager {
   }
 }
 
-// ==================== RETENTION ANALYZER ====================
-
 export class RetentionAnalyzer {
-  /**
-   * Analyze retention
-   */
   analyzeRetention(period: string): RetentionAnalysis {
+    const seed = hashString(period);
+    const retentionRate = round(normalize(seed, 86, 97), 2);
     return {
       period,
-      retentionRate: 94,
-      churnRate: 6,
-      avgCustomerLifetime: 48,
-      returnRateAtRisk: 35
+      retentionRate,
+      churnRate: round(100 - retentionRate, 2),
+      avgCustomerLifetime: round(normalize(seed + 13, 24, 72), 1),
+      returnRateAtRisk: round(normalize(seed + 29, 18, 48), 1)
     };
   }
 
-  /**
-   * Predict retention
-   */
   predictRetention(customerId: string): number {
-    return Math.round(70 + Math.random() * 30);
+    return Math.round(normalize(hashString(`${customerId}|retention`), 70, 99));
   }
 
-  /**
-   * Identify retention risks
-   */
   identifyRetentionRisks(): string[] {
     return [
       'customer-001',
@@ -165,16 +144,10 @@ export class RetentionAnalyzer {
     ];
   }
 
-  /**
-   * Calculate lifetime value
-   */
   calculateLifetimeValue(customerId: string): number {
-    return Math.round(5000 + Math.random() * 45000);
+    return Math.round(normalize(hashString(`${customerId}|ltv`), 5000, 50000));
   }
 
-  /**
-   * Analyze churn reasons
-   */
   analyzeChurnReasons(): Record<string, number> {
     return {
       'Product features': 25,
@@ -187,30 +160,23 @@ export class RetentionAnalyzer {
   }
 }
 
-// ==================== EXPANSION ANALYZER ====================
-
 export class ExpansionAnalyzer {
-  /**
-   * Analyze expansion potential
-   */
   analyzeExpansionPotential(customerId: string): ExpansionAnalysis {
+    const expansionScore = Math.round(normalize(hashString(`${customerId}|expansion-score`), 55, 92));
     return {
       customerId,
       accountId: 'account-' + customerId,
-      expansionScore: 72,
+      expansionScore,
       upsellOpportunities: [
         'Premium support plan',
         'Advanced analytics module',
         'Custom integrations'
       ],
-      estimatedExpansionRevenue: 15000,
-      timeFrame: '90 days'
+      estimatedExpansionRevenue: this.estimateExpansionRevenue('account-' + customerId),
+      timeFrame: expansionScore > 80 ? '30 days' : '90 days'
     };
   }
 
-  /**
-   * Identify upsell opportunities
-   */
   identifyUpsellOpportunities(customerId: string): string[] {
     return [
       'Feature pack upgrade',
@@ -221,9 +187,6 @@ export class ExpansionAnalyzer {
     ];
   }
 
-  /**
-   * Identify high-value expansion customers
-   */
   identifyHighValueExpansionCustomers(): string[] {
     return [
       'customer-101',
@@ -234,31 +197,18 @@ export class ExpansionAnalyzer {
     ];
   }
 
-  /**
-   * Estimate expansion revenue
-   */
   estimateExpansionRevenue(accountId: string): number {
-    return Math.round(10000 + Math.random() * 40000);
+    return Math.round(normalize(hashString(`${accountId}|expansion-revenue`), 10000, 50000));
   }
 
-  /**
-   * Track expansion progress
-   */
   trackExpansionProgress(customerId: string, months: number): number[] {
-    const progress: number[] = [];
-    for (let i = 0; i < months; i++) {
-      progress.push(Math.round(1000 + Math.random() * 9000));
-    }
-    return progress;
+    const base = normalize(hashString(`${customerId}|progress-base`), 1000, 5000);
+    const increment = normalize(hashString(`${customerId}|progress-step`), 500, 1800);
+    return Array.from({ length: months }, (_, i) => Math.round(base + increment * i));
   }
 }
 
-// ==================== CUSTOMER HEALTH DASHBOARD ====================
-
 export class CustomerHealthDashboard {
-  /**
-   * Get portfolio overview
-   */
   getPortfolioOverview(period: string): Record<string, any> {
     return {
       period,
@@ -273,9 +223,6 @@ export class CustomerHealthDashboard {
     };
   }
 
-  /**
-   * Get customer segmentation
-   */
   getCustomerSegmentation(): Record<string, string[]> {
     return {
       healthy: ['customer-001', 'customer-002', 'customer-003'],
@@ -285,9 +232,6 @@ export class CustomerHealthDashboard {
     };
   }
 
-  /**
-   * Get success metrics scorecard
-   */
   getSuccessMetricsScorecard(): Record<string, number> {
     return {
       health_score: 78,
@@ -300,9 +244,6 @@ export class CustomerHealthDashboard {
     };
   }
 
-  /**
-   * Get risk matrix
-   */
   getRiskMatrix(): Record<string, Record<string, number>> {
     return {
       engagement: { low: 12, medium: 28, high: 45 },
@@ -313,9 +254,6 @@ export class CustomerHealthDashboard {
     };
   }
 
-  /**
-   * Get actionable insights
-   */
   getActionableInsights(): string[] {
     return [
       '18 customers at expansion readiness - prioritize for upsell outreach',
@@ -329,8 +267,6 @@ export class CustomerHealthDashboard {
     ];
   }
 }
-
-// ==================== EXPORTS ====================
 
 export const successMetricsManager = new SuccessMetricsManager();
 export const retentionAnalyzer = new RetentionAnalyzer();

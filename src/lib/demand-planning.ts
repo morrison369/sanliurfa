@@ -4,8 +4,7 @@
  */
 
 import { logger } from './logging';
-
-// ==================== TYPES & INTERFACES ====================
+import { deterministicId, hashString, normalize, round } from './deterministic';
 
 export interface DemandForecast {
   sku: string;
@@ -36,127 +35,96 @@ export interface CapacityPlan {
   expansionNeeded: boolean;
 }
 
-// ==================== DEMAND FORECASTER ====================
-
 export class DemandForecaster {
   private patterns = new Map<string, SeasonalPattern[]>();
 
-  /**
-   * Forecast demand for SKU
-   */
   forecast(sku: string, periods: number): DemandForecast[] {
     const forecasts: DemandForecast[] = [];
-    let baseDemand = Math.random() * 1000 + 100;
+    const skuHash = hashString(sku);
+    const baseDemand = normalize(skuHash, 180, 1100);
 
     for (let i = 0; i < periods; i++) {
-      const month = (new Date().getMonth() + i) % 12;
+      const month = i % 12;
       const seasonalFactor = this.getSeasonalFactor(sku, month);
-      const predicted = Math.ceil(baseDemand * seasonalFactor);
+      const demandShift = normalize(hashString(`${sku}|period|${i}`), -60, 140);
+      const predicted = Math.ceil(Math.max(0, (baseDemand + demandShift + i * 14) * seasonalFactor));
+      const previous = i === 0 ? predicted : forecasts[i - 1].predicted;
 
       forecasts.push({
         sku,
         period: `month_${i + 1}`,
         predicted,
-        confidence: 0.85 - i * 0.05,
-        trend: i === 0 ? 'stable' : i % 2 === 0 ? 'up' : 'down'
+        confidence: round(Math.max(0.5, 0.9 - i * 0.035), 3),
+        trend: predicted > previous ? 'up' : predicted < previous ? 'down' : 'stable'
       });
-
-      baseDemand += (Math.random() - 0.5) * 100;
     }
 
     logger.debug('Demand forecast generated', { sku, periods });
     return forecasts;
   }
 
-  /**
-   * Get seasonal factors for SKU
-   */
   getSeasonalFactors(sku: string): SeasonalPattern[] {
     return this.patterns.get(sku) || this.generateDefaultPatterns(sku);
   }
 
-  /**
-   * Detect demand trend
-   */
   detectTrend(sku: string, days: number): 'up' | 'down' | 'stable' {
-    const rand = Math.random();
-    if (rand > 0.66) return 'up';
-    if (rand > 0.33) return 'down';
+    const window = this.forecast(sku, Math.max(2, Math.ceil(days / 30)));
+    const first = window[0]?.predicted ?? 0;
+    const last = window[window.length - 1]?.predicted ?? 0;
+    if (last > first) return 'up';
+    if (last < first) return 'down';
     return 'stable';
   }
 
-  /**
-   * Adjust demand for seasonal factor
-   */
   adjustForSeason(baseDemand: number, seasonFactor: number): number {
     return Math.ceil(baseDemand * seasonFactor);
   }
 
-  /**
-   * Get seasonal factor for month
-   */
   private getSeasonalFactor(sku: string, month: number): number {
     const patterns = this.patterns.get(sku) || this.generateDefaultPatterns(sku);
     const pattern = patterns.find(p => p.month === month);
     return pattern?.indexFactor || 1.0;
   }
 
-  /**
-   * Generate default seasonal patterns
-   */
   private generateDefaultPatterns(sku: string): SeasonalPattern[] {
     const patterns: SeasonalPattern[] = [];
     for (let month = 0; month < 12; month++) {
       patterns.push({
         sku,
         month,
-        indexFactor: 0.8 + Math.random() * 0.4
+        indexFactor: round(normalize(hashString(`${sku}|month|${month}`), 0.8, 1.2), 3)
       });
     }
     return patterns;
   }
 }
 
-// ==================== STOCK PLANNER ====================
-
 export class StockPlanner {
   private plans = new Map<string, StockPlan>();
+  private planCount = 0;
 
-  /**
-   * Plan replenishment
-   */
   planReplenishment(warehouseId: string, sku: string): StockPlan {
-    const plan: StockPlan = {
+    const seed = `${warehouseId}|${sku}`;
+    return {
       warehouseId,
       sku,
-      targetLevel: Math.ceil(Math.random() * 500 + 100),
-      safetyStock: Math.ceil(Math.random() * 50 + 10),
+      targetLevel: Math.ceil(normalize(hashString(`${seed}|target`), 120, 600)),
+      safetyStock: Math.ceil(normalize(hashString(`${seed}|safety`), 15, 90)),
       replenishmentDate: Date.now() + 7 * 24 * 60 * 60 * 1000
     };
-
-    return plan;
   }
 
-  /**
-   * Schedule replenishment
-   */
   scheduleReplenishment(plan: StockPlan): string {
-    const planId = 'plan-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const planId = deterministicId('plan', `${plan.warehouseId}|${plan.sku}|${plan.targetLevel}`, this.planCount++);
     this.plans.set(planId, plan);
     logger.debug('Replenishment scheduled', { planId, warehouseId: plan.warehouseId, sku: plan.sku });
     return planId;
   }
 
-  /**
-   * Get replenishment schedule
-   */
   getReplenishmentSchedule(warehouseId: string): StockPlan[] {
     return Array.from(this.plans.values()).filter(p => p.warehouseId === warehouseId);
   }
 
-  /**
-   * Adjust plan target level
-   */
   adjustPlan(planId: string, newTargetLevel: number): void {
     const plan = this.plans.get(planId);
     if (plan) {
@@ -166,48 +134,36 @@ export class StockPlanner {
   }
 }
 
-// ==================== CAPACITY PLANNER ====================
-
 export class CapacityPlanner {
-  /**
-   * Project warehouse usage
-   */
   projectUsage(warehouseId: string, forecastPeriod: string): number {
-    return Math.round(Math.random() * 5000 + 1000);
+    return Math.round(normalize(hashString(`${warehouseId}|${forecastPeriod}|usage`), 1000, 6000));
   }
 
-  /**
-   * Calculate required capacity
-   */
   calculateRequiredCapacity(warehouseId: string): number {
-    return Math.round(Math.random() * 10000 + 5000);
+    return Math.round(normalize(hashString(`${warehouseId}|required-capacity`), 5000, 15000));
   }
 
-  /**
-   * Identify bottlenecks
-   */
   identifyBottlenecks(warehouseId: string): string[] {
-    const bottlenecks = [];
-    if (Math.random() > 0.5) bottlenecks.push('Receiving dock congestion');
-    if (Math.random() > 0.6) bottlenecks.push('Picking zone capacity');
-    if (Math.random() > 0.7) bottlenecks.push('Packing station throughput');
-    return bottlenecks;
+    const candidates = [
+      'Receiving dock congestion',
+      'Picking zone capacity',
+      'Packing station throughput'
+    ];
+    return candidates.filter((_, index) => ((hashString(`${warehouseId}|bottleneck|${index}`) + index) % 3) !== 0);
   }
 
-  /**
-   * Recommend expansion
-   */
   recommendExpansion(warehouseId: string): { needed: boolean; size: number; timeframe: string } {
-    const needed = Math.random() > 0.5;
+    const requiredCapacity = this.calculateRequiredCapacity(warehouseId);
+    const projectedUsage = this.projectUsage(warehouseId, '90d');
+    const needed = projectedUsage / requiredCapacity > 0.72;
+
     return {
       needed,
-      size: needed ? Math.round(Math.random() * 5000 + 2000) : 0,
+      size: needed ? Math.round(requiredCapacity * 0.35) : 0,
       timeframe: needed ? '6-12 months' : 'Not needed'
     };
   }
 }
-
-// ==================== EXPORTS ====================
 
 export const demandForecaster = new DemandForecaster();
 export const stockPlanner = new StockPlanner();

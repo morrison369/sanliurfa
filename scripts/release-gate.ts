@@ -21,6 +21,7 @@ function main(): void {
   run('HTTP timeout governance guard', 'npm run governance:http:timeout:check');
   run('Governance import guard', 'npm run governance:imports:check');
   run('Governance logging guard', 'npm run governance:logging:check');
+  run('Governance runtime placeholder guard', 'npm run governance:runtime:placeholders:check');
   run('Governance cache redis prohibition guard', 'npm run governance:cache:redis:check');
   run('Governance queryMany prohibition guard', 'npm run governance:querymany:usage:check');
   run('Governance queryMany guard', 'npm run governance:querymany:check');
