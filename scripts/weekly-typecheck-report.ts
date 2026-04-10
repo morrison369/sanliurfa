@@ -21,15 +21,15 @@ function main(): void {
 
   const tsconfig = loadJson<TsConfig>(tsconfigPath);
   const excludes = Array.isArray(tsconfig.exclude) ? tsconfig.exclude : [];
-  const budgetedExcludes = excludes.filter((entry) => !BASELINE_EXCLUDES.has(entry));
-  const fileExcludes = budgetedExcludes.filter((entry) => entry.startsWith('src/lib/') && entry.endsWith('.ts'));
+  const policyExcludes = excludes.filter((entry) => !BASELINE_EXCLUDES.has(entry));
+  const fileExcludes = policyExcludes.filter((entry) => entry.startsWith('src/lib/') && entry.endsWith('.ts'));
   const baselineExcludes = excludes.filter((entry) => BASELINE_EXCLUDES.has(entry));
 
   const lines = [
     '# Weekly Typecheck Report',
     '',
     '## Experimental Exclude Policy',
-    `- Total entries: ${budgetedExcludes.length}`,
+    `- Total entries: ${policyExcludes.length}`,
     `- File entries: ${fileExcludes.length}`,
     `- Baseline test excludes: ${baselineExcludes.length}`,
     '',

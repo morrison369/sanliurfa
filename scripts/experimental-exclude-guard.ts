@@ -17,22 +17,21 @@ function main(): void {
 
   const tsconfig = JSON.parse(readFileSync(tsconfigPath, 'utf8')) as TsConfigLike;
   const excludes = Array.isArray(tsconfig.exclude) ? tsconfig.exclude : [];
-  const budgetedExcludes = excludes.filter((entry) => !BASELINE_EXCLUDES.has(entry));
+  const policyExcludes = excludes.filter((entry) => !BASELINE_EXCLUDES.has(entry));
+  const fileEntries = policyExcludes.filter((entry) => entry.startsWith('src/lib/') && entry.endsWith('.ts'));
 
-  const fileEntries = budgetedExcludes.filter((entry) => entry.startsWith('src/lib/') && entry.endsWith('.ts'));
-
-  if (budgetedExcludes.length > 0 || fileEntries.length > 0) {
+  if (policyExcludes.length > 0 || fileEntries.length > 0) {
     throw new Error(
       [
         'typecheck experimental excludes detected',
-        `total=${budgetedExcludes.length}`,
+        `total=${policyExcludes.length}`,
         `file_entries=${fileEntries.length}`,
       ].join(' | ')
     );
   }
 
   console.log(
-    `experimental-exclude-guard: OK (total=${budgetedExcludes.length}, file_entries=${fileEntries.length})`
+    `experimental-exclude-guard: OK (total=${policyExcludes.length}, file_entries=${fileEntries.length})`
   );
 }
 
