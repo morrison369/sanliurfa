@@ -3,6 +3,7 @@
  * Incident detection, response orchestration, forensic analysis
  */
 
+import { createHash } from 'crypto';
 import { logger } from './logger';
 
 interface SecurityIncident {
@@ -165,8 +166,7 @@ class ForensicAnalyzer {
   }
 
   private hashEvidence(data: string): string {
-    // Simulated hash
-    return `sha256-${Math.random().toString(36).substring(7)}`;
+    return `sha256-${createHash('sha256').update(data).digest('hex')}`;
   }
 
   buildTimeline(incident: SecurityIncident, auditLogs: any[]): IncidentTimeline {

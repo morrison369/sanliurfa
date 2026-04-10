@@ -3,6 +3,7 @@
  * User context building, content variant selection, A/B testing
  */
 
+import { deterministicNumber } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -154,13 +155,18 @@ export class ContentPersonalizer {
       return variants[0] || { id: 'default', content: '', weight: 1 };
     }
 
-    // Weighted random selection
+    // Weighted deterministic selection
     const totalWeight = applicable.reduce((sum, v) => sum + v.weight, 0);
-    let random = Math.random() * totalWeight;
+    let selectionWeight = deterministicNumber(
+      `content-selection:${contentId}:${context.userId}:${context.segment}:${context.signals.visitCount}`,
+      0,
+      totalWeight,
+      6
+    );
 
     for (const variant of applicable) {
-      random -= variant.weight;
-      if (random <= 0) return variant;
+      selectionWeight -= variant.weight;
+      if (selectionWeight <= 0) return variant;
     }
 
     return applicable[applicable.length - 1];

@@ -3,6 +3,8 @@
  * Invoice generation, billing cycles, payment tracking, reconciliation
  */
 
+import { randomUUID } from 'crypto';
+import { deterministicNumber } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -59,7 +61,7 @@ export class InvoiceGenerator {
     const invoiceNumber = `INV-${this.invoiceCounter++}`;
     const fullInvoice: Invoice = {
       ...invoice,
-      id: 'inv-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+      id: `inv-${randomUUID()}`,
       number: invoiceNumber,
       createdAt: Date.now()
     };
@@ -119,7 +121,7 @@ export class BillingCycleManager {
   createCycle(cycle: Omit<BillingCycleRecord, 'id'>): BillingCycleRecord {
     const fullCycle: BillingCycleRecord = {
       ...cycle,
-      id: 'cycle-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+      id: `cycle-${randomUUID()}`
     };
 
     this.cycles.set(fullCycle.id, fullCycle);
@@ -192,7 +194,9 @@ export class PaymentReconciliation {
   reconcilePayments(period: string): { matched: number; unmatched: number; variance: number } {
     const matched = this.payments.filter(p => p.status === 'completed').length;
     const unmatched = this.getUnmatchedPayments().length;
-    const variance = unmatched > 0 ? Math.random() * 100 : 0;
+    const variance = unmatched > 0
+      ? deterministicNumber(`payment-reconciliation:${period}:${matched}:${unmatched}:${this.payments.length}`, 1, 100)
+      : 0;
 
     return { matched, unmatched, variance };
   }

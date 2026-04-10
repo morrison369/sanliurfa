@@ -9,6 +9,13 @@ import { logger } from './logging';
 const BACKUP_CODE_COUNT = 10;
 const TOTP_WINDOW = 30; // seconds
 
+function getCrypto(): Crypto {
+  if (!globalThis.crypto?.getRandomValues) {
+    throw new Error('Secure crypto unavailable');
+  }
+  return globalThis.crypto;
+}
+
 /**
  * Generate TOTP secret and QR code URL
  */
@@ -16,12 +23,10 @@ export function generateTOTPSecret(email: string, appName: string = 'Şanlıurfa
   secret: string;
   qrCodeUrl: string;
 } {
-  // Generate random base32 secret (32 chars = 160 bits)
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let secret = '';
-  for (let i = 0; i < 32; i++) {
-    secret += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  const bytes = new Uint8Array(32);
+  getCrypto().getRandomValues(bytes);
+  const secret = Array.from(bytes, byte => chars[byte % chars.length]).join('');
 
   // Generate provisioning URI
   const encodedEmail = encodeURIComponent(email);
@@ -37,16 +42,10 @@ export function generateTOTPSecret(email: string, appName: string = 'Şanlıurfa
 export function generateBackupCodes(count: number = BACKUP_CODE_COUNT): string[] {
   const codes: string[] = [];
   for (let i = 0; i < count; i++) {
-    // Generate XXXX-XXXX format
-    const code = Array(4)
-      .fill(0)
-      .map(() => Math.floor(Math.random() * 10))
-      .join('') +
-      '-' +
-      Array(4)
-        .fill(0)
-        .map(() => Math.floor(Math.random() * 10))
-        .join('');
+    const bytes = new Uint8Array(8);
+    getCrypto().getRandomValues(bytes);
+    const digits = Array.from(bytes, byte => (byte % 10).toString()).join('');
+    const code = `${digits.slice(0, 4)}-${digits.slice(4, 8)}`;
     codes.push(code);
   }
   return codes;

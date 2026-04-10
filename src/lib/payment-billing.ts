@@ -3,6 +3,8 @@
  * Subscription management, invoicing, dunning, refund handling
  */
 
+import { randomUUID } from 'crypto';
+import { deterministicInt } from './deterministic';
 import { logger } from './logging';
 
 // ==================== BILLING MODELS ====================
@@ -38,6 +40,8 @@ export interface InvoiceItem {
   total: number;
 }
 
+let invoiceSequence = 0;
+
 /**
  * Generate invoice number (YYYY-MM-NNNNNN format)
  */
@@ -45,7 +49,11 @@ export function generateInvoiceNumber(): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
-  const seq = Math.floor(Math.random() * 1000000);
+  const seq = deterministicInt(
+    `${year}-${month}-${now.getDate()}-${invoiceSequence++}`,
+    0,
+    999999
+  );
 
   return `${year}-${month}-${String(seq).padStart(6, '0')}`;
 }
@@ -208,7 +216,7 @@ export class RefundManager {
    */
   createRefund(transactionId: string, subscriptionId: string, amount: number, reason: string): Refund {
     const refund: Refund = {
-      id: `REF-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `REF-${randomUUID()}`,
       transactionId,
       subscriptionId,
       amount,

@@ -61,7 +61,17 @@ const FILES = [
   'src/lib/security-compliance.ts',
   'src/lib/supply-chain-security.ts',
   'src/lib/vendor-analytics.ts',
-  'src/lib/tax-compliance.ts'
+  'src/lib/tax-compliance.ts',
+  'src/lib/apm.ts',
+  'src/lib/security-incidents.ts',
+  'src/lib/two-factor.ts',
+  'src/lib/utils.ts',
+  'src/lib/invoicing-billing.ts',
+  'src/lib/payment-billing.ts',
+  'src/lib/payout-engine.ts',
+  'src/lib/ml-pipelines.ts',
+  'src/lib/nlp-engine.ts',
+  'src/lib/personalization-engine.ts'
 ];
 
 const PATTERNS = [

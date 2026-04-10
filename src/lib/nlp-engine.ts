@@ -3,6 +3,7 @@
  * Text processing, sentiment analysis, entity extraction, dialogue management
  */
 
+import { deterministicNumber } from './deterministic';
 import { logger } from './logging';
 
 export type TextTask = 'tokenization' | 'lemmatization' | 'pos-tagging' | 'dependency-parsing';
@@ -15,17 +16,34 @@ export class NLPProcessor {
     return { id: 'text-' + Date.now(), text, tokens, metadata: { tasks }, createdAt: Date.now() };
   }
   tokenize(text: string): string[] { return text.split(/\s+/); }
-  generateEmbeddings(text: string): number[] { return Array.from({length: 768}, () => Math.random() - 0.5); }
+  generateEmbeddings(text: string): number[] {
+    return Array.from({ length: 768 }, (_, index) =>
+      deterministicNumber(`embedding:${text}:${index}`, -0.5, 0.5, 6)
+    );
+  }
   getSyntaxAnalysis(text: string): Record<string, any> { return { text, complexity: 'simple' }; }
   extractGrammaticalStructure(text: string): Record<string, any> { return { text, tense: 'past' }; }
-  compareTextSimilarity(text1: string, text2: string): number { return Math.random() * 0.4 + 0.6; }
+  compareTextSimilarity(text1: string, text2: string): number {
+    const tokens1 = new Set(this.tokenize(text1.toLowerCase()));
+    const tokens2 = new Set(this.tokenize(text2.toLowerCase()));
+    const overlap = Array.from(tokens1).filter(token => tokens2.has(token)).length;
+    const union = new Set([...tokens1, ...tokens2]).size || 1;
+    return deterministicNumber(`similarity:${text1}:${text2}`, overlap / union, Math.min(1, overlap / union + 0.4), 4);
+  }
 }
 
 export class SentimentAnalyzer {
   analyzeSentiment(text: string): { text: string; sentiment: SentimentLabel; score: number; confidence: number; emotions: Record<string, number> } {
-    return { text, sentiment: 'positive', score: Math.random(), confidence: 0.85, emotions: {} };
+    const score = deterministicNumber(`sentiment-score:${text}`, 0.2, 0.95, 4);
+    const sentiment: SentimentLabel = score > 0.66 ? 'positive' : score < 0.4 ? 'negative' : 'neutral';
+    return { text, sentiment, score, confidence: deterministicNumber(`sentiment-confidence:${text}`, 0.8, 0.95, 4), emotions: this.detectEmotions(text) };
   }
-  detectEmotions(text: string): Record<string, number> { return { joy: Math.random(), anger: Math.random() }; }
+  detectEmotions(text: string): Record<string, number> {
+    return {
+      joy: deterministicNumber(`emotion:${text}:joy`, 0.05, 0.95, 4),
+      anger: deterministicNumber(`emotion:${text}:anger`, 0.01, 0.75, 4)
+    };
+  }
   getAspectBasedSentiment(text: string, aspects: string[]): Record<string, SentimentLabel> { return {}; }
   trendSentimentOverTime(texts: string[], timestamps: number[]): Record<string, any> { return {}; }
   compareSentiments(texts: string[]): Record<string, any> { return {}; }

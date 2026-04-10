@@ -3,6 +3,7 @@
  * Distributed tracing, SLO tracking, error budgets, performance baselines
  */
 
+import { randomUUID } from 'crypto';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -62,8 +63,8 @@ export class TraceCollector {
    * Start a new span
    */
   startSpan(name: string, parentSpanId?: string): Span {
-    const traceId = this.currentContext?.traceId || 'trace-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-    const spanId = 'span-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const traceId = this.currentContext?.traceId || `trace-${randomUUID()}`;
+    const spanId = `span-${randomUUID()}`;
 
     const span: Span = {
       traceId,

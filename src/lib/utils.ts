@@ -1,3 +1,20 @@
+function getCrypto(): Crypto | null {
+  return typeof globalThis !== 'undefined' && 'crypto' in globalThis ? globalThis.crypto : null;
+}
+
+function randomAlphaNumeric(length: number): string {
+  const crypto = getCrypto();
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+
+  if (!crypto?.getRandomValues) {
+    return `id${Date.now().toString(36)}`.slice(0, length).padEnd(length, '0');
+  }
+
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, byte => alphabet[byte % alphabet.length]).join('');
+}
+
 // Yardımcı fonksiyonlar
 
 /**
@@ -82,7 +99,7 @@ export function formatNumber(num: number): string {
  * Rastgele string oluşturma
  */
 export function generateId(length = 8): string {
-  return Math.random().toString(36).substring(2, 2 + length);
+  return randomAlphaNumeric(length);
 }
 
 /**

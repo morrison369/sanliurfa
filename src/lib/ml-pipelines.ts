@@ -3,6 +3,7 @@
  * ML pipeline creation, feature engineering, model registry, AutoML
  */
 
+import { deterministicId, deterministicInt, deterministicNumber, pickDeterministic } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -99,8 +100,8 @@ export class MLPipelineBuilder {
       stage,
       status: 'executing',
       startTime: Date.now(),
-      recordsProcessed: Math.floor(Math.random() * 10000),
-      dataQuality: 0.92
+      recordsProcessed: deterministicInt(`ml-stage:${pipelineId}:${stage}:${pipeline.version}`, 100, 10000),
+      dataQuality: deterministicNumber(`ml-stage-quality:${pipelineId}:${stage}:${pipeline.version}`, 0.88, 0.98)
     };
   }
 
@@ -172,7 +173,11 @@ export class FeatureEngineering {
    */
   extractFeatures(datasetId: string, config: Record<string, any>): FeatureSet {
     const features: string[] = [];
-    const extractedCount = Math.floor(Math.random() * 50) + 10;
+    const extractedCount = deterministicInt(
+      `feature-extract:${datasetId}:${JSON.stringify(config.transformations || [])}`,
+      10,
+      59
+    );
 
     for (let i = 0; i < extractedCount; i++) {
       features.push(`feature_${i}`);
@@ -206,7 +211,7 @@ export class FeatureEngineering {
     const importance: Record<string, number> = {};
 
     for (let i = 0; i < 10; i++) {
-      importance[`feature_${i}`] = Math.random();
+      importance[`feature_${i}`] = deterministicNumber(`feature-importance:${modelId}:${i}`, 0.05, 1);
     }
 
     logger.debug('Feature importance analyzed', { modelId, featureCount: 10 });
@@ -330,10 +335,10 @@ export class AutoML {
     return {
       modelId,
       tuningStarted: Date.now(),
-      learningRate: 0.001 + Math.random() * 0.01,
-      batchSize: Math.floor(Math.random() * 128) + 32,
-      epochs: Math.floor(Math.random() * 100) + 50,
-      dropoutRate: Math.random() * 0.5
+      learningRate: deterministicNumber(`automl-learning-rate:${modelId}`, 0.001, 0.011, 4),
+      batchSize: deterministicInt(`automl-batch-size:${modelId}`, 32, 160),
+      epochs: deterministicInt(`automl-epochs:${modelId}`, 50, 149),
+      dropoutRate: deterministicNumber(`automl-dropout:${modelId}`, 0.05, 0.5)
     };
   }
 
@@ -359,7 +364,7 @@ export class AutoML {
    * Recommend optimal model
    */
   recommendOptimalModel(candidates: string[]): string {
-    const optimal = candidates[Math.floor(Math.random() * candidates.length)];
+    const optimal = pickDeterministic(candidates, candidates.join('|'));
 
     logger.info('Optimal model recommended', { modelCount: candidates.length, recommended: optimal });
 
@@ -370,13 +375,14 @@ export class AutoML {
    * Auto feature select
    */
   autoFeatureSelect(featureSetId: string, targetVariable: string): Record<string, any> {
+    const selectedFeatureCount = deterministicInt(`feature-select:${featureSetId}:${targetVariable}`, 10, 29);
     return {
       featureSetId,
       targetVariable,
-      selectedFeatureCount: Math.floor(Math.random() * 20) + 10,
+      selectedFeatureCount,
       selectionMethod: 'mutual-information',
       score: 0.85,
-      selectedFeatures: Array.from({ length: 15 }, (_, i) => `feature_${i}`)
+      selectedFeatures: Array.from({ length: Math.min(selectedFeatureCount, 15) }, (_, i) => `feature_${i}`)
     };
   }
 }
