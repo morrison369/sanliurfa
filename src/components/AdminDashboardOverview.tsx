@@ -4,6 +4,12 @@
  */
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, Users, FileText, Flag, ShieldAlert, KeyRound } from 'lucide-react';
+import {
+  classifyIntegrationStatus,
+  classifyNightlyStatus,
+  classifyReleaseGateStatus,
+  type AdminStatusLevel
+} from '../lib/admin-status';
 
 interface DashboardData {
   overview: {
@@ -126,6 +132,27 @@ export default function AdminDashboardOverview() {
 
   if (!data) return null;
 
+  const integrationLevel = classifyIntegrationStatus({
+    configuredCount: data.integrations?.summary?.configuredCount ?? 0,
+    total: data.integrations?.summary?.total ?? 2,
+    verificationHealthy: data.integrations?.verification?.summary?.healthy
+  });
+  const releaseGateLevel = data.releaseGate
+    ? classifyReleaseGateStatus(data.releaseGate)
+    : 'blocked';
+  const nightlyRegressionLevel = data.nightly
+    ? classifyNightlyStatus(data.nightly.regression)
+    : 'blocked';
+  const nightlyE2eLevel = data.nightly
+    ? classifyNightlyStatus(data.nightly.e2e)
+    : 'blocked';
+
+  function statusTone(level: AdminStatusLevel): string {
+    if (level === 'healthy') return 'text-emerald-700';
+    if (level === 'degraded') return 'text-amber-700';
+    return 'text-red-700';
+  }
+
   return (
     <div className="space-y-6">
       {/* Period Selector */}
@@ -219,7 +246,7 @@ export default function AdminDashboardOverview() {
               RESEND: {data.integrations?.resend?.source || 'none'} • Analytics: {data.integrations?.analytics?.source || 'none'}
             </div>
             <div className="text-xs text-gray-500">
-              Durum: {data.integrations?.summary?.fullyConfigured ? 'healthy' : 'degraded'}
+              Durum: <span className={statusTone(integrationLevel)}>{integrationLevel}</span>
             </div>
             <div className="text-xs text-gray-500">
               Doğrulama: {data.integrations?.verification?.summary?.healthy ? 'verified' : 'review'}
@@ -316,7 +343,7 @@ export default function AdminDashboardOverview() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <div className="text-xs text-gray-500 mb-1">Durum</div>
-              <div className="text-xl font-bold text-gray-900">{data.releaseGate.finalStatus}</div>
+              <div className={`text-xl font-bold ${statusTone(releaseGateLevel)}`}>{releaseGateLevel}</div>
             </div>
             <div>
               <div className="text-xs text-gray-500 mb-1">Hata Sayısı</div>
@@ -356,9 +383,9 @@ export default function AdminDashboardOverview() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-lg border border-gray-200 p-4">
               <div className="text-xs text-gray-500 mb-1">Regression</div>
-              <div className="text-xl font-bold text-gray-900">{data.nightly.regression.outcome}</div>
+              <div className={`text-xl font-bold ${statusTone(nightlyRegressionLevel)}`}>{nightlyRegressionLevel}</div>
               <div className="text-xs text-gray-500">
-                Success rate: {data.nightly.regression.successRatePercent ?? 'yok'}%
+                Outcome: {data.nightly.regression.outcome} • Success rate: {data.nightly.regression.successRatePercent ?? 'yok'}%
               </div>
               <div className="text-xs text-gray-500">
                 Son run: {data.nightly.regression.generatedAt || 'Henüz yok'}
@@ -369,9 +396,9 @@ export default function AdminDashboardOverview() {
             </div>
             <div className="rounded-lg border border-gray-200 p-4">
               <div className="text-xs text-gray-500 mb-1">E2E</div>
-              <div className="text-xl font-bold text-gray-900">{data.nightly.e2e.outcome}</div>
+              <div className={`text-xl font-bold ${statusTone(nightlyE2eLevel)}`}>{nightlyE2eLevel}</div>
               <div className="text-xs text-gray-500">
-                Success rate: {data.nightly.e2e.successRatePercent ?? 'yok'}%
+                Outcome: {data.nightly.e2e.outcome} • Success rate: {data.nightly.e2e.successRatePercent ?? 'yok'}%
               </div>
               <div className="text-xs text-gray-500">
                 Son run: {data.nightly.e2e.generatedAt || 'Henüz yok'}

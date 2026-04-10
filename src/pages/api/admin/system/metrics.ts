@@ -5,11 +5,14 @@
 
 import type { APIRoute } from 'astro';
 import { getSystemMetrics, getOperationalSnapshot } from '../../../../lib/admin-dashboard';
+import { classifyIntegrationStatus, classifyNightlyStatus, classifyReleaseGateStatus } from '../../../../lib/admin-status';
 import { getModerationStats } from '../../../../lib/admin-moderation';
 import { getModerationQueue, getContentFlags } from '../../../../lib/admin-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { getNightlyOpsSummary } from '../../../../lib/nightly-ops-summary';
+import { getReleaseGateSummary } from '../../../../lib/release-gate-summary';
 import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
 
 export const GET: APIRoute = async ({ request, locals }) => {
@@ -25,17 +28,22 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const [systemMetrics, modStats, pendingQueue, pendingFlags, integrationSettings, operational] = await Promise.all([
+    const [systemMetrics, modStats, pendingQueue, pendingFlags, integrationSettings, operational, nightly, releaseGate] = await Promise.all([
       getSystemMetrics(),
       getModerationStats(),
       getModerationQueue('pending', 1),
       getContentFlags('pending', 1),
       getRuntimeIntegrationSettings(),
-      getOperationalSnapshot(7)
+      getOperationalSnapshot(7),
+      getNightlyOpsSummary(),
+      getReleaseGateSummary()
     ]);
     const configuredCount =
       Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
-    const integrationsReady = configuredCount === 2;
+    const integrationStatus = classifyIntegrationStatus({
+      configuredCount,
+      total: 2
+    });
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/system/metrics', HttpStatus.OK, duration);
@@ -51,7 +59,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
             flagCount: (await getContentFlags('pending', 1000))?.length || 0
           },
           health: {
-            status: integrationsReady ? 'healthy' : 'degraded',
+            status: integrationStatus,
             timestamp: new Date().toISOString(),
             integrations: {
               resend: {
@@ -65,11 +73,19 @@ export const GET: APIRoute = async ({ request, locals }) => {
               summary: {
                 configuredCount,
                 total: 2,
-                fullyConfigured: integrationsReady
+                fullyConfigured: configuredCount === 2
               }
             }
           },
-          operational
+          operational,
+          nightly,
+          releaseGate,
+          statusSummary: {
+            integrations: integrationStatus,
+            regression: classifyNightlyStatus(nightly.regression),
+            e2e: classifyNightlyStatus(nightly.e2e),
+            releaseGate: classifyReleaseGateStatus(releaseGate)
+          }
         }
       },
       HttpStatus.OK,

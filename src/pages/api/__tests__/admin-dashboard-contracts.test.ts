@@ -193,6 +193,12 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.pendingWork.queueCount).toBe(2);
     expect(body.data.data.pendingWork.flagCount).toBe(3);
     expect(body.data.data.health.integrations.summary.configuredCount).toBe(1);
+    expect(body.data.data.nightly.regression.successRatePercent).toBe(86);
+    expect(body.data.data.releaseGate.finalStatus).toBe('passed');
+    expect(body.data.data.statusSummary.integrations).toBe('degraded');
+    expect(body.data.data.statusSummary.regression).toBe('healthy');
+    expect(body.data.data.statusSummary.e2e).toBe('degraded');
+    expect(body.data.data.statusSummary.releaseGate).toBe('healthy');
     expect(body.data.data.operational.webhook.stripe.p95DurationMs).toBe(250);
   });
 
