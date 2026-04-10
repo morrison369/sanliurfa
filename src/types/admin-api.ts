@@ -15,6 +15,10 @@ type SubscriptionUsersPostResponse =
   paths['/api/admin/subscriptions/users']['post']['responses']['200']['content']['application/json'];
 type MessageStatusPostResponse =
   paths['/api/admin/messages/{id}/status']['post']['responses']['200']['content']['application/json'];
+type AuditLogsResponse =
+  paths['/api/admin/audit-logs']['get']['responses']['200']['content']['application/json'];
+type PerformanceOptimizationResponse =
+  paths['/api/admin/performance/optimization']['get']['responses']['200']['content']['application/json'];
 
 export interface IntegrationVerificationState {
   status: string;
@@ -119,6 +123,8 @@ export type AdminArtifactHealthData = ArtifactHealthResponse['data']['data'];
 export type AdminSubscriptionUsersListData = SubscriptionUsersGetResponse['data'];
 export type AdminSubscriptionUsersMutationData = SubscriptionUsersPostResponse['data'];
 export type AdminMessageStatusMutationData = MessageStatusPostResponse['data'];
+export type AdminAuditLogsData = AuditLogsResponse['data'];
+export type AdminPerformanceOptimizationData = PerformanceOptimizationResponse['data']['data'];
 
 export interface AdminDashboardOverviewLegacyShape {
   overview: {
