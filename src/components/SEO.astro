@@ -13,6 +13,10 @@ export interface Props {
   canonicalUrl?: string;
   noindex?: boolean;
   schema?: object | object[];
+  alternateUrls?: Array<{
+    href: string;
+    hreflang: string;
+  }>;
 }
 
 const {
@@ -27,12 +31,18 @@ const {
   canonicalUrl,
   noindex = false,
   schema,
+  alternateUrls,
 } = Astro.props;
 
 const siteUrl = 'https://sanliurfa.com';
 const fullTitle = title.includes('Şanlıurfa') ? title : `${title} | Şanlıurfa.com`;
 const fullImageUrl = image.startsWith('http') ? image : `${siteUrl}${image}`;
 const fullCanonicalUrl = canonicalUrl || `${siteUrl}${Astro.url.pathname}`;
+const defaultAlternateUrls = [
+  { hreflang: 'tr-TR', href: fullCanonicalUrl },
+  { hreflang: 'x-default', href: fullCanonicalUrl }
+];
+const finalAlternateUrls = alternateUrls && alternateUrls.length > 0 ? alternateUrls : defaultAlternateUrls;
 
 // Default Schema.org yapısı
 const defaultSchema = {
@@ -81,6 +91,9 @@ const finalSchema = schema ? (Array.isArray(schema) ? [defaultSchema, ...schema]
 <meta name="title" content={fullTitle} />
 <meta name="description" content={description} />
 <link rel="canonical" href={fullCanonicalUrl} />
+{finalAlternateUrls.map((alternate) => (
+  <link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
+))}
 
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 {!noindex && <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />}

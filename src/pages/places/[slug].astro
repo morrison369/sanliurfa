@@ -70,10 +70,40 @@ const breadcrumbItems = [
   { label: place.name, href: `/places/${place.slug}` },
 ];
 
+const placeSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  name: place.name,
+  description: place.short_description || place.description || '',
+  image: Array.isArray(place.images) ? place.images : [],
+  telephone: place.phone || undefined,
+  url: place.website || `https://sanliurfa.com/places/${place.slug}`,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: place.address || '',
+    addressLocality: place.city || 'Şanlıurfa',
+    addressCountry: 'TR'
+  },
+  geo: place.latitude && place.longitude ? {
+    '@type': 'GeoCoordinates',
+    latitude: String(place.latitude),
+    longitude: String(place.longitude)
+  } : undefined,
+  aggregateRating: place.review_count ? {
+    '@type': 'AggregateRating',
+    ratingValue: String(place.rating || 0),
+    reviewCount: String(place.review_count || 0)
+  } : undefined
+};
+
 const seo = {
   title: `${place.name} - ${getCategoryLabel(place.category)}`,
   description: place.short_description || place.description,
   image: place.images?.[0],
+  type: 'place' as const,
+  canonicalUrl: `https://sanliurfa.com/places/${place.slug}`,
+  tags: Array.isArray(place.tags) ? place.tags : [],
+  schema: placeSchema,
 };
 ---
 
