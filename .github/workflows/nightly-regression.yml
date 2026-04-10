@@ -141,28 +141,32 @@ jobs:
             });
             const existing = issues.find((issue) => issue.title === title);
             let trendSummary = '## Trend\n- Not enough history yet';
-            if (existing) {
-              const { data: comments } = await github.rest.issues.listComments({
+            try {
+              const workflowFile = 'nightly-regression.yml';
+              const branch = context.ref?.startsWith('refs/heads/')
+                ? context.ref.replace('refs/heads/', '')
+                : undefined;
+              const { data: workflowRuns } = await github.rest.actions.listWorkflowRuns({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: existing.number,
-                per_page: 50
+                workflow_id: workflowFile,
+                per_page: 20,
+                ...(branch ? { branch } : {})
               });
-              const recentOutcomes = comments
-                .map((comment) => {
-                  const match = comment.body?.match(/- Outcome:\s+([a-zA-Z_]+)/);
-                  return match ? match[1].toLowerCase() : null;
-                })
-                .filter(Boolean)
-                .slice(-7);
+              const recentOutcomes = (workflowRuns.workflow_runs || [])
+                .filter((run) => run.status === 'completed' && run.conclusion)
+                .map((run) => String(run.conclusion).toLowerCase())
+                .slice(0, 7);
               if (recentOutcomes.length > 0) {
                 const successCount = recentOutcomes.filter((outcome) => outcome === 'success').length;
                 trendSummary = [
                   '## Trend',
-                  `- Last ${recentOutcomes.length} run success rate: ${Math.round((successCount / recentOutcomes.length) * 100)}%`,
+                  `- Last ${recentOutcomes.length} completed run success rate: ${Math.round((successCount / recentOutcomes.length) * 100)}%`,
                   `- Outcomes: ${recentOutcomes.join(', ')}`
                 ].join('\n');
               }
+            } catch (error) {
+              trendSummary = `## Trend\n- Workflow trend unavailable: ${error?.message || 'unknown error'}`;
             }
             const finalBody = [body, '', trendSummary].join('\n');
             if (existing) {

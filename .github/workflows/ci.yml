@@ -66,7 +66,7 @@ jobs:
       - name: Typecheck experimental exclude guard
         run: npm run typecheck:experimental:exclude:guard
       - name: Critical contracts and security smoke (blocking)
-        run: npm run test:critical
+        run: npm run test:critical:blocking
 
   critical_contracts_advisory:
     name: critical-contracts-advisory
@@ -102,10 +102,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Critical contracts and security smoke (advisory)
-        run: >
-          npm exec -- vitest run
-          src/pages/api/__tests__/contract-hardening.test.ts
-          src/lib/__tests__/email-contracts.test.ts
+        run: npm run test:critical:advisory
 
   full_gate:
     name: full-gate

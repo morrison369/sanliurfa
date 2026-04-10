@@ -1,0 +1,135 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const recordRequestMock = vi.fn();
+const getDashboardOverviewMock = vi.fn();
+const getSystemMetricsMock = vi.fn();
+const getOperationalSnapshotMock = vi.fn();
+const getModerationStatsMock = vi.fn();
+const getModerationQueueMock = vi.fn();
+const getContentFlagsMock = vi.fn();
+const getRuntimeIntegrationSettingsMock = vi.fn();
+const loggerMock = {
+  setRequestId: vi.fn(),
+  error: vi.fn(),
+  warn: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn(),
+  logMutation: vi.fn(),
+};
+
+vi.mock('../../../lib/metrics', () => ({
+  recordRequest: recordRequestMock,
+}));
+
+vi.mock('../../../lib/admin-dashboard', () => ({
+  getDashboardOverview: getDashboardOverviewMock,
+  getSystemMetrics: getSystemMetricsMock,
+  getOperationalSnapshot: getOperationalSnapshotMock,
+}));
+
+vi.mock('../../../lib/admin-moderation', () => ({
+  getModerationStats: getModerationStatsMock,
+  getModerationQueue: getModerationQueueMock,
+  getContentFlags: getContentFlagsMock,
+}));
+
+vi.mock('../../../lib/runtime-integration-settings', () => ({
+  getRuntimeIntegrationSettings: getRuntimeIntegrationSettingsMock,
+}));
+
+vi.mock('../../../lib/logging', () => ({
+  logger: loggerMock,
+}));
+
+describe('admin dashboard contracts', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.resetAllMocks();
+
+    getDashboardOverviewMock.mockResolvedValue({
+      users: { total: 10, new: 1, active: 5 },
+      content: { places: 20, reviews: 40, comments: 30, newReviews: 2 },
+      flags: { pending: 1, resolved: 3, total: 4 },
+      moderation: { totalActions: 8, warnings: 2, suspensions: 1, bans: 0 },
+      period: 30,
+    });
+    getSystemMetricsMock.mockResolvedValue({
+      database: { totalUsers: 10, totalPlaces: 20, totalReviews: 40 },
+      users: { total: 10, newThisWeek: 1, activeToday: 4 },
+      moderation: { pendingItems: 2, activeCases: 1 },
+      timestamp: new Date().toISOString(),
+    });
+    getOperationalSnapshotMock.mockResolvedValue({
+      generatedAt: new Date().toISOString(),
+      oauth: { callback: { sampleSize: 12, errorRatePercent: 1 } },
+      webhook: { stripe: { sampleSize: 15, errorRatePercent: 0, p95DurationMs: 250, duplicateRatePercent: 0 } },
+      search: { periodDays: 7, totalTopSearches: 21, topQueries: [{ query: 'urfa', count: 9 }] },
+    });
+    getModerationStatsMock.mockResolvedValue({
+      queue: { pending: 2, inReview: 1 },
+      flags: { highSeverity: 1 },
+      actions: { suspensions: 1 },
+    });
+    getModerationQueueMock.mockImplementation(async (_status: string, limit: number) => (
+      limit >= 1000 ? [{ id: 'q1' }, { id: 'q2' }] : [{ id: 'q0' }]
+    ));
+    getContentFlagsMock.mockImplementation(async (_status: string, limit: number) => (
+      limit >= 1000 ? [{ id: 'f1' }, { id: 'f2' }, { id: 'f3' }] : [{ id: 'f0' }]
+    ));
+    getRuntimeIntegrationSettingsMock.mockResolvedValue({
+      resendApiKey: 're_live_123',
+      analyticsId: '',
+      source: {
+        resendApiKey: 'admin',
+        analyticsId: 'none',
+      },
+    });
+  });
+
+  it('rejects unauthorized admin dashboard overview access', async () => {
+    const { GET } = await import('../admin/dashboard/overview.ts');
+    const request = new Request('https://example.com/api/admin/dashboard/overview?days=30');
+
+    const response = await GET({
+      request,
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(403);
+    expect(getDashboardOverviewMock).not.toHaveBeenCalled();
+  });
+
+  it('returns operational snapshot and integration sources in dashboard overview', async () => {
+    const { GET } = await import('../admin/dashboard/overview.ts');
+    const request = new Request('https://example.com/api/admin/dashboard/overview?days=30');
+
+    const response = await GET({
+      request,
+      locals: { user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.data.integrations.resend.source).toBe('admin');
+    expect(body.data.data.integrations.analytics.source).toBe('none');
+    expect(body.data.data.operational.oauth.callback.sampleSize).toBe(12);
+    expect(body.data.data.operational.search.topQueries[0].query).toBe('urfa');
+  });
+
+  it('returns system metrics with health and operational summary', async () => {
+    const { GET } = await import('../admin/system/metrics.ts');
+    const request = new Request('https://example.com/api/admin/system/metrics');
+
+    const response = await GET({
+      request,
+      locals: { user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.data.health.status).toBe('degraded');
+    expect(body.data.data.pendingWork.queueCount).toBe(2);
+    expect(body.data.data.pendingWork.flagCount).toBe(3);
+    expect(body.data.data.operational.webhook.stripe.p95DurationMs).toBe(250);
+  });
+});
