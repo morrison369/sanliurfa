@@ -2,56 +2,58 @@
 import Layout from '../../layouts/Layout.astro';
 import { Clock, Users, ChefHat, Flame, MapPin, Star, ArrowRight } from 'lucide-react';
 import Breadcrumb from '../../components/Breadcrumb.astro';
+import { queryOne, queryRows } from '../../lib/postgres';
 
-// TODO: Fetch from Supabase
+const { slug } = Astro.params;
+const rawFood = await queryOne('SELECT * FROM foods WHERE slug = $1', [slug]);
+
+if (!rawFood) {
+  return Astro.redirect('/gastronomi');
+}
+
+const whereToEat = await queryRows(
+  "SELECT id, name, slug, rating, address FROM places WHERE category = 'restaurant' AND status = 'active' ORDER BY rating DESC NULLS LAST LIMIT 3"
+);
+
+const coverImage =
+  rawFood.cover_image ||
+  (Array.isArray(rawFood.images) && rawFood.images.length > 0 ? rawFood.images[0] : '/images/placeholder-place.jpg');
+
+const ingredients = Array.isArray(rawFood.ingredients) ? rawFood.ingredients : [];
+const tags = Array.isArray(rawFood.tags) ? rawFood.tags : [];
+const gallery = Array.isArray(rawFood.images) && rawFood.images.length > 0 ? rawFood.images : [coverImage];
+const prepTime = rawFood.prep_time ? `${rawFood.prep_time} dk` : 'Belirtilmedi';
+
 const food = {
-  id: 'urfa-kebabi',
-  slug: 'urfa-kebabi',
-  name: 'Urfa Kebabı',
-  description: 'Baharatlı kıymanın odun ateşinde pişirilmesiyle hazırlanan efsane lezzet. Şanlıurfa\'nın dünyaca ünlü gastronomik simgesi.',
-  image: '/images/foods/urfa-kebabi.jpg',
-  gallery: [
-    '/images/foods/urfa-kebabi-1.jpg',
-    '/images/foods/urfa-kebabi-2.jpg',
-    '/images/foods/urfa-kebabi-3.jpg',
-  ],
-  history: 'Urfa kebabının tarihi, şehrin binlerce yıllık geçmişine dayanır. Geleneksel olarak düğün ve özel günlerde hazırlanan bu lezzet, zamanla Şanlıurfa\'nın vazgeçilmezi olmuştur.',
-  ingredients: [
-    'Kuzu kıyma (yağlı)',
-    'Soğan',
-    'Sarımsak',
-    'Kimyon',
-    'Pul biber',
-    'Karabiber',
-    'Tuz',
-    'Maydanoz',
-  ],
-  preparation: `
-    1. Kıyma, rendelenmiş soğan ve baharatlar bir kapta yoğrulur.
-    2. En az 2 saat dinlendirilir.
-    3. Şişlere yassı bir şekilde yerleştirilir.
-    4. Odun ateşinde kızgın köz üzerinde pişirilir.
-    5. Lavaş ekmeği üzerinde servis edilir.
-  `,
-  isSpicy: false,
-  isVegetarian: false,
-  difficulty: 'Zor',
-  prepTime: '45 dk + 2 saat dinlenme',
-  servingSize: '4 kişilik',
-  calories: '450 kcal/porsiyon',
-  rating: 4.9,
-  reviewCount: 2156,
-  whereToEat: [
-    { id: '1', name: 'Ciğerci Aziz Usta', rating: 4.9, address: 'Balıklıgöl' },
-    { id: '2', name: 'Zahter Kahvaltı', rating: 4.7, address: 'Eyyübiye' },
-    { id: '3', name: 'Köprübaşı Kebap', rating: 4.8, address: 'Haliliye' },
-  ],
-  tips: [
-    'Kıymanın yağ oranı en az %20 olmalıdır.',
-    'Odun ateşinde pişirilmesi şarttır.',
-    'Yanında ezme salata ve közlenmiş biber ile servis edilir.',
-    'Sıcak sıcak yenmelidir.',
-  ],
+  id: rawFood.id,
+  slug: rawFood.slug,
+  name: rawFood.name,
+  description: rawFood.description || `${rawFood.name} Şanlıurfa mutfağının öne çıkan lezzetlerinden biridir.`,
+  image: coverImage,
+  gallery,
+  history: rawFood.history || `${rawFood.name}, Şanlıurfa mutfağında uzun yıllardır bilinen yöresel tatlardan biridir.`,
+  ingredients,
+  preparation:
+    ingredients.length > 0
+      ? ingredients.map((ingredient: string, index: number) => `${index + 1}. ${ingredient}`).join('\n')
+      : 'Tarif adımları yakında eklenecek.',
+  isSpicy: Boolean(rawFood.is_spicy),
+  isVegetarian: Boolean(rawFood.is_vegetarian),
+  difficulty: rawFood.difficulty || 'Belirtilmedi',
+  prepTime,
+  servingSize: 'Belirtilmedi',
+  calories: 'Belirtilmedi',
+  rating: Number(rawFood.rating || 0),
+  reviewCount: Number(rawFood.review_count || 0),
+  whereToEat,
+  tips:
+    tags.length > 0
+      ? tags.map((tag: string) => `${tag} bu lezzetin öne çıkan özelliklerinden biridir.`)
+      : [
+          'Geleneksel sunum için yöresel eşlikçilerle servis edin.',
+          'Taze hazırlandığında en iyi sonucu verir.',
+          'Yerel restoranlarda usta yorumlarını denemek en doğru karşılaştırmayı sağlar.'
+        ],
 };
 
 const breadcrumbItems = [
@@ -202,7 +204,7 @@ const seo = {
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Nerede Yenir?</h3>
             <div class="space-y-3">
               {food.whereToEat.map(place => (
-                <a href={`/places/${place.id}`} class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <a href={`/places/${place.slug}`} class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-lg flex items-center justify-center text-urfa-600 dark:text-urfa-400 font-bold">
                     {place.name.charAt(0)}
                   </div>

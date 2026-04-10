@@ -1,38 +1,62 @@
 ---
 import Layout from '../../../../layouts/Layout.astro';
 import { MapPin, Upload, Clock, Phone, Globe, Mail, Save, ArrowLeft } from 'lucide-react';
+import { queryOne } from '../../../../lib/postgres';
 
 const { id } = Astro.params;
 
-// TODO: Fetch place from Supabase
+function normalizeOpeningHours(value: unknown): Record<string, string> {
+  if (!value) {
+    return {};
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, string>;
+      }
+    } catch {
+      return {
+        monday: value,
+        tuesday: value,
+        wednesday: value,
+        thursday: value,
+        friday: value,
+        saturday: value,
+        sunday: value
+      };
+    }
+  }
+
+  if (typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, string>;
+  }
+
+  return {};
+}
+
+const rawPlace = await queryOne('SELECT * FROM places WHERE id = $1', [id]);
+
+if (!rawPlace) {
+  return Astro.redirect('/admin/places');
+}
+
 const place = {
-  id,
-  slug: 'cigerci-aziz-usta',
-  name: 'Ciğerci Aziz Usta',
-  category: 'restaurant',
-  description: '1950\'den beri hizmet veren efsane ciğerci.',
-  short_description: 'Şanlıurfa\'nın en ünlü ciğercisi',
-  address: 'Balıklıgöl Mahallesi, Atatürk Bulvarı No:123, Şanlıurfa',
-  phone: '+90 414 123 45 67',
-  email: 'info@cigerciaziz.com',
-  website: 'https://cigerciaziz.com',
-  price_range: 2,
-  latitude: 37.1592,
-  longitude: 38.7965,
-  status: 'active',
-  is_featured: true,
-  is_verified: true,
-  amenities: ['Otopark', 'Wifi', 'Klima'],
-  tags: ['Ciğer Kebabı', 'Tarihi', 'Aile'],
-  opening_hours: {
-    monday: '08:00 - 23:00',
-    tuesday: '08:00 - 23:00',
-    wednesday: '08:00 - 23:00',
-    thursday: '08:00 - 23:00',
-    friday: '08:00 - 00:00',
-    saturday: '08:00 - 00:00',
-    sunday: '08:00 - 23:00',
-  },
+  ...rawPlace,
+  short_description: rawPlace.short_description || rawPlace.description?.slice(0, 150) || '',
+  phone: rawPlace.phone || '',
+  email: rawPlace.email || '',
+  website: rawPlace.website || '',
+  price_range: rawPlace.price_range || 1,
+  latitude: rawPlace.latitude ?? 37.1592,
+  longitude: rawPlace.longitude ?? 38.7965,
+  status: rawPlace.status || 'pending',
+  is_featured: Boolean(rawPlace.is_featured),
+  is_verified: Boolean(rawPlace.is_verified),
+  amenities: Array.isArray(rawPlace.amenities) ? rawPlace.amenities : [],
+  tags: Array.isArray(rawPlace.tags) ? rawPlace.tags : [],
+  opening_hours: normalizeOpeningHours(rawPlace.opening_hours),
 };
 
 const seo = {

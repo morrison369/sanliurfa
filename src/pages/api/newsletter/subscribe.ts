@@ -1,12 +1,15 @@
 // API: Newsletter subscription (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { queryOne, insert, update as updateDb } from '../../../lib/postgres';
+import { queryOne, insert } from '../../../lib/postgres';
+import { getWelcomeEmailHTML, sendEmail } from '../../../lib/email';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const { email } = await request.json();
+    const normalizedEmail = email?.toString().trim().toLowerCase();
 
-    if (!email) {
+    if (!normalizedEmail) {
       return new Response(
         JSON.stringify({ error: 'E-posta adresi gereklidir' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -15,7 +18,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       return new Response(
         JSON.stringify({ error: 'Geçerli bir e-posta adresi girin' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -25,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Check if already subscribed
     const existing = await queryOne(
       'SELECT id, status FROM newsletter_subscribers WHERE email = $1',
-      [email]
+      [normalizedEmail]
     );
 
     if (existing && existing.status === 'active') {
@@ -44,18 +47,27 @@ export const POST: APIRoute = async ({ request }) => {
     } else {
       // Insert new subscriber
       await insert('newsletter_subscribers', {
-        email,
+        email: normalizedEmail,
         subscribed_at: new Date().toISOString(),
         status: 'active',
       });
     }
 
-    // TODO: Send welcome email
+    const displayName = normalizedEmail.split('@')[0] || 'Değerli abonemiz';
+    const welcomeEmailSent = await sendEmail({
+      to: normalizedEmail,
+      subject: 'Şanlıurfa.com bültenine hoş geldiniz',
+      html: getWelcomeEmailHTML(displayName)
+    });
+
+    if (!welcomeEmailSent) {
+      logger.warn('Newsletter welcome email could not be sent', { email: normalizedEmail });
+    }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Bültenimize başarıyla abone oldunuz!' 
+      JSON.stringify({
+        success: true,
+        message: 'Bültenimize başarıyla abone oldunuz!'
       }),
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
@@ -86,9 +98,9 @@ export const DELETE: APIRoute = async ({ request }) => {
     );
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Abonelikten çıktınız' 
+      JSON.stringify({
+        success: true,
+        message: 'Abonelikten çıktınız'
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );

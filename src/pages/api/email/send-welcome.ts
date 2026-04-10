@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const { name, email } = validation.data as { name: string; email: string };
-    const html = getWelcomeEmailHTML(name, email);
+    const html = getWelcomeEmailHTML(name);
 
     const sent = await sendEmail({
       to: email,
