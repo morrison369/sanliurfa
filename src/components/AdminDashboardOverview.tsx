@@ -78,6 +78,13 @@ interface DashboardData {
     nightlyE2E: { available: boolean; generatedAt: string | null; status: AdminStatusLevel };
     performanceOps: { available: boolean; generatedAt: string | null; status: AdminStatusLevel };
   };
+  artifactHealthSummary?: {
+    overall: AdminStatusLevel;
+    healthyCount: number;
+    degradedCount: number;
+    blockedCount: number;
+    total: number;
+  };
   releaseGate?: {
     available: boolean;
     generatedAt: string | null;
@@ -430,7 +437,21 @@ export default function AdminDashboardOverview() {
 
       {data.artifactHealth && (
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Artifact Health</h3>
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h3 className="font-semibold text-gray-900">Artifact Health</h3>
+              {data.artifactHealthSummary && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Healthy: {data.artifactHealthSummary.healthyCount} • Degraded: {data.artifactHealthSummary.degradedCount} • Blocked: {data.artifactHealthSummary.blockedCount}
+                </div>
+              )}
+            </div>
+            {data.artifactHealthSummary && (
+              <div className={`text-sm font-semibold ${statusTone(data.artifactHealthSummary.overall)}`}>
+                {data.artifactHealthSummary.overall}
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <div className="text-xs text-gray-500 mb-1">Release Gate</div>
