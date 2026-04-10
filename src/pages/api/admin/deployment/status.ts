@@ -26,6 +26,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       getDeploymentChecklistRuntime(),
       getRuntimeIntegrationSettings()
     ]);
+    const configuredCount = Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/deployment/status', HttpStatus.OK, duration);
@@ -51,6 +52,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
             analytics: {
               configured: Boolean(integrationSettings.analyticsId),
               source: integrationSettings.source.analyticsId
+            },
+            summary: {
+              configuredCount,
+              total: 2,
+              fullyConfigured: configuredCount === 2
             }
           },
           timestamp: new Date().toISOString()

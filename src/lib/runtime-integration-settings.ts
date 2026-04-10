@@ -18,6 +18,24 @@ export type RuntimeIntegrationSettings = {
   };
 };
 
+export type IntegrationVerificationStatus = 'verified' | 'invalid' | 'unreachable' | 'not_configured';
+
+export type RuntimeIntegrationVerificationEntry = {
+  status: IntegrationVerificationStatus;
+  scope: 'provider' | 'runtime';
+  checkedAt: string;
+  message: string;
+};
+
+export type RuntimeIntegrationVerification = {
+  resend: RuntimeIntegrationVerificationEntry;
+  analytics: RuntimeIntegrationVerificationEntry;
+  summary: {
+    healthy: boolean;
+    checkedAt: string;
+  };
+};
+
 let cache: IntegrationSettingsCache | null = null;
 
 const resendPlaceholderPatterns = [/^re_x+$/i, /^your_/i, /^changeme$/i];
@@ -134,6 +152,122 @@ export async function getRuntimeIntegrationSettings(forceRefresh = false): Promi
 
 export function clearRuntimeIntegrationSettingsCache(): void {
   cache = null;
+}
+
+async function verifyResendKey(apiKey: string): Promise<RuntimeIntegrationVerificationEntry> {
+  const checkedAt = new Date().toISOString();
+
+  if (!apiKey) {
+    return {
+      status: 'not_configured',
+      scope: 'provider',
+      checkedAt,
+      message: 'RESEND API anahtarı tanımlı değil'
+    };
+  }
+
+  if (!isValidResendKey(apiKey)) {
+    return {
+      status: 'invalid',
+      scope: 'provider',
+      checkedAt,
+      message: 'RESEND API anahtarı format doğrulamasını geçemedi'
+    };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 4_000);
+
+  try {
+    const response = await fetch('https://api.resend.com/domains', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${apiKey}`
+      },
+      signal: controller.signal
+    });
+
+    if (response.ok) {
+      return {
+        status: 'verified',
+        scope: 'provider',
+        checkedAt,
+        message: 'RESEND sağlayıcı doğrulaması başarılı'
+      };
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      return {
+        status: 'invalid',
+        scope: 'provider',
+        checkedAt,
+        message: 'RESEND anahtarı sağlayıcı tarafından reddedildi'
+      };
+    }
+
+    return {
+      status: 'unreachable',
+      scope: 'provider',
+      checkedAt,
+      message: `RESEND doğrulaması beklenmeyen yanıt döndürdü (${response.status})`
+    };
+  } catch (error) {
+    return {
+      status: 'unreachable',
+      scope: 'provider',
+      checkedAt,
+      message: error instanceof Error ? error.message : 'RESEND doğrulaması başarısız'
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function verifyAnalyticsRuntime(analyticsId: string): RuntimeIntegrationVerificationEntry {
+  const checkedAt = new Date().toISOString();
+
+  if (!analyticsId) {
+    return {
+      status: 'not_configured',
+      scope: 'runtime',
+      checkedAt,
+      message: 'Analytics ID tanımlı değil'
+    };
+  }
+
+  if (!isValidAnalyticsId(analyticsId)) {
+    return {
+      status: 'invalid',
+      scope: 'runtime',
+      checkedAt,
+      message: 'Analytics ID format doğrulamasını geçemedi'
+    };
+  }
+
+  return {
+    status: 'verified',
+    scope: 'runtime',
+    checkedAt,
+    message: 'Layout runtime analytics kimliğini tüketmeye hazır'
+  };
+}
+
+export async function verifyRuntimeIntegrationSettings(
+  settings?: RuntimeIntegrationSettings
+): Promise<RuntimeIntegrationVerification> {
+  const current = settings ?? await getRuntimeIntegrationSettings();
+  const resend = await verifyResendKey(current.resendApiKey);
+  const analytics = verifyAnalyticsRuntime(current.analyticsId);
+  const checkedAt = new Date().toISOString();
+
+  return {
+    resend,
+    analytics,
+    summary: {
+      healthy: resend.status === 'verified' && analytics.status === 'verified',
+      checkedAt
+    }
+  };
 }
 
 export async function saveRuntimeIntegrationSetting(options: {

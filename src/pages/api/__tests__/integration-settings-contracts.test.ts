@@ -5,6 +5,7 @@ const getRuntimeIntegrationSettingsMock = vi.fn();
 const saveRuntimeIntegrationSettingMock = vi.fn();
 const isValidResendKeyMock = vi.fn();
 const isValidAnalyticsIdMock = vi.fn();
+const verifyRuntimeIntegrationSettingsMock = vi.fn();
 const logAdminActionMock = vi.fn();
 const loggerMock = {
   setRequestId: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock('../../../lib/runtime-integration-settings', () => ({
   saveRuntimeIntegrationSetting: saveRuntimeIntegrationSettingMock,
   isValidResendKey: isValidResendKeyMock,
   isValidAnalyticsId: isValidAnalyticsIdMock,
+  verifyRuntimeIntegrationSettings: verifyRuntimeIntegrationSettingsMock,
 }));
 
 vi.mock('../../../lib/admin-users', () => ({
@@ -50,6 +52,24 @@ describe('integration settings contracts', () => {
     logAdminActionMock.mockResolvedValue(undefined);
     isValidResendKeyMock.mockImplementation((value: string) => /^re_[a-z0-9]+$/i.test(value));
     isValidAnalyticsIdMock.mockImplementation((value: string) => /^G-[A-Z0-9]+$/i.test(value));
+    verifyRuntimeIntegrationSettingsMock.mockResolvedValue({
+      resend: {
+        status: 'verified',
+        scope: 'provider',
+        checkedAt: '2026-04-10T00:00:00.000Z',
+        message: 'ok',
+      },
+      analytics: {
+        status: 'verified',
+        scope: 'runtime',
+        checkedAt: '2026-04-10T00:00:00.000Z',
+        message: 'ok',
+      },
+      summary: {
+        healthy: true,
+        checkedAt: '2026-04-10T00:00:00.000Z',
+      },
+    });
   });
 
   it('rejects unauthorized GET', async () => {
@@ -90,6 +110,31 @@ describe('integration settings contracts', () => {
     expect(body.data.data.analytics.configured).toBe(true);
     expect(body.data.data.analytics.source).toBe('env');
     expect(typeof body.data.data.resend.maskedValue).toBe('string');
+    expect(body.data.data.verification).toBeUndefined();
+  });
+
+  it('returns live verification details when requested on GET', async () => {
+    getRuntimeIntegrationSettingsMock.mockResolvedValueOnce({
+      resendApiKey: 're_1234567890abcdef',
+      analyticsId: 'G-TEST12345',
+      source: {
+        resendApiKey: 'admin',
+        analyticsId: 'admin',
+      },
+    });
+
+    const { GET } = await import('../admin/system/integration-settings.ts');
+    const request = new Request('https://example.com/api/admin/system/integration-settings?includeVerification=1');
+
+    const response = await GET({
+      request,
+      locals: { user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.data.verification.summary.healthy).toBe(true);
+    expect(verifyRuntimeIntegrationSettingsMock).toHaveBeenCalledTimes(1);
   });
 
   it('rejects non-json PUT payload', async () => {
@@ -245,6 +290,32 @@ describe('integration settings contracts', () => {
     expect(saveRuntimeIntegrationSettingMock).toHaveBeenCalledWith({
       settingKey: 'analyticsId',
       value: 'G-LOWER123',
+      adminId: 'admin-1',
+    });
+  });
+
+  it('supports partial updates and empty string clear values', async () => {
+    const { PUT } = await import('../admin/system/integration-settings.ts');
+    const request = new Request('https://example.com/api/admin/system/integration-settings', {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        resendApiKey: '',
+      }),
+    });
+
+    const response = await PUT({
+      request,
+      locals: { user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    expect(saveRuntimeIntegrationSettingMock).toHaveBeenCalledTimes(1);
+    expect(saveRuntimeIntegrationSettingMock).toHaveBeenCalledWith({
+      settingKey: 'resendApiKey',
+      value: '',
       adminId: 'admin-1',
     });
   });

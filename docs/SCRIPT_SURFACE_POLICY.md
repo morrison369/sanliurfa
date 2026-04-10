@@ -21,6 +21,8 @@ These are the only commands operators should treat as the primary interface:
 - Do not add new top-level operator docs that depend on individual `test:phase:<range>` scripts.
 - Keep the compatibility surface until the generator and runner can remove it safely.
 - Review the current script count with `npm run phase:scripts:report`.
+- Active blocking decisions must stay on `quick-gate`, `full-gate`, `test:critical:blocking`, and `test:e2e:smoke`.
+- Legacy phase workflow is manual-only; see `docs/ops/LEGACY_PHASE_SURFACE.md`.
 
 ## Change Policy
 - Script surface changes belong in dedicated ops PRs, not mixed into dependency-only PRs unless the change is needed for validation.

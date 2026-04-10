@@ -33,7 +33,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
       getRuntimeIntegrationSettings(),
       getOperationalSnapshot(7)
     ]);
-    const integrationsReady = Boolean(integrationSettings.resendApiKey) && Boolean(integrationSettings.analyticsId);
+    const configuredCount =
+      Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
+    const integrationsReady = configuredCount === 2;
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/system/metrics', HttpStatus.OK, duration);
@@ -59,6 +61,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
               analytics: {
                 configured: Boolean(integrationSettings.analyticsId),
                 source: integrationSettings.source.analyticsId
+              },
+              summary: {
+                configuredCount,
+                total: 2,
+                fullyConfigured: integrationsReady
               }
             }
           },

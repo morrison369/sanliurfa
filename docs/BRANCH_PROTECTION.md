@@ -1,17 +1,24 @@
 # Branch Protection Policy
 
-`master` branch için required check listesi:
+`main` ve `master` için baseline:
 
-1. `Typecheck app scope`
-2. `HTTP timeout governance guard`
-3. `Typecheck experimental exclude`
-4. `Typecheck experimental`
-5. `Release gate`
-6. `Run E2E smoke`
+- Pull request zorunlu
+- Up-to-date branch zorunlu
+- Force-push ve branch silme kapalı
+- Status checks zorunlu
+
+Required checks:
+- `quick-gate`
+
+Protected branch push checks:
+- `full-gate`
+
+Recommended advisory checks:
+- `critical-contracts-advisory`
+- `e2e-smoke-advisory`
 
 Operasyon notları:
 
-1. `typecheck:experimental` advisory değildir; blocking olmalıdır.
-2. `tsconfig.experimental.json` içine baseline dışı exclude eklenmez.
-3. `src/lib/`, `scripts/`, `tsconfig*.json` ve `.github/workflows/*` değişikliklerinde CODEOWNERS onayı zorunludur.
-4. Nightly full E2E sonucu issue/comment akışına raporlanır.
+1. Blocking karar yalnızca CI job isimleri üzerinden verilir; tekil step isimleri required check olarak kullanılmaz.
+2. `docs/BRANCH_PROTECTION.md`, `docs/ops/BRANCH_PROTECTION.md` ve `.github/workflows/ci.yml` merge/push check listelerinde drift üretmemelidir.
+3. `.github/workflows/*`, `scripts/*`, `tsconfig*.json`, `src/lib/*`, `package.json` değişikliklerinde CODEOWNERS onayı zorunludur.

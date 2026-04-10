@@ -43,6 +43,8 @@ jobs:
         run: npm run repo:stabilize:check
       - name: Script surface budget
         run: npm run script:surface:budget:check
+      - name: Branch protection drift check
+        run: npm run branch:protection:drift:check
       - name: Security secret scan
         run: npm run security:secrets:scan
       - name: HTTP timeout governance guard

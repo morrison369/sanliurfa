@@ -9,8 +9,9 @@ Apply these rules on `main` and `master`:
 
 Required checks:
 - `quick-gate`
-- `full-gate` (for protected branch push flow)
-- `critical-observability-guard` (covered inside gate, keep visible in run summary)
+
+Protected branch push checks:
+- `full-gate`
 
 Recommended advisory checks:
 - `critical-contracts-advisory`
@@ -18,3 +19,4 @@ Recommended advisory checks:
 
 Operational note:
 - `critical-contracts-advisory` is intentionally non-blocking to keep PR velocity while still surfacing drift in broader contract suites.
+- Blocking karar sadece job isimleri üzerinden verilir; step isimleri branch protection required check listesine yazılmaz.

@@ -112,6 +112,8 @@ describe('admin dashboard contracts', () => {
     const body = await response.json();
     expect(body.data.data.integrations.resend.source).toBe('admin');
     expect(body.data.data.integrations.analytics.source).toBe('none');
+    expect(body.data.data.integrations.summary.configuredCount).toBe(1);
+    expect(body.data.data.integrations.summary.fullyConfigured).toBe(false);
     expect(body.data.data.operational.oauth.callback.sampleSize).toBe(12);
     expect(body.data.data.operational.search.topQueries[0].query).toBe('urfa');
   });
@@ -130,6 +132,7 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.health.status).toBe('degraded');
     expect(body.data.data.pendingWork.queueCount).toBe(2);
     expect(body.data.data.pendingWork.flagCount).toBe(3);
+    expect(body.data.data.health.integrations.summary.configuredCount).toBe(1);
     expect(body.data.data.operational.webhook.stripe.p95DurationMs).toBe(250);
   });
 });

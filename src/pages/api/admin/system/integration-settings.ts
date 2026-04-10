@@ -7,7 +7,8 @@ import {
   getRuntimeIntegrationSettings,
   saveRuntimeIntegrationSetting,
   isValidAnalyticsId,
-  isValidResendKey
+  isValidResendKey,
+  verifyRuntimeIntegrationSettings
 } from '../../../../lib/runtime-integration-settings';
 
 function maskSecret(value: string): string {
@@ -97,7 +98,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
+    const url = new URL(request.url);
+    const includeVerification = url.searchParams.get('includeVerification') === '1';
     const settings = await getRuntimeIntegrationSettings(true);
+    const verification = includeVerification
+      ? await verifyRuntimeIntegrationSettings(settings)
+      : undefined;
     recordRequest('GET', '/api/admin/system/integration-settings', HttpStatus.OK, Date.now() - startTime);
 
     return apiResponse(
@@ -113,7 +119,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
             configured: Boolean(settings.analyticsId),
             source: settings.source.analyticsId,
             maskedValue: settings.analyticsId
-          }
+          },
+          verification
         }
       },
       HttpStatus.OK,

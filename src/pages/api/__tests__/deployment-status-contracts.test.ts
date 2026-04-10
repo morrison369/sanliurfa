@@ -90,5 +90,29 @@ describe('admin deployment status contracts', () => {
     expect(body.data.data.integrations.resend.source).toBe('admin');
     expect(body.data.data.integrations.analytics.configured).toBe(false);
     expect(body.data.data.integrations.analytics.source).toBe('none');
+    expect(body.data.data.integrations.summary.configuredCount).toBe(1);
+    expect(body.data.data.integrations.summary.fullyConfigured).toBe(false);
+  });
+
+  it('returns default none integration summary when nothing is configured', async () => {
+    getRuntimeIntegrationSettingsMock.mockResolvedValueOnce({
+      resendApiKey: '',
+      analyticsId: '',
+      source: { resendApiKey: 'none', analyticsId: 'none' },
+    });
+
+    const { GET } = await import('../admin/deployment/status.ts');
+    const request = new Request('https://example.com/api/admin/deployment/status');
+
+    const response = await GET({
+      request,
+      locals: { isAdmin: true },
+    } as any);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.data.integrations.summary.configuredCount).toBe(0);
+    expect(body.data.data.integrations.summary.total).toBe(2);
+    expect(body.data.data.integrations.summary.fullyConfigured).toBe(false);
   });
 });

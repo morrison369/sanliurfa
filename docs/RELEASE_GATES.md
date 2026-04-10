@@ -58,7 +58,8 @@ npm run release:gate:local
 ## CI Enforcement
 - `.github/workflows/ci.yml` (master) runs env contract, stabilization, secret scan, governance import guard, db drift, test DB bootstrap, migrate status + dry-run, app typecheck and e2e smoke.
 - Full E2E runs in advisory mode (`continue-on-error`) to keep merge path deterministic.
-- `.github/workflows/phase-gate.yml` blocks merge on env contract (ci), secret scan, app typecheck and phase tsconfig checks.
+- `.github/workflows/phase-gate.yml` legacy phase compatibility workflow'udur; merge kararı vermez ve manuel çalıştırılır.
+- Merge ve release kararı `.github/workflows/ci.yml` içindeki `quick-gate` ve `full-gate` job'ları üzerinden verilir.
 
 ## SLO Note
 - `test:e2e:smoke` route başına yanıt süresi bütçesi uygular (`SMOKE_MAX_MS`, varsayılan `2000`).

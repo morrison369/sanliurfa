@@ -29,6 +29,15 @@ const seo = {
           <div id="status-box" class="text-sm text-gray-600 dark:text-gray-300">
             Yükleniyor...
           </div>
+          <div id="verification-box" class="text-sm text-gray-600 dark:text-gray-300">
+            Canlı doğrulama bekleniyor...
+          </div>
+          <button
+            id="refresh-verification"
+            class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium"
+          >
+            Canlı Doğrulama Yap
+          </button>
         </section>
 
         <section class="space-y-4">
@@ -93,15 +102,17 @@ const seo = {
   <script is:inline>
     const statusBox = document.getElementById('status-box');
     const messageBox = document.getElementById('message-box');
+    const verificationBox = document.getElementById('verification-box');
     const resendInput = document.getElementById('resendApiKey');
     const analyticsInput = document.getElementById('analyticsId');
     const resendButton = document.getElementById('save-resend');
     const analyticsButton = document.getElementById('save-analytics');
     const clearResendButton = document.getElementById('clear-resend');
     const clearAnalyticsButton = document.getElementById('clear-analytics');
+    const refreshVerificationButton = document.getElementById('refresh-verification');
     const resendError = document.getElementById('resend-error');
     const analyticsError = document.getElementById('analytics-error');
-    const actionButtons = [resendButton, analyticsButton, clearResendButton, clearAnalyticsButton];
+    const actionButtons = [resendButton, analyticsButton, clearResendButton, clearAnalyticsButton, refreshVerificationButton];
     const resendPattern = /^re_[a-z0-9]+$/i;
     const analyticsPattern = /^G-[A-Z0-9]+$/;
 
@@ -111,8 +122,31 @@ const seo = {
       return `${name}: ${state} (${payload.source}) • ${value}`;
     }
 
-    async function loadStatus() {
-      const response = await fetch('/api/admin/system/integration-settings');
+    function renderVerification(verification) {
+      if (!verificationBox) {
+        return;
+      }
+
+      if (!verification) {
+        verificationBox.innerHTML = '<div>Canlı doğrulama henüz çalıştırılmadı.</div>';
+        return;
+      }
+
+      const summary = verification.summary?.healthy ? 'healthy' : 'degraded';
+      verificationBox.innerHTML = `
+        <div class="space-y-1">
+          <div>Genel durum: ${summary} • ${verification.summary?.checkedAt || 'bilinmiyor'}</div>
+          <div>RESEND: ${verification.resend?.status || 'unknown'} • ${verification.resend?.message || 'Mesaj yok'}</div>
+          <div>Analytics: ${verification.analytics?.status || 'unknown'} • ${verification.analytics?.message || 'Mesaj yok'}</div>
+        </div>
+      `;
+    }
+
+    async function loadStatus(includeVerification = false) {
+      const endpoint = includeVerification
+        ? '/api/admin/system/integration-settings?includeVerification=1'
+        : '/api/admin/system/integration-settings';
+      const response = await fetch(endpoint);
       const payload = await response.json();
       if (!response.ok || !payload?.data) {
         throw new Error(payload?.error?.message || 'Ayarlar yüklenemedi');
@@ -126,6 +160,7 @@ const seo = {
           <div>${formatStatus('Analytics', analytics)}</div>
         </div>
       `;
+      renderVerification(payload.data.verification);
     }
 
     function clearFieldErrors() {
@@ -300,6 +335,18 @@ const seo = {
         setMessage('Analytics ayarı temizlendi.');
       } catch (error) {
         setMessage(error instanceof Error ? error.message : String(error), true);
+      }
+    });
+
+    refreshVerificationButton?.addEventListener('click', async () => {
+      try {
+        setLoadingState(true);
+        await loadStatus(true);
+        setMessage('Canlı doğrulama tamamlandı.');
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : String(error), true);
+      } finally {
+        setLoadingState(false);
       }
     });
 

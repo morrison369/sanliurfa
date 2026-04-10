@@ -18,6 +18,7 @@ interface DashboardData {
   integrations: {
     resend: { configured: boolean; source: 'env' | 'admin' | 'none' };
     analytics: { configured: boolean; source: 'env' | 'admin' | 'none' };
+    summary?: { configuredCount: number; total: number; fullyConfigured: boolean };
   };
   operational?: {
     oauth: {
@@ -171,10 +172,15 @@ export default function AdminDashboardOverview() {
           </div>
           <div className="space-y-1">
             <div className="text-2xl font-bold text-indigo-600">
-              {Number(data.integrations?.resend?.configured) + Number(data.integrations?.analytics?.configured)}/2
+              {data.integrations?.summary?.configuredCount ??
+                (Number(data.integrations?.resend?.configured) + Number(data.integrations?.analytics?.configured))}
+              /{data.integrations?.summary?.total || 2}
             </div>
             <div className="text-xs text-gray-500">
               RESEND: {data.integrations?.resend?.source || 'none'} • Analytics: {data.integrations?.analytics?.source || 'none'}
+            </div>
+            <div className="text-xs text-gray-500">
+              Durum: {data.integrations?.summary?.fullyConfigured ? 'healthy' : 'degraded'}
             </div>
           </div>
         </div>
