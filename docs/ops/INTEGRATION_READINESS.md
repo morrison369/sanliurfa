@@ -14,6 +14,17 @@ Bu dokuman, kod tarafinda otomatiklestirilemeyen ama release kalitesini dogrudan
 Notlar:
 - Placeholder degerler (`re_xxx`, `G-XXXXXXXXXX`, `YOUR_*`) readiness sayilmaz.
 - `GET /api/health` endpoint'i bu alanlari `checks.integrations` altinda gorunur kilacak sekilde guncellenmistir.
+- Env'de bu alanlar bos olsa bile admin panelden girilen global degerler runtime'da otomatik kullanilir.
+
+## 1.1) Admin Panelden Giris (Runtime Fallback)
+
+- Panel: `/admin/integrations`
+- API: `GET/PUT /api/admin/system/integration-settings`
+- Kaynak onceligi:
+  1. Env (`RESEND_API_KEY`, `PUBLIC_GOOGLE_ANALYTICS_ID`, `GOOGLE_ANALYTICS_ID`, `GA_TRACKING_ID`)
+  2. Admin panelde kayitli global ayar
+- Panelden kaydedilen/silinen degerler icin runtime cache otomatik temizlenir.
+- Admin degisiklikleri `user_audit_log` uzerinden kayda alinacak sekilde guncellenmistir.
 
 ## 2) Release Oncesi Kontrol
 
@@ -48,4 +59,3 @@ Bu adimlar kod deposundan otomatik uygulanamaz, panelde elle etkinlestirilir:
 - Google Search Console'a alan adi dogrulamasi yap.
 - `https://sanliurfa.com/sitemap-index.xml` URL'ini submit et.
 - Build cikisi icinde sitemap artefact check zaten release gate'e dahildir.
-

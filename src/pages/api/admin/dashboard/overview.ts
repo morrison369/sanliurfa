@@ -9,6 +9,7 @@ import { getModerationStats } from '../../../../lib/admin-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -33,10 +34,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const url = new URL(request.url);
     const days = Math.min(parseInt(url.searchParams.get('days') || '30'), 365);
 
-    const [overview, metrics, modStats] = await Promise.all([
+    const [overview, metrics, modStats, integrationSettings] = await Promise.all([
       getDashboardOverview(days),
       getSystemMetrics(),
-      getModerationStats()
+      getModerationStats(),
+      getRuntimeIntegrationSettings()
     ]);
 
     const duration = Date.now() - startTime;
@@ -49,6 +51,16 @@ export const GET: APIRoute = async ({ request, locals }) => {
           overview,
           metrics,
           moderation: modStats,
+          integrations: {
+            resend: {
+              configured: Boolean(integrationSettings.resendApiKey),
+              source: integrationSettings.source.resendApiKey
+            },
+            analytics: {
+              configured: Boolean(integrationSettings.analyticsId),
+              source: integrationSettings.source.analyticsId
+            }
+          },
           period: days
         }
       },

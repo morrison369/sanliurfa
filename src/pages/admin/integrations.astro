@@ -40,12 +40,20 @@ const seo = {
             placeholder="re_..."
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
-          <button
-            id="save-resend"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
-          >
-            RESEND Anahtarını Kaydet
-          </button>
+          <div class="flex flex-wrap gap-2">
+            <button
+              id="save-resend"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+            >
+              RESEND Anahtarını Kaydet
+            </button>
+            <button
+              id="clear-resend"
+              class="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 text-sm font-medium dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+            >
+              RESEND Ayarını Temizle
+            </button>
+          </div>
         </section>
 
         <section class="space-y-4">
@@ -57,12 +65,20 @@ const seo = {
             placeholder="G-XXXXXXXXXX"
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
-          <button
-            id="save-analytics"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
-          >
-            Analytics ID Kaydet
-          </button>
+          <div class="flex flex-wrap gap-2">
+            <button
+              id="save-analytics"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+            >
+              Analytics ID Kaydet
+            </button>
+            <button
+              id="clear-analytics"
+              class="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 text-sm font-medium dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+            >
+              Analytics Ayarını Temizle
+            </button>
+          </div>
         </section>
 
         <p id="message-box" class="text-sm"></p>
@@ -77,6 +93,14 @@ const seo = {
     const analyticsInput = document.getElementById('analyticsId');
     const resendButton = document.getElementById('save-resend');
     const analyticsButton = document.getElementById('save-analytics');
+    const clearResendButton = document.getElementById('clear-resend');
+    const clearAnalyticsButton = document.getElementById('clear-analytics');
+
+    function formatStatus(name, payload) {
+      const state = payload.configured ? 'hazır' : 'eksik';
+      const value = payload.configured ? payload.maskedValue : 'boş';
+      return `${name}: ${state} (${payload.source}) • ${value}`;
+    }
 
     async function loadStatus() {
       const response = await fetch('/api/admin/system/integration-settings');
@@ -87,9 +111,12 @@ const seo = {
 
       const resend = payload.data.resend;
       const analytics = payload.data.analytics;
-      statusBox.textContent =
-        `RESEND: ${resend.configured ? 'configured' : 'missing'} (${resend.source}) | ` +
-        `Analytics: ${analytics.configured ? analytics.maskedValue : 'missing'} (${analytics.source})`;
+      statusBox.innerHTML = `
+        <div class="space-y-1">
+          <div>${formatStatus('RESEND', resend)}</div>
+          <div>${formatStatus('Analytics', analytics)}</div>
+        </div>
+      `;
     }
 
     function setMessage(text, isError = false) {
@@ -138,6 +165,26 @@ const seo = {
         }
         await save({ analyticsId });
         analyticsInput.value = '';
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : String(error), true);
+      }
+    });
+
+    clearResendButton?.addEventListener('click', async () => {
+      try {
+        await save({ resendApiKey: '' });
+        resendInput.value = '';
+        setMessage('RESEND ayarı temizlendi.');
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : String(error), true);
+      }
+    });
+
+    clearAnalyticsButton?.addEventListener('click', async () => {
+      try {
+        await save({ analyticsId: '' });
+        analyticsInput.value = '';
+        setMessage('Analytics ayarı temizlendi.');
       } catch (error) {
         setMessage(error instanceof Error ? error.message : String(error), true);
       }

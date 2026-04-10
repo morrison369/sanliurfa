@@ -3,7 +3,7 @@
  * Main dashboard with metrics and alerts
  */
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Users, FileText, Flag, ShieldAlert } from 'lucide-react';
+import { AlertCircle, Users, FileText, Flag, ShieldAlert, KeyRound } from 'lucide-react';
 
 interface DashboardData {
   overview: {
@@ -15,6 +15,10 @@ interface DashboardData {
   };
   metrics: any;
   moderation: any;
+  integrations: {
+    resend: { configured: boolean; source: 'env' | 'admin' | 'none' };
+    analytics: { configured: boolean; source: 'env' | 'admin' | 'none' };
+  };
 }
 
 export default function AdminDashboardOverview() {
@@ -89,7 +93,7 @@ export default function AdminDashboardOverview() {
       </div>
 
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Users Card */}
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-3 mb-3">
@@ -142,6 +146,22 @@ export default function AdminDashboardOverview() {
             <div className="text-2xl font-bold text-red-600">{data.overview.moderation.totalActions}</div>
             <div className="text-xs text-gray-500">
               {data.overview.moderation.warnings} uyarı • {data.overview.moderation.bans} ban
+            </div>
+          </div>
+        </div>
+
+        {/* Integrations Card */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <KeyRound className="w-5 h-5 text-indigo-600" />
+            <h3 className="font-medium text-gray-700">Entegrasyonlar</h3>
+          </div>
+          <div className="space-y-1">
+            <div className="text-2xl font-bold text-indigo-600">
+              {Number(data.integrations?.resend?.configured) + Number(data.integrations?.analytics?.configured)}/2
+            </div>
+            <div className="text-xs text-gray-500">
+              RESEND: {data.integrations?.resend?.source || 'none'} • Analytics: {data.integrations?.analytics?.source || 'none'}
             </div>
           </div>
         </div>

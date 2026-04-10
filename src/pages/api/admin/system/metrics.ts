@@ -10,6 +10,7 @@ import { getModerationQueue, getContentFlags } from '../../../../lib/admin-moder
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -24,12 +25,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const [systemMetrics, modStats, pendingQueue, pendingFlags] = await Promise.all([
+    const [systemMetrics, modStats, pendingQueue, pendingFlags, integrationSettings] = await Promise.all([
       getSystemMetrics(),
       getModerationStats(),
       getModerationQueue('pending', 1),
-      getContentFlags('pending', 1)
+      getContentFlags('pending', 1),
+      getRuntimeIntegrationSettings()
     ]);
+    const integrationsReady = Boolean(integrationSettings.resendApiKey) && Boolean(integrationSettings.analyticsId);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/system/metrics', HttpStatus.OK, duration);
@@ -45,8 +48,18 @@ export const GET: APIRoute = async ({ request, locals }) => {
             flagCount: (await getContentFlags('pending', 1000))?.length || 0
           },
           health: {
-            status: 'healthy',
-            timestamp: new Date().toISOString()
+            status: integrationsReady ? 'healthy' : 'degraded',
+            timestamp: new Date().toISOString(),
+            integrations: {
+              resend: {
+                configured: Boolean(integrationSettings.resendApiKey),
+                source: integrationSettings.source.resendApiKey
+              },
+              analytics: {
+                configured: Boolean(integrationSettings.analyticsId),
+                source: integrationSettings.source.analyticsId
+              }
+            }
           }
         }
       },
