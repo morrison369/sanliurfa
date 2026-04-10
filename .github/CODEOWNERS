@@ -3,9 +3,13 @@
 
 # Critical runtime and release gates
 /src/lib/ @titanai777
+/scripts/ @titanai777
+/tsconfig*.json @titanai777
+/.github/workflows/ @titanai777
+/docs/BRANCH_PROTECTION.md @titanai777
 /scripts/release-gate.ts @titanai777
 /scripts/experimental-exclude-guard.ts @titanai777
 /config/experimental-exclude-budget.json @titanai777
+/config/security-secrets-allowlist.json @titanai777
 /tsconfig.experimental.json @titanai777
 /package.json @titanai777
-

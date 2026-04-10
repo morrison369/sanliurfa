@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 
 const BLOCK_PATTERNS = [
@@ -8,21 +9,42 @@ const BLOCK_PATTERNS = [
   /CHANGE_ME_CWP_SSH_PASSWORD/i
 ];
 
+type AllowlistConfig = {
+  entries?: Array<{
+    path: string;
+    reason?: string;
+  }>;
+};
+
 function listScriptFiles(): string[] {
   const output = execSync('rg --files scripts', { encoding: 'utf8' });
   return output
     .split(/\r?\n/)
-    .map((line) => line.trim())
+    .map((line) => line.trim().replace(/\\/g, '/'))
     .filter((line) => line.length > 0)
     .filter((line) => !/^scripts[\\/]+archive[\\/]/.test(line))
-    .filter((line) => !/^scripts[\\/]security-secrets-scan\.ts$/.test(line));
+    .filter((line) => !/^scripts[\\/]+archive[\\/]/.test(line));
+}
+
+function loadAllowlist(): Set<string> {
+  try {
+    const configPath = resolve(process.cwd(), 'config', 'security-secrets-allowlist.json');
+    const parsed = JSON.parse(readFileSync(configPath, 'utf8')) as AllowlistConfig;
+    return new Set((parsed.entries || []).map((entry) => entry.path.replace(/\\/g, '/')));
+  } catch {
+    return new Set();
+  }
 }
 
 function main(): void {
   const files = listScriptFiles();
+  const allowlist = loadAllowlist();
   const findings: string[] = [];
 
   for (const file of files) {
+    if (allowlist.has(file)) {
+      continue;
+    }
     let text = '';
     try {
       text = readFileSync(file, 'utf8');

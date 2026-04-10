@@ -127,6 +127,7 @@
     "db:drift:check": "npm exec -- tsx scripts/db-drift-check.ts",
     "db:test:bootstrap": "npm exec -- tsx scripts/db-test-bootstrap.ts",
     "security:secrets:scan": "npm exec -- tsx scripts/security-secrets-scan.ts",
+    "governance:http:timeout:check": "npm exec -- tsx scripts/http-timeout-guard.ts",
     "env:contract:check": "npm exec -- tsx scripts/env-contract-check.ts",
     "env:contract:check:ci": "npm exec -- tsx scripts/env-contract-check.ts -- --ci",
     "release:gate": "npm exec -- tsx scripts/release-gate.ts",

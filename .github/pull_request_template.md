@@ -27,3 +27,5 @@
 - [ ] Yeni `src/lib/*.ts` dosyası exclude'a eklendi mi? Eklendiyse neden?
 - [ ] Exclude budget düşürüldü mü (mümkünse)?
 - [ ] Domain bazlı en az 1 unit + 1 smoke doğrulaması eklendi/çalıştırıldı mı?
+- [ ] `src/lib/http.ts` dışında yeni timeout/AbortController mantığı eklendi mi? Eklendiyse neden?
+- [ ] Secrets allowlist genişledi mi? Genişlediyse risk ve onay notu yazıldı mı?

@@ -50,6 +50,9 @@ jobs:
       - name: Security secret scan
         run: npm run security:secrets:scan
 
+      - name: HTTP timeout governance guard
+        run: npm run governance:http:timeout:check
+
       - name: Governance import guard
         run: npm run governance:imports:check
 
@@ -92,6 +95,12 @@ jobs:
 
       - name: Typecheck weekly report
         run: npm run typecheck:experimental:report
+
+      - name: Upload weekly typecheck report
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-typecheck-report
+          path: docs/reports/weekly-typecheck-report.md
 
       - name: Release gate
         run: npm run release:gate

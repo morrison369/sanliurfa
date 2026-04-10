@@ -18,6 +18,7 @@ function main(): void {
   run('Environment contract (local)', 'npm run env:contract:check');
   run('Repository stabilization checks', 'npm run repo:stabilize:check');
   run('Security secret scan', 'npm run security:secrets:scan');
+  run('HTTP timeout governance guard', 'npm run governance:http:timeout:check');
   run('Governance import guard', 'npm run governance:imports:check');
   run('DB drift check', 'npm run db:drift:check');
   runOptional('DB test bootstrap', 'npm run db:test:bootstrap');
