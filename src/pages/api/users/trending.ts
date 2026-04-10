@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany } from '../../../lib/postgres';
+import { queryRows } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const safePeriod = validPeriods.includes(period) ? period : '30';
 
     // Get trending users by activity in specified period
-    const trendingUsers = await queryMany(
+    const trendingUsers = await queryRows(
       `SELECT u.id, u.full_name, u.username, u.avatar_url,
               (SELECT COUNT(*) FROM reviews WHERE user_id = u.id AND created_at >= NOW() - (CAST($1 AS INTEGER) || ' days')::INTERVAL) as review_count,
               (SELECT COUNT(*) FROM comments WHERE user_id = u.id AND created_at >= NOW() - (CAST($1 AS INTEGER) || ' days')::INTERVAL) as comment_count,

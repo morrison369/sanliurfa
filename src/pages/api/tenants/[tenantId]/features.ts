@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryOne, queryMany } from '../../../../lib/postgres';
+import { queryOne, queryRows } from '../../../../lib/postgres';
 import { isTenantFeatureEnabled, setTenantFeature, logTenantAudit } from '../../../../lib/multi-tenant';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
@@ -49,7 +49,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     }
 
     // Get all features (optimized: select specific feature columns)
-    const features = await queryMany(
+    const features = await queryRows(
       `SELECT id, tenant_id, feature_key, is_enabled, feature_limit, usage_count, updated_at
        FROM tenant_features WHERE tenant_id = $1 ORDER BY feature_key ASC`,
       [tenantId]

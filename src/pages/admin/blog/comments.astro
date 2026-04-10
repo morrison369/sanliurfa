@@ -5,7 +5,7 @@
  */
 
 import Layout from '../../../layouts/Layout.astro';
-import { queryMany, queryOne, update } from '../../../lib/postgres';
+import { queryRows, queryOne, update } from '../../../lib/postgres';
 
 const user = Astro.locals.user;
 if (!user || !Astro.locals.isAdmin) {
@@ -40,7 +40,7 @@ try {
   }
 
   // Yorumları getir
-  const result = await queryMany(`
+  const result = await queryRows(`
     SELECT bc.*, bp.title as post_title, bp.slug
     FROM blog_comments bc
     JOIN blog_posts bp ON bc.post_id = bp.id

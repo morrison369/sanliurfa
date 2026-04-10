@@ -7,7 +7,7 @@ import { validateWithSchema } from '../../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
-import { queryMany, insert, update, queryOne } from '../../../../lib/postgres';
+import { queryRows, insert, update, queryOne } from '../../../../lib/postgres';
 
 const schema = {
   type: {
@@ -45,7 +45,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Optimized: select specific report columns instead of SELECT *
-    const scheduled = await queryMany(
+    const scheduled = await queryRows(
       `SELECT id, name, report_type, frequency, next_run_at, last_run_at,
               email_recipients, enabled, created_at, updated_at
        FROM scheduled_reports WHERE enabled = true ORDER BY created_at DESC`

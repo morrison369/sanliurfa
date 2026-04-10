@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { insert, queryMany } from '../../../lib/postgres';
+import { insert, queryRows } from '../../../lib/postgres';
 import { validateWithSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
@@ -111,7 +111,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
 
-    const history = await queryMany(
+    const history = await queryRows(
       `SELECT brh.*, bp.title, bp.slug, bp.featured_image
        FROM blog_reading_history brh
        JOIN blog_posts bp ON brh.post_id = bp.id

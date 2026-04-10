@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryOne, queryMany } from '../../../lib/postgres';
+import { queryOne, queryRows } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
@@ -47,7 +47,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     }
 
     // Fetch tagged places
-    const places = await queryMany(
+    const places = await queryRows(
       `SELECT DISTINCT p.id, p.name, p.slug, p.category, p.rating_avg, p.address,
               hu.used_at as tagged_at
        FROM places p
@@ -59,7 +59,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     );
 
     // Fetch tagged reviews
-    const reviews = await queryMany(
+    const reviews = await queryRows(
       `SELECT DISTINCT r.id, r.content, r.rating, r.created_at,
               u.full_name as user_name, u.username,
               p.name as place_name, p.slug as place_slug,

@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany } from '../../../lib/postgres';
+import { queryRows } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -99,10 +99,10 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       params.push(0);
     }
 
-    const result = await queryMany(sql, params);
+    const result = await queryRows(sql, params);
 
     // Format response
-    const activities = result.rows.map((row: any) => ({
+    const activities = result.map((row: any) => ({
       id: row.id,
       user_id: row.user_id,
       user_name: row.full_name,

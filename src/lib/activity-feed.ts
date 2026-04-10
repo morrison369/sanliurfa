@@ -3,7 +3,7 @@
  * Personalized feed showing activities from followed users and collections
  */
 
-import { queryMany, queryOne } from './postgres';
+import { queryRows, queryOne } from './postgres';
 import { getCache, setCache } from './cache';
 import { logger } from './logging';
 
@@ -36,7 +36,7 @@ export async function getActivityFeed(userId: string, limit: number = 50, offset
     }
 
     // Get activities from followed users
-    const results = await queryMany(
+    const results = await queryRows(
       `
       SELECT DISTINCT
         ua.id,
@@ -60,7 +60,7 @@ export async function getActivityFeed(userId: string, limit: number = 50, offset
       [userId, limit, offset]
     );
 
-    const feed: FeedItem[] = results.rows.map((row: any) => ({
+    const feed: FeedItem[] = results.map((row: any) => ({
       id: row.id,
       userId: row.user_id,
       userName: row.user_name,
@@ -91,7 +91,7 @@ export async function getActivityFeed(userId: string, limit: number = 50, offset
  */
 export async function getPersonalActivity(userId: string, limit: number = 30): Promise<FeedItem[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `
       SELECT
         ua.id,
@@ -112,7 +112,7 @@ export async function getPersonalActivity(userId: string, limit: number = 30): P
       [userId, limit]
     );
 
-    return results.rows.map((row: any) => ({
+    return results.map((row: any) => ({
       id: row.id,
       userId: row.user_id,
       userName: row.user_name,
@@ -138,7 +138,7 @@ export async function getPersonalActivity(userId: string, limit: number = 30): P
  */
 export async function getUserActivities(targetUserId: string, limit: number = 20): Promise<FeedItem[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `
       SELECT
         ua.id,
@@ -159,7 +159,7 @@ export async function getUserActivities(targetUserId: string, limit: number = 20
       [targetUserId, limit]
     );
 
-    return results.rows.map((row: any) => ({
+    return results.map((row: any) => ({
       id: row.id,
       userId: row.user_id,
       userName: row.user_name,
@@ -185,7 +185,7 @@ export async function getUserActivities(targetUserId: string, limit: number = 20
  */
 export async function getTrendingActivities(limit: number = 10): Promise<FeedItem[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `
       SELECT
         ua.id,
@@ -208,7 +208,7 @@ export async function getTrendingActivities(limit: number = 10): Promise<FeedIte
       [limit]
     );
 
-    return results.rows.map((row: any) => ({
+    return results.map((row: any) => ({
       id: row.id,
       userId: row.user_id,
       userName: row.user_name,

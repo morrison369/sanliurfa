@@ -3,7 +3,7 @@
  * GET - User's loyalty transaction history
  */
 import type { APIRoute } from 'astro';
-import { queryMany } from '../../../lib/postgres';
+import { queryRows } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
-    const transactions = await queryMany(query, params);
+    const transactions = await queryRows(query, params);
 
     // Get total count
     let countQuery = 'SELECT COUNT(*) as count FROM loyalty_transactions WHERE user_id = $1';
@@ -59,7 +59,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       countParams.push(type);
     }
 
-    const countResult = await queryMany(countQuery, countParams);
+    const countResult = await queryRows(countQuery, countParams);
     const total = parseInt(countResult[0]?.count || '0');
 
     const duration = Date.now() - startTime;

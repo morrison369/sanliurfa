@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany } from '../../../lib/postgres';
+import { queryRows } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
@@ -45,7 +45,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
             try {
               // Get unread notifications for user
-              const notifications = await queryMany(
+              const notifications = await queryRows(
                 `SELECT id, user_id, title, message, type, data, is_read, created_at
                  FROM notifications
                  WHERE user_id = $1 AND is_read = false

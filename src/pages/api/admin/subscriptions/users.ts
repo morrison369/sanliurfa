@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, queryOne } from '../../../../lib/postgres';
+import { queryRows, queryOne } from '../../../../lib/postgres';
 import { getUserSubscriptionDetails, changeUserTier, logAdminAction } from '../../../../lib/subscription-admin';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
@@ -73,7 +73,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     sql += ` ORDER BY s.created_at DESC LIMIT $${paramCount}`;
     params.push(limit);
 
-    const results = await queryMany(sql, params);
+    const results = await queryRows(sql, params);
 
     recordRequest('GET', '/api/admin/subscriptions/users', HttpStatus.OK, Date.now() - startTime);
 

@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, queryOne } from '../../../lib/postgres';
+import { queryRows } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
@@ -40,7 +40,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     // Get user's interests (places they've interacted with)
-    const userPlaces = await queryMany(
+    const userPlaces = await queryRows(
       `SELECT DISTINCT p.category FROM places p
        LEFT JOIN reviews r ON p.id = r.place_id
        LEFT JOIN favorites f ON p.id = f.place_id
@@ -56,7 +56,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     let suggestedUsers: any[] = [];
 
     if (categories.length > 0) {
-      suggestedUsers = await queryMany(
+      suggestedUsers = await queryRows(
         `SELECT DISTINCT u.id, u.full_name, u.username, u.avatar_url,
                 (SELECT COUNT(*) FROM followers WHERE follower_id = $1 AND following_id = u.id) as is_following,
                 (SELECT COUNT(*) FROM reviews WHERE user_id = u.id) as activity_count,
@@ -78,7 +78,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     // If not enough suggestions, add trending/active users
     if (suggestedUsers.length < limit) {
-      const additionalUsers = await queryMany(
+      const additionalUsers = await queryRows(
         `SELECT u.id, u.full_name, u.username, u.avatar_url,
                 (SELECT COUNT(*) FROM followers WHERE follower_id = $1 AND following_id = u.id) as is_following,
                 (SELECT COUNT(*) FROM reviews WHERE user_id = u.id) as activity_count

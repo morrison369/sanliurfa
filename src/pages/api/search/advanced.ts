@@ -3,7 +3,7 @@
  * GET - AI-powered search with ranking and personalization
  */
 import type { APIRoute } from 'astro';
-import { queryMany } from '../../../lib/postgres';
+import { queryRows } from '../../../lib/postgres';
 import { rankSearchResults, recordSearchQuery } from '../../../lib/search-intelligence';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
@@ -75,7 +75,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     `;
     params.push(limit, offset);
 
-    const results = await queryMany(searchSql, params);
+    const results = await queryRows(searchSql, params);
 
     // Apply AI ranking
     const rankedResults = await rankSearchResults(results, locals.user?.id, query);

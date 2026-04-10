@@ -1,7 +1,7 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
 import { FileText, Plus, Edit, Trash2, Eye, User } from 'lucide-react';
-import { queryMany, queryOne } from '../../../lib/postgres';
+import { queryRows, queryOne } from '../../../lib/postgres';
 
 const user = Astro.locals.user;
 if (!user || !Astro.locals.isAdmin) {
@@ -14,7 +14,7 @@ let stats = { total: 0, published: 0, draft: 0, archived: 0 };
 let error = '';
 
 try {
-  const allPosts = await queryMany(`
+  const allPosts = await queryRows(`
     SELECT bp.*, u.full_name as author_name
     FROM blog_posts bp
     LEFT JOIN users u ON bp.author_id = u.id

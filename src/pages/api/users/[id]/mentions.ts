@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, query } from '../../../../lib/postgres';
+import { queryRows, query } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { getCache, setCache } from '../../../../lib/cache';
@@ -64,7 +64,7 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
     }
 
     // Fetch mentions
-    const mentions = await queryMany(
+    const mentions = await queryRows(
       `SELECT um.id, um.mentioned_by_user_id, um.content_type, um.content_id,
               um.context_text, um.is_read, um.created_at,
               u.full_name as by_user_name, u.username as by_username, u.avatar_url as by_avatar
@@ -77,7 +77,7 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
     );
 
     // Count unread mentions
-    const unreadCountResult = await queryMany(
+    const unreadCountResult = await queryRows(
       `SELECT COUNT(*) as count FROM user_mentions WHERE mentioned_user_id = $1 AND is_read = false`,
       [userId]
     );

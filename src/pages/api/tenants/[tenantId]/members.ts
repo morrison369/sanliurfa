@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryOne, queryMany } from '../../../../lib/postgres';
+import { queryOne, queryRows } from '../../../../lib/postgres';
 import { getTenantMembers, addTenantMember, removeTenantMember, logTenantAudit } from '../../../../lib/multi-tenant';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
@@ -49,7 +49,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     }
 
     // Get members with user details
-    const members = await queryMany(
+    const members = await queryRows(
       `SELECT tm.*, u.full_name, u.email, u.avatar_url
        FROM tenant_members tm
        JOIN users u ON tm.user_id = u.id

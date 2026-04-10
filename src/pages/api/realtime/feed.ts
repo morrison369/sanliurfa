@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryOne, queryMany } from '../../../lib/postgres';
+import { queryOne, queryRows } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
@@ -81,7 +81,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
               query += ` ORDER BY ua.created_at DESC LIMIT 10`;
 
-              const activities = await queryMany(query, params);
+              const activities = await queryRows(query, params);
 
               // Only emit event if there are new activities
               if (activities.length > 0) {
