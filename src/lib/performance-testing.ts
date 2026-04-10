@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { deterministicBoolean, deterministicNumber } from './deterministic';
 
 interface LoadProfile {
   type: 'constant' | 'ramp' | 'wave' | 'spike' | 'stress';
@@ -34,7 +35,7 @@ interface StressResult {
   cascadingFailures: boolean;
 }
 
-class LoadTestGenerator {
+export class LoadTestGenerator {
   private tests: Map<string, LoadProfile> = new Map();
   private counter = 0;
 
@@ -65,16 +66,17 @@ class LoadTestGenerator {
   }
 
   async run(): Promise<LoadTestResult> {
+    const profileCount = this.tests.size;
     const result: LoadTestResult = {
-      throughput: Math.floor(Math.random() * 1000) + 500,
+      throughput: Math.round(deterministicNumber(`load:throughput:${profileCount}`, 500, 1500, 0)),
       latency: {
-        p50: Math.floor(Math.random() * 100) + 20,
-        p95: Math.floor(Math.random() * 300) + 100,
-        p99: Math.floor(Math.random() * 500) + 300,
-        p999: Math.floor(Math.random() * 1000) + 500
+        p50: Math.round(deterministicNumber(`load:p50:${profileCount}`, 20, 120, 0)),
+        p95: Math.round(deterministicNumber(`load:p95:${profileCount}`, 100, 400, 0)),
+        p99: Math.round(deterministicNumber(`load:p99:${profileCount}`, 300, 800, 0)),
+        p999: Math.round(deterministicNumber(`load:p999:${profileCount}`, 500, 1500, 0))
       },
-      errorRate: Math.random() * 0.01,
-      totalRequests: Math.floor(Math.random() * 50000) + 10000,
+      errorRate: deterministicNumber(`load:errorRate:${profileCount}`, 0.0005, 0.01, 4),
+      totalRequests: Math.round(deterministicNumber(`load:totalRequests:${profileCount}`, 10000, 60000, 0)),
       successfulRequests: 0
     };
 
@@ -90,7 +92,7 @@ class LoadTestGenerator {
   }
 }
 
-class StressTestRunner {
+export class StressTestRunner {
   private stressTests: Map<string, StressResult> = new Map();
   private counter = 0;
 
@@ -98,10 +100,10 @@ class StressTestRunner {
     const testId = `stress-${Date.now()}-${++this.counter}`;
 
     const result: StressResult = {
-      breakingPoint: initialLoad * (1.5 + Math.random() * 1.5),
-      timeToFailure: Math.floor(Math.random() * 300000) + 60000,
-      gracefulDegradation: Math.random() > 0.3,
-      cascadingFailures: Math.random() > 0.7
+      breakingPoint: initialLoad * deterministicNumber(`${serviceName}:${initialLoad}:breakingPoint`, 1.5, 3, 3),
+      timeToFailure: Math.round(deterministicNumber(`${serviceName}:${initialLoad}:timeToFailure`, 60000, 360000, 0)),
+      gracefulDegradation: deterministicBoolean(`${serviceName}:${initialLoad}:graceful`, 0.3),
+      cascadingFailures: deterministicBoolean(`${serviceName}:${initialLoad}:cascade`, 0.7)
     };
 
     this.stressTests.set(testId, result);
@@ -120,7 +122,7 @@ class StressTestRunner {
   }
 
   identifySaturationPoint(serviceName: string): number {
-    return Math.floor(Math.random() * 500) + 200;
+    return Math.round(deterministicNumber(`${serviceName}:saturation`, 200, 700, 0));
   }
 
   validateGracefulDegradation(): { degraded: boolean; essentialServicesUp: boolean } {
@@ -131,20 +133,20 @@ class StressTestRunner {
   }
 }
 
-class PerformanceProfiler {
+export class PerformanceProfiler {
   private profiles: Map<string, LoadTestResult> = new Map();
 
   profileEndpoint(endpoint: string, concurrentUsers: number): LoadTestResult {
     const result: LoadTestResult = {
-      throughput: Math.floor(Math.random() * 1000) + 500,
+      throughput: Math.round(deterministicNumber(`${endpoint}:${concurrentUsers}:throughput`, 500, 1500, 0)),
       latency: {
-        p50: Math.floor(Math.random() * 100) + 20,
-        p95: Math.floor(Math.random() * 300) + 100,
-        p99: Math.floor(Math.random() * 500) + 300,
-        p999: Math.floor(Math.random() * 1000) + 500
+        p50: Math.round(deterministicNumber(`${endpoint}:${concurrentUsers}:p50`, 20, 120, 0)),
+        p95: Math.round(deterministicNumber(`${endpoint}:${concurrentUsers}:p95`, 100, 400, 0)),
+        p99: Math.round(deterministicNumber(`${endpoint}:${concurrentUsers}:p99`, 300, 800, 0)),
+        p999: Math.round(deterministicNumber(`${endpoint}:${concurrentUsers}:p999`, 500, 1500, 0))
       },
-      errorRate: Math.random() * 0.01,
-      totalRequests: concurrentUsers * (Math.floor(Math.random() * 100) + 50),
+      errorRate: deterministicNumber(`${endpoint}:${concurrentUsers}:errorRate`, 0.0005, 0.01, 4),
+      totalRequests: Math.round(concurrentUsers * deterministicNumber(`${endpoint}:${concurrentUsers}:requestMultiplier`, 50, 150, 0)),
       successfulRequests: 0
     };
 
@@ -174,13 +176,13 @@ class PerformanceProfiler {
   }
 }
 
-class MemoryAnalyzer {
+export class MemoryAnalyzer {
   private memorySnapshots: Map<string, number> = new Map();
   private counter = 0;
 
   detectLeaks(): MemoryAnalysis {
-    const heapGrowth = `+${Math.floor(Math.random() * 100)}MB/hour`;
-    const growthRate = Math.random() * 100;
+    const growthRate = deterministicNumber('memory:growthRate', 0, 100, 2);
+    const heapGrowth = `+${Math.round(deterministicNumber('memory:heapGrowth', 0, 100, 0))}MB/hour`;
 
     const status = growthRate > 50 ? 'critical' : growthRate > 20 ? 'warning' : 'healthy';
 
@@ -202,7 +204,7 @@ class MemoryAnalyzer {
   }
 
   analyzeHeapGrowth(duration: number): { totalGrowth: number; avgGrowthPerHour: number } {
-    const totalGrowth = Math.floor(Math.random() * 500) + 100;
+    const totalGrowth = Math.round(deterministicNumber(`memory:${duration}:totalGrowth`, 100, 600, 0));
     const hours = duration / 3600000;
 
     return {
@@ -213,13 +215,13 @@ class MemoryAnalyzer {
 
   checkGarbageCollection(): { collectionFrequency: number; avgDuration: number } {
     return {
-      collectionFrequency: Math.floor(Math.random() * 100) + 10,
-      avgDuration: Math.floor(Math.random() * 500) + 50
+      collectionFrequency: Math.round(deterministicNumber('memory:gcFrequency', 10, 110, 0)),
+      avgDuration: Math.round(deterministicNumber('memory:gcDuration', 50, 550, 0))
     };
   }
 
   estimateLongRunningStability(daysOfOperation: number): { expectedMemory: number; stable: boolean } {
-    const expectedMemory = Math.floor(Math.random() * 1000) + 500;
+    const expectedMemory = Math.round(deterministicNumber(`memory:${daysOfOperation}:expected`, 500, 1500, 0));
 
     return {
       expectedMemory,

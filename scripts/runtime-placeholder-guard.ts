@@ -21,7 +21,11 @@ const FILES = [
   'src/lib/financial-analytics.ts',
   'src/lib/financial-planning.ts',
   'src/lib/financial-reporting.ts',
-  'src/lib/predictive-incidents.ts'
+  'src/lib/predictive-incidents.ts',
+  'src/lib/crm-sales-pipeline.ts',
+  'src/lib/customer-health.ts',
+  'src/lib/performance-testing.ts',
+  'src/lib/test-automation.ts'
 ];
 
 const PATTERNS = [

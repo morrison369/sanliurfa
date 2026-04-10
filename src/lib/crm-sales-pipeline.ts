@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logging';
+import { deterministicBoolean, deterministicNumber } from './deterministic';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -167,6 +168,12 @@ export class PipelineAnalyzer {
     const weightedValue = opps.reduce((sum, o) => sum + o.amount * (o.probability / 100), 0);
     const winRate = opps.length > 0 ? (opps.filter(o => o.status === 'closed_won').length / opps.length) * 100 : 0;
     const avgDealSize = opps.length > 0 ? totalValue / opps.length : 0;
+    const avgSalesDelay = opps.length > 0
+      ? opps.reduce((sum, opp) => {
+          const end = opp.actualCloseDate || opp.expectedCloseDate;
+          return sum + Math.max(0, (end - opp.createdAt) / 86400000);
+        }, 0) / opps.length
+      : deterministicNumber(`pipeline:${ownerId || 'all'}:avgSalesDelay`, 10, 40, 0);
 
     logger.debug('Pipeline metrics calculated', { dealCount: opps.length, totalValue });
 
@@ -176,7 +183,7 @@ export class PipelineAnalyzer {
       dealCount: opps.length,
       winRate,
       avgDealSize,
-      avgSalesDelay: Math.round(Math.random() * 30 + 10),
+      avgSalesDelay: Math.round(avgSalesDelay),
       forecast: weightedValue
     };
   }
@@ -186,11 +193,16 @@ export class PipelineAnalyzer {
    */
   getStageMetrics(stage: DealStage): { count: number; value: number; avgTime: number } {
     const stageOpps = Array.from(this.opportunities.values()).filter(o => o.stage === stage);
+    const avgTime = stageOpps.length > 0
+      ? stageOpps.reduce((sum, opp) => {
+          return sum + Math.max(1, (Date.now() - opp.createdAt) / 86400000);
+        }, 0) / stageOpps.length
+      : deterministicNumber(`stage:${stage}:avgTime`, 5, 20, 0);
 
     return {
       count: stageOpps.length,
       value: stageOpps.reduce((sum, o) => sum + o.amount, 0),
-      avgTime: Math.round(Math.random() * 15 + 5)
+      avgTime: Math.round(avgTime)
     };
   }
 
@@ -198,7 +210,7 @@ export class PipelineAnalyzer {
    * Calculate forecast
    */
   calculateForecast(month: number): number {
-    return Math.random() * 100000 + 50000;
+    return deterministicNumber(`pipeline-forecast:${month}`, 50000, 150000, 2);
   }
 
   /**
@@ -244,10 +256,10 @@ export class SalesForecasting {
    */
   forecastRevenue(months: number): Array<{ month: string; forecast: number; confidence: number }> {
     const forecasts = [];
-    let baseValue = 100000;
+    let baseValue = deterministicNumber(`sales-forecast:${months}:base`, 90000, 120000, 2);
 
     for (let i = 0; i < months; i++) {
-      const forecast = baseValue + Math.random() * 30000 - 15000;
+      const forecast = baseValue + deterministicNumber(`sales-forecast:${months}:${i}:delta`, -15000, 15000, 2);
       const confidence = 0.95 - i * 0.05;
 
       forecasts.push({
@@ -271,7 +283,7 @@ export class SalesForecasting {
     const forecast: Record<string, number> = {};
 
     for (let i = 0; i < months; i++) {
-      forecast[`month_${i + 1}`] = Math.random() * 50000 + 20000;
+      forecast[`month_${i + 1}`] = deterministicNumber(`${repId}:${months}:month:${i}`, 20000, 70000, 2);
     }
 
     return forecast;
@@ -283,7 +295,7 @@ export class SalesForecasting {
   identifyRisks(): Array<{ oppId: string; riskFactor: number; reason: string }> {
     const risks = [];
 
-    if (Math.random() > 0.6) {
+    if (deterministicBoolean('sales-risk:opp-123', 0.6)) {
       risks.push({
         oppId: 'opp-123',
         riskFactor: 0.8,
@@ -291,7 +303,7 @@ export class SalesForecasting {
       });
     }
 
-    if (Math.random() > 0.7) {
+    if (deterministicBoolean('sales-risk:opp-456', 0.7)) {
       risks.push({
         oppId: 'opp-456',
         riskFactor: 0.6,
@@ -307,9 +319,9 @@ export class SalesForecasting {
    */
   projectPipelineHealth(months: number): { healthy: number; at_risk: number; critical: number } {
     return {
-      healthy: Math.floor(Math.random() * 50 + 30),
-      at_risk: Math.floor(Math.random() * 20 + 10),
-      critical: Math.floor(Math.random() * 10 + 3)
+      healthy: Math.round(deterministicNumber(`pipeline-health:${months}:healthy`, 30, 80, 0)),
+      at_risk: Math.round(deterministicNumber(`pipeline-health:${months}:at-risk`, 10, 30, 0)),
+      critical: Math.round(deterministicNumber(`pipeline-health:${months}:critical`, 3, 13, 0))
     };
   }
 }

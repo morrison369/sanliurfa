@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logging';
+import { deterministicNumber } from './deterministic';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -192,7 +193,7 @@ export class ChurnPredictor {
    */
   predictChurn(customerId: string): ChurnPrediction {
     const id = 'churn-' + Date.now() + '-' + this.predictionCount++;
-    const churnProbability = Math.random() * 100;
+    const churnProbability = deterministicNumber(`${customerId}:churnProbability`, 5, 95, 2);
     const riskScore = this.getChurnRiskScore(customerId);
 
     const prediction: ChurnPrediction = {
@@ -223,7 +224,7 @@ export class ChurnPredictor {
     const stored = this.riskScores.get(customerId);
     if (stored !== undefined) return stored;
 
-    const score = Math.round(Math.random() * 100);
+    const score = Math.round(deterministicNumber(`${customerId}:riskScore`, 0, 100, 0));
     this.riskScores.set(customerId, score);
     return score;
   }

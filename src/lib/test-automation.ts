@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { deterministicBoolean, deterministicNumber } from './deterministic';
 
 interface ScreenshotDiff {
   changed: boolean;
@@ -35,7 +36,7 @@ interface TestAutomation {
   details: Record<string, any>;
 }
 
-class VisualRegressionTester {
+export class VisualRegressionTester {
   private baselines: Map<string, { data: string; timestamp: number }> = new Map();
   private counter = 0;
 
@@ -56,7 +57,7 @@ class VisualRegressionTester {
       return { changed: true, pixelsChanged: 0, percentage: 0, threshold: 2 };
     }
 
-    const pixelsChanged = Math.floor(Math.random() * 10000);
+    const pixelsChanged = Math.round(deterministicNumber(`${name}:pixelsChanged`, 0, 10000, 0));
     const percentage = (pixelsChanged / 1000000) * 100; // Assuming 1M pixel image
 
     const diff: ScreenshotDiff = {
@@ -76,7 +77,7 @@ class VisualRegressionTester {
   }
 
   detectLayoutShifts(name: string): { hasShifts: boolean; affectedElements: string[] } {
-    return { hasShifts: Math.random() > 0.8, affectedElements: [] };
+    return { hasShifts: deterministicBoolean(`${name}:layoutShift`, 0.8), affectedElements: [] };
   }
 
   getDeviceBreakpoints(): { mobile: number; tablet: number; desktop: number } {
@@ -84,7 +85,7 @@ class VisualRegressionTester {
   }
 }
 
-class ContractTester {
+export class ContractTester {
   private contracts: Map<string, any> = new Map();
   private counter = 0;
 
@@ -135,13 +136,13 @@ class ContractTester {
   }
 }
 
-class MutationTestRunner {
+export class MutationTestRunner {
   private mutations: Map<string, MutationResult> = new Map();
   private counter = 0;
 
   runMutations(testFile: string): MutationResult {
-    const totalMutations = Math.floor(Math.random() * 50) + 50;
-    const killed = Math.floor(totalMutations * (0.8 + Math.random() * 0.15));
+    const totalMutations = Math.round(deterministicNumber(`${testFile}:totalMutations`, 50, 100, 0));
+    const killed = Math.round(totalMutations * deterministicNumber(`${testFile}:killRatio`, 0.8, 0.95, 4));
     const survived = totalMutations - killed;
 
     const result: MutationResult = {
@@ -197,7 +198,7 @@ class MutationTestRunner {
   }
 }
 
-class TestOrchestrator {
+export class TestOrchestrator {
   private automations: Map<string, TestAutomation> = new Map();
   private counter = 0;
 
@@ -212,19 +213,24 @@ class TestOrchestrator {
   }
 
   orchestrateMutationTests(files: string[]): { status: string; averageKillRate: number } {
-    const killRate = 85 + Math.random() * 10;
+    const killRate = deterministicNumber(`${files.join(',')}:avgKillRate`, 85, 95, 2);
     logger.debug('Mutation tests orchestrated', { fileCount: files.length, avgKillRate: killRate.toFixed(1) });
     return { status: 'completed', averageKillRate: killRate };
   }
 
   runFullTestSuite(): { totalTests: number; passed: number; failed: number; duration: number } {
-    const totalTests = Math.floor(Math.random() * 50) + 100;
+    const totalTests = Math.round(deterministicNumber('full-suite:totalTests', 100, 150, 0));
     const passed = Math.floor(totalTests * 0.98);
     const failed = totalTests - passed;
 
     logger.debug('Full test suite executed', { total: totalTests, passed, failed });
 
-    return { totalTests, passed, failed, duration: Math.random() * 60000 + 30000 };
+    return {
+      totalTests,
+      passed,
+      failed,
+      duration: deterministicNumber('full-suite:duration', 30000, 90000, 0)
+    };
   }
 
   getAutomationStatus(automationId: string): TestAutomation | undefined {
