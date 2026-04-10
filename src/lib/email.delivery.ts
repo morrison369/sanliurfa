@@ -17,7 +17,7 @@ let emailQueueSchemaModePromise: Promise<EmailQueueSchemaMode> | null = null;
 
 async function getEmailQueueSchemaMode(): Promise<EmailQueueSchemaMode> {
   if (!emailQueueSchemaModePromise) {
-    emailQueueSchemaModePromise = (async () => {
+    const detectionPromise = (async () => {
       const columns = await queryRows(
         `SELECT column_name
          FROM information_schema.columns
@@ -34,7 +34,11 @@ async function getEmailQueueSchemaMode(): Promise<EmailQueueSchemaMode> {
       return columnNames.has('html_content') || columnNames.has('delivery_attempts')
         ? 'delivery'
         : 'legacy';
-    })().catch((error) => {
+    })();
+
+    emailQueueSchemaModePromise = detectionPromise;
+
+    return detectionPromise.catch((error) => {
       emailQueueSchemaModePromise = null;
       logger.warn('Failed to detect email_queue schema mode, falling back to legacy mode', {
         error: error instanceof Error ? error.message : String(error)
@@ -196,6 +200,11 @@ export async function markEmailFailed(emailId: string, errorMessage: string): Pr
 export async function sendEmailViaService(email: any): Promise<boolean> {
   try {
     const queuedEmail = email as Record<string, any>;
+    if (!queuedEmail.recipient_email || typeof queuedEmail.recipient_email !== 'string') {
+      await markEmailFailed(String(queuedEmail.id), 'Queued email is missing recipient_email');
+      return false;
+    }
+
     const { subject, html } = renderQueuedEmail(queuedEmail);
     const success = await sendEmail(queuedEmail.recipient_email, subject, html);
 

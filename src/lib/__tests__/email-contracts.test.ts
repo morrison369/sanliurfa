@@ -122,4 +122,43 @@ describe('Email contracts hardening', () => {
     expect(campaign?.segmentFilters).toBeUndefined();
     expect(campaign?.id).toBe('campaign-1');
   });
+
+  it('should retry schema detection after a transient metadata failure', async () => {
+    queryRowsMock
+      .mockRejectedValueOnce(new Error('metadata unavailable'))
+      .mockResolvedValueOnce([{ column_name: 'html_content' }, { column_name: 'delivery_attempts' }]);
+    insertMock.mockResolvedValue({ id: 'queue-1' });
+
+    const { queueEmail } = await import('../email.delivery');
+
+    await queueEmail('legacy@example.com', 'welcome', { fullName: 'Legacy User' }, 'user-1');
+    await queueEmail('delivery@example.com', 'welcome', { fullName: 'Delivery User' }, 'user-2');
+
+    expect(insertMock).toHaveBeenNthCalledWith(1, 'email_queue', expect.objectContaining({
+      recipient_email: 'legacy@example.com',
+      template_type: 'welcome',
+      retry_count: 0
+    }));
+    expect(insertMock).toHaveBeenNthCalledWith(2, 'email_queue', expect.objectContaining({
+      recipient_email: 'delivery@example.com',
+      html_content: expect.any(String),
+      delivery_attempts: 0
+    }));
+  });
+
+  it('should mark queued emails as failed when recipient is missing', async () => {
+    queryRowsMock.mockResolvedValue([{ column_name: 'html_content' }, { column_name: 'delivery_attempts' }]);
+    queryOneMock.mockResolvedValue({ delivery_attempts: 0, max_attempts: 1 });
+
+    const { sendEmailViaService } = await import('../email.delivery');
+    const result = await sendEmailViaService({ id: 'queue-1' });
+
+    expect(result).toBe(false);
+    expect(queryMock).toHaveBeenCalledWith(expect.stringContaining('UPDATE email_queue'), [
+      'failed',
+      1,
+      'Queued email is missing recipient_email',
+      'queue-1'
+    ]);
+  });
 });

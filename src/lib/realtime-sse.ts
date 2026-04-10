@@ -111,7 +111,6 @@ class RealtimeManager {
         this.reconnect();
       });
 
-      this.reconnectAttempts = 0;
       console.log('Connected to real-time presence');
     } catch (error) {
       console.error('Failed to connect SSE:', error);
@@ -125,6 +124,7 @@ class RealtimeManager {
   private handleMessage(data: RealtimeData): void {
     switch (data.type) {
       case 'connected':
+        this.reconnectAttempts = 0;
         console.log('Real-time connection established');
         break;
 
@@ -280,7 +280,6 @@ class RealtimeManager {
         this.reconnectMessages();
       });
 
-      this.messageReconnectAttempts = 0;
       console.log('Connected to real-time messages');
     } catch (error) {
       console.error('Failed to connect message SSE:', error);
@@ -294,6 +293,7 @@ class RealtimeManager {
   private handleMessageData(data: RealtimeData): void {
     switch (data.type) {
       case 'connected':
+        this.messageReconnectAttempts = 0;
         console.log('Message real-time connection established');
         break;
 
@@ -378,7 +378,6 @@ class RealtimeManager {
         this.reconnectNotifications();
       });
 
-      this.notificationReconnectAttempts = 0;
       console.log('Connected to real-time notifications');
     } catch (error) {
       console.error('Failed to connect notification SSE:', error);
@@ -392,6 +391,7 @@ class RealtimeManager {
   private handleNotificationData(data: RealtimeData): void {
     switch (data.type) {
       case 'connected':
+        this.notificationReconnectAttempts = 0;
         console.log('Notification real-time connection established');
         break;
 
@@ -476,7 +476,6 @@ class RealtimeManager {
         this.reconnectAnalytics();
       });
 
-      this.analyticsReconnectAttempts = 0;
       console.log('Connected to real-time analytics');
     } catch (error) {
       console.error('Failed to connect analytics SSE:', error);
@@ -490,6 +489,7 @@ class RealtimeManager {
   private handleAnalyticsData(data: RealtimeData): void {
     switch (data.type) {
       case 'connected':
+        this.analyticsReconnectAttempts = 0;
         console.log('Analytics real-time connection established');
         break;
 
@@ -587,7 +587,6 @@ class RealtimeManager {
         this.reconnectFeed();
       });
 
-      this.feedReconnectAttempts = 0;
       console.log('Connected to real-time feed');
     } catch (error) {
       console.error('Failed to connect feed SSE:', error);
@@ -601,6 +600,7 @@ class RealtimeManager {
   private handleFeedData(data: RealtimeData): void {
     switch (data.type) {
       case 'connected':
+        this.feedReconnectAttempts = 0;
         console.log('Feed real-time connection established');
         break;
 

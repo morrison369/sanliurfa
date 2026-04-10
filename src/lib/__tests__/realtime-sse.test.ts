@@ -215,4 +215,31 @@ describe('Realtime SSE lifecycle hardening', () => {
     expect(warnSpy).toHaveBeenCalledWith('Listener cap reached for analyticsMetrics');
     warnSpy.mockRestore();
   });
+
+  it('should avoid duplicate message and notification streams and stop after max reconnect attempts', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { realtimeManager } = await import('../realtime-sse');
+
+    realtimeManager.connectToMessages();
+    realtimeManager.connectToMessages();
+    expect(FakeEventSource.instances).toHaveLength(1);
+
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const current = FakeEventSource.instances[FakeEventSource.instances.length - 1];
+      current.emit('error');
+      await vi.runOnlyPendingTimersAsync();
+    }
+
+    const messageInstances = FakeEventSource.instances.filter(instance => instance.url === '/api/realtime/messages');
+    expect(messageInstances.length).toBe(6);
+    expect(errorSpy).toHaveBeenCalledWith('Max message reconnect attempts reached');
+
+    realtimeManager.connectToNotifications();
+    realtimeManager.connectToNotifications();
+    const notificationInstances = FakeEventSource.instances.filter(instance => instance.url === '/api/realtime/notifications');
+    expect(notificationInstances.length).toBe(1);
+
+    realtimeManager.disconnect();
+    errorSpy.mockRestore();
+  });
 });
