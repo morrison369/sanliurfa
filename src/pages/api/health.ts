@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../lib/api';
 import { pool } from '../../lib/postgres';
 import { getRedisClient, isRedisAvailable } from '../../lib/cache';
+import { getRuntimeIntegrationSettings } from '../../lib/runtime-integration-settings';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -28,15 +29,6 @@ interface HealthStatus {
   };
 }
 
-function hasNonPlaceholder(value: string | undefined, placeholders: RegExp[] = []): boolean {
-  if (!value || value.trim().length === 0) {
-    return false;
-  }
-
-  const normalized = value.trim();
-  return !placeholders.some((pattern) => pattern.test(normalized));
-}
-
 /**
  * GET /api/health - Health check with database and Redis status
  */
@@ -48,11 +40,9 @@ export const GET: APIRoute = async ({ request }) => {
     let dbResponseTime = 0;
     let redisStatus: 'up' | 'down' = 'down';
     let redisResponseTime = 0;
-    const resendConfigured = hasNonPlaceholder(process.env.RESEND_API_KEY, [/^re_x+$/i, /^YOUR_/i]);
-    const analyticsConfigured = hasNonPlaceholder(
-      process.env.PUBLIC_GOOGLE_ANALYTICS_ID || process.env.GOOGLE_ANALYTICS_ID || process.env.GA_TRACKING_ID,
-      [/^G-XXXXXXXXXX$/i, /^G-X+$/i, /^YOUR_/i]
-    );
+    const integrationSettings = await getRuntimeIntegrationSettings();
+    const resendConfigured = Boolean(integrationSettings.resendApiKey);
+    const analyticsConfigured = Boolean(integrationSettings.analyticsId);
 
     // Check database
     try {

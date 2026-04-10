@@ -9,6 +9,7 @@ import {
   parseQueuedEmailData,
   stripHtmlTags
 } from './email.templates';
+import { getRuntimeIntegrationSettings } from './runtime-integration-settings';
 
 export type SendEmailPayload = { to: string; subject: string; html: string };
 type EmailQueueSchemaMode = 'legacy' | 'delivery';
@@ -240,7 +241,8 @@ export async function sendEmail(
       : toOrPayload;
 
   const { to, subject, html } = payload;
-  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const integrationSettings = await getRuntimeIntegrationSettings();
+  const RESEND_API_KEY = integrationSettings.resendApiKey;
   const FROM_EMAIL = process.env.MAIL_FROM || process.env.FROM_EMAIL || 'noreply@sanliurfa.com';
 
   if (!RESEND_API_KEY) {

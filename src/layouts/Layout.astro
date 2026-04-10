@@ -8,6 +8,7 @@ import PerformanceMonitor from '../components/PerformanceMonitor';
 import ThemeScript from '../components/ThemeScript.astro';
 import DarkModeToggle from '../components/DarkModeToggle.astro';
 import PageLoader from '../components/PageLoader.astro';
+import { getRuntimeIntegrationSettings } from '../lib/runtime-integration-settings';
 import '../styles/global.css';
 
 export interface Props {
@@ -32,9 +33,11 @@ const effectiveSeo: SEOProps = seo ?? {
 
 // Get current user if authenticated
 const user = null; // Will be populated from server
+const runtimeIntegrationSettings = await getRuntimeIntegrationSettings();
 const rawGoogleAnalyticsId =
+  runtimeIntegrationSettings.analyticsId ||
   import.meta.env.PUBLIC_GOOGLE_ANALYTICS_ID ||
-  import.meta.env.GA_TRACKING_ID ||
+  process.env.PUBLIC_GOOGLE_ANALYTICS_ID ||
   process.env.GOOGLE_ANALYTICS_ID ||
   process.env.GA_TRACKING_ID ||
   '';

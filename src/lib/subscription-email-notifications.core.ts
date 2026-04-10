@@ -2,8 +2,8 @@ import { queryOne, insert } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache } from './cache';
 import type { EmailTemplate } from './subscription-email-notifications.types';
+import { getRuntimeIntegrationSettings } from './runtime-integration-settings';
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const FROM_EMAIL = 'noreply@sanliurfa.com';
 
 export async function getEmailTemplate(templateName: string): Promise<EmailTemplate | null> {
@@ -90,7 +90,10 @@ export async function sendSubscriptionEmail(
   htmlContent: string,
   textContent?: string
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  if (!RESEND_API_KEY) {
+  const integrationSettings = await getRuntimeIntegrationSettings();
+  const resendApiKey = integrationSettings.resendApiKey;
+
+  if (!resendApiKey) {
     logger.warn('RESEND_API_KEY tanımlanmamış, email gönderilemedi', { toEmail });
     return { success: false, error: 'RESEND_API_KEY not configured' };
   }
@@ -99,7 +102,7 @@ export async function sendSubscriptionEmail(
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        Authorization: `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

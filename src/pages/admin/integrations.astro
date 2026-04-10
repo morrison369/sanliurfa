@@ -1,0 +1,150 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/integrations');
+}
+
+const seo = {
+  title: 'Entegrasyon Ayarları - Admin',
+  description: 'Email ve analytics entegrasyon anahtarlarını yönet.',
+  noindex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="container-custom max-w-3xl">
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Entegrasyon Ayarları</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">
+          Buradan girilen değerler env boşsa otomatik olarak runtime'da kullanılacaktır.
+        </p>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+        <section class="space-y-3">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Mevcut Durum</h2>
+          <div id="status-box" class="text-sm text-gray-600 dark:text-gray-300">
+            Yükleniyor...
+          </div>
+        </section>
+
+        <section class="space-y-4">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">RESEND API Anahtarı</h2>
+          <input
+            id="resendApiKey"
+            type="password"
+            autocomplete="off"
+            placeholder="re_..."
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          <button
+            id="save-resend"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+          >
+            RESEND Anahtarını Kaydet
+          </button>
+        </section>
+
+        <section class="space-y-4">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Google Analytics ID</h2>
+          <input
+            id="analyticsId"
+            type="text"
+            autocomplete="off"
+            placeholder="G-XXXXXXXXXX"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          <button
+            id="save-analytics"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+          >
+            Analytics ID Kaydet
+          </button>
+        </section>
+
+        <p id="message-box" class="text-sm"></p>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    const statusBox = document.getElementById('status-box');
+    const messageBox = document.getElementById('message-box');
+    const resendInput = document.getElementById('resendApiKey');
+    const analyticsInput = document.getElementById('analyticsId');
+    const resendButton = document.getElementById('save-resend');
+    const analyticsButton = document.getElementById('save-analytics');
+
+    async function loadStatus() {
+      const response = await fetch('/api/admin/system/integration-settings');
+      const payload = await response.json();
+      if (!response.ok || !payload?.data) {
+        throw new Error(payload?.error?.message || 'Ayarlar yüklenemedi');
+      }
+
+      const resend = payload.data.resend;
+      const analytics = payload.data.analytics;
+      statusBox.textContent =
+        `RESEND: ${resend.configured ? 'configured' : 'missing'} (${resend.source}) | ` +
+        `Analytics: ${analytics.configured ? analytics.maskedValue : 'missing'} (${analytics.source})`;
+    }
+
+    function setMessage(text, isError = false) {
+      messageBox.textContent = text;
+      messageBox.className = isError
+        ? 'text-sm text-red-600 dark:text-red-400'
+        : 'text-sm text-green-600 dark:text-green-400';
+    }
+
+    async function save(payload) {
+      const response = await fetch('/api/admin/system/integration-settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.error?.message || 'Kayıt başarısız');
+      }
+      await loadStatus();
+      setMessage('Ayar kaydedildi. Runtime cache yenilendi.');
+    }
+
+    resendButton?.addEventListener('click', async () => {
+      try {
+        const resendApiKey = resendInput?.value?.trim();
+        if (!resendApiKey) {
+          setMessage('RESEND API anahtarı boş olamaz', true);
+          return;
+        }
+        await save({ resendApiKey });
+        resendInput.value = '';
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : String(error), true);
+      }
+    });
+
+    analyticsButton?.addEventListener('click', async () => {
+      try {
+        const analyticsId = analyticsInput?.value?.trim();
+        if (!analyticsId) {
+          setMessage('Analytics ID boş olamaz', true);
+          return;
+        }
+        await save({ analyticsId });
+        analyticsInput.value = '';
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : String(error), true);
+      }
+    });
+
+    loadStatus().catch((error) => {
+      setMessage(error instanceof Error ? error.message : String(error), true);
+    });
+  </script>
+</Layout>

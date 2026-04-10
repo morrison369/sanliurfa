@@ -6,9 +6,8 @@
 
 import { queryOne } from './postgres';
 import { logger } from './logging';
+import { getRuntimeIntegrationSettings } from './runtime-integration-settings';
 
-// Resend API (production'da ayarlanacak)
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const FROM_EMAIL = 'noreply@sanliurfa.com';
 
 export interface EmailNotificationPayload {
@@ -27,7 +26,10 @@ export interface EmailNotificationPayload {
  * Email gönder
  */
 export async function sendEmail(payload: EmailNotificationPayload): Promise<boolean> {
-  if (!RESEND_API_KEY) {
+  const integrationSettings = await getRuntimeIntegrationSettings();
+  const resendApiKey = integrationSettings.resendApiKey;
+
+  if (!resendApiKey) {
     logger.warn('RESEND_API_KEY tanımlanmamış, email gönderilemedi', { payload });
     return false;
   }
@@ -89,7 +91,7 @@ export async function sendEmail(payload: EmailNotificationPayload): Promise<bool
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Authorization': `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
