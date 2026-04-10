@@ -77,7 +77,8 @@ class MetricsAggregator {
       if (!key.startsWith(metricName)) continue;
 
       if (labels) {
-        const seriesLabels = JSON.parse(key.split(':')[1] || '{}');
+        const rawLabels = key.slice(metricName.length + 1);
+        const seriesLabels = JSON.parse(rawLabels || '{}');
         if (!Object.entries(labels).every(([k, v]) => seriesLabels[k] === v)) continue;
       }
 

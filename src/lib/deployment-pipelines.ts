@@ -3,6 +3,7 @@
  * CI/CD pipelines with canary, blue-green, and progressive rollout strategies
  */
 
+import { deterministicInt, deterministicNumber } from './deterministic';
 import { logger } from './logger';
 
 interface PipelineRun {
@@ -165,7 +166,10 @@ class ReleaseOrchestrator {
 
     logger.debug('Release promoted to production', { version });
 
-    return { success: true, deploymentTime: Math.floor(Math.random() * 5000) + 1000 };
+    return {
+      success: true,
+      deploymentTime: deterministicInt(`release:${version}:${manifest.timestamp}`, 1000, 6000)
+    };
   }
 }
 
@@ -217,11 +221,14 @@ class CanaryDeployment {
   }
 
   analyzeMetrics(deploymentId: string): CanaryMetrics {
+    const deployment = this.deployments.get(deploymentId);
+    const seed = deployment ? `${deploymentId}:${deployment.serviceName}:${deployment.weight}:${deployment.status}` : deploymentId;
+
     return {
-      successRate: 0.98 + Math.random() * 0.02,
-      p99Latency: 300 + Math.random() * 200,
-      errorRate: Math.random() * 0.01,
-      throughput: Math.random() * 1000
+      successRate: deterministicNumber(`${seed}:successRate`, 0.98, 1),
+      p99Latency: deterministicInt(`${seed}:p99Latency`, 300, 500),
+      errorRate: deterministicNumber(`${seed}:errorRate`, 0, 0.01, 4),
+      throughput: deterministicInt(`${seed}:throughput`, 100, 1000)
     };
   }
 }

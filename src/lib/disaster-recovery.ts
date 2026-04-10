@@ -3,6 +3,7 @@
  * Backup management, failover coordination, recovery planning, RTO/RPO optimization
  */
 
+import { deterministicBoolean, deterministicInt, pickDeterministic } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -106,7 +107,7 @@ export class BackupManager {
     const backup = this.backups.get(backupId);
     if (!backup) return false;
 
-    const valid = Math.random() > 0.02; // 98% pass rate
+    const valid = deterministicBoolean(`backup:${backupId}:${backup.size}:${backup.timestamp}`, 0.02);
 
     logger.info('Backup integrity verified', {
       backupId,
@@ -181,8 +182,8 @@ export class RecoveryPlanner {
     const plan = this.plans.get(planId);
     if (!plan) return {};
 
-    const success = Math.random() > 0.1; // 90% success rate
-    const duration = Math.ceil(plan.rto * 0.8) + Math.floor(Math.random() * plan.rto * 0.2);
+    const success = deterministicBoolean(`recovery-plan:${planId}:${plan.lastTested}:${plan.procedures.length}`, 0.1);
+    const duration = deterministicInt(`recovery-duration:${planId}:${plan.rto}:${plan.rpo}`, Math.ceil(plan.rto * 0.8), Math.max(plan.rto, Math.ceil(plan.rto * 0.8)));
 
     logger.info('Recovery plan test completed', {
       planId,
@@ -330,7 +331,7 @@ export class FailoverManager {
       failoverId: failoverConfigId,
       status: 'healthy',
       trafficRoutedPercentage: 100,
-      activeConnections: Math.floor(Math.random() * 10000),
+      activeConnections: deterministicInt(`failover-health:${failoverConfigId}`, 100, 10000),
       errorRate: 0.001,
       latency: 125,
       lastHealthCheck: Date.now()
@@ -373,9 +374,9 @@ export class DisasterRecoveryOrchestrator {
       scenario,
       assessmentDate: Date.now(),
       affectedSystems: ['api', 'database', 'cache'],
-      estimatedDowntime: Math.floor(Math.random() * 240) + 30, // 30-270 minutes
-      affectedUsers: Math.floor(Math.random() * 50000),
-      estimatedRevenueLoss: Math.floor(Math.random() * 100000),
+      estimatedDowntime: deterministicInt(`impact:downtime:${scenario}`, 30, 270),
+      affectedUsers: deterministicInt(`impact:users:${scenario}`, 100, 50000),
+      estimatedRevenueLoss: deterministicInt(`impact:revenue:${scenario}`, 1000, 100000),
       priorityLevel: 'critical'
     };
   }
@@ -416,7 +417,7 @@ export class DisasterRecoveryOrchestrator {
    */
   validateRecoveryStatus(planId: string): RecoveryStatus {
     const statuses: RecoveryStatus[] = ['planning', 'prepared', 'recovering', 'recovered'];
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    const status = pickDeterministic(statuses, `recovery-status:${planId}`);
 
     logger.debug('Recovery status validated', {
       planId,

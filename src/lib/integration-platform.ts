@@ -3,6 +3,7 @@
  * Integration management, third-party API connectors, middleware, integration marketplace, webhook management
  */
 
+import { deterministicBoolean, deterministicInt } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -125,7 +126,7 @@ export class IntegrationManager {
    * Test integration
    */
   testIntegration(integrationId: string, config: Record<string, any>): { success: boolean; message: string } {
-    const success = Math.random() > 0.1;
+    const success = deterministicBoolean(`integration-test:${integrationId}:${JSON.stringify(config)}`, 0.1);
     const message = success ? 'Connection successful' : 'Connection failed';
 
     logger.info('Integration test', { integrationId, success });
@@ -185,7 +186,7 @@ export class ConnectionManager {
     const connection = this.getConnection(connectionId);
     if (!connection) return false;
 
-    const success = Math.random() > 0.15;
+    const success = deterministicBoolean(`connection-test:${connectionId}:${connection.integrationId}:${connection.accountId}`, 0.15);
     connection.status = success ? 'connected' : 'error';
 
     return success;
@@ -336,7 +337,7 @@ export class WebhookOrchestrator {
    * Test webhook delivery
    */
   testWebhookDelivery(integrationId: string, testData: Record<string, any>): boolean {
-    const success = Math.random() > 0.2;
+    const success = deterministicBoolean(`webhook-test:${integrationId}:${JSON.stringify(testData)}`, 0.2);
     logger.debug('Webhook delivery test', { integrationId, success });
     return success;
   }
@@ -358,7 +359,7 @@ export class WebhookOrchestrator {
    * Retry failed webhooks
    */
   retryFailedWebhooks(integrationId: string, limit?: number): number {
-    const retried = Math.floor(Math.random() * (limit || 10));
+    const retried = deterministicInt(`webhook-retry:${integrationId}:${limit || 10}`, 0, limit || 10);
     logger.info('Webhooks retried', { integrationId, count: retried });
     return retried;
   }
@@ -370,11 +371,12 @@ export class WebhookOrchestrator {
     const logs: Record<string, any>[] = [];
 
     for (let i = 0; i < (limit || 10); i++) {
+      const seed = `webhook-log:${integrationId}:${i}:${limit || 10}`;
       logs.push({
         timestamp: Date.now() - i * 60000,
-        status: Math.random() > 0.05 ? 200 : 500,
+        status: deterministicBoolean(`${seed}:status`, 0.05) ? 200 : 500,
         event: 'webhook_event',
-        latency: Math.round(Math.random() * 500)
+        latency: deterministicInt(`${seed}:latency`, 0, 500)
       });
     }
 

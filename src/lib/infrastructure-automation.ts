@@ -3,6 +3,7 @@
  * Auto-scaling, auto-remediation, and declarative infrastructure management
  */
 
+import { deterministicInt, deterministicNumber } from './deterministic';
 import { logger } from './logger';
 
 interface AutoScalingConfig {
@@ -82,7 +83,7 @@ class AutoScaler {
       from,
       to,
       reason,
-      duration: Math.random() * 300000 + 60000 // 1-6 minutes
+      duration: deterministicNumber(`scaling:${serviceName}:${from}:${to}:${reason}`, 60000, 360000)
     };
 
     this.scalingEvents.push(event);
@@ -177,12 +178,8 @@ class InfrastructureAutomator {
   }
 
   rotateBackups(serviceName: string, retention: number = 30): { deleted: number; retained: number } {
-    const now = Date.now();
-    const retentionMs = retention * 24 * 60 * 60 * 1000;
-
-    // Simulated backup rotation
-    const deleted = Math.floor(Math.random() * 3);
-    const retained = Math.floor(Math.random() * 5) + 10;
+    const deleted = deterministicInt(`rotate-backups:deleted:${serviceName}:${retention}`, 0, 2);
+    const retained = deterministicInt(`rotate-backups:retained:${serviceName}:${retention}`, 10, 14);
 
     logger.debug('Backups rotated', { service: serviceName, deleted, retained });
 
@@ -190,8 +187,8 @@ class InfrastructureAutomator {
   }
 
   rotateLogs(serviceName: string, retention: number = 30): { archived: number; deleted: number } {
-    const archived = Math.floor(Math.random() * 5);
-    const deleted = Math.floor(Math.random() * 2);
+    const archived = deterministicInt(`rotate-logs:archived:${serviceName}:${retention}`, 0, 4);
+    const deleted = deterministicInt(`rotate-logs:deleted:${serviceName}:${retention}`, 0, 1);
 
     logger.debug('Logs rotated', { service: serviceName, archived, deleted });
 
@@ -199,8 +196,8 @@ class InfrastructureAutomator {
   }
 
   rotateCertificates(serviceName: string): { renewed: number; expiringSoon: number } {
-    const renewed = Math.floor(Math.random() * 2);
-    const expiringSoon = Math.floor(Math.random() * 1);
+    const renewed = deterministicInt(`rotate-certs:renewed:${serviceName}`, 0, 1);
+    const expiringSoon = deterministicInt(`rotate-certs:expiring:${serviceName}`, 0, 1);
 
     logger.debug('Certificates rotated', { service: serviceName, renewed });
 
@@ -208,8 +205,8 @@ class InfrastructureAutomator {
   }
 
   enforceCompliance(policy: string): { compliant: number; violations: number } {
-    const compliant = Math.floor(Math.random() * 100) + 50;
-    const violations = Math.floor(Math.random() * 10);
+    const compliant = deterministicInt(`infra-compliance:compliant:${policy}`, 50, 149);
+    const violations = deterministicInt(`infra-compliance:violations:${policy}`, 0, 9);
 
     logger.debug('Compliance check completed', { policy, violations });
 
@@ -222,7 +219,7 @@ class InfrastructureAutomator {
 
     return {
       enabled: automation.enabled,
-      lastRun: Date.now() - Math.random() * 3600000 // Within last hour
+      lastRun: Date.now() - deterministicInt(`automation-status:${automationId}`, 0, 3600000)
     };
   }
 }
@@ -242,7 +239,7 @@ class CapacityPlanner {
       timeframe: config.timeframe,
       recommendedNodes: projectedNodes,
       expectedGrowth: config.growthRate * 100,
-      confidence: 0.85 + Math.random() * 0.1
+      confidence: deterministicNumber(`capacity:${config.timeframe}:${config.growthRate}:${config.currentNodes}`, 0.85, 0.95)
     };
 
     this.predictions.set(config.timeframe, prediction);
