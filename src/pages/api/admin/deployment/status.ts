@@ -8,7 +8,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
-import { getAdminArtifactHealthSnapshot } from '../../../../lib/artifact-health';
+import { getAdminArtifactHealthSnapshot, summarizeArtifactHealth } from '../../../../lib/artifact-health';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -28,6 +28,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       getRuntimeIntegrationSettings()
     ]);
     const artifactHealth = await getAdminArtifactHealthSnapshot();
+    const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
     const configuredCount = Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
 
     const duration = Date.now() - startTime;
@@ -62,6 +63,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
             }
           },
           artifactHealth,
+          artifactHealthSummary,
           timestamp: new Date().toISOString()
         }
       },

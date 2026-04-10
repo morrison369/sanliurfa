@@ -225,6 +225,8 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.artifactHealth.releaseGate.status).toBe('healthy');
     expect(body.data.data.artifactHealth.nightlyRegression.status).toBe('healthy');
     expect(body.data.data.artifactHealth.performanceOps.generatedAt).toBe('2026-04-10T03:00:00.000Z');
+    expect(body.data.data.artifactHealthSummary.overall).toBe('healthy');
+    expect(body.data.data.artifactHealthSummary.healthyCount).toBe(4);
   });
 
   it('returns system metrics with health and operational summary', async () => {
@@ -254,6 +256,8 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.performanceOptimization.cacheStrategies.count).toBe(2);
     expect(body.data.data.artifactHealth.releaseGate.status).toBe('healthy');
     expect(body.data.data.artifactHealth.performanceOps.status).toBe('healthy');
+    expect(body.data.data.artifactHealthSummary.overall).toBe('healthy');
+    expect(body.data.data.artifactHealthSummary.total).toBe(4);
   });
 
   it('returns release gate summary via dedicated admin endpoint', async () => {

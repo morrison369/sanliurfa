@@ -114,6 +114,8 @@ describe('admin deployment status contracts', () => {
     expect(body.data.data.artifactHealth.releaseGate.status).toBe('blocked');
     expect(body.data.data.artifactHealth.performanceOps.status).toBe('healthy');
     expect(body.data.data.artifactHealth.performanceOps.generatedAt).toBe('2026-04-10T03:00:00.000Z');
+    expect(body.data.data.artifactHealthSummary.overall).toBe('blocked');
+    expect(body.data.data.artifactHealthSummary.blockedCount).toBe(3);
   });
 
   it('returns default none integration summary when nothing is configured', async () => {

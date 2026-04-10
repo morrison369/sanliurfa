@@ -693,9 +693,10 @@ const openApiSpec = {
                             artifactHealth: {
                               ...adminArtifactHealthSnapshotSchema,
                             },
+                            artifactHealthSummary: adminArtifactHealthSummarySchema,
                             timestamp: { type: 'string', format: 'date-time' },
                           },
-                          required: ['environment', 'readiness', 'checklist', 'integrations', 'artifactHealth', 'timestamp'],
+                          required: ['environment', 'readiness', 'checklist', 'integrations', 'artifactHealth', 'artifactHealthSummary', 'timestamp'],
                         },
                       },
                       required: ['success', 'data'],
