@@ -9,6 +9,7 @@ import { createUserSession } from '../../../../lib/security';
 import { queryOne } from '../../../../lib/postgres';
 import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
+import { enforceRateLimitPolicy, getClientIpAddress } from '../../../../lib/sensitive-endpoint-policy';
 
 interface OAuthProviderConfig {
   provider_key: string;
@@ -47,6 +48,19 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   logger.setRequestId(requestId);
 
   try {
+    const clientIp = getClientIpAddress(request);
+    const policyResponse = await enforceRateLimitPolicy({
+      request,
+      requestId,
+      key: `auth:oauth:callback:ip:${clientIp}`,
+      limit: 120,
+      windowSeconds: 60,
+      message: 'Too many OAuth callback attempts'
+    });
+    if (policyResponse) {
+      return policyResponse;
+    }
+
     const code = url.searchParams.get('code');
     const state = url.searchParams.get('state');
     const error = url.searchParams.get('error');

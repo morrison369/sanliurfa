@@ -2,9 +2,10 @@
 import type { APIRoute } from 'astro';
 import { signUp, signIn } from '../../../lib/auth';
 import { validateWithSchema, commonSchemas } from '../../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, parseJsonBody } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest, isSlowRequest, metricsCollector } from '../../../lib/metrics';
+import { enforceRateLimitPolicy, getClientIpAddress } from '../../../lib/sensitive-endpoint-policy';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const requestId = getRequestId({ request } as any);
@@ -12,7 +13,46 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   logger.setRequestId(requestId);
 
   try {
-    const body = await request.json();
+    const parsed = await parseJsonBody(request);
+    if (parsed.error === 'UNSUPPORTED_CONTENT_TYPE') {
+      const duration = Date.now() - startTime;
+      recordRequest('POST', '/api/auth/register', HttpStatus.BAD_REQUEST, duration);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Content-Type application/json olmalı',
+        HttpStatus.BAD_REQUEST,
+        { contentType: parsed.contentType },
+        requestId
+      );
+    }
+
+    if (parsed.error === 'INVALID_JSON') {
+      const duration = Date.now() - startTime;
+      recordRequest('POST', '/api/auth/register', HttpStatus.BAD_REQUEST, duration);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçersiz JSON body',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
+    const body = parsed.body;
+
+    const clientIp = getClientIpAddress(request);
+    const ipLimit = await enforceRateLimitPolicy({
+      request,
+      requestId,
+      key: `auth:register:ip:${clientIp}`,
+      limit: 8,
+      windowSeconds: 300,
+      message: 'Çok fazla kayıt denemesi. Lütfen biraz sonra tekrar deneyin.'
+    });
+    if (ipLimit) {
+      recordRequest('POST', '/api/auth/register', HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return ipLimit;
+    }
 
     // Validate request body
     const validation = validateWithSchema(body, commonSchemas.register);
@@ -32,6 +72,19 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     const { email, password, full_name: fullName } = validation.data;
+
+    const emailLimit = await enforceRateLimitPolicy({
+      request,
+      requestId,
+      key: `auth:register:email:${email}`,
+      limit: 3,
+      windowSeconds: 3600,
+      message: 'Bu e-posta için çok fazla kayıt denemesi yapıldı. Lütfen daha sonra tekrar deneyin.'
+    });
+    if (emailLimit) {
+      recordRequest('POST', '/api/auth/register', HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return emailLimit;
+    }
 
     // Attempt registration
     const { data, error } = await signUp(email, password, fullName);

@@ -12,6 +12,7 @@ const queryMock = vi.fn();
 const updateDbMock = vi.fn();
 const isUserBlockedMock = vi.fn();
 const deleteCacheMock = vi.fn();
+const checkRateLimitMock = vi.fn();
 const recordRequestMock = vi.fn();
 const verifyWebhookSignatureMock = vi.fn();
 const getSubscriptionMock = vi.fn();
@@ -63,6 +64,7 @@ vi.mock('../../../lib/blocking', () => ({
 
 vi.mock('../../../lib/cache', () => ({
   deleteCache: deleteCacheMock,
+  checkRateLimit: checkRateLimitMock,
 }));
 
 vi.mock('../../../lib/metrics', () => ({
@@ -128,6 +130,7 @@ describe('API contract hardening', () => {
     getTenantMembersMock.mockResolvedValue([]);
     updateDbMock.mockResolvedValue({});
     isUserBlockedMock.mockResolvedValue(false);
+    checkRateLimitMock.mockResolvedValue(true);
     addTenantMemberMock.mockResolvedValue({ id: 'member-1' });
     removeTenantMemberMock.mockResolvedValue(true);
     logTenantAuditMock.mockResolvedValue(undefined);
@@ -696,6 +699,21 @@ describe('API contract hardening', () => {
     expect(getOAuthProviderMock).not.toHaveBeenCalled();
   });
 
+  it('rate limits oauth authorize endpoint', async () => {
+    const { GET } = await import('../auth/oauth/authorize.ts');
+    checkRateLimitMock.mockResolvedValueOnce(false);
+    const request = new Request('https://example.com/api/auth/oauth/authorize?provider=google');
+
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(429);
+    expect(getOAuthProviderMock).not.toHaveBeenCalled();
+  });
+
   it('rejects oauth authorize when redirect_uri is not same-origin', async () => {
     const { GET } = await import('../auth/oauth/authorize.ts');
     const request = new Request(
@@ -791,6 +809,21 @@ describe('API contract hardening', () => {
 
     expect(response.status).toBe(404);
     expect(createUserSessionMock).not.toHaveBeenCalled();
+  });
+
+  it('rate limits oauth callback endpoint', async () => {
+    const { GET } = await import('../auth/oauth/callback.ts');
+    checkRateLimitMock.mockResolvedValueOnce(false);
+    const request = new Request('https://example.com/api/auth/oauth/callback?code=abc&state=state-1');
+
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(429);
+    expect(verifyOAuthStateMock).not.toHaveBeenCalled();
   });
 
   it('rejects oauth callback when code or state is missing', async () => {

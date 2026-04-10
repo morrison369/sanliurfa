@@ -1,11 +1,12 @@
 // API: Kullanıcı girişi (PostgreSQL + Logging)
 import type { APIRoute } from 'astro';
 import { signIn, createToken } from '../../../lib/auth';
-import { logger, generateRequestId } from '../../../lib/logging';
-import { getRequestId } from '../../../lib/api';
+import { logger } from '../../../lib/logging';
+import { apiError, apiResponse, ErrorCode, getRequestId, HttpStatus, parseJsonBody, validators } from '../../../lib/api';
 import { recordRequest, isSlowRequest, metricsCollector } from '../../../lib/metrics';
 import { queryOne } from '../../../lib/postgres';
 import { setCache } from '../../../lib/cache';
+import { enforceRateLimitPolicy, getClientIpAddress } from '../../../lib/sensitive-endpoint-policy';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const requestId = getRequestId({ request } as any);
@@ -13,24 +14,94 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   logger.setRequestId(requestId);
 
   try {
-    const { email, password } = await request.json();
-
-    if (!email || !password) {
-      logger.warn('Login attempt with missing credentials', { email: email ? 'provided' : 'missing' });
-      return new Response(
-        JSON.stringify({ error: 'E-posta ve şifre gereklidir' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', 'X-Request-ID': requestId } }
+    const parsed = await parseJsonBody(request);
+    if (parsed.error === 'UNSUPPORTED_CONTENT_TYPE') {
+      recordRequest('POST', '/api/auth/login', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Content-Type application/json olmalı',
+        HttpStatus.BAD_REQUEST,
+        { contentType: parsed.contentType },
+        requestId
       );
     }
 
-    const { data, error } = await signIn(email, password);
+    if (parsed.error === 'INVALID_JSON') {
+      recordRequest('POST', '/api/auth/login', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçersiz JSON body',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
+    const { email, password } = (parsed.body || {}) as { email?: unknown; password?: unknown };
+
+    if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {
+      recordRequest('POST', '/api/auth/login', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      logger.warn('Login attempt with missing credentials', { email: email ? 'provided' : 'missing' });
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'E-posta ve şifre gereklidir',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!validators.email(normalizedEmail)) {
+      recordRequest('POST', '/api/auth/login', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçersiz e-posta formatı',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        undefined,
+        requestId
+      );
+    }
+
+    const clientIp = getClientIpAddress(request);
+    const ipLimit = await enforceRateLimitPolicy({
+      request,
+      requestId,
+      key: `auth:login:ip:${clientIp}`,
+      limit: 25,
+      windowSeconds: 60,
+      message: 'Çok fazla giriş denemesi. Lütfen biraz sonra tekrar deneyin.'
+    });
+    if (ipLimit) {
+      recordRequest('POST', '/api/auth/login', HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return ipLimit;
+    }
+
+    const emailLimit = await enforceRateLimitPolicy({
+      request,
+      requestId,
+      key: `auth:login:email:${normalizedEmail}`,
+      limit: 10,
+      windowSeconds: 300,
+      message: 'Bu hesap için çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.'
+    });
+    if (emailLimit) {
+      recordRequest('POST', '/api/auth/login', HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return emailLimit;
+    }
+
+    const { data, error } = await signIn(normalizedEmail, password);
 
     if (error) {
       const duration = Date.now() - startTime;
-      logger.logAuth('login', 'unknown', false, { email, duration, reason: error.message });
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 401, headers: { 'Content-Type': 'application/json', 'X-Request-ID': requestId } }
+      recordRequest('POST', '/api/auth/login', HttpStatus.UNAUTHORIZED, duration);
+      logger.logAuth('login', 'unknown', false, { email: normalizedEmail, duration, reason: error.message });
+      return apiError(
+        ErrorCode.AUTHENTICATION_FAILED,
+        error.message,
+        HttpStatus.UNAUTHORIZED,
+        undefined,
+        requestId
       );
     }
 
@@ -48,16 +119,18 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       await setCache(`2fa:pending:${tempToken}`, true, 300); // 5 minute TTL for 2FA verification
 
       const duration = Date.now() - startTime;
+      recordRequest('POST', '/api/auth/login', HttpStatus.OK, duration);
       logger.info('Login successful, 2FA verification required', { userId: data.user.id, email });
 
-      return new Response(
-        JSON.stringify({
+      return apiResponse(
+        {
           success: false,
           requiresTwoFactor: true,
           tempToken: tempToken,
           message: 'Kimlik doğrulama kodu gerekli'
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json', 'X-Request-ID': requestId } }
+        },
+        HttpStatus.OK,
+        requestId
       );
     }
 
@@ -74,15 +147,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     const duration = Date.now() - startTime;
+    recordRequest('POST', '/api/auth/login', HttpStatus.OK, duration);
     logger.logAuth('login', data.user.id, true, { email: data.user.email, duration });
 
-    return new Response(
-      JSON.stringify({
+    return apiResponse(
+      {
         success: true,
         user: data.user,
         message: 'Giriş başarılı'
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json', 'X-Request-ID': requestId } }
+      },
+      HttpStatus.OK,
+      requestId
     );
   } catch (err) {
     const duration = Date.now() - startTime;

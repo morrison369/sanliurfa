@@ -7,6 +7,7 @@ import type { APIRoute } from 'astro';
 import { getOAuthProvider, generateOAuthState } from '../../../../lib/oauth';
 import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
+import { enforceRateLimitPolicy, getClientIpAddress } from '../../../../lib/sensitive-endpoint-policy';
 
 const PROVIDER_KEY_REGEX = /^[a-z0-9_-]{2,50}$/;
 
@@ -31,6 +32,19 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   logger.setRequestId(requestId);
 
   try {
+    const clientIp = getClientIpAddress(request);
+    const policyResponse = await enforceRateLimitPolicy({
+      request,
+      requestId,
+      key: `auth:oauth:authorize:ip:${clientIp}`,
+      limit: 60,
+      windowSeconds: 60,
+      message: 'Too many OAuth authorization attempts'
+    });
+    if (policyResponse) {
+      return policyResponse;
+    }
+
     const providerKey = url.searchParams.get('provider')?.trim().toLowerCase();
     const redirectUri = resolveRedirectUri(url.searchParams.get('redirect_uri'), url);
 
