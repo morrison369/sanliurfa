@@ -16,6 +16,8 @@ const checkRateLimitMock = vi.fn();
 const recordRequestMock = vi.fn();
 const verifyWebhookSignatureMock = vi.fn();
 const getSubscriptionMock = vi.fn();
+const verifyBillingWebhookSignatureMock = vi.fn();
+const handleBillingWebhookEventMock = vi.fn();
 const updateUserQuotasMock = vi.fn();
 const emailOnSubscriptionCreatedMock = vi.fn();
 const emailOnPaymentSuccessMock = vi.fn();
@@ -82,6 +84,11 @@ vi.mock('../../../lib/logging', () => ({
 vi.mock('../../../lib/stripe-client', () => ({
   verifyWebhookSignature: verifyWebhookSignatureMock,
   getSubscription: getSubscriptionMock,
+}));
+
+vi.mock('../../../lib/stripe', () => ({
+  verifyWebhookSignature: verifyBillingWebhookSignatureMock,
+  handleWebhookEvent: handleBillingWebhookEventMock,
 }));
 
 vi.mock('../../../lib/usage-tracking', () => ({
@@ -161,6 +168,8 @@ describe('API contract hardening', () => {
     getReplayHistoryMock.mockResolvedValue([]);
     cancelReplayMock.mockResolvedValue(true);
     verifyWebhookSignatureMock.mockResolvedValue({ id: 'evt_1', type: 'invoice.payment_failed', data: { object: { id: 'in_1', subscription: 'sub_1' } } });
+    verifyBillingWebhookSignatureMock.mockReturnValue({ id: 'evt_bill_1', type: 'invoice.payment_failed' });
+    handleBillingWebhookEventMock.mockResolvedValue(true);
   });
 
   it('rejects invalid messages conversation id before service calls', async () => {
@@ -1021,6 +1030,48 @@ describe('API contract hardening', () => {
 
     expect(response.status).toBe(400);
     expect(verifyWebhookSignatureMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects billing webhook without signature header', async () => {
+    const { POST } = await import('../billing/webhook.ts');
+    const request = new Request('https://example.com/api/billing/webhook', {
+      method: 'POST',
+      body: JSON.stringify({ id: 'evt_1' })
+    });
+
+    const response = await POST({ request } as any);
+
+    expect(response.status).toBe(400);
+    expect(verifyBillingWebhookSignatureMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects billing webhook when signature verification fails', async () => {
+    const { POST } = await import('../billing/webhook.ts');
+    verifyBillingWebhookSignatureMock.mockReturnValueOnce(null);
+    const request = new Request('https://example.com/api/billing/webhook', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig' },
+      body: JSON.stringify({ id: 'evt_1' })
+    });
+
+    const response = await POST({ request } as any);
+
+    expect(response.status).toBe(401);
+    expect(handleBillingWebhookEventMock).not.toHaveBeenCalled();
+  });
+
+  it('returns server error when billing webhook event handling fails', async () => {
+    const { POST } = await import('../billing/webhook.ts');
+    handleBillingWebhookEventMock.mockResolvedValueOnce(false);
+    const request = new Request('https://example.com/api/billing/webhook', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig' },
+      body: JSON.stringify({ id: 'evt_1' })
+    });
+
+    const response = await POST({ request } as any);
+
+    expect(response.status).toBe(500);
   });
 
   it('rejects stripe webhook when signature verification fails', async () => {

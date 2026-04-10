@@ -1,0 +1,54 @@
+name: Nightly Regression
+
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  nightly-unit-regression:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sanliurfa_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+      READ_REPLICA_URL: ""
+      PUBLIC_SITE_URL: http://127.0.0.1:1111
+      PORT: "1111"
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Run nightly unit regression
+        id: nightly_regression
+        continue-on-error: true
+        run: npm run test:regression:unit
+      - name: Upload unit regression report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-unit-regression
+          path: |
+            coverage
+            docs/reports
+          if-no-files-found: ignore

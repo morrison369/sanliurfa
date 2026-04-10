@@ -4,6 +4,9 @@
 - `npm run release:gate:local`: passing on current branch.
 - `npm run typecheck:app`: passing.
 - `npm run typecheck:experimental`: passing.
+- `npm run script:surface:budget:check`: passing.
+- `npm run observability:critical:check`: passing.
+- `npm run performance:budget:check`: passing (after build).
 
 ## Test Gates
 - `npm run test:critical`: intended merge-blocking safety gate for API contracts, auth hardening, and webhook policy.

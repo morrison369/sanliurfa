@@ -6,8 +6,14 @@
 import type { APIRoute } from 'astro';
 import { verifyWebhookSignature, handleWebhookEvent } from '../../../lib/stripe';
 import { logger } from '../../../lib/logging';
+import { recordRequest } from '../../../lib/metrics';
+import { apiError, apiResponse, ErrorCode, HttpStatus, getRequestId } from '../../../lib/api';
 
 export const POST: APIRoute = async ({ request }) => {
+  const requestId = getRequestId({ request } as any);
+  const startTime = Date.now();
+  logger.setRequestId(requestId);
+
   try {
     // Get raw body for signature verification
     const body = await request.text();
@@ -15,7 +21,14 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (!signature) {
       logger.warn('Webhook received without signature');
-      return new Response('No signature provided', { status: 400 });
+      recordRequest('POST', '/api/billing/webhook', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'No signature provided',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
     }
 
     // Verify webhook signature
@@ -23,7 +36,14 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (!event) {
       logger.warn('Webhook signature verification failed');
-      return new Response('Signature verification failed', { status: 401 });
+      recordRequest('POST', '/api/billing/webhook', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
+      return apiError(
+        ErrorCode.AUTH_ERROR,
+        'Signature verification failed',
+        HttpStatus.UNAUTHORIZED,
+        undefined,
+        requestId
+      );
     }
 
     logger.info('Webhook event received', { eventId: event.id, eventType: event.type });
@@ -33,13 +53,28 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (!handled) {
       logger.error('Webhook event handling failed', new Error(`Failed to handle event ${event.id}`), { eventType: event.type });
-      return new Response('Event handling failed', { status: 500 });
+      recordRequest('POST', '/api/billing/webhook', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
+      return apiError(
+        ErrorCode.INTERNAL_ERROR,
+        'Event handling failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        undefined,
+        requestId
+      );
     }
 
     logger.info('Webhook event processed successfully', { eventId: event.id });
-    return new Response('Webhook processed', { status: 200 });
+    recordRequest('POST', '/api/billing/webhook', HttpStatus.OK, Date.now() - startTime);
+    return apiResponse({ processed: true, eventId: event.id }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Webhook error', error instanceof Error ? error : new Error(String(error)));
-    return new Response('Webhook error', { status: 500 });
+    recordRequest('POST', '/api/billing/webhook', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
+    return apiError(
+      ErrorCode.INTERNAL_ERROR,
+      'Webhook error',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      undefined,
+      requestId
+    );
   }
 };

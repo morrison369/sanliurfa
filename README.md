@@ -111,6 +111,9 @@ npm run migrate:status
 npm run migrate:dry-run
 npm run typecheck:app
 npm run release:gate
+npm run script:surface:budget:check
+npm run observability:critical:check
+npm run performance:budget:check
 npm run test:e2e:smoke
 npm run test:e2e:full
 ```

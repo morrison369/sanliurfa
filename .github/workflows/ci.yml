@@ -41,6 +41,8 @@ jobs:
         run: npm run env:contract:check:ci
       - name: Repo stabilization check
         run: npm run repo:stabilize:check
+      - name: Script surface budget
+        run: npm run script:surface:budget:check
       - name: Security secret scan
         run: npm run security:secrets:scan
       - name: HTTP timeout governance guard
@@ -59,6 +61,8 @@ jobs:
         run: npm run db:test:bootstrap
       - name: Typecheck app scope
         run: npm run typecheck:app
+      - name: Critical observability guard
+        run: npm run observability:critical:check
       - name: Typecheck experimental exclude guard
         run: npm run typecheck:experimental:exclude:guard
       - name: Critical contracts and security smoke

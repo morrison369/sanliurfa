@@ -34,14 +34,17 @@ function main(): void {
   run('Migration dry-run', 'npm run migrate:dry-run');
   run('Phase doctor', 'npm run phase:doctor');
   run('Dependency triage', 'npm run deps:audit:triage');
+  run('Script surface budget', 'npm run script:surface:budget:check');
   run('TypeScript app gate', 'npm run typecheck:app');
   run('TypeScript experimental exclude prohibition gate', 'npm run typecheck:experimental:exclude:guard');
   run('TypeScript experimental gate', 'npm run typecheck:experimental');
   run('TypeScript weekly report', 'npm run typecheck:experimental:report');
   run('TypeScript governance gate', 'npm run phase:check:tsconfig');
+  run('Critical observability guard', 'npm run observability:critical:check');
   run('Critical unit smoke', 'npm run test:critical');
   run('E2E smoke', 'npm run test:e2e:smoke');
   run('Build', 'npm run build');
+  run('Performance budget check', 'npm run performance:budget:check');
   run('SEO artifacts check', 'npm run seo:artifacts:check');
   console.log('\n[release-gate] OK');
 }

@@ -1,0 +1,10 @@
+{
+  "baseline": {
+    "js": 495334,
+    "css": 214314,
+    "html": 1920,
+    "json": 1487,
+    "total": 713055
+  },
+  "maxGrowthPercent": 20
+}
