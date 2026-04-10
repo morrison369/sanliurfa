@@ -8,6 +8,8 @@ const suggestIndexesMock = vi.fn();
 const getSlowQueriesOptimizerMock = vi.fn();
 const getMetricsMock = vi.fn();
 const getSlowOperationsMock = vi.fn();
+const getNightlyOpsSummaryMock = vi.fn();
+const getReleaseGateSummaryMock = vi.fn();
 const loggerMock = {
   setRequestId: vi.fn(),
   error: vi.fn(),
@@ -47,6 +49,14 @@ vi.mock('../../../lib/performance-optimizer', () => ({
 
 vi.mock('../../../lib/logging', () => ({
   logger: loggerMock,
+}));
+
+vi.mock('../../../lib/nightly-ops-summary', () => ({
+  getNightlyOpsSummary: getNightlyOpsSummaryMock,
+}));
+
+vi.mock('../../../lib/release-gate-summary', () => ({
+  getReleaseGateSummary: getReleaseGateSummaryMock,
 }));
 
 describe('runtime admin ops contracts', () => {
@@ -95,6 +105,27 @@ describe('runtime admin ops contracts', () => {
         timestamp: Date.now(),
       },
     ]);
+    getReleaseGateSummaryMock.mockResolvedValue({
+      available: true,
+      generatedAt: '2026-04-10T08:00:00.000Z',
+      status: 'passed',
+      failedStepCount: 0,
+      steps: [],
+    });
+    getNightlyOpsSummaryMock.mockResolvedValue({
+      regression: {
+        available: true,
+        generatedAt: '2026-04-10T07:00:00.000Z',
+        outcome: 'success',
+        successRate: 100,
+      },
+      e2e: {
+        available: false,
+        generatedAt: null,
+        outcome: 'missing',
+        successRate: null,
+      },
+    });
   });
 
   it('rejects unauthorized detailed health access', async () => {
@@ -124,6 +155,18 @@ describe('runtime admin ops contracts', () => {
     expect(body.data.status).toBe('degraded');
     expect(body.data.checks.database.status).toBe('up');
     expect(body.data.checks.redis.status).toBe('down');
+    expect(body.data.checks.artifacts.releaseGate).toEqual({
+      status: 'healthy',
+      generatedAt: '2026-04-10T08:00:00.000Z',
+    });
+    expect(body.data.checks.artifacts.nightlyRegression).toEqual({
+      status: 'healthy',
+      generatedAt: '2026-04-10T07:00:00.000Z',
+    });
+    expect(body.data.checks.artifacts.nightlyE2E).toEqual({
+      status: 'blocked',
+      generatedAt: null,
+    });
   });
 
   it('returns blocked detailed health and 503 when database is down', async () => {
