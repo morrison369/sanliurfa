@@ -1,147 +1,15 @@
-/**
- * Admin Dashboard Overview Component
- * Main dashboard with metrics and alerts
- */
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, Users, FileText, Flag, ShieldAlert, KeyRound } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import {
   classifyIntegrationStatus,
   classifyNightlyStatus,
   classifyReleaseGateStatus,
-  type AdminStatusLevel
 } from '../lib/admin-status';
-
-interface DashboardData {
-  overview: {
-    users: { total: number; new: number; active: number };
-    content: { places: number; reviews: number; comments: number; newReviews: number };
-    flags: { pending: number; resolved: number; total: number };
-    moderation: { totalActions: number; warnings: number; suspensions: number; bans: number };
-    period: number;
-  };
-  metrics: any;
-  moderation: any;
-  integrations: {
-    resend: { configured: boolean; source: 'env' | 'admin' | 'none' };
-    analytics: { configured: boolean; source: 'env' | 'admin' | 'none' };
-    summary?: { configuredCount: number; total: number; fullyConfigured: boolean };
-    verification?: {
-      resend: { status: string; message: string; checkedAt: string };
-      analytics: { status: string; message: string; checkedAt: string };
-      summary: { healthy: boolean; checkedAt: string };
-    };
-  };
-  operational?: {
-    oauth: {
-      callback: { errorRatePercent: number; sampleSize: number };
-    };
-    webhook: {
-      stripe: { errorRatePercent: number; p95DurationMs: number; duplicateRatePercent?: number; sampleSize: number };
-    };
-    search: {
-      periodDays: number;
-      totalTopSearches: number;
-      topQueries: Array<{ query: string; count: number }>;
-    };
-  };
-  performanceOptimization?: {
-    generatedAt: string;
-    recommendations: {
-      total: number;
-      highPriority: number;
-      mediumPriority: number;
-    };
-    metrics: {
-      slowQueriesCount: number;
-      slowRequestRate: number;
-      cacheHitRate: number;
-      avgRequestDuration: number;
-      p95Duration: number;
-    };
-    cacheStrategies: {
-      count: number;
-    };
-    indexSuggestions: {
-      count: number;
-      top: string[];
-    };
-    slowOperations: Array<{
-      type: string;
-      message: string;
-      duration: number;
-      timestamp: string;
-    }>;
-  };
-  artifactHealth?: {
-    releaseGate: { available: boolean; generatedAt: string | null; status: AdminStatusLevel };
-    nightlyRegression: { available: boolean; generatedAt: string | null; status: AdminStatusLevel };
-    nightlyE2E: { available: boolean; generatedAt: string | null; status: AdminStatusLevel };
-    performanceOps: { available: boolean; generatedAt: string | null; status: AdminStatusLevel };
-  };
-  artifactHealthSummary?: {
-    overall: AdminStatusLevel;
-    healthyCount: number;
-    degradedCount: number;
-    blockedCount: number;
-    total: number;
-  };
-  releaseGate?: {
-    available: boolean;
-    generatedAt: string | null;
-    finalStatus: 'passed' | 'failed' | 'missing';
-    blockingFailedSteps: string[];
-    advisoryFailedSteps: string[];
-    failedStepCount: number;
-    steps?: Array<{
-      step: string;
-      command: string;
-      advisory: boolean;
-      status: 'passed' | 'failed';
-    }>;
-    performanceOptimization?: {
-      recommendations: { total: number; highPriority: number; mediumPriority: number };
-      metrics: { slowRequestRate: number; cacheHitRate: number };
-    } | null;
-  };
-  nightly?: {
-    regression: {
-      available: boolean;
-      kind: 'regression';
-      generatedAt: string | null;
-      outcome: string;
-      successRatePercent: number | null;
-      recentOutcomes: string[];
-      topFailures: string[];
-      performanceOptimization?: {
-        recommendations: { total: number; highPriority: number; mediumPriority: number };
-        metrics: { slowRequestRate: number; cacheHitRate: number };
-      } | null;
-    };
-    e2e: {
-      available: boolean;
-      kind: 'e2e';
-      generatedAt: string | null;
-      outcome: string;
-      successRatePercent: number | null;
-      recentOutcomes: string[];
-      topFailures: string[];
-      performanceOptimization?: {
-        recommendations: { total: number; highPriority: number; mediumPriority: number };
-        metrics: { slowRequestRate: number; cacheHitRate: number };
-      } | null;
-    };
-  };
-  statusSummary?: {
-    integrations: AdminStatusLevel;
-    regression: AdminStatusLevel;
-    e2e: AdminStatusLevel;
-    releaseGate: AdminStatusLevel;
-    overall: AdminStatusLevel;
-  };
-}
+import type { AdminDashboardOverviewData } from '../types/admin-api';
+import { ArtifactHealthCard, IntegrationVerificationCard, ModerationStatsCard, NightlyTrendCard, OperationalSnapshotCard, PerformanceOptimizationCard, ReleaseGateCard } from './admin-dashboard/DetailCards';
+import { CoreMetricsGrid } from './admin-dashboard/CoreMetricsGrid';
 
 export default function AdminDashboardOverview() {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<AdminDashboardOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState(30);
@@ -180,12 +48,9 @@ export default function AdminDashboardOverview() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-        <div>
-          <h3 className="font-medium text-red-900">Hata</h3>
-          <p className="text-red-700 text-sm">{error}</p>
-        </div>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <h3 className="font-medium text-red-900">Hata</h3>
+        <p className="text-red-700 text-sm">{error}</p>
       </div>
     );
   }
@@ -195,36 +60,21 @@ export default function AdminDashboardOverview() {
   const integrationLevel = classifyIntegrationStatus({
     configuredCount: data.integrations?.summary?.configuredCount ?? 0,
     total: data.integrations?.summary?.total ?? 2,
-    verificationHealthy: data.integrations?.verification?.summary?.healthy
+    verificationHealthy: data.integrations?.verification?.summary?.healthy,
   });
-  const releaseGateLevel = data.releaseGate
-    ? classifyReleaseGateStatus(data.releaseGate)
-    : 'blocked';
-  const nightlyRegressionLevel = data.nightly
-    ? classifyNightlyStatus(data.nightly.regression)
-    : 'blocked';
-  const nightlyE2eLevel = data.nightly
-    ? classifyNightlyStatus(data.nightly.e2e)
-    : 'blocked';
-
-  function statusTone(level: AdminStatusLevel): string {
-    if (level === 'healthy') return 'text-emerald-700';
-    if (level === 'degraded') return 'text-amber-700';
-    return 'text-red-700';
-  }
+  const releaseGateLevel = data.releaseGate ? classifyReleaseGateStatus(data.releaseGate) : 'blocked';
+  const nightlyRegressionLevel = data.nightly ? classifyNightlyStatus(data.nightly.regression) : 'blocked';
+  const nightlyE2eLevel = data.nightly ? classifyNightlyStatus(data.nightly.e2e) : 'blocked';
 
   return (
     <div className="space-y-6">
-      {/* Period Selector */}
       <div className="flex gap-2">
         {[7, 30, 90, 365].map((days) => (
           <button
             key={days}
             onClick={() => setPeriod(days)}
             className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-              period === days
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              period === days ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
           >
             {days === 7 ? '7 gün' : days === 30 ? '30 gün' : days === 90 ? '3 ay' : '1 yıl'}
@@ -232,366 +82,20 @@ export default function AdminDashboardOverview() {
         ))}
       </div>
 
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <AlertCircle className="w-5 h-5 text-slate-700" />
-            <h3 className="font-medium text-gray-700">Ops Durumu</h3>
-          </div>
-          <div className="space-y-1">
-            <div className={`text-2xl font-bold ${statusTone(data.statusSummary?.overall || 'blocked')}`}>
-              {data.statusSummary?.overall || 'blocked'}
-            </div>
-            <div className="text-xs text-gray-500">
-              Release: {releaseGateLevel} • Reg: {nightlyRegressionLevel} • E2E: {nightlyE2eLevel}
-            </div>
-          </div>
-        </div>
-
-        {/* Users Card */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <Users className="w-5 h-5 text-blue-600" />
-            <h3 className="font-medium text-gray-700">Kullanıcılar</h3>
-          </div>
-          <div className="space-y-1">
-            <div className="text-2xl font-bold text-gray-900">{data.overview.users.total}</div>
-            <div className="text-xs text-gray-500">
-              +{data.overview.users.new} yeni • {data.overview.users.active} aktif
-            </div>
-          </div>
-        </div>
-
-        {/* Content Card */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <FileText className="w-5 h-5 text-green-600" />
-            <h3 className="font-medium text-gray-700">İçerik</h3>
-          </div>
-          <div className="space-y-1">
-            <div className="text-2xl font-bold text-gray-900">{data.overview.content.places}</div>
-            <div className="text-xs text-gray-500">
-              {data.overview.content.reviews} inceleme • +{data.overview.content.newReviews}
-            </div>
-          </div>
-        </div>
-
-        {/* Flags Card */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <Flag className="w-5 h-5 text-orange-600" />
-            <h3 className="font-medium text-gray-700">Bayraklar</h3>
-          </div>
-          <div className="space-y-1">
-            <div className="text-2xl font-bold text-orange-600">{data.overview.flags.pending}</div>
-            <div className="text-xs text-gray-500">
-              Beklemede • {data.overview.flags.resolved} çözüldü
-            </div>
-          </div>
-        </div>
-
-        {/* Moderation Card */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <ShieldAlert className="w-5 h-5 text-red-600" />
-            <h3 className="font-medium text-gray-700">Moderasyon</h3>
-          </div>
-          <div className="space-y-1">
-            <div className="text-2xl font-bold text-red-600">{data.overview.moderation.totalActions}</div>
-            <div className="text-xs text-gray-500">
-              {data.overview.moderation.warnings} uyarı • {data.overview.moderation.bans} ban
-            </div>
-          </div>
-        </div>
-
-        {/* Integrations Card */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <KeyRound className="w-5 h-5 text-indigo-600" />
-            <h3 className="font-medium text-gray-700">Entegrasyonlar</h3>
-          </div>
-          <div className="space-y-1">
-            <div className="text-2xl font-bold text-indigo-600">
-              {data.integrations?.summary?.configuredCount ??
-                (Number(data.integrations?.resend?.configured) + Number(data.integrations?.analytics?.configured))}
-              /{data.integrations?.summary?.total || 2}
-            </div>
-            <div className="text-xs text-gray-500">
-              RESEND: {data.integrations?.resend?.source || 'none'} • Analytics: {data.integrations?.analytics?.source || 'none'}
-            </div>
-            <div className="text-xs text-gray-500">
-              Durum: <span className={statusTone(integrationLevel)}>{integrationLevel}</span>
-            </div>
-            <div className="text-xs text-gray-500">
-              Doğrulama: {data.integrations?.verification?.summary?.healthy ? 'verified' : 'review'}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Moderation Stats */}
-      {data.moderation && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Moderasyon İstatistikleri</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Beklemede</div>
-              <div className="text-2xl font-bold text-orange-600">{data.moderation.queue.pending}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">İncelemede</div>
-              <div className="text-2xl font-bold text-blue-600">{data.moderation.queue.inReview}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Yüksek Önem Bayrakları</div>
-              <div className="text-2xl font-bold text-red-600">{data.moderation.flags.highSeverity}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Toplam Suspansyonlar</div>
-              <div className="text-2xl font-bold text-purple-600">{data.moderation.actions.suspensions}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Operational Snapshot */}
-      {data.operational && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Operasyon Özeti</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <div className="text-xs text-gray-500 mb-1">OAuth Callback Hata</div>
-              <div className="text-xl font-bold text-gray-900">
-                %{data.operational.oauth.callback.errorRatePercent}
-              </div>
-              <div className="text-xs text-gray-500">
-                Örnek: {data.operational.oauth.callback.sampleSize}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Stripe Webhook</div>
-              <div className="text-xl font-bold text-gray-900">
-                %{data.operational.webhook.stripe.errorRatePercent} / p95 {data.operational.webhook.stripe.p95DurationMs}ms
-              </div>
-              <div className="text-xs text-gray-500">
-                Duplicate %{data.operational.webhook.stripe.duplicateRatePercent || 0} • Örnek: {data.operational.webhook.stripe.sampleSize}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Arama Trendi ({data.operational.search.periodDays} gün)</div>
-              <div className="text-xl font-bold text-gray-900">{data.operational.search.totalTopSearches}</div>
-              <div className="text-xs text-gray-500 truncate">
-                {data.operational.search.topQueries?.[0]
-                  ? `${data.operational.search.topQueries[0].query} (${data.operational.search.topQueries[0].count})`
-                  : 'Veri yok'}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {data.performanceOptimization && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Performans Optimizasyonu</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Öneriler</div>
-              <div className="text-xl font-bold text-gray-900">{data.performanceOptimization.recommendations.total}</div>
-              <div className="text-xs text-gray-500">
-                High: {data.performanceOptimization.recommendations.highPriority} • Medium: {data.performanceOptimization.recommendations.mediumPriority}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Yavaş Query / Request</div>
-              <div className="text-xl font-bold text-gray-900">
-                {data.performanceOptimization.metrics.slowQueriesCount} / %{data.performanceOptimization.metrics.slowRequestRate}
-              </div>
-              <div className="text-xs text-gray-500">
-                Avg: {data.performanceOptimization.metrics.avgRequestDuration}ms • p95: {data.performanceOptimization.metrics.p95Duration}ms
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Cache / Index</div>
-              <div className="text-xl font-bold text-gray-900">
-                %{data.performanceOptimization.metrics.cacheHitRate} / {data.performanceOptimization.indexSuggestions.count}
-              </div>
-              <div className="text-xs text-gray-500">
-                Strategy: {data.performanceOptimization.cacheStrategies.count}
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Son Yavaş Operasyon</div>
-              <div className="text-sm font-semibold text-gray-900">
-                {data.performanceOptimization.slowOperations[0]
-                  ? `${data.performanceOptimization.slowOperations[0].type} • ${data.performanceOptimization.slowOperations[0].duration}ms`
-                  : 'yok'}
-              </div>
-              <div className="text-xs text-gray-500 truncate">
-                {data.performanceOptimization.slowOperations[0]?.message || 'Yavaş operasyon kaydı yok'}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {data.artifactHealth && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <h3 className="font-semibold text-gray-900">Artifact Health</h3>
-              {data.artifactHealthSummary && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Healthy: {data.artifactHealthSummary.healthyCount} • Degraded: {data.artifactHealthSummary.degradedCount} • Blocked: {data.artifactHealthSummary.blockedCount}
-                </div>
-              )}
-            </div>
-            {data.artifactHealthSummary && (
-              <div className={`text-sm font-semibold ${statusTone(data.artifactHealthSummary.overall)}`}>
-                {data.artifactHealthSummary.overall}
-              </div>
-            )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Release Gate</div>
-              <div className="text-sm font-semibold text-gray-900">
-                {data.artifactHealth.releaseGate.available ? 'var' : 'yok'}
-              </div>
-              <div className={`text-xs ${statusTone(data.artifactHealth.releaseGate.status)}`}>{data.artifactHealth.releaseGate.status}</div>
-              <div className="text-xs text-gray-500">{data.artifactHealth.releaseGate.generatedAt || 'Henüz yok'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Nightly Regression</div>
-              <div className="text-sm font-semibold text-gray-900">
-                {data.artifactHealth.nightlyRegression.available ? 'var' : 'yok'}
-              </div>
-              <div className={`text-xs ${statusTone(data.artifactHealth.nightlyRegression.status)}`}>{data.artifactHealth.nightlyRegression.status}</div>
-              <div className="text-xs text-gray-500">{data.artifactHealth.nightlyRegression.generatedAt || 'Henüz yok'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Nightly E2E</div>
-              <div className="text-sm font-semibold text-gray-900">
-                {data.artifactHealth.nightlyE2E.available ? 'var' : 'yok'}
-              </div>
-              <div className={`text-xs ${statusTone(data.artifactHealth.nightlyE2E.status)}`}>{data.artifactHealth.nightlyE2E.status}</div>
-              <div className="text-xs text-gray-500">{data.artifactHealth.nightlyE2E.generatedAt || 'Henüz yok'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Performance Ops</div>
-              <div className="text-sm font-semibold text-gray-900">
-                {data.artifactHealth.performanceOps.available ? 'var' : 'yok'}
-              </div>
-              <div className={`text-xs ${statusTone(data.artifactHealth.performanceOps.status)}`}>{data.artifactHealth.performanceOps.status}</div>
-              <div className="text-xs text-gray-500">{data.artifactHealth.performanceOps.generatedAt || 'Henüz yok'}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {data.integrations?.verification && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Entegrasyon Doğrulama</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <div className="text-xs text-gray-500 mb-1">RESEND</div>
-              <div className="text-xl font-bold text-gray-900">{data.integrations.verification.resend.status}</div>
-              <div className="text-xs text-gray-500">{data.integrations.verification.resend.message}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Analytics</div>
-              <div className="text-xl font-bold text-gray-900">{data.integrations.verification.analytics.status}</div>
-              <div className="text-xs text-gray-500">{data.integrations.verification.analytics.message}</div>
-            </div>
-          </div>
-          <div className="text-xs text-gray-500 mt-3">
-            Son kontrol: {data.integrations.verification.summary.checkedAt}
-          </div>
-        </div>
-      )}
-
-      {data.releaseGate && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Release Gate</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Durum</div>
-              <div className={`text-xl font-bold ${statusTone(releaseGateLevel)}`}>{releaseGateLevel}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Hata Sayısı</div>
-              <div className="text-xl font-bold text-gray-900">{data.releaseGate.failedStepCount}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500 mb-1">Son Üretim</div>
-              <div className="text-sm text-gray-900">{data.releaseGate.generatedAt || 'Henüz yok'}</div>
-            </div>
-          </div>
-          <div className="text-xs text-gray-500 mt-3">
-            Blocking: {data.releaseGate.blockingFailedSteps[0] || 'yok'} • Advisory: {data.releaseGate.advisoryFailedSteps[0] || 'yok'}
-          </div>
-          <div className="text-xs text-gray-500 mt-2">
-            Perf: {data.releaseGate.performanceOptimization?.recommendations.total ?? 'yok'} öneri • Slow request %{data.releaseGate.performanceOptimization?.metrics.slowRequestRate ?? 'yok'} • Cache %{data.releaseGate.performanceOptimization?.metrics.cacheHitRate ?? 'yok'}
-          </div>
-          {data.releaseGate.steps && data.releaseGate.steps.length > 0 && (
-            <details className="mt-4">
-              <summary className="cursor-pointer text-sm font-medium text-gray-700">
-                Step Detayları ({data.releaseGate.steps.length})
-              </summary>
-              <div className="mt-3 space-y-2">
-                {data.releaseGate.steps.slice(0, 10).map((step) => (
-                  <div key={`${step.step}-${step.command}`} className="rounded-lg border border-gray-200 p-3 text-xs">
-                    <div className="font-medium text-gray-900">
-                      {step.step} • {step.status} {step.advisory ? '(advisory)' : '(blocking)'}
-                    </div>
-                    <div className="mt-1 break-all text-gray-500">{step.command}</div>
-                  </div>
-                ))}
-              </div>
-            </details>
-          )}
-        </div>
-      )}
-
-      {data.nightly && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Nightly Trend</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-lg border border-gray-200 p-4">
-              <div className="text-xs text-gray-500 mb-1">Regression</div>
-              <div className={`text-xl font-bold ${statusTone(nightlyRegressionLevel)}`}>{nightlyRegressionLevel}</div>
-              <div className="text-xs text-gray-500">
-                Outcome: {data.nightly.regression.outcome} • Success rate: {data.nightly.regression.successRatePercent ?? 'yok'}%
-              </div>
-              <div className="text-xs text-gray-500">
-                Son run: {data.nightly.regression.generatedAt || 'Henüz yok'}
-              </div>
-              <div className="text-xs text-gray-500 mt-2">
-                Failure: {data.nightly.regression.topFailures[0] || 'yok'}
-              </div>
-              <div className="text-xs text-gray-500 mt-2">
-                Perf: {data.nightly.regression.performanceOptimization?.recommendations.total ?? 'yok'} öneri • Slow request %{data.nightly.regression.performanceOptimization?.metrics.slowRequestRate ?? 'yok'}
-              </div>
-            </div>
-            <div className="rounded-lg border border-gray-200 p-4">
-              <div className="text-xs text-gray-500 mb-1">E2E</div>
-              <div className={`text-xl font-bold ${statusTone(nightlyE2eLevel)}`}>{nightlyE2eLevel}</div>
-              <div className="text-xs text-gray-500">
-                Outcome: {data.nightly.e2e.outcome} • Success rate: {data.nightly.e2e.successRatePercent ?? 'yok'}%
-              </div>
-              <div className="text-xs text-gray-500">
-                Son run: {data.nightly.e2e.generatedAt || 'Henüz yok'}
-              </div>
-              <div className="text-xs text-gray-500 mt-2">
-                Failure: {data.nightly.e2e.topFailures[0] || 'yok'}
-              </div>
-              <div className="text-xs text-gray-500 mt-2">
-                Perf: {data.nightly.e2e.performanceOptimization?.recommendations.total ?? 'yok'} öneri • Slow request %{data.nightly.e2e.performanceOptimization?.metrics.slowRequestRate ?? 'yok'}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <CoreMetricsGrid
+        data={data}
+        integrationLevel={integrationLevel}
+        releaseGateLevel={releaseGateLevel}
+        nightlyRegressionLevel={nightlyRegressionLevel}
+        nightlyE2eLevel={nightlyE2eLevel}
+      />
+      <ModerationStatsCard moderation={data.moderation} />
+      <OperationalSnapshotCard operational={data.operational} />
+      <PerformanceOptimizationCard performanceOptimization={data.performanceOptimization} />
+      <ArtifactHealthCard artifactHealth={data.artifactHealth} artifactHealthSummary={data.artifactHealthSummary} />
+      <IntegrationVerificationCard verification={data.integrations?.verification} />
+      <ReleaseGateCard releaseGate={data.releaseGate} releaseGateLevel={releaseGateLevel} />
+      <NightlyTrendCard nightly={data.nightly} nightlyRegressionLevel={nightlyRegressionLevel} nightlyE2eLevel={nightlyE2eLevel} />
     </div>
   );
 }

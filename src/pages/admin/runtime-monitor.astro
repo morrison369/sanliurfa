@@ -36,6 +36,20 @@ const seo = {
       <div id="runtime-monitor-status" class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
         Veriler yükleniyor.
       </div>
+      <div class="grid gap-4 md:grid-cols-3">
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+          <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Son yenileme</div>
+          <div id="runtime-monitor-last-refresh" class="mt-2 text-lg font-semibold text-gray-900 dark:text-white">-</div>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+          <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Auto refresh</div>
+          <div class="mt-2 text-lg font-semibold text-gray-900 dark:text-white">60 saniye</div>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+          <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Trend</div>
+          <div id="runtime-monitor-trend" class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Henüz veri yok.</div>
+        </div>
+      </div>
 
       <div class="grid gap-6 xl:grid-cols-2">
         <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -122,6 +136,7 @@ const seo = {
       degraded: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
       blocked: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
     };
+    const history = [];
 
     function formatPayload(payload) {
       return JSON.stringify(payload, null, 2);
@@ -155,6 +170,8 @@ const seo = {
 
     async function refreshRuntimeMonitor() {
       const statusLine = document.getElementById('runtime-monitor-status');
+      const trendLine = document.getElementById('runtime-monitor-trend');
+      const lastRefresh = document.getElementById('runtime-monitor-last-refresh');
       if (statusLine) {
         statusLine.textContent = 'Veriler yenileniyor.';
       }
@@ -163,13 +180,25 @@ const seo = {
       const blockedCount = results.filter((item) => item.status === 'blocked').length;
       const degradedCount = results.filter((item) => item.status === 'degraded').length;
       const overall = blockedCount > 0 ? 'blocked' : degradedCount > 0 ? 'degraded' : 'healthy';
+      const refreshedAt = new Date().toISOString();
+      history.unshift({ overall, blockedCount, degradedCount, refreshedAt });
+      history.splice(5);
 
       if (statusLine) {
         statusLine.textContent = `Genel durum: ${overall}. Healthy: ${results.filter((item) => item.status === 'healthy').length}, degraded: ${degradedCount}, blocked: ${blockedCount}.`;
+      }
+      if (lastRefresh) {
+        lastRefresh.textContent = refreshedAt;
+      }
+      if (trendLine) {
+        trendLine.textContent = history
+          .map((entry) => `${entry.refreshedAt.slice(11, 19)} ${entry.overall} (d:${entry.degradedCount} b:${entry.blockedCount})`)
+          .join(' | ');
       }
     }
 
     document.getElementById('refresh-runtime-monitor')?.addEventListener('click', refreshRuntimeMonitor);
     refreshRuntimeMonitor();
+    window.setInterval(refreshRuntimeMonitor, 60000);
   </script>
 </Layout>

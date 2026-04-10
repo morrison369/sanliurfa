@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildPerformanceOptimizationSummary } from '../../../test/fixtures/ops';
 
 const recordRequestMock = vi.fn();
 const getCurrentEnvironmentMock = vi.fn();
@@ -63,20 +64,11 @@ describe('admin deployment status contracts', () => {
       analyticsId: '',
       source: { resendApiKey: 'admin', analyticsId: 'none' },
     });
-    getPerformanceOptimizationSummaryMock.mockResolvedValue({
-      generatedAt: '2026-04-10T03:00:00.000Z',
-      recommendations: { total: 4, highPriority: 2, mediumPriority: 2 },
-      metrics: {
-        slowQueriesCount: 6,
-        slowRequestRate: 14,
-        cacheHitRate: 42,
-        avgRequestDuration: 220,
-        p95Duration: 780,
-      },
-      cacheStrategies: { count: 2 },
-      indexSuggestions: { count: 3, top: ['CREATE INDEX idx_reviews_place_id ON reviews(place_id)'] },
-      slowOperations: [],
-    });
+    getPerformanceOptimizationSummaryMock.mockResolvedValue(
+      buildPerformanceOptimizationSummary({
+        slowOperations: [],
+      })
+    );
   });
 
   it('rejects unauthorized deployment status access', async () => {

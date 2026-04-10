@@ -249,11 +249,17 @@ jobs:
               const blockedCount = entries.filter((entry) => entry.status === 'blocked').length;
               const degradedCount = entries.filter((entry) => entry.status === 'degraded').length;
               const overall = blockedCount > 0 ? 'blocked' : degradedCount > 0 ? 'degraded' : 'healthy';
+              const action = overall === 'blocked'
+                ? 'Aynı gün müdahale et.'
+                : overall === 'degraded'
+                  ? 'Sonraki çalışma bloğunda düzelt.'
+                  : 'Aksiyon yok.';
               return {
                 overall,
                 lines: [
                   '## Artifact Freshness Alert',
                   `- Overall: ${overall}`,
+                  `- Aksiyon: ${action}`,
                   ...entries.map((entry) => `- ${entry.label}: ${entry.status} (${entry.generatedAt || 'missing'})`)
                 ].join('\n')
               };
@@ -374,6 +380,17 @@ jobs:
               : '## Nightly Summary\n- Summary file unavailable';
             const finalIssueBody = [body, '', nightlySummaryBlock, '', trendSummary].join('\n');
             if (existing) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                per_page: 5
+              });
+              const lastBody = comments[comments.length - 1]?.body || '';
+              if (lastBody === finalIssueBody) {
+                core.info('Nightly regression issue body unchanged; skipping duplicate comment.');
+                return;
+              }
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,

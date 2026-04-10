@@ -1,4 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildNightlySummary, buildReleaseGateSummary } from '../../../test/fixtures/ops';
 
 const poolQueryMock = vi.fn();
 const getRedisClientMock = vi.fn();
@@ -78,25 +79,22 @@ describe('runtime ops contracts', () => {
       resendApiKey: '',
       analyticsId: '',
     });
-    getReleaseGateSummaryMock.mockResolvedValue({
-      available: true,
-      generatedAt: '2026-04-10T08:00:00.000Z',
-      finalStatus: 'passed',
-      failedStepCount: 0,
-    });
+    getReleaseGateSummaryMock.mockResolvedValue(
+      buildReleaseGateSummary({
+        generatedAt: '2026-04-10T08:00:00.000Z',
+      })
+    );
     getNightlyOpsSummaryMock.mockResolvedValue({
-      regression: {
-        available: true,
+      regression: buildNightlySummary('regression', {
         generatedAt: '2026-04-10T07:00:00.000Z',
-        outcome: 'success',
         successRatePercent: 100,
-      },
-      e2e: {
+      }),
+      e2e: buildNightlySummary('e2e', {
         available: false,
         generatedAt: null,
         outcome: 'missing',
         successRatePercent: null,
-      },
+      }),
     });
 
     getPerformanceStatsMock.mockReturnValue({
