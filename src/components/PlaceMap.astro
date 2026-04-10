@@ -25,7 +25,13 @@ const {
   showSearch = false
 } = Astro.props;
 
-const mapId = Math.random().toString(36).substring(7);
+function hashValue(value: string): string {
+  return Array.from(value).reduce((hash, char, index) => {
+    return (hash + char.charCodeAt(0) * (index + 13)) % 1679616;
+  }, 0).toString(36).padStart(4, '0');
+}
+
+const mapId = `place-map-${hashValue(`${centerLat}:${centerLng}:${zoom}:${places.length}:${showSearch}:${height}`)}`;
 ---
 
 <div class="w-full">

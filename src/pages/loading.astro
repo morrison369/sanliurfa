@@ -106,8 +106,9 @@
       'Şanlıurfa 2029 Dünya Gastronomi Şehri adayıdır.'
     ];
     
-    const randomTip = tips[Math.floor(Math.random() * tips.length)];
-    document.getElementById('random-tip').textContent = randomTip;
+    const dayBucket = Math.floor(Date.now() / 86400000);
+    const deterministicTip = tips[dayBucket % tips.length];
+    document.getElementById('random-tip').textContent = deterministicTip;
   </script>
 </body>
 </html>

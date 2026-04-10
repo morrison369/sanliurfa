@@ -8,8 +8,8 @@ interface Props {
   zoom?: number;
 }
 
-const { 
-  latitude, 
+const {
+  latitude,
   longitude, 
   name = '', 
   address = '',
@@ -17,7 +17,13 @@ const {
   zoom = 15
 } = Astro.props;
 
-const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
+function hashValue(value: string): string {
+  return Array.from(value).reduce((hash, char, index) => {
+    return (hash + char.charCodeAt(0) * (index + 7)) % 1679616;
+  }, 0).toString(36).padStart(4, '0');
+}
+
+const mapId = `map-${hashValue(`${latitude}:${longitude}:${name}:${address}:${zoom}`)}`;
 ---
 
 <div class="relative rounded-xl overflow-hidden" style={`height: ${height}`}>

@@ -7,25 +7,26 @@
 4. `npm run governance:http:timeout:check`
 5. `npm run governance:imports:check`
 6. `npm run governance:logging:check`
-7. `npm run governance:runtime:placeholders:check`
-8. `npm run governance:cache:redis:check`
-9. `npm run governance:querymany:usage:check`
-10. `npm run governance:querymany:check`
-11. `npm run governance:migrations:contract:check`
-12. `npm run db:drift:check`
-13. `npm run db:test:bootstrap`
-14. `npm run migrate:status`
-15. `npm run migrate:dry-run`
-16. `npm run phase:doctor`
-17. `npm run deps:audit:triage`
-18. `npm run typecheck:app`
-19. `npm run typecheck:experimental:exclude:guard`
-20. `npm run typecheck:experimental`
-21. `npm run typecheck:experimental:report`
-22. `npm run phase:check:tsconfig`
-23. `npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts`
-24. `npm run test:e2e:smoke`
-25. `npm run build`
+7. `npm run governance:frontend:randomness:check`
+8. `npm run governance:runtime:placeholders:check`
+9. `npm run governance:cache:redis:check`
+10. `npm run governance:querymany:usage:check`
+11. `npm run governance:querymany:check`
+12. `npm run governance:migrations:contract:check`
+13. `npm run db:drift:check`
+14. `npm run db:test:bootstrap`
+15. `npm run migrate:status`
+16. `npm run migrate:dry-run`
+17. `npm run phase:doctor`
+18. `npm run deps:audit:triage`
+19. `npm run typecheck:app`
+20. `npm run typecheck:experimental:exclude:guard`
+21. `npm run typecheck:experimental`
+22. `npm run typecheck:experimental:report`
+23. `npm run phase:check:tsconfig`
+24. `npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts`
+25. `npm run test:e2e:smoke`
+26. `npm run build`
 
 > Not: `migrate:status` local ortamda DB yoksa advisory fallback ile raporlanır; CI içinde ayrı adım olarak zorunlu çalışır.
 
@@ -47,6 +48,7 @@ npm run release:gate:local
 - `db:test:bootstrap` önce hedef `DATABASE_URL` bağlantısını doğrular; yalnızca erişim yoksa admin bağlantısı ile DB oluşturmayı dener.
 - Legacy guard’lar:
   - `governance:logging:check`: `logger.debug/info/warn/error` çağrılarında 1-3 argüman sözleşmesini zorunlu tutar
+  - `governance:frontend:randomness:check`: kritik frontend/runtime sayfa ve component dosyalarında `Math.random()` kullanımını tamamen yasaklar
   - `governance:runtime:placeholders:check`: temizlenen kritik runtime modüllerinde `Math.random`, `simulated`, `placeholder`, `mock asset` kalıplarını yasaklar
   - `governance:cache:redis:check`: `redis` proxy import kullanımını tamamen yasaklar
   - `governance:querymany:usage:check`: ham `queryMany(` kullanımını tamamen yasaklar

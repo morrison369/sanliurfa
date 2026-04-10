@@ -8,7 +8,13 @@ interface Props {
 
 const { data, filename, format = 'csv', columns } = Astro.props;
 
-const buttonId = `export-btn-${Math.random().toString(36).substr(2, 9)}`;
+function hashValue(value: string): string {
+  return Array.from(value).reduce((hash, char, index) => {
+    return (hash + char.charCodeAt(0) * (index + 11)) % 1679616;
+  }, 0).toString(36).padStart(4, '0');
+}
+
+const buttonId = `export-btn-${hashValue(`${filename}:${format}:${columns?.length || 0}:${data.length}`)}`;
 ---
 
 <button 
