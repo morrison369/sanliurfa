@@ -39,10 +39,33 @@ export interface AggregationResult {
   recordCount: number;
 }
 
+interface StreamState {
+  name: string;
+  createdAt: number;
+  firstRecordAt?: number;
+  lastRecordAt?: number;
+  totalRecords: number;
+  totalIngressLatency: number;
+}
+
+interface JoinMetadata {
+  config: {
+    leftKey: string;
+    rightKey: string;
+    type: JoinType;
+    windowSize?: number;
+  };
+  resultCount: number;
+  leftCount: number;
+  rightCount: number;
+  matchedLeftCount: number;
+}
+
 // ==================== STREAM PROCESSOR ====================
 
 export class StreamProcessor {
   private streams = new Map<string, Record<string, any>[]>();
+  private streamStates = new Map<string, StreamState>();
   private streamCount = 0;
 
   /**
@@ -50,8 +73,15 @@ export class StreamProcessor {
    */
   createStream(name: string): string {
     const id = 'stream-' + Date.now() + '-' + this.streamCount++;
+    const createdAt = Date.now();
 
     this.streams.set(id, []);
+    this.streamStates.set(id, {
+      name,
+      createdAt,
+      totalRecords: 0,
+      totalIngressLatency: 0
+    });
     logger.info('Stream created', { streamId: id, name });
 
     return id;
@@ -62,11 +92,26 @@ export class StreamProcessor {
    */
   addRecord(streamId: string, record: Record<string, any>): void {
     const stream = this.streams.get(streamId);
+    const state = this.streamStates.get(streamId);
     if (stream) {
+      const now = Date.now();
+      const sourceTimestamp = typeof record.eventTime === 'number'
+        ? record.eventTime
+        : typeof record.timestamp === 'number'
+          ? record.timestamp
+          : now;
+
       stream.push({
         ...record,
-        _timestamp: Date.now()
+        _timestamp: now
       });
+
+      if (state) {
+        state.firstRecordAt = state.firstRecordAt ?? now;
+        state.lastRecordAt = now;
+        state.totalRecords += 1;
+        state.totalIngressLatency += Math.max(0, now - sourceTimestamp);
+      }
 
       logger.debug('Record added to stream', { streamId, recordCount: stream.length });
     }
@@ -85,13 +130,22 @@ export class StreamProcessor {
    */
   getStreamMetrics(streamId: string): Record<string, any> {
     const stream = this.streams.get(streamId) || [];
+    const state = this.streamStates.get(streamId);
+    const firstRecordAt = state?.firstRecordAt ?? state?.createdAt ?? Date.now();
+    const lastRecordAt = state?.lastRecordAt ?? Date.now();
+    const elapsedSeconds = Math.max(1, (lastRecordAt - firstRecordAt) / 1000);
+    const throughput = roundNumber(stream.length / elapsedSeconds);
+    const latency = state && state.totalRecords > 0
+      ? roundNumber(state.totalIngressLatency / state.totalRecords, 2)
+      : 0;
+    const watermarkLag = Math.max(0, Date.now() - (state?.lastRecordAt ?? Date.now()));
 
     return {
       streamId,
       recordCount: stream.length,
-      throughput: stream.length / 10, // records per second (simulated)
-      latency: 25, // ms (simulated)
-      watermarkLag: 100 // ms (simulated)
+      throughput,
+      latency,
+      watermarkLag
     };
   }
 
@@ -100,6 +154,7 @@ export class StreamProcessor {
    */
   clearStream(streamId: string): void {
     this.streams.delete(streamId);
+    this.streamStates.delete(streamId);
     logger.debug('Stream cleared', { streamId });
   }
 }
@@ -231,8 +286,9 @@ export class WindowAggregator {
 // ==================== STREAM JOINER ====================
 
 export class StreamJoiner {
-  private joins = new Map<string, Record<string, any>>();
+  private joins = new Map<string, JoinMetadata>();
   private joinCount = 0;
+  private lastJoinId: string | null = null;
 
   /**
    * Join streams
@@ -246,20 +302,23 @@ export class StreamJoiner {
     const id = 'join-' + Date.now() + '-' + this.joinCount++;
 
     const result: Record<string, any>[] = [];
+    const matchedLeft = new Set<number>();
 
     if (config.type === 'inner') {
-      for (const left of stream1) {
+      for (const [leftIndex, left] of stream1.entries()) {
         for (const right of stream2) {
           if (left[config.leftKey] === right[config.rightKey]) {
             result.push({ ...left, ...right });
+            matchedLeft.add(leftIndex);
           }
         }
       }
     } else if (config.type === 'left') {
-      for (const left of stream1) {
+      for (const [leftIndex, left] of stream1.entries()) {
         const matching = stream2.filter(r => r[config.rightKey] === left[config.leftKey]);
 
         if (matching.length > 0) {
+          matchedLeft.add(leftIndex);
           for (const right of matching) {
             result.push({ ...left, ...right });
           }
@@ -269,7 +328,14 @@ export class StreamJoiner {
       }
     }
 
-    this.joins.set(id, { config, resultCount: result.length });
+    this.joins.set(id, {
+      config,
+      resultCount: result.length,
+      leftCount: stream1.length,
+      rightCount: stream2.length,
+      matchedLeftCount: matchedLeft.size
+    });
+    this.lastJoinId = id;
     logger.info('Stream join completed', {
       joinId: id,
       type: config.type,
@@ -284,6 +350,10 @@ export class StreamJoiner {
    */
   getJoinMetadata(joinId: string): Record<string, any> | null {
     return this.joins.get(joinId) || null;
+  }
+
+  getLatestJoinId(): string | null {
+    return this.lastJoinId;
   }
 
   /**
@@ -308,7 +378,9 @@ export class StreamJoiner {
       joinId,
       joinType: join.config.type,
       resultCount: join.resultCount,
-      matchRate: 0.85
+      leftCount: join.leftCount,
+      rightCount: join.rightCount,
+      matchRate: join.leftCount === 0 ? 0 : roundNumber(join.matchedLeftCount / join.leftCount, 4)
     };
   }
 }
@@ -400,6 +472,11 @@ export class StreamMetrics {
       return 'unhealthy';
     }
   }
+}
+
+function roundNumber(value: number, digits: number = 4): number {
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
 }
 
 // ==================== EXPORTS ====================

@@ -90,6 +90,10 @@ export class SupportTicketManager {
     return tickets;
   }
 
+  getTicketStore(): Map<string, SupportTicket> {
+    return this.tickets;
+  }
+
   /**
    * Update ticket
    */
@@ -153,6 +157,12 @@ export class SupportTicketManager {
 
 export class SupportQueue {
   private tickets: Map<string, SupportTicket>;
+  private agentRoutingMap: Record<TicketCategory, string[]> = {
+    technical: ['agent-tech-1', 'agent-tech-2'],
+    billing: ['agent-billing-1', 'agent-billing-2'],
+    general: ['agent-support-1', 'agent-support-2'],
+    feature_request: ['agent-product-1', 'agent-product-2']
+  };
 
   constructor() {
     this.tickets = new Map();
@@ -230,8 +240,22 @@ export class SupportQueue {
    * Route ticket
    */
   routeTicket(ticketId: string): string {
-    // Placeholder: return a random agent
-    return 'agent-' + Math.floor(Math.random() * 10);
+    const ticket = this.tickets.get(ticketId);
+    if (!ticket) {
+      return 'agent-unassigned';
+    }
+
+    const candidates = this.agentRoutingMap[ticket.category] || ['agent-support-1'];
+    const queued = this.getQueue();
+
+    const selectedAgent = candidates
+      .map((agentId) => ({
+        agentId,
+        openCount: queued.filter((queuedTicket) => queuedTicket.assignedTo === agentId).length
+      }))
+      .sort((a, b) => a.openCount - b.openCount || a.agentId.localeCompare(b.agentId))[0];
+
+    return selectedAgent?.agentId || candidates[0];
   }
 }
 
@@ -239,6 +263,11 @@ export class SupportQueue {
 
 export class CustomerSatisfactionManager {
   private feedback = new Map<string, CustomerSatisfaction>();
+  private tickets = new Map<string, SupportTicket>();
+
+  setTickets(tickets: Map<string, SupportTicket>) {
+    this.tickets = tickets;
+  }
 
   /**
    * Record feedback
@@ -284,10 +313,24 @@ export class CustomerSatisfactionManager {
    * Get agent rating
    */
   getAgentRating(agentId: string): { avgRating: number; totalRatings: number } {
-    // Placeholder: return simulated values
+    const ticketIds = Array.from(this.tickets.values())
+      .filter((ticket) => ticket.assignedTo === agentId)
+      .map((ticket) => ticket.id);
+
+    const ratings = ticketIds
+      .map((ticketId) => this.feedback.get(ticketId))
+      .filter((entry): entry is CustomerSatisfaction => Boolean(entry));
+
+    if (ratings.length === 0) {
+      return {
+        avgRating: 0,
+        totalRatings: 0
+      };
+    }
+
     return {
-      avgRating: Math.random() * 2 + 3.5,
-      totalRatings: Math.floor(Math.random() * 100 + 20)
+      avgRating: Math.round((ratings.reduce((sum, entry) => sum + entry.rating, 0) / ratings.length) * 100) / 100,
+      totalRatings: ratings.length
     };
   }
 
@@ -296,12 +339,38 @@ export class CustomerSatisfactionManager {
    */
   getResolutionMetrics(): { avgResolutionTime: number; firstContactResolve: number; satisfactionScore: number } {
     const feedbackArray = Array.from(this.feedback.values());
+    const resolvedTickets = Array.from(this.tickets.values()).filter((ticket) => ticket.resolvedAt);
 
     const avgRating = feedbackArray.length > 0 ? feedbackArray.reduce((sum, f) => sum + f.rating, 0) / feedbackArray.length : 0;
+    const resolutionTimes = resolvedTickets
+      .map((ticket) => {
+        if (!ticket.resolvedAt) {
+          return 0;
+        }
+
+        return Math.max(1, Math.round((ticket.resolvedAt - ticket.createdAt) / (60 * 60 * 1000)));
+      })
+      .filter((value) => value > 0);
+
+    const avgResolutionTime = resolutionTimes.length > 0
+      ? Math.round(resolutionTimes.reduce((sum, value) => sum + value, 0) / resolutionTimes.length)
+      : 0;
+
+    const firstContactResolve = resolvedTickets.length > 0
+      ? Math.round(
+        (resolvedTickets.filter((ticket) => {
+          if (!ticket.resolvedAt) {
+            return false;
+          }
+
+          return (ticket.resolvedAt - ticket.createdAt) <= 24 * 60 * 60 * 1000;
+        }).length / resolvedTickets.length) * 100
+      )
+      : 0;
 
     return {
-      avgResolutionTime: Math.round(Math.random() * 24 + 4), // Hours
-      firstContactResolve: Math.round(Math.random() * 40 + 50), // Percentage
+      avgResolutionTime,
+      firstContactResolve,
       satisfactionScore: Math.round(avgRating * 10)
     };
   }
@@ -313,6 +382,7 @@ const supportTicketManager = new SupportTicketManager();
 const supportQueue = new SupportQueue();
 const customerSatisfactionManager = new CustomerSatisfactionManager();
 
-supportQueue.setTickets(supportTicketManager['tickets']);
+supportQueue.setTickets(supportTicketManager.getTicketStore());
+customerSatisfactionManager.setTickets(supportTicketManager.getTicketStore());
 
 export { supportTicketManager, supportQueue, customerSatisfactionManager };
