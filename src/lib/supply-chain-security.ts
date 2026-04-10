@@ -3,6 +3,7 @@
  * Dependency scanning, vulnerability tracking, SBOM generation, license compliance
  */
 
+import { createHash } from 'node:crypto';
 import { logger } from './logger';
 
 interface Dependency {
@@ -148,8 +149,8 @@ class SBOMGenerator {
       license: this.detectLicense(dep.name),
       purl: `pkg:npm/${dep.name}@${dep.version}`,
       hashes: {
-        'SHA-1': `sha1-${Math.random().toString(36).substring(7)}`,
-        'SHA-256': `sha256-${Math.random().toString(36).substring(7)}`
+        'SHA-1': this.buildHash(dep, 'sha1'),
+        'SHA-256': this.buildHash(dep, 'sha256')
       }
     }));
 
@@ -180,6 +181,12 @@ class SBOMGenerator {
     };
 
     return licenses[packageName] || 'Unknown';
+  }
+
+  private buildHash(dep: Dependency, algorithm: 'sha1' | 'sha256'): string {
+    return createHash(algorithm)
+      .update(`${dep.name}:${dep.version}:${dep.type}:${dep.parent || 'root'}`)
+      .digest('hex');
   }
 
   exportSBOM(sbom: any, format: 'json' | 'xml'): string {

@@ -3,6 +3,7 @@
  * Performance metrics, analytics dashboard, KPI tracking, reports
  */
 
+import { randomUUID } from 'node:crypto';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -187,7 +188,7 @@ export class ReportGenerator {
    * Generate report
    */
   generateReport(vendorId: string, type: 'sales' | 'performance' | 'financial'): Report {
-    const reportId = 'report-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const reportId = `report-${randomUUID()}`;
 
     const report: Report = {
       vendorId,
@@ -206,7 +207,7 @@ export class ReportGenerator {
    * Schedule recurring report
    */
   scheduleReport(vendorId: string, type: string, frequency: string): string {
-    const scheduleId = 'schedule-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const scheduleId = `schedule-${randomUUID()}`;
 
     this.reportSchedules.set(scheduleId, {
       type,

@@ -3,6 +3,7 @@
  * Tax rate management, tax calculations, compliance monitoring, filing preparation
  */
 
+import { deterministicBoolean, deterministicNumber } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -180,25 +181,26 @@ export class TaxReporting {
   listUpcomingObligations(days: number): TaxObligation[] {
     const obligations: TaxObligation[] = [];
 
-    const now = Date.now();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const now = today.getTime();
     const deadline = now + days * 24 * 60 * 60 * 1000;
 
-    // Simulate upcoming obligations
-    if (Math.random() > 0.5) {
+    if (deterministicBoolean(`tax-obligation:${days}:sales-tax`, 0.5)) {
       obligations.push({
         type: 'sales_tax',
         dueDate: now + 15 * 24 * 60 * 60 * 1000,
-        estimatedAmount: Math.random() * 10000 + 1000,
+        estimatedAmount: deterministicNumber(`tax-obligation:${days}:sales-tax:amount`, 1000, 11000),
         status: 'pending',
         jurisdictions: ['federal', 'state']
       });
     }
 
-    if (Math.random() > 0.6) {
+    if (deterministicBoolean(`tax-obligation:${days}:income-tax`, 0.6)) {
       obligations.push({
         type: 'income_tax',
         dueDate: now + 45 * 24 * 60 * 60 * 1000,
-        estimatedAmount: Math.random() * 50000 + 10000,
+        estimatedAmount: deterministicNumber(`tax-obligation:${days}:income-tax:amount`, 10000, 60000),
         status: 'pending',
         jurisdictions: ['federal']
       });

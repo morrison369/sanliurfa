@@ -4,7 +4,7 @@
  */
 
 import { logger } from './logging';
-import { createHmac } from 'crypto';
+import { createHmac, randomUUID } from 'crypto';
 
 // ==================== AUDIT LOGGING ====================
 
@@ -47,7 +47,7 @@ export class AuditLogger {
     }
   ): AuditLog {
     const log: AuditLog = {
-      id: `AUDIT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `AUDIT-${randomUUID()}`,
       timestamp: Date.now(),
       userId,
       action,

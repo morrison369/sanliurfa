@@ -57,7 +57,11 @@ const FILES = [
   'src/lib/multi-tenancy.ts',
   'src/lib/platform-intelligence.ts',
   'src/lib/policy-analytics.ts',
-  'src/lib/policy-as-code.ts'
+  'src/lib/policy-as-code.ts',
+  'src/lib/security-compliance.ts',
+  'src/lib/supply-chain-security.ts',
+  'src/lib/vendor-analytics.ts',
+  'src/lib/tax-compliance.ts'
 ];
 
 const PATTERNS = [
