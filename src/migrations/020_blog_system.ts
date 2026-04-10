@@ -3,8 +3,11 @@
  * Blog yazıları, kategoriler, yorum ve etiketler için tablolar
  */
 
-export const migration_020_blog_system = {
-  name: '020_blog_system',
+import type { Migration } from '../lib/migrations';
+
+export const migration_020_blog_system: Migration = {
+  version: '020_blog_system',
+  description: 'Blog system tables, categories, comments, and tags',
   async up(pool: any) {
     // Blog kategorileri
     await pool.query(`

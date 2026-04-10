@@ -3,8 +3,11 @@
  * Creates follower relationships between users for social features
  */
 
-export const migration_028_followers = {
-  name: '028_followers',
+import type { Migration } from '../lib/migrations';
+
+export const migration_028_followers: Migration = {
+  version: '028_followers',
+  description: 'Followers and following relationships',
   async up(pool: any) {
     // Followers table - tracks who follows whom
     await pool.query(`

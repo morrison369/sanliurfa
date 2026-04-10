@@ -3,8 +3,11 @@
  * Creates badge_definitions table with built-in badge types and criteria
  */
 
-export const migration_023_badge_definitions = {
-  name: '023_badge_definitions',
+import type { Migration } from '../lib/migrations';
+
+export const migration_023_badge_definitions: Migration = {
+  version: '023_badge_definitions',
+  description: 'Badge definitions and criteria catalog',
   async up(pool: any) {
     // Create badge_definitions table
     await pool.query(`

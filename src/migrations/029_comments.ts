@@ -3,8 +3,11 @@
  * Creates comments table for threaded discussions on reviews and places
  */
 
-export const migration_029_comments = {
-  name: '029_comments',
+import type { Migration } from '../lib/migrations';
+
+export const migration_029_comments: Migration = {
+  version: '029_comments',
+  description: 'Threaded comments and replies system',
   async up(pool: any) {
     // Comments table - threaded comments on reviews/places
     await pool.query(`

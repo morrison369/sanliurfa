@@ -3,8 +3,11 @@
  * Manages place verification status and trust badges
  */
 
-export const migration_045_place_verification = {
-  name: '045_place_verification',
+import type { Migration } from '../lib/migrations';
+
+export const migration_045_place_verification: Migration = {
+  version: '045_place_verification',
+  description: 'Place verification workflow and status tracking',
   async up(pool: any) {
     // Place verification table
     await pool.query(`

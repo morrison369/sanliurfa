@@ -20,6 +20,7 @@ function main(): void {
   run('Security secret scan', 'npm run security:secrets:scan');
   run('HTTP timeout governance guard', 'npm run governance:http:timeout:check');
   run('Governance import guard', 'npm run governance:imports:check');
+  run('Governance logging guard', 'npm run governance:logging:check');
   run('Governance cache redis guard', 'npm run governance:cache:redis:check');
   run('Governance queryMany guard', 'npm run governance:querymany:check');
   run('Governance migration contract guard', 'npm run governance:migrations:contract:check');

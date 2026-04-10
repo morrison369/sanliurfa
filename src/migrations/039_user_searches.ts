@@ -3,8 +3,11 @@
  * Tracks user searches and search suggestions for analytics
  */
 
-export const migration_039_user_searches = {
-  name: '039_user_searches',
+import type { Migration } from '../lib/migrations';
+
+export const migration_039_user_searches: Migration = {
+  version: '039_user_searches',
+  description: 'User search history and suggestion analytics',
   async up(pool: any) {
     // User searches - history of searches
     await pool.query(`

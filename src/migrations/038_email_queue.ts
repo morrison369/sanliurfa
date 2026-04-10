@@ -3,8 +3,11 @@
  * Tracks pending and sent emails for notifications
  */
 
-export const migration_038_email_queue = {
-  name: '038_email_queue',
+import type { Migration } from '../lib/migrations';
+
+export const migration_038_email_queue: Migration = {
+  version: '038_email_queue',
+  description: 'Email queue delivery tracking',
   async up(pool: any) {
     // Email queue table
     await pool.query(`

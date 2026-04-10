@@ -3,8 +3,11 @@
  * Adds strategic indexes for query performance
  */
 
-export const migration_019_database_optimization = {
-  name: '019_database_optimization',
+import type { Migration } from '../lib/migrations';
+
+export const migration_019_database_optimization: Migration = {
+  version: '019_database_optimization',
+  description: 'Database optimization indexes and performance tuning',
   async up(pool: any) {
     // Filtered queries
     await pool.query(`

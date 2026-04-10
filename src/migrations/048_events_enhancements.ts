@@ -3,8 +3,11 @@
  * Add RSVP tracking, capacity, and better event management
  */
 
-export const migration_048_events_enhancements = {
-  name: '048_events_enhancements',
+import type { Migration } from '../lib/migrations';
+
+export const migration_048_events_enhancements: Migration = {
+  version: '048_events_enhancements',
+  description: 'Event RSVP, capacity, and management enhancements',
   async up(pool: any) {
     // Add new columns to events table
     await pool.query(`

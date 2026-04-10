@@ -3,8 +3,11 @@
  * Creates points_transactions table for tracking user points history
  */
 
-export const migration_022_points_transactions = {
-  name: '022_points_transactions',
+import type { Migration } from '../lib/migrations';
+
+export const migration_022_points_transactions: Migration = {
+  version: '022_points_transactions',
+  description: 'Points transaction tracking table',
   async up(pool: any) {
     // Create points_transactions table
     await pool.query(`

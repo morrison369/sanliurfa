@@ -3,8 +3,11 @@
  * Award badges to places based on criteria (ratings, reviews, verification, etc.)
  */
 
-export const migration_046_place_badges = {
-  name: '046_place_badges',
+import type { Migration } from '../lib/migrations';
+
+export const migration_046_place_badges: Migration = {
+  version: '046_place_badges',
+  description: 'Place badge awards and metadata',
   async up(pool: any) {
     // Place badges table
     await pool.query(`

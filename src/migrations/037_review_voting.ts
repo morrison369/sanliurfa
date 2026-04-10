@@ -3,8 +3,11 @@
  * Adds helpful voting to reviews
  */
 
-export const migration_037_review_voting = {
-  name: '037_review_voting',
+import type { Migration } from '../lib/migrations';
+
+export const migration_037_review_voting: Migration = {
+  version: '037_review_voting',
+  description: 'Review helpful and unhelpful voting',
   async up(pool: any) {
     // Add voting columns to reviews if not exists
     await pool.query(`

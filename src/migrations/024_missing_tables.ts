@@ -4,8 +4,11 @@
  * historical_sites, foods, coupons, reservations, messages, blog_post_revisions
  */
 
-export const migration_024_missing_tables = {
-  name: '024_missing_tables',
+import type { Migration } from '../lib/migrations';
+
+export const migration_024_missing_tables: Migration = {
+  version: '024_missing_tables',
+  description: 'Missing referenced domain tables',
   async up(pool: any) {
     // Historical sites table
     await pool.query(`

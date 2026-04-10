@@ -3,8 +3,11 @@
  * Tracks user visits to places with notes and ratings
  */
 
-export const migration_044_place_visits = {
-  name: '044_place_visits',
+import type { Migration } from '../lib/migrations';
+
+export const migration_044_place_visits: Migration = {
+  version: '044_place_visits',
+  description: 'Place visit history with notes and ratings',
   async up(pool: any) {
     // Place visits table
     await pool.query(`

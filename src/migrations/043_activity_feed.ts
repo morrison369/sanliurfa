@@ -3,8 +3,11 @@
  * Tracks and displays activities from followed places and users
  */
 
-export const migration_043_activity_feed = {
-  name: '043_activity_feed',
+import type { Migration } from '../lib/migrations';
+
+export const migration_043_activity_feed: Migration = {
+  version: '043_activity_feed',
+  description: 'Activity feed timeline and fanout tables',
   async up(pool: any) {
     // Activity feed table
     await pool.query(`

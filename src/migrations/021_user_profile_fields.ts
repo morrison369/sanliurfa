@@ -3,8 +3,11 @@
  * Adds missing columns to users table (avatar_url, bio, points, level, username, reset_token)
  */
 
-export const migration_021_user_profile_fields = {
-  name: '021_user_profile_fields',
+import type { Migration } from '../lib/migrations';
+
+export const migration_021_user_profile_fields: Migration = {
+  version: '021_user_profile_fields',
+  description: 'User profile fields and account recovery columns',
   async up(pool: any) {
     // Add missing columns
     await pool.query(`

@@ -3,8 +3,11 @@
  * Tracks user actions (reviews, favorites, badges, etc.) for activity feed
  */
 
-export const migration_026_user_activity = {
-  name: '026_user_activity',
+import type { Migration } from '../lib/migrations';
+
+export const migration_026_user_activity: Migration = {
+  version: '026_user_activity',
+  description: 'User activity tracking for feed and analytics',
   async up(pool: any) {
     // User activity table
     await pool.query(`

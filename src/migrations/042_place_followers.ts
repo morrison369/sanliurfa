@@ -3,8 +3,11 @@
  * Allows users to follow places and receive updates
  */
 
-export const migration_042_place_followers = {
-  name: '042_place_followers',
+import type { Migration } from '../lib/migrations';
+
+export const migration_042_place_followers: Migration = {
+  version: '042_place_followers',
+  description: 'Place following and notification subscriptions',
   async up(pool: any) {
     // Place followers table
     await pool.query(`

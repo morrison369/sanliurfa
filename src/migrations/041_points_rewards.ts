@@ -3,8 +3,11 @@
  * Tracks user points earned through activities and reward achievements
  */
 
-export const migration_041_points_rewards = {
-  name: '041_points_rewards',
+import type { Migration } from '../lib/migrations';
+
+export const migration_041_points_rewards: Migration = {
+  version: '041_points_rewards',
+  description: 'User points and rewards tracking',
   async up(pool: any) {
     // User points transactions
     await pool.query(`

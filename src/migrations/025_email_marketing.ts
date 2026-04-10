@@ -3,8 +3,11 @@
  * Adds newsletter subscribers, automation sequences, and tracking
  */
 
-export const migration_025_email_marketing = {
-  name: '025_email_marketing',
+import type { Migration } from '../lib/migrations';
+
+export const migration_025_email_marketing: Migration = {
+  version: '025_email_marketing',
+  description: 'Email marketing subscribers, automations, and tracking',
   async up(pool: any) {
     // Newsletter subscribers table
     await pool.query(`
