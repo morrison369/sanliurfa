@@ -2,7 +2,7 @@
  * Analytics Library
  * User behavior and business metrics analytics
  */
-import { query, queryOne, queryMany, insert } from './postgres';
+import { query, queryOne, queryRows, insert } from './postgres';
 import { logger } from './logging';
 
 export async function createSession(sessionId: string, userId?: string, metadata?: any): Promise<void> {
@@ -94,7 +94,7 @@ export async function recordPlaceView(placeId: string, userId: string | undefine
 
 export async function getPlaceAnalytics(placeId: string, startDate: Date, endDate: Date): Promise<any> {
   try {
-    const metrics = await queryMany(`
+    const metrics = await queryRows(`
       SELECT * FROM place_daily_metrics
       WHERE place_id = $1 AND metric_date BETWEEN $2 AND $3
       ORDER BY metric_date DESC
@@ -121,13 +121,13 @@ export async function getPlaceAnalytics(placeId: string, startDate: Date, endDat
 
 export async function getUserAnalytics(userId: string, startDate: Date, endDate: Date): Promise<any> {
   try {
-    const sessions = await queryMany(`
+    const sessions = await queryRows(`
       SELECT COUNT(*) as session_count, AVG(duration_seconds) as avg_session_duration
       FROM user_sessions
       WHERE user_id = $1 AND started_at BETWEEN $2 AND $3
     `, [userId, startDate, endDate]);
 
-    const interactions = await queryMany(`
+    const interactions = await queryRows(`
       SELECT interaction_type, COUNT(*) as count
       FROM user_interactions
       WHERE user_id = $1 AND occurred_at BETWEEN $2 AND $3
@@ -178,7 +178,7 @@ export async function recordConversion(goalId: string, metadata?: any): Promise<
 
 export async function getConversionMetrics(userId: string, startDate: Date, endDate: Date): Promise<any> {
   try {
-    const goals = await queryMany(`
+    const goals = await queryRows(`
       SELECT g.*, COUNT(c.id) as conversion_count, SUM(c.conversion_value_cents) as total_value
       FROM conversion_goals g
       LEFT JOIN conversions c ON g.id = c.goal_id AND c.converted_at BETWEEN $2 AND $3
@@ -257,7 +257,7 @@ export async function getTrendingPlacesByViews(days: number, limit: number): Pro
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const places = await queryMany(`
+    const places = await queryRows(`
       SELECT
         p.id,
         p.name,
@@ -298,7 +298,7 @@ export async function getSearchTrends(days: number, limit: number): Promise<any[
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const trends = await queryMany(`
+    const trends = await queryRows(`
       SELECT
         search_query,
         COUNT(*) as search_count,

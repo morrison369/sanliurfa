@@ -3,7 +3,7 @@
  * GET - AI-driven insights and recommendations
  */
 import type { APIRoute } from 'astro';
-import { queryOne, queryMany, update, insert } from '../../../lib/postgres';
+import { queryOne, queryRows, update, insert } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
 
-    const insights = await queryMany(`
+    const insights = await queryRows(`
       SELECT
         id,
         insight_type,

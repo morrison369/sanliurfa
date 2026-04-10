@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, queryOne, update } from '../../../lib/postgres';
+import { queryRows, queryOne, update } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Planlanmış yazıları getir
-    const scheduled = await queryMany(`
+    const scheduled = await queryRows(`
       SELECT
         id, title, slug, status, published_at,
         CASE

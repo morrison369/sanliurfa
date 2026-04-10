@@ -3,9 +3,12 @@
  * Session tracking, page views, and user journey analytics
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_078_user_behavior_tracking = async (pool: Pool) => {
+export const migration_078_user_behavior_tracking: Migration = {
+  version: '078_user_behavior_tracking',
+  description: 'Session tracking, page views, and user journey analytics',
+  up: async (pool: any) => {
   try {
     // User sessions
     await pool.query(`
@@ -124,9 +127,8 @@ export const migration_078_user_behavior_tracking = async (pool: Pool) => {
     console.error('Migration 078 failed:', error);
     throw error;
   }
-};
-
-export const rollback_078 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS search_analytics CASCADE');
     await pool.query('DROP TABLE IF EXISTS user_interactions CASCADE');
@@ -136,5 +138,6 @@ export const rollback_078 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 078 failed:', error);
     throw error;
+  }
   }
 };

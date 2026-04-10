@@ -2,7 +2,7 @@
  * Admin User Management Library
  * User management, audit logging, and account flags
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export async function getAllUsers(limit: number = 50, offset: number = 0, searchQuery?: string): Promise<any[]> {
@@ -35,7 +35,7 @@ export async function getAllUsers(limit: number = 50, offset: number = 0, search
     query += ` ORDER BY u.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
-    const users = await queryMany(query, params);
+    const users = await queryRows(query, params);
     return users;
   } catch (error) {
     logger.error('Failed to get all users', error instanceof Error ? error : new Error(String(error)));
@@ -66,17 +66,17 @@ export async function getUserDetails(userId: string): Promise<any> {
         LEFT JOIN user_activity_summary uas ON u.id = uas.user_id
         WHERE u.id = $1
       `, [userId]),
-      queryMany(`
+      queryRows(`
         SELECT * FROM account_flags
         WHERE user_id = $1 AND is_active = true
       `, [userId]),
-      queryMany(`
+      queryRows(`
         SELECT * FROM moderation_actions
         WHERE target_id = $1 AND target_type = 'user'
         ORDER BY created_at DESC
         LIMIT 10
       `, [userId]),
-      queryMany(`
+      queryRows(`
         SELECT * FROM user_audit_log
         WHERE target_user_id = $1
         ORDER BY created_at DESC
@@ -181,7 +181,7 @@ export async function logAdminAction(
 
 export async function getUserAuditLog(userId: string, limit: number = 50): Promise<any[]> {
   try {
-    const logs = await queryMany(`
+    const logs = await queryRows(`
       SELECT
         ual.id,
         ual.admin_id,
@@ -218,7 +218,7 @@ export async function getUserActivitySummary(userId: string): Promise<any> {
 
 export async function getAdminSessions(adminId: string): Promise<any[]> {
   try {
-    const sessions = await queryMany(`
+    const sessions = await queryRows(`
       SELECT
         id,
         ip_address,

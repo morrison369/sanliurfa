@@ -3,9 +3,12 @@
  * Likes, reactions, and engagement tracking
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_076_social_interactions = async (pool: Pool) => {
+export const migration_076_social_interactions: Migration = {
+  version: '076_social_interactions',
+  description: 'Likes, reactions, and engagement tracking',
+  up: async (pool: any) => {
   try {
     // Place likes
     await pool.query(`
@@ -83,9 +86,8 @@ export const migration_076_social_interactions = async (pool: Pool) => {
     console.error('Migration 076 failed:', error);
     throw error;
   }
-};
-
-export const rollback_076 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS shares CASCADE');
     await pool.query('DROP TABLE IF EXISTS review_reactions CASCADE');
@@ -94,5 +96,6 @@ export const rollback_076 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 076 failed:', error);
     throw error;
+  }
   }
 };

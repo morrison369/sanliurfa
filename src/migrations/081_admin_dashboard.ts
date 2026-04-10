@@ -3,9 +3,12 @@
  * Dashboard customization and configuration
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_081_admin_dashboard = async (pool: Pool) => {
+export const migration_081_admin_dashboard: Migration = {
+  version: '081_admin_dashboard',
+  description: 'Dashboard customization and configuration',
+  up: async (pool: any) => {
   try {
     // Admin dashboard widget preferences
     await pool.query(`
@@ -70,9 +73,8 @@ export const migration_081_admin_dashboard = async (pool: Pool) => {
     console.error('Migration 081 failed:', error);
     throw error;
   }
-};
-
-export const rollback_081 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS dashboard_refresh_events CASCADE');
     await pool.query('DROP TABLE IF EXISTS admin_dashboard_settings CASCADE');
@@ -81,5 +83,6 @@ export const rollback_081 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 081 failed:', error);
     throw error;
+  }
   }
 };

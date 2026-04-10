@@ -3,9 +3,12 @@
  * User email and notification preference settings
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_075_notification_preferences = async (pool: Pool) => {
+export const migration_075_notification_preferences: Migration = {
+  version: '075_notification_preferences',
+  description: 'User email and notification preference settings',
+  up: async (pool: any) => {
   try {
     // Notification preferences
     await pool.query(`
@@ -33,14 +36,14 @@ export const migration_075_notification_preferences = async (pool: Pool) => {
     console.error('Migration 075 failed:', error);
     throw error;
   }
-};
-
-export const rollback_075 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS notification_preferences CASCADE');
     console.log('✓ Migration 075 rolled back');
   } catch (error) {
     console.error('Rollback 075 failed:', error);
     throw error;
+  }
   }
 };

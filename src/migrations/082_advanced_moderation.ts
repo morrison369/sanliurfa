@@ -3,9 +3,12 @@
  * Content flagging, moderation actions, and moderation queues
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_082_advanced_moderation = async (pool: Pool) => {
+export const migration_082_advanced_moderation: Migration = {
+  version: '082_advanced_moderation',
+  description: 'Content flagging, moderation actions, and moderation queues',
+  up: async (pool: any) => {
   try {
     // Content flags for user-submitted reports
     await pool.query(`
@@ -126,9 +129,8 @@ export const migration_082_advanced_moderation = async (pool: Pool) => {
     console.error('Migration 082 failed:', error);
     throw error;
   }
-};
-
-export const rollback_082 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS content_filter_rules CASCADE');
     await pool.query('DROP TABLE IF EXISTS moderation_queue CASCADE');
@@ -138,5 +140,6 @@ export const rollback_082 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 082 failed:', error);
     throw error;
+  }
   }
 };

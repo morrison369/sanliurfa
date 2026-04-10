@@ -3,9 +3,12 @@
  * Place owner analytics and business metrics
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_079_business_metrics = async (pool: Pool) => {
+export const migration_079_business_metrics: Migration = {
+  version: '079_business_metrics',
+  description: 'Place owner analytics and business metrics',
+  up: async (pool: any) => {
   try {
     // Place metrics aggregated daily
     await pool.query(`
@@ -114,9 +117,8 @@ export const migration_079_business_metrics = async (pool: Pool) => {
     console.error('Migration 079 failed:', error);
     throw error;
   }
-};
-
-export const rollback_079 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS keyword_performance CASCADE');
     await pool.query('DROP TABLE IF EXISTS owner_analytics_summary CASCADE');
@@ -126,5 +128,6 @@ export const rollback_079 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 079 failed:', error);
     throw error;
+  }
   }
 };

@@ -3,9 +3,12 @@
  * Multi-channel delivery status and analytics
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_086_notification_delivery = async (pool: Pool) => {
+export const migration_086_notification_delivery: Migration = {
+  version: '086_notification_delivery',
+  description: 'Multi-channel delivery status and analytics',
+  up: async (pool: any) => {
   try {
     // Delivery tracking across channels
     await pool.query(`
@@ -105,9 +108,8 @@ export const migration_086_notification_delivery = async (pool: Pool) => {
     console.error('Migration 086 failed:', error);
     throw error;
   }
-};
-
-export const rollback_086 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS notification_digests CASCADE');
     await pool.query('DROP TABLE IF EXISTS notification_type_preferences CASCADE');
@@ -117,5 +119,6 @@ export const rollback_086 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 086 failed:', error);
     throw error;
+  }
   }
 };

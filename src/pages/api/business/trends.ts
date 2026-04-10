@@ -3,7 +3,7 @@
  * GET - Trend analysis and predictions
  */
 import type { APIRoute } from 'astro';
-import { queryOne, queryMany } from '../../../lib/postgres';
+import { queryOne, queryRows } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Access denied', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const trends = await queryMany(`
+    const trends = await queryRows(`
       SELECT
         trend_type,
         metric_name,
@@ -50,7 +50,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       LIMIT 20
     `, [placeId]);
 
-    const satisfaction = await queryMany(`
+    const satisfaction = await queryRows(`
       SELECT
         score_date,
         overall_satisfaction,

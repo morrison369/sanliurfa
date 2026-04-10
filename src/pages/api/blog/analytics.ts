@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryOne, queryMany } from '../../../lib/postgres';
+import { queryOne, queryRows } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     `);
 
     // En çok okunan yazılar
-    const topPosts = await queryMany(`
+    const topPosts = await queryRows(`
       SELECT id, title, slug, view_count, like_count, published_at
       FROM blog_posts
       WHERE status = 'published'
@@ -61,7 +61,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     `);
 
     // En yeni yazılar
-    const recentPosts = await queryMany(`
+    const recentPosts = await queryRows(`
       SELECT id, title, slug, status, published_at
       FROM blog_posts
       ORDER BY created_at DESC
@@ -69,7 +69,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     `);
 
     // Kategori performansı
-    const categoryStats = await queryMany(`
+    const categoryStats = await queryRows(`
       SELECT
         bc.id,
         bc.name,

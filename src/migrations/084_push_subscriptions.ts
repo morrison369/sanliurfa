@@ -3,9 +3,12 @@
  * Web push notification subscriptions
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_084_push_subscriptions = async (pool: Pool) => {
+export const migration_084_push_subscriptions: Migration = {
+  version: '084_push_subscriptions',
+  description: 'Web push notification subscriptions',
+  up: async (pool: any) => {
   try {
     // Web push subscriptions
     await pool.query(`
@@ -60,9 +63,8 @@ export const migration_084_push_subscriptions = async (pool: Pool) => {
     console.error('Migration 084 failed:', error);
     throw error;
   }
-};
-
-export const rollback_084 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS push_subscription_stats CASCADE');
     await pool.query('DROP TABLE IF EXISTS push_subscriptions CASCADE');
@@ -70,5 +72,6 @@ export const rollback_084 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 084 failed:', error);
     throw error;
+  }
   }
 };

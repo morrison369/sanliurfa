@@ -3,9 +3,12 @@
  * Goal tracking and conversion funnel analytics
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_080_conversion_tracking = async (pool: Pool) => {
+export const migration_080_conversion_tracking: Migration = {
+  version: '080_conversion_tracking',
+  description: 'Goal tracking and conversion funnel analytics',
+  up: async (pool: any) => {
   try {
     // Goals/conversions tracking
     await pool.query(`
@@ -124,9 +127,8 @@ export const migration_080_conversion_tracking = async (pool: Pool) => {
     console.error('Migration 080 failed:', error);
     throw error;
   }
-};
-
-export const rollback_080 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS attribution_events CASCADE');
     await pool.query('DROP TABLE IF EXISTS funnel_completions CASCADE');
@@ -137,5 +139,6 @@ export const rollback_080 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 080 failed:', error);
     throw error;
+  }
   }
 };

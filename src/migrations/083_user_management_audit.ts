@@ -3,9 +3,12 @@
  * User audit logging, account flags, and admin session tracking
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_083_user_management_audit = async (pool: Pool) => {
+export const migration_083_user_management_audit: Migration = {
+  version: '083_user_management_audit',
+  description: 'User audit logging, account flags, and admin session tracking',
+  up: async (pool: any) => {
   try {
     // User audit log (track all admin actions on users)
     await pool.query(`
@@ -115,9 +118,8 @@ export const migration_083_user_management_audit = async (pool: Pool) => {
     console.error('Migration 083 failed:', error);
     throw error;
   }
-};
-
-export const rollback_083 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS user_activity_summary CASCADE');
     await pool.query('DROP TABLE IF EXISTS admin_sessions CASCADE');
@@ -127,5 +129,6 @@ export const rollback_083 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 083 failed:', error);
     throw error;
+  }
   }
 };

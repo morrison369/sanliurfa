@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { queryMany } from '../../../lib/postgres';
+import { queryRows } from '../../../lib/postgres';
 
 export const GET: APIRoute = async ({ locals, url }) => {
   try {
@@ -9,7 +9,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
 
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
 
-    const history = await queryMany(
+    const history = await queryRows(
       `SELECT id, action_type, metadata, points_earned, created_at 
        FROM user_activity 
        WHERE user_id = $1 AND action_type IN ('review_created', 'comment_posted', 'favorite_added')
@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
       [locals.user.id, limit]
     );
 
-    const summary = await queryMany(
+    const summary = await queryRows(
       `SELECT action_type, COUNT(*) as count, COALESCE(SUM((metadata->>'points')::int), 0) as total_points
        FROM user_activity 
        WHERE user_id = $1 AND action_type IN ('review_created', 'comment_posted', 'favorite_added')
@@ -29,8 +29,8 @@ export const GET: APIRoute = async ({ locals, url }) => {
     return new Response(JSON.stringify({
       success: true,
       data: {
-        history: history.rows || [],
-        summary: summary.rows || []
+        history,
+        summary
       }
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {

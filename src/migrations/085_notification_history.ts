@@ -3,9 +3,12 @@
  * Notification history, read status, and archiving
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_085_notification_history = async (pool: Pool) => {
+export const migration_085_notification_history: Migration = {
+  version: '085_notification_history',
+  description: 'Notification history, read status, and archiving',
+  up: async (pool: any) => {
   try {
     // Notification history and center
     await pool.query(`
@@ -95,9 +98,8 @@ export const migration_085_notification_history = async (pool: Pool) => {
     console.error('Migration 085 failed:', error);
     throw error;
   }
-};
-
-export const rollback_085 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS notification_templates CASCADE');
     await pool.query('DROP TABLE IF EXISTS notification_groups CASCADE');
@@ -106,5 +108,6 @@ export const rollback_085 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 085 failed:', error);
     throw error;
+  }
   }
 };

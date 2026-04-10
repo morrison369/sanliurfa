@@ -3,9 +3,12 @@
  * Trending content tracking and recommendation engine data
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_077_trending_and_recommendations = async (pool: Pool) => {
+export const migration_077_trending_and_recommendations: Migration = {
+  version: '077_trending_and_recommendations',
+  description: 'Trending content tracking and recommendation engine data',
+  up: async (pool: any) => {
   try {
     // Trending places (aggregated daily)
     await pool.query(`
@@ -106,9 +109,8 @@ export const migration_077_trending_and_recommendations = async (pool: Pool) => 
     console.error('Migration 077 failed:', error);
     throw error;
   }
-};
-
-export const rollback_077 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS engagement_events CASCADE');
     await pool.query('DROP TABLE IF EXISTS user_preferences CASCADE');
@@ -118,5 +120,6 @@ export const rollback_077 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 077 failed:', error);
     throw error;
+  }
   }
 };

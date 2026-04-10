@@ -2,7 +2,7 @@
  * Search Engine Library
  * Full-text search, filtering, and ranking
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export async function searchPlaces(
@@ -71,7 +71,7 @@ export async function searchPlaces(
     sql += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
-    const results = await queryMany(sql, params);
+    const results = await queryRows(sql, params);
     return results;
   } catch (error) {
     logger.error('Search places failed', error instanceof Error ? error : new Error(String(error)));
@@ -126,7 +126,7 @@ export async function searchReviews(
     sql += ` ORDER BY relevance_score DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
-    const results = await queryMany(sql, params);
+    const results = await queryRows(sql, params);
     return results;
   } catch (error) {
     logger.error('Search reviews failed', error instanceof Error ? error : new Error(String(error)));
@@ -181,7 +181,7 @@ export async function searchEvents(
     sql += ` ORDER BY relevance_score DESC, e.event_date ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
-    const results = await queryMany(sql, params);
+    const results = await queryRows(sql, params);
     return results;
   } catch (error) {
     logger.error('Search events failed', error instanceof Error ? error : new Error(String(error)));
@@ -235,7 +235,7 @@ export async function recordSearchQuery(
 
 export async function getTrendingSearches(searchType: string = 'places', limit: number = 10): Promise<any[]> {
   try {
-    const results = await queryMany(`
+    const results = await queryRows(`
       SELECT
         search_query,
         search_count,
@@ -255,7 +255,7 @@ export async function getTrendingSearches(searchType: string = 'places', limit: 
 
 export async function getSearchFilters(searchType: string): Promise<any[]> {
   try {
-    const filters = await queryMany(`
+    const filters = await queryRows(`
       SELECT
         filter_key,
         filter_label,

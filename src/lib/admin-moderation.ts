@@ -2,12 +2,12 @@
  * Admin Moderation Library
  * Content flagging, moderation actions, and queue management
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export async function getModerationQueue(status: string = 'pending', limit: number = 20, offset: number = 0): Promise<any[]> {
   try {
-    const items = await queryMany(`
+    const items = await queryRows(`
       SELECT
         mq.id,
         mq.queue_type,
@@ -36,7 +36,7 @@ export async function getModerationQueue(status: string = 'pending', limit: numb
 
 export async function getContentFlags(status: string = 'pending', limit: number = 20, offset: number = 0): Promise<any[]> {
   try {
-    const flags = await queryMany(`
+    const flags = await queryRows(`
       SELECT
         cf.id,
         cf.content_type,
@@ -176,7 +176,7 @@ export async function getModerationActions(targetId?: string, status: string = '
     query += ` ORDER BY ma.created_at DESC LIMIT $${params.length + 1}`;
     params.push(limit);
 
-    const actions = await queryMany(query, params);
+    const actions = await queryRows(query, params);
     return actions;
   } catch (error) {
     logger.error('Failed to get moderation actions', error instanceof Error ? error : new Error(String(error)));
@@ -258,7 +258,7 @@ export async function addContentFilterRule(ruleType: string, pattern: string, ac
 
 export async function getContentFilterRules(isActive: boolean = true): Promise<any[]> {
   try {
-    const rules = await queryMany(`
+    const rules = await queryRows(`
       SELECT * FROM content_filter_rules
       WHERE is_active = $1
       ORDER BY created_at DESC
