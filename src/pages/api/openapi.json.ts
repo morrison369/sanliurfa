@@ -530,13 +530,14 @@ const openApiSpec = {
                               },
                               required: ['strategies', 'strategiesCount'],
                             },
-                            indexSuggestions: {
-                              type: 'array',
-                              items: { type: 'string' },
-                            },
-                            slowOperations: {
-                              type: 'array',
-                              items: {
+                              indexSuggestions: {
+                                type: 'array',
+                                items: { type: 'string' },
+                              },
+                              artifactHealth: artifactHealthChecksSchema,
+                              slowOperations: {
+                                type: 'array',
+                                items: {
                                 type: 'object',
                                 properties: {
                                   type: { type: 'string' },
@@ -549,8 +550,8 @@ const openApiSpec = {
                             },
                             timestamp: { type: 'string', format: 'date-time' },
                           },
-                          required: ['recommendations', 'metrics', 'cacheStrategies', 'indexSuggestions', 'slowOperations', 'timestamp'],
-                        },
+                            required: ['recommendations', 'metrics', 'cacheStrategies', 'indexSuggestions', 'artifactHealth', 'slowOperations', 'timestamp'],
+                          },
                       },
                       required: ['success', 'data'],
                     },

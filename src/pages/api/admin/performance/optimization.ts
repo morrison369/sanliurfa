@@ -8,6 +8,7 @@ import { metricsCollector } from '../../../../lib/metrics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { getArtifactHealthSnapshot } from '../../../../lib/artifact-health';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -21,8 +22,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Collect performance data
+    const [artifactHealth, indexSuggestions] = await Promise.all([
+      getArtifactHealthSnapshot(),
+      suggestIndexes()
+    ]);
     const slowQueries = getSlowQueries(100); // > 100ms
-    const indexSuggestions = await suggestIndexes();
     const cacheStats = {
       strategies: Object.keys(CACHE_STRATEGIES),
       strategiesCount: Object.keys(CACHE_STRATEGIES).length
@@ -86,6 +90,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           },
           cacheStrategies: cacheStats,
           indexSuggestions: indexSuggestions.slice(0, 5),
+          artifactHealth,
           slowOperations: slowOperations.map(op => ({
             type: op.type,
             message: op.message,

@@ -224,6 +224,16 @@ describe('runtime admin ops contracts', () => {
     expect(body.data.data.metrics.slowRequestRate).toBe(14);
     expect(body.data.data.cacheStrategies.strategiesCount).toBe(2);
     expect(body.data.data.indexSuggestions).toHaveLength(2);
+    expect(body.data.data.artifactHealth.releaseGate).toEqual({
+      available: true,
+      generatedAt: '2026-04-10T08:00:00.000Z',
+      status: 'healthy',
+    });
+    expect(body.data.data.artifactHealth.nightlyE2E).toEqual({
+      available: false,
+      generatedAt: null,
+      status: 'blocked',
+    });
     expect(body.data.data.slowOperations[0].type).toBe('query');
     expect(body.data.data.slowOperations[0].message).toBe('reviews query exceeded threshold');
     expect(recordRequestMock).toHaveBeenCalledWith(
