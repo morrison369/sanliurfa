@@ -3,6 +3,7 @@
  * Policy definition, version control, templates, compilation
  */
 
+import { hashString } from './deterministic';
 import { logger } from './logger';
 
 interface PolicyDefinition {
@@ -211,7 +212,15 @@ class PolicyCompiler {
   }
 
   private hashPolicy(policy: PolicyDefinition): string {
-    return `hash-${Math.random().toString(36).substring(7)}`;
+    const normalizedPolicy = JSON.stringify({
+      policyId: policy.policyId,
+      name: policy.name,
+      description: policy.description,
+      version: policy.version,
+      rules: policy.rules,
+      variables: policy.variables
+    });
+    return `hash-${hashString(normalizedPolicy).toString(36)}`;
   }
 
   validatePolicy(policy: PolicyDefinition): { valid: boolean; errors: string[] } {

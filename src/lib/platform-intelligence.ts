@@ -3,6 +3,7 @@
  * Predictive insights, recommendations, anomaly detection, trend analysis, forecasting
  */
 
+import { deterministicBoolean, deterministicId, deterministicInt, deterministicNumber } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -152,7 +153,11 @@ export class InsightEngine {
    * Score insight relevance
    */
   scoreInsightRelevance(insight: Insight, userId: string): number {
-    return Math.random();
+    return deterministicNumber(
+      `insight-relevance:${insight.id}:${insight.type}:${insight.severity}:${userId}`,
+      0.05,
+      0.99
+    );
   }
 }
 
@@ -169,17 +174,17 @@ export class PredictiveAnalytics {
     for (let i = 0; i < periods; i++) {
       predictions.push({
         timestamp: now + i * 86400000,
-        value: 100 + Math.random() * 20 - 10
+        value: deterministicNumber(`forecast:${metric}:${periods}:${i}`, 90, 110)
       });
     }
 
     return {
-      id: 'forecast-' + Date.now(),
+      id: deterministicId('forecast', `${metric}:${periods}`, periods),
       metric,
       period: `${periods}d`,
       predictions,
       confidence: 'high',
-      accuracy: 0.85,
+      accuracy: deterministicNumber(`forecast-accuracy:${metric}:${periods}`, 0.82, 0.93),
       createdAt: Date.now()
     };
   }
@@ -188,14 +193,14 @@ export class PredictiveAnalytics {
    * Predict customer churn
    */
   predictCustomerChurn(customerId: string): number {
-    return Math.random() * 100;
+    return deterministicNumber(`customer-churn:${customerId}`, 0, 100);
   }
 
   /**
    * Predict revenue opportunity
    */
   predictRevenueOpportunity(accountId: string): number {
-    return 5000 + Math.random() * 45000;
+    return deterministicNumber(`revenue-opportunity:${accountId}`, 5000, 50000);
   }
 
   /**
@@ -208,17 +213,17 @@ export class PredictiveAnalytics {
     for (let i = 0; i < periods; i++) {
       predictions.push({
         timestamp: now + i * 86400000,
-        value: Math.round(1000 + Math.random() * 500)
+        value: deterministicInt(`demand:${product}:${periods}:${i}`, 1000, 1500)
       });
     }
 
     return {
-      id: 'demand-' + Date.now(),
+      id: deterministicId('demand', `${product}:${periods}`, periods),
       metric: `demand_${product}`,
       period: `${periods}d`,
       predictions,
       confidence: 'medium',
-      accuracy: 0.78,
+      accuracy: deterministicNumber(`demand-accuracy:${product}:${periods}`, 0.72, 0.86),
       createdAt: Date.now()
     };
   }
@@ -227,7 +232,7 @@ export class PredictiveAnalytics {
    * Predictive scoring
    */
   predictiveScoring(entityType: string, entityId: string): number {
-    return Math.round(Math.random() * 100);
+    return deterministicInt(`predictive-score:${entityType}:${entityId}`, 0, 100);
   }
 }
 
@@ -243,11 +248,11 @@ export class AnomalyDetector {
     const baseline = this.baselineMetrics.get(metric) || 100;
     const anomalies: AnomalyDetection[] = [];
 
-    if (Math.random() > 0.7) {
+    if (deterministicBoolean(`anomaly:${metric}:${threshold}`, 0.7)) {
       anomalies.push({
-        id: 'anomaly-' + Date.now(),
+        id: deterministicId('anomaly', `${metric}:${threshold}`, anomalies.length + 1),
         metric,
-        value: baseline * (1 + threshold * 2),
+        value: deterministicNumber(`anomaly-value:${metric}:${threshold}`, baseline * (1 + threshold), baseline * (1 + threshold * 2)),
         expectedRange: { min: baseline * 0.8, max: baseline * 1.2 },
         severity: 'warning',
         detectedAt: Date.now(),
@@ -286,7 +291,7 @@ export class AnomalyDetector {
 
     if (Math.abs(value - baseline) > baseline * threshold) {
       return {
-        id: 'anomaly-' + Date.now(),
+        id: deterministicId('anomaly', `${metric}:${value}:${baseline}`, 1),
         metric,
         value,
         expectedRange: { min: baseline * 0.7, max: baseline * 1.3 },

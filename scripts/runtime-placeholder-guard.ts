@@ -53,7 +53,11 @@ const FILES = [
   'src/lib/security-headers.ts',
   'src/lib/data-governance.ts',
   'src/lib/logging.ts',
-  'src/lib/webhook-queue.ts'
+  'src/lib/webhook-queue.ts',
+  'src/lib/multi-tenancy.ts',
+  'src/lib/platform-intelligence.ts',
+  'src/lib/policy-analytics.ts',
+  'src/lib/policy-as-code.ts'
 ];
 
 const PATTERNS = [

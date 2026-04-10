@@ -3,6 +3,7 @@
  * Tenant management, data segregation, isolation enforcement, compliance
  */
 
+import { deterministicBoolean, deterministicInt, deterministicNumber } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -115,11 +116,11 @@ export class TenantManager {
   getTenantMetrics(tenantId: string): Record<string, any> {
     return {
       tenantId,
-      activeUsers: Math.floor(Math.random() * 1000),
-      dataSize: Math.floor(Math.random() * 1000000),
-      requestsPerDay: Math.floor(Math.random() * 100000),
-      storageUtilization: Math.random(),
-      apiCallsPerDay: Math.floor(Math.random() * 50000)
+      activeUsers: deterministicInt(`tenant:${tenantId}:active-users`, 50, 1000),
+      dataSize: deterministicInt(`tenant:${tenantId}:data-size`, 10000, 1000000),
+      requestsPerDay: deterministicInt(`tenant:${tenantId}:requests-per-day`, 1000, 100000),
+      storageUtilization: deterministicNumber(`tenant:${tenantId}:storage-utilization`, 0.1, 0.95),
+      apiCallsPerDay: deterministicInt(`tenant:${tenantId}:api-calls-per-day`, 500, 50000)
     };
   }
 }
@@ -154,7 +155,7 @@ export class IsolationEnforcer {
    * Verify isolation
    */
   verifyIsolation(tenantId: string): boolean {
-    const verified = Math.random() > 0.05; // 95% success rate
+    const verified = deterministicBoolean(`tenant:${tenantId}:verify-isolation`, 0.05);
 
     logger.debug('Isolation verification', {
       tenantId,
@@ -201,7 +202,7 @@ export class ComplianceManager {
    * Validate tenant compliance
    */
   validateTenantCompliance(tenantId: string, framework: string): boolean {
-    const compliant = Math.random() > 0.1; // 90% compliant
+    const compliant = deterministicBoolean(`tenant:${tenantId}:compliance:${framework}`, 0.1);
 
     logger.info('Tenant compliance validation', {
       tenantId,
@@ -324,7 +325,7 @@ export class TenantIsolationMonitor {
    * Validate data separation
    */
   validateDataSeparation(tenantId: string): boolean {
-    const valid = Math.random() > 0.05; // 95% success rate
+    const valid = deterministicBoolean(`tenant:${tenantId}:validate-data-separation`, 0.05);
 
     logger.debug('Data separation validation', {
       tenantId,

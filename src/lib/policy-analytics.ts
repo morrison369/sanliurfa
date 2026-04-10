@@ -3,6 +3,7 @@
  * Policy usage analytics, access pattern analysis, conflict detection, recommendations
  */
 
+import { deterministicInt } from './deterministic';
 import { logger } from './logger';
 
 interface PolicyUsageMetric {
@@ -170,7 +171,11 @@ class PolicyConflictDetector {
       policy2Id,
       conflictType: 'contradictory',
       severity: 'high',
-      affectedDecisions: Math.floor(Math.random() * 100) + 10
+      affectedDecisions: deterministicInt(
+        `policy-conflict:${policy1Id}:${policy2Id}:${rules1.length}:${rules2.length}`,
+        10,
+        109
+      )
     };
 
     this.conflicts.set(conflictId, conflict);
