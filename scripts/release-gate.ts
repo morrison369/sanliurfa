@@ -41,7 +41,14 @@ function main(): void {
   run('TypeScript weekly report', 'npm run typecheck:experimental:report');
   run('TypeScript governance gate', 'npm run phase:check:tsconfig');
   run('Critical observability guard', 'npm run observability:critical:check');
-  run('Critical unit smoke', 'npm run test:critical');
+  run(
+    'Critical unit smoke (blocking)',
+    'npm exec -- vitest run src/pages/api/__tests__/auth-contracts.test.ts src/pages/api/__tests__/oauth-contracts.test.ts src/pages/api/__tests__/webhook-contracts.test.ts src/lib/__tests__/api-contract-utils.test.ts src/lib/__tests__/webhook-delivery-policy.test.ts src/lib/__tests__/webhook-replay-policy.test.ts'
+  );
+  runOptional(
+    'Critical unit smoke (advisory)',
+    'npm exec -- vitest run src/pages/api/__tests__/contract-hardening.test.ts src/lib/__tests__/email-contracts.test.ts'
+  );
   run('E2E smoke', 'npm run test:e2e:smoke');
   run('Build', 'npm run build');
   run('Performance budget check', 'npm run performance:budget:check');

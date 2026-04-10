@@ -18,6 +18,30 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     const metrics = metricsCollector.getMetrics();
+    const endpointMetrics = metrics.byEndpoint;
+
+    const summarize = (endpoint: string) => {
+      const value = endpointMetrics[endpoint];
+      if (!value) {
+        return {
+          requests: 0,
+          errorRatePercent: 0,
+          avgDurationMs: 0,
+          slowRatePercent: 0
+        };
+      }
+
+      return {
+        requests: value.count,
+        errorRatePercent: value.count > 0 ? Math.round((value.errorCount / value.count) * 100) : 0,
+        avgDurationMs: value.avgDuration,
+        slowRatePercent: value.count > 0 ? Math.round((value.slowCount / value.count) * 100) : 0
+      };
+    };
+
+    const oauthAuthorize = summarize('GET /api/auth/oauth/authorize');
+    const oauthCallback = summarize('GET /api/auth/oauth/callback');
+    const webhookStripe = summarize('POST /api/webhooks/stripe');
 
     logger.info('Metrics retrieved', {
       totalRequests: metrics.totalRequests,
@@ -30,6 +54,15 @@ export const GET: APIRoute = async ({ request, locals }) => {
       {
         timestamp: new Date().toISOString(),
         metrics,
+        focus: {
+          oauth: {
+            authorize: oauthAuthorize,
+            callback: oauthCallback
+          },
+          webhooks: {
+            stripe: webhookStripe
+          }
+        },
         thresholds: {
           slowRequestMs: 500,
           slowQueryMs: 100,

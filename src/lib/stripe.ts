@@ -5,6 +5,7 @@
 import Stripe from 'stripe';
 import { pool } from './postgres';
 import { logger } from './logging';
+import { processStripeWebhookBusinessEvent } from './stripe-webhook-business';
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -112,30 +113,7 @@ export async function createSubscription(
  */
 export async function handleWebhookEvent(event: Stripe.Event): Promise<boolean> {
   try {
-    switch (event.type) {
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object as Stripe.Subscription;
-        const metadata = subscription.metadata;
-        // Update membership status based on subscription status
-        logger.info('Subscription updated', { subscriptionId: subscription.id });
-        break;
-      }
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription;
-        // Downgrade user to free tier
-        await pool.query(
-          `UPDATE memberships SET tier = 'free', status = 'cancelled'
-           WHERE stripe_customer_id = $1`,
-          [subscription.customer]
-        );
-        logger.info('Subscription cancelled', { subscriptionId: subscription.id });
-        break;
-      }
-      case 'payment_intent.succeeded': {
-        logger.info('Payment succeeded', { event: event.id });
-        break;
-      }
-    }
+    await processStripeWebhookBusinessEvent(event);
     return true;
   } catch (error) {
     logger.error('Webhook handling failed', error instanceof Error ? error : new Error(String(error)));

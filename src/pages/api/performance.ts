@@ -25,6 +25,17 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const metrics = metricsCollector.getMetrics();
     const slowQueries = metricsCollector.getSlowQueries(20);
     const slowOps = metricsCollector.getSlowOperations(20);
+    const oauthAuthorizeMetrics = metricsCollector.getEndpointMetrics('GET', '/api/auth/oauth/authorize');
+    const oauthCallbackMetrics = metricsCollector.getEndpointMetrics('GET', '/api/auth/oauth/callback');
+    const webhookStripeMetrics = metricsCollector.getEndpointMetrics('POST', '/api/webhooks/stripe');
+    const webhookRetryDeferredCount = webhookStripeMetrics.filter((metric) => metric.error === 'retry_deferred').length;
+    const webhookRetryExhaustedCount = webhookStripeMetrics.filter((metric) => metric.error === 'retry_exhausted').length;
+    const webhookDuplicateCount = webhookStripeMetrics.filter((metric) => metric.error === 'duplicate_delivery').length;
+    const webhookSuccessCount = webhookStripeMetrics.filter((metric) => metric.statusCode >= 200 && metric.statusCode < 400).length;
+    const webhookErrorCount = webhookStripeMetrics.filter((metric) => metric.statusCode >= 400).length;
+    const webhookP95Duration = webhookStripeMetrics.length > 0
+      ? [...webhookStripeMetrics].sort((a, b) => a.duration - b.duration)[Math.floor(webhookStripeMetrics.length * 0.95)].duration
+      : 0;
 
     logger.info('Performance metrics retrieved', {
       slowQueryCount: perfStats.slowQueryCount,
@@ -50,6 +61,33 @@ export const GET: APIRoute = async ({ request, locals }) => {
           avgDuration: `${metrics.avgDuration}ms`,
           p95Duration: `${metrics.p95Duration}ms`,
           slowestEndpoints: metrics.slowestEndpoints
+        },
+        serviceLevelObjectives: {
+          oauth: {
+            authorizeRequests: oauthAuthorizeMetrics.length,
+            callbackRequests: oauthCallbackMetrics.length,
+            callbackErrorRatePercent: oauthCallbackMetrics.length > 0
+              ? Math.round((oauthCallbackMetrics.filter((metric) => metric.statusCode >= 400).length / oauthCallbackMetrics.length) * 100)
+              : 0
+          },
+          webhookIngestion: {
+            requests: webhookStripeMetrics.length,
+            successCount: webhookSuccessCount,
+            errorCount: webhookErrorCount,
+            duplicateCount: webhookDuplicateCount,
+            retryDeferredCount: webhookRetryDeferredCount,
+            retryExhaustedCount: webhookRetryExhaustedCount,
+            p95DurationMs: webhookP95Duration,
+            targets: {
+              maxErrorRatePercent: 1,
+              maxP95DurationMs: 1500
+            },
+            actual: {
+              errorRatePercent: webhookStripeMetrics.length > 0
+                ? Math.round((webhookErrorCount / webhookStripeMetrics.length) * 100)
+                : 0
+            }
+          }
         },
         slowestQueries: slowQueries.map(q => ({
           duration: `${q.duration}ms`,

@@ -42,7 +42,9 @@ jobs:
       - name: Run nightly unit regression
         id: nightly_regression
         continue-on-error: true
-        run: npm run test:regression:unit
+        run: |
+          set -o pipefail
+          npm run test:regression:unit 2>&1 | tee nightly-regression.log
       - name: Upload unit regression report
         if: always()
         uses: actions/upload-artifact@v4
@@ -51,6 +53,7 @@ jobs:
           path: |
             coverage
             docs/reports
+            nightly-regression.log
           if-no-files-found: ignore
 
       - name: Generate migration summary
@@ -110,10 +113,24 @@ jobs:
             const migrationSummary = fs.existsSync('migration-summary.md')
               ? fs.readFileSync('migration-summary.md', 'utf8')
               : '## Migration Summary\n- Not available for this run';
+            const regressionLog = fs.existsSync('nightly-regression.log')
+              ? fs.readFileSync('nightly-regression.log', 'utf8')
+              : '';
+            const failCandidates = regressionLog
+              .split('\n')
+              .map((line) => line.trim())
+              .filter((line) => line.startsWith('FAIL') || line.startsWith('×') || line.startsWith('❯'))
+              .slice(0, 8);
+            const failingSummary = failCandidates.length > 0
+              ? ['## Top Failing Tests', ...failCandidates.map((line) => `- ${line}`)].join('\n')
+              : '## Top Failing Tests\n- No failing tests captured from log';
+
             const body = [
               '## Nightly Unit Regression',
               `- Outcome: ${process.env.REGRESSION_OUTCOME}`,
               `- Run: ${process.env.RUN_URL}`,
+              '',
+              failingSummary,
               '',
               migrationSummary
             ].join('\n');
@@ -123,18 +140,43 @@ jobs:
               state: 'open'
             });
             const existing = issues.find((issue) => issue.title === title);
+            let trendSummary = '## Trend\n- Not enough history yet';
+            if (existing) {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                per_page: 50
+              });
+              const recentOutcomes = comments
+                .map((comment) => {
+                  const match = comment.body?.match(/- Outcome:\s+([a-zA-Z_]+)/);
+                  return match ? match[1].toLowerCase() : null;
+                })
+                .filter(Boolean)
+                .slice(-7);
+              if (recentOutcomes.length > 0) {
+                const successCount = recentOutcomes.filter((outcome) => outcome === 'success').length;
+                trendSummary = [
+                  '## Trend',
+                  `- Last ${recentOutcomes.length} run success rate: ${Math.round((successCount / recentOutcomes.length) * 100)}%`,
+                  `- Outcomes: ${recentOutcomes.join(', ')}`
+                ].join('\n');
+              }
+            }
+            const finalBody = [body, '', trendSummary].join('\n');
             if (existing) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: existing.number,
-                body
+                body: finalBody
               });
             } else {
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title,
-                body
+                body: finalBody
               });
             }

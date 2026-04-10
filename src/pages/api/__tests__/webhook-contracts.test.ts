@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CONTRACT_TEST_IDS } from './helpers/contract-test-ids';
 
 process.env.DATABASE_URL ||= 'postgresql://postgres:postgres@127.0.0.1:5432/sanliurfa';
 
@@ -267,7 +268,7 @@ describe('Webhook API contracts', () => {
 
     const response = await POST({
       request,
-      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      locals: { user: { id: CONTRACT_TEST_IDS.primaryUserId } },
     } as any);
 
     expect(response.status).toBe(400);
@@ -285,7 +286,7 @@ describe('Webhook API contracts', () => {
 
     const response = await POST({
       request,
-      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      locals: { user: { id: CONTRACT_TEST_IDS.primaryUserId } },
     } as any);
 
     expect(response.status).toBe(429);
@@ -302,7 +303,7 @@ describe('Webhook API contracts', () => {
 
     const response = await POST({
       request,
-      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      locals: { user: { id: CONTRACT_TEST_IDS.primaryUserId } },
     } as any);
 
     expect(response.status).toBe(400);
@@ -320,7 +321,7 @@ describe('Webhook API contracts', () => {
 
     const response = await POST({
       request,
-      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      locals: { user: { id: CONTRACT_TEST_IDS.primaryUserId } },
     } as any);
 
     expect(response.status).toBe(429);

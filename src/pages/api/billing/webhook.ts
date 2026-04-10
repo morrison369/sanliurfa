@@ -15,6 +15,8 @@ export const POST: APIRoute = async ({ request }) => {
   logger.setRequestId(requestId);
 
   try {
+    logger.info('Legacy billing webhook endpoint invoked; canonical ingestion is /api/webhooks/stripe');
+
     // Get raw body for signature verification
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
@@ -65,7 +67,10 @@ export const POST: APIRoute = async ({ request }) => {
 
     logger.info('Webhook event processed successfully', { eventId: event.id });
     recordRequest('POST', '/api/billing/webhook', HttpStatus.OK, Date.now() - startTime);
-    return apiResponse({ processed: true, eventId: event.id }, HttpStatus.OK, requestId);
+    const response = apiResponse({ processed: true, eventId: event.id }, HttpStatus.OK, requestId);
+    response.headers.set('X-Webhook-Endpoint', 'legacy-billing-proxy');
+    response.headers.set('X-Webhook-Canonical', '/api/webhooks/stripe');
+    return response;
   } catch (error) {
     logger.error('Webhook error', error instanceof Error ? error : new Error(String(error)));
     recordRequest('POST', '/api/billing/webhook', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
