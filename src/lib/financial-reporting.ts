@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logging';
+import { deterministicId, deterministicNumber } from './deterministic';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -51,10 +52,11 @@ export class FinancialReporter {
    * Generate income statement
    */
   generateIncomeStatement(startDate: number, endDate: number): IncomeStatement {
-    const revenue = Math.random() * 500000 + 100000;
-    const costOfRevenue = revenue * (Math.random() * 0.3 + 0.2);
+    const seed = `income:${startDate}:${endDate}`;
+    const revenue = deterministicNumber(`${seed}:revenue`, 100000, 600000, 2);
+    const costOfRevenue = revenue * deterministicNumber(`${seed}:costRatio`, 0.2, 0.5, 4);
     const grossProfit = revenue - costOfRevenue;
-    const operatingExpenses = grossProfit * (Math.random() * 0.4 + 0.2);
+    const operatingExpenses = grossProfit * deterministicNumber(`${seed}:opexRatio`, 0.2, 0.6, 4);
     const netIncome = grossProfit - operatingExpenses;
 
     logger.debug('Income statement generated', { startDate, endDate });
@@ -73,8 +75,9 @@ export class FinancialReporter {
    * Generate balance sheet
    */
   generateBalanceSheet(asOfDate: number): BalanceSheet {
-    const assets = Math.random() * 1000000 + 200000;
-    const liabilities = assets * (Math.random() * 0.4 + 0.1);
+    const seed = `balance:${asOfDate}`;
+    const assets = deterministicNumber(`${seed}:assets`, 200000, 1200000, 2);
+    const liabilities = assets * deterministicNumber(`${seed}:liabilitiesRatio`, 0.1, 0.5, 4);
     const equity = assets - liabilities;
 
     logger.debug('Balance sheet generated', { asOfDate });
@@ -91,10 +94,11 @@ export class FinancialReporter {
    * Generate cash flow
    */
   generateCashFlow(startDate: number, endDate: number): Record<string, number> {
+    const seed = `cashflow:${startDate}:${endDate}`;
     return {
-      operatingCash: Math.random() * 100000 + 20000,
-      investingCash: Math.random() * -50000 - 5000,
-      financingCash: Math.random() * 30000 - 10000
+      operatingCash: deterministicNumber(`${seed}:operating`, 20000, 120000, 2),
+      investingCash: -deterministicNumber(`${seed}:investing`, 5000, 55000, 2),
+      financingCash: deterministicNumber(`${seed}:financing`, -10000, 30000, 2)
     };
   }
 
@@ -102,7 +106,7 @@ export class FinancialReporter {
    * Generate report
    */
   generateReport(type: ReportType, period: string): FinancialStatement {
-    const reportId = 'report-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const reportId = deterministicId('report', `${type}:${period}:${Date.now()}`, 0);
 
     let data: Record<string, any> = {};
 

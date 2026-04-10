@@ -17,7 +17,11 @@ const FILES = [
   'src/lib/semantic-intelligence.ts',
   'src/lib/chaos-engineering.ts',
   'src/lib/service-mesh.ts',
-  'src/lib/threat-modeling.ts'
+  'src/lib/threat-modeling.ts',
+  'src/lib/financial-analytics.ts',
+  'src/lib/financial-planning.ts',
+  'src/lib/financial-reporting.ts',
+  'src/lib/predictive-incidents.ts'
 ];
 
 const PATTERNS = [

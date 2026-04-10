@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logging';
+import { deterministicBoolean, deterministicNumber, pickDeterministic } from './deterministic';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -115,7 +116,7 @@ export class FinancialMetrics {
     const values: number[] = [];
 
     for (let i = 0; i < periods; i++) {
-      values.push(Math.random() * 10 + 50);
+      values.push(deterministicNumber(`${metric}:trend:${i}`, 50, 60, 2));
     }
 
     const trend = values[periods - 1] > values[0] ? 'up' : 'down';
@@ -133,12 +134,13 @@ export class ProfitabilityAnalyzer {
    * Analyze
    */
   analyze(startDate: number, endDate: number): ProfitabilityAnalysis {
-    const totalRevenue = Math.random() * 500000 + 100000;
-    const totalCost = totalRevenue * (Math.random() * 0.5 + 0.3);
+    const seed = `profitability:${startDate}:${endDate}`;
+    const totalRevenue = deterministicNumber(`${seed}:revenue`, 100000, 600000, 2);
+    const totalCost = totalRevenue * deterministicNumber(`${seed}:costRatio`, 0.3, 0.8, 4);
     const grossProfit = totalRevenue - totalCost;
-    const operatingExpenses = grossProfit * (Math.random() * 0.4 + 0.1);
+    const operatingExpenses = grossProfit * deterministicNumber(`${seed}:opexRatio`, 0.1, 0.5, 4);
     const operatingProfit = grossProfit - operatingExpenses;
-    const netProfit = operatingProfit * (Math.random() * 0.9 + 0.7);
+    const netProfit = operatingProfit * deterministicNumber(`${seed}:netRatio`, 0.7, 1.6, 4);
     const profitMargin = (netProfit / totalRevenue) * 100;
 
     logger.debug('Profitability analysis completed', { totalRevenue, netProfit });
@@ -158,8 +160,8 @@ export class ProfitabilityAnalyzer {
    * Get product profitability
    */
   getProductProfitability(productId: string, period: string): { revenue: number; cost: number; profit: number; margin: number } {
-    const revenue = Math.random() * 50000 + 10000;
-    const cost = revenue * (Math.random() * 0.5 + 0.2);
+    const revenue = deterministicNumber(`${productId}:${period}:revenue`, 10000, 60000, 2);
+    const cost = revenue * deterministicNumber(`${productId}:${period}:costRatio`, 0.2, 0.7, 4);
     const profit = revenue - cost;
     const margin = (profit / revenue) * 100;
 
@@ -172,11 +174,14 @@ export class ProfitabilityAnalyzer {
    * Get customer profitability
    */
   getCustomerProfitability(customerId: string, period: string): Record<string, number> {
+    const revenue = deterministicNumber(`${customerId}:${period}:revenue`, 10000, 110000, 2);
+    const cost = deterministicNumber(`${customerId}:${period}:cost`, 5000, 35000, 2);
+    const profit = Math.max(revenue - cost, 0);
     return {
-      revenue: Math.random() * 100000 + 10000,
-      cost: Math.random() * 30000 + 5000,
-      profit: Math.random() * 70000 + 5000,
-      margin: Math.random() * 50 + 20
+      revenue,
+      cost,
+      profit,
+      margin: revenue > 0 ? (profit / revenue) * 100 : 0
     };
   }
 
@@ -186,11 +191,11 @@ export class ProfitabilityAnalyzer {
   identifyLowMarginAreas(): string[] {
     const areas = [];
 
-    if (Math.random() > 0.5) {
+    if (deterministicBoolean('low-margin:category-a', 0.5)) {
       areas.push('Product Category A - 8% margin');
     }
 
-    if (Math.random() > 0.6) {
+    if (deterministicBoolean('low-margin:category-b', 0.6)) {
       areas.push('Product Category B - 12% margin');
     }
 
@@ -204,7 +209,7 @@ export class ProfitabilityAnalyzer {
     const forecasts: ProfitabilityAnalysis[] = [];
 
     for (let i = 0; i < months; i++) {
-      const totalRevenue = Math.random() * 500000 + 100000;
+      const totalRevenue = deterministicNumber(`forecast:${months}:${i}:revenue`, 100000, 600000, 2);
       const totalCost = totalRevenue * 0.4;
       const grossProfit = totalRevenue - totalCost;
       const operatingProfit = grossProfit * 0.6;
@@ -234,9 +239,10 @@ export class CashFlowAnalyzer {
    * Analyze
    */
   analyze(startDate: number, endDate: number): CashFlowAnalysis {
-    const operatingCash = Math.random() * 100000 + 20000;
-    const investingCash = Math.random() * -50000 - 5000;
-    const financingCash = Math.random() * 30000 - 10000;
+    const seed = `cashflow:${startDate}:${endDate}`;
+    const operatingCash = deterministicNumber(`${seed}:operating`, 20000, 120000, 2);
+    const investingCash = -deterministicNumber(`${seed}:investing`, 5000, 55000, 2);
+    const financingCash = deterministicNumber(`${seed}:financing`, -10000, 30000, 2);
     const netCashFlow = operatingCash + investingCash + financingCash;
 
     logger.debug('Cash flow analysis completed', { netCashFlow });
@@ -247,7 +253,7 @@ export class CashFlowAnalyzer {
       investingCash,
       financingCash,
       netCashFlow,
-      endingCash: Math.random() * 200000 + 50000
+      endingCash: deterministicNumber(`${seed}:endingCash`, 50000, 250000, 2)
     };
   }
 
@@ -256,9 +262,9 @@ export class CashFlowAnalyzer {
    */
   getCashPosition(asOfDate: number): { available: number; committed: number; forecasted: number } {
     return {
-      available: Math.random() * 100000 + 50000,
-      committed: Math.random() * 50000 + 10000,
-      forecasted: Math.random() * 150000 + 30000
+      available: deterministicNumber(`${asOfDate}:available`, 50000, 150000, 2),
+      committed: deterministicNumber(`${asOfDate}:committed`, 10000, 60000, 2),
+      forecasted: deterministicNumber(`${asOfDate}:forecasted`, 30000, 180000, 2)
     };
   }
 
@@ -266,7 +272,7 @@ export class CashFlowAnalyzer {
    * Analyze liquidity
    */
   analyzeLiquidity(asOfDate: number): { current_ratio: number; quick_ratio: number; health: string } {
-    const currentRatio = Math.random() * 1.5 + 1.5;
+    const currentRatio = deterministicNumber(`${asOfDate}:currentRatio`, 1.5, 3, 3);
     const quickRatio = currentRatio * 0.8;
     const health = currentRatio > 1.5 ? 'healthy' : currentRatio > 1 ? 'acceptable' : 'concerning';
 
@@ -284,11 +290,11 @@ export class CashFlowAnalyzer {
     for (let i = 0; i < months; i++) {
       forecasts.push({
         period: `Month ${i + 1}`,
-        operatingCash: Math.random() * 100000 + 20000,
-        investingCash: Math.random() * -50000 - 5000,
-        financingCash: Math.random() * 30000 - 10000,
-        netCashFlow: Math.random() * 80000 + 10000,
-        endingCash: Math.random() * 200000 + 50000
+        operatingCash: deterministicNumber(`${months}:${i}:operating`, 20000, 120000, 2),
+        investingCash: -deterministicNumber(`${months}:${i}:investing`, 5000, 55000, 2),
+        financingCash: deterministicNumber(`${months}:${i}:financing`, -10000, 30000, 2),
+        netCashFlow: deterministicNumber(`${months}:${i}:netCash`, 10000, 90000, 2),
+        endingCash: deterministicNumber(`${months}:${i}:endingCash`, 50000, 250000, 2)
       });
     }
 
@@ -303,15 +309,15 @@ export class CashFlowAnalyzer {
   identifyRisks(): string[] {
     const risks = [];
 
-    if (Math.random() > 0.6) {
+    if (deterministicBoolean('cashflow-risk:ap-aging', 0.6)) {
       risks.push('High accounts payable aging');
     }
 
-    if (Math.random() > 0.7) {
+    if (deterministicBoolean('cashflow-risk:seasonal-volatility', 0.7)) {
       risks.push('Seasonal cash flow volatility');
     }
 
-    if (Math.random() > 0.8) {
+    if (deterministicBoolean('cashflow-risk:debt-service', 0.8)) {
       risks.push('Debt service concentration');
     }
 
@@ -326,8 +332,8 @@ export class FinancialHealthAnalyzer {
    * Calculate health
    */
   calculateHealth(asOfDate: number): FinancialHealthSnapshot {
-    const score = Math.random() * 40 + 60; // 60-100
-    const trend: 'improving' | 'declining' | 'stable' = ['improving', 'declining', 'stable'][Math.floor(Math.random() * 3)] as any;
+    const score = deterministicNumber(`${asOfDate}:healthScore`, 60, 100, 2);
+    const trend = pickDeterministic(['improving', 'declining', 'stable'] as const, `${asOfDate}:trend`);
     const issues: string[] = [];
     const recommendations: string[] = [];
 
@@ -336,7 +342,7 @@ export class FinancialHealthAnalyzer {
       recommendations.push('Review cost structure and pricing strategy');
     }
 
-    if (Math.random() > 0.7) {
+    if (deterministicBoolean(`${asOfDate}:debtRisk`, 0.7)) {
       issues.push('High debt-to-equity ratio');
       recommendations.push('Consider debt reduction strategy');
     }
@@ -350,7 +356,7 @@ export class FinancialHealthAnalyzer {
    * Get health score
    */
   getHealthScore(asOfDate: number): number {
-    return Math.random() * 40 + 60; // 60-100
+    return deterministicNumber(`${asOfDate}:healthScore`, 60, 100, 2);
   }
 
   /**
@@ -370,9 +376,9 @@ export class FinancialHealthAnalyzer {
    */
   compareToPriors(period: string): Record<string, any> {
     return {
-      scoreChange: Math.random() * 20 - 10,
-      marginChange: Math.random() * 5 - 2.5,
-      liquidityChange: Math.random() * 0.3 - 0.15
+      scoreChange: deterministicNumber(`${period}:scoreChange`, -10, 10, 2),
+      marginChange: deterministicNumber(`${period}:marginChange`, -2.5, 2.5, 2),
+      liquidityChange: deterministicNumber(`${period}:liquidityChange`, -0.15, 0.15, 3)
     };
   }
 }

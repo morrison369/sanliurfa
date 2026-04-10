@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { deterministicNumber } from './deterministic';
 
 interface IncidentForecast {
   incidentType: string;
@@ -38,7 +39,7 @@ interface Recommendation {
   estimatedImpact: number;
 }
 
-class IncidentPredictor {
+export class IncidentPredictor {
   private forecastHistory: Map<string, IncidentForecast[]> = new Map();
   private counter = 0;
 
@@ -47,15 +48,17 @@ class IncidentPredictor {
     const incidentTypes = ['database-unavailable', 'api-timeout', 'memory-leak', 'connection-pool-exhaustion'];
 
     incidentTypes.forEach(type => {
+      const seed = `${type}:${timeWindowMinutes}`;
+      const start = 1704067200000 + Math.round(deterministicNumber(`${seed}:windowStart`, 0, 3600000, 0));
       const forecast: IncidentForecast = {
         incidentType: type,
-        likelihood: Math.random() * 0.8,
+        likelihood: deterministicNumber(`${seed}:likelihood`, 0.1, 0.8, 4),
         estimatedTimeWindow: {
-          start: Date.now(),
-          end: Date.now() + timeWindowMinutes * 60 * 1000
+          start,
+          end: start + timeWindowMinutes * 60 * 1000
         },
-        confidence: Math.random() * 0.8 + 0.2,
-        severity: Math.random() > 0.5 ? 'high' : 'medium'
+        confidence: deterministicNumber(`${seed}:confidence`, 0.2, 1, 4),
+        severity: deterministicNumber(`${seed}:severity`, 0, 1, 4) > 0.65 ? 'high' : 'medium'
       };
 
       if (forecast.likelihood > 0.3) {
@@ -77,11 +80,14 @@ class IncidentPredictor {
 
   getHistoricalAccuracy(incidentType: string): { accuracy: number; predictions: number } {
     const forecasts = this.forecastHistory.get(incidentType) || [];
-    return { accuracy: Math.random() * 0.4 + 0.6, predictions: forecasts.length };
+    return {
+      accuracy: deterministicNumber(`${incidentType}:accuracy:${forecasts.length}`, 0.6, 1, 4),
+      predictions: forecasts.length
+    };
   }
 }
 
-class MTTREstimator {
+export class MTTREstimator {
   private resolutionHistory: Map<string, Array<{ resolution: number; duration: number }>> = new Map();
   private counter = 0;
 
@@ -91,9 +97,9 @@ class MTTREstimator {
     const estimatedMTTR = history.length > 0 ? history.reduce((sum, h) => sum + h.duration, 0) / history.length : 300000; // Default 5 min
 
     const factors: Record<string, number> = {
-      complexity: Math.random() * 100,
-      availableResources: Math.random() * 100,
-      serviceDependencies: Math.random() * 50
+      complexity: deterministicNumber(`${incidentType}:complexity`, 20, 95, 2),
+      availableResources: deterministicNumber(`${incidentType}:resources`, 20, 95, 2),
+      serviceDependencies: deterministicNumber(`${incidentType}:dependencies`, 5, 50, 2)
     };
 
     logger.debug('MTTR estimation completed', {
@@ -104,7 +110,7 @@ class MTTREstimator {
     return {
       incidentType,
       estimatedMTTR,
-      confidence: Math.random() * 0.4 + 0.6,
+      confidence: deterministicNumber(`${incidentType}:confidence:${history.length}`, 0.6, 1, 4),
       factors,
       historicalData: history
     };
@@ -133,12 +139,12 @@ class MTTREstimator {
   }
 }
 
-class RiskScorer {
+export class RiskScorer {
   private counter = 0;
 
   score(incidentType: string, currentMetrics: Record<string, number>, affectedServices: string[] = []): RiskScore {
     const impact = currentMetrics.errorRate > 0.1 ? 'critical' : currentMetrics.errorRate > 0.05 ? 'high' : 'medium';
-    const probability = Math.random() > 0.5 ? 'high' : 'medium';
+    const probability = deterministicNumber(`${incidentType}:${affectedServices.join(',')}:probability`, 0, 1, 4) > 0.55 ? 'high' : 'medium';
     const urgency = impact === 'critical' ? 'critical' : 'high';
 
     const impactWeight = impact === 'critical' ? 1 : impact === 'high' ? 0.7 : 0.4;
@@ -164,7 +170,7 @@ class RiskScorer {
   }
 }
 
-class RecommendationEngine {
+export class RecommendationEngine {
   private counter = 0;
 
   generateRecommendations(riskScore: RiskScore, forecast: { incidentType: string; likelihood: number }): Recommendation[] {
