@@ -7,8 +7,40 @@ import type { APIRoute } from 'astro';
 import { verifyOAuthState, getOAuthProvider, linkOAuthAccount, getOAuthAccountByProvider } from '../../../../lib/oauth';
 import { createUserSession } from '../../../../lib/security';
 import { queryOne } from '../../../../lib/postgres';
-import { apiError, apiResponse, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
+
+interface OAuthProviderConfig {
+  provider_key: string;
+  client_id: string;
+  client_secret: string;
+  token_url: string;
+  userinfo_url: string;
+}
+
+interface OAuthTokenData {
+  access_token: string;
+  refresh_token?: string;
+  expires_at: Date | null;
+}
+
+interface OAuthUserInfo {
+  id: string;
+  email?: string;
+  name?: string;
+  picture?: string;
+}
+
+function isValidProviderConfig(provider: any): provider is OAuthProviderConfig {
+  return Boolean(
+    provider &&
+    typeof provider.provider_key === 'string' &&
+    typeof provider.client_id === 'string' &&
+    typeof provider.client_secret === 'string' &&
+    typeof provider.token_url === 'string' &&
+    typeof provider.userinfo_url === 'string'
+  );
+}
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -36,7 +68,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     // Get provider
     const provider = await getOAuthProvider(oauthState.provider_key);
-    if (!provider) {
+    if (!provider || !isValidProviderConfig(provider)) {
       return apiError(ErrorCode.NOT_FOUND, 'OAuth provider not found', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
@@ -58,6 +90,10 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     let userId = oauthAccount?.user_id;
 
     if (!userId) {
+      if (!userInfo.email) {
+        return apiError(ErrorCode.AUTH_ERROR, 'OAuth provider did not return an email address', HttpStatus.BAD_REQUEST, undefined, requestId);
+      }
+
       // Check if user exists by email
       const existingUser = await queryOne(
         'SELECT id FROM users WHERE email = $1',
@@ -105,12 +141,26 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     logger.info('OAuth login successful', { userId, provider: oauthState.provider_key });
 
+    const forwardedProto = request.headers.get('x-forwarded-proto');
+    const isSecureCookie = forwardedProto ? forwardedProto === 'https' : url.protocol === 'https:';
+    const cookieParts = [
+      `auth-token=${session.session_token}`,
+      'Path=/',
+      'HttpOnly',
+      'SameSite=Lax',
+      'Max-Age=86400'
+    ];
+
+    if (isSecureCookie) {
+      cookieParts.push('Secure');
+    }
+
     // Redirect to dashboard
     return new Response(null, {
       status: 302,
       headers: {
         'Location': '/',
-        'Set-Cookie': `auth-token=${session.session_token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=86400`,
+        'Set-Cookie': cookieParts.join('; '),
         'X-Request-ID': requestId
       }
     });
@@ -120,7 +170,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   }
 };
 
-async function exchangeCodeForToken(provider: any, code: string, redirectUri: string): Promise<any> {
+async function exchangeCodeForToken(provider: OAuthProviderConfig, code: string, redirectUri: string): Promise<OAuthTokenData | null> {
   try {
     const response = await fetch(provider.token_url, {
       method: 'POST',
@@ -141,10 +191,15 @@ async function exchangeCodeForToken(provider: any, code: string, redirectUri: st
     }
 
     const data = await response.json();
+    if (!data?.access_token) {
+      logger.warn('OAuth token exchange returned no access token', { provider: provider.provider_key });
+      return null;
+    }
+
     return {
       access_token: data.access_token,
       refresh_token: data.refresh_token,
-      expires_at: new Date(Date.now() + data.expires_in * 1000)
+      expires_at: typeof data.expires_in === 'number' ? new Date(Date.now() + data.expires_in * 1000) : null
     };
   } catch (error) {
     logger.error('Code exchange failed', error instanceof Error ? error : new Error(String(error)));
@@ -152,7 +207,7 @@ async function exchangeCodeForToken(provider: any, code: string, redirectUri: st
   }
 }
 
-async function getUserInfoFromProvider(provider: any, accessToken: string): Promise<any> {
+async function getUserInfoFromProvider(provider: OAuthProviderConfig, accessToken: string): Promise<OAuthUserInfo | null> {
   try {
     const response = await fetch(provider.userinfo_url, {
       headers: { 'Authorization': `Bearer ${accessToken}` },
@@ -166,8 +221,14 @@ async function getUserInfoFromProvider(provider: any, accessToken: string): Prom
 
     const data = await response.json();
 
+    const userId = data.sub || data.id;
+    if (!userId || typeof userId !== 'string') {
+      logger.warn('OAuth user info payload missing user id', { provider: provider.provider_key });
+      return null;
+    }
+
     return {
-      id: data.sub || data.id,
+      id: userId,
       email: data.email,
       name: data.name,
       picture: data.picture
@@ -179,10 +240,10 @@ async function getUserInfoFromProvider(provider: any, accessToken: string): Prom
 }
 
 function extractBrowser(userAgent: string): string {
+  if (userAgent.includes('Edge')) return 'Edge';
   if (userAgent.includes('Chrome')) return 'Chrome';
   if (userAgent.includes('Safari')) return 'Safari';
   if (userAgent.includes('Firefox')) return 'Firefox';
-  if (userAgent.includes('Edge')) return 'Edge';
   return 'Unknown';
 }
 

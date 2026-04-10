@@ -5,12 +5,13 @@
 
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
-import { insert, queryOne, update as updateDb } from '../../../lib/postgres';
+import { insert, queryOne, query, update as updateDb } from '../../../lib/postgres';
 import { verifyWebhookSignature, getSubscription } from '../../../lib/stripe-client';
 import { updateUserQuotas } from '../../../lib/usage-tracking';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { emailOnSubscriptionCreated, emailOnPaymentSuccess, emailOnSubscriptionCancelled } from '../../../lib/subscription-email-integration';
+import { apiError, apiResponse, ErrorCode, HttpStatus, getRequestId } from '../../../lib/api';
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   try {
@@ -106,6 +107,11 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       return;
     }
 
+    const subscription = await queryOne(
+      `SELECT id, user_id, billing_cycle, tier_id FROM subscriptions WHERE stripe_subscription_id = $1`,
+      [subscriptionId]
+    );
+
     // Update billing history
     const existingBilling = await queryOne(
       `SELECT id FROM billing_history WHERE stripe_invoice_id = $1`,
@@ -113,11 +119,6 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     );
 
     if (!existingBilling) {
-      const subscription = await queryOne(
-        `SELECT id, user_id FROM subscriptions WHERE stripe_subscription_id = $1`,
-        [subscriptionId]
-      );
-
       if (subscription) {
         await insert('billing_history', {
           subscription_id: subscription.id,
@@ -186,15 +187,55 @@ async function handleCustomerSubscriptionDeleted(subscription: Stripe.Subscripti
 }
 
 export const POST: APIRoute = async ({ request }) => {
+  const requestId = getRequestId({ request } as any);
   const startTime = Date.now();
+  logger.setRequestId(requestId);
 
   try {
     // Get raw body for signature verification
     const rawBody = await request.text();
     const signature = request.headers.get('stripe-signature');
 
+    if (!signature) {
+      const duration = Date.now() - startTime;
+      recordRequest('POST', '/api/webhooks/stripe', HttpStatus.BAD_REQUEST, duration);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Missing stripe-signature header',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
     // Verify webhook signature
     const event = await verifyWebhookSignature(rawBody, signature);
+    const existingDelivery = await queryOne(
+      `SELECT id, status FROM webhook_deliveries WHERE stripe_event_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [event.id]
+    );
+
+    if (existingDelivery?.status === 'completed') {
+      recordRequest('POST', '/api/webhooks/stripe', HttpStatus.OK, Date.now() - startTime);
+      logger.info('Duplicate Stripe webhook ignored', { eventType: event.type, eventId: event.id });
+      return apiResponse({ received: true, duplicate: true }, HttpStatus.OK, requestId);
+    }
+
+    const delivery = existingDelivery || await queryOne(
+      `INSERT INTO webhook_deliveries (event_type, stripe_event_id, payload, status, last_tried_at)
+       VALUES ($1, $2, $3::jsonb, 'processing', NOW())
+       RETURNING id`,
+      [event.type, event.id, rawBody]
+    );
+
+    if (existingDelivery?.id) {
+      await query(
+        `UPDATE webhook_deliveries
+         SET status = 'processing', retry_count = COALESCE(retry_count, 0) + 1, last_tried_at = NOW()
+         WHERE id = $1`,
+        [existingDelivery.id]
+      );
+    }
 
     recordRequest('POST', '/api/webhooks/stripe', 200, Date.now() - startTime);
     logger.info('Stripe webhook received', { eventType: event.type, eventId: event.id });
@@ -224,21 +265,25 @@ export const POST: APIRoute = async ({ request }) => {
         logger.debug('Unhandled webhook event', { eventType: event.type });
     }
 
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    await query(
+      `UPDATE webhook_deliveries
+       SET status = 'completed', http_status = 200, response_body = $2, completed_at = NOW()
+       WHERE id = $1`,
+      [delivery.id, JSON.stringify({ received: true })]
+    );
+
+    return apiResponse({ received: true }, HttpStatus.OK, requestId);
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/webhooks/stripe', 400, duration);
     logger.error('Webhook verification failed', error instanceof Error ? error : new Error(String(error)));
 
-    return new Response(
-      JSON.stringify({ error: 'Webhook signature verification failed' }),
-      {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      }
+    return apiError(
+      ErrorCode.AUTH_ERROR,
+      'Webhook signature verification failed',
+      HttpStatus.BAD_REQUEST,
+      undefined,
+      requestId
     );
   }
 };
