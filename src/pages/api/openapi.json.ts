@@ -565,6 +565,46 @@ const openApiSpec = {
         },
       },
     },
+    '/api/admin/system/artifact-health': {
+      get: {
+        tags: ['Health'],
+        summary: 'Artifact health snapshot for admins',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Artifact freshness snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        success: { type: 'boolean' },
+                        data: {
+                          type: 'object',
+                          properties: {
+                            releaseGate: artifactHealthEntrySchema,
+                            nightlyRegression: artifactHealthEntrySchema,
+                            nightlyE2E: artifactHealthEntrySchema,
+                            performanceOps: artifactHealthEntrySchema,
+                          },
+                          required: ['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps'],
+                        },
+                      },
+                      required: ['success', 'data'],
+                    },
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {

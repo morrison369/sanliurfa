@@ -270,4 +270,22 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.finalStatus).toBe('passed');
     expect(body.data.data.available).toBe(true);
   });
+
+  it('returns artifact health via dedicated admin endpoint', async () => {
+    const { GET } = await import('../admin/system/artifact-health.ts');
+    const request = new Request('https://example.com/api/admin/system/artifact-health');
+
+    const response = await GET({
+      request,
+      locals: { user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.data.releaseGate.available).toBe(true);
+    expect(body.data.data.releaseGate.status).toBe('healthy');
+    expect(body.data.data.nightlyRegression.status).toBe('healthy');
+    expect(body.data.data.nightlyE2E.status).toBe('healthy');
+    expect(body.data.data.performanceOps.generatedAt).toBe('2026-04-10T03:00:00.000Z');
+  });
 });
