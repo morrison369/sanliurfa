@@ -21,6 +21,7 @@ const emailOnPaymentSuccessMock = vi.fn();
 const emailOnSubscriptionCancelledMock = vi.fn();
 const verifyOAuthStateMock = vi.fn();
 const getOAuthProviderMock = vi.fn();
+const generateOAuthStateMock = vi.fn();
 const linkOAuthAccountMock = vi.fn();
 const getOAuthAccountByProviderMock = vi.fn();
 const createUserSessionMock = vi.fn();
@@ -90,6 +91,7 @@ vi.mock('../../../lib/subscription-email-integration', () => ({
 vi.mock('../../../lib/oauth', () => ({
   verifyOAuthState: verifyOAuthStateMock,
   getOAuthProvider: getOAuthProviderMock,
+  generateOAuthState: generateOAuthStateMock,
   linkOAuthAccount: linkOAuthAccountMock,
   getOAuthAccountByProvider: getOAuthAccountByProviderMock,
 }));
@@ -131,6 +133,7 @@ describe('API contract hardening', () => {
     logTenantAuditMock.mockResolvedValue(undefined);
     verifyOAuthStateMock.mockResolvedValue(null);
     getOAuthProviderMock.mockResolvedValue(null);
+    generateOAuthStateMock.mockResolvedValue('state-token');
     getOAuthAccountByProviderMock.mockResolvedValue(null);
     createUserSessionMock.mockResolvedValue({ session_token: 'session-token' });
     verifyWebhookSignatureMock.mockResolvedValue({ id: 'evt_1', type: 'invoice.payment_failed', data: { object: { id: 'in_1', subscription: 'sub_1' } } });
@@ -677,6 +680,95 @@ describe('API contract hardening', () => {
     } as any);
 
     expect(response.status).toBe(409);
+  });
+
+  it('rejects oauth authorize when provider key format is invalid', async () => {
+    const { GET } = await import('../auth/oauth/authorize.ts');
+    const request = new Request('https://example.com/api/auth/oauth/authorize?provider=bad key');
+
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(getOAuthProviderMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects oauth authorize when redirect_uri is not same-origin', async () => {
+    const { GET } = await import('../auth/oauth/authorize.ts');
+    const request = new Request(
+      'https://example.com/api/auth/oauth/authorize?provider=google&redirect_uri=https://evil.example/callback'
+    );
+
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(getOAuthProviderMock).not.toHaveBeenCalled();
+    expect(generateOAuthStateMock).not.toHaveBeenCalled();
+  });
+
+  it('completes oauth authorize redirect for valid provider and redirect_uri', async () => {
+    const { GET } = await import('../auth/oauth/authorize.ts');
+    getOAuthProviderMock.mockResolvedValueOnce({
+      provider_key: 'google',
+      client_id: 'client-id',
+      auth_url: 'https://accounts.example.com/oauth/authorize',
+      scope: 'openid email profile'
+    });
+    generateOAuthStateMock.mockResolvedValueOnce('state-xyz');
+
+    const request = new Request(
+      'https://example.com/api/auth/oauth/authorize?provider=google&redirect_uri=https://example.com/api/auth/oauth/callback'
+    );
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+    } as any);
+
+    expect(response.status).toBe(302);
+    const location = response.headers.get('Location') || '';
+    expect(location.startsWith('https://accounts.example.com/oauth/authorize?')).toBe(true);
+    expect(location).toContain('client_id=client-id');
+    expect(location).toContain(`state=${encodeURIComponent('state-xyz')}`);
+  });
+
+  it('builds oauth provider authorize redirect only for valid same-origin redirect_uri', async () => {
+    const { GET } = await import('../auth/oauth/[provider].ts');
+    const request = new Request(
+      'https://example.com/api/auth/oauth/google?redirect_uri=https://example.com/api/auth/oauth/callback'
+    );
+
+    const response = await GET({
+      params: { provider: 'google' },
+      url: new URL(request.url),
+    } as any);
+
+    expect(response.status).toBe(302);
+    const location = response.headers.get('Location') || '';
+    expect(location).toContain('/api/auth/oauth/authorize');
+    expect(location).toContain('provider=google');
+    expect(location).toContain(encodeURIComponent('https://example.com/api/auth/oauth/callback'));
+  });
+
+  it('rejects oauth provider redirect when redirect_uri is external', async () => {
+    const { GET } = await import('../auth/oauth/[provider].ts');
+    const request = new Request(
+      'https://example.com/api/auth/oauth/google?redirect_uri=https://evil.example/callback'
+    );
+
+    const response = await GET({
+      params: { provider: 'google' },
+      url: new URL(request.url),
+    } as any);
+
+    expect(response.status).toBe(400);
   });
 
   it('rejects oauth callback when provider config is incomplete', async () => {

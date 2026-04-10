@@ -8,16 +8,38 @@ import { getOAuthProvider, generateOAuthState } from '../../../../lib/oauth';
 import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 
+const PROVIDER_KEY_REGEX = /^[a-z0-9_-]{2,50}$/;
+
+function resolveRedirectUri(rawRedirectUri: string | null, currentUrl: URL): string | null {
+  if (!rawRedirectUri) {
+    return `${currentUrl.origin}/api/auth/oauth/callback`;
+  }
+
+  try {
+    const parsed = new URL(rawRedirectUri);
+    if ((parsed.protocol !== 'https:' && parsed.protocol !== 'http:') || parsed.origin !== currentUrl.origin) {
+      return null;
+    }
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 export const GET: APIRoute = async ({ request, url, locals }) => {
   const requestId = getRequestId({ request } as any);
   logger.setRequestId(requestId);
 
   try {
-    const providerKey = url.searchParams.get('provider');
-    const redirectUri = url.searchParams.get('redirect_uri') || `${url.origin}/api/auth/oauth/callback`;
+    const providerKey = url.searchParams.get('provider')?.trim().toLowerCase();
+    const redirectUri = resolveRedirectUri(url.searchParams.get('redirect_uri'), url);
 
-    if (!providerKey) {
+    if (!providerKey || !PROVIDER_KEY_REGEX.test(providerKey)) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Provider key required', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+
+    if (!redirectUri) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid redirect_uri', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Get provider configuration
