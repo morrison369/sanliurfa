@@ -65,10 +65,90 @@ export async function getSession(token?: string) {
 // ==================== SUPABASE CLIENT COMPAT ====================
 // Provides a minimal Supabase-style API surface for backward compatibility
 
-const mockChannel = {
-  on: () => mockChannel,
-  subscribe: () => {},
+type RealtimePayload = {
+  eventType: string;
+  schema: string;
+  table?: string;
+  new: any;
+  old: any;
+  commit_timestamp: string;
 };
+
+type ChannelHandler = {
+  type: string;
+  filter: Record<string, any> | null;
+  callback: (payload: RealtimePayload) => void;
+};
+
+type RealtimeHandler = (payload: RealtimePayload) => void;
+
+type CompatChannel = {
+  name: string;
+  on: (type: string, filter: Record<string, any> | RealtimeHandler, callback?: RealtimeHandler) => CompatChannel;
+  subscribe: (callback?: (status: string) => void) => CompatChannel;
+  unsubscribe: () => void;
+  emit: (payload: Partial<RealtimePayload>) => void;
+};
+
+const realtimeChannels = new Set<CompatChannel>();
+
+function buildRealtimePayload(payload: Partial<RealtimePayload>): RealtimePayload {
+  return {
+    eventType: payload.eventType || 'SYNC',
+    schema: payload.schema || 'public',
+    table: payload.table,
+    new: payload.new ?? null,
+    old: payload.old ?? null,
+    commit_timestamp: payload.commit_timestamp || new Date().toISOString()
+  };
+}
+
+function createCompatChannel(name: string): CompatChannel {
+  const handlers: ChannelHandler[] = [];
+  let subscribed = false;
+
+  const channel: CompatChannel = {
+    name,
+    on: (type, filter, callback) => {
+      if (typeof filter === 'function') {
+        handlers.push({ type, filter: null, callback: filter as RealtimeHandler });
+      } else if (callback) {
+        handlers.push({ type, filter, callback });
+      }
+      return channel;
+    },
+    subscribe: (callback) => {
+      subscribed = true;
+      realtimeChannels.add(channel);
+      queueMicrotask(() => {
+        callback?.('SUBSCRIBED');
+      });
+      return channel;
+    },
+    unsubscribe: () => {
+      subscribed = false;
+      realtimeChannels.delete(channel);
+      logger.debug('Supabase compat channel unsubscribed', { name });
+    },
+    emit: (payload) => {
+      if (!subscribed) return;
+      const normalized = buildRealtimePayload(payload);
+      handlers.forEach(handler => {
+        if (handler.type !== 'postgres_changes' && handler.type !== normalized.eventType) {
+          return;
+        }
+
+        if (handler.filter?.table && normalized.table && handler.filter.table !== normalized.table) {
+          return;
+        }
+
+        handler.callback(normalized);
+      });
+    }
+  };
+
+  return channel;
+}
 
 export const supabase = {
   auth: {
@@ -139,26 +219,32 @@ export const supabase = {
     }),
   }),
 
-  channel: () => mockChannel,
+  channel: (name = 'realtime') => createCompatChannel(name),
 };
 
 export function subscribeToTable(table: string, callback: (payload: any) => void) {
-  const channel = {
-    unsubscribe: () => {
-      logger.debug('Supabase compat subscription unsubscribed', { table });
-    }
-  };
-
-  queueMicrotask(() => {
-    try {
-      callback({ eventType: 'SUBSCRIBED', new: null, old: null, table });
-    } catch (error) {
-      logger.error('Supabase compat subscription callback failed', error instanceof Error ? error : new Error(String(error)), { table });
-    }
-  });
+  const channel = createCompatChannel(`table:${table}`)
+    .on('postgres_changes', { table }, callback)
+    .subscribe(status => {
+      if (status === 'SUBSCRIBED') {
+        try {
+          callback(buildRealtimePayload({ eventType: 'SUBSCRIBED', table }));
+        } catch (error) {
+          logger.error('Supabase compat subscription callback failed', error instanceof Error ? error : new Error(String(error)), { table });
+        }
+      }
+    });
 
   logger.info('Supabase compat subscription established', { table, mode: 'postgres-compat' });
-  return channel;
+  return {
+    unsubscribe: () => channel.unsubscribe()
+  };
+}
+
+export function notifyRealtime(table: string, payload: Partial<RealtimePayload> = {}) {
+  const normalized = buildRealtimePayload({ ...payload, table });
+  realtimeChannels.forEach(channel => channel.emit(normalized));
+  logger.debug('Supabase compat realtime notified', { table, eventType: normalized.eventType });
 }
 
 export { pool };

@@ -77,6 +77,21 @@ class LLMClient {
     }
   };
 
+  private buildContent(prompt: string, systemPrompt = '', maxTokens = 256): string {
+    const normalizedPrompt = prompt.replace(/\s+/g, ' ').trim();
+    const normalizedSystemPrompt = systemPrompt.replace(/\s+/g, ' ').trim();
+    const promptSummary = normalizedPrompt.split(' ').slice(0, 24).join(' ');
+    const systemPrefix = normalizedSystemPrompt ? `[system:${normalizedSystemPrompt.slice(0, 40)}] ` : '';
+    const rawContent = `${systemPrefix}Answer: ${promptSummary}`.trim();
+    const approxWordBudget = Math.max(8, Math.min(maxTokens, 80));
+    return rawContent.split(' ').slice(0, approxWordBudget).join(' ');
+  }
+
+  private estimateLatency(prompt: string, maxTokens: number, chunkCount = 1): number {
+    const promptTokens = this.countTokens(prompt);
+    return 120 + promptTokens * 4 + Math.min(maxTokens, 256) + chunkCount * 12;
+  }
+
   async generate(config: {
     model: string;
     prompt: string;
@@ -98,7 +113,7 @@ class LLMClient {
     const startTime = Date.now();
 
     // Check cache
-    const cacheKey = `sanliurfa:llm:${model}:${prompt}`;
+    const cacheKey = `sanliurfa:llm:${model}:${systemPrompt}:${maxTokens}:${temperature}:${topP}:${prompt}`;
     const redis = await getRedisClient();
     const cached = await redis.get(cacheKey);
     if (cached) {
@@ -122,22 +137,22 @@ class LLMClient {
 
     this.requests.set(requestId, request);
 
-    // Simulate LLM response (in production, would call actual API)
     const estimatedInputTokens = Math.ceil(prompt.split(/\s+/).length * 1.3);
-    const estimatedOutputTokens = Math.ceil(maxTokens * 0.5);
+    const content = this.buildContent(prompt, systemPrompt, maxTokens);
+    const estimatedOutputTokens = this.countTokens(content);
 
     const response: LLMResponse = {
       id: `resp-${Date.now()}`,
       requestId,
-      content: `Generated response based on prompt: "${prompt.slice(0, 50)}..."`,
+      content,
       model,
       usage: {
         inputTokens: estimatedInputTokens,
         outputTokens: estimatedOutputTokens,
         totalTokens: estimatedInputTokens + estimatedOutputTokens
       },
-      finishReason: 'stop',
-      latencyMs: Math.random() * 2000 + 500,
+      finishReason: estimatedOutputTokens >= maxTokens ? 'length' : 'stop',
+      latencyMs: this.estimateLatency(prompt, maxTokens),
       cached: false
     };
 
@@ -165,32 +180,28 @@ class LLMClient {
     onChunk: (chunk: string) => void
   ): Promise<LLMResponse> {
     const requestId = `llm-stream-${Date.now()}-${++this.counter}`;
-    let content = '';
-    let tokenCount = 0;
+    const content = this.buildContent(config.prompt, '', config.maxTokens);
+    const words = content.split(/\s+/);
+    const chunks: string[] = [];
 
-    // Simulate streaming
-    const words = config.prompt.split(/\s+/).slice(0, 10);
-    for (const word of words) {
-      onChunk(word + ' ');
-      content += word + ' ';
-      tokenCount++;
-
-      // Small delay to simulate streaming
-      await new Promise(resolve => setTimeout(resolve, 10));
+    for (let index = 0; index < words.length; index += 3) {
+      const chunk = words.slice(index, index + 3).join(' ');
+      chunks.push(chunk);
+      onChunk(`${chunk}${index + 3 < words.length ? ' ' : ''}`);
     }
 
     return {
       id: `resp-${Date.now()}`,
       requestId,
-      content: content.trim(),
+      content,
       model: config.model,
       usage: {
-        inputTokens: config.prompt.split(/\s+/).length,
-        outputTokens: tokenCount,
-        totalTokens: config.prompt.split(/\s+/).length + tokenCount
+        inputTokens: this.countTokens(config.prompt),
+        outputTokens: this.countTokens(content),
+        totalTokens: this.countTokens(config.prompt) + this.countTokens(content)
       },
-      finishReason: 'stop',
-      latencyMs: tokenCount * 10,
+      finishReason: this.countTokens(content) >= config.maxTokens ? 'length' : 'stop',
+      latencyMs: this.estimateLatency(config.prompt, config.maxTokens, chunks.length),
       cached: false
     };
   }

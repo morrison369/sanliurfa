@@ -59,6 +59,44 @@ export interface ContractParty {
   createdAt: number;
 }
 
+function formatCustomizationValue(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'number') {
+    if (value > 1_000_000_000_000) {
+      return new Date(value).toISOString().split('T')[0];
+    }
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return value.join(', ');
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  return String(value);
+}
+
+function renderTemplateContent(content: string, customizations: Record<string, any>): string {
+  const derivedValues: Record<string, string> = {
+    parties: formatCustomizationValue(customizations.parties),
+    partyNames: formatCustomizationValue(customizations.partyNames || customizations.parties),
+    contractName: formatCustomizationValue(customizations.name),
+    startDate: formatCustomizationValue(customizations.startDate),
+    endDate: formatCustomizationValue(customizations.endDate),
+    currency: formatCustomizationValue(customizations.currency),
+    value: formatCustomizationValue(customizations.value),
+    createdBy: formatCustomizationValue(customizations.createdBy)
+  };
+
+  const values = { ...derivedValues, ...Object.fromEntries(Object.entries(customizations).map(([key, value]) => [key, formatCustomizationValue(value)])) };
+
+  return Object.entries(values).reduce((result, [key, value]) => {
+    const moustachePattern = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
+    const bracePattern = new RegExp(`\\{${key}\\}`, 'g');
+    return result.replace(moustachePattern, value).replace(bracePattern, value);
+  }, content);
+}
+
 // ==================== CONTRACT MANAGER ====================
 
 export class ContractManager {
@@ -218,17 +256,36 @@ export class TemplateManager {
       throw new Error('Template not found');
     }
 
-    // Placeholder: would customize content with provided values
-    return {
-      id: 'contract-' + Date.now(),
+    const contract = contractManager.createContract({
       name: customizations.name || template.name,
       type: template.type,
       parties: customizations.parties || [],
       startDate: customizations.startDate || Date.now(),
-      status: 'draft',
-      createdAt: Date.now(),
+      endDate: customizations.endDate,
+      status: customizations.status || 'draft',
+      value: customizations.value,
+      currency: customizations.currency,
       createdBy: customizations.createdBy || 'system'
-    };
+    });
+
+    const content = renderTemplateContent(template.content, {
+      ...customizations,
+      contractId: contract.id,
+      templateName: template.name
+    });
+
+    documentManager.createDocument({
+      name: `${contract.name} Document`,
+      type: 'contract',
+      contractId: contract.id,
+      content,
+      version: 1,
+      status: 'draft'
+    });
+
+    logger.info('Contract created from template', { templateId, contractId: contract.id, type: template.type });
+
+    return contract;
   }
 }
 
