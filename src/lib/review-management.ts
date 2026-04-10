@@ -3,7 +3,7 @@
  * Owner responses, helpful votes, sentiment tracking
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 import { createNotification } from './notifications-queue';
 import { logger } from './logging';
@@ -85,15 +85,15 @@ export async function getReviewResponses(reviewId: string): Promise<ReviewRespon
     const cached = await getCache<ReviewResponse[]>(cacheKey);
     if (cached) return cached;
 
-    const responses = await queryMany(
+    const responses = await queryRows(
       `SELECT * FROM review_responses
        WHERE review_id = $1 AND is_public = true
        ORDER BY created_at DESC`,
       [reviewId]
     );
 
-    await setCache(cacheKey, responses.rows, 600);
-    return responses.rows;
+    await setCache(cacheKey, responses, 600);
+    return responses;
   } catch (error) {
     logger.error('Failed to get review responses', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -229,7 +229,7 @@ export async function getTopReviewsForPlace(
   limit: number = 5
 ): Promise<any[]> {
   try {
-    const reviews = await queryMany(
+    const reviews = await queryRows(
       `SELECT
         r.*,
         ra.helpful_count,
@@ -246,7 +246,7 @@ export async function getTopReviewsForPlace(
       [placeId, limit]
     );
 
-    return reviews.rows;
+    return reviews;
   } catch (error) {
     logger.error('Failed to get top reviews', error instanceof Error ? error : new Error(String(error)));
     throw error;

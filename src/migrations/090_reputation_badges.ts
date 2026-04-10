@@ -3,9 +3,12 @@
  * User reputation scores and badge system
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_090_reputation_badges = async (pool: Pool) => {
+export const migration_090_reputation_badges: Migration = {
+  version: '090_reputation_badges',
+  description: 'User reputation scores and badge system',
+  up: async (pool: any) => {
   try {
     // User reputation scores
     await pool.query(`
@@ -102,9 +105,8 @@ export const migration_090_reputation_badges = async (pool: Pool) => {
     console.error('Migration 090 failed:', error);
     throw error;
   }
-};
-
-export const rollback_090 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS badge_requirements CASCADE');
     await pool.query('DROP TABLE IF EXISTS user_badges CASCADE');
@@ -114,5 +116,6 @@ export const rollback_090 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 090 failed:', error);
     throw error;
+  }
   }
 };

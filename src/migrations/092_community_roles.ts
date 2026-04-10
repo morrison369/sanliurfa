@@ -3,9 +3,12 @@
  * Community roles and user privileges
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_092_community_roles = async (pool: Pool) => {
+export const migration_092_community_roles: Migration = {
+  version: '092_community_roles',
+  description: 'Community roles and user privileges',
+  up: async (pool: any) => {
   try {
     // Community roles (contributor, expert, moderator, etc.)
     await pool.query(`
@@ -136,9 +139,8 @@ export const migration_092_community_roles = async (pool: Pool) => {
     console.error('Migration 092 failed:', error);
     throw error;
   }
-};
-
-export const rollback_092 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS user_expertise CASCADE');
     await pool.query('DROP TABLE IF EXISTS community_statistics CASCADE');
@@ -149,5 +151,6 @@ export const rollback_092 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 092 failed:', error);
     throw error;
+  }
   }
 };

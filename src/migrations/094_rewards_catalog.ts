@@ -3,9 +3,12 @@
  * Rewards definitions and redemption tracking
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_094_rewards_catalog = async (pool: Pool) => {
+export const migration_094_rewards_catalog: Migration = {
+  version: '094_rewards_catalog',
+  description: 'Rewards definitions and redemption tracking',
+  up: async (pool: any) => {
   try {
     // Rewards catalog
     await pool.query(`
@@ -109,9 +112,8 @@ export const migration_094_rewards_catalog = async (pool: Pool) => {
     console.error('Migration 094 failed:', error);
     throw error;
   }
-};
-
-export const rollback_094 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS promotional_offers CASCADE');
     await pool.query('DROP TABLE IF EXISTS reward_inventory CASCADE');
@@ -121,5 +123,6 @@ export const rollback_094 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 094 failed:', error);
     throw error;
+  }
   }
 };

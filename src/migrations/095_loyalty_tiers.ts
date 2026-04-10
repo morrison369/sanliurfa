@@ -3,9 +3,12 @@
  * Tier system and tier-specific benefits
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_095_loyalty_tiers = async (pool: Pool) => {
+export const migration_095_loyalty_tiers: Migration = {
+  version: '095_loyalty_tiers',
+  description: 'Tier system and tier-specific benefits',
+  up: async (pool: any) => {
   try {
     // Loyalty tier definitions
     await pool.query(`
@@ -119,9 +122,8 @@ export const migration_095_loyalty_tiers = async (pool: Pool) => {
     console.error('Migration 095 failed:', error);
     throw error;
   }
-};
-
-export const rollback_095 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS tier_reset_schedule CASCADE');
     await pool.query('DROP TABLE IF EXISTS tier_benefits_redeemed CASCADE');
@@ -132,5 +134,6 @@ export const rollback_095 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 095 failed:', error);
     throw error;
+  }
   }
 };

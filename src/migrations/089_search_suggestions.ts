@@ -3,9 +3,12 @@
  * Search suggestions, autocomplete data, and personalized recommendations
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_089_search_suggestions = async (pool: Pool) => {
+export const migration_089_search_suggestions: Migration = {
+  version: '089_search_suggestions',
+  description: 'Search suggestions, autocomplete data, and personalized recommendations',
+  up: async (pool: any) => {
   try {
     // Global search suggestions (for autocomplete)
     await pool.query(`
@@ -123,9 +126,8 @@ export const migration_089_search_suggestions = async (pool: Pool) => {
     console.error('Migration 089 failed:', error);
     throw error;
   }
-};
-
-export const rollback_089 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS search_metrics_summary CASCADE');
     await pool.query('DROP TABLE IF EXISTS search_clicks CASCADE');
@@ -136,5 +138,6 @@ export const rollback_089 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 089 failed:', error);
     throw error;
+  }
   }
 };

@@ -3,9 +3,12 @@
  * User search history and saved search queries
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_087_search_history = async (pool: Pool) => {
+export const migration_087_search_history: Migration = {
+  version: '087_search_history',
+  description: 'User search history and saved search queries',
+  up: async (pool: any) => {
   try {
     // Search history for each user
     await pool.query(`
@@ -91,9 +94,8 @@ export const migration_087_search_history = async (pool: Pool) => {
     console.error('Migration 087 failed:', error);
     throw error;
   }
-};
-
-export const rollback_087 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS search_alerts CASCADE');
     await pool.query('DROP TABLE IF EXISTS saved_searches CASCADE');
@@ -102,5 +104,6 @@ export const rollback_087 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 087 failed:', error);
     throw error;
+  }
   }
 };

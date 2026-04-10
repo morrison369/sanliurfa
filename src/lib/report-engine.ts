@@ -3,7 +3,7 @@
  * Execute reports and generate exports in multiple formats
  */
 
-import { query, queryMany, queryOne } from './postgres';
+import { query, queryRows, queryOne } from './postgres';
 import { logReportExecution } from './business-analytics';
 import { logger } from './logging';
 import { generateExcelBuffer } from './report-export';
@@ -70,7 +70,7 @@ async function collectBusinessMetricsData(filters: ReportFilters): Promise<{ hea
     const startDate = filters.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const endDate = filters.endDate || new Date().toISOString().split('T')[0];
 
-    const metrics = await queryMany(
+    const metrics = await queryRows(
       `SELECT metric_date, revenue, user_count, active_users, new_users,
               engagement_rate, churn_rate, retention_rate, conversion_rate,
               avg_session_duration, page_views, bounce_rate
@@ -113,7 +113,7 @@ async function collectKPIData(filters: ReportFilters): Promise<{ headers: string
     const startDate = filters.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const endDate = filters.endDate || new Date().toISOString().split('T')[0];
 
-    const kpiData = await queryMany(
+    const kpiData = await queryRows(
       `SELECT kd.key, kd.name, kd.unit, kd.category, kv.period_date, kv.value, kv.target_value
        FROM kpi_definitions kd
        LEFT JOIN kpi_values kv ON kd.id = kv.kpi_id
@@ -147,7 +147,7 @@ async function collectKPIData(filters: ReportFilters): Promise<{ headers: string
 async function collectUserData(filters: ReportFilters): Promise<{ headers: string[]; rows: any[][] }> {
   try {
     const limit = filters.limit || 1000;
-    const users = await queryMany(
+    const users = await queryRows(
       `SELECT id, email, full_name, role, created_at FROM users ORDER BY created_at DESC LIMIT $1`,
       [limit]
     );
@@ -175,7 +175,7 @@ async function collectUserData(filters: ReportFilters): Promise<{ headers: strin
 async function collectPlacesData(filters: ReportFilters): Promise<{ headers: string[]; rows: any[][] }> {
   try {
     const limit = filters.limit || 1000;
-    const places = await queryMany(
+    const places = await queryRows(
       `SELECT id, title, category, rating, visit_count, follower_count, created_at
        FROM places ORDER BY visit_count DESC LIMIT $1`,
       [limit]
@@ -206,7 +206,7 @@ async function collectPlacesData(filters: ReportFilters): Promise<{ headers: str
 async function collectReviewsData(filters: ReportFilters): Promise<{ headers: string[]; rows: any[][] }> {
   try {
     const limit = filters.limit || 1000;
-    const reviews = await queryMany(
+    const reviews = await queryRows(
       `SELECT r.id, r.place_id, p.title as place_title, r.rating, r.comment, r.created_at
        FROM reviews r
        LEFT JOIN places p ON r.place_id = p.id
@@ -332,7 +332,7 @@ export async function executeReport(
  */
 export async function getExportTemplates(userId: string): Promise<any[]> {
   try {
-    const templates = await queryMany(
+    const templates = await queryRows(
       `SELECT id, name, export_format, columns, filters, created_at
        FROM export_templates
        WHERE created_by = $1

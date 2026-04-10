@@ -3,9 +3,12 @@
  * Achievement tracking and leaderboard system
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_091_achievements_leaderboards = async (pool: Pool) => {
+export const migration_091_achievements_leaderboards: Migration = {
+  version: '091_achievements_leaderboards',
+  description: 'Achievement tracking and leaderboard system',
+  up: async (pool: any) => {
   try {
     // Achievement definitions
     await pool.query(`
@@ -122,9 +125,8 @@ export const migration_091_achievements_leaderboards = async (pool: Pool) => {
     console.error('Migration 091 failed:', error);
     throw error;
   }
-};
-
-export const rollback_091 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS achievement_progress CASCADE');
     await pool.query('DROP TABLE IF EXISTS leaderboard_snapshots CASCADE');
@@ -135,5 +137,6 @@ export const rollback_091 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 091 failed:', error);
     throw error;
+  }
   }
 };

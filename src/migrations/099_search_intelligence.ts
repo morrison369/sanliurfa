@@ -3,9 +3,12 @@
  * AI-powered search and intelligent ranking
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_099_search_intelligence = async (pool: Pool) => {
+export const migration_099_search_intelligence: Migration = {
+  version: '099_search_intelligence',
+  description: 'AI-powered search and intelligent ranking',
+  up: async (pool: any) => {
   try {
     // Search query analysis
     await pool.query(`
@@ -118,9 +121,8 @@ export const migration_099_search_intelligence = async (pool: Pool) => {
     console.error('Migration 099 failed:', error);
     throw error;
   }
-};
-
-export const rollback_099 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS search_result_cache CASCADE');
     await pool.query('DROP TABLE IF EXISTS search_corrections CASCADE');
@@ -131,5 +133,6 @@ export const rollback_099 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 099 failed:', error);
     throw error;
+  }
   }
 };

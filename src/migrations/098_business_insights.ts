@@ -3,9 +3,12 @@
  * AI-driven insights, trend analysis, and predictive analytics
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_098_business_insights = async (pool: Pool) => {
+export const migration_098_business_insights: Migration = {
+  version: '098_business_insights',
+  description: 'AI-driven insights, trend analysis, and predictive analytics',
+  up: async (pool: any) => {
   try {
     // Trend analysis data
     await pool.query(`
@@ -151,9 +154,8 @@ export const migration_098_business_insights = async (pool: Pool) => {
     console.error('Migration 098 failed:', error);
     throw error;
   }
-};
-
-export const rollback_098 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS action_suggestions CASCADE');
     await pool.query('DROP TABLE IF EXISTS competitor_analysis CASCADE');
@@ -165,5 +167,6 @@ export const rollback_098 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 098 failed:', error);
     throw error;
+  }
   }
 };

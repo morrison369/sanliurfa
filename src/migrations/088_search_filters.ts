@@ -3,9 +3,12 @@
  * Search filter definitions and search analytics
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_088_search_filters = async (pool: Pool) => {
+export const migration_088_search_filters: Migration = {
+  version: '088_search_filters',
+  description: 'Search filter definitions and search analytics',
+  up: async (pool: any) => {
   try {
     // Available search filters
     await pool.query(`
@@ -102,9 +105,8 @@ export const migration_088_search_filters = async (pool: Pool) => {
     console.error('Migration 088 failed:', error);
     throw error;
   }
-};
-
-export const rollback_088 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS zero_result_searches CASCADE');
     await pool.query('DROP TABLE IF EXISTS popular_search_combinations CASCADE');
@@ -114,5 +116,6 @@ export const rollback_088 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 088 failed:', error);
     throw error;
+  }
   }
 };

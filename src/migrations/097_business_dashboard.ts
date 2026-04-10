@@ -3,9 +3,12 @@
  * Business owner dashboard settings and configurations
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_097_business_dashboard = async (pool: Pool) => {
+export const migration_097_business_dashboard: Migration = {
+  version: '097_business_dashboard',
+  description: 'Business owner dashboard settings and configurations',
+  up: async (pool: any) => {
   try {
     // Business dashboard settings
     await pool.query(`
@@ -127,9 +130,8 @@ export const migration_097_business_dashboard = async (pool: Pool) => {
     console.error('Migration 097 failed:', error);
     throw error;
   }
-};
-
-export const rollback_097 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS business_insights CASCADE');
     await pool.query('DROP TABLE IF EXISTS category_benchmarks CASCADE');
@@ -140,5 +142,6 @@ export const rollback_097 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 097 failed:', error);
     throw error;
+  }
   }
 };

@@ -3,9 +3,12 @@
  * User preferences, personalized recommendations, and learning
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_100_search_personalization = async (pool: Pool) => {
+export const migration_100_search_personalization: Migration = {
+  version: '100_search_personalization',
+  description: 'User preferences, personalized recommendations, and learning',
+  up: async (pool: any) => {
   try {
     // User search preferences
     await pool.query(`
@@ -127,9 +130,8 @@ export const migration_100_search_personalization = async (pool: Pool) => {
     console.error('Migration 100 failed:', error);
     throw error;
   }
-};
-
-export const rollback_100 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS search_result_feedback CASCADE');
     await pool.query('DROP TABLE IF EXISTS search_sessions CASCADE');
@@ -140,5 +142,6 @@ export const rollback_100 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 100 failed:', error);
     throw error;
+  }
   }
 };

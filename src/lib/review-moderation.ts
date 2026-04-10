@@ -3,7 +3,7 @@
  * Flag handling, moderation queue, spam detection
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { createNotification } from './notifications-queue';
 import { logger } from './logging';
@@ -61,7 +61,7 @@ export async function getModerationQueue(
     const cached = await getCache<{ flags: ReviewFlag[]; total: number }>(cacheKey);
     if (cached) return cached;
 
-    const flags = await queryMany(
+    const flags = await queryRows(
       `SELECT * FROM review_flags
        WHERE status = $1
        ORDER BY created_at ASC
@@ -75,7 +75,7 @@ export async function getModerationQueue(
     );
 
     const data = {
-      flags: flags.rows,
+      flags,
       total: parseInt(countResult?.total || '0')
     };
 
@@ -202,7 +202,7 @@ export async function checkReviewSpamPatterns(userId: string): Promise<number> {
  */
 export async function getPlaceFlaggedReviews(placeId: string): Promise<any[]> {
   try {
-    const reviews = await queryMany(
+    const reviews = await queryRows(
       `SELECT
         r.*,
         COUNT(rf.id) as flag_count,
@@ -215,7 +215,7 @@ export async function getPlaceFlaggedReviews(placeId: string): Promise<any[]> {
       [placeId]
     );
 
-    return reviews.rows;
+    return reviews;
   } catch (error) {
     logger.error('Failed to get flagged reviews', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -227,7 +227,7 @@ export async function getPlaceFlaggedReviews(placeId: string): Promise<any[]> {
  */
 export async function getUserFlagHistory(userId: string, limit: number = 20): Promise<ReviewFlag[]> {
   try {
-    const flags = await queryMany(
+    const flags = await queryRows(
       `SELECT * FROM review_flags
        WHERE reported_by_user_id = $1
        ORDER BY created_at DESC
@@ -235,7 +235,7 @@ export async function getUserFlagHistory(userId: string, limit: number = 20): Pr
       [userId, limit]
     );
 
-    return flags.rows;
+    return flags;
   } catch (error) {
     logger.error('Failed to get flag history', error instanceof Error ? error : new Error(String(error)));
     throw error;

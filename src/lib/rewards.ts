@@ -2,7 +2,7 @@
  * Rewards Library
  * Rewards catalog, redemption, and inventory management
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { deleteCache, getCache, setCache } from './cache';
 
@@ -29,7 +29,7 @@ export async function getRewardsCatalog(filters?: { category?: string; tier?: st
 
     query += ` ORDER BY r.display_order ASC`;
 
-    const rewards = await queryMany(query, params);
+    const rewards = await queryRows(query, params);
     return rewards;
   } catch (error) {
     logger.error('Failed to get rewards catalog', error instanceof Error ? error : new Error(String(error)));
@@ -132,7 +132,7 @@ export async function redeemReward(userId: string, rewardId: string): Promise<{ 
 
 export async function getRedemptionHistory(userId: string, limit: number = 50): Promise<any[]> {
   try {
-    const history = await queryMany(`
+    const history = await queryRows(`
       SELECT
         rr.*,
         r.reward_name,
@@ -158,7 +158,7 @@ export async function getPromotionalOffers(): Promise<any[]> {
     let offers = await getCache(cacheKey);
 
     if (!offers) {
-      offers = await queryMany(`
+      offers = await queryRows(`
         SELECT
           po.*,
           r.reward_name,

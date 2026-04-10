@@ -3,9 +3,12 @@
  * Business analytics and performance metrics for places
  */
 
-import { Pool } from 'pg';
+import type { Migration } from '../lib/migrations';
 
-export const migration_096_business_metrics = async (pool: Pool) => {
+export const migration_096_business_metrics: Migration = {
+  version: '096_business_metrics',
+  description: 'Business analytics and performance metrics for places',
+  up: async (pool: any) => {
   try {
     // Daily place metrics
     await pool.query(`
@@ -114,9 +117,8 @@ export const migration_096_business_metrics = async (pool: Pool) => {
     console.error('Migration 096 failed:', error);
     throw error;
   }
-};
-
-export const rollback_096 = async (pool: Pool) => {
+  },
+  down: async (pool: any) => {
   try {
     await pool.query('DROP TABLE IF EXISTS place_rankings CASCADE');
     await pool.query('DROP TABLE IF EXISTS review_sentiment CASCADE');
@@ -127,5 +129,6 @@ export const rollback_096 = async (pool: Pool) => {
   } catch (error) {
     console.error('Rollback 096 failed:', error);
     throw error;
+  }
   }
 };

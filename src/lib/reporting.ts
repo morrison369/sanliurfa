@@ -3,7 +3,7 @@
  * Handles reporting, analytics exports, and scheduled reports
  */
 
-import { queryMany, queryOne } from './postgres';
+import { queryRows, queryOne } from './postgres';
 import { logger } from './logging';
 
 export interface Report {
@@ -21,7 +21,7 @@ export interface Report {
  */
 export async function generateUserReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
   try {
-    const data = await queryMany(`
+    const data = await queryRows(`
       SELECT
         DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at) as period,
         COUNT(*) as new_users,
@@ -52,7 +52,7 @@ export async function generateUserReport(period: 'daily' | 'weekly' | 'monthly')
  */
 export async function generatePlacesReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
   try {
-    const data = await queryMany(`
+    const data = await queryRows(`
       SELECT
         p.id, p.name, p.category_id,
         COUNT(DISTINCT r.id) as review_count,
@@ -88,7 +88,7 @@ export async function generatePlacesReport(period: 'daily' | 'weekly' | 'monthly
  */
 export async function generateReviewsReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
   try {
-    const data = await queryMany(`
+    const data = await queryRows(`
       SELECT
         DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at) as period,
         COUNT(*) as total_reviews,
@@ -120,7 +120,7 @@ export async function generateReviewsReport(period: 'daily' | 'weekly' | 'monthl
  */
 export async function generateRevenueReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
   try {
-    const data = await queryMany(`
+    const data = await queryRows(`
       SELECT
         DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at) as period,
         tier,
@@ -152,7 +152,7 @@ export async function generateRevenueReport(period: 'daily' | 'weekly' | 'monthl
  */
 export async function generateEngagementReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
   try {
-    const data = await queryMany(`
+    const data = await queryRows(`
       SELECT
         DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at) as period,
         COUNT(DISTINCT action_type) as action_types,
