@@ -7,6 +7,7 @@ import { getCurrentEnvironment, getReadinessStatusRuntime, getDeploymentChecklis
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -20,9 +21,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     const environment = getCurrentEnvironment();
-    const [readiness, checklist] = await Promise.all([
+    const [readiness, checklist, integrationSettings] = await Promise.all([
       getReadinessStatusRuntime(),
-      getDeploymentChecklistRuntime()
+      getDeploymentChecklistRuntime(),
+      getRuntimeIntegrationSettings()
     ]);
 
     const duration = Date.now() - startTime;
@@ -41,6 +43,16 @@ export const GET: APIRoute = async ({ request, locals }) => {
           },
           readiness,
           checklist,
+          integrations: {
+            resend: {
+              configured: Boolean(integrationSettings.resendApiKey),
+              source: integrationSettings.source.resendApiKey
+            },
+            analytics: {
+              configured: Boolean(integrationSettings.analyticsId),
+              source: integrationSettings.source.analyticsId
+            }
+          },
           timestamp: new Date().toISOString()
         }
       },
