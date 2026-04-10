@@ -4,7 +4,7 @@
  */
 
 import { logger } from './logger';
-import { redis } from './cache';
+import { getRedisClient } from './cache';
 
 interface Event {
   id: string;
@@ -79,7 +79,11 @@ class EventStore {
     this.events.push(event);
 
     const cacheKey = `sanliurfa:event:${id}`;
-    redis.setex(cacheKey, 604800, JSON.stringify(event)); // 7 days
+    void getRedisClient()
+      .then((redis) => redis.setEx(cacheKey, 604800, JSON.stringify(event)))
+      .catch((error) => {
+        logger.warn('Failed to persist event to Redis', { cacheKey, error });
+      });
 
     logger.info('Event appended', {
       id,
@@ -218,7 +222,11 @@ class EventSnapshot {
     this.snapshots.set(snapshotId, snapshot);
 
     const cacheKey = `sanliurfa:snapshot:${snapshotId}`;
-    redis.setex(cacheKey, 2592000, JSON.stringify(snapshot)); // 30 days
+    void getRedisClient()
+      .then((redis) => redis.setEx(cacheKey, 2592000, JSON.stringify(snapshot)))
+      .catch((error) => {
+        logger.warn('Failed to persist snapshot to Redis', { cacheKey, error });
+      });
 
     logger.debug('Snapshot created', { aggregateId, version });
     return snapshot;
@@ -240,7 +248,11 @@ class EventSnapshot {
 
     for (const [key] of snapshots) {
       this.snapshots.delete(key);
-      redis.del(`sanliurfa:snapshot:${key}`);
+      void getRedisClient()
+        .then((redis) => redis.del(`sanliurfa:snapshot:${key}`))
+        .catch((error) => {
+          logger.warn('Failed to delete snapshot from Redis', { key, error });
+        });
     }
 
     logger.debug('Old snapshots deleted', { aggregateId, deleted: snapshots.length });

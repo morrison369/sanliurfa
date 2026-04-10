@@ -3,8 +3,11 @@
  * Creates tables for vendor onboarding and progress tracking
  */
 
-export const migration_014_vendor_onboarding = {
-  name: '014_vendor_onboarding',
+import type { Migration } from '../lib/migrations';
+
+export const migration_014_vendor_onboarding: Migration = {
+  version: '014_vendor_onboarding',
+  description: 'Vendor onboarding tables and progress tracking',
   async up(pool: any) {
     // Add vendor_onboarded flag to users table
     await pool.query(`

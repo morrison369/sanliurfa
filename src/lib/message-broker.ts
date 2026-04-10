@@ -4,7 +4,7 @@
  */
 
 import { logger } from './logger';
-import { redis } from './cache';
+import { getRedisClient } from './cache';
 
 interface Message {
   id: string;
@@ -56,8 +56,14 @@ class MessageBroker {
     this.messages.set(id, message);
 
     const streamKey = `sanliurfa:stream:${topic}`;
-    redis.lpush(streamKey, JSON.stringify(message));
-    redis.expire(streamKey, 604800); // 7 days retention
+    void getRedisClient()
+      .then((redis) => Promise.all([
+        redis.lPush(streamKey, JSON.stringify(message)),
+        redis.expire(streamKey, 604800)
+      ]))
+      .catch((error) => {
+        logger.warn('Failed to persist broker stream to Redis', { streamKey, error });
+      });
 
     logger.debug('Message published', { id, topic });
     return id;

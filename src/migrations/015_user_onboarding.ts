@@ -3,8 +3,11 @@
  * Adds onboarding tracking columns to users table
  */
 
-export const migration_015_user_onboarding = {
-  name: '015_user_onboarding',
+import type { Migration } from '../lib/migrations';
+
+export const migration_015_user_onboarding: Migration = {
+  version: '015_user_onboarding',
+  description: 'User onboarding tracking columns',
   async up(pool: any) {
     await pool.query(`
       ALTER TABLE users

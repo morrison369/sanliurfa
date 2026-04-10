@@ -4,7 +4,7 @@
  */
 
 import { logger } from './logger';
-import { redis } from './cache';
+import { getRedisClient } from './cache';
 
 interface EmbeddingMetadata {
   documentId?: string;
@@ -80,7 +80,11 @@ class VectorStore {
 
     // Cache in Redis with TTL
     const cacheKey = `sanliurfa:embedding:${id}`;
-    redis.setex(cacheKey, 86400, JSON.stringify(embedding));
+    void getRedisClient()
+      .then((redis) => redis.setEx(cacheKey, 86400, JSON.stringify(embedding)))
+      .catch((error) => {
+        logger.warn('Failed to cache embedding in Redis', { cacheKey, error });
+      });
 
     logger.debug('Embedding stored', { id, dimension: config.embedding.length, model: config.model });
     return embedding;
@@ -93,7 +97,11 @@ class VectorStore {
   deleteEmbedding(id: string): boolean {
     const deleted = this.embeddings.delete(id);
     if (deleted) {
-      redis.del(`sanliurfa:embedding:${id}`);
+      void getRedisClient()
+        .then((redis) => redis.del(`sanliurfa:embedding:${id}`))
+        .catch((error) => {
+          logger.warn('Failed to delete embedding from Redis', { id, error });
+        });
       logger.debug('Embedding deleted', { id });
     }
     return deleted;
@@ -151,7 +159,11 @@ class EmbeddingCache {
 
     // Also store in Redis
     const cacheKey = `sanliurfa:emb-cache:${key}`;
-    redis.setex(cacheKey, ttlSeconds, JSON.stringify(embedding));
+    void getRedisClient()
+      .then((redis) => redis.setEx(cacheKey, ttlSeconds, JSON.stringify(embedding)))
+      .catch((error) => {
+        logger.warn('Failed to cache embedding payload in Redis', { cacheKey, error });
+      });
 
     logger.debug('Embedding cached', { key, ttl: ttlSeconds });
   }
@@ -164,7 +176,11 @@ class EmbeddingCache {
     if (expiresAt && Date.now() > expiresAt) {
       this.cache.delete(key);
       this.ttlMap.delete(key);
-      redis.del(`sanliurfa:emb-cache:${key}`);
+      void getRedisClient()
+        .then((redis) => redis.del(`sanliurfa:emb-cache:${key}`))
+        .catch((error) => {
+          logger.warn('Failed to delete embedding cache from Redis', { key, error });
+        });
       return null;
     }
 

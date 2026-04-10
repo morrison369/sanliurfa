@@ -4,7 +4,7 @@
  */
 
 import { logger } from './logger';
-import { redis } from './cache';
+import { getRedisClient } from './cache';
 
 interface DocumentChunk {
   id: string;
@@ -272,7 +272,8 @@ class RAGPipeline {
 
     // Check cache
     const cacheKey = `sanliurfa:rag:${query}`;
-    const cached = redis.get(cacheKey);
+    const redis = await getRedisClient();
+    const cached = await redis.get(cacheKey);
     if (cached) {
       logger.debug('RAG context retrieved from cache', { query });
       return JSON.parse(cached);
@@ -291,7 +292,7 @@ class RAGPipeline {
     });
 
     // Cache result
-    redis.setex(cacheKey, 3600, JSON.stringify(context));
+    await redis.setEx(cacheKey, 3600, JSON.stringify(context));
 
     logger.info('RAG retrieval completed', {
       query,

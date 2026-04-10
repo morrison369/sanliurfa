@@ -3,8 +3,11 @@
  * Creates tables for email marketing campaigns
  */
 
-export const migration_018_email_campaigns = {
-  name: '018_email_campaigns',
+import type { Migration } from '../lib/migrations';
+
+export const migration_018_email_campaigns: Migration = {
+  version: '018_email_campaigns',
+  description: 'Email campaign and campaign event tables',
   async up(pool: any) {
     // Create email_campaigns table
     await pool.query(`

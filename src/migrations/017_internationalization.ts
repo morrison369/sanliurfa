@@ -3,8 +3,11 @@
  * Adds language preference support to users table
  */
 
-export const migration_017_internationalization = {
-  name: '017_internationalization',
+import type { Migration } from '../lib/migrations';
+
+export const migration_017_internationalization: Migration = {
+  version: '017_internationalization',
+  description: 'Internationalization and language preference support',
   async up(pool: any) {
     await pool.query(`
       ALTER TABLE users

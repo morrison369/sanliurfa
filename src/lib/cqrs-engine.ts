@@ -4,7 +4,6 @@
  */
 
 import { logger } from './logger';
-import { redis } from './cache';
 
 interface Command {
   type: string;

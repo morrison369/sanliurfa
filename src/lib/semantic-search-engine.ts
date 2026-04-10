@@ -4,7 +4,7 @@
  */
 
 import { logger } from './logger';
-import { redis } from './cache';
+import { getRedisClient } from './cache';
 
 interface IndexedDocument {
   id: string;
@@ -71,7 +71,11 @@ class SemanticIndex {
 
     // Cache in Redis
     const cacheKey = `sanliurfa:index:${id}`;
-    redis.setex(cacheKey, 86400, JSON.stringify(indexed));
+    void getRedisClient()
+      .then((redis) => redis.setEx(cacheKey, 86400, JSON.stringify(indexed)))
+      .catch((error) => {
+        logger.warn('Failed to cache indexed document in Redis', { cacheKey, error });
+      });
 
     logger.info('Document indexed', { id, title: doc.title });
     return indexed;
@@ -166,7 +170,11 @@ class SemanticIndex {
     this.documents.set(id, updated);
 
     const cacheKey = `sanliurfa:index:${id}`;
-    redis.setex(cacheKey, 86400, JSON.stringify(updated));
+    void getRedisClient()
+      .then((redis) => redis.setEx(cacheKey, 86400, JSON.stringify(updated)))
+      .catch((error) => {
+        logger.warn('Failed to cache updated document in Redis', { cacheKey, error });
+      });
 
     logger.debug('Document updated', { id });
     return updated;
@@ -175,7 +183,11 @@ class SemanticIndex {
   deleteDocument(id: string): boolean {
     const deleted = this.documents.delete(id);
     if (deleted) {
-      redis.del(`sanliurfa:index:${id}`);
+      void getRedisClient()
+        .then((redis) => redis.del(`sanliurfa:index:${id}`))
+        .catch((error) => {
+          logger.warn('Failed to delete indexed document from Redis', { id, error });
+        });
       logger.debug('Document deleted', { id });
     }
     return deleted;
@@ -329,7 +341,11 @@ class SearchOptimizer {
     this.queryCache.set(optimized, results);
 
     const cacheKey = `sanliurfa:search:${optimized}`;
-    redis.setex(cacheKey, 3600, JSON.stringify(results));
+    void getRedisClient()
+      .then((redis) => redis.setEx(cacheKey, 3600, JSON.stringify(results)))
+      .catch((error) => {
+        logger.warn('Failed to cache search result in Redis', { cacheKey, error });
+      });
 
     logger.debug('Search result cached', { query: optimized, resultCount: results.length });
   }

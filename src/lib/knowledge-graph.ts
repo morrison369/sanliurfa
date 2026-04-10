@@ -4,7 +4,7 @@
  */
 
 import { logger } from './logger';
-import { redis } from './cache';
+import { getRedisClient } from './cache';
 
 interface Entity {
   id: string;
@@ -75,7 +75,11 @@ class KnowledgeGraph {
     this.entities.set(id, newEntity);
 
     const cacheKey = `sanliurfa:entity:${id}`;
-    redis.setex(cacheKey, 86400, JSON.stringify(newEntity));
+    void getRedisClient()
+      .then((redis) => redis.setEx(cacheKey, 86400, JSON.stringify(newEntity)))
+      .catch((error) => {
+        logger.warn('Failed to cache entity in Redis', { cacheKey, error });
+      });
 
     logger.debug('Entity added', { id, name: entity.name, type: entity.type });
     return newEntity;
@@ -113,7 +117,11 @@ class KnowledgeGraph {
     this.relationships.set(id, relationship);
 
     const cacheKey = `sanliurfa:relationship:${id}`;
-    redis.setex(cacheKey, 86400, JSON.stringify(relationship));
+    void getRedisClient()
+      .then((redis) => redis.setEx(cacheKey, 86400, JSON.stringify(relationship)))
+      .catch((error) => {
+        logger.warn('Failed to cache relationship in Redis', { cacheKey, error });
+      });
 
     logger.debug('Relationship added', {
       id,

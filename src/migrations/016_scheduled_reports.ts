@@ -3,8 +3,11 @@
  * Creates table for managing scheduled report generation
  */
 
-export const migration_016_scheduled_reports = {
-  name: '016_scheduled_reports',
+import type { Migration } from '../lib/migrations';
+
+export const migration_016_scheduled_reports: Migration = {
+  version: '016_scheduled_reports',
+  description: 'Scheduled report generation table',
   async up(pool: any) {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS scheduled_reports (
