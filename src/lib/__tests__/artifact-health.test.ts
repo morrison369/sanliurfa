@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildNightlySummary, buildPerformanceOptimizationSummary, buildReleaseGateSummary } from '../../test/fixtures/ops';
 
 const getReleaseGateSummaryMock = vi.fn();
 const getNightlyOpsSummaryMock = vi.fn();
@@ -21,29 +22,24 @@ describe('artifact health snapshot', () => {
     vi.resetModules();
     vi.resetAllMocks();
 
-    getReleaseGateSummaryMock.mockResolvedValue({
-      available: true,
+    getReleaseGateSummaryMock.mockResolvedValue(buildReleaseGateSummary({
       generatedAt: '2026-04-10T08:00:00.000Z',
-      finalStatus: 'passed',
-      failedStepCount: 0,
-    });
+    }));
     getNightlyOpsSummaryMock.mockResolvedValue({
-      regression: {
-        available: true,
+      regression: buildNightlySummary('regression', {
         generatedAt: '2026-04-10T07:00:00.000Z',
-        outcome: 'success',
         successRatePercent: 100,
-      },
-      e2e: {
+      }),
+      e2e: buildNightlySummary('e2e', {
         available: false,
         generatedAt: null,
         outcome: 'missing',
         successRatePercent: null,
-      },
+      }),
     });
-    getPerformanceOptimizationSummaryMock.mockResolvedValue({
+    getPerformanceOptimizationSummaryMock.mockResolvedValue(buildPerformanceOptimizationSummary({
       generatedAt: '2026-04-10T06:00:00.000Z',
-    });
+    }));
   });
 
   it('builds release and nightly artifact health snapshot', async () => {

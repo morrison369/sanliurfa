@@ -14,6 +14,8 @@ describe('openapi runtime contracts', () => {
     expect(body.paths['/api/admin/performance/optimization']).toBeDefined();
     expect(body.paths['/api/admin/system/artifact-health']).toBeDefined();
     expect(body.paths['/api/admin/deployment/status']).toBeDefined();
+    expect(body.paths['/api/admin/dashboard/overview']).toBeDefined();
+    expect(body.paths['/api/admin/system/metrics']).toBeDefined();
 
     const healthStatusEnum = body.paths['/api/health'].get.responses['200'].content['application/json'].schema.properties.data.properties.status.enum;
     const healthArtifactSchema =
@@ -40,6 +42,10 @@ describe('openapi runtime contracts', () => {
       body.paths['/api/admin/deployment/status'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties.artifactHealth;
     const deploymentArtifactHealthSummarySchema =
       body.paths['/api/admin/deployment/status'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties.artifactHealthSummary;
+    const dashboardOverviewSchema =
+      body.paths['/api/admin/dashboard/overview'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties;
+    const metricsSchema =
+      body.paths['/api/admin/system/metrics'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties;
 
     expect(healthStatusEnum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(healthArtifactSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E']);
@@ -63,6 +69,13 @@ describe('openapi runtime contracts', () => {
     expect(deploymentArtifactHealthSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps']);
     expect(deploymentArtifactHealthSchema.properties.performanceOps.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(deploymentArtifactHealthSummarySchema.required).toEqual(['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total']);
+    expect(dashboardOverviewSchema.artifactHealth.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps']);
+    expect(dashboardOverviewSchema.artifactHealthSummary.required).toEqual(['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total']);
+    expect(dashboardOverviewSchema.statusSummary.required).toEqual(['integrations', 'regression', 'e2e', 'releaseGate', 'overall']);
+    expect(dashboardOverviewSchema.releaseGate.required).toEqual(['available', 'generatedAt', 'finalStatus', 'failedStepCount', 'blockingFailedSteps', 'advisoryFailedSteps', 'performanceOptimization', 'steps']);
+    expect(metricsSchema.artifactHealth.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps']);
+    expect(metricsSchema.artifactHealthSummary.required).toEqual(['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total']);
+    expect(metricsSchema.statusSummary.required).toEqual(['integrations', 'regression', 'e2e', 'releaseGate', 'overall']);
     expect(detailedArtifactSchema.properties.releaseGate.required).toEqual(['available', 'status', 'generatedAt']);
     expect(detailedArtifactSchema.properties.releaseGate.properties.available.type).toBe('boolean');
     expect(detailedArtifactSchema.properties.releaseGate.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);

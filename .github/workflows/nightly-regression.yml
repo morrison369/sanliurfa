@@ -211,6 +211,53 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const HOURS = {
+              releaseGate: 24,
+              nightlyRegression: 36,
+              nightlyE2E: 36,
+              performanceOps: 24
+            };
+            function classifyArtifact(kind, available, generatedAt) {
+              if (!available || !generatedAt) {
+                return 'blocked';
+              }
+              const ageHours = (Date.now() - new Date(generatedAt).getTime()) / (1000 * 60 * 60);
+              return ageHours > HOURS[kind] ? 'degraded' : 'healthy';
+            }
+            function buildArtifactAlert(releaseGate, nightlySummary) {
+              const entries = [
+                {
+                  label: 'releaseGate',
+                  status: classifyArtifact('releaseGate', Boolean(releaseGate?.generatedAt), releaseGate?.generatedAt),
+                  generatedAt: releaseGate?.generatedAt ?? null
+                },
+                {
+                  label: 'nightlyRegression',
+                  status: classifyArtifact('nightlyRegression', Boolean(nightlySummary?.generatedAt), nightlySummary?.generatedAt),
+                  generatedAt: nightlySummary?.generatedAt ?? null
+                },
+                {
+                  label: 'performanceOps',
+                  status: classifyArtifact(
+                    'performanceOps',
+                    Boolean(nightlySummary?.performanceOptimization?.generatedAt),
+                    nightlySummary?.performanceOptimization?.generatedAt
+                  ),
+                  generatedAt: nightlySummary?.performanceOptimization?.generatedAt ?? null
+                }
+              ];
+              const blockedCount = entries.filter((entry) => entry.status === 'blocked').length;
+              const degradedCount = entries.filter((entry) => entry.status === 'degraded').length;
+              const overall = blockedCount > 0 ? 'blocked' : degradedCount > 0 ? 'degraded' : 'healthy';
+              return {
+                overall,
+                lines: [
+                  '## Artifact Freshness Alert',
+                  `- Overall: ${overall}`,
+                  ...entries.map((entry) => `- ${entry.label}: ${entry.status} (${entry.generatedAt || 'missing'})`)
+                ].join('\n')
+              };
+            }
             const title = 'Nightly Unit Regression Report';
             const migrationSummary = fs.existsSync('migration-summary.md')
               ? fs.readFileSync('migration-summary.md', 'utf8')
@@ -230,10 +277,12 @@ jobs:
               ? ['## Top Failing Tests', ...failCandidates.map((line) => `- ${line}`)].join('\n')
               : '## Top Failing Tests\n- No failing tests captured from log';
             let releaseGateSummary = '## Latest Release Gate Summary\n- No recent release gate artifact found';
+            let releaseGatePayload = null;
             try {
               const summaryPath = 'latest-release-gate/release-gate-summary.json';
               if (fs.existsSync(summaryPath)) {
                 const releaseGate = JSON.parse(fs.readFileSync(summaryPath, 'utf8'));
+                releaseGatePayload = releaseGate;
                 const blocking = Array.isArray(releaseGate.blockingFailedSteps) && releaseGate.blockingFailedSteps.length > 0
                   ? releaseGate.blockingFailedSteps.map((step) => `- Blocking: ${step}`)
                   : ['- Blocking: yok'];
@@ -259,6 +308,10 @@ jobs:
             } catch (error) {
               releaseGateSummary = `## Latest Release Gate Summary\n- Summary unavailable: ${error?.message || 'unknown error'}`;
             }
+            const artifactAlert = buildArtifactAlert(releaseGatePayload, nightlySummary);
+            if (artifactAlert.overall !== 'healthy') {
+              core.warning(`Artifact freshness degraded for nightly regression: ${artifactAlert.overall}`);
+            }
 
             const body = [
               '## Nightly Unit Regression',
@@ -266,6 +319,8 @@ jobs:
               `- Run: ${process.env.RUN_URL}`,
               '',
               failingSummary,
+              '',
+              artifactAlert.lines,
               '',
               releaseGateSummary,
               '',

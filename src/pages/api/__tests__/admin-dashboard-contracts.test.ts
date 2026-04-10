@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildNightlySummary, buildPerformanceOptimizationSummary, buildReleaseGateSummary } from '../../../test/fixtures/ops';
 
 const recordRequestMock = vi.fn();
 const getDashboardOverviewMock = vi.fn();
@@ -79,30 +80,7 @@ describe('admin dashboard contracts', () => {
       webhook: { stripe: { sampleSize: 15, errorRatePercent: 0, p95DurationMs: 250, duplicateRatePercent: 0 } },
       search: { periodDays: 7, totalTopSearches: 21, topQueries: [{ query: 'urfa', count: 9 }] },
     });
-    getPerformanceOptimizationSummaryMock.mockResolvedValue({
-      generatedAt: '2026-04-10T03:00:00.000Z',
-      recommendations: { total: 4, highPriority: 2, mediumPriority: 2 },
-      metrics: {
-        slowQueriesCount: 6,
-        slowRequestRate: 14,
-        cacheHitRate: 42,
-        avgRequestDuration: 220,
-        p95Duration: 780,
-      },
-      cacheStrategies: { count: 2 },
-      indexSuggestions: {
-        count: 3,
-        top: ['CREATE INDEX idx_reviews_place_id ON reviews(place_id)'],
-      },
-      slowOperations: [
-        {
-          type: 'query',
-          message: 'reviews query exceeded threshold',
-          duration: 1200,
-          timestamp: '2026-04-10T03:00:00.000Z',
-        },
-      ],
-    });
+    getPerformanceOptimizationSummaryMock.mockResolvedValue(buildPerformanceOptimizationSummary());
     getModerationStatsMock.mockResolvedValue({
       queue: { pending: 2, inReview: 1 },
       flags: { highSeverity: 1 },
@@ -127,53 +105,10 @@ describe('admin dashboard contracts', () => {
       analytics: { status: 'not_configured', message: 'missing', checkedAt: '2026-04-10T00:00:00.000Z' },
       summary: { healthy: false, checkedAt: '2026-04-10T00:00:00.000Z' },
     });
-    getReleaseGateSummaryMock.mockResolvedValue({
-      available: true,
-      generatedAt: '2026-04-10T00:00:00.000Z',
-      finalStatus: 'passed',
-      blockingFailedSteps: [],
-      advisoryFailedSteps: [],
-      failedStepCount: 0,
-      performanceOptimization: {
-        recommendations: { total: 4, highPriority: 2, mediumPriority: 2 },
-        metrics: { slowRequestRate: 14, cacheHitRate: 42 },
-      },
-      steps: [
-        {
-          step: 'TypeScript app gate',
-          command: 'npm run typecheck:app',
-          advisory: false,
-          status: 'passed',
-        },
-      ],
-    });
+    getReleaseGateSummaryMock.mockResolvedValue(buildReleaseGateSummary());
     getNightlyOpsSummaryMock.mockResolvedValue({
-      regression: {
-        available: true,
-        kind: 'regression',
-        generatedAt: '2026-04-10T01:00:00.000Z',
-        outcome: 'success',
-        successRatePercent: 86,
-        recentOutcomes: ['success', 'success', 'failure'],
-        topFailures: ['FAIL auth-contracts'],
-        performanceOptimization: {
-          recommendations: { total: 4, highPriority: 2, mediumPriority: 2 },
-          metrics: { slowRequestRate: 14, cacheHitRate: 42 },
-        },
-      },
-      e2e: {
-        available: true,
-        kind: 'e2e',
-        generatedAt: '2026-04-10T02:00:00.000Z',
-        outcome: 'failure',
-        successRatePercent: 57,
-        recentOutcomes: ['failure', 'success', 'failure'],
-        topFailures: ['Error: timeout on /giris'],
-        performanceOptimization: {
-          recommendations: { total: 3, highPriority: 1, mediumPriority: 2 },
-          metrics: { slowRequestRate: 9, cacheHitRate: 48 },
-        },
-      },
+      regression: buildNightlySummary('regression'),
+      e2e: buildNightlySummary('e2e'),
     });
   });
 

@@ -48,6 +48,218 @@ const adminArtifactHealthSummarySchema = {
   required: ['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total'],
 };
 
+const integrationSummarySchema = {
+  type: 'object',
+  properties: {
+    configuredCount: { type: 'integer' },
+    total: { type: 'integer' },
+    fullyConfigured: { type: 'boolean' },
+  },
+  required: ['configuredCount', 'total', 'fullyConfigured'],
+};
+
+const integrationVerificationSchema = {
+  type: 'object',
+  properties: {
+    resend: {
+      type: 'object',
+      properties: {
+        status: { type: 'string' },
+        message: { type: 'string' },
+        checkedAt: { type: 'string', format: 'date-time' },
+      },
+      required: ['status', 'message', 'checkedAt'],
+    },
+    analytics: {
+      type: 'object',
+      properties: {
+        status: { type: 'string' },
+        message: { type: 'string' },
+        checkedAt: { type: 'string', format: 'date-time' },
+      },
+      required: ['status', 'message', 'checkedAt'],
+    },
+    summary: {
+      type: 'object',
+      properties: {
+        healthy: { type: 'boolean' },
+        checkedAt: { type: 'string', format: 'date-time' },
+      },
+      required: ['healthy', 'checkedAt'],
+    },
+  },
+  required: ['resend', 'analytics', 'summary'],
+};
+
+const adminStatusSummarySchema = {
+  type: 'object',
+  properties: {
+    integrations: healthStatusSchema,
+    regression: healthStatusSchema,
+    e2e: healthStatusSchema,
+    releaseGate: healthStatusSchema,
+    overall: healthStatusSchema,
+  },
+  required: ['integrations', 'regression', 'e2e', 'releaseGate', 'overall'],
+};
+
+const nightlySummarySchema = {
+  type: 'object',
+  properties: {
+    available: { type: 'boolean' },
+    kind: { type: 'string' },
+    generatedAt: { type: ['string', 'null'], format: 'date-time' },
+    outcome: { type: 'string' },
+    successRatePercent: { type: ['integer', 'null'] },
+    recentOutcomes: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    topFailures: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    performanceOptimization: {
+      type: ['object', 'null'],
+      properties: {
+        recommendations: {
+          type: 'object',
+          properties: {
+            total: { type: 'integer' },
+            highPriority: { type: 'integer' },
+            mediumPriority: { type: 'integer' },
+          },
+          required: ['total', 'highPriority', 'mediumPriority'],
+        },
+        metrics: {
+          type: 'object',
+          properties: {
+            slowRequestRate: { type: 'integer' },
+            cacheHitRate: { type: 'integer' },
+          },
+          required: ['slowRequestRate', 'cacheHitRate'],
+        },
+      },
+      required: ['recommendations', 'metrics'],
+    },
+  },
+  required: ['available', 'kind', 'generatedAt', 'outcome', 'successRatePercent', 'recentOutcomes', 'topFailures', 'performanceOptimization'],
+};
+
+const performanceOptimizationSummarySchema = {
+  type: 'object',
+  properties: {
+    generatedAt: { type: 'string', format: 'date-time' },
+    recommendations: {
+      type: 'object',
+      properties: {
+        total: { type: 'integer' },
+        highPriority: { type: 'integer' },
+        mediumPriority: { type: 'integer' },
+      },
+      required: ['total', 'highPriority', 'mediumPriority'],
+    },
+    metrics: {
+      type: 'object',
+      properties: {
+        slowQueriesCount: { type: 'integer' },
+        slowRequestRate: { type: 'integer' },
+        cacheHitRate: { type: 'integer' },
+        avgRequestDuration: { type: 'integer' },
+        p95Duration: { type: 'integer' },
+      },
+      required: ['slowQueriesCount', 'slowRequestRate', 'cacheHitRate', 'avgRequestDuration', 'p95Duration'],
+    },
+    cacheStrategies: {
+      type: 'object',
+      properties: {
+        count: { type: 'integer' },
+      },
+      required: ['count'],
+    },
+    indexSuggestions: {
+      type: 'object',
+      properties: {
+        count: { type: 'integer' },
+        top: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
+      required: ['count', 'top'],
+    },
+    slowOperations: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          type: { type: 'string' },
+          message: { type: 'string' },
+          duration: { type: 'integer' },
+          timestamp: { type: 'string', format: 'date-time' },
+        },
+        required: ['type', 'message', 'duration', 'timestamp'],
+      },
+    },
+  },
+  required: ['generatedAt', 'recommendations', 'metrics', 'cacheStrategies', 'indexSuggestions', 'slowOperations'],
+};
+
+const releaseGateSummarySchema = {
+  type: 'object',
+  properties: {
+    available: { type: 'boolean' },
+    generatedAt: { type: ['string', 'null'], format: 'date-time' },
+    finalStatus: { type: 'string' },
+    failedStepCount: { type: 'integer' },
+    blockingFailedSteps: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    advisoryFailedSteps: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    performanceOptimization: {
+      type: ['object', 'null'],
+      properties: {
+        recommendations: {
+          type: 'object',
+          properties: {
+            total: { type: 'integer' },
+            highPriority: { type: 'integer' },
+            mediumPriority: { type: 'integer' },
+          },
+          required: ['total', 'highPriority', 'mediumPriority'],
+        },
+        metrics: {
+          type: 'object',
+          properties: {
+            slowRequestRate: { type: 'integer' },
+            cacheHitRate: { type: 'integer' },
+          },
+          required: ['slowRequestRate', 'cacheHitRate'],
+        },
+      },
+      required: ['recommendations', 'metrics'],
+    },
+    steps: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          step: { type: 'string' },
+          command: { type: 'string' },
+          advisory: { type: 'boolean' },
+          status: { type: 'string' },
+        },
+        required: ['step', 'command', 'advisory', 'status'],
+      },
+    },
+  },
+  required: ['available', 'generatedAt', 'finalStatus', 'failedStepCount', 'blockingFailedSteps', 'advisoryFailedSteps', 'performanceOptimization', 'steps'],
+};
+
 const openApiSpec = {
   openapi: '3.1.0',
   info: {
@@ -701,6 +913,160 @@ const openApiSpec = {
                             timestamp: { type: 'string', format: 'date-time' },
                           },
                           required: ['environment', 'readiness', 'checklist', 'integrations', 'artifactHealth', 'artifactHealthSummary', 'timestamp'],
+                        },
+                      },
+                      required: ['success', 'data'],
+                    },
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+        },
+      },
+    },
+    '/api/admin/dashboard/overview': {
+      get: {
+        tags: ['Health'],
+        summary: 'Admin dashboard overview with operational summaries',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Dashboard overview snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        success: { type: 'boolean' },
+                        data: {
+                          type: 'object',
+                          properties: {
+                            integrations: {
+                              type: 'object',
+                              properties: {
+                                resend: {
+                                  type: 'object',
+                                  properties: {
+                                    configured: { type: 'boolean' },
+                                    source: { type: 'string' },
+                                  },
+                                  required: ['configured', 'source'],
+                                },
+                                analytics: {
+                                  type: 'object',
+                                  properties: {
+                                    configured: { type: 'boolean' },
+                                    source: { type: 'string' },
+                                  },
+                                  required: ['configured', 'source'],
+                                },
+                                summary: integrationSummarySchema,
+                                verification: integrationVerificationSchema,
+                              },
+                              required: ['resend', 'analytics', 'summary', 'verification'],
+                            },
+                            performanceOptimization: performanceOptimizationSummarySchema,
+                            artifactHealth: adminArtifactHealthSnapshotSchema,
+                            artifactHealthSummary: adminArtifactHealthSummarySchema,
+                            releaseGate: releaseGateSummarySchema,
+                            nightly: {
+                              type: 'object',
+                              properties: {
+                                regression: nightlySummarySchema,
+                                e2e: nightlySummarySchema,
+                              },
+                              required: ['regression', 'e2e'],
+                            },
+                            statusSummary: adminStatusSummarySchema,
+                            period: { type: 'integer' },
+                          },
+                          required: ['integrations', 'performanceOptimization', 'artifactHealth', 'artifactHealthSummary', 'releaseGate', 'nightly', 'statusSummary', 'period'],
+                        },
+                      },
+                      required: ['success', 'data'],
+                    },
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+        },
+      },
+    },
+    '/api/admin/system/metrics': {
+      get: {
+        tags: ['Health'],
+        summary: 'Admin system metrics and operational health snapshot',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'System metrics snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        success: { type: 'boolean' },
+                        data: {
+                          type: 'object',
+                          properties: {
+                            health: {
+                              type: 'object',
+                              properties: {
+                                status: healthStatusSchema,
+                                timestamp: { type: 'string', format: 'date-time' },
+                                integrations: {
+                                  type: 'object',
+                                  properties: {
+                                    resend: {
+                                      type: 'object',
+                                      properties: {
+                                        configured: { type: 'boolean' },
+                                        source: { type: 'string' },
+                                      },
+                                      required: ['configured', 'source'],
+                                    },
+                                    analytics: {
+                                      type: 'object',
+                                      properties: {
+                                        configured: { type: 'boolean' },
+                                        source: { type: 'string' },
+                                      },
+                                      required: ['configured', 'source'],
+                                    },
+                                    summary: integrationSummarySchema,
+                                  },
+                                  required: ['resend', 'analytics', 'summary'],
+                                },
+                              },
+                              required: ['status', 'timestamp', 'integrations'],
+                            },
+                            performanceOptimization: performanceOptimizationSummarySchema,
+                            artifactHealth: adminArtifactHealthSnapshotSchema,
+                            artifactHealthSummary: adminArtifactHealthSummarySchema,
+                            nightly: {
+                              type: 'object',
+                              properties: {
+                                regression: nightlySummarySchema,
+                                e2e: nightlySummarySchema,
+                              },
+                              required: ['regression', 'e2e'],
+                            },
+                            releaseGate: releaseGateSummarySchema,
+                            statusSummary: adminStatusSummarySchema,
+                          },
+                          required: ['health', 'performanceOptimization', 'artifactHealth', 'artifactHealthSummary', 'nightly', 'releaseGate', 'statusSummary'],
                         },
                       },
                       required: ['success', 'data'],
