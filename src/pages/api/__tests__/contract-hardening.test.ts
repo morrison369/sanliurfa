@@ -186,6 +186,26 @@ describe('API contract hardening', () => {
     expect(getMessagesMock).not.toHaveBeenCalled();
   });
 
+  it('clamps messages GET limit to maximum 100', async () => {
+    const { GET } = await import('../messages/[conversationId].ts');
+    getMessagesMock.mockResolvedValueOnce([]);
+
+    const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111?limit=999');
+    const response = await GET({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { conversationId: '11111111-1111-1111-1111-111111111111' },
+    } as any);
+
+    expect(response.status).toBe(200);
+    expect(getMessagesMock).toHaveBeenCalledWith(
+      '11111111-1111-1111-1111-111111111111',
+      '11111111-1111-1111-1111-111111111111',
+      100,
+      undefined
+    );
+  });
+
   it('rejects non-json content type for messages POST', async () => {
     const { POST } = await import('../messages/[conversationId].ts');
     const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111', {
@@ -326,6 +346,31 @@ describe('API contract hardening', () => {
     expect(removeTenantMemberMock).not.toHaveBeenCalled();
   });
 
+  it('returns conflict when tenant member already exists', async () => {
+    const { POST } = await import('../tenants/[tenantId]/members.ts');
+    queryOneMock
+      .mockResolvedValueOnce({ owner_id: '11111111-1111-1111-1111-111111111111' })
+      .mockResolvedValueOnce({ id: '22222222-2222-2222-2222-222222222222' });
+    addTenantMemberMock.mockResolvedValueOnce(null);
+
+    const request = new Request('https://example.com/api/tenants/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/members', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        user_id: '22222222-2222-2222-2222-222222222222',
+        role: 'member'
+      })
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { tenantId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' },
+    } as any);
+
+    expect(response.status).toBe(409);
+  });
+
   it('rejects oauth callback when provider config is incomplete', async () => {
     const { GET } = await import('../auth/oauth/callback.ts');
     verifyOAuthStateMock.mockResolvedValue({
@@ -420,6 +465,51 @@ describe('API contract hardening', () => {
 
     expect(response.status).toBe(400);
     expect(createUserSessionMock).not.toHaveBeenCalled();
+  });
+
+  it('completes oauth callback and sets non-secure cookie on http origin', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: 'access-token' }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        id: 'provider-user',
+        email: 'oauth@example.com',
+        name: 'OAuth User'
+      }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { GET } = await import('../auth/oauth/callback.ts');
+    verifyOAuthStateMock.mockResolvedValue({
+      provider_key: 'google',
+      redirect_uri: 'http://example.com/api/auth/oauth/callback'
+    });
+    getOAuthProviderMock.mockResolvedValue({
+      provider_key: 'google',
+      client_id: 'client-id',
+      client_secret: 'client-secret',
+      authorization_url: 'https://example.com/oauth/authorize',
+      token_url: 'https://example.com/oauth/token',
+      userinfo_url: 'https://example.com/oauth/userinfo'
+    });
+    queryOneMock.mockResolvedValueOnce({ id: '11111111-1111-1111-1111-111111111111' });
+
+    const request = new Request('http://example.com/api/auth/oauth/callback?code=abc&state=state-1', {
+      headers: { 'user-agent': 'Mozilla/5.0', 'x-forwarded-for': '127.0.0.1' }
+    });
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Location')).toBe('/');
+    const setCookie = response.headers.get('Set-Cookie') || '';
+    expect(setCookie).toContain('auth-token=session-token');
+    expect(setCookie).not.toContain('Secure');
+    expect(linkOAuthAccountMock).toHaveBeenCalled();
+    expect(createUserSessionMock).toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
   });
 
   it('rejects stripe webhook without signature header', async () => {

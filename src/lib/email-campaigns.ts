@@ -289,8 +289,8 @@ export async function sendCampaign(campaignId: number | string, testMode: boolea
       return { sent: 0, failed: 0 };
     }
 
-    // In test mode, only send to first user (admin email)
-    const recipientEmails = testMode ? users.slice(0, 1).map(u => u.email) : users.map(u => u.email);
+    // In test mode, only send to the first matched user.
+    const targetUsers = testMode ? users.slice(0, 1) : users;
 
     let sentCount = 0;
     let failedCount = 0;
@@ -300,7 +300,7 @@ export async function sendCampaign(campaignId: number | string, testMode: boolea
     const { shouldNotify } = await import('./email-preferences');
 
     // Send emails
-    for (const user of users) {
+    for (const user of targetUsers) {
       try {
         // Check if user wants promotional emails
         const canReceive = await shouldNotify(user.id, 'promotional');

@@ -8,6 +8,7 @@ const queryMock = vi.fn();
 const getCacheMock = vi.fn();
 const setCacheMock = vi.fn();
 const shouldNotifyMock = vi.fn();
+const sendEmailMock = vi.fn();
 
 vi.mock('../postgres', () => ({
   queryOne: queryOneMock,
@@ -33,6 +34,10 @@ vi.mock('../logging', () => ({
 
 vi.mock('../email-preferences', () => ({
   shouldNotify: shouldNotifyMock
+}));
+
+vi.mock('../email', () => ({
+  sendEmail: sendEmailMock
 }));
 
 describe('Email contracts hardening', () => {
@@ -214,5 +219,92 @@ describe('Email contracts hardening', () => {
       bounceRate: 0,
       conversionRate: 0
     }));
+  });
+
+  it('should send campaign to only one user in test mode', async () => {
+    queryOneMock.mockResolvedValue({
+      id: 'campaign-1',
+      name: 'Launch',
+      subject: 'Subject',
+      from_name: 'Ops',
+      from_email: 'ops@example.com',
+      html_content: '<p>Hello</p>',
+      text_content: 'Hello',
+      segment: 'all_users',
+      segment_filters: null,
+      scheduled_at: null,
+      status: 'draft',
+      send_count: 0,
+      open_count: 0,
+      click_count: 0,
+      unsubscribe_count: 0,
+      bounce_count: 0,
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z'
+    });
+    queryRowsMock.mockResolvedValue([
+      { id: 'user-1', email: 'first@example.com' },
+      { id: 'user-2', email: 'second@example.com' }
+    ]);
+    shouldNotifyMock.mockResolvedValue(true);
+    sendEmailMock.mockResolvedValue(true);
+    updateMock.mockResolvedValue({ id: 'campaign-1' });
+
+    const { sendCampaign } = await import('../email-campaigns');
+    const result = await sendCampaign('campaign-1', true);
+
+    expect(result).toEqual({ sent: 1, failed: 0 });
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+    expect(sendEmailMock).toHaveBeenCalledWith(expect.objectContaining({
+      to: 'first@example.com',
+      subject: 'Subject'
+    }));
+  });
+
+  it('should report partial failures in campaign delivery counts', async () => {
+    queryOneMock.mockResolvedValue({
+      id: 'campaign-1',
+      name: 'Launch',
+      subject: 'Subject',
+      from_name: 'Ops',
+      from_email: 'ops@example.com',
+      html_content: '<p>Hello</p>',
+      text_content: 'Hello',
+      segment: 'all_users',
+      segment_filters: null,
+      scheduled_at: null,
+      status: 'draft',
+      send_count: 0,
+      open_count: 0,
+      click_count: 0,
+      unsubscribe_count: 0,
+      bounce_count: 0,
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z'
+    });
+    queryRowsMock.mockResolvedValue([
+      { id: 'user-1', email: 'one@example.com' },
+      { id: 'user-2', email: 'two@example.com' },
+      { id: 'user-3', email: 'three@example.com' }
+    ]);
+    shouldNotifyMock
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(true);
+    sendEmailMock
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+    updateMock.mockResolvedValue({ id: 'campaign-1' });
+
+    const { sendCampaign } = await import('../email-campaigns');
+    const result = await sendCampaign('campaign-1', false);
+
+    expect(result).toEqual({ sent: 1, failed: 2 });
+    expect(sendEmailMock).toHaveBeenCalledTimes(2);
+    expect(updateMock).toHaveBeenLastCalledWith(
+      'email_campaigns',
+      { id: 'campaign-1' },
+      expect.objectContaining({ status: 'completed', send_count: 1 })
+    );
   });
 });
