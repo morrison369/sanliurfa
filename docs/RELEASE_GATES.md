@@ -60,6 +60,7 @@ npm run release:gate:local
 - Full E2E runs in advisory mode (`continue-on-error`) to keep merge path deterministic.
 - `.github/workflows/phase-gate.yml` legacy phase compatibility workflow'udur; merge kararı vermez ve manuel çalıştırılır.
 - Merge ve release kararı `.github/workflows/ci.yml` içindeki `quick-gate` ve `full-gate` job'ları üzerinden verilir.
+- Artifact freshness ve admin panelde gorunen `healthy/degraded/blocked` policy'si icin `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` dosyasini source of truth kabul et.
 
 ## SLO Note
 - `test:e2e:smoke` route başına yanıt süresi bütçesi uygular (`SMOKE_MAX_MS`, varsayılan `2000`).
