@@ -6,13 +6,9 @@
 
 import type { APIRoute } from 'astro';
 import { markConversationRead } from '../../../../lib/messages';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, validators } from '../../../../lib/api';
+import { AppError, apiResponse, apiError, apiErrorFrom, HttpStatus, ErrorCode, ensureUuid, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
-
-function isValidUuid(value: string | undefined): value is string {
-  return typeof value === 'string' && validators.uuid(value);
-}
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
   const requestId = getRequestId({ request } as any);
@@ -34,16 +30,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    if (!isValidUuid(conversationId)) {
-      recordRequest('POST', `/api/messages/${conversationId ?? 'unknown'}/read`, HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Geçersiz konuşma kimliği',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
+    ensureUuid(conversationId, 'konuşma kimliği');
 
     // Mark conversation as read (includes access control check)
     await markConversationRead(conversationId, user.id);
@@ -60,6 +47,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       requestId
     );
   } catch (error) {
+    if (error instanceof AppError) {
+      const duration = Date.now() - startTime;
+      recordRequest('POST', `/api/messages/${params.conversationId ?? 'unknown'}/read`, error.statusCode, duration);
+      return apiErrorFrom(error, requestId);
+    }
+
     const duration = Date.now() - startTime;
     const statusCode = error instanceof Error && error.message.includes('Access denied') ? HttpStatus.FORBIDDEN : HttpStatus.INTERNAL_SERVER_ERROR;
     recordRequest('POST', `/api/messages/${params.conversationId}/read`, statusCode, duration);

@@ -6,45 +6,10 @@
 import type { APIRoute } from 'astro';
 import { queryOne, update } from '../../../lib/postgres';
 import { getTenantBranding, updateTenantBranding, getTenantMembers, logTenantAudit } from '../../../lib/multi-tenant';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, validators } from '../../../lib/api';
+import { AppError, apiResponse, apiError, apiErrorFrom, HttpStatus, ErrorCode, ensureUuid, getRequestId, parseJsonBody } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
-
-function isValidUuid(value: string | undefined): value is string {
-  return typeof value === 'string' && validators.uuid(value);
-}
-
-async function parseJsonBody(request: Request, tenantId: string | undefined, requestId: string, startTime: number) {
-  const contentType = request.headers.get('content-type') || '';
-  if (!contentType.toLowerCase().includes('application/json')) {
-    recordRequest('PATCH', `/api/tenants/${tenantId ?? 'unknown'}`, HttpStatus.BAD_REQUEST, Date.now() - startTime);
-    return {
-      response: apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Content-Type application/json olmalı',
-        HttpStatus.BAD_REQUEST,
-        { contentType },
-        requestId
-      )
-    };
-  }
-
-  try {
-    return { body: await request.json() };
-  } catch {
-    recordRequest('PATCH', `/api/tenants/${tenantId ?? 'unknown'}`, HttpStatus.BAD_REQUEST, Date.now() - startTime);
-    return {
-      response: apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Geçersiz JSON body',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      )
-    };
-  }
-}
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
   const requestId = getRequestId({ request } as any);
@@ -65,16 +30,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    if (!isValidUuid(tenantId)) {
-      recordRequest('GET', `/api/tenants/${tenantId ?? 'unknown'}`, HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Invalid tenant ID',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
+    ensureUuid(tenantId, 'tenant ID');
 
     // Get tenant (optimized: select common tenant columns)
     const tenant = await queryOne(
@@ -140,6 +96,11 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       requestId
     );
   } catch (error) {
+    if (error instanceof AppError) {
+      recordRequest('GET', `/api/tenants/${params.tenantId ?? 'unknown'}`, error.statusCode, Date.now() - startTime);
+      return apiErrorFrom(error, requestId);
+    }
+
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/tenants/${params.tenantId}`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
@@ -175,20 +136,29 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    if (!isValidUuid(tenantId)) {
+    ensureUuid(tenantId, 'tenant ID');
+
+    const parsed = await parseJsonBody(request);
+    if (parsed.error === 'UNSUPPORTED_CONTENT_TYPE') {
       recordRequest('PATCH', `/api/tenants/${tenantId ?? 'unknown'}`, HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid tenant ID',
+        'Content-Type application/json olmalı',
         HttpStatus.BAD_REQUEST,
-        undefined,
+        { contentType: parsed.contentType },
         requestId
       );
     }
 
-    const parsed = await parseJsonBody(request, tenantId, requestId, startTime);
-    if (parsed.response) {
-      return parsed.response;
+    if (parsed.error === 'INVALID_JSON') {
+      recordRequest('PATCH', `/api/tenants/${tenantId ?? 'unknown'}`, HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçersiz JSON body',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
     }
 
     const body = parsed.body as Record<string, unknown>;
@@ -301,6 +271,11 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
       requestId
     );
   } catch (error) {
+    if (error instanceof AppError) {
+      recordRequest('PATCH', `/api/tenants/${params.tenantId ?? 'unknown'}`, error.statusCode, Date.now() - startTime);
+      return apiErrorFrom(error, requestId);
+    }
+
     const duration = Date.now() - startTime;
     recordRequest('PATCH', `/api/tenants/${params.tenantId}`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(

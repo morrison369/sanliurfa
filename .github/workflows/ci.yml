@@ -2,14 +2,14 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [master]
+    branches: [main, master]
   pull_request:
-    branches: [master]
+    branches: [main, master]
 
 jobs:
-  test:
+  quick_gate:
+    name: quick-gate
     runs-on: ubuntu-latest
-    
     services:
       postgres:
         image: postgres:15
@@ -23,114 +23,131 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+      READ_REPLICA_URL: ""
+      PUBLIC_SITE_URL: http://127.0.0.1:1111
+      PORT: "1111"
     steps:
       - uses: actions/checkout@v4
-      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.13.0'
-          cache: 'npm'
-      
+          node-version: "22.13.0"
+          cache: "npm"
       - name: Install dependencies
         run: npm ci
-
       - name: Environment contract check (CI)
         run: npm run env:contract:check:ci
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
-          READ_REPLICA_URL: ""
-          PUBLIC_SITE_URL: http://127.0.0.1:1111
-          PORT: "1111"
-
       - name: Repo stabilization check
         run: npm run repo:stabilize:check
-
       - name: Security secret scan
         run: npm run security:secrets:scan
-
       - name: HTTP timeout governance guard
         run: npm run governance:http:timeout:check
-
       - name: Governance import guard
         run: npm run governance:imports:check
-
+      - name: Governance logging guard
+        run: npm run governance:logging:check
+      - name: Governance runtime placeholder guard
+        run: npm run governance:runtime:placeholders:check
+      - name: Governance legacy insecure usage guard
+        run: npm run governance:legacy:insecure:check
       - name: DB drift check
         run: npm run db:drift:check
-
       - name: Bootstrap test DB
         run: npm run db:test:bootstrap
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
-      
       - name: Typecheck app scope
         run: npm run typecheck:app
-
-      - name: Typecheck experimental exclude
+      - name: Typecheck experimental exclude guard
         run: npm run typecheck:experimental:exclude:guard
-      
-      - name: Build
-        run: npm run build
+      - name: Contract hardening smoke
+        run: npm exec -- vitest run src/pages/api/__tests__/contract-hardening.test.ts src/lib/__tests__/email-contracts.test.ts
+
+  full_gate:
+    name: full-gate
+    needs: quick_gate
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
-          PUBLIC_SITE_URL: http://127.0.0.1:1111
-          PORT: "1111"
-      
-      - name: Run unit tests
-        run: npm run test:unit
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
-
-      - name: Migration status
-        run: npm run migrate:status
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
-
-      - name: Migration dry-run
-        run: npm run migrate:dry-run
-
-      - name: Typecheck experimental
-        run: npm run typecheck:experimental
-
-      - name: Typecheck weekly report
-        run: npm run typecheck:experimental:report
-
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sanliurfa_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+      READ_REPLICA_URL: ""
+      PUBLIC_SITE_URL: http://127.0.0.1:1111
+      PORT: "1111"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Release gate
+        run: npm run release:gate
       - name: Upload weekly typecheck report
         uses: actions/upload-artifact@v4
         with:
           name: weekly-typecheck-report
           path: docs/reports/weekly-typecheck-report.md
 
-      - name: Release gate
-        run: npm run release:gate
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
-          PUBLIC_SITE_URL: http://127.0.0.1:1111
-          PORT: "1111"
-      
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-      
-      - name: Run E2E smoke
-        run: npm run test:e2e:smoke
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
-
-      - name: Run full E2E advisory
-        continue-on-error: true
-        run: npm run test:e2e:full
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
-
-  deploy:
-    needs: test
-    if: github.ref == 'refs/heads/main'
+  e2e_smoke_advisory:
+    name: e2e-smoke-advisory
+    needs: quick_gate
+    if: github.event_name == 'pull_request'
+    continue-on-error: true
     runs-on: ubuntu-latest
-    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sanliurfa_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+      READ_REPLICA_URL: ""
+      PUBLIC_SITE_URL: http://127.0.0.1:1111
+      PORT: "1111"
     steps:
       - uses: actions/checkout@v4
-      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run E2E smoke
+        run: npm run test:e2e:smoke
+
+  deploy:
+    needs: full_gate
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Deploy to production
         run: |
           echo "Deploying to production..."

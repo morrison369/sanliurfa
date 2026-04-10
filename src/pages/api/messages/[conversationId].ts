@@ -9,47 +9,31 @@ import type { APIRoute } from 'astro';
 import { getMessages, sendMessage, markConversationRead } from '../../../lib/messages';
 import { queryOne } from '../../../lib/postgres';
 import { isUserBlocked } from '../../../lib/blocking';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, validators } from '../../../lib/api';
+import { AppError, apiResponse, apiError, apiErrorFrom, HttpStatus, ErrorCode, ensureUuid, getRequestId, parseBoundedInt, parseJsonBody } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
 
-function isValidUuid(value: string | undefined): value is string {
-  return typeof value === 'string' && validators.uuid(value);
-}
-
 function parseLimit(rawLimit: string | null): number | null {
-  if (rawLimit === null) {
-    return 50;
-  }
-
-  const parsed = Number.parseInt(rawLimit, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) {
-    return null;
-  }
-
-  return Math.min(parsed, 100);
+  return parseBoundedInt(rawLimit, { defaultValue: 50, min: 1, max: 100 });
 }
 
 async function parseMessageBody(request: Request, requestId: string, route: string, startTime: number) {
-  const contentType = request.headers.get('content-type') || '';
-  if (!contentType.toLowerCase().includes('application/json')) {
+  const parsed = await parseJsonBody(request);
+  if (parsed.error === 'UNSUPPORTED_CONTENT_TYPE') {
     recordRequest('POST', route, HttpStatus.BAD_REQUEST, Date.now() - startTime);
     return {
       response: apiError(
         ErrorCode.VALIDATION_ERROR,
         'Content-Type application/json olmalı',
         HttpStatus.BAD_REQUEST,
-        { contentType },
+        { contentType: parsed.contentType },
         requestId
       )
     };
   }
 
-  try {
-    const body = await request.json();
-    return { body };
-  } catch {
+  if (parsed.error === 'INVALID_JSON') {
     recordRequest('POST', route, HttpStatus.BAD_REQUEST, Date.now() - startTime);
     return {
       response: apiError(
@@ -61,6 +45,8 @@ async function parseMessageBody(request: Request, requestId: string, route: stri
       )
     };
   }
+
+  return { body: parsed.body };
 }
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
@@ -84,16 +70,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    if (!isValidUuid(conversationId)) {
-      recordRequest('GET', route, HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Geçersiz konuşma kimliği',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
+    ensureUuid(conversationId, 'konuşma kimliği');
 
     // Get URL parameters
     const url = new URL(request.url);
@@ -111,15 +88,8 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    if (before && !isValidUuid(before)) {
-      recordRequest('GET', route, HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Geçersiz before parametresi',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
+    if (before) {
+      ensureUuid(before, 'before parametresi');
     }
 
     // Get messages (includes access control check)
@@ -142,6 +112,12 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       requestId
     );
   } catch (error) {
+    if (error instanceof AppError) {
+      const duration = Date.now() - startTime;
+      recordRequest('GET', `/api/messages/${params.conversationId ?? 'unknown'}`, error.statusCode, duration);
+      return apiErrorFrom(error, requestId);
+    }
+
     const duration = Date.now() - startTime;
     const statusCode =
       error instanceof Error && (error.message.includes('Access denied') || error.message.includes('Unauthorized'))
@@ -201,16 +177,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    if (!isValidUuid(conversationId)) {
-      recordRequest('POST', route, HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Geçersiz konuşma kimliği',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
+    ensureUuid(conversationId, 'konuşma kimliği');
 
     const parsed = await parseMessageBody(request, requestId, route, startTime);
     if (parsed.response) {
@@ -314,6 +281,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       requestId
     );
   } catch (error) {
+    if (error instanceof AppError) {
+      const duration = Date.now() - startTime;
+      recordRequest('POST', `/api/messages/${params.conversationId ?? 'unknown'}`, error.statusCode, duration);
+      return apiErrorFrom(error, requestId);
+    }
+
     const duration = Date.now() - startTime;
     const statusCode =
       error instanceof Error && (error.message.includes('Access denied') || error.message.includes('Unauthorized'))
@@ -373,16 +346,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    if (!isValidUuid(conversationId)) {
-      recordRequest('DELETE', route, HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Geçersiz konuşma kimliği',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
+    ensureUuid(conversationId, 'konuşma kimliği');
 
     // Verify user is participant (soft delete via archive table concept)
     const conversation = await queryOne(
@@ -430,6 +394,12 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       requestId
     );
   } catch (error) {
+    if (error instanceof AppError) {
+      const duration = Date.now() - startTime;
+      recordRequest('DELETE', `/api/messages/${params.conversationId ?? 'unknown'}`, error.statusCode, duration);
+      return apiErrorFrom(error, requestId);
+    }
+
     const duration = Date.now() - startTime;
     recordRequest('DELETE', `/api/messages/${params.conversationId ?? 'unknown'}`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Delete conversation failed', error instanceof Error ? error : new Error(String(error)));

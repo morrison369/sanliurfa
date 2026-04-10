@@ -23,6 +23,7 @@ function main(): void {
   run('Governance logging guard', 'npm run governance:logging:check');
   run('Governance frontend randomness guard', 'npm run governance:frontend:randomness:check');
   run('Governance runtime placeholder guard', 'npm run governance:runtime:placeholders:check');
+  run('Governance legacy insecure usage guard', 'npm run governance:legacy:insecure:check');
   run('Governance cache redis prohibition guard', 'npm run governance:cache:redis:check');
   run('Governance queryMany prohibition guard', 'npm run governance:querymany:usage:check');
   run('Governance queryMany guard', 'npm run governance:querymany:check');
@@ -41,6 +42,7 @@ function main(): void {
   run('Critical unit smoke', 'npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts');
   run('E2E smoke', 'npm run test:e2e:smoke');
   run('Build', 'npm run build');
+  run('SEO artifacts check', 'npm run seo:artifacts:check');
   console.log('\n[release-gate] OK');
 }
 

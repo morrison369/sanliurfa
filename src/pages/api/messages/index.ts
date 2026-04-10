@@ -1,66 +1,9 @@
 import type { APIRoute } from 'astro';
 import { getConversations, getOrCreateConversation } from '../../../lib/messages';
 import { queryOne } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, validators } from '../../../lib/api';
+import { AppError, apiResponse, apiError, apiErrorFrom, HttpStatus, ErrorCode, getRequestId, parseBoundedInt, parseJsonBody, validators } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
-
-function parseLimit(rawLimit: string | null): number | null {
-  if (rawLimit === null) {
-    return 50;
-  }
-
-  const parsed = Number.parseInt(rawLimit, 10);
-  if (!Number.isFinite(parsed) || parsed < 1) {
-    return null;
-  }
-
-  return Math.min(parsed, 100);
-}
-
-function parseOffset(rawOffset: string | null): number | null {
-  if (rawOffset === null) {
-    return 0;
-  }
-
-  const parsed = Number.parseInt(rawOffset, 10);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    return null;
-  }
-
-  return parsed;
-}
-
-async function parseJsonBody(request: Request, requestId: string, startTime: number) {
-  const contentType = request.headers.get('content-type') || '';
-  if (!contentType.toLowerCase().includes('application/json')) {
-    recordRequest('POST', '/api/messages', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-    return {
-      response: apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Content-Type application/json olmalı',
-        HttpStatus.BAD_REQUEST,
-        { contentType },
-        requestId
-      )
-    };
-  }
-
-  try {
-    return { body: await request.json() };
-  } catch {
-    recordRequest('POST', '/api/messages', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-    return {
-      response: apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Geçersiz JSON body',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      )
-    };
-  }
-}
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
   const requestId = getRequestId({ request } as any);
@@ -73,8 +16,8 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const limit = parseLimit(url.searchParams.get('limit'));
-    const offset = parseOffset(url.searchParams.get('offset'));
+    const limit = parseBoundedInt(url.searchParams.get('limit'), { defaultValue: 50, min: 1, max: 100 });
+    const offset = parseBoundedInt(url.searchParams.get('offset'), { defaultValue: 0, min: 0, allowZero: true });
 
     if (limit === null || offset === null) {
       recordRequest('GET', '/api/messages', HttpStatus.BAD_REQUEST, Date.now() - startTime);
@@ -111,9 +54,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const parsed = await parseJsonBody(request, requestId, startTime);
-    if (parsed.response) {
-      return parsed.response;
+    const parsed = await parseJsonBody(request);
+    if (parsed.error === 'UNSUPPORTED_CONTENT_TYPE') {
+      recordRequest('POST', '/api/messages', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Content-Type application/json olmalı',
+        HttpStatus.BAD_REQUEST,
+        { contentType: parsed.contentType },
+        requestId
+      );
+    }
+
+    if (parsed.error === 'INVALID_JSON') {
+      recordRequest('POST', '/api/messages', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçersiz JSON body',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
     }
 
     const { recipient_id } = parsed.body as { recipient_id?: unknown };
@@ -141,6 +102,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.info('Conversation created', { id: convo.id, userId: locals.user.id });
     return apiResponse({ success: true, data: convo }, HttpStatus.CREATED, requestId);
   } catch (error) {
+    if (error instanceof AppError) {
+      recordRequest('POST', '/api/messages', error.statusCode, Date.now() - startTime);
+      return apiErrorFrom(error, requestId);
+    }
+
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/messages', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Create conversation failed', error instanceof Error ? error : new Error(String(error)));

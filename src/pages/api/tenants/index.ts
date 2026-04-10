@@ -6,42 +6,11 @@
 import type { APIRoute } from 'astro';
 import { createTenant, getTenantBySlug } from '../../../lib/multi-tenant';
 import { queryRows } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { AppError, apiResponse, apiError, apiErrorFrom, HttpStatus, ErrorCode, getRequestId, parseJsonBody } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 const TENANT_SLUG_REGEX = /^[a-z0-9-]{3,50}$/;
-
-async function parseJsonBody(request: Request, requestId: string, startTime: number) {
-  const contentType = request.headers.get('content-type') || '';
-  if (!contentType.toLowerCase().includes('application/json')) {
-    recordRequest('POST', '/api/tenants', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-    return {
-      response: apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Content-Type application/json olmalı',
-        HttpStatus.BAD_REQUEST,
-        { contentType },
-        requestId
-      )
-    };
-  }
-
-  try {
-    return { body: await request.json() };
-  } catch {
-    recordRequest('POST', '/api/tenants', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-    return {
-      response: apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Geçersiz JSON body',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      )
-    };
-  }
-}
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -115,9 +84,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const parsed = await parseJsonBody(request, requestId, startTime);
-    if (parsed.response) {
-      return parsed.response;
+    const parsed = await parseJsonBody(request);
+    if (parsed.error === 'UNSUPPORTED_CONTENT_TYPE') {
+      recordRequest('POST', '/api/tenants', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Content-Type application/json olmalı',
+        HttpStatus.BAD_REQUEST,
+        { contentType: parsed.contentType },
+        requestId
+      );
+    }
+
+    if (parsed.error === 'INVALID_JSON') {
+      recordRequest('POST', '/api/tenants', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçersiz JSON body',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
     }
 
     const { name, slug, description } = parsed.body as {
@@ -204,6 +191,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
+    if (error instanceof AppError) {
+      recordRequest('POST', '/api/tenants', error.statusCode, Date.now() - startTime);
+      return apiErrorFrom(error, requestId);
+    }
+
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/tenants', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
