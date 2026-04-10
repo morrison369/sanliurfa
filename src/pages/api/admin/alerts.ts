@@ -2,6 +2,8 @@ import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { getAlerts, acknowledgeAlert, resolveAlert, performHealthCheck } from '../../../lib/alerts';
 import { logger } from '../../../lib/logging';
+import { recordRequest } from '../../../lib/metrics';
+import { withAdminOpsReadAccess } from '../../../lib/admin-ops-access';
 
 /**
  * GET /api/admin/alerts - Alertleri listele
@@ -14,27 +16,37 @@ import { logger } from '../../../lib/logging';
  */
 export const GET: APIRoute = async ({ request, locals, url }) => {
   const requestId = getRequestId({ request } as any);
+  const startTime = Date.now();
   logger.setRequestId(requestId);
 
-  if (!locals.isAdmin) {
-    return apiError(ErrorCode.FORBIDDEN, 'Yetkisiz', HttpStatus.FORBIDDEN, undefined, requestId);
-  }
-
   try {
-    // Health check çalıştır
-    if (url.searchParams.get('healthCheck') === 'true') {
-      await performHealthCheck();
-    }
+    return await withAdminOpsReadAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/alerts',
+      requestId,
+      startTime,
+      onDenied: (_response, statusCode, duration) => {
+        recordRequest('GET', '/api/admin/alerts', statusCode, duration);
+      },
+      onSuccess: (_response, duration) => {
+        recordRequest('GET', '/api/admin/alerts', HttpStatus.OK, duration);
+      }
+    }, async () => {
+      if (url.searchParams.get('healthCheck') === 'true') {
+        await performHealthCheck();
+      }
 
-    const alerts = await getAlerts({
-      type: (url.searchParams.get('type') || undefined) as any,
-      severity: (url.searchParams.get('severity') || undefined) as any,
-      acknowledged: url.searchParams.get('acknowledged') === 'true' ? true : url.searchParams.get('acknowledged') === 'false' ? false : undefined,
-      limit: parseInt(url.searchParams.get('limit') || '50'),
-      offset: parseInt(url.searchParams.get('offset') || '0')
+      const alerts = await getAlerts({
+        type: (url.searchParams.get('type') || undefined) as any,
+        severity: (url.searchParams.get('severity') || undefined) as any,
+        acknowledged: url.searchParams.get('acknowledged') === 'true' ? true : url.searchParams.get('acknowledged') === 'false' ? false : undefined,
+        limit: parseInt(url.searchParams.get('limit') || '50'),
+        offset: parseInt(url.searchParams.get('offset') || '0')
+      });
+
+      return apiResponse({ alerts, count: alerts.length }, HttpStatus.OK, requestId);
     });
-
-    return apiResponse({ alerts, count: alerts.length }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Alertler alınırken hata', error instanceof Error ? error : new Error(String(error)));
     return apiError(
