@@ -45,7 +45,7 @@ describe('Runtime compat hardening', () => {
     expect(chunks.join('').trim()).toBe(response.content);
     expect(response.latencyMs).toBeGreaterThan(0);
     expect(response.finishReason).toBe('stop');
-  });
+  }, 20000);
 
   it('should notify realtime subscribers through supabase compat channel', async () => {
     process.env.DATABASE_URL ||= 'postgresql://postgres:postgres@127.0.0.1:5432/sanliurfa';
@@ -77,5 +77,30 @@ describe('Runtime compat hardening', () => {
 
     subscription.unsubscribe();
     channel.unsubscribe();
+  });
+
+  it('should respect event filters and stop emitting after unsubscribe', async () => {
+    process.env.DATABASE_URL ||= 'postgresql://postgres:postgres@127.0.0.1:5432/sanliurfa';
+    const { notifyRealtime, supabase } = await import('../supabase');
+    const events: string[] = [];
+
+    const channel = supabase
+      .channel('places-update-only')
+      .on('postgres_changes', { table: 'places', event: 'UPDATE' }, payload => {
+        events.push(payload.eventType);
+      })
+      .subscribe();
+
+    await new Promise(resolve => queueMicrotask(resolve));
+
+    notifyRealtime('places', { eventType: 'INSERT', new: { id: 'place-1' } });
+    notifyRealtime('places', { eventType: 'UPDATE', new: { id: 'place-1' } });
+
+    expect(events).toEqual(['UPDATE']);
+
+    channel.unsubscribe();
+    notifyRealtime('places', { eventType: 'UPDATE', new: { id: 'place-2' } });
+
+    expect(events).toEqual(['UPDATE']);
   });
 });

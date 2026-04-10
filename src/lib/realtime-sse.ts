@@ -48,6 +48,11 @@ class RealtimeManager {
   private notificationEventSource: EventSource | null = null;
   private analyticsEventSource: EventSource | null = null;
   private feedEventSource: EventSource | null = null;
+  private presenceReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private messageReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private notificationReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private analyticsReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private feedReconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private listeners: Map<string, Set<Function>> = new Map();
   private onlineUsers = 0;
   private unreadCount = 0;
@@ -59,6 +64,7 @@ class RealtimeManager {
   private notificationReconnectAttempts = 0;
   private analyticsReconnectAttempts = 0;
   private feedReconnectAttempts = 0;
+  private disconnected = false;
 
   constructor() {
     this.listeners.set('onlineUsers', new Set());
@@ -75,6 +81,8 @@ class RealtimeManager {
    * Connect to SSE endpoint
    */
   connect(): void {
+    this.disconnected = false;
+    this.clearReconnectTimer('presence');
     if (this.eventSource) {
       this.eventSource.close();
     }
@@ -143,6 +151,10 @@ class RealtimeManager {
    * Reconnect with exponential backoff
    */
   private reconnect(): void {
+    if (this.disconnected || this.presenceReconnectTimer) {
+      return;
+    }
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max reconnect attempts reached, giving up');
       return;
@@ -152,7 +164,12 @@ class RealtimeManager {
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
     console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
-    setTimeout(() => this.connect(), delay);
+    this.presenceReconnectTimer = setTimeout(() => {
+      this.presenceReconnectTimer = null;
+      if (!this.disconnected) {
+        this.connect();
+      }
+    }, delay);
   }
 
   /**
@@ -222,6 +239,8 @@ class RealtimeManager {
    * Connect to messaging SSE endpoint (for authenticated users)
    */
   connectToMessages(): void {
+    this.disconnected = false;
+    this.clearReconnectTimer('message');
     if (this.messageEventSource) {
       this.messageEventSource.close();
     }
@@ -277,6 +296,10 @@ class RealtimeManager {
    * Reconnect messages SSE with exponential backoff
    */
   private reconnectMessages(): void {
+    if (this.disconnected || this.messageReconnectTimer) {
+      return;
+    }
+
     if (this.messageReconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max message reconnect attempts reached');
       return;
@@ -286,7 +309,12 @@ class RealtimeManager {
     const delay = this.reconnectDelay * Math.pow(2, this.messageReconnectAttempts - 1);
 
     console.log(`Reconnecting messages in ${delay}ms (attempt ${this.messageReconnectAttempts})`);
-    setTimeout(() => this.connectToMessages(), delay);
+    this.messageReconnectTimer = setTimeout(() => {
+      this.messageReconnectTimer = null;
+      if (!this.disconnected) {
+        this.connectToMessages();
+      }
+    }, delay);
   }
 
   /**
@@ -316,6 +344,8 @@ class RealtimeManager {
    * Connect to notifications SSE endpoint (for authenticated users)
    */
   connectToNotifications(): void {
+    this.disconnected = false;
+    this.clearReconnectTimer('notification');
     if (this.notificationEventSource) {
       this.notificationEventSource.close();
     }
@@ -374,6 +404,10 @@ class RealtimeManager {
    * Reconnect notifications SSE with exponential backoff
    */
   private reconnectNotifications(): void {
+    if (this.disconnected || this.notificationReconnectTimer) {
+      return;
+    }
+
     if (this.notificationReconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max notification reconnect attempts reached');
       return;
@@ -383,7 +417,12 @@ class RealtimeManager {
     const delay = this.reconnectDelay * Math.pow(2, this.notificationReconnectAttempts - 1);
 
     console.log(`Reconnecting notifications in ${delay}ms (attempt ${this.notificationReconnectAttempts})`);
-    setTimeout(() => this.connectToNotifications(), delay);
+    this.notificationReconnectTimer = setTimeout(() => {
+      this.notificationReconnectTimer = null;
+      if (!this.disconnected) {
+        this.connectToNotifications();
+      }
+    }, delay);
   }
 
   /**
@@ -409,6 +448,8 @@ class RealtimeManager {
    * Connect to analytics SSE endpoint (for admin users)
    */
   connectToAnalytics(): void {
+    this.disconnected = false;
+    this.clearReconnectTimer('analytics');
     if (this.analyticsEventSource) {
       this.analyticsEventSource.close();
     }
@@ -469,6 +510,10 @@ class RealtimeManager {
    * Reconnect analytics SSE with exponential backoff
    */
   private reconnectAnalytics(): void {
+    if (this.disconnected || this.analyticsReconnectTimer) {
+      return;
+    }
+
     if (this.analyticsReconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max analytics reconnect attempts reached');
       return;
@@ -478,7 +523,12 @@ class RealtimeManager {
     const delay = this.reconnectDelay * Math.pow(2, this.analyticsReconnectAttempts - 1);
 
     console.log(`Reconnecting analytics in ${delay}ms (attempt ${this.analyticsReconnectAttempts})`);
-    setTimeout(() => this.connectToAnalytics(), delay);
+    this.analyticsReconnectTimer = setTimeout(() => {
+      this.analyticsReconnectTimer = null;
+      if (!this.disconnected) {
+        this.connectToAnalytics();
+      }
+    }, delay);
   }
 
   /**
@@ -509,6 +559,8 @@ class RealtimeManager {
    * Connect to social feed SSE endpoint (for authenticated users)
    */
   connectToFeed(): void {
+    this.disconnected = false;
+    this.clearReconnectTimer('feed');
     if (this.feedEventSource) {
       this.feedEventSource.close();
     }
@@ -563,6 +615,10 @@ class RealtimeManager {
    * Reconnect feed SSE with exponential backoff
    */
   private reconnectFeed(): void {
+    if (this.disconnected || this.feedReconnectTimer) {
+      return;
+    }
+
     if (this.feedReconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max feed reconnect attempts reached');
       return;
@@ -572,7 +628,29 @@ class RealtimeManager {
     const delay = this.reconnectDelay * Math.pow(2, this.feedReconnectAttempts - 1);
 
     console.log(`Reconnecting feed in ${delay}ms (attempt ${this.feedReconnectAttempts})`);
-    setTimeout(() => this.connectToFeed(), delay);
+    this.feedReconnectTimer = setTimeout(() => {
+      this.feedReconnectTimer = null;
+      if (!this.disconnected) {
+        this.connectToFeed();
+      }
+    }, delay);
+  }
+
+  private clearReconnectTimer(kind: 'presence' | 'message' | 'notification' | 'analytics' | 'feed'): void {
+    const timerMap = {
+      presence: 'presenceReconnectTimer',
+      message: 'messageReconnectTimer',
+      notification: 'notificationReconnectTimer',
+      analytics: 'analyticsReconnectTimer',
+      feed: 'feedReconnectTimer'
+    } as const;
+
+    const timerKey = timerMap[kind];
+    const timer = this[timerKey];
+    if (timer) {
+      clearTimeout(timer);
+      this[timerKey] = null;
+    }
   }
 
   /**
@@ -591,6 +669,13 @@ class RealtimeManager {
    * Disconnect from SSE
    */
   disconnect(): void {
+    this.disconnected = true;
+    this.clearReconnectTimer('presence');
+    this.clearReconnectTimer('message');
+    this.clearReconnectTimer('notification');
+    this.clearReconnectTimer('analytics');
+    this.clearReconnectTimer('feed');
+
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;

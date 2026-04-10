@@ -118,6 +118,13 @@ function createCompatChannel(name: string): CompatChannel {
       return channel;
     },
     subscribe: (callback) => {
+      if (subscribed) {
+        queueMicrotask(() => {
+          callback?.('SUBSCRIBED');
+        });
+        return channel;
+      }
+
       subscribed = true;
       realtimeChannels.add(channel);
       queueMicrotask(() => {
@@ -126,6 +133,7 @@ function createCompatChannel(name: string): CompatChannel {
       return channel;
     },
     unsubscribe: () => {
+      if (!subscribed) return;
       subscribed = false;
       realtimeChannels.delete(channel);
       logger.debug('Supabase compat channel unsubscribed', { name });
@@ -139,6 +147,18 @@ function createCompatChannel(name: string): CompatChannel {
         }
 
         if (handler.filter?.table && normalized.table && handler.filter.table !== normalized.table) {
+          return;
+        }
+
+        if (handler.filter?.table && !normalized.table) {
+          return;
+        }
+
+        if (handler.filter?.schema && handler.filter.schema !== normalized.schema) {
+          return;
+        }
+
+        if (handler.filter?.event && handler.filter.event !== normalized.eventType) {
           return;
         }
 
