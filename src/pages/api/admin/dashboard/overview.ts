@@ -10,7 +10,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import {
-  classifyArtifactFreshnessStatus,
+  buildArtifactHealth,
   classifyIntegrationStatus,
   classifyNightlyStatus,
   classifyOverallOpsStatus,
@@ -103,42 +103,26 @@ export const GET: APIRoute = async ({ request, locals }) => {
           operational,
           performanceOptimization,
           artifactHealth: {
-            releaseGate: {
+            releaseGate: buildArtifactHealth({
+              kind: 'releaseGate',
               available: releaseGate.available,
-              generatedAt: releaseGate.generatedAt,
-              status: classifyArtifactFreshnessStatus({
-                available: releaseGate.available,
-                generatedAt: releaseGate.generatedAt,
-                degradedAfterHours: 24
-              })
-            },
-            nightlyRegression: {
+              generatedAt: releaseGate.generatedAt
+            }),
+            nightlyRegression: buildArtifactHealth({
+              kind: 'nightlyRegression',
               available: nightly.regression.available,
-              generatedAt: nightly.regression.generatedAt,
-              status: classifyArtifactFreshnessStatus({
-                available: nightly.regression.available,
-                generatedAt: nightly.regression.generatedAt,
-                degradedAfterHours: 36
-              })
-            },
-            nightlyE2E: {
+              generatedAt: nightly.regression.generatedAt
+            }),
+            nightlyE2E: buildArtifactHealth({
+              kind: 'nightlyE2E',
               available: nightly.e2e.available,
-              generatedAt: nightly.e2e.generatedAt,
-              status: classifyArtifactFreshnessStatus({
-                available: nightly.e2e.available,
-                generatedAt: nightly.e2e.generatedAt,
-                degradedAfterHours: 36
-              })
-            },
-            performanceOps: {
+              generatedAt: nightly.e2e.generatedAt
+            }),
+            performanceOps: buildArtifactHealth({
+              kind: 'performanceOps',
               available: Boolean(performanceOptimization?.generatedAt),
-              generatedAt: performanceOptimization?.generatedAt ?? null,
-              status: classifyArtifactFreshnessStatus({
-                available: Boolean(performanceOptimization?.generatedAt),
-                generatedAt: performanceOptimization?.generatedAt ?? null,
-                degradedAfterHours: 24
-              })
-            }
+              generatedAt: performanceOptimization?.generatedAt ?? null
+            })
           },
           releaseGate,
           nightly,

@@ -156,14 +156,17 @@ describe('runtime admin ops contracts', () => {
     expect(body.data.checks.database.status).toBe('up');
     expect(body.data.checks.redis.status).toBe('down');
     expect(body.data.checks.artifacts.releaseGate).toEqual({
+      available: true,
       status: 'healthy',
       generatedAt: '2026-04-10T08:00:00.000Z',
     });
     expect(body.data.checks.artifacts.nightlyRegression).toEqual({
+      available: true,
       status: 'healthy',
       generatedAt: '2026-04-10T07:00:00.000Z',
     });
     expect(body.data.checks.artifacts.nightlyE2E).toEqual({
+      available: false,
       status: 'blocked',
       generatedAt: null,
     });

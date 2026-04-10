@@ -339,26 +339,29 @@ const openApiSpec = {
                                 releaseGate: {
                                   type: 'object',
                                   properties: {
+                                    available: { type: 'boolean' },
                                     status: healthStatusSchema,
                                     generatedAt: { type: ['string', 'null'], format: 'date-time' },
                                   },
-                                  required: ['status', 'generatedAt'],
+                                  required: ['available', 'status', 'generatedAt'],
                                 },
                                 nightlyRegression: {
                                   type: 'object',
                                   properties: {
+                                    available: { type: 'boolean' },
                                     status: healthStatusSchema,
                                     generatedAt: { type: ['string', 'null'], format: 'date-time' },
                                   },
-                                  required: ['status', 'generatedAt'],
+                                  required: ['available', 'status', 'generatedAt'],
                                 },
                                 nightlyE2E: {
                                   type: 'object',
                                   properties: {
+                                    available: { type: 'boolean' },
                                     status: healthStatusSchema,
                                     generatedAt: { type: ['string', 'null'], format: 'date-time' },
                                   },
-                                  required: ['status', 'generatedAt'],
+                                  required: ['available', 'status', 'generatedAt'],
                                 },
                               },
                               required: ['releaseGate', 'nightlyRegression', 'nightlyE2E'],

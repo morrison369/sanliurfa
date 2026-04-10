@@ -1,5 +1,14 @@
 export type AdminStatusLevel = 'healthy' | 'degraded' | 'blocked';
 
+export const ARTIFACT_FRESHNESS_HOURS = {
+  releaseGate: 24,
+  nightlyRegression: 36,
+  nightlyE2E: 36,
+  performanceOps: 24,
+} as const;
+
+export type ArtifactFreshnessKind = keyof typeof ARTIFACT_FRESHNESS_HOURS;
+
 export function classifyIntegrationStatus(options: {
   configuredCount: number;
   total: number;
@@ -103,4 +112,20 @@ export function classifyArtifactFreshnessStatus(options: {
   }
 
   return 'healthy';
+}
+
+export function buildArtifactHealth(options: {
+  kind: ArtifactFreshnessKind;
+  available: boolean;
+  generatedAt: string | null;
+}) {
+  return {
+    available: options.available,
+    generatedAt: options.generatedAt,
+    status: classifyArtifactFreshnessStatus({
+      available: options.available,
+      generatedAt: options.generatedAt,
+      degradedAfterHours: ARTIFACT_FRESHNESS_HOURS[options.kind],
+    }),
+  };
 }

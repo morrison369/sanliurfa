@@ -23,6 +23,8 @@ describe('openapi runtime contracts', () => {
     expect(detailedStatusEnum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(oauthStatusEnum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(detailedArtifactSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E']);
+    expect(detailedArtifactSchema.properties.releaseGate.required).toEqual(['available', 'status', 'generatedAt']);
+    expect(detailedArtifactSchema.properties.releaseGate.properties.available.type).toBe('boolean');
     expect(detailedArtifactSchema.properties.releaseGate.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(detailedArtifactSchema.properties.releaseGate.properties.generatedAt.type).toEqual(['string', 'null']);
   });

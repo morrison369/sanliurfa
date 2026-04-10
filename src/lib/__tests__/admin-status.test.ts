@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ARTIFACT_FRESHNESS_HOURS,
+  buildArtifactHealth,
   classifyOverallOpsStatus,
   classifyThresholdStatus,
   classifyIntegrationStatus,
@@ -54,5 +56,32 @@ describe('admin status helpers', () => {
       generatedAt: new Date().toISOString(),
       degradedAfterHours: 24
     })).toBe('healthy');
+  });
+
+  it('builds artifact health with shared freshness thresholds', () => {
+    expect(ARTIFACT_FRESHNESS_HOURS.releaseGate).toBe(24);
+    expect(ARTIFACT_FRESHNESS_HOURS.performanceOps).toBe(24);
+    expect(ARTIFACT_FRESHNESS_HOURS.nightlyRegression).toBe(36);
+    expect(ARTIFACT_FRESHNESS_HOURS.nightlyE2E).toBe(36);
+
+    expect(buildArtifactHealth({
+      kind: 'releaseGate',
+      available: false,
+      generatedAt: null
+    })).toEqual({
+      available: false,
+      generatedAt: null,
+      status: 'blocked'
+    });
+
+    expect(buildArtifactHealth({
+      kind: 'nightlyRegression',
+      available: true,
+      generatedAt: new Date().toISOString()
+    })).toEqual({
+      available: true,
+      generatedAt: expect.any(String),
+      status: 'healthy'
+    });
   });
 });
