@@ -307,4 +307,61 @@ describe('Email contracts hardening', () => {
       expect.objectContaining({ status: 'completed', send_count: 1 })
     );
   });
+
+  it('should track sent events with original campaign id type', async () => {
+    queryOneMock.mockResolvedValue({
+      id: 'campaign-1',
+      name: 'Launch',
+      subject: 'Subject',
+      from_name: 'Ops',
+      from_email: 'ops@example.com',
+      html_content: '<p>Hello</p>',
+      text_content: 'Hello',
+      segment: 'all_users',
+      segment_filters: null,
+      scheduled_at: null,
+      status: 'draft',
+      send_count: 0,
+      open_count: 0,
+      click_count: 0,
+      unsubscribe_count: 0,
+      bounce_count: 0,
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z'
+    });
+    queryRowsMock.mockResolvedValue([{ id: 'user-1', email: 'one@example.com' }]);
+    shouldNotifyMock.mockResolvedValue(true);
+    sendEmailMock.mockResolvedValue(true);
+    updateMock.mockResolvedValue({ id: 'campaign-1' });
+
+    const { sendCampaign } = await import('../email-campaigns');
+    await sendCampaign('campaign-1', false);
+
+    expect(queryOneMock).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO campaign_tracking'),
+      ['campaign-1', 'user-1', 'sent', null]
+    );
+  });
+
+  it('should return false when tracking insert fails', async () => {
+    queryOneMock.mockRejectedValueOnce(new Error('db down'));
+    const { trackCampaignEvent } = await import('../email-campaigns');
+
+    const result = await trackCampaignEvent('campaign-1', 'user-1', 'open');
+    expect(result).toBe(false);
+  });
+
+  it('should skip aggregate update for unknown tracking event types', async () => {
+    queryOneMock.mockResolvedValue({ id: 'tracked-1' });
+    const { trackCampaignEvent } = await import('../email-campaigns');
+
+    const result = await trackCampaignEvent('campaign-1', 'user-1', 'delivered');
+
+    expect(result).toBe(true);
+    expect(queryOneMock).toHaveBeenCalledTimes(1);
+    expect(queryOneMock).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO campaign_tracking'),
+      ['campaign-1', 'user-1', 'delivered', null]
+    );
+  });
 });

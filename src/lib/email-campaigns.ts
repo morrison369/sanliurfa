@@ -318,7 +318,7 @@ export async function sendCampaign(campaignId: number | string, testMode: boolea
         if (success) {
           sentCount++;
           // Track sent event
-          await trackCampaignEvent(Number(campaignId), user.id, 'sent');
+          await trackCampaignEvent(campaignId, user.id, 'sent');
         } else {
           failedCount++;
         }
@@ -371,7 +371,7 @@ export async function scheduleCampaign(campaignId: number | string, scheduledAt:
 /**
  * Track campaign events (opens, clicks, unsubscribes)
  */
-export async function trackCampaignEvent(campaignId: number, userId: string, eventType: string, linkUrl?: string): Promise<boolean> {
+export async function trackCampaignEvent(campaignId: number | string, userId: string, eventType: string, linkUrl?: string): Promise<boolean> {
   try {
     const query = `
       INSERT INTO campaign_tracking

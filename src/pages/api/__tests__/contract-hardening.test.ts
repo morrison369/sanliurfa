@@ -7,6 +7,7 @@ const sendMessageMock = vi.fn();
 const markConversationReadMock = vi.fn();
 const queryOneMock = vi.fn();
 const queryMock = vi.fn();
+const updateDbMock = vi.fn();
 const isUserBlockedMock = vi.fn();
 const deleteCacheMock = vi.fn();
 const recordRequestMock = vi.fn();
@@ -43,7 +44,7 @@ vi.mock('../../../lib/postgres', () => ({
   queryOne: queryOneMock,
   query: queryMock,
   insert: vi.fn(),
-  update: vi.fn(),
+  update: updateDbMock,
 }));
 
 vi.mock('../../../lib/blocking', () => ({
@@ -101,6 +102,7 @@ describe('API contract hardening', () => {
     vi.resetAllMocks();
     queryMock.mockResolvedValue({ rows: [], rowCount: 0 });
     queryOneMock.mockResolvedValue(null);
+    updateDbMock.mockResolvedValue({});
     isUserBlockedMock.mockResolvedValue(false);
     addTenantMemberMock.mockResolvedValue({ id: 'member-1' });
     removeTenantMemberMock.mockResolvedValue(true);
@@ -346,6 +348,25 @@ describe('API contract hardening', () => {
     expect(removeTenantMemberMock).not.toHaveBeenCalled();
   });
 
+  it('returns not found when deleting a tenant member that does not exist', async () => {
+    const { DELETE } = await import('../tenants/[tenantId]/members.ts');
+    queryOneMock.mockResolvedValueOnce({ owner_id: '11111111-1111-1111-1111-111111111111' });
+    removeTenantMemberMock.mockResolvedValueOnce(false);
+
+    const request = new Request('https://example.com/api/tenants/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/members?user_id=22222222-2222-2222-2222-222222222222', {
+      method: 'DELETE'
+    });
+
+    const response = await DELETE({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { tenantId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' },
+      url: new URL(request.url),
+    } as any);
+
+    expect(response.status).toBe(404);
+  });
+
   it('returns conflict when tenant member already exists', async () => {
     const { POST } = await import('../tenants/[tenantId]/members.ts');
     queryOneMock
@@ -512,6 +533,50 @@ describe('API contract hardening', () => {
     vi.unstubAllGlobals();
   });
 
+  it('sets secure cookie when request is behind https proxy', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: 'access-token' }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        id: 'provider-user',
+        email: 'oauth@example.com',
+        name: 'OAuth User'
+      }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { GET } = await import('../auth/oauth/callback.ts');
+    verifyOAuthStateMock.mockResolvedValue({
+      provider_key: 'google',
+      redirect_uri: 'http://example.com/api/auth/oauth/callback'
+    });
+    getOAuthProviderMock.mockResolvedValue({
+      provider_key: 'google',
+      client_id: 'client-id',
+      client_secret: 'client-secret',
+      authorization_url: 'https://example.com/oauth/authorize',
+      token_url: 'https://example.com/oauth/token',
+      userinfo_url: 'https://example.com/oauth/userinfo'
+    });
+    queryOneMock.mockResolvedValueOnce({ id: '11111111-1111-1111-1111-111111111111' });
+
+    const request = new Request('http://example.com/api/auth/oauth/callback?code=abc&state=state-1', {
+      headers: {
+        'user-agent': 'Mozilla/5.0',
+        'x-forwarded-for': '127.0.0.1',
+        'x-forwarded-proto': 'https'
+      }
+    });
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Set-Cookie') || '').toContain('Secure');
+
+    vi.unstubAllGlobals();
+  });
+
   it('rejects stripe webhook without signature header', async () => {
     const { POST } = await import('../webhooks/stripe.ts');
     const request = new Request('https://example.com/api/webhooks/stripe', {
@@ -585,6 +650,67 @@ describe('API contract hardening', () => {
       expect.stringContaining("UPDATE webhook_deliveries"),
       ['delivery-1', JSON.stringify({ received: true })]
     );
+  });
+
+  it('processes customer.subscription.deleted and records cancellation flow', async () => {
+    const { POST } = await import('../webhooks/stripe.ts');
+    verifyWebhookSignatureMock.mockResolvedValueOnce({
+      id: 'evt_sub_deleted',
+      type: 'customer.subscription.deleted',
+      data: { object: { id: 'sub_deleted_1' } }
+    });
+    queryOneMock
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'delivery-sub-1' })
+      .mockResolvedValueOnce({ id: 'sub-1', user_id: '11111111-1111-1111-1111-111111111111', tier_id: 'tier-pro' });
+
+    const request = new Request('https://example.com/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig' },
+      body: JSON.stringify({ id: 'evt_sub_deleted' })
+    });
+
+    const response = await POST({ request } as any);
+
+    expect(response.status).toBe(200);
+    expect(updateDbMock).toHaveBeenCalledWith(
+      'subscriptions',
+      'sub-1',
+      expect.objectContaining({ status: 'cancelled' })
+    );
+    expect(emailOnSubscriptionCancelledMock).toHaveBeenCalledWith(
+      '11111111-1111-1111-1111-111111111111',
+      'tier-pro',
+      expect.any(Date)
+    );
+  });
+
+  it('keeps message delete idempotent for same participant conversation', async () => {
+    const { DELETE } = await import('../messages/[conversationId].ts');
+    queryOneMock.mockResolvedValue({
+      id: '11111111-1111-1111-1111-111111111111',
+      participant_a: '11111111-1111-1111-1111-111111111111',
+      participant_b: '22222222-2222-2222-2222-222222222222'
+    });
+
+    const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111', {
+      method: 'DELETE'
+    });
+
+    const responseA = await DELETE({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { conversationId: '11111111-1111-1111-1111-111111111111' },
+    } as any);
+    const responseB = await DELETE({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { conversationId: '11111111-1111-1111-1111-111111111111' },
+    } as any);
+
+    expect(responseA.status).toBe(200);
+    expect(responseB.status).toBe(200);
+    expect(deleteCacheMock).toHaveBeenCalledTimes(2);
   });
 
   it('retries an existing incomplete stripe delivery before completing it', async () => {
