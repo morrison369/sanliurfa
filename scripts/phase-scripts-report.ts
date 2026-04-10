@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { getPhaseCompatMap } from './phase-compat-manifest';
 
 interface PackageJson {
   scripts?: Record<string, string>;
@@ -56,7 +57,10 @@ export function renderScriptSurfaceReport(report: ScriptSurfaceReport): string {
 export function main(): void {
   const packagePath = resolve(process.cwd(), 'package.json');
   const packageJson = JSON.parse(readFileSync(packagePath, 'utf8')) as PackageJson;
-  const report = buildScriptSurfaceReport(packageJson.scripts ?? {});
+  const report = buildScriptSurfaceReport({
+    ...(packageJson.scripts ?? {}),
+    ...getPhaseCompatMap()
+  });
   process.stdout.write(`${renderScriptSurfaceReport(report)}\n`);
 }
 

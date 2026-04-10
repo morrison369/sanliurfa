@@ -18,6 +18,7 @@ import {
 import { getNightlyOpsSummary } from '../../../../lib/nightly-ops-summary';
 import { getReleaseGateSummary } from '../../../../lib/release-gate-summary';
 import { getAdminArtifactHealthSnapshot, summarizeArtifactHealth } from '../../../../lib/artifact-health';
+import { ensureAdminOpsReadAccess, logAdminOpsRead } from '../../../../lib/admin-ops-access';
 import {
   getRuntimeIntegrationSettings,
   verifyRuntimeIntegrationSettings
@@ -29,18 +30,18 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    const user = locals.user;
-
-    // Check admin access
-    if (!user || user.role !== 'admin') {
-      recordRequest('GET', '/api/admin/dashboard/overview', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(
-        ErrorCode.FORBIDDEN,
-        'Admin erişimi gereklidir',
-        HttpStatus.FORBIDDEN,
-        undefined,
-        requestId
-      );
+    const accessResponse = ensureAdminOpsReadAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/dashboard/overview',
+      requestId,
+      startTime
+    });
+    if (accessResponse) {
+      const statusCode = accessResponse.status;
+      recordRequest('GET', '/api/admin/dashboard/overview', statusCode, Date.now() - startTime);
+      logAdminOpsRead({ endpoint: '/api/admin/dashboard/overview', request, locals, statusCode, duration: Date.now() - startTime });
+      return accessResponse;
     }
 
     const url = new URL(request.url);
@@ -78,6 +79,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/dashboard/overview', HttpStatus.OK, duration);
+    logAdminOpsRead({ endpoint: '/api/admin/dashboard/overview', request, locals, statusCode: HttpStatus.OK, duration });
 
     return apiResponse(
       {

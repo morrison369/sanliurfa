@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { withPhaseLock } from './phase-lock';
+import { resolvePhaseCompatCommand } from './phase-compat-manifest';
 
 export interface PhasePipelineOptions {
   phaseScript?: string;
@@ -77,6 +78,18 @@ export function buildPipelineStepInvocation(
       shell: false,
       env: pipelineEnv
     };
+  }
+
+  if (step.command === 'npm' && step.args[0] === 'run') {
+    const compatCommand = resolvePhaseCompatCommand(step.args[1]);
+    if (compatCommand) {
+      return {
+        command: compatCommand,
+        args: [],
+        shell: true,
+        env: pipelineEnv
+      };
+    }
   }
 
   return {

@@ -9,6 +9,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { getArtifactHealthSnapshot, summarizeArtifactHealth } from '../../../../lib/artifact-health';
+import { ensureAdminOpsReadAccess, logAdminOpsRead } from '../../../../lib/admin-ops-access';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -16,9 +17,18 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
-      recordRequest('GET', '/api/admin/performance/optimization', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
+    const accessResponse = ensureAdminOpsReadAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/performance/optimization',
+      requestId,
+      startTime
+    });
+    if (accessResponse) {
+      const statusCode = accessResponse.status;
+      recordRequest('GET', '/api/admin/performance/optimization', statusCode, Date.now() - startTime);
+      logAdminOpsRead({ endpoint: '/api/admin/performance/optimization', request, locals, statusCode, duration: Date.now() - startTime });
+      return accessResponse;
     }
 
     // Collect performance data
@@ -75,6 +85,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/performance/optimization', HttpStatus.OK, duration);
+    logAdminOpsRead({ endpoint: '/api/admin/performance/optimization', request, locals, statusCode: HttpStatus.OK, duration });
     logger.info('Performance optimization data retrieved', { slowQueries: slowQueries.length, duration });
 
     return apiResponse(

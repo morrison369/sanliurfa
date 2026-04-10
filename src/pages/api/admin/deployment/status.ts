@@ -9,6 +9,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
 import { getAdminArtifactHealthSnapshot, summarizeArtifactHealth } from '../../../../lib/artifact-health';
+import { ensureAdminOpsReadAccess, logAdminOpsRead } from '../../../../lib/admin-ops-access';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -16,9 +17,18 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
-      recordRequest('GET', '/api/admin/deployment/status', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
+    const accessResponse = ensureAdminOpsReadAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/deployment/status',
+      requestId,
+      startTime
+    });
+    if (accessResponse) {
+      const statusCode = accessResponse.status;
+      recordRequest('GET', '/api/admin/deployment/status', statusCode, Date.now() - startTime);
+      logAdminOpsRead({ endpoint: '/api/admin/deployment/status', request, locals, statusCode, duration: Date.now() - startTime });
+      return accessResponse;
     }
 
     const environment = getCurrentEnvironment();
@@ -33,6 +43,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/deployment/status', HttpStatus.OK, duration);
+    logAdminOpsRead({ endpoint: '/api/admin/deployment/status', request, locals, statusCode: HttpStatus.OK, duration });
 
     return apiResponse(
       {

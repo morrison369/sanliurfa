@@ -20,6 +20,7 @@ import { getNightlyOpsSummary } from '../../../../lib/nightly-ops-summary';
 import { getReleaseGateSummary } from '../../../../lib/release-gate-summary';
 import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
 import { getAdminArtifactHealthSnapshot, summarizeArtifactHealth } from '../../../../lib/artifact-health';
+import { ensureAdminOpsReadAccess, logAdminOpsRead } from '../../../../lib/admin-ops-access';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -27,11 +28,18 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    const user = locals.user;
-
-    if (!user || user.role !== 'admin') {
-      recordRequest('GET', '/api/admin/system/metrics', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
+    const accessResponse = ensureAdminOpsReadAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/system/metrics',
+      requestId,
+      startTime
+    });
+    if (accessResponse) {
+      const statusCode = accessResponse.status;
+      recordRequest('GET', '/api/admin/system/metrics', statusCode, Date.now() - startTime);
+      logAdminOpsRead({ endpoint: '/api/admin/system/metrics', request, locals, statusCode, duration: Date.now() - startTime });
+      return accessResponse;
     }
 
     const [systemMetrics, modStats, pendingQueue, pendingFlags, integrationSettings, operational, performanceOptimization, nightly, releaseGate] = await Promise.all([
@@ -65,6 +73,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/system/metrics', HttpStatus.OK, duration);
+    logAdminOpsRead({ endpoint: '/api/admin/system/metrics', request, locals, statusCode: HttpStatus.OK, duration });
 
     return apiResponse(
       {

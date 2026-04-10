@@ -1,13 +1,9 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { getPhaseCompatMap, getPhaseCompatOrder, resolvePhaseCompatCommand } from './phase-compat-manifest';
 
 export type Target = 'prev' | 'latest';
-
-interface PackageJson {
-  scripts?: Record<string, string>;
-}
 
 export function getPhaseScriptOrder(scripts: Record<string, string>): string[] {
   const keys = Object.keys(scripts).filter((key) => /^test:phase:\d+-\d+$/.test(key));
@@ -38,6 +34,23 @@ export function selectPhaseScript(target: Target, scripts: Record<string, string
 }
 
 export function runScript(scriptName: string): never | void {
+  const compatCommand = resolvePhaseCompatCommand(scriptName);
+  if (compatCommand) {
+    const compatResult = spawnSync(compatCommand, {
+      stdio: 'inherit',
+      shell: true
+    });
+
+    if (typeof compatResult.status === 'number' && compatResult.status !== 0) {
+      process.exit(compatResult.status);
+    }
+
+    if (compatResult.error) {
+      throw compatResult.error;
+    }
+    return;
+  }
+
   const result = spawnSync('npm', ['run', scriptName], {
     stdio: 'inherit',
     shell: process.platform === 'win32'
@@ -58,9 +71,11 @@ export function main(): void {
     throw new Error('Usage: tsx scripts/phase-runner.ts <prev|latest>');
   }
 
-  const packagePath = resolve(process.cwd(), 'package.json');
-  const packageJson = JSON.parse(readFileSync(packagePath, 'utf8')) as PackageJson;
-  const scripts = packageJson.scripts ?? {};
+  const scripts = getPhaseCompatMap();
+  if (Object.keys(scripts).length === 0) {
+    const available = getPhaseCompatOrder();
+    throw new Error(`No phase compatibility scripts found in manifest. Available: ${available.join(', ')}`);
+  }
   const selected = selectPhaseScript(target, scripts);
   runScript(selected);
 }

@@ -1,4 +1,14 @@
 import type { AdminStatusLevel } from '../lib/admin-status';
+import type { paths } from './generated-admin-api';
+
+type DashboardOverviewResponse =
+  paths['/api/admin/dashboard/overview']['get']['responses']['200']['content']['application/json'];
+type SystemMetricsResponse =
+  paths['/api/admin/system/metrics']['get']['responses']['200']['content']['application/json'];
+type DeploymentStatusResponse =
+  paths['/api/admin/deployment/status']['get']['responses']['200']['content']['application/json'];
+type ArtifactHealthResponse =
+  paths['/api/admin/system/artifact-health']['get']['responses']['200']['content']['application/json'];
 
 export interface IntegrationVerificationState {
   status: string;
@@ -82,7 +92,15 @@ export interface ArtifactHealthSummary {
   total: number;
 }
 
-export interface AdminDashboardOverviewData {
+export interface AdminDashboardOverviewData extends DashboardOverviewResponse['data']['data'] {
+  metrics: SystemMetricsResponse['data']['data'];
+}
+
+export type AdminSystemMetricsData = SystemMetricsResponse['data']['data'];
+export type AdminDeploymentStatusData = DeploymentStatusResponse['data']['data'];
+export type AdminArtifactHealthData = ArtifactHealthResponse['data']['data'];
+
+export interface AdminDashboardOverviewLegacyShape {
   overview: {
     users: { total: number; new: number; active: number };
     content: { places: number; reviews: number; comments: number; newReviews: number };
@@ -140,4 +158,3 @@ export interface AdminDashboardOverviewData {
     overall: AdminStatusLevel;
   };
 }
-

@@ -1,18 +1,12 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getPhaseScriptOrder, runScript } from './phase-runner';
-
-interface PackageJson {
-  scripts?: Record<string, string>;
-}
+import { getPhaseCompatMap } from './phase-compat-manifest';
 
 type Mode = 'range' | 'batch';
 
 function readScripts(): Record<string, string> {
-  const packagePath = resolve(process.cwd(), 'package.json');
-  const packageJson = JSON.parse(readFileSync(packagePath, 'utf8')) as PackageJson;
-  return packageJson.scripts ?? {};
+  return getPhaseCompatMap();
 }
 
 export function toScriptName(range: string): string {
