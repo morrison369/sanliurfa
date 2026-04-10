@@ -9,15 +9,47 @@ const queryOneMock = vi.fn();
 const updateMock = vi.fn();
 const runSecurityAuditMock = vi.fn();
 const generateAuditReportHTMLMock = vi.fn();
+const getUserUsageMock = vi.fn();
+const resetUsageMock = vi.fn();
+const updateUserQuotasMock = vi.fn();
+const generateUserReportMock = vi.fn();
+const generatePlacesReportMock = vi.fn();
+const generateReviewsReportMock = vi.fn();
+const generateRevenueReportMock = vi.fn();
+const generateEngagementReportMock = vi.fn();
+const getSummaryStatsMock = vi.fn();
+const reportToCSVMock = vi.fn();
+const reportToJSONMock = vi.fn();
+const approveVendorMock = vi.fn();
+const rejectVendorMock = vi.fn();
 const loggerMock = {
   setRequestId: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
   info: vi.fn(),
   debug: vi.fn(),
+  logMutation: vi.fn(),
 };
 
 vi.mock('../../../lib/admin-ops-access', () => ({
+  withAdminOpsReadAccess: async (options: { locals?: { isAdmin?: boolean; user?: { role?: string } } }, handler: () => Promise<Response>) => {
+    if (options.locals?.isAdmin || options.locals?.user?.role === 'admin') {
+      return handler();
+    }
+
+    return new Response(
+      JSON.stringify({
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Admin access required',
+        },
+      }),
+      {
+        status: 403,
+        headers: { 'content-type': 'application/json' },
+      }
+    );
+  },
   withAdminOpsWriteAccess: async (options: { locals?: { isAdmin?: boolean; user?: { role?: string } } }, handler: () => Promise<Response>) => {
     if (options.locals?.isAdmin || options.locals?.user?.role === 'admin') {
       return handler();
@@ -65,6 +97,28 @@ vi.mock('../../../lib/security-audit', () => ({
   generateAuditReportHTML: generateAuditReportHTMLMock,
 }));
 
+vi.mock('../../../lib/usage-tracking', () => ({
+  getUserUsage: getUserUsageMock,
+  resetUsage: resetUsageMock,
+  updateUserQuotas: updateUserQuotasMock,
+}));
+
+vi.mock('../../../lib/reporting', () => ({
+  generateUserReport: generateUserReportMock,
+  generatePlacesReport: generatePlacesReportMock,
+  generateReviewsReport: generateReviewsReportMock,
+  generateRevenueReport: generateRevenueReportMock,
+  generateEngagementReport: generateEngagementReportMock,
+  getSummaryStats: getSummaryStatsMock,
+  reportToCSV: reportToCSVMock,
+  reportToJSON: reportToJSONMock,
+}));
+
+vi.mock('../../../lib/vendor-onboarding', () => ({
+  approveVendor: approveVendorMock,
+  rejectVendor: rejectVendorMock,
+}));
+
 vi.mock('../../../lib/logging', () => ({
   logger: loggerMock,
 }));
@@ -97,6 +151,26 @@ describe('admin write access contracts', () => {
     updateMock.mockResolvedValue(true);
     runSecurityAuditMock.mockResolvedValue({ overallScore: 91 });
     generateAuditReportHTMLMock.mockReturnValue('<html><body>ok</body></html>');
+    getUserUsageMock.mockResolvedValue([
+      {
+        featureName: 'featured_listing',
+        currentUsage: 2,
+        limitValue: 5,
+        resetDate: '2026-04-11T00:00:00.000Z',
+      },
+    ]);
+    resetUsageMock.mockResolvedValue(undefined);
+    updateUserQuotasMock.mockResolvedValue(undefined);
+    generateUserReportMock.mockResolvedValue([{ id: 'u1' }]);
+    generatePlacesReportMock.mockResolvedValue([{ id: 'p1' }]);
+    generateReviewsReportMock.mockResolvedValue([{ id: 'r1' }]);
+    generateRevenueReportMock.mockResolvedValue([{ id: 'rev1' }]);
+    generateEngagementReportMock.mockResolvedValue([{ id: 'eng1' }]);
+    getSummaryStatsMock.mockReturnValue({ total: 1 });
+    reportToCSVMock.mockReturnValue('id\nu1');
+    reportToJSONMock.mockReturnValue('{"ok":true}');
+    approveVendorMock.mockResolvedValue(true);
+    rejectVendorMock.mockResolvedValue(true);
   });
 
   it('rejects unauthorized alert mutation', async () => {
@@ -207,5 +281,98 @@ describe('admin write access contracts', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('text/html');
     expect(generateAuditReportHTMLMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns quotas for admins via standardized read access', async () => {
+    const { GET } = await import('../admin/quotas/[userId].ts');
+    const request = new Request('https://example.com/api/admin/quotas/12345678-1234-1234-1234-123456789012');
+
+    const response = await GET({
+      request,
+      locals: { isAdmin: true, user: { id: 'admin-1', role: 'admin' } },
+      params: { userId: '12345678-1234-1234-1234-123456789012' },
+    } as any);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.totalQuotas).toBe(1);
+    expect(body.data.quotas[0].remaining).toBe(3);
+  });
+
+  it('resets quotas for admins via standardized write access', async () => {
+    const { POST } = await import('../admin/quotas/[userId].ts');
+    const request = new Request('https://example.com/api/admin/quotas/12345678-1234-1234-1234-123456789012', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'reset_all' }),
+    });
+
+    const response = await POST({
+      request,
+      locals: { isAdmin: true, user: { id: 'admin-1', role: 'admin' } },
+      params: { userId: '12345678-1234-1234-1234-123456789012' },
+    } as any);
+
+    expect(response.status).toBe(200);
+    expect(updateUserQuotasMock).toHaveBeenCalledWith('12345678-1234-1234-1234-123456789012');
+  });
+
+  it('generates admin report JSON for admins', async () => {
+    const { POST } = await import('../admin/reports/generate.ts');
+    const request = new Request('https://example.com/api/admin/reports/generate', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'users', period: 'weekly', format: 'json' }),
+    });
+
+    const response = await POST({
+      request,
+      locals: { isAdmin: true, user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.success).toBe(true);
+    expect(body.data.data.summary.total).toBe(1);
+  });
+
+  it('approves vendor for admins', async () => {
+    const { POST } = await import('../admin/vendor/[id]/approve.ts');
+    const request = new Request('https://example.com/api/admin/vendor/vendor-1/approve', {
+      method: 'POST',
+    });
+
+    const response = await POST({
+      request,
+      locals: { isAdmin: true, user: { id: 'admin-1', role: 'admin' } },
+      params: { id: 'vendor-1' },
+    } as any);
+
+    expect(response.status).toBe(200);
+    expect(approveVendorMock).toHaveBeenCalledWith('vendor-1');
+  });
+
+  it('rejects vendor with validation for admins', async () => {
+    validateWithSchemaMock.mockReturnValueOnce({
+      valid: true,
+      data: { reason: 'Belgeler eksik ve kriterleri karşılamıyor.' },
+      errors: [],
+    });
+
+    const { POST } = await import('../admin/vendor/[id]/reject.ts');
+    const request = new Request('https://example.com/api/admin/vendor/vendor-1/reject', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ reason: 'Belgeler eksik ve kriterleri karşılamıyor.' }),
+    });
+
+    const response = await POST({
+      request,
+      locals: { isAdmin: true, user: { id: 'admin-1', role: 'admin' } },
+      params: { id: 'vendor-1' },
+    } as any);
+
+    expect(response.status).toBe(200);
+    expect(rejectVendorMock).toHaveBeenCalledWith('vendor-1', 'Belgeler eksik ve kriterleri karşılamıyor.');
   });
 });
