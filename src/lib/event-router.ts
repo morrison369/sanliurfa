@@ -5,7 +5,7 @@
 
 import { logger } from './logger';
 
-interface RoutingRule {
+interface RoutingRuleDefinition {
   id: string;
   pattern: string;
   filter?: (event: any) => boolean;
@@ -29,7 +29,7 @@ interface FilterMetrics {
 }
 
 class EventRouter {
-  private rules: Map<string, RoutingRule> = new Map();
+  private rules: Map<string, RoutingRuleDefinition> = new Map();
   private counter = 0;
   private metrics: FilterMetrics = {
     totalEvents: 0,
@@ -45,7 +45,7 @@ class EventRouter {
     priority?: number;
   }): string {
     const id = `rule-${Date.now()}-${++this.counter}`;
-    const rule: RoutingRule = {
+    const rule: RoutingRuleDefinition = {
       id,
       pattern: config.pattern,
       filter: config.filter,
@@ -137,7 +137,7 @@ class EventRouter {
     return { ...this.metrics };
   }
 
-  getRules(): RoutingRule[] {
+  getRules(): RoutingRuleDefinition[] {
     return Array.from(this.rules.values());
   }
 }
@@ -242,10 +242,10 @@ class EventTransformer {
   }
 }
 
-class RoutingRule {
-  private rules: RoutingRule[] = [];
+class RoutingRuleRegistry {
+  private rules: RoutingRuleDefinition[] = [];
 
-  addRule(rule: RoutingRule): void {
+  addRule(rule: RoutingRuleDefinition): void {
     this.rules.push(rule);
   }
 
@@ -253,7 +253,7 @@ class RoutingRule {
     this.rules = this.rules.filter(r => r.id !== ruleId);
   }
 
-  listRules(): RoutingRule[] {
+  listRules(): RoutingRuleDefinition[] {
     return [...this.rules];
   }
 }
@@ -261,6 +261,6 @@ class RoutingRule {
 export const eventRouter = new EventRouter();
 export const contentFilter = new ContentFilter();
 export const eventTransformer = new EventTransformer();
-export const routingRule = new RoutingRule();
+export const routingRule = new RoutingRuleRegistry();
 
-export { RoutingRule as RoutingRuleType, RoutingResult, FilterMetrics };
+export type { RoutingRuleDefinition as RoutingRule, RoutingResult, FilterMetrics };

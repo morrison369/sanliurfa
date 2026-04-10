@@ -30,7 +30,7 @@ interface ConsumerState {
   lastMessageTime: number;
 }
 
-interface StreamMetrics {
+interface StreamMetricsRecord {
   topic: string;
   messageCount: number;
   throughput: number;
@@ -92,8 +92,8 @@ class MessageBroker {
     }
   }
 
-  getMetrics(): Record<string, StreamMetrics> {
-    const result: Record<string, StreamMetrics> = {};
+  getMetrics(): Record<string, StreamMetricsRecord> {
+    const result: Record<string, StreamMetricsRecord> = {};
 
     for (const message of this.messages.values()) {
       if (!result[message.topic]) {
@@ -213,7 +213,7 @@ class ConsumerGroup {
   }
 }
 
-class StreamMetrics {
+class StreamMetricsTracker {
   private metrics: Map<string, { timestamp: number; count: number }[]> = new Map();
 
   recordMessage(topic: string): void {
@@ -266,6 +266,6 @@ class StreamMetrics {
 export const messageBroker = new MessageBroker();
 export const streamConsumer = StreamConsumer;
 export const consumerGroup = new ConsumerGroup();
-export const streamMetrics = new StreamMetrics();
+export const streamMetrics = new StreamMetricsTracker();
 
-export { Message, ConsumerGroupConfig, ConsumerState, StreamMetrics as StreamMetricsType };
+export type { Message, ConsumerGroupConfig, ConsumerState, StreamMetricsRecord as StreamMetrics };

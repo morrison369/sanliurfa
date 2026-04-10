@@ -29,7 +29,7 @@ interface EventVersion {
   transformations: Array<{ from: number; to: number; transform: (data: any) => any }>;
 }
 
-interface EventSnapshot {
+interface EventSnapshotRecord {
   aggregateId: string;
   aggregateType: string;
   version: number;
@@ -197,7 +197,7 @@ class EventVersionManager {
 }
 
 class EventSnapshot {
-  private snapshots: Map<string, EventSnapshot> = new Map();
+  private snapshots: Map<string, EventSnapshotRecord> = new Map();
   private counter = 0;
 
   createSnapshot(
@@ -205,8 +205,8 @@ class EventSnapshot {
     aggregateType: string,
     version: number,
     state: Record<string, any>
-  ): EventSnapshot {
-    const snapshot: EventSnapshot = {
+  ): EventSnapshotRecord {
+    const snapshot: EventSnapshotRecord = {
       aggregateId,
       aggregateType,
       version,
@@ -224,7 +224,7 @@ class EventSnapshot {
     return snapshot;
   }
 
-  getLatestSnapshot(aggregateId: string): EventSnapshot | undefined {
+  getLatestSnapshot(aggregateId: string): EventSnapshotRecord | undefined {
     const snapshots = Array.from(this.snapshots.values())
       .filter(s => s.aggregateId === aggregateId)
       .sort((a, b) => b.version - a.version);
@@ -294,4 +294,4 @@ export const eventVersionManager = new EventVersionManager();
 export const eventSnapshot = new EventSnapshot();
 export const eventRecovery = new EventRecovery();
 
-export { Event, EventVersion, EventSnapshot as EventSnapshotType, RecoveryPoint };
+export type { Event, EventVersion, EventSnapshotRecord as EventSnapshot, RecoveryPoint };

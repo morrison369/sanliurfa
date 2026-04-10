@@ -5,7 +5,7 @@
 
 import { logger } from './logger';
 
-interface TraceContext {
+interface TraceContextRecord {
   traceId: string;
   spanId: string;
   parentSpanId?: string;
@@ -42,7 +42,7 @@ interface ExportTarget {
 class TraceContext {
   private counter = 0;
 
-  startTrace(operationName: string, parentContext?: TraceContext): TraceContext {
+  startTrace(operationName: string, parentContext?: TraceContextRecord): TraceContextRecord {
     const traceId = parentContext?.traceId || `${Date.now()}-${++this.counter}`;
     const spanId = `span-${Date.now()}-${++this.counter}`;
     const parentSpanId = parentContext?.spanId;
@@ -73,7 +73,7 @@ class TraceContext {
     };
   }
 
-  propagateContext(context: TraceContext): Record<string, string> {
+  propagateContext(context: TraceContextRecord): Record<string, string> {
     return {
       traceparent: context.traceparent,
       tracestate: context.tracestate,
@@ -149,17 +149,17 @@ class SpanManager {
 }
 
 class TraceCollector {
-  private traces: Map<string, TraceContext> = new Map();
+  private traces: Map<string, TraceContextRecord> = new Map();
   private spans: Map<string, Span[]> = new Map();
 
-  collectTrace(trace: TraceContext, spans: Span[]): void {
+  collectTrace(trace: TraceContextRecord, spans: Span[]): void {
     this.traces.set(trace.traceId, trace);
     this.spans.set(trace.traceId, spans);
 
     logger.debug('Trace collected', { traceId: trace.traceId, spanCount: spans.length });
   }
 
-  getTrace(traceId: string): { trace: TraceContext; spans: Span[] } | undefined {
+  getTrace(traceId: string): { trace: TraceContextRecord; spans: Span[] } | undefined {
     const trace = this.traces.get(traceId);
     const spans = this.spans.get(traceId);
 
@@ -170,7 +170,7 @@ class TraceCollector {
     return undefined;
   }
 
-  queryTraces(filter: { operationName?: string; minDuration?: number; maxDuration?: number }): TraceContext[] {
+  queryTraces(filter: { operationName?: string; minDuration?: number; maxDuration?: number }): TraceContextRecord[] {
     return Array.from(this.traces.values()).filter(trace => {
       const spans = this.spans.get(trace.traceId) || [];
       const totalDuration = spans.reduce((sum, s) => sum + (s.duration || 0), 0);
@@ -213,7 +213,7 @@ class TraceExporter {
     logger.debug('Export target registered', { name, type: target.type });
   }
 
-  async exportTrace(trace: TraceContext, spans: Span[], targetName?: string): Promise<{ exported: boolean; destination: string }> {
+  async exportTrace(trace: TraceContextRecord, spans: Span[], targetName?: string): Promise<{ exported: boolean; destination: string }> {
     const target = targetName ? this.targets.get(targetName) : Array.from(this.targets.values())[0];
 
     if (!target) {
@@ -230,7 +230,7 @@ class TraceExporter {
     return { exported: true, destination: target.type };
   }
 
-  batchExport(traces: Array<{ trace: TraceContext; spans: Span[] }>, targetName?: string): Promise<{ exported: number; failed: number }> {
+  batchExport(traces: Array<{ trace: TraceContextRecord; spans: Span[] }>, targetName?: string): Promise<{ exported: number; failed: number }> {
     const exported = traces.length;
 
     logger.debug('Batch export completed', { total: traces.length, exported });
@@ -248,4 +248,4 @@ export const spanManager = new SpanManager();
 export const traceCollector = new TraceCollector();
 export const traceExporter = new TraceExporter();
 
-export { TraceContext, Span, InstrumentationHook, ExportTarget };
+export type { TraceContextRecord as TraceContext, Span, InstrumentationHook, ExportTarget };

@@ -193,9 +193,9 @@ class AutomationExecutor {
         return { success: true, result: { service: context.service, status: 'open' } };
       }
 
-      return { success: false, error: `Unknown action: ${action}` };
+      return { success: false, result: null, error: `Unknown action: ${action}` };
     } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : String(err) };
+      return { success: false, result: null, error: err instanceof Error ? err.message : String(err) };
     }
   }
 

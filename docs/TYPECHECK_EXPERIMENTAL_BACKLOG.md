@@ -8,7 +8,7 @@
 2. Monorepo/legacy alanlar için aşırı geniş experimental kapsam  
    Durum: **kısmen kapandı**. `tsconfig.experimental.json` yalnızca `src/lib` + `src/env.d.ts` kapsıyor.
 3. Legacy modül sözleşme kırıkları (`src/lib/index.ts` mega re-export, `cache.redis`, zayıf tipli helper kullanımları)  
-   Durum: **açık**.
+   Durum: **kısmen kapandı**. `src/lib/index.ts` artık curated stable barrel; excluded domainler doğrudan import ile ayrıştırılıyor.
 4. React state ve API wrapper tip uyuşmazlıkları  
    Durum: **açık** (experimental scope dışına alındı; ayrı fazda kapanacak).
 
@@ -27,5 +27,5 @@
 ## Exclude Budget
 - Budget dosyası: `config/experimental-exclude-budget.json`
 - Kural: `tsconfig.experimental.json` içindeki `exclude` listesi bütçeyi aşamaz.
-- Aktif hedef: `max_entries=24`, `max_file_entries=21`
+- Aktif hedef: `max_entries=18`, `max_file_entries=15`
 - Amaç: yeni teknik borcun gate altından sessizce büyümesini engellemek.
