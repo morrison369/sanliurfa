@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSystemMetrics } from '../../../../lib/admin-dashboard';
+import { getSystemMetrics, getOperationalSnapshot } from '../../../../lib/admin-dashboard';
 import { getModerationStats } from '../../../../lib/admin-moderation';
 import { getModerationQueue, getContentFlags } from '../../../../lib/admin-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
@@ -25,12 +25,13 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const [systemMetrics, modStats, pendingQueue, pendingFlags, integrationSettings] = await Promise.all([
+    const [systemMetrics, modStats, pendingQueue, pendingFlags, integrationSettings, operational] = await Promise.all([
       getSystemMetrics(),
       getModerationStats(),
       getModerationQueue('pending', 1),
       getContentFlags('pending', 1),
-      getRuntimeIntegrationSettings()
+      getRuntimeIntegrationSettings(),
+      getOperationalSnapshot(7)
     ]);
     const integrationsReady = Boolean(integrationSettings.resendApiKey) && Boolean(integrationSettings.analyticsId);
 
@@ -60,7 +61,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
                 source: integrationSettings.source.analyticsId
               }
             }
-          }
+          },
+          operational
         }
       },
       HttpStatus.OK,

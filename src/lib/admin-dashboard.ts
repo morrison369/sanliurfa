@@ -4,6 +4,50 @@
  */
 import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
+import { metricsCollector } from './metrics';
+import { getSearchTrends } from './analytics';
+
+function toPercent(numerator: number, denominator: number): number {
+  if (denominator <= 0) {
+    return 0;
+  }
+
+  return Math.round((numerator / denominator) * 100);
+}
+
+function p95Duration(metrics: Array<{ duration: number }>): number {
+  if (metrics.length === 0) {
+    return 0;
+  }
+
+  const sorted = [...metrics].sort((a, b) => a.duration - b.duration);
+  return sorted[Math.floor(sorted.length * 0.95)]?.duration ?? 0;
+}
+
+function summarizeEndpoint(method: string, path: string, targetErrorRatePercent: number, targetP95Ms?: number) {
+  const endpointMetrics = metricsCollector.getEndpointMetrics(method, path);
+  const sampleSize = endpointMetrics.length;
+  const errorCount = endpointMetrics.filter((metric) => metric.statusCode >= 400).length;
+  const errorRatePercent = toPercent(errorCount, sampleSize);
+  const avgDurationMs = sampleSize > 0
+    ? Math.round(endpointMetrics.reduce((acc, metric) => acc + metric.duration, 0) / sampleSize)
+    : 0;
+  const p95DurationMs = p95Duration(endpointMetrics);
+
+  return {
+    sampleSize,
+    errorCount,
+    errorRatePercent,
+    avgDurationMs,
+    p95DurationMs,
+    slo: {
+      targetErrorRatePercent,
+      targetP95Ms: targetP95Ms ?? null,
+      errorRateOk: errorRatePercent <= targetErrorRatePercent,
+      p95Ok: typeof targetP95Ms === 'number' ? p95DurationMs <= targetP95Ms : true
+    }
+  };
+}
 
 export async function getDashboardOverview(days: number = 30): Promise<any> {
   try {
@@ -165,6 +209,59 @@ export async function getSystemMetrics(): Promise<any> {
   } catch (error) {
     logger.error('Failed to get system metrics', error instanceof Error ? error : new Error(String(error)));
     return null;
+  }
+}
+
+export async function getOperationalSnapshot(days: number = 7): Promise<any> {
+  try {
+    const oauthAuthorize = summarizeEndpoint('GET', '/api/auth/oauth/authorize', 2, 1200);
+    const oauthCallback = summarizeEndpoint('GET', '/api/auth/oauth/callback', 2, 1500);
+    const webhookStripe = summarizeEndpoint('POST', '/api/webhooks/stripe', 1, 1500);
+    const webhookStripeMetrics = metricsCollector.getEndpointMetrics('POST', '/api/webhooks/stripe');
+    const duplicateCount = webhookStripeMetrics.filter((metric) => metric.error === 'duplicate_delivery').length;
+    const retryDeferredCount = webhookStripeMetrics.filter((metric) => metric.error === 'retry_deferred').length;
+    const retryExhaustedCount = webhookStripeMetrics.filter((metric) => metric.error === 'retry_exhausted').length;
+    const safeDays = Math.min(Math.max(days, 1), 30);
+    const searchTrends = await getSearchTrends(safeDays, 5);
+
+    return {
+      generatedAt: new Date().toISOString(),
+      oauth: {
+        authorize: oauthAuthorize,
+        callback: oauthCallback
+      },
+      webhook: {
+        stripe: {
+          ...webhookStripe,
+          duplicateCount,
+          duplicateRatePercent: toPercent(duplicateCount, webhookStripe.sampleSize),
+          retryDeferredCount,
+          retryExhaustedCount
+        }
+      },
+      search: {
+        periodDays: safeDays,
+        topQueries: searchTrends,
+        totalTopSearches: searchTrends.reduce((total, trend) => total + (trend.count || 0), 0)
+      }
+    };
+  } catch (error) {
+    logger.error('Failed to get operational snapshot', error instanceof Error ? error : new Error(String(error)));
+    return {
+      generatedAt: new Date().toISOString(),
+      oauth: {
+        authorize: summarizeEndpoint('GET', '/api/auth/oauth/authorize', 2, 1200),
+        callback: summarizeEndpoint('GET', '/api/auth/oauth/callback', 2, 1500)
+      },
+      webhook: {
+        stripe: summarizeEndpoint('POST', '/api/webhooks/stripe', 1, 1500)
+      },
+      search: {
+        periodDays: 0,
+        topQueries: [],
+        totalTopSearches: 0
+      }
+    };
   }
 }
 

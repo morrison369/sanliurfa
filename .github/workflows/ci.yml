@@ -66,14 +66,7 @@ jobs:
       - name: Typecheck experimental exclude guard
         run: npm run typecheck:experimental:exclude:guard
       - name: Critical contracts and security smoke (blocking)
-        run: >
-          npm exec -- vitest run
-          src/pages/api/__tests__/auth-contracts.test.ts
-          src/pages/api/__tests__/oauth-contracts.test.ts
-          src/pages/api/__tests__/webhook-contracts.test.ts
-          src/lib/__tests__/api-contract-utils.test.ts
-          src/lib/__tests__/webhook-delivery-policy.test.ts
-          src/lib/__tests__/webhook-replay-policy.test.ts
+        run: npm run test:critical
 
   critical_contracts_advisory:
     name: critical-contracts-advisory

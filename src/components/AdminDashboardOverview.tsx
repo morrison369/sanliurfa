@@ -19,6 +19,19 @@ interface DashboardData {
     resend: { configured: boolean; source: 'env' | 'admin' | 'none' };
     analytics: { configured: boolean; source: 'env' | 'admin' | 'none' };
   };
+  operational?: {
+    oauth: {
+      callback: { errorRatePercent: number; sampleSize: number };
+    };
+    webhook: {
+      stripe: { errorRatePercent: number; p95DurationMs: number; duplicateRatePercent?: number; sampleSize: number };
+    };
+    search: {
+      periodDays: number;
+      totalTopSearches: number;
+      topQueries: Array<{ query: string; count: number }>;
+    };
+  };
 }
 
 export default function AdminDashboardOverview() {
@@ -187,6 +200,42 @@ export default function AdminDashboardOverview() {
             <div>
               <div className="text-xs text-gray-500 mb-1">Toplam Suspansyonlar</div>
               <div className="text-2xl font-bold text-purple-600">{data.moderation.actions.suspensions}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Operational Snapshot */}
+      {data.operational && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h3 className="font-semibold text-gray-900 mb-4">Operasyon Özeti</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <div className="text-xs text-gray-500 mb-1">OAuth Callback Hata</div>
+              <div className="text-xl font-bold text-gray-900">
+                %{data.operational.oauth.callback.errorRatePercent}
+              </div>
+              <div className="text-xs text-gray-500">
+                Örnek: {data.operational.oauth.callback.sampleSize}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Stripe Webhook</div>
+              <div className="text-xl font-bold text-gray-900">
+                %{data.operational.webhook.stripe.errorRatePercent} / p95 {data.operational.webhook.stripe.p95DurationMs}ms
+              </div>
+              <div className="text-xs text-gray-500">
+                Duplicate %{data.operational.webhook.stripe.duplicateRatePercent || 0} • Örnek: {data.operational.webhook.stripe.sampleSize}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Arama Trendi ({data.operational.search.periodDays} gün)</div>
+              <div className="text-xl font-bold text-gray-900">{data.operational.search.totalTopSearches}</div>
+              <div className="text-xs text-gray-500 truncate">
+                {data.operational.search.topQueries?.[0]
+                  ? `${data.operational.search.topQueries[0].query} (${data.operational.search.topQueries[0].count})`
+                  : 'Veri yok'}
+              </div>
             </div>
           </div>
         </div>

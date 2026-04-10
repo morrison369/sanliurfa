@@ -73,6 +73,8 @@ async function main(): Promise<void> {
       '/hakkinda',
       '/robots.txt',
       '/api/version',
+      '/api/health',
+      '/api/search/suggestions?prefix=ur&type=places&limit=3',
     ];
 
     for (const path of canaryPaths) {
