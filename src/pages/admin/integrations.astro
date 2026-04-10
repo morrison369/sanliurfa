@@ -40,6 +40,8 @@ const seo = {
             placeholder="re_..."
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
+          <p class="text-xs text-gray-500 dark:text-gray-400">Format: <code>re_...</code></p>
+          <p id="resend-error" class="text-sm text-red-600 dark:text-red-400 min-h-[1.25rem]"></p>
           <div class="flex flex-wrap gap-2">
             <button
               id="save-resend"
@@ -65,6 +67,8 @@ const seo = {
             placeholder="G-XXXXXXXXXX"
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
+          <p class="text-xs text-gray-500 dark:text-gray-400">Format: <code>G-XXXXXXXXXX</code></p>
+          <p id="analytics-error" class="text-sm text-red-600 dark:text-red-400 min-h-[1.25rem]"></p>
           <div class="flex flex-wrap gap-2">
             <button
               id="save-analytics"
@@ -95,6 +99,11 @@ const seo = {
     const analyticsButton = document.getElementById('save-analytics');
     const clearResendButton = document.getElementById('clear-resend');
     const clearAnalyticsButton = document.getElementById('clear-analytics');
+    const resendError = document.getElementById('resend-error');
+    const analyticsError = document.getElementById('analytics-error');
+    const actionButtons = [resendButton, analyticsButton, clearResendButton, clearAnalyticsButton];
+    const resendPattern = /^re_[a-z0-9]+$/i;
+    const analyticsPattern = /^G-[A-Z0-9]+$/;
 
     function formatStatus(name, payload) {
       const state = payload.configured ? 'hazır' : 'eksik';
@@ -119,6 +128,48 @@ const seo = {
       `;
     }
 
+    function clearFieldErrors() {
+      if (resendError) resendError.textContent = '';
+      if (analyticsError) analyticsError.textContent = '';
+    }
+
+    function setFieldError(field, message) {
+      if (field === 'resendApiKey' && resendError) {
+        resendError.textContent = message;
+      }
+      if (field === 'analyticsId' && analyticsError) {
+        analyticsError.textContent = message;
+      }
+    }
+
+    function setLoadingState(isLoading) {
+      actionButtons.forEach((button) => {
+        if (!button) return;
+        button.disabled = isLoading;
+        if (isLoading) {
+          button.classList.add('opacity-60', 'cursor-not-allowed');
+        } else {
+          button.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+      });
+    }
+
+    function validateInput(field, value) {
+      if (!value) {
+        return `${field === 'resendApiKey' ? 'RESEND API anahtarı' : 'Analytics ID'} boş olamaz`;
+      }
+
+      if (field === 'resendApiKey' && !resendPattern.test(value)) {
+        return 'Geçersiz RESEND formatı. Örnek: re_abc123';
+      }
+
+      if (field === 'analyticsId' && !analyticsPattern.test(value)) {
+        return 'Geçersiz Analytics ID formatı. Örnek: G-ABC123XYZ';
+      }
+
+      return null;
+    }
+
     function setMessage(text, isError = false) {
       messageBox.textContent = text;
       messageBox.className = isError
@@ -126,27 +177,58 @@ const seo = {
         : 'text-sm text-green-600 dark:text-green-400';
     }
 
-    async function save(payload) {
-      const response = await fetch('/api/admin/system/integration-settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result?.error?.message || 'Kayıt başarısız');
+    function applyServerValidationMessage(payload, message) {
+      if ('resendApiKey' in payload) {
+        setFieldError('resendApiKey', message);
+        return;
       }
-      await loadStatus();
-      setMessage('Ayar kaydedildi. Runtime cache yenilendi.');
+      if ('analyticsId' in payload) {
+        setFieldError('analyticsId', message);
+      }
+    }
+
+    async function save(payload) {
+      clearFieldErrors();
+      setLoadingState(true);
+      try {
+        const response = await fetch('/api/admin/system/integration-settings', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        let result = null;
+        try {
+          result = await response.json();
+        } catch {
+          result = null;
+        }
+
+        if (!response.ok) {
+          const message = result?.error?.message || 'Kayıt başarısız';
+          if (response.status === 422) {
+            applyServerValidationMessage(payload, message);
+          }
+          throw new Error(message);
+        }
+
+        await loadStatus();
+        setMessage('Ayar kaydedildi. Runtime cache yenilendi.');
+      } finally {
+        setLoadingState(false);
+      }
     }
 
     resendButton?.addEventListener('click', async () => {
       try {
+        clearFieldErrors();
         const resendApiKey = resendInput?.value?.trim();
-        if (!resendApiKey) {
-          setMessage('RESEND API anahtarı boş olamaz', true);
+        const validationError = validateInput('resendApiKey', resendApiKey);
+        if (validationError) {
+          setFieldError('resendApiKey', validationError);
+          setMessage(validationError, true);
           return;
         }
         await save({ resendApiKey });
@@ -158,9 +240,12 @@ const seo = {
 
     analyticsButton?.addEventListener('click', async () => {
       try {
+        clearFieldErrors();
         const analyticsId = analyticsInput?.value?.trim();
-        if (!analyticsId) {
-          setMessage('Analytics ID boş olamaz', true);
+        const validationError = validateInput('analyticsId', analyticsId);
+        if (validationError) {
+          setFieldError('analyticsId', validationError);
+          setMessage(validationError, true);
           return;
         }
         await save({ analyticsId });
@@ -172,6 +257,7 @@ const seo = {
 
     clearResendButton?.addEventListener('click', async () => {
       try {
+        clearFieldErrors();
         await save({ resendApiKey: '' });
         resendInput.value = '';
         setMessage('RESEND ayarı temizlendi.');
@@ -182,6 +268,7 @@ const seo = {
 
     clearAnalyticsButton?.addEventListener('click', async () => {
       try {
+        clearFieldErrors();
         await save({ analyticsId: '' });
         analyticsInput.value = '';
         setMessage('Analytics ayarı temizlendi.');
