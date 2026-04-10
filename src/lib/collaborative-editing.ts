@@ -3,7 +3,7 @@
  * Real-time collaboration, operational transformation, conflict resolution
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 import crypto from 'crypto';
@@ -131,7 +131,7 @@ export async function recordEditOperation(sessionId: string, userId: string, ope
 
 export async function getEditOperations(sessionId: string, startIndex: number = 0, limit: number = 100): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       `SELECT * FROM edit_operations
        WHERE session_id = $1 AND operation_index >= $2
        ORDER BY operation_index ASC
@@ -237,7 +237,7 @@ export async function getCollaborationComments(sessionId: string, resolvedOnly: 
 
     query += ' ORDER BY position_in_doc ASC, created_at DESC';
 
-    return await queryMany(query, params);
+    return await queryRows(query, params);
   } catch (error) {
     logger.error('Failed to get collaboration comments', error instanceof Error ? error : new Error(String(error)));
     return [];
@@ -259,7 +259,7 @@ export async function resolveComment(commentId: string): Promise<boolean> {
 
 export async function getActiveParticipants(sessionId: string): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       `SELECT * FROM collaboration_participants
        WHERE session_id = $1 AND left_at IS NULL
        ORDER BY joined_at DESC`,
@@ -289,7 +289,7 @@ export async function updateParticipantCursor(participantId: string, cursorPosit
 
 export async function getCollaborationStats(): Promise<any> {
   try {
-    const stats = await queryMany(
+    const stats = await queryRows(
       `SELECT
         COUNT(DISTINCT session_id) as active_sessions,
         COUNT(DISTINCT user_id) as active_users,

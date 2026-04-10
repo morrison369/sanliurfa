@@ -2,12 +2,12 @@
  * Search History Library
  * User search history and saved searches
  */
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export async function getSearchHistory(userId: string, limit: number = 20): Promise<any[]> {
   try {
-    const history = await queryMany(`
+    const history = await queryRows(`
       SELECT
         id,
         search_query,
@@ -86,7 +86,7 @@ export async function getSavedSearches(userId: string, favoriteOnly: boolean = f
 
     query += ` ORDER BY ${favoriteOnly ? 'created_at DESC' : 'is_favorite DESC, created_at DESC'}`;
 
-    const searches = await queryMany(query, params);
+    const searches = await queryRows(query, params);
     return searches;
   } catch (error) {
     logger.error('Failed to get saved searches', error instanceof Error ? error : new Error(String(error)));
@@ -146,7 +146,7 @@ export async function getRecentSearches(userId: string | undefined, limit: numbe
   try {
     if (!userId) {
       // Return global trending for anonymous users
-      const trending = await queryMany(`
+      const trending = await queryRows(`
         SELECT DISTINCT search_query FROM search_analytics
         WHERE is_trending = true
         ORDER BY trend_score DESC
@@ -155,7 +155,7 @@ export async function getRecentSearches(userId: string | undefined, limit: numbe
       return trending.map((t: any) => t.search_query);
     }
 
-    const recent = await queryMany(`
+    const recent = await queryRows(`
       SELECT DISTINCT search_query FROM search_history
       WHERE user_id = $1
       ORDER BY created_at DESC

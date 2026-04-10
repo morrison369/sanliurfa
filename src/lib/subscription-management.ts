@@ -3,7 +3,7 @@
  * Handle subscription tiers, billing, and feature access
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -53,7 +53,7 @@ export async function getSubscriptionTiers(): Promise<SubscriptionTier[]> {
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, name, display_name, description, monthly_price, annual_price, tier_level, is_active
        FROM subscription_tiers
        WHERE is_active = true
@@ -146,7 +146,7 @@ export async function getActiveSubscription(userId: string): Promise<(Subscripti
  */
 export async function getTierFeatures(tierId: string): Promise<any[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT feature_name, feature_limit, description
        FROM tier_features
        WHERE tier_id = $1
@@ -190,7 +190,7 @@ export async function checkFeatureAccess(userId: string, featureName: string): P
  */
 export async function getUserFeatureAccess(userId: string): Promise<FeatureAccess[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT user_id, feature_name, access_level, limit_value, current_usage
        FROM feature_access
        WHERE user_id = $1`,
@@ -331,7 +331,7 @@ export async function recordBilling(
  */
 export async function getBillingHistory(userId: string, limit: number = 12): Promise<any[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, amount, currency, payment_status, invoice_number, payment_date, created_at
        FROM billing_history
        WHERE user_id = $1

@@ -3,7 +3,7 @@
  * Push, Email, SMS multi-channel delivery
  */
 
-import { queryOne, queryMany, insert, update, query } from './postgres';
+import { queryOne, queryRows, insert, update, query } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 
@@ -60,7 +60,7 @@ export async function getUserChannels(userId: string): Promise<NotificationChann
       return JSON.parse(cached);
     }
 
-    const channels = await queryMany(
+    const channels = await queryRows(
       'SELECT * FROM notification_channels WHERE user_id = $1 ORDER BY is_primary DESC',
       [userId]
     );
@@ -162,7 +162,7 @@ export async function getUserPushSubscriptions(userId: string): Promise<PushSubs
       return JSON.parse(cached);
     }
 
-    const subscriptions = await queryMany(
+    const subscriptions = await queryRows(
       'SELECT * FROM push_subscriptions WHERE user_id = $1 AND is_active = true',
       [userId]
     );
@@ -223,7 +223,7 @@ export async function getEmailTemplate(key: string): Promise<EmailTemplate | nul
 
 export async function getAllEmailTemplates(): Promise<EmailTemplate[]> {
   try {
-    return await queryMany('SELECT * FROM email_templates WHERE is_active = true', []);
+    return await queryRows('SELECT * FROM email_templates WHERE is_active = true', []);
   } catch (error) {
     logger.error(
       'Failed to get email templates',
@@ -301,7 +301,7 @@ export async function queueEmail(
 
 export async function getPendingEmails(limit: number = 100): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       `SELECT * FROM email_queue
        WHERE status = 'pending'
        AND (scheduled_for IS NULL OR scheduled_for <= NOW())

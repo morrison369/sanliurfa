@@ -3,7 +3,7 @@
  * Browse, redeem, and track rewards
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 import { redeemPoints } from './loyalty-system';
 import { createNotification } from './notifications-queue';
@@ -78,7 +78,7 @@ export async function getRewardsCatalog(
     sql += ` ORDER BY featured DESC, created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
-    const rewards = await queryMany(sql, params);
+    const rewards = await queryRows(sql, params);
 
     const countSql = 'SELECT COUNT(*) as total FROM rewards_catalog WHERE status = $1' +
       (filters?.tier_requirement ? ` AND (tier_requirement IS NULL OR tier_requirement = '${filters.tier_requirement}')` : '') +
@@ -88,7 +88,7 @@ export async function getRewardsCatalog(
     const countResult = await queryOne(countSql, []);
 
     const data = {
-      rewards: rewards.rows,
+      rewards,
       total: parseInt(countResult?.total || '0')
     };
 
@@ -218,7 +218,7 @@ export async function getUserRedemptions(
     sql += ` ORDER BY r.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
-    const redemptions = await queryMany(sql, params);
+    const redemptions = await queryRows(sql, params);
 
     const countSql = `SELECT COUNT(*) as total FROM reward_redemptions WHERE user_id = $1${status ? ` AND status = $2` : ''}`;
     const countParams = [userId];
@@ -226,7 +226,7 @@ export async function getUserRedemptions(
     const countResult = await queryOne(countSql, countParams);
 
     return {
-      redemptions: redemptions.rows,
+      redemptions,
       total: parseInt(countResult?.total || '0')
     };
   } catch (error) {
@@ -245,7 +245,7 @@ export async function getFeaturedRewards(limit: number = 8): Promise<Reward[]> {
     const cached = await getCache<Reward[]>(cacheKey);
     if (cached) return cached;
 
-    const rewards = await queryMany(
+    const rewards = await queryRows(
       `SELECT * FROM rewards_catalog
        WHERE status = 'active' AND featured = true
        ORDER BY created_at DESC
@@ -253,8 +253,8 @@ export async function getFeaturedRewards(limit: number = 8): Promise<Reward[]> {
       [limit]
     );
 
-    await setCache(cacheKey, rewards.rows, 600);
-    return rewards.rows;
+    await setCache(cacheKey, rewards, 600);
+    return rewards;
   } catch (error) {
     logger.error('Failed to get featured rewards', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -274,7 +274,7 @@ export async function getRewardsByType(
     const cached = await getCache<Reward[]>(cacheKey);
     if (cached) return cached;
 
-    const rewards = await queryMany(
+    const rewards = await queryRows(
       `SELECT * FROM rewards_catalog
        WHERE status = 'active' AND reward_type = $1
        ORDER BY featured DESC, created_at DESC
@@ -282,8 +282,8 @@ export async function getRewardsByType(
       [rewardType, limit]
     );
 
-    await setCache(cacheKey, rewards.rows, 600);
-    return rewards.rows;
+    await setCache(cacheKey, rewards, 600);
+    return rewards;
   } catch (error) {
     logger.error('Failed to get rewards by type', error instanceof Error ? error : new Error(String(error)));
     throw error;

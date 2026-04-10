@@ -3,7 +3,7 @@
  * Handle event creation, browsing, search, and RSVP management
  */
 
-import { query, queryOne, queryMany, insert } from './postgres';
+import { query, queryOne, queryRows, insert } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -133,7 +133,7 @@ export async function getEvents(
     );
     const total = parseInt(countResult?.count || '0');
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT * FROM events ${whereClause}
        ORDER BY start_date ASC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
@@ -178,7 +178,7 @@ export async function getEvents(
  */
 export async function searchEvents(queryText: string, limit: number = 20): Promise<Event[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT * FROM events
        WHERE status = 'active'
          AND (title ILIKE $1 OR description ILIKE $1)
@@ -272,7 +272,7 @@ export async function getEventAttendees(eventId: string): Promise<EventAttendee[
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT * FROM event_attendees
        WHERE event_id = $1
        ORDER BY created_at DESC`,
@@ -327,7 +327,7 @@ export async function getUpcomingEvents(limit: number = 10): Promise<Event[]> {
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT * FROM events
        WHERE status = 'active' AND start_date > NOW()
        ORDER BY start_date ASC

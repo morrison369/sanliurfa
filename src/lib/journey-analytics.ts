@@ -3,7 +3,7 @@
  * Track and analyze user paths and interactions
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 import crypto from 'crypto';
@@ -89,7 +89,7 @@ export async function endJourneySession(sessionId: string, converted: boolean = 
 
 async function recordJourneyPath(sessionId: string): Promise<void> {
   try {
-    const steps = await queryMany(
+    const steps = await queryRows(
       `SELECT page_url FROM journey_steps
        WHERE journey_session_id = (SELECT id FROM user_journey_sessions WHERE session_id = $1)
        ORDER BY step_number ASC`,
@@ -140,7 +140,7 @@ export async function getTopConvertingPaths(limit: number = 10): Promise<any[]> 
       return JSON.parse(cached);
     }
 
-    const paths = await queryMany(
+    const paths = await queryRows(
       'SELECT * FROM journey_paths ORDER BY conversion_rate DESC, user_count DESC LIMIT $1',
       [limit]
     );
@@ -155,7 +155,7 @@ export async function getTopConvertingPaths(limit: number = 10): Promise<any[]> 
 
 export async function getUserJourneys(userId: string, limit: number = 20): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       'SELECT * FROM user_journey_sessions WHERE user_id = $1 ORDER BY start_time DESC LIMIT $2',
       [userId, limit]
     );
@@ -174,7 +174,7 @@ export async function getJourneyDetails(journeySessionId: string): Promise<any> 
 
     if (!session) return null;
 
-    const steps = await queryMany(
+    const steps = await queryRows(
       'SELECT * FROM journey_steps WHERE journey_session_id = $1 ORDER BY step_number ASC',
       [journeySessionId]
     );

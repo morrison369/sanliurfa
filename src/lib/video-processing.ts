@@ -3,7 +3,7 @@
  * Video metadata, transcoding, thumbnails, streaming
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 
@@ -77,7 +77,7 @@ export async function createTranscodingJob(videoFileId: string, targetQuality: s
 
 export async function getPendingTranscodingJobs(limit: number = 10): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       `SELECT * FROM transcoding_jobs
        WHERE status IN ('queued', 'processing')
        ORDER BY created_at ASC
@@ -155,7 +155,7 @@ export async function getVideoThumbnails(videoFileId: string): Promise<any[]> {
       return JSON.parse(cached);
     }
 
-    const thumbnails = await queryMany(
+    const thumbnails = await queryRows(
       'SELECT * FROM video_thumbnails WHERE video_file_id = $1 ORDER BY is_primary DESC, thumbnail_time_seconds ASC',
       [videoFileId]
     );
@@ -195,7 +195,7 @@ export async function getVideoCaptions(videoFileId: string): Promise<any[]> {
       return JSON.parse(cached);
     }
 
-    const captions = await queryMany(
+    const captions = await queryRows(
       'SELECT * FROM video_captions WHERE video_file_id = $1 ORDER BY is_default DESC, language ASC',
       [videoFileId]
     );
@@ -247,7 +247,7 @@ export async function getVideoStreamingSettings(videoFileId: string): Promise<an
 
 export async function getTranscodingStats(): Promise<any> {
   try {
-    const stats = await queryMany(
+    const stats = await queryRows(
       `SELECT
         status,
         COUNT(*) as count,

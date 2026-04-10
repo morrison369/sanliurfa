@@ -2,7 +2,7 @@
  * Search Suggestions Library
  * Autocomplete and search suggestions
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export async function getSearchSuggestions(
@@ -11,7 +11,7 @@ export async function getSearchSuggestions(
   limit: number = 10
 ): Promise<string[]> {
   try {
-    const suggestions = await queryMany(`
+    const suggestions = await queryRows(`
       SELECT DISTINCT completion_text
       FROM autocomplete_index
       WHERE prefix ILIKE $1 AND search_type = $2
@@ -28,7 +28,7 @@ export async function getSearchSuggestions(
 
 export async function getGlobalSuggestions(query: string, limit: number = 5): Promise<any[]> {
   try {
-    const suggestions = await queryMany(`
+    const suggestions = await queryRows(`
       SELECT
         suggestion_text,
         suggestion_type,
@@ -51,7 +51,7 @@ export async function getPersonalizedSuggestions(
   limit: number = 5
 ): Promise<any[]> {
   try {
-    const suggestions = await queryMany(`
+    const suggestions = await queryRows(`
       SELECT
         suggestion_text,
         suggestion_type,
@@ -167,7 +167,7 @@ export async function recordZeroResultSearch(
 
 export async function getZeroResultSearches(limit: number = 10): Promise<any[]> {
   try {
-    const searches = await queryMany(`
+    const searches = await queryRows(`
       SELECT
         search_query,
         search_type,
