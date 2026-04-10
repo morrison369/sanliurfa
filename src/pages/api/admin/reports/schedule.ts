@@ -8,6 +8,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { queryRows, insert, update, queryOne } from '../../../../lib/postgres';
+import { withAdminOpsReadAccess, withAdminOpsWriteAccess } from '../../../../lib/admin-ops-access';
 
 const schema = {
   type: {
@@ -39,26 +40,31 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
-      recordRequest('GET', '/api/admin/reports/schedule', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
+    return await withAdminOpsReadAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/reports/schedule',
+      requestId,
+      startTime,
+      onDenied: (_response, statusCode, duration) => {
+        recordRequest('GET', '/api/admin/reports/schedule', statusCode, duration);
+      },
+      onSuccess: (_response, duration) => {
+        recordRequest('GET', '/api/admin/reports/schedule', HttpStatus.OK, duration);
+      }
+    }, async () => {
+      const scheduled = await queryRows(
+        `SELECT id, name, report_type, frequency, next_run_at, last_run_at,
+                email_recipients, enabled, created_at, updated_at
+         FROM scheduled_reports WHERE enabled = true ORDER BY created_at DESC`
+      );
 
-    // Optimized: select specific report columns instead of SELECT *
-    const scheduled = await queryRows(
-      `SELECT id, name, report_type, frequency, next_run_at, last_run_at,
-              email_recipients, enabled, created_at, updated_at
-       FROM scheduled_reports WHERE enabled = true ORDER BY created_at DESC`
-    );
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/admin/reports/schedule', HttpStatus.OK, duration);
-
-    return apiResponse(
-      { success: true, data: { scheduled, count: scheduled.length } },
-      HttpStatus.OK,
-      requestId
-    );
+      return apiResponse(
+        { success: true, data: { scheduled, count: scheduled.length } },
+        HttpStatus.OK,
+        requestId
+      );
+    });
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/reports/schedule', HttpStatus.INTERNAL_SERVER_ERROR, duration);
@@ -74,57 +80,60 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
-      recordRequest('POST', '/api/admin/reports/schedule', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
+    return await withAdminOpsWriteAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/reports/schedule',
+      requestId,
+      startTime,
+      onDenied: (_response, statusCode, duration) => {
+        recordRequest('POST', '/api/admin/reports/schedule', statusCode, duration);
+      },
+      onSuccess: (response, duration) => {
+        recordRequest('POST', '/api/admin/reports/schedule', response.status, duration);
+      }
+    }, async () => {
+      const body = await request.json();
+      const validation = validateWithSchema(body, schema as any);
 
-    const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+      if (!validation.valid) {
+        return apiError(
+          ErrorCode.VALIDATION_ERROR,
+          'Invalid schedule parameters',
+          HttpStatus.UNPROCESSABLE_ENTITY,
+          validation.errors,
+          requestId
+        );
+      }
 
-    if (!validation.valid) {
-      recordRequest('POST', '/api/admin/reports/schedule', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Invalid schedule parameters',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        validation.errors,
+      const { type, period, frequency, email } = validation.data as any;
+      const query = `
+        INSERT INTO scheduled_reports
+        (report_type, period, frequency, email, enabled, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, true, NOW(), NOW())
+        RETURNING id, report_type, period, frequency, email, enabled
+      `;
+
+      const result = await queryOne(query, [type, period, frequency, email]);
+
+      if (!result) {
+        return apiError(
+          ErrorCode.INTERNAL_ERROR,
+          'Failed to schedule report',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          undefined,
+          requestId
+        );
+      }
+
+      logger.info('Report scheduled', { type, frequency, email, duration: Date.now() - startTime });
+
+      return apiResponse(
+        { success: true, data: result },
+        HttpStatus.CREATED,
         requestId
       );
-    }
-
-    const { type, period, frequency, email } = validation.data as any;
-
-    // Insert scheduled report
-    const query = `
-      INSERT INTO scheduled_reports
-      (report_type, period, frequency, email, enabled, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, true, NOW(), NOW())
-      RETURNING id, report_type, period, frequency, email, enabled
-    `;
-
-    const result = await queryOne(query, [type, period, frequency, email]);
-
-    if (!result) {
-      recordRequest('POST', '/api/admin/reports/schedule', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
-      return apiError(
-        ErrorCode.INTERNAL_ERROR,
-        'Failed to schedule report',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        undefined,
-        requestId
-      );
-    }
-
-    const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/admin/reports/schedule', HttpStatus.CREATED, duration);
-    logger.info('Report scheduled', { type, frequency, email, duration });
-
-    return apiResponse(
-      { success: true, data: result },
-      HttpStatus.CREATED,
-      requestId
-    );
+    });
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/reports/schedule', HttpStatus.INTERNAL_SERVER_ERROR, duration);
@@ -140,30 +149,35 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
-      recordRequest('DELETE', '/api/admin/reports/schedule', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
+    return await withAdminOpsWriteAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/reports/schedule',
+      requestId,
+      startTime,
+      onDenied: (_response, statusCode, duration) => {
+        recordRequest('DELETE', '/api/admin/reports/schedule', statusCode, duration);
+      },
+      onSuccess: (response, duration) => {
+        recordRequest('DELETE', '/api/admin/reports/schedule', response.status, duration);
+      }
+    }, async () => {
+      const id = url.searchParams.get('id');
 
-    const id = url.searchParams.get('id');
+      if (!id) {
+        return apiError(ErrorCode.INVALID_INPUT, 'Schedule ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      }
 
-    if (!id) {
-      recordRequest('DELETE', '/api/admin/reports/schedule', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.INVALID_INPUT, 'Schedule ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
-    }
+      const result = await update('scheduled_reports', { id }, { enabled: false, updated_at: new Date().toISOString() });
 
-    const result = await update('scheduled_reports', { id }, { enabled: false, updated_at: new Date().toISOString() });
+      if (!result) {
+        return apiError(ErrorCode.NOT_FOUND, 'Schedule not found', HttpStatus.NOT_FOUND, undefined, requestId);
+      }
 
-    if (!result) {
-      recordRequest('DELETE', '/api/admin/reports/schedule', HttpStatus.NOT_FOUND, Date.now() - startTime);
-      return apiError(ErrorCode.NOT_FOUND, 'Schedule not found', HttpStatus.NOT_FOUND, undefined, requestId);
-    }
+      logger.info('Report schedule disabled', { id, duration: Date.now() - startTime });
 
-    const duration = Date.now() - startTime;
-    recordRequest('DELETE', '/api/admin/reports/schedule', HttpStatus.OK, duration);
-    logger.info('Report schedule disabled', { id, duration });
-
-    return apiResponse({ success: true, data: { disabled: true } }, HttpStatus.OK, requestId);
+      return apiResponse({ success: true, data: { disabled: true } }, HttpStatus.OK, requestId);
+    });
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/admin/reports/schedule', HttpStatus.INTERNAL_SERVER_ERROR, duration);

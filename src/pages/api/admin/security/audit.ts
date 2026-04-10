@@ -7,6 +7,7 @@ import { runSecurityAudit, generateAuditReportHTML } from '../../../../lib/secur
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { withAdminOpsReadAccess, withAdminOpsWriteAccess } from '../../../../lib/admin-ops-access';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -14,18 +15,23 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
-      recordRequest('GET', '/api/admin/security/audit', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
-
-    const report = await runSecurityAudit();
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/admin/security/audit', HttpStatus.OK, duration);
-    logger.info('Security audit executed', { score: report.overallScore, duration });
-
-    return apiResponse({ success: true, data: report }, HttpStatus.OK, requestId);
+    return await withAdminOpsReadAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/security/audit',
+      requestId,
+      startTime,
+      onDenied: (_response, statusCode, duration) => {
+        recordRequest('GET', '/api/admin/security/audit', statusCode, duration);
+      },
+      onSuccess: (_response, duration) => {
+        recordRequest('GET', '/api/admin/security/audit', HttpStatus.OK, duration);
+      }
+    }, async () => {
+      const report = await runSecurityAudit();
+      logger.info('Security audit executed', { score: report.overallScore, duration: Date.now() - startTime });
+      return apiResponse({ success: true, data: report }, HttpStatus.OK, requestId);
+    });
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/security/audit', HttpStatus.INTERNAL_SERVER_ERROR, duration);
@@ -41,23 +47,29 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
-      recordRequest('POST', '/api/admin/security/audit', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return new Response('Unauthorized', { status: 403 });
-    }
-
-    const report = await runSecurityAudit();
-    const html = generateAuditReportHTML(report);
-
-    const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/admin/security/audit', HttpStatus.OK, duration);
-
-    return new Response(html, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'X-Request-ID': requestId
+    return await withAdminOpsWriteAccess({
+      request,
+      locals,
+      endpoint: '/api/admin/security/audit',
+      requestId,
+      startTime,
+      onDenied: (_response, statusCode, duration) => {
+        recordRequest('POST', '/api/admin/security/audit', statusCode, duration);
+      },
+      onSuccess: (response, duration) => {
+        recordRequest('POST', '/api/admin/security/audit', response.status, duration);
       }
+    }, async () => {
+      const report = await runSecurityAudit();
+      const html = generateAuditReportHTML(report);
+
+      return new Response(html, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'X-Request-ID': requestId
+        }
+      });
     });
   } catch (error) {
     const duration = Date.now() - startTime;
