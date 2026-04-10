@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logging';
+import { deterministicId } from './deterministic';
 
 // ==================== ANOMALY DETECTION ====================
 
@@ -292,12 +293,17 @@ export class TraceContext {
   }
 }
 
+let traceCounter = 0;
+let spanCounter = 0;
+
 function generateTraceId(): string {
-  return Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+  traceCounter++;
+  return deterministicId('trace', `trace-${Date.now()}-${traceCounter}`, traceCounter);
 }
 
 function generateSpanId(): string {
-  return Math.random().toString(36).substring(2, 10);
+  spanCounter++;
+  return deterministicId('span', `span-${Date.now()}-${spanCounter}`, spanCounter);
 }
 
 // ==================== REQUEST PATH ANALYSIS ====================
@@ -351,8 +357,15 @@ export class RequestPathAnalyzer {
       metric.errorRate = ((metric.errorRate * (metric.callCount - 1)) + 1) / metric.callCount;
     }
 
-    if (bottleneck && (!metric.bottleneck || Math.random() < 0.1)) {
-      metric.bottleneck = bottleneck; // Update bottleneck occasionally
+    if (bottleneck) {
+      const shouldUpdate =
+        !metric.bottleneck ||
+        duration >= metric.avgDuration * 1.2 ||
+        Boolean(error);
+
+      if (shouldUpdate) {
+        metric.bottleneck = bottleneck;
+      }
     }
   }
 

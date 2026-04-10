@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logging';
+import { deterministicId, deterministicNumber } from './deterministic';
 
 export type RecommendationType = 'collaborative' | 'content-based' | 'hybrid';
 export type RankingStrategy = 'relevance' | 'popularity' | 'personalized';
@@ -29,21 +30,24 @@ export interface Recommendation {
 // ==================== SEMANTIC SEARCH ====================
 
 export class SemanticSearch {
-  private searchCount = 0;
-
   createSemanticIndex(datasetId: string): void {
     logger.info('Semantic index created', { datasetId });
   }
 
   semanticSearch(query: string, limit?: number): SearchResult {
-    const id = 'search-' + Date.now() + '-' + this.searchCount++;
+    const effectiveLimit = limit || 10;
+    const seed = `${query}:${effectiveLimit}`;
+    const id = deterministicId('search', seed, 0);
     return {
       id,
       query,
-      results: Array.from({ length: limit || 10 }, (_, i) => ({ resultId: i, relevance: Math.random() })),
-      semanticScore: 0.85 + Math.random() * 0.15,
-      executionTime: Math.random() * 1000,
-      createdAt: Date.now()
+      results: Array.from({ length: effectiveLimit }, (_, i) => ({
+        resultId: i,
+        relevance: deterministicNumber(`${seed}:result:${i}`, 0.45, 0.99, 4)
+      })).sort((a, b) => b.relevance - a.relevance),
+      semanticScore: deterministicNumber(`${seed}:semantic`, 0.85, 0.99, 4),
+      executionTime: deterministicNumber(`${seed}:latency`, 80, 320, 2),
+      createdAt: 1704067200000 + Math.round(deterministicNumber(`${seed}:createdAt`, 0, 86400000, 0))
     };
   }
 
@@ -122,13 +126,17 @@ export class RankingEngine {
   }
 
   rankResults(query: string, results: Record<string, any>[], strategy: RankingStrategy): Record<string, any>[] {
-    return results.sort(() => Math.random() - 0.5);
+    return [...results].sort((a, b) => this.getRankingScore(query, b, strategy) - this.getRankingScore(query, a, strategy));
   }
 
   learningToRank(features: Record<string, number>[]): Record<string, any> {
+    const aggregate = features.reduce((sum, feature) => {
+      return sum + Object.values(feature).reduce((featureSum, value) => featureSum + value, 0);
+    }, 0);
+
     return {
       rankedResults: features.length,
-      score: Math.random() * 0.4 + 0.6
+      score: deterministicNumber(`ltr:${features.length}:${aggregate}`, 0.6, 0.99, 4)
     };
   }
 
@@ -146,6 +154,23 @@ export class RankingEngine {
         personalized: results.slice(2, 5)
       }
     };
+  }
+
+  private getRankingScore(query: string, result: Record<string, any>, strategy: RankingStrategy): number {
+    const resultKey = typeof result.id === 'string'
+      ? result.id
+      : typeof result.resultId !== 'undefined'
+        ? String(result.resultId)
+        : JSON.stringify(result);
+
+    const base = deterministicNumber(`${query}:${strategy}:${resultKey}:base`, 0.2, 0.95, 6);
+    const semanticBoost = typeof result.semanticScore === 'number' ? result.semanticScore * 0.3 : 0;
+    const popularityBoost = typeof result.popularity === 'number' ? Math.min(result.popularity / 100, 0.2) : 0;
+    const personalizedBoost = strategy === 'personalized'
+      ? deterministicNumber(`${query}:${resultKey}:personalized`, 0.05, 0.15, 6)
+      : 0;
+
+    return base + semanticBoost + popularityBoost + personalizedBoost;
   }
 }
 

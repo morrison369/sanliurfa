@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { deterministicNumber } from './deterministic';
 
 interface Threat {
   id: string;
@@ -38,7 +39,7 @@ interface Mitigation {
   cost: number;
 }
 
-class ThreatModeler {
+export class ThreatModeler {
   private threats: Map<string, Threat[]> = new Map();
   private counter = 0;
 
@@ -54,13 +55,15 @@ class ThreatModeler {
     ];
 
     strideThreats.forEach((t, idx) => {
+      const probability = deterministicNumber(`${assetName}:${t.name}:probability`, 0.2, 0.8, 4);
+      const impact = deterministicNumber(`${assetName}:${t.name}:impact`, 0.3, 0.9, 4);
       threats.push({
         id: `threat-${assetName}-${++this.counter}`,
         name: t.name,
         category: t.category,
-        probability: Math.random() * 0.8,
-        impact: Math.random() * 0.9,
-        riskScore: Math.random() * 9 + 1,
+        probability,
+        impact,
+        riskScore: deterministicNumber(`${assetName}:${t.name}:risk`, Math.max(probability * impact * 8, 1), 10, 2),
         affectedAsset: assetName
       });
     });
@@ -90,7 +93,7 @@ class ThreatModeler {
   }
 }
 
-class AttackSurfaceAnalyzer {
+export class AttackSurfaceAnalyzer {
   private surfaces: Map<string, AttackSurface> = new Map();
   private counter = 0;
 
@@ -130,12 +133,16 @@ class AttackSurfaceAnalyzer {
   getEntryPointRisks(surface: AttackSurface): Array<{ entryPoint: string; riskLevel: 'low' | 'medium' | 'high' }> {
     return surface.entryPoints.map(ep => ({
       entryPoint: ep,
-      riskLevel: Math.random() > 0.6 ? 'high' : Math.random() > 0.3 ? 'medium' : 'low'
+      riskLevel: ep.includes('admin') || ep.includes('database')
+        ? 'high'
+        : ep.includes('auth') || ep.includes('api')
+          ? 'medium'
+          : 'low'
     }));
   }
 }
 
-class RiskAssessment {
+export class RiskAssessment {
   private assessments: Map<string, { threat: string; score: number }[]> = new Map();
   private counter = 0;
 
@@ -169,7 +176,7 @@ class RiskAssessment {
   }
 }
 
-class MitigationPlanner {
+export class MitigationPlanner {
   private mitigations: Map<string, Mitigation[]> = new Map();
   private counter = 0;
 

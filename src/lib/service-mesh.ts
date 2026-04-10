@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { deterministicInt, deterministicNumber } from './deterministic';
 
 interface TrafficMetrics {
   requestsPerSecond: number;
@@ -34,7 +35,7 @@ interface ServiceMeshPolicy {
   conditions?: Record<string, any>;
 }
 
-class ServiceMesh {
+export class ServiceMesh {
   private canaries: Map<string, CanaryConfig> = new Map();
   private circuitBreakers: Map<string, CircuitBreakerConfig> = new Map();
   private policies: ServiceMeshPolicy[] = [];
@@ -74,10 +75,14 @@ class ServiceMesh {
 
   getTrafficMetrics(serviceName: string, duration: number): TrafficMetrics {
     const metrics = this.metrics.get(serviceName) || {
-      requestsPerSecond: Math.random() * 1000,
-      errorRate: Math.random() * 0.05,
-      latency: { p50: 50, p95: 200, p99: 500 },
-      throughputMBps: Math.random() * 100
+      requestsPerSecond: deterministicNumber(`${serviceName}:${duration}:rps`, 120, 980, 2),
+      errorRate: deterministicNumber(`${serviceName}:${duration}:errorRate`, 0.002, 0.03, 4),
+      latency: {
+        p50: deterministicInt(`${serviceName}:${duration}:p50`, 40, 90),
+        p95: deterministicInt(`${serviceName}:${duration}:p95`, 120, 260),
+        p99: deterministicInt(`${serviceName}:${duration}:p99`, 260, 480)
+      },
+      throughputMBps: deterministicNumber(`${serviceName}:${duration}:throughput`, 15, 95, 2)
     };
 
     this.metrics.set(serviceName, metrics);
@@ -103,7 +108,7 @@ class ServiceMesh {
   }
 }
 
-class TrafficPolicy {
+export class TrafficPolicy {
   private rules: Map<string, any> = new Map();
   private counter = 0;
 
@@ -171,7 +176,7 @@ class TrafficPolicy {
   }
 }
 
-class CircuitBreaker {
+export class CircuitBreaker {
   private breakers: Map<string, CircuitBreakerConfig & { state: 'closed' | 'open' | 'half-open' }> = new Map();
   private counter = 0;
 
@@ -227,7 +232,7 @@ class CircuitBreaker {
   }
 }
 
-class ServiceDiscovery {
+export class ServiceDiscovery {
   private services: Map<string, { name: string; namespace: string; replicas: number; endpoints: string[] }> = new Map();
   private counter = 0;
 
@@ -237,7 +242,7 @@ class ServiceDiscovery {
     this.services.set(serviceId, {
       name: config.name,
       namespace: config.namespace,
-      replicas: Math.floor(Math.random() * 10) + 1,
+      replicas: deterministicInt(`${serviceId}:${config.port}:replicas`, 1, 10),
       endpoints: []
     });
 

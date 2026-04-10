@@ -15,6 +15,18 @@ export function round(value: number, digits: number = 2): number {
   return Math.round(value * factor) / factor;
 }
 
+export function deterministicNumber(seed: string, min: number, max: number, digits: number = 2): number {
+  return round(normalize(hashString(seed), min, max), digits);
+}
+
+export function deterministicInt(seed: string, min: number, max: number): number {
+  return Math.floor(deterministicNumber(seed, min, max + 1, 6));
+}
+
+export function deterministicBoolean(seed: string, threshold: number = 0.5): boolean {
+  return normalize(hashString(seed), 0, 1) >= threshold;
+}
+
 export function pickDeterministic<T>(items: T[], seed: string): T {
   return items[hashString(seed) % items.length];
 }

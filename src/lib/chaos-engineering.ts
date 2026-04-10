@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { deterministicId, deterministicInt } from './deterministic';
 
 interface FailureScenario {
   id: string;
@@ -28,7 +29,7 @@ interface RecoveryMetric {
   degradationLevel: number;
 }
 
-class FailureInjector {
+export class FailureInjector {
   private activeFailures: Map<string, FailureScenario> = new Map();
   private counter = 0;
 
@@ -96,20 +97,32 @@ class FailureInjector {
   }
 }
 
-class ResilienceValidator {
+export class ResilienceValidator {
   private validations: Map<string, ResilienceResult> = new Map();
-  private counter = 0;
+
+  constructor(private readonly injector: Pick<FailureInjector, 'getActiveFailures'> = failureInjector) {}
 
   validateRecovery(): ResilienceResult {
-    const recovered = Math.random() > 0.1; // 90% recovery rate
-    const mttr = Math.floor(Math.random() * 5000) + 1000; // 1-6 seconds
-    const impactLevel = recovered ? 'minor' : 'major';
+    const activeFailures = this.injector.getActiveFailures();
+    const seed = activeFailures.map(failure => `${failure.type}:${failure.targets.join(',')}:${failure.duration}`).sort().join('|') || 'steady-state';
+    const highestSeverity = activeFailures.some(failure => failure.severity === 'high')
+      ? 'high'
+      : activeFailures.some(failure => failure.severity === 'medium')
+        ? 'medium'
+        : 'low';
+    const recovered = highestSeverity !== 'high';
+    const mttr = activeFailures.length === 0
+      ? 0
+      : activeFailures.reduce((sum, failure) => sum + failure.duration, 0) + deterministicInt(`${seed}:mttr`, 250, 1250);
+    const impactLevel = recovered
+      ? activeFailures.length > 0 ? 'minor' : 'minimal'
+      : activeFailures.length > 2 ? 'catastrophic' : 'major';
 
     const result: ResilienceResult = {
       recovered,
       mttr,
-      impactLevel: impactLevel as 'minor' | 'major',
-      failuresObserved: recovered ? [] : ['timeout', 'connection refused']
+      impactLevel,
+      failuresObserved: recovered ? [] : activeFailures.flatMap(failure => failure.targets.map(target => `${failure.type}:${target}`))
     };
 
     logger.debug('Resilience validation completed', { recovered, mttr });
@@ -118,9 +131,15 @@ class ResilienceValidator {
   }
 
   validateCircuitBreaker(serviceName: string): { opensOnFailure: boolean; stateTransitions: number } {
+    const activeFailures = this.injector
+      .getActiveFailures()
+      .filter(failure => failure.targets.includes(serviceName) || failure.type === 'network');
+
     return {
-      opensOnFailure: true,
-      stateTransitions: Math.floor(Math.random() * 10) + 1
+      opensOnFailure: activeFailures.length > 0,
+      stateTransitions: activeFailures.length === 0
+        ? 1
+        : activeFailures.length + deterministicInt(`${serviceName}:circuit-transitions`, 1, 4)
     };
   }
 
@@ -132,14 +151,19 @@ class ResilienceValidator {
   }
 
   validateRetryPolicy(serviceName: string): { retriedSuccessfully: boolean; maxRetriesHit: boolean } {
+    const activeFailures = this.injector
+      .getActiveFailures()
+      .filter(failure => failure.targets.includes(serviceName) || failure.type === 'network');
+    const retriedSuccessfully = activeFailures.every(failure => failure.severity !== 'high');
+
     return {
-      retriedSuccessfully: Math.random() > 0.2,
-      maxRetriesHit: Math.random() > 0.8
+      retriedSuccessfully,
+      maxRetriesHit: activeFailures.some(failure => failure.duration >= 5000 || failure.severity === 'high')
     };
   }
 }
 
-class RecoveryAnalyzer {
+export class RecoveryAnalyzer {
   private metrics: Map<string, RecoveryMetric> = new Map();
 
   recordRecovery(serviceName: string, detectionMs: number, recoveryMs: number, degradation: number): RecoveryMetric {
@@ -166,17 +190,23 @@ class RecoveryAnalyzer {
   }
 
   analyzeRecoveryTrend(): { averageMttr: number; improvingTrend: boolean } {
+    const metrics = Array.from(this.metrics.values());
     let totalMttr = 0;
     let count = 0;
 
-    for (const metric of this.metrics.values()) {
+    for (const metric of metrics) {
       totalMttr += metric.recoveryTime;
       count++;
     }
 
+    const improvingTrend =
+      metrics.length < 2
+        ? true
+        : metrics[metrics.length - 1].recoveryTime <= metrics[0].recoveryTime;
+
     return {
       averageMttr: count > 0 ? totalMttr / count : 0,
-      improvingTrend: Math.random() > 0.5
+      improvingTrend
     };
   }
 
@@ -191,13 +221,13 @@ class RecoveryAnalyzer {
   }
 }
 
-class ChaosScenario {
+export class ChaosScenario {
   private scenarios: Map<string, FailureScenario> = new Map();
   private counter = 0;
 
   create(config: { name: string; duration: number; targets: string[]; severity?: string }): FailureScenario {
     const scenario: FailureScenario = {
-      id: `scenario-${Date.now()}-${++this.counter}`,
+      id: deterministicId('scenario', `${config.name}:${config.targets.join(',')}:${config.duration}`, ++this.counter),
       name: config.name,
       type: 'service',
       duration: config.duration,

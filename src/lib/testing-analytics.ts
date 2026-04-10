@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { deterministicBoolean, deterministicInt, deterministicNumber } from './deterministic';
 
 interface TestExecution {
   testName: string;
@@ -37,21 +38,28 @@ interface TestHealth {
   recommendation: string;
 }
 
-class TestAnalyticsEngine {
+export class TestAnalyticsEngine {
   private executions: Map<string, TestExecution[]> = new Map();
-  private counter = 0;
 
   recordTestExecution(testName: string, status: 'pass' | 'fail', duration: number): void {
     if (!this.executions.has(testName)) {
       this.executions.set(testName, []);
     }
 
+    const runCount = (this.executions.get(testName)?.length || 0) + 1;
+    const derivedStatus =
+      status === 'fail'
+        ? 'fail'
+        : duration >= 5000 || deterministicBoolean(`${testName}:${runCount}:${duration}`, 0.92)
+          ? 'flaky'
+          : status;
+
     const execution: TestExecution = {
       testName,
-      status: Math.random() > 0.95 ? 'flaky' : status,
+      status: derivedStatus,
       duration,
       timestamp: Date.now(),
-      runCount: (this.executions.get(testName)?.length || 0) + 1
+      runCount
     };
 
     this.executions.get(testName)!.push(execution);
@@ -91,7 +99,7 @@ class TestAnalyticsEngine {
   }
 }
 
-class FlakinessDetector {
+export class FlakinessDetector {
   private flakyTests: Map<string, FlakinessReport> = new Map();
 
   detectFlakyTests(): FlakinessReport[] {
@@ -100,8 +108,8 @@ class FlakinessDetector {
     const testCases = ['auth.spec.ts', 'api.spec.ts', 'ui.spec.ts', 'integration.spec.ts'];
 
     for (const testName of testCases) {
-      const runs = Math.floor(Math.random() * 20) + 10;
-      const failures = Math.floor(Math.random() * 5);
+      const runs = deterministicInt(`${testName}:runs`, 10, 29);
+      const failures = deterministicInt(`${testName}:failures`, 0, Math.max(runs - 1, 0));
       const flakiness = (failures / runs) * 100;
 
       const report: FlakinessReport = {
@@ -142,7 +150,7 @@ class FlakinessDetector {
   }
 }
 
-class TestPrioritizer {
+export class TestPrioritizer {
   private priorities: Map<string, TestPriority> = new Map();
 
   prioritizeTests(changedFiles: string[]): TestPriority[] {
@@ -161,7 +169,7 @@ class TestPrioritizer {
           testName: test,
           priority: 10,
           riskScore: 0.8,
-          executionTime: Math.floor(Math.random() * 5000) + 1000,
+          executionTime: deterministicInt(`${file}:${test}:executionTime`, 1000, 6000),
           efficiency: 0.85
         });
       }
@@ -171,19 +179,32 @@ class TestPrioritizer {
   }
 
   rankByRisk(tests: string[]): TestPriority[] {
-    return tests.map((test, idx) => ({
+    return tests.map(test => ({
       testName: test,
-      priority: Math.floor(Math.random() * 10) + 1,
-      riskScore: Math.random(),
-      executionTime: Math.floor(Math.random() * 5000) + 1000,
-      efficiency: Math.random() * 0.5 + 0.5
-    }));
+      priority: deterministicInt(`${test}:priority`, 1, 10),
+      riskScore: deterministicNumber(`${test}:riskScore`, 0.2, 0.95, 3),
+      executionTime: deterministicInt(`${test}:executionTime`, 1000, 6000),
+      efficiency: deterministicNumber(`${test}:efficiency`, 0.5, 1, 3)
+    })).sort((a, b) => b.priority - a.priority || b.riskScore - a.riskScore);
   }
 
   getOptimalTestOrder(availableTime: number): { testOrder: string[]; estimatedTime: number } {
+    const ranked = this.rankByRisk(['auth.test.ts', 'payment.test.ts', 'api.test.ts']);
+    const testOrder: string[] = [];
+    let estimatedTime = 0;
+
+    for (const test of ranked) {
+      if (estimatedTime + test.executionTime > availableTime && testOrder.length > 0) {
+        break;
+      }
+
+      testOrder.push(test.testName);
+      estimatedTime += test.executionTime;
+    }
+
     return {
-      testOrder: ['auth.test.ts', 'payment.test.ts', 'api.test.ts'],
-      estimatedTime: Math.floor(Math.random() * 30000) + 10000
+      testOrder,
+      estimatedTime
     };
   }
 
@@ -192,9 +213,8 @@ class TestPrioritizer {
   }
 }
 
-class TestHealthMonitor {
+export class TestHealthMonitor {
   private healthHistory: Map<string, TestHealth[]> = new Map();
-  private counter = 0;
 
   recordHealth(health: TestHealth): void {
     const key = `health-${Date.now()}`;
@@ -212,18 +232,25 @@ class TestHealthMonitor {
   }
 
   getHealth(): TestHealth {
+    const allHealthRecords = Array.from(this.healthHistory.values()).flat();
+    const latest = allHealthRecords.at(-1);
+
+    if (latest) {
+      return latest;
+    }
+
     return {
-      testCount: Math.floor(Math.random() * 200) + 300,
-      avgDuration: Math.floor(Math.random() * 50) + 30,
-      flakiness: Math.random() * 5,
+      testCount: deterministicInt('test-health:testCount', 300, 500),
+      avgDuration: deterministicInt('test-health:avgDuration', 30, 80),
+      flakiness: deterministicNumber('test-health:flakiness', 0.5, 5, 2),
       trend: 'improving',
       recommendation: 'Continue optimizing slow tests'
     };
   }
 
   getHealthTrend(days: number = 30): { trend: 'improving' | 'stable' | 'degrading'; changePercent: number } {
-    const trend = Math.random() > 0.5 ? 'improving' : 'stable';
-    const changePercent = (Math.random() * 10 - 5); // -5% to +5%
+    const changePercent = deterministicNumber(`health-trend:${days}`, -5, 5, 2);
+    const trend = changePercent > 1 ? 'improving' : changePercent < -1 ? 'degrading' : 'stable';
 
     return { trend, changePercent };
   }

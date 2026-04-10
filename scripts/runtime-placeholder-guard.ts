@@ -11,7 +11,13 @@ const FILES = [
   'src/lib/shipping-logistics.ts',
   'src/lib/reverse-logistics.ts',
   'src/lib/security-automation.ts',
-  'src/lib/zero-trust-security.ts'
+  'src/lib/zero-trust-security.ts',
+  'src/lib/advanced-observability.ts',
+  'src/lib/testing-analytics.ts',
+  'src/lib/semantic-intelligence.ts',
+  'src/lib/chaos-engineering.ts',
+  'src/lib/service-mesh.ts',
+  'src/lib/threat-modeling.ts'
 ];
 
 const PATTERNS = [
