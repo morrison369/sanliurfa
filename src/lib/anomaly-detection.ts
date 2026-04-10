@@ -3,6 +3,7 @@
  * Statistical anomaly detection, ML baselines, drift detection
  */
 
+import { deterministicNumber } from './deterministic';
 import { logger } from './logger';
 
 interface Baseline {
@@ -190,7 +191,11 @@ class AnomalyClassifier {
       type,
       expectedDuration,
       impact,
-      confidence: 0.75 + Math.random() * 0.2
+      confidence: deterministicNumber(
+        `${anomaly.metricName}:${anomaly.value}:${anomaly.severity}:${contextWindow.length}:${type}:${impact}`,
+        0.75,
+        0.95
+      )
     };
   }
 }

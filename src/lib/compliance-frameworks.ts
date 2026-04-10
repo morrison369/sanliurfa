@@ -3,6 +3,7 @@
  * Compliance mapping, audit trails, policy enforcement
  */
 
+import { deterministicNumber } from './deterministic';
 import { logger } from './logger';
 
 interface ComplianceRequirement {
@@ -215,11 +216,12 @@ class ComplianceReporter {
   private counter = 0;
 
   generateReport(framework: 'GDPR' | 'HIPAA' | 'PCI-DSS' | 'SOC2' | 'ISO27001', dateRange: { start: number; end: number }): ComplianceReport {
+    const seed = `${framework}:${dateRange.start}:${dateRange.end}`;
     const report: ComplianceReport = {
       reportId: `report-${framework}-${Date.now()}`,
       framework,
       generatedAt: Date.now(),
-      coverage: 75 + Math.random() * 20,
+      coverage: deterministicNumber(seed, 75, 95),
       gaps: ['Data retention policy not fully documented', 'Incident response plan needs update'],
       recommendations: ['Implement automated compliance monitoring', 'Conduct staff training on compliance'],
       evidence: {

@@ -3,6 +3,7 @@
  * Coverage gates, trends, and critical path identification
  */
 
+import { deterministicNumber } from './deterministic';
 import { logger } from './logger';
 
 interface CoverageMetrics {
@@ -60,11 +61,34 @@ class CoverageAnalyzer {
   }
 
   getCoverageSummary(): CoverageMetrics {
+    const entries = Array.from(this.coverageHistory.values()).flat();
+    if (entries.length > 0) {
+      const totals = entries.reduce(
+        (acc, entry) => {
+          acc.line += entry.line;
+          acc.branch += entry.branch;
+          acc.function += entry.function;
+          acc.statement += entry.statement;
+          acc.timestamp = Math.max(acc.timestamp, entry.timestamp);
+          return acc;
+        },
+        { line: 0, branch: 0, function: 0, statement: 0, timestamp: 0 }
+      );
+
+      return {
+        line: totals.line / entries.length,
+        branch: totals.branch / entries.length,
+        function: totals.function / entries.length,
+        statement: totals.statement / entries.length,
+        timestamp: totals.timestamp
+      };
+    }
+
     return {
-      line: 82 + Math.random() * 10,
-      branch: 76 + Math.random() * 10,
-      function: 85 + Math.random() * 10,
-      statement: 83 + Math.random() * 10,
+      line: deterministicNumber('coverage:line:summary', 82, 92),
+      branch: deterministicNumber('coverage:branch:summary', 76, 86),
+      function: deterministicNumber('coverage:function:summary', 85, 95),
+      statement: deterministicNumber('coverage:statement:summary', 83, 93),
       timestamp: Date.now()
     };
   }
@@ -160,7 +184,7 @@ class CoverageTrendAnalyzer {
 
     for (let i = 0; i < days; i++) {
       dates.push(Date.now() - (days - i) * 86400000);
-      values.push(75 + Math.random() * 15);
+      values.push(deterministicNumber(`${metric}:${days}:${i}`, 75, 90));
     }
 
     const trend =

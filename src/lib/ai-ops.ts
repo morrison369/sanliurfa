@@ -3,6 +3,7 @@
  * Model registry, prediction monitoring, experiment runner, drift detection
  */
 
+import { deterministicId } from './deterministic';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -154,9 +155,12 @@ export class ExperimentRunner {
   private experiments = new Map<string, ModelExperiment>();
   private outcomes = new Map<string, boolean[]>();
   private assignments = new Map<string, string>();
+  private experimentCounter = 0;
 
   createExperiment(experiment: Omit<ModelExperiment, 'id'>): ModelExperiment {
-    const id = 'exp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    this.experimentCounter += 1;
+    const seed = `${experiment.name}:${experiment.championModelId}:${experiment.challengerModelId}:${experiment.startDate}`;
+    const id = deterministicId('exp', seed, this.experimentCounter);
 
     const exp: ModelExperiment = {
       ...experiment,
