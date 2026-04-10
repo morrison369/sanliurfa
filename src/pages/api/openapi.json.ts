@@ -333,8 +333,38 @@ const openApiSpec = {
                               },
                               required: ['status'],
                             },
+                            artifacts: {
+                              type: 'object',
+                              properties: {
+                                releaseGate: {
+                                  type: 'object',
+                                  properties: {
+                                    status: healthStatusSchema,
+                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
+                                  },
+                                  required: ['status', 'generatedAt'],
+                                },
+                                nightlyRegression: {
+                                  type: 'object',
+                                  properties: {
+                                    status: healthStatusSchema,
+                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
+                                  },
+                                  required: ['status', 'generatedAt'],
+                                },
+                                nightlyE2E: {
+                                  type: 'object',
+                                  properties: {
+                                    status: healthStatusSchema,
+                                    generatedAt: { type: ['string', 'null'], format: 'date-time' },
+                                  },
+                                  required: ['status', 'generatedAt'],
+                                },
+                              },
+                              required: ['releaseGate', 'nightlyRegression', 'nightlyE2E'],
+                            },
                           },
-                          required: ['database', 'redis'],
+                          required: ['database', 'redis', 'artifacts'],
                         },
                       },
                       required: ['status', 'uptime', 'timestamp', 'version', 'system', 'checks'],
