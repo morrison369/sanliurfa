@@ -161,7 +161,7 @@ async function handleCustomerSubscriptionDeleted(subscription: Stripe.Subscripti
 
     // Find and cancel subscription in our database
     const dbSubscription = await queryOne(
-      `SELECT id, user_id FROM subscriptions WHERE stripe_subscription_id = $1`,
+      `SELECT id, user_id, tier_id FROM subscriptions WHERE stripe_subscription_id = $1`,
       [stripeSubscriptionId]
     );
 
@@ -190,6 +190,7 @@ export const POST: APIRoute = async ({ request }) => {
   const requestId = getRequestId({ request } as any);
   const startTime = Date.now();
   logger.setRequestId(requestId);
+  let deliveryId: string | undefined;
 
   try {
     // Get raw body for signature verification
@@ -227,6 +228,7 @@ export const POST: APIRoute = async ({ request }) => {
        RETURNING id`,
       [event.type, event.id, rawBody]
     );
+    deliveryId = delivery?.id;
 
     if (existingDelivery?.id) {
       await query(
@@ -277,6 +279,15 @@ export const POST: APIRoute = async ({ request }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/webhooks/stripe', 400, duration);
     logger.error('Webhook verification failed', error instanceof Error ? error : new Error(String(error)));
+
+    if (deliveryId) {
+      await query(
+        `UPDATE webhook_deliveries
+         SET status = 'failed', http_status = 400, response_body = $2, completed_at = NOW()
+         WHERE id = $1`,
+        [deliveryId, JSON.stringify({ error: 'Webhook signature verification failed' })]
+      );
+    }
 
     return apiError(
       ErrorCode.AUTH_ERROR,

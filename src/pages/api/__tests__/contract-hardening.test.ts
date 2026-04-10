@@ -98,7 +98,7 @@ describe('API contract hardening', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.unstubAllGlobals();
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     queryMock.mockResolvedValue({ rows: [], rowCount: 0 });
     queryOneMock.mockResolvedValue(null);
     isUserBlockedMock.mockResolvedValue(false);
@@ -144,6 +144,34 @@ describe('API contract hardening', () => {
     expect(sendMessageMock).not.toHaveBeenCalled();
   });
 
+  it('rejects invalid before cursor for messages GET', async () => {
+    const { GET } = await import('../messages/[conversationId].ts');
+    const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111?before=bad-cursor');
+
+    const response = await GET({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { conversationId: '11111111-1111-1111-1111-111111111111' },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(getMessagesMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid limit for messages GET', async () => {
+    const { GET } = await import('../messages/[conversationId].ts');
+    const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111?limit=0');
+
+    const response = await GET({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { conversationId: '11111111-1111-1111-1111-111111111111' },
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(getMessagesMock).not.toHaveBeenCalled();
+  });
+
   it('rejects non-json content type for messages POST', async () => {
     const { POST } = await import('../messages/[conversationId].ts');
     const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111', {
@@ -182,6 +210,24 @@ describe('API contract hardening', () => {
     } as any);
 
     expect(response.status).toBe(422);
+    expect(addTenantMemberMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects non-json tenant member POST body', async () => {
+    const { POST } = await import('../tenants/[tenantId]/members.ts');
+    const request = new Request('https://example.com/api/tenants/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/members', {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain' },
+      body: 'hello'
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { tenantId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' },
+    } as any);
+
+    expect(response.status).toBe(400);
     expect(addTenantMemberMock).not.toHaveBeenCalled();
   });
 
@@ -247,6 +293,20 @@ describe('API contract hardening', () => {
     expect(createUserSessionMock).not.toHaveBeenCalled();
   });
 
+  it('rejects oauth callback when code or state is missing', async () => {
+    const { GET } = await import('../auth/oauth/callback.ts');
+    const request = new Request('https://example.com/api/auth/oauth/callback?code=abc');
+
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(verifyOAuthStateMock).not.toHaveBeenCalled();
+  });
+
   it('rejects oauth callback when provider returns no email and no linked account exists', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: 'access-token' }), { status: 200 }))
@@ -291,13 +351,43 @@ describe('API contract hardening', () => {
     expect(verifyWebhookSignatureMock).not.toHaveBeenCalled();
   });
 
+  it('rejects stripe webhook when signature verification fails', async () => {
+    const { POST } = await import('../webhooks/stripe.ts');
+    verifyWebhookSignatureMock.mockRejectedValueOnce(new Error('invalid signature'));
+
+    const request = new Request('https://example.com/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig' },
+      body: JSON.stringify({ id: 'evt_1' })
+    });
+
+    const response = await POST({ request } as any);
+
+    expect(response.status).toBe(400);
+  });
+
+  it('returns duplicate response for already completed stripe delivery', async () => {
+    const { POST } = await import('../webhooks/stripe.ts');
+    queryOneMock.mockResolvedValueOnce({ id: 'delivery-1', status: 'completed' });
+
+    const request = new Request('https://example.com/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig' },
+      body: JSON.stringify({ id: 'evt_1' })
+    });
+
+    const response = await POST({ request } as any);
+    const payload = await response.json();
+    expect(response.status).toBe(200);
+    expect(payload.data).toEqual({ received: true, duplicate: true });
+    expect(queryMock).not.toHaveBeenCalled();
+  });
+
   it('accepts a valid stripe webhook and records delivery completion in payment-failed flow', async () => {
     const { POST } = await import('../webhooks/stripe.ts');
-    queryOneMock.mockImplementation(async (sql: string) => (
-      sql.includes('SELECT id, status FROM webhook_deliveries')
-        ? { id: 'delivery-1', status: 'completed' }
-        : null
-    ));
+    queryOneMock
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'delivery-1' });
 
     const request = new Request('https://example.com/api/webhooks/stripe', {
       method: 'POST',
@@ -307,16 +397,19 @@ describe('API contract hardening', () => {
 
     const response = await POST({ request } as any);
     const payloadText = await response.text();
-
     expect(response.status).toBe(200);
     expect(payloadText).toContain('"received":true');
     expect(queryOneMock).toHaveBeenCalledWith(
       expect.stringContaining('SELECT id, status FROM webhook_deliveries'),
       ['evt_1']
     );
+    expect(queryOneMock).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO webhook_deliveries'),
+      ['invoice.payment_failed', 'evt_1', JSON.stringify({ id: 'evt_1' })]
+    );
     expect(queryMock).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE webhook_deliveries"),
-      [undefined, JSON.stringify({ received: true })]
+      ['delivery-1', JSON.stringify({ received: true })]
     );
   });
 });
