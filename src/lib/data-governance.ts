@@ -5,6 +5,8 @@
 
 import { logger } from './logging';
 
+let tokenizedValueCounter = 0;
+
 // ==================== TYPES & INTERFACES ====================
 
 export type DataSensitivity = 'public' | 'internal' | 'confidential' | 'restricted';
@@ -218,7 +220,8 @@ export class DataMasker {
       case 'hash':
         return '****' + Math.abs(value.length * 31).toString(16).substring(0, 4);
       case 'tokenize':
-        return 'TOKEN_' + Math.random().toString(36).substring(7).toUpperCase();
+        tokenizedValueCounter += 1;
+        return `TOKEN_${value.length.toString(36).toUpperCase()}${tokenizedValueCounter.toString(36).toUpperCase()}`;
       default:
         return value;
     }

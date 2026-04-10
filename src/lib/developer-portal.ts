@@ -3,6 +3,7 @@
  * Developer experience with comprehensive analytics, documentation, and support
  */
 
+import { randomBytes } from 'crypto';
 import { logger } from './logging';
 
 // ==================== TYPES & INTERFACES ====================
@@ -81,7 +82,7 @@ export class DeveloperPortal {
 
     if (!account) return '';
 
-    const key = 'sk_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const key = `sk_${randomBytes(24).toString('hex')}`;
 
     account.apiKeys.push(key);
 

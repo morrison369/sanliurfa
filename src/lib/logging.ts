@@ -1,5 +1,7 @@
 // Structured logging with request ID tracking
 
+let requestIdFallbackCounter = 0;
+
 enum LogLevel {
   DEBUG = 'debug',
   INFO = 'info',
@@ -30,7 +32,8 @@ export function generateRequestId(): string {
   if (typeof globalThis.crypto?.randomUUID === 'function') {
     return globalThis.crypto.randomUUID();
   }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  requestIdFallbackCounter += 1;
+  return `${Date.now()}-${requestIdFallbackCounter}`;
 }
 
 class Logger {

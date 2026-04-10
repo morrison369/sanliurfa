@@ -1,22 +1,32 @@
 import { describe, expect, it } from 'vitest';
 import { apiKeyManager as gatewayApiKeyManager } from '../api-gateway';
-import { developerPortal } from '../api-documentation';
+import { developerPortal as documentationPortal } from '../api-documentation';
+import { developerPortal as accountPortal } from '../developer-portal';
 import { apiKeyManager as developerApiKeyManager } from '../developer-platform';
 import { distributedLock, cacheWarmer } from '../distributed-cache';
 import { messageQueue } from '../event-bus';
 import { jobQueue } from '../job-queue';
 import { getRequestId } from '../api';
+import { generateSecurityToken } from '../security-headers';
+import { dataMasker } from '../data-governance';
 
 describe('Infrastructure runtime security and id generation', () => {
   it('generates non-Math.random API keys and secrets', () => {
     const gatewayKey = gatewayApiKeyManager.generateKey('user-1', 'Primary', ['read']);
-    const portalKey = developerPortal.createAPIKey('vendor-1', 'Portal Key');
+    const portalKey = documentationPortal.createAPIKey('vendor-1', 'Portal Key');
     const developerKey = developerApiKeyManager.generateAPIKey('dev-1', 'SDK Key', 30);
+    const account = accountPortal.createAccount({
+      email: 'ops@example.com',
+      organizationName: 'Ops',
+      plan: 'pro'
+    });
+    const accountKey = accountPortal.generateAPIKey(account.id);
 
     expect(gatewayKey.key).toMatch(/^sk_[a-f0-9]{48}$/);
     expect(portalKey.id).toMatch(/^key-/);
     expect(portalKey.secret).toMatch(/^secret-[a-f0-9]{48}$/);
     expect(developerKey.keyHash).toMatch(/^sk_[a-f0-9]{48}$/);
+    expect(accountKey).toMatch(/^sk_[a-f0-9]{48}$/);
   });
 
   it('uses deterministic counters for queue-style ids', () => {
@@ -57,5 +67,19 @@ describe('Infrastructure runtime security and id generation', () => {
     expect(explicit).toBe('req-existing');
     expect(generated).toMatch(/^req-/);
     expect(generated).not.toContain('undefined');
+  });
+
+  it('generates non-randomized security and tokenized values through controlled helpers', () => {
+    const token = generateSecurityToken(24);
+    dataMasker.registerMaskingConfig({ fieldName: 'secretField', strategy: 'tokenize' });
+
+    const maskedA = dataMasker.mask('secretField', 'sensitive-value');
+    const maskedB = dataMasker.mask('secretField', 'sensitive-value');
+
+    expect(token).toHaveLength(24);
+    expect(token).toMatch(/^[A-Za-z0-9]+$/);
+    expect(maskedA).toMatch(/^TOKEN_/);
+    expect(maskedB).toMatch(/^TOKEN_/);
+    expect(maskedA).not.toBe(maskedB);
   });
 });

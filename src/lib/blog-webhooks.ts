@@ -4,6 +4,7 @@
  * Abone sistemi, analytics, sosyal medya entegrasyonu için
  */
 
+import { randomUUID } from 'crypto';
 import { logger } from './logging';
 import { fetchWithTimeout } from './http';
 
@@ -158,7 +159,7 @@ function generateSignature(event: WebhookEvent): string {
  * Webhook ID oluştur
  */
 function generateId(): string {
-  return `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `wh_${randomUUID()}`;
 }
 
 /**

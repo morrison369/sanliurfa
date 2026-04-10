@@ -2,6 +2,8 @@
  * Google Analytics 4 integration with client-side event tracking
  */
 
+let analyticsSessionCounter = 0;
+
 export interface AnalyticsEvent {
   name: string;
   category?: string;
@@ -260,7 +262,10 @@ export class GoogleAnalytics {
     const stored = sessionStorage.getItem('ga_session_id');
     if (stored) return stored;
 
-    const sessionId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    analyticsSessionCounter += 1;
+    const sessionId = typeof globalThis.crypto?.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID()
+      : `ga_${Date.now()}_${analyticsSessionCounter}`;
     sessionStorage.setItem('ga_session_id', sessionId);
     return sessionId;
   }

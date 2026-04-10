@@ -3,6 +3,7 @@
  * Supports email sending, notifications, reports, etc.
  */
 
+import { randomUUID } from 'crypto';
 import { getCache, setCache } from './cache';
 import { logger } from './logging';
 
@@ -265,7 +266,7 @@ export class BackgroundJobQueue {
    * Generate job ID
    */
   private generateId(): string {
-    return `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `job_${randomUUID()}`;
   }
 }
 

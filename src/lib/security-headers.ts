@@ -161,13 +161,20 @@ export function isSafeRedirectUrl(url: string, allowedOrigins: string[] = []): b
  */
 export function generateSecurityToken(length: number = 32): string {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let token = '';
-
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charset.length);
-    token += charset[randomIndex];
+  if (typeof globalThis.crypto?.getRandomValues === 'function') {
+    const bytes = new Uint8Array(length);
+    globalThis.crypto.getRandomValues(bytes);
+    let token = '';
+    for (let i = 0; i < length; i++) {
+      token += charset[bytes[i] % charset.length];
+    }
+    return token;
   }
 
+  let token = '';
+  for (let i = 0; i < length; i++) {
+    token += charset[(Date.now() + (i * 17)) % charset.length];
+  }
   return token;
 }
 

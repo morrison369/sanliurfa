@@ -3,6 +3,7 @@
  * Ensures reliable webhook delivery with exponential backoff
  */
 
+import { randomUUID } from 'crypto';
 import { pool } from './postgres';
 import { logger } from './logging';
 import { fetchWithTimeout } from './http';
@@ -310,7 +311,7 @@ export class WebhookQueue {
    * Generate unique ID
    */
   private generateId(): string {
-    return `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `wh_${randomUUID()}`;
   }
 }
 

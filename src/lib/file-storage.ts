@@ -3,6 +3,7 @@
  * Handles file uploads to local filesystem or cloud storage
  */
 
+import { randomBytes } from 'crypto';
 import { logger } from './logging';
 import { createClient } from '@supabase/supabase-js';
 
@@ -31,7 +32,7 @@ function sanitizePathSegment(value: string, fallback: string): string {
 
 function buildFileName(file: File, fileName?: string): string {
   const sourceName = fileName || file.name || 'upload.bin';
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}-${sanitizePathSegment(sourceName, 'upload.bin')}`;
+  return `${Date.now()}-${randomBytes(6).toString('hex')}-${sanitizePathSegment(sourceName, 'upload.bin')}`;
 }
 
 function normalizePublicBaseUrl(): string {

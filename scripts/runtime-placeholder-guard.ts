@@ -29,11 +29,20 @@ const FILES = [
   'src/lib/advanced-rate-limit.ts',
   'src/lib/api-gateway.ts',
   'src/lib/api-documentation.ts',
+  'src/lib/developer-portal.ts',
   'src/lib/developer-platform.ts',
   'src/lib/distributed-cache.ts',
+  'src/lib/background-jobs.ts',
+  'src/lib/blog-webhooks.ts',
   'src/lib/event-bus.ts',
   'src/lib/job-queue.ts',
-  'src/lib/api.ts'
+  'src/lib/api.ts',
+  'src/lib/file-storage.ts',
+  'src/lib/google-analytics.ts',
+  'src/lib/security-headers.ts',
+  'src/lib/data-governance.ts',
+  'src/lib/logging.ts',
+  'src/lib/webhook-queue.ts'
 ];
 
 const PATTERNS = [
