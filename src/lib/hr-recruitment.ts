@@ -290,6 +290,7 @@ export class OfferManager {
 
     const newOffer: JobOffer = {
       ...offer,
+      status: offer.status || 'pending',
       id,
       createdAt: Date.now()
     };

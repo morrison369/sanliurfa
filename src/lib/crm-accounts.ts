@@ -4,6 +4,8 @@
  */
 
 import { logger } from './logging';
+import { communicationTracker } from './crm-interactions';
+import { opportunityManager } from './crm-sales-pipeline';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -42,6 +44,10 @@ export interface AccountPlan {
   opportunities: string[];
   owner: string;
   createdAt: number;
+}
+
+function round(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 // ==================== ACCOUNT MANAGER ====================
@@ -125,31 +131,70 @@ export class AccountManager {
       return { score: 0, risks: [], opportunities: [] };
     }
 
-    const score = Math.random() * 40 + 60; // 60-100
+    const opportunitiesForAccount = opportunityManager.listOpportunities().filter(opportunity => opportunity.accountId === accountId);
+    const openOpportunities = opportunitiesForAccount.filter(opportunity => opportunity.stage !== 'closed');
+    const wonOpportunities = opportunitiesForAccount.filter(opportunity => opportunity.status === 'closed_won');
+    const communicationCount = account.primaryContact
+      ? communicationTracker.getContactCommunication(account.primaryContact, 90).length
+      : 0;
+
+    let score = 45;
     const risks: string[] = [];
-    const opportunities: string[] = [];
+    const growthOpportunities: string[] = [];
 
-    if (score < 70) {
-      risks.push('Engagement declining');
+    if (account.status === 'customer') score += 20;
+    if ((account.annualRevenue || 0) >= 1_000_000) score += 10;
+    if (communicationCount >= 3) score += 10;
+    if (wonOpportunities.length > 0) score += 10;
+
+    if (communicationCount === 0) {
+      risks.push('Low recent engagement');
+      score -= 15;
     }
 
-    if (Math.random() > 0.6) {
-      opportunities.push('Expansion opportunity');
+    if (openOpportunities.length === 0 && account.status === 'customer') {
+      growthOpportunities.push('Expansion pipeline is empty');
     }
+
+    if (account.status === 'inactive' || account.status === 'lost') {
+      risks.push('Account status is deteriorating');
+      score -= 20;
+    }
+
+    if ((account.annualRevenue || 0) < 500_000 && account.status === 'customer') {
+      growthOpportunities.push('Upsell premium services');
+    }
+
+    if (openOpportunities.some(opportunity => opportunity.probability >= 70)) {
+      growthOpportunities.push('High-probability expansion deal in pipeline');
+    }
+
+    score = round(Math.max(0, Math.min(score, 100)));
 
     logger.debug('Account health calculated', { accountId, score });
 
-    return { score, risks, opportunities };
+    return { score, risks, opportunities: Array.from(new Set(growthOpportunities)) };
   }
 
   /**
    * Get account value
    */
   getAccountValue(accountId: string): { mrr: number; arr: number; lifetime: number } {
+    const account = this.accounts.get(accountId);
+    const opportunitiesForAccount = opportunityManager.listOpportunities().filter(opportunity => opportunity.accountId === accountId);
+    const closedWonValue = opportunitiesForAccount
+      .filter(opportunity => opportunity.status === 'closed_won')
+      .reduce((sum, opportunity) => sum + opportunity.amount, 0);
+    const pipelineValue = opportunitiesForAccount
+      .filter(opportunity => opportunity.stage !== 'closed')
+      .reduce((sum, opportunity) => sum + (opportunity.amount * (opportunity.probability / 100)), 0);
+    const arr = round(account?.annualRevenue || closedWonValue || 0);
+    const mrr = round(arr / 12);
+
     return {
-      mrr: Math.random() * 50000 + 10000,
-      arr: Math.random() * 500000 + 100000,
-      lifetime: Math.random() * 1000000 + 500000
+      mrr,
+      arr,
+      lifetime: round(arr * 3 + pipelineValue)
     };
   }
 }
@@ -212,18 +257,32 @@ export class TerritoryManager {
    * Get territory accounts
    */
   getTerritoryAccounts(territoryId: string): Account[] {
-    // Placeholder: return empty array
-    return [];
+    const territory = this.territories.get(territoryId);
+    if (!territory) {
+      return [];
+    }
+
+    return territory.accounts
+      .map(accountId => accountManager.getAccount(accountId))
+      .filter((account): account is Account => account !== null);
   }
 
   /**
    * Calculate territory metrics
    */
   calculateTerritoryMetrics(territoryId: string): { totalValue: number; accountCount: number; potential: number } {
+    const accounts = this.getTerritoryAccounts(territoryId);
+    const totalValue = accounts.reduce((sum, account) => sum + accountManager.getAccountValue(account.id).lifetime, 0);
+    const potential = accounts.reduce((sum, account) => {
+      const growth = accountPlanning.identifyGrowthOpportunities(account.id)
+        .reduce((innerSum, opportunity) => innerSum + opportunity.potential, 0);
+      return sum + growth;
+    }, 0);
+
     return {
-      totalValue: Math.random() * 1000000 + 500000,
-      accountCount: Math.floor(Math.random() * 50 + 10),
-      potential: Math.random() * 500000 + 100000
+      totalValue: round(totalValue),
+      accountCount: accounts.length,
+      potential: round(potential)
     };
   }
 }
@@ -275,27 +334,47 @@ export class AccountPlanning {
    * Get strategic accounts
    */
   getStrategicAccounts(): Account[] {
-    // Placeholder: return empty array
-    return [];
+    return accountManager
+      .listAccounts()
+      .filter(account => account.status === 'customer')
+      .sort((left, right) => accountManager.getAccountValue(right.id).lifetime - accountManager.getAccountValue(left.id).lifetime)
+      .slice(0, 10);
   }
 
   /**
    * Identify growth opportunities
    */
   identifyGrowthOpportunities(accountId: string): Array<{ opportunity: string; potential: number }> {
-    const opportunities = [];
+    const account = accountManager.getAccount(accountId);
+    if (!account) {
+      return [];
+    }
 
-    if (Math.random() > 0.5) {
+    const opportunities: Array<{ opportunity: string; potential: number }> = [];
+    const accountValue = accountManager.getAccountValue(accountId);
+    const health = accountManager.getAccountHealth(accountId);
+    const recentCommunicationCount = account.primaryContact
+      ? communicationTracker.getContactCommunication(account.primaryContact, 90).length
+      : 0;
+
+    if (account.status === 'customer' && accountValue.arr > 0) {
       opportunities.push({
         opportunity: 'Upsell additional services',
-        potential: Math.random() * 50000 + 10000
+        potential: round(accountValue.arr * 0.2)
       });
     }
 
-    if (Math.random() > 0.6) {
+    if (recentCommunicationCount < 2) {
+      opportunities.push({
+        opportunity: 'Re-engagement campaign',
+        potential: round(Math.max(accountValue.mrr * 3, 5000))
+      });
+    }
+
+    if (health.score >= 75 && (account.employees || 0) >= 100) {
       opportunities.push({
         opportunity: 'Cross-sell to other departments',
-        potential: Math.random() * 30000 + 5000
+        potential: round(Math.max(accountValue.arr * 0.12, 10000))
       });
     }
 

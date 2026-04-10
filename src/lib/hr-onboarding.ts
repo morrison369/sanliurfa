@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logging';
+import { employeeManager, employeeProfileManager } from './hr-employees';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -53,6 +54,16 @@ export interface LearningPath {
   estimatedDuration: number;
   createdAt: number;
 }
+
+const departmentSkillMap: Record<string, string[]> = {
+  engineering: ['TypeScript', 'Testing', 'Cloud Architecture'],
+  sales: ['Negotiation', 'CRM', 'Forecasting'],
+  marketing: ['Analytics', 'Content Strategy', 'Campaign Management'],
+  operations: ['Process Improvement', 'Project Management', 'Reporting'],
+  finance: ['Financial Planning', 'Excel', 'Compliance'],
+  hr: ['People Operations', 'Coaching', 'Compliance'],
+  other: ['Communication', 'Reporting']
+};
 
 // ==================== ONBOARDING MANAGER ====================
 
@@ -275,8 +286,23 @@ export class LearningPathManager {
    * Recommend path
    */
   recommendPath(employeeId: string): LearningPath[] {
-    // Placeholder: return all paths
-    return Array.from(this.paths.values());
+    const employee = employeeManager.getEmployee(employeeId);
+    const profile = employeeProfileManager.getProfile(employeeId);
+    const currentSkills = new Set(profile?.skills || []);
+
+    const scoredPaths = Array.from(this.paths.values()).map(path => {
+      let score = 0;
+      if (employee && path.department === employee.department) score += 3;
+      const matchingCourses = path.courses.filter(course =>
+        Array.from(currentSkills).some(skill => course.toLowerCase().includes(skill.toLowerCase()))
+      );
+      score += matchingCourses.length;
+      return { path, score };
+    });
+
+    return scoredPaths
+      .sort((left, right) => right.score - left.score || left.path.estimatedDuration - right.path.estimatedDuration)
+      .map(item => item.path);
   }
 
   /**
@@ -302,19 +328,11 @@ export class SkillDevelopment {
    * Identify skill gaps
    */
   identifySkillGaps(employeeId: string): string[] {
-    const gaps = [];
-
-    if (Math.random() > 0.5) {
-      gaps.push('Advanced SQL');
-    }
-
-    if (Math.random() > 0.6) {
-      gaps.push('Cloud Architecture');
-    }
-
-    if (Math.random() > 0.7) {
-      gaps.push('Leadership');
-    }
+    const employee = employeeManager.getEmployee(employeeId);
+    const profile = employeeProfileManager.getProfile(employeeId);
+    const requiredSkills = employee ? departmentSkillMap[employee.department] || departmentSkillMap.other : departmentSkillMap.other;
+    const knownSkills = new Set(profile?.skills || []);
+    const gaps = requiredSkills.filter(skill => !knownSkills.has(skill));
 
     logger.debug('Skill gaps identified', { employeeId, count: gaps.length });
 
@@ -325,16 +343,37 @@ export class SkillDevelopment {
    * Recommend training
    */
   recommendTraining(employeeId: string): TrainingProgram[] {
-    // Placeholder: return empty array
-    return [];
+    const gaps = this.identifySkillGaps(employeeId).map(skill => skill.toLowerCase());
+    const scoredPrograms = trainingManager.listPrograms().map(program => {
+      const haystack = `${program.title} ${program.description}`.toLowerCase();
+      const score = gaps.reduce((sum, gap) => sum + (haystack.includes(gap) ? 2 : 0), 0)
+        + (program.type === 'skill_development' ? 1 : 0);
+      return { program, score };
+    });
+
+    return scoredPrograms
+      .filter(item => item.score > 0)
+      .sort((left, right) => right.score - left.score || left.program.duration - right.program.duration)
+      .map(item => item.program);
   }
 
   /**
    * Track skill progress
    */
   trackSkillProgress(employeeId: string, skill: string): { level: number; targetLevel: number } {
+    const profile = employeeProfileManager.getProfile(employeeId);
+    const normalizedSkill = skill.toLowerCase();
+    const completedPrograms = Array.from(trainingManager['enrollments'].values())
+      .filter(enrollment => enrollment.employeeId === employeeId && enrollment.status === 'completed')
+      .map(enrollment => trainingManager.getProgram(enrollment.programId))
+      .filter((program): program is TrainingProgram => program !== null);
+
+    const hasSkill = (profile?.skills || []).some(item => item.toLowerCase() === normalizedSkill);
+    const certificationBonus = (profile?.certifications || []).some(item => item.toLowerCase().includes(normalizedSkill)) ? 1 : 0;
+    const trainingBonus = completedPrograms.some(program => `${program.title} ${program.description}`.toLowerCase().includes(normalizedSkill)) ? 1 : 0;
+
     return {
-      level: Math.floor(Math.random() * 3) + 1,
+      level: Math.min(5, (hasSkill ? 2 : 1) + certificationBonus + trainingBonus),
       targetLevel: 4
     };
   }

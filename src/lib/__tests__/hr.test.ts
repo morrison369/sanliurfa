@@ -1,29 +1,10 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  employeeManager,
-  employeeProfileManager,
-  employmentHistory,
-  jobManager,
-  applicationTracker,
-  candidateManager,
-  offerManager,
-  onboardingManager,
-  trainingManager,
-  learningPathManager,
-  skillDevelopment,
-  performanceReviewManager,
-  goalManager,
-  feedbackManager,
-  appraisalCycleManager,
-  salaryManager,
-  benefitsManager,
-  equityManager,
-  payrollManager,
-  hrMetricsManager,
-  turnoverAnalyzer,
-  engagementAnalyzer,
-  workforceAnalytics
-} from '../index';
+import { describe, it, expect } from 'vitest';
+import { employeeManager, employeeProfileManager, employmentHistory } from '../hr-employees';
+import { jobManager, applicationTracker, candidateManager, offerManager } from '../hr-recruitment';
+import { onboardingManager, trainingManager, learningPathManager, skillDevelopment } from '../hr-onboarding';
+import { performanceReviewManager, goalManager, feedbackManager, appraisalCycleManager } from '../hr-performance';
+import { salaryManager, benefitsManager, equityManager, payrollManager } from '../hr-compensation';
+import { hrMetricsManager, turnoverAnalyzer, engagementAnalyzer, workforceAnalytics } from '../hr-analytics';
 
 describe('Phase 71: Employee Management', () => {
   it('should create and retrieve employee', () => {
@@ -214,6 +195,25 @@ describe('Phase 73: Onboarding & Learning Development', () => {
   });
 
   it('should track learning paths and skill development', () => {
+    const employee = employeeManager.createEmployee({
+      firstName: 'Skill',
+      lastName: 'Gap',
+      email: 'skillgap@example.com',
+      status: 'active',
+      type: 'full_time',
+      department: 'engineering',
+      title: 'Platform Engineer',
+      startDate: Date.now() - 30 * 86400000
+    });
+
+    employeeProfileManager.createProfile({
+      employeeId: employee.id,
+      location: 'Remote',
+      skills: ['TypeScript'],
+      certifications: [],
+      languages: ['tr']
+    });
+
     const path = learningPathManager.createPath({
       title: 'Full Stack Development',
       description: 'Complete path from frontend to backend',
@@ -221,11 +221,12 @@ describe('Phase 73: Onboarding & Learning Development', () => {
       estimatedDuration: 120
     });
 
-    const recommended = learningPathManager.recommendPath('emp-001');
+    const recommended = learningPathManager.recommendPath(employee.id);
     expect(Array.isArray(recommended)).toBe(true);
 
-    const gaps = skillDevelopment.identifySkillGaps('emp-001');
+    const gaps = skillDevelopment.identifySkillGaps(employee.id);
     expect(Array.isArray(gaps)).toBe(true);
+    expect(gaps).toContain('Cloud Architecture');
   });
 });
 
@@ -367,6 +368,51 @@ describe('Phase 75: Compensation & Benefits Management', () => {
     const processed = payrollManager.getPayrollRun(payroll.id);
     expect(processed?.status).toBe('processed');
   });
+
+  it('should compare salaries by department using active employees', () => {
+    const employeeOne = employeeManager.createEmployee({
+      firstName: 'Salary',
+      lastName: 'One',
+      email: 'salary.one@example.com',
+      status: 'active',
+      type: 'full_time',
+      department: 'engineering',
+      title: 'Engineer I',
+      startDate: Date.now()
+    });
+
+    const employeeTwo = employeeManager.createEmployee({
+      firstName: 'Salary',
+      lastName: 'Two',
+      email: 'salary.two@example.com',
+      status: 'active',
+      type: 'full_time',
+      department: 'engineering',
+      title: 'Engineer II',
+      startDate: Date.now()
+    });
+
+    salaryManager.createSalary({
+      employeeId: employeeOne.id,
+      baseSalary: 120000,
+      currency: 'USD',
+      payFrequency: 'annual',
+      effectiveDate: Date.now()
+    });
+
+    salaryManager.createSalary({
+      employeeId: employeeTwo.id,
+      baseSalary: 150000,
+      currency: 'USD',
+      payFrequency: 'annual',
+      effectiveDate: Date.now()
+    });
+
+    const comparison = salaryManager.compareSalaries('engineering');
+    expect(comparison.count).toBeGreaterThanOrEqual(2);
+    expect(comparison.maxSalary).toBe(150000);
+    expect(comparison.minSalary).toBe(120000);
+  });
 });
 
 describe('Phase 76: HR Analytics & Insights', () => {
@@ -425,5 +471,45 @@ describe('Phase 76: HR Analytics & Insights', () => {
 
     const succession = workforceAnalytics.successorPlanningAnalysis();
     expect(succession.criticalRoles).toBeDefined();
+  });
+
+  it('should derive engagement and turnover from recorded HR data', () => {
+    const employee = employeeManager.createEmployee({
+      firstName: 'Risk',
+      lastName: 'Candidate',
+      email: 'risk@example.com',
+      status: 'active',
+      type: 'full_time',
+      department: 'sales',
+      title: 'Account Executive',
+      startDate: Date.now() - 4 * 365 * 86400000
+    });
+
+    salaryManager.createSalary({
+      employeeId: employee.id,
+      baseSalary: 50000,
+      currency: 'USD',
+      payFrequency: 'annual',
+      effectiveDate: Date.now() - 365 * 86400000
+    });
+
+    performanceReviewManager.createReview({
+      employeeId: employee.id,
+      cycle: 'annual',
+      reviewer: 'manager-001',
+      rating: 'needs_improvement',
+      comments: 'Needs support',
+      goals: ['Improve conversion'],
+      startDate: Date.now() - 90 * 86400000,
+      endDate: Date.now()
+    });
+
+    const turnoverRisk = turnoverAnalyzer.predictTurnover(employee.id);
+    expect(turnoverRisk.riskScore).toBeGreaterThan(0);
+    expect(turnoverRisk.riskFactors.length).toBeGreaterThan(0);
+
+    const engagement = engagementAnalyzer.getTeamEngagement('sales');
+    expect(engagement.avgScore).toBeGreaterThanOrEqual(0);
+    expect(Object.keys(engagement.byEmployee).length).toBeGreaterThan(0);
   });
 });

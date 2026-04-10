@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logging';
+import { employeeManager } from './hr-employees';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -168,13 +169,27 @@ export class SalaryManager {
    * Compare salaries
    */
   compareSalaries(department: string): Record<string, any> {
-    // Placeholder: would need access to employees from EmployeeManager
+    const employees = employeeManager.listEmployees('active').filter(employee => employee.department === department);
+    const annualSalaries = employees
+      .map(employee => this.calculateAnnualSalary(employee.id))
+      .filter(amount => amount > 0)
+      .sort((left, right) => left - right);
+
+    const count = annualSalaries.length;
+    const total = annualSalaries.reduce((sum, amount) => sum + amount, 0);
+    const medianSalary = count === 0
+      ? 0
+      : count % 2 === 1
+        ? annualSalaries[(count - 1) / 2]
+        : (annualSalaries[count / 2 - 1] + annualSalaries[count / 2]) / 2;
+
     return {
       department,
-      averageSalary: 0,
-      minSalary: 0,
-      maxSalary: 0,
-      count: 0
+      averageSalary: count > 0 ? Math.round(total / count) : 0,
+      medianSalary: Math.round(medianSalary),
+      minSalary: count > 0 ? annualSalaries[0] : 0,
+      maxSalary: count > 0 ? annualSalaries[count - 1] : 0,
+      count
     };
   }
 }
@@ -367,6 +382,7 @@ export class PayrollManager {
 
     const newRun: PayrollRun = {
       ...run,
+      status: run.status || 'pending',
       id,
       createdAt: Date.now()
     };
