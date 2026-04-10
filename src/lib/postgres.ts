@@ -280,23 +280,6 @@ export async function queryRows<T = any>(text: string, params?: any[]): Promise<
 }
 
 /**
- * Deprecated alias kept temporarily for legacy call-sites.
- * New code must use `queryRows`.
- */
-export async function queryMany<T = any>(
-  text: string,
-  params?: any[],
-  options?: { stream?: boolean; onRow?: (row: any) => Promise<void> }
-): Promise<T[]> {
-  if (options?.stream && options?.onRow) {
-    await queryStream(text, params, options.onRow);
-    return [];
-  }
-
-  return queryRows<T>(text, params);
-}
-
-/**
  * Execute a transaction with automatic rollback on error
  */
 export async function transaction<T>(callback: (client: pg.PoolClient) => Promise<T>): Promise<T> {

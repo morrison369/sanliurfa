@@ -3,7 +3,7 @@ import { getUserAchievements, getUnviewedAchievements, markAchievementViewed, ge
 
 vi.mock('../postgres', () => ({
   queryOne: vi.fn(),
-  queryMany: vi.fn(),
+  queryRows: vi.fn(),
   insert: vi.fn(),
   query: vi.fn()
 }));
@@ -51,16 +51,14 @@ describe('Achievements Library', () => {
       const mockDb = await import('../postgres');
 
       mockCache.getCache.mockResolvedValueOnce(null);
-      mockDb.queryMany.mockResolvedValueOnce({
-        rows: [
-          { id: '1', achievement_key: 'first_review', name: 'First Review' }
-        ]
-      });
+      mockDb.queryRows.mockResolvedValueOnce([
+        { id: '1', achievement_key: 'first_review', name: 'First Review' }
+      ]);
 
       const result = await getUserAchievements('user-456');
 
       expect(result).toHaveLength(1);
-      expect(mockDb.queryMany).toHaveBeenCalled();
+      expect(mockDb.queryRows).toHaveBeenCalled();
       expect(mockCache.setCache).toHaveBeenCalledWith(
         'sanliurfa:achievements:user:user-456',
         expect.any(Array),
@@ -72,16 +70,14 @@ describe('Achievements Library', () => {
   describe('getUnviewedAchievements', () => {
     it('returns unviewed achievements only', async () => {
       const mockDb = await import('../postgres');
-      mockDb.queryMany.mockResolvedValueOnce({
-        rows: [
-          { id: '2', achievement_key: 'five_reviews', viewed: false }
-        ]
-      });
+      mockDb.queryRows.mockResolvedValueOnce([
+        { id: '2', achievement_key: 'five_reviews', viewed: false }
+      ]);
 
       const result = await getUnviewedAchievements('user-789');
 
       expect(result).toHaveLength(1);
-      expect(mockDb.queryMany).toHaveBeenCalledWith(
+      expect(mockDb.queryRows).toHaveBeenCalledWith(
         expect.stringContaining('viewed = false'),
         ['user-789']
       );
@@ -114,11 +110,9 @@ describe('Achievements Library', () => {
       mockDb.queryOne
         .mockResolvedValueOnce({ count: '5' }) // total unlocked
         .mockResolvedValueOnce({ count: '20' }); // total available
-      mockDb.queryMany.mockResolvedValueOnce({
-        rows: [
-          { category: 'review', unlocked_count: '3', total_count: '10' }
-        ]
-      });
+      mockDb.queryRows.mockResolvedValueOnce([
+        { category: 'review', unlocked_count: '3', total_count: '10' }
+      ]);
 
       const result = await getAchievementStats('user-stats');
 

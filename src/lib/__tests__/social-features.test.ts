@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('../postgres', () => ({
   queryOne: vi.fn(),
-  queryMany: vi.fn(),
+  queryRows: vi.fn(),
   insert: vi.fn(),
   update: vi.fn(),
   query: vi.fn()
@@ -48,11 +48,11 @@ describe('Social Features Library', () => {
       const mockDb = await import('../postgres');
 
       mockCache.getCache.mockResolvedValueOnce(null);
-      mockDb.queryMany.mockResolvedValueOnce({
-        rows: [{ name: 'places', usage_count: 89 }]
-      });
+      mockDb.queryRows.mockResolvedValueOnce([
+        { name: 'places', usage_count: 89 }
+      ]);
 
-      expect(mockDb.queryMany).not.toHaveBeenCalled();
+      expect(mockDb.queryRows).not.toHaveBeenCalled();
     });
   });
 
@@ -66,11 +66,9 @@ describe('Social Features Library', () => {
         full_name: 'John Doe'
       });
 
-      mockDb.queryMany.mockResolvedValueOnce({
-        rows: [
-          { count: 42 } // reviews
-        ]
-      });
+      mockDb.queryRows.mockResolvedValueOnce([
+        { count: 42 } // reviews
+      ]);
 
       expect(mockDb.queryOne).not.toHaveBeenCalled();
     });
@@ -95,15 +93,13 @@ describe('Social Features Library', () => {
     it('sorts by points correctly', async () => {
       const mockDb = await import('../postgres');
 
-      mockDb.queryMany.mockResolvedValueOnce({
-        rows: [
-          { rank: 1, user_id: 'user-1', points: 15000 },
-          { rank: 2, user_id: 'user-2', points: 12500 },
-          { rank: 3, user_id: 'user-3', points: 10000 }
-        ]
-      });
+      mockDb.queryRows.mockResolvedValueOnce([
+        { rank: 1, user_id: 'user-1', points: 15000 },
+        { rank: 2, user_id: 'user-2', points: 12500 },
+        { rank: 3, user_id: 'user-3', points: 10000 }
+      ]);
 
-      expect(mockDb.queryMany).not.toHaveBeenCalled();
+      expect(mockDb.queryRows).not.toHaveBeenCalled();
     });
 
     it('supports different sort options', async () => {
@@ -117,13 +113,13 @@ describe('Social Features Library', () => {
     it('respects limit parameter', async () => {
       const mockDb = await import('../postgres');
 
-      mockDb.queryMany.mockResolvedValueOnce({
-        rows: Array(10).fill(null).map((_, i) => ({
+      mockDb.queryRows.mockResolvedValueOnce(
+        Array(10).fill(null).map((_, i) => ({
           rank: i + 1,
           username: `user${i}`,
           points: 1000 * (10 - i)
         }))
-      });
+      );
 
       const results = Array(10).fill(null);
       expect(results).toHaveLength(10);

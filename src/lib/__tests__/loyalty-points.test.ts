@@ -4,7 +4,7 @@ import { getUserPoints, awardPoints, spendPoints } from '../loyalty-points';
 // Mock database and cache
 vi.mock('../postgres', () => ({
   queryOne: vi.fn(),
-  queryMany: vi.fn(),
+  queryRows: vi.fn(),
   insert: vi.fn(),
   update: vi.fn()
 }));
