@@ -4,7 +4,12 @@ import { classifyIntegrationStatus, classifyOverallOpsStatus, classifyThresholdS
 import { pool } from '../../lib/postgres';
 import { getRedisClient, isRedisAvailable } from '../../lib/cache';
 import { getRuntimeIntegrationSettings } from '../../lib/runtime-integration-settings';
-import { getArtifactHealthSnapshot, type RuntimeArtifactHealthSnapshot } from '../../lib/artifact-health';
+import {
+  getArtifactHealthSnapshot,
+  summarizeArtifactHealth,
+  type ArtifactHealthSummary,
+  type RuntimeArtifactHealthSnapshot
+} from '../../lib/artifact-health';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'blocked';
@@ -29,6 +34,7 @@ interface HealthStatus {
       };
     };
     artifacts: RuntimeArtifactHealthSnapshot;
+    artifactSummary: ArtifactHealthSummary;
   };
 }
 
@@ -47,6 +53,7 @@ export const GET: APIRoute = async ({ request }) => {
       getRuntimeIntegrationSettings(),
       getArtifactHealthSnapshot()
     ]);
+    const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
     const resendConfigured = Boolean(integrationSettings.resendApiKey);
     const analyticsConfigured = Boolean(integrationSettings.analyticsId);
 
@@ -120,7 +127,8 @@ export const GET: APIRoute = async ({ request }) => {
             configured: analyticsConfigured
           }
         },
-        artifacts: artifactHealth
+        artifacts: artifactHealth,
+        artifactSummary: artifactHealthSummary
       }
     };
 

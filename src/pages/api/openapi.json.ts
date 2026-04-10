@@ -294,8 +294,9 @@ const openApiSpec = {
                             artifacts: {
                               ...artifactHealthChecksSchema,
                             },
+                            artifactSummary: adminArtifactHealthSummarySchema,
                           },
-                          required: ['database', 'redis', 'integrations', 'artifacts'],
+                          required: ['database', 'redis', 'integrations', 'artifacts', 'artifactSummary'],
                         },
                       },
                       required: ['status', 'uptime', 'timestamp', 'version', 'checks'],
@@ -382,8 +383,9 @@ const openApiSpec = {
                             artifacts: {
                               ...artifactHealthChecksSchema,
                             },
+                            artifactSummary: adminArtifactHealthSummarySchema,
                           },
-                          required: ['database', 'redis', 'artifacts'],
+                          required: ['database', 'redis', 'artifacts', 'artifactSummary'],
                         },
                       },
                       required: ['status', 'uptime', 'timestamp', 'version', 'system', 'checks'],

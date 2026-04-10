@@ -196,6 +196,13 @@ describe('runtime ops contracts', () => {
       generatedAt: null,
       status: 'blocked',
     });
+    expect(body.data.checks.artifactSummary).toEqual({
+      overall: 'blocked',
+      healthyCount: 2,
+      degradedCount: 0,
+      blockedCount: 1,
+      total: 3,
+    });
   });
 
   it('returns degraded health status in production when integrations are incomplete', async () => {

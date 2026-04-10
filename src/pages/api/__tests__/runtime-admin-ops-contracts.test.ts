@@ -170,6 +170,13 @@ describe('runtime admin ops contracts', () => {
       status: 'blocked',
       generatedAt: null,
     });
+    expect(body.data.checks.artifactSummary).toEqual({
+      overall: 'blocked',
+      healthyCount: 2,
+      degradedCount: 0,
+      blockedCount: 1,
+      total: 3,
+    });
   });
 
   it('returns blocked detailed health and 503 when database is down', async () => {

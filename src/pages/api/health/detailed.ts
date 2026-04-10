@@ -3,7 +3,12 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { classifyOverallOpsStatus, classifyThresholdStatus } from '../../../lib/admin-status';
 import { pool } from '../../../lib/postgres';
 import { getRedisClient, isRedisAvailable } from '../../../lib/cache';
-import { getArtifactHealthSnapshot, type RuntimeArtifactHealthSnapshot } from '../../../lib/artifact-health';
+import {
+  getArtifactHealthSnapshot,
+  summarizeArtifactHealth,
+  type ArtifactHealthSummary,
+  type RuntimeArtifactHealthSnapshot
+} from '../../../lib/artifact-health';
 
 interface DetailedHealth {
   status: 'healthy' | 'degraded' | 'blocked';
@@ -38,6 +43,7 @@ interface DetailedHealth {
       error?: string;
     };
     artifacts: RuntimeArtifactHealthSnapshot;
+    artifactSummary: ArtifactHealthSummary;
   };
 }
 
@@ -60,6 +66,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     let redisResponseTime = 0;
     let redisError: string | undefined;
     const artifactHealth = await getArtifactHealthSnapshot();
+    const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
 
     // Check database
     try {
@@ -137,7 +144,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
           ...(redisResponseTime && { responseTime: redisResponseTime }),
           ...(redisError && { error: redisError })
         },
-        artifacts: artifactHealth
+        artifacts: artifactHealth,
+        artifactSummary: artifactHealthSummary
       }
     };
 
