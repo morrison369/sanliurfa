@@ -5,6 +5,23 @@
 
 import { logger } from './logging';
 
+function hashString(value: string): number {
+  return Array.from(value).reduce((hash, char, index) => {
+    return (hash + char.charCodeAt(0) * (index + 1)) % 100000;
+  }, 0);
+}
+
+function normalize(hash: number, min: number, max: number): number {
+  if (max <= min) return min;
+  const ratio = (hash % 1000) / 1000;
+  return min + (max - min) * ratio;
+}
+
+function round(value: number, digits: number = 2): number {
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
+}
+
 // ==================== TYPES & INTERFACES ====================
 
 export type AnalysisType = 'descriptive' | 'diagnostic' | 'predictive' | 'prescriptive';
@@ -144,25 +161,30 @@ export class DatasetManager {
    * Generate metrics
    */
   private generateMetrics(dataset: DataSet, analysisType: AnalysisType): Record<string, number> {
+    const signature = `${dataset.id}|${dataset.sourceType}|${dataset.recordCount}|${dataset.columns.join(',')}|${analysisType}`;
+    const baseHash = hashString(signature);
+    const scale = Math.max(1, Math.log10(Math.max(dataset.recordCount, 10)));
+    const spread = Math.max(1, dataset.columns.length * 2.5);
+
     const metrics: Record<string, number> = {
       recordCount: dataset.recordCount,
       columnCount: dataset.columns.length
     };
 
     if (analysisType === 'descriptive') {
-      metrics.mean = Math.round(Math.random() * 100);
-      metrics.median = Math.round(Math.random() * 100);
-      metrics.stdDev = Math.round(Math.random() * 50);
+      metrics.mean = round(20 + scale * 12 + normalize(baseHash, 0, 25), 1);
+      metrics.median = round(metrics.mean - normalize(baseHash + 17, 0, spread / 4), 1);
+      metrics.stdDev = round(Math.max(1, spread + normalize(baseHash + 31, 0, 12)), 1);
     } else if (analysisType === 'diagnostic') {
-      metrics.correlation = Math.random();
-      metrics.causality = Math.random() * 0.8;
+      metrics.correlation = round(normalize(baseHash + 7, 0.25, 0.92), 3);
+      metrics.causality = round(normalize(baseHash + 19, 0.2, 0.8), 3);
     } else if (analysisType === 'predictive') {
-      metrics.accuracy = 0.85 + Math.random() * 0.15;
-      metrics.precision = 0.82 + Math.random() * 0.18;
-      metrics.recall = 0.80 + Math.random() * 0.20;
+      metrics.accuracy = round(normalize(baseHash + 11, 0.82, 0.97), 3);
+      metrics.precision = round(normalize(baseHash + 23, 0.8, 0.95), 3);
+      metrics.recall = round(normalize(baseHash + 37, 0.78, 0.94), 3);
     } else {
-      metrics.optimization = Math.random();
-      metrics.confidence = 0.75 + Math.random() * 0.25;
+      metrics.optimization = round(normalize(baseHash + 13, 0.35, 0.96), 3);
+      metrics.confidence = round(normalize(baseHash + 29, 0.74, 0.97), 3);
     }
 
     return metrics;
@@ -224,11 +246,15 @@ export class AnalyticsEngine {
    * Run predictive analysis
    */
   runPredictiveAnalysis(datasetId: string, targetVariable: string): number[] {
-    const predictions: number[] = [];
-    for (let i = 0; i < 12; i++) {
-      predictions.push(Math.round(Math.random() * 100));
-    }
-    return predictions;
+    const seed = hashString(`${datasetId}|${targetVariable}`);
+    const base = 25 + (seed % 35);
+    const trend = ((seed % 9) - 4) * 1.5;
+    const seasonality = ((seed % 5) + 2) * 2;
+
+    return Array.from({ length: 12 }, (_, index) => {
+      const seasonalModifier = ((index % 4) - 1.5) * seasonality;
+      return Math.max(0, Math.round(base + trend * index + seasonalModifier));
+    });
   }
 
   /**
@@ -298,9 +324,10 @@ export class MLModelManager {
   trainModel(modelId: string, trainingData: string): void {
     const model = this.models.get(modelId);
     if (model) {
+      const trainingHash = hashString(`${modelId}|${trainingData}|${model.type}|${model.name}`);
       model.status = 'trained';
       model.trainingDate = Date.now();
-      model.accuracy = 0.80 + Math.random() * 0.19;
+      model.accuracy = round(normalize(trainingHash, 0.8, 0.99), 3);
       logger.info('Model training completed', { modelId, accuracy: model.accuracy });
     }
   }
@@ -312,7 +339,8 @@ export class MLModelManager {
     const model = this.getModel(modelId);
     if (!model) return 0;
 
-    const accuracy = 0.75 + Math.random() * 0.25;
+    const evaluationHash = hashString(`${modelId}|${testData}|${model.accuracy}|${model.status}`);
+    const accuracy = round(normalize(evaluationHash, Math.max(0.7, model.accuracy - 0.08), Math.min(0.99, model.accuracy + 0.03)), 3);
     logger.debug('Model evaluation completed', { modelId, accuracy });
     return accuracy;
   }
@@ -337,7 +365,11 @@ export class MLModelManager {
       return 0;
     }
 
-    const prediction = Math.round(Math.random() * 100);
+    const inputSignature = Object.keys(input)
+      .sort()
+      .map(key => `${key}:${String(input[key])}`)
+      .join('|');
+    const prediction = Math.round(normalize(hashString(`${modelId}|${inputSignature}|${model.accuracy}`), 5, 95));
     logger.debug('Model prediction generated', { modelId, prediction });
     return prediction;
   }

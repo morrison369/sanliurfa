@@ -5,6 +5,12 @@
 
 import { logger } from './logging';
 
+function hashString(value: string): number {
+  return Array.from(value).reduce((hash, char, index) => {
+    return (hash + char.charCodeAt(0) * (index + 3)) % 100000;
+  }, 0);
+}
+
 // ==================== INTENT RECOGNITION ====================
 
 export interface Intent {
@@ -117,12 +123,15 @@ export interface ConversationContext {
 export class ConversationManager {
   private contexts = new Map<string, ConversationContext>();
   private readonly maxMessages = 50; // Keep last 50 messages
+  private sessionCount = 0;
+  private messageCount = 0;
 
   /**
    * Create new conversation
    */
   createConversation(userId: string): ConversationContext {
-    const sessionId = `session-${Date.now()}-${Math.random()}`;
+    const sessionId = `session-${Date.now()}-${this.sessionCount.toString().padStart(4, '0')}`;
+    this.sessionCount++;
 
     const context: ConversationContext = {
       sessionId,
@@ -145,12 +154,13 @@ export class ConversationManager {
     if (!context) return null;
 
     const message: ConversationMessage = {
-      id: `msg-${Date.now()}`,
+      id: `msg-${Date.now()}-${this.messageCount.toString().padStart(4, '0')}`,
       userId: context.userId,
       role,
       content,
       timestamp: Date.now()
     };
+    this.messageCount++;
 
     context.messages.push(message);
 
@@ -207,6 +217,11 @@ export class ConversationManager {
  */
 export class ResponseGenerator {
   private responseTemplates = new Map<string, string[]>();
+  private readonly fallbacks = [
+    'I didn\'t quite understand that. Could you rephrase?',
+    'I\'m not sure what you mean. Can you provide more details?',
+    'Let me help you find what you need.'
+  ];
 
   /**
    * Register responses for intent
@@ -220,7 +235,9 @@ export class ResponseGenerator {
    */
   generate(intent: string, context?: ConversationContext): string {
     const responses = this.responseTemplates.get(intent) || ['I understand.'];
-    const response = responses[Math.floor(Math.random() * responses.length)];
+    const contextWeight = context ? context.messages.length + context.userId.length : 0;
+    const responseIndex = hashString(`${intent}|${contextWeight}`) % responses.length;
+    const response = responses[responseIndex];
 
     // Personalize response
     if (context) {
@@ -234,13 +251,7 @@ export class ResponseGenerator {
    * Generate fallback response
    */
   generateFallback(): string {
-    const fallbacks = [
-      'I didn\'t quite understand that. Could you rephrase?',
-      'I\'m not sure what you mean. Can you provide more details?',
-      'Let me help you find what you need.'
-    ];
-
-    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+    return this.fallbacks[0];
   }
 }
 
