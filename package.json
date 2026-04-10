@@ -131,6 +131,7 @@
     "env:contract:check": "npm exec -- tsx scripts/env-contract-check.ts",
     "env:contract:check:ci": "npm exec -- tsx scripts/env-contract-check.ts -- --ci",
     "release:gate": "npm exec -- tsx scripts/release-gate.ts",
+    "release:gate:local": "npm exec -- tsx scripts/release-gate-local.ts",
     "phase:env:check": "npm exec -- tsx scripts/phase-env.ts",
     "phase:env:check:preferred": "npm exec -- tsx scripts/phase-node.ts run-tsx scripts/phase-env.ts",
     "phase:lock:show": "type .phase-worktree.lock",

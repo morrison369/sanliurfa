@@ -15,6 +15,19 @@ function buildAdminUrl(connectionString: string): string {
   return parsed.toString();
 }
 
+async function canConnect(connectionString: string): Promise<boolean> {
+  const client = new Client({ connectionString });
+  try {
+    await client.connect();
+    await client.query('SELECT 1');
+    return true;
+  } catch {
+    return false;
+  } finally {
+    await client.end().catch(() => undefined);
+  }
+}
+
 async function main(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
@@ -22,6 +35,12 @@ async function main(): Promise<void> {
   }
 
   const targetDb = parseDbNameFromUrl(databaseUrl);
+
+  if (await canConnect(databaseUrl)) {
+    console.log(`db-test-bootstrap: OK (reachable=${targetDb})`);
+    return;
+  }
+
   const adminUrl = buildAdminUrl(databaseUrl);
   const client = new Client({ connectionString: adminUrl });
 

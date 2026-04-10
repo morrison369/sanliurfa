@@ -21,6 +21,8 @@ interface LogEntry {
   duration?: number;
 }
 
+export type LogContext = Record<string, any>;
+
 /**
  * Generate a unique request ID for tracking
  */
@@ -36,9 +38,9 @@ class Logger {
   private requestId: string | undefined;
 
   private normalizeArgs(
-    maybeErrorOrContext?: Error | string | Record<string, any>,
-    maybeContext?: Record<string, any>
-  ): { errorData?: { message: string; stack?: string }; context?: Record<string, any> } {
+    maybeErrorOrContext?: Error | string | LogContext,
+    maybeContext?: LogContext
+  ): { errorData?: { message: string; stack?: string }; context?: LogContext } {
     if (
       maybeErrorOrContext &&
       typeof maybeErrorOrContext === 'object' &&
@@ -119,22 +121,22 @@ class Logger {
     }
   }
 
-  debug(message: string, maybeErrorOrContext?: Error | string | Record<string, any>, maybeContext?: Record<string, any>) {
+  debug(message: string, maybeErrorOrContext?: Error | string | LogContext, maybeContext?: LogContext) {
     const { errorData, context } = this.normalizeArgs(maybeErrorOrContext, maybeContext);
     this.log({ level: LogLevel.DEBUG, message, error: errorData, context, timestamp: new Date().toISOString() });
   }
 
-  info(message: string, maybeErrorOrContext?: Error | string | Record<string, any>, maybeContext?: Record<string, any>) {
+  info(message: string, maybeErrorOrContext?: Error | string | LogContext, maybeContext?: LogContext) {
     const { errorData, context } = this.normalizeArgs(maybeErrorOrContext, maybeContext);
     this.log({ level: LogLevel.INFO, message, error: errorData, context, timestamp: new Date().toISOString() });
   }
 
-  warn(message: string, maybeErrorOrContext?: Error | string | Record<string, any>, maybeContext?: Record<string, any>) {
+  warn(message: string, maybeErrorOrContext?: Error | string | LogContext, maybeContext?: LogContext) {
     const { errorData, context } = this.normalizeArgs(maybeErrorOrContext, maybeContext);
     this.log({ level: LogLevel.WARN, message, error: errorData, context, timestamp: new Date().toISOString() });
   }
 
-  error(message: string, maybeErrorOrContext?: Error | string | Record<string, any>, maybeContext?: Record<string, any>) {
+  error(message: string, maybeErrorOrContext?: Error | string | LogContext, maybeContext?: LogContext) {
     const { errorData, context } = this.normalizeArgs(maybeErrorOrContext, maybeContext);
 
     this.log({

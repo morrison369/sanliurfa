@@ -292,6 +292,14 @@ export async function queryMany(text: string, params?: any[], options?: { stream
 }
 
 /**
+ * Official helper for callers that want a plain rows array without compatibility wrappers.
+ */
+export async function queryRows<T = any>(text: string, params?: any[]): Promise<T[]> {
+  const result = await query(text, params);
+  return result.rows as T[];
+}
+
+/**
  * Execute a transaction with automatic rollback on error
  */
 export async function transaction<T>(callback: (client: pg.PoolClient) => Promise<T>): Promise<T> {

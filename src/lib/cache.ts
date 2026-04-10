@@ -6,6 +6,7 @@ const KEY_PREFIX = process.env.REDIS_KEY_PREFIX || 'sanliurfa:';
 
 let client: ReturnType<typeof createClient> | null = null;
 let connectionError: Error | null = null;
+let connectPromise: Promise<ReturnType<typeof createClient>> | null = null;
 
 /**
  * Get or create Redis client with proper error handling
@@ -15,7 +16,11 @@ export async function getRedisClient() {
     return client;
   }
 
-  try {
+  if (connectPromise) {
+    return connectPromise;
+  }
+
+  connectPromise = (async () => {
     client = createClient({
       url: redisUrl,
       socket: {
@@ -39,11 +44,15 @@ export async function getRedisClient() {
     await client.connect();
     connectionError = null;
     return client;
-  } catch (error) {
+  })().catch((error) => {
     connectionError = error instanceof Error ? error : new Error(String(error));
     console.error('Redis connection failed:', connectionError);
     throw connectionError;
-  }
+  }).finally(() => {
+    connectPromise = null;
+  });
+
+  return connectPromise;
 }
 
 /**
@@ -65,9 +74,6 @@ export function prefixKey(key: string): string {
  */
 export async function getCache<T = any>(key: string): Promise<T | null> {
   try {
-    if (!isRedisAvailable()) {
-      return null;
-    }
     const redis = await getRedisClient();
     const prefixedKey = prefixKey(key);
     const value = await redis.get(prefixedKey);
@@ -83,9 +89,6 @@ export async function getCache<T = any>(key: string): Promise<T | null> {
  */
 export async function setCache(key: string, value: any, ttlSeconds = 3600): Promise<void> {
   try {
-    if (!isRedisAvailable()) {
-      return;
-    }
     const redis = await getRedisClient();
     const prefixedKey = prefixKey(key);
     await redis.setEx(prefixedKey, ttlSeconds, JSON.stringify(value));
@@ -99,9 +102,6 @@ export async function setCache(key: string, value: any, ttlSeconds = 3600): Prom
  */
 export async function deleteCache(key: string): Promise<void> {
   try {
-    if (!isRedisAvailable()) {
-      return;
-    }
     const redis = await getRedisClient();
     const prefixedKey = prefixKey(key);
     await redis.del(prefixedKey);
@@ -116,9 +116,6 @@ export async function deleteCache(key: string): Promise<void> {
  */
 export async function deleteCachePattern(pattern: string): Promise<void> {
   try {
-    if (!isRedisAvailable()) {
-      return;
-    }
     const redis = await getRedisClient();
     const prefixedPattern = prefixKey(pattern);
     const keys = await redis.keys(prefixedPattern);
@@ -136,10 +133,6 @@ export async function deleteCachePattern(pattern: string): Promise<void> {
  */
 export async function checkRateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
   try {
-    if (!isRedisAvailable()) {
-      console.warn('Redis unavailable for rate limiting, allowing request');
-      return true; // Fail-open with warning
-    }
     const redis = await getRedisClient();
     const prefixedKey = prefixKey(`ratelimit:${key}`);
     const current = await redis.incr(prefixedKey);
