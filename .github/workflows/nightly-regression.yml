@@ -52,3 +52,89 @@ jobs:
             coverage
             docs/reports
           if-no-files-found: ignore
+
+      - name: Generate migration summary
+        if: always()
+        continue-on-error: true
+        run: |
+          node <<'NODE' > migration-summary.md
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const migrationsDir = path.join(process.cwd(), 'src', 'migrations');
+          const trackerPath = path.join(migrationsDir, 'migration-tracker.json');
+
+          const versioned = fs.existsSync(migrationsDir)
+            ? fs.readdirSync(migrationsDir).filter((name) => /^\d{3}_.+\.ts$/.test(name)).sort()
+            : [];
+          const latest = versioned.length > 0 ? versioned[versioned.length - 1] : 'none';
+          const trackerExists = fs.existsSync(trackerPath);
+          const trackerEntries = trackerExists
+            ? (JSON.parse(fs.readFileSync(trackerPath, 'utf8')).migrations || [])
+            : [];
+          const pending = trackerEntries.filter((entry) => entry && entry.status === 'pending');
+          const missing = trackerEntries.filter((entry) => {
+            if (!entry || !entry.file) return false;
+            return !fs.existsSync(path.join(migrationsDir, entry.file));
+          });
+
+          const lines = [
+            '## Migration Summary',
+            `- Generated at: ${new Date().toISOString()}`,
+            `- Versioned migration files: ${versioned.length}`,
+            `- Latest versioned migration: ${latest}`,
+            `- Tracker file present: ${trackerExists ? 'yes' : 'no'}`,
+            `- Tracker entries: ${trackerEntries.length}`,
+            `- Tracker entries pending: ${pending.length}`,
+            `- Tracker entries with missing files: ${missing.length}`
+          ];
+
+          if (missing.length > 0) {
+            lines.push(`- Missing tracker files sample: ${missing.slice(0, 10).map((entry) => entry.file).join(', ')}`);
+          }
+
+          process.stdout.write(`${lines.join('\n')}\n`);
+          NODE
+          cat migration-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open or update nightly regression issue
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          REGRESSION_OUTCOME: ${{ steps.nightly_regression.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const title = 'Nightly Unit Regression Report';
+            const migrationSummary = fs.existsSync('migration-summary.md')
+              ? fs.readFileSync('migration-summary.md', 'utf8')
+              : '## Migration Summary\n- Not available for this run';
+            const body = [
+              '## Nightly Unit Regression',
+              `- Outcome: ${process.env.REGRESSION_OUTCOME}`,
+              `- Run: ${process.env.RUN_URL}`,
+              '',
+              migrationSummary
+            ].join('\n');
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+            const existing = issues.find((issue) => issue.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body
+              });
+            }

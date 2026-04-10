@@ -33,7 +33,7 @@
     "typecheck:experimental:exclude:guard": "npm exec -- tsx scripts/experimental-exclude-guard.ts",
     "typecheck:experimental:report": "npm exec -- tsx scripts/weekly-typecheck-report.ts",
     "lint:phase": "tsc --noEmit -p tsconfig.phase.json",
-    "test:critical": "vitest run src/pages/api/__tests__/contract-hardening.test.ts src/pages/api/__tests__/auth-contracts.test.ts src/lib/__tests__/email-contracts.test.ts src/lib/__tests__/api-contract-utils.test.ts src/lib/__tests__/webhook-delivery-policy.test.ts src/lib/__tests__/webhook-replay-policy.test.ts",
+    "test:critical": "vitest run src/pages/api/__tests__/contract-hardening.test.ts src/pages/api/__tests__/auth-contracts.test.ts src/pages/api/__tests__/webhook-contracts.test.ts src/lib/__tests__/email-contracts.test.ts src/lib/__tests__/api-contract-utils.test.ts src/lib/__tests__/webhook-delivery-policy.test.ts src/lib/__tests__/webhook-replay-policy.test.ts",
     "test:unit": "vitest run",
     "test:regression:unit": "vitest run",
     "test:phase:311-316": "vitest run src/lib/__tests__/governance-continuity-recovery-stability.test.ts",

@@ -10,6 +10,7 @@ import { queryOne } from '../../../../lib/postgres';
 import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { enforceRateLimitPolicy, getClientIpAddress } from '../../../../lib/sensitive-endpoint-policy';
+import { recordRequest } from '../../../../lib/metrics';
 
 interface OAuthProviderConfig {
   provider_key: string;
@@ -45,6 +46,7 @@ function isValidProviderConfig(provider: any): provider is OAuthProviderConfig {
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
   const requestId = getRequestId({ request } as any);
+  const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
@@ -58,6 +60,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       message: 'Too many OAuth callback attempts'
     });
     if (policyResponse) {
+      recordRequest('GET', '/api/auth/oauth/callback', policyResponse.status, Date.now() - startTime);
       return policyResponse;
     }
 
@@ -67,34 +70,40 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     if (error) {
       logger.warn('OAuth error', { error, error_description: url.searchParams.get('error_description') });
+      recordRequest('GET', '/api/auth/oauth/callback', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(ErrorCode.AUTH_ERROR, `OAuth error: ${error}`, HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     if (!code || !state) {
+      recordRequest('GET', '/api/auth/oauth/callback', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(ErrorCode.VALIDATION_ERROR, 'Code and state required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Verify state token
     const oauthState = await verifyOAuthState(state);
     if (!oauthState) {
+      recordRequest('GET', '/api/auth/oauth/callback', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(ErrorCode.AUTH_ERROR, 'Invalid or expired state', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Get provider
     const provider = await getOAuthProvider(oauthState.provider_key);
     if (!provider || !isValidProviderConfig(provider)) {
+      recordRequest('GET', '/api/auth/oauth/callback', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(ErrorCode.NOT_FOUND, 'OAuth provider not found', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
     // Exchange code for token (simplified - implement with provider SDK)
     const tokenData = await exchangeCodeForToken(provider, code, oauthState.redirect_uri);
     if (!tokenData) {
+      recordRequest('GET', '/api/auth/oauth/callback', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(ErrorCode.AUTH_ERROR, 'Failed to exchange code', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Get user info from provider
     const userInfo = await getUserInfoFromProvider(provider, tokenData.access_token);
     if (!userInfo) {
+      recordRequest('GET', '/api/auth/oauth/callback', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(ErrorCode.AUTH_ERROR, 'Failed to get user info', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
@@ -105,6 +114,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     if (!userId) {
       if (!userInfo.email) {
+        recordRequest('GET', '/api/auth/oauth/callback', HttpStatus.BAD_REQUEST, Date.now() - startTime);
         return apiError(ErrorCode.AUTH_ERROR, 'OAuth provider did not return an email address', HttpStatus.BAD_REQUEST, undefined, requestId);
       }
 
@@ -117,6 +127,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       if (existingUser) {
         userId = existingUser.id;
       } else {
+        recordRequest('GET', '/api/auth/oauth/callback', HttpStatus.NOT_FOUND, Date.now() - startTime);
         return apiError(ErrorCode.AUTH_ERROR, 'User not found. Please sign up first.', HttpStatus.NOT_FOUND, undefined, requestId);
       }
     }
@@ -150,6 +161,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     );
 
     if (!session) {
+      recordRequest('GET', '/api/auth/oauth/callback', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to create session', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
     }
 
@@ -168,6 +180,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     if (isSecureCookie) {
       cookieParts.push('Secure');
     }
+    recordRequest('GET', '/api/auth/oauth/callback', 302, Date.now() - startTime);
 
     // Redirect to dashboard
     return new Response(null, {
@@ -180,6 +193,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     });
   } catch (error) {
     logger.error('OAuth callback failed', error instanceof Error ? error : new Error(String(error)));
+    recordRequest('GET', '/api/auth/oauth/callback', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
     return apiError(ErrorCode.INTERNAL_ERROR, 'OAuth callback failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -4,6 +4,8 @@ import { resolve } from 'node:path';
 const criticalApiFiles = [
   'src/pages/api/auth/login.ts',
   'src/pages/api/auth/register.ts',
+  'src/pages/api/auth/oauth/authorize.ts',
+  'src/pages/api/auth/oauth/callback.ts',
   'src/pages/api/webhooks/stripe.ts',
   'src/pages/api/webhooks/replay.ts',
   'src/pages/api/webhooks/retry.ts',
