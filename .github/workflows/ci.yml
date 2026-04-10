@@ -67,7 +67,7 @@ jobs:
       - name: Typecheck app scope
         run: npm run typecheck:app
 
-      - name: Typecheck experimental exclude budget
+      - name: Typecheck experimental exclude
         run: npm run typecheck:experimental:exclude:guard
       
       - name: Build

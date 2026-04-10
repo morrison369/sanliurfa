@@ -46,10 +46,10 @@ npm run release:gate:local
 - `db:test:bootstrap` önce hedef `DATABASE_URL` bağlantısını doğrular; yalnızca erişim yoksa admin bağlantısı ile DB oluşturmayı dener.
 - Legacy guard’lar:
   - `governance:logging:check`: `logger.debug/info/warn/error` çağrılarında 1-3 argüman sözleşmesini zorunlu tutar
-  - `governance:cache:redis:check`: `redis` proxy import’larında artışı bütçe ile sınırlar
+  - `governance:cache:redis:check`: `redis` proxy import kullanımını tamamen yasaklar
   - `governance:querymany:usage:check`: ham `queryMany(` kullanımını tamamen yasaklar
   - `governance:querymany:check`: `queryMany(...).rows` kalıbını tamamen yasaklar
-  - `governance:migrations:contract:check`: migration kontrat drift’ini bütçe ile sınırlar
+  - `governance:migrations:contract:check`: migration kontrat drift’ini tamamen yasaklar
 
 ## CI Enforcement
 - `.github/workflows/ci.yml` (master) runs env contract, stabilization, secret scan, governance import guard, db drift, test DB bootstrap, migrate status + dry-run, app typecheck and e2e smoke.

@@ -4,7 +4,7 @@
 
 ## P1 Buckets
 1. `queryMany/queryOne` dönüş tipi tutarsızlığı (`any[] | { rowCount... }`)  
-   Durum: **kısmen kapandı**. `queryMany` artık hem dizi hem `rows` erişimini aynı anda destekliyor.
+   Durum: **kapandı**. Liste sorguları `queryRows` standardına taşındı; deprecated `queryMany` kaldırıldı.
 2. Monorepo/legacy alanlar için aşırı geniş experimental kapsam  
    Durum: **kısmen kapandı**. `tsconfig.experimental.json` yalnızca `src/lib` + `src/env.d.ts` kapsıyor.
 3. Legacy modül sözleşme kırıkları (`src/lib/index.ts` mega re-export, `cache.redis`, zayıf tipli helper kullanımları)  
@@ -24,8 +24,7 @@
 - `typecheck:experimental` merge-blocking.
 - `typecheck:experimental:exclude:guard` merge-blocking.
 
-## Exclude Budget
-- Budget dosyası: `config/experimental-exclude-budget.json`
-- Kural: `tsconfig.experimental.json` içindeki `exclude` listesi bütçeyi aşamaz.
-- Aktif hedef: `max_entries=0`, `max_file_entries=0`
-- Amaç: yeni teknik borcun gate altından sessizce büyümesini engellemek.
+## Exclude Policy
+- Kural: `tsconfig.experimental.json` içine baseline dışı exclude eklenmez.
+- Aktif hedef: `total=0`, `file_entries=0`
+- Amaç: yeni teknik borcun gate altından sessizce büyümesini tamamen engellemek.

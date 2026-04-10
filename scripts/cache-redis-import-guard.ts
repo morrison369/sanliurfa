@@ -4,10 +4,6 @@ import { resolve, extname, join, relative } from 'node:path';
 const SCAN_EXTENSIONS = new Set(['.ts', '.tsx', '.astro']);
 const REDIS_IMPORT_PATTERN = /import\s*\{[^}]*\bredis\b[^}]*\}\s*from\s*['"][^'"]*cache['"]/g;
 
-type CacheRedisBudget = {
-  max_legacy_imports: number;
-};
-
 function collectFiles(dir: string): string[] {
   const entries = readdirSync(dir, { withFileTypes: true });
   const files: string[] = [];
@@ -27,15 +23,9 @@ function collectFiles(dir: string): string[] {
   return files;
 }
 
-function loadJson<T>(path: string): T {
-  return JSON.parse(readFileSync(path, 'utf8')) as T;
-}
-
 function main(): void {
   const root = process.cwd();
   const srcDir = resolve(root, 'src');
-  const budgetPath = resolve(root, 'config', 'cache-redis-budget.json');
-  const budget = loadJson<CacheRedisBudget>(budgetPath);
   const files = collectFiles(srcDir);
   const offenders: string[] = [];
 
@@ -49,16 +39,16 @@ function main(): void {
     }
   }
 
-  if (offenders.length > budget.max_legacy_imports) {
+  if (offenders.length > 0) {
     throw new Error(
       [
-        `legacy redis cache import budget exceeded (${offenders.length}/${budget.max_legacy_imports})`,
+        `legacy redis cache import detected (${offenders.length})`,
         ...offenders.slice(0, 20).map((file) => `- ${file}`),
       ].join('\n')
     );
   }
 
-  console.log(`cache-redis-import-guard: OK (legacy_imports=${offenders.length}/${budget.max_legacy_imports})`);
+  console.log('cache-redis-import-guard: OK (legacy_imports=0)');
 }
 
 main();

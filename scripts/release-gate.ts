@@ -21,7 +21,7 @@ function main(): void {
   run('HTTP timeout governance guard', 'npm run governance:http:timeout:check');
   run('Governance import guard', 'npm run governance:imports:check');
   run('Governance logging guard', 'npm run governance:logging:check');
-  run('Governance cache redis guard', 'npm run governance:cache:redis:check');
+  run('Governance cache redis prohibition guard', 'npm run governance:cache:redis:check');
   run('Governance queryMany prohibition guard', 'npm run governance:querymany:usage:check');
   run('Governance queryMany guard', 'npm run governance:querymany:check');
   run('Governance migration contract guard', 'npm run governance:migrations:contract:check');
@@ -32,7 +32,7 @@ function main(): void {
   run('Phase doctor', 'npm run phase:doctor');
   run('Dependency triage', 'npm run deps:audit:triage');
   run('TypeScript app gate', 'npm run typecheck:app');
-  run('TypeScript experimental exclude budget gate', 'npm run typecheck:experimental:exclude:guard');
+  run('TypeScript experimental exclude prohibition gate', 'npm run typecheck:experimental:exclude:guard');
   run('TypeScript experimental gate', 'npm run typecheck:experimental');
   run('TypeScript weekly report', 'npm run typecheck:experimental:report');
   run('TypeScript governance gate', 'npm run phase:check:tsconfig');

@@ -25,7 +25,7 @@
 ## Typecheck Debt Checklist
 - [ ] `tsconfig.experimental.json` exclude list size increased mi? Artış varsa gerekçe yazıldı mı?
 - [ ] Yeni `src/lib/*.ts` dosyası exclude'a eklendi mi? Eklendiyse neden?
-- [ ] Exclude budget düşürüldü mü (mümkünse)?
+- [ ] `tsconfig.experimental.json` içine yeni baseline dışı exclude eklenmedi
 - [ ] Domain bazlı en az 1 unit + 1 smoke doğrulaması eklendi/çalıştırıldı mı?
 - [ ] `src/lib/http.ts` dışında yeni timeout/AbortController mantığı eklendi mi? Eklendiyse neden?
 - [ ] Secrets allowlist genişledi mi? Genişlediyse risk ve onay notu yazıldı mı?
