@@ -5,6 +5,7 @@ const getCurrentEnvironmentMock = vi.fn();
 const getReadinessStatusRuntimeMock = vi.fn();
 const getDeploymentChecklistRuntimeMock = vi.fn();
 const getRuntimeIntegrationSettingsMock = vi.fn();
+const getPerformanceOptimizationSummaryMock = vi.fn();
 const loggerMock = {
   setRequestId: vi.fn(),
   error: vi.fn(),
@@ -26,6 +27,10 @@ vi.mock('../../../lib/deployment', () => ({
 
 vi.mock('../../../lib/runtime-integration-settings', () => ({
   getRuntimeIntegrationSettings: getRuntimeIntegrationSettingsMock,
+}));
+
+vi.mock('../../../lib/admin-dashboard', () => ({
+  getPerformanceOptimizationSummary: getPerformanceOptimizationSummaryMock,
 }));
 
 vi.mock('../../../lib/logging', () => ({
@@ -57,6 +62,20 @@ describe('admin deployment status contracts', () => {
       resendApiKey: 're_live123',
       analyticsId: '',
       source: { resendApiKey: 'admin', analyticsId: 'none' },
+    });
+    getPerformanceOptimizationSummaryMock.mockResolvedValue({
+      generatedAt: '2026-04-10T03:00:00.000Z',
+      recommendations: { total: 4, highPriority: 2, mediumPriority: 2 },
+      metrics: {
+        slowQueriesCount: 6,
+        slowRequestRate: 14,
+        cacheHitRate: 42,
+        avgRequestDuration: 220,
+        p95Duration: 780,
+      },
+      cacheStrategies: { count: 2 },
+      indexSuggestions: { count: 3, top: ['CREATE INDEX idx_reviews_place_id ON reviews(place_id)'] },
+      slowOperations: [],
     });
   });
 
@@ -92,6 +111,9 @@ describe('admin deployment status contracts', () => {
     expect(body.data.data.integrations.analytics.source).toBe('none');
     expect(body.data.data.integrations.summary.configuredCount).toBe(1);
     expect(body.data.data.integrations.summary.fullyConfigured).toBe(false);
+    expect(body.data.data.artifactHealth.releaseGate.status).toBe('blocked');
+    expect(body.data.data.artifactHealth.performanceOps.status).toBe('healthy');
+    expect(body.data.data.artifactHealth.performanceOps.generatedAt).toBe('2026-04-10T03:00:00.000Z');
   });
 
   it('returns default none integration summary when nothing is configured', async () => {

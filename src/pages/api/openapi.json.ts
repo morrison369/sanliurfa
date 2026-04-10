@@ -605,6 +605,97 @@ const openApiSpec = {
         },
       },
     },
+    '/api/admin/deployment/status': {
+      get: {
+        tags: ['Health'],
+        summary: 'Deployment readiness and artifact health for admins',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Deployment status snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        success: { type: 'boolean' },
+                        data: {
+                          type: 'object',
+                          properties: {
+                            environment: {
+                              type: 'object',
+                              properties: {
+                                name: { type: 'string' },
+                                url: { type: 'string' },
+                                logLevel: { type: 'string' },
+                                sslEnabled: { type: 'boolean' },
+                                maintenanceMode: { type: 'boolean' },
+                              },
+                              required: ['name', 'url', 'logLevel', 'sslEnabled', 'maintenanceMode'],
+                            },
+                            readiness: { type: 'object' },
+                            checklist: { type: 'object' },
+                            integrations: {
+                              type: 'object',
+                              properties: {
+                                resend: {
+                                  type: 'object',
+                                  properties: {
+                                    configured: { type: 'boolean' },
+                                    source: { type: 'string' },
+                                  },
+                                  required: ['configured', 'source'],
+                                },
+                                analytics: {
+                                  type: 'object',
+                                  properties: {
+                                    configured: { type: 'boolean' },
+                                    source: { type: 'string' },
+                                  },
+                                  required: ['configured', 'source'],
+                                },
+                                summary: {
+                                  type: 'object',
+                                  properties: {
+                                    configuredCount: { type: 'integer' },
+                                    total: { type: 'integer' },
+                                    fullyConfigured: { type: 'boolean' },
+                                  },
+                                  required: ['configuredCount', 'total', 'fullyConfigured'],
+                                },
+                              },
+                              required: ['resend', 'analytics', 'summary'],
+                            },
+                            artifactHealth: {
+                              type: 'object',
+                              properties: {
+                                releaseGate: artifactHealthEntrySchema,
+                                nightlyRegression: artifactHealthEntrySchema,
+                                nightlyE2E: artifactHealthEntrySchema,
+                                performanceOps: artifactHealthEntrySchema,
+                              },
+                              required: ['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps'],
+                            },
+                            timestamp: { type: 'string', format: 'date-time' },
+                          },
+                          required: ['environment', 'readiness', 'checklist', 'integrations', 'artifactHealth', 'timestamp'],
+                        },
+                      },
+                      required: ['success', 'data'],
+                    },
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {

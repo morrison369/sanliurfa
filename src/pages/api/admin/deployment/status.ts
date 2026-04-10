@@ -8,6 +8,8 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integration-settings';
+import { getArtifactHealthSnapshot } from '../../../../lib/artifact-health';
+import { getPerformanceOptimizationSummary } from '../../../../lib/admin-dashboard';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -21,11 +23,16 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     const environment = getCurrentEnvironment();
-    const [readiness, checklist, integrationSettings] = await Promise.all([
+    const [readiness, checklist, integrationSettings, performanceOptimization] = await Promise.all([
       getReadinessStatusRuntime(),
       getDeploymentChecklistRuntime(),
-      getRuntimeIntegrationSettings()
+      getRuntimeIntegrationSettings(),
+      getPerformanceOptimizationSummary()
     ]);
+    const artifactHealth = await getArtifactHealthSnapshot({
+      includePerformanceOps: true,
+      performanceOpsGeneratedAt: performanceOptimization?.generatedAt ?? null
+    });
     const configuredCount = Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
 
     const duration = Date.now() - startTime;
@@ -59,6 +66,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
               fullyConfigured: configuredCount === 2
             }
           },
+          artifactHealth,
           timestamp: new Date().toISOString()
         }
       },

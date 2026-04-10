@@ -13,6 +13,7 @@ describe('openapi runtime contracts', () => {
     expect(body.paths['/api/performance']).toBeDefined();
     expect(body.paths['/api/admin/performance/optimization']).toBeDefined();
     expect(body.paths['/api/admin/system/artifact-health']).toBeDefined();
+    expect(body.paths['/api/admin/deployment/status']).toBeDefined();
 
     const healthStatusEnum = body.paths['/api/health'].get.responses['200'].content['application/json'].schema.properties.data.properties.status.enum;
     const healthArtifactSchema =
@@ -27,6 +28,8 @@ describe('openapi runtime contracts', () => {
       body.paths['/api/admin/performance/optimization'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties.artifactHealth;
     const adminArtifactHealthSchema =
       body.paths['/api/admin/system/artifact-health'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties;
+    const deploymentArtifactHealthSchema =
+      body.paths['/api/admin/deployment/status'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties.artifactHealth;
 
     expect(healthStatusEnum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(healthArtifactSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E']);
@@ -41,6 +44,8 @@ describe('openapi runtime contracts', () => {
     expect(optimizationArtifactSchema.properties.releaseGate.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(adminArtifactHealthSchema.performanceOps.properties.available.type).toBe('boolean');
     expect(adminArtifactHealthSchema.performanceOps.properties.generatedAt.type).toEqual(['string', 'null']);
+    expect(deploymentArtifactHealthSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps']);
+    expect(deploymentArtifactHealthSchema.properties.performanceOps.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(detailedArtifactSchema.properties.releaseGate.required).toEqual(['available', 'status', 'generatedAt']);
     expect(detailedArtifactSchema.properties.releaseGate.properties.available.type).toBe('boolean');
     expect(detailedArtifactSchema.properties.releaseGate.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
