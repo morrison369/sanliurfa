@@ -5,43 +5,10 @@
 
 import { queryRows, queryOne, insert, update } from './postgres';
 import { logger } from './logging';
+import { mapEmailCampaignRow } from './email-campaigns.mapper';
+import type { CampaignMetrics, CampaignStatus, EmailCampaign, SegmentType } from './email-campaigns.types';
 
-export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'failed';
-export type SegmentType = 'all_users' | 'subscribers' | 'premium' | 'inactive' | 'custom';
-
-export interface EmailCampaign {
-  id: string;
-  name: string;
-  subject: string;
-  fromName: string;
-  fromEmail: string;
-  htmlContent: string;
-  textContent: string;
-  segment: SegmentType;
-  segmentFilters?: Record<string, any>;
-  scheduledAt?: string;
-  status: CampaignStatus;
-  sendCount: number;
-  openCount: number;
-  clickCount: number;
-  unsubscribeCount: number;
-  bounceCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CampaignMetrics {
-  campaignId: string;
-  sendCount: number;
-  deliveryRate: number;
-  openRate: number;
-  clickRate: number;
-  unsubscribeRate: number;
-  bounceRate: number;
-  conversionRate: number;
-  topLinks: { url: string; clicks: number }[];
-  topRegions: { region: string; opens: number }[];
-}
+export type { CampaignMetrics, CampaignStatus, EmailCampaign, SegmentType } from './email-campaigns.types';
 
 /**
  * Create email campaign
@@ -74,26 +41,7 @@ export async function createCampaign(campaign: Omit<EmailCampaign, 'id' | 'creat
 
     logger.info('Email campaign created', { campaignId: result.id, name: campaign.name });
 
-    return {
-      id: result.id,
-      name: result.name,
-      subject: result.subject,
-      fromName: result.from_name,
-      fromEmail: result.from_email,
-      htmlContent: result.html_content,
-      textContent: result.text_content,
-      segment: result.segment,
-      segmentFilters: result.segment_filters ? JSON.parse(result.segment_filters) : undefined,
-      scheduledAt: result.scheduled_at,
-      status: result.status,
-      sendCount: result.send_count,
-      openCount: result.open_count,
-      clickCount: result.click_count,
-      unsubscribeCount: result.unsubscribe_count,
-      bounceCount: result.bounce_count,
-      createdAt: result.created_at,
-      updatedAt: result.updated_at
-    };
+    return mapEmailCampaignRow(result);
   } catch (error) {
     logger.error('Create campaign failed', error instanceof Error ? error : new Error(String(error)));
     return null;
@@ -111,26 +59,7 @@ export async function getCampaign(campaignId: string): Promise<EmailCampaign | n
       return null;
     }
 
-    return {
-      id: result.id,
-      name: result.name,
-      subject: result.subject,
-      fromName: result.from_name,
-      fromEmail: result.from_email,
-      htmlContent: result.html_content,
-      textContent: result.text_content,
-      segment: result.segment,
-      segmentFilters: result.segment_filters ? JSON.parse(result.segment_filters) : undefined,
-      scheduledAt: result.scheduled_at,
-      status: result.status,
-      sendCount: result.send_count,
-      openCount: result.open_count,
-      clickCount: result.click_count,
-      unsubscribeCount: result.unsubscribe_count,
-      bounceCount: result.bounce_count,
-      createdAt: result.created_at,
-      updatedAt: result.updated_at
-    };
+    return mapEmailCampaignRow(result);
   } catch (error) {
     logger.error('Get campaign failed', error instanceof Error ? error : new Error(String(error)));
     return null;
@@ -144,26 +73,7 @@ export async function getAllCampaigns(limit: number = 50): Promise<EmailCampaign
   try {
     const results = await queryRows('SELECT * FROM email_campaigns ORDER BY created_at DESC LIMIT $1', [limit]);
 
-    return results.map((r: any) => ({
-      id: r.id,
-      name: r.name,
-      subject: r.subject,
-      fromName: r.from_name,
-      fromEmail: r.from_email,
-      htmlContent: r.html_content,
-      textContent: r.text_content,
-      segment: r.segment,
-      segmentFilters: r.segment_filters ? JSON.parse(r.segment_filters) : undefined,
-      scheduledAt: r.scheduled_at,
-      status: r.status,
-      sendCount: r.send_count,
-      openCount: r.open_count,
-      clickCount: r.click_count,
-      unsubscribeCount: r.unsubscribe_count,
-      bounceCount: r.bounce_count,
-      createdAt: r.created_at,
-      updatedAt: r.updated_at
-    }));
+    return results.map((r: any) => mapEmailCampaignRow(r));
   } catch (error) {
     logger.error('Get all campaigns failed', error instanceof Error ? error : new Error(String(error)));
     return [];

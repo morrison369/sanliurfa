@@ -92,4 +92,58 @@ describe('Realtime SSE lifecycle hardening', () => {
 
     expect(counts).toEqual([0, 7]);
   });
+
+  it('should not duplicate callback delivery when the same listener subscribes twice', async () => {
+    const { realtimeManager } = await import('../realtime-sse');
+    const counts: number[] = [];
+    const listener = (count: number) => counts.push(count);
+
+    const unsubscribeA = realtimeManager.subscribeToOnlineUsers(listener);
+    const unsubscribeB = realtimeManager.subscribeToOnlineUsers(listener);
+
+    realtimeManager.connect();
+    FakeEventSource.instances[0].emit('message', {
+      data: JSON.stringify({
+        type: 'update',
+        onlineUsers: 11
+      })
+    });
+
+    unsubscribeA();
+    unsubscribeB();
+    realtimeManager.disconnect();
+
+    expect(counts).toEqual([0, 0, 11]);
+  });
+
+  it('should replay the latest notification snapshot to new subscribers', async () => {
+    const { realtimeManager } = await import('../realtime-sse');
+    const payloads: Array<{ count: number; notifications: Array<{ id: string }> }> = [];
+
+    realtimeManager.connectToNotifications();
+    FakeEventSource.instances[0].emit('message', {
+      data: JSON.stringify({
+        type: 'update',
+        notificationCount: 2,
+        notifications: [{ id: 'n-1' }, { id: 'n-2' }]
+      })
+    });
+
+    const unsubscribe = realtimeManager.subscribeToNotifications(data => {
+      payloads.push({
+        count: data.count,
+        notifications: data.notifications.map(item => ({ id: item.id }))
+      });
+    });
+
+    unsubscribe();
+    realtimeManager.disconnect();
+
+    expect(payloads).toEqual([
+      {
+        count: 2,
+        notifications: [{ id: 'n-1' }, { id: 'n-2' }]
+      }
+    ]);
+  });
 });

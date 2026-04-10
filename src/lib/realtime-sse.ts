@@ -43,6 +43,7 @@ interface RealtimeData {
 }
 
 class RealtimeManager {
+  private static readonly MAX_LISTENERS_PER_EVENT = 25;
   private eventSource: EventSource | null = null;
   private messageEventSource: EventSource | null = null;
   private notificationEventSource: EventSource | null = null;
@@ -57,6 +58,7 @@ class RealtimeManager {
   private onlineUsers = 0;
   private unreadCount = 0;
   private notificationCount = 0;
+  private latestNotifications: Notification[] = [];
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000;
@@ -188,44 +190,53 @@ class RealtimeManager {
     }
   }
 
+  private subscribe<T>(event: string, callback: (data: T) => void, immediateValue?: T): () => void {
+    const listeners = this.listeners.get(event)!;
+
+    if (listeners.has(callback)) {
+      if (arguments.length === 3) {
+        callback(immediateValue as T);
+      }
+      return () => {
+        listeners.delete(callback);
+      };
+    }
+
+    if (listeners.size >= RealtimeManager.MAX_LISTENERS_PER_EVENT) {
+      console.warn(`Listener cap reached for ${event}`);
+      return () => {};
+    }
+
+    listeners.add(callback);
+
+    if (arguments.length === 3) {
+      callback(immediateValue as T);
+    }
+
+    return () => {
+      listeners.delete(callback);
+    };
+  }
+
   /**
    * Subscribe to online users updates
    */
   subscribeToOnlineUsers(callback: (count: number) => void): () => void {
-    const listeners = this.listeners.get('onlineUsers')!;
-    listeners.add(callback);
-
-    // Call immediately with current value
-    callback(this.onlineUsers);
-
-    // Return unsubscribe function
-    return () => {
-      listeners.delete(callback);
-    };
+    return this.subscribe('onlineUsers', callback, this.onlineUsers);
   }
 
   /**
    * Subscribe to trending searches
    */
   subscribeToTrendingSearches(callback: (searches: string[]) => void): () => void {
-    const listeners = this.listeners.get('trendingSearches')!;
-    listeners.add(callback);
-
-    return () => {
-      listeners.delete(callback);
-    };
+    return this.subscribe('trendingSearches', callback);
   }
 
   /**
    * Subscribe to active places
    */
   subscribeToActivePlaces(callback: (places: string[]) => void): () => void {
-    const listeners = this.listeners.get('activePlaces')!;
-    listeners.add(callback);
-
-    return () => {
-      listeners.delete(callback);
-    };
+    return this.subscribe('activePlaces', callback);
   }
 
   /**
@@ -321,16 +332,7 @@ class RealtimeManager {
    * Subscribe to unread count updates
    */
   subscribeToUnreadCount(callback: (count: number) => void): () => void {
-    const listeners = this.listeners.get('unreadCount')!;
-    listeners.add(callback);
-
-    // Call immediately with current value
-    callback(this.unreadCount);
-
-    // Return unsubscribe function
-    return () => {
-      listeners.delete(callback);
-    };
+    return this.subscribe('unreadCount', callback, this.unreadCount);
   }
 
   /**
@@ -387,9 +389,10 @@ class RealtimeManager {
       case 'update':
         if (data.notificationCount !== undefined) {
           this.notificationCount = data.notificationCount;
+          this.latestNotifications = data.notifications || [];
           this.emit('notifications', {
             count: data.notificationCount,
-            notifications: data.notifications || []
+            notifications: this.latestNotifications
           });
         }
         break;
@@ -429,19 +432,10 @@ class RealtimeManager {
    * Subscribe to notification updates
    */
   subscribeToNotifications(callback: (data: { count: number; notifications: Notification[] }) => void): () => void {
-    const listeners = this.listeners.get('notifications')!;
-    listeners.add(callback);
-
-    // Call immediately with current value
-    callback({
+    return this.subscribe('notifications', callback, {
       count: this.notificationCount,
-      notifications: []
+      notifications: this.latestNotifications
     });
-
-    // Return unsubscribe function
-    return () => {
-      listeners.delete(callback);
-    };
   }
 
   /**
@@ -535,24 +529,14 @@ class RealtimeManager {
    * Subscribe to analytics metrics updates
    */
   onAnalyticsMetrics(callback: (metrics: any) => void): () => void {
-    const listeners = this.listeners.get('analyticsMetrics')!;
-    listeners.add(callback);
-
-    return () => {
-      listeners.delete(callback);
-    };
+    return this.subscribe('analyticsMetrics', callback);
   }
 
   /**
    * Subscribe to analytics KPI updates
    */
   onAnalyticsKPI(callback: (kpi: any) => void): () => void {
-    const listeners = this.listeners.get('analyticsKPI')!;
-    listeners.add(callback);
-
-    return () => {
-      listeners.delete(callback);
-    };
+    return this.subscribe('analyticsKPI', callback);
   }
 
   /**
@@ -657,12 +641,7 @@ class RealtimeManager {
    * Subscribe to feed updates
    */
   onFeedUpdate(callback: (data: { activities: any[]; count: number }) => void): () => void {
-    const listeners = this.listeners.get('feedUpdate')!;
-    listeners.add(callback);
-
-    return () => {
-      listeners.delete(callback);
-    };
+    return this.subscribe('feedUpdate', callback);
   }
 
   /**

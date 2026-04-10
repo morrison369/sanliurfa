@@ -126,6 +126,20 @@ describe('API contract hardening', () => {
     expect(getMessagesMock).not.toHaveBeenCalled();
   });
 
+  it('rejects unauthenticated messages GET before service calls', async () => {
+    const { GET } = await import('../messages/[conversationId].ts');
+    const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111');
+
+    const response = await GET({
+      request,
+      locals: {},
+      params: { conversationId: '11111111-1111-1111-1111-111111111111' },
+    } as any);
+
+    expect(response.status).toBe(401);
+    expect(getMessagesMock).not.toHaveBeenCalled();
+  });
+
   it('rejects invalid JSON for messages POST', async () => {
     const { POST } = await import('../messages/[conversationId].ts');
     const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111', {
@@ -190,6 +204,31 @@ describe('API contract hardening', () => {
     expect(sendMessageMock).not.toHaveBeenCalled();
   });
 
+  it('rejects messages POST when sender is blocked by recipient', async () => {
+    const { POST } = await import('../messages/[conversationId].ts');
+    queryOneMock.mockResolvedValueOnce({
+      id: '11111111-1111-1111-1111-111111111111',
+      participant_a: '11111111-1111-1111-1111-111111111111',
+      participant_b: '22222222-2222-2222-2222-222222222222'
+    });
+    isUserBlockedMock.mockResolvedValueOnce(true);
+
+    const request = new Request('https://example.com/api/messages/11111111-1111-1111-1111-111111111111', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ content: 'test' })
+    });
+
+    const response = await POST({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { conversationId: '11111111-1111-1111-1111-111111111111' },
+    } as any);
+
+    expect(response.status).toBe(403);
+    expect(sendMessageMock).not.toHaveBeenCalled();
+  });
+
   it('rejects invalid tenant member role', async () => {
     const { POST } = await import('../tenants/[tenantId]/members.ts');
     queryOneMock.mockResolvedValueOnce({ owner_id: '11111111-1111-1111-1111-111111111111' });
@@ -211,6 +250,22 @@ describe('API contract hardening', () => {
 
     expect(response.status).toBe(422);
     expect(addTenantMemberMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects tenant members GET for non-owner non-member users', async () => {
+    const { GET } = await import('../tenants/[tenantId]/members.ts');
+    queryOneMock
+      .mockResolvedValueOnce({ owner_id: '99999999-9999-9999-9999-999999999999' })
+      .mockResolvedValueOnce(null);
+
+    const request = new Request('https://example.com/api/tenants/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/members');
+    const response = await GET({
+      request,
+      locals: { user: { id: '11111111-1111-1111-1111-111111111111' } },
+      params: { tenantId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' },
+    } as any);
+
+    expect(response.status).toBe(403);
   });
 
   it('rejects non-json tenant member POST body', async () => {
@@ -338,6 +393,35 @@ describe('API contract hardening', () => {
     expect(linkOAuthAccountMock).not.toHaveBeenCalled();
   });
 
+  it('rejects oauth callback when token exchange fails', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(new Response('nope', { status: 500 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { GET } = await import('../auth/oauth/callback.ts');
+    verifyOAuthStateMock.mockResolvedValue({
+      provider_key: 'google',
+      redirect_uri: 'https://example.com/api/auth/oauth/callback'
+    });
+    getOAuthProviderMock.mockResolvedValue({
+      provider_key: 'google',
+      client_id: 'client-id',
+      client_secret: 'client-secret',
+      authorization_url: 'https://example.com/oauth/authorize',
+      token_url: 'https://example.com/oauth/token',
+      userinfo_url: 'https://example.com/oauth/userinfo'
+    });
+
+    const request = new Request('https://example.com/api/auth/oauth/callback?code=abc&state=state-1');
+    const response = await GET({
+      request,
+      url: new URL(request.url),
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(400);
+    expect(createUserSessionMock).not.toHaveBeenCalled();
+  });
+
   it('rejects stripe webhook without signature header', async () => {
     const { POST } = await import('../webhooks/stripe.ts');
     const request = new Request('https://example.com/api/webhooks/stripe', {
@@ -409,6 +493,29 @@ describe('API contract hardening', () => {
     );
     expect(queryMock).toHaveBeenCalledWith(
       expect.stringContaining("UPDATE webhook_deliveries"),
+      ['delivery-1', JSON.stringify({ received: true })]
+    );
+  });
+
+  it('retries an existing incomplete stripe delivery before completing it', async () => {
+    const { POST } = await import('../webhooks/stripe.ts');
+    queryOneMock.mockResolvedValueOnce({ id: 'delivery-1', status: 'processing' });
+
+    const request = new Request('https://example.com/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig' },
+      body: JSON.stringify({ id: 'evt_1' })
+    });
+
+    const response = await POST({ request } as any);
+
+    expect(response.status).toBe(200);
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.stringContaining("SET status = 'processing'"),
+      ['delivery-1']
+    );
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.stringContaining("SET status = 'completed'"),
       ['delivery-1', JSON.stringify({ received: true })]
     );
   });
