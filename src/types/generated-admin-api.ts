@@ -1,5 +1,95 @@
 // This file is generated. Do not edit manually.
 export interface paths {
+    "/api/admin/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin audit logs and admin ops audit sink */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Audit logs */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                count?: number;
+                                limit?: number;
+                                logs?: ({
+                                    actorKey: string;
+                                    details?: {
+                                        [key: string]: unknown;
+                                    } | null;
+                                    duration: number;
+                                    endpoint: string;
+                                    ipAddress: string;
+                                    method: string;
+                                    /** @enum {string} */
+                                    mode: "read" | "write";
+                                    /** @enum {string} */
+                                    outcome: "allowed" | "denied" | "error";
+                                    requestId: string | null;
+                                    statusCode: number;
+                                    /** Format: date-time */
+                                    timestamp: string;
+                                    userId: string | null;
+                                } | {
+                                    [key: string]: unknown;
+                                })[];
+                                offset?: number;
+                                source?: string;
+                                summary?: {
+                                    deniedCount: number;
+                                    /** Format: date-time */
+                                    generatedAt: string;
+                                    /** Format: date-time */
+                                    lastDeniedAt: string | null;
+                                    rateLimitedCount: number;
+                                    readCount: number;
+                                    total: number;
+                                    windowHours: number;
+                                    writeCount: number;
+                                };
+                            };
+                        };
+                    };
+                };
+                /** @description Validation error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/dashboard/overview": {
         parameters: {
             query?: never;
@@ -26,6 +116,18 @@ export interface paths {
                         "application/json": {
                             data: {
                                 data: {
+                                    adminOpsAudit: {
+                                        deniedCount: number;
+                                        /** Format: date-time */
+                                        generatedAt: string;
+                                        /** Format: date-time */
+                                        lastDeniedAt: string | null;
+                                        rateLimitedCount: number;
+                                        readCount: number;
+                                        total: number;
+                                        windowHours: number;
+                                        writeCount: number;
+                                    };
                                     artifactHealth: {
                                         nightlyE2E: {
                                             available: boolean;
@@ -541,6 +643,181 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/system/integration-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin integration settings and verification status */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Integration settings snapshot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    analytics: {
+                                        configured: boolean;
+                                        maskedValue: string;
+                                        source: string;
+                                    };
+                                    resend: {
+                                        configured: boolean;
+                                        maskedValue: string;
+                                        source: string;
+                                    };
+                                    verification?: {
+                                        analytics: {
+                                            /** Format: date-time */
+                                            checkedAt: string;
+                                            message: string;
+                                            status: string;
+                                        };
+                                        resend: {
+                                            /** Format: date-time */
+                                            checkedAt: string;
+                                            message: string;
+                                            status: string;
+                                        };
+                                        summary: {
+                                            /** Format: date-time */
+                                            checkedAt: string;
+                                            healthy: boolean;
+                                        };
+                                    } | null;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Update admin integration settings */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        analyticsId?: string;
+                        resendApiKey?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Updated integration settings snapshot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    analytics: {
+                                        configured: boolean;
+                                        maskedValue: string;
+                                        source: string;
+                                    };
+                                    resend: {
+                                        configured: boolean;
+                                        maskedValue: string;
+                                        source: string;
+                                    };
+                                    verification?: {
+                                        analytics: {
+                                            /** Format: date-time */
+                                            checkedAt: string;
+                                            message: string;
+                                            status: string;
+                                        };
+                                        resend: {
+                                            /** Format: date-time */
+                                            checkedAt: string;
+                                            message: string;
+                                            status: string;
+                                        };
+                                        summary: {
+                                            /** Format: date-time */
+                                            checkedAt: string;
+                                            healthy: boolean;
+                                        };
+                                    } | null;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Invalid payload */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation error */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/system/metrics": {
         parameters: {
             query?: never;
@@ -567,6 +844,18 @@ export interface paths {
                         "application/json": {
                             data: {
                                 data: {
+                                    adminOpsAudit: {
+                                        deniedCount: number;
+                                        /** Format: date-time */
+                                        generatedAt: string;
+                                        /** Format: date-time */
+                                        lastDeniedAt: string | null;
+                                        rateLimitedCount: number;
+                                        readCount: number;
+                                        total: number;
+                                        windowHours: number;
+                                        writeCount: number;
+                                    };
                                     artifactHealth: {
                                         nightlyE2E: {
                                             available: boolean;

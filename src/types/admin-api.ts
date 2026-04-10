@@ -92,6 +92,17 @@ export interface ArtifactHealthSummary {
   total: number;
 }
 
+export interface AdminOpsAuditSummary {
+  generatedAt: string;
+  windowHours: number;
+  total: number;
+  deniedCount: number;
+  rateLimitedCount: number;
+  writeCount: number;
+  readCount: number;
+  lastDeniedAt: string | null;
+}
+
 export interface AdminDashboardOverviewData extends DashboardOverviewResponse['data']['data'] {
   metrics: SystemMetricsResponse['data']['data'];
 }
@@ -138,6 +149,7 @@ export interface AdminDashboardOverviewLegacyShape {
     };
   };
   performanceOptimization?: PerformanceOptimizationSummary;
+  adminOpsAudit?: AdminOpsAuditSummary;
   artifactHealth?: {
     releaseGate: ArtifactHealthEntry;
     nightlyRegression: ArtifactHealthEntry;

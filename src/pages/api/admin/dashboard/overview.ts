@@ -18,6 +18,7 @@ import {
 import { getNightlyOpsSummary } from '../../../../lib/nightly-ops-summary';
 import { getReleaseGateSummary } from '../../../../lib/release-gate-summary';
 import { getAdminArtifactHealthSnapshot, summarizeArtifactHealth } from '../../../../lib/artifact-health';
+import { summarizeAdminOpsAudit } from '../../../../lib/admin-ops-audit';
 import { withAdminOpsReadAccess } from '../../../../lib/admin-ops-access';
 import {
   getRuntimeIntegrationSettings,
@@ -58,6 +59,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       ]);
       const artifactHealth = await getAdminArtifactHealthSnapshot();
       const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
+      const adminOpsAudit = summarizeAdminOpsAudit(24);
       const integrationVerification = await verifyRuntimeIntegrationSettings(integrationSettings);
       const configuredCount =
         Number(Boolean(integrationSettings.resendApiKey)) + Number(Boolean(integrationSettings.analyticsId));
@@ -101,6 +103,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
             },
             operational,
             performanceOptimization,
+            adminOpsAudit,
             artifactHealth,
             artifactHealthSummary,
             releaseGate,

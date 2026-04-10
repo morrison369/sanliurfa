@@ -101,6 +101,43 @@ export function PerformanceOptimizationCard({
   );
 }
 
+export function AdminOpsAuditCard({
+  adminOpsAudit,
+}: {
+  adminOpsAudit?: AdminDashboardOverviewData extends { adminOpsAudit?: infer T } ? T : never;
+}) {
+  if (!adminOpsAudit) return null;
+  return (
+    <div className={cardClassName()}>
+      <h3 className="font-semibold text-gray-900 mb-4">Admin Ops Audit</h3>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Toplam / Pencere</div>
+          <div className="text-xl font-bold text-gray-900">{adminOpsAudit.total}</div>
+          <div className="text-xs text-gray-500">{adminOpsAudit.windowHours} saat</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Denied / Rate Limit</div>
+          <div className="text-xl font-bold text-gray-900">
+            {adminOpsAudit.deniedCount} / {adminOpsAudit.rateLimitedCount}
+          </div>
+          <div className="text-xs text-gray-500">Son denied: {adminOpsAudit.lastDeniedAt || 'yok'}</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Write</div>
+          <div className="text-xl font-bold text-gray-900">{adminOpsAudit.writeCount}</div>
+          <div className="text-xs text-gray-500">Mutation audit hacmi</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Read</div>
+          <div className="text-xl font-bold text-gray-900">{adminOpsAudit.readCount}</div>
+          <div className="text-xs text-gray-500">Read audit hacmi</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ArtifactHealthCard({
   artifactHealth,
   artifactHealthSummary,
@@ -285,4 +322,3 @@ function NightlyItem({
     </div>
   );
 }
-

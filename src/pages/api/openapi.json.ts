@@ -2,9 +2,12 @@ import type { APIRoute } from 'astro';
 import {
   adminArtifactHealthSnapshotSchema,
   adminArtifactHealthSummarySchema,
+  adminOpsAuditEntrySchema,
+  adminOpsAuditSummarySchema,
   adminStatusSummarySchema,
   artifactHealthChecksSchema,
   healthStatusSchema,
+  integrationSettingsResponseSchema,
   integrationSummarySchema,
   integrationVerificationSchema,
   nightlySummarySchema,
@@ -594,6 +597,127 @@ const openApiSpec = {
         },
       },
     },
+    '/api/admin/system/integration-settings': {
+      get: {
+        tags: ['Health'],
+        summary: 'Admin integration settings and verification status',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Integration settings snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        success: { type: 'boolean' },
+                        data: integrationSettingsResponseSchema,
+                      },
+                      required: ['success', 'data'],
+                    },
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+      put: {
+        tags: ['Health'],
+        summary: 'Update admin integration settings',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  resendApiKey: { type: 'string' },
+                  analyticsId: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Updated integration settings snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        success: { type: 'boolean' },
+                        data: integrationSettingsResponseSchema,
+                      },
+                      required: ['success', 'data'],
+                    },
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '400': { description: 'Invalid payload' },
+          '403': { description: 'Admin access required' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/audit-logs': {
+      get: {
+        tags: ['Health'],
+        summary: 'Admin audit logs and admin ops audit sink',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Audit logs',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        logs: {
+                          type: 'array',
+                          items: {
+                            anyOf: [
+                              adminOpsAuditEntrySchema,
+                              { type: 'object', additionalProperties: true },
+                            ],
+                          },
+                        },
+                        source: { type: 'string' },
+                        count: { type: 'integer' },
+                        limit: { type: 'integer' },
+                        offset: { type: 'integer' },
+                        summary: adminOpsAuditSummarySchema,
+                      },
+                    },
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '400': { description: 'Validation error' },
+          '403': { description: 'Admin access required' },
+        },
+      },
+    },
     '/api/admin/deployment/status': {
       get: {
         tags: ['Health'],
@@ -724,6 +848,7 @@ const openApiSpec = {
                               required: ['resend', 'analytics', 'summary', 'verification'],
                             },
                             performanceOptimization: performanceOptimizationSummarySchema,
+                            adminOpsAudit: adminOpsAuditSummarySchema,
                             artifactHealth: adminArtifactHealthSnapshotSchema,
                             artifactHealthSummary: adminArtifactHealthSummarySchema,
                             releaseGate: releaseGateSummarySchema,
@@ -738,7 +863,7 @@ const openApiSpec = {
                             statusSummary: adminStatusSummarySchema,
                             period: { type: 'integer' },
                           },
-                          required: ['integrations', 'performanceOptimization', 'artifactHealth', 'artifactHealthSummary', 'releaseGate', 'nightly', 'statusSummary', 'period'],
+                          required: ['integrations', 'performanceOptimization', 'adminOpsAudit', 'artifactHealth', 'artifactHealthSummary', 'releaseGate', 'nightly', 'statusSummary', 'period'],
                         },
                       },
                       required: ['success', 'data'],
@@ -805,6 +930,7 @@ const openApiSpec = {
                               required: ['status', 'timestamp', 'integrations'],
                             },
                             performanceOptimization: performanceOptimizationSummarySchema,
+                            adminOpsAudit: adminOpsAuditSummarySchema,
                             artifactHealth: adminArtifactHealthSnapshotSchema,
                             artifactHealthSummary: adminArtifactHealthSummarySchema,
                             nightly: {
@@ -818,7 +944,7 @@ const openApiSpec = {
                             releaseGate: releaseGateSummarySchema,
                             statusSummary: adminStatusSummarySchema,
                           },
-                          required: ['health', 'performanceOptimization', 'artifactHealth', 'artifactHealthSummary', 'nightly', 'releaseGate', 'statusSummary'],
+                          required: ['health', 'performanceOptimization', 'adminOpsAudit', 'artifactHealth', 'artifactHealthSummary', 'nightly', 'releaseGate', 'statusSummary'],
                         },
                       },
                       required: ['success', 'data'],

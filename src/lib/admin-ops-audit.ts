@@ -6,6 +6,7 @@ export interface AdminOpsAuditEntry {
   endpoint: string;
   method: string;
   mode: 'read' | 'write';
+  requestId?: string | null;
   actorKey: string;
   userId: string | null;
   ipAddress: string;
@@ -13,6 +14,17 @@ export interface AdminOpsAuditEntry {
   duration: number;
   outcome: 'allowed' | 'denied' | 'error';
   details?: Record<string, unknown>;
+}
+
+export interface AdminOpsAuditSummary {
+  generatedAt: string;
+  windowHours: number;
+  total: number;
+  deniedCount: number;
+  rateLimitedCount: number;
+  writeCount: number;
+  readCount: number;
+  lastDeniedAt: string | null;
 }
 
 const ADMIN_OPS_AUDIT_DIR = resolve(process.cwd(), 'logs');
@@ -53,4 +65,25 @@ export function cleanupAdminOpsAuditEntries(daysToKeep: number): number {
     'utf8'
   );
   return retained.length;
+}
+
+export function summarizeAdminOpsAudit(windowHours: number = 24): AdminOpsAuditSummary {
+  const cutoff = Date.now() - windowHours * 60 * 60 * 1000;
+  const entries = readAdminOpsAuditEntries().filter((entry) => {
+    const timestamp = new Date(entry.timestamp).getTime();
+    return Number.isFinite(timestamp) && timestamp >= cutoff;
+  });
+  const deniedEntries = entries.filter((entry) => entry.outcome === 'denied');
+  const rateLimitedCount = entries.filter((entry) => entry.statusCode === 429).length;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    windowHours,
+    total: entries.length,
+    deniedCount: deniedEntries.length,
+    rateLimitedCount,
+    writeCount: entries.filter((entry) => entry.mode === 'write').length,
+    readCount: entries.filter((entry) => entry.mode === 'read').length,
+    lastDeniedAt: deniedEntries.sort((left, right) => right.timestamp.localeCompare(left.timestamp))[0]?.timestamp ?? null,
+  };
 }

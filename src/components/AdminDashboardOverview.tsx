@@ -5,7 +5,7 @@ import {
   classifyReleaseGateStatus,
 } from '../lib/admin-status';
 import type { AdminDashboardOverviewData } from '../types/admin-api';
-import { ArtifactHealthCard, IntegrationVerificationCard, ModerationStatsCard, NightlyTrendCard, OperationalSnapshotCard, PerformanceOptimizationCard, ReleaseGateCard } from './admin-dashboard/DetailCards';
+import { AdminOpsAuditCard, ArtifactHealthCard, IntegrationVerificationCard, ModerationStatsCard, NightlyTrendCard, OperationalSnapshotCard, PerformanceOptimizationCard, ReleaseGateCard } from './admin-dashboard/DetailCards';
 import { CoreMetricsGrid } from './admin-dashboard/CoreMetricsGrid';
 
 export default function AdminDashboardOverview() {
@@ -92,6 +92,7 @@ export default function AdminDashboardOverview() {
       <ModerationStatsCard moderation={data.moderation} />
       <OperationalSnapshotCard operational={data.operational} />
       <PerformanceOptimizationCard performanceOptimization={data.performanceOptimization} />
+      <AdminOpsAuditCard adminOpsAudit={(data as any).adminOpsAudit} />
       <ArtifactHealthCard artifactHealth={data.artifactHealth} artifactHealthSummary={data.artifactHealthSummary} />
       <IntegrationVerificationCard verification={data.integrations?.verification} />
       <ReleaseGateCard releaseGate={data.releaseGate} releaseGateLevel={releaseGateLevel} />

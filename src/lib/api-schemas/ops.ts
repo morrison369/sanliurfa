@@ -89,6 +89,62 @@ export const integrationVerificationSchema = {
   required: ['resend', 'analytics', 'summary'],
 };
 
+export const integrationSettingSchema = {
+  type: 'object',
+  properties: {
+    configured: { type: 'boolean' },
+    source: { type: 'string' },
+    maskedValue: { type: 'string' },
+  },
+  required: ['configured', 'source', 'maskedValue'],
+};
+
+export const integrationSettingsResponseSchema = {
+  type: 'object',
+  properties: {
+    resend: integrationSettingSchema,
+    analytics: integrationSettingSchema,
+    verification: {
+      anyOf: [integrationVerificationSchema, { type: 'null' }],
+    },
+  },
+  required: ['resend', 'analytics'],
+};
+
+export const adminOpsAuditEntrySchema = {
+  type: 'object',
+  properties: {
+    timestamp: { type: 'string', format: 'date-time' },
+    endpoint: { type: 'string' },
+    method: { type: 'string' },
+    mode: { type: 'string', enum: ['read', 'write'] },
+    requestId: { type: ['string', 'null'] },
+    actorKey: { type: 'string' },
+    userId: { type: ['string', 'null'] },
+    ipAddress: { type: 'string' },
+    statusCode: { type: 'integer' },
+    duration: { type: 'integer' },
+    outcome: { type: 'string', enum: ['allowed', 'denied', 'error'] },
+    details: { type: ['object', 'null'], additionalProperties: true },
+  },
+  required: ['timestamp', 'endpoint', 'method', 'mode', 'requestId', 'actorKey', 'userId', 'ipAddress', 'statusCode', 'duration', 'outcome'],
+};
+
+export const adminOpsAuditSummarySchema = {
+  type: 'object',
+  properties: {
+    generatedAt: { type: 'string', format: 'date-time' },
+    windowHours: { type: 'integer' },
+    total: { type: 'integer' },
+    deniedCount: { type: 'integer' },
+    rateLimitedCount: { type: 'integer' },
+    writeCount: { type: 'integer' },
+    readCount: { type: 'integer' },
+    lastDeniedAt: { type: ['string', 'null'], format: 'date-time' },
+  },
+  required: ['generatedAt', 'windowHours', 'total', 'deniedCount', 'rateLimitedCount', 'writeCount', 'readCount', 'lastDeniedAt'],
+};
+
 export const adminStatusSummarySchema = {
   type: 'object',
   properties: {

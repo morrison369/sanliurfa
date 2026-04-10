@@ -13,6 +13,7 @@ const getRuntimeIntegrationSettingsMock = vi.fn();
 const verifyRuntimeIntegrationSettingsMock = vi.fn();
 const getReleaseGateSummaryMock = vi.fn();
 const getNightlyOpsSummaryMock = vi.fn();
+const summarizeAdminOpsAuditMock = vi.fn();
 const loggerMock = {
   setRequestId: vi.fn(),
   error: vi.fn(),
@@ -50,6 +51,31 @@ vi.mock('../../../lib/release-gate-summary', () => ({
 
 vi.mock('../../../lib/nightly-ops-summary', () => ({
   getNightlyOpsSummary: getNightlyOpsSummaryMock,
+}));
+
+vi.mock('../../../lib/admin-ops-audit', () => ({
+  summarizeAdminOpsAudit: summarizeAdminOpsAuditMock,
+}));
+
+vi.mock('../../../lib/admin-ops-access', () => ({
+  withAdminOpsReadAccess: async (options: { locals?: { isAdmin?: boolean; user?: { role?: string } } }, handler: () => Promise<Response>) => {
+    if (options.locals?.isAdmin || options.locals?.user?.role === 'admin') {
+      return handler();
+    }
+
+    return new Response(
+      JSON.stringify({
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Admin access required',
+        },
+      }),
+      {
+        status: 403,
+        headers: { 'content-type': 'application/json' },
+      }
+    );
+  },
 }));
 
 vi.mock('../../../lib/logging', () => ({
@@ -110,6 +136,16 @@ describe('admin dashboard contracts', () => {
       regression: buildNightlySummary('regression'),
       e2e: buildNightlySummary('e2e'),
     });
+    summarizeAdminOpsAuditMock.mockReturnValue({
+      generatedAt: '2026-04-10T00:00:00.000Z',
+      windowHours: 24,
+      total: 0,
+      deniedCount: 0,
+      rateLimitedCount: 0,
+      writeCount: 0,
+      readCount: 0,
+      lastDeniedAt: null,
+    });
   });
 
   it('rejects unauthorized admin dashboard overview access', async () => {
@@ -156,6 +192,8 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.performanceOptimization.recommendations.total).toBe(4);
     expect(body.data.data.performanceOptimization.metrics.slowRequestRate).toBe(14);
     expect(body.data.data.performanceOptimization.slowOperations[0].type).toBe('query');
+    expect(body.data.data.adminOpsAudit.deniedCount).toBe(0);
+    expect(body.data.data.adminOpsAudit.readCount).toBe(0);
     expect(body.data.data.artifactHealth.releaseGate.available).toBe(true);
     expect(body.data.data.artifactHealth.releaseGate.status).toBe('healthy');
     expect(body.data.data.artifactHealth.nightlyRegression.status).toBe('healthy');
@@ -189,6 +227,8 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.operational.webhook.stripe.p95DurationMs).toBe(250);
     expect(body.data.data.performanceOptimization.indexSuggestions.count).toBe(3);
     expect(body.data.data.performanceOptimization.cacheStrategies.count).toBe(2);
+    expect(body.data.data.adminOpsAudit.windowHours).toBe(24);
+    expect(body.data.data.adminOpsAudit.total).toBe(0);
     expect(body.data.data.artifactHealth.releaseGate.status).toBe('healthy');
     expect(body.data.data.artifactHealth.performanceOps.status).toBe('healthy');
     expect(body.data.data.artifactHealthSummary.overall).toBe('healthy');

@@ -49,6 +49,10 @@ const seo = {
           <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Trend</div>
           <div id="runtime-monitor-trend" class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Henüz veri yok.</div>
         </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+          <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Incident Delta</div>
+          <div id="runtime-monitor-delta" class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Henüz veri yok.</div>
+        </div>
       </div>
 
       <div class="grid gap-6 xl:grid-cols-2">
@@ -156,6 +160,17 @@ const seo = {
       } catch {}
     }
 
+    function getSameStatusSinceMinutes(overall) {
+      let oldestMatching = history[0];
+      for (const entry of history) {
+        if (entry.overall !== overall) {
+          break;
+        }
+        oldestMatching = entry;
+      }
+      return Math.round((new Date(history[0].refreshedAt).getTime() - new Date(oldestMatching.refreshedAt).getTime()) / 60000);
+    }
+
     function formatPayload(payload) {
       return JSON.stringify(payload, null, 2);
     }
@@ -190,6 +205,7 @@ const seo = {
       const statusLine = document.getElementById('runtime-monitor-status');
       const trendLine = document.getElementById('runtime-monitor-trend');
       const lastRefresh = document.getElementById('runtime-monitor-last-refresh');
+      const deltaLine = document.getElementById('runtime-monitor-delta');
       if (statusLine) {
         statusLine.textContent = 'Veriler yenileniyor.';
       }
@@ -202,6 +218,7 @@ const seo = {
       history.unshift({ overall, blockedCount, degradedCount, refreshedAt });
       history.splice(20);
       persistHistory();
+      const previous = history[1];
 
       if (statusLine) {
         statusLine.textContent = `Genel durum: ${overall}. Healthy: ${results.filter((item) => item.status === 'healthy').length}, degraded: ${degradedCount}, blocked: ${blockedCount}.`;
@@ -215,6 +232,14 @@ const seo = {
           .map((entry) => `${entry.refreshedAt.slice(11, 19)} ${entry.overall} (d:${entry.degradedCount} b:${entry.blockedCount})`)
           .join(' | ');
       }
+      if (deltaLine) {
+        if (!previous) {
+          deltaLine.textContent = 'İlk snapshot alındı.';
+        } else {
+          const sameStatusSinceMinutes = getSameStatusSinceMinutes(overall);
+          deltaLine.textContent = `${previous.overall} -> ${overall} • yaklaşık ${sameStatusSinceMinutes} dk`;
+        }
+      }
     }
 
     document.getElementById('refresh-runtime-monitor')?.addEventListener('click', refreshRuntimeMonitor);
@@ -225,6 +250,10 @@ const seo = {
         .slice(0, 5)
         .map((entry) => `${entry.refreshedAt.slice(11, 19)} ${entry.overall} (d:${entry.degradedCount} b:${entry.blockedCount})`)
         .join(' | ');
+    }
+    const deltaLine = document.getElementById('runtime-monitor-delta');
+    if (deltaLine && history.length > 1) {
+      deltaLine.textContent = `${history[1].overall} -> ${history[0].overall}`;
     }
     refreshRuntimeMonitor();
     window.setInterval(refreshRuntimeMonitor, 60000);

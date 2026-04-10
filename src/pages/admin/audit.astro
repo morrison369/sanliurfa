@@ -1,0 +1,153 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const user = Astro.locals.user;
+
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/audit');
+}
+
+const seo = {
+  title: 'Admin Audit - Şanlıurfa.com',
+  description: 'Admin ops audit kayitlarini endpoint, method ve sonuc bazinda inceleyin.',
+};
+---
+
+<Layout seo={seo}>
+  <section class="min-h-screen bg-gray-100 dark:bg-gray-950 py-8">
+    <div class="container-custom space-y-6">
+      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-[0.24em] text-urfa-600">Admin Audit</p>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Admin ops audit kayıtları</h1>
+          <p class="mt-2 max-w-3xl text-sm text-gray-600 dark:text-gray-400">
+            Kalıcı admin ops audit sink verisini endpoint, method, mode ve statusCode bazında filtreleyin.
+          </p>
+        </div>
+        <button
+          id="refresh-admin-audit"
+          class="inline-flex items-center justify-center rounded-xl bg-urfa-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-urfa-700"
+          type="button"
+        >
+          Yenile
+        </button>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-6">
+        <input id="audit-endpoint" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="endpoint filtre" />
+        <input id="audit-actor" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="actorKey filtre" />
+        <input id="audit-request-id" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="requestId filtre" />
+        <select id="audit-mode" class="rounded-xl border border-gray-300 px-3 py-2 text-sm">
+          <option value="">Tüm mode</option>
+          <option value="read">read</option>
+          <option value="write">write</option>
+        </select>
+        <select id="audit-outcome" class="rounded-xl border border-gray-300 px-3 py-2 text-sm">
+          <option value="">Tüm outcome</option>
+          <option value="allowed">allowed</option>
+          <option value="denied">denied</option>
+          <option value="error">error</option>
+        </select>
+        <input id="audit-status" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="status code" />
+      </div>
+
+      <div id="audit-summary" class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        Audit verileri yükleniyor.
+      </div>
+
+      <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+            <thead class="bg-gray-50 dark:bg-gray-900/40">
+              <tr>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Zaman</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Endpoint</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Method</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Mode</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Outcome</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Actor</th>
+              </tr>
+            </thead>
+            <tbody id="audit-rows" class="divide-y divide-gray-100 dark:divide-gray-800">
+              <tr><td colspan="7" class="px-4 py-6 text-center text-gray-500">Yükleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const allEntries = [];
+
+    function renderRows(entries) {
+      const tbody = document.getElementById('audit-rows');
+      if (!tbody) return;
+
+      if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-center text-gray-500">Kayıt yok.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = entries
+        .map((entry) => `
+          <tr>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">${entry.timestamp}</td>
+            <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">${entry.endpoint}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">${entry.method}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">${entry.mode}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">${entry.outcome}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">${entry.statusCode}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">${entry.actorKey}</td>
+          </tr>
+        `)
+        .join('');
+    }
+
+    function applyFilters() {
+      const endpoint = document.getElementById('audit-endpoint')?.value?.trim().toLowerCase() || '';
+      const actor = document.getElementById('audit-actor')?.value?.trim().toLowerCase() || '';
+      const requestId = document.getElementById('audit-request-id')?.value?.trim().toLowerCase() || '';
+      const mode = document.getElementById('audit-mode')?.value || '';
+      const outcome = document.getElementById('audit-outcome')?.value || '';
+      const status = document.getElementById('audit-status')?.value?.trim() || '';
+
+      const filtered = allEntries.filter((entry) => {
+        if (endpoint && !String(entry.endpoint).toLowerCase().includes(endpoint)) return false;
+        if (actor && !String(entry.actorKey).toLowerCase().includes(actor)) return false;
+        if (requestId && !String(entry.requestId || '').toLowerCase().includes(requestId)) return false;
+        if (mode && entry.mode !== mode) return false;
+        if (outcome && entry.outcome !== outcome) return false;
+        if (status && String(entry.statusCode) !== status) return false;
+        return true;
+      });
+
+      renderRows(filtered);
+      const summary = document.getElementById('audit-summary');
+      if (summary) {
+        const deniedCount = filtered.filter((entry) => entry.outcome === 'denied').length;
+        const writeCount = filtered.filter((entry) => entry.mode === 'write').length;
+        summary.textContent = `Görünen kayıt: ${filtered.length}. Denied: ${deniedCount}. Write: ${writeCount}.`;
+      }
+    }
+
+    async function loadAudit() {
+      const response = await fetch('/api/admin/audit-logs?source=admin-ops&limit=100', { credentials: 'same-origin' });
+      const payload = await response.json();
+      allEntries.splice(0, allEntries.length, ...((payload.data?.logs || []).slice(0, 100)));
+      const summary = document.getElementById('audit-summary');
+      if (summary && payload.data?.summary) {
+        summary.textContent = `Son ${payload.data.summary.windowHours} saatte toplam ${payload.data.summary.total} kayıt. Denied: ${payload.data.summary.deniedCount}. Rate limit: ${payload.data.summary.rateLimitedCount}.`;
+      }
+      applyFilters();
+    }
+
+    ['audit-endpoint', 'audit-actor', 'audit-request-id', 'audit-mode', 'audit-outcome', 'audit-status'].forEach((id) => {
+      document.getElementById(id)?.addEventListener('input', applyFilters);
+      document.getElementById(id)?.addEventListener('change', applyFilters);
+    });
+    document.getElementById('refresh-admin-audit')?.addEventListener('click', loadAudit);
+    loadAudit();
+  </script>
+</Layout>
