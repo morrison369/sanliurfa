@@ -3,7 +3,7 @@
  * Handle business promotions, discounts, and coupon validation
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -96,7 +96,7 @@ export async function getPlacePromotions(placeId: string): Promise<Promotion[]> 
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT * FROM promotions
        WHERE place_id = $1 AND is_active = true AND end_date > NOW()
        ORDER BY start_date ASC`,
@@ -211,7 +211,7 @@ export async function validatePromotion(
  */
 export async function searchPromotions(query: string, limit: number = 20): Promise<Promotion[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT * FROM promotions
        WHERE is_active = true
          AND end_date > NOW()
@@ -352,7 +352,7 @@ export async function getTrendingPromotions(limit: number = 10): Promise<Promoti
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT p.* FROM promotions p
        LEFT JOIN promotion_redemptions pr ON p.id = pr.promotion_id
        WHERE p.is_active = true AND p.end_date > NOW()

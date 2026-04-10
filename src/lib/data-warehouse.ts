@@ -3,7 +3,7 @@
  * Star-schema ETL and multidimensional analytics
  */
 
-import { query, queryMany, queryOne } from './postgres';
+import { query, queryRows, queryOne } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -292,7 +292,7 @@ export async function queryOLAP(olapQuery: OLAPQuery): Promise<OLAPResult> {
     }
 
     // Execute query
-    const result = await queryMany(sql, params);
+    const result = await queryRows(sql, params);
     const duration = Date.now() - startTime;
 
     const olapResult: OLAPResult = {

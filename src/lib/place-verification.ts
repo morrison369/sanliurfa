@@ -3,7 +3,7 @@
  * Manage place verification status and trust badges
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -270,7 +270,7 @@ export async function getPlaceBadges(placeId: string): Promise<PlaceBadge[]> {
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT pb.id, pb.place_id, pb.badge_type, bd.name, bd.icon, pb.awarded_at, pb.reason
        FROM place_badges pb
        JOIN badge_definitions bd ON pb.badge_type = bd.type
@@ -311,7 +311,7 @@ export async function getBadgeDefinitions(): Promise<BadgeDefinition[]> {
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       'SELECT id, type, name, icon, description, auto_award FROM badge_definitions ORDER BY name',
       []
     );
@@ -340,7 +340,7 @@ export async function getBadgeDefinitions(): Promise<BadgeDefinition[]> {
  */
 export async function getPendingVerifications(limit: number = 50): Promise<any[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT pv.id, pv.place_id, pv.requested_at, pv.reason,
               p.name as place_name, p.category, p.rating
        FROM place_verification pv

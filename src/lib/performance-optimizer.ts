@@ -4,7 +4,7 @@
  */
 
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
-import { queryMany, queryOne } from './postgres';
+import { queryRows, queryOne } from './postgres';
 import { logger } from './logging';
 
 export interface CacheStrategy {
@@ -186,7 +186,7 @@ export async function getPlacesWithReviewsCombined(placeIds: string[]): Promise<
       ORDER BY p.name
     `;
 
-    return queryMany(query, [placeIds]);
+    return queryRows(query, [placeIds]);
   });
 }
 
@@ -198,7 +198,7 @@ export async function getPaginatedPlaces(page: number = 1, limit: number = 20): 
   const cacheKey = `sanliurfa:places:paginated:${page}:${limit}`;
 
   return getOrCache(cacheKey, 600, async () => {
-    const items = await queryMany(
+    const items = await queryRows(
       'SELECT * FROM places ORDER BY created_at DESC LIMIT $1 OFFSET $2',
       [limit, offset]
     );
@@ -250,7 +250,7 @@ export async function getPlacesWithDetails(filter: string = ''): Promise<any[]> 
     `;
 
     const params = filter ? [filter] : [];
-    return queryMany(query, params);
+    return queryRows(query, params);
   });
 }
 

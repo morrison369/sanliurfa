@@ -2,7 +2,7 @@
  * Social Interactions
  * Likes, reactions, shares, and engagement tracking
  */
-import { query, queryOne, queryMany, insert } from './postgres';
+import { query, queryOne, queryRows, insert } from './postgres';
 import { logger } from './logging';
 import { deleteCache, deleteCachePattern } from './cache';
 
@@ -70,7 +70,7 @@ export async function removeReaction(reviewId: string, userId: string, reactionT
 
 export async function getReactionCounts(reviewId: string): Promise<Record<string, number>> {
   try {
-    const results = await queryMany('SELECT reaction_type, COUNT(*) as count FROM review_reactions WHERE review_id = $1 GROUP BY reaction_type', [reviewId]);
+    const results = await queryRows('SELECT reaction_type, COUNT(*) as count FROM review_reactions WHERE review_id = $1 GROUP BY reaction_type', [reviewId]);
     const counts: Record<string, number> = {};
     results.forEach((r: any) => {
       counts[r.reaction_type] = parseInt(r.count, 10);
@@ -143,7 +143,7 @@ export async function getTrendingPlaces(limit: number = 10, category?: string): 
       whereClause += ' AND trend_category = $1';
       params = [category];
     }
-    const trending = await queryMany(`
+    const trending = await queryRows(`
       SELECT t.*, p.name, p.category, p.rating, p.review_count
       FROM trending_places t
       JOIN places p ON t.place_id = p.id

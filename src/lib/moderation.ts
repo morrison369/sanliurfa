@@ -3,7 +3,7 @@
  * Manage user reports, moderation actions, and bans
  */
 
-import { query, queryOne, queryMany } from './postgres';
+import { query, queryOne, queryRows } from './postgres';
 import { deleteCache, deleteCachePattern } from './cache';
 import { logger } from './logging';
 
@@ -150,9 +150,9 @@ export async function getReports(
       query_str += ` ORDER BY created_at DESC LIMIT $1 OFFSET $2`;
     }
 
-    const result = await queryMany(query_str, params);
+    const result = await queryRows(query_str, params);
 
-    return result.rows.map((row: any) => ({
+    return result.map((row: any) => ({
       id: row.id,
       reporter_id: row.reporter_id,
       reported_user_id: row.reported_user_id,
@@ -329,12 +329,12 @@ export async function isUserBanned(userId: string): Promise<UserBan | null> {
  */
 export async function getUserBanHistory(userId: string): Promise<UserBan[]> {
   try {
-    const result = await queryMany(
+    const result = await queryRows(
       `SELECT * FROM user_bans WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10`,
       [userId]
     );
 
-    return result.rows.map((row: any) => ({
+    return result.map((row: any) => ({
       id: row.id,
       user_id: row.user_id,
       banned_by: row.banned_by,
@@ -380,9 +380,9 @@ export async function getModerationQueue(
     query_str += ` ORDER BY priority DESC, created_at ASC LIMIT $${paramIndex}`;
     params.push(limit);
 
-    const result = await queryMany(query_str, params);
+    const result = await queryRows(query_str, params);
 
-    return result.rows;
+    return result;
   } catch (error) {
     logger.error('Failed to get moderation queue', error instanceof Error ? error : new Error(String(error)));
     throw error;

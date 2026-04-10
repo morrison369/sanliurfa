@@ -3,7 +3,7 @@
  * Manage user follows for places
  */
 
-import { query, queryOne, queryMany, insert } from './postgres';
+import { query, queryOne, queryRows, insert } from './postgres';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 import { logger } from './logging';
 
@@ -93,7 +93,7 @@ export async function getUserFollowedPlaces(userId: string, limit: number = 50):
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT p.id, p.name, p.category, p.rating, p.image_url, pf.followed_at
        FROM place_followers pf
        JOIN places p ON pf.place_id = p.id
@@ -134,7 +134,7 @@ export async function getPlaceFollowers(placeId: string, limit: number = 20): Pr
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT u.id, u.full_name, u.username, u.avatar_url, pf.followed_at
        FROM place_followers pf
        JOIN users u ON pf.user_id = u.id
@@ -190,7 +190,7 @@ export async function getTrendingPlacesByFollowers(limit: number = 20): Promise<
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, name, category, rating, image_url, follower_count
        FROM places
        WHERE status = 'active'

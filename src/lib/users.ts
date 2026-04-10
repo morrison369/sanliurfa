@@ -3,7 +3,7 @@
  * Manage user profile information, preferences, security settings
  */
 
-import { query, queryOne, queryMany } from './postgres';
+import { query, queryOne } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 import { hashPassword } from './auth';

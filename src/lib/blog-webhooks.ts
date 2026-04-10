@@ -4,7 +4,6 @@
  * Abone sistemi, analytics, sosyal medya entegrasyonu için
  */
 
-import { queryMany } from './postgres';
 import { logger } from './logging';
 import { fetchWithTimeout } from './http';
 

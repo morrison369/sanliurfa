@@ -3,7 +3,7 @@
  * Handles vendor registration and setup process
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export interface VendorProfile {
@@ -193,7 +193,7 @@ export async function saveOnboardingProgress(userId: string, step: number, data:
  */
 export async function getOnboardingProgress(userId: string): Promise<VendorOnboardingStep[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       'SELECT step, data FROM onboarding_progress WHERE user_id = $1 ORDER BY step ASC',
       [userId]
     );
@@ -252,7 +252,7 @@ export async function isVendor(userId: string): Promise<boolean> {
  */
 export async function getPendingVerifications(limit: number = 10): Promise<VendorProfile[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       'SELECT * FROM vendor_profiles WHERE verification_status = $1 ORDER BY created_at ASC LIMIT $2',
       ['pending', limit]
     );

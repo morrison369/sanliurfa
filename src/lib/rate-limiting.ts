@@ -3,7 +3,7 @@
  * API rate limiting, IP whitelist/blacklist, DDoS protection
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache } from './cache';
 
@@ -284,7 +284,7 @@ export async function getRateLimitStatus(ipAddress: string): Promise<any> {
 export async function detectDDoSAttempt(ipAddress: string, endpoint: string): Promise<boolean> {
   try {
     const timeWindow = Math.floor(Date.now() / 1000) - 60; // Last 60 seconds
-    const attempts = await queryMany(
+    const attempts = await queryRows(
       'SELECT COUNT(*) as count FROM request_metrics WHERE ip_address = $1 AND endpoint = $2 AND EXTRACT(EPOCH FROM timestamp) > $3',
       [ipAddress, endpoint, timeWindow]
     );
@@ -336,7 +336,7 @@ export async function getRequestStatistics(hours: number = 24): Promise<any> {
   try {
     const since = new Date(Date.now() - hours * 3600000);
 
-    const stats = await queryMany(`
+    const stats = await queryRows(`
       SELECT
         endpoint,
         method,

@@ -3,7 +3,7 @@
  * Handles user notification preferences
  */
 
-import { queryOne, queryMany, update } from './postgres';
+import { queryOne, update } from './postgres';
 import { logger } from './logging';
 import type { EmailNotificationType } from './notification-types';
 

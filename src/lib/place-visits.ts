@@ -3,7 +3,7 @@
  * Track user visits to places with notes and ratings
  */
 
-import { query, queryOne, queryMany, insert, update } from './postgres';
+import { query, queryOne, queryRows, insert, update } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -81,7 +81,7 @@ export async function getUserVisits(userId: string, limit: number = 50): Promise
       return JSON.parse(cached);
     }
 
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT id, user_id, place_id, visited_at, notes, rating, duration_minutes, created_at, updated_at
        FROM place_visits
        WHERE user_id = $1
@@ -247,7 +247,7 @@ export async function deletePlaceVisit(visitId: string, userId: string): Promise
  */
 export async function getUserVisitedPlaces(userId: string, limit: number = 30): Promise<any[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         p.id, p.name, p.category, p.rating, p.image_url,
         COUNT(pv.id) as visit_count,
@@ -283,7 +283,7 @@ export async function getUserVisitedPlaces(userId: string, limit: number = 30): 
  */
 export async function getMostVisitedPlaces(userId: string, limit: number = 10): Promise<any[]> {
   try {
-    const results = await queryMany(
+    const results = await queryRows(
       `SELECT
         p.id, p.name, p.category, p.rating,
         COUNT(pv.id) as visit_count

@@ -3,7 +3,7 @@
  * Handles photo uploads, voting, and gallery management for places
  */
 
-import { pool, queryOne, queryMany } from './postgres';
+import { pool, queryOne, queryRows } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 
@@ -51,7 +51,7 @@ export async function getPlacePhotos(placeId: string, limit = 20): Promise<any[]
       return JSON.parse(cached);
     }
 
-    const photos = await queryMany(
+    const photos = await queryRows(
       `SELECT id, place_id, uploaded_by, file_path, file_size, mime_type, alt_text, caption,
               is_featured, helpful_count, unhelpful_count, created_at
        FROM place_photos
@@ -235,7 +235,7 @@ export async function getFeaturedPhoto(placeId: string): Promise<any> {
  */
 export async function getUserPhotos(userId: string, limit = 50): Promise<any[]> {
   try {
-    const photos = await queryMany(
+    const photos = await queryRows(
       `SELECT id, place_id, uploaded_by, file_path, caption, helpful_count, created_at
        FROM place_photos
        WHERE uploaded_by = $1

@@ -3,7 +3,7 @@
  * Dynamic XML sitemap for SEO crawlability
  */
 
-import { queryMany, queryOne } from './postgres';
+import { queryRows, queryOne } from './postgres';
 import { logger } from './logging';
 
 export interface SitemapEntry {
@@ -32,7 +32,7 @@ export async function generateSitemap(): Promise<string> {
     entries.push(...staticPages);
 
     // Dynamic places
-    const places = await queryMany(
+    const places = await queryRows(
       `SELECT id, slug, updated_at FROM places ORDER BY updated_at DESC LIMIT 5000`
     );
 
@@ -46,7 +46,7 @@ export async function generateSitemap(): Promise<string> {
     }
 
     // Dynamic categories
-    const categories = await queryMany(
+    const categories = await queryRows(
       `SELECT DISTINCT category FROM places WHERE category IS NOT NULL LIMIT 100`
     );
 
@@ -59,7 +59,7 @@ export async function generateSitemap(): Promise<string> {
     }
 
     // Events
-    const events = await queryMany(
+    const events = await queryRows(
       `SELECT id, slug, date FROM events WHERE date > NOW() ORDER BY date DESC LIMIT 1000`
     );
 
@@ -73,7 +73,7 @@ export async function generateSitemap(): Promise<string> {
     }
 
     // Blog posts
-    const posts = await queryMany(
+    const posts = await queryRows(
       `SELECT id, slug, updated_at FROM blog_posts WHERE status = 'published' ORDER BY updated_at DESC LIMIT 1000`
     );
 

@@ -2,7 +2,7 @@
  * Notification Delivery Library
  * Multi-channel notification delivery (in-app, push, email)
  */
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryRows, insert, update } from './postgres';
 import { logger } from './logging';
 
 export async function sendNotification(
@@ -143,7 +143,7 @@ export async function archiveNotification(notificationId: string, userId: string
 
 export async function getNotifications(userId: string, limit: number = 20, archived: boolean = false): Promise<any[]> {
   try {
-    const notifications = await queryMany(`
+    const notifications = await queryRows(`
       SELECT * FROM notification_history
       WHERE user_id = $1 AND is_archived = $2
       ORDER BY created_at DESC
@@ -237,7 +237,7 @@ export async function updateNotificationTypePreferences(
 
 async function getPushSubscriptions(userId: string): Promise<any[]> {
   try {
-    return await queryMany(
+    return await queryRows(
       'SELECT * FROM push_subscriptions WHERE user_id = $1 AND is_active = true',
       [userId]
     );

@@ -272,31 +272,28 @@ export async function queryOne(text: string, params?: any[]) {
 }
 
 /**
- * Execute a query and return all rows
- * Phase 5: Optional streaming for large result sets
- */
-export async function queryMany(text: string, params?: any[], options?: { stream?: boolean; onRow?: (row: any) => Promise<void> }) {
-  const attachRowsCompat = <T extends any[]>(rows: T): T & { rows: T } => {
-    // Backward compatibility: some call-sites expect an array, others expect { rows }.
-    return Object.assign(rows, { rows });
-  };
-
-  if (options?.stream && options?.onRow) {
-    // Stream mode intentionally returns empty array but keeps `rows` compatibility.
-    await queryStream(text, params, options.onRow);
-    return attachRowsCompat([]);
-  }
-
-  const result = await query(text, params);
-  return attachRowsCompat(result.rows);
-}
-
-/**
- * Official helper for callers that want a plain rows array without compatibility wrappers.
+ * Official helper for callers that want a plain rows array.
  */
 export async function queryRows<T = any>(text: string, params?: any[]): Promise<T[]> {
   const result = await query(text, params);
   return result.rows as T[];
+}
+
+/**
+ * Deprecated alias kept temporarily for legacy call-sites.
+ * New code must use `queryRows`.
+ */
+export async function queryMany<T = any>(
+  text: string,
+  params?: any[],
+  options?: { stream?: boolean; onRow?: (row: any) => Promise<void> }
+): Promise<T[]> {
+  if (options?.stream && options?.onRow) {
+    await queryStream(text, params, options.onRow);
+    return [];
+  }
+
+  return queryRows<T>(text, params);
 }
 
 /**
