@@ -59,6 +59,13 @@ jobs:
             test-results
             nightly-e2e.log
           if-no-files-found: ignore
+      - name: Upload performance ops summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-performance-ops-summary
+          path: docs/reports/performance-ops-summary.json
+          if-no-files-found: ignore
 
       - name: Write performance ops summary
         if: always()
