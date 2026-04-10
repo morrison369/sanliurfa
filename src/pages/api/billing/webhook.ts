@@ -4,10 +4,10 @@
  */
 
 import type { APIRoute } from 'astro';
-import { verifyWebhookSignature, handleWebhookEvent } from '../../../lib/stripe';
+import { POST as canonicalStripeWebhookPost } from '../webhooks/stripe';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
-import { apiError, apiResponse, ErrorCode, HttpStatus, getRequestId } from '../../../lib/api';
+import { HttpStatus, getRequestId } from '../../../lib/api';
 
 export const POST: APIRoute = async ({ request }) => {
   const requestId = getRequestId({ request } as any);
@@ -16,70 +16,36 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     logger.info('Legacy billing webhook endpoint invoked; canonical ingestion is /api/webhooks/stripe');
-
-    // Get raw body for signature verification
-    const body = await request.text();
-    const signature = request.headers.get('stripe-signature');
-
-    if (!signature) {
-      logger.warn('Webhook received without signature');
-      recordRequest('POST', '/api/billing/webhook', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'No signature provided',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
-
-    // Verify webhook signature
-    const event = verifyWebhookSignature(body, signature);
-
-    if (!event) {
-      logger.warn('Webhook signature verification failed');
-      recordRequest('POST', '/api/billing/webhook', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(
-        ErrorCode.AUTH_ERROR,
-        'Signature verification failed',
-        HttpStatus.UNAUTHORIZED,
-        undefined,
-        requestId
-      );
-    }
-
-    logger.info('Webhook event received', { eventId: event.id, eventType: event.type });
-
-    // Handle the webhook event
-    const handled = await handleWebhookEvent(event);
-
-    if (!handled) {
-      logger.error('Webhook event handling failed', new Error(`Failed to handle event ${event.id}`), { eventType: event.type });
-      recordRequest('POST', '/api/billing/webhook', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
-      return apiError(
-        ErrorCode.INTERNAL_ERROR,
-        'Event handling failed',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        undefined,
-        requestId
-      );
-    }
-
-    logger.info('Webhook event processed successfully', { eventId: event.id });
-    recordRequest('POST', '/api/billing/webhook', HttpStatus.OK, Date.now() - startTime);
-    const response = apiResponse({ processed: true, eventId: event.id }, HttpStatus.OK, requestId);
+    const canonicalResponse = await canonicalStripeWebhookPost({ request } as any);
+    const response = new Response(canonicalResponse.body, {
+      status: canonicalResponse.status,
+      headers: canonicalResponse.headers
+    });
     response.headers.set('X-Webhook-Endpoint', 'legacy-billing-proxy');
     response.headers.set('X-Webhook-Canonical', '/api/webhooks/stripe');
+    recordRequest('POST', '/api/billing/webhook', response.status, Date.now() - startTime);
     return response;
   } catch (error) {
     logger.error('Webhook error', error instanceof Error ? error : new Error(String(error)));
     recordRequest('POST', '/api/billing/webhook', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
-    return apiError(
-      ErrorCode.INTERNAL_ERROR,
-      'Webhook error',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      undefined,
-      requestId
+    return new Response(
+      JSON.stringify({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Webhook error'
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId
+        }
+      }),
+      {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Request-ID': requestId
+        }
+      }
     );
   }
 };

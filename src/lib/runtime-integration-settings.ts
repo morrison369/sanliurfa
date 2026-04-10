@@ -35,11 +35,11 @@ function hasNonPlaceholder(value: string, placeholderPatterns: RegExp[]): boolea
   return !placeholderPatterns.some((pattern) => pattern.test(value));
 }
 
-function isValidResendKey(value: string): boolean {
+export function isValidResendKey(value: string): boolean {
   return hasNonPlaceholder(value, resendPlaceholderPatterns) && /^re_[a-z0-9]+$/i.test(value);
 }
 
-function isValidAnalyticsId(value: string): boolean {
+export function isValidAnalyticsId(value: string): boolean {
   return hasNonPlaceholder(value, analyticsPlaceholderPatterns) && /^G-[A-Z0-9]+$/i.test(value);
 }
 

@@ -10,8 +10,6 @@ const checkRateLimitMock = vi.fn();
 const recordRequestMock = vi.fn();
 const verifyWebhookSignatureMock = vi.fn();
 const getSubscriptionMock = vi.fn();
-const verifyBillingWebhookSignatureMock = vi.fn();
-const handleBillingWebhookEventMock = vi.fn();
 const updateUserQuotasMock = vi.fn();
 const emailOnSubscriptionCreatedMock = vi.fn();
 const emailOnPaymentSuccessMock = vi.fn();
@@ -51,11 +49,6 @@ vi.mock('../../../lib/logging', () => ({
 vi.mock('../../../lib/stripe-client', () => ({
   verifyWebhookSignature: verifyWebhookSignatureMock,
   getSubscription: getSubscriptionMock,
-}));
-
-vi.mock('../../../lib/stripe', () => ({
-  verifyWebhookSignature: verifyBillingWebhookSignatureMock,
-  handleWebhookEvent: handleBillingWebhookEventMock,
 }));
 
 vi.mock('../../../lib/usage-tracking', () => ({
@@ -102,8 +95,6 @@ describe('Webhook API contracts', () => {
       type: 'invoice.payment_failed',
       data: { object: { id: 'in_1', subscription: 'sub_1' } }
     });
-    verifyBillingWebhookSignatureMock.mockReturnValue({ id: 'evt_bill_1', type: 'invoice.payment_failed' });
-    handleBillingWebhookEventMock.mockResolvedValue(true);
     retryFailedWebhooksMock.mockResolvedValue(0);
     getSubscriptionMock.mockResolvedValue({ items: { data: [] }, currency: 'try', latest_invoice: null });
   });
@@ -131,12 +122,13 @@ describe('Webhook API contracts', () => {
     const response = await POST({ request } as any);
 
     expect(response.status).toBe(400);
-    expect(verifyBillingWebhookSignatureMock).not.toHaveBeenCalled();
+    expect(response.headers.get('X-Webhook-Endpoint')).toBe('legacy-billing-proxy');
+    expect(response.headers.get('X-Webhook-Canonical')).toBe('/api/webhooks/stripe');
   });
 
   it('rejects billing webhook when signature verification fails', async () => {
     const { POST } = await import('../billing/webhook.ts');
-    verifyBillingWebhookSignatureMock.mockReturnValueOnce(null);
+    verifyWebhookSignatureMock.mockRejectedValueOnce(new Error('invalid signature'));
     const request = new Request('https://example.com/api/billing/webhook', {
       method: 'POST',
       headers: { 'stripe-signature': 'sig' },
@@ -145,13 +137,16 @@ describe('Webhook API contracts', () => {
 
     const response = await POST({ request } as any);
 
-    expect(response.status).toBe(401);
-    expect(handleBillingWebhookEventMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(400);
+    expect(response.headers.get('X-Webhook-Endpoint')).toBe('legacy-billing-proxy');
+    expect(response.headers.get('X-Webhook-Canonical')).toBe('/api/webhooks/stripe');
   });
 
-  it('returns server error when billing webhook event handling fails', async () => {
+  it('proxies valid billing webhook payload to canonical stripe handler', async () => {
     const { POST } = await import('../billing/webhook.ts');
-    handleBillingWebhookEventMock.mockResolvedValueOnce(false);
+    queryOneMock
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'delivery-billing-1' });
     const request = new Request('https://example.com/api/billing/webhook', {
       method: 'POST',
       headers: { 'stripe-signature': 'sig' },
@@ -160,7 +155,9 @@ describe('Webhook API contracts', () => {
 
     const response = await POST({ request } as any);
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('X-Webhook-Endpoint')).toBe('legacy-billing-proxy');
+    expect(response.headers.get('X-Webhook-Canonical')).toBe('/api/webhooks/stripe');
   });
 
   it('rejects stripe webhook when signature verification fails', async () => {

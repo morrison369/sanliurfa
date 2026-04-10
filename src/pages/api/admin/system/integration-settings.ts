@@ -5,7 +5,9 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logAdminAction } from '../../../../lib/admin-users';
 import {
   getRuntimeIntegrationSettings,
-  saveRuntimeIntegrationSetting
+  saveRuntimeIntegrationSetting,
+  isValidAnalyticsId,
+  isValidResendKey
 } from '../../../../lib/runtime-integration-settings';
 
 function maskSecret(value: string): string {
@@ -22,10 +24,25 @@ function maskSecret(value: string): string {
 
 function asOptionalString(value: unknown): string | undefined {
   if (typeof value === 'string') {
-    return value;
+    return value.trim();
   }
 
   return undefined;
+}
+
+function validatePayload(payload: {
+  resendApiKey?: string;
+  analyticsId?: string;
+}): string | null {
+  if (payload.resendApiKey !== undefined && payload.resendApiKey && !isValidResendKey(payload.resendApiKey)) {
+    return 'Geçersiz RESEND API key formatı';
+  }
+
+  if (payload.analyticsId !== undefined && payload.analyticsId && !isValidAnalyticsId(payload.analyticsId)) {
+    return 'Geçersiz Google Analytics ID formatı';
+  }
+
+  return null;
 }
 
 function getClientIp(request: Request): string | undefined {
@@ -136,6 +153,23 @@ export const PUT: APIRoute = async ({ request, locals }) => {
         ErrorCode.VALIDATION_ERROR,
         'En az bir alan gönderilmelidir (resendApiKey veya analyticsId)',
         HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
+    const validationError = validatePayload({ resendApiKey, analyticsId });
+    if (validationError) {
+      recordRequest(
+        'PUT',
+        '/api/admin/system/integration-settings',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        Date.now() - startTime
+      );
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        validationError,
+        HttpStatus.UNPROCESSABLE_ENTITY,
         undefined,
         requestId
       );

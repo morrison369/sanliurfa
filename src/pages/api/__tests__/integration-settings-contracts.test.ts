@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const recordRequestMock = vi.fn();
 const getRuntimeIntegrationSettingsMock = vi.fn();
 const saveRuntimeIntegrationSettingMock = vi.fn();
+const isValidResendKeyMock = vi.fn();
+const isValidAnalyticsIdMock = vi.fn();
 const logAdminActionMock = vi.fn();
 const loggerMock = {
   setRequestId: vi.fn(),
@@ -20,6 +22,8 @@ vi.mock('../../../lib/metrics', () => ({
 vi.mock('../../../lib/runtime-integration-settings', () => ({
   getRuntimeIntegrationSettings: getRuntimeIntegrationSettingsMock,
   saveRuntimeIntegrationSetting: saveRuntimeIntegrationSettingMock,
+  isValidResendKey: isValidResendKeyMock,
+  isValidAnalyticsId: isValidAnalyticsIdMock,
 }));
 
 vi.mock('../../../lib/admin-users', () => ({
@@ -44,6 +48,8 @@ describe('integration settings contracts', () => {
     });
     saveRuntimeIntegrationSettingMock.mockResolvedValue(undefined);
     logAdminActionMock.mockResolvedValue(undefined);
+    isValidResendKeyMock.mockImplementation((value: string) => /^re_[a-z0-9]+$/i.test(value));
+    isValidAnalyticsIdMock.mockImplementation((value: string) => /^G-[A-Z0-9]+$/i.test(value));
   });
 
   it('rejects unauthorized GET', async () => {
@@ -105,9 +111,51 @@ describe('integration settings contracts', () => {
     expect(saveRuntimeIntegrationSettingMock).not.toHaveBeenCalled();
   });
 
+  it('rejects invalid resend key format with 422', async () => {
+    const { PUT } = await import('../admin/system/integration-settings.ts');
+    const request = new Request('https://example.com/api/admin/system/integration-settings', {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        resendApiKey: 'invalid-key',
+      }),
+    });
+
+    const response = await PUT({
+      request,
+      locals: { user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(422);
+    expect(saveRuntimeIntegrationSettingMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid analytics id format with 422', async () => {
+    const { PUT } = await import('../admin/system/integration-settings.ts');
+    const request = new Request('https://example.com/api/admin/system/integration-settings', {
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        analyticsId: 'UA-12345',
+      }),
+    });
+
+    const response = await PUT({
+      request,
+      locals: { user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(422);
+    expect(saveRuntimeIntegrationSettingMock).not.toHaveBeenCalled();
+  });
+
   it('saves both keys and writes admin audit action on PUT', async () => {
     getRuntimeIntegrationSettingsMock.mockResolvedValueOnce({
-      resendApiKey: 're_live_key_1234',
+      resendApiKey: 're_livekey1234',
       analyticsId: 'G-LIVE1234',
       source: {
         resendApiKey: 'admin',
@@ -125,7 +173,7 @@ describe('integration settings contracts', () => {
         'user-agent': 'vitest',
       },
       body: JSON.stringify({
-        resendApiKey: 're_live_key_1234',
+        resendApiKey: 're_livekey1234',
         analyticsId: 'G-LIVE1234',
       }),
     });
@@ -139,7 +187,7 @@ describe('integration settings contracts', () => {
     expect(saveRuntimeIntegrationSettingMock).toHaveBeenCalledTimes(2);
     expect(saveRuntimeIntegrationSettingMock).toHaveBeenCalledWith({
       settingKey: 'resendApiKey',
-      value: 're_live_key_1234',
+      value: 're_livekey1234',
       adminId: 'admin-1',
     });
     expect(saveRuntimeIntegrationSettingMock).toHaveBeenCalledWith({
