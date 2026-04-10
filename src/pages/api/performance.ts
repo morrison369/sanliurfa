@@ -4,6 +4,7 @@ import { classifyThresholdStatus } from '../../lib/admin-status';
 import { metricsCollector } from '../../lib/metrics';
 import { updatePoolStatus } from '../../lib/postgres';
 import { logger } from '../../lib/logging';
+import { getArtifactHealthSnapshot } from '../../lib/artifact-health';
 
 /**
  * GET /api/performance - Get detailed performance metrics (admin only)
@@ -22,13 +23,25 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // Update pool status before retrieving stats
     updatePoolStatus();
 
-    const perfStats = metricsCollector.getPerformanceStats();
-    const metrics = metricsCollector.getMetrics();
-    const slowQueries = metricsCollector.getSlowQueries(20);
-    const slowOps = metricsCollector.getSlowOperations(20);
-    const oauthAuthorizeMetrics = metricsCollector.getEndpointMetrics('GET', '/api/auth/oauth/authorize');
-    const oauthCallbackMetrics = metricsCollector.getEndpointMetrics('GET', '/api/auth/oauth/callback');
-    const webhookStripeMetrics = metricsCollector.getEndpointMetrics('POST', '/api/webhooks/stripe');
+    const [
+      artifactHealth,
+      perfStats,
+      metrics,
+      slowQueries,
+      slowOps,
+      oauthAuthorizeMetrics,
+      oauthCallbackMetrics,
+      webhookStripeMetrics
+    ] = await Promise.all([
+      getArtifactHealthSnapshot(),
+      Promise.resolve(metricsCollector.getPerformanceStats()),
+      Promise.resolve(metricsCollector.getMetrics()),
+      Promise.resolve(metricsCollector.getSlowQueries(20)),
+      Promise.resolve(metricsCollector.getSlowOperations(20)),
+      Promise.resolve(metricsCollector.getEndpointMetrics('GET', '/api/auth/oauth/authorize')),
+      Promise.resolve(metricsCollector.getEndpointMetrics('GET', '/api/auth/oauth/callback')),
+      Promise.resolve(metricsCollector.getEndpointMetrics('POST', '/api/webhooks/stripe'))
+    ]);
     const webhookRetryDeferredCount = webhookStripeMetrics.filter((metric) => metric.error === 'retry_deferred').length;
     const webhookRetryExhaustedCount = webhookStripeMetrics.filter((metric) => metric.error === 'retry_exhausted').length;
     const webhookDuplicateCount = webhookStripeMetrics.filter((metric) => metric.error === 'duplicate_delivery').length;
@@ -105,6 +118,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
             status: webhookStatus
           }
         },
+        artifactHealth,
         slowestQueries: slowQueries.map(q => ({
           duration: `${q.duration}ms`,
           rowCount: q.rowCount,

@@ -18,6 +18,8 @@ describe('openapi runtime contracts', () => {
       body.paths['/api/health'].get.responses['200'].content['application/json'].schema.properties.data.properties.checks.properties.artifacts;
     const detailedStatusEnum = body.paths['/api/health/detailed'].get.responses['200'].content['application/json'].schema.properties.data.properties.status.enum;
     const oauthStatusEnum = body.paths['/api/performance'].get.responses['200'].content['application/json'].schema.properties.data.properties.serviceLevelObjectives.properties.oauth.properties.status.enum;
+    const performanceArtifactSchema =
+      body.paths['/api/performance'].get.responses['200'].content['application/json'].schema.properties.data.properties.artifactHealth;
     const detailedArtifactSchema =
       body.paths['/api/health/detailed'].get.responses['200'].content['application/json'].schema.properties.data.properties.checks.properties.artifacts;
 
@@ -27,6 +29,8 @@ describe('openapi runtime contracts', () => {
     expect(healthArtifactSchema.properties.releaseGate.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(detailedStatusEnum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(oauthStatusEnum).toEqual(['healthy', 'degraded', 'blocked']);
+    expect(performanceArtifactSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E']);
+    expect(performanceArtifactSchema.properties.releaseGate.properties.generatedAt.type).toEqual(['string', 'null']);
     expect(detailedArtifactSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E']);
     expect(detailedArtifactSchema.properties.releaseGate.required).toEqual(['available', 'status', 'generatedAt']);
     expect(detailedArtifactSchema.properties.releaseGate.properties.available.type).toBe('boolean');

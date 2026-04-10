@@ -432,8 +432,9 @@ const openApiSpec = {
                               required: ['requests', 'successCount', 'errorCount', 'duplicateCount', 'retryDeferredCount', 'retryExhaustedCount', 'p95DurationMs', 'status'],
                             },
                           },
-                          required: ['oauth', 'webhookIngestion'],
-                        },
+                            required: ['oauth', 'webhookIngestion'],
+                          },
+                        artifactHealth: artifactHealthChecksSchema,
                         slowestQueries: {
                           type: 'array',
                           items: {
@@ -462,7 +463,7 @@ const openApiSpec = {
                           },
                         },
                       },
-                      required: ['timestamp', 'summary', 'serviceLevelObjectives', 'slowestQueries', 'slowOperations'],
+                      required: ['timestamp', 'summary', 'serviceLevelObjectives', 'artifactHealth', 'slowestQueries', 'slowOperations'],
                     },
                   },
                   required: ['data'],

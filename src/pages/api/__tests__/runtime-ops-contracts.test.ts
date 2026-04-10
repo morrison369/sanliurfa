@@ -259,6 +259,16 @@ describe('runtime ops contracts', () => {
     expect(body.data.serviceLevelObjectives.oauth.status).toBe('degraded');
     expect(body.data.serviceLevelObjectives.oauth.callbackErrorRatePercent).toBe(3);
     expect(body.data.serviceLevelObjectives.webhookIngestion.status).toBe('healthy');
+    expect(body.data.artifactHealth.releaseGate).toEqual({
+      available: true,
+      generatedAt: '2026-04-10T08:00:00.000Z',
+      status: 'healthy',
+    });
+    expect(body.data.artifactHealth.nightlyE2E).toEqual({
+      available: false,
+      generatedAt: null,
+      status: 'blocked',
+    });
   });
 
   it('returns blocked webhook ingestion status when retry exhaustion is present', async () => {
