@@ -3,7 +3,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { classifyOverallOpsStatus, classifyThresholdStatus } from '../../../lib/admin-status';
 import { pool } from '../../../lib/postgres';
 import { getRedisClient, isRedisAvailable } from '../../../lib/cache';
-import { getArtifactHealthSnapshot } from '../../../lib/artifact-health';
+import { getArtifactHealthSnapshot, type RuntimeArtifactHealthSnapshot } from '../../../lib/artifact-health';
 
 interface DetailedHealth {
   status: 'healthy' | 'degraded' | 'blocked';
@@ -37,23 +37,7 @@ interface DetailedHealth {
       responseTime?: number;
       error?: string;
     };
-    artifacts: {
-      releaseGate: {
-        available: boolean;
-        status: 'healthy' | 'degraded' | 'blocked';
-        generatedAt: string | null;
-      };
-      nightlyRegression: {
-        available: boolean;
-        status: 'healthy' | 'degraded' | 'blocked';
-        generatedAt: string | null;
-      };
-      nightlyE2E: {
-        available: boolean;
-        status: 'healthy' | 'degraded' | 'blocked';
-        generatedAt: string | null;
-      };
-    };
+    artifacts: RuntimeArtifactHealthSnapshot;
   };
 }
 

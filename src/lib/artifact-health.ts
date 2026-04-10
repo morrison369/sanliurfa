@@ -2,12 +2,19 @@ import { buildArtifactHealth } from './admin-status';
 import { getNightlyOpsSummary } from './nightly-ops-summary';
 import { getReleaseGateSummary } from './release-gate-summary';
 
+export type ArtifactHealthEntry = ReturnType<typeof buildArtifactHealth>;
+
 export type ArtifactHealthSnapshot = {
-  releaseGate: ReturnType<typeof buildArtifactHealth>;
-  nightlyRegression: ReturnType<typeof buildArtifactHealth>;
-  nightlyE2E: ReturnType<typeof buildArtifactHealth>;
-  performanceOps?: ReturnType<typeof buildArtifactHealth>;
+  releaseGate: ArtifactHealthEntry;
+  nightlyRegression: ArtifactHealthEntry;
+  nightlyE2E: ArtifactHealthEntry;
+  performanceOps?: ArtifactHealthEntry;
 };
+
+export type RuntimeArtifactHealthSnapshot = Pick<
+  ArtifactHealthSnapshot,
+  'releaseGate' | 'nightlyRegression' | 'nightlyE2E'
+>;
 
 export async function getArtifactHealthSnapshot(options?: {
   includePerformanceOps?: boolean;

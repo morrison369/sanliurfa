@@ -4,7 +4,7 @@ import { classifyIntegrationStatus, classifyOverallOpsStatus, classifyThresholdS
 import { pool } from '../../lib/postgres';
 import { getRedisClient, isRedisAvailable } from '../../lib/cache';
 import { getRuntimeIntegrationSettings } from '../../lib/runtime-integration-settings';
-import { getArtifactHealthSnapshot } from '../../lib/artifact-health';
+import { getArtifactHealthSnapshot, type RuntimeArtifactHealthSnapshot } from '../../lib/artifact-health';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'blocked';
@@ -28,20 +28,7 @@ interface HealthStatus {
         configured: boolean;
       };
     };
-    artifacts: {
-      releaseGate: {
-        available: boolean;
-        status: 'healthy' | 'degraded' | 'blocked';
-      };
-      nightlyRegression: {
-        available: boolean;
-        status: 'healthy' | 'degraded' | 'blocked';
-      };
-      nightlyE2E: {
-        available: boolean;
-        status: 'healthy' | 'degraded' | 'blocked';
-      };
-    };
+    artifacts: RuntimeArtifactHealthSnapshot;
   };
 }
 
