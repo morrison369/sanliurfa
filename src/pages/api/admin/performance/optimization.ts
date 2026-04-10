@@ -3,7 +3,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { suggestIndexes, getQueryMetrics, getSlowQueries, CACHE_STRATEGIES } from '../../../../lib/performance-optimizer';
+import { suggestIndexes, getSlowQueries, CACHE_STRATEGIES } from '../../../../lib/performance-optimizer';
 import { metricsCollector } from '../../../../lib/metrics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       strategiesCount: Object.keys(CACHE_STRATEGIES).length
     };
 
-    const requestMetrics = metricsCollector.getAggregated();
+    const requestMetrics = metricsCollector.getMetrics();
     const slowOperations = metricsCollector.getSlowOperations(20);
 
     // Generate recommendations
@@ -87,7 +87,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
           cacheStrategies: cacheStats,
           indexSuggestions: indexSuggestions.slice(0, 5),
           slowOperations: slowOperations.map(op => ({
-            operation: op.operation,
+            type: op.type,
+            message: op.message,
             duration: op.duration,
             timestamp: op.timestamp
           })),

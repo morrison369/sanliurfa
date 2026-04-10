@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { classifyOverallOpsStatus, classifyThresholdStatus } from '../../../lib/admin-status';
 import { pool } from '../../../lib/postgres';
 import { getRedisClient, isRedisAvailable } from '../../../lib/cache';
-import { query } from '../../../lib/postgres';
 
 interface DetailedHealth {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: 'healthy' | 'degraded' | 'blocked';
   uptime: number;
   timestamp: string;
   version: string;
@@ -91,13 +91,16 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const memUsage = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
 
-    // Determine overall status
-    let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    if (dbStatus === 'down') {
-      overallStatus = 'unhealthy';
-    } else if (redisStatus === 'down') {
-      overallStatus = 'degraded';
-    }
+    const overallStatus = classifyOverallOpsStatus([
+      classifyThresholdStatus({
+        blockedWhen: dbStatus === 'down',
+        degradedWhen: false
+      }),
+      classifyThresholdStatus({
+        blockedWhen: false,
+        degradedWhen: redisStatus === 'down'
+      })
+    ]);
 
     const uptime = Math.floor(process.uptime());
 
@@ -134,7 +137,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       }
     };
 
-    const statusCode = overallStatus === 'unhealthy' ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.OK;
+    const statusCode = overallStatus === 'blocked' ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.OK;
 
     return apiResponse(healthData, statusCode, requestId);
   } catch (error) {
