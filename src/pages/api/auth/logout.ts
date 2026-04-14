@@ -7,7 +7,7 @@ export const POST: APIRoute = async ({ cookies }) => {
     const token = cookies.get('auth-token')?.value;
     
     if (token) {
-      signOut(token);
+      await signOut(token);
     }
 
     // Clear cookie
@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ cookies, redirect }) => {
   try {
     const token = cookies.get('auth-token')?.value;
     if (token) {
-      signOut(token);
+      await signOut(token);
     }
     cookies.delete('auth-token', { path: '/' });
     return redirect('/?logout=success');

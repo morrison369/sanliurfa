@@ -1,9 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { getPersonalizedRecommendations, getTrendingPlaces } from '../lib/recommendations';
+import { getPersonalizedRecommendations, getTrendingPlaces } from '../lib/recommendation/recommendations';
 
 // Check if user is authenticated
-const token = Astro.cookies.get('auth-token')?.value;
+const token = Astro.cookies.get('token')?.value;
 let recommendations = [];
 let isPersonalized = false;
 
@@ -24,7 +24,7 @@ if (token) {
       <!-- Header -->
       <div class="mb-12">
         <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          💡 {isPersonalized ? 'Sana Özel Öneriler' : 'En Popüler Yerler'}
+          ğŸ’¡ {isPersonalized ? 'Sana Özel Öneriler' : 'En Popüler Yerler'}
         </h1>
         <p class="text-lg text-gray-600 dark:text-gray-300">
           {isPersonalized
@@ -58,7 +58,7 @@ if (token) {
                 </div>
               ) : (
                 <div class="w-full h-48 bg-gradient-to-br from-orange-200 to-red-200 flex items-center justify-center">
-                  <span class="text-5xl">📍</span>
+                  <span class="text-5xl">ğŸ“</span>
                 </div>
               )}
 
@@ -87,7 +87,7 @@ if (token) {
                     <div class="flex items-center">
                       {[...Array(5)].map((_, i) => (
                         <span key={i} class={i < Math.floor(place.rating) ? 'text-yellow-400' : 'text-gray-300'}>
-                          ★
+                          â˜…
                         </span>
                       ))}
                     </div>
@@ -100,7 +100,7 @@ if (token) {
                 <!-- View Count (if available) -->
                 {place.view_count && (
                   <div class="text-xs text-gray-500 dark:text-gray-400">
-                    👁️ {place.view_count.toLocaleString()} görüş
+                    ğŸ‘ï¸ {place.view_count.toLocaleString()} görüş
                   </div>
                 )}
               </div>
@@ -108,7 +108,7 @@ if (token) {
               <!-- Hover Overlay -->
               <div class="hidden group-hover:block absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-all">
                 <button class="px-6 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600">
-                  Detayları Gör →
+                  Detayları Gör â†’
                 </button>
               </div>
             </a>

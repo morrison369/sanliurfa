@@ -1,83 +1,253 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { query } from '../../lib/postgres';
 
-const user = Astro.locals.user;
-
-if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/giris?redirect=/admin');
-}
-
-// İstatistikler
-const [placesCount, usersCount, reviewsCount, messagesCount, pendingPlaces] = await Promise.all([
-  query("SELECT COUNT(*) FROM places"),
-  query("SELECT COUNT(*) FROM users"),
-  query("SELECT COUNT(*) FROM reviews"),
-  query("SELECT COUNT(*) FROM contact_messages WHERE status = 'new'"),
-  query("SELECT COUNT(*) FROM places WHERE status = 'pending'"),
-]);
-
-const stats = {
-  places: parseInt(placesCount.rows[0]?.count || '0'),
-  users: parseInt(usersCount.rows[0]?.count || '0'),
-  reviews: parseInt(reviewsCount.rows[0]?.count || '0'),
-  messages: parseInt(messagesCount.rows[0]?.count || '0'),
-  pending: parseInt(pendingPlaces.rows[0]?.count || '0'),
+const seo = {
+  title: 'Admin Dashboard - Şanlıurfa.com',
+  description: 'Yönetim paneli',
+  noindex: true,
 };
-
-const seo = { title: 'Admin Panel - Şanlıurfa.com' };
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-100 dark:bg-gray-900 py-8">
-    <div class="container-custom">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">Admin Panel</h1>
-      
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
-          <div class="text-3xl font-bold text-urfa-600">{stats.places}</div>
-          <div class="text-gray-600 dark:text-gray-400">Mekan</div>
+  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
+    <div class="container mx-auto px-4">
+      {/* Header */}
+      <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        <p class="text-gray-500 mt-1">Platform genel görünümü</p>
+      </div>
+
+      {/* Stats Grid */}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="statsGrid">
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-500">Toplam Kullanıcı</p>
+              <p class="text-2xl font-bold text-gray-900 mt-1" id="totalUsers">-</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">
+              👥
+            </div>
+          </div>
+          <p class="text-xs text-green-600 mt-2">+<span id="newUsers">-</span> bu ay</p>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
-          <div class="text-3xl font-bold text-blue-600">{stats.users}</div>
-          <div class="text-gray-600 dark:text-gray-400">Kullanıcı</div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-500">İşletmeler</p>
+              <p class="text-2xl font-bold text-gray-900 mt-1" id="totalPlaces">-</p>
+            </div>
+            <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">
+              🏪
+            </div>
+          </div>
+          <p class="text-xs text-amber-600 mt-2"><span id="pendingPlaces">-</span> onay bekliyor</p>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
-          <div class="text-3xl font-bold text-green-600">{stats.reviews}</div>
-          <div class="text-gray-600 dark:text-gray-400">Yorum</div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-500">Yorumlar</p>
+              <p class="text-2xl font-bold text-gray-900 mt-1" id="totalReviews">-</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl">
+              ⭐
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 mt-2"><span id="pendingReviews">-</span> onay bekliyor</p>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
-          <div class="text-3xl font-bold text-red-600">{stats.messages}</div>
-          <div class="text-gray-600 dark:text-gray-400">Yeni Mesaj</div>
+
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-500">Açık Ticketlar</p>
+              <p class="text-2xl font-bold text-gray-900 mt-1" id="openTickets">-</p>
+            </div>
+            <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-2xl">
+              🎫
+            </div>
+          </div>
+          <p class="text-xs text-blue-600 mt-2">+<span id="newTickets">-</span> son 24 saat</p>
         </div>
       </div>
-      
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <a href="/admin/places" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Mekanlar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.pending} onay bekleyen</p>
-        </a>
-        <a href="/admin/users" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Kullanıcılar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kullanıcı yönetimi</p>
-        </a>
-        <a href="/admin/reviews" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Yorumlar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Yorum moderasyonu</p>
-        </a>
-        <a href="/admin/blog" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Blog</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Blog yazıları</p>
-        </a>
-        <a href="/admin/events" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Etkinlikler</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Etkinlik yönetimi</p>
-        </a>
-        <a href="/admin/messages" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Mesajlar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.messages} yeni mesaj</p>
-        </a>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        {/* Daily Chart */}
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
+          <h2 class="text-lg font-bold text-gray-900 mb-4">Son 14 Gün Aktivitesi</h2>
+          <div id="chartContainer" class="h-64 flex items-end justify-between gap-2">
+            <p class="text-gray-400 w-full text-center">Yükleniyor...</p>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h2 class="text-lg font-bold text-gray-900 mb-4">Hızlı İşlemler</h2>
+          <div class="space-y-3">
+            <a href="/admin/users" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">👥</span>
+              <div>
+                <div class="font-medium text-gray-900">Kullanıcılar</div>
+                <div class="text-sm text-gray-500">Tüm kullanıcıları yönet</div>
+              </div>
+            </a>
+            <a href="/admin/places" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">🏪</span>
+              <div>
+                <div class="font-medium text-gray-900">İşletmeler</div>
+                <div class="text-sm text-gray-500">Onay ve düzenleme</div>
+              </div>
+            </a>
+            <a href="/admin/blog" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">📝</span>
+              <div>
+                <div class="font-medium text-gray-900">Blog</div>
+                <div class="text-sm text-gray-500">İçerik yönetimi</div>
+              </div>
+            </a>
+            <a href="/admin/tickets" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">🎫</span>
+              <div>
+                <div class="font-medium text-gray-900">Destek Talepleri</div>
+                <div class="text-sm text-gray-500">Ticketları yönet</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div class="grid md:grid-cols-2 gap-6 mt-6">
+        {/* Recent Users */}
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h2 class="text-lg font-bold text-gray-900 mb-4">Son Kayıt Olanlar</h2>
+          <div id="recentUsers" class="space-y-3">
+            <p class="text-gray-400 text-center py-4">Yükleniyor...</p>
+          </div>
+        </div>
+
+        {/* Recent Places */}
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h2 class="text-lg font-bold text-gray-900 mb-4">Son Eklenen İşletmeler</h2>
+          <div id="recentPlaces" class="space-y-3">
+            <p class="text-gray-400 text-center py-4">Yükleniyor...</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Places */}
+      <div class="bg-white rounded-xl shadow-sm p-6 mt-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">En Çok Görüntülenen İşletmeler (Son 30 Gün)</h2>
+        <div id="topPlaces" class="grid md:grid-cols-5 gap-4">
+          <p class="text-gray-400 col-span-5 text-center py-4">Yükleniyor...</p>
+        </div>
       </div>
     </div>
   </div>
+
+  <script>
+    async function loadDashboard() {
+      try {
+        const response = await fetch('/api/admin/dashboard');
+        const data = await response.json();
+
+        if (data.success) {
+          updateStats(data.stats);
+          renderChart(data.dailyStats);
+          renderRecent(data.recent);
+          renderTopPlaces(data.topPlaces);
+        }
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      }
+    }
+
+    function updateStats(stats) {
+      document.getElementById('totalUsers').textContent = stats.users.total;
+      document.getElementById('newUsers').textContent = stats.users.new_this_month;
+      document.getElementById('totalPlaces').textContent = stats.places.total;
+      document.getElementById('pendingPlaces').textContent = stats.places.pending;
+      document.getElementById('totalReviews').textContent = stats.reviews.total;
+      document.getElementById('pendingReviews').textContent = stats.reviews.pending;
+      document.getElementById('openTickets').textContent = stats.tickets.open;
+      document.getElementById('newTickets').textContent = stats.tickets.new_today;
+    }
+
+    function renderChart(dailyStats) {
+      if (!dailyStats || dailyStats.length === 0) return;
+
+      const max = Math.max(...dailyStats.map(d => parseInt(d.views) || 0), 1);
+      
+      const chartHtml = dailyStats.map(day => {
+        const height = ((parseInt(day.views) || 0) / max) * 100;
+        const date = new Date(day.date);
+        const label = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+        
+        return `
+          <div class="flex-1 flex flex-col items-center group relative">
+            <div class="w-full bg-red-500 rounded-t hover:bg-red-600 transition-colors" 
+                 style="height: ${Math.max(height, 4)}%"></div>
+            <span class="text-xs text-gray-400 mt-1 rotate-45 origin-left">${label}</span>
+            <div class="absolute bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
+              ${day.views || 0} görüntülenme
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('chartContainer').innerHTML = chartHtml;
+    }
+
+    function renderRecent(recent) {
+      const usersHtml = recent.users.map(user => `
+        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-medium text-gray-600">
+            ${user.name ? user.name.charAt(0).toUpperCase() : '?'}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium text-gray-900 truncate">${user.name || 'İsimsiz'}</div>
+            <div class="text-sm text-gray-500">${user.email}</div>
+          </div>
+          <span class="text-xs px-2 py-1 rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : user.role === 'vendor' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}">
+            ${user.role}
+          </span>
+        </div>
+      `).join('');
+      document.getElementById('recentUsers').innerHTML = usersHtml || '<p class="text-gray-400 text-center">Kullanıcı yok</p>';
+
+      const placesHtml = recent.places.map(place => `
+        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+          <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-xl">
+            🏪
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium text-gray-900 truncate">${place.name}</div>
+            <div class="text-sm text-gray-500">${place.owner_name || 'Sahipsiz'}</div>
+          </div>
+          <span class="text-xs px-2 py-1 rounded-full ${place.status === 'active' ? 'bg-green-100 text-green-700' : place.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}">
+            ${place.status}
+          </span>
+        </div>
+      `).join('');
+      document.getElementById('recentPlaces').innerHTML = placesHtml || '<p class="text-gray-400 text-center">İşletme yok</p>';
+    }
+
+    function renderTopPlaces(places) {
+      const html = places.map((place, i) => `
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-2xl mb-2">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</div>
+          ${place.image_url ? 
+            `<img src="${place.image_url}" alt="" class="w-16 h-16 rounded-lg object-cover mx-auto mb-2" />` :
+            `<div class="w-16 h-16 bg-gray-200 rounded-lg mx-auto mb-2 flex items-center justify-center text-2xl">🏪</div>`
+          }
+          <div class="font-medium text-gray-900 text-sm truncate">${place.name}</div>
+          <div class="text-red-600 font-bold">${place.total_views} gör.</div>
+        </div>
+      `).join('');
+      document.getElementById('topPlaces').innerHTML = html || '<p class="text-gray-400 col-span-5 text-center">Veri yok</p>';
+    }
+
+    loadDashboard();
+  </script>
 </Layout>

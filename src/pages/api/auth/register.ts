@@ -1,98 +1,80 @@
-// API: Kullanıcı kaydı (PostgreSQL + Validation + Logging)
 import type { APIRoute } from 'astro';
-import { signUp, signIn } from '../../../lib/auth';
-import { validateWithSchema, commonSchemas } from '../../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { logger } from '../../../lib/logging';
-import { recordRequest, isSlowRequest, metricsCollector } from '../../../lib/metrics';
+import { query } from '../../../lib/postgres';
+import { createToken, hashPassword, validatePasswordStrength } from '../../../lib/auth';
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-  const requestId = getRequestId({ request } as any);
-  const startTime = Date.now();
-  logger.setRequestId(requestId);
-
+export const POST: APIRoute = async (context) => {
   try {
-    const body = await request.json();
+    const body = await context.request.json();
+    const { fullName, email, password } = body;
 
-    // Validate request body
-    const validation = validateWithSchema(body, commonSchemas.register);
-
-    if (!validation.valid) {
-      const duration = Date.now() - startTime;
-      recordRequest('POST', '/api/auth/register', HttpStatus.UNPROCESSABLE_ENTITY, duration);
-      logger.warn('Register validation failed', { errors: validation.errors });
-
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Validation failed',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        validation.errors,
-        requestId
-      );
-    }
-
-    const { email, password, full_name: fullName } = validation.data;
-
-    // Attempt registration
-    const { data, error } = await signUp(email, password, fullName);
-
-    if (error) {
-      const duration = Date.now() - startTime;
-      recordRequest('POST', '/api/auth/register', HttpStatus.CONFLICT, duration, { error: error.message });
-      logger.logAuth('register', 'unknown', false, { email, reason: error.message, duration });
-
-      return apiError(ErrorCode.CONFLICT, error.message, HttpStatus.CONFLICT, undefined, requestId);
-    }
-
-    // Auto login after registration
-    const loginResult = await signIn(email, password);
-    if (loginResult.data?.token) {
-      cookies.set('auth-token', loginResult.data.token, {
-        path: '/',
-        httpOnly: true,
-        secure: import.meta.env.PROD,
-        sameSite: 'strict',
-        maxAge: 60 * 60 * 24
+    if (!fullName || !email || !password) {
+      return new Response(JSON.stringify({ error: 'Tüm alanlar gerekli' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/auth/register', HttpStatus.CREATED, duration);
-    logger.logAuth('register', data.user.id, true, { email: data.user.email, duration });
-
-    return apiResponse(
-      {
-        success: true,
-        user: data.user,
-        message: 'Kayıt başarılı! Hoş geldiniz.'
-      },
-      HttpStatus.CREATED,
-      requestId
-    );
-  } catch (err) {
-    const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/auth/register', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
-    });
-
-    if (isSlowRequest(duration)) {
-      metricsCollector.recordSlowOperation(
-        'request',
-        'Register endpoint slow',
-        duration,
-        { path: '/api/auth/register' },
-        err instanceof Error ? err.stack : undefined
-      );
+    // Password strength check
+    const strength = validatePasswordStrength(password);
+    if (!strength.valid) {
+      return new Response(JSON.stringify({ error: strength.error }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    logger.error('Register error', err instanceof Error ? err : new Error(String(err)), { duration });
+    const normalizedEmail = email.toLowerCase().trim();
 
-    return apiError(
-      ErrorCode.INTERNAL_ERROR,
-      'Kayıt işlemi sırasında bir hata oluştu',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      undefined,
-      requestId
+    // Check if email exists
+    const existing = await query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+    if (existing.rows.length > 0) {
+      return new Response(JSON.stringify({ error: 'Bu e-posta adresi zaten kayıtlı' }), {
+        status: 409,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Hash password and create user
+    const passwordHash = await hashPassword(password);
+    const result = await query(
+      `INSERT INTO users (full_name, email, password_hash, role)
+       VALUES ($1, $2, $3, 'user')
+       RETURNING id, full_name, email, role`,
+      [fullName.trim(), normalizedEmail, passwordHash]
     );
+
+    const user = result.rows[0];
+
+    // Create JWT token
+    const token = createToken({ userId: user.id, email: user.email, role: user.role });
+
+    // Set auth cookie
+    context.cookies.set('auth-token', token, {
+      path: '/',
+      httpOnly: true,
+      secure: import.meta.env.PROD,
+      sameSite: 'strict',
+      maxAge: 86400,
+    });
+
+    return new Response(JSON.stringify({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.full_name,
+        role: user.role,
+      }
+    }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Register error:', error);
+    return new Response(JSON.stringify({ error: 'Sunucu hatası' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 };

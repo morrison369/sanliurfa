@@ -1,219 +1,330 @@
-// Auth utilities - PostgreSQL based with bcrypt + Redis sessions
+/**
+ * Authentication Module
+ * bcrypt password hashing, JWT tokens, Redis session management
+ */
+
+import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import bcryptjs from 'bcryptjs';
 import { queryOne } from './postgres';
-import { setCache, getCache, deleteCache, isRedisAvailable } from './cache';
+import { getRedisClient, isRedisAvailable, prefixKey } from './cache/cache';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-key-minimum-32-characters-long';
+const SESSION_TTL = parseInt(process.env.SESSION_TIMEOUT || '86400', 10); // 24h default
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
 
-// ==================== PASSWORD HASHING ====================
+// ─── Password Hashing ────────────────────────────────────────
 
-/**
- * Hash a plaintext password using bcryptjs
- */
 export async function hashPassword(password: string): Promise<string> {
-  const salt = await bcryptjs.genSalt(12);
-  return bcryptjs.hash(password, salt);
+  return bcrypt.hash(password, BCRYPT_ROUNDS);
 }
+
+export const hashPasswordAsync = hashPassword; // alias
+
+export async function comparePassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
+
+export const verifyPassword = comparePassword; // alias
 
 /**
- * Verify plaintext password against hash
+ * Validate password complexity
+ * Min 8 chars, 1 uppercase, 1 lowercase, 1 number
  */
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcryptjs.compare(password, hash);
+export function validatePasswordStrength(password: string): { valid: boolean; error?: string } {
+  if (password.length < 8) {
+    return { valid: false, error: 'Şifre en az 8 karakter olmalıdır.' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, error: 'Şifre en az bir büyük harf içermelidir.' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, error: 'Şifre en az bir küçük harf içermelidir.' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, error: 'Şifre en az bir rakam içermelidir.' };
+  }
+  return { valid: true };
 }
 
-/**
- * Check if a hash is the old SHA-256 format (migration helper)
- */
-function isLegacySha256Hash(hash: string): boolean {
-  return /^[a-f0-9]{64}$/.test(hash);
+// ─── JWT Token ───────────────────────────────────────────────
+
+function base64url(str: string): string {
+  return Buffer.from(str).toString('base64url');
 }
 
-/**
- * Verify legacy SHA-256 hash (for migration from old system)
- */
-function verifyLegacyHash(password: string, hash: string): boolean {
-  return crypto.createHash('sha256').update(password + JWT_SECRET).digest('hex') === hash;
+export function createToken(payload: { userId: string; email: string; role?: string }): string {
+  const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const body = base64url(JSON.stringify({
+    ...payload,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + SESSION_TTL,
+  }));
+  const signature = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(`${header}.${body}`)
+    .digest('base64url');
+  return `${header}.${body}.${signature}`;
 }
 
-// ==================== SESSION MANAGEMENT (Redis-backed) ====================
+export const generateJWT = (userId: string, email: string) => createToken({ userId, email });
 
-interface SessionData {
-  userId: string;
-  email: string;
-  role: string;
-  createdAt: number;
+function decodeToken(token: string): any | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const [header, body, signature] = parts;
+    const expectedSig = crypto
+      .createHmac('sha256', JWT_SECRET)
+      .update(`${header}.${body}`)
+      .digest('base64url');
+
+    if (signature !== expectedSig) return null;
+
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+
+    return payload;
+  } catch {
+    return null;
+  }
 }
 
-const SESSION_TTL = 86400; // 24 hours in seconds
+// ─── Session Management (Redis) ──────────────────────────────
 
-/**
- * Create a new session token
- */
-export async function createToken(
-  userId: string,
+async function setSession(token: string, data: any): Promise<void> {
+  if (!isRedisAvailable()) return;
+  try {
+    const redis = await getRedisClient();
+    const key = prefixKey(`session:${token}`);
+    await redis.setEx(key, SESSION_TTL, JSON.stringify(data));
+  } catch (err) {
+    console.error('[auth] Failed to set session:', err);
+  }
+}
+
+async function getSession(token: string): Promise<any | null> {
+  if (!isRedisAvailable()) return null;
+  try {
+    const redis = await getRedisClient();
+    const key = prefixKey(`session:${token}`);
+    const data = await redis.get(key);
+    if (!data) return null;
+
+    // Sliding window: refresh TTL on access
+    await redis.expire(key, SESSION_TTL);
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+
+async function deleteSession(token: string): Promise<void> {
+  if (!isRedisAvailable()) return;
+  try {
+    const redis = await getRedisClient();
+    await redis.del(prefixKey(`session:${token}`));
+  } catch (err) {
+    console.error('[auth] Failed to delete session:', err);
+  }
+}
+
+// ─── Public API ──────────────────────────────────────────────
+
+export async function verifyToken(token: string): Promise<{ userId: string; email: string; role?: string } | null> {
+  // First check JWT signature
+  const payload = decodeToken(token);
+  if (!payload) return null;
+
+  // Then verify session exists in Redis (if available)
+  if (isRedisAvailable()) {
+    const session = await getSession(token);
+    if (!session) return null;
+  }
+
+  return { userId: payload.userId, email: payload.email, role: payload.role };
+}
+
+export function getUserFromToken(token: string): any | null {
+  return decodeToken(token);
+}
+
+export async function signIn(
   email: string,
-  role: string = 'user'
-): Promise<string> {
-  const token = crypto.randomBytes(32).toString('hex');
-  const sessionData: SessionData = {
-    userId,
-    email,
-    role,
-    createdAt: Date.now()
-  };
-
-  // Try to store in Redis, fallback to console warning
-  try {
-    await setCache(`session:${token}`, sessionData, SESSION_TTL);
-  } catch (error) {
-    console.error('Failed to create session in Redis:', error);
-    if (isRedisAvailable()) {
-      throw new Error('Session creation failed');
-    }
-    // If Redis isn't available, log warning but continue (graceful degradation)
-    console.warn('Redis unavailable - session may not persist across restarts');
-  }
-
-  return token;
-}
-
-/**
- * Verify a session token and return session data
- * Also performs sliding window: refreshes TTL if token is valid
- */
-export async function verifyToken(token: string): Promise<SessionData | null> {
-  try {
-    const sessionData = await getCache<SessionData>(`session:${token}`);
-
-    if (!sessionData) {
-      return null;
-    }
-
-    // Sliding window: refresh TTL on each verification
-    await setCache(`session:${token}`, sessionData, SESSION_TTL);
-
-    return sessionData;
-  } catch (error) {
-    console.error('Token verification error:', error);
-    return null;
-  }
-}
-
-/**
- * Get the current user from a token
- */
-export async function getCurrentUser(token: string): Promise<any> {
-  const sessionData = await verifyToken(token);
-
-  if (!sessionData) {
-    return null;
-  }
-
-  try {
-    // Fetch fresh user data from database
-    const user = await queryOne(
-      'SELECT id, email, full_name, role, points, level, avatar_url FROM users WHERE id = $1',
-      [sessionData.userId]
-    );
-
-    return user;
-  } catch (error) {
-    console.error('Get current user error:', error);
-    return null;
-  }
-}
-
-/**
- * Sign out by deleting the session token
- */
-export async function signOut(token: string): Promise<void> {
-  try {
-    await deleteCache(`session:${token}`);
-  } catch (error) {
-    console.error('Sign out error:', error);
-  }
-}
-
-// ==================== AUTHENTICATION FLOW ====================
-
-/**
- * Sign in with email and password
- * Supports both bcrypt and legacy SHA-256 hashes (migration path)
- */
-export async function signIn(email: string, password: string) {
-  try {
-    const user = await queryOne('SELECT id, email, full_name, role, password_hash FROM users WHERE email = $1', [
-      email
-    ]);
-
-    if (!user) {
-      return { data: null, error: { message: 'Invalid credentials' } };
-    }
-
-    // Try bcrypt first (modern)
-    let passwordValid = await verifyPassword(password, user.password_hash);
-
-    // Fallback to legacy SHA-256 (for migration)
-    if (!passwordValid && isLegacySha256Hash(user.password_hash)) {
-      passwordValid = verifyLegacyHash(password, user.password_hash);
-
-      // If legacy hash is valid, upgrade it to bcrypt
-      if (passwordValid) {
-        try {
-          const newHash = await hashPassword(password);
-          await queryOne('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, user.id]);
-          console.info('Password hash upgraded to bcrypt for user:', email);
-        } catch (upgradeError) {
-          console.error('Failed to upgrade password hash:', upgradeError);
-          // Continue anyway - old hash still works
-        }
+  password: string,
+  ip?: string
+): Promise<{ success: boolean; error?: string; user?: any; token?: string }> {
+  // Brute force check
+  if (ip && isRedisAvailable()) {
+    try {
+      const redis = await getRedisClient();
+      const failKey = prefixKey(`login_fail:${ip}`);
+      const attempts = await redis.get(failKey);
+      if (attempts && parseInt(attempts) >= 5) {
+        return { success: false, error: 'Çok fazla başarısız deneme. 15 dakika sonra tekrar deneyin.' };
       }
-    }
+    } catch { /* continue */ }
+  }
 
-    if (!passwordValid) {
-      return { data: null, error: { message: 'Invalid credentials' } };
-    }
+  // User lookup
+  const user = await queryOne<any>(
+    'SELECT id, email, password_hash, full_name, role, avatar_url, points FROM users WHERE email = $1',
+    [email.toLowerCase().trim()]
+  );
 
-    const token = await createToken(user.id, user.email, user.role);
-    const safeUser = {
-      id: user.id,
-      email: user.email,
-      fullName: user.full_name,
-      role: user.role
-    };
+  if (!user) {
+    await incrementFailedAttempts(ip);
+    return { success: false, error: 'E-posta veya şifre hatalı.' };
+  }
 
-    return { data: { user: safeUser, token }, error: null };
-  } catch (error: any) {
-    console.error('Sign in error:', error);
-    return { data: null, error: { message: 'Authentication failed' } };
+  // Password verify
+  const isValid = await bcrypt.compare(password, user.password_hash);
+  if (!isValid) {
+    await incrementFailedAttempts(ip);
+    return { success: false, error: 'E-posta veya şifre hatalı.' };
+  }
+
+  // Create token and session
+  const token = createToken({ userId: user.id, email: user.email, role: user.role });
+  await setSession(token, { userId: user.id, email: user.email, role: user.role });
+
+  // Clear failed attempts
+  if (ip && isRedisAvailable()) {
+    try {
+      const redis = await getRedisClient();
+      await redis.del(prefixKey(`login_fail:${ip}`));
+    } catch { /* ignore */ }
+  }
+
+  return {
+    success: true,
+    user: { id: user.id, email: user.email, fullName: user.full_name, role: user.role, avatar: user.avatar_url },
+    token,
+  };
+}
+
+export async function signUp(
+  email: string,
+  password: string,
+  data?: { fullName?: string }
+): Promise<{ success: boolean; error?: string; user?: any; token?: string }> {
+  const strength = validatePasswordStrength(password);
+  if (!strength.valid) {
+    return { success: false, error: strength.error };
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Check existing
+  const existing = await queryOne('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+  if (existing) {
+    return { success: false, error: 'Bu e-posta adresi zaten kayıtlı.' };
+  }
+
+  // Hash and insert
+  const passwordHash = await hashPassword(password);
+  const newUser = await queryOne<any>(
+    `INSERT INTO users (email, password_hash, full_name, role)
+     VALUES ($1, $2, $3, 'user') RETURNING id, email, full_name, role`,
+    [normalizedEmail, passwordHash, data?.fullName || '']
+  );
+
+  if (!newUser) {
+    return { success: false, error: 'Kullanıcı oluşturulamadı.' };
+  }
+
+  // Create session
+  const token = createToken({ userId: newUser.id, email: newUser.email, role: newUser.role });
+  await setSession(token, { userId: newUser.id, email: newUser.email, role: newUser.role });
+
+  return {
+    success: true,
+    user: { id: newUser.id, email: newUser.email, fullName: newUser.full_name, role: newUser.role },
+    token,
+  };
+}
+
+export async function signOut(token?: string): Promise<void> {
+  if (token) {
+    await deleteSession(token);
   }
 }
 
-/**
- * Sign up with email, password, and full name
- */
-export async function signUp(email: string, password: string, fullName: string) {
-  try {
-    // Check if email already exists
-    const existing = await queryOne('SELECT id FROM users WHERE email = $1', [email]);
-    if (existing) {
-      return { data: null, error: { message: 'Email already registered' } };
-    }
+export async function getCurrentUser(token?: string): Promise<any | null> {
+  if (!token) return null;
+  const payload = await verifyToken(token);
+  if (!payload) return null;
 
-    // Hash password with bcrypt
-    const passwordHash = await hashPassword(password);
+  return queryOne(
+    'SELECT id, email, full_name, role, avatar_url, points FROM users WHERE id = $1',
+    [payload.userId]
+  );
+}
 
-    // Create user
-    const result = await queryOne(
-      'INSERT INTO users (email, password_hash, full_name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, full_name, role',
-      [email, passwordHash, fullName, 'user']
-    );
+export async function createSession(userId: string): Promise<{ token: string; expiresAt: Date }> {
+  const user = await queryOne<any>('SELECT id, email, role FROM users WHERE id = $1', [userId]);
+  const token = createToken({ userId, email: user?.email || '', role: user?.role });
+  await setSession(token, { userId, email: user?.email, role: user?.role });
 
-    return { data: { user: result }, error: null };
-  } catch (error: any) {
-    console.error('Sign up error:', error);
-    return { data: null, error: { message: 'Registration failed' } };
+  const expiresAt = new Date();
+  expiresAt.setSeconds(expiresAt.getSeconds() + SESSION_TTL);
+  return { token, expiresAt };
+}
+
+export async function requireAuth(request: Request): Promise<{ user: any | null; redirect?: string }> {
+  const authHeader = request.headers.get('Authorization');
+  let token = '';
+
+  if (authHeader?.startsWith('Bearer ')) {
+    token = authHeader.slice(7);
   }
+
+  if (!token) {
+    const cookieHeader = request.headers.get('cookie');
+    if (cookieHeader) {
+      const match = cookieHeader.match(/auth-token=([^;]+)/);
+      if (match) token = decodeURIComponent(match[1]);
+    }
+  }
+
+  if (!token) return { user: null, redirect: '/giris' };
+
+  const user = await getCurrentUser(token);
+  if (!user) return { user: null, redirect: '/giris' };
+
+  return { user };
+}
+
+export async function requireRole(request: Request, role: string): Promise<{ user: any | null; redirect?: string }> {
+  const result = await requireAuth(request);
+  if (!result.user) return result;
+
+  if (role === 'admin' && result.user.role !== 'admin' && result.user.role !== 'moderator') {
+    return { user: null, redirect: '/' };
+  }
+
+  return result;
+}
+
+export async function verifyAdmin(user: any): Promise<boolean> {
+  return user?.role === 'admin' || user?.role === 'moderator';
+}
+
+export async function getUserFromRequest(request: Request): Promise<any | null> {
+  const result = await requireAuth(request);
+  return result.user;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────
+
+async function incrementFailedAttempts(ip?: string): Promise<void> {
+  if (!ip || !isRedisAvailable()) return;
+  try {
+    const redis = await getRedisClient();
+    const key = prefixKey(`login_fail:${ip}`);
+    const current = await redis.incr(key);
+    if (current === 1) {
+      await redis.expire(key, 900); // 15 min window
+    }
+  } catch { /* ignore */ }
 }

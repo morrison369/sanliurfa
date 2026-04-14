@@ -3,7 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import TrendingPlaces from "../../components/TrendingPlaces";
 import UserRecommendations from "../../components/UserRecommendations";
 
-const { locals, redirect } = Astro;
+const { locals } = Astro;
 if (!locals.user) {
   return redirect("/giris?redirect=/kesfet");
 }

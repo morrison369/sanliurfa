@@ -1,8 +1,7 @@
 ---
-import { Bell, Check, Trash2, X } from 'lucide-react';
-
+// Real-time Notification Center with SSE
 interface Props {
-  user: any;
+  user?: any;
 }
 
 const { user } = Astro.props;
@@ -10,59 +9,50 @@ const { user } = Astro.props;
 
 {user && (
   <div class="relative" id="notification-center">
-    <button 
-      id="notification-toggle"
-      class="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-      aria-label="Bildirimler"
+    {/* Bell Button */}
+    <button
+      onclick="toggleNotifications()"
+      class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+      id="notification-btn"
     >
-      <Bell className="w-5 h-5" />
-      <span 
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+      </svg>
+      
+      {/* Badge */}
+      <span
         id="notification-badge"
-        class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center hidden"
+        class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center hidden"
       >
         0
       </span>
     </button>
-    
-    <!-- Dropdown -->
-    <div 
+
+    {/* Dropdown */}
+    <div
       id="notification-dropdown"
-      class="absolute right-0 top-full mt-2 w-96 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 hidden opacity-0 transition-opacity"
+      class="hidden absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden"
     >
-      <div class="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
-        <h3 class="font-semibold text-gray-900 dark:text-white">Bildirimler</h3>
-        <div class="flex items-center gap-2">
-          <button 
-            id="mark-all-read"
-            class="text-xs text-urfa-600 dark:text-urfa-400 hover:underline"
-          >
-            Tümünü Okundu İşaretle
-          </button>
-          <button 
-            id="close-notifications"
-            class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+      <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="font-bold text-gray-900">Bildirimler</h3>
+        <button
+          onclick="markAllAsRead()"
+          class="text-sm text-amber-600 hover:text-amber-700 font-medium"
+        >
+          Tümünü Okundu İşaretle
+        </button>
       </div>
       
-      <div 
-        id="notification-list"
-        class="max-h-96 overflow-y-auto"
-      >
-        <div class="p-4 text-center text-gray-500 dark:text-gray-400">
-          <Bell className="w-8 h-8 mx-auto mb-2 opacity-50" />
+      <div id="notification-list" class="max-h-96 overflow-y-auto">
+        <div class="p-8 text-center text-gray-500">
+          <div class="text-4xl mb-2">🔔</div>
           <p>Bildirimler yükleniyor...</p>
         </div>
       </div>
       
-      <div class="p-3 border-t border-gray-100 dark:border-gray-700 text-center">
-        <a 
-          href="/profil/bildirimler"
-          class="text-sm text-urfa-600 dark:text-urfa-400 hover:underline"
-        >
-          Tüm Bildirimleri Gör
+      <div class="p-3 border-t border-gray-100 bg-gray-50">
+        <a href="/notifications" class="block text-center text-sm text-gray-600 hover:text-gray-900">
+          Tüm Bildirimleri Gör →
         </a>
       </div>
     </div>
@@ -70,185 +60,206 @@ const { user } = Astro.props;
 )}
 
 <script>
-  let notifications = [];
+  let eventSource: EventSource | null = null;
+  let notifications: any[] = [];
   let unreadCount = 0;
-  
-  const toggle = document.getElementById('notification-toggle');
-  const dropdown = document.getElementById('notification-dropdown');
-  const badge = document.getElementById('notification-badge');
-  const list = document.getElementById('notification-list');
-  const closeBtn = document.getElementById('close-notifications');
-  const markAllBtn = document.getElementById('mark-all-read');
-  
-  function toggleDropdown() {
-    if (dropdown?.classList.contains('hidden')) {
-      dropdown.classList.remove('hidden');
-      setTimeout(() => dropdown.classList.remove('opacity-0'), 10);
-      loadNotifications();
-    } else {
-      dropdown?.classList.add('opacity-0');
-      setTimeout(() => dropdown?.classList.add('hidden'), 200);
-    }
+
+  // Initialize SSE connection
+  function initSSE() {
+    if (eventSource) return;
+    
+    eventSource = new EventSource('/api/notifications/sse');
+    
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.type === 'connected') {
+        console.log('SSE Connected:', data.userId);
+        loadNotifications();
+      } else {
+        // New notification received
+        notifications.unshift(data);
+        unreadCount++;
+        updateUI();
+        showToast(data);
+      }
+    };
+    
+    eventSource.onerror = (error) => {
+      console.error('SSE Error:', error);
+      eventSource?.close();
+      eventSource = null;
+      // Reconnect after 5 seconds
+      setTimeout(initSSE, 5000);
+    };
   }
-  
-  function closeDropdown() {
-    dropdown?.classList.add('opacity-0');
-    setTimeout(() => dropdown?.classList.add('hidden'), 200);
-  }
-  
+
+  // Load notifications from API
   async function loadNotifications() {
     try {
       const response = await fetch('/api/notifications');
       const data = await response.json();
       
-      notifications = data.data || [];
+      notifications = data.notifications || [];
       unreadCount = data.unreadCount || 0;
       
-      updateBadge();
-      renderNotifications();
+      updateUI();
     } catch (error) {
       console.error('Failed to load notifications:', error);
-      if (list) {
-        list.innerHTML = `
-          <div class="p-4 text-center text-gray-500">
-            <p>Bildirimler yüklenemedi</p>
-          </div>
-        `;
-      }
     }
   }
-  
-  function updateBadge() {
+
+  // Update UI
+  function updateUI() {
+    const badge = document.getElementById('notification-badge');
+    const list = document.getElementById('notification-list');
+    
+    // Update badge
     if (badge) {
       if (unreadCount > 0) {
-        badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+        badge.textContent = unreadCount > 99 ? '99+' : unreadCount.toString();
         badge.classList.remove('hidden');
       } else {
         badge.classList.add('hidden');
       }
     }
-  }
-  
-  function renderNotifications() {
-    if (!list) return;
     
-    if (notifications.length === 0) {
-      list.innerHTML = `
-        <div class="p-8 text-center text-gray-500">
-          <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p>Henüz bildirim yok</p>
-        </div>
-      `;
-      return;
-    }
-    
-    list.innerHTML = notifications.map(n => `
-      <div 
-        class="flex items-start gap-3 p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${n.is_read ? 'opacity-70' : 'bg-urfa-50/30 dark:bg-urfa-900/10'}"
-        data-notification-id="${n.id}"
-      >
-        <div class="flex-1 min-w-0 cursor-pointer" onclick="handleNotificationClick('${n.id}', '${n.type}', '${n.data ? JSON.stringify(n.data).replace(/"/g, '&quot;') : '{}'}')">
-          <p class="font-medium text-gray-900 dark:text-white text-sm">${n.title}</p>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-0.5">${n.message || ''}</p>
-          <p class="text-xs text-gray-400 mt-1">${new Date(n.created_at).toLocaleString('tr-TR')}</p>
-        </div>
-        <div class="flex flex-col gap-1">
-          ${!n.is_read ? `
-            <button 
-              class="p-1.5 text-urfa-600 dark:text-urfa-400 hover:bg-urfa-100 dark:hover:bg-urfa-900/30 rounded"
-              onclick="markAsRead('${n.id}')"
-              title="Okundu olarak işaretle"
-            >
-              <Check className="w-4 h-4" />
-            </button>
-          ` : ''}
-        </div>
-      </div>
-    `).join('');
-  }
-  
-  (window as any).markAsRead = async function(id: string) {
-    try {
-      const response = await fetch(`/api/notifications/${id}/read`, {
-        method: 'POST'
-      });
-      
-      if (response.ok) {
-        const notification = notifications.find(n => n.id === id);
-        if (notification) {
-          notification.is_read = true;
-          unreadCount = Math.max(0, unreadCount - 1);
-          updateBadge();
-          renderNotifications();
-        }
+    // Update list
+    if (list) {
+      if (notifications.length === 0) {
+        list.innerHTML = `
+          <div class="p-8 text-center text-gray-500">
+            <div class="text-4xl mb-2">📭</div>
+            <p>Henüz bildirim yok</p>
+          </div>
+        `;
+      } else {
+        list.innerHTML = notifications.map(n => `
+          <div class="p-4 border-b border-gray-100 hover:bg-gray-50 ${n.read ? 'opacity-60' : 'bg-amber-50/30'}">
+            <div class="flex items-start gap-3">
+              <div class="text-2xl">${getNotificationIcon(n.type)}</div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-sm text-gray-900">${n.title}</p>
+                <p class="text-sm text-gray-600 mt-1">${n.message}</p>
+                <div class="flex items-center justify-between mt-2">
+                  <span class="text-xs text-gray-400">${formatTime(n.created_at)}</span>
+                  ${n.link ? `<a href="${n.link}" class="text-xs text-amber-600 hover:underline">Görüntüle →</a>` : ''}
+                </div>
+              </div>
+              ${!n.read ? `<span class="w-2 h-2 bg-amber-500 rounded-full flex-shrink-0 mt-2"></span>` : ''}
+            </div>
+          </div>
+        `).join('');
       }
-    } catch (error) {
-      console.error('Failed to mark as read:', error);
     }
-  };
-  
-  (window as any).handleNotificationClick = async function(id: string, type: string, dataStr: string) {
-    // Mark as read
-    await (window as any).markAsRead(id);
+  }
+
+  // Get icon by type
+  function getNotificationIcon(type: string): string {
+    const icons: Record<string, string> = {
+      review: '⭐',
+      follow: '👤',
+      message: '💬',
+      place_approved: '✅',
+      system: '📢',
+    };
+    return icons[type] || '🔔';
+  }
+
+  // Format time
+  function formatTime(date: string): string {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
     
-    // Navigate based on type
-    const data = JSON.parse(dataStr || '{}');
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
     
-    switch (type) {
-      case 'review_approved':
-      case 'review_rejected':
-        if (data.place_slug) {
-          window.location.href = `/places/${data.place_slug}`;
+    if (minutes < 1) return 'Az önce';
+    if (minutes < 60) return `${minutes} dk önce`;
+    if (hours < 24) return `${hours} saat önce`;
+    if (days < 7) return `${days} gün önce`;
+    
+    return d.toLocaleDateString('tr-TR');
+  }
+
+  // Show toast notification
+  function showToast(notification: any) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-white rounded-xl shadow-xl border border-gray-200 p-4 z-50 animate-slide-in';
+    toast.innerHTML = `
+      <div class="flex items-start gap-3">
+        <div class="text-2xl">${getNotificationIcon(notification.type)}</div>
+        <div>
+          <p class="font-medium">${notification.title}</p>
+          <p class="text-sm text-gray-600">${notification.message}</p>
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">✕</button>
+      </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.remove();
+    }, 5000);
+  }
+
+  // Toggle dropdown
+  function toggleNotifications() {
+    const dropdown = document.getElementById('notification-dropdown');
+    dropdown?.classList.toggle('hidden');
+    
+    // Close when clicking outside
+    if (!dropdown?.classList.contains('hidden')) {
+      document.addEventListener('click', function close(e) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('#notification-center')) {
+          dropdown?.classList.add('hidden');
+          document.removeEventListener('click', close);
         }
-        break;
-      case 'level_up':
-        window.location.href = '/profil';
-        break;
-      case 'badge_earned':
-        window.location.href = '/profil/rozetler';
-        break;
-      case 'place_approved':
-        if (data.place_slug) {
-          window.location.href = `/places/${data.place_slug}`;
-        }
-        break;
-      default:
-        window.location.href = '/profil/bildirimler';
+      });
     }
-  };
-  
+  }
+
+  // Mark all as read
   async function markAllAsRead() {
     try {
-      const response = await fetch('/api/notifications/read-all', {
-        method: 'POST'
+      await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAll: true }),
       });
       
-      if (response.ok) {
-        notifications.forEach(n => n.is_read = true);
-        unreadCount = 0;
-        updateBadge();
-        renderNotifications();
-      }
+      notifications.forEach(n => n.read = true);
+      unreadCount = 0;
+      updateUI();
     } catch (error) {
       console.error('Failed to mark all as read:', error);
     }
   }
-  
-  toggle?.addEventListener('click', toggleDropdown);
-  closeBtn?.addEventListener('click', closeDropdown);
-  markAllBtn?.addEventListener('click', markAllAsRead);
-  
-  // Close on click outside
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest('#notification-center')) {
-      closeDropdown();
-    }
-  });
-  
-  // Initial load
-  loadNotifications();
-  
-  // Refresh every 30 seconds
-  setInterval(loadNotifications, 30000);
+
+  // Initialize on page load
+  if (document.getElementById('notification-center')) {
+    initSSE();
+    loadNotifications();
+  }
 </script>
+
+<style>
+  @keyframes slide-in {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  .animate-slide-in {
+    animation: slide-in 0.3s ease-out;
+  }
+</style>

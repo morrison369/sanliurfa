@@ -1,6 +1,14 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { Landmark, MapPin, Save, ArrowLeft, Clock, DollarSign } from 'lucide-react';
+
+const icons = {
+  landmark: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="13"/><path d="M22 20H2"/><path d="m19 9-3.5 1 3.5 7"/><path d="m5 9 3.5 1-3.5 7"/><path d="M8 20V9l4-7 4 7v11"/></svg>`,
+  mapPin: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  save: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`,
+  arrowLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`,
+  clock: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  dollarSign: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5c0-1.7-1.3-3-3-3h-4c-1.7 0-3 1.3-3 3 0 2 3 3 3 5 0 1.7-1.3 3-3 3h-4c-1.7 0-3 1.3-3 3 0 1.7 1.3 3 3 3h4c1.7 0 3-1.3 3-3 0-2-3-3-3-5 0-1.7 1.3-3 3-3h4c1.7 0 3-1.3 3-3z"/></svg>`,
+};
 
 const periods = [
   { id: 'tunç-çağı', label: 'Tunç Çağı' },
@@ -15,7 +23,7 @@ const periods = [
   { id: 'cumhuriyet', label: 'Cumhuriyet Dönemi' },
 ];
 
-const errorMessage = Astro.url.searchParams.get('error');
+const errorMessage = Astro.url.searchParams.get('token');
 const errorMessages: Record<string, string> = {
   'missing_fields': 'İsim, açıklama ve konum zorunludur.',
   'server_error': 'Bir hata oluştu. Lütfen tekrar deneyin.',
@@ -36,7 +44,7 @@ const seo = {
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
             <a href="/admin/historical-sites" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              <ArrowLeft className="w-5 h-5" />
+              <span set:html={icons.arrowLeft}></span>
             </a>
             <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Yeni Tarihi Yer</h1>
           </div>
@@ -114,11 +122,11 @@ const seo = {
               <div>
                 <label for="location" class="label dark:text-gray-300">Adres *</label>
                 <div class="relative">
-                  <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input 
-                    type="text" 
-                    id="location" 
-                    name="location" 
+                  <span set:html={icons.mapPin} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
+                  <input
+                    type="text"
+                    id="location"
+                    name="location"
                     required
                     class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="Örn: Örencik Mahallesi, Haliliye/Şanlıurfa"
@@ -160,10 +168,10 @@ const seo = {
               <div>
                 <label for="opening_hours" class="label dark:text-gray-300">Çalışma Saatleri</label>
                 <div class="relative">
-                  <Clock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input 
-                    type="text" 
-                    id="opening_hours" 
+                  <span set:html={icons.clock} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
+                  <input
+                    type="text"
+                    id="opening_hours"
                     name="opening_hours"
                     class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="Örn: 08:00 - 18:00"
@@ -174,10 +182,10 @@ const seo = {
               <div>
                 <label for="entry_fee" class="label dark:text-gray-300">Giriş Ücreti</label>
                 <div class="relative">
-                  <DollarSign className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input 
-                    type="text" 
-                    id="entry_fee" 
+                  <span set:html={icons.dollarSign} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
+                  <input
+                    type="text"
+                    id="entry_fee"
                     name="entry_fee"
                     class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="Örn: 50 TL veya Ücretsiz"
@@ -210,7 +218,7 @@ const seo = {
               <option value="inactive">Pasif</option>
             </select>
             <button type="submit" class="btn-primary w-full mt-4 flex items-center justify-center gap-2">
-              <Save className="w-4 h-4" />
+              <span set:html={icons.save}></span>
               Kaydet
             </button>
           </div>

@@ -1,57 +1,239 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Hero from '../components/Hero.astro';
-import FeaturedPlaces from '../components/FeaturedPlaces.astro';
-import HistoricalSites from '../components/HistoricalSites.astro';
-import FoodGuide from '../components/FoodGuide.astro';
-import WeatherWidget from '../components/weather/WeatherWidget.astro';
-import Stats from '../components/Stats.astro';
-import CTASection from '../components/CTASection.astro';
-import LatestBlog from '../components/LatestBlog.astro';
+import PlaceCard from '../components/PlaceCard.astro';
+import { query } from '../lib/postgres';
 
 const seo = {
-  title: 'Şanlıurfa Şehir Rehberi - Tarihin Sıfır Noktası',
-  description: 'Şanlıurfa\'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, Harran, gastronomi ve daha fazlası. Mekanlar, yorumlar ve puanlama sistemi ile keşfedin.',
-  image: '/images/og-home.jpg',
-  schema: {
-    '@type': 'WebSite',
-    name: 'Şanlıurfa.com',
-    url: 'https://sanliurfa.com',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: 'https://sanliurfa.com/arama?q={search_term_string}',
-      'query-input': 'required name=search_term_string',
-    },
-  },
+  title: 'Şanlıurfa.com - Şehrin En İyi Mekanları',
+  description: 'Şanlıurfa\'nın en kapsamlı mekan rehberi. Restoranlar, oteller, tarihi yerler ve daha fazlası.',
+};
+
+// Veritabanından verileri çek
+let featuredPlaces: any[] = [];
+let recentPlaces: any[] = [];
+let recentPosts: any[] = [];
+let categories: any[] = [];
+
+try {
+  const [featuredResult, recentResult, postsResult, categoriesResult] = await Promise.all([
+    query(`SELECT * FROM places WHERE status = 'active' AND featured = true ORDER BY rating DESC LIMIT 6`),
+    query(`SELECT * FROM places WHERE status = 'active' ORDER BY created_at DESC LIMIT 8`),
+    query(`SELECT * FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC LIMIT 3`),
+    query(`SELECT category, COUNT(*) as count FROM places WHERE status = 'active' GROUP BY category`)
+  ]);
+  
+  featuredPlaces = featuredResult.rows;
+  recentPlaces = recentResult.rows;
+  recentPosts = postsResult.rows;
+  categories = categoriesResult.rows;
+} catch (e) {
+  console.error('Error loading homepage data:', e);
+}
+
+const categoryIcons: Record<string, string> = {
+  restaurant: '🍽️',
+  hotel: '🏨',
+  shopping: '🛍️',
+  attraction: '🏛️',
+  service: '🔧',
+  entertainment: '🎭',
+  dini: '🕌',
+  tarihi: '🏺',
+  yemek: '🥘',
+  doga: '🌳',
+};
+
+const categoryNames: Record<string, string> = {
+  restaurant: 'Restoran',
+  hotel: 'Otel',
+  shopping: 'Alışveriş',
+  attraction: 'Turistik Yer',
+  service: 'Hizmet',
+  entertainment: 'Eğlence',
+  dini: 'Dini Yer',
+  tarihi: 'Tarihi Yer',
+  yemek: 'Yemek',
+  doga: 'Doğa',
 };
 ---
 
 <Layout seo={seo}>
-  <!-- Hero Section -->
-  <Hero />
-  
-  <!-- Weather Widget -->
-  <section class="bg-gray-50 dark:bg-gray-800 border-y border-gray-100 dark:border-gray-700">
-    <div class="container-custom py-6">
-      <WeatherWidget />
-    </div>
-  </section>
-  
-  <!-- Stats Section -->
-  <Stats />
-  
-  <!-- Featured Places -->
-  <FeaturedPlaces />
-  
-  <!-- Historical Sites -->
-  <HistoricalSites />
-  
-  <!-- Food Guide -->
-  <FoodGuide />
-  
-  <!-- Latest Blog Posts -->
-  <LatestBlog />
-  
-  <!-- CTA Section -->
-  <CTASection />
+  <div class="min-h-screen">
+    {/* Hero Section */}
+    <section class="relative bg-gradient-to-br from-red-600 to-orange-500 text-white pt-32 pb-20 px-4">
+      <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.4"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]" />
+      
+      <div class="container mx-auto max-w-4xl text-center relative z-10">
+        <h1 class="text-4xl md:text-6xl font-bold mb-6">
+          Şanlıurfa'nın En İyi<br />Mekanlarını Keşfedin
+        </h1>
+        <p class="text-xl text-red-100 mb-8 max-w-2xl mx-auto">
+          Restoranlardan otellere, tarihi yerlerden alışveriş noktalarına 
+          şehrin tüm incileri tek platformda.
+        </p>
+        
+        {/* Search Box */}
+        <form action="/arama" class="max-w-2xl mx-auto bg-white rounded-2xl p-2 shadow-2xl">
+          <div class="flex gap-2">
+            <input
+              type="text"
+              name="q"
+              placeholder="Mekan, restoran veya otel ara..."
+              class="flex-1 px-6 py-4 text-gray-800 rounded-xl focus:outline-none text-lg"
+            />
+            <button
+              type="submit"
+              class="px-8 py-4 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors flex items-center gap-2"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span class="hidden sm:inline">Ara</span>
+            </button>
+          </div>
+        </form>
+
+        {/* Quick Links */}
+        <div class="flex flex-wrap justify-center gap-3 mt-8">
+          {['Ciğerci', 'Göbeklitepe', 'Hotel', 'Kahvaltı'].map(tag => (
+            <a
+              href={`/arama?q=${encodeURIComponent(tag)}`}
+              class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors"
+            >
+              {tag}
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Categories */}
+    <section class="py-16 bg-gray-50">
+      <div class="container mx-auto px-4">
+        <h2 class="text-2xl font-bold text-center text-gray-900 mb-8">Kategoriler</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {categories.map(cat => (
+            <a
+              href={`/kategori/${cat.category}`}
+              class="bg-white rounded-xl p-6 text-center hover:shadow-lg transition-shadow group"
+            >
+              <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">
+                {categoryIcons[cat.category] || '📍'}
+              </div>
+              <h3 class="font-medium text-gray-900">{categoryNames[cat.category] || cat.category}</h3>
+              <p class="text-sm text-gray-500">{cat.count} mekan</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Featured Places */}
+    {featuredPlaces.length > 0 && (
+      <section class="py-16">
+        <div class="container mx-auto px-4">
+          <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-bold text-gray-900">Öne Çıkan Mekanlar</h2>
+            <a href="/places" class="text-red-600 hover:text-red-700 font-medium flex items-center gap-1">
+              Tümünü Gör
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredPlaces.map(place => (
+              <PlaceCard place={place} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {/* Recent Places */}
+    {recentPlaces.length > 0 && (
+      <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4">
+          <h2 class="text-2xl font-bold text-gray-900 mb-8">Yeni Eklenenler</h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {recentPlaces.map(place => (
+              <PlaceCard place={place} compact />
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {/* Blog Section */}
+    {recentPosts.length > 0 && (
+      <section class="py-16">
+        <div class="container mx-auto px-4">
+          <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-bold text-gray-900">Blog'dan Son Yazılar</h2>
+            <a href="/blog" class="text-red-600 hover:text-red-700 font-medium">Tüm Yazılar →</a>
+          </div>
+          <div class="grid md:grid-cols-3 gap-6">
+            {recentPosts.map(post => (
+              <a href={`/blog/${post.slug}`} class="group">
+                <article class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
+                  {post.cover_image ? (
+                    <img src={post.cover_image} alt={post.title} class="w-full h-48 object-cover group-hover:scale-105 transition-transform" />
+                  ) : (
+                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-4xl">📝</div>
+                  )}
+                  <div class="p-5">
+                    <span class="text-xs text-red-600 font-medium">{post.category}</span>
+                    <h3 class="font-bold text-gray-900 mt-2 line-clamp-2">{post.title}</h3>
+                    <p class="text-gray-500 text-sm mt-2 line-clamp-2">{post.excerpt}</p>
+                  </div>
+                </article>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {/* CTA Section */}
+    <section class="py-20 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+      <div class="container mx-auto px-4 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">İşletmenizi Eklemek İster Misiniz?</h2>
+        <p class="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
+          Şanlıurfa.com'a katılın, binlerce potansiyel müşteriye ulaşın.
+          Kayıt ücretsiz, yönetimi kolay.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="/isletme-kayit" class="px-8 py-4 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors">
+            Hemen Başvurun
+          </a>
+          <a href="/iletisim" class="px-8 py-4 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-colors">
+            Daha Fazla Bilgi
+          </a>
+        </div>
+      </div>
+    </section>
+
+    {/* Features */}
+    <section class="py-16 bg-gray-50">
+      <div class="container mx-auto px-4">
+        <div class="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto text-center">
+          <div>
+            <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">⭐</div>
+            <h3 class="font-bold text-gray-900 mb-2">Güvenilir Değerlendirmeler</h3>
+            <p class="text-gray-600">Gerçek kullanıcı yorumları ve puanlamaları</p>
+          </div>
+          <div>
+            <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">📍</div>
+            <h3 class="font-bold text-gray-900 mb-2">Kolay Lokasyon</h3>
+            <p class="text-gray-600">Harita üzerinden hızlı yol tarifi</p>
+          </div>
+          <div>
+            <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">📱</div>
+            <h3 class="font-bold text-gray-900 mb-2">Her Yerden Erişim</h3>
+            <p class="text-gray-600">Mobil uyumlu tasarım</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 </Layout>

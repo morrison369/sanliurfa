@@ -7,12 +7,12 @@ interface Props {
 
 const { type, data } = Astro.props;
 
-const baseSchema = {
+const baseSchema: Record<string, any> = {
   '@context': 'https://schema.org',
   '@type': type,
 };
 
-const schema = { ...baseSchema, ...data };
+const schema: Record<string, any> = { ...baseSchema, ...data };
 
 // Type-specific required fields
 switch (type) {

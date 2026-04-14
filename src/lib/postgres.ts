@@ -1,275 +1,159 @@
-import pg from 'pg';
-const { Pool } = pg;
-import { metricsCollector, performanceThresholds } from './metrics';
-import { logger } from './logging';
-
-// Get DATABASE_URL and READ_REPLICA_URL from environment
-const DATABASE_URL = process.env.DATABASE_URL;
-const READ_REPLICA_URL = process.env.READ_REPLICA_URL;
-
-if (!DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is required but not set');
-}
-
-// ==================== CONNECTION POOL CONFIGURATION ====================
-
 /**
- * Adaptive pool configuration based on environment
- * - Development: smaller pool (2-5 connections)
- * - Production: larger pool (5-20 connections) with dynamic scaling
+ * PostgreSQL Database Client
+ * Real connection pool with parameterized queries, slow query detection,
+ * and automatic reconnection.
  */
-const getPoolConfig = (isDev: boolean) => ({
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: isDev ? 5 : 20,
-  min: isDev ? 2 : 5,
+
+import pg from 'pg';
+const { Pool: PgPool } = pg;
+
+// Environment-based configuration
+const isProduction = process.env.NODE_ENV === 'production';
+
+const DATABASE_URL = process.env.DATABASE_URL
+  || `postgresql://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'postgres'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5432'}/${process.env.DB_NAME || 'sanliurfa'}`;
+
+// CWP shared hosting: max 5-10 connections. VPS/dedicated: up to 20.
+const pool = new PgPool({
+  connectionString: DATABASE_URL,
+  max: isProduction ? 8 : 5,
+  min: isProduction ? 2 : 1,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
-  statement_timeout: 30000,
-  // Phase 5: Connection reuse optimization
-  application_name: 'sanliurfa-api',
-  reapIntervalMillis: 5000, // Reap idle connections every 5s for efficiency
+  allowExitOnIdle: !isProduction,
 });
 
-const isDev = process.env.NODE_ENV !== 'production';
-
-// PostgreSQL write pool (primary)
-export const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ...getPoolConfig(isDev)
-});
-
-// Phase 5: Read replica pool for SELECT queries (optional)
-export const readReplicaPool = READ_REPLICA_URL ? new Pool({
-  connectionString: READ_REPLICA_URL,
-  ...getPoolConfig(isDev)
-}) : null;
-
+// Connection error handling — log but don't crash
 pool.on('error', (err) => {
-  logger.error('PostgreSQL pool error', err);
+  console.error('[postgres] Unexpected pool error:', err.message);
 });
 
-if (readReplicaPool) {
-  readReplicaPool.on('error', (err) => {
-    logger.warn('Read replica pool error, falling back to primary', err);
-  });
+// Slow query threshold (ms)
+const SLOW_QUERY_THRESHOLD = 1000;
+
+export interface QueryResult<T = any> {
+  rows: T[];
+  rowCount: number;
+  command: string;
 }
 
-// ==================== POOL STATISTICS & MONITORING ====================
-
 /**
- * Phase 5: Enhanced pool status tracking with per-pool metrics
+ * Execute a SQL query with parameterized values
  */
-export function updatePoolStatus(): void {
-  const getPoolStats = (p: any, name: string) => {
-    const poolState = p._clients || [];
-    const idleCount = p._idle ? p._idle.length : 0;
-    const totalConnections = poolState.length;
-    const activeConnections = totalConnections - idleCount;
-    const waitingRequests = p._waitingCount || 0;
+export async function query<T = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
+  const start = Date.now();
+  try {
+    const result = await pool.query(text, params);
+    const duration = Date.now() - start;
+
+    if (duration > SLOW_QUERY_THRESHOLD) {
+      console.warn(`[postgres] Slow query (${duration}ms):`, text.substring(0, 120));
+    }
 
     return {
-      name,
-      totalConnections,
-      activeConnections,
-      idleConnections: idleCount,
-      waitingRequests,
-      utilization: totalConnections > 0 ? ((activeConnections / totalConnections) * 100).toFixed(1) : '0'
+      rows: result.rows,
+      rowCount: result.rowCount ?? 0,
+      command: result.command,
     };
-  };
-
-  const primaryStats = getPoolStats(pool, 'primary');
-  const replicaStats = readReplicaPool ? getPoolStats(readReplicaPool, 'replica') : null;
-
-  metricsCollector.setPoolStatus(primaryStats);
-
-  // Phase 5: Log replica pool status if available
-  if (replicaStats) {
-    metricsCollector.recordSlowOperation(
-      'pool',
-      `Replica pool utilization: ${replicaStats.utilization}%`,
-      0,
-      replicaStats
-    );
-  }
-}
-
-// Update pool status periodically (every 30 seconds)
-setInterval(updatePoolStatus, 30000);
-
-/**
- * Enhanced pool health monitoring with alerting
- */
-function monitorPoolHealth(): void {
-  setInterval(() => {
-    const poolState = (pool as any)._clients || [];
-    const idleCount = (pool as any)._idle ? (pool as any)._idle.length : 0;
-    const totalConnections = poolState.length;
-    const activeConnections = totalConnections - idleCount;
-    const waitingRequests = (pool as any)._waitingCount || 0;
-
-    const utilization = (activeConnections / totalConnections) * 100;
-
-    if (utilization > 80) {
-      logger.warn('Connection pool high utilization', {
-        utilization: Math.round(utilization),
-        active: activeConnections,
-        idle: idleCount,
-        waiting: waitingRequests
-      });
-    }
-
-    if (waitingRequests > 5) {
-      logger.error('Connection pool saturation detected', {
-        waiting: waitingRequests,
-        utilization: Math.round(utilization)
-      });
-    }
-  }, 30000); // Check every 30 seconds
-}
-
-// Start pool health monitoring
-monitorPoolHealth();
-
-// ==================== QUERY HELPERS ====================
-
-/**
- * Phase 5: Query execution with automatic read replica routing
- * - SELECT queries are routed to read replica if available
- * - All other operations go to primary pool
- */
-export async function query(text: string, params?: any[], options?: { useReplica?: boolean }) {
-  const start = Date.now();
-  const isSelect = text.trim().toUpperCase().startsWith('SELECT');
-
-  // Phase 5: Route SELECTs to replica if available and explicitly allowed
-  const targetPool = isSelect && options?.useReplica && readReplicaPool ? readReplicaPool : pool;
-  const poolName = targetPool === readReplicaPool ? 'replica' : 'primary';
-
-  try {
-    const result = await targetPool.query(text, params);
-    const duration = Date.now() - start;
-
-    // Record query metrics with pool routing info
-    metricsCollector.recordQuery(text, duration, result.rowCount || undefined, undefined, poolName);
-
-    // Log slow queries
-    if (duration > performanceThresholds.slowQueryMs) {
-      const isVerySlow = duration > 1000;
-
-      if (isVerySlow) {
-        metricsCollector.recordSlowOperation(
-          'query',
-          `Very slow query [${poolName}]: ${text.substring(0, 100)}`,
-          duration,
-          { rows: result.rowCount, sql: text.substring(0, 200), pool: poolName },
-          new Error().stack
-        );
-        logger.warn('Very slow query detected', {
-          duration,
-          rows: result.rowCount,
-          query: text.substring(0, 100),
-          pool: poolName
-        });
-      } else {
-        metricsCollector.recordSlowOperation(
-          'query',
-          `Slow query [${poolName}]: ${text.substring(0, 100)}`,
-          duration,
-          { rows: result.rowCount, pool: poolName }
-        );
-        logger.debug('Slow query detected', {
-          duration,
-          rows: result.rowCount,
-          query: text.substring(0, 100),
-          pool: poolName
-        });
-      }
-    }
-
-    return result;
   } catch (error) {
     const duration = Date.now() - start;
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    metricsCollector.recordQuery(text, duration, undefined, errorMsg, poolName);
-
-    logger.error('Query error', error instanceof Error ? error : new Error(String(error)), {
-      query: text.substring(0, 100),
-      duration,
-      pool: poolName
-    });
+    console.error(`[postgres] Query failed (${duration}ms):`, text.substring(0, 120), error instanceof Error ? error.message : error);
     throw error;
   }
 }
 
 /**
- * Phase 5: Stream large result sets efficiently without loading into memory
- * Use for queries that return many rows (> 1000 rows)
+ * Execute a query and return single result or null
  */
-export async function queryStream(text: string, params?: any[], onRow?: (row: any) => Promise<void>) {
-  const client = await pool.connect();
-  let rowCount = 0;
-
-  try {
-    const query = client.query(new (pg as any).Query({
-      text,
-      values: params,
-      rowMode: 'object'
-    }));
-
-    return new Promise<number>((resolve, reject) => {
-      query.on('row', async (row) => {
-        rowCount++;
-        if (onRow) {
-          try {
-            await onRow(row);
-          } catch (err) {
-            logger.error('Row processing error in stream', err);
-          }
-        }
-      });
-
-      query.on('error', (err) => {
-        logger.error('Stream query error', err);
-        reject(err);
-      });
-
-      query.on('end', () => {
-        metricsCollector.recordQuery(text, 0, rowCount);
-        resolve(rowCount);
-      });
-    });
-  } finally {
-    client.release();
-  }
-}
-
-/**
- * Execute a query and return the first row or null
- */
-export async function queryOne(text: string, params?: any[]) {
-  const result = await query(text, params);
+export async function queryOne<T = any>(text: string, params?: any[]): Promise<T | null> {
+  const result = await query<T>(text, params);
   return result.rows[0] || null;
 }
 
 /**
- * Execute a query and return all rows
- * Phase 5: Optional streaming for large result sets
+ * Execute a query and return all results
  */
-export async function queryMany(text: string, params?: any[], options?: { stream?: boolean; onRow?: (row: any) => Promise<void> }) {
-  if (options?.stream && options?.onRow) {
-    // Use streaming for large datasets
-    const rowCount = await queryStream(text, params, options.onRow);
-    return { rowCount, streamed: true };
-  }
-
-  const result = await query(text, params);
+export async function queryMany<T = any>(text: string, params?: any[]): Promise<T[]> {
+  const result = await query<T>(text, params);
   return result.rows;
 }
 
 /**
- * Execute a transaction with automatic rollback on error
+ * Execute insert query and return inserted row
  */
-export async function transaction<T>(callback: (client: pg.PoolClient) => Promise<T>): Promise<T> {
+export async function insert<T = any>(
+  table: string,
+  data: Record<string, any>,
+  upsert?: boolean
+): Promise<T | null> {
+  validateTable(table);
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+  const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
+
+  let text = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
+
+  if (upsert) {
+    const updateClause = keys.map((k) => `${k} = EXCLUDED.${k}`).join(', ');
+    text += ` ON CONFLICT (id) DO UPDATE SET ${updateClause}`;
+  }
+
+  text += ' RETURNING *';
+  return queryOne<T>(text, values);
+}
+
+/**
+ * Execute update query and return updated row
+ */
+export async function update<T = any>(
+  table: string,
+  where: Record<string, any> | string | number,
+  data: Record<string, any>
+): Promise<T | null> {
+  validateTable(table);
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+  const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
+
+  if (typeof where === 'object' && where !== null) {
+    const whereKeys = Object.keys(where);
+    const whereClause = whereKeys.map((k, i) => `${k} = $${values.length + i + 1}`).join(' AND ');
+    const text = `UPDATE ${table} SET ${setClause}, updated_at = NOW() WHERE ${whereClause} RETURNING *`;
+    return queryOne<T>(text, [...values, ...Object.values(where)]);
+  }
+
+  const text = `UPDATE ${table} SET ${setClause}, updated_at = NOW() WHERE id = $${values.length + 1} RETURNING *`;
+  return queryOne<T>(text, [...values, where]);
+}
+
+/**
+ * Execute delete query
+ */
+export async function deleteQuery<T = any>(
+  table: string,
+  where: Record<string, any> | string | number
+): Promise<T | null> {
+  validateTable(table);
+  if (typeof where === 'object' && where !== null) {
+    const whereKeys = Object.keys(where);
+    const whereClause = whereKeys.map((k, i) => `${k} = $${i + 1}`).join(' AND ');
+    const text = `DELETE FROM ${table} WHERE ${whereClause} RETURNING *`;
+    return queryOne<T>(text, Object.values(where));
+  }
+
+  const text = `DELETE FROM ${table} WHERE id = $1 RETURNING *`;
+  return queryOne<T>(text, [where]);
+}
+
+export { deleteQuery as delete };
+export { deleteQuery as remove };
+
+/**
+ * Execute queries within a transaction
+ */
+export async function transaction<T>(
+  callback: (client: pg.PoolClient) => Promise<T>
+): Promise<T> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -284,178 +168,80 @@ export async function transaction<T>(callback: (client: pg.PoolClient) => Promis
   }
 }
 
-// ==================== TABLE SECURITY ====================
+/**
+ * Get the raw pool instance (for sitemap-dynamic.xml.ts and similar)
+ */
+export function getPool() {
+  return pool;
+}
 
 /**
- * Allowed table names to prevent SQL injection via table parameter
- * Phase 5: Added loyalty, social, and analytics tables
+ * Pool status for monitoring
  */
+export function getPoolStatus() {
+  return {
+    totalCount: pool.totalCount,
+    idleCount: pool.idleCount,
+    waitingCount: pool.waitingCount,
+  };
+}
+
+/**
+ * Update pool status (compat with existing code)
+ */
+export function updatePoolStatus(_status: string): void {
+  // No-op — pool status is read from getPoolStatus()
+}
+
+// Table allowlist to prevent SQL injection on table names
 const ALLOWED_TABLES = new Set([
-  'users',
-  'places',
-  'blog_posts',
-  'reviews',
-  'comments',
-  'favorites',
-  'events',
-  'historical_sites',
-  'reservations',
+  'users', 'places', 'reviews', 'comments', 'favorites',
+  'blog_posts', 'blog_comments', 'blog_subscribers',
+  'events', 'event_rsvps',
+  'historical_sites', 'foods',
+  'categories', 'place_daily_analytics',
   'notifications',
-  'coupons',
-  'categories',
-  'tags',
-  'messages',
-  'points_history',
-  'badges',
-  'user_badges',
-  'place_photos',
-  'photo_votes',
-  // Phase 16: Loyalty & Rewards
-  'loyalty_points',
-  'loyalty_tiers',
-  'user_achievements',
-  'user_badges',
-  'rewards',
-  'reward_inventory',
-  'user_tier_history',
-  // Phase 25: Social Features
-  'user_activity',
-  'followers',
-  'mentions',
-  'hashtag_index',
-  // Phase 28D: Real-time Analytics
-  'request_metrics',
-  'query_metrics',
-  'performance_metrics'
+  'loyalty_points', 'loyalty_tiers', 'user_badges', 'user_achievements',
+  'rewards', 'reward_inventory', 'user_tier_history',
+  'user_activity', 'followers', 'mentions',
+  'user_subscriptions', 'subscription_usage',
+  'webhooks', 'webhook_logs',
+  'reservations', 'promotions',
+  'support_tickets', 'support_messages',
+  'collections', 'collection_items',
+  'user_blocks', 'content_reports',
+  'system_logs', 'migration_tracking',
+  'photos', 'photo_albums',
+  'messages', 'conversations',
+  'coupons', 'coupon_usage',
+  'featured_listings',
+  'search_history',
+  'email_subscriptions',
+  'contact_submissions',
 ]);
 
-/**
- * Validate that a table name is in the allowed list
- * Throws if table is not allowed
- */
-function assertTable(table: string): void {
+function validateTable(table: string): void {
   if (!ALLOWED_TABLES.has(table)) {
-    throw new Error(`Invalid table name: ${table}. Allowed: ${Array.from(ALLOWED_TABLES).join(', ')}`);
+    throw new Error(`Table "${table}" is not in the allowed tables list. Add it to ALLOWED_TABLES in postgres.ts if this is a new table.`);
   }
 }
 
-// ==================== GENERIC ORM HELPERS ====================
+// Read replica pool — same pool for now, can be split for read-heavy workloads
+export const readReplicaPool = pool;
 
-/**
- * Get all rows from a table with pagination
- */
-export async function getAll(table: string, options?: { limit?: number; offset?: number }) {
-  assertTable(table);
-  const limit = options?.limit || 100;
-  const offset = options?.offset || 0;
-  const result = await query(`SELECT * FROM ${table} LIMIT $1 OFFSET $2`, [limit, offset]);
-  return result.rows;
-}
+export { pool, ALLOWED_TABLES };
 
-/**
- * Get a single row by ID
- */
-export async function getById(table: string, id: string) {
-  assertTable(table);
-  return await queryOne(`SELECT * FROM ${table} WHERE id = $1`, [id]);
-}
-
-/**
- * Get a single row by slug
- */
-export async function getBySlug(table: string, slug: string) {
-  assertTable(table);
-  return await queryOne(`SELECT * FROM ${table} WHERE slug = $1`, [slug]);
-}
-
-/**
- * Insert a new row
- * WARNING: Column names are interpolated. Only use with trusted/validated column names.
- */
-export async function insert(table: string, data: Record<string, any>) {
-  assertTable(table);
-  const keys = Object.keys(data);
-  const values = Object.values(data);
-
-  if (keys.length === 0) {
-    throw new Error('No data to insert');
-  }
-
-  const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
-  const result = await queryOne(`INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders}) RETURNING *`, values);
-  return result;
-}
-
-/**
- * Update a row by ID
- * WARNING: Column names are interpolated. Only use with trusted/validated column names.
- */
-export async function update(table: string, id: string, data: Record<string, any>) {
-  assertTable(table);
-  const keys = Object.keys(data);
-  const values = Object.values(data);
-
-  if (keys.length === 0) {
-    throw new Error('No data to update');
-  }
-
-  const setClause = keys.map((k, i) => `${k} = $${i + 2}`).join(', ');
-  const result = await queryOne(`UPDATE ${table} SET ${setClause} WHERE id = $1 RETURNING *`, [id, ...values]);
-  return result;
-}
-
-/**
- * Delete a row by ID
- */
-export async function remove(table: string, id: string) {
-  assertTable(table);
-  await query(`DELETE FROM ${table} WHERE id = $1`, [id]);
-  return { success: true };
-}
-
-// ==================== BACKWARD COMPATIBILITY ====================
-
-/**
- * Supabase API shim for backward compatibility
- */
-export const db = {
-  from: (table: string) => ({
-    select: async (columns = '*') => {
-      assertTable(table);
-      const result = await query(`SELECT ${columns} FROM ${table}`);
-      return { data: result.rows, error: null };
-    },
-    selectOne: async (columns = '*') => {
-      assertTable(table);
-      const result = await queryOne(`SELECT ${columns} FROM ${table}`);
-      return { data: result, error: null };
-    },
-    eq: async (column: string, value: any) => {
-      assertTable(table);
-      const result = await query(`SELECT * FROM ${table} WHERE ${column} = $1`, [value]);
-      return { data: result.rows, error: null };
-    },
-    eqOne: async (column: string, value: any) => {
-      assertTable(table);
-      const result = await queryOne(`SELECT * FROM ${table} WHERE ${column} = $1`, [value]);
-      return { data: result, error: null };
-    },
-    insert: async (data: any) => {
-      const result = await insert(table, data);
-      return { data: result, error: null };
-    },
-    update: async (data: any) => {
-      if (data.id) {
-        const { id, ...rest } = data;
-        const result = await update(table, id, rest);
-        return { data: result, error: null };
-      }
-      return { data: null, error: { message: 'ID required' } };
-    },
-    delete: async () => {
-      return { data: null, error: { message: 'Use remove() instead' } };
-    }
-  })
+export default {
+  pool,
+  query,
+  queryOne,
+  queryMany,
+  insert,
+  update,
+  delete: deleteQuery,
+  remove: deleteQuery,
+  transaction,
+  getPool,
+  getPoolStatus,
+  updatePoolStatus,
 };
-
-export default pool;

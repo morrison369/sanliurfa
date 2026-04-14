@@ -1,7 +1,21 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { Clock, Users, ChefHat, Flame, MapPin, Star, ArrowRight } from 'lucide-react';
 import Breadcrumb from '../../components/Breadcrumb.astro';
+
+// SVG ikonlar
+const icons = {
+  clock: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  clockLarge: `<svg class="w-6 h-6 text-urfa-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  users: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  usersLarge: `<svg class="w-6 h-6 text-urfa-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  chefHat: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>`,
+  chefHatLarge: `<svg class="w-6 h-6 text-urfa-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>`,
+  flame: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.43-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`,
+  mapPin: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  star: `<svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`,
+  starLarge: `<svg class="w-6 h-6 text-urfa-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  arrowRight: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`,
+};
 
 // TODO: Fetch from Supabase
 const food = {
@@ -105,12 +119,12 @@ const seo = {
           <div class="flex items-center gap-3 mb-4">
             {food.isSpicy && (
               <span class="inline-flex items-center gap-1 px-3 py-1 bg-isot-600 text-white text-sm rounded-full">
-                <Flame className="w-4 h-4" />
+                <span set:html={icons.flame}></span>
                 Acılı
               </span>
             )}
             <span class="inline-flex items-center gap-1 px-3 py-1 bg-white/20 text-white text-sm rounded-full backdrop-blur-sm">
-              <ChefHat className="w-4 h-4" />
+              <span set:html={icons.chefHat}></span>
               {food.difficulty}
             </span>
           </div>
@@ -132,22 +146,22 @@ const seo = {
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <Clock className="w-6 h-6 text-urfa-600 mx-auto mb-2" />
+                <span set:html={icons.clockLarge}></span>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Hazırlama</p>
                 <p class="font-semibold text-gray-900 dark:text-white">{food.prepTime}</p>
               </div>
               <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <Users className="w-6 h-6 text-urfa-600 mx-auto mb-2" />
+                <span set:html={icons.usersLarge}></span>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Porsiyon</p>
                 <p class="font-semibold text-gray-900 dark:text-white">{food.servingSize}</p>
               </div>
               <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <ChefHat className="w-6 h-6 text-urfa-600 mx-auto mb-2" />
+                <span set:html={icons.chefHatLarge}></span>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Zorluk</p>
                 <p class="font-semibold text-gray-900 dark:text-white">{food.difficulty}</p>
               </div>
               <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                <Star className="w-6 h-6 text-urfa-600 mx-auto mb-2" />
+                <span set:html={icons.starLarge}></span>
                 <p class="text-sm text-gray-600 dark:text-gray-400">Puan</p>
                 <p class="font-semibold text-gray-900 dark:text-white">{food.rating}/5</p>
               </div>
@@ -211,7 +225,7 @@ const seo = {
                     <p class="text-xs text-gray-600 dark:text-gray-400">{place.address}</p>
                   </div>
                   <div class="flex items-center gap-1 text-sm">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    <span set:html={icons.star}></span>
                     <span class="font-medium">{place.rating}</span>
                   </div>
                 </a>
@@ -219,7 +233,7 @@ const seo = {
             </div>
             <a href="/places?category=restaurant" class="btn-outline w-full mt-4 text-sm flex items-center justify-center gap-2">
               Tüm Restoranlar
-              <ArrowRight className="w-4 h-4" />
+              <span set:html={icons.arrowRight}></span>
             </a>
           </div>
           

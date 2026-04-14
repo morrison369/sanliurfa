@@ -5,7 +5,7 @@
  */
 
 import Layout from '../../layouts/Layout.astro';
-import { getAllCampaigns } from '../../lib/email-campaigns';
+import { getAllCampaigns } from '../../lib/email/email-campaigns';
 import { getSequence, getSequenceSteps } from '../../lib/email-automation';
 
 // Check auth
@@ -26,29 +26,25 @@ const campaigns = await getAllCampaigns(100);
 
     <!-- Tabs -->
     <div class="tabs mb-8" role="tablist">
-      <button
-        class="tab-button active px-6 py-3 font-medium border-b-2 border-blue-500 text-blue-600"
+      <button class="tab-button active px-6 py-3 font-medium border-b-2 border-blue-500 text-blue-600"
         role="tab"
         data-tab="campaigns"
       >
         Kampanyalar
       </button>
-      <button
-        class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
+      <button class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
         role="tab"
         data-tab="create"
       >
         Yeni Kampanya
       </button>
-      <button
-        class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
+      <button class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
         role="tab"
         data-tab="analytics"
       >
         Analitik
       </button>
-      <button
-        class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
+      <button class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
         role="tab"
         data-tab="sequences"
       >
@@ -103,20 +99,17 @@ const campaigns = await getAllCampaigns(100);
               </div>
 
               <div class="flex gap-2">
-                <button
-                  class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
                   onclick="sendCampaign({campaign.id})"
                 >
                   Hemen Gönder
                 </button>
-                <button
-                  class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm"
+                <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm"
                   onclick="testCampaign({campaign.id})"
                 >
                   Test Gönder
                 </button>
-                <button
-                  class="px-4 py-2 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 text-sm"
+                <button class="px-4 py-2 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 text-sm"
                   onclick="editCampaign({campaign.id})"
                 >
                   Düzenle
@@ -341,16 +334,16 @@ const campaigns = await getAllCampaigns(100);
   // Form submission
   document.getElementById('campaign-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const form = e.target as HTMLFormElement;
+    const form = e.target;
     const data = new FormData(form);
 
     const payload = {
-      name: data.get('name'),
-      subject: data.get('subject'),
-      fromName: data.get('fromName'),
-      fromEmail: data.get('fromEmail'),
-      segment: data.get('segment'),
-      htmlContent: data.get('htmlContent'),
+      name: data.get('token'),
+      subject: data.get('token'),
+      fromName: data.get('token'),
+      fromEmail: data.get('token'),
+      segment: data.get('token'),
+      htmlContent: data.get('token'),
       textContent: '',
       status: 'draft'
     };

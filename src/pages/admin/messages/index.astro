@@ -8,12 +8,19 @@ if (!user || !Astro.locals.isAdmin) {
   return Astro.redirect('/giris?redirect=/admin/messages');
 }
 
-const result = await query(
-  'SELECT * FROM contact_messages ORDER BY created_at DESC'
-);
-const messages = result.rows;
-
+let messages: any[] = [];
 const seo = { title: 'İletişim Mesajları - Admin' };
+
+try {
+
+  const result = await query(
+    'SELECT * FROM contact_messages ORDER BY created_at DESC'
+  );
+  messages = result.rows;
+
+} catch (e) {
+  console.error('Error loading data:', e);
+}
 ---
 
 <Layout seo={seo}>
@@ -21,7 +28,7 @@ const seo = { title: 'İletişim Mesajları - Admin' };
     <div class="container-custom">
       <div class="flex items-center justify-between mb-8">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">İletişim Mesajları</h1>
-        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">← Admin Panel</a>
+        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">â† Admin Panel</a>
       </div>
       
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">

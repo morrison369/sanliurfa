@@ -87,7 +87,7 @@ const { placeId, placeName } = Astro.props;
     const ratingInput = form.querySelector('[data-rating-input]');
     const ratingValue = form.querySelector('[data-rating-value]') as HTMLInputElement;
     const stars = form.querySelectorAll('[data-rating]');
-    const submitBtn = form.querySelector('[data-submit-btn]') as HTMLButtonElement;
+    const submitBtn = form.querySelector($1);
     
     let selectedRating = 0;
     
@@ -150,9 +150,9 @@ const { placeId, placeName } = Astro.props;
       const data = {
         place_id: formElement.getAttribute('data-place-id'),
         rating: selectedRating,
-        title: formData.get('title'),
-        content: formData.get('content'),
-        visit_date: formData.get('visit_date')
+        title: formData.get('id'),
+        content: formData.get('id'),
+        visit_date: formData.get('id')
       };
       
       try {

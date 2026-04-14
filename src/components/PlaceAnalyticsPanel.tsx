@@ -1,7 +1,20 @@
 import React, { useState, useEffect } from 'react';
 
-export default function PlaceAnalyticsPanel({ placeId }) {
-  const [analytics, setAnalytics] = useState(null);
+interface AnalyticsData {
+  reviews: {
+    total: number;
+    average: number;
+  };
+  ratingDistribution: Array<{
+    rating: number;
+    count: number;
+  }>;
+  favorites: number;
+  views: number;
+}
+
+export default function PlaceAnalyticsPanel({ placeId }: { placeId: string }) {
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -44,7 +57,7 @@ export default function PlaceAnalyticsPanel({ placeId }) {
           <p className="text-3xl font-bold text-red-600">{favorites}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">Goruntulemeler</p>
+          <p className="text-sm text-gray-600">Görüntülemeler</p>
           <p className="text-3xl font-bold text-blue-600">{views}</p>
         </div>
       </div>

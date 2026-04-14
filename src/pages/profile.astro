@@ -1,15 +1,259 @@
 ---
+// User Profile Page
 import Layout from '../layouts/Layout.astro';
-import UserProfile from '../components/UserProfile';
+import { requireAuth } from '../lib/auth';
+import { getUserProfile } from '../lib/user/users';
+import { getSocialStats } from '../lib/social/friendship-db';
+import { getUserReviews } from '../lib/places/reviews';
+import { getUserSubmissions } from '../lib/places/user-submissions';
 
-const seo = {
-  title: 'Profilim - Şanlıurfa.com',
-  description: 'Profil bilgileri, favorileri, aktivite geçmişi',
-};
+const auth = await requireAuth(Astro.request);
+if (auth instanceof Response) return auth;
+
+const [profile, socialStats, reviews, submissions] = await Promise.all([
+  getUserProfile(auth.user.id),
+  getSocialStats(auth.user.id),
+  getUserReviews(auth.user.id),
+  getUserSubmissions(auth.user.id),
+]);
 ---
 
-<Layout seo={seo}>
-  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20 pb-12">
-    <UserProfile client:load />
+<Layout title={`${profile?.full_name || 'Profil'} - Şanlıurfa Rehberi`}>
+  <div class="min-h-screen bg-gray-50">
+    {/* Profile Header */}
+    <section class="bg-white border-b">
+      <div class="container-custom py-8">
+        <div class="flex flex-col md:flex-row items-center gap-6">
+          {/* Avatar */}
+          <div class="relative">
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.full_name}
+                class="w-32 h-32 rounded-full object-cover border-4 border-amber-100"
+              />
+            ) : (
+              <div class="w-32 h-32 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-4xl font-bold border-4 border-amber-100">
+                {profile?.full_name?.charAt(0).toUpperCase() || 'U'}
+              </div>
+            )}
+            <button
+              onclick="changeAvatar()"
+              class="absolute bottom-0 right-0 w-10 h-10 bg-gray-900 text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors"
+              title="Fotoğraf değiştir"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </button>
+          </div>
+          
+          {/* Info */}
+          <div class="flex-1 text-center md:text-left">
+            <h1 class="text-3xl font-bold">{profile?.full_name}</h1>
+            <p class="text-gray-500 mt-1">@{profile?.username || auth.user.username}</p>
+            <p class="text-gray-600 mt-2 max-w-lg">{profile?.bio || 'Henüz biyografi eklenmemiş.'}</p>
+            
+            {/* Stats */}
+            <div class="flex items-center justify-center md:justify-start gap-6 mt-4">
+              <a href="/takipciler" class="text-center hover:text-amber-600 transition-colors">
+                <div class="text-2xl font-bold">{socialStats?.follower_count || 0}</div>
+                <div class="text-sm text-gray-500">Takipçi</div>
+              </a>
+              <a href="/takip-edilenler" class="text-center hover:text-amber-600 transition-colors">
+                <div class="text-2xl font-bold">{socialStats?.following_count || 0}</div>
+                <div class="text-sm text-gray-500">Takip</div>
+              </a>
+              <div class="text-center">
+                <div class="text-2xl font-bold">{reviews.length}</div>
+                <div class="text-sm text-gray-500">Değerlendirme</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold">{profile?.points || 0}</div>
+                <div class="text-sm text-gray-500">Puan</div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Actions */}
+          <div class="flex flex-col gap-2">
+            <a
+              href="/ayarlar"
+              class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-center"
+            >
+              Profili Düzenle
+            </a>
+            <a
+              href="/places/ekle"
+              class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-center"
+            >
+              Mekan Ekle
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Content Tabs */}
+    <section class="container-custom py-8">
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        {/* Tab Navigation */}
+        <div class="border-b">
+          <nav class="flex">
+            <button onclick="switchTab('reviews')" class="tab-btn active px-6 py-4 font-medium border-b-2 border-amber-600 text-amber-600" data-tab="reviews">
+              Değerlendirmelerim ({reviews.length})
+            </button>
+            <button onclick="switchTab('saved')" class="tab-btn px-6 py-4 font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="saved">
+              Kaydedilenler
+            </button>
+            <button onclick="switchTab('submissions')" class="tab-btn px-6 py-4 font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="submissions">
+              Mekan Önerilerim ({submissions.length})
+            </button>
+            <button onclick="switchTab('activity')" class="tab-btn px-6 py-4 font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="activity">
+              Aktivite
+            </button>
+          </nav>
+        </div>
+        
+        {/* Tab Content */}
+        <div class="p-6">
+          {/* Reviews Tab */}
+          <div id="tab-reviews" class="tab-content">
+            {reviews.length > 0 ? (
+              <div class="space-y-6">
+                {reviews.map(review => (
+                  <div class="border-b border-gray-100 pb-6 last:border-0">
+                    <div class="flex items-center justify-between mb-3">
+                      <a href={`/places/${review.place_slug}`} class="font-medium text-lg hover:text-amber-600">
+                        {review.place_name}
+                      </a>
+                      <div class="flex text-yellow-400">
+                        {'★'.repeat(review.rating)}
+                        <span class="text-gray-300">{'★'.repeat(5 - review.rating)}</span>
+                      </div>
+                    </div>
+                    <p class="text-gray-700">{review.content}</p>
+                    <div class="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                      <span>{new Date(review.created_at).toLocaleDateString('tr-TR')}</span>
+                      <span>{review.likes} beğeni</span>
+                      <button onclick="deleteReview('${review.id}')" class="text-red-500 hover:text-red-700">
+                        Sil
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <div class="text-5xl mb-4">📝</div>
+                <h3 class="text-lg font-medium mb-2">Henüz değerlendirme yok</h3>
+                <p class="text-gray-500 mb-4">Ziyaret ettiğiniz mekanları değerlendirin</p>
+                <a href="/places" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                  Mekanları Keşfet
+                </a>
+              </div>
+            )}
+          </div>
+          
+          {/* Saved Tab */}
+          <div id="tab-saved" class="tab-content hidden">
+            <div class="text-center py-12">
+              <div class="text-5xl mb-4">🔖</div>
+              <h3 class="text-lg font-medium mb-2">Kaydedilmiş mekan yok</h3>
+              <p class="text-gray-500 mb-4">Beğendiğiniz mekanları kaydedin</p>
+              <a href="/places" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                Mekanları Keşfet
+              </a>
+            </div>
+          </div>
+          
+          {/* Submissions Tab */}
+          <div id="tab-submissions" class="tab-content hidden">
+            {submissions.length > 0 ? (
+              <div class="space-y-4">
+                {submissions.map(sub => (
+                  <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div>
+                      <h4 class="font-medium">{sub.name}</h4>
+                      <p class="text-sm text-gray-500">{sub.category} • {new Date(sub.created_at).toLocaleDateString('tr-TR')}</p>
+                    </div>
+                    <span class={`px-3 py-1 text-sm rounded-full ${
+                      sub.status === 'approved' ? 'bg-green-100 text-green-700' :
+                      sub.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                      sub.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {sub.status === 'approved' ? 'Onaylandı' :
+                       sub.status === 'pending' ? 'Beklemede' :
+                       sub.status === 'rejected' ? 'Reddedildi' : 'Taslak'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <div class="text-5xl mb-4">📍</div>
+                <h3 class="text-lg font-medium mb-2">Henüz mekan önerisi yok</h3>
+                <p class="text-gray-500 mb-4">Bildiğiniz mekanları ekleyin</p>
+                <a href="/places/ekle" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                  Mekan Ekle
+                </a>
+              </div>
+            )}
+          </div>
+          
+          {/* Activity Tab */}
+          <div id="tab-activity" class="tab-content hidden">
+            <div class="text-center py-12 text-gray-500">
+              Aktivite geçmişi yakında burada
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
+
+  <script>
+    function switchTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+      });
+      
+      // Show selected tab
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      
+      // Update buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-amber-600', 'text-amber-600');
+        btn.classList.add('border-transparent', 'text-gray-500');
+      });
+      
+      event.target.classList.remove('border-transparent', 'text-gray-500');
+      event.target.classList.add('border-amber-600', 'text-amber-600');
+    }
+    
+    function changeAvatar() {
+      alert('Avatar değiştirme yakında geliyor!');
+    }
+    
+    async function deleteReview(reviewId) {
+      if (!confirm('Bu değerlendirmeyi silmek istediğinize emin misiniz?')) return;
+      
+      try {
+        const response = await fetch(`/api/reviews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', reviewId }),
+        });
+        
+        if (response.ok) {
+          window.location.reload();
+        }
+      } catch (error) {
+        alert('Silme işlemi başarısız');
+      }
+    }
+  </script>
 </Layout>

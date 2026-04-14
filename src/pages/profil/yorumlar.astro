@@ -1,6 +1,5 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { Star, User, Settings, Heart, MessageSquare } from 'lucide-react';
 import { query } from '../../lib/postgres';
 
 const user = Astro.locals.user;
@@ -9,55 +8,82 @@ if (!user) {
   return Astro.redirect('/giris?redirect=/profil/yorumlar');
 }
 
-const result = await query(
-  `SELECT r.*, p.name as place_name, p.slug as place_slug
-   FROM reviews r 
-   JOIN places p ON r.place_id = p.id 
-   WHERE r.user_id = $1 
-   ORDER BY r.created_at DESC`,
-  [user.id]
-);
-const reviews = result.rows;
-
+let reviews: any[] = [];
+let icons: any = {};
 const seo = {
-  title: 'Yorumlarım - Şanlıurfa.com',
-  description: 'Yaptığınız yorumları görüntüleyin.',
-};
+    title: 'Yorumlarım - Şanlıurfa.com',
+    description: 'Yaptığınız yorumları görüntüleyin.',
+  };
+
+try {
+
+  const result = await query(
+    `SELECT r.*, p.name as place_name, p.slug as place_slug
+     FROM reviews r
+     JOIN places p ON r.place_id = p.id
+     WHERE r.user_id = $1
+     ORDER BY r.created_at DESC`,
+    [user.id]
+  );
+  reviews = result.rows;
+
+  // SVG ikonlar
+  const icons = {
+    user: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    messageSquare: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+    heart: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    settings: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+    activity: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+    star: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    starFilled: `<svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`,
+    starEmpty: `<svg class="w-4 h-4 text-gray-300 dark:text-gray-600" viewBox="0 0 20 20"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`,
+    messageLarge: `<svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  };
+
+} catch (e) {
+  console.error('Error loading data:', e);
+}
 ---
 
 <Layout seo={seo}>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-    <div class="container-custom">
+    <div class="container mx-auto px-4">
       <div class="grid lg:grid-cols-4 gap-8">
         <aside class="lg:col-span-1">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <nav class="space-y-1">
-                <a href="/profil" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <User className="w-4 h-4" />
-                  Profil
-                </a>
-                <a href="/profil/yorumlar" class="flex items-center gap-2 p-2 rounded-lg bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300">
-                  <MessageSquare className="w-4 h-4" />
-                  Yorumlarım ({reviews.length})
-                </a>
-                <a href="/profil/favoriler" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <Heart className="w-4 h-4" />
-                  Favorilerim
-                </a>
-                <a href="/profil/ayarlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <Settings className="w-4 h-4" />
-                  Ayarlar
-                </a>
-              </nav>
-            </div>
+            <nav class="space-y-1">
+              <a href="/profil" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span set:html={icons.user}></span>
+                Profil
+              </a>
+              <a href="/profil/yorumlar" class="flex items-center gap-2 p-2 rounded-lg bg-urfa-50 dark:bg-urfa-900/20 text-urfa-700 dark:text-urfa-300">
+                <span set:html={icons.messageSquare}></span>
+                Yorumlarım ({reviews.length})
+              </a>
+              <a href="/profil/favoriler" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span set:html={icons.heart}></span>
+                Favorilerim
+              </a>
+              <a href="/profil/bildirimler" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span set:html={icons.activity}></span>
+                Bildirimler
+              </a>
+              <a href="/profil/aktivite" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span set:html={icons.activity}></span>
+                Aktivite
+              </a>
+              <a href="/profil/ayarlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span set:html={icons.settings}></span>
+                Ayarlar
+              </a>
+            </nav>
           </div>
         </aside>
-        
+
         <main class="lg:col-span-3">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="font-display font-bold text-xl text-gray-900 dark:text-white mb-4">Yorumlarım</h2>
-            
+            <h2 class="font-bold text-xl text-gray-900 dark:text-white mb-4">Yorumlarım</h2>
+
             {reviews.length > 0 ? (
               <div class="space-y-4">
                 {reviews.map((review) => (
@@ -67,9 +93,9 @@ const seo = {
                         <a href={`/places/${review.place_slug}`} class="font-semibold text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400">
                           {review.place_name}
                         </a>
-                        <div class="flex items-center gap-1 text-yellow-500 mt-1">
+                        <div class="flex items-center gap-0.5 mt-1">
                           {[...Array(5)].map((_, i) => (
-                            <Star className={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-gray-300 dark:text-gray-600'}`} />
+                            <span set:html={i < review.rating ? icons.starFilled : icons.starEmpty}></span>
                           ))}
                         </div>
                       </div>
@@ -80,9 +106,9 @@ const seo = {
                     {review.title && (
                       <h4 class="font-medium text-gray-900 dark:text-white mt-2">{review.title}</h4>
                     )}
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">{review.content}</p>
+                    <p class="text-gray-600 dark:text-gray-300 mt-1">{review.content}</p>
                     <div class="flex items-center gap-2 mt-2">
-                      <span class={`text-xs px-2 py-1 rounded ${review.is_approved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                      <span class={`text-xs px-2 py-1 rounded ${review.is_approved ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'}`}>
                         {review.is_approved ? 'Onaylandı' : 'Onay Bekliyor'}
                       </span>
                     </div>
@@ -91,10 +117,12 @@ const seo = {
               </div>
             ) : (
               <div class="text-center py-12">
-                <MessageSquare className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <span set:html={icons.messageLarge}></span>
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Henüz yorum yok</h3>
                 <p class="text-gray-600 dark:text-gray-400 mb-4">Ziyaret ettiğiniz mekanlar hakkında yorum yapın.</p>
-                <a href="/places" class="btn-primary">Mekanları Keşfet</a>
+                <a href="/places" class="inline-block px-6 py-3 bg-urfa-600 text-white rounded-lg hover:bg-urfa-700 transition-colors">
+                  Mekanları Keşfet
+                </a>
               </div>
             )}
           </div>

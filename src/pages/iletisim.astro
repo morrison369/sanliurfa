@@ -1,164 +1,122 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import ContactForm from '../components/ContactForm';
 
 const seo = {
-  title: 'İletişim - Bizimle İletişime Geçin',
-  description: 'Şanlıurfa.com ile iletişime geçin. Öneri, şikayet ve işbirliği talepleriniz için bize ulaşın.',
+  title: 'İletişim - Şanlıurfa.com',
+  description: 'Bize ulaşın, işletmenizi ekleyin veya destek alın. Şanlıurfa.com ekibi size yardımcı olmaya hazır.',
 };
 
 const contactInfo = [
   {
-    icon: MapPin,
-    title: 'Adres',
-    content: 'Haliliye, Şanlıurfa, Türkiye',
-  },
-  {
-    icon: Phone,
-    title: 'Telefon',
-    content: '+90 414 123 45 67',
-    href: 'tel:+904141234567',
-  },
-  {
-    icon: Mail,
+    icon: '📧',
     title: 'E-posta',
-    content: 'info@sanliurfa.com',
-    href: 'mailto:info@sanliurfa.com',
+    value: 'info@sanliurfa.com',
+    link: 'mailto:info@sanliurfa.com',
   },
   {
-    icon: Clock,
-    title: 'Çalışma Saatleri',
-    content: 'Pzt-Cum: 09:00 - 18:00',
+    icon: '📱',
+    title: 'Telefon',
+    value: '+90 (414) 123 45 67',
+    link: 'tel:+904141234567',
+  },
+  {
+    icon: '📍',
+    title: 'Adres',
+    value: 'Eyyübiye, Şanlıurfa',
+    link: '#',
+  },
+  {
+    icon: '💼',
+    title: 'İşletme Başvurusu',
+    value: 'business@sanliurfa.com',
+    link: 'mailto:business@sanliurfa.com',
   },
 ];
 ---
 
 <Layout seo={seo}>
-  <!-- Page Header -->
-  <div class="page-header">
-    <div class="page-header-content">
-      <h1 class="page-header-title">İletişim</h1>
-      <p class="page-header-description">
-        Sorularınız, önerileriniz veya işbirliği talepleriniz için bize ulaşın.
-      </p>
-    </div>
-  </div>
-  
-  <section class="section bg-gray-50 dark:bg-gray-900">
-    <div class="container-custom">
-      <div class="grid lg:grid-cols-2 gap-12">
-        <!-- Contact Form -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
-          <h2 class="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2">
-            Bize Mesaj Gönderin
-          </h2>
-          <p class="text-gray-600 dark:text-gray-400 mb-6">
-            Formu doldurun, en kısa sürede size dönüş yapalım.
-          </p>
-          
-          <form action="/api/contact" method="POST" class="space-y-5">
-            <div class="grid sm:grid-cols-2 gap-5">
-              <div>
-                <label for="name" class="label">Adınız</label>
-                <input 
-                  type="text"
-                  id="name"
-                  name="name"
-                  required
-                  class="input mt-1"
-                  placeholder="Adınız Soyadınız"
-                />
-              </div>
-              <div>
-                <label for="email" class="label">E-posta</label>
-                <input 
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  class="input mt-1"
-                  placeholder="ornek@email.com"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label for="subject" class="label">Konu</label>
-              <select id="subject" name="subject" required class="input mt-1">
-                <option value="">Konu seçin</option>
-                <option value="general">Genel Bilgi</option>
-                <option value="business">İşbirliği</option>
-                <option value="advertising">Reklam</option>
-                <option value="place">Mekan Ekleme</option>
-                <option value="complaint">Şikayet</option>
-                <option value="other">Diğer</option>
-              </select>
-            </div>
-            
-            <div>
-              <label for="message" class="label">Mesajınız</label>
-              <textarea 
-                id="message"
-                name="message"
-                rows={5}
-                required
-                class="input mt-1 resize-none"
-                placeholder="Mesajınızı yazın..."
-              ></textarea>
-            </div>
-            
-            <button type="submit" class="btn-primary w-full flex items-center justify-center gap-2">
-              <Send className="w-4 h-4" />
-              Gönder
-            </button>
-          </form>
+  <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-20 pb-12">
+    <div class="container mx-auto px-4">
+      {/* Header */}
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Bize Ulaşın</h1>
+        <p class="text-gray-600 text-lg">
+          Sorularınız mı var? İşletmenizi mi eklemek istiyorsunuz? 
+          Veya önerileriniz mi var? Size yardımcı olmaktan memnuniyet duyarız.
+        </p>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        {/* Contact Form */}
+        <div class="lg:col-span-2">
+          <div class="bg-white rounded-2xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Mesaj Gönderin</h2>
+            <ContactForm client:load />
+          </div>
         </div>
-        
-        <!-- Contact Info -->
-        <div class="space-y-8">
-          <div>
-            <h2 class="text-2xl font-display font-bold text-gray-900 dark:text-white mb-6">
-              İletişim Bilgileri
-            </h2>
-            <div class="space-y-6">
+
+        {/* Contact Info Sidebar */}
+        <div class="space-y-6">
+          <div class="bg-white rounded-2xl shadow-lg p-6">
+            <h3 class="font-bold text-gray-900 mb-4">İletişim Bilgileri</h3>
+            <div class="space-y-4">
               {contactInfo.map((item) => (
-                <div class="flex items-start gap-4">
-                  <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <item.icon className="w-6 h-6 text-urfa-600 dark:text-urfa-400" />
-                  </div>
+                <a
+                  href={item.link}
+                  class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <span class="text-2xl">{item.icon}</span>
                   <div>
-                    <h3 class="font-medium text-gray-900 dark:text-white">{item.title}</h3>
-                    {item.href ? (
-                      <a 
-                        href={item.href}
-                        class="text-gray-600 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors"
-                      >
-                        {item.content}
-                      </a>
-                    ) : (
-                      <p class="text-gray-600 dark:text-gray-400">{item.content}</p>
-                    )}
+                    <div class="font-medium text-gray-900">{item.title}</div>
+                    <div class="text-gray-600 text-sm">{item.value}</div>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </div>
-          
-          <!-- Map -->
-          <div class="rounded-2xl overflow-hidden h-80 bg-gray-200 dark:bg-gray-700">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12515.5!2d38.7969!3d37.1591!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzfCsDA5JzMyLjciTiAzOMKwNDcnNDguOCJF!5e0!3m2!1str!2str!4v1609459200000!5m2!1str!2str"
-              width="100%"
-              height="100%"
-              style="border:0;"
-              allowfullscreen=""
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              title="Şanlıurfa Harita"
-            ></iframe>
+
+          {/* Business CTA */}
+          <div class="bg-gradient-to-br from-red-600 to-orange-500 rounded-2xl shadow-lg p-6 text-white">
+            <h3 class="font-bold text-xl mb-2">İşletmenizi Ekleyin</h3>
+            <p class="text-red-100 text-sm mb-4">
+              Şanlıurfa.com'da yer alın, binlerce potansiyel müşteriye ulaşın.
+            </p>
+            <a
+              href="/isletme-kayit"
+              class="inline-block px-4 py-2 bg-white text-red-600 rounded-lg font-medium hover:bg-red-50 transition-colors"
+            >
+              Hemen Başvurun →
+            </a>
+          </div>
+
+          {/* FAQ Link */}
+          <div class="bg-white rounded-2xl shadow-lg p-6">
+            <h3 class="font-bold text-gray-900 mb-2">Sıkça Sorulan Sorular</h3>
+            <p class="text-gray-600 text-sm mb-4">
+              Hızlı cevaplar için SSS sayfamıza göz atın.
+            </p>
+            <a
+              href="/sss"
+              class="text-red-600 font-medium hover:underline"
+            >
+              SSS'yi Görüntüle →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Map Section */}
+      <div class="max-w-6xl mx-auto mt-12">
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div class="aspect-[21/9] bg-gray-100 flex items-center justify-center">
+            <div class="text-center text-gray-400">
+              <div class="text-6xl mb-4">🗺️</div>
+              <p>Harita entegrasyonu burada görüntülenecek</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 </Layout>

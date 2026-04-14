@@ -1,5 +1,12 @@
 ---
-import { Star, MapPin, Heart, TrendingUp } from 'lucide-react';
+const icons = {
+  Star: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  MapPin: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  Heart: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+  TrendingUp: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+};
+
+;
 import { query } from '../lib/postgres';
 
 const categories = [
@@ -31,7 +38,7 @@ const getCategoryLabel = (category: string) => {
     <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-10">
       <div>
         <span class="inline-flex items-center gap-2 text-isot-600 font-medium mb-2">
-          <TrendingUp className="w-5 h-5" />
+          <span set:html={icons.TrendingUp}></span>
           Popüler Mekanlar
         </span>
         <h2 class="section-title dark:text-white">Öne Çıkan Mekanlar</h2>
@@ -42,8 +49,7 @@ const getCategoryLabel = (category: string) => {
       
       <div class="flex flex-wrap gap-2">
         {categories.map((cat) => (
-          <button 
-            class="px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-urfa-100 dark:hover:bg-urfa-900/30 hover:text-urfa-700 dark:hover:text-urfa-300 data-[active=true]:bg-urfa-600 data-[active=true]:text-white"
+          <button class="px-4 py-2 rounded-full text-sm font-medium transition-colors bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-urfa-100 dark:hover:bg-urfa-900/30 hover:text-urfa-700 dark:hover:text-urfa-300 data-[active=true]:bg-urfa-600 data-[active=true]:text-white"
             data-category={cat.id}
             data-active={cat.id === 'all'}
           >
@@ -55,8 +61,7 @@ const getCategoryLabel = (category: string) => {
     
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {places?.map((place, index) => (
-        <article 
-          class="card-hover group"
+        <article class="card-hover group"
           data-category={place.category}
           style={`animation-delay: ${index * 100}ms`}
         >
@@ -77,11 +82,10 @@ const getCategoryLabel = (category: string) => {
               )}
             </div>
             
-            <button 
-              class="absolute top-3 right-3 w-8 h-8 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 rounded-full flex items-center justify-center shadow-sm transition-colors"
+            <button class="absolute top-3 right-3 w-8 h-8 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 rounded-full flex items-center justify-center shadow-sm transition-colors"
               aria-label="Favorilere ekle"
             >
-              <Heart className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+              <span set:html={icons.Heart}></span>
             </button>
             
             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -93,13 +97,13 @@ const getCategoryLabel = (category: string) => {
                 {place.name}
               </h3>
               <div class="flex items-center gap-1 text-sm">
-                <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                <span set:html={icons.Star}></span>
                 <span class="font-medium">{place.rating || '4.5'}</span>
               </div>
             </div>
             
             <div class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mt-1">
-              <MapPin className="w-3.5 h-3.5" />
+              <span set:html={icons.MapPin}></span>
               {place.address}
             </div>
             

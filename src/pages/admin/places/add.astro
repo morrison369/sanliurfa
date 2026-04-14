@@ -1,6 +1,14 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { MapPin, Upload, Clock, Phone, Globe, Mail } from 'lucide-react';
+
+const icons = {
+  mapPin: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  upload: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>`,
+  clock: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  phone: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  globe: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`,
+  mail: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
+};
 
 const seo = {
   title: 'Mekan Ekle - Admin Panel',
@@ -44,7 +52,7 @@ const days = [
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
             <a href="/admin" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              ← Geri
+              â† Geri
             </a>
             <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Yeni Mekan Ekle</h1>
           </div>
@@ -126,11 +134,11 @@ const days = [
               <div>
                 <label for="address" class="label dark:text-gray-300">Adres *</label>
                 <div class="relative">
-                  <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input 
-                    type="text" 
-                    id="address" 
-                    name="address" 
+                  <span set:html={icons.mapPin} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
                     required
                     class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="Tam adres"
@@ -142,10 +150,10 @@ const days = [
                 <div>
                   <label for="phone" class="label dark:text-gray-300">Telefon</label>
                   <div class="relative">
-                    <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                    <input 
-                      type="tel" 
-                      id="phone" 
+                    <span set:html={icons.phone} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
+                    <input
+                      type="tel"
+                      id="phone"
                       name="phone"
                       class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="+90 414 123 45 67"
@@ -155,10 +163,10 @@ const days = [
                 <div>
                   <label for="email" class="label dark:text-gray-300">E-posta</label>
                   <div class="relative">
-                    <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                    <input 
-                      type="email" 
-                      id="email" 
+                    <span set:html={icons.mail} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
+                    <input
+                      type="email"
+                      id="email"
                       name="email"
                       class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="info@ornek.com"
@@ -170,10 +178,10 @@ const days = [
               <div>
                 <label for="website" class="label dark:text-gray-300">Web Sitesi</label>
                 <div class="relative">
-                  <Globe className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input 
-                    type="url" 
-                    id="website" 
+                  <span set:html={icons.globe} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
+                  <input
+                    type="url"
+                    id="website"
                     name="website"
                     class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="https://www.ornek.com"
@@ -271,7 +279,7 @@ const days = [
                 <label for="cover_image" class="label dark:text-gray-300">Kapak Fotoğrafı</label>
                 <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-urfa-500 transition-colors">
                   <div class="space-y-1 text-center">
-                    <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                    <span set:html={icons.upload} class="mx-auto h-12 w-12 text-gray-400"></span>
                     <div class="flex text-sm text-gray-600 dark:text-gray-400">
                       <label for="cover_image" class="relative cursor-pointer rounded-md font-medium text-urfa-600 hover:text-urfa-500">
                         <span>Dosya seç</span>

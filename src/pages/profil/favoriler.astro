@@ -1,6 +1,5 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { Heart, MapPin, Star, User, Settings } from 'lucide-react';
 import { query } from '../../lib/postgres';
 
 const user = Astro.locals.user;
@@ -9,94 +8,124 @@ if (!user) {
   return Astro.redirect('/giris?redirect=/profil/favoriler');
 }
 
-const result = await query(
-  `SELECT f.*, p.name as place_name, p.slug as place_slug, p.images as place_images, 
-          p.rating as place_rating, p.address as place_address
-   FROM favorites f 
-   JOIN places p ON f.place_id = p.id 
-   WHERE f.user_id = $1 
-   ORDER BY f.created_at DESC`,
-  [user.id]
-);
-const favorites = result.rows;
-
+let favorites: any[] = [];
+let icons: any = {};
 const seo = {
-  title: 'Favorilerim - Şanlıurfa.com',
-  description: 'Favori mekanlarınızı görüntüleyin.',
-};
+    title: 'Favorilerim - Şanlıurfa.com',
+    description: 'Favori mekanlarınızı görüntüleyin.',
+  };
+
+try {
+
+  const result = await query(
+    `SELECT f.*, p.name as place_name, p.slug as place_slug, p.images as place_images,
+            p.rating as place_rating, p.address as place_address
+     FROM favorites f
+     JOIN places p ON f.place_id = p.id
+     WHERE f.user_id = $1
+     ORDER BY f.created_at DESC`,
+    [user.id]
+  );
+  favorites = result.rows;
+
+  // SVG ikonlar
+  const icons = {
+    user: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    star: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    heart: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    settings: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+    activity: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+    mapPin: `<svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+    starFilled: `<svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`,
+    trash: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+    heartLarge: `<svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+  };
+
+} catch (e) {
+  console.error('Error loading data:', e);
+}
 ---
 
 <Layout seo={seo}>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-    <div class="container-custom">
+    <div class="container mx-auto px-4">
       <div class="grid lg:grid-cols-4 gap-8">
         <aside class="lg:col-span-1">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <nav class="space-y-1">
-                <a href="/profil" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <User className="w-4 h-4" />
-                  Profil
-                </a>
-                <a href="/profil/yorumlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <Star className="w-4 h-4" />
-                  Yorumlarım
-                </a>
-                <a href="/profil/favoriler" class="flex items-center gap-2 p-2 rounded-lg bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300">
-                  <Heart className="w-4 h-4" />
-                  Favorilerim ({favorites.length})
-                </a>
-                <a href="/profil/ayarlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <Settings className="w-4 h-4" />
-                  Ayarlar
-                </a>
-              </nav>
-            </div>
+            <nav class="space-y-1">
+              <a href="/profil" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span set:html={icons.user}></span>
+                Profil
+              </a>
+              <a href="/profil/yorumlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span set:html={icons.star}></span>
+                Yorumlarım
+              </a>
+              <a href="/profil/favoriler" class="flex items-center gap-2 p-2 rounded-lg bg-urfa-50 dark:bg-urfa-900/20 text-urfa-700 dark:text-urfa-300">
+                <span set:html={icons.heart}></span>
+                Favorilerim ({favorites.length})
+              </a>
+              <a href="/profil/bildirimler" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span set:html={icons.activity}></span>
+                Bildirimler
+              </a>
+              <a href="/profil/aktivite" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span set:html={icons.activity}></span>
+                Aktivite
+              </a>
+              <a href="/profil/ayarlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span set:html={icons.settings}></span>
+                Ayarlar
+              </a>
+            </nav>
           </div>
         </aside>
-        
+
         <main class="lg:col-span-3">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="font-display font-bold text-xl text-gray-900 dark:text-white mb-4">Favorilerim</h2>
-            
+            <h2 class="font-bold text-xl text-gray-900 dark:text-white mb-4">Favorilerim</h2>
+
             {favorites.length > 0 ? (
               <div class="space-y-4">
                 {favorites.map((fav) => (
                   <div class="flex gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                    <img 
-                      src={fav.place_images?.[0] || '/images/placeholder-place.jpg'}
+                    <img
+                      src={fav.place_images?.[0] || '/images/placeholder.jpg'}
                       alt={fav.place_name}
                       class="w-24 h-24 rounded-lg object-cover flex-shrink-0"
+                      onerror="this.src='/images/placeholder.jpg'"
                     />
                     <div class="flex-1 min-w-0">
                       <a href={`/places/${fav.place_slug}`} class="font-semibold text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400">
                         {fav.place_name}
                       </a>
                       <div class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {fav.place_address}
+                        <span set:html={icons.mapPin}></span>
+                        {fav.place_address || 'Şanlıurfa'}
                       </div>
                       <div class="flex items-center gap-1 text-sm text-yellow-500 mt-2">
-                        <Star className="w-4 h-4 fill-current" />
-                        <span>{fav.place_rating || '4.5'}</span>
+                        <span set:html={icons.starFilled}></span>
+                        <span>{fav.place_rating || '-'}</span>
                       </div>
                     </div>
-                    <button 
-                      class="text-red-500 hover:text-red-600 self-start"
+                    <button
+                      class="remove-fav-btn text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 self-start p-2"
                       data-favorite-id={fav.id}
-                      onclick="removeFavorite(this)"
+                      title="Favorilerden Kaldır"
                     >
-                      <Heart className="w-5 h-5 fill-current" />
+                      <span set:html={icons.trash}></span>
                     </button>
                   </div>
                 ))}
               </div>
             ) : (
               <div class="text-center py-12">
-                <Heart className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <span set:html={icons.heartLarge}></span>
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Henüz favori yok</h3>
                 <p class="text-gray-600 dark:text-gray-400 mb-4">Beğendiğiniz mekanları favorilere ekleyin.</p>
-                <a href="/places" class="btn-primary">Mekanları Keşfet</a>
+                <a href="/places" class="inline-block px-6 py-3 bg-urfa-600 text-white rounded-lg hover:bg-urfa-700 transition-colors">
+                  Mekanları Keşfet
+                </a>
               </div>
             )}
           </div>
@@ -104,25 +133,31 @@ const seo = {
       </div>
     </div>
   </div>
-  
+
   <script>
-    async function removeFavorite(btn: HTMLButtonElement) {
+    // Event delegation ile favori kaldırma
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.remove-fav-btn');
+      if (!btn) return;
+
       const id = btn.dataset.favoriteId;
       if (!confirm('Favorilerden kaldırmak istediğinize emin misiniz?')) return;
-      
+
       try {
-        const response = await fetch(`/api/favorites`, {
+        const response = await fetch(`/api/favorites/${id}`, {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id })
         });
-        
+
         if (response.ok) {
           btn.closest('.flex')?.remove();
+          // Sayfayı yenile (sayaçları güncellemek için)
+          window.location.reload();
+        } else {
+          alert('İşlem başarısız');
         }
       } catch (error) {
-        alert('İşlem başarısız');
+        alert('Bir hata oluştu');
       }
-    }
+    });
   </script>
 </Layout>

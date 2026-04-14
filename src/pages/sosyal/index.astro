@@ -11,7 +11,7 @@ if (!userId) {
 }
 
 // Get initial hashtag from URL params
-const initialTag = Astro.url.searchParams.get('tag');
+const initialTag = Astro.url.searchParams.get('tag') || undefined;
 ---
 
 <Layout title="Sosyal - Şanlıurfa">
@@ -21,9 +21,9 @@ const initialTag = Astro.url.searchParams.get('tag');
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Sidebar */}
-      <div className="space-y-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <div class="space-y-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Sizi Tanıyabileceğiniz Kişiler
           </h2>
           <UserSuggestionsPanel client:load />
@@ -31,9 +31,9 @@ const initialTag = Astro.url.searchParams.get('tag');
       </div>
 
       {/* Main Content */}
-      <div className="lg:col-span-2">
+      <div class="lg:col-span-2">
         {/* Tab Bar */}
-        <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-6">
+        <div class="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-6">
           <button
             data-tab-btn="feed"
             class="px-4 py-2 font-semibold text-gray-900 dark:text-white border-b-2 border-blue-600"
@@ -60,7 +60,7 @@ const initialTag = Astro.url.searchParams.get('tag');
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     {
       // Tab switching logic
       const tabButtons = document.querySelectorAll('[data-tab-btn]');
@@ -94,7 +94,7 @@ const initialTag = Astro.url.searchParams.get('tag');
 
       // If hashtag tab is selected via initialTag, switch to it
       if (document.location.search.includes('tag=')) {
-        const hashtagBtn = document.querySelector('[data-tab-btn="hashtag"]') as HTMLButtonElement;
+        const hashtagBtn = document.querySelector('[data-tab-btn="hashtag"]');
         if (hashtagBtn) {
           hashtagBtn.click();
         }

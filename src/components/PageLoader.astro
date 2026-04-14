@@ -85,7 +85,7 @@
     
     // Handle form submissions
     document.addEventListener('submit', (e) => {
-      const form = e.target as HTMLFormElement;
+      const form = e.target;
       if (form.method === 'get') return; // Don't show for search forms
       showLoader();
     });

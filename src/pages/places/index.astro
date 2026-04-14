@@ -1,8 +1,16 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { MapPin, Star, Filter, Search, Grid3X3, List } from 'lucide-react';
 import Pagination from '../../components/Pagination.astro';
 import { query } from '../../lib/postgres';
+
+const icons = {
+  mapPin: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  star: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  filter: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
+  search: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
+  grid3x3: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>`,
+  list: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>`,
+};
 
 const ITEMS_PER_PAGE = 12;
 const currentPage = parseInt(Astro.url.searchParams.get('page') || '1');
@@ -29,16 +37,23 @@ if (queryParam) {
   paramIndex++;
 }
 
-// Get count
-const countResult = await query(countSql, values);
-const count = parseInt(countResult.rows[0]?.count || '0');
-const totalPages = Math.ceil(count / ITEMS_PER_PAGE);
-const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+// Get count and places
+let count = 0;
+let totalPages = 0;
+let places: any[] = [];
 
-// Get places
-placesSql += ` ORDER BY rating DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-const placesResult = await query(placesSql, [...values, ITEMS_PER_PAGE, offset]);
-const places = placesResult.rows;
+try {
+  const countResult = await query(countSql, values);
+  count = parseInt(countResult.rows[0]?.count || '0');
+  totalPages = Math.ceil(count / ITEMS_PER_PAGE);
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  placesSql += ` ORDER BY rating DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+  const placesResult = await query(placesSql, [...values, ITEMS_PER_PAGE, offset]);
+  places = placesResult.rows;
+} catch (e) {
+  console.error('Error loading places:', e);
+}
 
 const categories = [
   { id: 'restaurant', label: 'Restoran' },
@@ -94,7 +109,7 @@ if (queryParam) searchParams.set('q', queryParam);
             placeholder="Mekan ara..."
             class="w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border border-white/20 focus:outline-none focus:border-white/40"
           />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
+          <span set:html={icons.search} class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60"></span>
         </form>
       </div>
     </div>
@@ -105,7 +120,7 @@ if (queryParam) searchParams.set('q', queryParam);
       <aside class="lg:w-64 flex-shrink-0">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sticky top-24">
           <div class="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <span set:html={icons.filter} class="w-5 h-5 text-gray-600 dark:text-gray-400"></span>
             <h3 class="font-semibold dark:text-white">Filtreler</h3>
           </div>
           
@@ -164,10 +179,10 @@ if (queryParam) searchParams.set('q', queryParam);
             
             <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
               <button class="p-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white" aria-label="Grid görünümü">
-                <Grid3X3 className="w-4 h-4" />
+                <span set:html={icons.grid3x3} class="w-4 h-4"></span>
               </button>
               <button class="p-2 rounded text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white" aria-label="Liste görünümü">
-                <List className="w-4 h-4" />
+                <span set:html={icons.list} class="w-4 h-4"></span>
               </button>
             </div>
           </div>
@@ -198,12 +213,12 @@ if (queryParam) searchParams.set('q', queryParam);
                         {place.name}
                       </h3>
                       <div class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        <MapPin className="w-3.5 h-3.5" />
+                        <span set:html={icons.mapPin} class="w-3.5 h-3.5"></span>
                         {place.address}
                       </div>
                     </div>
                     <div class="flex items-center gap-1 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-lg">
-                      <Star className="w-4 h-4 text-green-600 fill-current" />
+                      <span set:html={icons.star} class="w-4 h-4 text-green-600 fill-current"></span>
                       <span class="font-semibold text-green-700 dark:text-green-400">{place.rating || '4.5'}</span>
                     </div>
                   </div>
@@ -228,7 +243,7 @@ if (queryParam) searchParams.set('q', queryParam);
                       {place.review_count || 0} değerlendirme
                     </span>
                     <span class="text-sm font-medium text-urfa-600 dark:text-urfa-400">
-                      Detaylar →
+                      Detaylar â†’
                     </span>
                   </div>
                 </div>
@@ -246,7 +261,7 @@ if (queryParam) searchParams.set('q', queryParam);
         
         {(!places || places.length === 0) && (
           <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-            <Search className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <span set:html={icons.search} class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4"></span>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Mekan bulunamadı</h3>
             <p class="text-gray-600 dark:text-gray-400">Farklı filtrelerle tekrar deneyin.</p>
           </div>

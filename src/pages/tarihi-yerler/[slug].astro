@@ -1,29 +1,48 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { MapPin, Clock, Ticket, Camera, Navigation, Share2, Heart, Star } from 'lucide-react';
 import { query, queryOne } from '../../lib/postgres';
 
-const { slug } = Astro.params;
+// SVG ikonlar
+const icons = {
+  mapPin: `<svg class="w-5 h-5 text-urfa-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  mapPinSm: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  clock: `<svg class="w-5 h-5 text-urfa-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  ticket: `<svg class="w-5 h-5 text-urfa-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="m13 5-1 1"/><path d="m13 19-1-1"/></svg>`,
+  camera: `<svg class="w-5 h-5 text-urfa-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
+  navigation: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>`,
+  share2: `<svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
+  heart: `<svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+  star: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+};
 
-const site = await queryOne(
-  "SELECT * FROM historical_sites WHERE slug = $1 AND status = 'active'",
-  [slug]
-);
+let site: any = null;
+let nearbySites: any[] = [];
 
-if (!site) {
-  return Astro.redirect('/tarihi-yerler');
+try {
+  const { slug } = Astro.params;
+
+  site = await queryOne(
+    "SELECT * FROM historical_sites WHERE slug = $1 AND status = 'active'",
+    [slug]
+  );
+
+  if (!site) {
+    return Astro.redirect('/tarihi-yerler');
+  }
+
+  const nearbyResult = await query(
+    "SELECT id, name, slug, location FROM historical_sites WHERE status = 'active' AND id != $1 LIMIT 5",
+    [site.id]
+  );
+  nearbySites = nearbyResult.rows;
+} catch (e) {
+  console.error('Error loading historical site:', e);
 }
 
-const nearbyResult = await query(
-  "SELECT id, name, slug, location FROM historical_sites WHERE status = 'active' AND id != $1 LIMIT 5",
-  [site.id]
-);
-const nearbySites = nearbyResult.rows;
-
 const seo = {
-  title: `${site.name} - ${site.short_description || 'Tarihi Yer'}`,
-  description: site.description,
-  image: site.images?.[0],
+  title: site ? `${site.name} - Tarihi Yer` : 'Tarihi Yer - Şanlıurfa',
+  description: site?.description || 'Şanlıurfa tarihi yerleri',
+  image: site?.images?.[0],
 };
 ---
 
@@ -39,7 +58,7 @@ const seo = {
         <div class="flex flex-wrap items-center gap-3 mb-4">
           {site.is_unesco && (
             <span class="badge bg-blue-600 text-white flex items-center gap-1">
-              <Star className="w-3 h-3" />
+              <span set:html={icons.star}></span>
               UNESCO Dünya Mirası
             </span>
           )}
@@ -56,7 +75,7 @@ const seo = {
         
         <div class="flex items-center gap-6 mt-6 text-white">
           <div class="flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
+            <span set:html={icons.mapPinSm}></span>
             <span>{site.location}</span>
           </div>
         </div>
@@ -64,10 +83,10 @@ const seo = {
       
       <div class="absolute top-4 right-4 flex gap-2">
         <button class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors">
-          <Heart className="w-6 h-6" />
+          <span set:html={icons.heart}></span>
         </button>
         <button class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors">
-          <Share2 className="w-6 h-6" />
+          <span set:html={icons.share2}></span>
         </button>
       </div>
     </div>
@@ -100,31 +119,31 @@ const seo = {
             
             <div class="space-y-4">
               <div class="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-urfa-600 mt-0.5" />
+                <span set:html={icons.clock}></span>
                 <div>
                   <p class="font-medium text-gray-900 dark:text-white">Çalışma Saatleri</p>
                   <p class="text-gray-600 dark:text-gray-400">{site.opening_hours || '08:00 - 18:00'}</p>
                 </div>
               </div>
-              
+
               <div class="flex items-start gap-3">
-                <Ticket className="w-5 h-5 text-urfa-600 mt-0.5" />
+                <span set:html={icons.ticket}></span>
                 <div>
                   <p class="font-medium text-gray-900 dark:text-white">Giriş Ücreti</p>
                   <p class="text-gray-600 dark:text-gray-400">{site.entry_fee || 'Ücretsiz'}</p>
                 </div>
               </div>
-              
+
               <div class="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-urfa-600 mt-0.5" />
+                <span set:html={icons.mapPin}></span>
                 <div>
                   <p class="font-medium text-gray-900 dark:text-white">Konum</p>
                   <p class="text-gray-600 dark:text-gray-400">{site.location}</p>
                 </div>
               </div>
-              
+
               <div class="flex items-start gap-3">
-                <Camera className="w-5 h-5 text-urfa-600 mt-0.5" />
+                <span set:html={icons.camera}></span>
                 <div>
                   <p class="font-medium text-gray-900 dark:text-white">Fotoğraf</p>
                   <p class="text-gray-600 dark:text-gray-400">Ücretsiz çekim yapılabilir</p>
@@ -139,7 +158,7 @@ const seo = {
                   target="_blank"
                   class="btn-primary w-full flex items-center justify-center gap-2"
                 >
-                  <Navigation className="w-5 h-5" />
+                  <span set:html={icons.navigation}></span>
                   Yol Tarifi Al
                 </a>
               </div>

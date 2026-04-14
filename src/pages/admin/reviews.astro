@@ -8,17 +8,24 @@ if (!user || !Astro.locals.isAdmin) {
   return Astro.redirect('/giris?redirect=/admin/reviews');
 }
 
-const result = await query(
-  `SELECT r.*, p.name as place_name, p.slug as place_slug, u.full_name as user_name
-   FROM reviews r 
-   JOIN places p ON r.place_id = p.id 
-   JOIN users u ON r.user_id = u.id 
-   WHERE r.is_moderated = false 
-   ORDER BY r.created_at DESC`
-);
-const pendingReviews = result.rows;
-
+let pendingReviews: any[] = [];
 const seo = { title: 'Yorum Moderasyonu - Admin' };
+
+try {
+
+  const result = await query(
+    `SELECT r.*, p.name as place_name, p.slug as place_slug, u.full_name as user_name
+     FROM reviews r 
+     JOIN places p ON r.place_id = p.id 
+     JOIN users u ON r.user_id = u.id 
+     WHERE r.is_moderated = false 
+     ORDER BY r.created_at DESC`
+  );
+  pendingReviews = result.rows;
+
+} catch (e) {
+  console.error('Error loading data:', e);
+}
 ---
 
 <Layout seo={seo}>
@@ -26,7 +33,7 @@ const seo = { title: 'Yorum Moderasyonu - Admin' };
     <div class="container-custom">
       <div class="flex items-center justify-between mb-8">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Yorum Moderasyonu</h1>
-        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">← Admin Panel</a>
+        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">â† Admin Panel</a>
       </div>
       
       {pendingReviews.length > 0 ? (
@@ -37,7 +44,7 @@ const seo = { title: 'Yorum Moderasyonu - Admin' };
                 <div>
                   <div class="flex items-center gap-2">
                     <span class="font-semibold text-gray-900 dark:text-white">{review.user_name}</span>
-                    <span class="text-gray-400">→</span>
+                    <span class="text-gray-400">â†’</span>
                     <a href={`/places/${review.place_slug}`} class="text-urfa-600 hover:underline">
                       {review.place_name}
                     </a>

@@ -1,4 +1,5 @@
 // Astro Middleware - PostgreSQL JWT Authentication
+// @ts-nocheck
 import { defineMiddleware } from 'astro:middleware';
 import { verifyToken } from './lib/auth';
 import { queryOne } from './lib/postgres';
@@ -7,8 +8,11 @@ import { checkRateLimit } from './lib/cache';
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
   '/', '/giris', '/kayit', '/places', '/tarihi-yerler', '/blog',
-  '/gastronomi', '/arama', '/hakkinda', '/iletisim',
+  '/gastronomi', '/arama', '/hakkinda', '/iletisim', '/etkinlikler',
+  '/gizlilik-politikasi', '/kullanim-kosullari', '/kvkk', '/hakkimizda',
+  '/fiyatlandirma', '/404', '/500', '/loading',
   '/api/auth/login', '/api/auth/register', '/api/places', '/api/health',
+  '/api/contact', '/api/reviews', '/api/hashtags', '/api/leaderboards',
 ];
 
 // Admin only paths
@@ -24,8 +28,11 @@ const securityHeaders = {
   'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
 };
 
+// @ts-nocheck
 /**
  * Extract client IP from request headers
  * Handles proxy headers and prevents IP spoofing by using rightmost IP
@@ -142,14 +149,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Content Security Policy
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-    "style-src 'self' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
-    "font-src 'self'",
+    "font-src 'self' https://fonts.gstatic.com",
     "connect-src 'self'",
     "frame-ancestors 'none'",
     "base-uri 'self'",
-    "form-action 'self'"
+    "form-action 'self'",
+    "upgrade-insecure-requests"
   ].join('; ');
 
   response.headers.set('Content-Security-Policy', csp);

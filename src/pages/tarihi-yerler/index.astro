@@ -1,7 +1,15 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { MapPin, Clock, Camera, Search } from 'lucide-react';
 import { query } from '../../lib/postgres';
+
+// SVG ikonlar
+const icons = {
+  search: `<svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-white/60" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  searchLarge: `<svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  mapPin: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  clock: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  camera: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
+};
 
 const queryParam = Astro.url.searchParams.get('q') || '';
 
@@ -15,8 +23,13 @@ if (queryParam) {
 
 sql += " ORDER BY is_featured DESC, created_at DESC";
 
-const result = await query(sql, values);
-const sites = result.rows;
+let sites: any[] = [];
+try {
+  const result = await query(sql, values);
+  sites = result.rows;
+} catch (e) {
+  console.error('Error loading tarihi yerler:', e);
+}
 
 const seo = {
   title: 'Tarihi Yerler - Şanlıurfa\'nın Zengin Tarihi',
@@ -41,7 +54,7 @@ const seo = {
             placeholder="Tarihi yer ara..."
             class="w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border border-white/20 focus:outline-none focus:border-white/40"
           />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
+          <span set:html={icons.search}></span>
         </form>
       </div>
     </div>
@@ -78,13 +91,13 @@ const seo = {
                 </h3>
                 
                 <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-2">
-                  <MapPin className="w-4 h-4" />
+                  <span set:html={icons.mapPin}></span>
                   {site.location}
                 </div>
                 
                 {site.period && (
                   <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    <Clock className="w-4 h-4" />
+                    <span set:html={icons.clock}></span>
                     {site.period}
                   </div>
                 )}
@@ -95,10 +108,10 @@ const seo = {
                 
                 <div class="flex items-center gap-4 mt-4 text-sm text-urfa-600 dark:text-urfa-400 font-medium">
                   <span class="flex items-center gap-1">
-                    <Camera className="w-4 h-4" />
+                    <span set:html={icons.camera}></span>
                     {site.images?.length || 0} fotoğraf
                   </span>
-                  <span>Detaylar →</span>
+                  <span>Detaylar â†’</span>
                 </div>
               </div>
             </a>
@@ -108,7 +121,7 @@ const seo = {
       
       {sites.length === 0 && (
         <div class="text-center py-16">
-          <Search className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          <span set:html={icons.searchLarge}></span>
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Sonuç bulunamadı</h3>
           <p class="text-gray-600 dark:text-gray-400">Farklı bir arama terimi deneyin.</p>
         </div>

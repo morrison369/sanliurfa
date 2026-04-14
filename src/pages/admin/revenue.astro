@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import { verifyToken } from '../../lib/auth';
 
 // Check authentication
-const token = Astro.cookies.get('auth-token')?.value;
+const token = Astro.cookies.get('token')?.value;
 if (!token) {
   return Astro.redirect('/giris');
 }
@@ -22,7 +22,7 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
     <div class="container max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">💰 Gelir Yönetimi</h1>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">ğŸ’° Gelir Yönetimi</h1>
         <p class="text-gray-600 dark:text-gray-400">Abonelik geliri, MRR ve çurluk oranı analitikleri</p>
       </div>
 
@@ -32,7 +32,7 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Aylık Gelir (MRR)</h3>
-            <span class="text-2xl">📈</span>
+            <span class="text-2xl">ğŸ“ˆ</span>
           </div>
           <div class="text-3xl font-bold text-gray-900 dark:text-white" id="totalMRR">
             $0.00
@@ -44,7 +44,7 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Aktif Abonelikler</h3>
-            <span class="text-2xl">👥</span>
+            <span class="text-2xl">ğŸ‘¥</span>
           </div>
           <div class="text-3xl font-bold text-gray-900 dark:text-white" id="activeSubscriptions">
             0
@@ -56,7 +56,7 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Çurluk Oranı (30g)</h3>
-            <span class="text-2xl">📉</span>
+            <span class="text-2xl">ğŸ“‰</span>
           </div>
           <div class="text-3xl font-bold text-red-600 dark:text-red-400" id="churnRate">
             0%
@@ -68,7 +68,7 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Toplam Gelir</h3>
-            <span class="text-2xl">💵</span>
+            <span class="text-2xl">ğŸ’µ</span>
           </div>
           <div class="text-3xl font-bold text-green-600 dark:text-green-400" id="totalRevenue">
             $0.00
@@ -82,9 +82,9 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
         {['free', 'premium', 'pro'].map((tier) => (
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 capitalize">
-              {tier === 'free' && '🎁 Ücretsiz'}
-              {tier === 'premium' && '⭐ Premium'}
-              {tier === 'pro' && '👑 Pro'}
+              {tier === 'free' && 'ğŸ Ücretsiz'}
+              {tier === 'premium' && 'â­ Premium'}
+              {tier === 'pro' && 'ğŸ‘‘ Pro'}
             </h3>
 
             {tier === 'free' && (
@@ -129,7 +129,7 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
 
       <!-- Note -->
       <div class="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-        <h3 class="font-semibold text-blue-900 dark:text-blue-200 mb-2">📊 Grafik Yükleniyor</h3>
+        <h3 class="font-semibold text-blue-900 dark:text-blue-200 mb-2">ğŸ“Š Grafik Yükleniyor</h3>
         <p class="text-sm text-blue-800 dark:text-blue-300">
           Günlük gelir grafiği burada gösterilecek (Chart.js ile). Son 30 günün gelir trendini takip et.
         </p>

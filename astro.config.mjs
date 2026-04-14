@@ -6,13 +6,15 @@ import sitemap from '@astrojs/sitemap';
 import compress from 'astro-compress';
 
 const site = process.env.SITE_URL || 'https://sanliurfa.com';
+const port = parseInt(process.env.PORT || '4321', 10);
 
 export default defineConfig({
   site,
   output: 'server',
   adapter: node({
     mode: 'standalone',
-    port: 6000,
+    host: process.env.HOST || '0.0.0.0',
+    port,
   }),
   integrations: [
     tailwind(),
@@ -29,6 +31,7 @@ export default defineConfig({
       JavaScript: true,
       Image: false,
       SVG: true,
+      Exclude: [(file) => file.includes('service-worker') || file.includes('sw-advanced') || file.includes('sw.js')],
     }),
   ],
   image: {
@@ -38,13 +41,39 @@ export default defineConfig({
   },
   build: {
     inlineStylesheets: 'auto',
+    // Split chunks for better caching
+    splitVendorChunk: true,
   },
   vite: {
     build: {
       cssCodeSplit: true,
+      // Reduce chunk size
+      chunkSizeWarningLimit: 200,
+      rollupOptions: {
+        external: ['nodemailer'],
+      },
     },
     ssr: {
       noExternal: ['@astrojs/internal-helpers'],
+      external: ['nodemailer'],
+    },
+    // Optimize deps for faster dev/build
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'date-fns',
+        'lodash-es',
+        'zod',
+        'react-hook-form',
+        '@hookform/resolvers',
+      ],
+    },
+    // Exclude SvelteKit routes
+    server: {
+      watch: {
+        ignored: ['**/src/routes/**'],
+      },
     },
   },
 });

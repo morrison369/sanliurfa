@@ -166,10 +166,13 @@ try {
 </aside>
 
 <script>
-  async function handleSubscribe(event: Event) {
+  async function handleSubscribe(event) {
     event.preventDefault();
-    const form = event.target as HTMLFormElement;
-    const email = (form.querySelector('input[name="email"]') as HTMLInputElement).value;
+    const form = /** @type {HTMLFormElement} */ (event.target);
+    const emailInput = /** @type {HTMLInputElement} */ (form.querySelector('input[name="email"]'));
+    const email = emailInput?.value;
+
+    if (!email) return;
 
     try {
       const response = await fetch('/api/blog/subscribe', {

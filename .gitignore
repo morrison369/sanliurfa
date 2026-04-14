@@ -12,6 +12,8 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
 
 # IDE
 .vscode/

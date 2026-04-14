@@ -1,5 +1,11 @@
 ---
-import { Users, Star, Award } from 'lucide-react';
+const icons = {
+  Users: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  Star: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  Award: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>`,
+};
+
+;
 ---
 
 <section class="relative py-24 overflow-hidden">
@@ -20,11 +26,11 @@ import { Users, Star, Award } from 'lucide-react';
     
     <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
       <a href="/kayit" class="btn bg-white text-urfa-700 hover:bg-gray-100 text-base px-8 py-4">
-        <Users className="w-5 h-5 mr-2" />
+        <span set:html={icons.Users}></span>
         Ücretsiz Üye Ol
       </a>
       <a href="/places/ekle" class="btn bg-urfa-700 text-white hover:bg-urfa-800 text-base px-8 py-4 border border-urfa-500">
-        <Star className="w-5 h-5 mr-2" />
+        <span set:html={icons.Star}></span>
         Mekan Ekle
       </a>
     </div>
@@ -32,15 +38,15 @@ import { Users, Star, Award } from 'lucide-react';
     <!-- Benefits -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-12 max-w-3xl mx-auto">
       <div class="flex items-center gap-3 text-white/90">
-        <Award className="w-6 h-6 text-yellow-400" />
+        <span set:html={icons.Award}></span>
         <span>Puan kazanın</span>
       </div>
       <div class="flex items-center gap-3 text-white/90">
-        <Star className="w-6 h-6 text-yellow-400" />
+        <span set:html={icons.Star}></span>
         <span>Mekan yorumlayın</span>
       </div>
       <div class="flex items-center gap-3 text-white/90">
-        <Users className="w-6 h-6 text-yellow-400" />
+        <span set:html={icons.Users}></span>
         <span>Topluluğa katılın</span>
       </div>
     </div>

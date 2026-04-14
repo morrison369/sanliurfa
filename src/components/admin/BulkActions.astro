@@ -48,7 +48,7 @@ const { itemType, actions } = Astro.props;
   </form>
 </div>
 
-<script>
+<script is:inline>
   let selectedItems = new Set();
   
   const selectAllCheckbox = document.getElementById('select-all');

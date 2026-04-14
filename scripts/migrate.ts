@@ -1,120 +1,209 @@
-#!/usr/bin/env tsx
-
 /**
- * Migrasyon CLI aracı
+ * Database Migration Runner
+ * Runs TypeScript migrations from src/migrations/ in order
  *
- * Kullanım:
- *   npm run migrate          - Tüm migrasyonları çalıştır
- *   npm run migrate status   - Migrasyon durumunu göster
- *   npm run migrate rollback - Son migrasyonu geri al
+ * Usage:
+ *   npx tsx scripts/migrate.ts          # Run pending migrations
+ *   npx tsx scripts/migrate.ts status   # Show migration status
+ *   npx tsx scripts/migrate.ts down     # Rollback last migration
  */
 
-import { runMigrations, rollbackMigration, getMigrationHistory, validateMigrations, rollbackAll } from '../src/lib/migrations';
-import { migration_001_initial_schema } from '../src/migrations/001_initial_schema';
-import { logger } from '../src/lib/logging';
+import { readdir } from 'fs/promises';
+import { join, resolve } from 'path';
+import { pool } from '../src/lib/postgres';
 
-// Tüm migrasyonlar buraya eklenmeli
-const ALL_MIGRATIONS = [
-  migration_001_initial_schema
-];
+const MIGRATIONS_DIR = resolve(__dirname, '../src/migrations');
 
-async function main() {
-  const command = process.argv[2] || 'run';
+/**
+ * Ensure migration tracking table exists
+ */
+async function initTrackingTable(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      version TEXT PRIMARY KEY,
+      filename TEXT NOT NULL,
+      description TEXT,
+      executed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  `);
+}
 
+/**
+ * Get set of already-executed migration versions
+ */
+async function getExecutedVersions(): Promise<Set<string>> {
+  const result = await pool.query('SELECT version FROM schema_migrations ORDER BY version');
+  return new Set(result.rows.map((r: any) => r.version));
+}
+
+/**
+ * Discover .ts migration files, sorted by filename
+ */
+async function getMigrationFiles(): Promise<string[]> {
+  const files = await readdir(MIGRATIONS_DIR);
+  return files
+    .filter(f => f.endsWith('.ts') && /^\d{3}_/.test(f))
+    .sort();
+}
+
+/**
+ * Run a single migration inside a transaction
+ */
+async function executeMigration(filename: string): Promise<void> {
+  const version = filename.replace('.ts', '');
+  const filepath = join(MIGRATIONS_DIR, filename);
+
+  console.log(`⏳ Running: ${filename}`);
+
+  // Dynamic import of the migration module
+  const mod = await import(filepath);
+
+  // Find the exported migration object (first export matching Migration shape)
+  const migration = Object.values(mod).find(
+    (v: any) => v && typeof v === 'object' && typeof v.up === 'function'
+  ) as { version: string; description: string; up: (p: any) => Promise<void> } | undefined;
+
+  if (!migration) {
+    throw new Error(`No valid migration export found in ${filename}`);
+  }
+
+  const client = await pool.connect();
   try {
-    switch (command) {
-      case 'run':
-        console.log('📦 Migrasyonlar çalıştırılıyor...');
-        await runMigrations(ALL_MIGRATIONS);
-        console.log('✅ Migrasyonlar tamamlandı!');
-        break;
-
-      case 'status':
-        console.log('📋 Migrasyon Durumu\n');
-        const history = await getMigrationHistory();
-        if (history.length === 0) {
-          console.log('Hiç migrasyon çalıştırılmadı');
-        } else {
-          console.log('Çalıştırılan migrasyonlar:');
-          history.forEach(m => {
-            const date = new Date(m.executedAt).toLocaleString('tr-TR');
-            console.log(`  ✓ ${m.version}`);
-            console.log(`    ${m.description}`);
-            console.log(`    ${date}\n`);
-          });
-        }
-
-        console.log('\nBeklenen migrasyonlar:');
-        ALL_MIGRATIONS.forEach(m => {
-          const isExecuted = history.some(h => h.version === m.version);
-          const status = isExecuted ? '✓' : '⏳';
-          console.log(`  ${status} ${m.version}`);
-          console.log(`    ${m.description}\n`);
-        });
-
-        const validation = await validateMigrations(ALL_MIGRATIONS);
-        if (!validation.valid) {
-          console.log('⚠️  Uyarılar:');
-          if (validation.missing.length > 0) {
-            console.log(`  Eksik migrasyonlar: ${validation.missing.join(', ')}`);
-          }
-          if (validation.extra.length > 0) {
-            console.log(`  Tanımlanmamış migrasyonlar: ${validation.extra.join(', ')}`);
-          }
-        } else {
-          console.log('✅ Tüm migrasyonlar senkronize');
-        }
-        break;
-
-      case 'rollback':
-        console.log('⏮️  Son migrasyon geri alınıyor...');
-        const history2 = await getMigrationHistory();
-        if (history2.length === 0) {
-          console.log('Geri alınacak migrasyon yok');
-          break;
-        }
-
-        const lastVersion = history2[history2.length - 1].version;
-        const lastMigration = ALL_MIGRATIONS.find(m => m.version === lastVersion);
-
-        if (!lastMigration) {
-          console.log(`Migrasyon tanımı bulunamadı: ${lastVersion}`);
-          break;
-        }
-
-        await rollbackMigration(lastMigration);
-        console.log(`✅ Migrasyon geri alındı: ${lastVersion}`);
-        break;
-
-      case 'rollback-all':
-        if (process.env.NODE_ENV === 'production') {
-          console.error('❌ Rollback All sadece geliştirme ortamında yapılabilir!');
-          process.exit(1);
-        }
-        console.log('🗑️  TÜM MİGRASYONLAR GERİ ALINACAK!');
-        console.log('Devam etmek için Ctrl+C tuşlaması yapmalı veya 5 saniye bekleyiniz...\n');
-
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        await rollbackAll(ALL_MIGRATIONS);
-        console.log('✅ Tüm migrasyonlar geri alındı');
-        break;
-
-      default:
-        console.log(`Bilinmeyen komut: ${command}`);
-        console.log('\nKullanılabilir komutlar:');
-        console.log('  run        - Tüm migrasyonları çalıştır');
-        console.log('  status     - Migrasyon durumunu göster');
-        console.log('  rollback   - Son migrasyonu geri al');
-        console.log('  rollback-all - Tüm migrasyonları geri al (sadece dev)');
-        process.exit(1);
-    }
+    await client.query('BEGIN');
+    await migration.up(client);
+    await client.query(
+      'INSERT INTO schema_migrations (version, filename, description) VALUES ($1, $2, $3)',
+      [version, filename, migration.description || '']
+    );
+    await client.query('COMMIT');
+    console.log(`✅ Done: ${filename}`);
   } catch (error) {
-    console.error('❌ Hata:', error instanceof Error ? error.message : String(error));
-    if (error instanceof Error && error.stack) {
-      console.error(error.stack);
-    }
-    process.exit(1);
+    await client.query('ROLLBACK');
+    console.error(`❌ Failed: ${filename}`);
+    throw error;
+  } finally {
+    client.release();
   }
 }
 
-main();
+/**
+ * Run all pending migrations
+ */
+async function migrate(): Promise<void> {
+  console.log('🚀 Starting migrations...\n');
+
+  await initTrackingTable();
+  const executed = await getExecutedVersions();
+  const files = await getMigrationFiles();
+  const pending = files.filter(f => !executed.has(f.replace('.ts', '')));
+
+  if (pending.length === 0) {
+    console.log('✅ No pending migrations');
+    return;
+  }
+
+  console.log(`📦 ${pending.length} pending migration(s)\n`);
+
+  for (const file of pending) {
+    await executeMigration(file);
+  }
+
+  console.log(`\n✅ All ${pending.length} migration(s) applied`);
+}
+
+/**
+ * Show migration status
+ */
+async function status(): Promise<void> {
+  await initTrackingTable();
+  const executed = await getExecutedVersions();
+  const files = await getMigrationFiles();
+
+  console.log('\n📊 Migration Status\n');
+  console.log('Filename                                    Status');
+  console.log('=========================================== =========');
+
+  for (const file of files) {
+    const version = file.replace('.ts', '');
+    const mark = executed.has(version) ? '✅ Applied' : '⏳ Pending';
+    console.log(`${file.padEnd(43)} ${mark}`);
+  }
+
+  const pendingCount = files.filter(f => !executed.has(f.replace('.ts', ''))).length;
+  console.log(`\nTotal: ${files.length} | Applied: ${executed.size} | Pending: ${pendingCount}`);
+}
+
+/**
+ * Rollback last applied migration (removes tracking record only)
+ */
+async function rollback(): Promise<void> {
+  await initTrackingTable();
+  const result = await pool.query(
+    'SELECT version, filename FROM schema_migrations ORDER BY executed_at DESC LIMIT 1'
+  );
+
+  if (result.rows.length === 0) {
+    console.log('⚠️  No migrations to rollback');
+    return;
+  }
+
+  const { version, filename } = result.rows[0];
+  console.log(`⏪ Rolling back: ${filename}`);
+
+  // Try to run down() if available
+  try {
+    const filepath = join(MIGRATIONS_DIR, filename);
+    const mod = await import(filepath);
+    const migration = Object.values(mod).find(
+      (v: any) => v && typeof v === 'object' && typeof v.down === 'function'
+    ) as { down: (p: any) => Promise<void> } | undefined;
+
+    if (migration) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await migration.down(client);
+        await client.query('DELETE FROM schema_migrations WHERE version = $1', [version]);
+        await client.query('COMMIT');
+        console.log(`✅ Rolled back: ${filename}`);
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    } else {
+      await pool.query('DELETE FROM schema_migrations WHERE version = $1', [version]);
+      console.log(`⚠️  No down() found. Removed tracking record for: ${filename}`);
+    }
+  } catch (error) {
+    console.error(`❌ Rollback failed:`, error);
+  }
+}
+
+// CLI entry
+const command = process.argv[2] || 'up';
+
+(async () => {
+  try {
+    switch (command) {
+      case 'up':
+        await migrate();
+        break;
+      case 'down':
+        await rollback();
+        break;
+      case 'status':
+        await status();
+        break;
+      default:
+        console.log('Usage: npx tsx scripts/migrate.ts [up|down|status]');
+        process.exit(1);
+    }
+  } catch (error) {
+    console.error('Migration error:', error);
+    process.exit(1);
+  } finally {
+    await pool.end();
+  }
+})();

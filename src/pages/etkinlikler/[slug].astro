@@ -1,32 +1,21 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { Calendar, MapPin, Clock, ArrowLeft, Share2 } from 'lucide-react';
 import Breadcrumb from '../../components/Breadcrumb.astro';
 import { query, queryOne } from '../../lib/postgres';
 
-const { slug } = Astro.params;
+// SVG ikonlar
+const icons = {
+  calendar: `<svg class="w-6 h-6 text-urfa-600 dark:text-urfa-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+  clock: `<svg class="w-6 h-6 text-urfa-600 dark:text-urfa-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  mapPin: `<svg class="w-6 h-6 text-urfa-600 dark:text-urfa-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  arrowLeft: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
+  share2: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
+};
 
-const event = await queryOne(
-  `SELECT e.*, u.full_name as creator_name 
-   FROM events e 
-   LEFT JOIN users u ON e.created_by = u.id 
-   WHERE e.slug = $1 AND e.status = 'published'`,
-  [slug]
-);
-
-if (!event) {
-  return Astro.redirect('/etkinlikler');
-}
-
-const relatedResult = await query(
-  `SELECT id, title, slug, image_url, start_date, location 
-   FROM events 
-   WHERE status = 'published' AND category = $1 AND id != $2 
-   AND start_date >= CURRENT_DATE 
-   LIMIT 3`,
-  [event.category, event.id]
-);
-const relatedEvents = relatedResult.rows;
+let event: any = null;
+let relatedEvents: any[] = [];
+let isPast = false;
+let breadcrumbItems: any[] = [];
 
 const getCategoryLabel = (category: string) => {
   const labels: Record<string, string> = {
@@ -36,19 +25,47 @@ const getCategoryLabel = (category: string) => {
   return labels[category] || category;
 };
 
-const isPast = new Date(event.start_date) < new Date();
+try {
+  const { slug } = Astro.params;
 
-const breadcrumbItems = [
-  { label: 'Ana Sayfa', href: '/' },
-  { label: 'Etkinlikler', href: '/etkinlikler' },
-  { label: getCategoryLabel(event.category), href: `/etkinlikler?category=${event.category}` },
-  { label: event.title, href: `/etkinlikler/${event.slug}` },
-];
+  event = await queryOne(
+    `SELECT e.*, u.full_name as creator_name
+     FROM events e
+     LEFT JOIN users u ON e.created_by = u.id
+     WHERE e.slug = $1 AND e.status = 'published'`,
+    [slug]
+  );
+
+  if (!event) {
+    return Astro.redirect('/etkinlikler');
+  }
+
+  const relatedResult = await query(
+    `SELECT id, title, slug, image_url, start_date, location
+     FROM events
+     WHERE status = 'published' AND category = $1 AND id != $2
+     AND start_date >= CURRENT_DATE
+     LIMIT 3`,
+    [event.category, event.id]
+  );
+  relatedEvents = relatedResult.rows;
+
+  isPast = new Date(event.start_date) < new Date();
+
+  breadcrumbItems = [
+    { label: 'Ana Sayfa', href: '/' },
+    { label: 'Etkinlikler', href: '/etkinlikler' },
+    { label: getCategoryLabel(event.category), href: `/etkinlikler?category=${event.category}` },
+    { label: event.title, href: `/etkinlikler/${event.slug}` },
+  ];
+} catch (e) {
+  console.error('Error loading event detail:', e);
+}
 
 const seo = {
-  title: `${event.title} - Şanlıurfa Etkinlikleri`,
-  description: event.description,
-  image: event.image_url,
+  title: event ? `${event.title} - Şanlıurfa Etkinlikleri` : 'Etkinlik - Şanlıurfa',
+  description: event?.description || 'Şanlıurfa etkinlikleri',
+  image: event?.image_url,
 };
 ---
 
@@ -94,7 +111,7 @@ const seo = {
             <div class="grid sm:grid-cols-3 gap-4 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
               <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-urfa-600 dark:text-urfa-400" />
+                  <span set:html={icons.calendar}></span>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500 dark:text-gray-400">Tarih</p>
@@ -111,7 +128,7 @@ const seo = {
               
               <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-urfa-600 dark:text-urfa-400" />
+                  <span set:html={icons.clock}></span>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500 dark:text-gray-400">Saat</p>
@@ -123,7 +140,7 @@ const seo = {
               
               <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center">
-                  <MapPin className="w-6 h-6 text-urfa-600 dark:text-urfa-400" />
+                  <span set:html={icons.mapPin}></span>
                 </div>
                 <div>
                   <p class="text-sm text-gray-500 dark:text-gray-400">Konum</p>
@@ -139,11 +156,11 @@ const seo = {
             
             <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
               <a href="/etkinlikler" class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
-                <ArrowLeft className="w-4 h-4" />
+                <span set:html={icons.arrowLeft}></span>
                 Tüm Etkinlikler
               </a>
               <button class="p-2 text-gray-500 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors" aria-label="Paylaş">
-                <Share2 className="w-5 h-5" />
+                <span set:html={icons.share2}></span>
               </button>
             </div>
           </div>

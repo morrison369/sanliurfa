@@ -1,97 +1,56 @@
-import type { APIRoute } from 'astro';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../lib/api';
-import { pool } from '../../lib/postgres';
-import { getRedisClient, isRedisAvailable } from '../../lib/cache';
-
-interface HealthStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  uptime: number;
-  timestamp: string;
-  version: string;
-  checks: {
-    database: {
-      status: 'up' | 'down';
-      responseTime?: number;
-    };
-    redis: {
-      status: 'up' | 'down';
-      responseTime?: number;
-    };
-  };
-}
-
 /**
- * GET /api/health - Health check with database and Redis status
+ * Healthcheck Endpoint
+ * Used by PM2, Docker, and load balancers
  */
-export const GET: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
 
+import type { APIRoute } from 'astro';
+import { pool, getPoolStatus } from '../../lib/postgres';
+import { isRedisAvailable } from '../../lib/cache/cache';
+
+export const GET: APIRoute = async () => {
+  let dbStatus = 'unknown';
+  let dbLatency = -1;
+
+  // Check PostgreSQL
   try {
-    let dbStatus: 'up' | 'down' = 'down';
-    let dbResponseTime = 0;
-    let redisStatus: 'up' | 'down' = 'down';
-    let redisResponseTime = 0;
-
-    // Check database
-    try {
-      const dbStart = Date.now();
-      const result = await pool.query('SELECT 1');
-      dbResponseTime = Date.now() - dbStart;
-      if (result.rows.length > 0) {
-        dbStatus = 'up';
-      }
-    } catch (error) {
-      console.error('Database health check failed:', error);
-      dbStatus = 'down';
-    }
-
-    // Check Redis
-    try {
-      if (isRedisAvailable()) {
-        const redisStart = Date.now();
-        const redis = await getRedisClient();
-        await redis.ping();
-        redisResponseTime = Date.now() - redisStart;
-        redisStatus = 'up';
-      }
-    } catch (error) {
-      console.error('Redis health check failed:', error);
-      redisStatus = 'down';
-    }
-
-    // Determine overall status
-    let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    if (dbStatus === 'down') {
-      overallStatus = 'unhealthy';
-    } else if (redisStatus === 'down') {
-      overallStatus = 'degraded';
-    }
-
-    const uptime = Math.floor(process.uptime());
-
-    const healthData: HealthStatus = {
-      status: overallStatus,
-      uptime,
-      timestamp: new Date().toISOString(),
-      version: '1.0.0',
-      checks: {
-        database: {
-          status: dbStatus,
-          ...(dbResponseTime && { responseTime: dbResponseTime })
-        },
-        redis: {
-          status: redisStatus,
-          ...(redisResponseTime && { responseTime: redisResponseTime })
-        }
-      }
-    };
-
-    // Return appropriate status code based on health
-    const statusCode = overallStatus === 'unhealthy' ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.OK;
-
-    return apiResponse(healthData, statusCode, requestId);
-  } catch (error) {
-    console.error('Health check error:', error);
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Health check failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    const start = Date.now();
+    await pool.query('SELECT 1');
+    dbLatency = Date.now() - start;
+    dbStatus = 'connected';
+  } catch {
+    dbStatus = 'disconnected';
   }
+
+  const poolStatus = getPoolStatus();
+  const redisStatus = isRedisAvailable() ? 'connected' : 'disconnected';
+  const allHealthy = dbStatus === 'connected' && redisStatus === 'connected';
+
+  const health = {
+    status: allHealthy ? 'healthy' : 'degraded',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime()),
+    version: process.env.npm_package_version || '1.0.0',
+    services: {
+      database: {
+        status: dbStatus,
+        latencyMs: dbLatency,
+        pool: poolStatus,
+      },
+      redis: {
+        status: redisStatus,
+      },
+    },
+    memory: {
+      rss: Math.round(process.memoryUsage().rss / 1024 / 1024),
+      heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+    },
+  };
+
+  return new Response(JSON.stringify(health), {
+    status: allHealthy ? 200 : 503,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+    },
+  });
 };

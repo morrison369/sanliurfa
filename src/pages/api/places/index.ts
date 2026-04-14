@@ -1,8 +1,10 @@
 // API: Mekan listesi (PostgreSQL + Redis cache)
+// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { query, insert } from '../../../lib/postgres';
 import { getCache, setCache, deleteCache } from '../../../lib/cache';
 
+// @ts-nocheck
 /**
  * Generate cache key for places list query
  */

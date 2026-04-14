@@ -1,344 +1,101 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
-import { FileText, Upload, Eye, Save, AlertCircle } from 'lucide-react';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { getBlogCategories } from '../../../lib/blog';
 
-const user = Astro.locals.user;
-if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/login');
-}
-
-let categories = [];
-let error = '';
-
-try {
-  categories = await getBlogCategories();
-} catch (err) {
-  error = 'Kategoriler yüklenirken hata oluştu';
-  console.error('Blog add error:', err);
-}
+// Kategorileri getir
+const categories = await getBlogCategories();
 
 const seo = {
-  title: 'Yeni Blog Yazısı - Yönetim Paneli',
-  description: 'Blog yazısı ekle',
-  noindex: true
+  title: 'Yeni Blog Yazısı - Admin',
+  description: 'Yeni blog yazısı oluşturun'
 };
-
-const isEdit = false;
-const post = null;
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Admin Header -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="container-custom py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <a href="/admin/blog" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              ← Geri
-            </a>
-            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">
-              {isEdit ? 'Yazıyı Düzenle' : 'Yeni Yazı'}
-            </h1>
+<AdminLayout seo={seo}>
+  <div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Yeni Blog Yazısı</h1>
+      <a href="/admin/blog" class="btn-secondary">Geri Dön</a>
+    </div>
+
+    <form id="blogForm" class="space-y-6">
+      <div class="bg-white rounded-lg shadow p-6 space-y-4">
+        <div>
+          <label for="title" class="label">Başlık</label>
+          <input type="text" id="title" name="title" required class="input" />
+        </div>
+
+        <div>
+          <label for="content" class="label">İçerik</label>
+          <textarea id="content" name="content" rows="10" required class="input"></textarea>
+        </div>
+
+        <div>
+          <label for="excerpt" class="label">Özet</label>
+          <textarea id="excerpt" name="excerpt" rows="3" class="input"></textarea>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label for="categoryId" class="label">Kategori</label>
+            <select id="categoryId" name="categoryId" class="input">
+              <option value="">Seçiniz</option>
+              {categories.map(cat => (
+                <option value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
           </div>
-          <div class="flex items-center gap-2">
-            <button type="submit" form="blog-form" class="btn-primary flex items-center gap-2">
-              <Save className="w-4 h-4" />
-              {isEdit ? 'Güncelle' : 'Oluştur'}
-            </button>
+
+          <div>
+            <label for="status" class="label">Durum</label>
+            <select id="status" name="status" class="input">
+              <option value="draft">Taslak</option>
+              <option value="published">Yayınla</option>
+            </select>
           </div>
         </div>
       </div>
-    </div>
 
-    {error && (
-      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 m-4 rounded-lg flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-        <p class="text-red-700 dark:text-red-300">{error}</p>
+      <div class="flex justify-end gap-4">
+        <button type="button" onclick="history.back()" class="btn-secondary">İptal</button>
+        <button type="submit" class="btn-primary">Kaydet</button>
       </div>
-    )}
-
-    <div class="container-custom py-8">
-      <form id="blog-form" class="grid lg:grid-cols-3 gap-8">
-        <!-- Main Content -->
-        <div class="lg:col-span-2 space-y-6">
-          <!-- Basic Info -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Yazı Bilgileri</h2>
-            
-            <div class="space-y-4">
-              <div>
-                <label for="title" class="label dark:text-gray-300">Başlık *</label>
-                <input 
-                  type="text" 
-                  id="title" 
-                  name="title" 
-                  required
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="Yazı başlığı"
-                  value={post?.title || ''}
-                />
-              </div>
-              
-              <div>
-                <label for="excerpt" class="label dark:text-gray-300">Özet *</label>
-                <textarea 
-                  id="excerpt" 
-                  name="excerpt" 
-                  rows="2" 
-                  required
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
-                  placeholder="Yazının kısa özeti (150-200 karakter)"
-                  maxlength="200"
-                >{post?.excerpt || ''}</textarea>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">SEO için önemli, 150-200 karakter önerilir.</p>
-              </div>
-              
-              <div>
-                <label for="content" class="label dark:text-gray-300">İçerik *</label>
-                <textarea 
-                  id="content" 
-                  name="content" 
-                  rows="15" 
-                  required
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none font-mono"
-                  placeholder="Yazı içeriği... (HTML veya Markdown desteklenir)"
-                >{post?.content || ''}</textarea>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  HTML etiketleri desteklenir: &lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;img&gt;, vb.
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- SEO -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">SEO Ayarları</h2>
-            
-            <div class="space-y-4">
-              <div>
-                <label for="seoTitle" class="label dark:text-gray-300">SEO Başlığı</label>
-                <input
-                  type="text"
-                  id="seoTitle"
-                  name="seoTitle"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="SEO başlığı (boş bırakılırsa yazı başlığı kullanılır)"
-                  maxlength="255"
-                />
-              </div>
-
-              <div>
-                <label for="seoDescription" class="label dark:text-gray-300">SEO Açıklaması</label>
-                <textarea
-                  id="seoDescription"
-                  name="seoDescription"
-                  rows="2"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
-                  placeholder="SEO açıklaması (150-160 karakter)"
-                  maxlength="500"
-                ></textarea>
-              </div>
-
-              <div>
-                <label for="seoKeywords" class="label dark:text-gray-300">SEO Anahtar Kelimeleri</label>
-                <input
-                  type="text"
-                  id="seoKeywords"
-                  name="seoKeywords"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="Anahtar kelimeler (virgülle ayırın)"
-                  maxlength="255"
-                />
-              </div>
-              
-              <div>
-                <label for="slug" class="label dark:text-gray-300">URL Slug</label>
-                <div class="flex">
-                  <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
-                    /blog/
-                  </span>
-                  <input 
-                    type="text" 
-                    id="slug" 
-                    name="slug"
-                    class="input rounded-l-none dark:bg-gray-700 dark:border-gray-600 dark:text-white flex-1"
-                    placeholder="yazi-basligi"
-                  />
-                </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Boş bırakılırsa başlıktan otomatik oluşturulur.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Sidebar -->
-        <aside class="space-y-6">
-          <!-- Publish Settings -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayın Ayarları</h3>
-            
-            <div class="space-y-4">
-              <div>
-                <label for="status" class="label dark:text-gray-300">Durum</label>
-                <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <option value="draft">Taslak</option>
-                  <option value="published">Yayınla</option>
-                  <option value="scheduled">Zamanla</option>
-                </select>
-              </div>
-              
-              <div>
-                <label for="publishedAt" class="label dark:text-gray-300">Yayın Tarihi (Planlanmış Yazılar için)</label>
-                <input
-                  type="datetime-local"
-                  id="publishedAt"
-                  name="publishedAt"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Gelecek bir tarih seçerseniz yazı otomatik olarak yayınlanacak</p>
-              </div>
-              
-              <label class="flex items-center gap-2">
-                <input type="checkbox" id="isFeatured" name="isFeatured" class="rounded border-gray-300 text-blue-600" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan yazı</span>
-              </label>
-            </div>
-          </div>
-          
-          <!-- Category -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Kategori</h3>
-
-            <div class="space-y-4">
-              <div>
-                <label for="categoryId" class="label dark:text-gray-300">Kategori</label>
-                <select id="categoryId" name="categoryId" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <option value="">-- Kategori Seçin --</option>
-                  {categories.map(cat => (
-                    <option value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Cover Image -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Kapak Görseli</h3>
-
-            <div class="space-y-4">
-              <div>
-                <label for="featuredImage" class="label dark:text-gray-300">Kapak Görseli URL</label>
-                <input
-                  type="url"
-                  id="featuredImage"
-                  name="featuredImage"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div>
-                <label for="thumbnail" class="label dark:text-gray-300">Küçük Resim URL</label>
-                <input
-                  type="url"
-                  id="thumbnail"
-                  name="thumbnail"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="https://..."
-                />
-              </div>
-            </div>
-          </div>
-          
-          <!-- Tags -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Etiketler</h3>
-            
-            <input 
-              type="text" 
-              name="tags"
-              class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              placeholder="Etiketleri virgülle ayırın"
-            />
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Örn: Göbeklitepe, Tarih, Gezi
-            </p>
-          </div>
-        </aside>
-      </form>
-    </div>
+    </form>
   </div>
-  
-  <script>
-    const form = document.getElementById('blog-form') as HTMLFormElement;
+</AdminLayout>
 
-    if (form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+<script>
+  const form = document.getElementById('blogForm');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const data = {
+        title: formData.get('title'),
+        content: formData.get('content'),
+        excerpt: formData.get('excerpt'),
+        categoryId: formData.get('categoryId') ? parseInt(formData.get('categoryId') as string) : null,
+        status: formData.get('status') || 'draft'
+      };
 
-        // Form verilerini topla
-        const formData = new FormData(form);
-        const data: any = {
-          title: formData.get('title'),
-          content: formData.get('content'),
-          excerpt: formData.get('excerpt'),
-          categoryId: formData.get('categoryId') ? parseInt(formData.get('categoryId') as string) : undefined,
-          featuredImage: formData.get('featuredImage'),
-          thumbnail: formData.get('thumbnail'),
-          status: formData.get('status') || 'draft',
-          isFeatured: formData.get('isFeatured') ? true : false,
-          seoTitle: formData.get('seoTitle'),
-          seoDescription: formData.get('seoDescription'),
-          seoKeywords: formData.get('seoKeywords'),
-          tags: formData.get('tags') ? (formData.get('tags') as string).split(',').map(t => t.trim()) : []
-        };
+      try {
+        const response = await fetch('/api/blog/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
 
-        try {
-          const response = await fetch('/api/blog/posts', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-          });
-
-          const result = await response.json();
-
-          if (!response.ok) {
-            alert(result.error || 'Yazı oluşturulamadı');
-            return;
-          }
-
-          alert('Yazı başarıyla oluşturuldu');
+        const result = await response.json();
+        
+        if (result.success) {
           window.location.href = '/admin/blog';
-        } catch (err) {
-          alert('Hata: ' + String(err));
+        } else {
+          alert(result.error || 'Bir hata oluştu');
         }
-      });
-    }
-
-    // Auto-generate slug from title
-    const titleInput = document.getElementById('title');
-    const slugInput = document.getElementById('slug');
-
-    titleInput?.addEventListener('input', (e) => {
-      if (!slugInput?.value) {
-        const slug = (e.target as HTMLInputElement).value
-          .toLowerCase()
-          .replace(/ş/g, 's')
-          .replace(/ç/g, 'c')
-          .replace(/ğ/g, 'g')
-          .replace(/ı/g, 'i')
-          .replace(/ö/g, 'o')
-          .replace(/ü/g, 'u')
-          .replace(/[^\w\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .substring(0, 60);
-        if (slugInput) slugInput.value = slug;
+      } catch (error) {
+        alert('Bağlantı hatası');
       }
     });
-  </script>
-</Layout>
+  }
+</script>

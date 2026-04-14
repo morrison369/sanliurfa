@@ -1,84 +1,113 @@
-// API: İletişim formu (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { insert } from '../../lib/postgres';
-import { sendEmail } from '../../lib/email';
+import { query } from '../../lib/postgres';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
   try {
-    const formData = await request.formData();
-    
-    const name = formData.get('name')?.toString();
-    const email = formData.get('email')?.toString();
-    const subject = formData.get('subject')?.toString();
-    const message = formData.get('message')?.toString();
+    const body = await context.request.json();
+    const { name, email, subject, message, type = 'general', placeId } = body;
 
     // Validation
     if (!name || !email || !subject || !message) {
-      return new Response(
-        JSON.stringify({ error: 'Tüm alanları doldurun' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ 
+        error: 'Missing required fields',
+        fields: ['name', 'email', 'subject', 'message']
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return new Response(
-        JSON.stringify({ error: 'Geçerli bir e-posta adresi girin' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Invalid email address' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    // Save to database
-    await insert('contact_messages', {
-      name,
-      email,
-      subject,
-      message,
-      status: 'new',
-      created_at: new Date().toISOString(),
-    });
-
-    // Send notification email to admin
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@sanliurfa.com';
-    await sendEmail({
-      to: adminEmail,
-      subject: `[İletişim] ${subject}`,
-      html: `
-        <h2>Yeni İletişim Formu Mesajı</h2>
-        <p><b>Gönderen:</b> ${name} (${email})</p>
-        <p><b>Konu:</b> ${subject}</p>
-        <p><b>Mesaj:</b></p>
-        <blockquote style="border-left: 4px solid #3b82f6; padding-left: 16px; margin: 16px 0;">
-          ${message.replace(/\n/g, '<br>')}
-        </blockquote>
-      `
-    });
-
-    // Send confirmation email to user
-    await sendEmail({
-      to: email,
-      subject: 'Mesajınız alındı - Şanlıurfa.com',
-      html: `
-        <h2>Mesajınız alındı!</h2>
-        <p>Merhaba ${name},</p>
-        <p>İletişim formu aracılığıyla gönderdiğiniz mesajı aldık. En kısa sürede size dönüş yapacağız.</p>
-        <p>Saygılarımızla,<br>Şanlıurfa.com Ekibi</p>
-      `
-    });
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Mesajınız başarıyla gönderildi. En kısa sürede size dönüş yapacağız.'
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    // Create ticket
+    const result = await query(
+      `INSERT INTO support_tickets (
+        name, email, subject, message, type, place_id, status, priority
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'open', 'medium')
+      RETURNING id, ticket_number`,
+      [name, email, subject, message, type, placeId || null]
     );
-  } catch (err) {
-    console.error('Contact form error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Mesaj gönderilirken bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+
+    const ticket = result.rows[0];
+
+    // TODO: Send notification email to admin
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Mesajınız başarıyla gönderildi',
+      ticket: {
+        id: ticket.id,
+        ticketNumber: ticket.ticket_number
+      }
+    }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Contact form error:', error);
+    return new Response(JSON.stringify({ error: 'Server error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
+
+// List tickets (admin only)
+export const GET: APIRoute = async (context) => {
+  try {
+    const auth = await context.locals.auth?.();
+    if (!auth?.user?.role === 'admin') {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const url = new URL(context.request.url);
+    const status = url.searchParams.get('status') || 'open';
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = 20;
+    const offset = (page - 1) * limit;
+
+    const result = await query(
+      `SELECT * FROM support_tickets 
+       WHERE status = $1 
+       ORDER BY created_at DESC 
+       LIMIT $2 OFFSET $3`,
+      [status, limit, offset]
     );
+
+    const countResult = await query(
+      'SELECT COUNT(*) FROM support_tickets WHERE status = $1',
+      [status]
+    );
+
+    return new Response(JSON.stringify({
+      success: true,
+      tickets: result.rows,
+      pagination: {
+        page,
+        limit,
+        total: parseInt(countResult.rows[0].count)
+      }
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('List tickets error:', error);
+    return new Response(JSON.stringify({ error: 'Server error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 };

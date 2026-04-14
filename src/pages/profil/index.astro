@@ -1,6 +1,5 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { User, MapPin, Star, Heart, Award, Settings } from 'lucide-react';
 import { query, queryOne } from '../../lib/postgres';
 
 const user = Astro.locals.user;
@@ -9,26 +8,46 @@ if (!user) {
   return Astro.redirect('/giris?redirect=/profil');
 }
 
-const profile = await queryOne('SELECT * FROM users WHERE id = $1', [user.id]);
-
-// Kullanıcı istatistikleri
-const reviewsCount = await query('SELECT COUNT(*) FROM reviews WHERE user_id = $1', [user.id]);
-const favoritesCount = await query('SELECT COUNT(*) FROM favorites WHERE user_id = $1', [user.id]);
-
-const stats = {
-  reviews: parseInt(reviewsCount.rows[0]?.count || '0'),
-  favorites: parseInt(favoritesCount.rows[0]?.count || '0'),
-};
-
+let profile: any = null;
+let stats: any[] = [];
 const seo = {
-  title: 'Profilim - Şanlıurfa.com',
-  description: 'Profil bilgilerinizi yönetin.',
-};
+    title: 'Profilim - Şanlıurfa.com',
+    description: 'Profil bilgilerinizi yönetin.',
+  };
+let icons: any = {};
+
+try {
+
+  profile = await queryOne('SELECT * FROM users WHERE id = $1', [user.id]);
+
+  // Kullanıcı istatistikleri
+  const reviewsCount = await query('SELECT COUNT(*) FROM reviews WHERE user_id = $1', [user.id]);
+  const favoritesCount = await query('SELECT COUNT(*) FROM favorites WHERE user_id = $1', [user.id]);
+
+  stats = {
+    reviews: parseInt(reviewsCount.rows[0]?.count || '0'),
+    favorites: parseInt(favoritesCount.rows[0]?.count || '0'),
+  };
+
+  // SVG ikonlar
+  const icons = {
+    user: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+    star: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+    heart: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
+    award: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>`,
+    activity: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+    settings: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+    logout: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+  };
+
+} catch (e) {
+  console.error('Error loading data:', e);
+}
 ---
 
 <Layout seo={seo}>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-    <div class="container-custom">
+    <div class="container mx-auto px-4">
       <div class="grid lg:grid-cols-4 gap-8">
         <!-- Sidebar -->
         <aside class="lg:col-span-1">
@@ -36,67 +55,79 @@ const seo = {
             <div class="w-24 h-24 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center text-urfa-600 dark:text-urfa-400 text-3xl font-bold mx-auto">
               {profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
             </div>
-            <h1 class="font-display font-bold text-xl text-gray-900 dark:text-white mt-4">
+            <h1 class="font-bold text-xl text-gray-900 dark:text-white mt-4">
               {profile?.full_name || 'Kullanıcı'}
             </h1>
             <p class="text-gray-500 dark:text-gray-400 text-sm">{user.email}</p>
-            
+
             <div class="flex items-center justify-center gap-2 mt-2">
-              <Award className="w-4 h-4 text-yellow-500" />
+              <span set:html={icons.award}></span>
               <span class="text-sm text-gray-600 dark:text-gray-400">
                 {profile?.points || 0} puan
               </span>
             </div>
-            
+
             <div class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
-              <nav class="space-y-1">
-                <a href="/profil" class="flex items-center gap-2 p-2 rounded-lg bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300">
-                  <User className="w-4 h-4" />
+              <nav class="space-y-1 text-left">
+                <a href="/profil" class="flex items-center gap-2 p-2 rounded-lg bg-urfa-50 dark:bg-urfa-900/20 text-urfa-700 dark:text-urfa-300">
+                  <span set:html={icons.user}></span>
                   Profil
                 </a>
                 <a href="/profil/yorumlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <Star className="w-4 h-4" />
+                  <span set:html={icons.star}></span>
                   Yorumlarım ({stats.reviews})
                 </a>
                 <a href="/profil/favoriler" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <Heart className="w-4 h-4" />
+                  <span set:html={icons.heart}></span>
                   Favorilerim ({stats.favorites})
                 </a>
+                <a href="/profil/bildirimler" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <span set:html={icons.award}></span>
+                  Bildirimler
+                </a>
+                <a href="/profil/aktivite" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <span set:html={icons.activity}></span>
+                  Aktivite
+                </a>
                 <a href="/profil/ayarlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <Settings className="w-4 h-4" />
+                  <span set:html={icons.settings}></span>
                   Ayarlar
+                </a>
+                <a href="/cikis" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 mt-4">
+                  <span set:html={icons.logout}></span>
+                  Çıkış Yap
                 </a>
               </nav>
             </div>
           </div>
         </aside>
-        
+
         <!-- Main Content -->
         <main class="lg:col-span-3">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="font-display font-bold text-xl text-gray-900 dark:text-white mb-4">Profil Bilgileri</h2>
-            
+            <h2 class="font-bold text-xl text-gray-900 dark:text-white mb-4">Profil Bilgileri</h2>
+
             <div class="grid md:grid-cols-2 gap-6">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ad Soyad</label>
-                <p class="text-gray-900 dark:text-white">{profile?.full_name || '-'}</p>
+                <label class="label">Ad Soyad</label>
+                <p class="text-gray-900 dark:text-white mt-1">{profile?.full_name || '-'}</p>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-posta</label>
-                <p class="text-gray-900 dark:text-white">{user.email}</p>
+                <label class="label">E-posta</label>
+                <p class="text-gray-900 dark:text-white mt-1">{user.email}</p>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kullanıcı Adı</label>
-                <p class="text-gray-900 dark:text-white">{profile?.username || '-'}</p>
+                <label class="label">Kullanıcı Adı</label>
+                <p class="text-gray-900 dark:text-white mt-1">{profile?.username || '-'}</p>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Üyelik Tarihi</label>
-                <p class="text-gray-900 dark:text-white">
+                <label class="label">Üyelik Tarihi</label>
+                <p class="text-gray-900 dark:text-white mt-1">
                   {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('tr-TR') : '-'}
                 </p>
               </div>
             </div>
-            
+
             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
               <h3 class="font-medium text-gray-900 dark:text-white mb-4">İstatistikler</h3>
               <div class="grid grid-cols-3 gap-4">
