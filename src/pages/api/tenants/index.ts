@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { createTenant, getTenantBySlug } from '../../../lib/multi-tenant';
+import { createTenant, getTenantBySlug } from '../../../lib/multi/multi-tenant';
 import { queryMany } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/tenants', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -74,7 +74,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/tenants', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,

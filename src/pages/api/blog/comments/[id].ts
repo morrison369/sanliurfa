@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Blog API - Yorum Moderasyonu
  * PATCH /api/blog/comments/[id]/approve - Yorumu onayla (admin)

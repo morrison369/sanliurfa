@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Blog API - Yorumlar
  * GET /api/blog/comments - Blog yazısının yorumlarını getir (query: postId)

@@ -1,7 +1,35 @@
 import React, { useState, useEffect } from 'react';
 
+interface AnalyticsSummary {
+  totalUsers: number;
+  totalReviews: number;
+  totalPlaces: number;
+  avgRating: number;
+  activeToday: number;
+}
+
+interface Place {
+  id: string;
+  name: string;
+  review_count: number;
+  avg_rating: string;
+}
+
+interface User {
+  id: string;
+  full_name: string;
+  review_count: number;
+  points: number;
+}
+
+interface AnalyticsData {
+  summary: AnalyticsSummary;
+  topPlaces: Place[];
+  topUsers: User[];
+}
+
 export default function AnalyticsPanel() {
-  const [analytics, setAnalytics] = useState(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -63,7 +91,7 @@ export default function AnalyticsPanel() {
                   <p className="font-medium text-gray-900 dark:text-white">#{idx + 1} {place.name}</p>
                   <p className="text-sm text-gray-600">{place.review_count} inceleme</p>
                 </div>
-                <p className="text-yellow-600">⭐{parseFloat(place.avg_rating || 0).toFixed(1)}</p>
+                <p className="text-yellow-600">⭐{parseFloat(place.avg_rating || '0').toFixed(1)}</p>
               </div>
             ))}
           </div>

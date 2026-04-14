@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
-import { pool } from '../../../lib/postgres';
+import { pool as postgresPool } from '../../../lib/postgres';
 import {
   createWebhookTemplate,
   getUserTemplates,
   applyTemplate,
   deleteTemplate,
   getPopularTemplates
-} from '../../../lib/webhook-templates';
+} from '../../../lib/webhook/webhook-templates';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -28,9 +28,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     let data;
     if (popular) {
-      data = await getPopularTemplates(pool);
+      data = await getPopularTemplates(postgresPool as any);
     } else {
-      data = await getUserTemplates(pool, locals.user.id);
+      data = await getUserTemplates(postgresPool as any, locals.user.id);
     }
 
     return apiResponse(
@@ -54,7 +54,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const body = await request.json();
@@ -66,7 +66,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Create template
     const template = await createWebhookTemplate(
-      pool,
+      postgresPool as any,
       locals.user.id,
       name,
       event,
@@ -78,7 +78,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let webhookId = null;
     if (applyTo && applyTo.webhookUrl) {
       webhookId = await applyTemplate(
-        pool,
+        postgresPool as any,
         locals.user.id,
         template.id,
         applyTo.webhookUrl,
@@ -113,7 +113,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const { id } = params;
@@ -122,7 +122,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Template ID required', HttpStatus.BAD_REQUEST);
     }
 
-    const deleted = await deleteTemplate(pool, id, locals.user.id);
+    const deleted = await deleteTemplate(postgresPool as any, id, locals.user.id);
 
     if (!deleted) {
       return apiError(ErrorCode.NOT_FOUND, 'Template not found', HttpStatus.NOT_FOUND);

@@ -12,6 +12,35 @@ const icons = {
   share2: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
 };
 
+// Kategori (tur) sayfaları — slug bir etkinlik kategorisi ise bu listesi gösterilir
+const ETKINLIK_TURLERI: Record<string, { name: string; icon: string; category?: string; dateFilter?: string }> = {
+  'konserler': { name: 'Konserler', icon: '🎵', category: 'konser' },
+  'sira-geceleri': { name: 'Sıra Geceleri', icon: '🎶', category: 'sira-gecesi' },
+  'festivaller': { name: 'Festivaller', icon: '🎉', category: 'festival' },
+  'sergiler': { name: 'Sergiler', icon: '🖼️', category: 'sergi' },
+  'belediye-etkinlikleri': { name: 'Belediye Etkinlikleri', icon: '🏛️', category: 'belediye' },
+  'bugun': { name: 'Bugünkü Etkinlikler', icon: '📅', dateFilter: 'today' },
+  'hafta-sonu': { name: 'Hafta Sonu Etkinlikleri', icon: '🗓️', dateFilter: 'weekend' },
+};
+
+const turMeta = ETKINLIK_TURLERI[Astro.params.slug || ''];
+let turEvents: any[] = [];
+
+if (turMeta) {
+  try {
+    let sql = `SELECT * FROM events WHERE status = 'published' AND (end_date IS NULL OR end_date >= CURRENT_DATE)`;
+    const vals: any[] = [];
+    if (turMeta.category) { sql += ` AND category = $${vals.length+1}`; vals.push(turMeta.category); }
+    if (turMeta.dateFilter === 'today') { sql += ` AND start_date::date = CURRENT_DATE`; }
+    else if (turMeta.dateFilter === 'weekend') { sql += ` AND EXTRACT(DOW FROM start_date) IN (0, 6)`; }
+    sql += ` ORDER BY is_featured DESC, start_date ASC LIMIT 20`;
+    const r = await query(sql, vals);
+    turEvents = r.rows;
+  } catch(e) { console.error('tur events error', e); }
+}
+
+const formatTurDate = (d: string) => new Date(d).toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
+
 let event: any = null;
 let relatedEvents: any[] = [];
 let isPast = false;
@@ -62,7 +91,10 @@ try {
   console.error('Error loading event detail:', e);
 }
 
-const seo = {
+const seo = turMeta ? {
+  title: `Şanlıurfa ${turMeta.name} | Etkinlikler Rehberi`,
+  description: `Şanlıurfa'daki ${turMeta.name.toLowerCase()}. Güncel program ve konum bilgileri.`,
+} : {
   title: event ? `${event.title} - Şanlıurfa Etkinlikleri` : 'Etkinlik - Şanlıurfa',
   description: event?.description || 'Şanlıurfa etkinlikleri',
   image: event?.image_url,
@@ -70,6 +102,59 @@ const seo = {
 ---
 
 <Layout seo={seo}>
+  {turMeta ? (
+    <div class="min-h-screen bg-gray-50">
+      <div class="bg-white border-b">
+        <div class="container mx-auto px-4 py-3">
+          <nav class="flex items-center gap-2 text-sm text-gray-500">
+            <a href="/" class="hover:text-purple-600">Ana Sayfa</a>
+            <span>/</span>
+            <a href="/etkinlikler" class="hover:text-purple-600">Etkinlikler</a>
+            <span>/</span>
+            <span class="text-gray-900 font-medium">{turMeta.name}</span>
+          </nav>
+        </div>
+      </div>
+      <div class="bg-gradient-to-br from-purple-700 to-indigo-800 text-white py-12">
+        <div class="container mx-auto px-4">
+          <div class="flex items-center gap-4">
+            <span class="text-5xl">{turMeta.icon}</span>
+            <div>
+              <h1 class="text-3xl md:text-4xl font-bold">Şanlıurfa {turMeta.name}</h1>
+              <p class="text-purple-100 mt-1">{turEvents.length} etkinlik bulundu</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="container mx-auto px-4 py-8">
+        {turEvents.length > 0 ? (
+          <div class="space-y-4">
+            {turEvents.map((ev: any) => (
+              <a href={`/etkinlikler/${ev.slug}`} class="block bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all group">
+                <div class="flex items-start gap-4">
+                  <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">{turMeta.icon}</div>
+                  <div class="flex-1">
+                    <h2 class="font-bold text-lg text-gray-900 group-hover:text-purple-600">{ev.title}</h2>
+                    {ev.description && <p class="text-sm text-gray-600 mt-1 line-clamp-2">{ev.description}</p>}
+                    <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-500">
+                      {ev.start_date && <span>📅 {formatTurDate(ev.start_date)}</span>}
+                      {ev.location && <span>📍 {ev.location}</span>}
+                    </div>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div class="text-center py-16">
+            <div class="text-6xl mb-4">{turMeta.icon}</div>
+            <p class="text-gray-500 text-lg">Bu kategoride yaklaşan etkinlik bulunmuyor.</p>
+            <a href="/etkinlikler" class="mt-4 inline-block text-purple-600 hover:underline">Tüm Etkinliklere Bak →</a>
+          </div>
+        )}
+      </div>
+    </div>
+  ) : (
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div class="container-custom py-4">
@@ -224,4 +309,5 @@ const seo = {
       </div>
     </div>
   </div>
+  )}
 </Layout>

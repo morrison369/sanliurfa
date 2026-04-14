@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { API_VERSIONS } from '../../lib/api-versioning';
+import { API_VERSIONS } from '../../lib/api/api-versioning';
 import { apiResponse, HttpStatus, getRequestId } from '../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {

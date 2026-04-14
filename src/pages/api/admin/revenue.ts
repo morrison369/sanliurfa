@@ -15,13 +15,13 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const token = cookies.get('auth-token')?.value;
     if (!token) {
       recordRequest('GET', '/api/admin/revenue', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const sessionData = await verifyToken(token);
     if (!sessionData) {
       recordRequest('GET', '/api/admin/revenue', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Invalid or expired token', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Invalid or expired token', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     // Check admin role (would be done via RBAC, for now check if role includes admin)

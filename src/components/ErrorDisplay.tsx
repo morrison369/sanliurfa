@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { AppError, formatErrorForDisplay } from '../lib/error-handling';
+import { type AppError, formatErrorForDisplay } from '../lib/error-handling';
 
 /**
  * Inline error message (for form fields)
@@ -67,7 +67,7 @@ export function ErrorAlert({
 }: {
   error: AppError;
   onDismiss?: () => void;
-  lang?: 'tr' | 'en';
+  lang?: 'tr';
 }) {
   const { title, message, action } = formatErrorForDisplay(error, lang);
 
@@ -121,7 +121,7 @@ export function LoadingState({
   error?: AppError | null;
   onRetry?: () => void;
   children: React.ReactNode;
-  lang?: 'tr' | 'en';
+  lang?: 'tr';
 }) {
   if (isLoading) {
     return (

@@ -3,7 +3,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { runSecurityAudit, generateAuditReportHTML } from '../../../../lib/security-audit';
+import { runSecurityAudit, generateAuditReportHTML } from '../../../../lib/security/security-audit';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';

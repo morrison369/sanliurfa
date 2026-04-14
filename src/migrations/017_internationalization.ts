@@ -1,6 +1,9 @@
 /**
- * Migration 017: Internationalization
- * Adds language preference support to users table
+ * Migration 017: Turkish Language Default
+ * Adds language preference column (always 'tr' - no multi-language support)
+ * 
+ * NOT: Bu proje SADECE Türkçe destekler. Çok dilli destek YASAKTIR.
+ * @see AGENTS.md - Yasaklar bölümü
  */
 
 export const migration_017_internationalization = {
@@ -11,13 +14,14 @@ export const migration_017_internationalization = {
       ADD COLUMN IF NOT EXISTS language_preference VARCHAR(10) DEFAULT 'tr'
     `);
 
-    // Create index for language preference queries
+    // Tüm mevcut kullanıcıları Türkçe'ye ayarla
     await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_users_language_preference
-      ON users(language_preference)
+      UPDATE users 
+      SET language_preference = 'tr' 
+      WHERE language_preference IS NULL OR language_preference != 'tr'
     `);
 
-    console.log('✓ Migration 017: Internationalization support added');
+    console.log('✓ Migration 017: Turkish language default set (single language only)');
   },
 
   async down(pool: any) {

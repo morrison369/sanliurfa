@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { getAlerts, acknowledgeAlert, resolveAlert, performHealthCheck } from '../../../lib/alerts';
+import { getAlerts, acknowledgeAlert, resolveAlert, performHealthCheck } from '../../../lib/alert/alerts';
 import { logger } from '../../../lib/logging';
 
 /**

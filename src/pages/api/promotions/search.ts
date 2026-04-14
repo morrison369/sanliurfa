@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { searchPromotions, getTrendingPromotions } from '../../../lib/promotions-management';
+import { searchPromotions, getTrendingPromotions } from '../../../lib/promotions/promotions-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';

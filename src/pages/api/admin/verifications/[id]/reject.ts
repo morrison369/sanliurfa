@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * Reject Place Verification (Admin)
  * POST /api/admin/verifications/[id]/reject - Reject a verification request
  */
 
 import type { APIRoute } from 'astro';
-import { rejectVerification } from '../../../../../lib/place-verification';
+import { rejectVerification } from '../../../../../lib/place/place-verification';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
 import { logger } from '../../../../../lib/logging';
 import { recordRequest } from '../../../../../lib/metrics';

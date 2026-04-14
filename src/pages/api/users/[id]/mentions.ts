@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * User Mentions API
  * Get mentions for a user

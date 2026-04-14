@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserSavedSearches, saveSearch } from '../../../../lib/saved-searches';
+import { getUserSavedSearches, saveSearch } from '../../../../lib/saved/saved-searches';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';

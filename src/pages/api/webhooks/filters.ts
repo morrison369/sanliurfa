@@ -4,7 +4,7 @@ import {
   createWebhookFilter,
   getWebhookFilters,
   deleteWebhookFilter
-} from '../../../lib/webhook-filters';
+} from '../../../lib/webhook/webhook-filters';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Webhook ID required', HttpStatus.BAD_REQUEST);
     }
 
-    const filters = await getWebhookFilters(pool, webhookId, locals.user.id);
+    const filters = await getWebhookFilters(pool as any, webhookId, locals.user.id);
 
     return apiResponse(
       {
@@ -40,7 +40,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to get webhook filters', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to get webhook filters', error instanceof Error ? error : new Error(String(error)), {} as any);
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get filters', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
@@ -55,7 +55,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const body = await request.json();
@@ -66,7 +66,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const filter = await createWebhookFilter(
-      pool,
+      pool as any,
       webhookId,
       locals.user.id,
       filterType,
@@ -85,7 +85,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to create webhook filter', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to create webhook filter', error instanceof Error ? error : new Error(String(error)), {} as any);
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to create filter', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
@@ -99,7 +99,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const { id } = params;
@@ -108,7 +108,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Filter ID required', HttpStatus.BAD_REQUEST);
     }
 
-    const deleted = await deleteWebhookFilter(pool, id, locals.user.id);
+    const deleted = await deleteWebhookFilter(pool as any, id, locals.user.id);
 
     if (!deleted) {
       return apiError(ErrorCode.NOT_FOUND, 'Filter not found', HttpStatus.NOT_FOUND);
@@ -120,7 +120,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to delete webhook filter', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to delete webhook filter', error instanceof Error ? error : new Error(String(error)), {} as any);
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to delete filter', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

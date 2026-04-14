@@ -9,7 +9,7 @@ import {
   getUnimplementedGuidelines,
   calculateSecurityScore,
   getCriticalItems
-} from '../../../../lib/security-guidelines';
+} from '../../../../lib/security/security-guidelines';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';

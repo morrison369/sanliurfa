@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const criticalAlerts = getCriticalAlerts();
 
     if (criticalAlerts.length > 0) {
-      logger.warn('Critical alerts detected', { count: criticalAlerts.length });
+      logger.warn('Critical alerts detected', Object.assign(new Error('Critical alerts detected'), { count: criticalAlerts.length }));
     }
 
     return apiResponse(

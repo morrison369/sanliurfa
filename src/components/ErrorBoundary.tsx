@@ -1,90 +1,288 @@
 /**
- * Error Boundary component for React
- * Catches errors in child components and displays fallback UI
+ * Hata Sınırı Bileşeni (Error Boundary)
+ *
+ * React hatalarını yakalar, kullanıcı dostu bir arayüz gösterir
+ * ve hata takip sistemine raporlar.
  */
 
-import React, { ReactNode, ReactElement } from 'react';
-import { logger } from '../lib/logging';
-import { unknownToAppError } from '../lib/error-handling';
+import React, { Component, type ErrorInfo, type ReactNode } from 'react';
+import { captureException, addBreadcrumb } from '../lib/error-tracking';
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactElement;
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  /** Özel başlık mesajı */
+  fallbackTitle?: string;
+  /** Özel açıklama mesajı */
+  fallbackDescription?: string;
+  /** Hata durumunda gösterilecek özel bileşen */
+  fallbackComponent?: ReactNode;
+  /** Hata durumunda callback fonksiyonu */
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  /** Yeniden deneme callback fonksiyonu */
+  onRetry?: () => void;
+  /** Hata raporlamasını devre dışı bırak */
+  disableReporting?: boolean;
+  /** Sadece geliştirme modunda hata göster */
+  showDetailsInDev?: boolean;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
+  errorInfo: ErrorInfo | null;
+  eventId: string | null;
 }
 
-class ErrorBoundary extends React.Component<Props, State> {
+/**
+ * Varsayılan hata arayüzü bileşeni
+ */
+function DefaultErrorFallback({
+  error,
+  eventId,
+  onRetry,
+  showDetails,
+}: {
+  error: Error | null;
+  eventId: string | null;
+  onRetry: () => void;
+  showDetails: boolean;
+}) {
+  return (
+    <div
+      style={{
+        padding: '2rem',
+        margin: '2rem auto',
+        maxWidth: '600px',
+        backgroundColor: '#fef2f2',
+        border: '1px solid #fecaca',
+        borderRadius: '0.5rem',
+        textAlign: 'center',
+      }}
+    >
+      {/* Hata ikonu */}
+      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+
+      {/* Başlık */}
+      <h2
+        style={{
+          fontSize: '1.25rem',
+          fontWeight: '600',
+          color: '#991b1b',
+          marginBottom: '0.5rem',
+        }}
+      >
+        Bir Şeyler Ters Gitti
+      </h2>
+
+      {/* Açıklama */}
+      <p
+        style={{
+          color: '#7f1d1d',
+          marginBottom: '1.5rem',
+          lineHeight: '1.6',
+        }}
+      >
+        Üzgünüz, bu bileşen yüklenirken beklenmeyen bir hata oluştu.
+        Lütfen tekrar deneyin veya daha sonra geri gelin.
+      </p>
+
+      {/* Hata detayları (sadece geliştirme modunda) */}
+      {showDetails && error && (
+        <details
+          style={{
+            marginBottom: '1rem',
+            textAlign: 'left',
+            backgroundColor: '#fff',
+            padding: '1rem',
+            borderRadius: '0.375rem',
+            border: '1px solid #e5e7eb',
+          }}
+        >
+          <summary
+            style={{
+              cursor: 'pointer',
+              fontWeight: '500',
+              color: '#374151',
+              marginBottom: '0.5rem',
+            }}
+          >
+            Hata Detayları (Geliştirici)
+          </summary>
+          <pre
+            style={{
+              marginTop: '0.5rem',
+              fontSize: '0.875rem',
+              color: '#dc2626',
+              overflow: 'auto',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            }}
+          >
+            {error.toString()}
+            {error.stack && (
+              <>
+                {'\n\n'}
+                {error.stack}
+              </>
+            )}
+          </pre>
+        </details>
+      )}
+
+      {/* Olay ID */}
+      {eventId && (
+        <p
+          style={{
+            fontSize: '0.75rem',
+            color: '#6b7280',
+            marginBottom: '1rem',
+          }}
+        >
+          Hata ID: {eventId}
+          <br />
+          Destek ekibiyle paylaşmanız gerekebilir.
+        </p>
+      )}
+
+      {/* Yeniden dene butonu */}
+      <button
+        onClick={onRetry}
+        style={{
+          padding: '0.75rem 1.5rem',
+          backgroundColor: '#dc2626',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '0.375rem',
+          fontSize: '1rem',
+          fontWeight: '500',
+          cursor: 'pointer',
+          transition: 'background-color 0.2s',
+        }}
+        onMouseOver={(e) => {
+          (e.target as HTMLButtonElement).style.backgroundColor = '#b91c1c';
+        }}
+        onMouseOut={(e) => {
+          (e.target as HTMLButtonElement).style.backgroundColor = '#dc2626';
+        }}
+      >
+        Tekrar Dene
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Error Boundary bileşeni
+ */
+class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      eventId: null,
+    };
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+  /**
+   * Hata yakalama - Render sırasında hataları yakalar
+   */
+  static getDerivedStateFromError(error: Error): Partial<State> {
+    return {
+      hasError: true,
+      error,
+    };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error
-    logger.error('Error Boundary caught error', error, {
-      componentStack: errorInfo.componentStack
+  /**
+   * Hata yakalandığında çalışır
+   */
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // State'i güncelle
+    this.setState({
+      errorInfo,
     });
 
-    // Call optional error handler
-    this.props.onError?.(error, errorInfo);
+    // Hata detaylarını breadcrumb olarak ekle
+    addBreadcrumb({
+      message: 'React Error Boundary yakaladı',
+      category: 'react_error',
+      level: 'error',
+      data: {
+        componentName: this.constructor.name,
+        errorName: error.name,
+        errorMessage: error.message,
+      },
+    });
+
+    // Hata raporlama
+    if (!this.props.disableReporting) {
+      const eventId = captureException(error, {
+        tags: {
+          'error.type': 'react_boundary',
+          'error.source': 'component_render',
+        },
+        extra: {
+          componentStack: errorInfo.componentStack,
+          props: this.props,
+        },
+      });
+
+      this.setState({ eventId });
+    }
+
+    // Özel error callback'i çağır
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+
+    // Konsola logla (geliştirme modunda)
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('[ErrorBoundary] Yakalanan hata:', error);
+      console.error('[ErrorBoundary] Bileşen yığını:', errorInfo.componentStack);
+    }
   }
 
-  render() {
+  /**
+   * Sayfayı yeniden yükleyerek yeniden dene
+   */
+  handleRetry = (): void => {
+    if (this.props.onRetry) {
+      // Özel retry fonksiyonu varsa onu çağır
+      this.props.onRetry();
+    } else {
+      // Yoksa sayfayı yenile
+      window.location.reload();
+    }
+
+    // State'i sıfırla
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+      eventId: null,
+    });
+  };
+
+  render(): ReactNode {
     if (this.state.hasError) {
+      // Özel fallback bileşen varsa onu göster
+      if (this.props.fallbackComponent) {
+        return this.props.fallbackComponent;
+      }
+
+      // Varsayılan fallback bileşenini göster
       return (
-        this.props.fallback || (
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-            <div className="max-w-md w-full">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full">
-                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-
-                <h3 className="mt-4 text-center text-lg font-medium text-gray-900">
-                  Bir Hata Oluştu
-                </h3>
-
-                <p className="mt-2 text-center text-sm text-gray-600">
-                  Sayfayı yenileyerek tekrar deneyin. Sorun devam ederse, lütfen destek ekibine başvurun.
-                </p>
-
-                <div className="mt-6 flex flex-col gap-3">
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Sayfayı Yenile
-                  </button>
-
-                  <button
-                    onClick={() => window.history.back()}
-                    className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Geri Git
-                  </button>
-                </div>
-
-                {process.env.NODE_ENV === 'development' && this.state.error && (
-                  <div className="mt-6 p-4 bg-gray-100 rounded text-xs font-mono text-gray-700 overflow-auto max-h-48">
-                    <p className="font-bold mb-2">Error Details (Dev Only):</p>
-                    <p>{this.state.error.message}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )
+        <DefaultErrorFallback
+          error={this.state.error}
+          eventId={this.state.eventId}
+          onRetry={this.handleRetry}
+          showDetails={
+            this.props.showDetailsInDev !== false &&
+            process.env.NODE_ENV !== 'production'
+          }
+        />
       );
     }
 
@@ -93,3 +291,22 @@ class ErrorBoundary extends React.Component<Props, State> {
 }
 
 export default ErrorBoundary;
+
+/**
+ * Hook tabanlı alternatif - Fonksiyon bileşenleri için
+ * Kullanım: tryCatch ile sarmalanmış bileşenler
+ */
+export function withErrorBoundary<P extends Record<string, unknown>>(
+  WrappedComponent: React.ComponentType<P>,
+  errorBoundaryProps?: Omit<Props, 'children'>,
+): React.ComponentType<P> {
+  return class WithErrorBoundary extends React.Component<P> {
+    render(): ReactNode {
+      return (
+        <ErrorBoundary {...errorBoundaryProps}>
+          <WrappedComponent {...(this.props as P)} />
+        </ErrorBoundary>
+      );
+    }
+  };
+}

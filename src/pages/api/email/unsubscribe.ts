@@ -4,9 +4,9 @@
  */
 
 import type { APIRoute } from 'astro';
-import { unsubscribeAll } from '../../../lib/email-preferences';
+import { unsubscribeAll } from '../../../lib/email/email-preferences';
 import { queryOne } from '../../../lib/postgres';
-import { trackCampaignEvent } from '../../../lib/email-campaigns';
+import { trackCampaignEvent } from '../../../lib/email/email-campaigns';
 import { validateWithSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';

@@ -3,7 +3,7 @@
  * Display a prompt to upgrade when accessing premium features without permission
  */
 
-import React, { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 interface PremiumFeatureGuardProps {
   featureName: string;

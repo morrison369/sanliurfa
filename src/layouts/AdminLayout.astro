@@ -1,0 +1,91 @@
+---
+import '../styles/global.css';
+
+export interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+
+const navItems = [
+  { href: '/admin', label: 'Dashboard', icon: 'home' },
+  { href: '/admin/places', label: 'Mekanlar', icon: 'map' },
+  { href: '/admin/users', label: 'Kullanıcılar', icon: 'users' },
+  { href: '/admin/reviews', label: 'Değerlendirmeler', icon: 'star' },
+  { href: '/admin/blog', label: 'Blog', icon: 'document' },
+  { href: '/admin/categories', label: 'Kategoriler', icon: 'tag' },
+  { href: '/admin/reports', label: 'Raporlar', icon: 'chart' },
+  { href: '/admin/settings', label: 'Ayarlar', icon: 'cog' },
+];
+---
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title} - Admin | Şanlıurfa.com</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-lg">
+      <div class="p-6 border-b border-gray-200">
+        <a href="/admin" class="text-2xl font-bold text-urfa-600">
+          Admin Panel
+        </a>
+      </div>
+      
+      <nav class="mt-6 px-4">
+        {navItems.map(item => (
+          <a
+            href={item.href}
+            class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-urfa-50 hover:text-urfa-600 transition-colors mb-1"
+            class:list={[{ 'bg-urfa-50 text-urfa-600': Astro.url.pathname === item.href }]}
+          >
+            <span class="ml-3">{item.label}</span>
+          </a>
+        ))}
+      </nav>
+
+      <div class="absolute bottom-0 w-64 p-4 border-t border-gray-200">
+        <a href="/" class="flex items-center text-gray-600 hover:text-urfa-600">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Siteye Dön
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header -->
+      <header class="bg-white shadow-sm">
+        <div class="px-6 py-4 flex items-center justify-between">
+          <h1 class="text-2xl font-semibold text-gray-800">{title}</h1>
+          <div class="flex items-center space-x-4">
+            <button class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+            </button>
+            <div class="flex items-center">
+              <span class="text-sm text-gray-600 mr-2">Admin</span>
+              <div class="w-8 h-8 rounded-full bg-urfa-600 text-white flex items-center justify-center">
+                A
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <main class="flex-1 overflow-auto p-6">
+        <slot />
+      </main>
+    </div>
+  </div>
+</body>
+</html>

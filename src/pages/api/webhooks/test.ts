@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
-import { triggerWebhook } from '../../../lib/webhooks';
+import { triggerWebhook } from '../../../lib/webhook/webhooks';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
@@ -15,7 +15,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,

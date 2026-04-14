@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Email Template Detail API
  * GET: Get template

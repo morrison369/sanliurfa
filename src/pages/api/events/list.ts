@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getEvents } from '../../../lib/events-management';
+import { getEvents } from '../../../lib/events/events-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';

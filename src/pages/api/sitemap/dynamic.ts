@@ -41,7 +41,7 @@ ${urls.map(url => `  <url>
     <loc>${site}${url.loc}</loc>
     <priority>${url.priority}</priority>
     <changefreq>${url.changefreq}</changefreq>
-    ${url.lastmod ? `<lastmod>${new Date(url.lastmod).toISOString()}</lastmod>` : ''}
+    ${(url as any).lastmod ? `<lastmod>${new Date((url as any).lastmod).toISOString()}</lastmod>` : ''}
   </url>`).join('\n')}
 </urlset>`;
 

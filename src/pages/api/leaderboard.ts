@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getLeaderboard } from '../../lib/gamification';
+import { getLeaderboard } from '../../lib/gamification/gamification';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../lib/api';
 import { recordRequest } from '../../lib/metrics';
 import { logger } from '../../lib/logging';

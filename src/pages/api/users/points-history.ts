@@ -29,8 +29,8 @@ export const GET: APIRoute = async ({ locals, url }) => {
     return new Response(JSON.stringify({
       success: true,
       data: {
-        history: history.rows || [],
-        summary: summary.rows || []
+        history: history || [],
+        summary: summary || []
       }
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {

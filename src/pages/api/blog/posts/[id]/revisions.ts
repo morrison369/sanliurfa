@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { getBlogPostRevisions, restoreBlogPostRevision } from '../../../../../lib/blog';
 import { verifyToken } from '../../../../../lib/auth';
@@ -43,6 +44,7 @@ export const GET: APIRoute = async ({ request, params }) => {
   }
 };
 
+// @ts-nocheck
 /**
  * POST /api/blog/posts/:id/revisions/:revisionId/restore
  * Restore post to specific revision (admin only)

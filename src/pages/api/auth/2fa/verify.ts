@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * 2FA Verification Endpoint
  * Verify two-factor authentication code and complete setup

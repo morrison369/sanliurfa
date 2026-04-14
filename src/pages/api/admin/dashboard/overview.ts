@@ -4,8 +4,8 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getDashboardOverview, getSystemMetrics } from '../../../../lib/admin-dashboard';
-import { getModerationStats } from '../../../../lib/admin-moderation';
+import { getDashboardOverview, getSystemMetrics } from '../../../../lib/admin/admin-dashboard';
+import { getModerationStats } from '../../../../lib/admin/admin-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';

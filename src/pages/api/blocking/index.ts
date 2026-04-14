@@ -6,7 +6,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getBlockedUsers, blockUser, unblockUser } from '../../../lib/blocking';
+import { getBlockedUsers, blockUser, unblockUser } from '../../../lib/block/blocking';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -36,7 +36,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     if (!user) {
       recordRequest('GET', '/api/blocking', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -88,7 +88,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('POST', '/api/blocking', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -161,7 +161,7 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
     if (!user) {
       recordRequest('DELETE', '/api/blocking', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,

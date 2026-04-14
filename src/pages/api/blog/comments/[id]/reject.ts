@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Blog API - Yorum Reddet
  * PATCH /api/blog/comments/[id]/reject

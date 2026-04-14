@@ -15,7 +15,7 @@ export default function TrendingPlaces() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchTrending = async () => {
       try {
         const res = await fetch('/api/discovery/trending?limit=10');
         if (res.ok) {
@@ -28,7 +28,7 @@ export default function TrendingPlaces() {
         setLoading(false);
       }
     };
-    fetch();
+    fetchTrending();
   }, []);
 
   if (loading) return <div className="p-4">Yükleniyor...</div>;

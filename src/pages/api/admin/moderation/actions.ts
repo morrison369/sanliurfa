@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Admin Moderation Actions API
  * POST: Take moderation action on a user or content

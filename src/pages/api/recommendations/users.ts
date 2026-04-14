@@ -23,7 +23,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
 
     return new Response(JSON.stringify({
       success: true,
-      data: recommendations.rows || []
+      data: recommendations || []
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
     console.error('Recommendations error', error);

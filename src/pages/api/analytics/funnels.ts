@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { listFunnels, getFunnelById, createFunnel, getFunnelAnalytics, optimizeFunnelSteps } from '../../../lib/funnel-analytics';
+import { listFunnels, getFunnelById, createFunnel, getFunnelAnalytics, optimizeFunnelSteps } from '../../../lib/analytics/funnel-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 

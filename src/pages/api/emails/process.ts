@@ -13,7 +13,7 @@ export const POST: APIRoute = async ({ request }) => {
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.includes('Bearer ')) {
       recordRequest('POST', '/api/emails/process', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Unauthorized', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Unauthorized', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const pendingEmails = await getPendingEmails(50);

@@ -1,397 +1,184 @@
 /**
- * Internationalization (i18n)
- * Multi-language support for Turkish and English
+ * i18n Module (Turkish Only)
+ * Simple localization utilities - Project is locked to Turkish
  */
 
-export type Language = 'tr' | 'en';
+export const LOCALE = 'tr';
 
-export interface TranslationKey {
-  [key: string]: string | TranslationKey;
-}
-
-export const TRANSLATIONS: Record<Language, TranslationKey> = {
-  tr: {
-    // Navigation
-    nav: {
-      home: 'Anasayfa',
-      search: 'Arama',
-      places: 'Yerler',
-      profile: 'Profil',
-      favorites: 'Favorilerim',
-      dashboard: 'Panelim',
-      admin: 'Yönetim',
-      logout: 'Çıkış'
-    },
-
-    // Common
-    common: {
-      loading: 'Yükleniyor...',
-      error: 'Hata oluştu',
-      success: 'Başarılı',
-      save: 'Kaydet',
-      cancel: 'İptal',
-      delete: 'Sil',
-      edit: 'Düzenle',
-      view: 'Görüntüle',
-      more: 'Daha Fazla',
-      close: 'Kapat',
-      submit: 'Gönder',
-      search: 'Ara',
-      filter: 'Filtrele',
-      sort: 'Sırala'
-    },
-
-    // Auth
-    auth: {
-      welcome: 'Hoşgeldiniz',
-      login: 'Giriş Yap',
-      register: 'Kaydol',
-      forgotPassword: 'Şifremi Unuttum',
-      resetPassword: 'Şifremi Sıfırla',
-      email: 'E-posta Adresi',
-      password: 'Şifre',
-      passwordConfirm: 'Şifreyi Onayla',
-      fullName: 'Adı Soyadı',
-      invalidEmail: 'Geçerli bir e-posta adresi giriniz',
-      passwordTooShort: 'Şifre en az 8 karakter olmalıdır',
-      termsAccept: 'Şartları ve Koşulları kabul ediyorum',
-      signUpSuccess: 'Kaydınız başarılı oldu',
-      loginSuccess: 'Başarıyla giriş yaptınız',
-      logoutSuccess: 'Başarıyla çıkış yaptınız'
-    },
-
-    // Places
-    places: {
-      title: 'Yerler',
-      name: 'Yer Adı',
-      description: 'Açıklama',
-      category: 'Kategori',
-      address: 'Adres',
-      phone: 'Telefon',
-      website: 'Web Sitesi',
-      rating: 'Puan',
-      reviews: 'Yorumlar',
-      openingHours: 'Açılış Saatleri',
-      addToFavorites: 'Favorilere Ekle',
-      removeFromFavorites: 'Favorilerden Çıkar',
-      viewDetails: 'Detayları Gör',
-      noResults: 'Sonuç bulunamadı'
-    },
-
-    // Reviews
-    reviews: {
-      title: 'Yorumlar',
-      writeReview: 'Yorum Yaz',
-      rating: 'Puan',
-      comment: 'Yorum',
-      author: 'Yazar',
-      date: 'Tarih',
-      helpful: 'Faydalı',
-      notHelpful: 'Faydasız',
-      deleteConfirm: 'Bu yorumu silmek istediğinize emin misiniz?',
-      reviewAdded: 'Yorumunuz başarıyla eklendi',
-      reviewDeleted: 'Yorum başarıyla silindi'
-    },
-
-    // User Profile
-    profile: {
-      title: 'Profil',
-      myProfile: 'Profilim',
-      editProfile: 'Profili Düzenle',
-      settings: 'Ayarlar',
-      preferences: 'Tercihler',
-      security: 'Güvenlik',
-      changePassword: 'Şifreni Değiştir',
-      currentPassword: 'Mevcut Şifre',
-      newPassword: 'Yeni Şifre',
-      confirmNewPassword: 'Yeni Şifreyi Onayla',
-      joined: 'Katılım Tarihi',
-      followers: 'Takipçiler',
-      following: 'Takip Ediliyor',
-      reviews: 'Yorumlar',
-      badges: 'Rozetler'
-    },
-
-    // Premium
-    premium: {
-      title: 'Premium Üyelik',
-      premium: 'Premium',
-      pro: 'Pro',
-      monthlyPrice: '₺/Ay',
-      features: 'Özellikler',
-      upgrade: 'Yükselt',
-      downgrade: 'İndir',
-      subscriptionActive: 'Aktif Abonelik',
-      nextBillingDate: 'Sonraki Fatura Tarihi',
-      cancel: 'Aboneliği İptal Et',
-      manageSubscription: 'Aboneliği Yönet'
-    },
-
-    // Notifications
-    notifications: {
-      title: 'Bildirimler',
-      newReview: 'Yeni Yorum',
-      reviewResponse: 'Yorum Yanıtı',
-      newFollower: 'Yeni Takipçi',
-      message: 'Mesaj',
-      markAsRead: 'Okundu Olarak İşaretle',
-      markAllAsRead: 'Hepsini Okundu Olarak İşaretle',
-      delete: 'Sil',
-      noNotifications: 'Bildiriminiz yok'
-    },
-
-    // Dashboard
-    dashboard: {
-      title: 'Panelim',
-      overview: 'Genel Bakış',
-      statistics: 'İstatistikler',
-      views: 'Görüntüleme',
-      reviews: 'Yorumlar',
-      favorites: 'Favoriler',
-      followers: 'Takipçiler',
-      recentActivity: 'Son Aktivite'
-    },
-
-    // Errors
-    errors: {
-      notFound: 'Sayfa bulunamadı',
-      unauthorized: 'Bu sayfaya erişim yetkiniz yok',
-      serverError: 'Sunucu hatası',
-      networkError: 'Ağ hatası',
-      tryAgain: 'Tekrar Deneyin',
-      goHome: 'Anasayfaya Dön'
-    }
+export const TEXTS = {
+  nav: {
+    home: 'Anasayfa',
+    places: 'Mekanlar',
+    events: 'Etkinlikler',
+    blog: 'Blog',
+    about: 'Hakkımızda',
+    contact: 'İletişim',
+    profile: 'Profil',
+    settings: 'Ayarlar',
+    logout: 'Çıkış Yap'
   },
-
-  en: {
-    // Navigation
-    nav: {
-      home: 'Home',
-      search: 'Search',
-      places: 'Places',
-      profile: 'Profile',
-      favorites: 'Favorites',
-      dashboard: 'Dashboard',
-      admin: 'Admin',
-      logout: 'Logout'
-    },
-
-    // Common
-    common: {
-      loading: 'Loading...',
-      error: 'An error occurred',
-      success: 'Success',
-      save: 'Save',
-      cancel: 'Cancel',
-      delete: 'Delete',
-      edit: 'Edit',
-      view: 'View',
-      more: 'More',
-      close: 'Close',
-      submit: 'Submit',
-      search: 'Search',
-      filter: 'Filter',
-      sort: 'Sort'
-    },
-
-    // Auth
-    auth: {
-      welcome: 'Welcome',
-      login: 'Sign In',
-      register: 'Sign Up',
-      forgotPassword: 'Forgot Password',
-      resetPassword: 'Reset Password',
-      email: 'Email Address',
-      password: 'Password',
-      passwordConfirm: 'Confirm Password',
-      fullName: 'Full Name',
-      invalidEmail: 'Please enter a valid email address',
-      passwordTooShort: 'Password must be at least 8 characters',
-      termsAccept: 'I accept the Terms and Conditions',
-      signUpSuccess: 'Sign up successful',
-      loginSuccess: 'You have successfully logged in',
-      logoutSuccess: 'You have been logged out'
-    },
-
-    // Places
-    places: {
-      title: 'Places',
-      name: 'Place Name',
-      description: 'Description',
-      category: 'Category',
-      address: 'Address',
-      phone: 'Phone',
-      website: 'Website',
-      rating: 'Rating',
-      reviews: 'Reviews',
-      openingHours: 'Opening Hours',
-      addToFavorites: 'Add to Favorites',
-      removeFromFavorites: 'Remove from Favorites',
-      viewDetails: 'View Details',
-      noResults: 'No results found'
-    },
-
-    // Reviews
-    reviews: {
-      title: 'Reviews',
-      writeReview: 'Write a Review',
-      rating: 'Rating',
-      comment: 'Comment',
-      author: 'Author',
-      date: 'Date',
-      helpful: 'Helpful',
-      notHelpful: 'Not Helpful',
-      deleteConfirm: 'Are you sure you want to delete this review?',
-      reviewAdded: 'Review added successfully',
-      reviewDeleted: 'Review deleted successfully'
-    },
-
-    // User Profile
-    profile: {
-      title: 'Profile',
-      myProfile: 'My Profile',
-      editProfile: 'Edit Profile',
-      settings: 'Settings',
-      preferences: 'Preferences',
-      security: 'Security',
-      changePassword: 'Change Password',
-      currentPassword: 'Current Password',
-      newPassword: 'New Password',
-      confirmNewPassword: 'Confirm New Password',
-      joined: 'Joined',
-      followers: 'Followers',
-      following: 'Following',
-      reviews: 'Reviews',
-      badges: 'Badges'
-    },
-
-    // Premium
-    premium: {
-      title: 'Premium Membership',
-      premium: 'Premium',
-      pro: 'Pro',
-      monthlyPrice: '$/Month',
-      features: 'Features',
-      upgrade: 'Upgrade',
-      downgrade: 'Downgrade',
-      subscriptionActive: 'Active Subscription',
-      nextBillingDate: 'Next Billing Date',
-      cancel: 'Cancel Subscription',
-      manageSubscription: 'Manage Subscription'
-    },
-
-    // Notifications
-    notifications: {
-      title: 'Notifications',
-      newReview: 'New Review',
-      reviewResponse: 'Review Response',
-      newFollower: 'New Follower',
-      message: 'Message',
-      markAsRead: 'Mark as Read',
-      markAllAsRead: 'Mark All as Read',
-      delete: 'Delete',
-      noNotifications: 'You have no notifications'
-    },
-
-    // Dashboard
-    dashboard: {
-      title: 'Dashboard',
-      overview: 'Overview',
-      statistics: 'Statistics',
-      views: 'Views',
-      reviews: 'Reviews',
-      favorites: 'Favorites',
-      followers: 'Followers',
-      recentActivity: 'Recent Activity'
-    },
-
-    // Errors
-    errors: {
-      notFound: 'Page not found',
-      unauthorized: 'You do not have access to this page',
-      serverError: 'Server error',
-      networkError: 'Network error',
-      tryAgain: 'Try Again',
-      goHome: 'Go to Home'
-    }
+  common: {
+    loading: 'Yükleniyor...',
+    save: 'Kaydet',
+    cancel: 'İptal',
+    delete: 'Sil',
+    edit: 'Düzenle',
+    create: 'Oluştur',
+    search: 'Ara',
+    filter: 'Filtrele',
+    sort: 'Sırala',
+    next: 'Sonraki',
+    previous: 'Önceki',
+    submit: 'Gönder',
+    close: 'Kapat',
+    open: 'Aç',
+    yes: 'Evet',
+    no: 'Hayır',
+    ok: 'Tamam'
+  },
+  auth: {
+    login: 'Giriş Yap',
+    register: 'Kayıt Ol',
+    forgotPassword: 'Şifremi Unuttum',
+    email: 'E-posta',
+    password: 'Şifre',
+    confirmPassword: 'Şifreyi Onayla',
+    fullName: 'Ad Soyad'
+  },
+  places: {
+    addPlace: 'Mekan Ekle',
+    editPlace: 'Mekan Düzenle',
+    reviews: 'Değerlendirmeler',
+    rating: 'Puan',
+    address: 'Adres',
+    phone: 'Telefon',
+    website: 'Web Sitesi',
+    hours: 'Çalışma Saatleri'
+  },
+  reviews: {
+    writeReview: 'Değerlendirme Yaz',
+    editReview: 'Değerlendirmeyi Düzenle',
+    rating: 'Puan',
+    comment: 'Yorum',
+    helpful: 'Faydalı',
+    report: 'Şikayet Et'
+  },
+  profile: {
+    myProfile: 'Profilim',
+    myPlaces: 'Mekanlarım',
+    myReviews: 'Değerlendirmelerim',
+    myFavorites: 'Favorilerim',
+    editProfile: 'Profili Düzenle'
+  },
+  premium: {
+    upgrade: 'Premium Yükselt',
+    features: 'Özellikler',
+    pricing: 'Fiyatlandırma',
+    subscribe: 'Abone Ol'
+  },
+  notifications: {
+    title: 'Bildirimler',
+    markAllRead: 'Tümünü Okundu İşaretle',
+    noNotifications: 'Bildirim yok'
+  },
+  dashboard: {
+    overview: 'Genel Bakış',
+    analytics: 'Analitik',
+    settings: 'Ayarlar'
+  },
+  errors: {
+    notFound: 'Sayfa bulunamadı',
+    serverError: 'Sunucu hatası oluştu',
+    unauthorized: 'Yetkisiz erişim',
+    validationError: 'Doğrulama hatası',
+    networkError: 'Ağ bağlantısı hatası'
   }
 };
 
-/**
- * Get translation by key
- */
-export function t(key: string, language: Language = 'tr'): string {
+export function t(key: string, _params?: Record<string, string>): string {
   const keys = key.split('.');
-  let value: any = TRANSLATIONS[language];
-
+  let value: any = TEXTS;
+  
   for (const k of keys) {
     if (value && typeof value === 'object' && k in value) {
       value = value[k];
     } else {
-      return key; // Return key if not found
+      return key; // Return key if translation not found
     }
   }
-
-  return typeof value === 'string' ? value : key;
+  
+  if (typeof value !== 'string') {
+    return key;
+  }
+  
+  let result = value;
+  if (_params) {
+    Object.entries(_params).forEach(([paramKey, paramValue]) => {
+      result = result.replace(`{{${paramKey}}}`, paramValue);
+    });
+  }
+  
+  return result;
 }
 
-/**
- * Detect language from browser
- */
-export function detectLanguage(): Language {
-  if (typeof navigator === 'undefined') {
-    return 'tr';
-  }
-
-  const lang = navigator.language?.toLowerCase() || '';
-
-  if (lang.startsWith('en')) {
-    return 'en';
-  }
-
-  if (lang.startsWith('tr')) {
-    return 'tr';
-  }
-
-  return 'tr'; // Default to Turkish
-}
-
-/**
- * Format date based on language
- */
-export function formatDate(date: Date | string, language: Language = 'tr'): string {
+export function formatDate(date: Date | string, _locale?: string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-
-  const options: Intl.DateTimeFormatOptions = {
+  return d.toLocaleDateString('tr-TR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
-  };
-
-  return d.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', options);
+  });
 }
 
-/**
- * Format currency based on language
- */
-export function formatCurrency(amount: number, language: Language = 'tr'): string {
-  const currency = language === 'tr' ? 'TRY' : 'USD';
-  const symbol = language === 'tr' ? '₺' : '$';
-
-  const formatted = amount.toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US', {
+export function formatCurrency(amount: number, currency: string = 'TRY'): string {
+  return new Intl.NumberFormat('tr-TR', {
     style: 'currency',
     currency
-  });
-
-  return formatted.replace(/TRY|USD|\s/g, symbol).trim();
+  }).format(amount);
 }
 
-/**
- * Get available languages
- */
-export function getAvailableLanguages(): { code: Language; name: string }[] {
-  return [
-    { code: 'tr', name: 'Türkçe' },
-    { code: 'en', name: 'English' }
-  ];
+export function getLocale(): { code: string; name: string } {
+  return { code: 'tr', name: 'Türkçe' };
+}
+
+export function detectLanguage(): string {
+  return 'tr';
+}
+
+export function getPreferredLanguage(_acceptLanguage?: string): string {
+  return 'tr';
+}
+
+export function getAvailableLanguages(): { code: string; name: string }[] {
+  return [{ code: 'tr', name: 'Türkçe' }];
+}
+
+export function formatRelativeTime(date: Date | string, _locale?: string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSecs < 60) return 'az önce';
+  if (diffMins < 60) return `${diffMins} dakika önce`;
+  if (diffHours < 24) return `${diffHours} saat önce`;
+  if (diffDays === 1) return 'dün';
+  if (diffDays < 7) return `${diffDays} gün önce`;
+  
+  return formatDate(d);
+}
+
+export function pluralize(count: number, singular: string, plural: string): string {
+  return count === 1 ? `${count} ${singular}` : `${count} ${plural}`;
+}
+
+export function getTextDirection(): 'ltr' | 'rtl' {
+  return 'ltr'; // Turkish is LTR
+}
+
+export function interpolate(template: string, values: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => values[key] || match);
 }

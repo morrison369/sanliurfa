@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { registerS3File, generateUploadSignature } from '../../../lib/file-management';
+import { registerS3File, generateUploadSignature } from '../../../lib/file/file-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 

@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { createTranscodingJob, getPendingTranscodingJobs, getTranscodingStats } from '../../../lib/video-processing';
+import { createTranscodingJob, getPendingTranscodingJobs, getTranscodingStats } from '../../../lib/video/video-processing';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 

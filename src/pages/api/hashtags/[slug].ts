@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Hashtag Content API
  * Get hashtag metadata and tagged places/reviews

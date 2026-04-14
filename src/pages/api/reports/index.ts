@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { createReport, getReports } from '../../../lib/business-analytics';
+import { createReport, getReports } from '../../../lib/analytics/business-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -27,7 +27,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/reports', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -78,7 +78,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/reports', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,

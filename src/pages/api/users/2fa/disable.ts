@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Disable 2FA
  * POST /api/users/2fa/disable

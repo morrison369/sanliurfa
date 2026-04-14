@@ -1,0 +1,159 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const seo = {
+  title: 'İçerik Rehberi - Şanlıurfa.com',
+  description: 'Şanlıurfa gezi rehberi için içerik ve resim ekleme rehberi',
+};
+
+const steps = [
+  {
+    title: '1. Wikipedia\'dan İçerik Çekme',
+    description: 'Hazır script ile otomatik içerik çekme',
+    code: 'npx tsx scripts/content-scraper/wikipedia-scraper.ts',
+    note: 'Balıklıgöl, Göbeklitepe, Harran gibi yerlerin içeriği otomatik çekilir'
+  },
+  {
+    title: '2. Ücretsiz Resim Bulma',
+    description: 'Unsplash ve Pexels\'ten ücretsiz resimler',
+    code: `// Unsplash API anahtarı al:
+// 1. https://unsplash.com/developers
+// 2. New Application
+// 3. Access Key kopyala
+
+export UNSPLASH_ACCESS_KEY=xxx
+npx tsx scripts/content-scraper/image-downloader.ts`,
+    note: 'Otomatik olarak public/images/places klasörüne indirilir'
+  },
+  {
+    title: '3. Manuel İçerik Ekleme',
+    description: 'src/content/places/ klasörüne .md dosyası oluştur',
+    code: `---
+title: "Mekan Adı"
+description: "Kısa açıklama"
+lat: 37.1591
+lon: 38.7969
+category: "tarihi"
+image: "https://images.unsplash.com/..."
+---
+
+# Başlık
+
+İçerik buraya...`,
+    note: 'Frontmatter (--- arası) zorunlu alanları içermeli'
+  },
+  {
+    title: '4. Ücretsiz Resim Kaynakları',
+    description: 'API kullanmadan manuel indirme',
+    links: [
+      { name: 'Unsplash', url: 'https://unsplash.com/s/photos/sanliurfa' },
+      { name: 'Pexels', url: 'https://pexels.com/search/sanliurfa' },
+      { name: 'Pixabay', url: 'https://pixabay.com/images/search/urfa' },
+      { name: 'Wikimedia Commons', url: 'https://commons.wikimedia.org/wiki/Sanliurfa' }
+    ]
+  }
+];
+
+const imageKeywords = [
+  'Sanliurfa cityscape',
+  'Balikligol Urfa',
+  'Gobekli Tepe',
+  'Harran houses',
+  'Southeast Turkey landscape',
+  'Mesopotamia',
+  'Anatolian history',
+  'Turkish cuisine',
+  'Historical mosque',
+  'Ancient ruins'
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+    <div class="container-custom max-w-4xl">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+        İçerik ve Resim Ekleme Rehberi
+      </h1>
+      <p class="text-xl text-gray-600 dark:text-gray-300 mb-12">
+        Şanlıurfa gezi rehberi için içerik ve resim bulma kaynakları
+      </p>
+
+      <!-- Steps -->
+      <div class="space-y-8">
+        {steps.map((step) => (
+          <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+              {step.title}
+            </h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-4">
+              {step.description}
+            </p>
+            
+            {step.code && (
+              <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm mb-4"><code>{step.code}</code></pre>
+            )}
+            
+            {step.links && (
+              <ul class="space-y-2 mb-4">
+                {step.links.map((link) => (
+                  <li>
+                    <a 
+                      href={link.url} 
+                      target="_blank"
+                      class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-2"
+                    >
+                      <span>{link.name}</span>
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                      </svg>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+            
+            {step.note && (
+              <p class="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
+                💡 {step.note}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <!-- Image Keywords -->
+      <div class="mt-12 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          Arama Anahtar Kelimeleri
+        </h2>
+        <p class="text-gray-600 dark:text-gray-300 mb-4">
+          Ücretsiz resim sitelerinde kullanabileceğiniz İngilizce anahtar kelimeler:
+        </p>
+        <div class="flex flex-wrap gap-2">
+          {imageKeywords.map((keyword) => (
+            <a 
+              href={`https://unsplash.com/s/photos/${encodeURIComponent(keyword)}`}
+              target="_blank"
+              class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+            >
+              {keyword}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="mt-12 text-center">
+        <a 
+          href="/places" 
+          class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-colors"
+        >
+          <span>Mekanları Görüntüle</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</Layout>

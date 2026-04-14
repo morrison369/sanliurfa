@@ -1,0 +1,88 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+let featuredPlaces: any[] = [];
+
+const egitimCategories = [
+  { slug: 'anaokullari', name: 'Anaokulları', icon: '🎨', desc: 'Anaokulu ve kreşler' },
+  { slug: 'okullar', name: 'İlk ve Ortaokullar', icon: '🏫', desc: 'İlkokul, ortaokul, lise' },
+  { slug: 'universiteler', name: 'Üniversiteler', icon: '🎓', desc: 'Harran Üniversitesi ve diğerleri' },
+  { slug: 'dershaneler', name: 'Dershaneler', icon: '📚', desc: 'Etüt ve dershaneler' },
+  { slug: 'kurslar', name: 'Kurslar', icon: '🎯', desc: 'Dil, sürücü ve özel kurslar' },
+];
+
+try {
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE c.slug IN ('anaokullari','okullar','universiteler','dershaneler','kurslar')
+     AND p.status = 'active'
+     ORDER BY p.rating DESC LIMIT 6`
+  );
+  featuredPlaces = placesResult.rows;
+} catch (e) {
+  console.error('Error loading egitim:', e);
+}
+
+const seo = {
+  title: 'Şanlıurfa Eğitim Rehberi | Okullar, Üniversiteler ve Kurslar',
+  description: 'Şanlıurfa\'da anaokulları, ilk ve ortaokullar, Harran Üniversitesi, dershaneler ve özel kurslar.',
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-blue-700 to-indigo-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Eğitim Rehberi</h1>
+        <p class="text-xl text-blue-100 max-w-2xl">
+          Şanlıurfa'da okullar, üniversiteler, dershaneler ve kurslar
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <!-- Harran Üniversitesi Bilgi Kutusu -->
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-10">
+        <h2 class="text-xl font-bold text-blue-800 mb-2">🎓 Harran Üniversitesi</h2>
+        <p class="text-blue-700">Şanlıurfa'nın köklü üniversitesi — 1992 yılında kurulan Harran Üniversitesi, pek çok fakülte ve yüksekokul ile hizmet vermektedir.</p>
+      </div>
+
+      <!-- Kategoriler -->
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Eğitim Kategorileri</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
+        {egitimCategories.map((cat) => (
+          <a
+            href={`/egitim/${cat.slug}`}
+            class="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 border border-gray-100 group text-center"
+          >
+            <div class="text-3xl mb-3">{cat.icon}</div>
+            <h3 class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors text-sm">{cat.name}</h3>
+            <p class="text-xs text-gray-500 mt-1">{cat.desc}</p>
+          </a>
+        ))}
+      </div>
+
+      {featuredPlaces.length > 0 && (
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Öne Çıkan Eğitim Kurumları</h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredPlaces.map((place) => (
+              <a href={`/places/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+                <div class="flex items-start gap-3">
+                  <span class="text-2xl">🏫</span>
+                  <div>
+                    <h3 class="font-bold text-gray-900 group-hover:text-blue-600">{place.name}</h3>
+                    <span class="text-xs text-blue-600">{place.category_name}</span>
+                    {place.address && <p class="text-xs text-gray-500 mt-1">📍 {place.address}</p>}
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

@@ -40,14 +40,14 @@ export const GET: APIRoute = async ({ locals }) => {
         LIMIT 5
       `);
 
-      if (unusedIndexes.rows && unusedIndexes.rows.length > 0) {
+      if (unusedIndexes && unusedIndexes.length > 0) {
         recommendations.push({
           priority: 'medium',
           category: 'Database Indexes',
-          title: `${unusedIndexes.rows.length} Unused Indexes Found`,
-          description: `Found ${unusedIndexes.rows.length} indexes that are never used. Removing them will free up disk space and speed up writes.`,
+          title: `${unusedIndexes.length} Unused Indexes Found`,
+          description: `Found ${unusedIndexes.length} indexes that are never used. Removing them will free up disk space and speed up writes.`,
           estimatedImpact: 'Medium - Improves write performance',
-          action: `DROP INDEX IF EXISTS ${unusedIndexes.rows.map((r: any) => r.indexname).join(', ')};`
+          action: `DROP INDEX IF EXISTS ${unusedIndexes.map((r: any) => r.indexname).join(', ')};`
         });
       }
     } catch (e) {
@@ -67,7 +67,7 @@ export const GET: APIRoute = async ({ locals }) => {
         LIMIT 5
       `);
 
-      if (largeUnindexedTables.rows && largeUnindexedTables.rows.length > 0) {
+      if (largeUnindexedTables && largeUnindexedTables.length > 0) {
         recommendations.push({
           priority: 'high',
           category: 'Database Indexes',
@@ -116,13 +116,13 @@ export const GET: APIRoute = async ({ locals }) => {
         LIMIT 5
       `);
 
-      if (slowQueries.rows && slowQueries.rows.length > 0) {
-        const avgTime = slowQueries.rows.reduce((sum: number, q: any) => sum + q.mean_time, 0) / slowQueries.rows.length;
+      if (slowQueries && slowQueries.length > 0) {
+        const avgTime = slowQueries.reduce((sum: number, q: any) => sum + q.mean_time, 0) / slowQueries.length;
         recommendations.push({
           priority: avgTime > 500 ? 'high' : 'medium',
           category: 'Query Performance',
-          title: `${slowQueries.rows.length} Slow Queries Detected`,
-          description: `Found ${slowQueries.rows.length} queries with avg execution time > 100ms. Optimize these queries with appropriate indexes and query refactoring.`,
+          title: `${slowQueries.length} Slow Queries Detected`,
+          description: `Found ${slowQueries.length} queries with avg execution time > 100ms. Optimize these queries with appropriate indexes and query refactoring.`,
           estimatedImpact: 'High - Significant response time improvement',
           action: 'Use EXPLAIN ANALYZE to identify bottlenecks and add missing indexes'
         });

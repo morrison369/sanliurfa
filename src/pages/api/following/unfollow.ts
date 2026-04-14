@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('POST', '/api/following/unfollow', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,

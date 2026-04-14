@@ -8,7 +8,7 @@ import {
   getLoyaltyBalance,
   getAllLoyaltyTiers,
   getTransactionHistory
-} from '../../../lib/loyalty-system';
+} from '../../../lib/loyalty/loyalty-system';
 import { getAchievementStats, getUserAchievements } from '../../../lib/achievements';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/user/loyalty', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const url = new URL(request.url);

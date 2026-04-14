@@ -3,7 +3,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserOnboardingStatus, getOnboardingProgress } from '../../../lib/user-onboarding';
+import { getUserOnboardingStatus, getOnboardingProgress } from '../../../lib/user/user-onboarding';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/onboarding/status', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const status = await getUserOnboardingStatus(locals.user.id);

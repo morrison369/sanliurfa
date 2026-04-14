@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getExportTemplates, createExportTemplate } from '../../../lib/report-engine';
+import { getExportTemplates, createExportTemplate } from '../../../lib/report/report-engine';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/export-templates', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -73,7 +73,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/export-templates', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,

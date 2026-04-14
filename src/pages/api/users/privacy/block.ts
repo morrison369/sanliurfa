@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user) {
       recordRequest('GET', '/api/users/privacy/block', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -66,7 +66,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user) {
       recordRequest('POST', '/api/users/privacy/block', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -149,7 +149,7 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
     if (!locals.user) {
       recordRequest('DELETE', '/api/users/privacy/block', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,

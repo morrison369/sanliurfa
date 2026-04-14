@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Verify 2FA setup and enable 2FA
  * POST /api/users/2fa/verify

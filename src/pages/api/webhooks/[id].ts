@@ -4,14 +4,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { deleteWebhook } from '../../../lib/webhooks';
+import { deleteWebhook } from '../../../lib/webhook';
 import { apiResponse, apiError, HttpStatus, ErrorCode } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const DELETE: APIRoute = async ({ locals, params }) => {
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const { id } = params;

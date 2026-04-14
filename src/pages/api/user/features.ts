@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { checkFeaturesAccess, hasFeatureAccess, getUserTierInfo, PREMIUM_FEATURES } from '../../../lib/feature-gating';
+import { checkFeaturesAccess, hasFeatureAccess, getUserTierInfo, PREMIUM_FEATURES } from '../../../lib/feature/feature-gating';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';

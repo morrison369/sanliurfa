@@ -12,7 +12,7 @@ export default function SocialInteractions({ placeId, userId }: SocialInteractio
   const [shareCount, setShareCount] = useState(0);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchStats = async () => {
       const likeRes = await fetch(`/api/places/${placeId}/like`);
       const shareRes = await fetch(`/api/places/${placeId}/share`);
       if (likeRes.ok && shareRes.ok) {
@@ -23,7 +23,7 @@ export default function SocialInteractions({ placeId, userId }: SocialInteractio
         setShareCount(shareData.data.count);
       }
     };
-    fetch();
+    fetchStats();
   }, [placeId]);
 
   const handleLike = async () => {

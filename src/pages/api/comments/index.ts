@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getComments, createComment } from '../../../lib/comments';
+import { getComments, createComment } from '../../../lib/comment/comments';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -73,7 +73,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('POST', '/api/comments', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,

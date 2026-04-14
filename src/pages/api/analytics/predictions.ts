@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { predictUserChurn, calculateLifetimeValue, getHighRiskUsers, getRecommendations, getModelPerformanceMetrics } from '../../../lib/predictive-analytics';
+import { predictUserChurn, calculateLifetimeValue, getHighRiskUsers, getRecommendations, getModelPerformanceMetrics } from '../../../lib/predictive/predictive-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 

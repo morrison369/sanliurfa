@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { requestPlaceVerification } from '../../../../lib/place-verification';
+import { requestPlaceVerification } from '../../../../lib/place/place-verification';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';

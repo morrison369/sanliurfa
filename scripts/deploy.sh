@@ -1,121 +1,58 @@
 #!/bin/bash
-
-# Şanlıurfa.com Production Deployment Script
-# Usage: ./scripts/deploy.sh [staging|production]
+# Sanliurfa.com - Tek Tıkla Deploy Scripti
+# Sunucuda çalıştırın: bash /home/sanliur/public_html/scripts/deploy.sh
 
 set -e
+DIR="/home/sanliur/public_html"
 
-ENVIRONMENT=${1:-staging}
-DEPLOY_LOG="deploy-$(date +%Y%m%d-%H%M%S).log"
+echo "========================================"
+echo "SANLIURFA.COM - DEPLOY BASLATILIYOR"
+echo "========================================"
 
-# Colors for output
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+echo "[1/6] Eski prosesler temizleniyor..."
+pkill -9 -f "node dist" 2>/dev/null || true
+pm2 delete all 2>/dev/null || true
+pm2 kill 2>/dev/null || true
+sleep 3
 
-log() {
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$DEPLOY_LOG"
-}
+echo "[2/6] Portlar temizleniyor..."
+fuser -k 6000/tcp 2>/dev/null || true
+fuser -k 4321/tcp 2>/dev/null || true
+sleep 2
 
-error() {
-    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}" | tee -a "$DEPLOY_LOG"
+echo "[3/6] Port kontrolu..."
+if ss -tlnp | grep -q 6000; then
+    echo "HATA: Port 6000 hala kullanımda!"
     exit 1
-}
-
-warn() {
-    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}" | tee -a "$DEPLOY_LOG"
-}
-
-log "Starting deployment to $ENVIRONMENT environment..."
-
-# Check prerequisites
-log "Checking prerequisites..."
-command -v node >/dev/null 2>&1 || error "Node.js is not installed"
-command -v npm >/dev/null 2>&1 || error "npm is not installed"
-command -v git >/dev/null 2>&1 || error "git is not installed"
-
-log "✓ Prerequisites verified"
-
-# Get current branch
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-log "Current branch: $CURRENT_BRANCH"
-
-if [ "$ENVIRONMENT" == "production" ] && [ "$CURRENT_BRANCH" != "master" ]; then
-    error "Cannot deploy to production from branch $CURRENT_BRANCH. Must be on master."
 fi
+echo "Port 6000 bosta"
 
-# Verify no uncommitted changes
-log "Verifying no uncommitted changes..."
-if ! git diff-index --quiet HEAD --; then
-    error "Uncommitted changes found. Please commit or stash changes first."
-fi
-log "✓ No uncommitted changes"
+echo "[4/6] Uygulama baslatiliyor..."
+cd $DIR
+NODE_ENV=production PORT=6000 nohup node dist/server/entry.mjs > /tmp/app.log 2>&1 &
+sleep 12
 
-# Run tests
-log "Running test suite..."
-npm run test 2>&1 | tee -a "$DEPLOY_LOG" || error "Tests failed"
-log "✓ All tests passed"
+echo "[5/6] Saglik kontrolu..."
+HEALTH=$(curl -sf http://127.0.0.1:6000/api/health 2>&1 || echo "FAIL")
+echo "$HEALTH"
 
-# Build application
-log "Building application..."
-npm run build 2>&1 | tee -a "$DEPLOY_LOG" || error "Build failed"
-log "✓ Build completed successfully"
-
-# Create database backup
-log "Creating database backup..."
-if command -v pg_dump >/dev/null 2>&1; then
-    BACKUP_FILE="backups/db-backup-$(date +%Y%m%d-%H%M%S).sql"
-    mkdir -p backups
-    # Note: This assumes DATABASE_URL is set
-    pg_dump "$DATABASE_URL" > "$BACKUP_FILE" 2>&1 || warn "Database backup failed (may be normal if not available)"
-    log "✓ Database backup created: $BACKUP_FILE"
+if echo "$HEALTH" | grep -q "healthy"; then
+    echo "[6/6] PM2 ile kaydediliyor..."
+    pm2 start dist/server/entry.mjs --name sanliurfa-app
+    pm2 save
+    echo ""
+    echo "========================================"
+    echo "✅ DEPLOY BASARILI!"
+    echo "========================================"
+    echo "Site: https://sanliurfa.com"
+    echo "Health: http://127.0.0.1:6000/api/health"
+    pm2 list
 else
-    warn "pg_dump not found, skipping database backup"
+    echo ""
+    echo "========================================"
+    echo "❌ DEPLOY BASARISIZ!"
+    echo "========================================"
+    echo "Loglar:"
+    tail -30 /tmp/app.log
+    exit 1
 fi
-
-# Deploy code
-log "Deploying code..."
-case "$ENVIRONMENT" in
-    staging)
-        log "Deploying to staging environment..."
-        npm run deploy:staging 2>&1 | tee -a "$DEPLOY_LOG" || warn "Staging deployment command not found"
-        ;;
-    production)
-        log "Deploying to production environment..."
-        log "WARNING: This will update the production system!"
-        read -p "Continue? (yes/no): " -n 3 -r
-        echo
-        if [[ $REPLY =~ ^[Yy] ]]; then
-            npm run deploy:production 2>&1 | tee -a "$DEPLOY_LOG" || error "Production deployment failed"
-        else
-            error "Deployment cancelled by user"
-        fi
-        ;;
-    *)
-        error "Unknown environment: $ENVIRONMENT. Use 'staging' or 'production'."
-        ;;
-esac
-
-# Health check
-log "Running health checks..."
-sleep 5
-if curl -s -f http://localhost:3000/api/health > /dev/null 2>&1; then
-    log "✓ Health check passed"
-else
-    warn "Health check failed or not accessible"
-fi
-
-# Verify deployment
-log "Verifying deployment..."
-DEPLOYED_VERSION=$(curl -s http://localhost:3000/api/version 2>/dev/null || echo "unknown")
-log "Deployed version: $DEPLOYED_VERSION"
-
-# Success
-log ""
-log "╔════════════════════════════════════════╗"
-log "║   ✓ DEPLOYMENT SUCCESSFUL              ║"
-log "║   Environment: $ENVIRONMENT"
-log "║   Time: $(date +'%Y-%m-%d %H:%M:%S')"
-log "║   Log: $DEPLOY_LOG"
-log "╚════════════════════════════════════════╝"

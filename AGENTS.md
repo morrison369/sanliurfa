@@ -55,3 +55,25 @@ For every new phase range:
 6. Keep `tsconfig.phase.json` scoped (`include: []` + explicit phase `files` list).
 7. Prefer pure phase modules; avoid direct infra imports (`logger`, `postgres`) unless phase contract requires them.
 8. Verify with `npm run test:phase:gate:ci` before handoff.
+
+## 🚫 YASAKLAR (Strict Prohibitions)
+
+**Multi-language / i18n YASAĞI:**
+- Bu proje **sadece Türkçe** dil desteği içerir
+- **KESİNLİKLE YASAK:** Çoklu dil desteği (i18n, l10n)
+- **KESİNLİKLE YASAK:** Dil seçici (language selector) UI
+- **KESİNLİKLE YASAK:** `hreflang` etiketleri
+- **KESİNLİKLE YASAK:** Dil tercihi API'si veya veritabanı alanları
+- **KESİNLİKLE YASAK:** `accept-language` header'ına göre içerik değiştirme
+- **KESİNLİKLE YASAK:** Dil dosyaları (en.json, ar.json vb.)
+
+**Neden:** Proje sahibi açıkça tek dil (Türkçe) istemiştir. Tüm UI metinleri, SEO içerikleri ve kullanıcı mesajları Türkçe olarak sabitlenmiştir.
+
+**Ücretli Servis ve Harici CDN YASAĞI:**
+- **KESİNLİKLE YASAK:** Image CDN servisleri (Cloudinary, Cloudflare Images, Imgix vb.)
+- **KESİNLİKLE YASAK:** Ücretli görseller (Shutterstock, Getty Images vb.)
+- **KESİNLİKLE YASAK:** Ücretli API'ler (Google Maps API, SendGrid, AWS SES vb.)
+- **KESİNLİKLE YASAK:** Üçüncü parti haritalama servisleri (Google Maps, Mapbox vb.)
+- **İZİN VERİLEN:** Ücretsiz alternatifler (OpenStreetMap, Ücretsiz SMTP, Local image processing)
+
+**Neden:** Proje sahibi açıkça ücretsiz, açık kaynak çözümler istemiştir.

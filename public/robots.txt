@@ -1,26 +1,51 @@
-# robots.txt for sanliurfa.com
+# Şanlıurfa.com Robots.txt
+# Son güncelleme: Nisan 2026
+
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://sanliurfa.com/sitemap-index.xml
+Sitemap: https://sanliurfa.com/sitemap.xml
 
-# Disallow admin paths
+# Özel sayfalar - indekslenmemeli
 Disallow: /admin/
 Disallow: /profil/
-Disallow: /api/
 Disallow: /giris
 Disallow: /kayit
+Disallow: /sifremi-unuttum
+Disallow: /api/
+Disallow: /_astro/
 
-# Crawl rate
+# Arama sonuçları - indekslenmemeli
+Disallow: /ara?q=
+Disallow: /arama/
+
+# Geçici ve test sayfaları
+Disallow: /test/
+Disallow: /draft/
+
+# Crawl-delay (sunucu yükünü azaltmak için)
 Crawl-delay: 1
 
-# Allow specific bots
+# Ana arama motorları için özel kurallar
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 0.5
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
-User-agent: DuckDuckBot
+User-agent: YandexBot
+Allow: /
+Crawl-delay: 2
+
+# AI botlar (opsiyonel - içerik koruması için)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: Google-Extended
 Allow: /

@@ -3,8 +3,9 @@ module.exports = {
     {
       name: 'sanliurfa',
       script: './dist/server/entry.mjs',
-      instances: 'max',
-      exec_mode: 'cluster',
+      // CWP Shared Hosting: Single instance (cluster mode requires more resources)
+      instances: 1,
+      exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
@@ -13,12 +14,18 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3000,
       },
+      // Log files with rotation
       error_file: './logs/err.log',
       out_file: './logs/out.log',
       log_file: './logs/combined.log',
       time: true,
       merge_logs: true,
-      max_memory_restart: '1G',
+      // Log rotation settings
+      log_rotate: true,
+      log_max_size: '10M',
+      log_retention: '7d',
+      // Memory management
+      max_memory_restart: '512M',  // Lower for CWP shared hosting
       restart_delay: 3000,
       max_restarts: 5,
       min_uptime: '10s',
@@ -29,7 +36,7 @@ module.exports = {
       autorestart: true,
       // Don't restart if crashing too fast
       exp_backoff_restart_delay: 100,
-      // Environment file
+      // Environment file (ensure .env has 600 permissions)
       env_file: '.env',
       // Logging
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
@@ -37,6 +44,10 @@ module.exports = {
       monitoring: false,
       // PM2 Plus (optional)
       pmx: false,
+      // Kill timeout
+      kill_timeout: 5000,
+      // Listen timeout
+      listen_timeout: 10000,
     },
   ],
   deploy: {

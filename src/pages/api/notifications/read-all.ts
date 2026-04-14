@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { markAllAsRead } from '../../../lib/notifications-queue';
+import { markAllAsRead } from '../../../lib/notification/notifications-queue';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -12,7 +12,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/notifications/read-all', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Kimlik dogrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Kimlik dogrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const count = await markAllAsRead(locals.user.id);

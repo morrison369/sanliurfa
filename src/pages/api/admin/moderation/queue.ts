@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getModerationQueue, assignModerationQueueItem, resolveModerationQueueItem } from '../../../../lib/admin-moderation';
+import { getModerationQueue, assignModerationQueueItem, resolveModerationQueueItem } from '../../../../lib/admin/admin-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';

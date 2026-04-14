@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../../lib/postgres';
-import { awardPoints } from '../../../../lib/loyalty-points';
+import { awardPoints } from '../../../../lib/loyalty/loyalty-points';
 import { deleteCache, deleteCachePattern } from '../../../../lib/cache';
 import { apiResponse, apiError } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';

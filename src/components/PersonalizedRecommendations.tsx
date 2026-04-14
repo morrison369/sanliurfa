@@ -15,7 +15,7 @@ export default function PersonalizedRecommendations() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchRecs = async () => {
       try {
         const res = await fetch('/api/discovery/recommendations?limit=8');
         if (res.ok) {
@@ -28,7 +28,7 @@ export default function PersonalizedRecommendations() {
         setLoading(false);
       }
     };
-    fetch();
+    fetchRecs();
   }, []);
 
   const handleClick = async (recId: string) => {

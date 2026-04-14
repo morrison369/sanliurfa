@@ -4,8 +4,8 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSearchSuggestions, getGlobalSuggestions, getPersonalizedSuggestions } from '../../../lib/search-suggestions';
-import { getRecentSearches } from '../../../lib/search-history';
+import { getSearchSuggestions, getGlobalSuggestions, getPersonalizedSuggestions } from '../../../lib/search/search-suggestions';
+import { getRecentSearches } from '../../../lib/search/search-history';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';

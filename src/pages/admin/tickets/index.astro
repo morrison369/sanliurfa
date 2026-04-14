@@ -1,0 +1,95 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yonetimi', noindex: true };
+---
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
+    <div class="container mx-auto px-4">
+      <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Destek Talepleri</h1>
+            <p class="text-gray-500 mt-1">Musteri destek taleplerini yonetin</p>
+          </div>
+          <div class="flex gap-3">
+            <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg"><span class="font-bold" id="openCount">0</span> Acik</div>
+            <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg"><span class="font-bold" id="inProgressCount">0</span> Islemde</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full">
+          <thead class="bg-gray-50 border-b">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Ticket</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Gonderen</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Konu</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Durum</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Tarih</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Islem</th>
+            </tr>
+          </thead>
+          <tbody id="ticketsTable" class="divide-y">
+            <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yukleniyor...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const statusLabels = {
+      open: { text: 'Acik', class: 'bg-green-100 text-green-700' },
+      in_progress: { text: 'Islemde', class: 'bg-yellow-100 text-yellow-700' },
+      resolved: { text: 'Cozuldu', class: 'bg-blue-100 text-blue-700' },
+      closed: { text: 'Kapandi', class: 'bg-gray-100 text-gray-600' },
+    };
+
+    async function loadTickets() {
+      try {
+        const response = await fetch('/api/contact?status=open');
+        const data = await response.json();
+        
+        if (data.success) {
+          const tbody = document.getElementById('ticketsTable');
+          tbody.innerHTML = data.tickets.map(t => `
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 font-mono text-sm text-gray-600">${t.ticket_number}</td>
+              <td class="px-4 py-3">
+                <div class="font-medium">${t.name}</div>
+                <div class="text-sm text-gray-500">${t.email}</div>
+              </td>
+              <td class="px-4 py-3">${t.subject}</td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${statusLabels[t.status]?.class || 'bg-gray-100'}">
+                  ${statusLabels[t.status]?.text || t.status}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-500">${new Date(t.created_at).toLocaleDateString('tr-TR')}</td>
+              <td class="px-4 py-3">
+                <button onclick="updateStatus('${t.id}', 'in_progress')" class="text-blue-600 text-sm hover:underline">Isleme Al</button>
+              </td>
+            </tr>
+          `).join('');
+          
+          document.getElementById('openCount').textContent = data.tickets.filter(t => t.status === 'open').length;
+          document.getElementById('inProgressCount').textContent = data.tickets.filter(t => t.status === 'in_progress').length;
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    }
+
+    async function updateStatus(id, status) {
+      await fetch(`/api/contact/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      loadTickets();
+    }
+
+    loadTickets();
+  </script>
+</Layout>

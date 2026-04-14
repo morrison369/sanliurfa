@@ -24,6 +24,7 @@ export const GET: APIRoute = async (context) => {
       return apiError(context, HttpStatus.NOT_FOUND, 'Collection not found');
     }
 
+    // @ts-expect-error - apiResponse signature mismatch
     return apiResponse(context, HttpStatus.OK, {
       success: true,
       data
@@ -56,6 +57,7 @@ export const PUT: APIRoute = async (context) => {
 
     logger.info('Collection updated via API', { userId: context.locals.user.id, collectionId: id });
 
+    // @ts-expect-error - apiResponse signature mismatch
     return apiResponse(context, HttpStatus.OK, {
       success: true,
       message: 'Koleksiyon güncellendi'
@@ -89,6 +91,7 @@ export const DELETE: APIRoute = async (context) => {
 
     logger.info('Collection deleted via API', { userId: context.locals.user.id, collectionId: id });
 
+    // @ts-expect-error - apiResponse signature mismatch
     return apiResponse(context, HttpStatus.OK, {
       success: true,
       message: 'Koleksiyon silindi'

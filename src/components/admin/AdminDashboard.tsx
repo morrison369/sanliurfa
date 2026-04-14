@@ -135,7 +135,7 @@ export default function AdminDashboard() {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
           <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Cache Hit Rate</div>
           <div className="text-3xl font-bold text-blue-600">{(metrics.cacheHitRate * 100).toFixed(1)}%</div>
-          <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">{metrics.slowRequestRate || 0} slow</div>
+          <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">{slowRequestRate || 0}% yavaş</div>
         </div>
       </div>
 

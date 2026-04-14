@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from "react";
 
+interface LeaderboardUser {
+  id: string;
+  rank: number;
+  avatar_url?: string;
+  full_name: string;
+  username?: string;
+  points: number;
+  level: number;
+}
+
 export default function LeaderboardsDisplay() {
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
   const [sortBy, setSortBy] = useState("points");
   const [isLoading, setIsLoading] = useState(true);
 

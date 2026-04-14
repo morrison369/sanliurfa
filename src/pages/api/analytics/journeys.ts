@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserJourneys, getJourneyDetails, getTopConvertingPaths, analyzeBehaviorPattern } from '../../../lib/journey-analytics';
+import { getUserJourneys, getJourneyDetails, getTopConvertingPaths, analyzeBehaviorPattern } from '../../../lib/analytics/journey-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 

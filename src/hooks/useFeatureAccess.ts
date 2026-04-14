@@ -46,6 +46,10 @@ export function useFeatureAccess(feature: FeatureName): UseFeatureAccessResult {
           setHasAccess(data.features[0].hasAccess);
         }
 
+        if (data.success && data.tier) {
+          setTier(data.tier);
+        }
+
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to check feature access');
@@ -101,6 +105,10 @@ export function useFeaturesAccess(features: FeatureName[]): {
             accessMap[f.feature] = f.hasAccess;
           });
           setAccess(accessMap);
+        }
+
+        if (data.success && data.tier) {
+          setTier(data.tier);
         }
 
         setError(null);

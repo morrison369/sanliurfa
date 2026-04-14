@@ -1,0 +1,218 @@
+---
+/**
+ * Structured Data Component
+ * Generates Schema.org JSON-LD for various page types
+ */
+
+interface Props {
+  type: 'website' | 'organization' | 'place' | 'review' | 'article' | 'event' | 'breadcrumb' | 'faq';
+  data: Record<string, any>;
+}
+
+const { type, data } = Astro.props;
+
+// Base context
+const baseSchema = {
+  '@context': 'https://schema.org',
+};
+
+// Generate schema based on type
+function generateSchema(type: string, data: Record<string, any>) {
+  switch (type) {
+    case 'website':
+      return {
+        ...baseSchema,
+        '@type': 'WebSite',
+        name: data.name || 'Şanlıurfa.com',
+        url: data.url || 'https://sanliurfa.com',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: 'https://sanliurfa.com/arama?q={search_term_string}',
+          },
+          'query-input': 'required name=search_term_string',
+        },
+      };
+
+    case 'organization':
+      return {
+        ...baseSchema,
+        '@type': 'Organization',
+        name: data.name || 'Şanlıurfa.com',
+        url: data.url || 'https://sanliurfa.com',
+        logo: {
+          '@type': 'ImageObject',
+          url: data.logo || 'https://sanliurfa.com/logo.png',
+          width: 512,
+          height: 512,
+        },
+        sameAs: [
+          'https://facebook.com/sanliurfa',
+          'https://twitter.com/sanliurfa',
+          'https://instagram.com/sanliurfa',
+        ],
+        contactPoint: {
+          '@type': 'ContactPoint',
+          telephone: data.phone || '+90-414-XXX-XXXX',
+          contactType: 'customer service',
+          availableLanguage: ['Turkish'],
+        },
+      };
+
+    case 'place':
+      return {
+        ...baseSchema,
+        '@type': 'TouristAttraction',
+        name: data.name,
+        description: data.description,
+        url: `https://sanliurfa.com/yerler/${data.slug}`,
+        image: data.images?.[0],
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: data.address,
+          addressLocality: 'Şanlıurfa',
+          addressRegion: 'Şanlıurfa',
+          addressCountry: 'TR',
+        },
+        geo: data.latitude && data.longitude ? {
+          '@type': 'GeoCoordinates',
+          latitude: data.latitude,
+          longitude: data.longitude,
+        } : undefined,
+        aggregateRating: data.rating ? {
+          '@type': 'AggregateRating',
+          ratingValue: data.rating,
+          reviewCount: data.reviewCount || 0,
+          bestRating: 5,
+          worstRating: 1,
+        } : undefined,
+        priceRange: data.priceRange || '$$',
+        telephone: data.phone,
+        openingHoursSpecification: data.openingHours?.map((oh: any) => ({
+          '@type': 'OpeningHoursSpecification',
+          dayOfWeek: oh.dayOfWeek,
+          opens: oh.opens,
+          closes: oh.closes,
+        })),
+      };
+
+    case 'review':
+      return {
+        ...baseSchema,
+        '@type': 'Review',
+        reviewRating: {
+          '@type': 'Rating',
+          ratingValue: data.rating,
+          bestRating: 5,
+          worstRating: 1,
+        },
+        author: {
+          '@type': 'Person',
+          name: data.authorName,
+        },
+        reviewBody: data.content,
+        datePublished: data.createdAt,
+        itemReviewed: {
+          '@type': 'TouristAttraction',
+          name: data.placeName,
+          image: data.placeImage,
+        },
+      };
+
+    case 'article':
+      return {
+        ...baseSchema,
+        '@type': 'Article',
+        headline: data.title,
+        description: data.excerpt,
+        image: data.featuredImage,
+        datePublished: data.publishedAt,
+        dateModified: data.updatedAt || data.publishedAt,
+        author: {
+          '@type': 'Person',
+          name: data.authorName,
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: 'Şanlıurfa.com',
+          logo: {
+            '@type': 'ImageObject',
+            url: 'https://sanliurfa.com/logo.png',
+          },
+        },
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': `https://sanliurfa.com/blog/${data.slug}`,
+        },
+      };
+
+    case 'event':
+      return {
+        ...baseSchema,
+        '@type': 'Event',
+        name: data.title,
+        description: data.description,
+        image: data.image,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        eventStatus: 'https://schema.org/EventScheduled',
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        location: {
+          '@type': 'Place',
+          name: data.locationName,
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: 'Şanlıurfa',
+            addressCountry: 'TR',
+          },
+        },
+        organizer: {
+          '@type': 'Organization',
+          name: data.organizer || 'Şanlıurfa.com',
+        },
+        offers: data.ticketPrice ? {
+          '@type': 'Offer',
+          url: `https://sanliurfa.com/etkinlikler/${data.slug}`,
+          price: data.ticketPrice,
+          priceCurrency: 'TRY',
+          availability: 'https://schema.org/InStock',
+        } : undefined,
+      };
+
+    case 'breadcrumb':
+      return {
+        ...baseSchema,
+        '@type': 'BreadcrumbList',
+        itemListElement: data.items.map((item: any, index: number) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: item.name,
+          item: item.url,
+        })),
+      };
+
+    case 'faq':
+      return {
+        ...baseSchema,
+        '@type': 'FAQPage',
+        mainEntity: data.questions.map((q: any) => ({
+          '@type': 'Question',
+          name: q.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: q.answer,
+          },
+        })),
+      };
+
+    default:
+      return { ...baseSchema, ...data };
+  }
+}
+
+const schema = generateSchema(type, data);
+const jsonLd = JSON.stringify(schema, null, 0);
+---
+
+<script type="application/ld+json" set:html={jsonLd} />

@@ -71,7 +71,7 @@ export class CircuitBreaker {
     this.failures++;
     if (this.failures >= this.config.failureThreshold) {
       this.state = 'open';
-      logger.warn('Circuit breaker opened', { name: this.name, failures: this.failures });
+      logger.warn('Circuit breaker opened', Object.assign(new Error('Circuit breaker opened'), { name: this.name, failures: this.failures }));
     }
   }
 

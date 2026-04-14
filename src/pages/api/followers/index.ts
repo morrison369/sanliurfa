@@ -6,7 +6,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getFollowers, getFollowing, getMutualFriends, followUser, unfollowUser } from '../../../lib/followers';
+import { getFollowers, getFollowing, getMutualFriends, followUser, unfollowUser } from '../../../lib/followers/followers';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -98,7 +98,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('POST', '/api/followers', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -160,7 +160,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('DELETE', '/api/followers', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,

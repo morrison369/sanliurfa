@@ -1,0 +1,267 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const seo = {
+  title: 'Isletme Yonetimi - Admin Panel',
+  description: 'Isletmeleri yonetin',
+  noindex: true,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
+    <div class="container mx-auto px-4">
+      {/* Header */}
+      <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Isletme Yonetimi</h1>
+            <p class="text-gray-500 mt-1">Tum isletmeleri goruntuleyin ve yonetin</p>
+          </div>
+          <a href="/isletme-kayit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            + Yeni Isletme
+          </a>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="stats">
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <div class="text-2xl font-bold text-gray-900" id="statTotal">-</div>
+          <div class="text-sm text-gray-500">Toplam</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <div class="text-2xl font-bold text-green-600" id="statActive">-</div>
+          <div class="text-sm text-gray-500">Aktif</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <div class="text-2xl font-bold text-yellow-600" id="statPending">-</div>
+          <div class="text-sm text-gray-500">Onay Bekleyen</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <div class="text-2xl font-bold text-red-600" id="statSuspended">-</div>
+          <div class="text-sm text-gray-500">Askiya Alinmis</div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+        <div class="flex flex-wrap gap-4">
+          <input type="text" id="searchInput" placeholder="Isletme ara..."
+            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 flex-1 min-w-[200px]" />
+          <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+            <option value="all">Tum Durumlar</option>
+            <option value="active">Aktif</option>
+            <option value="pending">Onay Bekleyen</option>
+            <option value="suspended">Askiya Alinmis</option>
+            <option value="rejected">Reddedilmis</option>
+          </select>
+          <button id="searchBtn" class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900">Ara</button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <table class="w-full">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="px-4 py-3 text-left"><input type="checkbox" id="selectAll" class="rounded" /></th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Isletme</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sahip</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Istatistik</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Islemler</th>
+            </tr>
+          </thead>
+          <tbody id="placesTable" class="divide-y divide-gray-100">
+            <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yukleniyor...</td></tr>
+          </tbody>
+        </table>
+        
+        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+          <div class="text-sm text-gray-500">
+            <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
+          </div>
+          <div class="flex gap-2" id="pagination"></div>
+        </div>
+      </div>
+
+      {/* Bulk Actions */}
+      <div id="bulkActions" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg hidden">
+        <span id="selectedCount">0</span> secildi
+        <div class="inline-flex gap-2 ml-4">
+          <button onclick="bulkAction('approve')" class="px-3 py-1 bg-green-600 rounded text-sm">Onayla</button>
+          <button onclick="bulkAction('suspend')" class="px-3 py-1 bg-yellow-600 rounded text-sm">Askiya Al</button>
+          <button onclick="bulkAction('reject')" class="px-3 py-1 bg-red-600 rounded text-sm">Reddet</button>
+          <button onclick="bulkAction('feature')" class="px-3 py-1 bg-blue-600 rounded text-sm">One Cikar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentPage = 1;
+    let selectedPlaces = new Set();
+    let allPlaces = [];
+
+    const statusLabels = {
+      active: { text: 'Aktif', class: 'bg-green-100 text-green-700' },
+      pending: { text: 'Bekliyor', class: 'bg-yellow-100 text-yellow-700' },
+      suspended: { text: 'Askida', class: 'bg-red-100 text-red-700' },
+      rejected: { text: 'Reddedildi', class: 'bg-gray-100 text-gray-600' },
+    };
+
+    async function loadPlaces() {
+      const tbody = document.getElementById('placesTable');
+      tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center">Yukleniyor...</td></tr>';
+
+      const params = new URLSearchParams({ page: currentPage.toString() });
+      const search = document.getElementById('searchInput').value;
+      const status = document.getElementById('statusFilter').value;
+
+      if (search) params.append('search', search);
+      if (status !== 'all') params.append('status', status);
+
+      try {
+        const response = await fetch(`/api/admin/places?${params}`);
+        const data = await response.json();
+
+        if (data.success) {
+          allPlaces = data.places;
+          renderPlaces(data.places);
+          updatePagination(data.pagination);
+          updateStats(data.places);
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-red-500">Hata olustu</td></tr>';
+      }
+    }
+
+    function renderPlaces(places) {
+      const tbody = document.getElementById('placesTable');
+      
+      if (places.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Isletme bulunamadi</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = places.map(place => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3">
+            <input type="checkbox" value="${place.id}" 
+              ${selectedPlaces.has(place.id) ? 'checked' : ''}
+              onchange="toggleSelection('${place.id}')" class="rounded place-checkbox" />
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              ${place.image_url ? 
+                `<img src="${place.image_url}" class="w-10 h-10 rounded-lg object-cover" />` :
+                `<div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">🏪</div>`
+              }
+              <div>
+                <div class="font-medium text-gray-900">${place.name}</div>
+                <div class="text-xs text-gray-500">${place.category} • ${place.price_range || '-'}</div>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-sm">
+            <div class="text-gray-900">${place.owner_name || 'Sahipsiz'}</div>
+            <div class="text-gray-500 text-xs">${place.owner_email || ''}</div>
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium ${statusLabels[place.status]?.class || 'bg-gray-100'}">
+              ${statusLabels[place.status]?.text || place.status}
+            </span>
+            ${place.featured ? '<span class="ml-1 px-1.5 bg-amber-100 text-amber-700 text-xs rounded">★</span>' : ''}
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-600">
+            <div>${place.total_views || 0} gor.</div>
+            <div>${place.review_count || 0} yorum</div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex gap-2">
+              <a href="/places/${place.slug}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">Goruntule</a>
+              ${place.status === 'pending' ? `
+                <button onclick="approvePlace('${place.id}')" class="text-green-600 hover:text-green-800 text-sm">Onayla</button>
+              ` : ''}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateStats(places) {
+      const counts = { active: 0, pending: 0, suspended: 0, total: places.length };
+      places.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
+      
+      document.getElementById('statActive').textContent = counts.active;
+      document.getElementById('statPending').textContent = counts.pending;
+      document.getElementById('statSuspended').textContent = counts.suspended;
+      document.getElementById('statTotal').textContent = counts.total;
+    }
+
+    function updatePagination(pagination) {
+      document.getElementById('showingFrom').textContent = ((pagination.page - 1) * pagination.limit) + 1;
+      document.getElementById('showingTo').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
+      document.getElementById('totalCount').textContent = pagination.total;
+
+      const pages = [];
+      for (let i = 1; i <= Math.min(pagination.totalPages, 10); i++) {
+        pages.push(`
+          <button onclick="goToPage(${i})" 
+            class="px-3 py-1 rounded ${i === pagination.page ? 'bg-red-600 text-white' : 'bg-gray-100'}">${i}</button>
+        `);
+      }
+      document.getElementById('pagination').innerHTML = pages.join('');
+    }
+
+    function toggleSelection(id) {
+      selectedPlaces.has(id) ? selectedPlaces.delete(id) : selectedPlaces.add(id);
+      updateBulkActions();
+    }
+
+    function updateBulkActions() {
+      const el = document.getElementById('bulkActions');
+      document.getElementById('selectedCount').textContent = selectedPlaces.size;
+      el.classList.toggle('hidden', selectedPlaces.size === 0);
+    }
+
+    async function bulkAction(action) {
+      if (!confirm(`${selectedPlaces.size} isletme icin bu islemi yapmak istiyor musunuz?`)) return;
+
+      const response = await fetch('/api/admin/places', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ placeIds: Array.from(selectedPlaces), action })
+      });
+
+      if (response.ok) {
+        selectedPlaces.clear();
+        updateBulkActions();
+        loadPlaces();
+      }
+    }
+
+    async function approvePlace(id) {
+      const response = await fetch('/api/admin/places', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ placeIds: [id], action: 'approve' })
+      });
+      if (response.ok) loadPlaces();
+    }
+
+    function goToPage(page) { currentPage = page; loadPlaces(); }
+
+    document.getElementById('selectAll').addEventListener('change', (e) => {
+      document.querySelectorAll('.place-checkbox').forEach(cb => {
+        cb.checked = e.target.checked;
+        toggleSelection(cb.value);
+      });
+    });
+
+    document.getElementById('searchBtn').addEventListener('click', () => { currentPage = 1; loadPlaces(); });
+
+    loadPlaces();
+  </script>
+</Layout>

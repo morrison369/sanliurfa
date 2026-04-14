@@ -3,7 +3,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { saveOnboardingProgress } from '../../../../lib/vendor-onboarding';
+import { saveOnboardingProgress } from '../../../../lib/vendor/vendor-onboarding';
 import { validateWithSchema } from '../../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/vendor/onboarding/step', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();

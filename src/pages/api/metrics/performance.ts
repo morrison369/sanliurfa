@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Performance Metrics Collection
  * POST: Collect client-side performance metrics

@@ -1,198 +1,204 @@
-// API: Yorum işlemleri (PostgreSQL + Redis cache)
-import type { APIRoute } from 'astro';
-import { query, queryOne, insert, update as updateDb } from '../../../lib/postgres';
-import { getCache, setCache, deleteCache } from '../../../lib/cache';
-import { logActivity } from '../../../lib/activity';
-
 /**
- * Generate cache key for reviews
+ * GET /api/reviews
+ * Get reviews for a place or user
+ * 
+ * POST /api/reviews
+ * Create a new review
  */
-function generateReviewsCacheKey(placeId: string, limit = 10, offset = 0): string {
-  return `reviews:place:${placeId}:limit:${limit}:offset:${offset}`;
-}
 
-// Get reviews for a place
-export const GET: APIRoute = async ({ url }) => {
+import type { APIRoute } from 'astro';
+import { 
+  getPlaceReviews,
+  getUserReviews,
+  getUserReviewForPlace,
+  createReview,
+  updateReview,
+  deleteReview,
+  toggleLikeReview,
+  markHelpful,
+  getRatingBreakdown,
+  hasUserReviewed,
+  type ReviewFilter
+} from '../../../lib/places/reviews';
+import { requireAuth } from '../../../lib/auth';
+
+export const GET: APIRoute = async ({ request, url }) => {
   try {
-    const placeId = url.searchParams.get('placeId');
-    const limit = parseInt(url.searchParams.get('limit') || '10');
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const searchParams = url.searchParams;
+    const placeId = searchParams.get('placeId');
+    const userId = searchParams.get('userId');
+    const stats = searchParams.get('stats');
 
-    if (!placeId) {
+    // Get rating breakdown
+    if (stats && placeId) {
+      const breakdown = getRatingBreakdown(placeId);
       return new Response(
-        JSON.stringify({ error: 'Mekan ID gereklidir' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ breakdown }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Try to get from cache
-    const cacheKey = generateReviewsCacheKey(placeId, limit, offset);
-    const cached = await getCache<{
-      data: any[];
-      count: number;
-      avgRating: number;
-      totalReviews: number;
-      pagination: any;
-    }>(cacheKey);
-
-    if (cached) {
-      return new Response(JSON.stringify(cached), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }
-      });
-    }
-
-    const [dataResult, countResult, statsResult] = await Promise.all([
-      query(
-        `SELECT r.id, r.title, r.content, r.rating, r.helpful_count, r.created_at,
-                u.full_name, u.avatar_url
-         FROM reviews r
-         JOIN users u ON r.user_id = u.id
-         WHERE r.place_id = $1
-         ORDER BY r.created_at DESC
-         LIMIT $2 OFFSET $3`,
-        [placeId, limit, offset]
-      ),
-      query('SELECT COUNT(*) as count FROM reviews WHERE place_id = $1', [placeId]),
-      query(
-        `SELECT COUNT(*) as total_reviews,
-                COALESCE(AVG(rating), 0) as avg_rating
-         FROM reviews WHERE place_id = $1`,
-        [placeId]
-      )
-    ]);
-
-    const count = parseInt(countResult.rows[0]?.count || '0');
-    const avgRating = parseFloat(statsResult.rows[0]?.avg_rating || '0');
-    const totalReviews = parseInt(statsResult.rows[0]?.total_reviews || '0');
-
-    const responseData = {
-      data: dataResult.rows,
-      count,
-      avgRating: Math.round(avgRating * 10) / 10,
-      totalReviews,
-      pagination: { limit, offset, hasMore: offset + limit < count }
+    // Build filter
+    const filter: ReviewFilter = {
+      sortBy: (searchParams.get('sortBy') as ReviewFilter['sortBy']) || 'newest',
+      rating: searchParams.get('rating') ? parseInt(searchParams.get('rating')!) : undefined,
+      visitType: searchParams.get('visitType') as ReviewFilter['visitType'],
+      hasPhotos: searchParams.get('hasPhotos') === 'true',
+      verifiedOnly: searchParams.get('verifiedOnly') === 'true',
     };
 
-    // Cache for 10 minutes
-    await setCache(cacheKey, responseData, 600);
+    if (placeId) {
+      const reviews = getPlaceReviews(placeId, filter);
+      
+      // Check if current user has reviewed
+      const authHeader = request.headers.get('authorization');
+      let userReview = null;
+      if (authHeader) {
+        const auth = await requireAuth(request);
+        if (!(auth instanceof Response)) {
+          userReview = getUserReviewForPlace(placeId, auth.user.id);
+        }
+      }
 
-    return new Response(JSON.stringify(responseData), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }
-    });
-  } catch (err) {
-    console.error('Reviews fetch error:', err);
+      return new Response(
+        JSON.stringify({ reviews, userReview }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (userId) {
+      const reviews = getUserReviews(userId);
+      return new Response(
+        JSON.stringify({ reviews }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: 'Yorumlar getirilirken bir hata oluştu' }),
+      JSON.stringify({ error: 'Place ID or User ID required' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to get reviews';
+    return new Response(
+      JSON.stringify({ error: message }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };
 
-/**
- * Invalidate all review caches for a place
- */
-async function invalidateReviewsCache(placeId: string): Promise<void> {
+export const POST: APIRoute = async ({ request }) => {
   try {
-    // Delete all review cache keys for this place
-    await deleteCache(`reviews:place:${placeId}:*`);
-  } catch (error) {
-    console.warn('Failed to invalidate reviews cache:', error);
-    // Continue anyway - cache invalidation is not critical
-  }
-}
+    const auth = await requireAuth(request);
+    if (auth instanceof Response) return auth;
 
-// Create review
-export const POST: APIRoute = async ({ request, locals }) => {
-  try {
-    const user = locals.user;
-    if (!user) {
+    const body = await request.json();
+    const { 
+      placeId, 
+      rating, 
+      content, 
+      title,
+      photos = [],
+      visitDate,
+      visitType,
+      pros = [],
+      cons = [],
+      action,
+      reviewId 
+    } = body;
+
+    // Handle like/helpful actions
+    if (action === 'like' && reviewId) {
+      const review = toggleLikeReview(reviewId, auth.user.id);
       return new Response(
-        JSON.stringify({ error: 'Oturum açmanız gerekiyor' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: true, review }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const body = await request.json();
-    const { placeId, rating, content, title } = body;
+    if (action === 'helpful' && reviewId) {
+      const review = markHelpful(reviewId, auth.user.id);
+      return new Response(
+        JSON.stringify({ success: true, review }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
+    // Handle update
+    if (action === 'update' && reviewId) {
+      const review = updateReview(reviewId, auth.user.id, {
+        rating,
+        title,
+        content,
+        photos,
+        visitDate,
+        visitType,
+        pros,
+        cons,
+      });
+      return new Response(
+        JSON.stringify({ success: true, review }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Handle delete
+    if (action === 'delete' && reviewId) {
+      const success = deleteReview(reviewId, auth.user.id);
+      return new Response(
+        JSON.stringify({ success }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create new review
     if (!placeId || !rating || !content) {
       return new Response(
-        JSON.stringify({ error: 'Tüm zorunlu alanları doldurun' }),
+        JSON.stringify({ error: 'Place ID, rating, and content are required' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     if (rating < 1 || rating > 5) {
       return new Response(
-        JSON.stringify({ error: 'Puan 1-5 arasında olmalıdır' }),
+        JSON.stringify({ error: 'Rating must be between 1 and 5' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Check if user already reviewed this place
-    const existing = await queryOne(
-      'SELECT id FROM reviews WHERE place_id = $1 AND user_id = $2',
-      [placeId, user.id]
-    );
-
-    if (existing) {
+    // Check if already reviewed
+    if (hasUserReviewed(placeId, auth.user.id)) {
       return new Response(
-        JSON.stringify({ error: 'Bu mekan için zaten yorum yaptınız' }),
+        JSON.stringify({ error: 'You have already reviewed this place' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const data = await insert('reviews', {
-      place_id: placeId,
-      user_id: user.id,
+    const review = createReview({
+      placeId,
+      userId: auth.user.id,
+      userName: auth.user.full_name || auth.user.username || 'Anonim',
+      userAvatar: auth.user.avatar_url,
       rating,
-      content,
       title,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      content,
+      photos,
+      visitDate,
+      visitType,
+      pros,
+      cons,
+      isVerified: false, // Would need check-in verification
     });
-
-    // Update place rating
-    await updatePlaceRating(placeId);
-
-    // Add points to user (10 puan)
-    await query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [user.id]);
-
-    // Log activity
-    const place = await queryOne('SELECT name FROM places WHERE id = $1', [placeId]);
-    await logActivity(user.id, 'review_created', 'place', placeId, {
-      placeName: place?.name || 'Mekan',
-      rating,
-      points: 10
-    });
-
-    // Invalidate reviews cache for this place
-    await invalidateReviewsCache(placeId);
 
     return new Response(
-      JSON.stringify({ data, message: 'Yorumunuz başarıyla eklendi' }),
+      JSON.stringify({ success: true, review }),
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
-  } catch (err) {
-    console.error('Review create error:', err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to create review';
     return new Response(
-      JSON.stringify({ error: 'Yorum eklenirken bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: message }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };
-
-async function updatePlaceRating(placeId: string) {
-  const result = await query('SELECT rating FROM reviews WHERE place_id = $1', [placeId]);
-  const reviews = result.rows;
-  
-  if (reviews.length > 0) {
-    const avgRating = reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length;
-    await query(
-      'UPDATE places SET rating = $1, review_count = $2 WHERE id = $3',
-      [Math.round(avgRating * 10) / 10, reviews.length, placeId]
-    );
-  }
-}

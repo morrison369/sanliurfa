@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getUserFeed, createActivity } from '../../../lib/social-features';
+import { getUserFeed, createActivity } from '../../../lib/social/social-features';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 

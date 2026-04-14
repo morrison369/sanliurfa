@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getPlaceFollowers } from '../../../../lib/place-followers';
+import { getPlaceFollowers } from '../../../../lib/place/place-followers';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';

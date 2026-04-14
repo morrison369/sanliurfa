@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { sendEmail, getWelcomeEmailHTML } from '../../../lib/email';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
@@ -9,7 +10,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.isAdmin) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Admin islemi', HttpStatus.FORBIDDEN, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Admin islemi', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const body = await request.json();

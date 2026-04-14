@@ -25,6 +25,7 @@ export interface QueryMetric {
   isSlow: boolean;
   rowCount?: number;
   error?: string;
+  pool?: string;
 }
 
 /**
@@ -124,7 +125,7 @@ class MetricsCollector {
   /**
    * Record a database query metric
    */
-  recordQuery(query: string, duration: number, rowCount?: number, error?: string): void {
+  recordQuery(query: string, duration: number, rowCount?: number, error?: string, poolName?: string): void {
     const isSlow = duration > performanceThresholds.slowQueryMs;
     this.queryMetrics.push({
       query: query.substring(0, 200), // Truncate long queries
@@ -132,7 +133,8 @@ class MetricsCollector {
       timestamp: Date.now(),
       isSlow,
       rowCount,
-      error
+      error,
+      pool: poolName
     });
   }
 

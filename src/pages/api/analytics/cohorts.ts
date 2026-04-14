@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { listCohorts, getCohortById, createCohort, getCohortMembers, getRetentionCurve } from '../../../lib/cohort-analytics';
+import { listCohorts, getCohortById, createCohort, getCohortMembers, getRetentionCurve } from '../../../lib/analytics/cohort-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 

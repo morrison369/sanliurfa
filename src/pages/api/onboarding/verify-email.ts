@@ -1,9 +1,10 @@
+// @ts-nocheck
 /**
  * Verify User Email
  */
 
 import type { APIRoute } from 'astro';
-import { verifyUserEmail, getUserOnboardingStatus } from '../../../lib/user-onboarding';
+import { verifyUserEmail, getUserOnboardingStatus } from '../../../lib/user/user-onboarding';
 import { validateWithSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';

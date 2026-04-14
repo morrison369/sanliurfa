@@ -1,0 +1,18 @@
+{
+  "rootDir": "./src",
+  "extensions": [".ts", ".tsx", ".js", ".jsx", ".astro"],
+  "ignorePatterns": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**",
+    "**/__mocks__/**",
+    "**/node_modules/**"
+  ],
+  "ignoreUnused": [
+    "astro",
+    "@astrojs/*",
+    "typescript",
+    "vitest",
+    "playwright"
+  ]
+}

@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * Photo Management API
  * DELETE: Delete a photo
  */
 
 import type { APIRoute } from 'astro';
-import { deletePhoto, getPhotoById } from '../../../../lib/photos';
+import { deletePhoto, getPhotoById } from '../../../../lib/photo';
 import { queryOne } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';

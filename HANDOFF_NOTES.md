@@ -3,6 +3,11 @@
 ## Session Summary
 Successfully completed build fixes, integrated webhook system, and created comprehensive test coverage and documentation.
 
+## Canonical Tracking Files
+- `memory.md`: current phase, completed phases, open tasks, blockers, acceptance gate
+- `TASK_TRACKER.md`: open/closed execution items and ownership status
+- `PHASE_INDEX.md`: canonical map for all phase documentation locations
+
 ## What Was Accomplished
 
 ### 1. Production Build Fixed ✅

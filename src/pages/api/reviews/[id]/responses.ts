@@ -12,7 +12,7 @@ import {
   addReviewResponse,
   updateReviewResponse,
   deleteReviewResponse
-} from '../../../../lib/review-management';
+} from '../../../../lib/review/review-management';
 import { queryOne } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Get responses failed', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Get responses failed', error instanceof Error ? error : new Error(String(error)), {} as any);
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get responses', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
@@ -56,7 +56,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/reviews/[id]/responses', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: reviewId } = params;
@@ -86,7 +86,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Add response failed', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Add response failed', error instanceof Error ? error : new Error(String(error)), {} as any);
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to add response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
@@ -99,7 +99,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/reviews/[id]/responses', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -123,7 +123,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Update response failed', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Update response failed', error instanceof Error ? error : new Error(String(error)), {} as any);
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to update response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
@@ -136,7 +136,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/reviews/[id]/responses', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -165,7 +165,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Delete response failed', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Delete response failed', error instanceof Error ? error : new Error(String(error)), {} as any);
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to delete response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

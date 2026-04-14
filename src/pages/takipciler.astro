@@ -1,0 +1,123 @@
+---
+// Followers Page
+import Layout from '../layouts/Layout.astro';
+import { requireAuth } from '../lib/auth';
+import { getFollowers, getSocialStats } from '../lib/social/friendship-db';
+
+const auth = await requireAuth(Astro.request);
+if (auth instanceof Response) return auth;
+
+const [followers, stats] = await Promise.all([
+  getFollowers(auth.user.id, 50),
+  getSocialStats(auth.user.id),
+]);
+---
+
+<Layout title={`Takipçiler (${stats?.follower_count || 0}) - Şanlıurfa Rehberi`}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="container-custom py-8">
+      <div class="max-w-3xl mx-auto">
+        {/* Header */}
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h1 class="text-3xl font-bold">Takipçiler</h1>
+            <p class="text-gray-600 mt-1">Seni takip eden {stats?.follower_count || 0} kişi</p>
+          </div>
+          <a href="/takip-edilenler" class="text-amber-600 hover:text-amber-700">
+            Takip Edilenler →
+          </a>
+        </div>
+
+        {/* Followers List */}
+        <div class="bg-white rounded-2xl shadow-sm">
+          {followers.length > 0 ? (
+            <div class="divide-y">
+              {followers.map(user => (
+                <div class="p-6 flex items-center justify-between">
+                  <a href={`/kullanici/${user.username || user.id}`} class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xl font-bold">
+                      {user.avatar_url ? (
+                        <img src={user.avatar_url} alt={user.full_name} class="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        user.full_name?.charAt(0).toUpperCase() || 'U'
+                      )}
+                    </div>
+                    <div>
+                      <h3 class="font-bold text-lg hover:text-amber-600 transition-colors">{user.full_name}</h3>
+                      <p class="text-gray-500">@{user.username || 'kullanici'}</p>
+                      <p class="text-sm text-gray-400 mt-1">{user.follower_count} takipçi • {user.following_count} takip</p>
+                    </div>
+                  </a>
+                  
+                  <div class="flex items-center gap-3">
+                    {user.friendship_status === 'mutual' ? (
+                      <span class="px-4 py-2 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
+                        Karşılıklı Takip
+                      </span>
+                    ) : user.friendship_status === 'follows_you' ? (
+                      <button
+                        onclick={`followUser('${user.id}')`}
+                        class="px-4 py-2 bg-amber-600 text-white rounded-full text-sm font-medium hover:bg-amber-700 transition-colors"
+                      >
+                        Takip Et
+                      </button>
+                    ) : null}
+                    
+                    <a
+                      href={`/messages?user=${user.id}`}
+                      class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
+                      title="Mesaj gönder"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div class="text-center py-16">
+              <div class="text-6xl mb-4">👥</div>
+              <h3 class="text-xl font-bold mb-2">Henüz takipçi yok</h3>
+              <p class="text-gray-600 mb-6">Profilinizi paylaşarak daha fazla kişiye ulaşın</p>
+              <button onclick="shareProfile()" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                Profili Paylaş
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function followUser(userId) {
+      try {
+        const response = await fetch('/api/social/follow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, action: 'follow' }),
+        });
+        
+        if (response.ok) {
+          window.location.reload();
+        }
+      } catch (error) {
+        alert('Takip işlemi başarısız');
+      }
+    }
+    
+    function shareProfile() {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Profilim - Şanlıurfa Rehberi',
+          url: window.location.origin + '/profile',
+        });
+      } else {
+        navigator.clipboard.writeText(window.location.origin + '/profile');
+        alert('Profil linki kopyalandı!');
+      }
+    }
+  </script>
+</Layout>

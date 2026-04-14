@@ -1,0 +1,24 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import GovernanceDashboard from '../../components/GovernanceDashboard';
+
+const { locals } = Astro;
+
+// Redirect if not admin
+if (!locals.user || locals.user.role !== 'admin') {
+  return Astro.redirect('/');
+}
+
+const seo = {
+  title: 'Governance Dashboard | Şanlıurfa.com',
+  description: 'Veri yönetimi, denetim ve uyumluluk takibi',
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+      <GovernanceDashboard client:load />
+    </div>
+  </div>
+</Layout>

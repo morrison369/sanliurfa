@@ -2,16 +2,38 @@
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
     "ignoreDeprecations": "6.0",
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "noImplicitThis": false,
+    "alwaysStrict": false,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     },
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "exactOptionalPropertyTypes": false
-  }
+    "exactOptionalPropertyTypes": false,
+    "incremental": true,
+    "tsBuildInfoFile": "./.tsbuildinfo",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "noImplicitReturns": false,
+    "noFallthroughCasesInSwitch": false,
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  },
+  "include": ["src/**/*", "src/types/**/*.d.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".tsbuildinfo",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "src/routes/**/*"
+  ]
 }

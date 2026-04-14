@@ -4,7 +4,7 @@
  * POST - Create new content
  */
 import type { APIRoute } from 'astro';
-import { createContent, getUserContent } from '../../../lib/content-management';
+import { createContent, getUserContent } from '../../../lib/content/content-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';

@@ -1,0 +1,17 @@
+---
+// Logout page - clears session and redirects
+import Layout from '../layouts/Layout.astro';
+
+// Clear session cookie
+Astro.cookies.delete('session', { path: '/' });
+Astro.cookies.delete('token', { path: '/' });
+
+// Redirect to home
+return Astro.redirect('/?logout=success');
+---
+
+<Layout seo={{ title: 'Çıkış Yapılıyor...' }}>
+  <div class="min-h-screen flex items-center justify-center">
+    <p class="text-gray-600">Çıkış yapılıyor...</p>
+  </div>
+</Layout>

@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user) {
       recordRequest('GET', '/api/users/privacy', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -63,7 +63,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     if (!locals.user) {
       recordRequest('PUT', '/api/users/privacy', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,

@@ -1,0 +1,138 @@
+---
+// Core Web Vitals izleme bileşeni
+// LCP, FID, CLS, INP, TTFB metriklerini ölçer
+---
+
+<script>
+  // Core Web Vitals ölçümü
+  import { getCLS, getFCP, getFID, getINP, getLCP, getTTFB } from 'web-vitals';
+  
+  // Metrik değerlerini sakla
+  const vitals = {
+    CLS: 0,
+    FCP: 0,
+    FID: 0,
+    INP: 0,
+    LCP: 0,
+    TTFB: 0,
+  };
+  
+  // Hedef değerler
+  const thresholds = {
+    LCP: { good: 2500, poor: 4000 },
+    FID: { good: 100, poor: 300 },
+    INP: { good: 200, poor: 500 },
+    CLS: { good: 0.1, poor: 0.25 },
+    FCP: { good: 1800, poor: 3000 },
+    TTFB: { good: 800, poor: 1800 },
+  };
+  
+  // Metrik durumunu belirle
+  function getStatus(name: string, value: number): 'good' | 'needs-improvement' | 'poor' {
+    const t = thresholds[name as keyof typeof thresholds];
+    if (!t) return 'good';
+    
+    if (name === 'CLS') {
+      return value <= t.good ? 'good' : value <= t.poor ? 'needs-improvement' : 'poor';
+    }
+    return value <= t.good ? 'good' : value <= t.poor ? 'needs-improvement' : 'poor';
+  }
+  
+  // Console'da göster (development)
+  function logVitals() {
+    if (import.meta.env.DEV) {
+      console.log('%c📊 Core Web Vitals', 'font-size: 16px; font-weight: bold;');
+      Object.entries(vitals).forEach(([name, value]) => {
+        const status = getStatus(name, value);
+        const color = status === 'good' ? '🟢' : status === 'needs-improvement' ? '🟡' : '🔴';
+        console.log(`${color} ${name}: ${value}${name === 'CLS' ? '' : 'ms'}`);
+      });
+    }
+  }
+  
+  // Analytics'e gönder
+  function sendToAnalytics(metric: any) {
+    const { name, value, id } = metric;
+    vitals[name as keyof typeof vitals] = value;
+    
+    // Google Analytics 4
+    if (window.gtag) {
+      window.gtag('event', name, {
+        event_category: 'Web Vitals',
+        value: Math.round(name === 'CLS' ? value * 1000 : value),
+        event_label: id,
+        non_interaction: true,
+      });
+    }
+    
+    // Console log
+    if (import.meta.env.DEV) {
+      const status = getStatus(name, value);
+      const color = status === 'good' ? 'color: green' : status === 'needs-improvement' ? 'color: orange' : 'color: red';
+      console.log(`%c${name}: ${value}${name === 'CLS' ? '' : 'ms'}`, color);
+    }
+  }
+  
+  // Metrikleri topla
+  getCLS(sendToAnalytics);
+  getFCP(sendToAnalytics);
+  getFID(sendToAnalytics);
+  getINP(sendToAnalytics);
+  getLCP(sendToAnalytics);
+  getTTFB(sendToAnalytics);
+  
+  // Sayfa tamamen yüklendiğinde özet göster
+  window.addEventListener('load', () => {
+    setTimeout(logVitals, 3000);
+  });
+  
+  // Performance Observer ile ek metrikler
+  if ('PerformanceObserver' in window) {
+    // Largest Contentful Paint detayları
+    const lcpObserver = new PerformanceObserver((list) => {
+      const entries = list.getEntries();
+      const lastEntry = entries[entries.length - 1];
+      
+      if (import.meta.env.DEV) {
+        console.log('LCP Element:', lastEntry.element);
+      }
+    });
+    
+    try {
+      lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+    } catch (e) {
+      // Ignore
+    }
+  }
+</script>
+
+{/* Performance Badge - Sadece development */}
+{import.meta.env.DEV && (
+  <div id="perf-badge" class="fixed bottom-4 left-4 z-50 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-3 text-sm font-mono hidden">
+    <div class="font-bold mb-2">Core Web Vitals</div>
+    <div id="perf-metrics" class="space-y-1">
+      <div class="flex justify-between gap-4">
+        <span>LCP:</span>
+        <span id="lcp-value" class="font-bold">-</span>
+      </div>
+      <div class="flex justify-between gap-4">
+        <span>FID:</span>
+        <span id="fid-value" class="font-bold">-</span>
+      </div>
+      <div class="flex justify-between gap-4">
+        <span>CLS:</span>
+        <span id="cls-value" class="font-bold">-</span>
+      </div>
+      <div class="flex justify-between gap-4">
+        <span>INP:</span>
+        <span id="inp-value" class="font-bold">-</span>
+      </div>
+    </div>
+    <button 
+      onclick="document.getElementById('perf-badge').classList.add('hidden')"
+      class="absolute top-1 right-1 text-gray-400 hover:text-gray-600"
+    >
+      ×
+    </button>
+  </div>
+)}

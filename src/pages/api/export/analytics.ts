@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
-import { convertToCSV, convertToJSON, getContentType, getFileExtension, getFormattedDate } from '../../../lib/export';
+import { convertToCSV, convertToJSON, getContentType, getFileExtension, getFormattedDate } from '../../../lib/export/export';
 import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
@@ -9,8 +9,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.user?.isAdmin) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Admin islemi', HttpStatus.FORBIDDEN, undefined, requestId);
+    // Check admin role instead of isAdmin property
+    if (locals.user?.role !== 'admin') {
+      return apiError(ErrorCode.FORBIDDEN, 'Admin islemi', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const url = new URL(request.url);
@@ -46,22 +47,25 @@ export const GET: APIRoute = async ({ request, locals }) => {
         startDate: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString(),
         endDate: new Date().toISOString()
       },
-      popularPlaces: placesResult.rows.map((p: any) => ({
+      popularPlaces: (placesResult as any).rows?.map((p: any) => ({
         placeId: p.place_id,
         viewCount: p.view_count
-      })),
-      dailyStats: statsResult.rows.map((s: any) => ({
+      })) || [],
+      dailyStats: (statsResult as any).rows?.map((s: any) => ({
         date: s.date,
         totalEvents: s.total_events,
         uniqueUsers: s.unique_users
-      }))
+      })) || []
     };
 
-    const data = format === 'csv' ? convertToJSON(analytics) : convertToJSON(analytics);
+    // convertToCSV expects an array, convertToJSON can take any
+    const data = format === 'csv' 
+      ? convertToCSV((analytics as any).dailyStats || []) 
+      : convertToJSON(analytics as any);
     const extension = getFileExtension(format);
     const filename = `analytics-${getFormattedDate()}.${extension}`;
 
-    logger.info('Analytics exported', { userId: locals.user.id, format, days });
+    logger.info('Analytics exported', { userId: locals.user?.id, format, days });
 
     return new Response(data, {
       status: 200,

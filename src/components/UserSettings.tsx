@@ -45,8 +45,8 @@ export default function UserSettings() {
   });
 
   // Settings form state
+  // NOT: Dil tercihi KALDIRILDI - Site SADECE Türkçe destekler
   const [settingsForm, setSettingsForm] = useState({
-    language_preference: 'tr',
     theme_preference: 'light'
   });
 
@@ -95,7 +95,6 @@ export default function UserSettings() {
         bio: data.data.bio || ''
       });
       setSettingsForm({
-        language_preference: data.data.language_preference,
         theme_preference: data.data.theme_preference
       });
       setPreferencesForm(data.data.notification_preferences);
@@ -143,7 +142,8 @@ export default function UserSettings() {
       const response = await fetch('/api/users/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settingsForm)
+        // Dil tercihi gönderilmiyor - sadece tema
+        body: JSON.stringify({ theme_preference: settingsForm.theme_preference })
       });
 
       if (!response.ok) {
@@ -465,20 +465,17 @@ export default function UserSettings() {
         <form onSubmit={handleSaveSettings} className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Genel Ayarlar</h2>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Dil
-            </label>
-            <select
-              value={settingsForm.language_preference}
-              onChange={(e) => setSettingsForm({ ...settingsForm, language_preference: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="tr">Türkçe</option>
-              <option value="en">English</option>
-              <option value="de">Deutsch</option>
-              <option value="fr">Français</option>
-            </select>
+          {/* Dil Bilgilendirmesi - Seçici kaldırıldı */}
+          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">🇹🇷</span>
+              <div>
+                <p className="font-medium text-blue-900 dark:text-blue-200">Türkçe</p>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Site sadece Türkçe olarak kullanılabilir. Diğer dil seçenekleri mevcut değildir.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div>

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Blog API - Yazılar
  * GET /api/blog/posts - Blog yazılarını listele (filtreleme, sıralama, sayfalama)

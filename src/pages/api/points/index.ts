@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserPoints, getPointsLeaderboard } from '../../../lib/points';
+import { getUserPoints, getPointsLeaderboard } from '../../../lib/points/points';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';

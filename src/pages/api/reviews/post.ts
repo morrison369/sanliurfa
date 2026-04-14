@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { insert, queryOne, update as updateDb } from '../../../lib/postgres';
-import { checkQuota, incrementUsage } from '../../../lib/usage-tracking';
+import { checkQuota, incrementUsage } from '../../../lib/usage/usage-tracking';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';

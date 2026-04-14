@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getTrendingScores, getTrendingKeywords } from '../../../lib/trending-recommendations';
+import { getTrendingScores, getTrendingKeywords } from '../../../lib/feed/trending-recommendations';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';

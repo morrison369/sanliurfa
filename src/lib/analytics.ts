@@ -1,334 +1,736 @@
 /**
- * Analytics Library
- * User behavior and business metrics analytics
+ * Analytics Module
+ * User behavior tracking, page views, events
+ * Privacy-friendly, GDPR compliant
  */
-import { query, queryOne, queryMany, insert } from './postgres';
-import { logger } from './logging';
 
-export async function createSession(sessionId: string, userId?: string, metadata?: any): Promise<void> {
+import { query } from './postgres';
+
+// Check if analytics is enabled
+const isEnabled = import.meta.env.ANALYTICS_ENABLED !== 'false';
+
+// Track page view
+export async function trackPageView(
+  path: string,
+  userId?: string,
+  referrer?: string,
+  userAgent?: string
+): Promise<void> {
+  if (!isEnabled) return;
+
   try {
-    await insert('user_sessions', {
-      session_id: sessionId,
-      user_id: userId,
-      ip_address: metadata?.ipAddress,
-      user_agent: metadata?.userAgent,
-      country: metadata?.country,
-      city: metadata?.city,
-      device_type: metadata?.deviceType,
-      browser: metadata?.browser,
-      os: metadata?.os,
-      referrer: metadata?.referrer,
-      utm_source: metadata?.utm_source,
-      utm_medium: metadata?.utm_medium,
-      utm_campaign: metadata?.utm_campaign,
+    await query(
+      `INSERT INTO page_views (path, user_id, referrer, user_agent, created_at)
+       VALUES ($1, $2, $3, $4, NOW())`,
+      [path, userId || null, referrer || null, userAgent?.slice(0, 255)]
+    );
+  } catch (error) {
+    console.error('Analytics error:', error);
+  }
+}
+
+// Track event
+export async function trackEvent(
+  eventName: string,
+  properties: Record<string, any> = {},
+  userId?: string
+): Promise<void> {
+  if (!isEnabled) return;
+
+  try {
+    await query(
+      `INSERT INTO events (name, properties, user_id, created_at)
+       VALUES ($1, $2, $3, NOW())`,
+      [eventName, JSON.stringify(properties), userId || null]
+    );
+  } catch (error) {
+    console.error('Analytics error:', error);
+  }
+}
+
+// Track search
+export async function trackSearch(
+  query: string,
+  resultsCount: number,
+  userId?: string
+): Promise<void> {
+  await trackEvent('search', { query, results_count: resultsCount }, userId);
+}
+
+// Track place view
+export async function trackPlaceView(
+  placeId: string,
+  placeName: string,
+  userId?: string
+): Promise<void> {
+  await trackEvent('place_view', { place_id: placeId, place_name: placeName }, userId);
+}
+
+// Get popular pages
+export async function getPopularPages(
+  days: number = 7,
+  limit: number = 10
+): Promise<{ path: string; views: number }[]> {
+  const result = await query(
+    `SELECT path, COUNT(*)::int as views
+     FROM page_views
+     WHERE created_at > NOW() - INTERVAL '${days} days'
+     GROUP BY path
+     ORDER BY views DESC
+     LIMIT $1`,
+    [limit]
+  );
+
+  return result.rows;
+}
+
+// Get daily stats
+export async function getDailyStats(
+  days: number = 30
+): Promise<{ date: string; page_views: number; unique_visitors: number }[]> {
+  const result = await query(
+    `SELECT 
+      DATE(created_at) as date,
+      COUNT(*)::int as page_views,
+      COUNT(DISTINCT user_id) FILTER (WHERE user_id IS NOT NULL)::int +
+      COUNT(DISTINCT user_agent) FILTER (WHERE user_id IS NULL)::int as unique_visitors
+     FROM page_views
+     WHERE created_at > NOW() - INTERVAL '${days} days'
+     GROUP BY DATE(created_at)
+     ORDER BY date DESC`,
+    []
+  );
+
+  return result.rows;
+}
+
+// Get top searches
+export async function getTopSearches(
+  days: number = 7,
+  limit: number = 20
+): Promise<{ query: string; count: number }[]> {
+  const result = await query(
+    `SELECT 
+      properties->>'query' as query,
+      COUNT(*)::int as count
+     FROM events
+     WHERE name = 'search'
+       AND created_at > NOW() - INTERVAL '${days} days'
+     GROUP BY properties->>'query'
+     ORDER BY count DESC
+     LIMIT $1`,
+    [limit]
+  );
+
+  return result.rows;
+}
+
+// Get device stats
+export async function getDeviceStats(
+  days: number = 7
+): Promise<{ device_type: string; count: number }[]> {
+  const result = await query(
+    `SELECT 
+      CASE 
+        WHEN user_agent ILIKE '%mobile%' THEN 'mobile'
+        WHEN user_agent ILIKE '%tablet%' THEN 'tablet'
+        ELSE 'desktop'
+      END as device_type,
+      COUNT(*)::int as count
+     FROM page_views
+     WHERE created_at > NOW() - INTERVAL '${days} days'
+     GROUP BY 1
+     ORDER BY count DESC`,
+    []
+  );
+
+  return result.rows;
+}
+
+// Get referrer stats
+export async function getReferrerStats(
+  days: number = 7,
+  limit: number = 10
+): Promise<{ referrer: string; count: number }[]> {
+  const result = await query(
+    `SELECT 
+      COALESCE(
+        CASE 
+          WHEN referrer LIKE '%google%' THEN 'Google'
+          WHEN referrer LIKE '%facebook%' THEN 'Facebook'
+          WHEN referrer LIKE '%twitter%' OR referrer LIKE '%x.com%' THEN 'Twitter/X'
+          WHEN referrer LIKE '%instagram%' THEN 'Instagram'
+          ELSE 'Diğer'
+        END,
+        'Direkt'
+      ) as referrer,
+      COUNT(*)::int as count
+     FROM page_views
+     WHERE created_at > NOW() - INTERVAL '${days} days'
+     GROUP BY 1
+     ORDER BY count DESC
+     LIMIT $1`,
+    [limit]
+  );
+
+  return result.rows;
+}
+
+// Real-time stats (last 5 minutes)
+export async function getRealtimeStats(): Promise<{
+  active_users: number;
+  page_views_last_5min: number;
+}> {
+  const result = await query(
+    `SELECT 
+      COUNT(DISTINCT user_id) FILTER (WHERE user_id IS NOT NULL)::int +
+      COUNT(DISTINCT user_agent) FILTER (WHERE user_id IS NULL)::int as active_users,
+      COUNT(*)::int as page_views_last_5min
+     FROM page_views
+     WHERE created_at > NOW() - INTERVAL '5 minutes'`,
+    []
+  );
+
+  return result.rows[0] || { active_users: 0, page_views_last_5min: 0 };
+}
+
+// Admin dashboard stats
+export async function getAdminStats(): Promise<{
+  today_views: number;
+  this_week_views: number;
+  this_month_views: number;
+  unique_users_today: number;
+}> {
+  const result = await query(
+    `SELECT 
+      COUNT(*) FILTER (WHERE created_at > CURRENT_DATE)::int as today_views,
+      COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days')::int as this_week_views,
+      COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '30 days')::int as this_month_views,
+      COUNT(DISTINCT user_id) FILTER (WHERE created_at > CURRENT_DATE)::int as unique_users_today
+     FROM page_views`,
+    []
+  );
+
+  return result.rows[0];
+}
+
+// Client-side analytics helpers
+export const clientAnalytics = {
+  // Track page view from client
+  async pageView(path?: string) {
+    if (!isEnabled) return;
+    
+    try {
+      await fetch('/api/analytics/pageview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          path: path || window.location.pathname,
+          referrer: document.referrer,
+        }),
+      });
+    } catch (error) {
+      // Silent fail for analytics
+    }
+  },
+
+  // Track event from client
+  async event(name: string, properties?: Record<string, any>) {
+    if (!isEnabled) return;
+    
+    try {
+      await fetch('/api/analytics/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, properties }),
+      });
+    } catch (error) {
+      // Silent fail
+    }
+  },
+
+  // Track search
+  async search(query: string, resultsCount: number) {
+    await this.event('search', { query, results_count: resultsCount });
+  },
+
+  // Track place view
+  async placeView(placeId: string, placeName: string) {
+    await this.event('place_view', { place_id: placeId, place_name: placeName });
+  },
+
+  // Initialize analytics
+  init() {
+    // Track initial page view
+    this.pageView();
+    
+    // Track route changes (for SPA)
+    let currentPath = window.location.pathname;
+    
+    const observer = new MutationObserver(() => {
+      if (window.location.pathname !== currentPath) {
+        currentPath = window.location.pathname;
+        this.pageView(currentPath);
+      }
     });
-  } catch (error) {
-    logger.error('Failed to create session', error instanceof Error ? error : new Error(String(error)));
-  }
-}
-
-export async function recordPageView(sessionId: string, userId: string | undefined, pageUrl: string, metadata?: any): Promise<void> {
-  try {
-    await insert('page_views', {
-      session_id: sessionId,
-      user_id: userId,
-      page_url: pageUrl,
-      page_title: metadata?.title,
-      referrer_url: metadata?.referrer,
-      time_on_page_seconds: metadata?.timeOnPage,
-      scroll_depth: metadata?.scrollDepth,
+    
+    observer.observe(document, { subtree: true, childList: true });
+    
+    // Track clicks on external links
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a');
+      
+      if (link?.hostname !== window.location.hostname) {
+        this.event('external_link_click', {
+          url: link?.href,
+          text: link?.textContent?.slice(0, 50),
+        });
+      }
     });
-    await query('UPDATE user_sessions SET page_view_count = page_view_count + 1 WHERE session_id = $1', [sessionId]);
-  } catch (error) {
-    logger.error('Failed to record page view', error instanceof Error ? error : new Error(String(error)));
-  }
+  },
+};
+
+// Additional exports for admin API
+
+export async function getPlatformStats(): Promise<{
+  total_users: number;
+  total_places: number;
+  total_reviews: number;
+  total_views: number;
+}> {
+  const result = await query(
+    `SELECT 
+      (SELECT COUNT(*) FROM users)::int as total_users,
+      (SELECT COUNT(*) FROM places)::int as total_places,
+      (SELECT COUNT(*) FROM reviews)::int as total_reviews,
+      (SELECT COUNT(*) FROM page_views)::int as total_views`,
+    []
+  );
+  
+  return result.rows[0];
 }
 
-export async function recordInteraction(sessionId: string, userId: string | undefined, interactionType: string, metadata?: any): Promise<void> {
-  try {
-    await insert('user_interactions', {
-      session_id: sessionId,
-      user_id: userId,
-      interaction_type: interactionType,
-      interaction_target: metadata?.target,
-      interaction_data: metadata?.data ? JSON.stringify(metadata.data) : null,
-      page_url: metadata?.pageUrl,
-    });
-    await query('UPDATE user_sessions SET interaction_count = interaction_count + 1 WHERE session_id = $1', [sessionId]);
-  } catch (error) {
-    logger.error('Failed to record interaction', error instanceof Error ? error : new Error(String(error)));
-  }
+export async function getTrendingPlacesByViews(limit = 10): Promise<Array<{
+  id: string;
+  name: string;
+  views: number;
+}>> {
+  const result = await query(
+    `SELECT 
+      p.id,
+      p.name,
+      COUNT(pv.id)::int as views
+     FROM places p
+     LEFT JOIN page_views pv ON pv.path LIKE '/mekan/' || p.slug
+     WHERE pv.created_at > NOW() - INTERVAL '7 days'
+     GROUP BY p.id, p.name
+     ORDER BY views DESC
+     LIMIT $1`,
+    [limit]
+  );
+  
+  return result.rows;
 }
 
-export async function recordSearch(sessionId: string, userId: string | undefined, query: string, filters?: any, resultCount?: number): Promise<void> {
-  try {
-    await insert('search_analytics', {
-      session_id: sessionId,
-      user_id: userId,
-      search_query: query,
-      search_filters: filters ? JSON.stringify(filters) : null,
-      result_count: resultCount,
-    });
-  } catch (error) {
-    logger.error('Failed to record search', error instanceof Error ? error : new Error(String(error)));
-  }
+export async function getSearchTrends(): Promise<Array<{
+  query: string;
+  count: number;
+}>> {
+  const result = await query(
+    `SELECT 
+      query,
+      COUNT(*)::int as count
+     FROM search_logs
+     WHERE created_at > NOW() - INTERVAL '7 days'
+     GROUP BY query
+     ORDER BY count DESC
+     LIMIT 20`,
+    []
+  );
+  
+  return result.rows;
 }
 
-export async function recordPlaceView(placeId: string, userId: string | undefined, metadata?: any): Promise<void> {
-  try {
-    await insert('place_visitors', {
-      place_id: placeId,
-      user_id: userId,
-      session_id: metadata?.sessionId,
-      visit_type: metadata?.visitType,
-      device_type: metadata?.deviceType,
-      city: metadata?.city,
-      country: metadata?.country,
-      action_taken: metadata?.actionTaken,
-    });
-    await query('UPDATE place_daily_metrics SET view_count = view_count + 1 WHERE place_id = $1 AND metric_date = CURRENT_DATE', [placeId]);
-  } catch (error) {
-    logger.error('Failed to record place view', error instanceof Error ? error : new Error(String(error)));
-  }
+// Report generation functions
+
+export async function generateUserReport(startDate: string, endDate: string): Promise<{
+  total: number;
+  new: number;
+  active: number;
+}> {
+  const result = await query(
+    `SELECT 
+      COUNT(*)::int as total,
+      COUNT(*) FILTER (WHERE created_at BETWEEN $1 AND $2)::int as new,
+      COUNT(*) FILTER (WHERE last_login_at BETWEEN $1 AND $2)::int as active
+     FROM users`,
+    [startDate, endDate]
+  );
+  
+  return result.rows[0];
 }
 
-export async function getPlaceAnalytics(placeId: string, startDate: Date, endDate: Date): Promise<any> {
-  try {
-    const metrics = await queryMany(`
-      SELECT * FROM place_daily_metrics
-      WHERE place_id = $1 AND metric_date BETWEEN $2 AND $3
-      ORDER BY metric_date DESC
-    `, [placeId, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]]);
-
-    const summary = await queryOne(`
-      SELECT
-        SUM(view_count) as total_views,
-        SUM(click_count) as total_clicks,
-        SUM(review_count) as total_reviews,
-        AVG(review_sentiment_avg) as avg_sentiment,
-        SUM(like_count) as total_likes,
-        SUM(share_count) as total_shares
-      FROM place_daily_metrics
-      WHERE place_id = $1 AND metric_date BETWEEN $2 AND $3
-    `, [placeId, startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]]);
-
-    return { metrics, summary };
-  } catch (error) {
-    logger.error('Failed to get place analytics', error instanceof Error ? error : new Error(String(error)));
-    return { metrics: [], summary: null };
-  }
+export async function generatePlacesReport(startDate: string, endDate: string): Promise<{
+  total: number;
+  new: number;
+  byCategory: Array<{ category: string; count: number }>;
+}> {
+  const totalResult = await query(
+    `SELECT 
+      COUNT(*)::int as total,
+      COUNT(*) FILTER (WHERE created_at BETWEEN $1 AND $2)::int as new
+     FROM places`,
+    [startDate, endDate]
+  );
+  
+  const categoryResult = await query(
+    `SELECT 
+      category,
+      COUNT(*)::int as count
+     FROM places
+     GROUP BY category
+     ORDER BY count DESC`,
+    []
+  );
+  
+  return {
+    ...totalResult.rows[0],
+    byCategory: categoryResult.rows,
+  };
 }
 
-export async function getUserAnalytics(userId: string, startDate: Date, endDate: Date): Promise<any> {
-  try {
-    const sessions = await queryMany(`
-      SELECT COUNT(*) as session_count, AVG(duration_seconds) as avg_session_duration
-      FROM user_sessions
-      WHERE user_id = $1 AND started_at BETWEEN $2 AND $3
-    `, [userId, startDate, endDate]);
-
-    const interactions = await queryMany(`
-      SELECT interaction_type, COUNT(*) as count
-      FROM user_interactions
-      WHERE user_id = $1 AND occurred_at BETWEEN $2 AND $3
-      GROUP BY interaction_type
-    `, [userId, startDate, endDate]);
-
-    return { sessions: sessions[0] || {}, interactions };
-  } catch (error) {
-    logger.error('Failed to get user analytics', error instanceof Error ? error : new Error(String(error)));
-    return { sessions: {}, interactions: [] };
-  }
+export async function generateReviewsReport(startDate: string, endDate: string): Promise<{
+  total: number;
+  new: number;
+  averageRating: number;
+}> {
+  const result = await query(
+    `SELECT 
+      COUNT(*)::int as total,
+      COUNT(*) FILTER (WHERE created_at BETWEEN $1 AND $2)::int as new,
+      COALESCE(AVG(rating), 0)::float as averageRating
+     FROM reviews`,
+    [startDate, endDate]
+  );
+  
+  return result.rows[0];
 }
 
-export async function createConversionGoal(userId: string, goalName: string, goalType: string, metadata?: any): Promise<string> {
-  try {
-    const id = crypto.randomUUID();
-    await insert('conversion_goals', {
-      id,
-      user_id: userId,
-      goal_name: goalName,
-      goal_type: goalType,
-      goal_description: metadata?.description,
-      goal_url_pattern: metadata?.urlPattern,
-      goal_event_type: metadata?.eventType,
-      value_cents: metadata?.valueCents,
-    });
-    return id;
-  } catch (error) {
-    logger.error('Failed to create conversion goal', error instanceof Error ? error : new Error(String(error)));
-    throw error;
-  }
+export async function generateTrafficReport(startDate: string, endDate: string): Promise<{
+  totalViews: number;
+  uniqueVisitors: number;
+  topPages: Array<{ path: string; views: number }>;
+}> {
+  const viewsResult = await query(
+    `SELECT 
+      COUNT(*)::int as totalViews,
+      COUNT(DISTINCT user_id)::int as uniqueVisitors
+     FROM page_views
+     WHERE created_at BETWEEN $1 AND $2`,
+    [startDate, endDate]
+  );
+  
+  const pagesResult = await query(
+    `SELECT 
+      path,
+      COUNT(*)::int as views
+     FROM page_views
+     WHERE created_at BETWEEN $1 AND $2
+     GROUP BY path
+     ORDER BY views DESC
+     LIMIT 10`,
+    [startDate, endDate]
+  );
+  
+  return {
+    ...viewsResult.rows[0],
+    topPages: pagesResult.rows,
+  };
 }
 
-export async function recordConversion(goalId: string, metadata?: any): Promise<void> {
-  try {
-    await insert('conversions', {
-      goal_id: goalId,
-      session_id: metadata?.sessionId,
-      user_id: metadata?.userId,
-      conversion_value_cents: metadata?.valueCents,
-      conversion_data: metadata?.data ? JSON.stringify(metadata.data) : null,
-    });
-    await query('UPDATE conversion_goals SET id = id WHERE id = $1', [goalId]);
-  } catch (error) {
-    logger.error('Failed to record conversion', error instanceof Error ? error : new Error(String(error)));
-  }
+// Additional report functions
+
+export async function generateRevenueReport(startDate: string, endDate: string): Promise<{
+  totalRevenue: number;
+  reservations: number;
+  averageOrder: number;
+}> {
+  const result = await query(
+    `SELECT 
+      COALESCE(SUM(amount), 0)::float as totalRevenue,
+      COUNT(*)::int as reservations,
+      COALESCE(AVG(amount), 0)::float as averageOrder
+     FROM reservations
+     WHERE status = 'confirmed'
+     AND created_at BETWEEN $1 AND $2`,
+    [startDate, endDate]
+  );
+  
+  return result.rows[0] || { totalRevenue: 0, reservations: 0, averageOrder: 0 };
 }
 
-export async function getConversionMetrics(userId: string, startDate: Date, endDate: Date): Promise<any> {
-  try {
-    const goals = await queryMany(`
-      SELECT g.*, COUNT(c.id) as conversion_count, SUM(c.conversion_value_cents) as total_value
-      FROM conversion_goals g
-      LEFT JOIN conversions c ON g.id = c.goal_id AND c.converted_at BETWEEN $2 AND $3
-      WHERE g.user_id = $1
-      GROUP BY g.id
-    `, [userId, startDate, endDate]);
-
-    return goals;
-  } catch (error) {
-    logger.error('Failed to get conversion metrics', error instanceof Error ? error : new Error(String(error)));
-    return [];
-  }
+export async function generateEngagementReport(startDate: string, endDate: string): Promise<{
+  totalReviews: number;
+  totalFavorites: number;
+  totalShares: number;
+}> {
+  const result = await query(
+    `SELECT 
+      (SELECT COUNT(*)::int FROM reviews WHERE created_at BETWEEN $1 AND $2) as totalReviews,
+      (SELECT COUNT(*)::int FROM user_favorites WHERE created_at BETWEEN $1 AND $2) as totalFavorites,
+      (SELECT COUNT(*)::int FROM social_shares WHERE created_at BETWEEN $1 AND $2) as totalShares`,
+    [startDate, endDate]
+  );
+  
+  return result.rows[0] || { totalReviews: 0, totalFavorites: 0, totalShares: 0 };
 }
 
-export async function getPlatformStats(days: number): Promise<any> {
-  try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const stats = await queryOne(`
-      SELECT
-        COUNT(DISTINCT s.session_id) as total_sessions,
-        COUNT(DISTINCT s.user_id) as unique_users,
-        SUM(pv.time_on_page_seconds) as total_time_spent,
-        COUNT(DISTINCT pv.page_url) as unique_pages,
-        COUNT(DISTINCT sa.search_query) as unique_searches,
-        AVG(s.duration_seconds) as avg_session_duration,
-        COUNT(DISTINCT c.id) as total_conversions
-      FROM user_sessions s
-      LEFT JOIN page_views pv ON s.session_id = pv.session_id
-      LEFT JOIN search_analytics sa ON s.session_id = sa.session_id
-      LEFT JOIN conversions c ON s.session_id = c.session_id
-      WHERE s.started_at >= $1
-    `, [startDate]);
-
-    return {
-      totalSessions: parseInt(stats?.total_sessions || '0'),
-      uniqueUsers: parseInt(stats?.unique_users || '0'),
-      totalTimeSpent: parseInt(stats?.total_time_spent || '0'),
-      uniquePages: parseInt(stats?.unique_pages || '0'),
-      uniqueSearches: parseInt(stats?.unique_searches || '0'),
-      avgSessionDuration: Math.round(parseFloat(stats?.avg_session_duration || '0')),
-      totalConversions: parseInt(stats?.total_conversions || '0'),
-      period: days
-    };
-  } catch (error) {
-    logger.error('Failed to get platform stats', error instanceof Error ? error : new Error(String(error)));
-    return { totalSessions: 0, uniqueUsers: 0, totalTimeSpent: 0, uniquePages: 0, uniqueSearches: 0, avgSessionDuration: 0, totalConversions: 0, period: days };
-  }
+export async function getSummaryStats(): Promise<{
+  users: { total: number; new: number };
+  places: { total: number; pending: number };
+  reviews: { total: number; pending: number };
+  views: { today: number; week: number };
+}> {
+  const users = await query(
+    `SELECT 
+      COUNT(*)::int as total,
+      COUNT(*) FILTER (WHERE created_at > CURRENT_DATE)::int as new
+     FROM users`
+  );
+  
+  const places = await query(
+    `SELECT 
+      COUNT(*)::int as total,
+      COUNT(*) FILTER (WHERE status = 'pending')::int as pending
+     FROM places`
+  );
+  
+  const reviews = await query(
+    `SELECT 
+      COUNT(*)::int as total,
+      COUNT(*) FILTER (WHERE status = 'pending')::int as pending
+     FROM reviews`
+  );
+  
+  const views = await query(
+    `SELECT 
+      COUNT(*) FILTER (WHERE created_at > CURRENT_DATE)::int as today,
+      COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days')::int as week
+     FROM page_views`
+  );
+  
+  return {
+    users: users.rows[0],
+    places: places.rows[0],
+    reviews: reviews.rows[0],
+    views: views.rows[0],
+  };
 }
 
-export async function getTrendingPlacesByViews(days: number, limit: number): Promise<any[]> {
-  try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+// Export utilities
 
-    const places = await queryMany(`
-      SELECT
-        p.id,
-        p.name,
-        p.category,
-        SUM(pdm.view_count) as total_views,
-        SUM(pdm.click_count) as total_clicks,
-        SUM(pdm.like_count) as total_likes,
-        SUM(pdm.share_count) as total_shares,
-        AVG(p.rating) as avg_rating,
-        COUNT(DISTINCT r.id) as review_count
-      FROM places p
-      LEFT JOIN place_daily_metrics pdm ON p.id = pdm.place_id AND pdm.metric_date >= $1
-      LEFT JOIN reviews r ON p.id = r.place_id
-      GROUP BY p.id, p.name, p.category
-      ORDER BY total_views DESC NULLS LAST
-      LIMIT $2
-    `, [startDate.toISOString().split('T')[0], limit]);
-
-    return places.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      category: p.category,
-      totalViews: parseInt(p.total_views || '0'),
-      totalClicks: parseInt(p.total_clicks || '0'),
-      totalLikes: parseInt(p.total_likes || '0'),
-      totalShares: parseInt(p.total_shares || '0'),
-      avgRating: parseFloat(p.avg_rating || '0'),
-      reviewCount: parseInt(p.review_count || '0')
-    }));
-  } catch (error) {
-    logger.error('Failed to get trending places', error instanceof Error ? error : new Error(String(error)));
-    return [];
-  }
+export function reportToCSV(data: Record<string, any>[]): string {
+  if (data.length === 0) return '';
+  
+  const headers = Object.keys(data[0]);
+  const rows = data.map(row => 
+    headers.map(h => {
+      const val = row[h];
+      if (typeof val === 'string' && val.includes(',')) {
+        return `"${val}"`;
+      }
+      return val;
+    }).join(',')
+  );
+  
+  return [headers.join(','), ...rows].join('\n');
 }
 
-export async function getSearchTrends(days: number, limit: number): Promise<any[]> {
-  try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-
-    const trends = await queryMany(`
-      SELECT
-        search_query,
-        COUNT(*) as search_count,
-        AVG(result_count) as avg_results
-      FROM search_analytics
-      WHERE occurred_at >= $1 AND search_query IS NOT NULL
-      GROUP BY search_query
-      ORDER BY search_count DESC
-      LIMIT $2
-    `, [startDate, limit]);
-
-    return trends.map((t: any) => ({
-      query: t.search_query,
-      count: parseInt(t.search_count || '0'),
-      avgResults: Math.round(parseFloat(t.avg_results || '0'))
-    }));
-  } catch (error) {
-    logger.error('Failed to get search trends', error instanceof Error ? error : new Error(String(error)));
-    return [];
-  }
+export function reportToJSON(data: Record<string, any>): string {
+  return JSON.stringify(data, null, 2);
 }
 
-export async function getUserActivitySummary(userId: string, days: number): Promise<any> {
-  try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+// Place analytics
 
-    const [views, searches, reviews, comments, favorites] = await Promise.all([
-      queryOne(`SELECT COUNT(*) as count FROM page_views WHERE user_id = $1 AND created_at >= $2`, [userId, startDate]),
-      queryOne(`SELECT COUNT(*) as count FROM search_analytics WHERE user_id = $1 AND occurred_at >= $2`, [userId, startDate]),
-      queryOne(`SELECT COUNT(*) as count FROM reviews WHERE user_id = $1 AND created_at >= $2`, [userId, startDate]),
-      queryOne(`SELECT COUNT(*) as count FROM comments WHERE user_id = $1 AND created_at >= $2`, [userId, startDate]),
-      queryOne(`SELECT COUNT(*) as count FROM place_likes WHERE user_id = $1 AND created_at >= $2`, [userId, startDate])
-    ]);
+export async function getPlaceAnalytics(placeId: string): Promise<{
+  totalViews: number;
+  uniqueVisitors: number;
+  avgTimeOnPage: number;
+  reviews: number;
+  rating: number;
+}> {
+  const result = await query(
+    `SELECT 
+      COUNT(pv.id)::int as totalViews,
+      COUNT(DISTINCT pv.user_id)::int as uniqueVisitors,
+      COALESCE(AVG(pv.duration), 0)::float as avgTimeOnPage,
+      COUNT(DISTINCT r.id)::int as reviews,
+      COALESCE(AVG(r.rating), 0)::float as rating
+     FROM places p
+     LEFT JOIN page_views pv ON pv.path LIKE '/mekan/' || p.slug
+     LEFT JOIN reviews r ON r.place_id = p.id
+     WHERE p.id = $1`,
+    [placeId]
+  );
+  
+  return result.rows[0] || {
+    totalViews: 0,
+    uniqueVisitors: 0,
+    avgTimeOnPage: 0,
+    reviews: 0,
+    rating: 0,
+  };
+}
 
-    const viewCount = parseInt(views?.count || '0');
-    const searchCount = parseInt(searches?.count || '0');
-    const reviewCount = parseInt(reviews?.count || '0');
-    const commentCount = parseInt(comments?.count || '0');
-    const favoriteCount = parseInt(favorites?.count || '0');
+// Analytics record functions
 
-    return {
-      views: viewCount,
-      searches: searchCount,
-      reviews: reviewCount,
-      comments: commentCount,
-      favorites: favoriteCount,
-      total: viewCount + searchCount + reviewCount + commentCount + favoriteCount,
-      period: days
-    };
-  } catch (error) {
-    logger.error('Failed to get user activity summary', error instanceof Error ? error : new Error(String(error)));
-    return { views: 0, searches: 0, reviews: 0, comments: 0, favorites: 0, total: 0, period: days };
-  }
+export async function recordPageView(data: {
+  path: string;
+  userId?: string;
+  referrer?: string;
+  userAgent?: string;
+  ip?: string;
+}): Promise<void> {
+  await query(
+    `INSERT INTO page_views (path, user_id, referrer, user_agent, ip, created_at)
+     VALUES ($1, $2, $3, $4, $5, NOW())`,
+    [data.path, data.userId || null, data.referrer || null, data.userAgent || null, data.ip || null]
+  );
+}
+
+export async function recordInteraction(data: {
+  type: string;
+  element: string;
+  userId?: string;
+  metadata?: Record<string, any>;
+}): Promise<void> {
+  await query(
+    `INSERT INTO interactions (type, element, user_id, metadata, created_at)
+     VALUES ($1, $2, $3, $4, NOW())`,
+    [data.type, data.element, data.userId || null, data.metadata ? JSON.stringify(data.metadata) : null]
+  );
+}
+
+export async function recordSearch(data: {
+  query: string;
+  resultsCount: number;
+  userId?: string;
+}): Promise<void> {
+  await query(
+    `INSERT INTO search_logs (query, results_count, user_id, created_at)
+     VALUES ($1, $2, $3, NOW())`,
+    [data.query, data.resultsCount, data.userId || null]
+  );
+}
+
+export async function recordPlaceView(data: {
+  placeId: string;
+  userId?: string;
+  source?: string;
+}): Promise<void> {
+  await query(
+    `INSERT INTO place_views (place_id, user_id, source, created_at)
+     VALUES ($1, $2, $3, NOW())`,
+    [data.placeId, data.userId || null, data.source || null]
+  );
+}
+
+
+/**
+ * Get user activity summary
+ */
+export async function getUserActivitySummary(userId: string): Promise<{
+  totalReviews: number;
+  totalFavorites: number;
+  totalViews: number;
+  lastActive: Date | null;
+}> {
+  const result = await query(
+    `SELECT 
+      (SELECT COUNT(*)::int FROM reviews WHERE user_id = $1) as totalReviews,
+      (SELECT COUNT(*)::int FROM user_favorites WHERE user_id = $1) as totalFavorites,
+      (SELECT COUNT(*)::int FROM page_views WHERE user_id = $1) as totalViews,
+      (SELECT MAX(created_at) FROM page_views WHERE user_id = $1) as lastActive`,
+    [userId]
+  );
+  
+  const row = result.rows[0];
+  return {
+    totalReviews: row.totalreviews || 0,
+    totalFavorites: row.totalfavorites || 0,
+    totalViews: row.totalviews || 0,
+    lastActive: row.lastactive ? new Date(row.lastactive) : null,
+  };
+}
+
+/**
+ * Get user reviews with details
+ */
+export async function getUserReviews(userId: string, limit = 10): Promise<Array<{
+  id: string;
+  placeId: string;
+  placeName: string;
+  rating: number;
+  comment: string;
+  createdAt: Date;
+}>> {
+  const result = await query(
+    `SELECT 
+      r.id,
+      r.place_id as placeId,
+      p.name as placeName,
+      r.rating,
+      r.comment,
+      r.created_at as createdAt
+     FROM reviews r
+     JOIN places p ON r.place_id = p.id
+     WHERE r.user_id = $1
+     ORDER BY r.created_at DESC
+     LIMIT $2`,
+    [userId, limit]
+  );
+  
+  return result.rows.map(row => ({
+    id: row.id,
+    placeId: row.placeid,
+    placeName: row.placename,
+    rating: row.rating,
+    comment: row.comment,
+    createdAt: new Date(row.createdat),
+  }));
+}
+
+/**
+ * Get user favorites with details
+ */
+export async function getUserFavorites(userId: string, limit = 10): Promise<Array<{
+  id: string;
+  placeId: string;
+  placeName: string;
+  placeImage?: string;
+  createdAt: Date;
+}>> {
+  const result = await query(
+    `SELECT 
+      uf.id,
+      uf.place_id as placeId,
+      p.name as placeName,
+      p.image as placeImage,
+      uf.created_at as createdAt
+     FROM user_favorites uf
+     JOIN places p ON uf.place_id = p.id
+     WHERE uf.user_id = $1
+     ORDER BY uf.created_at DESC
+     LIMIT $2`,
+    [userId, limit]
+  );
+  
+  return result.rows.map(row => ({
+    id: row.id,
+    placeId: row.placeid,
+    placeName: row.placename,
+    placeImage: row.placeimage,
+    createdAt: new Date(row.createdat),
+  }));
 }

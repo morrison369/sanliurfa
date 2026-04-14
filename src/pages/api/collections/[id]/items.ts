@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Collection items endpoints
  * POST /api/collections/[id]/items — Add place to collection

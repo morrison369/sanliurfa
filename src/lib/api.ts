@@ -131,11 +131,25 @@ export function errorResponse(
  * Create a standardized API route response
  */
 export function apiResponse(
-  data: any,
-  statusCode: number = 200,
+  dataOrContext: any,
+  statusCodeOrData?: number | any,
   requestId?: string
 ): Response {
-  const [body, status, headers] = successResponse(data, statusCode, requestId);
+  // Handle both signatures: apiResponse(data, statusCode) and apiResponse(context, data, statusCode)
+  let data: any;
+  let statusCode: number;
+  
+  if (statusCodeOrData && typeof statusCodeOrData === 'object') {
+    // Signature: apiResponse(context, data, statusCode)
+    data = statusCodeOrData;
+    statusCode = requestId ? parseInt(requestId) : 200;
+  } else {
+    // Signature: apiResponse(data, statusCode)
+    data = dataOrContext;
+    statusCode = statusCodeOrData || 200;
+  }
+  
+  const [body, status, headers] = successResponse(data, statusCode, undefined);
   return new Response(JSON.stringify(body), { status, headers });
 }
 
@@ -143,12 +157,29 @@ export function apiResponse(
  * Create a standardized error response
  */
 export function apiError(
-  code: string,
-  message: string,
-  statusCode: number = 400,
+  codeOrContext: string | any,
+  messageOrCode?: string | number,
+  statusCodeOrMessage?: number | string,
   details?: Record<string, any>,
   requestId?: string
 ): Response {
+  // Handle multiple signatures
+  let code: string;
+  let message: string;
+  let statusCode: number;
+  
+  if (typeof codeOrContext === 'object' && codeOrContext !== null) {
+    // Signature: apiError(context, statusCode, message)
+    code = 'ERROR';
+    statusCode = typeof messageOrCode === 'number' ? messageOrCode : 400;
+    message = typeof statusCodeOrMessage === 'string' ? statusCodeOrMessage : 'An error occurred';
+  } else {
+    // Signature: apiError(code, message, statusCode, details, requestId)
+    code = codeOrContext as string;
+    message = (messageOrCode as string) || 'An error occurred';
+    statusCode = (statusCodeOrMessage as number) || 400;
+  }
+  
   const [body, status, headers] = errorResponse(code, message, statusCode, details, requestId);
   return new Response(JSON.stringify(body), { status, headers });
 }
@@ -243,7 +274,7 @@ export function sanitizeInput(input: string): string {
  * Extract request ID or generate one
  */
 export function getRequestId(context: APIContext): string {
-  return context.request.headers.get('x-request-id') || `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return context.request.headers.get('x-request-id') || `req-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
 /**

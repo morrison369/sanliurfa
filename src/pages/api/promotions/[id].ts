@@ -1,51 +1,121 @@
-/**
- * Get Promotion Details
- * GET /api/promotions/[id] - Get promotion information
- */
-
 import type { APIRoute } from 'astro';
-import { getPromotion } from '../../../lib/promotions-management';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { logger } from '../../../lib/logging';
-import { recordRequest } from '../../../lib/metrics';
+import { query } from '../../../lib/postgres';
+import { authenticateUser } from '../../../lib/auth/middleware';
 
-export const GET: APIRoute = async ({ request, params }) => {
-  const requestId = getRequestId({ request } as any);
-  const startTime = Date.now();
-  logger.setRequestId(requestId);
-
+export const PUT: APIRoute = async (context) => {
   try {
-    const { id } = params;
-
-    const promotion = await getPromotion(id);
-
-    if (!promotion) {
-      recordRequest('GET', '/api/promotions/[id]', HttpStatus.NOT_FOUND, Date.now() - startTime);
-      return apiError(
-        ErrorCode.NOT_FOUND,
-        'Promotion not found',
-        HttpStatus.NOT_FOUND,
-        undefined,
-        requestId
-      );
+    const auth = await authenticateUser(context);
+    if (!auth) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    recordRequest('GET', '/api/promotions/[id]', HttpStatus.OK, Date.now() - startTime);
+    const { id } = context.params;
+    const body = await context.request.json();
 
-    return apiResponse({
-      success: true,
-      promotion
-    }, HttpStatus.OK, requestId);
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/promotions/[id]', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get promotion', error instanceof Error ? error : new Error(String(error)));
-    return apiError(
-      ErrorCode.INTERNAL_ERROR,
-      'Failed to get promotion',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      undefined,
-      requestId
+    // Get promotion info
+    const promoResult = await query(
+      'SELECT * FROM promotions WHERE id = $1',
+      [id]
     );
+
+    if (promoResult.rows.length === 0) {
+      return new Response(JSON.stringify({ error: 'Promotion not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const promotion = promoResult.rows[0];
+
+    // Yetki kontrolu
+    if (auth.user.role === 'vendor') {
+      const placeCheck = await query(
+        'SELECT id FROM places WHERE id = $1 AND owner_id = $2',
+        [promotion.place_id, auth.user.id]
+      );
+      if (placeCheck.rows.length === 0) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    const allowedFields = ['status', 'featured', 'title', 'description', 'end_date'];
+    const updates: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    for (const [key, value] of Object.entries(body)) {
+      if (allowedFields.includes(key)) {
+        updates.push(`${key} = $${paramIndex}`);
+        params.push(value);
+        paramIndex++;
+      }
+    }
+
+    if (updates.length === 0) {
+      return new Response(JSON.stringify({ error: 'No valid fields to update' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    updates.push(`updated_at = NOW()`);
+    params.push(id);
+
+    const result = await query(
+      `UPDATE promotions SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+      params
+    );
+
+    return new Response(JSON.stringify({
+      success: true,
+      promotion: result.rows[0]
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Update promotion error:', error);
+    return new Response(JSON.stringify({ error: 'Server error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
+
+export const DELETE: APIRoute = async (context) => {
+  try {
+    const auth = await authenticateUser(context);
+    if (!auth || auth.user.role !== 'admin') {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { id } = context.params;
+
+    await query('DELETE FROM promotions WHERE id = $1', [id]);
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Promotion deleted'
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Delete promotion error:', error);
+    return new Response(JSON.stringify({ error: 'Server error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 };

@@ -1,0 +1,100 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+let featuredPlaces: any[] = [];
+
+const emlakCategories = [
+  { slug: 'satilik-daire', name: 'Satılık Daire', icon: '🏠', desc: 'Satılık konutlar' },
+  { slug: 'kiralik-daire', name: 'Kiralık Daire', icon: '🔑', desc: 'Kiralık konutlar' },
+  { slug: 'emlak-ofisleri', name: 'Emlak Ofisleri', icon: '🏢', desc: 'Emlakçı ve danışmanlar' },
+];
+
+try {
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE c.slug IN ('satilik-daire','kiralik-daire','emlak-ofisleri')
+     AND p.status = 'active'
+     ORDER BY p.rating DESC LIMIT 6`
+  );
+  featuredPlaces = placesResult.rows;
+} catch (e) {
+  console.error('Error loading emlak:', e);
+}
+
+const ilceler = [
+  { name: 'Eyyübiye', slug: 'eyyubiye' },
+  { name: 'Haliliye', slug: 'haliliye' },
+  { name: 'Karaköprü', slug: 'karakopru' },
+  { name: 'Siverek', slug: 'siverek' },
+  { name: 'Viranşehir', slug: 'viransehir' },
+  { name: 'Halfeti', slug: 'halfeti' },
+];
+
+const seo = {
+  title: 'Şanlıurfa Emlak Rehberi | Satılık ve Kiralık Daireler',
+  description: 'Şanlıurfa\'da satılık daireler, kiralık konutlar ve emlak ofisleri. İlçelere göre emlak listesi.',
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-emerald-700 to-green-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Emlak Rehberi</h1>
+        <p class="text-xl text-emerald-100 max-w-2xl">
+          Şanlıurfa'da satılık ve kiralık daireler, emlak ofisleri
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <!-- Ana Kategoriler -->
+      <div class="grid md:grid-cols-3 gap-6 mb-12">
+        {emlakCategories.map((cat) => (
+          <a
+            href={`/emlak/${cat.slug}`}
+            class="bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 group text-center"
+          >
+            <div class="text-5xl mb-4">{cat.icon}</div>
+            <h3 class="text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">{cat.name}</h3>
+            <p class="text-gray-500 mt-2">{cat.desc}</p>
+          </a>
+        ))}
+      </div>
+
+      <!-- İlçeye Göre Emlak -->
+      <div class="bg-white rounded-2xl p-8 shadow-sm mb-10">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">İlçeye Göre Emlak</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {ilceler.map((ilce) => (
+            <a
+              href={`/ilceler/${ilce.slug}`}
+              class="flex items-center gap-2 p-3 rounded-lg hover:bg-emerald-50 group transition-colors"
+            >
+              <span class="text-emerald-600">📍</span>
+              <span class="font-medium text-gray-700 group-hover:text-emerald-600">{ilce.name} Emlak</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {featuredPlaces.length > 0 && (
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Emlak Ofisleri</h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredPlaces.map((place) => (
+              <a href={`/places/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+                <h3 class="font-bold text-gray-900 group-hover:text-emerald-600">{place.name}</h3>
+                <span class="text-xs text-emerald-600">{place.category_name}</span>
+                {place.address && <p class="text-xs text-gray-500 mt-2">📍 {place.address}</p>}
+                {place.phone && <p class="text-xs text-gray-500">📞 {place.phone}</p>}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { addPushSubscription, removePushSubscription } from '../../../../lib/notification-channels';
+import { addPushSubscription, removePushSubscription } from '../../../../lib/notification/notification-channels';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
@@ -18,7 +18,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/notifications/push/subscribe', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -96,7 +96,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/notifications/push/subscribe', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,

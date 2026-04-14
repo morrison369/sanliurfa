@@ -1,0 +1,105 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+let categories: any[] = [];
+let featuredPlaces: any[] = [];
+
+const saglikCategories = [
+  { slug: 'devlet-hastaneleri', name: 'Devlet Hastaneleri', icon: '🏥', desc: 'Kamu hastaneleri' },
+  { slug: 'ozel-hastaneler', name: 'Özel Hastaneler', icon: '🏨', desc: 'Özel sağlık kuruluşları' },
+  { slug: 'dis-klinikleri', name: 'Diş Klinikleri', icon: '🦷', desc: 'Diş hekimleri ve klinikler' },
+  { slug: 'eczaneler', name: 'Eczaneler', icon: '💊', desc: 'Tüm eczaneler' },
+  { slug: 'nobetci-eczaneler', name: 'Nöbetçi Eczaneler', icon: '🚨', desc: 'Güncel nöbetçiler', href: '/saglik/nobetci-eczaneler' },
+  { slug: 'veterinerler', name: 'Veterinerler', icon: '🐾', desc: 'Veteriner klinikler' },
+];
+
+try {
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE c.slug IN ('devlet-hastaneleri','ozel-hastaneler','dis-klinikleri','eczaneler','veterinerler')
+     AND p.status = 'active'
+     ORDER BY p.rating DESC LIMIT 6`
+  );
+  featuredPlaces = placesResult.rows;
+} catch (e) {
+  console.error('Error loading saglik:', e);
+}
+
+const seo = {
+  title: 'Şanlıurfa Sağlık Rehberi | Hastaneler, Eczaneler ve Klinikler',
+  description: 'Şanlıurfa\'da devlet ve özel hastaneler, diş klinikleri, eczaneler, nöbetçi eczaneler ve veteriner klinikler.',
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-green-700 to-teal-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Sağlık Rehberi</h1>
+        <p class="text-xl text-green-100 max-w-2xl">
+          Şanlıurfa'da hastaneler, klinikler, eczaneler ve sağlık hizmetleri
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <!-- Hızlı Erişim: Nöbetçi Eczane -->
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-6 mb-10 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-red-800">🚨 Nöbetçi Eczane</h2>
+          <p class="text-red-600 mt-1">Bugün nöbetçi olan eczaneleri görün</p>
+        </div>
+        <a href="/saglik/nobetci-eczaneler" class="bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition-colors">
+          Nöbetçileri Gör →
+        </a>
+      </div>
+
+      <!-- Kategoriler -->
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Sağlık Kategorileri</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
+        {saglikCategories.map((cat) => (
+          <a
+            href={cat.href || `/saglik/${cat.slug}`}
+            class="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 border border-gray-100 group"
+          >
+            <div class="text-3xl mb-3">{cat.icon}</div>
+            <h3 class="font-bold text-gray-900 group-hover:text-green-600 transition-colors">{cat.name}</h3>
+            <p class="text-sm text-gray-500 mt-1">{cat.desc}</p>
+          </a>
+        ))}
+      </div>
+
+      <!-- Öne Çıkan Sağlık Mekanları -->
+      {featuredPlaces.length > 0 && (
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Öne Çıkan Sağlık Kuruluşları</h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredPlaces.map((place) => (
+              <a href={`/places/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+                <div class="flex items-start gap-3">
+                  <span class="text-2xl">🏥</span>
+                  <div>
+                    <h3 class="font-bold text-gray-900 group-hover:text-green-600">{place.name}</h3>
+                    <span class="text-xs text-green-600">{place.category_name}</span>
+                    {place.address && <p class="text-xs text-gray-500 mt-1">📍 {place.address}</p>}
+                    {place.phone && <p class="text-xs text-gray-500">📞 {place.phone}</p>}
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: 'https://sanliurfa.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Sağlık', item: 'https://sanliurfa.com/saglik' },
+    ]
+  })} />
+</Layout>

@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getPlaceAnalytics } from '../../../../../lib/business-analytics';
+import { getPlaceBusinessAnalytics } from '../../../../../lib/analytics/business-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
 import { logger } from '../../../../../lib/logging';
 import { recordRequest } from '../../../../../lib/metrics';
@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ request, params, locals, url }) => {
       );
     }
 
-    const analytics = await getPlaceAnalytics(placeId, days);
+    const analytics = await getPlaceBusinessAnalytics(placeId, days);
 
     if (!analytics) {
       recordRequest('GET', '/api/owner/analytics/place/[id]', HttpStatus.NOT_FOUND, Date.now() - startTime);

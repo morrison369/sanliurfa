@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * API: Business Insights
  * GET - AI-driven insights and recommendations

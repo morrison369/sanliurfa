@@ -12,7 +12,7 @@ import {
   getSummaryStats,
   reportToCSV,
   reportToJSON
-} from '../../../../lib/reporting';
+} from '../../../../lib/analytics';
 import { validateWithSchema } from '../../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';

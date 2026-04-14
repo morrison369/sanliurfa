@@ -1,0 +1,149 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+const { kategori } = Astro.params;
+
+const categoryMeta: Record<string, { name: string; icon: string; desc: string }> = {
+  'kahvalti': { name: 'Kahvaltı Mekanları', icon: '🍳', desc: 'Serpme kahvaltı ve sabah mekanları' },
+  'brunch': { name: 'Brunch', icon: '🥐', desc: 'Öğle saatlerine kadar kahvaltı' },
+  'gece-acik-mekanlar': { name: 'Gece Açık Mekanlar', icon: '🌙', desc: 'Gece geç saatlere kadar açık' },
+  'paket-servis': { name: 'Paket Servis', icon: '📦', desc: 'Eve ve ofise teslimat' },
+  'aile-mekanlari': { name: 'Aile Mekanları', icon: '👨‍👩‍👧', desc: 'Çocuk dostu aile mekanları' },
+  'uygun-fiyatli-mekanlar': { name: 'Uygun Fiyatlı Mekanlar', icon: '💰', desc: 'Bütçe dostu seçenekler' },
+};
+
+const meta = categoryMeta[kategori || ''] || { name: kategori || '', icon: '🍽️', desc: '' };
+
+const page = parseInt(Astro.url.searchParams.get('sayfa') || '1');
+const limit = 12;
+const offset = (page - 1) * limit;
+
+let places: any[] = [];
+let totalCount = 0;
+
+try {
+  // Features tabanlı filtreleme: gece mekanları, paket servis, aile mekanları
+  const featureMap: Record<string, string> = {
+    'gece-acik-mekanlar': 'gece_acik',
+    'paket-servis': 'paket_servis',
+    'aile-mekanlari': 'cocuk_oyun_alani',
+  };
+
+  const feature = featureMap[kategori || ''];
+
+  let whereClause = `p.status = 'active'`;
+  let queryParams: any[] = [];
+
+  if (kategori === 'kahvalti' || kategori === 'brunch') {
+    whereClause += ` AND c.slug = 'kahvalti-mekanlari'`;
+  } else if (feature) {
+    whereClause += ` AND $1 = ANY(p.features)`;
+    queryParams.push(feature);
+  } else if (kategori === 'uygun-fiyatli-mekanlar') {
+    whereClause += ` AND p.price_range = '₺'`;
+  }
+
+  const countResult = await query(
+    `SELECT COUNT(*) FROM places p LEFT JOIN categories c ON p.category_id = c.id WHERE ${whereClause}`,
+    queryParams
+  );
+  totalCount = parseInt(countResult.rows[0]?.count || '0');
+
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name, d.name as district_name
+     FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     LEFT JOIN districts d ON p.district_id = d.id
+     WHERE ${whereClause}
+     ORDER BY p.rating DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`,
+    [...queryParams, limit, offset]
+  );
+  places = placesResult.rows;
+} catch (e) {
+  console.error('Error loading yeme-icme kategori:', e);
+}
+
+const totalPages = Math.ceil(totalCount / limit);
+
+const seo = {
+  title: `Şanlıurfa ${meta.name} | Yeme İçme Rehberi`,
+  description: `Şanlıurfa'da ${meta.desc || meta.name.toLowerCase()}. En iyi mekanlar, adresler ve bilgiler.`,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-white border-b">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-gray-500">
+          <a href="/" class="hover:text-orange-600">Ana Sayfa</a>
+          <span>/</span>
+          <a href="/yeme-icme" class="hover:text-orange-600">Yeme İçme</a>
+          <span>/</span>
+          <span class="text-gray-900 font-medium">{meta.name}</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-orange-600 to-red-700 text-white py-12">
+      <div class="container mx-auto px-4">
+        <div class="flex items-center gap-4">
+          <span class="text-5xl">{meta.icon}</span>
+          <div>
+            <h1 class="text-3xl md:text-4xl font-bold">Şanlıurfa {meta.name}</h1>
+            <p class="text-orange-100 mt-1">{totalCount} mekan bulundu</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      {places.length > 0 ? (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {places.map((place) => (
+            <a href={`/places/${place.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group">
+              <div class="h-44 bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+                <span class="text-5xl opacity-40">🍽️</span>
+              </div>
+              <div class="p-5">
+                <h2 class="font-bold text-lg text-gray-900 group-hover:text-orange-600">{place.name}</h2>
+                {place.category_name && <span class="text-xs text-orange-500">{place.category_name}</span>}
+                {place.short_description && <p class="text-sm text-gray-500 mt-2 line-clamp-2">{place.short_description}</p>}
+                <div class="flex items-center justify-between mt-3">
+                  {place.rating && (
+                    <div class="flex items-center gap-1">
+                      <span class="text-yellow-500">★</span>
+                      <span class="font-medium">{place.rating}</span>
+                      <span class="text-gray-400 text-xs">({place.review_count || 0})</span>
+                    </div>
+                  )}
+                  {place.district_name && <span class="text-xs text-gray-400">📍 {place.district_name}</span>}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16">
+          <div class="text-6xl mb-4">{meta.icon}</div>
+          <p class="text-gray-500 text-lg">Bu kategoride henüz mekan bulunmuyor.</p>
+          <a href="/yeme-icme" class="mt-4 inline-block text-orange-600 hover:underline">Yeme İçme Rehberine Dön →</a>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div class="flex justify-center gap-2 mt-10">
+          {page > 1 && <a href={`/yeme-icme/${kategori}?sayfa=${page - 1}`} class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50">← Önceki</a>}
+          {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((p) => (
+            <a
+              href={`/yeme-icme/${kategori}?sayfa=${p}`}
+              class={`px-4 py-2 rounded-lg ${p === page ? 'bg-orange-600 text-white' : 'bg-white border hover:bg-gray-50'}`}
+            >{p}</a>
+          ))}
+          {page < totalPages && <a href={`/yeme-icme/${kategori}?sayfa=${page + 1}`} class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50">Sonraki →</a>}
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

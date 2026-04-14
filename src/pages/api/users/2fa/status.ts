@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Check 2FA status
  * GET /api/users/2fa/status

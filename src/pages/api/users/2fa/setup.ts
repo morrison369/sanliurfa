@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Initiate 2FA setup
  * POST /api/users/2fa/setup

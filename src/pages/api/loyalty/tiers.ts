@@ -4,7 +4,7 @@
  */
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { getUserTierInfo, getTierList, getTierStats, getUserTierHistory } from '../../../lib/loyalty-tiers';
+import { getUserTierInfo, getTierList, getTierStats, getUserTierHistory } from '../../../lib/loyalty/loyalty-tiers';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 

@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSubscriptionAnalytics, getWebhookStatus } from '../../../../lib/subscription-admin';
+import { getSubscriptionAnalytics, getWebhookStatus } from '../../../../lib/subscription/subscription-admin';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';

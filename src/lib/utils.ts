@@ -29,13 +29,34 @@ export function truncate(str: string, length: number, suffix = '...'): string {
 }
 
 /**
- * Slug oluşturma
+ * Slug oluşturma (Türkçe karakter desteği)
  */
 export function slugify(str: string): string {
   return str
-    .toLowerCase()
+    .split('')
+    .map(c => {
+      switch (c) {
+        case 'ç': return 'c';
+        case 'ğ': return 'g';
+        case 'ı': return '';
+        case 'ö': return 'o';
+        case 'ş': return 's';
+        case 'ü': return 'u';
+        case 'Ç': return 'C';
+        case 'Ğ': return 'G';
+        case 'İ': return 'I';
+        case 'Ö': return 'O';
+        case 'Ş': return 'S';
+        case 'Ü': return 'U';
+        default: return c;
+      }
+    })
+    .join('')
+    .replace(/_/g, '-')
+    .replace(/[^a-zA-Z0-9\s-]/g, '')
     .trim()
-    .replace(/[\s\W-]+/g, '-')
+    .replace(/\s+/g, '-')
+    .toLowerCase()
     .replace(/^-+|-+$/g, '');
 }
 

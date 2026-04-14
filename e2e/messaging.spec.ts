@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Direct Messaging System', () => {
-  let user1Token: string;
-  let user2Token: string;
-  let user1Id: string;
-  let user2Id: string;
-  let conversationId: string;
+  let user1Token = '';
+  let user2Token = '';
+  let user1Id = '';
+  let user2Id = '';
+  let conversationId = '';
 
   test.beforeAll(async ({ browser }) => {
     // Setup: Create two test users
@@ -19,7 +19,7 @@ test.describe('Direct Messaging System', () => {
     await page.fill('input[name="fullName"]', 'User One');
     await page.click('button:has-text("Kayıt Ol")');
     await page.waitForURL('**/');
-    user1Token = await page.evaluate(() => localStorage.getItem('auth-token'));
+    user1Token = (await page.evaluate(() => localStorage.getItem('auth-token'))) ?? '';
 
     // Register second user
     await page.goto('http://localhost:3000/kayit');
@@ -28,7 +28,7 @@ test.describe('Direct Messaging System', () => {
     await page.fill('input[name="fullName"]', 'User Two');
     await page.click('button:has-text("Kayıt Ol")');
     await page.waitForURL('**/');
-    user2Token = await page.evaluate(() => localStorage.getItem('auth-token'));
+    user2Token = (await page.evaluate(() => localStorage.getItem('auth-token'))) ?? '';
 
     await context.close();
   });

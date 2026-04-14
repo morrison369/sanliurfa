@@ -9,6 +9,7 @@ export interface Category {
   color?: string;
   sortOrder: number;
   isActive: boolean;
+  type?: string;
 }
 
 // Mekan Kategorileri

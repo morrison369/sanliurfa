@@ -1,49 +1,75 @@
+/**
+ * Notifications API
+ * GET: List notifications
+ * POST: Mark as read
+ * DELETE: Delete notification
+ */
+
 import type { APIRoute } from 'astro';
-import { getUserNotifications, getUnreadNotifications } from '../../../lib/notifications-queue';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { recordRequest } from '../../../lib/metrics';
-import { logger } from '../../../lib/logging';
+import { requireAuth } from '../../../lib/auth';
+import {
+  getUserNotifications,
+  markAsRead,
+  markAllAsRead,
+  getUnreadCount,
+} from '../../../lib/notifications/sse';
 
-export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
-  const startTime = Date.now();
-  logger.setRequestId(requestId);
-
+export const GET: APIRoute = async ({ request, url }) => {
   try {
-    if (!locals.user?.id) {
-      recordRequest('GET', '/api/notifications', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
-    }
+    const auth = await requireAuth(request);
+    if (auth instanceof Response) return auth;
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const filter = url.searchParams.get('filter') || 'all'; // all, unread
+    const searchParams = new URL(url).searchParams;
+    const unreadOnly = searchParams.get('unreadOnly') === 'true';
+    const limit = parseInt(searchParams.get('limit') || '20');
 
-    let notifications;
+    const [notifications, unreadCount] = await Promise.all([
+      getUserNotifications(auth.user.id, { limit, unreadOnly }),
+      getUnreadCount(auth.user.id),
+    ]);
 
-    if (filter === 'unread') {
-      notifications = await getUnreadNotifications(locals.user.id, limit);
-    } else {
-      const result = await getUserNotifications(locals.user.id, 1, limit);
-      notifications = result.notifications;
-    }
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/notifications', HttpStatus.OK, duration);
-
-    return apiResponse(
-      {
-        success: true,
-        data: notifications,
-        count: notifications.length,
-        filter
-      },
-      HttpStatus.OK,
-      requestId
+    return new Response(
+      JSON.stringify({ notifications, unreadCount }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/notifications', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get notifications', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Bildirimler alınırken bir hata oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to get notifications' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+};
+
+export const POST: APIRoute = async ({ request }) => {
+  try {
+    const auth = await requireAuth(request);
+    if (auth instanceof Response) return auth;
+
+    const body = await request.json();
+    const { notificationId, markAll } = body;
+
+    if (markAll) {
+      await markAllAsRead(auth.user.id);
+    } else if (notificationId) {
+      await markAsRead(notificationId, auth.user.id);
+    } else {
+      return new Response(
+        JSON.stringify({ error: 'notificationId or markAll required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get updated unread count
+    const unreadCount = await getUnreadCount(auth.user.id);
+
+    return new Response(
+      JSON.stringify({ success: true, unreadCount }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to mark as read' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 };

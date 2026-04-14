@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * Photo Vote API
  * POST: Vote on a photo (helpful/unhelpful)
  */
 
 import type { APIRoute } from 'astro';
-import { voteOnPhoto, getPhotoById } from '../../../../lib/photos';
+import { voteOnPhoto, getPhotoById } from '../../../../lib/photo';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';

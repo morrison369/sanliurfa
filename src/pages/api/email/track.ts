@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { trackCampaignEvent } from '../../../lib/email-campaigns';
+import { trackCampaignEvent } from '../../../lib/email/email-campaigns';
 import { logger } from '../../../lib/logging';
 
 // 1x1 transparent PNG pixel
@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     // Validate parameters
     if (!campaignId || !userId || !eventType) {
-      logger.warn('Track request missing parameters', {
+      logger.warn('Track request missing parameters', undefined, {
         hasCampaignId: !!campaignId,
         hasUserId: !!userId,
         hasEventType: !!eventType
@@ -45,7 +45,7 @@ export const GET: APIRoute = async ({ url, request }) => {
     );
 
     if (!success) {
-      logger.warn('Failed to track campaign event', {
+      logger.warn('Failed to track campaign event', undefined, {
         campaignId,
         userId,
         eventType
@@ -55,7 +55,7 @@ export const GET: APIRoute = async ({ url, request }) => {
         campaignId,
         userId,
         eventType
-      });
+      } as any);
     }
 
     // Handle different event types
@@ -74,7 +74,7 @@ export const GET: APIRoute = async ({ url, request }) => {
           });
         }
       } catch (error) {
-        logger.warn('Invalid redirect URL', { linkUrl });
+        logger.warn('Invalid redirect URL', undefined, { linkUrl });
       }
     }
 
@@ -88,7 +88,7 @@ export const GET: APIRoute = async ({ url, request }) => {
       }
     });
   } catch (error) {
-    logger.error('Track endpoint error', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Track endpoint error', error instanceof Error ? error : new Error(String(error)), {} as any);
 
     // Always return pixel even on error
     return new Response(PIXEL, {

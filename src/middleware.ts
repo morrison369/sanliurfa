@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   '/gizlilik-politikasi', '/kullanim-kosullari', '/kvkk', '/hakkimizda',
   '/fiyatlandirma', '/404', '/500', '/loading',
   '/mekanlar', '/ilceler', '/gezilecek-yerler', '/saglik', '/mahalleler', '/yeme-icme',
+  '/egitim', '/ulasim', '/alisveris', '/hizmetler', '/emlak', '/konaklama', '/etkinlikler',
   '/en-iyi-kebapcilar', '/en-iyi-cigerciler', '/sanliurfa-kahvalti-mekanlari',
   '/sanliurfa-sira-gecesi-mekanlari', '/sanliurfa-gece-acik-mekanlar',
   '/sanliurfada-ne-yenir', '/bugun-sanliurfada-ne-yapilir',

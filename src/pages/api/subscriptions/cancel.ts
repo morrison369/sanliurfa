@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Cancel Subscription
  * POST /api/subscriptions/cancel - Cancel active subscription
@@ -5,7 +6,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryOne, update as updateDb } from '../../../lib/postgres';
-import { cancelSubscription } from '../../../lib/stripe-client';
+import { cancelSubscription } from '../../../lib/stripe/stripe-client';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';

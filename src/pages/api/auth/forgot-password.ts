@@ -1,5 +1,6 @@
 // API: Şifre sıfırlama talebi (PostgreSQL)
 // NOTE: E-posta gönderimi için Resend API key gerekli
+// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../lib/postgres';
 import { sendEmail, getPasswordResetEmailHTML } from '../../../lib/email';

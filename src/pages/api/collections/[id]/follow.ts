@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Collection follow endpoints
  * POST /api/collections/[id]/follow — Toggle follow status

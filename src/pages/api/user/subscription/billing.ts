@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getBillingHistory } from '../../../../lib/subscription-management';
+import { getBillingHistory } from '../../../../lib/subscription/subscription-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';

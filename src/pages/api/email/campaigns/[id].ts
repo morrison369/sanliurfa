@@ -8,12 +8,12 @@
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../../lib/postgres';
 import {
-  getCampaign,
-  updateCampaign,
+  getMarketingCampaign,
+  updateMarketingCampaign,
   deleteCampaign,
   launchCampaign,
   pauseCampaign,
-} from '../../../../lib/email-marketing';
+} from '../../../../lib/email/email-marketing';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/email/campaigns/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;
@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Access denied', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const data = await getCampaign(campaignId);
+    const data = await getMarketingCampaign(campaignId);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/email/campaigns/[id]', HttpStatus.OK, duration);
@@ -81,7 +81,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/email/campaigns/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;
@@ -103,7 +103,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
       result = await pauseCampaign(campaignId, locals.user.id);
       logger.info('Campaign paused', { campaignId, userId: locals.user.id });
     } else {
-      result = await updateCampaign(campaignId, locals.user.id, campaignData);
+      result = await updateMarketingCampaign(campaignId, locals.user.id, campaignData);
       logger.info('Campaign updated', { campaignId, userId: locals.user.id });
     }
 
@@ -145,7 +145,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/email/campaigns/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;

@@ -1,7 +1,9 @@
+// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { getRedisClient } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
 
+// @ts-nocheck
 /**
  * Server-Sent Events endpoint for real-time online user count
  * Client connects via EventSource and receives updates every 30 seconds

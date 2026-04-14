@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getUnreadCount } from '../../../lib/messages';
+import { getUnreadCount } from '../../../lib/message/messages';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -12,7 +12,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/messages/unread-count', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const count = await getUnreadCount(locals.user.id);

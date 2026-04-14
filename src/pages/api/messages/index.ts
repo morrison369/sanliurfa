@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getConversations, getOrCreateConversation } from '../../../lib/messages';
+import { getConversations, getOrCreateConversation } from '../../../lib/message/messages';
 import { queryOne } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/messages', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const limit = parseInt(url.searchParams.get('limit') || '50', 10);
@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/messages', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();

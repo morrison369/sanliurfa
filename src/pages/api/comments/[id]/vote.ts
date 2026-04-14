@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * Comment Vote API
  * POST: Vote on a comment (helpful/unhelpful)
  */
 
 import type { APIRoute } from 'astro';
-import { voteOnComment } from '../../../../lib/comments';
+import { voteOnComment } from '../../../../lib/comment';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';

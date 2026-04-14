@@ -6,7 +6,7 @@
 
 import type { APIRoute } from 'astro';
 import { metricsCollector } from '../../../lib/metrics';
-import { getKPIs, checkMetricAlerts } from '../../../lib/business-analytics';
+import { getKPIs, checkMetricAlerts } from '../../../lib/analytics/business-analytics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {

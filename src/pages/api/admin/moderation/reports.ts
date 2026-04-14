@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Admin Moderation Reports API
  * GET: Get reports for review

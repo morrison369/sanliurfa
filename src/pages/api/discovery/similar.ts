@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getSimilarPlaces } from '../../../lib/recommendations';
+import { getSimilarPlaces } from '../../../lib/recommendation/recommendations';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';

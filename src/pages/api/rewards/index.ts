@@ -10,8 +10,8 @@ import {
   getFeaturedRewards,
   redeemReward,
   getUserRedemptions
-} from '../../../lib/rewards-catalog';
-import { getLoyaltyBalance } from '../../../lib/loyalty-system';
+} from '../../../lib/rewards/rewards-catalog';
+import { getLoyaltyBalance } from '../../../lib/loyalty/loyalty-system';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (myRedemptions) {
       if (!locals.user?.id) {
         recordRequest('GET', '/api/rewards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-        return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+        return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
       }
       const status = url.searchParams.get('status');
       data = await getUserRedemptions(locals.user.id, status, limit, offset);
@@ -79,7 +79,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/rewards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();

@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 export default function PerformanceMonitor() {
   useEffect(() => {
     // Dinamically import performance monitor
-    import('../lib/performance-monitor').then(({ initializePerformanceMonitoring }) => {
+    import('../lib/performance/performance-monitor').then(({ initializePerformanceMonitoring }) => {
       initializePerformanceMonitoring();
     });
   }, []);

@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getAvailableDimensions, getAvailableMeasures } from '../../../lib/data-warehouse';
+import { getAvailableDimensions, getAvailableMeasures } from '../../../lib/data/data-warehouse';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/warehouse/dimensions', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,

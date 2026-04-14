@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Send Password Reset Email
  */

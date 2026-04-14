@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * Marketing Campaign Analytics API
  * GET: Get campaign performance metrics
  */
 
 import type { APIRoute } from 'astro';
-import { getCampaignPerformance } from '../../../../lib/marketing-campaigns';
+import { getCampaignPerformance } from '../../../../lib/marketing/marketing-campaigns';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { realtimeManager } from '../lib/realtime-sse';
+import { realtimeManager } from '../lib/realtime/realtime-sse';
 
 interface RealtimeNotificationBadgeProps {
   userId?: string;

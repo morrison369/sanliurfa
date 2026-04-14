@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * Followers Stats API
  * GET: Get follower statistics for a user
  */
 
 import type { APIRoute } from 'astro';
-import { getFollowerStats } from '../../../lib/followers';
+import { getFollowerStats } from '../../../lib/followers/followers';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';

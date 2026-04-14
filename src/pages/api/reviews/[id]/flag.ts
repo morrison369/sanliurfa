@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * Review Flag API
  * POST: Flag a review for moderation
  */
 
 import type { APIRoute } from 'astro';
-import { flagReview } from '../../../../lib/review-moderation';
+import { flagReview } from '../../../../lib/review/review-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';

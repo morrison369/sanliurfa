@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { createCollaborationSession, getCollaborationSession, addParticipant, removeParticipant, getActiveParticipants, getCollaborationStats } from '../../../lib/collaborative-editing';
+import { createCollaborationSession, getCollaborationSession, addParticipant, removeParticipant, getActiveParticipants, getCollaborationStats } from '../../../lib/collaborative/collaborative-editing';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 

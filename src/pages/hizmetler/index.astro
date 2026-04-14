@@ -1,0 +1,99 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+let featuredPlaces: any[] = [];
+
+const hizmetlerCategories = [
+  { slug: 'kuaforler', name: 'Kuaförler', icon: '💇', desc: 'Bayan kuaförleri' },
+  { slug: 'berberler', name: 'Berberler', icon: '✂️', desc: 'Erkek berberleri' },
+  { slug: 'temizlik-firmalari', name: 'Temizlik Firmaları', icon: '🧹', desc: 'Ev ve ofis temizliği' },
+  { slug: 'nakliyat', name: 'Nakliyat', icon: '🚚', desc: 'Taşımacılık firmaları' },
+  { slug: 'cilingir', name: 'Çilingir', icon: '🔑', desc: '7/24 çilingir hizmeti' },
+  { slug: 'elektrikci', name: 'Elektrikçi', icon: '⚡', desc: 'Elektrik tadilat ve tamir' },
+  { slug: 'tesisatci', name: 'Tesisatçı', icon: '🔧', desc: 'Su ve doğalgaz tesisatı' },
+];
+
+try {
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE c.slug IN ('kuaforler','berberler','temizlik-firmalari','nakliyat','cilingir','elektrikci','tesisatci')
+     AND p.status = 'active'
+     ORDER BY p.rating DESC LIMIT 6`
+  );
+  featuredPlaces = placesResult.rows;
+} catch (e) {
+  console.error('Error loading hizmetler:', e);
+}
+
+const seo = {
+  title: 'Şanlıurfa Hizmetler Rehberi | Kuaför, Temizlik, Nakliyat ve Teknik Servis',
+  description: 'Şanlıurfa\'da hizmet firmaları: kuaförler, berberler, temizlik şirketleri, nakliyat, çilingir, elektrikçi ve tesisatçı.',
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-cyan-700 to-blue-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Hizmetler Rehberi</h1>
+        <p class="text-xl text-cyan-100 max-w-2xl">
+          Şanlıurfa'da kuaförlerden çilingire, nakliyattan elektrikçiye tüm hizmetler
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <!-- Acil Hizmetler -->
+      <div class="grid md:grid-cols-3 gap-4 mb-10">
+        <div class="bg-red-50 border border-red-200 rounded-xl p-5 text-center">
+          <div class="text-3xl mb-2">🔑</div>
+          <h3 class="font-bold text-red-800">7/24 Çilingir</h3>
+          <a href="/hizmetler/cilingir" class="text-red-600 text-sm hover:underline">Hemen Bul →</a>
+        </div>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-5 text-center">
+          <div class="text-3xl mb-2">⚡</div>
+          <h3 class="font-bold text-yellow-800">Elektrikçi</h3>
+          <a href="/hizmetler/elektrikci" class="text-yellow-600 text-sm hover:underline">Hemen Bul →</a>
+        </div>
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-center">
+          <div class="text-3xl mb-2">🔧</div>
+          <h3 class="font-bold text-blue-800">Tesisatçı</h3>
+          <a href="/hizmetler/tesisatci" class="text-blue-600 text-sm hover:underline">Hemen Bul →</a>
+        </div>
+      </div>
+
+      <!-- Tüm Kategoriler -->
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Hizmet Kategorileri</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+        {hizmetlerCategories.map((cat) => (
+          <a
+            href={`/hizmetler/${cat.slug}`}
+            class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 border border-gray-100 group"
+          >
+            <div class="text-2xl mb-2">{cat.icon}</div>
+            <h3 class="font-bold text-gray-900 group-hover:text-cyan-600 transition-colors text-sm">{cat.name}</h3>
+            <p class="text-xs text-gray-500 mt-1">{cat.desc}</p>
+          </a>
+        ))}
+      </div>
+
+      {featuredPlaces.length > 0 && (
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Öne Çıkan Hizmet Firmaları</h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredPlaces.map((place) => (
+              <a href={`/places/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+                <h3 class="font-bold text-gray-900 group-hover:text-cyan-600">{place.name}</h3>
+                <span class="text-xs text-cyan-600">{place.category_name}</span>
+                {place.address && <p class="text-xs text-gray-500 mt-2">📍 {place.address}</p>}
+                {place.phone && <p class="text-xs text-gray-500">📞 {place.phone}</p>}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

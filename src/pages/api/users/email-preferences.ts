@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const user = locals.user;
     if (!user) {
       recordRequest('GET', '/api/users/email-preferences', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const result = await queryOne(
@@ -50,7 +50,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const user = locals.user;
     if (!user) {
       recordRequest('PUT', '/api/users/email-preferences', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();

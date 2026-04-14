@@ -1,0 +1,210 @@
+---
+// Category Detail Page
+import Layout from '../../layouts/Layout.astro';
+import { getCategoryBySlug } from '../../lib/places/categories';
+import { getPlaces } from '../../lib/places/db';
+import OptimizedImage from '../../components/OptimizedImage.astro';
+
+const { slug } = Astro.params;
+if (!slug) {
+  return Astro.redirect('/');
+}
+
+const category = await getCategoryBySlug(slug);
+if (!category) {
+  return Astro.redirect('/404');
+}
+
+const { places } = await getPlaces({
+  category: slug,
+  status: 'approved',
+  limit: 50,
+  sortBy: 'rating',
+});
+
+const seo = {
+  title: `${category.name} - Şanlıurfa Rehberi`,
+  description: category.metaDescription || `${category.name} kategorisindeki en iyi mekanları keşfedin. ${places.length}+ mekan, yorumlar ve puanlamalar.`,
+};
+---
+
+<Layout seo={seo}>
+  <!-- Hero -->
+  <section class="relative py-16" style={`background-color: ${category.color}15`}>
+    <div class="container-custom">
+      <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
+        <a href="/" class="hover:text-gray-900">Ana Sayfa</a>
+        <span>/</span>
+        <span class="text-gray-900">{category.name}</span>
+      </div>
+      
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">{category.name}</h1>
+      <p class="text-xl text-gray-600 max-w-2xl">{category.description}</p>
+      
+      <div class="flex items-center gap-6 mt-6">
+        <span class="text-gray-600">
+          <strong class="text-gray-900">{places.length}</strong> mekan
+        </span>
+        <span class="text-gray-600">
+          <strong class="text-gray-900">{places.filter(p => p.rating >= 4).length}</strong> yüksek puanlı
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filters & Results -->
+  <section class="py-12">
+    <div class="container-custom">
+      <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar Filters -->
+        <aside class="lg:w-64 flex-shrink-0">
+          <div class="bg-white rounded-xl shadow-sm p-6 sticky top-4">
+            <h3 class="font-bold text-lg mb-4">Filtreler</h3>
+            
+            <!-- Price Range -->
+            <div class="mb-6">
+              <h4 class="font-medium mb-2">Fiyat Aralığı</h4>
+              <div class="space-y-2">
+                {['₺', '₺₺', '₺₺₺', '₺₺₺₺'].map((price, i) => (
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="price" value={i} class="rounded border-gray-300" />
+                    <span class="text-gray-700">{price}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            
+            <!-- Rating -->
+            <div class="mb-6">
+              <h4 class="font-medium mb-2">Puan</h4>
+              <div class="space-y-2">
+                {[5, 4, 3].map(rating => (
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="rating" value={rating} class="rounded border-gray-300" />
+                    <div class="flex text-yellow-400 text-sm">
+                      {'★'.repeat(rating)}
+                      <span class="text-gray-300">{'★'.repeat(5 - rating)}</span>
+                    </div>
+                    <span class="text-gray-500 text-sm">ve üzeri</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            
+            <!-- Features -->
+            <div class="mb-6">
+              <h4 class="font-medium mb-2">Özellikler</h4>
+              <div class="space-y-2">
+                {['WiFi', 'Otopark', 'Engelli Erişimi', 'Açık Alan'].map(feature => (
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="feature" value={feature} class="rounded border-gray-300" />
+                    <span class="text-gray-700 text-sm">{feature}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            
+            <button
+              onclick="applyFilters()"
+              class="w-full py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+            >
+              Filtrele
+            </button>
+          </div>
+        </aside>
+        
+        <!-- Results -->
+        <div class="flex-1">
+          <!-- Sort -->
+          <div class="flex justify-between items-center mb-6">
+            <p class="text-gray-600">{places.length} sonuç bulundu</p>
+            <select id="sort" onchange="sortResults()" class="px-4 py-2 border border-gray-300 rounded-lg">
+              <option value="rating">En Yüksek Puan</option>
+              <option value="popular">En Popüler</option>
+              <option value="newest">En Yeni</option>
+              <option value="name">İsim (A-Z)</option>
+            </select>
+          </div>
+          
+          <!-- Places Grid -->
+          {places.length > 0 ? (
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {places.map(place => (
+                <a href={`/places/${place.slug}`} class="group">
+                  <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex flex-col md:flex-row">
+                    <div class="md:w-2/5 h-48 md:h-auto bg-gray-200">
+                      {place.thumbnail ? (
+                        <OptimizedImage
+                          src={place.thumbnail}
+                          alt={place.name}
+                          width={400}
+                          height={300}
+                          class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div class="w-full h-full flex items-center justify-center text-gray-300 text-4xl">
+                          📍
+                        </div>
+                      )}
+                    </div>
+                    <div class="md:w-3/5 p-5">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs text-gray-500 uppercase tracking-wider">{category.name}</span>
+                        {place.is_verified && (
+                          <span class="text-blue-500" title="Doğrulanmış">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                          </span>
+                        )}
+                      </div>
+                      
+                      <h3 class="font-bold text-lg group-hover:text-amber-600 transition-colors">{place.name}</h3>
+                      
+                      <div class="flex items-center gap-2 mt-2">
+                        <div class="flex text-yellow-400">
+                          {'★'.repeat(Math.floor(place.rating || 0))}
+                          <span class="text-gray-300">{'★'.repeat(5 - Math.floor(place.rating || 0))}</span>
+                        </div>
+                        <span class="text-sm text-gray-500">{place.rating?.toFixed(1) || '-'}</span>
+                        <span class="text-sm text-gray-400">({place.review_count} yorum)</span>
+                      </div>
+                      
+                      <p class="text-gray-600 text-sm mt-2 line-clamp-2">{place.short_description}</p>
+                      
+                      <div class="flex items-center gap-4 mt-4 text-sm text-gray-500">
+                        {place.price_range && (
+                          <span class="font-medium text-gray-700">{place.price_range}</span>
+                        )}
+                        {place.address && (
+                          <span class="truncate">{place.address}</span>
+                        )}
+                      </div>
+                      
+                      {place.features && place.features.length > 0 && (
+                        <div class="flex flex-wrap gap-2 mt-3">
+                          {place.features.slice(0, 3).map(feature => (
+                            <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                              {feature}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div class="text-center py-16">
+              <div class="text-6xl mb-4">🔍</div>
+              <h3 class="text-xl font-bold text-gray-900 mb-2">Mekan Bulunamadı</h3>
+              <p class="text-gray-600">Bu kategoride henüz mekan eklenmemiş.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

@@ -16,37 +16,37 @@ export const GET: APIRoute = async (context) => {
     // If userId parameter, get that user's collections
     if (userId) {
       const collections = await getUserCollections(userId, limit ? parseInt(limit) : 50);
-      return apiResponse(context, HttpStatus.OK, {
+      return apiResponse({
         success: true,
         data: collections,
         count: collections.length
-      });
+      }, HttpStatus.OK);
     }
 
     // If public flag, get public collections
     if (isPublic === 'true') {
       const collections = await getPublicCollections(limit ? parseInt(limit) : 20, offset ? parseInt(offset) : 0);
-      return apiResponse(context, HttpStatus.OK, {
+      return apiResponse({
         success: true,
         data: collections,
         count: collections.length
-      });
+      }, HttpStatus.OK);
     }
 
     // Default: if authenticated, get user's collections
     if (context.locals.user) {
       const collections = await getUserCollections(context.locals.user.id);
-      return apiResponse(context, HttpStatus.OK, {
+      return apiResponse({
         success: true,
         data: collections,
         count: collections.length
-      });
+      }, HttpStatus.OK);
     }
 
-    return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+    return apiError('UNAUTHORIZED', 'Authentication required', HttpStatus.UNAUTHORIZED);
   } catch (error) {
-    logger.error('Failed to get collections', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to get collections');
+    logger.error('Failed to get collections', error instanceof Error ? error : new Error(String(error)) as any);
+    return apiError('INTERNAL_ERROR', 'Failed to get collections', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -76,13 +76,13 @@ export const POST: APIRoute = async (context) => {
 
     logger.info('Collection created via API', { userId: context.locals.user.id, collectionId: collection.id });
 
-    return apiResponse(context, HttpStatus.CREATED, {
+    return apiResponse({
       success: true,
       message: 'Koleksiyon oluşturuldu',
       data: collection
-    });
+    }, HttpStatus.CREATED);
   } catch (error) {
-    logger.error('Failed to create collection', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to create collection');
+    logger.error('Failed to create collection', error instanceof Error ? error : new Error(String(error)) as any);
+    return apiError('INTERNAL_ERROR', 'Failed to create collection', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

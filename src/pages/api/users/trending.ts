@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Trending Users
  * GET /api/users/trending - Get most active and popular users

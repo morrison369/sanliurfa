@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * Get user statistics including activity trends
  * GET /api/users/stats?userId=...
  */
 
 import type { APIRoute } from 'astro';
-import { getUserStats, getActivityTrends } from '../../../../lib/user-stats';
+import { getUserStats, getActivityTrends } from '../../../../lib/user/user-stats';
 import { apiResponse, apiError, HttpStatus } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 

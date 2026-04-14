@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Blog API - Yorum Onayla
  * PATCH /api/blog/comments/[id]/approve

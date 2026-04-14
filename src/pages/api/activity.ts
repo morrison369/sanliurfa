@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     if (!userId) {
       recordRequest('GET', '/api/activity', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Login required',
         HttpStatus.UNAUTHORIZED,
         undefined,

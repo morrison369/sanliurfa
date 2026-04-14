@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { likePlace, unlikePlace, hasUserLikedPlace, getPlaceLikeCount } from '../../../../lib/social-interactions';
+import { likePlace, unlikePlace, hasUserLikedPlace, getPlaceLikeCount } from '../../../../lib/social/social-interactions';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
@@ -12,7 +12,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/places/[id]/like', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: placeId } = params;

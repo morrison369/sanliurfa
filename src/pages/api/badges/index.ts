@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getAllBadges, getUserBadges } from '../../../lib/badges';
+import { getAllBadges, getUserBadges } from '../../../lib/badges/badges';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';

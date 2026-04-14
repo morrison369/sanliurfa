@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
 
+interface RecommendedUser {
+  id: string;
+  full_name: string;
+  avatar_url?: string;
+  level?: number;
+  review_count?: number;
+}
+
 export default function UserRecommendations() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<RecommendedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [followingIds, setFollowingIds] = useState(new Set());
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadRecommendations();
@@ -22,7 +30,7 @@ export default function UserRecommendations() {
     }
   };
 
-  const toggleFollow = async (userId) => {
+  const toggleFollow = async (userId: string) => {
     try {
       const method = followingIds.has(userId) ? 'DELETE' : 'POST';
       const response = await fetch('/api/followers/' + userId, { method });

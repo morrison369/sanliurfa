@@ -3,7 +3,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { createCampaign, getAllCampaigns, getCampaign, updateCampaign, getCampaignMetrics } from '../../../lib/email-campaigns';
+import { createCampaign, getAllCampaigns, getCampaign, updateCampaign, getCampaignMetrics } from '../../../lib/email/email-campaigns';
 import { validateWithSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';

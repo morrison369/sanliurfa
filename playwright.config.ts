@@ -5,10 +5,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 4,
+  workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:1111',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:6000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -35,8 +35,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:1111',
+    command: 'npm run build && node dist/server/entry.mjs',
+    url: 'http://localhost:6000',
     reuseExistingServer: !process.env.CI,
+    timeout: 120000,
   },
 });

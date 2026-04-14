@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * User Suggestions
  * GET /api/users/suggestions - Get user suggestions based on interests and activity

@@ -4,8 +4,8 @@
  */
 
 import type { APIRoute } from 'astro';
-import { searchPlaces, searchReviews, searchEvents, recordSearchQuery, getTrendingSearches } from '../../../lib/search-engine';
-import { recordSuggestionImpression, updateAutocompleteIndex, recordZeroResultSearch } from '../../../lib/search-suggestions';
+import { searchPlaces, searchReviews, searchEvents, recordSearchQuery, getTrendingSearches } from '../../../lib/search/search-engine';
+import { recordSuggestionImpression, updateAutocompleteIndex, recordZeroResultSearch } from '../../../lib/search/search-suggestions';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const url = new URL(request.url);
     const query = url.searchParams.get('q');
     const searchType = url.searchParams.get('type') || 'places';
-    const sortBy = url.searchParams.get('sort') || 'relevance';
+    const sortBy = url.searchParams.get('sort') || 'rating';
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
     const offset = parseInt(url.searchParams.get('offset') || '0');
 

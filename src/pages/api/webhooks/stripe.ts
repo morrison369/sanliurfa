@@ -6,11 +6,11 @@
 import type { APIRoute } from 'astro';
 import Stripe from 'stripe';
 import { insert, queryOne, update as updateDb } from '../../../lib/postgres';
-import { verifyWebhookSignature, getSubscription } from '../../../lib/stripe-client';
-import { updateUserQuotas } from '../../../lib/usage-tracking';
+import { verifyStripeWebhookSignature, getSubscription } from '../../../lib/stripe/stripe-client';
+import { updateUserQuotas } from '../../../lib/usage/usage-tracking';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
-import { emailOnSubscriptionCreated, emailOnPaymentSuccess, emailOnSubscriptionCancelled } from '../../../lib/subscription-email-integration';
+import { emailOnSubscriptionCreated, emailOnPaymentSuccess, emailOnSubscriptionCancelled } from '../../../lib/subscription/subscription-email-integration';
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   try {
@@ -19,13 +19,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     const billingCycle = session.metadata?.billingCycle || 'monthly';
 
     if (!userId || !tierId) {
-      logger.warn('Invalid checkout session metadata', { sessionId: session.id });
+      logger.warn('Invalid checkout session metadata', new Error(`sessionId: ${session.id}`));
       return;
     }
 
     // Get subscription details from Stripe
     if (!session.subscription || typeof session.subscription !== 'string') {
-      logger.warn('No subscription ID in checkout session', { sessionId: session.id });
+      logger.warn('No subscription ID in checkout session', new Error(`sessionId: ${session.id}`));
       return;
     }
 
@@ -98,11 +98,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
+  let subscription: { id: string; user_id: string; tier_id: string; billing_cycle?: string } | null = null;
+
   try {
-    const subscriptionId = invoice.subscription;
+    const subscriptionId = (invoice as any).subscription;
 
     if (!subscriptionId || typeof subscriptionId !== 'string') {
-      logger.warn('No subscription ID in invoice', { invoiceId: invoice.id });
+      logger.warn('No subscription ID in invoice', new Error(`invoiceId: ${invoice.id}`));
       return;
     }
 
@@ -113,8 +115,8 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     );
 
     if (!existingBilling) {
-      const subscription = await queryOne(
-        `SELECT id, user_id FROM subscriptions WHERE stripe_subscription_id = $1`,
+      subscription = await queryOne(
+        `SELECT id, user_id, tier_id, billing_cycle FROM subscriptions WHERE stripe_subscription_id = $1`,
         [subscriptionId]
       );
 
@@ -160,7 +162,7 @@ async function handleCustomerSubscriptionDeleted(subscription: Stripe.Subscripti
 
     // Find and cancel subscription in our database
     const dbSubscription = await queryOne(
-      `SELECT id, user_id FROM subscriptions WHERE stripe_subscription_id = $1`,
+      `SELECT id, user_id, tier_id FROM subscriptions WHERE stripe_subscription_id = $1`,
       [stripeSubscriptionId]
     );
 
@@ -194,10 +196,10 @@ export const POST: APIRoute = async ({ request }) => {
     const signature = request.headers.get('stripe-signature');
 
     // Verify webhook signature
-    const event = await verifyWebhookSignature(rawBody, signature);
+    const event = await verifyStripeWebhookSignature(rawBody, signature || '');
 
     recordRequest('POST', '/api/webhooks/stripe', 200, Date.now() - startTime);
-    logger.info('Stripe webhook received', { eventType: event.type, eventId: event.id });
+    logger.info('Stripe webhook received', new Error(`eventType: ${event.type}, eventId: ${event.id}`));
 
     // Handle different event types
     switch (event.type) {
@@ -214,14 +216,12 @@ export const POST: APIRoute = async ({ request }) => {
         break;
 
       case 'invoice.payment_failed':
-        logger.warn('Invoice payment failed', {
-          invoiceId: (event.data.object as Stripe.Invoice).id,
-          subscriptionId: (event.data.object as Stripe.Invoice).subscription,
-        });
+        const inv = event.data.object as Stripe.Invoice;
+        logger.warn('Invoice payment failed', new Error(`invoiceId: ${inv.id}, subscriptionId: ${(inv as any).subscription}`));
         break;
 
       default:
-        logger.debug('Unhandled webhook event', { eventType: event.type });
+        logger.debug('Unhandled webhook event', new Error(`eventType: ${event.type}`));
     }
 
     return new Response(JSON.stringify({ received: true }), {

@@ -1,49 +1,69 @@
 import type { APIRoute } from 'astro';
 
-const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Şanlıurfa.com API Documentation</title>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.css">
-  <style>
-    html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
-    *, *:before, *:after { box-sizing: inherit; }
-    body { margin:0; padding: 0; }
-  </style>
-</head>
-<body>
-  <div id="swagger-ui"></div>
-  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-standalone-preset.js"></script>
-  <script>
-    window.onload = function() {
-      window.ui = SwaggerUIBundle({
-        url: "/api/openapi.json",
-        dom_id: '#swagger-ui',
-        deepLinking: true,
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
-        ],
-        layout: "StandaloneLayout"
-      })
+const apiDocs = {
+  name: 'Sanliurfa.com API',
+  version: '1.0.0',
+  description: 'Sehir rehberi platformu API dokumantasyonu',
+  baseUrl: '/api',
+  endpoints: {
+    auth: {
+      'POST /auth/register': { description: 'Yeni kullanici kaydi', body: ['name', 'email', 'password'] },
+      'POST /auth/login': { description: 'Kullanici girisi', body: ['email', 'password'] }
+    },
+    places: {
+      'GET /places': { description: 'Mekan listesi', params: ['category', 'page', 'limit', 'sort'] },
+      'GET /places/:id': { description: 'Mekan detayi' },
+      'POST /places/:id/reviews': { description: 'Yorum ekle', auth: true },
+      'POST /places/apply': { description: 'Isletme basvurusu', body: ['name', 'category', 'address', 'phone', 'ownerName', 'ownerEmail'] }
+    },
+    search: {
+      'GET /search': { description: 'Arama', params: ['q', 'category', 'type'] }
+    },
+    user: {
+      'GET /user/favorites': { description: 'Favori mekanlar', auth: true },
+      'POST /user/favorites': { description: 'Favorilere ekle', auth: true },
+      'DELETE /user/favorites': { description: 'Favorilerden cikar', auth: true }
+    },
+    upload: {
+      'POST /upload': { description: 'Dosya yukle', auth: true, contentType: 'multipart/form-data' }
+    },
+    reservations: {
+      'GET /reservations': { description: 'Rezervasyon listesi', auth: true },
+      'POST /reservations': { description: 'Rezervasyon olustur', body: ['placeId', 'customerName', 'customerPhone', 'reservationDate', 'reservationTime', 'partySize'] }
+    },
+    promotions: {
+      'GET /promotions': { description: 'Kampanya listesi' },
+      'POST /promotions': { description: 'Kampanya olustur', auth: true }
+    },
+    contact: {
+      'POST /contact': { description: 'Iletisim formu', body: ['name', 'email', 'subject', 'message', 'type'] }
+    },
+    admin: {
+      'GET /admin/dashboard': { description: 'Admin istatistikleri', auth: true, role: 'admin' },
+      'GET /admin/users': { description: 'Kullanici listesi', auth: true, role: 'admin' },
+      'GET /admin/places': { description: 'Isletme listesi', auth: true, role: 'admin' }
     }
-  </script>
-</body>
-</html>
-`;
+  },
+  authentication: {
+    type: 'Bearer Token',
+    header: 'Authorization: Bearer <token>'
+  },
+  rateLimit: {
+    default: '100 istek / 15 dakika',
+    auth: '1000 istek / 15 dakika',
+    endpoints: {
+      '/api/auth/login': '5 istek / saat',
+      '/api/auth/register': '3 istek / saat'
+    }
+  }
+};
 
 export const GET: APIRoute = () => {
-  return new Response(html, {
+  return new Response(JSON.stringify(apiDocs, null, 2), {
     status: 200,
     headers: {
-      'Content-Type': 'text/html; charset=utf-8'
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=3600'
     }
   });
 };

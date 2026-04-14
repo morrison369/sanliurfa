@@ -1,212 +1,301 @@
-# API Dokümantasyonu
+# 📡 API Dokümantasyonu
 
-## Kimlik Doğrulama
+Şanlıurfa.com API Referansı
 
-### POST /api/auth/login
-Email ve şifre ile giriş.
+## 🔐 Kimlik Doğrulama
 
-**Request:**
-```json
+API, JWT tabanlı kimlik doğrulama kullanır.
+
+### Giriş Yap
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
 {
-  "email": "user@example.com",
-  "password": "password123"
+  "email": "kullanici@example.com",
+  "password": "sifre123"
 }
 ```
 
-**Response:**
+**Yanıt:**
 ```json
 {
   "success": true,
-  "user": { ... }
-}
-```
-
-### POST /api/auth/register
-Yeni kullanıcı kaydı.
-
-**Request:**
-```json
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "full_name": "John Doe"
-}
-```
-
-### GET /api/auth/social/google
-Google OAuth girişi.
-
-### GET /api/auth/social/facebook
-Facebook OAuth girişi.
-
-## Mekanlar
-
-### GET /api/places
-Mekan listesi.
-
-**Query Parameters:**
-- `category` - Filtre kategorisi
-- `page` - Sayfa numarası
-- `limit` - Sayfa başına öğe
-- `sort` - Sıralama (rating, newest, name)
-- `minRating` - Minimum puan
-
-**Response:**
-```json
-{
-  "data": [...],
-  "pagination": {
-    "page": 1,
-    "totalPages": 10,
-    "total": 100
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "user-123",
+    "email": "kullanici@example.com",
+    "role": "user"
   }
 }
 ```
 
-### POST /api/places
-Yeni mekan ekleme (giriş gerekli).
+### Token Kullanımı
 
-**Request:**
-```json
+```http
+Authorization: Bearer <token>
+```
+
+## 👤 Kullanıcı API
+
+### Kullanıcı Bilgilerini Getir
+
+```http
+GET /api/users/[id]
+Authorization: Bearer <token>
+```
+
+### Kullanıcı Profilini Güncelle
+
+```http
+PUT /api/users/[id]
+Authorization: Bearer <token>
+Content-Type: application/json
+
 {
-  "name": "Mekan Adı",
-  "category": "restaurant",
-  "description": "Açıklama",
-  "address": "Adres",
-  "latitude": 37.1591,
-  "longitude": 38.7969
+  "full_name": "Yeni İsim",
+  "avatar": "https://..."
 }
 ```
 
-### GET /api/places/:id
-Mekan detayı.
+## 🏛️ Mekanlar API
 
-### PUT /api/places/:id
-Mekan güncelleme (sahibi veya admin).
+### Tüm Mekanları Listele
 
-### DELETE /api/places/:id
-Mekan silme (sahibi veya admin).
-
-## Yorumlar
-
-### GET /api/reviews
-Yorum listesi.
+```http
+GET /api/places
+```
 
 **Query Parameters:**
-- `placeId` - Mekan ID
-- `userId` - Kullanıcı ID
-- `status` - Durum (pending, approved, rejected)
+- `category` - Kategori filtresi
+- `limit` - Sayfa başına sonuç (default: 20)
+- `offset` - Sayfalama (default: 0)
 
-### POST /api/reviews
-Yeni yorum ekleme.
+### Mekan Detayı
 
-**Request:**
-```json
+```http
+GET /api/places/[id]
+```
+
+### Yeni Mekan Ekle (Admin)
+
+```http
+POST /api/places
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
 {
-  "placeId": "uuid",
+  "name": "Balıklıgöl",
+  "description": "Şanlıurfa'nın sembolü...",
+  "category": "tarihi",
+  "latitude": 37.1493,
+  "longitude": 38.7926,
+  "address": "Eyyübiye, Şanlıurfa"
+}
+```
+
+## 📝 Yorumlar API
+
+### Yorum Ekle
+
+```http
+POST /api/places/[id]/reviews
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
   "rating": 5,
-  "title": "Başlık",
-  "content": "Yorum içeriği"
+  "text": "Harika bir yer!",
+  "photos": ["url1", "url2"]
 }
 ```
 
-### POST /api/reviews/:id/approve
-Yorum onaylama (admin).
+### Yorumlara Yanıt Ver
 
-### POST /api/reviews/:id/reject
-Yorum reddetme (admin).
+```http
+POST /api/reviews/[id]/responses
+Authorization: Bearer <token>
+Content-Type: application/json
 
-## Kullanıcı
-
-### GET /api/users
-Kullanıcı listesi (admin).
-
-### GET /api/users/:id
-Kullanıcı detayı.
-
-### POST /api/users/:id/ban
-Kullanıcı yasaklama (admin).
-
-### POST /api/users/:id/update-role
-Rol güncelleme (admin).
-
-## Bildirimler
-
-### GET /api/notifications
-Kullanıcı bildirimleri.
-
-**Response:**
-```json
 {
-  "data": [...],
-  "unreadCount": 5
+  "text": "Teşekkürler!"
 }
 ```
 
-### POST /api/notifications/:id/read
-Bildirimi okundu olarak işaretle.
+## 🎫 Etkinlikler API
 
-### POST /api/notifications/read-all
-Tüm bildirimleri okundu olarak işaretle.
+### Etkinlikleri Listele
 
-## Favoriler
-
-### GET /api/favorites
-Kullanıcı favorileri.
-
-### POST /api/favorites
-Favorilere ekleme.
-
-**Request:**
-```json
-{
-  "placeId": "uuid"
-}
+```http
+GET /api/events
 ```
-
-### DELETE /api/favorites
-Favoriden çıkarma.
 
 **Query Parameters:**
-- `id` - Mekan ID
+- `start_date` - Başlangıç tarihi (YYYY-MM-DD)
+- `end_date` - Bitiş tarihi (YYYY-MM-DD)
+- `category` - Kategori filtresi
 
-## Arama
+### Etkinlik Detayı
 
-### GET /api/search
-Arama sonuçları.
+```http
+GET /api/events/[id]
+```
 
-**Query Parameters:**
-- `q` - Arama terimi
-- `type` - Tip (place, blog, historical, all)
+### Etkinliğe Katıl
 
-## Admin
+```http
+POST /api/events/[id]/rsvp
+Authorization: Bearer <token>
+```
 
-### POST /api/admin/bulk-action
-Toplu işlem.
+## 🔖 Koleksiyonlar API
 
-**Request:**
-```json
+### Koleksiyon Oluştur
+
+```http
+POST /api/collections
+Authorization: Bearer <token>
+Content-Type: application/json
+
 {
-  "action": "delete",
-  "items": ["uuid1", "uuid2"]
+  "name": "Favori Mekanlarım",
+  "description": "En sevdiğim yerler",
+  "is_public": true
 }
 ```
 
-## Hata Kodları
+### Koleksiyona Mekan Ekle
+
+```http
+POST /api/collections/[id]/items
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "place_id": "place-123",
+  "note": "Muhakkak gidilmeli"
+}
+```
+
+## 🏅 Başarılar API
+
+### Kullanıcı Başarımları
+
+```http
+GET /api/users/[id]/badges
+```
+
+### Tüm Başarımlar
+
+```http
+GET /api/badges
+```
+
+## 📊 Analytics API
+
+### Sayfa Görüntüleme İstatistikleri
+
+```http
+GET /api/analytics/pageviews
+Authorization: Bearer <admin_token>
+```
+
+### Popüler Mekanlar
+
+```http
+GET /api/analytics/popular
+```
+
+## 🔍 Arama API
+
+### Genel Arama
+
+```http
+GET /api/search?q=balıklıgöl&limit=10
+```
+
+### Gelişmiş Arama
+
+```http
+POST /api/search/advanced
+Content-Type: application/json
+
+{
+  "query": "restoran",
+  "filters": {
+    "category": "yemek",
+    "rating": 4,
+    "price_range": "medium"
+  },
+  "sort": "rating",
+  "limit": 20
+}
+```
+
+## 📁 Dosya Yükleme API
+
+### Dosya Yükle
+
+```http
+POST /api/upload
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+file: <binary>
+```
+
+**Yanıt:**
+```json
+{
+  "success": true,
+  "url": "https://cdn.sanliurfa.com/uploads/...",
+  "filename": "image.jpg"
+}
+```
+
+## ⚙️ Sistem API
+
+### Sağlık Kontrolü
+
+```http
+GET /api/health
+```
+
+**Yanıt:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-04-11T17:30:00Z",
+  "version": "1.0.0"
+}
+```
+
+### Önbelleği Temizle (Admin)
+
+```http
+POST /api/admin/cache/clear
+Authorization: Bearer <admin_token>
+```
+
+## 🚨 Hata Kodları
 
 | Kod | Açıklama |
 |-----|----------|
-| 400 | Geçersiz istek |
-| 401 | Yetkisiz erişim |
-| 403 | Yasaklı erişim |
+| 400 | Geçersiz İstek |
+| 401 | Yetkisiz Erişim |
+| 403 | Yasak |
 | 404 | Bulunamadı |
-| 429 | Çok fazla istek |
-| 500 | Sunucu hatası |
+| 409 | Çakışma |
+| 422 | Doğrulama Hatası |
+| 429 | Rate Limit Aşıldı |
+| 500 | Sunucu Hatası |
 
-## Rate Limiting
+## 📊 Rate Limiting
 
-| Endpoint | Limit |
-|----------|-------|
-| API Genel | 100/dakika |
-| Auth | 5/dakika |
-| Yorum | 10/saat |
+- **Authenticated:** 100 istek / dakika
+- **Anonymous:** 20 istek / dakika
+
+---
+
+Son Güncelleme: 2026-04-11

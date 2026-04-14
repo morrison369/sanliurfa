@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { pool } from '../../../lib/postgres';
-import { getWebhookLogs, getWebhookLogsSummary, clearOldWebhookLogs } from '../../../lib/webhook-logs';
+import { pool as postgresPool } from '../../../lib/postgres';
+import { getWebhookLogs, getWebhookLogsSummary, clearOldWebhookLogs } from '../../../lib/webhook/webhook-logs';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -29,7 +29,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     if (summary) {
       // Return summary only
-      const summaryData = await getWebhookLogsSummary(pool, webhookId, locals.user.id);
+      const summaryData = await getWebhookLogsSummary(postgresPool as any, webhookId, locals.user.id);
       return apiResponse(
         { success: true, data: summaryData },
         HttpStatus.OK,
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Return paginated logs
-    const { logs, total } = await getWebhookLogs(pool, webhookId, locals.user.id, limit, offset);
+    const { logs, total } = await getWebhookLogs(postgresPool as any, webhookId, locals.user.id, limit, offset);
 
     return apiResponse(
       {
@@ -70,7 +70,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -81,7 +81,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Webhook ID required', HttpStatus.BAD_REQUEST);
     }
 
-    const deletedCount = await clearOldWebhookLogs(pool, webhookId, locals.user.id, olderThanDays);
+    const deletedCount = await clearOldWebhookLogs(postgresPool as any, webhookId, locals.user.id, olderThanDays);
 
     logger.info('Webhook logs cleared', {
       webhookId,

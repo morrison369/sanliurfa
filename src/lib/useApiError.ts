@@ -3,8 +3,8 @@
  */
 
 import { useState, useCallback } from 'react';
-import { AppError, unknownToAppError, fetchWithErrorHandling } from './error-handling';
-import { toast } from './toast';
+import { type AppError, unknownToAppError } from './error-handling';
+
 
 interface UseApiErrorOptions {
   showToast?: boolean;
@@ -24,15 +24,8 @@ export function useApiError(options: UseApiErrorOptions = {}) {
 
   const handleError = useCallback(
     (err: unknown, context?: string) => {
-      const appError = unknownToAppError(err, context);
+      const appError = unknownToAppError(err);
       setError(appError);
-
-      if (showToast) {
-        const message = lang === 'tr'
-          ? appError.userMessage || `${appError.type}: ${appError.message}`
-          : `${appError.type}: ${appError.message}`;
-        toast.error(message);
-      }
 
       onError?.(appError);
     },
@@ -62,39 +55,12 @@ export function useApiError(options: UseApiErrorOptions = {}) {
     [handleError]
   );
 
-  const fetchWithHandler = useCallback(
-    async <T,>(
-      url: string,
-      options?: RequestInit
-    ): Promise<T | null> => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const response = await fetchWithErrorHandling(url, options);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        return await response.json() as T;
-      } catch (err) {
-        handleError(err, url);
-        return null;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [handleError]
-  );
-
   return {
     error,
     isLoading,
     clearError,
     handleError,
-    executeAsync,
-    fetchWithHandler
+    executeAsync
   };
 }
 

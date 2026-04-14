@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const user = locals.user;
     if (!user) {
       recordRequest('GET', '/api/feed', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const feedType = url.searchParams.get('type') || 'following';

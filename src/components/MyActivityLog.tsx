@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from 'react';
 
+interface Activity {
+  id: string;
+  actionType: string;
+  metadata?: {
+    placeName?: string;
+  };
+  createdAt: string;
+}
+
 export default function MyActivityLog() {
-  const [activities, setActivities] = useState([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -23,8 +32,8 @@ export default function MyActivityLog() {
 
   if (isLoading) return <div className="text-center py-8">Yukleniyor...</div>;
 
-  const getActivityIcon = (type) => {
-    const icons = {
+  const getActivityIcon = (type: string) => {
+    const icons: Record<string, string> = {
       'review_created': '⭐',
       'favorite_added': '❤️',
       'comment_posted': '💬',
@@ -34,8 +43,8 @@ export default function MyActivityLog() {
     return icons[type] || '📌';
   };
 
-  const getActivityText = (type) => {
-    const texts = {
+  const getActivityText = (type: string) => {
+    const texts: Record<string, string> = {
       'review_created': 'Inceleme yazdin',
       'favorite_added': 'Favorilere ekledi',
       'comment_posted': 'Yorum yaptin',

@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { generateAnalyticsReport } from '../../../../../lib/business-analytics';
+import { generateAnalyticsReport } from '../../../../../lib/analytics/business-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
 import { logger } from '../../../../../lib/logging';
 import { recordRequest } from '../../../../../lib/metrics';

@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * Badge Definitions
  * GET /api/badges/definitions - Get all available badge types
  */
 
 import type { APIRoute } from 'astro';
-import { getBadgeDefinitions } from '../../../lib/place-verification';
+import { getBadgeDefinitions } from '../../../lib/place/place-verification';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';

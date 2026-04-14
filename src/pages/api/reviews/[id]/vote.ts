@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     if (!user) {
       recordRequest('POST', `/api/reviews/${params.id}/vote`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,

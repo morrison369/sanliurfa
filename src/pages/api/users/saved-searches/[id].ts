@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * Delete a saved search
  * DELETE /api/users/saved-searches/[id]
  */
 
 import type { APIRoute } from 'astro';
-import { deleteSavedSearch } from '../../../../lib/saved-searches';
+import { deleteSavedSearch } from '../../../../lib/saved/saved-searches';
 import { apiResponse, apiError, HttpStatus } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 

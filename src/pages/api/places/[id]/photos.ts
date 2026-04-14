@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getPlacePhotos } from '../../../../lib/photos';
+import { getPlacePhotos } from '../../../../lib/photo';
 import { queryOne } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';

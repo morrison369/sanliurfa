@@ -1,0 +1,41 @@
+---
+// Service Worker registration component
+---
+
+{import.meta.env.PROD && (
+  <script>
+    // Service Worker registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function(registration) {
+            console.log('[SW] Registered:', registration.scope);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', function() {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', function() {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New version available
+                    if (confirm('Yeni versiyon mevcut! Sayfayı yenilemek ister misiniz?')) {
+                      window.location.reload();
+                    }
+                  }
+                });
+              }
+            });
+          })
+          .catch(function(error) {
+            console.log('[SW] Registration failed:', error);
+          });
+      });
+    }
+  </script>
+)}
+
+{import.meta.env.DEV && (
+  <script>
+    console.log('[SW] Service Worker disabled in development mode');
+  </script>
+)}

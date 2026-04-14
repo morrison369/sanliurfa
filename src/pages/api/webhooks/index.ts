@@ -5,14 +5,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { registerWebhook, getUserWebhooks } from '../../../lib/webhooks';
+import { registerWebhook, getUserWebhooks } from '../../../lib/webhook';
 import { apiResponse, apiError, HttpStatus, ErrorCode } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ locals }) => {
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const webhooks = await getUserWebhooks(locals.user.id);
@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ locals }) => {
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const body = await request.json();

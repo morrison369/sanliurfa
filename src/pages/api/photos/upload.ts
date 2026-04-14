@@ -4,12 +4,12 @@
  */
 
 import type { APIRoute } from 'astro';
-import { uploadPhoto, getPhotoCount } from '../../../lib/photos';
+import { uploadPhoto, getPhotoCount } from '../../../lib/photo/photos';
 import { queryOne } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
-import { saveFile } from '../../../lib/file-storage';
+import { saveFile } from '../../../lib/file/file-storage';
 
 // TODO: Configure storage settings
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('POST', '/api/photos/upload', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,

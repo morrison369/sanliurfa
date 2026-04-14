@@ -5,33 +5,35 @@
 
 import type { APIRoute } from 'astro';
 import { verifyEmailWithToken } from '../../../lib/email';
-import { apiResponse, apiError, HttpStatus } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async (context) => {
   try {
-    const { token } = context.url.searchParams;
+    const token = context.url.searchParams.get('token');
 
     if (!token || typeof token !== 'string' || token.length !== 64) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Invalid verification token');
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid verification token', HttpStatus.BAD_REQUEST, undefined, undefined);
     }
 
     const result = await verifyEmailWithToken(token);
 
     if (!result) {
-      return apiError(context, HttpStatus.NOT_FOUND, 'Invalid or expired verification token');
+      return apiError(ErrorCode.NOT_FOUND, 'Invalid or expired verification token', HttpStatus.NOT_FOUND, undefined, undefined);
     }
 
-    logger.info('Email verified via API', { userId: result.userId, email: result.email });
+    logger.info('Email verified via API', { success: result });
 
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      message: 'Email verified successfully',
-      userId: result.userId,
-      email: result.email
-    });
+    return apiResponse(
+      {
+        success: true,
+        message: 'Email verified successfully',
+      },
+      HttpStatus.OK,
+      undefined
+    );
   } catch (error) {
     logger.error('Email verification error', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to verify email');
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to verify email', HttpStatus.INTERNAL_SERVER_ERROR, undefined, undefined);
   }
 };

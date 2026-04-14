@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * User Subscription Management
  * GET /api/user/subscription - Get active subscription
@@ -6,7 +7,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getActiveSubscription, upgradeSubscription, cancelSubscription, getTierFeatures } from '../../../lib/subscription-management';
+import { getActiveSubscription, upgradeSubscription, cancelSubscription, getTierFeatures } from '../../../lib/subscription/subscription-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';

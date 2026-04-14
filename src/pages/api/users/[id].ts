@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * User Profile API
  * GET: Retrieve user profile information

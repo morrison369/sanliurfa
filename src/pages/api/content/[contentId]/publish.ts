@@ -3,7 +3,7 @@
  * POST - Publish content
  */
 import type { APIRoute } from 'astro';
-import { publishContent, getContentById } from '../../../../lib/content-management';
+import { publishContent, getContentById } from '../../../../lib/content/content-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';

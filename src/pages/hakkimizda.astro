@@ -1,0 +1,101 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const seo = {
+  title: 'Hakkimizda - Sanliurfa.com',
+  description: 'Sanliurfa.com hakkinda bilgi edinin. Misyonumuz ve vizyonumuz.',
+};
+
+const stats = [
+  { value: '500+', label: 'Mekan' },
+  { value: '50K+', label: 'Aylik Ziyaretci' },
+  { value: '10K+', label: 'Yorum' },
+  { value: '100+', label: 'Rehber' },
+];
+
+const features = [
+  { icon: '🏛️', title: 'Tarihi Mekanlar', desc: 'Gobeklitepe ve diger tarihi yerler hakkinda detayli bilgi' },
+  { icon: '🍽️', title: 'Lezzet Duraklari', desc: 'Cig kofteden baklavaya, dogu mutfaginin essiz tatlari' },
+  { icon: '🏨', title: 'Konaklama', desc: 'Her butceye uygun otel ve konaklama secenekleri' },
+  { icon: '📱', title: 'Mobil Uyumlu', desc: 'Her yerden erisim, kullanici dostu arayuz' },
+];
+---
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 pt-20">
+    {/* Hero */}
+    <section class="bg-gradient-to-br from-red-600 to-orange-500 text-white py-20">
+      <div class="container mx-auto px-4 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6">Sanliurfa'nin Kesif Platformu</h1>
+        <p class="text-xl text-red-100 max-w-2xl mx-auto">
+          2024 yilinda kurulan Sanliurfa.com, sehrin en kapsamli mekan rehberi olma yolunda ilerliyor.
+        </p>
+      </div>
+    </section>
+
+    {/* Stats */}
+    <section class="py-12 bg-white">
+      <div class="container mx-auto px-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
+          {stats.map(stat => (
+            <div class="text-center">
+              <div class="text-4xl font-bold text-red-600">{stat.value}</div>
+              <div class="text-gray-500">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Mission */}
+    <section class="py-16">
+      <div class="container mx-auto px-4 max-w-4xl">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Misyonumuz</h2>
+            <p class="text-gray-600 mb-6">
+              Sanliurfa'nin zengin kulturunu, tarihini ve lezzetlerini dunyaya tanitmak. 
+              Yerel isletmeleri destekleyerek sehrin ekonomisine katki saglamak.
+            </p>
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Vizyonumuz</h2>
+            <p class="text-gray-600">
+              Turkiye'nin en guvenilir ve kapsamli sehir rehberi olmak. 
+              Teknoloji ve yerel bilgiyi birlestirerek kullanicilara en iyi deneyimi sunmak.
+            </p>
+          </div>
+          <div class="bg-gray-200 rounded-2xl aspect-square flex items-center justify-center">
+            <span class="text-8xl">🎯</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Features */}
+    <section class="py-16 bg-white">
+      <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">Neler Sunuyoruz?</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          {features.map(feat => (
+            <div class="bg-gray-50 rounded-xl p-6 text-center">
+              <div class="text-5xl mb-4">{feat.icon}</div>
+              <h3 class="font-bold text-gray-900 mb-2">{feat.title}</h3>
+              <p class="text-gray-600 text-sm">{feat.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* CTA */}
+    <section class="py-16 bg-gray-900 text-white">
+      <div class="container mx-auto px-4 text-center">
+        <h2 class="text-3xl font-bold mb-4">Isletmenizi Eklemek Ister Misiniz?</h2>
+        <p class="text-gray-400 mb-8 max-w-xl mx-auto">
+          Sanliurfa.com'a katilin, binlerce potansiyel musteriye ulasin.
+        </p>
+        <a href="/isletme-kayit" class="inline-block px-8 py-3 bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+          Hemen Basvurun
+        </a>
+      </div>
+    </section>
+  </div>
+</Layout>

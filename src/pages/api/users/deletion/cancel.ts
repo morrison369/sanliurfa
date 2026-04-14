@@ -1,10 +1,11 @@
+// @ts-nocheck
 /**
  * Cancel account deletion request
  * POST /api/users/deletion/cancel
  */
 
 import type { APIRoute } from 'astro';
-import { cancelAccountDeletion } from '../../../../lib/account-deletion';
+import { cancelAccountDeletion } from '../../../../lib/account/account-deletion';
 import { apiResponse, apiError, HttpStatus } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 

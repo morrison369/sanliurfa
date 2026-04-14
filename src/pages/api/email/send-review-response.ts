@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Check authentication
     if (!locals.user?.id) {
       recordRequest('POST', '/api/email/send-review-response', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();

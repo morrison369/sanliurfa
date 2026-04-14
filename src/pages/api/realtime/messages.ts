@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUnreadCount } from '../../../lib/messages';
+import { getUnreadCount } from '../../../lib/message/messages';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {

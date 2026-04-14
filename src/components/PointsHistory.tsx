@@ -1,7 +1,25 @@
 import React, { useState, useEffect } from 'react';
 
+interface HistoryItem {
+  id: string;
+  action_type: string;
+  created_at: string;
+  points_earned?: number;
+}
+
+interface SummaryItem {
+  action_type: string;
+  total_points: number;
+  count: number;
+}
+
+interface HistoryData {
+  summary: SummaryItem[];
+  history: HistoryItem[];
+}
+
 export default function PointsHistory() {
-  const [history, setHistory] = useState(null);
+  const [history, setHistory] = useState<HistoryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -24,13 +42,13 @@ export default function PointsHistory() {
   if (isLoading) return <div className="text-center py-8">Yukleniyor...</div>;
   if (!history) return <div>Veri yuklenemedi</div>;
 
-  const getActivityIcon = (type) => {
-    const icons = { 'review_created': '⭐', 'comment_posted': '💬', 'favorite_added': '❤️' };
+  const getActivityIcon = (type: string) => {
+    const icons: Record<string, string> = { 'review_created': '⭐', 'comment_posted': '💬', 'favorite_added': '❤️' };
     return icons[type] || '📌';
   };
 
-  const getActivityLabel = (type) => {
-    const labels = { 'review_created': 'Inceleme', 'comment_posted': 'Yorum', 'favorite_added': 'Favori' };
+  const getActivityLabel = (type: string) => {
+    const labels: Record<string, string> = { 'review_created': 'Inceleme', 'comment_posted': 'Yorum', 'favorite_added': 'Favori' };
     return labels[type] || 'Aktivite';
   };
 

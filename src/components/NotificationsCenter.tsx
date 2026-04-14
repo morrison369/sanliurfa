@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 
+interface Notification {
+  id: string;
+  type: string;
+  message: string;
+  read_at?: string;
+  created_at: string;
+}
+
 export default function NotificationsCenter() {
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
@@ -24,7 +32,7 @@ export default function NotificationsCenter() {
     }
   };
 
-  const markAsRead = async (notificationId) => {
+  const markAsRead = async (notificationId: string) => {
     try {
       await fetch('/api/notifications/' + notificationId, { method: 'PATCH' });
       await loadNotifications();
@@ -33,7 +41,7 @@ export default function NotificationsCenter() {
     }
   };
 
-  const deleteNotification = async (notificationId) => {
+  const deleteNotification = async (notificationId: string) => {
     try {
       await fetch('/api/notifications/' + notificationId, { method: 'DELETE' });
       await loadNotifications();

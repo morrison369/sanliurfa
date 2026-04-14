@@ -3,7 +3,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { approveVendor } from '../../../../../lib/vendor-onboarding';
+import { approveVendor } from '../../../../../lib/vendor/vendor-onboarding';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
 import { recordRequest } from '../../../../../lib/metrics';
 import { logger } from '../../../../../lib/logging';

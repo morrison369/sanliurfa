@@ -1,0 +1,134 @@
+---
+// Map Page - All Places
+import Layout from '../layouts/Layout.astro';
+import LeafletMap from '../components/map/LeafletMap.astro';
+import { getPlaces } from '../lib/places/db';
+import { getCategories } from '../lib/places/categories';
+
+const url = new URL(Astro.request.url);
+const category = url.searchParams.get('kategori') || undefined;
+
+const [{ places }, categories] = await Promise.all([
+  getPlaces({ status: 'approved', category, limit: 200 }),
+  getCategories(),
+]);
+
+const validPlaces = places.filter(p => p.latitude && p.longitude).map(p => ({
+  id: p.id,
+  name: p.name,
+  lat: p.latitude,
+  lon: p.longitude,
+  category: p.category_slug,
+  thumbnail: p.thumbnail,
+  rating: p.rating,
+  slug: p.slug,
+}));
+
+const seo = {
+  title: 'Harita - Şanlıurfa Mekanları',
+  description: `Şanlıurfa'daki ${validPlaces.length}+ mekanı haritada keşfedin. Restoranlar, oteller, tarihi yerler ve daha fazlası.`,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    {/* Header */}
+    <div class="bg-white border-b">
+      <div class="container-custom py-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-bold">Harita</h1>
+            <p class="text-gray-600 text-sm">{validPlaces.length} mekan haritada gösteriliyor</p>
+          </div>
+          
+          {/* Category Filter */}
+          <div class="flex flex-wrap gap-2">
+            <a
+              href="/harita"
+              class={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                !category ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Tümü
+            </a>
+            {categories.filter(c => c.is_active).slice(0, 6).map(cat => (
+              <a
+                href={`/harita?kategori=${cat.slug}`}
+                class={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  category === cat.slug ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {cat.name}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Map */}
+    <div class="h-[calc(100vh-180px)]">
+      <LeafletMap 
+        places={validPlaces}
+        zoom={13}
+        height="100%"
+      />
+    </div>
+
+    {/* Mobile Place List Toggle */}
+    <div class="md:hidden fixed bottom-4 left-4 right-4 z-[400]">
+      <button
+        onclick="togglePlaceList()"
+        class="w-full py-3 bg-white rounded-xl shadow-lg font-medium flex items-center justify-center gap-2"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        Mekan Listesi ({validPlaces.length})
+      </button>
+    </div>
+
+    {/* Mobile Place List Modal */}
+    <div id="place-list-modal" class="fixed inset-0 bg-black/50 z-[500] hidden" onclick="togglePlaceList()">
+      <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[70vh] overflow-hidden" onclick="event.stopPropagation()">
+        <div class="p-4 border-b flex items-center justify-between">
+          <h3 class="font-bold">Mekanlar ({validPlaces.length})</h3>
+          <button onclick="togglePlaceList()" class="p-2 hover:bg-gray-100 rounded-full">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="overflow-y-auto max-h-[60vh]">
+          {validPlaces.map(place => (
+            <a href={`/places/${place.slug}`} class="flex items-center gap-3 p-4 border-b hover:bg-gray-50">
+              <div class="w-12 h-12 rounded-lg bg-gray-200 flex-shrink-0">
+                {place.thumbnail ? (
+                  <img src={place.thumbnail} alt={place.name} class="w-full h-full object-cover rounded-lg" />
+                ) : (
+                  <div class="w-full h-full flex items-center justify-center text-2xl">📍</div>
+                )}
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-medium truncate">{place.name}</h4>
+                <div class="flex items-center gap-2 text-sm text-gray-500">
+                  {place.rating && (
+                    <span class="text-yellow-500">★ {place.rating.toFixed(1)}</span>
+                  )}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePlaceList() {
+      const modal = document.getElementById('place-list-modal');
+      modal.classList.toggle('hidden');
+      document.body.style.overflow = modal.classList.contains('hidden') ? '' : 'hidden';
+    }
+  </script>
+</Layout>

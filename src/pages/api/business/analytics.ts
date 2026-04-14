@@ -4,7 +4,7 @@
  */
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../lib/postgres';
-import { getPlaceAnalytics, getPlaceDailyMetrics, getDashboardOverview } from '../../../lib/business-analytics';
+import { getPlaceBusinessAnalytics, getPlaceDailyMetrics, getDashboardOverview } from '../../../lib/analytics/business-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     }
 
     const days = parseInt(url.searchParams.get('days') || '30', 10);
-    const analytics = await getPlaceAnalytics(placeId, days);
+    const analytics = await getPlaceBusinessAnalytics(placeId, days);
     const metrics = await getPlaceDailyMetrics(placeId, days);
     const overview = await getDashboardOverview(placeId);
 

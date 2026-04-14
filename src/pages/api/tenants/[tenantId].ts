@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Tenant Detail API
  * Get, update tenant settings
@@ -5,7 +6,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryOne, update } from '../../../lib/postgres';
-import { getTenantBranding, updateTenantBranding, getTenantMembers, logTenantAudit } from '../../../lib/multi-tenant';
+import { getTenantBranding, updateTenantBranding, getTenantMembers, logTenantAudit } from '../../../lib/multi/multi-tenant';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';

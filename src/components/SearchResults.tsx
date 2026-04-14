@@ -1,7 +1,34 @@
 import React, { useState, useEffect } from 'react';
 
-export default function SearchResults({ query }) {
-  const [results, setResults] = useState(null);
+interface Place {
+  id: string;
+  name: string;
+  category: string;
+  image_url?: string;
+  rating?: number;
+}
+
+interface User {
+  id: string;
+  full_name: string;
+  username?: string;
+  avatar_url?: string;
+}
+
+interface Collection {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+interface SearchResults {
+  places: Place[];
+  users: User[];
+  collections: Collection[];
+}
+
+export default function SearchResults({ query }: { query?: string }) {
+  const [results, setResults] = useState<SearchResults | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(query || '');
 

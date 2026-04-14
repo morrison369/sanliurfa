@@ -5,7 +5,7 @@
  */
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { getRewardsCatalog, redeemReward, getPromotionalOffers } from '../../../lib/rewards';
+import { getRewardsList, processRewardRedemption, getPromotionalOffers } from '../../../lib/rewards';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       tier: tier || undefined
     };
 
-    const rewards = await getRewardsCatalog(filters);
+    const rewards = await getRewardsList(filters);
     const promos = includePromos ? await getPromotionalOffers() : [];
 
     const duration = Date.now() - startTime;
@@ -68,16 +68,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Reward ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
-    const result = await redeemReward(locals.user.id, rewardId);
+    const result = await processRewardRedemption(locals.user.id, rewardId);
 
     if (!result.success) {
       recordRequest('POST', '/api/loyalty/rewards', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.BAD_REQUEST, result.error || 'Redemption failed', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, result.error || 'Redemption failed', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/loyalty/rewards', HttpStatus.OK, duration);
-    logger.logMutation('redeem_reward', 'reward_redemptions', rewardId, locals.user?.id);
+    logger.info('Reward redeemed', { userId: locals.user?.id, rewardId, redemptionCode: result.redemptionCode });
 
     return apiResponse(
       {

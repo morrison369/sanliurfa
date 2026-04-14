@@ -1,63 +1,64 @@
-/**
- * Robots.txt for SEO crawlability
- * Guides search engine crawlers on what to index
- */
-
 import type { APIRoute } from 'astro';
 
+const BASE_URL = process.env.PUBLIC_APP_URL || 'https://sanliurfa.com';
+
 export const GET: APIRoute = async () => {
-  const baseUrl = process.env.PUBLIC_SITE_URL || 'https://sanliurfa.com';
+  const isProduction = process.env.NODE_ENV === 'production';
 
-  const robotsTxt = `# Robots.txt - Şanlıurfa.com
-# Generated dynamically for search engine crawlers
+  // Disallow paths
+  const disallowedPaths = [
+    '/admin',
+    '/api/',
+    '/giris',
+    '/kayit',
+    '/sifre-sifirla',
+    '/hesabim',
+    '/mesajlar',
+    '/_astro/',
+    '/private/',
+  ];
 
-# Allow all crawlers
+  const robots = isProduction
+    ? `# Robots.txt for Şanlıurfa.com
 User-agent: *
 Allow: /
-
-# Specific rules for Google
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 1
-
-# Specific rules for Bing
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 1
-
-# Disallow paths
-User-agent: *
-Disallow: /api/
-Disallow: /admin/
-Disallow: /auth/
-Disallow: /giris
-Disallow: /kayit
-Disallow: /_astro/
-Disallow: /search
-Disallow: /*?*sort=
-Disallow: /*?*page=
-Disallow: /*?*filter=
-Disallow: /*.json
-Disallow: /*.css
-Disallow: /*.js
-
-# Allow specific admin pages if needed
-# Allow: /admin/public/
+${disallowedPaths.map(path => `Disallow: ${path}`).join('\n')}
 
 # Sitemap
-Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: ${BASE_URL}/sitemap.xml
 
-# Crawl delay (in seconds) to be respectful
+# Crawl-delay
 Crawl-delay: 1
 
-# Request rate (pages per second) - optional
-Request-rate: 1/1
+# Allow specific bots
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# Block bad bots
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+`
+    : `# Development - Block all crawlers
+User-agent: *
+Disallow: /
 `;
 
-  return new Response(robotsTxt, {
+  return new Response(robots, {
     headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'public, max-age=86400', // 24 hours
+      'Content-Type': 'text/plain',
+      'Cache-Control': 'public, max-age=86400',
     },
   });
 };

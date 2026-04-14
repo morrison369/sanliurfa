@@ -1,0 +1,93 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+const { kategori } = Astro.params;
+
+const categoryMeta: Record<string, { name: string; icon: string }> = {
+  'kuaforler': { name: 'Kuaförler', icon: '💇' },
+  'berberler': { name: 'Berberler', icon: '✂️' },
+  'temizlik-firmalari': { name: 'Temizlik Firmaları', icon: '🧹' },
+  'nakliyat': { name: 'Nakliyat', icon: '🚚' },
+  'cilingir': { name: 'Çilingir', icon: '🔑' },
+  'elektrikci': { name: 'Elektrikçi', icon: '⚡' },
+  'tesisatci': { name: 'Tesisatçı', icon: '🔧' },
+};
+
+const meta = categoryMeta[kategori || ''] || { name: kategori || '', icon: '🛠️' };
+
+let places: any[] = [];
+
+try {
+  const result = await query(
+    `SELECT p.*, d.name as district_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     LEFT JOIN districts d ON p.district_id = d.id
+     WHERE c.slug = $1 AND p.status = 'active'
+     ORDER BY p.is_featured DESC, p.rating DESC`,
+    [kategori]
+  );
+  places = result.rows;
+} catch (e) {
+  console.error('Error loading hizmetler kategori:', e);
+}
+
+const seo = {
+  title: `Şanlıurfa ${meta.name} | Hizmetler Rehberi`,
+  description: `Şanlıurfa'da ${meta.name.toLowerCase()}. Adres, telefon ve iletişim bilgileri.`,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-white border-b">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-gray-500">
+          <a href="/" class="hover:text-cyan-600">Ana Sayfa</a>
+          <span>/</span>
+          <a href="/hizmetler" class="hover:text-cyan-600">Hizmetler</a>
+          <span>/</span>
+          <span class="text-gray-900 font-medium">{meta.name}</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-cyan-700 to-blue-800 text-white py-12">
+      <div class="container mx-auto px-4">
+        <div class="flex items-center gap-4">
+          <span class="text-5xl">{meta.icon}</span>
+          <div>
+            <h1 class="text-3xl md:text-4xl font-bold">Şanlıurfa {meta.name}</h1>
+            <p class="text-cyan-100 mt-1">{places.length} firma bulundu</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      {places.length > 0 ? (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {places.map((place) => (
+            <a href={`/places/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+              <div class="flex items-start gap-3">
+                <span class="text-3xl">{meta.icon}</span>
+                <div>
+                  <h2 class="font-bold text-gray-900 group-hover:text-cyan-600">{place.name}</h2>
+                  {place.district_name && <p class="text-xs text-gray-400">{place.district_name}</p>}
+                  {place.address && <p class="text-sm text-gray-500 mt-1">📍 {place.address}</p>}
+                  {place.phone && <p class="text-sm text-gray-500">📞 {place.phone}</p>}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16">
+          <div class="text-6xl mb-4">{meta.icon}</div>
+          <p class="text-gray-500 text-lg">Bu kategoride henüz kayıt bulunmuyor.</p>
+          <a href="/hizmetler" class="mt-4 inline-block text-cyan-600 hover:underline">Hizmetler Rehberine Dön →</a>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserDetails, flagUserAccount, changeUserRole, logAdminAction } from '../../../../lib/admin-users';
+import { getUserDetails, flagUserAccount, changeUserRole, logAdminAction } from '../../../../lib/admin/admin-users';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';

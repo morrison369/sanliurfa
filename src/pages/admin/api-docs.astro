@@ -1,0 +1,64 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+
+const user = Astro.locals.user;
+if (!user?.is_admin) {
+  return Astro.redirect('/giris');
+}
+---
+
+<AdminLayout title="API Dokümantasyonu">
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-white">API Dokümantasyonu</h1>
+      <a
+        href="/api/docs"
+        target="_blank"
+        class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors text-sm"
+      >
+        OpenAPI JSON
+      </a>
+    </div>
+
+    <div class="bg-gray-800 rounded-lg overflow-hidden">
+      <div id="swagger-ui" class="swagger-ui"></div>
+    </div>
+  </div>
+</AdminLayout>
+
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+<script is:inline src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script is:inline>
+  window.addEventListener('load', () => {
+    SwaggerUIBundle({
+      url: '/api/docs',
+      dom_id: '#swagger-ui',
+      deepLinking: true,
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIBundle.presets.standalone
+      ],
+      plugins: [
+        SwaggerUIBundle.plugins.DownloadUrl
+      ],
+      requestInterceptor: (req) => {
+        // Add auth token if available
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          req.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return req;
+      }
+    });
+  });
+</script>
+
+<style is:global>
+  .swagger-ui {
+    background: white;
+    padding: 20px;
+  }
+  .swagger-ui .topbar {
+    display: none;
+  }
+</style>

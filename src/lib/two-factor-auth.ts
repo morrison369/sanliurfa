@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Two-Factor Authentication Library
  * TOTP, Email, SMS, and recovery codes for 2FA

@@ -20,8 +20,8 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const error = url.searchParams.get('error');
 
     if (error) {
-      logger.warn('OAuth error', { error, error_description: url.searchParams.get('error_description') });
-      return apiError(ErrorCode.AUTH_ERROR, `OAuth error: ${error}`, HttpStatus.BAD_REQUEST, undefined, requestId);
+      logger.warn('OAuth error', Object.assign(new Error('OAuth error'), { error, error_description: url.searchParams.get('error_description') }));
+      return apiError(ErrorCode.AUTHENTICATION_FAILED, `OAuth error: ${error}`, HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     if (!code || !state) {
@@ -31,7 +31,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     // Verify state token
     const oauthState = await verifyOAuthState(state);
     if (!oauthState) {
-      return apiError(ErrorCode.AUTH_ERROR, 'Invalid or expired state', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.AUTHENTICATION_FAILED, 'Invalid or expired state', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Get provider
@@ -43,13 +43,13 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     // Exchange code for token (simplified - implement with provider SDK)
     const tokenData = await exchangeCodeForToken(provider, code, oauthState.redirect_uri);
     if (!tokenData) {
-      return apiError(ErrorCode.AUTH_ERROR, 'Failed to exchange code', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.AUTHENTICATION_FAILED, 'Failed to exchange code', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Get user info from provider
     const userInfo = await getUserInfoFromProvider(provider, tokenData.access_token);
     if (!userInfo) {
-      return apiError(ErrorCode.AUTH_ERROR, 'Failed to get user info', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.AUTHENTICATION_FAILED, 'Failed to get user info', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Check if OAuth account already exists
@@ -67,7 +67,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       if (existingUser) {
         userId = existingUser.id;
       } else {
-        return apiError(ErrorCode.AUTH_ERROR, 'User not found. Please sign up first.', HttpStatus.NOT_FOUND, undefined, requestId);
+        return apiError(ErrorCode.AUTHENTICATION_FAILED, 'User not found. Please sign up first.', HttpStatus.NOT_FOUND, undefined, requestId);
       }
     }
 

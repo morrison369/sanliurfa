@@ -1,0 +1,87 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+const { kategori } = Astro.params;
+
+const categoryMeta: Record<string, { name: string; icon: string }> = {
+  'avmler': { name: 'Alışveriş Merkezleri', icon: '🏬' },
+  'hediyelik-esya': { name: 'Hediyelik Eşya', icon: '🎁' },
+  'yoresel-urunler': { name: 'Yöresel Ürünler', icon: '🫙' },
+  'kuyumcular': { name: 'Kuyumcular', icon: '💍' },
+  'giyim-magazalari': { name: 'Giyim Mağazaları', icon: '👗' },
+};
+
+const meta = categoryMeta[kategori || ''] || { name: kategori || '', icon: '🛍️' };
+
+let places: any[] = [];
+
+try {
+  const result = await query(
+    `SELECT p.*, d.name as district_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     LEFT JOIN districts d ON p.district_id = d.id
+     WHERE c.slug = $1 AND p.status = 'active'
+     ORDER BY p.is_featured DESC, p.rating DESC`,
+    [kategori]
+  );
+  places = result.rows;
+} catch (e) {
+  console.error('Error loading alisveris kategori:', e);
+}
+
+const seo = {
+  title: `Şanlıurfa ${meta.name} | Alışveriş Rehberi`,
+  description: `Şanlıurfa'da en iyi ${meta.name.toLowerCase()}. Adres, telefon ve konum bilgileri.`,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-white border-b">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-gray-500">
+          <a href="/" class="hover:text-purple-600">Ana Sayfa</a>
+          <span>/</span>
+          <a href="/alisveris" class="hover:text-purple-600">Alışveriş</a>
+          <span>/</span>
+          <span class="text-gray-900 font-medium">{meta.name}</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-purple-700 to-pink-700 text-white py-12">
+      <div class="container mx-auto px-4">
+        <div class="flex items-center gap-4">
+          <span class="text-5xl">{meta.icon}</span>
+          <div>
+            <h1 class="text-3xl md:text-4xl font-bold">Şanlıurfa {meta.name}</h1>
+            <p class="text-purple-100 mt-1">{places.length} mekan bulundu</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      {places.length > 0 ? (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {places.map((place) => (
+            <a href={`/places/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+              <h2 class="font-bold text-lg text-gray-900 group-hover:text-purple-600">{place.name}</h2>
+              {place.district_name && <span class="text-xs text-purple-600">{place.district_name}</span>}
+              {place.address && <p class="text-sm text-gray-500 mt-2">📍 {place.address}</p>}
+              {place.phone && <p class="text-sm text-gray-500">📞 {place.phone}</p>}
+              {place.short_description && <p class="text-sm text-gray-600 mt-2 line-clamp-2">{place.short_description}</p>}
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16">
+          <div class="text-6xl mb-4">{meta.icon}</div>
+          <p class="text-gray-500 text-lg">Bu kategoride henüz kayıt bulunmuyor.</p>
+          <a href="/alisveris" class="mt-4 inline-block text-purple-600 hover:underline">Alışveriş Rehberine Dön →</a>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

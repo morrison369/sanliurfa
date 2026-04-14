@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { getAuditLogs, getUserActivitySummary, getResourceHistory, findSuspiciousActivity } from '../../../lib/audit';
+import { getAuditLogs, getUserActivitySummary, getResourceHistory, findSuspiciousActivity } from '../../../lib/audit/audit';
 import { logger } from '../../../lib/logging';
 
 /**
@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
   // Sadece admin erişebilir
   if (!locals.isAdmin) {
-    logger.warn('Yetkisiz audit log erişim', { userId: locals.user?.id });
+    logger.warn('Yetkisiz audit log erişim', Object.assign(new Error('Yetkisiz audit log erişim'), { userId: locals.user?.id }));
     return apiError(ErrorCode.FORBIDDEN, 'Yetkisiz', HttpStatus.FORBIDDEN, undefined, requestId);
   }
 

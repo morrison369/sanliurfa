@@ -20,6 +20,9 @@ interface PendingRequest<T> {
 const pendingRequests = new Map<string, PendingRequest<any>>();
 const REQUEST_CACHE_TTL = 5000; // 5 seconds for deduplication
 
+// Global coalescing statistics (persists across requests)
+let totalCoalescedCount = 0;
+
 /**
  * Generate cache key from endpoint + parameters
  */
@@ -43,6 +46,7 @@ export async function coalesceRequest<T>(
   // Return existing promise if available and fresh
   if (existing && Date.now() - existing.timestamp < REQUEST_CACHE_TTL) {
     existing.count++;
+    totalCoalescedCount++; // Track coalesced request globally
     return existing.promise;
   }
 
@@ -78,7 +82,7 @@ export function getCoalescingStats() {
 
   return {
     totalPending: pendingRequests.size,
-    coalescedRequests: stats.reduce((sum, s) => sum + (s.coalescedCount - 1), 0),
+    coalescedRequests: totalCoalescedCount, // Use global counter for accurate stats
     details: stats
   };
 }

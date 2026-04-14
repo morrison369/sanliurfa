@@ -23,23 +23,23 @@ export default function MessagingInbox() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchConversations = async () => {
       const res = await fetch('/api/messages');
       if (res.ok) setConversations((await res.json()).data);
     };
-    fetch();
-    const interval = setInterval(fetch, 30000);
+    fetchConversations();
+    const interval = setInterval(fetchConversations, 30000);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     if (!selectedConvoId) return;
-    const fetch = async () => {
+    const fetchMessages = async () => {
       const res = await fetch(`/api/messages/${selectedConvoId}`);
       if (res.ok) setMessages((await res.json()).data);
     };
-    fetch();
-    const interval = setInterval(fetch, 10000);
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 10000);
     return () => clearInterval(interval);
   }, [selectedConvoId]);
 
