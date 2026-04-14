@@ -5,7 +5,7 @@ export const GET: APIRoute = async () => {
   const site = import.meta.env.SITE_URL || 'https://sanliurfa.com';
   
   const result = await query(
-    "SELECT title, slug, excerpt, published_at FROM blog_posts WHERE is_published = true ORDER BY published_at DESC LIMIT 20",
+    "SELECT title, slug, excerpt, published_at FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC LIMIT 20",
     []
   );
   const posts = result.rows;
