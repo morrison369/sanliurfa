@@ -78,4 +78,17 @@ const seo = {
       )}
     </div>
   </div>
+  {/* Schema.org */}
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'TouristDestination',
+    name: 'Şanlıurfa Gezilecek Yerler',
+    description: 'Göbeklitepe, Balıklıgöl, Harran ve diğer turistik yerler',
+    touristType: ['Tarih', 'Kültür', 'Gastronomi', 'Doğa'],
+    containedInPlace: {
+      '@type': 'City',
+      name: 'Şanlıurfa',
+      containedInPlace: { '@type': 'Country', name: 'Türkiye' }
+    }
+  })} />
 </Layout>

@@ -67,4 +67,22 @@ const seo = {
       </div>
     </div>
   </div>
+  {/* Schema.org */}
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Şanlıurfa İlçeleri',
+    description: 'Şanlıurfa\'nın 13 ilçesi',
+    numberOfItems: districts.length,
+    itemListElement: districts.map((d, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'City',
+        name: d.name,
+        url: `https://sanliurfa.com/ilceler/${d.slug}`,
+        containedInPlace: { '@type': 'AdministrativeArea', name: 'Şanlıurfa' },
+      }
+    }))
+  })} />
 </Layout>

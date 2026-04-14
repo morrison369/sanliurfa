@@ -91,4 +91,13 @@ const seo = {
       )}
     </div>
   </div>
+  {/* Schema.org BreadcrumbList */}
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: 'https://sanliurfa.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: 'https://sanliurfa.com/mekanlar' },
+    ]
+  })} />
 </Layout>
