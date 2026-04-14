@@ -13,14 +13,16 @@ let recentPlaces: any[] = [];
 let recentPosts: any[] = [];
 let mainCategories: any[] = [];
 let districts: any[] = [];
+let featuredSites: any[] = [];
 
 try {
-  const [featuredResult, recentResult, postsResult, catResult, distResult] = await Promise.all([
+  const [featuredResult, recentResult, postsResult, catResult, distResult, sitesResult] = await Promise.all([
     query("SELECT * FROM places WHERE status = 'active' AND is_featured = true ORDER BY rating DESC LIMIT 6"),
     query("SELECT * FROM places WHERE status = 'active' ORDER BY created_at DESC LIMIT 8"),
     query("SELECT * FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC LIMIT 3"),
-    query("SELECT * FROM categories WHERE parent_id IS NULL AND is_active = true ORDER BY sort_order LIMIT 8"),
+    query("SELECT * FROM categories WHERE parent_id IS NULL AND is_active = true ORDER BY sort_order LIMIT 10"),
     query("SELECT d.*, (SELECT COUNT(*) FROM places p WHERE p.district_id = d.id AND p.status = 'active') as place_count FROM districts d WHERE d.is_central = true ORDER BY d.sort_order"),
+    query("SELECT * FROM historical_sites WHERE status = 'active' AND is_featured = true ORDER BY created_at LIMIT 3"),
   ]);
 
   featuredPlaces = featuredResult.rows;
@@ -28,6 +30,7 @@ try {
   recentPosts = postsResult.rows;
   mainCategories = catResult.rows;
   districts = distResult.rows;
+  featuredSites = sitesResult.rows;
 } catch (e) {
   console.error('Error loading homepage data:', e);
 }
@@ -58,7 +61,7 @@ const quickCategories = [
         </p>
         
         {/* Search Box */}
-        <form action="/arama" class="max-w-2xl mx-auto bg-white rounded-2xl p-2 shadow-2xl">
+        <form action="/ara" class="max-w-2xl mx-auto bg-white rounded-2xl p-2 shadow-2xl">
           <div class="flex gap-2">
             <input
               type="text"
@@ -112,7 +115,12 @@ const quickCategories = [
         {mainCategories.length > 0 && (
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
             {mainCategories.map(cat => (
-              <a href={cat.slug === 'mekanlar' ? '/mekanlar' : cat.slug === 'gezilecek-yerler' ? '/gezilecek-yerler' : cat.slug === 'etkinlikler' ? '/etkinlikler' : `/mekanlar/${cat.slug}`}
+              <a href={
+                  ['mekanlar','gezilecek-yerler','etkinlikler','saglik','egitim','ulasim',
+                   'alisveris','hizmetler','emlak','konaklama','yeme-icme','ilceler','blog'].includes(cat.slug)
+                    ? `/${cat.slug}`
+                    : `/mekanlar/${cat.slug}`
+                }
                  class="flex items-center gap-3 bg-white rounded-lg p-3 hover:bg-red-50 transition-colors group">
                 <span class="text-xl">{
                   cat.slug === 'mekanlar' ? '🍽️' : cat.slug === 'yeme-icme' ? '🥘' :
@@ -142,6 +150,36 @@ const quickCategories = [
                 <h3 class="font-bold text-gray-900 group-hover:text-red-600">{d.name}</h3>
                 <p class="text-sm text-gray-500 mt-1 line-clamp-1">{d.description}</p>
                 <span class="text-xs text-gray-400 mt-2 block">{d.place_count || 0} mekan</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {/* Gezilecek Yerler */}
+    {featuredSites.length > 0 && (
+      <section class="py-12 bg-amber-50">
+        <div class="container mx-auto px-4">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Mutlaka Görülmesi Gereken Yerler</h2>
+            <a href="/gezilecek-yerler" class="text-amber-700 hover:text-amber-800 font-medium">Tümünü Gör →</a>
+          </div>
+          <div class="grid md:grid-cols-3 gap-6">
+            {featuredSites.map((site: any) => (
+              <a href={`/gezilecek-yerler/${site.slug}`} class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group">
+                <div class="h-44 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                  <span class="text-6xl opacity-50">
+                    {site.slug === 'gobeklitepe' ? '🏛️' :
+                     site.slug === 'balikligol' ? '🐟' :
+                     site.slug === 'halfeti-batik-sehir' ? '🌹' : '📍'}
+                  </span>
+                </div>
+                <div class="p-5">
+                  <h3 class="font-bold text-lg text-gray-900 group-hover:text-amber-700">{site.name}</h3>
+                  <p class="text-sm text-gray-500 mt-1 line-clamp-2">{site.short_description}</p>
+                  {site.location && <p class="text-xs text-gray-400 mt-2">📍 {site.location}</p>}
+                </div>
               </a>
             ))}
           </div>
