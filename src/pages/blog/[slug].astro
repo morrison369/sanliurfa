@@ -1,22 +1,58 @@
 ---
-// Blog Post Detail Page
+// Blog Post Detail Page — reads from DB, falls back to content collection
 import Layout from '../../layouts/Layout.astro';
-import { getPostBySlug, getPostsByCategory } from '../../lib/blog';
+import { queryOne, query } from '../../lib/postgres';
 
 const { slug } = Astro.params;
-if (!slug) {
-  return Astro.redirect('/blog');
+if (!slug) return Astro.redirect('/blog');
+
+let post: any = null;
+let relatedPosts: any[] = [];
+
+try {
+  // Try DB first
+  post = await queryOne(
+    "SELECT * FROM blog_posts WHERE slug = $1 AND status = 'published'",
+    [slug]
+  );
+
+  if (post) {
+    // Content may contain HTML already
+    post.content_html = post.content;
+    post.reading_time = Math.ceil((post.content || '').split(/\s+/).length / 200);
+
+    const relResult = await query(
+      "SELECT id, title, slug, excerpt, featured_image, category, created_at FROM blog_posts WHERE status = 'published' AND category = $1 AND slug != $2 LIMIT 3",
+      [post.category, slug]
+    );
+    relatedPosts = relResult.rows;
+  }
+} catch (e) {
+  console.error('Error loading blog post from DB:', e);
 }
 
-const post = await getPostBySlug(slug);
+// Fallback: try Astro content collection
 if (!post) {
-  return Astro.redirect('/404');
+  try {
+    const { getPostBySlug: getFromCollection } = await import('../../lib/blog');
+    const collectionPost = await getFromCollection(slug);
+    if (collectionPost) {
+      post = {
+        ...collectionPost,
+        content_html: null,
+        author_name: collectionPost.author,
+        published_at: collectionPost.publishedAt,
+        reading_time: collectionPost.readingTime,
+        featured_image: collectionPost.image,
+      };
+    }
+  } catch { /* content collection not available in SSR */ }
 }
 
-const relatedPosts = post.category ? await getPostsByCategory(post.category) : [];
+if (!post) return Astro.redirect('/blog');
 
 const title = post.title;
-const description = post.excerpt;
+const description = post.excerpt || post.meta_description || '';
 ---
 
 <Layout seo={{ title, description }}>

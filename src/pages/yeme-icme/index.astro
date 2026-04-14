@@ -1,0 +1,97 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+let subcategories: any[] = [];
+let topPlaces: any[] = [];
+
+try {
+  const catResult = await query(
+    "SELECT * FROM categories WHERE parent_id = 11 AND is_active = true ORDER BY sort_order"
+  );
+  subcategories = catResult.rows;
+
+  const placesResult = await query(
+    "SELECT p.*, c.name as category_name FROM places p LEFT JOIN categories c ON p.category_id = c.id WHERE p.status = 'active' ORDER BY p.rating DESC LIMIT 8"
+  );
+  topPlaces = placesResult.rows;
+} catch (e) {
+  console.error('Error loading yeme-icme:', e);
+}
+
+const seo = {
+  title: 'Şanlıurfa Yeme İçme Rehberi | Kebap, Ciğer, Tatlı ve Yöresel Lezzetler',
+  description: 'Kahvaltıdan gece mekanlarına, paket servisten aile mekanlarına Şanlıurfa\'nın tüm lezzetleri.',
+};
+
+const featuredGuides = [
+  { title: 'En İyi Kebapçılar', href: '/en-iyi-kebapcilar', icon: '🍖', desc: 'Şehrin efsane kebapçıları' },
+  { title: 'En İyi Ciğerciler', href: '/en-iyi-cigerciler', icon: '🥩', desc: 'Ciğer kebabının en iyisi' },
+  { title: 'Kahvaltı Mekanları', href: '/sanliurfa-kahvalti-mekanlari', icon: '🍳', desc: 'Serpme kahvaltı' },
+  { title: 'Ne Yenir?', href: '/sanliurfada-ne-yenir', icon: '🥘', desc: 'Tam lezzet rehberi' },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-orange-600 to-red-700 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Yeme İçme Rehberi</h1>
+        <p class="text-xl text-orange-100 max-w-2xl">
+          Ciğer kebabından çiğ köfteye, mırra'dan meyan şerbetine Şanlıurfa mutfağı
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      {/* Rehberler */}
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        {featuredGuides.map(g => (
+          <a href={g.href} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+            <span class="text-3xl">{g.icon}</span>
+            <h3 class="font-bold text-gray-900 group-hover:text-red-600 mt-2">{g.title}</h3>
+            <p class="text-sm text-gray-500 mt-1">{g.desc}</p>
+          </a>
+        ))}
+      </div>
+
+      {/* Alt Kategoriler */}
+      {subcategories.length > 0 && (
+        <div class="mb-12">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Kategoriler</h2>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {subcategories.map(cat => (
+              <a href={`/mekanlar/${cat.slug}`} class="flex items-center gap-3 bg-white rounded-lg p-4 hover:bg-red-50 transition-colors group">
+                <span class="text-2xl">{
+                  cat.slug === 'kahvalti' ? '🍳' : cat.slug === 'brunch' ? '🥐' :
+                  cat.slug === 'gece-acik-mekanlar' ? '🌙' : cat.slug === 'paket-servis' ? '📦' :
+                  cat.slug === 'aile-mekanlari' ? '👨‍👩‍👧' : '💰'
+                }</span>
+                <span class="font-medium text-gray-700 group-hover:text-red-600">{cat.name}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* En İyi Mekanlar */}
+      {topPlaces.length > 0 && (
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">En Yüksek Puanlı Mekanlar</h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {topPlaces.map(place => (
+              <a href={`/places/${place.slug}`} class="bg-white rounded-xl p-4 shadow-sm hover:shadow-lg transition-all group">
+                <h3 class="font-bold text-gray-900 group-hover:text-red-600">{place.name}</h3>
+                <span class="text-xs text-red-600">{place.category_name}</span>
+                <div class="flex items-center gap-1 mt-2">
+                  <span class="text-yellow-500">★</span>
+                  <span class="font-medium">{place.rating || '-'}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>
