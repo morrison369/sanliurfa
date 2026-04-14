@@ -200,6 +200,7 @@ const ALLOWED_TABLES = new Set([
   'events', 'event_rsvps',
   'historical_sites', 'foods',
   'categories', 'place_daily_analytics',
+  'districts', 'neighborhoods', 'pharmacies', 'seo_pages',
   'notifications',
   'loyalty_points', 'loyalty_tiers', 'user_badges', 'user_achievements',
   'rewards', 'reward_inventory', 'user_tier_history',

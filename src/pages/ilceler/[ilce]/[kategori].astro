@@ -1,0 +1,78 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { query, queryOne } from '../../../lib/postgres';
+
+const { ilce, kategori } = Astro.params;
+let district: any = null;
+let category: any = null;
+let places: any[] = [];
+
+try {
+  district = await queryOne("SELECT * FROM districts WHERE slug = $1", [ilce]);
+  category = await queryOne("SELECT * FROM categories WHERE slug = $1", [kategori]);
+
+  if (!district || !category) return Astro.redirect('/ilceler');
+
+  const result = await query(
+    `SELECT p.* FROM places p
+     JOIN categories c ON p.category_id = c.id
+     WHERE p.district_id = $1
+     AND (c.slug = $2 OR c.parent_id = (SELECT id FROM categories WHERE slug = $2))
+     AND p.status = 'active'
+     ORDER BY p.rating DESC`,
+    [district.id, kategori]
+  );
+  places = result.rows;
+} catch (e) {
+  console.error('Error:', e);
+}
+
+const seo = {
+  title: `${district?.name || ilce} ${category?.name || kategori} | Şanlıurfa`,
+  description: `${district?.name} ilçesindeki en iyi ${(category?.name || '').toLowerCase()} mekanları.`,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-white border-b">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-gray-500">
+          <a href="/" class="hover:text-red-600">Ana Sayfa</a><span>/</span>
+          <a href="/ilceler" class="hover:text-red-600">İlçeler</a><span>/</span>
+          <a href={`/ilceler/${ilce}`} class="hover:text-red-600">{district?.name || ilce}</a><span>/</span>
+          <span class="text-gray-900 font-medium">{category?.name || kategori}</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-teal-700 to-teal-900 text-white py-10">
+      <div class="container mx-auto px-4">
+        <h1 class="text-3xl font-bold">{district?.name} {category?.name}</h1>
+        <p class="text-teal-100 mt-1">{places.length} mekan bulundu</p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      {places.length > 0 ? (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {places.map((place) => (
+            <a href={`/places/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+              <h3 class="font-bold text-gray-900 group-hover:text-teal-600">{place.name}</h3>
+              <p class="text-sm text-gray-500 mt-2">{place.short_description || place.address}</p>
+              <div class="flex items-center gap-1 mt-3">
+                <span class="text-yellow-500">★</span>
+                <span class="font-medium">{place.rating || '-'}</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16">
+          <p class="text-gray-500">Bu kategoride mekan bulunmuyor.</p>
+          <a href={`/ilceler/${ilce}`} class="text-teal-600 hover:underline mt-2 inline-block">← {district?.name} Rehberine Dön</a>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

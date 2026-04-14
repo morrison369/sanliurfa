@@ -1,0 +1,123 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+const today = new Date().toISOString().split('T')[0];
+let onDutyPharmacies: any[] = [];
+let districts: any[] = [];
+
+try {
+  const result = await query(
+    `SELECT p.*, d.name as district_name
+     FROM pharmacies p
+     LEFT JOIN districts d ON p.district_id = d.id
+     WHERE p.is_on_duty = true AND (p.duty_date = $1 OR p.duty_date IS NULL)
+     ORDER BY d.name, p.name`,
+    [today]
+  );
+  onDutyPharmacies = result.rows;
+
+  const distResult = await query(
+    "SELECT DISTINCT d.id, d.name, d.slug FROM districts d JOIN pharmacies p ON p.district_id = d.id WHERE p.is_on_duty = true ORDER BY d.name"
+  );
+  districts = distResult.rows;
+} catch (e) {
+  console.error('Error loading pharmacies:', e);
+}
+
+const formatDate = (date: string) => new Date(date).toLocaleDateString('tr-TR', {
+  day: 'numeric', month: 'long', year: 'numeric', weekday: 'long'
+});
+
+const seo = {
+  title: `Şanlıurfa Nöbetçi Eczaneler - ${formatDate(today)}`,
+  description: `Şanlıurfa'da bugün nöbetçi olan eczaneler. ${formatDate(today)} tarihli güncel nöbetçi eczane listesi. Adres ve telefon bilgileri.`,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-green-600 to-emerald-700 text-white py-12">
+      <div class="container mx-auto px-4">
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">Nöbetçi Eczaneler</h1>
+        <p class="text-green-100 text-lg">{formatDate(today)}</p>
+        <p class="text-green-200 mt-2">{onDutyPharmacies.length} nöbetçi eczane</p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      {/* İlçe Filtreleri */}
+      {districts.length > 0 && (
+        <div class="flex flex-wrap gap-2 mb-8">
+          <button class="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium" data-filter="all">Tümü</button>
+          {districts.map((d) => (
+            <button class="px-4 py-2 bg-white border rounded-full text-sm font-medium hover:border-green-500 hover:text-green-600 transition-colors" data-filter={d.id}>
+              {d.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {onDutyPharmacies.length > 0 ? (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {onDutyPharmacies.map((pharm) => (
+            <div class="bg-white rounded-xl p-5 border border-green-100 shadow-sm" data-district={pharm.district_id}>
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-600 flex-shrink-0">
+                  💊
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-bold text-gray-900">{pharm.name}</h3>
+                  {pharm.district_name && <span class="text-xs text-green-600 font-medium">{pharm.district_name}</span>}
+                  <p class="text-sm text-gray-500 mt-2">{pharm.address}</p>
+                  {pharm.phone && (
+                    <a href={`tel:${pharm.phone}`} class="inline-flex items-center gap-1 mt-3 text-green-600 font-medium text-sm hover:underline">
+                      📞 {pharm.phone}
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16 bg-white rounded-xl">
+          <div class="text-6xl mb-4">💊</div>
+          <h2 class="text-xl font-bold text-gray-900 mb-2">Nöbetçi Eczane Verisi Bekleniyor</h2>
+          <p class="text-gray-500">Nöbetçi eczane bilgileri yakında güncellenecektir.</p>
+          <p class="text-sm text-gray-400 mt-4">Acil durumlar için: <a href="tel:182" class="text-green-600 font-bold">182</a> (ALO Eczane)</p>
+        </div>
+      )}
+
+      {/* Acil Bilgi */}
+      <div class="mt-8 bg-green-50 border border-green-200 rounded-xl p-6">
+        <h3 class="font-bold text-green-800 mb-2">Acil Durumda</h3>
+        <ul class="text-green-700 space-y-1 text-sm">
+          <li>📞 <strong>182</strong> — ALO Eczane (7/24)</li>
+          <li>📞 <strong>112</strong> — Acil Sağlık</li>
+          <li>📞 <strong>155</strong> — Polis İmdat</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filter = btn.getAttribute('data-filter');
+        document.querySelectorAll('[data-district]').forEach(card => {
+          if (filter === 'all' || card.getAttribute('data-district') === filter) {
+            card.style.display = '';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+        document.querySelectorAll('[data-filter]').forEach(b => {
+          b.className = b === btn
+            ? 'px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium'
+            : 'px-4 py-2 bg-white border rounded-full text-sm font-medium hover:border-green-500 hover:text-green-600 transition-colors';
+        });
+      });
+    });
+  </script>
+</Layout>

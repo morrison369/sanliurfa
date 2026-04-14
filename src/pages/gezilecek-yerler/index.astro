@@ -1,0 +1,81 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+let subcategories: any[] = [];
+let featuredSites: any[] = [];
+
+try {
+  const catResult = await query(
+    "SELECT * FROM categories WHERE parent_id = 12 AND is_active = true ORDER BY sort_order"
+  );
+  subcategories = catResult.rows;
+
+  const sitesResult = await query(
+    "SELECT * FROM historical_sites WHERE status = 'active' ORDER BY is_featured DESC, created_at DESC LIMIT 8"
+  );
+  featuredSites = sitesResult.rows;
+} catch (e) {
+  console.error('Error loading gezilecek yerler:', e);
+}
+
+const seo = {
+  title: 'Şanlıurfa Gezilecek Yerler | Tarihi ve Turistik Noktalar',
+  description: 'Göbeklitepe, Balıklıgöl, Harran, Halfeti ve diğer turistik yerler. Şanlıurfa\'da görülmesi gereken yerler rehberi.',
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-amber-700 to-amber-900 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Gezilecek Yerler</h1>
+        <p class="text-xl text-amber-100 max-w-2xl">
+          Tarihin sıfır noktası Şanlıurfa'nın eşsiz mekanlarını keşfedin
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      {/* Alt Kategoriler */}
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
+        {subcategories.map((cat) => (
+          <a href={`/gezilecek-yerler/${cat.slug}`} class="bg-white rounded-xl p-5 text-center shadow-sm hover:shadow-lg transition-all group">
+            <div class="text-3xl mb-2">{
+              cat.slug === 'balikligol' ? '🐟' :
+              cat.slug === 'gobeklitepe' ? '🏛️' :
+              cat.slug === 'harran' ? '🏠' :
+              cat.slug === 'halfeti' ? '🌹' :
+              cat.slug === 'urfa-kalesi' ? '🏰' :
+              cat.slug === 'carsiler' ? '🛍️' :
+              cat.slug === 'muzeler' ? '🏛️' :
+              cat.slug === 'mesire-alanlari' ? '🌳' : '📍'
+            }</div>
+            <h3 class="font-bold text-gray-900 group-hover:text-amber-600 text-sm">{cat.name}</h3>
+          </a>
+        ))}
+      </div>
+
+      {/* Öne Çıkan Yerler */}
+      {featuredSites.length > 0 && (
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Öne Çıkan Yerler</h2>
+          <div class="grid md:grid-cols-2 gap-6">
+            {featuredSites.map((site) => (
+              <a href={`/tarihi-yerler/${site.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group flex">
+                <div class="w-40 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center flex-shrink-0">
+                  <span class="text-4xl opacity-50">🏛️</span>
+                </div>
+                <div class="p-5 flex-1">
+                  <h3 class="font-bold text-lg text-gray-900 group-hover:text-amber-600">{site.name}</h3>
+                  <p class="text-sm text-gray-500 mt-1 line-clamp-2">{site.short_description || site.description}</p>
+                  {site.location && <p class="text-xs text-gray-400 mt-2">📍 {site.location}</p>}
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

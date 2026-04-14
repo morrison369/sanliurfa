@@ -1,0 +1,70 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+let districts: any[] = [];
+
+try {
+  const result = await query(
+    `SELECT d.*,
+            (SELECT COUNT(*) FROM places p WHERE p.district_id = d.id AND p.status = 'active') as place_count
+     FROM districts d
+     ORDER BY d.is_central DESC, d.sort_order`
+  );
+  districts = result.rows;
+} catch (e) {
+  console.error('Error loading districts:', e);
+}
+
+const centralDistricts = districts.filter(d => d.is_central);
+const otherDistricts = districts.filter(d => !d.is_central);
+
+const seo = {
+  title: 'Şanlıurfa İlçeler Rehberi | Tüm İlçeler ve Yaşam',
+  description: 'Şanlıurfa\'nın 13 ilçesi hakkında detaylı bilgi. Eyyübiye, Haliliye, Karaköprü, Siverek, Halfeti ve daha fazlası.',
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-teal-700 to-teal-900 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Şanlıurfa İlçeleri</h1>
+        <p class="text-xl text-teal-100">13 ilçe, binlerce yıllık tarih ve kültür</p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      {/* Merkez İlçeler */}
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Merkez İlçeler</h2>
+      <div class="grid md:grid-cols-3 gap-6 mb-12">
+        {centralDistricts.map((d) => (
+          <a href={`/ilceler/${d.slug}`} class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group">
+            <div class="h-40 bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center">
+              <span class="text-6xl opacity-60">🏙️</span>
+            </div>
+            <div class="p-6">
+              <h3 class="text-xl font-bold text-gray-900 group-hover:text-teal-600">{d.name}</h3>
+              <p class="text-sm text-gray-500 mt-2 line-clamp-2">{d.description}</p>
+              <div class="flex items-center gap-4 mt-4 text-sm text-gray-400">
+                <span>📍 {d.place_count || 0} mekan</span>
+                {d.population && <span>👥 {(d.population / 1000).toFixed(0)}K nüfus</span>}
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      {/* Diğer İlçeler */}
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Diğer İlçeler</h2>
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {otherDistricts.map((d) => (
+          <a href={`/ilceler/${d.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+            <h3 class="font-bold text-gray-900 group-hover:text-teal-600">{d.name}</h3>
+            <p class="text-sm text-gray-500 mt-1">{d.place_count || 0} mekan</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</Layout>

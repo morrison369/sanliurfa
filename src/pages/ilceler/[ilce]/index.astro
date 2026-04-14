@@ -1,0 +1,107 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { query, queryOne } from '../../../lib/postgres';
+
+const { ilce } = Astro.params;
+let district: any = null;
+let places: any[] = [];
+let categories: any[] = [];
+
+try {
+  district = await queryOne("SELECT * FROM districts WHERE slug = $1", [ilce]);
+  if (!district) return Astro.redirect('/ilceler');
+
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name, c.slug as category_slug
+     FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE p.district_id = $1 AND p.status = 'active'
+     ORDER BY p.is_featured DESC, p.rating DESC LIMIT 20`,
+    [district.id]
+  );
+  places = placesResult.rows;
+
+  const catResult = await query(
+    `SELECT c.slug, c.name, COUNT(p.id) as count
+     FROM places p
+     JOIN categories c ON p.category_id = c.id
+     WHERE p.district_id = $1 AND p.status = 'active'
+     GROUP BY c.slug, c.name
+     ORDER BY count DESC`,
+    [district.id]
+  );
+  categories = catResult.rows;
+} catch (e) {
+  console.error('Error loading district:', e);
+}
+
+const seo = {
+  title: district?.meta_title || `${district?.name || ilce} Rehberi - Şanlıurfa`,
+  description: district?.meta_description || district?.description || `${district?.name} ilçesindeki mekanlar ve yaşam rehberi.`,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-white border-b">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-gray-500">
+          <a href="/" class="hover:text-red-600">Ana Sayfa</a>
+          <span>/</span>
+          <a href="/ilceler" class="hover:text-red-600">İlçeler</a>
+          <span>/</span>
+          <span class="text-gray-900 font-medium">{district?.name || ilce}</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-teal-700 to-teal-900 text-white py-12">
+      <div class="container mx-auto px-4">
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">{district?.name || ilce} Rehberi</h1>
+        <p class="text-teal-100">{district?.description}</p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      {/* Kategoriler */}
+      {categories.length > 0 && (
+        <div class="mb-8">
+          <h2 class="text-xl font-bold text-gray-900 mb-4">Kategoriler</h2>
+          <div class="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <a href={`/ilceler/${ilce}/${cat.slug}`} class="px-4 py-2 bg-white rounded-full border hover:border-teal-500 hover:text-teal-600 text-sm font-medium transition-colors">
+                {cat.name} ({cat.count})
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mekanlar */}
+      {places.length > 0 ? (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {places.map((place) => (
+            <a href={`/places/${place.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group">
+              <div class="h-40 bg-gradient-to-br from-teal-50 to-cyan-50 flex items-center justify-center">
+                <span class="text-4xl opacity-40">📍</span>
+              </div>
+              <div class="p-5">
+                <h3 class="font-bold text-gray-900 group-hover:text-teal-600">{place.name}</h3>
+                {place.category_name && <span class="text-xs text-teal-600 font-medium">{place.category_name}</span>}
+                <p class="text-sm text-gray-500 mt-2 line-clamp-2">{place.short_description || place.address}</p>
+                <div class="flex items-center gap-1 mt-3">
+                  <span class="text-yellow-500">★</span>
+                  <span class="font-medium">{place.rating || '-'}</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16">
+          <p class="text-gray-500">Bu ilçede henüz kayıtlı mekan bulunmuyor.</p>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>

@@ -11,6 +11,10 @@ const PUBLIC_PATHS = [
   '/gastronomi', '/arama', '/hakkinda', '/iletisim', '/etkinlikler',
   '/gizlilik-politikasi', '/kullanim-kosullari', '/kvkk', '/hakkimizda',
   '/fiyatlandirma', '/404', '/500', '/loading',
+  '/mekanlar', '/ilceler', '/gezilecek-yerler', '/saglik', '/mahalleler',
+  '/en-iyi-kebapcilar', '/en-iyi-cigerciler', '/sanliurfa-kahvalti-mekanlari',
+  '/sanliurfa-sira-gecesi-mekanlari', '/sanliurfa-gece-acik-mekanlar',
+  '/sanliurfada-ne-yenir', '/bugun-sanliurfada-ne-yapilir',
   '/api/auth/login', '/api/auth/register', '/api/places', '/api/health',
   '/api/contact', '/api/reviews', '/api/hashtags', '/api/leaderboards',
 ];

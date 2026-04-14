@@ -1,0 +1,120 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { query, queryOne } from '../../../lib/postgres';
+
+const { ilce, mahalle } = Astro.params;
+let district: any = null;
+let neighborhood: any = null;
+let places: any[] = [];
+let nearbyPharmacies: any[] = [];
+
+try {
+  district = await queryOne("SELECT * FROM districts WHERE slug = $1", [ilce]);
+  if (!district) return Astro.redirect('/ilceler');
+
+  neighborhood = await queryOne(
+    "SELECT * FROM neighborhoods WHERE slug = $1 AND district_id = $2",
+    [mahalle, district.id]
+  );
+  if (!neighborhood) return Astro.redirect(`/ilceler/${ilce}`);
+
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE p.neighborhood_id = $1 AND p.status = 'active'
+     ORDER BY p.rating DESC LIMIT 20`,
+    [neighborhood.id]
+  );
+  places = placesResult.rows;
+
+  const pharmResult = await query(
+    "SELECT * FROM pharmacies WHERE neighborhood_id = $1 ORDER BY name LIMIT 10",
+    [neighborhood.id]
+  );
+  nearbyPharmacies = pharmResult.rows;
+} catch (e) {
+  console.error('Error loading neighborhood:', e);
+}
+
+const seo = {
+  title: `${neighborhood?.name || mahalle} Mahallesi - ${district?.name || ilce} | Şanlıurfa`,
+  description: `${district?.name} ${neighborhood?.name} mahallesindeki mekanlar, eczaneler ve yaşam rehberi.`,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-white border-b">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-gray-500">
+          <a href="/" class="hover:text-red-600">Ana Sayfa</a><span>/</span>
+          <a href="/ilceler" class="hover:text-red-600">İlçeler</a><span>/</span>
+          <a href={`/ilceler/${ilce}`} class="hover:text-red-600">{district?.name}</a><span>/</span>
+          <span class="text-gray-900 font-medium">{neighborhood?.name} Mah.</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-indigo-700 to-indigo-900 text-white py-10">
+      <div class="container mx-auto px-4">
+        <h1 class="text-3xl font-bold">{neighborhood?.name} Mahallesi</h1>
+        <p class="text-indigo-200">{district?.name}, Şanlıurfa</p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      <div class="grid lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2">
+          <h2 class="text-xl font-bold text-gray-900 mb-4">Mekanlar</h2>
+          {places.length > 0 ? (
+            <div class="space-y-3">
+              {places.map((p) => (
+                <a href={`/places/${p.slug}`} class="flex items-center gap-4 bg-white rounded-xl p-4 shadow-sm hover:shadow-lg transition-all group">
+                  <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-xl flex-shrink-0">📍</div>
+                  <div class="flex-1">
+                    <h3 class="font-bold text-gray-900 group-hover:text-indigo-600">{p.name}</h3>
+                    <span class="text-xs text-indigo-600">{p.category_name}</span>
+                  </div>
+                  {p.rating && <div class="text-yellow-500 font-bold">★ {p.rating}</div>}
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p class="text-gray-500 bg-white rounded-xl p-8 text-center">Henüz kayıtlı mekan yok.</p>
+          )}
+        </div>
+
+        <aside>
+          {/* Eczaneler */}
+          <div class="bg-white rounded-xl p-5 shadow-sm mb-6">
+            <h3 class="font-bold text-gray-900 mb-3">💊 Yakın Eczaneler</h3>
+            {nearbyPharmacies.length > 0 ? (
+              <div class="space-y-3">
+                {nearbyPharmacies.map((ph) => (
+                  <div class="text-sm">
+                    <p class="font-medium text-gray-900">{ph.name}</p>
+                    <p class="text-gray-500 text-xs">{ph.address}</p>
+                    {ph.phone && <a href={`tel:${ph.phone}`} class="text-green-600 text-xs">{ph.phone}</a>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p class="text-gray-500 text-sm">Yakın eczane bilgisi eklenecek.</p>
+            )}
+            <a href="/saglik/nobetci-eczaneler" class="text-sm text-green-600 hover:underline mt-3 block">Nöbetçi Eczaneler →</a>
+          </div>
+
+          {/* Hızlı Linkler */}
+          <div class="bg-white rounded-xl p-5 shadow-sm">
+            <h3 class="font-bold text-gray-900 mb-3">Hızlı Linkler</h3>
+            <div class="space-y-2 text-sm">
+              <a href={`/ilceler/${ilce}`} class="block text-indigo-600 hover:underline">{district?.name} Rehberi</a>
+              <a href="/saglik/nobetci-eczaneler" class="block text-indigo-600 hover:underline">Nöbetçi Eczaneler</a>
+              <a href="/mekanlar" class="block text-indigo-600 hover:underline">Tüm Mekanlar</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</Layout>

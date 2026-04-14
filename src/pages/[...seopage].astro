@@ -1,0 +1,127 @@
+---
+/**
+ * Dynamic SEO Landing Pages
+ * Handles: /en-iyi-kebapcilar, /sanliurfa-kahvalti-mekanlari, /sanliurfada-ne-yenir, etc.
+ * Data comes from seo_pages table
+ */
+import Layout from '../layouts/Layout.astro';
+import { query, queryOne } from '../lib/postgres';
+
+const slug = Astro.params.seopage;
+if (!slug) return Astro.redirect('/');
+
+let page: any = null;
+let places: any[] = [];
+
+try {
+  page = await queryOne(
+    "SELECT * FROM seo_pages WHERE slug = $1 AND is_active = true",
+    [slug]
+  );
+
+  if (!page) {
+    // Not a SEO page — let Astro handle 404
+    return new Response(null, { status: 404 });
+  }
+
+  // Build dynamic query based on page filters
+  let sql = "SELECT p.*, c.name as category_name, d.name as district_name FROM places p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN districts d ON p.district_id = d.id WHERE p.status = 'active'";
+  const params: any[] = [];
+  let idx = 1;
+
+  if (page.category_filter) {
+    sql += ` AND (c.slug = $${idx} OR c.parent_id = (SELECT id FROM categories WHERE slug = $${idx}))`;
+    params.push(page.category_filter);
+    idx++;
+  }
+
+  if (page.district_filter) {
+    sql += ` AND p.district_id = $${idx}`;
+    params.push(page.district_filter);
+    idx++;
+  }
+
+  const sortMap: Record<string, string> = {
+    rating: 'p.rating DESC NULLS LAST',
+    newest: 'p.created_at DESC',
+    popular: 'p.view_count DESC NULLS LAST',
+    name: 'p.name ASC',
+  };
+  sql += ` ORDER BY ${sortMap[page.sort_by] || 'p.rating DESC NULLS LAST'}`;
+  sql += ` LIMIT $${idx}`;
+  params.push(page.limit_count || 20);
+
+  const result = await query(sql, params);
+  places = result.rows;
+} catch (e) {
+  console.error('Error loading SEO page:', e);
+}
+
+if (!page) return new Response(null, { status: 404 });
+
+const seo = {
+  title: page.meta_title || page.title,
+  description: page.meta_description || page.intro_text,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-red-700 to-red-900 text-white py-14">
+      <div class="container mx-auto px-4">
+        <h1 class="text-3xl md:text-4xl font-bold mb-3">{page.heading || page.title}</h1>
+        {page.intro_text && <p class="text-lg text-red-100 max-w-3xl">{page.intro_text}</p>}
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-10">
+      {places.length > 0 ? (
+        <div class="space-y-4">
+          {places.map((place, i) => (
+            <a href={`/places/${place.slug}`} class="flex items-center gap-5 bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+              <div class="flex-shrink-0 w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600 font-bold text-lg">
+                {i + 1}
+              </div>
+              <div class="flex-1 min-w-0">
+                <h2 class="font-bold text-lg text-gray-900 group-hover:text-red-600 transition-colors">{place.name}</h2>
+                <p class="text-sm text-gray-500 truncate">{place.short_description || place.address}</p>
+                {place.district_name && <span class="text-xs text-gray-400">📍 {place.district_name}</span>}
+              </div>
+              <div class="flex-shrink-0 text-right">
+                <div class="flex items-center gap-1">
+                  <span class="text-yellow-500">★</span>
+                  <span class="font-bold text-lg">{place.rating || '-'}</span>
+                </div>
+                <span class="text-xs text-gray-400">{place.review_count || 0} yorum</span>
+                {place.price_range && <div class="text-sm text-gray-500 mt-1">{place.price_range}</div>}
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16">
+          <p class="text-gray-500 text-lg">Yakında içerik eklenecek.</p>
+        </div>
+      )}
+    </div>
+  </div>
+
+  {/* Schema.org - ItemList */}
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: page.heading || page.title,
+    description: page.meta_description,
+    numberOfItems: places.length,
+    itemListElement: places.map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'LocalBusiness',
+        name: p.name,
+        url: `https://sanliurfa.com/places/${p.slug}`,
+        aggregateRating: p.rating ? { '@type': 'AggregateRating', ratingValue: p.rating, reviewCount: p.review_count || 0 } : undefined,
+      }
+    }))
+  })} />
+</Layout>
