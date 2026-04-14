@@ -18,6 +18,7 @@ const PUBLIC_PATHS = [
   '/sanliurfada-ne-yenir', '/bugun-sanliurfada-ne-yapilir',
   '/api/auth/login', '/api/auth/register', '/api/places', '/api/health',
   '/api/contact', '/api/reviews', '/api/hashtags', '/api/leaderboards',
+  '/api/saglik/nobetci',
   '/sitemap.xml', '/sitemap-dynamic.xml', '/rss.xml', '/robots.txt',
 ];
 

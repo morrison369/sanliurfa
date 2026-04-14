@@ -5,72 +5,135 @@ export interface Props {
 
 const { user } = Astro.props;
 
-const navLinks = [
-  { href: '/mekanlar', label: 'Mekanlar' },
-  { href: '/gezilecek-yerler', label: 'Gezilecek Yerler' },
-  { href: '/ilceler', label: 'İlçeler' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/iletisim', label: 'İletişim' },
+const megaMenu = [
+  {
+    label: 'Mekanlar',
+    href: '/mekanlar',
+    sub: [
+      { href: '/mekanlar/kebapcilar', label: '🍖 Kebapçılar' },
+      { href: '/mekanlar/cigerciler', label: '🥩 Ciğerciler' },
+      { href: '/mekanlar/kahvalti-mekanlari', label: '🍳 Kahvaltı' },
+      { href: '/mekanlar/tatlicilar', label: '🍮 Tatlıcılar' },
+      { href: '/mekanlar/kafeler', label: '☕ Kafeler' },
+      { href: '/mekanlar/lahmacuncular', label: '🫓 Lahmacuncular' },
+    ],
+  },
+  {
+    label: 'Gezilecek Yerler',
+    href: '/gezilecek-yerler',
+    sub: [
+      { href: '/gezilecek-yerler/gobeklitepe', label: '🏛️ Göbeklitepe' },
+      { href: '/gezilecek-yerler/balikligol', label: '🐟 Balıklıgöl' },
+      { href: '/gezilecek-yerler/harran-kumbet-evleri', label: '🏠 Harran' },
+      { href: '/gezilecek-yerler/halfeti-batik-sehir', label: '🌹 Halfeti' },
+      { href: '/gezilecek-yerler/urfa-kalesi', label: '🏰 Urfa Kalesi' },
+      { href: '/gezilecek-yerler/sanliurfa-arkeoloji-muzesi', label: '🏛️ Müze' },
+    ],
+  },
+  {
+    label: 'İlçeler',
+    href: '/ilceler',
+    sub: [
+      { href: '/ilceler/eyyubiye', label: '🏙️ Eyyübiye' },
+      { href: '/ilceler/haliliye', label: '🏙️ Haliliye' },
+      { href: '/ilceler/karakopru', label: '🏙️ Karaköprü' },
+      { href: '/ilceler/siverek', label: '📍 Siverek' },
+      { href: '/ilceler/halfeti', label: '📍 Halfeti' },
+      { href: '/ilceler/harran', label: '📍 Harran' },
+    ],
+  },
+  {
+    label: 'Daha Fazla',
+    href: '#',
+    sub: [
+      { href: '/saglik', label: '🏥 Sağlık' },
+      { href: '/saglik/nobetci-eczaneler', label: '🚨 Nöbetçi Eczane' },
+      { href: '/konaklama', label: '🏨 Konaklama' },
+      { href: '/alisveris', label: '🛍️ Alışveriş' },
+      { href: '/ulasim', label: '🚌 Ulaşım' },
+      { href: '/etkinlikler', label: '🎉 Etkinlikler' },
+      { href: '/blog', label: '📝 Blog' },
+      { href: '/yeme-icme', label: '🍽️ Yeme İçme' },
+    ],
+  },
 ];
 
 const currentPath = Astro.url.pathname;
 ---
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
+<header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
   <div class="container mx-auto px-4">
     <div class="flex items-center justify-between h-16">
       {/* Logo */}
-      <a href="/" class="flex items-center gap-2">
+      <a href="/" class="flex items-center gap-2 flex-shrink-0">
         <span class="text-2xl font-bold text-gray-900">
           Şanlıurfa<span class="text-red-600">.com</span>
         </span>
       </a>
 
       {/* Desktop Nav */}
-      <nav class="hidden md:flex items-center gap-8">
-        {navLinks.map(link => (
-          <a
-            href={link.href}
-            class={`text-sm font-medium transition-colors ${
-              currentPath.startsWith(link.href)
-                ? 'text-red-600'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            {link.label}
-          </a>
+      <nav class="hidden md:flex items-center gap-1">
+        {megaMenu.map(item => (
+          <div class="relative group">
+            <a
+              href={item.href}
+              class={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+                item.href !== '#' && currentPath.startsWith(item.href)
+                  ? 'text-red-600 bg-red-50'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              {item.label}
+              <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </a>
+            {/* Dropdown */}
+            <div class="absolute left-0 top-full pt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+              <div class="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[200px]">
+                {item.sub.map(sub => (
+                  <a
+                    href={sub.href}
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  >
+                    {sub.label}
+                  </a>
+                ))}
+                <div class="border-t border-gray-100 mt-2 pt-2 mx-2">
+                  <a href={item.href} class="block px-2 py-1.5 text-xs text-red-600 hover:underline font-medium">
+                    Tümünü Gör →
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         ))}
       </nav>
 
       {/* Right Side */}
-      <div class="flex items-center gap-4">
-        {/* Search Button */}
+      <div class="flex items-center gap-3">
+        {/* Search */}
         <a
           href="/arama"
-          class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+          class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
           aria-label="Ara"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </a>
 
-        {/* User Menu */}
+        {/* User */}
         {user ? (
           <div class="relative group">
-            <button class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
+            <button class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100">
               <div class="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
                 {(user.fullName || user.email)?.charAt(0).toUpperCase() || 'U'}
               </div>
-              <span class="hidden sm:block text-sm font-medium text-gray-700">{user.fullName || user.email}</span>
-              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
+              <span class="hidden lg:block text-sm font-medium text-gray-700">{user.fullName?.split(' ')[0] || user.email}</span>
             </button>
-            
-            {/* Dropdown */}
-            <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-              <div class="py-2">
+            <div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              <div class="py-1.5">
                 <a href="/profil" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Profilim</a>
                 {user.role === 'vendor' && (
                   <a href="/vendor/dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">İşletme Paneli</a>
@@ -78,16 +141,15 @@ const currentPath = Astro.url.pathname;
                 {(user.role === 'admin' || user.role === 'moderator') && (
                   <a href="/admin" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Admin Panel</a>
                 )}
-                <a href="/profil?tab=saved" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Kaydedilenler</a>
-                <hr class="my-2" />
+                <hr class="my-1" />
                 <a href="/api/auth/logout" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Çıkış Yap</a>
               </div>
             </div>
           </div>
         ) : (
           <div class="flex items-center gap-2">
-            <a href="/giris" class="hidden sm:block px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
-              Giriş Yap
+            <a href="/giris" class="hidden sm:block px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
+              Giriş
             </a>
             <a href="/kayit" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
               Kayıt Ol
@@ -96,8 +158,8 @@ const currentPath = Astro.url.pathname;
         )}
 
         {/* Mobile Menu Button */}
-        <button id="mobileMenuBtn" class="md:hidden w-10 h-10 rounded-lg hover:bg-gray-100 flex items-center justify-center">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="mobileMenuBtn" class="md:hidden w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center" aria-label="Menü">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
@@ -106,34 +168,58 @@ const currentPath = Astro.url.pathname;
   </div>
 
   {/* Mobile Menu */}
-  <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-100">
-    <div class="container mx-auto px-4 py-4 space-y-2">
-      {navLinks.map(link => (
-        <a
-          href={link.href}
-          class={`block px-4 py-3 rounded-lg font-medium ${
-            currentPath.startsWith(link.href)
-              ? 'bg-red-50 text-red-600'
-              : 'text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          {link.label}
+  <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-100 max-h-[80vh] overflow-y-auto">
+    <div class="container mx-auto px-4 py-4">
+      {/* Quick links */}
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        {[
+          { href: '/mekanlar', icon: '🍽️', label: 'Mekanlar' },
+          { href: '/gezilecek-yerler', icon: '🏛️', label: 'Gezilecek' },
+          { href: '/ilceler', icon: '🏙️', label: 'İlçeler' },
+          { href: '/saglik', icon: '🏥', label: 'Sağlık' },
+          { href: '/etkinlikler', icon: '🎉', label: 'Etkinlikler' },
+          { href: '/blog', icon: '📝', label: 'Blog' },
+        ].map(item => (
+          <a href={item.href} class="flex flex-col items-center gap-1 p-3 rounded-xl bg-gray-50 hover:bg-red-50 group">
+            <span class="text-2xl">{item.icon}</span>
+            <span class="text-xs font-medium text-gray-700 group-hover:text-red-600">{item.label}</span>
+          </a>
+        ))}
+      </div>
+
+      {/* All links */}
+      <div class="space-y-1 border-t border-gray-100 pt-4">
+        {[
+          { href: '/konaklama', label: '🏨 Konaklama' },
+          { href: '/alisveris', label: '🛍️ Alışveriş' },
+          { href: '/ulasim', label: '🚌 Ulaşım' },
+          { href: '/yeme-icme', label: '🍽️ Yeme İçme' },
+          { href: '/saglik/nobetci-eczaneler', label: '🚨 Nöbetçi Eczane' },
+          { href: '/mahalleler', label: '🏘️ Mahalleler' },
+          { href: '/emlak', label: '🏠 Emlak' },
+          { href: '/hizmetler', label: '🛠️ Hizmetler' },
+          { href: '/egitim', label: '🎓 Eğitim' },
+        ].map(item => (
+          <a href={item.href} class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">{item.label}</a>
+        ))}
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-gray-100">
+        <a href="/isletme-kayit" class="block px-4 py-3 bg-red-600 text-white rounded-xl font-medium text-center">
+          İşletmenizi Ekleyin
         </a>
-      ))}
-      <hr class="my-4" />
-      <a href="/isletme-kayit" class="block px-4 py-3 bg-red-600 text-white rounded-lg font-medium text-center">
-        İşletmenizi Ekleyin
-      </a>
+      </div>
     </div>
   </div>
 </header>
 
 <script>
-  // Mobile menu toggle
-  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-  const mobileMenu = document.getElementById('mobileMenu');
-  
-  mobileMenuBtn?.addEventListener('click', () => {
-    mobileMenu.classList.toggle('hidden');
+  const btn = document.getElementById('mobileMenuBtn');
+  const menu = document.getElementById('mobileMenu');
+  btn?.addEventListener('click', () => menu?.classList.toggle('hidden'));
+  document.addEventListener('click', (e) => {
+    if (!btn?.contains(e.target as Node) && !menu?.contains(e.target as Node)) {
+      menu?.classList.add('hidden');
+    }
   });
 </script>
