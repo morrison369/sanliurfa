@@ -62,10 +62,11 @@ export const GET: APIRoute = async () => {
       entries.push({ url: `/ilceler/${d.slug}`, lastmod: now, changefreq: 'weekly', priority: 0.7 });
     }
 
-    // Mekan detay sayfaları
+    // Mekan detay sayfaları (her mekanın iki URL'i var: /places/ ve /isletme/)
     const places = await query("SELECT slug, updated_at FROM places WHERE status = 'active' ORDER BY rating DESC LIMIT 500");
     for (const p of places.rows) {
       entries.push({ url: `/places/${p.slug}`, lastmod: p.updated_at || now, changefreq: 'weekly', priority: 0.6 });
+      entries.push({ url: `/isletme/${p.slug}`, lastmod: p.updated_at || now, changefreq: 'weekly', priority: 0.7 });
     }
 
     // Tarihi yerler

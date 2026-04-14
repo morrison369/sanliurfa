@@ -1,0 +1,111 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+let districts: any[] = [];
+let neighborhoodCount = 0;
+
+try {
+  const districtResult = await query(
+    `SELECT d.*,
+            (SELECT COUNT(*) FROM neighborhoods n WHERE n.district_id = d.id) as neighborhood_count
+     FROM districts d
+     ORDER BY d.is_central DESC, d.sort_order`
+  );
+  districts = districtResult.rows;
+
+  const countResult = await query("SELECT COUNT(*) FROM neighborhoods");
+  neighborhoodCount = parseInt(countResult.rows[0]?.count || '0');
+} catch (e) {
+  console.error('Error loading mahalleler index:', e);
+}
+
+const seo = {
+  title: 'Şanlıurfa Mahalleler Rehberi | İlçe ve Mahalle Bilgileri',
+  description: 'Şanlıurfa\'nın tüm mahallelerini keşfedin. İlçe ve mahallelere göre mekanlar, eczaneler, okullar ve daha fazlası.',
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-indigo-700 to-purple-800 text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Mahalleler Rehberi</h1>
+        <p class="text-xl text-indigo-100 max-w-2xl">
+          Şanlıurfa'nın tüm mahallelerini ilçelere göre keşfedin
+        </p>
+        {neighborhoodCount > 0 && (
+          <p class="text-indigo-200 mt-2">{neighborhoodCount} mahalle listelendi</p>
+        )}
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <!-- Öne Çıkan Bilgi -->
+      <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-6 mb-10">
+        <h2 class="text-lg font-bold text-indigo-800 mb-2">📍 Mahalle Rehberi Hakkında</h2>
+        <p class="text-indigo-700 text-sm">
+          Her mahalle sayfasında yakın mekanlar, eczaneler, okullar ve diğer hizmetleri bulabilirsiniz.
+          İlçenizi seçerek mahalle listesine ulaşın.
+        </p>
+      </div>
+
+      <!-- İlçe Listesi -->
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">İlçelere Göre Mahalleler</h2>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {districts.map((d) => (
+          <a
+            href={`/ilceler/${d.slug}`}
+            class="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 border border-gray-100 group"
+          >
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-3xl">🏘️</span>
+              <h3 class="text-xl font-bold text-gray-900 group-hover:text-indigo-600">{d.name}</h3>
+            </div>
+            {d.neighborhood_count > 0 ? (
+              <p class="text-sm text-gray-500">{d.neighborhood_count} mahalle</p>
+            ) : (
+              <p class="text-sm text-gray-400">Mahalle bilgisi güncelleniyor</p>
+            )}
+            {d.description && (
+              <p class="text-sm text-gray-500 mt-2 line-clamp-2">{d.description}</p>
+            )}
+          </a>
+        ))}
+      </div>
+
+      <!-- Popüler Mahalleler -->
+      <div class="mt-12">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Popüler Mahalleler</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {[
+            { name: 'Dergah Mahallesi', ilce: 'eyyubiye', slug: 'dergah-mahallesi' },
+            { name: 'Balıklıgöl Mahallesi', ilce: 'eyyubiye', slug: 'balikligol-mahallesi' },
+            { name: 'Atatürk Mahallesi', ilce: 'haliliye', slug: 'ataturk-mahallesi' },
+            { name: 'Paşabağı Mahallesi', ilce: 'haliliye', slug: 'pasabagi-mahallesi' },
+            { name: 'Camikebir Mahallesi', ilce: 'eyyubiye', slug: 'camikebir-mahallesi' },
+            { name: 'Yenişehir Mahallesi', ilce: 'karakopru', slug: 'yenisehir-mahallesi' },
+            { name: 'Bağlarbaşı Mahallesi', ilce: 'haliliye', slug: 'baglarbasi-mahallesi' },
+            { name: 'Karaköprü Merkez', ilce: 'karakopru', slug: 'karakopru-merkez' },
+          ].map((mah) => (
+            <a
+              href={`/mahalleler/${mah.ilce}/${mah.slug}`}
+              class="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-all group border border-gray-100"
+            >
+              <span class="text-xs text-indigo-500">{mah.ilce}</span>
+              <p class="font-medium text-gray-800 group-hover:text-indigo-600 text-sm mt-1">{mah.name}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: 'https://sanliurfa.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Mahalleler', item: 'https://sanliurfa.com/mahalleler' },
+    ]
+  })} />
+</Layout>

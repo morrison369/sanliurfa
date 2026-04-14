@@ -1,0 +1,226 @@
+---
+/**
+ * /isletme/[slug] — İşletme detay sayfası (SEO canonical URL)
+ * kategoriler.txt section 7: /isletme/{ad}/
+ * Bu sayfa, places tablosundaki işletme verilerini gösterir.
+ */
+import Layout from '../../layouts/Layout.astro';
+import { queryOne, query } from '../../lib/postgres';
+
+const { slug } = Astro.params;
+
+let place: any = null;
+let reviews: any[] = [];
+let relatedPlaces: any[] = [];
+
+try {
+  place = await queryOne(
+    `SELECT p.*, c.name as category_name, c.slug as category_slug,
+            d.name as district_name, d.slug as district_slug
+     FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     LEFT JOIN districts d ON p.district_id = d.id
+     WHERE p.slug = $1 AND p.status = 'active'`,
+    [slug]
+  );
+
+  if (!place) {
+    return Astro.redirect('/mekanlar');
+  }
+
+  const relatedResult = await query(
+    `SELECT id, name, slug, short_description, rating, price_range
+     FROM places
+     WHERE category_id = $1 AND id != $2 AND status = 'active'
+     ORDER BY rating DESC LIMIT 4`,
+    [place.category_id, place.id]
+  );
+  relatedPlaces = relatedResult.rows;
+} catch (e) {
+  console.error('Error loading isletme detail:', e);
+  if (!place) return Astro.redirect('/mekanlar');
+}
+
+const seo = {
+  title: `${place.name} Şanlıurfa | Adres, Menü, Telefon ve Yorumlar`,
+  description: place.short_description || `${place.name} - ${place.address || 'Şanlıurfa'}. Adres, telefon, çalışma saatleri ve yorumlar.`,
+};
+
+const breadcrumbs = [
+  { label: 'Ana Sayfa', href: '/' },
+  { label: 'Mekanlar', href: '/mekanlar' },
+  ...(place.category_slug ? [{ label: place.category_name, href: `/mekanlar/${place.category_slug}` }] : []),
+  { label: place.name, href: `/isletme/${slug}` },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
+          {breadcrumbs.map((crumb, i) => (
+            <>
+              {i > 0 && <span>/</span>}
+              {i === breadcrumbs.length - 1 ? (
+                <span class="text-gray-900 font-medium">{crumb.label}</span>
+              ) : (
+                <a href={crumb.href} class="hover:text-red-600">{crumb.label}</a>
+              )}
+            </>
+          ))}
+        </nav>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="bg-gradient-to-br from-red-700 to-red-900 text-white py-10">
+      <div class="container mx-auto px-4">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-3 mb-3">
+              {place.is_verified && (
+                <span class="px-2 py-1 bg-white/20 rounded-full text-xs font-medium">✓ Doğrulanmış</span>
+              )}
+              {place.is_featured && (
+                <span class="px-2 py-1 bg-yellow-500/80 rounded-full text-xs font-medium">⭐ Öne Çıkan</span>
+              )}
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold">{place.name}</h1>
+            {place.category_name && (
+              <p class="text-red-200 mt-1">{place.category_name}</p>
+            )}
+            {place.rating && (
+              <div class="flex items-center gap-2 mt-3">
+                <span class="text-yellow-300 text-xl">★</span>
+                <span class="text-2xl font-bold">{place.rating}</span>
+                <span class="text-red-200">({place.review_count || 0} yorum)</span>
+              </div>
+            )}
+          </div>
+          {place.price_range && (
+            <div class="text-right">
+              <div class="text-3xl font-bold">{place.price_range}</div>
+              <div class="text-red-200 text-sm">fiyat aralığı</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      <div class="grid lg:grid-cols-3 gap-8">
+        <!-- Ana İçerik -->
+        <div class="lg:col-span-2 space-y-6">
+          {/* Açıklama */}
+          {(place.description || place.short_description) && (
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+              <h2 class="text-xl font-bold text-gray-900 mb-3">Hakkında</h2>
+              <p class="text-gray-600 leading-relaxed">{place.description || place.short_description}</p>
+            </div>
+          )}
+
+          {/* Özellikler */}
+          {place.features && place.features.length > 0 && (
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+              <h2 class="text-xl font-bold text-gray-900 mb-4">Özellikler</h2>
+              <div class="flex flex-wrap gap-2">
+                {place.features.map((f: string) => (
+                  <span class="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm font-medium">
+                    {f.replace(/_/g, ' ')}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Benzer Mekanlar */}
+          {relatedPlaces.length > 0 && (
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+              <h2 class="text-xl font-bold text-gray-900 mb-4">Benzer Mekanlar</h2>
+              <div class="grid sm:grid-cols-2 gap-4">
+                {relatedPlaces.map((r) => (
+                  <a href={`/isletme/${r.slug}`} class="flex items-center gap-3 p-3 rounded-lg border hover:border-red-300 hover:bg-red-50 transition-colors group">
+                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center text-lg flex-shrink-0">🍽️</div>
+                    <div>
+                      <p class="font-medium text-gray-900 group-hover:text-red-600 text-sm">{r.name}</p>
+                      {r.rating && <p class="text-xs text-gray-500">★ {r.rating}</p>}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <!-- Kenar Bilgi Paneli -->
+        <div class="space-y-4">
+          <div class="bg-white rounded-xl p-6 shadow-sm">
+            <h3 class="font-bold text-gray-900 mb-4">İletişim ve Konum</h3>
+            <div class="space-y-3 text-sm">
+              {place.address && (
+                <div class="flex items-start gap-2">
+                  <span class="text-lg flex-shrink-0">📍</span>
+                  <span class="text-gray-600">{place.address}</span>
+                </div>
+              )}
+              {place.phone && (
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">📞</span>
+                  <a href={`tel:${place.phone}`} class="text-red-600 font-medium hover:underline">{place.phone}</a>
+                </div>
+              )}
+              {place.website && (
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🌐</span>
+                  <a href={place.website} target="_blank" rel="noopener noreferrer" class="text-red-600 hover:underline truncate">{place.website}</a>
+                </div>
+              )}
+              {place.district_name && (
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🏘️</span>
+                  <a href={`/ilceler/${place.district_slug}`} class="text-gray-600 hover:text-red-600">{place.district_name}</a>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {(place.open_hours || place.visiting_hours) && (
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+              <h3 class="font-bold text-gray-900 mb-3">Çalışma Saatleri</h3>
+              <p class="text-sm text-gray-600">{place.open_hours || place.visiting_hours}</p>
+            </div>
+          )}
+
+          {place.price_min && place.price_max && (
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+              <h3 class="font-bold text-gray-900 mb-3">Fiyat Aralığı</h3>
+              <p class="text-gray-600 text-sm">{place.price_min}₺ — {place.price_max}₺</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: place.name,
+    description: place.short_description,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: place.address,
+      addressLocality: place.district_name || 'Şanlıurfa',
+      addressCountry: 'TR',
+    },
+    telephone: place.phone,
+    url: `https://sanliurfa.com/isletme/${slug}`,
+    ...(place.rating ? { aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: place.rating,
+      reviewCount: place.review_count || 1,
+    }} : {}),
+  })} />
+</Layout>
