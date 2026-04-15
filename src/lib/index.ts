@@ -225,3 +225,21 @@ export { plgFunnelTracker, viralLoopAnalyzer, activationTracker, expansionSignal
 // Phase 202: NPS & Satisfaction
 export { npsSurveyManager, satisfactionScoreTracker, feedbackCategorizor, npsTrendAnalyzer } from './nps-satisfaction';
 
+// Phase 203: Skills Gap Analysis
+export { skillsInventoryManager, gapAnalyzer, skillsDevelopmentPlanner, skillsMatrixBuilder } from './skills-gap';
+
+// Phase 204: Workforce Planning
+export { headcountPlanner, workforceForecaster, capacityAnalyzer, hiringPlanManager } from './workforce-planning';
+
+// Phase 205: Performance Intelligence
+export { performanceMetricsTracker, goalAlignmentAnalyzer, performancePredictionEngine, teamPerformanceAnalyzer } from './performance-intelligence';
+
+// Phase 206: Succession Planning
+export { successionPlanManager, readinessAssessor, talentPipelineTracker, leadershipDevelopmentTracker } from './succession-planning';
+
+// Phase 207: Engagement Analytics
+export { engagementSurveyManager, pulseCheckTracker, retentionRiskAnalyzer, engagementActionTracker } from './engagement-analytics';
+
+// Phase 208: Talent Marketplace
+export { internalOpportunityManager, talentMatchingEngine, mobilityTracker, skillsMarketplaceAnalyzer } from './talent-marketplace';
+
