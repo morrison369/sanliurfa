@@ -174,3 +174,21 @@ export { lineageGraphBuilder, transformationTracker, provenanceManager, impactAn
 // Phase 184: Data Quality SLAs
 export { slaDefinitionManager, slaMonitor, slaBreachNotifier, slaReporter } from './data-quality-sla';
 
+// Phase 185: Partner Onboarding
+export { partnerApplicationManager, partnerOnboardingOrchestrator, partnerComplianceChecker, partnerProfileManager } from './partner-onboarding';
+
+// Phase 186: API Monetization
+export { apiProductManager, apiUsageTracker, apiBillingEngine, apiAccessManager } from './api-monetization';
+
+// Phase 187: Ecosystem Analytics
+export { ecosystemHealthMonitor, partnerPerformanceTracker, ecosystemGrowthAnalyzer, networkEffectCalculator } from './ecosystem-analytics';
+
+// Phase 188: Partner Portal
+export { partnerPortalContentManager, partnerSandboxManager, partnerSupportTicketManager, partnerCertificationTracker } from './partner-portal';
+
+// Phase 189: Co-selling Workflows
+export { coSellOpportunityManager, coSellDealRegistration, partnerCommissionTracker, coSellPipelineAnalyzer } from './coselling-workflows';
+
+// Phase 190: Integration Marketplace
+export { integrationCatalogManager, integrationRatingSystem, integrationDeploymentManager, integrationHealthMonitor } from './integration-marketplace';
+
