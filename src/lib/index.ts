@@ -441,3 +441,21 @@ export { subscriptionHealthMonitor, expansionRevenueEngine, renewalForecastEngin
 // Phase 274: Field Service Intelligence
 export { workOrderManager, technicianPerformanceTracker, slaPerformanceAnalyzer, fieldServiceCostTracker } from './field-service-intelligence';
 
+// Phase 275: Real Estate Portfolio Intelligence
+export { propertyPortfolioManager, tenantAnalyticsEngine, portfolioPerformanceAnalyzer, marketBenchmarkTracker } from './real-estate-portfolio-intelligence';
+
+// Phase 276: Fleet Management Intelligence
+export { vehicleFleetManager, maintenanceScheduler, fuelAnalyticsEngine, driverPerformanceTracker } from './fleet-management-intelligence';
+
+// Phase 277: Healthcare & Benefits Intelligence
+export { benefitsPlanManager, healthcareCostAnalyzer, wellnessProgramTracker, claimsAnalyticsEngine } from './healthcare-benefits-intelligence';
+
+// Phase 278: Energy Management Intelligence
+export { energyConsumptionTracker, renewableEnergyManager, energyAnomalyDetector, carbonFootprintTracker } from './energy-management-intelligence';
+
+// Phase 279: Quality Management Intelligence
+export { defectTrackingSystem, qualityCostAnalyzer, supplierQualityManager, continuousImprovementTracker } from './quality-management-intelligence';
+
+// Phase 280: R&D Intelligence
+export { rdProjectManager, innovationMetricsTracker, technologyReadinessAssessor, researchROICalculator } from './rd-intelligence';
+
