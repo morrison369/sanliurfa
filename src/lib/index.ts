@@ -603,3 +603,21 @@ export { riskRegister, controlEffectivenessTracker, lossEventTracker, riskAppeti
 // Phase 328: Product Launch Intelligence
 export { launchManager, launchReadinessAssessor, launchMetricsTracker, adoptionCurveAnalyzer } from './product-launch-intelligence';
 
+// Phase 329: Price Optimization Intelligence
+export { priceOptimizer, elasticityAnalyzer, markdownManager, priceTestManager } from './price-optimization-intelligence';
+
+// Phase 330: Customer Feedback Intelligence
+export { feedbackCollector, surveyAnalyzer, feedbackThemeEngine, voiceOfCustomerEngine } from './customer-feedback-intelligence';
+
+// Phase 331: Knowledge Worker Intelligence
+export { workerProductivityTracker, collaborationAnalyzer, expertiseMapper, teamFlowAnalyzer } from './knowledge-worker-intelligence';
+
+// Phase 332: Supply Disruption Intelligence
+export { disruptionDetector, alternateSourceManager, disruptionImpactCalculator, recoveryPlanManager } from './supply-disruption-intelligence';
+
+// Phase 333: Revenue Leakage Intelligence
+export { leakageDetector, billingAuditor, contractComplianceChecker, recoveryTracker } from './revenue-leakage-intelligence';
+
+// Phase 334: Corporate Learning Intelligence
+export { trainingProgramManager, learningOutcomeTracker, ldRoiCalculator, skillDevelopmentManager } from './corporate-learning-intelligence';
+
