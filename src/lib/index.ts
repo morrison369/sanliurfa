@@ -513,3 +513,21 @@ export { representationAnalyzer, payEquityAnalyzer, inclusionSentimentTracker, d
 // Phase 298: Enterprise Architecture Intelligence
 export { applicationPortfolioManager, technicalDebtTracker, architectureComplianceAnalyzer, capabilityMapper } from './enterprise-architecture-intelligence';
 
+// Phase 299: Sales Intelligence
+export { salesPipelineManager, salesQuotaTracker, winLossAnalyzer, territoryPerformanceAnalyzer } from './sales-intelligence';
+
+// Phase 300: Asset Lifecycle Intelligence
+export { assetTracker, maintenanceScheduler, depreciationEngine, assetDisposalManager } from './asset-lifecycle-intelligence';
+
+// Phase 301: Regulatory Reporting Intelligence
+export { regulatoryFilingManager, regulatoryChangeMonitor, complianceReportGenerator, filingDeadlineAlertEngine } from './regulatory-reporting-intelligence';
+
+// Phase 302: Workforce Analytics Intelligence
+export { headcountPlanner, attritionAnalyzer, productivityBenchmarker, orgHealthAnalyzer } from './workforce-analytics-intelligence';
+
+// Phase 303: Customer Onboarding Intelligence
+export { onboardingTracker, adoptionMilestoneTracker, onboardingDropOffAnalyzer, onboardingEffectivenessTracker } from './customer-onboarding-intelligence';
+
+// Phase 304: Vendor Performance Intelligence
+export { vendorScorecardManager, vendorSLAMonitor, vendorRiskAnalyzer, vendorContractComplianceTracker } from './vendor-performance-intelligence';
+
