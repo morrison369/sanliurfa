@@ -369,3 +369,21 @@ export { platformServiceRegistry, goldenPathManager, developerExperienceTracker,
 // Phase 250: Infrastructure Cost Intelligence
 export { cloudCostTracker, costAllocationEngine, wasteDetector, costOptimizationAdvisor } from './infrastructure-cost-intelligence';
 
+// Phase 251: Employee Experience Intelligence
+export { exScoreCalculator, pulseSurveyAnalyzer, wellbeingMonitor, engagementDriverAnalyzer } from './employee-experience-intelligence';
+
+// Phase 252: Sustainability & ESG Intelligence
+export { carbonEmissionTracker, esgScorer, sustainabilityTargetManager, esgComplianceTracker } from './sustainability-esg-intelligence';
+
+// Phase 253: Digital Transformation Intelligence
+export { transformationInitiativeTracker, digitizationMaturityAssessor, adoptionVelocityTracker, transformationROICalculator } from './digital-transformation-intelligence';
+
+// Phase 254: Customer Data Platform Intelligence
+export { unifiedProfileManager, identityResolutionEngine, segmentManager, dataActivationManager } from './customer-data-platform';
+
+// Phase 255: Ecosystem Health Intelligence
+export { partnerHealthMonitor, marketplaceVitalityAnalyzer, apiConsumerHealthTracker, ecosystemGrowthReporter } from './ecosystem-health-intelligence';
+
+// Phase 256: Organizational Network Analytics
+export { collaborationNetworkMapper, employeeNetworkProfiler, siloDetector, knowledgeFlowAnalyzer } from './organizational-network-analytics';
+
