@@ -6,23 +6,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Şanlıurfa.com** is a production-grade city guide web application built with Astro 6.1, React 19, and TypeScript. Full-stack with bcrypt authentication, Redis caching/sessions/rate-limiting, PostgreSQL, comprehensive observability, API documentation, and E2E testing. Enterprise-ready infrastructure with strict TypeScript, SQL injection prevention, and performance monitoring.
 
+## Source of Truth & Working Model
+
+This file is a high-signal working guide, not the only source of truth. For operational decisions, open these files first:
+
+- `docs/ops/README.md` — entry point for ops documents
+- `docs/ops/SOURCE_OF_TRUTH_MAP.md` — which file owns which decision
+- `docs/RELEASE_GATES.md` — release and merge gate behavior
+- `docs/ops/BRANCH_PROTECTION.md` — required checks / branch protection parity
+- `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` — artifact freshness semantics
+- `docs/ops/ARTIFACT_RETENTION_POLICY.md` — retention and cleanup rules
+- `docs/ops/INTEGRATION_READINESS.md` — admin integration readiness behavior
+- `docs/ops/INCIDENT_RUNBOOK.md` — incident response order
+- `docs/ops/LEGACY_PHASE_SURFACE.md` and `docs/SCRIPT_SURFACE_POLICY.md` — legacy phase and script surface policy
+- `src/pages/api/openapi.json.ts` — current API contract source
+- `src/types/generated-admin-api.ts` — generated admin API types from OpenAPI
+- `src/types/admin-api.ts` — UI-facing admin type layer
+
+For long-form architecture notes, prefer `docs/architecture/README.md` and keep this file focused on daily execution rules.
+
 ## Quick Start Commands
 
-### Development
-- `npm run dev` — Start dev server on port 3000
-- `npm run dev:1111` — Dev server on custom port (1111, 1112, 1113 available)
-- `npm run dev:wsl` — Dev server for WSL with external host access
-
-### Building & Preview
+### Daily Development
+- `npm run dev` — Start dev server
+- `npm run dev:1111` — Preferred local strict-port dev server
+- `npm run dev:wsl` — Dev server for WSL / external host access
 - `npm run build` — Production build
-- `npm run preview` — Preview production build locally
+- `npm run lint` — TypeScript + Astro validation
+- `npm run format` — Prettier (including Astro)
 
-### Testing
-- `npm run test:unit` — Run Vitest unit tests
-- `npm run test:unit:watch` — Watch mode for unit tests
-- `npm run test:e2e` — Run Playwright E2E tests
-- `npm run test:e2e:ui` — Run E2E tests with UI
-- `npm run test` — Run all tests (unit + E2E)
+### Primary Quality Gates
+- `npm run typecheck:app` — Canonical app typecheck
+- `npm run test:critical:blocking` — Blocking contract tests
+- `npm run test:critical:advisory` — Advisory contract tests
+- `npm run test:critical` — Full critical gate
+- `npm run test:e2e:smoke` — Canonical smoke suite
+
+### Admin API Contract & Types
+- `npm run types:admin:generate` — Regenerate admin API types from OpenAPI
+- `npm run types:admin:drift:check` — Fail if generated types are stale
+- `npm run test:critical:advisory` — Includes admin contract and OpenAPI contract checks
+
+### Release, Governance & Ops
+- `npm run release:gate` — Release gate summary and decision
+- `npm run branch:protection:drift:check` — Required checks / docs parity
+- `npm run ops:retention:apply` — Local artifact and audit retention cleanup
+- `npm run phase:scripts:report` — Phase compatibility status
+- `npm run phase:compat:cleanup` — Cleanup compatibility manifest state
 
 ### Database & Services
 - `npm run db:start` — Start PostgreSQL Docker container
@@ -31,10 +61,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run db:psql` — Open psql shell to database
 - `npm run db:logs` — View database logs
 
-### Other
-- `npm run lint` — Run TypeScript strict check + Astro check (must pass before commits)
-- `npm run format` — Format code with Prettier (including Astro)
-- `npm run deploy` — Deploy application
+### Extended Test Commands
+- `npm run test:unit` — Full Vitest unit suite
+- `npm run test:unit:watch` — Vitest watch mode
+- `npm run test:e2e` — Full Playwright suite
+- `npm run test:e2e:ui` — Playwright UI mode
+- `npm run test` — Legacy broad suite, not the primary merge signal
 
 ## Architecture
 
@@ -189,6 +221,25 @@ All queries use parameterized statements (`$1`, `$2`, etc.). Direct access via `
 - `GET /api/health/detailed` (admin) — System metrics, pool info, error details
 - `GET /api/metrics` (admin) — Aggregated request metrics, error rates, cache stats, slowest endpoints
 - `GET /api/performance` (admin) — Slow queries, slow operations, pool utilization, performance dashboard
+
+**Ops & Admin Contract Surfaces**:
+- `GET /api/admin/dashboard/overview` — Admin dashboard summary surface
+- `GET /api/admin/system/metrics` — Admin metrics and normalized status summary
+- `GET /api/admin/system/artifact-health` — Artifact snapshot + summary
+- `GET /api/admin/deployment/status` — Deployment readiness + artifact health
+- `GET /api/admin/audit-logs` — Admin audit sink + filters + CSV export
+- `GET /api/admin/system/integration-settings` — Integration readiness snapshot
+- `PUT /api/admin/system/integration-settings` — Integration settings mutation
+- `GET /api/admin/performance/optimization` — Performance optimization summary
+- `GET /api/admin/subscriptions/users` — Subscription user list
+- `POST /api/admin/subscriptions/users` — Subscription management actions
+- `POST /api/admin/messages/{id}/status` — Contact message status mutation
+- `GET /api/openapi.json` — Current contract source for generated admin types
+
+**Admin UI Ops Surfaces**:
+- `/admin/runtime-monitor` — Runtime health / performance / artifact monitor
+- `/admin/audit` — Persistent admin ops audit viewer
+- `/admin` — Admin dashboard overview fed by typed admin client layer
 
 **Authentication**:
 - `POST /api/auth/register` — Create account (schema: email, password min 8 chars with uppercase/number/special)
@@ -665,6 +716,22 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `src/pages/api/openapi.json.ts` | OpenAPI 3.1 specification |
 | `src/pages/api/docs.ts` | Swagger UI endpoint |
 
+### Ops Governance & Source Of Truth
+| File | Purpose |
+|------|---------|
+| `docs/ops/README.md` | Ops document entry point |
+| `docs/ops/SOURCE_OF_TRUTH_MAP.md` | Which file owns which decision |
+| `docs/RELEASE_GATES.md` | Release gate behavior and decision model |
+| `docs/ops/BRANCH_PROTECTION.md` | Required checks and parity rules |
+| `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` | Artifact freshness status semantics |
+| `docs/ops/ARTIFACT_RETENTION_POLICY.md` | Artifact and audit retention rules |
+| `docs/ops/INCIDENT_RUNBOOK.md` | Incident response order |
+| `docs/ops/INTEGRATION_READINESS.md` | Admin integration readiness policy |
+| `docs/ops/LEGACY_PHASE_SURFACE.md` | Legacy phase compatibility boundaries |
+| `docs/SCRIPT_SURFACE_POLICY.md` | Script surface and runner-first policy |
+| `src/types/generated-admin-api.ts` | Generated admin API contract types |
+| `src/types/admin-api.ts` | UI-facing admin type layer |
+
 ### Real-time & Analytics
 | File | Purpose |
 |------|---------|
@@ -788,8 +855,11 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 7. **SSE Implementation**: Always use `ReadableStream` for real-time endpoints, include `Cache-Control: no-cache` and `Connection: keep-alive` headers, implement client-side exponential backoff reconnection with max 60s delay.
 8. **Gamification Hooks**: `checkCommonAchievements()` must be called from event hooks, not directly. It has internal try/catch so it cannot throw.
 9. **Cache Invalidation**: On any mutation (POST/PUT/DELETE), invalidate related cache patterns. For loyalty changes, invalidate `sanliurfa:loyalty:*` and `sanliurfa:tier:*` patterns.
-10. **Admin Guard**: Every admin endpoint must check `if (!locals.user || locals.user.role !== 'admin')` and return 403 FORBIDDEN, never redirect.
-11. **Fire-and-Forget**: For non-critical background work (marking mentions as read), queue async queries without awaiting to avoid request timeout.
+10. **Admin Guard**: New admin API endpoints must use `withAdminOpsReadAccess(...)` or `withAdminOpsWriteAccess(...)`. Admin pages may redirect; admin API routes must return API-style 403/429/422 responses, not redirects.
+11. **Admin API Contract**: If an admin endpoint changes, update `src/pages/api/openapi.json.ts`, regenerate `src/types/generated-admin-api.ts`, and keep `src/types/admin-api.ts` aligned. Treat `npm run types:admin:drift:check` as authoritative.
+12. **Primary Gates**: Before calling a change green, prefer `npm run typecheck:app`, `npm run test:critical`, and `npm run test:e2e:smoke`. `npm run test` remains broader legacy coverage, not the primary operational gate.
+13. **Phase Workflow**: Phase compatibility is runner-first. Do not reintroduce broad `package.json` phase alias surfaces; use the phase runner and manifest flow documented in `docs/ops/LEGACY_PHASE_SURFACE.md` and `docs/SCRIPT_SURFACE_POLICY.md`.
+14. **Fire-and-Forget**: For non-critical background work (marking mentions as read), queue async queries without awaiting to avoid request timeout.
 
 ### Performance Optimization
 - Cache aggressively (5-10 min TTL for reads, invalidate on mutations)
@@ -807,11 +877,14 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 
 **New API Endpoints**:
 - Follow response formatter pattern from `src/lib/api.ts`
-- Include auth checks (`locals.user`, role checks for admin)
+- For admin endpoints, use the shared admin ops access wrapper instead of ad hoc inline role checks
 - Validate input via `validateWithSchema()` before using
 - Record metrics: `recordRequest(method, path, status, duration)`
 - Log important mutations: `logger.logMutation(action, table, recordId, userId, details)`
 - Return X-Request-ID in response headers
+- If the endpoint is consumed by admin UI or changes admin contract shape, update `src/pages/api/openapi.json.ts`
+- Regenerate admin API types with `npm run types:admin:generate`
+- Keep `npm run types:admin:drift:check` green
 - For SSE endpoints, use `ReadableStream` pattern, include proper headers, implement client-side reconnection
 
 **New Validations**:
@@ -848,10 +921,14 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 - Aggregated in `/api/metrics` endpoint (viewable by admins)
 
 ### Testing
-- Run `npm run test` before committing
-- E2E tests validate auth flows, data endpoints, admin access control
-- Unit tests for validation, utility functions, business logic
-- Performance benchmarks in `/api/performance` to catch regressions
+- Minimum pre-commit / pre-push gate:
+  - `npm run typecheck:app`
+  - `npm run test:critical`
+  - `npm run test:e2e:smoke`
+- Admin contract changes also require:
+  - `npm run types:admin:drift:check`
+- Use `npm run release:gate` when the change affects release readiness, branch protection parity, summaries, or ops decisions
+- `npm run test` is still useful for broad regression coverage, but it is not the primary blocker signal
 
 ### Monitoring
 - Check `/api/health` on every deployment
