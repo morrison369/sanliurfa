@@ -138,3 +138,21 @@ export { explainabilityAnalyzer, biasDetector, modelAuditor, explainabilityRepor
 // Phase 172: ML Cost Optimization
 export { mlInfrastructureCostTracker, modelEfficiencyAnalyzer, computeResourceOptimizer, mlCostReporter } from './ml-cost-optimization';
 
+// Phase 173: Journey Orchestration
+export { journeyBuilder, journeyProgressTracker, journeyTriggerEngine, journeyAnalytics } from './journey-orchestration';
+
+// Phase 174: Real-time Personalization
+export { personalizationEngine, userContextManager, contentVariantSelector, personalizationCache } from './realtime-personalization';
+
+// Phase 175: A/B Testing & Experimentation
+export { experimentDesigner, variantAssigner, experimentMetricsCollector, experimentAnalyzer } from './ab-experimentation';
+
+// Phase 176: Content Optimization
+export { contentScorer, contentRecommender, contentPerformanceTracker, contentOptimizationSuggester } from './content-optimization';
+
+// Phase 177: UX Analytics
+export { userSessionAnalyzer, heatmapTracker, funnelAnalyzer, uxQualityScorer } from './ux-analytics';
+
+// Phase 178: Conversion Intelligence
+export { conversionPredictor, conversionOptimizer, abandonmentDetector, revenueAttributionTracker } from './conversion-intelligence';
+
