@@ -333,3 +333,21 @@ export { auditEngagementPlanner, auditFindingManager, controlTestingEngine, audi
 // Phase 238: Financial Forecasting & Budgeting
 export { budgetManager, rollingForecastManager, varianceAnalyzer, financialScenarioModeler } from './financial-forecasting-budgeting';
 
+// Phase 239: Marketing Attribution
+export { touchpointEventCollector, attributionModelEngine, channelContributionTracker, campaignROICalculator } from './marketing-attribution';
+
+// Phase 240: Account-Based Marketing Intelligence
+export { targetAccountManager, engagementSignalTracker, abmCampaignManager, accountIntelligenceEngine } from './account-based-marketing';
+
+// Phase 241: Content Performance Analytics
+export { contentAssetManager, contentEngagementTracker, contentROIAnalyzer, seoPerformanceTracker } from './content-performance-analytics';
+
+// Phase 242: Growth Analytics
+export { growthLoopManager, acquisitionFunnelAnalyzer, retentionCohortAnalyzer, growthExperimentEngine } from './growth-analytics';
+
+// Phase 243: Customer Acquisition Optimization
+export { cacTracker, acquisitionChannelScorer, leadQualityScorer, conversionOptimizationAdvisor } from './customer-acquisition-optimization';
+
+// Phase 244: Brand Intelligence
+export { brandHealthTracker, shareOfVoiceTracker, brandSentimentMonitor, brandEquityMeasurer } from './brand-intelligence';
+
