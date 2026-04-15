@@ -387,3 +387,21 @@ export { partnerHealthMonitor, marketplaceVitalityAnalyzer, apiConsumerHealthTra
 // Phase 256: Organizational Network Analytics
 export { collaborationNetworkMapper, employeeNetworkProfiler, siloDetector, knowledgeFlowAnalyzer } from './organizational-network-analytics';
 
+// Phase 257: Regulatory Intelligence
+export { regulatoryChangeTracker, complianceObligationManager, controlTestingEngine, regulatoryRiskScorer } from './regulatory-intelligence';
+
+// Phase 258: Vendor Risk Intelligence
+export { vendorRiskProfiler, vendorIncidentTracker, concentrationRiskAnalyzer, vendorDueDiligenceTracker } from './vendor-risk-intelligence';
+
+// Phase 259: Product Lifecycle Intelligence
+export { productLifecycleTracker, versionEOLManager, adoptionCurveAnalyzer, productSunsetAdvisor } from './product-lifecycle-intelligence';
+
+// Phase 260: Revenue Operations Intelligence
+export { pipelineIntelligenceEngine, salesVelocityTracker, gtmEffectivenessAnalyzer, revOpsHealthMonitor } from './revenue-operations-intelligence';
+
+// Phase 261: Crisis & Business Continuity Intelligence
+export { crisisCommandCenter, bcpTestingTracker, rtoRPOManager, crisisCommunicationManager } from './crisis-business-continuity';
+
+// Phase 262: Intelligent Automation & RPA Analytics
+export { automationBotRegistry, automationROICalculator, processAutomationCoverageTracker, exceptionAnalyzer } from './intelligent-automation-analytics';
+
