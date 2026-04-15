@@ -567,3 +567,21 @@ export { incidentManager, postMortemTracker, incidentMetricsEngine, incidentTren
 // Phase 316: Executive Dashboard Intelligence
 export { kpiManager, executiveScorecardGenerator, boardReportGenerator, trendAlertEngine } from './executive-dashboard-intelligence';
 
+// Phase 317: Inventory Optimization Intelligence
+export { inventoryManager, reorderManager, abcAnalyzer, stockOptimizer } from './inventory-optimization-intelligence';
+
+// Phase 318: Channel Analytics Intelligence
+export { channelManager, attributionEngine, channelMixOptimizer, channelFunnelAnalyzer } from './channel-analytics-intelligence';
+
+// Phase 319: Project Portfolio Intelligence
+export { projectManager, portfolioManager, resourceAllocationManager, deliveryMetricsAnalyzer } from './project-portfolio-intelligence';
+
+// Phase 320: Customer Health Intelligence
+export { customerHealthEngine, churnPredictor, expansionSignalDetector, lifecycleStageManager } from './customer-health-intelligence';
+
+// Phase 321: Network & Infrastructure Intelligence
+export { networkNodeManager, bandwidthAnalyzer, capacityPlanner, infrastructureAlertManager } from './network-infrastructure-intelligence';
+
+// Phase 322: Sustainability Intelligence
+export { carbonTracker, esgMetricsManager, energyManager, sustainabilityReportGenerator } from './sustainability-intelligence';
+
