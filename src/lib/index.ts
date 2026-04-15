@@ -495,3 +495,21 @@ export { franchiseeManager, franchiseePerformanceTracker, franchiseComplianceMan
 // Phase 292: Corporate Events & Hospitality Intelligence
 export { corporateEventManager, hospitalityBudgetManager, guestExperienceTracker, hospitalityComplianceTracker } from './corporate-events-hospitality-intelligence';
 
+// Phase 293: Procurement Intelligence
+export { procurementSpendAnalyzer, supplierNegotiationTracker, procurementContractManager, procurementSavingsTracker } from './procurement-intelligence';
+
+// Phase 294: Customer Credit Intelligence
+export { creditProfileManager, creditExposureAnalyzer, collectionsManager, creditRiskForecaster } from './customer-credit-intelligence';
+
+// Phase 295: Trade Compliance Intelligence
+export { tradeComplianceScreener, exportControlManager, customsAnalyticsEngine, tradeRiskMonitor } from './trade-compliance-intelligence';
+
+// Phase 296: Innovation Lab Intelligence
+export { experimentTracker, prototypeManager, ideationFunnelAnalyzer, labROICalculator } from './innovation-lab-intelligence';
+
+// Phase 297: D&I Intelligence
+export { representationAnalyzer, payEquityAnalyzer, inclusionSentimentTracker, diHiringPipelineTracker } from './diversity-inclusion-intelligence';
+
+// Phase 298: Enterprise Architecture Intelligence
+export { applicationPortfolioManager, technicalDebtTracker, architectureComplianceAnalyzer, capabilityMapper } from './enterprise-architecture-intelligence';
+
