@@ -243,3 +243,21 @@ export { engagementSurveyManager, pulseCheckTracker, retentionRiskAnalyzer, enga
 // Phase 208: Talent Marketplace
 export { internalOpportunityManager, talentMatchingEngine, mobilityTracker, skillsMarketplaceAnalyzer } from './talent-marketplace';
 
+// Phase 209: Supplier Risk Scoring
+export { supplierProfileManager, riskScoreCalculator, supplierAuditTracker, riskMitigationManager } from './supplier-risk';
+
+// Phase 210: Procurement Analytics
+export { spendAnalyzer, procurementPerformanceTracker, contractUtilizationMonitor, savingsTracker } from './procurement-analytics';
+
+// Phase 211: Carbon Footprint Tracking
+export { emissionTracker, carbonIntensityCalculator, scopeEmissionManager, carbonReductionPlanner } from './carbon-footprint';
+
+// Phase 212: Supply Chain Resilience
+export { resilienceScoreCalculator, disruptionSimulator, alternativeSourceManager, recoveryTimeEstimator } from './supply-chain-resilience';
+
+// Phase 213: Supply Chain Cost Optimization
+export { costDriverAnalyzer, optimizationOpportunityFinder, tcoCalculator, costReductionTracker } from './supply-chain-costs';
+
+// Phase 214: ESG Compliance
+export { esgScoreManager, supplierESGAssessor, esgReportGenerator, complianceFrameworkTracker } from './esg-compliance';
+
