@@ -261,3 +261,21 @@ export { costDriverAnalyzer, optimizationOpportunityFinder, tcoCalculator, costR
 // Phase 214: ESG Compliance
 export { esgScoreManager, supplierESGAssessor, esgReportGenerator, complianceFrameworkTracker } from './esg-compliance';
 
+// Phase 215: Voice of Customer
+export { feedbackCollector, vocAnalyzer, customerInsightManager, vocDashboardAggregator } from './voice-of-customer';
+
+// Phase 216: Customer Journey Analytics
+export { journeyStageMapper, customerJourneyTracker, journeyDropOffAnalyzer, journeyOptimizationEngine } from './customer-journey-analytics';
+
+// Phase 217: Experience Scoring
+export { cxScoreCalculator, experienceIndexManager, momentOfTruthTracker, experienceBenchmarker } from './experience-scoring';
+
+// Phase 218: Touchpoint Analytics
+export { touchpointMapper, channelPerformanceTracker, journeyOrchestrationAnalyzer, touchpointInfluenceCalculator } from './touchpoint-analytics';
+
+// Phase 219: Feedback Intelligence
+export { feedbackTopicExtractor, issueClusteringEngine, feedbackPriorityRanker, closedLoopTracker } from './feedback-intelligence';
+
+// Phase 220: CX Forecasting
+export { cxMetricForecaster, churnRiskPredictor, customerValueForecaster, experienceImpactModeler } from './cx-forecasting';
+
