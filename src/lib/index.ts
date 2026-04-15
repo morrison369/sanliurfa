@@ -351,3 +351,21 @@ export { cacTracker, acquisitionChannelScorer, leadQualityScorer, conversionOpti
 // Phase 244: Brand Intelligence
 export { brandHealthTracker, shareOfVoiceTracker, brandSentimentMonitor, brandEquityMeasurer } from './brand-intelligence';
 
+// Phase 245: Technology Portfolio Management
+export { techAssetInventory, techLifecycleTracker, vendorDependencyAnalyzer, techRoadmapManager } from './technology-portfolio-management';
+
+// Phase 246: Technical Debt Intelligence
+export { technicalDebtRegister, debtRemediationTracker, debtCostCalculator, techHealthScorer } from './technical-debt-intelligence';
+
+// Phase 247: Architecture Intelligence
+export { serviceRegistry, serviceDependencyMapper, architectureHealthAnalyzer, adrManager } from './architecture-intelligence';
+
+// Phase 248: API Lifecycle Management
+export { apiInventoryManager, apiVersionGovernor, apiDeprecationManager, apiHealthReporter } from './api-lifecycle-management';
+
+// Phase 249: Platform Engineering Intelligence
+export { platformServiceRegistry, goldenPathManager, developerExperienceTracker, platformIncidentTracker } from './platform-engineering-intelligence';
+
+// Phase 250: Infrastructure Cost Intelligence
+export { cloudCostTracker, costAllocationEngine, wasteDetector, costOptimizationAdvisor } from './infrastructure-cost-intelligence';
+
