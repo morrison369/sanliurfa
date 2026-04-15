@@ -2,12 +2,13 @@
 // Admin Import/Export Page
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { requireRole } from '../../lib/auth';
-import { getCategories } from '../../lib/places/categories';
+import { query } from '../../lib/postgres';
 
 const auth = await requireRole(Astro.request, 'admin');
 if (auth instanceof Response) return auth;
 
-const categories = await getCategories();
+const catResult = await query(`SELECT id, slug, name FROM categories WHERE is_active = true ORDER BY sort_order, name`);
+const categories = catResult.rows;
 ---
 
 <AdminLayout title="İçe/Dışa Aktar">

@@ -28,7 +28,7 @@ export const POST: APIRoute = async (context) => {
     }
 
     // Get the secret that was generated during setup (stored in cache)
-    const secret = await getCache<string>(`sanliurfa:2fa:setup:${userId}`);
+    const secret = await getCache<string>(`2fa:setup:${userId}`);
 
     if (!secret) {
       return apiError(context, HttpStatus.BAD_REQUEST, 'Please complete the setup step first. Call POST /api/users/2fa/setup to get started.');
@@ -52,7 +52,7 @@ export const POST: APIRoute = async (context) => {
     }
 
     // Clean up the temporary setup secret from cache
-    await deleteCache(`sanliurfa:2fa:setup:${userId}`);
+    await deleteCache(`2fa:setup:${userId}`);
 
     logger.info('2FA verified and enabled', { userId });
 

@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Offline Support Module
  * Service Worker helpers, background sync, and cache management
@@ -71,7 +72,7 @@ export async function queueForSync(
     try {
       await (registration as any).sync.register('sync-data');
     } catch (e) {
-      console.log('Background sync registration failed');
+      logger.info('Background sync registration failed');
     }
   }
 }
@@ -178,7 +179,7 @@ export async function cachePageForOffline(url: string): Promise<void> {
     const html = await response.text();
     localStorage.setItem(`page-${url}`, html);
   } catch (error) {
-    console.error('Failed to cache page:', error);
+    logger.error('Failed to cache page:', error);
   }
 }
 
@@ -257,7 +258,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 
     return registration;
   } catch (error) {
-    console.error('SW registration failed:', error);
+    logger.error('SW registration failed:', error);
     return null;
   }
 }

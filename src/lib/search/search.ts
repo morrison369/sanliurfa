@@ -195,7 +195,7 @@ async function searchEvents(query: string, filters?: any): Promise<any[]> {
  */
 export async function search(filters: SearchFilters): Promise<SearchResult> {
   const startTime = Date.now();
-  const cacheKey = `sanliurfa:search:${filters.query}:${filters.type || 'all'}`;
+  const cacheKey = `search:${filters.query}:${filters.type || 'all'}`;
 
   // Cache'den kontrol et
   const cached = await getCache(cacheKey);
@@ -296,7 +296,7 @@ export async function recordSearch(query: string, resultsCount: number, resultTy
  */
 export async function getTrendingSearches(limit: number = 10): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:trending:searches';
+    const cacheKey = 'trending:searches';
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -346,6 +346,6 @@ export async function getSearchSuggestions(partial: string, limit: number = 5): 
  * Arama cache'ini sil
  */
 export async function invalidateSearchCache(): Promise<void> {
-  await deleteCachePattern('sanliurfa:search:*');
-  await deleteCache('sanliurfa:trending:searches');
+  await deleteCachePattern('search:*');
+  await deleteCache('trending:searches');
 }

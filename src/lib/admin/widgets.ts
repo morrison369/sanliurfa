@@ -207,10 +207,10 @@ export async function getTrafficChart(days = 7): Promise<ChartData> {
       COUNT(*) as page_views,
       COUNT(DISTINCT user_id) as unique_users
     FROM page_views
-    WHERE created_at > CURRENT_DATE - INTERVAL '${days} days'
+    WHERE created_at > CURRENT_DATE - ($1 * INTERVAL '1 day')
     GROUP BY DATE(created_at)
     ORDER BY date
-  `);
+  `, [days]);
 
   const labels = result.rows.map(r => 
     new Date(r.date).toLocaleDateString('tr-TR', { weekday: 'short', day: 'numeric' })
@@ -268,11 +268,12 @@ export async function getUserGrowthChart(months = 6): Promise<ChartData> {
       DATE_TRUNC('month', created_at) as month,
       COUNT(*) as new_users
     FROM users
-    WHERE created_at > CURRENT_DATE - INTERVAL '${months} months'
+    WHERE created_at > CURRENT_DATE - ($1 * INTERVAL '1 month')
       AND is_deleted = false
     GROUP BY DATE_TRUNC('month', created_at)
     ORDER BY month
-  `);
+  `,
+      [months]);
 
   return {
     labels: result.rows.map(r => 

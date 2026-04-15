@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 // Tüm bildirimleri sil
 export const DELETE: APIRoute = async ({ locals }) => {
@@ -22,7 +23,7 @@ export const DELETE: APIRoute = async ({ locals }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error: any) {
-    console.error('Clear notifications error:', error);
+    logger.error('Clear notifications error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

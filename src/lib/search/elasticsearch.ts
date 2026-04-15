@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Elasticsearch Integration
  * Advanced search functionality placeholder
@@ -29,7 +30,7 @@ export interface SearchResult<T> {
 
 class ElasticsearchClient {
   async connect(): Promise<void> {
-    console.log('Elasticsearch: Install @elastic/elasticsearch package for full functionality');
+    logger.info('Elasticsearch: Install @elastic/elasticsearch package for full functionality');
   }
 
   async createIndex(_indexName: string, _mappings: Record<string, any>): Promise<void> {
@@ -45,7 +46,7 @@ class ElasticsearchClient {
   }
 
   async search<T>(_index: string, query: SearchQuery): Promise<SearchResult<T>> {
-    console.log('Elasticsearch search:', query);
+    logger.info('Elasticsearch search:', query);
     return {
       hits: [],
       total: 0,
@@ -63,7 +64,7 @@ class ElasticsearchClient {
   }
 
   async reindexFromPostgres(): Promise<void> {
-    console.log('Elasticsearch reindex: Install @elastic/elasticsearch package');
+    logger.info('Elasticsearch reindex: Install @elastic/elasticsearch package');
   }
 }
 

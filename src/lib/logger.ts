@@ -125,6 +125,21 @@ class Logger {
       metadata: { operation, duration }
     });
   }
+
+  // Compat methods used across API endpoints (no-op implementations)
+  setRequestId(_requestId: string): void { /* request-scoped logging not needed at module level */ }
+  logMutation(action: string, table: string, id: string, userId?: string): void {
+    this.info(`Mutation: ${action} ${table} ${id}`, { userId });
+  }
+  logQuery(sql: string, duration: number): void {
+    if (duration > 500) this.warn(`Slow query (${duration}ms): ${sql.slice(0, 200)}`);
+  }
+  logError(message: string, error?: Error): void {
+    this.error(message, error);
+  }
+  logAuth(event: string, userId: string, success: boolean, meta?: Record<string, any>): void {
+    this.info(`Auth: ${event} user=${userId} success=${success}`, meta);
+  }
 }
 
 export const logger = new Logger();

@@ -1,3 +1,4 @@
+import { logger } from './logging';
 // Yardımcı fonksiyonlar
 
 /**
@@ -155,7 +156,7 @@ export const storage = {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (e) {
-      console.error('Storage error:', e);
+      logger.error('Storage error:', e);
     }
   },
   remove(key: string): void {

@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Check cache
-    const cacheKey = 'sanliurfa:admin:rewards:catalog';
+    const cacheKey = 'admin:rewards:catalog';
     const cached = await getCache(cacheKey);
     if (cached) {
       return apiResponse({ success: true, data: cached }, 200, requestId);
@@ -91,7 +91,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Invalidate cache
-    await deleteCache('sanliurfa:admin:rewards:catalog');
+    await deleteCache('admin:rewards:catalog');
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/loyalty/rewards', 201, duration);

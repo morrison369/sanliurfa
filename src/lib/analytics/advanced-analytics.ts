@@ -4,6 +4,7 @@
  */
 
 import { generateId } from '../utils';
+import { logger } from '../logging';
 
 // Event types
 export type AnalyticsEventType =
@@ -519,4 +520,4 @@ export function clearOldData(daysToKeep: number = 30): number {
 }
 
 // Initialize
-console.log('[Analytics] Advanced analytics initialized');
+logger.info('[Analytics] Advanced analytics initialized');

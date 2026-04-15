@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Client-side XSS Protection with DOMPurify
  * For browser environments
@@ -14,7 +15,7 @@ async function getDOMPurify() {
       const module = await import('dompurify');
       DOMPurify = module.default || module;
     } catch (error) {
-      console.warn('DOMPurify not available');
+      logger.warn('DOMPurify not available');
       return null;
     }
   }

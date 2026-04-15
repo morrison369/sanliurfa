@@ -2,7 +2,7 @@
  * Phase 357: Board Continuity Confidence Coordinator
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 export interface BoardContinuitySignalV3 {
   signalId: string;

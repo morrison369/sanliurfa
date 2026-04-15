@@ -290,7 +290,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
 
     // For now, we just clear the inbox cache - actual soft delete would require archive table
     // This prevents the conversation from appearing in their inbox until next message
-    await deleteCache(`sanliurfa:messages:inbox:${user.id}`);
+    await deleteCache(`messages:inbox:${user.id}`);
 
     const duration = Date.now() - startTime;
     recordRequest('DELETE', `/api/messages/${conversationId}`, HttpStatus.OK, duration);

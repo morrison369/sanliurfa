@@ -96,9 +96,45 @@ export const businessGlossary = {
 };
 
 export const lineageTracker = {
-  trackTransformation(source: string, target: string, transform: string) { 
-    return { source, target, transform, timestamp: new Date() }; 
+  trackTransformation(source: string, target: string, transform: string) {
+    return { source, target, transform, timestamp: new Date() };
   },
   getLineage(id: string) { return []; }
 };
+
+// Phase 161: Policy as Code & Definition
+export { policyDefinitionBuilder, policyVersionManager, policyTemplateLibrary, policyCompiler } from './policy-as-code';
+
+// Phase 162: Access Governance & Entitlement Management
+export { entitlementManager, accessReviewOrchestrator, privilegeEscalationMonitor, roleHierarchyManager } from './access-governance';
+
+// Phase 163: Compliance Automation & Audit
+export { complianceAutomator, auditAutomation, remediationOrchestrator, complianceReportAutomation } from './compliance-automation';
+
+// Phase 164: Decision Auditing & Logging
+export { decisionAuditor, decisionTraceability, changeImpactAnalyzer, decisionReplayEngine } from './decision-audit';
+
+// Phase 165: Policy Analytics & Insights
+export { policyUsageAnalytics, accessPatternAnalyzer, policyConflictDetector, policyRecommendationEngine } from './policy-analytics';
+
+// Phase 166: Policy Enforcement & Remediation
+export { policyEnforcementEngine, autoRemediationExecutor, policyExceptionManager, policyEvaluationCache } from './policy-enforcement';
+
+// Phase 167: Model Lifecycle Management
+export { modelRegistry, modelDeploymentManager, modelABTestManager, modelRetirementManager } from './model-lifecycle';
+
+// Phase 168: ML Observability & Monitoring
+export { modelPerformanceMonitor, featureDriftDetector, predictionDistributionAnalyzer, modelHealthTracker } from './ml-observability';
+
+// Phase 169: Feature Engineering & Store
+export { featureStoreManager, featurePipelineOrchestrator, featureValidator, featureVersionManager } from './feature-store';
+
+// Phase 170: Model Retraining Orchestration
+export { retrainingScheduler, trainingDataManager, hyperparameterTuner, retrainingOrchestrator } from './model-retraining';
+
+// Phase 171: Model Explainability & Governance
+export { explainabilityAnalyzer, biasDetector, modelAuditor, explainabilityReporter } from './model-explainability';
+
+// Phase 172: ML Cost Optimization
+export { mlInfrastructureCostTracker, modelEfficiencyAnalyzer, computeResourceOptimizer, mlCostReporter } from './ml-cost-optimization';
 

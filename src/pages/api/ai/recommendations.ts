@@ -1,95 +1,64 @@
 import type { APIRoute } from 'astro';
-import { verifyToken } from '../../../lib/auth';
 import { getPersonalizedRecommendations, getSimilarItems, recordRecommendationFeedback } from '../../../lib/ai/recommendations';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { recordRequest } from '../../../lib/metrics';
+import { logger } from '../../../lib/logging';
 
-export const GET: APIRoute = async ({ request, cookies }) => {
+export const GET: APIRoute = async ({ request, locals, url }) => {
+  const requestId = getRequestId({ request } as any);
+  const startTime = Date.now();
+
   try {
-    // Verify authentication
-    const token = cookies.get('access_token')?.value;
-    if (!token) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (!locals.user) {
+      recordRequest('GET', '/api/ai/recommendations', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Kimlik doğrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const user = verifyToken(token);
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Parse query params
-    const url = new URL(request.url);
     const type = url.searchParams.get('type') as 'place' | 'blog' | 'event' | 'all' || 'all';
-    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
 
-    const recommendations = await getPersonalizedRecommendations(user.sub, {
+    const recommendations = await getPersonalizedRecommendations(locals.user.id, {
       type,
       limit,
       excludeVisited: true,
     });
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      data: recommendations,
-      count: recommendations.length,
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    recordRequest('GET', '/api/ai/recommendations', HttpStatus.OK, Date.now() - startTime);
+    return apiResponse({ recommendations, count: recommendations.length }, HttpStatus.OK, requestId);
 
   } catch (error) {
-    console.error('Recommendations error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    recordRequest('GET', '/api/ai/recommendations', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
+    logger.error('Recommendations error', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-  try {
-    const token = cookies.get('access_token')?.value;
-    if (!token) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+export const POST: APIRoute = async ({ request, locals }) => {
+  const requestId = getRequestId({ request } as any);
+  const startTime = Date.now();
 
-    const user = verifyToken(token);
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
+  try {
+    if (!locals.user) {
+      recordRequest('POST', '/api/ai/recommendations', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Kimlik doğrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
     const { recommendation, feedback } = body;
 
     if (!recommendation || !feedback) {
-      return new Response(JSON.stringify({ error: 'Missing fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      recordRequest('POST', '/api/ai/recommendations', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'recommendation ve feedback alanları gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
-    await recordRecommendationFeedback(user.sub, recommendation, feedback);
+    await recordRecommendationFeedback(locals.user.id, recommendation, feedback);
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    recordRequest('POST', '/api/ai/recommendations', HttpStatus.OK, Date.now() - startTime);
+    return apiResponse({ success: true }, HttpStatus.OK, requestId);
 
   } catch (error) {
-    console.error('Recommendation feedback error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    recordRequest('POST', '/api/ai/recommendations', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
+    logger.error('Recommendation feedback error', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

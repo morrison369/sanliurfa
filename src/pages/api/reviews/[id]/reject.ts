@@ -1,6 +1,7 @@
 // API: Review reject (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
+import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
   try {
@@ -32,7 +33,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {
-    console.error('Review reject error:', err);
+    logger.error('Review reject error:', err);
     return new Response(
       JSON.stringify({ error: 'Server error' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

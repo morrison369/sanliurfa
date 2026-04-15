@@ -43,7 +43,7 @@ export async function getNearbyPlaces(
   limit: number = 10
 ): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:maps:nearby:${userLat.toFixed(4)}:${userLng.toFixed(4)}:${radiusKm}`;
+    const cacheKey = `maps:nearby:${userLat.toFixed(4)}:${userLng.toFixed(4)}:${radiusKm}`;
     const cached = await getCache<any[]>(cacheKey);
     if (cached) return cached;
 
@@ -83,7 +83,7 @@ export async function getPlacesByCategory(
   limit: number = 20
 ): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:maps:category:${category}`;
+    const cacheKey = `maps:category:${category}`;
     const cached = await getCache<any[]>(cacheKey);
     if (cached) return cached;
 
@@ -111,7 +111,7 @@ export async function getPlacesByCategory(
  */
 export async function getAllPlacesForMap(limit: number = 500): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:maps:all-places';
+    const cacheKey = 'maps:all-places';
     const cached = await getCache<any[]>(cacheKey);
     if (cached) return cached;
 

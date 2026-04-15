@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { queryOne } from './postgres';
 import { getRedisClient, isRedisAvailable, prefixKey } from './cache/cache';
+import { logger } from './logging';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-key-minimum-32-characters-long';
 const SESSION_TTL = parseInt(process.env.SESSION_TIMEOUT || '86400', 10); // 24h default
@@ -99,7 +100,7 @@ async function setSession(token: string, data: any): Promise<void> {
     const key = prefixKey(`session:${token}`);
     await redis.setEx(key, SESSION_TTL, JSON.stringify(data));
   } catch (err) {
-    console.error('[auth] Failed to set session:', err);
+    logger.error('[auth] Failed to set session:', err);
   }
 }
 
@@ -125,7 +126,7 @@ async function deleteSession(token: string): Promise<void> {
     const redis = await getRedisClient();
     await redis.del(prefixKey(`session:${token}`));
   } catch (err) {
-    console.error('[auth] Failed to delete session:', err);
+    logger.error('[auth] Failed to delete session:', err);
   }
 }
 

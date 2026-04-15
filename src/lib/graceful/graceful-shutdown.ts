@@ -5,6 +5,7 @@
  */
 
 import { pool } from '../postgres';
+import { logger } from '../logging';
 
 interface ShutdownHandler {
   name: string;
@@ -35,25 +36,25 @@ class GracefulShutdown {
   private setupSignalHandlers(): void {
     // SIGTERM - Kubernetes, Docker, systemd
     process.on('SIGTERM', () => {
-      console.log('SIGTERM received. Starting graceful shutdown...');
+      logger.info('SIGTERM received. Starting graceful shutdown...');
       this.shutdown('SIGTERM');
     });
 
     // SIGINT - Ctrl+C
     process.on('SIGINT', () => {
-      console.log('SIGINT received. Starting graceful shutdown...');
+      logger.info('SIGINT received. Starting graceful shutdown...');
       this.shutdown('SIGINT');
     });
 
     // Uncaught exceptions
     process.on('uncaughtException', (error) => {
-      console.error('Uncaught Exception:', error);
+      logger.error('Uncaught Exception:', error);
       this.shutdown('uncaughtException');
     });
 
     // Unhandled rejections
     process.on('unhandledRejection', (reason, promise) => {
-      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
       this.shutdown('unhandledRejection');
     });
   }
@@ -63,16 +64,16 @@ class GracefulShutdown {
    */
   private async shutdown(signal: string): Promise<void> {
     if (this.isShuttingDown) {
-      console.log('Shutdown already in progress...');
+      logger.info('Shutdown already in progress...');
       return;
     }
 
     this.isShuttingDown = true;
-    console.log(`🛑 Initiating graceful shutdown due to ${signal}...`);
+    logger.info(`🛑 Initiating graceful shutdown due to ${signal}...`);
 
     // Set a force exit timeout
     const forceExitTimeout = setTimeout(() => {
-      console.error('⚠️ Forced shutdown due to timeout');
+      logger.error('⚠️ Forced shutdown due to timeout');
       process.exit(1);
     }, this.shutdownTimeout);
 
@@ -80,19 +81,19 @@ class GracefulShutdown {
       // Execute all registered handlers
       for (const { name, handler } of this.handlers) {
         try {
-          console.log(`   Cleaning up: ${name}...`);
+          logger.info(`   Cleaning up: ${name}...`);
           await handler();
-          console.log(`   ✓ ${name} cleaned up`);
+          logger.info(`   ✓ ${name} cleaned up`);
         } catch (error) {
-          console.error(`   ✗ ${name} cleanup failed:`, error);
+          logger.error(`   ✗ ${name} cleanup failed:`, error);
         }
       }
 
-      console.log('✅ Graceful shutdown completed');
+      logger.info('✅ Graceful shutdown completed');
       clearTimeout(forceExitTimeout);
       process.exit(0);
     } catch (error) {
-      console.error('❌ Error during shutdown:', error);
+      logger.error('❌ Error during shutdown:', error);
       clearTimeout(forceExitTimeout);
       process.exit(1);
     }
@@ -121,7 +122,7 @@ export function registerDefaultCleanupHandlers(): void {
   // Database connections
   gracefulShutdown.register('Database Pool', async () => {
     await pool.end();
-    console.log('   Database connections closed');
+    logger.info('   Database connections closed');
   }, 1); // High priority - close DB first
 
   // Redis (if used)
@@ -130,7 +131,7 @@ export function registerDefaultCleanupHandlers(): void {
       const { redis } = await import('./redis');
       if (redis) {
         await redis.quit();
-        console.log('   Redis connection closed');
+        logger.info('   Redis connection closed');
       }
     } catch {
       // Redis not configured
@@ -143,7 +144,7 @@ export function registerDefaultCleanupHandlers(): void {
       const { messageBroker } = await import('./index');
       if (messageBroker) {
         await messageBroker.disconnect();
-        console.log('   Message brokers disconnected');
+        logger.info('   Message brokers disconnected');
       }
     } catch {
       // Not configured
@@ -156,7 +157,7 @@ export function registerDefaultCleanupHandlers(): void {
       const { websocketManager } = await import('./index');
       if (websocketManager) {
         websocketManager.closeAll();
-        console.log('   WebSocket connections closed');
+        logger.info('   WebSocket connections closed');
       }
     } catch {
       // Not configured

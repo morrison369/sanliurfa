@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   try {
     const user = locals.user;
 
-    if (!user || !user.isAdmin) {
+    if (!user || !locals.isAdmin) {
       recordRequest('GET', '/api/admin/moderation/stats', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,

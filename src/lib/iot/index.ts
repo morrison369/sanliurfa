@@ -5,6 +5,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { logger } from '../logging';
 
 export interface IoTSensor {
   id: string;
@@ -202,7 +203,7 @@ export async function getParkingAvailability(areaId: string): Promise<{
 async function checkThresholds(reading: SensorReading): Promise<void> {
   // Alert logic for critical values
   if (reading.quality === 'critical') {
-    console.log(`[IoT] Critical reading from sensor ${reading.sensorId}`);
+    logger.info(`[IoT] Critical reading from sensor ${reading.sensorId}`);
     // Send alerts
   }
 }

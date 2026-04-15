@@ -1,3 +1,4 @@
+import { logger } from './logging';
 /**
  * Webhooks Module
  * Stub for webhook management
@@ -36,7 +37,7 @@ export class WebhookManager {
       .filter(w => w.active && w.events.includes(event));
     
     for (const webhook of matching) {
-      console.log(`[Webhook] Triggering ${event} to ${webhook.url}`);
+      logger.info(`[Webhook] Triggering ${event} to ${webhook.url}`);
     }
   }
 }

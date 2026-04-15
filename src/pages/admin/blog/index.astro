@@ -2,8 +2,8 @@
 import Layout from '../../../layouts/Layout.astro';
 
 const seo = {
-  title: 'Blog Yonetimi - Admin Panel',
-  description: 'Blog yazilarini yonetin',
+  title: 'Blog Yönetimi - Admin Panel',
+  description: 'Blog yazılarını yönetin',
   noindex: true,
 };
 ---
@@ -15,14 +15,14 @@ const seo = {
       <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 class="text-2xl font-bold text-gray-900">Blog Yonetimi</h1>
-            <p class="text-gray-500 mt-1">Blog yazilarini olusturun, duzenleyin ve yayinlayin</p>
+            <h1 class="text-2xl font-bold text-gray-900">Blog Yönetimi</h1>
+            <p class="text-gray-500 mt-1">Blog yazılarını oluşturun, düzenleyin ve yayınlayın</p>
           </div>
-          <a 
-            href="/admin/blog/new" 
+          <a
+            href="/admin/blog/new"
             class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors inline-flex items-center gap-2"
           >
-            <span>+</span> Yeni Yazi
+            <span>+</span> Yeni Yazı
           </a>
         </div>
       </div>
@@ -33,14 +33,14 @@ const seo = {
           <input
             type="text"
             id="searchInput"
-            placeholder="Yazi ara..."
+            placeholder="Yazı ara..."
             class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 flex-1 min-w-[200px]"
           />
           <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-            <option value="">Tum Durumlar</option>
-            <option value="published">Yayinda</option>
+            <option value="">Tüm Durumlar</option>
+            <option value="published">Yayında</option>
             <option value="draft">Taslak</option>
-            <option value="scheduled">Zamanlanmis</option>
+            <option value="scheduled">Zamanlanmış</option>
           </select>
           <button id="searchBtn" class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900">
             Ara
@@ -54,12 +54,12 @@ const seo = {
           <table class="w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Yazi</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Yazı</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Yazar</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Istatistikler</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İstatistikler</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tarih</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Islemler</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
               </tr>
             </thead>
             <tbody id="postsTableBody" class="divide-y divide-gray-100">
@@ -87,9 +87,9 @@ const seo = {
     let currentPage = 1;
 
     const statusLabels = {
-      published: { text: 'Yayinda', class: 'bg-green-100 text-green-700' },
+      published: { text: 'Yayında', class: 'bg-green-100 text-green-700' },
       draft: { text: 'Taslak', class: 'bg-gray-100 text-gray-700' },
-      scheduled: { text: 'Zamanlanmis', class: 'bg-blue-100 text-blue-700' },
+      scheduled: { text: 'Zamanlanmış', class: 'bg-blue-100 text-blue-700' },
     };
 
     async function loadPosts() {
@@ -151,10 +151,10 @@ const seo = {
             <span class="px-2 py-1 rounded-full text-xs font-medium ${statusLabels[post.status]?.class || 'bg-gray-100'}">
               ${statusLabels[post.status]?.text || post.status}
             </span>
-            ${post.featured ? `<span class="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded">One Cikan</span>` : ''}
+            ${post.featured ? `<span class="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded">Öne Çıkan</span>` : ''}
           </td>
           <td class="px-6 py-4 text-sm text-gray-600">
-            <div>${post.like_count || 0} begeni</div>
+            <div>${post.like_count || 0} beğeni</div>
             <div>${post.comment_count || 0} yorum</div>
           </td>
           <td class="px-6 py-4 text-sm text-gray-500">
@@ -165,8 +165,8 @@ const seo = {
           </td>
           <td class="px-6 py-4">
             <div class="flex gap-2">
-              <a href="/admin/blog/edit/${post.id}" class="text-blue-600 hover:text-blue-800 text-sm">Duzenle</a>
-              <a href="/blog/${post.slug}" target="_blank" class="text-gray-600 hover:text-gray-800 text-sm">Goruntule</a>
+              <a href="/admin/blog/edit/${post.id}" class="text-blue-600 hover:text-blue-800 text-sm">Düzenle</a>
+              <a href="/blog/${post.slug}" target="_blank" class="text-gray-600 hover:text-gray-800 text-sm">Görüntüle</a>
               <button onclick="deletePost('${post.id}')" class="text-red-600 hover:text-red-800 text-sm">Sil</button>
             </div>
           </td>
@@ -201,7 +201,7 @@ const seo = {
     }
 
     async function deletePost(id) {
-      if (!confirm('Bu yaziyi silmek istediginize emin misiniz?')) return;
+      if (!confirm('Bu yazıyı silmek istediğinize emin misiniz?')) return;
 
       try {
         const response = await fetch(`/api/blog/${id}/admin`, {
@@ -211,10 +211,10 @@ const seo = {
         if (response.ok) {
           loadPosts();
         } else {
-          alert('Silme islemi basarisiz');
+          alert('Silme işlemi başarısız');
         }
       } catch (err) {
-        alert('Bir hata olustu');
+        alert('Bir hata oluştu');
       }
     }
 

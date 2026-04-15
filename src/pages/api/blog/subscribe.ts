@@ -73,7 +73,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     // Cache temizle
-    await deleteCache('sanliurfa:blog:subscriptions:count');
+    await deleteCache('blog:subscriptions:count');
 
     return apiResponse(
       {
@@ -139,7 +139,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     logger.info('Abonelik iptal edildi', { email: validation.data.email });
 
     // Cache temizle
-    await deleteCache('sanliurfa:blog:subscriptions:count');
+    await deleteCache('blog:subscriptions:count');
 
     return apiResponse(
       {

@@ -53,7 +53,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Create verification token
-    const verifyToken = createToken(user.id, email, 'user');
+    const verifyToken = createToken({ userId: user.id, email, role: 'user' });
     const verifyLink = `https://sanliurfa.com/verify-email?token=${verifyToken}`;
 
     const html = getEmailVerificationHTML(user.full_name || 'Kullanıcı', verifyLink);

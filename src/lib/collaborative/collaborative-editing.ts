@@ -31,7 +31,7 @@ export async function createCollaborationSession(contentId: string, initiatedByU
 
 export async function getCollaborationSession(sessionToken: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:collab:${sessionToken}`;
+    const cacheKey = `collab:${sessionToken}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -73,7 +73,7 @@ export async function addParticipant(sessionId: string, userId: string): Promise
       current_participants: parseInt(count?.count || '1')
     });
 
-    await deleteCache(`sanliurfa:collab:session:${sessionId}`);
+    await deleteCache(`collab:session:${sessionId}`);
     logger.info('Participant added to session', { sessionId, userId });
     return result;
   } catch (error) {
@@ -102,7 +102,7 @@ export async function removeParticipant(sessionId: string, userId: string): Prom
       });
     }
 
-    await deleteCache(`sanliurfa:collab:session:${sessionId}`);
+    await deleteCache(`collab:session:${sessionId}`);
     return true;
   } catch (error) {
     logger.error('Failed to remove participant', error instanceof Error ? error : new Error(String(error)));

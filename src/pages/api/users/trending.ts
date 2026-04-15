@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   try {
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '15'), 50);
     const period = url.searchParams.get('period') || '30'; // days
-    const cacheKey = `sanliurfa:users:trending:${period}`;
+    const cacheKey = `users:trending:${period}`;
 
     // Check cache (1 hour)
     const cached = await getCache(cacheKey);

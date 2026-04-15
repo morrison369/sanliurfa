@@ -5,6 +5,7 @@
 
 import { query } from '../postgres';
 import { getCache, setCache } from '../cache';
+import { logger } from '../logging';
 
 type JobHandler = () => Promise<void>;
 
@@ -22,7 +23,7 @@ const jobs: Map<string, Job> = new Map();
  */
 export function registerJob(name: string, schedule: string, handler: JobHandler): void {
   jobs.set(name, { name, schedule, handler });
-  console.log(`📅 Job registered: ${name}`);
+  logger.info(`📅 Job registered: ${name}`);
 }
 
 /**
@@ -44,13 +45,13 @@ export async function runJob(name: string): Promise<{ success: boolean; error?: 
   await setCache(lockKey, true, 300); // 5 min lock
   
   try {
-    console.log(`🚀 Running job: ${name}`);
+    logger.info(`🚀 Running job: ${name}`);
     const startTime = Date.now();
     
     await job.handler();
     
     const duration = Date.now() - startTime;
-    console.log(`✅ Job completed: ${name} (${duration}ms)`);
+    logger.info(`✅ Job completed: ${name} (${duration}ms)`);
     
     // Update last run time
     job.lastRun = new Date();
@@ -58,7 +59,7 @@ export async function runJob(name: string): Promise<{ success: boolean; error?: 
     
     return { success: true };
   } catch (error) {
-    console.error(`❌ Job failed: ${name}`, error);
+    logger.error(`❌ Job failed: ${name}`, error);
     await logJobRun(name, false, 0, error instanceof Error ? error.message : 'Unknown error');
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   } finally {
@@ -82,7 +83,7 @@ async function logJobRun(
       [name, success, duration, error || null]
     );
   } catch (err) {
-    console.error('Failed to log job run:', err);
+    logger.error('Failed to log job run:', err);
   }
 }
 
@@ -121,17 +122,32 @@ export async function cleanupOldData(): Promise<void> {
     `DELETE FROM sessions WHERE expires_at < NOW()`
   );
   
-  console.log('🧹 Old data cleaned up');
+  logger.info('🧹 Old data cleaned up');
 }
 
 /**
- * Backup database
+ * Backup database via pg_dump
+ * Requires pg_dump in PATH and DATABASE_URL env var
  */
 export async function backupDatabase(): Promise<void> {
-  // This would typically trigger pg_dump or similar
-  // For now, just log
-  console.log('💾 Database backup triggered');
-  // TODO: Implement actual backup logic
+  const { execFile } = await import('child_process');
+  const { promisify } = await import('util');
+  const { mkdirSync } = await import('fs');
+  const execFileAsync = promisify(execFile);
+
+  const backupDir = process.env.BACKUP_DIR || '/tmp/sanliurfa-backups';
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const filename = `${backupDir}/backup-${timestamp}.sql.gz`;
+
+  try {
+    mkdirSync(backupDir, { recursive: true });
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) throw new Error('DATABASE_URL not set');
+    await execFileAsync('sh', ['-c', `pg_dump "${dbUrl}" | gzip > "${filename}"`]);
+    logger.info('Database backup completed:', filename);
+  } catch (err) {
+    logger.error('Database backup failed:', err);
+  }
 }
 
 /**
@@ -151,7 +167,7 @@ export async function updateTrendingPlaces(): Promise<void> {
     )`
   );
   
-  console.log('📈 Trending places updated');
+  logger.info('📈 Trending places updated');
 }
 
 /**
@@ -162,7 +178,7 @@ export async function sendScheduledNotifications(): Promise<void> {
   const batchSize = 100;
   
   // This would integrate with email/push services
-  console.log('📧 Scheduled notifications processed');
+  logger.info('📧 Scheduled notifications processed');
 }
 
 /**
@@ -170,7 +186,7 @@ export async function sendScheduledNotifications(): Promise<void> {
  */
 export async function refreshMaterializedViews(): Promise<void> {
   // If we had materialized views, refresh them here
-  console.log('🔄 Materialized views refreshed');
+  logger.info('🔄 Materialized views refreshed');
 }
 
 // Register default jobs

@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { query, transaction } from '../../../lib/postgres';
 import { authenticateUser, requireAuth } from '../../../lib/auth/middleware';
+import { sendEmail } from '../../../lib/email';
+import { logger } from '../../../lib/logging';
 
 // Rezervasyonları listele (işletme sahibi veya admin)
 export const GET: APIRoute = async (context) => {
@@ -62,7 +64,7 @@ export const GET: APIRoute = async (context) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('Reservations list error:', error);
+    logger.error('Reservations list error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -180,7 +182,25 @@ export const POST: APIRoute = async (context) => {
 
     const reservation = reservationResult.rows[0];
 
-    // TODO: İşletme sahibine email bildirimi gönder
+    // İşletme sahibine bildirim emaili gönder
+    const ownerResult = await query(
+      `SELECT u.email FROM places p JOIN users u ON u.id = p.owner_id WHERE p.id = $1`,
+      [placeId]
+    );
+    const ownerEmail = ownerResult.rows[0]?.email;
+    if (ownerEmail) {
+      await sendEmail({
+        to: ownerEmail,
+        subject: `Yeni Rezervasyon - ${place.name}`,
+        html: `<p><strong>${customerName}</strong> adına yeni rezervasyon:</p>
+<ul>
+  <li><strong>Tarih:</strong> ${reservationDate} ${reservationTime}</li>
+  <li><strong>Kişi sayısı:</strong> ${partySize}</li>
+  <li><strong>Telefon:</strong> ${customerPhone}</li>
+  ${specialRequests ? `<li><strong>Not:</strong> ${specialRequests}</li>` : ''}
+</ul>`,
+      });
+    }
 
     return new Response(JSON.stringify({
       success: true,
@@ -199,7 +219,7 @@ export const POST: APIRoute = async (context) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('Reservation creation error:', error);
+    logger.error('Reservation creation error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

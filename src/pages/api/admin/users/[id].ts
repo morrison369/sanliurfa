@@ -6,6 +6,7 @@
 
 import type { APIRoute } from 'astro';
 import { getUserDetails, flagUserAccount, changeUserRole, logAdminAction } from '../../../../lib/admin/admin-users';
+import { query } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
@@ -81,7 +82,17 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
       );
     }
 
-    if (action === 'flag') {
+    if (action === 'suspend') {
+      await query(
+        `UPDATE users SET status = 'suspended', updated_at = NOW() WHERE id = $1`,
+        [params.id]
+      );
+    } else if (action === 'activate') {
+      await query(
+        `UPDATE users SET status = 'active', updated_at = NOW() WHERE id = $1`,
+        [params.id]
+      );
+    } else if (action === 'flag') {
       if (!flagType || !reason) {
         recordRequest('POST', `/api/admin/users/${params.id}`, HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
         return apiError(

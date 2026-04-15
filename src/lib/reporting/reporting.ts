@@ -21,17 +21,19 @@ export interface Report {
  */
 export async function generateUserReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
   try {
+    const days = period === 'daily' ? 30 : 365;
+    const truncUnit = period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month';
     const data = await queryMany(`
       SELECT
-        DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at) as period,
+        DATE_TRUNC('${truncUnit}', created_at) as period,
         COUNT(*) as new_users,
         COUNT(CASE WHEN email_verified THEN 1 END) as verified_users,
         COUNT(CASE WHEN is_vendor THEN 1 END) as vendor_users
       FROM users
-      WHERE created_at >= NOW() - INTERVAL '1 ${period === 'daily' ? 'month' : 'year'}'
-      GROUP BY DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at)
+      WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
+      GROUP BY DATE_TRUNC('${truncUnit}', created_at)
       ORDER BY period DESC
-    `);
+    `, [days]);
 
     return {
       id: `user_${Date.now()}`,
@@ -52,6 +54,7 @@ export async function generateUserReport(period: 'daily' | 'weekly' | 'monthly')
  */
 export async function generatePlacesReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
   try {
+    const days = period === 'daily' ? 30 : 365;
     const data = await queryMany(`
       SELECT
         p.id, p.name, p.category_id,
@@ -63,11 +66,11 @@ export async function generatePlacesReport(period: 'daily' | 'weekly' | 'monthly
       LEFT JOIN reviews r ON p.id = r.place_id
       LEFT JOIN favorites f ON p.id = f.place_id
       LEFT JOIN analytics v ON p.id = v.place_id AND v.action_type = 'view'
-      WHERE p.created_at >= NOW() - INTERVAL '1 ${period === 'daily' ? 'month' : 'year'}'
+      WHERE p.created_at >= NOW() - ($1 * INTERVAL '1 day')
       GROUP BY p.id, p.name, p.category_id
       ORDER BY review_count DESC
       LIMIT 100
-    `);
+    `, [days]);
 
     return {
       id: `places_${Date.now()}`,
@@ -88,18 +91,20 @@ export async function generatePlacesReport(period: 'daily' | 'weekly' | 'monthly
  */
 export async function generateReviewsReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
   try {
+    const days = period === 'daily' ? 30 : 365;
+    const truncUnit = period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month';
     const data = await queryMany(`
       SELECT
-        DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at) as period,
+        DATE_TRUNC('${truncUnit}', created_at) as period,
         COUNT(*) as total_reviews,
         AVG(rating) as avg_rating,
         SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) as positive_reviews,
         SUM(CASE WHEN rating <= 2 THEN 1 ELSE 0 END) as negative_reviews
       FROM reviews
-      WHERE created_at >= NOW() - INTERVAL '1 ${period === 'daily' ? 'month' : 'year'}'
-      GROUP BY DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at)
+      WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
+      GROUP BY DATE_TRUNC('${truncUnit}', created_at)
       ORDER BY period DESC
-    `);
+    `, [days]);
 
     return {
       id: `reviews_${Date.now()}`,
@@ -120,18 +125,20 @@ export async function generateReviewsReport(period: 'daily' | 'weekly' | 'monthl
  */
 export async function generateRevenueReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
   try {
+    const days = period === 'daily' ? 30 : 365;
+    const truncUnit = period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month';
     const data = await queryMany(`
       SELECT
-        DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at) as period,
+        DATE_TRUNC('${truncUnit}', created_at) as period,
         tier,
         COUNT(*) as subscription_count,
         COUNT(CASE WHEN status = 'active' THEN 1 END) as active_subscriptions,
         ROUND(SUM(CASE WHEN tier = 'premium' THEN 2.99 WHEN tier = 'pro' THEN 5.99 ELSE 0 END)::numeric, 2) as monthly_revenue
       FROM memberships
-      WHERE created_at >= NOW() - INTERVAL '1 ${period === 'daily' ? 'month' : 'year'}'
-      GROUP BY DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at), tier
+      WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
+      GROUP BY DATE_TRUNC('${truncUnit}', created_at), tier
       ORDER BY period DESC
-    `);
+    `, [days]);
 
     return {
       id: `revenue_${Date.now()}`,
@@ -152,17 +159,19 @@ export async function generateRevenueReport(period: 'daily' | 'weekly' | 'monthl
  */
 export async function generateEngagementReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
   try {
+    const days = period === 'daily' ? 30 : 365;
+    const truncUnit = period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month';
     const data = await queryMany(`
       SELECT
-        DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at) as period,
+        DATE_TRUNC('${truncUnit}', created_at) as period,
         COUNT(DISTINCT action_type) as action_types,
         COUNT(DISTINCT user_id) as unique_users,
         COUNT(*) as total_actions
       FROM analytics
-      WHERE created_at >= NOW() - INTERVAL '1 ${period === 'daily' ? 'month' : 'year'}'
-      GROUP BY DATE_TRUNC('${period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month'}', created_at)
+      WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
+      GROUP BY DATE_TRUNC('${truncUnit}', created_at)
       ORDER BY period DESC
-    `);
+    `, [days]);
 
     return {
       id: `engagement_${Date.now()}`,

@@ -48,7 +48,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Create reset token (valid for 24 hours)
-    const resetToken = createToken(user.id, email, 'user');
+    const resetToken = createToken({ userId: user.id, email, role: 'user' });
     const resetLink = `https://sanliurfa.com/reset-password?token=${resetToken}`;
 
     const html = getPasswordResetEmailHTML(user.full_name || 'Kullanıcı', resetLink);

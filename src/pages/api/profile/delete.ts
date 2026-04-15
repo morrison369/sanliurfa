@@ -2,6 +2,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { signOut } from '../../../lib/auth';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ locals, redirect, cookies }) => {
   try {
@@ -22,7 +23,7 @@ export const POST: APIRoute = async ({ locals, redirect, cookies }) => {
 
     return redirect('/?account_deleted=true');
   } catch (err) {
-    console.error('Account delete error:', err);
+    logger.error('Account delete error:', err);
     return redirect('/profil/ayarlar?error=delete_failed');
   }
 };

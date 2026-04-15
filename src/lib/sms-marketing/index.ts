@@ -6,6 +6,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { logger } from '../logging';
 
 export type SMSCampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'cancelled';
 export type SMSCampaignType = 'promotional' | 'transactional' | 'otp' | 'reminder';
@@ -125,7 +126,7 @@ export async function sendSingleSMS(phone: string, message: string, senderId?: s
 }> {
   try {
     if (!NETGSM_CONFIG.username || !NETGSM_CONFIG.password) {
-      console.log('[SMS] Mock send:', { phone, message: message.substring(0, 30) });
+      logger.info('[SMS] Mock send:', { phone, message: message.substring(0, 30) });
       return { success: true, messageId: `mock-${Date.now()}` };
     }
 
@@ -154,12 +155,12 @@ export async function sendOTP(phone: string, code: string): Promise<boolean> {
  */
 async function sendSMSBatch(phones: string[], message: string, senderId: string): Promise<void> {
   if (!NETGSM_CONFIG.username) {
-    console.log('[SMS] Mock batch send:', { count: phones.length, message: message.substring(0, 30) });
+    logger.info('[SMS] Mock batch send:', { count: phones.length, message: message.substring(0, 30) });
     return;
   }
   
   // Actual Netgsm API integration
-  console.log(`[SMS] Sending to ${phones.length} recipients`);
+  logger.info(`[SMS] Sending to ${phones.length} recipients`);
 }
 
 /**

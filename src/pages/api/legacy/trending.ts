@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
 import { legacyJsonHeaders } from '../../../lib/api/api-legacy';
+import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ url }) => {
   try {
@@ -31,7 +32,7 @@ export const GET: APIRoute = async ({ url }) => {
       type
     }), { status: 200, headers: legacyJsonHeaders() });
   } catch (error) {
-    console.error('Trending error', error);
+    logger.error('Trending error', error);
     return new Response(JSON.stringify({ error: 'Failed' }), { status: 500, headers: legacyJsonHeaders() });
   }
 };

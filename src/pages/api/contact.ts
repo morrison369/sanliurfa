@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../lib/postgres';
+import { sendEmail } from '../../lib/email';
+import { logger } from '../../lib/logging';
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -37,7 +39,20 @@ export const POST: APIRoute = async (context) => {
 
     const ticket = result.rows[0];
 
-    // TODO: Send notification email to admin
+    // Notify admin
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@sanliurfa.com';
+    await sendEmail({
+      to: adminEmail,
+      subject: `[Destek] ${subject} - #${ticket.ticket_number}`,
+      html: `<p>Yeni destek talebi:</p>
+<ul>
+  <li><strong>Ad Soyad:</strong> ${name}</li>
+  <li><strong>E-posta:</strong> ${email}</li>
+  <li><strong>Konu:</strong> ${subject}</li>
+  <li><strong>Mesaj:</strong> ${message}</li>
+  <li><strong>Talep No:</strong> #${ticket.ticket_number}</li>
+</ul>`,
+    });
 
     return new Response(JSON.stringify({
       success: true,
@@ -52,7 +67,7 @@ export const POST: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Contact form error:', error);
+    logger.error('Contact form error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -104,7 +119,7 @@ export const GET: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('List tickets error:', error);
+    logger.error('List tickets error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

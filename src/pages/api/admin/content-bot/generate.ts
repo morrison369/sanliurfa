@@ -128,7 +128,7 @@ function generateSectionContent(section: string, place: any): string {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (auth instanceof Response) return auth;
+    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const body = await request.json();
     const { type, category, placeIds, count = 1 } = body;
@@ -253,7 +253,7 @@ export const POST: APIRoute = async ({ request }) => {
 export const GET: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (auth instanceof Response) return auth;
+    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     // Get generation jobs
     const jobs = await query(

@@ -149,7 +149,7 @@ export async function create2FAMethod(userId: string, methodType: 'totp' | 'emai
       backup_codes: generateBackupCodes()
     });
 
-    await deleteCache(`sanliurfa:user:2fa:${userId}`);
+    await deleteCache(`user:2fa:${userId}`);
     logger.info('2FA method created', { userId, methodType });
     return result;
   } catch (error) {
@@ -160,7 +160,7 @@ export async function create2FAMethod(userId: string, methodType: 'totp' | 'emai
 
 export async function get2FAMethods(userId: string): Promise<TwoFAMethod[]> {
   try {
-    const cacheKey = `sanliurfa:user:2fa:${userId}`;
+    const cacheKey = `user:2fa:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -193,7 +193,7 @@ export async function verify2FAMethod(methodId: string, code: string): Promise<b
       const isValid = verifyTOTP(method.secret_key, code);
       if (isValid) {
         await update('user_2fa_methods', { id: methodId }, { is_verified: true });
-        await deleteCache(`sanliurfa:user:2fa:${method.user_id}`);
+        await deleteCache(`user:2fa:${method.user_id}`);
       }
       return isValid;
     }
@@ -224,7 +224,7 @@ export async function activate2FAMethod(methodId: string): Promise<boolean> {
     );
 
     await update('user_2fa_methods', { id: methodId }, { is_active: true, is_primary: true });
-    await deleteCache(`sanliurfa:user:2fa:${method.user_id}`);
+    await deleteCache(`user:2fa:${method.user_id}`);
 
     logger.info('2FA method activated', { methodId });
     return true;
@@ -254,7 +254,7 @@ export async function remove2FAMethod(methodId: string, userId: string): Promise
     }
 
     await queryOne('DELETE FROM user_2fa_methods WHERE id = $1', [methodId]);
-    await deleteCache(`sanliurfa:user:2fa:${userId}`);
+    await deleteCache(`user:2fa:${userId}`);
 
     logger.info('2FA method removed', { methodId, userId });
     return true;
@@ -320,9 +320,17 @@ export async function verify2FASession(sessionToken: string, code: string): Prom
 }
 
 async function verify2FAVerificationCode(userId: string, code: string): Promise<boolean> {
-  // This would integrate with email/SMS service to verify sent codes
-  // For now, returning false - implement with your email/SMS provider
-  return false;
+  // Retrieve OTP stored in cache when the session was created
+  const cacheKey = `2fa:otp:${userId}`;
+  const stored = await getCache(cacheKey);
+  if (!stored) return false;
+
+  const matches = stored === code;
+  if (matches) {
+    // Consume the code — one-time use
+    await deleteCache(cacheKey);
+  }
+  return matches;
 }
 
 async function recordFailedAttempt(sessionId: string, userId: string): Promise<void> {

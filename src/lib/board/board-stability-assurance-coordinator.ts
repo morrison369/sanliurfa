@@ -2,7 +2,7 @@
  * Phase 333 + Phase 351: Board Stability Assurance Coordinator variants
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 // Phase 333 legacy contract
 export interface BoardAssuranceSignal {

@@ -1,3 +1,4 @@
+import { logger } from './logging';
 /**
  * Real-time SSE (Server-Sent Events) Module
  * Stub implementation for real-time updates
@@ -37,12 +38,12 @@ export class SSEManager {
   
   broadcast(channel: string, event: string, data: unknown): void {
     // Stub implementation
-    console.log(`[SSE] Broadcast to ${channel}:`, { event, data });
+    logger.info(`[SSE] Broadcast to ${channel}:`, { event, data });
   }
   
   sendToUser(userId: string, event: string, data: unknown): void {
     // Stub implementation
-    console.log(`[SSE] Send to user ${userId}:`, { event, data });
+    logger.info(`[SSE] Send to user ${userId}:`, { event, data });
   }
   
   getConnectionCount(channel?: string): number {

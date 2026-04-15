@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 // Tüm bildirimleri okundu işaretle
 export const POST: APIRoute = async ({ locals }) => {
@@ -22,7 +23,7 @@ export const POST: APIRoute = async ({ locals }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error: any) {
-    console.error('Mark all read error:', error);
+    logger.error('Mark all read error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

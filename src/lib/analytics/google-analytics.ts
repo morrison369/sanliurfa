@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Google Analytics 4 integration with client-side event tracking
  */
@@ -59,7 +60,7 @@ export class GoogleAnalytics {
    */
   pageView(path: string, title: string): void {
     if (!this.isEnabled) {
-      console.log(`[GA] Page View: ${title} - ${path}`);
+      logger.info(`[GA] Page View: ${title} - ${path}`);
       return;
     }
 
@@ -78,7 +79,7 @@ export class GoogleAnalytics {
    */
   event(event: AnalyticsEvent): void {
     if (!this.isEnabled) {
-      console.log(`[GA] Event: ${event.name}`, event);
+      logger.info(`[GA] Event: ${event.name}`, event);
       return;
     }
 
@@ -303,7 +304,7 @@ export function initializeGoogleAnalytics(): void {
   const ga = getGoogleAnalytics();
 
   if (!ga.isInitialized()) {
-    console.log('[GA] Analytics not initialized (localhost or missing key)');
+    logger.info('[GA] Analytics not initialized (localhost or missing key)');
     return;
   }
 

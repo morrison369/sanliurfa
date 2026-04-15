@@ -11,7 +11,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // Require authentication
     const auth = await requireAuth(request);
-    if (auth instanceof Response) return auth;
+    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const body = await request.json();
     const { userId, action = 'follow' } = body;

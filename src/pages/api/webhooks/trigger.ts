@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 // Webhook tetikleme endpoint'i
 export const POST: APIRoute = async (context) => {
@@ -83,7 +84,7 @@ export const POST: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Webhook trigger error:', error);
+    logger.error('Webhook trigger error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

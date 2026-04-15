@@ -2,6 +2,7 @@
 import type { APIRoute } from 'astro';
 import { queryOne, update } from '../../../lib/postgres';
 import { hashPassword } from '../../../lib/auth';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
   try {
@@ -48,7 +49,7 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
 
     return redirect('/profil/ayarlar?success=password_changed');
   } catch (err) {
-    console.error('Password change error:', err);
+    logger.error('Password change error:', err);
     return redirect('/profil/ayarlar?error=update_failed');
   }
 };

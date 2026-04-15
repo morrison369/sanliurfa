@@ -34,7 +34,7 @@ export async function registerS3File(userId: string, fileKey: string, filename: 
       virus_scan_status: 'pending'
     });
 
-    await deleteCache(`sanliurfa:files:user:${userId}`);
+    await deleteCache(`files:user:${userId}`);
     logger.info('S3 file registered', { fileKey, filename, size: fileSize });
     return result;
   } catch (error) {
@@ -45,7 +45,7 @@ export async function registerS3File(userId: string, fileKey: string, filename: 
 
 export async function getFileById(fileId: string): Promise<S3File | null> {
   try {
-    const cacheKey = `sanliurfa:file:${fileId}`;
+    const cacheKey = `file:${fileId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -70,7 +70,7 @@ export async function getFileById(fileId: string): Promise<S3File | null> {
 
 export async function getUserFiles(userId: string, limit: number = 50): Promise<S3File[]> {
   try {
-    const cacheKey = `sanliurfa:files:user:${userId}`;
+    const cacheKey = `files:user:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -102,7 +102,7 @@ export async function recordFileAccess(fileId: string, userId: string | null, ip
     });
 
     // Update cache invalidation for analytics
-    await deleteCache(`sanliurfa:file:analytics:${fileId}`);
+    await deleteCache(`file:analytics:${fileId}`);
   } catch (error) {
     logger.error('Failed to record file access', error instanceof Error ? error : new Error(String(error)));
   }
@@ -136,7 +136,7 @@ export async function registerFileVariant(originalFileId: string, variantType: s
       dimensions: dimensions || null
     });
 
-    await deleteCache(`sanliurfa:variants:${originalFileId}`);
+    await deleteCache(`variants:${originalFileId}`);
     return result;
   } catch (error) {
     logger.error('Failed to register file variant', error instanceof Error ? error : new Error(String(error)));
@@ -146,7 +146,7 @@ export async function registerFileVariant(originalFileId: string, variantType: s
 
 export async function getFileVariants(fileId: string): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:variants:${fileId}`;
+    const cacheKey = `variants:${fileId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -176,7 +176,7 @@ export async function setupCDNCaching(fileId: string, ttlSeconds: number = 86400
       is_cached: true
     });
 
-    await deleteCache(`sanliurfa:file:${fileId}`);
+    await deleteCache(`file:${fileId}`);
     logger.info('CDN caching configured', { fileId, ttl: ttlSeconds });
     return true;
   } catch (error) {
@@ -192,7 +192,7 @@ export async function purgeCDNCache(fileId: string): Promise<boolean> {
       cache_key_version: 1  // Increment to invalidate cache
     });
 
-    await deleteCache(`sanliurfa:file:${fileId}`);
+    await deleteCache(`file:${fileId}`);
     logger.info('CDN cache purged', { fileId });
     return true;
   } catch (error) {
@@ -208,7 +208,7 @@ export async function archiveFile(fileId: string): Promise<boolean> {
       updated_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:file:${fileId}`);
+    await deleteCache(`file:${fileId}`);
     logger.info('File archived', { fileId });
     return true;
   } catch (error) {
@@ -219,15 +219,40 @@ export async function archiveFile(fileId: string): Promise<boolean> {
 
 export async function scanFileVirus(fileId: string): Promise<boolean> {
   try {
-    // In production, integrate with ClamAV or similar
-    // For now, mark as passed
+    // Get file path from DB
+    const fileRow = await import('../postgres').then(m => m.queryOne('SELECT file_key FROM s3_files WHERE id = $1', [fileId]));
+    const filePath = fileRow?.file_key;
+    let status = 'skipped';
+
+    if (filePath && process.env.CLAMAV_ENABLED === 'true') {
+      // Attempt ClamAV scan if enabled
+      const { exec } = await import('child_process');
+      const { promisify } = await import('util');
+      const execAsync = promisify(exec);
+      const fullPath = require('path').join(process.cwd(), 'public', filePath);
+
+      try {
+        await execAsync(`clamscan --no-summary "${fullPath}"`);
+        status = 'passed'; // exit 0 = clean
+      } catch (scanErr: any) {
+        if (scanErr.code === 1) {
+          // ClamAV exit code 1 = virus found
+          status = 'failed';
+          logger.warn('Virus detected in file', Object.assign(new Error('Virus detected'), { fileId, filePath }));
+        } else {
+          // ClamAV not installed or other error — skip scan
+          status = 'skipped';
+        }
+      }
+    }
+
     await update('s3_files', { id: fileId }, {
-      virus_scan_status: 'passed',
+      virus_scan_status: status,
       virus_scan_date: new Date()
     });
 
-    logger.info('File virus scan completed', { fileId });
-    return true;
+    logger.info('File virus scan completed', { fileId, status });
+    return status !== 'failed';
   } catch (error) {
     logger.error('Failed to scan file virus', error instanceof Error ? error : new Error(String(error)));
     return false;

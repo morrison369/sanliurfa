@@ -4,6 +4,7 @@
  */
 
 import crypto from 'crypto';
+import { logger } from '../../logging';
 
 export interface CSPConfig {
   nonce?: string;
@@ -113,7 +114,7 @@ export interface CSPViolationReport {
 export async function handleCSPViolation(report: CSPViolationReport): Promise<void> {
   const { 'csp-report': violation } = report;
   
-  console.error('[CSP Violation]', {
+  logger.error('[CSP Violation]', {
     document: violation['document-uri'],
     blocked: violation['blocked-uri'],
     directive: violation['violated-directive'],

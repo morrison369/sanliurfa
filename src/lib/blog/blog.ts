@@ -60,7 +60,7 @@ export interface BlogComment {
  */
 export async function getBlogCategories(): Promise<BlogCategory[]> {
   try {
-    const cacheKey = 'sanliurfa:blog:categories';
+    const cacheKey = 'blog:categories';
     const cached = await getCache<BlogCategory[]>(cacheKey);
 
     if (cached) {
@@ -163,7 +163,7 @@ export async function getBlogPosts(options: {
  */
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   try {
-    const cacheKey = `sanliurfa:blog:post:${slug}`;
+    const cacheKey = `blog:post:${slug}`;
     const cached = await getCache<BlogPost>(cacheKey);
 
     if (cached) {
@@ -232,7 +232,7 @@ export async function createBlogPost(data: Omit<BlogPost, 'id' | 'createdAt' | '
     }
 
     // Cache temizle
-    await deleteCachePattern('sanliurfa:blog:*');
+    await deleteCachePattern('blog:*');
 
     logger.info('Blog yazısı oluşturuldu', { postId: result.id, title: data.title });
     return getBlogPostBySlug(slug);
@@ -271,13 +271,13 @@ export async function updateBlogPost(id: number, data: Partial<BlogPost>): Promi
 
     // Etiketleri güncelle
     if (data.tags) {
-      await deleteCache(`sanliurfa:blog:post_tags:${id}`);
+      await deleteCache(`blog:post_tags:${id}`);
       await queryMany(`DELETE FROM blog_post_tags WHERE post_id = $1`, [id]) as any[];
       await addTagsToPost(id, data.tags);
     }
 
     // Cache temizle
-    await deleteCachePattern('sanliurfa:blog:*');
+    await deleteCachePattern('blog:*');
 
     const post = await queryOne('SELECT slug FROM blog_posts WHERE id = $1', [id]);
     return getBlogPostBySlug(post.slug);
@@ -293,7 +293,7 @@ export async function updateBlogPost(id: number, data: Partial<BlogPost>): Promi
 export async function deleteBlogPost(id: number): Promise<boolean> {
   try {
     await queryMany('DELETE FROM blog_posts WHERE id = $1', [id]) as any[];
-    await deleteCachePattern('sanliurfa:blog:*');
+    await deleteCachePattern('blog:*');
 
     logger.info('Blog yazısı silindi', { postId: id });
     return true;
@@ -522,7 +522,7 @@ export async function restoreBlogPostRevision(postId: number, revisionId: number
     });
 
     // Clear cache
-    await deleteCachePattern('sanliurfa:blog:*');
+    await deleteCachePattern('blog:*');
 
     logger.info('Blog yazı revizyon geri yüklendi', { postId, revisionId });
     return true;

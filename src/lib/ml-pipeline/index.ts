@@ -5,6 +5,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { logger } from '../logging';
 
 export interface MLModel {
   id: string;
@@ -44,7 +45,7 @@ interface UserFeatures {
  * Train recommendation model v3
  */
 export async function trainRecommendationModelV3(): Promise<MLModel> {
-  console.log('[ML] Training recommendation model v3...');
+  logger.info('[ML] Training recommendation model v3...');
   
   // Extract features
   const userFeatures = await extractUserFeatures();
@@ -147,7 +148,7 @@ export async function autoML(
   task: 'classification' | 'regression' | 'clustering',
   datasetId: string
 ): Promise<MLModel> {
-  console.log(`[AutoML] Starting ${task} training for dataset ${datasetId}`);
+  logger.info(`[AutoML] Starting ${task} training for dataset ${datasetId}`);
   
   // Try multiple algorithms
   const candidates = [

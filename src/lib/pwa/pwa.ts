@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 // @ts-nocheck
 /**
  * PWA Utilities
@@ -17,7 +18,7 @@ export interface PushSubscription {
  */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) {
-    console.warn('[PWA] Service Worker not supported');
+    logger.warn('[PWA] Service Worker not supported');
     return null;
   }
 
@@ -25,10 +26,10 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/'
     });
-    console.log('[PWA] Service Worker registered', registration);
+    logger.info('[PWA] Service Worker registered', registration);
     return registration;
   } catch (error) {
-    console.error('[PWA] Service Worker registration failed', error);
+    logger.error('[PWA] Service Worker registration failed', error);
     return null;
   }
 }
@@ -60,10 +61,10 @@ export async function subscribeToPush(vapidPublicKey: string): Promise<PushSubsc
       body: JSON.stringify({ endpoint, p256dh, auth })
     });
 
-    console.log('[PWA] Push subscription successful');
+    logger.info('[PWA] Push subscription successful');
     return { endpoint, p256dh, auth };
   } catch (error) {
-    console.error('[PWA] Push subscription failed', error);
+    logger.error('[PWA] Push subscription failed', error);
     return null;
   }
 }
@@ -85,10 +86,10 @@ export async function unsubscribeFromPush(): Promise<boolean> {
     });
 
     await subscription.unsubscribe();
-    console.log('[PWA] Push unsubscription successful');
+    logger.info('[PWA] Push unsubscription successful');
     return true;
   } catch (error) {
-    console.error('[PWA] Push unsubscription failed', error);
+    logger.error('[PWA] Push unsubscription failed', error);
     return false;
   }
 }
@@ -111,7 +112,7 @@ export async function isPushSubscribed(): Promise<boolean> {
  */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
   if (!('Notification' in window)) {
-    console.warn('[PWA] Notifications not supported');
+    logger.warn('[PWA] Notifications not supported');
     return 'denied';
   }
 
@@ -121,10 +122,10 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 
   try {
     const permission = await Notification.requestPermission();
-    console.log('[PWA] Notification permission:', permission);
+    logger.info('[PWA] Notification permission:', permission);
     return permission;
   } catch (error) {
-    console.error('[PWA] Notification permission request failed', error);
+    logger.error('[PWA] Notification permission request failed', error);
     return 'denied';
   }
 }
@@ -141,12 +142,12 @@ export function setupInstallPrompt(
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    console.log('[PWA] Install prompt ready');
+    logger.info('[PWA] Install prompt ready');
     onPromptReady(e);
   });
 
   window.addEventListener('appinstalled', () => {
-    console.log('[PWA] App installed');
+    logger.info('[PWA] App installed');
     deferredPrompt = null;
     onInstallSuccess();
   });
@@ -156,7 +157,7 @@ export function setupInstallPrompt(
     if (deferredPrompt) {
       (deferredPrompt as any).prompt?.();
       const { outcome } = await (deferredPrompt as any).userChoice;
-      console.log(`[PWA] Install prompt response: ${outcome}`);
+      logger.info(`[PWA] Install prompt response: ${outcome}`);
       deferredPrompt = null;
     }
   }) as any;

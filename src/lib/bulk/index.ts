@@ -4,7 +4,7 @@
  */
 
 import { query } from '../postgres';
-import { logAudit } from '../audit';
+import { logAudit } from '../audit/index';
 
 export type BulkOperationType =
   | 'delete'

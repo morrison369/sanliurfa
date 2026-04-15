@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     }
 
     // Check cache
-    const cacheKey = `sanliurfa:leaderboard:users:${sortBy}:${limit}`;
+    const cacheKey = `leaderboard:users:${sortBy}:${limit}`;
     const cached = await getCache<any[]>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;

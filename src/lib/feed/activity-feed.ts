@@ -26,7 +26,7 @@ export interface FeedItem {
  * 2. Followed collections
  */
 export async function getActivityFeed(userId: string, limit: number = 50, offset: number = 0): Promise<FeedItem[]> {
-  const cacheKey = `sanliurfa:feed:${userId}`;
+  const cacheKey = `feed:${userId}`;
 
   try {
     // Try cache first
@@ -233,7 +233,7 @@ export async function getTrendingActivities(limit: number = 10): Promise<FeedIte
  */
 export async function clearFeedCache(userId: string): Promise<void> {
   try {
-    const cacheKey = `sanliurfa:feed:${userId}`;
+    const cacheKey = `feed:${userId}`;
     await setCache(cacheKey, null, 0); // Immediate expiry
   } catch (error) {
     logger.warn(

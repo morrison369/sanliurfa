@@ -39,7 +39,7 @@ export const GET: APIRoute = async ({ request }) => {
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE f.user_id = $1 AND p.status = 'active'
       ORDER BY f.created_at DESC
-    `, [user.sub]);
+    `, [user.userId]);
 
     return new Response(JSON.stringify({
       success: true,
@@ -91,7 +91,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     await query(
       `INSERT INTO favorites (user_id, place_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-      [user.sub, place_id]
+      [user.userId, place_id]
     );
 
     return new Response(JSON.stringify({ success: true }), {
@@ -138,7 +138,7 @@ export const DELETE: APIRoute = async ({ request, url }) => {
 
     await query(
       `DELETE FROM favorites WHERE user_id = $1 AND place_id = $2`,
-      [user.sub, placeId]
+      [user.userId, placeId]
     );
 
     return new Response(JSON.stringify({ success: true }), {

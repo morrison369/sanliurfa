@@ -4,6 +4,7 @@
  */
 
 import { query } from '../postgres';
+import { logger } from '../logging';
 
 export interface ScheduledJob {
   id: string;
@@ -267,7 +268,7 @@ export async function runSchedulerTick(): Promise<{
       executed++;
     } catch (error) {
       failed++;
-      console.error(`Job ${job.name} failed:`, error);
+      logger.error(`Job ${job.name} failed:`, error);
     }
   }
 

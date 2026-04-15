@@ -1,3 +1,4 @@
+import { logger } from './logging';
 /**
  * Önbellekleme Stratejisi Yardımcıları
  *
@@ -441,7 +442,7 @@ export async function staleWhileRevalidate<T>(
           cache.set(key, freshData, options?.ttl, options?.staleTtl);
         })
         .catch((err) => {
-          console.error(`[Önbellek Yenileme Hatası] ${key}:`, err);
+          logger.error(`[Önbellek Yenileme Hatası] ${key}:`, err);
         });
     }
 

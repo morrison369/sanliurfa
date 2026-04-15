@@ -3,15 +3,16 @@
 import Layout from '../layouts/Layout.astro';
 import LeafletMap from '../components/map/LeafletMap.astro';
 import { getPlaces } from '../lib/places/db';
-import { getCategories } from '../lib/places/categories';
+import { query } from '../lib/postgres';
 
 const url = new URL(Astro.request.url);
 const category = url.searchParams.get('kategori') || undefined;
 
-const [{ places }, categories] = await Promise.all([
+const [{ places }, categoriesResult] = await Promise.all([
   getPlaces({ status: 'approved', category, limit: 200 }),
-  getCategories(),
+  query(`SELECT id, slug, name, icon, color, is_active FROM categories WHERE is_active = true ORDER BY sort_order, name`),
 ]);
+const categories = categoriesResult.rows;
 
 const validPlaces = places.filter(p => p.latitude && p.longitude).map(p => ({
   id: p.id,

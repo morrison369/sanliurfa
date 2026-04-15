@@ -177,19 +177,15 @@ export async function getUserActivitySummary(
   userId: string,
   period: 'day' | 'week' | 'month' | 'year' = 'month'
 ): Promise<Record<string, number>> {
-  const intervalMap = {
-    day: '1 day',
-    week: '7 days',
-    month: '30 days',
-    year: '365 days',
-  };
+  const daysMap: Record<string, number> = { day: 1, week: 7, month: 30, year: 365 };
+  const days = daysMap[period] || 30;
 
   const result = await query(
     `SELECT type, COUNT(*) as count
     FROM user_activities
-    WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '${intervalMap[period]}'
+    WHERE user_id = $1 AND created_at >= NOW() - ($2 * INTERVAL '1 day')
     GROUP BY type`,
-    [userId]
+    [userId, days]
   );
 
   const summary: Record<string, number> = {};
@@ -249,9 +245,9 @@ export async function deleteOldActivities(
 ): Promise<number> {
   const result = await query(
     `DELETE FROM user_activities
-    WHERE created_at < NOW() - INTERVAL '${olderThanDays} days'
+    WHERE created_at < NOW() - ($1 * INTERVAL '1 day')
     RETURNING id`,
-    []
+    [olderThanDays]
   );
 
   return result.rows.length;

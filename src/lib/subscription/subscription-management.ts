@@ -47,7 +47,7 @@ export interface FeatureAccess {
  */
 export async function getSubscriptionTiers(): Promise<SubscriptionTier[]> {
   try {
-    const cacheKey = 'sanliurfa:subscription:tiers';
+    const cacheKey = 'subscription:tiers';
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -87,7 +87,7 @@ export async function getSubscriptionTiers(): Promise<SubscriptionTier[]> {
  */
 export async function getActiveSubscription(userId: string): Promise<(Subscription & { tier: SubscriptionTier }) | null> {
   try {
-    const cacheKey = `sanliurfa:subscription:user:${userId}`;
+    const cacheKey = `subscription:user:${userId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -242,7 +242,7 @@ export async function upgradeSubscription(
     });
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:subscription:user:${userId}`);
+    await deleteCache(`subscription:user:${userId}`);
 
     logger.info('Subscription upgraded', { userId, newTierId });
 
@@ -286,7 +286,7 @@ export async function cancelSubscription(subscriptionId: string): Promise<boolea
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:subscription:user:${subscription.user_id}`);
+    await deleteCache(`subscription:user:${subscription.user_id}`);
 
     logger.info('Subscription cancelled', { subscriptionId });
 

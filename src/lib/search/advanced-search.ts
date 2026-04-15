@@ -4,6 +4,7 @@
  */
 
 import { generateId } from '../utils';
+import { logger } from '../logging';
 
 // Search document
 export interface SearchDocument {
@@ -77,7 +78,7 @@ const indexStore: Map<string, Set<string>> = new Map();
  * Initialize search index
  */
 export function initSearch(): void {
-  console.log('[Search] Advanced search initialized');
+  logger.info('[Search] Advanced search initialized');
 }
 
 /**

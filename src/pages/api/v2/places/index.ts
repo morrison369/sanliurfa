@@ -5,6 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
+import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ url }) => {
   try {
@@ -19,20 +20,27 @@ export const GET: APIRoute = async ({ url }) => {
     const offset = parseInt(searchParams.get('offset') || '0');
 
     let sql = `
-      SELECT 
+      SELECT
         p.id, p.name, p.slug, p.description, p.address, p.district,
         p.rating, p.review_count, p.price_level,
         p.latitude, p.longitude, p.phone, p.website,
         c.name as category_name, c.icon as category_icon,
         ${lat && lng ? `
           ROUND((6371 * acos(
-            cos(radians($1)) * cos(radians(p.latitude)) * 
-            cos(radians(p.longitude) - radians($2)) + 
+            cos(radians($1)) * cos(radians(p.latitude)) *
+            cos(radians(p.longitude) - radians($2)) +
             sin(radians($1)) * sin(radians(p.latitude))
           ))::numeric, 2) as distance_km
-        ` : '0 as distance_km'}
+        ` : '0 as distance_km'},
+        CASE
+          WHEN ph.is_closed = true THEN false
+          WHEN ph.open_time IS NULL THEN NULL
+          WHEN TO_CHAR(NOW() AT TIME ZONE 'Europe/Istanbul', 'HH24:MI') BETWEEN TO_CHAR(ph.open_time, 'HH24:MI') AND TO_CHAR(ph.close_time, 'HH24:MI') THEN true
+          ELSE false
+        END as is_open
       FROM places p
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN place_hours ph ON ph.place_id = p.id AND ph.day_of_week = EXTRACT(DOW FROM NOW() AT TIME ZONE 'Europe/Istanbul')::int
       WHERE p.status = 'active'
     `;
 
@@ -60,8 +68,7 @@ export const GET: APIRoute = async ({ url }) => {
       data: result.rows.map(place => ({
         ...place,
         distance: place.distance_km ? Math.round(place.distance_km * 1000) : null,
-        main_image: `/images/places/${place.id}/thumb.jpg`,
-        is_open: Math.random() > 0.3, // Placeholder
+        main_image: `/uploads/photos/places/${place.id}/thumb.jpg`,
       })),
       pagination: { limit, offset, has_more: result.rows.length === limit },
       meta: { version: '2.0', api: 'mobile' }
@@ -74,7 +81,7 @@ export const GET: APIRoute = async ({ url }) => {
     });
 
   } catch (error) {
-    console.error('API v2 places error:', error);
+    logger.error('API v2 places error:', error);
     return new Response(JSON.stringify({ success: false, error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

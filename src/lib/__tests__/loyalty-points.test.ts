@@ -40,7 +40,7 @@ describe('Loyalty Points Library', () => {
       const result = await getUserPoints('user-123');
 
       expect(result.currentBalance).toBe(100);
-      expect(mockCache.getCache).toHaveBeenCalledWith('sanliurfa:loyalty:balance:user-123');
+      expect(mockCache.getCache).toHaveBeenCalledWith('loyalty:balance:user-123');
     });
 
     it('fetches from database if not cached', async () => {
@@ -81,7 +81,7 @@ describe('Loyalty Points Library', () => {
         points_amount: 50,
         transaction_reason: 'test award'
       }));
-      expect(mockCache.deleteCache).toHaveBeenCalledWith('sanliurfa:loyalty:balance:user-789');
+      expect(mockCache.deleteCache).toHaveBeenCalledWith('loyalty:balance:user-789');
     });
 
     it('returns false on error', async () => {

@@ -2,7 +2,7 @@
  * Phase 417: Board Continuity Stability Coordinator V12
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 export interface BoardContinuityStabilitySignalV12 {
   signalId: string;

@@ -68,7 +68,7 @@ export async function initializeLoyaltyBalance(userId: string): Promise<LoyaltyB
  * Get user's loyalty balance
  */
 export async function getLoyaltyBalance(userId: string): Promise<LoyaltyBalance | null> {
-  const cacheKey = `sanliurfa:loyalty:balance:${userId}`;
+  const cacheKey = `loyalty:balance:${userId}`;
 
   try {
     const cached = await getCache<LoyaltyBalance>(cacheKey);
@@ -131,7 +131,7 @@ export async function awardPoints(
     );
 
     // Clear cache
-    await deleteCache(`sanliurfa:loyalty:balance:${userId}`);
+    await deleteCache(`loyalty:balance:${userId}`);
 
     // Check for tier promotion
     await checkAndPromoteTier(userId, updated.total_points);
@@ -184,7 +184,7 @@ export async function redeemPoints(
     );
 
     // Clear cache
-    await deleteCache(`sanliurfa:loyalty:balance:${userId}`);
+    await deleteCache(`loyalty:balance:${userId}`);
 
     logger.info('Points redeemed', { userId, amount, reason });
 
@@ -215,7 +215,7 @@ export async function getLoyaltyTier(tierName: string): Promise<LoyaltyTier | nu
  * Get all tiers
  */
 export async function getAllLoyaltyTiers(): Promise<LoyaltyTier[]> {
-  const cacheKey = 'sanliurfa:loyalty:tiers:all';
+  const cacheKey = 'loyalty:tiers:all';
 
   try {
     const cached = await getCache<LoyaltyTier[]>(cacheKey);
@@ -266,7 +266,7 @@ export async function checkAndPromoteTier(userId: string, currentPoints: number)
       });
 
       // Clear cache
-      await deleteCache(`sanliurfa:loyalty:balance:${userId}`);
+      await deleteCache(`loyalty:balance:${userId}`);
 
       // Send notification
       await createNotification(
@@ -319,7 +319,7 @@ export async function getTransactionHistory(
  * Get points earning rules
  */
 export async function getPointsEarningRules(): Promise<any[]> {
-  const cacheKey = 'sanliurfa:loyalty:earning-rules:all';
+  const cacheKey = 'loyalty:earning-rules:all';
 
   try {
     const cached = await getCache<any[]>(cacheKey);

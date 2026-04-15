@@ -4,6 +4,7 @@
  */
 
 import { Pool } from 'pg';
+import { logger } from '../logging';
 
 export interface DatabaseNode {
   host: string;
@@ -66,7 +67,7 @@ export class DatabaseCluster {
       replicas.sort((a, b) => a.priority - b.priority);
       this.currentPrimary = replicas[0];
       this.currentPrimary.role = 'primary';
-      console.log(`[DB] Failover to ${this.currentPrimary.host}`);
+      logger.info(`[DB] Failover to ${this.currentPrimary.host}`);
     }
   }
 

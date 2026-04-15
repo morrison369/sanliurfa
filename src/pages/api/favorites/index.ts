@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro';
 import { query, queryOne, insert, remove } from '../../../lib/postgres';
 import { getCache, setCache, deleteCache } from '../../../lib/cache';
 import { logActivity } from '../../../lib/activity';
+import { logger } from '../../../lib/logging';
 
 /**
  * Generate cache key for user favorites
@@ -53,7 +54,7 @@ export const GET: APIRoute = async ({ locals }) => {
       headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }
     });
   } catch (err) {
-    console.error('Favorites fetch error:', err);
+    logger.error('Favorites fetch error:', err);
     return new Response(
       JSON.stringify({ error: 'Favoriler getirilirken bir hata oluştu' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -120,7 +121,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {
-    console.error('Favorite add error:', err);
+    logger.error('Favorite add error:', err);
     return new Response(
       JSON.stringify({ error: 'Favori eklenirken bir hata oluştu' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -160,7 +161,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {
-    console.error('Favorite remove error:', err);
+    logger.error('Favorite remove error:', err);
     return new Response(
       JSON.stringify({ error: 'Favori kaldırılırken bir hata oluştu' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

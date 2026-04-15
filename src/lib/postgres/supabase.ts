@@ -4,6 +4,7 @@
 
 import { pool, query, queryOne, insert } from './postgres';
 import * as auth from '../auth';
+import { logger } from '../logging';
 
 // ==================== AUTH DELEGATION ====================
 
@@ -145,7 +146,7 @@ export const supabase = {
  * Realtime subscription stub (not implemented)
  */
 export function subscribeToTable(table: string, callback: (payload: any) => void) {
-  console.log(`Realtime subscription to ${table} - not implemented in PostgreSQL mode`);
+  logger.info(`Realtime subscription to ${table} - not implemented in PostgreSQL mode`);
   return { unsubscribe: () => {} };
 }
 

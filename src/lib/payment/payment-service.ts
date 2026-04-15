@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Payment service with Stripe and iyzico support
  * Multi-currency, subscriptions, and refunds
@@ -86,13 +87,13 @@ let currentProvider: 'stripe' | 'iyzico' | 'mock' = 'mock';
 export function initPaymentService(): void {
   if (PAYMENT_CONFIG.stripe.secretKey) {
     currentProvider = 'stripe';
-    console.log('[Payment] Using Stripe provider');
+    logger.info('[Payment] Using Stripe provider');
   } else if (PAYMENT_CONFIG.iyizico.apiKey && PAYMENT_CONFIG.iyizico.secretKey) {
     currentProvider = 'iyzico';
-    console.log('[Payment] Using iyzico provider');
+    logger.info('[Payment] Using iyzico provider');
   } else {
     currentProvider = 'mock';
-    console.log('[Payment] Using mock provider');
+    logger.info('[Payment] Using mock provider');
   }
 }
 
@@ -139,7 +140,7 @@ async function createStripePaymentIntent(
   // });
   // return { clientSecret: intent.client_secret!, paymentId, amount, currency };
 
-  console.log('[Payment] Stripe intent created:', { paymentId, amount, currency });
+  logger.info('[Payment] Stripe intent created:', { paymentId, amount, currency });
   return {
     clientSecret: `mock_secret_${paymentId}`,
     paymentId,
@@ -159,7 +160,7 @@ async function createIyzicoPaymentIntent(
   metadata?: Record<string, any>
 ): Promise<PaymentIntent> {
   // In production, use iyzipay npm package
-  console.log('[Payment] iyzico intent created:', { paymentId, amount, currency });
+  logger.info('[Payment] iyzico intent created:', { paymentId, amount, currency });
   return {
     clientSecret: `mock_secret_${paymentId}`,
     paymentId,
@@ -283,7 +284,7 @@ export async function processRefund(
   const refundAmount = amount || payment.amount;
 
   // In production, process refund with provider
-  console.log('[Payment] Refund processed:', { paymentId, amount: refundAmount, reason });
+  logger.info('[Payment] Refund processed:', { paymentId, amount: refundAmount, reason });
 
   payment.status = 'refunded';
   payment.updatedAt = new Date().toISOString();
@@ -325,7 +326,7 @@ export async function handleWebhook(
   payload: any,
   signature: string
 ): Promise<void> {
-  console.log('[Payment] Webhook received:', { provider, event: payload.type });
+  logger.info('[Payment] Webhook received:', { provider, event: payload.type });
 
   switch (payload.type) {
     case 'payment_intent.succeeded':

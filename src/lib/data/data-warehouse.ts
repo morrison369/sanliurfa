@@ -210,7 +210,7 @@ export async function runWarehouseETL(date?: string): Promise<{ dimensions: numb
  */
 export async function queryOLAP(olapQuery: OLAPQuery): Promise<OLAPResult> {
   const startTime = Date.now();
-  const cacheKey = `sanliurfa:olap:${olapQuery.cube}:${JSON.stringify(olapQuery)}`;
+  const cacheKey = `olap:${olapQuery.cube}:${JSON.stringify(olapQuery)}`;
 
   try {
     // Check cache

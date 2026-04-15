@@ -146,10 +146,8 @@ export async function getTopPagesByInteraction(
  */
 export async function cleanOldHeatmapData(retentionDays: number = 90): Promise<number> {
   const result = await query(
-    `DELETE FROM heatmap_events WHERE created_at < NOW() - INTERVAL '${retentionDays} days'
-    RETURNING id`,
-    []
-  );
+    `DELETE FROM heatmap_events WHERE created_at < NOW() - ($1 * INTERVAL '1 day')
+    RETURNING id`, [retentionDays]);
 
   return result.rows.length;
 }

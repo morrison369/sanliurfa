@@ -73,7 +73,7 @@ export async function awardPoints(
     await updateUserPointsTotal(userId);
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:user:points:${userId}`);
+    await deleteCache(`user:points:${userId}`);
 
     logger.info('Points awarded', { userId, action, points: pointsToAward });
 
@@ -129,7 +129,7 @@ async function updateUserPointsTotal(userId: string): Promise<void> {
  */
 export async function getUserPoints(userId: string): Promise<UserPoints | null> {
   try {
-    const cacheKey = `sanliurfa:user:points:${userId}`;
+    const cacheKey = `user:points:${userId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -197,7 +197,7 @@ export async function getPointsHistory(userId: string, limit: number = 50): Prom
  */
 export async function getRewardLevels(): Promise<RewardLevel[]> {
   try {
-    const cacheKey = 'sanliurfa:rewards:levels';
+    const cacheKey = 'rewards:levels';
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -235,7 +235,7 @@ export async function getRewardLevels(): Promise<RewardLevel[]> {
  */
 export async function getUserRewards(userId: string): Promise<RewardLevel[]> {
   try {
-    const cacheKey = `sanliurfa:user:rewards:${userId}`;
+    const cacheKey = `user:rewards:${userId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -301,7 +301,7 @@ async function checkAndAwardRewards(userId: string, totalPoints: number): Promis
           logger.info('Reward level achieved', { userId, levelId: level.id });
 
           // Invalidate cache
-          await deleteCache(`sanliurfa:user:rewards:${userId}`);
+          await deleteCache(`user:rewards:${userId}`);
         }
       }
     }
@@ -315,7 +315,7 @@ async function checkAndAwardRewards(userId: string, totalPoints: number): Promis
  */
 export async function getPointsLeaderboard(limit: number = 20): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:leaderboard:points';
+    const cacheKey = 'leaderboard:points';
     const cached = await getCache(cacheKey);
 
     if (cached) {

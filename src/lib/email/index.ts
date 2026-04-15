@@ -1,21 +1,12 @@
 /**
  * Email Service
- * Transactional email handling with templates
+ * Transactional email handling with templates via SMTP (nodemailer)
  */
 
+import nodemailer from 'nodemailer';
 import { getCache, setCache } from '../cache';
-
-// Email configuration
-interface EmailConfig {
-  from: string;
-  fromName: string;
-  replyTo?: string;
-}
-
-const defaultConfig: EmailConfig = {
-  from: 'noreply@sanliurfa.com',
-  fromName: 'Şanlıurfa.com',
-};
+import { query } from '../postgres';
+import { logger } from '../logging';
 
 interface EmailData {
   to: string;
@@ -24,32 +15,59 @@ interface EmailData {
   text?: string;
 }
 
+const FROM_ADDRESS = process.env.SMTP_FROM || 'noreply@sanliurfa.com';
+const FROM_NAME = process.env.SMTP_FROM_NAME || 'Şanlıurfa.com';
+
+function createTransport() {
+  if (
+    process.env.SMTP_HOST &&
+    process.env.SMTP_USER &&
+    process.env.SMTP_PASS
+  ) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+  }
+  // Dev fallback: log to console, no actual send
+  return null;
+}
+
 /**
- * Send email
+ * Send email via SMTP
  */
 export async function sendEmail(data: EmailData): Promise<{ success: boolean; error?: string }> {
   try {
-    // Log email for development
-    console.log('📧 Email to:', data.to);
-    console.log('Subject:', data.subject);
-    
-    // TODO: Integrate with email provider (SendGrid, Mailgun, AWS SES)
-    // For now, just log and return success
-    
-    // Rate limiting check
+    // Rate limiting: max 10 emails/day per recipient
     const rateKey = `email:${data.to}`;
     const sentToday = await getCache<number>(rateKey) || 0;
-    
     if (sentToday >= 10) {
       return { success: false, error: 'Email rate limit exceeded' };
     }
-    
+
+    const transport = createTransport();
+    if (transport) {
+      await transport.sendMail({
+        from: `"${FROM_NAME}" <${FROM_ADDRESS}>`,
+        to: data.to,
+        subject: data.subject,
+        html: data.html,
+        text: data.text,
+      });
+    } else {
+      logger.info('📧 [DEV] Email to:', data.to, '| Subject:', data.subject);
+    }
+
     await setCache(rateKey, sentToday + 1, 86400);
-    
     return { success: true };
   } catch (error) {
-    console.error('Email send error:', error);
-    return { success: false, error: 'Failed to send email' };
+    logger.error('Email send error:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }
 
@@ -494,24 +512,10 @@ export async function markEmailFailed(emailId: string, error: string): Promise<v
 }
 
 /**
- * Send email via external service
- * Stub for actual implementation with SendGrid/Mailgun/AWS SES
+ * Alias for sendEmail — kept for backward compatibility
  */
 export async function sendEmailViaService(data: EmailData): Promise<{ success: boolean; error?: string }> {
-  try {
-    // TODO: Implement actual email sending
-    // const response = await fetch('https://api.sendgrid.com/v3/mail/send', {...})
-    
-    console.log('📧 Sending email via service:', data.to);
-    
-    // Simulate success
-    return { success: true };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
-  }
+  return sendEmail(data);
 }
 
 

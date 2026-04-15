@@ -5,6 +5,7 @@
 
 import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
+import { logger } from '../logging';
 
 // Redis connection for BullMQ
 const redisConnection = new IORedis({
@@ -139,26 +140,26 @@ export function createWorkers(): Worker[] {
 
   // Email Worker
   workers.push(new Worker(QUEUES.EMAIL, async (job) => {
-    console.log(`[Worker] Processing email job ${job.id}`);
+    logger.info(`[Worker] Processing email job ${job.id}`);
     // Process email...
     await processEmail(job.data as EmailJobData);
   }, { connection: redisConnection, concurrency: 5 }));
 
   // SMS Worker
   workers.push(new Worker(QUEUES.SMS, async (job) => {
-    console.log(`[Worker] Processing SMS job ${job.id}`);
+    logger.info(`[Worker] Processing SMS job ${job.id}`);
     await processSMS(job.data as SMSJobData);
   }, { connection: redisConnection, concurrency: 3 }));
 
   // Image Processing Worker
   workers.push(new Worker(QUEUES.IMAGES, async (job) => {
-    console.log(`[Worker] Processing image job ${job.id}`);
+    logger.info(`[Worker] Processing image job ${job.id}`);
     await processImage(job.data as ImageProcessingJobData);
   }, { connection: redisConnection, concurrency: 2 }));
 
   // Webhook Worker
   workers.push(new Worker(QUEUES.WEBHOOKS, async (job) => {
-    console.log(`[Worker] Processing webhook job ${job.id}`);
+    logger.info(`[Worker] Processing webhook job ${job.id}`);
     await processWebhook(job.data as WebhookJobData);
   }, { connection: redisConnection, concurrency: 10 }));
 
@@ -168,17 +169,17 @@ export function createWorkers(): Worker[] {
 // Job processors
 async function processEmail(data: EmailJobData): Promise<void> {
   // Implementation
-  console.log(`Sending email to ${data.to}`);
+  logger.info(`Sending email to ${data.to}`);
 }
 
 async function processSMS(data: SMSJobData): Promise<void> {
   // Implementation
-  console.log(`Sending SMS to ${data.to}`);
+  logger.info(`Sending SMS to ${data.to}`);
 }
 
 async function processImage(data: ImageProcessingJobData): Promise<void> {
   // Implementation
-  console.log(`Processing image ${data.imageId}`);
+  logger.info(`Processing image ${data.imageId}`);
 }
 
 async function processWebhook(data: WebhookJobData): Promise<void> {

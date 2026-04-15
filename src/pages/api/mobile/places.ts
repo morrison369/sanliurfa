@@ -6,96 +6,87 @@
 
 import type { APIRoute } from 'astro';
 import { query, queryOne } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 // GET: List places with pagination
 export const GET: APIRoute = async ({ request }) => {
   try {
     const url = new URL(request.url);
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const offset = (page - 1) * limit;
     const category = url.searchParams.get('category');
     const lat = url.searchParams.get('lat');
     const lon = url.searchParams.get('lon');
     const radius = url.searchParams.get('radius'); // km
 
-    // Mock data for now
-    const places = [
-      {
-        id: 'place_1',
-        name: 'Balıklıgöl',
-        description: 'Şanlıurfa\'nın sembolü, kutsal balıklarıyla ünlü göl.',
-        category: 'religious',
-        rating: 4.8,
-        reviewCount: 1250,
-        location: { lat: 37.1591, lon: 38.7969 },
-        images: ['https://sanliurfa.com/images/balikligol-1.jpg'],
-        address: 'Balıklıgöl Mahallesi, Haliliye/Şanlıurfa',
-        phone: '+90 414 123 45 67',
-        openHours: '07:00 - 22:00',
-        priceRange: 1,
-        tags: ['tarihi', 'dini', 'turistik'],
-        lastUpdated: new Date().toISOString(),
-      },
-      {
-        id: 'place_2',
-        name: 'Göbeklitepe',
-        description: 'Dünyanın en eski tapınağı, UNESCO Dünya Mirası.',
-        category: 'historical',
-        rating: 4.9,
-        reviewCount: 2100,
-        location: { lat: 37.2231, lon: 38.9222 },
-        images: ['https://sanliurfa.com/images/gobeklitepe-1.jpg'],
-        address: 'Örencik Köyü, Haliliye/Şanlıurfa',
-        phone: '+90 414 234 56 78',
-        openHours: '08:00 - 18:00',
-        priceRange: 2,
-        tags: ['tarihi', 'arkeoloji', 'unesco'],
-        lastUpdated: new Date().toISOString(),
-      },
-      {
-        id: 'place_3',
-        name: 'Harran',
-        description: 'Konik kubbeli evleriyle ünlü antik şehir.',
-        category: 'historical',
-        rating: 4.6,
-        reviewCount: 890,
-        location: { lat: 36.86, lon: 39.03 },
-        images: ['https://sanliurfa.com/images/harran-1.jpg'],
-        address: 'Harran, Şanlıurfa',
-        phone: '+90 414 345 67 89',
-        openHours: '09:00 - 17:00',
-        priceRange: 1,
-        tags: ['tarihi', 'mimari', 'kültür'],
-        lastUpdated: new Date().toISOString(),
-      },
-    ];
+    const params: any[] = [];
+    let where = `WHERE p.status = 'active'`;
+    let idx = 1;
 
-    // Filter by category
-    let filtered = places;
     if (category) {
-      filtered = places.filter(p => p.category === category);
+      where += ` AND (p.category = $${idx} OR c.slug = $${idx})`;
+      params.push(category);
+      idx++;
     }
 
-    // Filter by location
+    // Geo filter via Haversine in SQL
     if (lat && lon && radius) {
-      const userLat = parseFloat(lat);
-      const userLon = parseFloat(lon);
-      const rad = parseFloat(radius);
-
-      filtered = filtered.filter(p => {
-        const distance = calculateDistance(userLat, userLon, p.location.lat, p.location.lon);
-        return distance <= rad;
-      });
+      where += ` AND (
+        6371 * acos(
+          cos(radians($${idx})) * cos(radians(p.latitude)) *
+          cos(radians(p.longitude) - radians($${idx + 1})) +
+          sin(radians($${idx})) * sin(radians(p.latitude))
+        )
+      ) <= $${idx + 2}`;
+      params.push(parseFloat(lat), parseFloat(lon), parseFloat(radius));
+      idx += 3;
     }
 
-    const total = filtered.length;
-    const start = (page - 1) * limit;
-    const paginated = filtered.slice(start, start + limit);
+    const countResult = await query(
+      `SELECT COUNT(*) FROM places p LEFT JOIN categories c ON c.id = p.category_id ${where}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0].count || '0');
+
+    const dataResult = await query(
+      `SELECT
+         p.id, p.slug, p.name, p.description, p.address,
+         p.latitude, p.longitude, p.rating, p.review_count,
+         p.images, p.phone, p.open_hours, p.price_range, p.tags,
+         p.updated_at,
+         COALESCE(p.category, c.slug) AS category
+       FROM places p
+       LEFT JOIN categories c ON c.id = p.category_id
+       ${where}
+       ORDER BY p.rating DESC NULLS LAST
+       LIMIT $${idx} OFFSET $${idx + 1}`,
+      [...params, limit, offset]
+    );
+
+    const places = dataResult.rows.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      category: p.category,
+      rating: parseFloat(p.rating) || 0,
+      reviewCount: p.review_count || 0,
+      location: p.latitude && p.longitude
+        ? { lat: parseFloat(p.latitude), lon: parseFloat(p.longitude) }
+        : null,
+      images: p.images || [],
+      address: p.address,
+      phone: p.phone,
+      openHours: p.open_hours,
+      priceRange: p.price_range,
+      tags: p.tags || [],
+      lastUpdated: p.updated_at,
+    }));
 
     return new Response(
       JSON.stringify({
         success: true,
-        places: paginated,
+        places,
         pagination: {
           page,
           limit,
@@ -106,7 +97,7 @@ export const GET: APIRoute = async ({ request }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Mobile places error:', error);
+    logger.error('Mobile places error:', error);
     return new Response(
       JSON.stringify({ error: 'Failed to fetch places' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -114,28 +105,47 @@ export const GET: APIRoute = async ({ request }) => {
   }
 };
 
-// POST: Sync places for offline mode
+// POST: Sync places updated since lastSync
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { lastSync, categories, bounds } = await request.json();
+    const { lastSync, categories } = await request.json();
 
-    // Return places that have been updated since last sync
-    const mockUpdates = [
-      {
-        id: 'place_1',
-        action: 'update',
-        data: {
-          rating: 4.9,
-          reviewCount: 1251,
-          lastUpdated: new Date().toISOString(),
-        },
+    const since = lastSync ? new Date(lastSync) : new Date(0);
+
+    let where = `WHERE p.status = 'active' AND p.updated_at > $1`;
+    const params: any[] = [since];
+    let idx = 2;
+
+    if (categories && Array.isArray(categories) && categories.length > 0) {
+      where += ` AND (p.category = ANY($${idx}) OR c.slug = ANY($${idx}))`;
+      params.push(categories);
+      idx++;
+    }
+
+    const result = await query(
+      `SELECT p.id, p.slug, p.name, p.rating, p.review_count, p.updated_at
+       FROM places p
+       LEFT JOIN categories c ON c.id = p.category_id
+       ${where}
+       ORDER BY p.updated_at DESC
+       LIMIT 200`,
+      params
+    );
+
+    const updates = result.rows.map((p: any) => ({
+      id: p.id,
+      action: 'update',
+      data: {
+        rating: parseFloat(p.rating) || 0,
+        reviewCount: p.review_count || 0,
+        lastUpdated: p.updated_at,
       },
-    ];
+    }));
 
     return new Response(
       JSON.stringify({
         success: true,
-        updates: mockUpdates,
+        updates,
         timestamp: new Date().toISOString(),
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }

@@ -2,7 +2,7 @@
  * Phase 399: Board Assurance Stability Coordinator V9
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 export interface BoardAssuranceStabilitySignalV9 {
   signalId: string;

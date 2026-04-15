@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Core Web Vitals Monitoring
  * LCP, FID, CLS, FCP, TTFB, INP tracking and reporting
@@ -54,7 +55,7 @@ function reportMetric(metric: WebVitalEntry) {
       try {
         cb(metric);
       } catch (e) {
-        console.error('WebVital callback error:', e);
+        logger.error('WebVital callback error:', e);
       }
     });
   }

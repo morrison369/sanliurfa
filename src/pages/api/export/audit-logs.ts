@@ -11,23 +11,23 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.user?.isAdmin) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Admin islemi', HttpStatus.FORBIDDEN, undefined, requestId);
+    if (!locals.isAdmin) {
+      return apiError(ErrorCode.FORBIDDEN, 'Admin işlemi gerekli', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const url = new URL(request.url);
     const format = (url.searchParams.get('format') || 'json') as 'csv' | 'json';
-    const days = parseInt(url.searchParams.get('days') || '7');
+    const days = Math.max(1, Math.min(90, parseInt(url.searchParams.get('days') || '7') || 7));
 
     const result = await pool.query(
       `SELECT id, user_id, action, resource_type, resource_id, ip_address, created_at
        FROM audit_logs
-       WHERE created_at > NOW() - INTERVAL '${days} days'
+       WHERE created_at > NOW() - ($1 * INTERVAL '1 day')
        ORDER BY created_at DESC`,
-      []
+      [days]
     );
 
-    const logs = result.map((row: any) => ({
+    const logs = result.rows.map((row: any) => ({
       id: row.id,
       userId: row.user_id,
       action: row.action,

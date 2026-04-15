@@ -111,12 +111,10 @@ export async function getPopularContent(
   const result = await query(
     `SELECT content_id, COUNT(*) as shares
      FROM social_shares
-     WHERE content_type = $1 AND shared_at > NOW() - INTERVAL '${days} days'
+     WHERE content_type = $1 AND shared_at > NOW() - ($3 * INTERVAL '1 day')
      GROUP BY content_id
      ORDER BY shares DESC
-     LIMIT $2`,
-    [contentType, limit]
-  );
+     LIMIT $2`, [contentType, limit, days]);
 
   return result.rows.map(row => ({
     contentId: row.content_id,

@@ -33,44 +33,24 @@ const seo = {
   description: 'Şanlıurfa mutfağının eşsiz lezzetlerini keşfedin. Ciğer kebabı, çiğ köfte, isot ve daha fazlası.',
 };
 
-const featuredFoods = [
-  {
-    id: 'urfa-kebabi',
-    name: 'Urfa Kebabı',
-    description: 'Baharatlı kıymanın odun ateşinde pişirilmesiyle hazırlanan, dünyaca ünlü efsane lezzet.',
-    image: '/images/foods/urfa-kebabi.jpg',
-    isSpicy: false,
-    difficulty: 'Zor',
-    rating: 4.9,
-  },
-  {
-    id: 'cig-kofte',
-    name: 'Çiğ Köfte',
-    description: 'İsot ve bulgurun karataşta yoğrulmasıyla yapılan geleneksel lezzet. UNESCO Somut Olmayan Kültür Mirası.',
-    image: '/images/foods/cig-kofte.jpg',
-    isSpicy: true,
-    difficulty: 'Çok Zor',
-    rating: 4.8,
-  },
-  {
-    id: 'isot',
-    name: 'Urfa İsotu',
-    description: 'Güneşte kurutulmuş, yağda kavrulmuş, Şanlıurfa\'ya özgü eşsiz baharat.',
-    image: '/images/foods/isot.jpg',
-    isSpicy: true,
-    difficulty: 'Orta',
-    rating: 4.9,
-  },
-  {
-    id: 'sillik-tatlisi',
-    name: 'Şıllık Tatlısı',
-    description: 'Cevizli, kremalı geleneksel Urfa tatlısı. İnce hamur ve özel şerbetle hazırlanır.',
-    image: '/images/foods/sillik-tatlisi.jpg',
-    isSpicy: false,
-    difficulty: 'Zor',
-    rating: 4.7,
-  },
-];
+let featuredFoods: any[] = [];
+try {
+  const foodsResult = await query(
+    `SELECT id, slug, name, description, cover_image, images, is_spicy, difficulty, rating
+     FROM foods ORDER BY rating DESC NULLS LAST LIMIT 4`
+  );
+  featuredFoods = foodsResult.rows.map((f: any) => ({
+    id: f.slug || f.id,
+    name: f.name,
+    description: f.description || '',
+    image: f.cover_image || (f.images?.[0]) || '/images/foods/default.jpg',
+    isSpicy: f.is_spicy || false,
+    difficulty: f.difficulty || '',
+    rating: parseFloat(f.rating) || 0,
+  }));
+} catch (e) {
+  console.error('Error loading featured foods:', e);
+}
 ---
 
 <Layout seo={seo}>
@@ -165,7 +145,7 @@ const featuredFoods = [
                       <span set:html={icons.Star}></span>
                       {food.rating}
                     </span>
-                    <span>â€¢</span>
+                    <span>•</span>
                     <span>{food.difficulty}</span>
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 // API: Event create (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { insert } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, redirect, locals }) => {
   try {
@@ -50,7 +51,7 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
 
     return redirect('/admin/events?success=created');
   } catch (err) {
-    console.error('Event create error:', err);
+    logger.error('Event create error:', err);
     return redirect('/admin/events/add?error=server_error');
   }
 };

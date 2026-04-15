@@ -4,7 +4,7 @@ import { isAdmin } from '../../lib/auth';
 
 // Check if user is admin
 const user = Astro.locals.user;
-if (!user || !user.isAdmin) {
+if (!user || !Astro.locals.isAdmin) {
   return Astro.redirect('/giris');
 }
 ---

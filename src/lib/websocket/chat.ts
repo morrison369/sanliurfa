@@ -4,6 +4,7 @@
  */
 
 import { query } from '../postgres';
+import { logger } from '../logging';
 
 export interface ChatMessage {
   id: string;
@@ -46,7 +47,7 @@ const roomSubscriptions = new Map<string, Set<string>>(); // roomId -> Set<userI
  */
 export function initWebSocketServer(port: number = 8080): void {
   // In production, this would create a WebSocketServer
-  console.log(`[WebSocket] Server would start on port ${port}`);
+  logger.info(`[WebSocket] Server would start on port ${port}`);
 }
 
 /**
@@ -71,7 +72,7 @@ export function handleConnection(ws: WebSocket, userId: string): void {
   });
   
   ws.addEventListener('error', (error) => {
-    console.error(`[WebSocket] Error for user ${userId}:`, error);
+    logger.error(`[WebSocket] Error for user ${userId}:`, error);
   });
 }
 
@@ -112,7 +113,7 @@ async function handleMessage(userId: string, data: any): Promise<void> {
         break;
     }
   } catch (error) {
-    console.error('[WebSocket] Message handling error:', error);
+    logger.error('[WebSocket] Message handling error:', error);
     sendToUser(userId, { type: 'error', message: 'Invalid message format' });
   }
 }
@@ -475,7 +476,7 @@ async function createNotification(
   data: any
 ): Promise<void> {
   // This would integrate with your notification system
-  console.log(`[Notification] ${type} for user ${userId}:`, data);
+  logger.info(`[Notification] ${type} for user ${userId}:`, data);
 }
 
 function mapMessageRow(row: any): ChatMessage {

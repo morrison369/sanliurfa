@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { query, transaction } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -7,18 +8,19 @@ export const POST: APIRoute = async (context) => {
     const {
       // Isletme bilgileri
       name,
-      category,
-      description,
+      category, category_id,           // eski ve yeni ad
+      district_id,                      // yeni alan
+      description, short_description,   // eski ve yeni ad
       address,
       phone,
       email,
       website,
-      
+
       // Sahip bilgileri
-      ownerName,
-      ownerEmail,
+      ownerName, owner_name,            // eski ve yeni ad
+      ownerEmail, owner_email,          // eski ve yeni ad
       ownerPhone,
-      
+
       // Ek bilgiler
       hasMenu,
       acceptsReservations,
@@ -27,11 +29,19 @@ export const POST: APIRoute = async (context) => {
       features
     } = body;
 
+    // Eski ve yeni alan adlarini birlestir
+    // category_id integer FK; eski formdan gelen category text ise NULL bırak
+    const categoryIdFinal = category_id ? parseInt(String(category_id), 10) : null;
+    const categoryFinal = categoryIdFinal || category; // validasyon için
+    const ownerNameFinal = owner_name || ownerName;
+    const ownerEmailFinal = owner_email || ownerEmail;
+    const descriptionFinal = short_description || description;
+
     // Validasyon
-    if (!name || !category || !address || !phone || !ownerName || !ownerEmail) {
-      return new Response(JSON.stringify({ 
-        error: 'Missing required fields',
-        fields: ['name', 'category', 'address', 'phone', 'ownerName', 'ownerEmail']
+    if (!name || !categoryFinal || !address || !phone || !ownerNameFinal || !ownerEmailFinal) {
+      return new Response(JSON.stringify({
+        error: 'Zorunlu alanlar eksik',
+        fields: ['name', 'category_id', 'address', 'phone', 'owner_name', 'owner_email']
       }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
@@ -40,8 +50,8 @@ export const POST: APIRoute = async (context) => {
 
     // Email validasyonu
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(ownerEmail)) {
-      return new Response(JSON.stringify({ error: 'Invalid email address' }), {
+    if (!emailRegex.test(ownerEmailFinal)) {
+      return new Response(JSON.stringify({ error: 'Geçersiz e-posta adresi' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -50,7 +60,7 @@ export const POST: APIRoute = async (context) => {
     // Telefon validasyonu
     const phoneRegex = /^[0-9]{10,11}$/;
     if (!phoneRegex.test(phone.replace(/\D/g, ''))) {
-      return new Response(JSON.stringify({ error: 'Invalid phone number' }), {
+      return new Response(JSON.stringify({ error: 'Geçersiz telefon numarası' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -75,7 +85,7 @@ export const POST: APIRoute = async (context) => {
       let userId;
       const existingUser = await client.query(
         'SELECT id FROM users WHERE email = $1',
-        [ownerEmail]
+        [ownerEmailFinal]
       );
 
       if (existingUser.rows.length > 0) {
@@ -90,7 +100,7 @@ export const POST: APIRoute = async (context) => {
           `INSERT INTO users (name, email, phone, role, status, email_verified)
            VALUES ($1, $2, $3, 'vendor', 'active', false)
            RETURNING id`,
-          [ownerName, ownerEmail, ownerPhone || null]
+          [ownerNameFinal, ownerEmailFinal, ownerPhone || null]
         );
         userId = newUser.rows[0].id;
       }
@@ -98,15 +108,15 @@ export const POST: APIRoute = async (context) => {
       // 2. Isletme olustur
       const placeResult = await client.query(
         `INSERT INTO places (
-          name, slug, category, description, address, phone, email, website,
-          owner_id, status, price_range, accepts_reservations,
+          name, slug, category_id, short_description, address, phone, email, website,
+          district_id, owner_id, status, price_range, accepts_reservations,
           created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, NOW(), NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending', $11, $12, NOW(), NOW())
         RETURNING id, slug`,
         [
-          name, finalSlug, category, description || null, address,
+          name, finalSlug, categoryIdFinal, descriptionFinal || null, address,
           phone.replace(/\D/g, ''), email || null, website || null,
-          userId, priceRange || null, acceptsReservations || false
+          district_id || null, userId, priceRange || null, acceptsReservations || false
         ]
       );
 
@@ -140,7 +150,7 @@ export const POST: APIRoute = async (context) => {
         `INSERT INTO support_tickets (name, email, subject, message, type, place_id, status, priority)
          VALUES ($1, $2, $3, $4, 'business_inquiry', $5, 'open', 'high')`,
         [
-          ownerName, ownerEmail, 'Yeni İşletme Başvurusu',
+          ownerNameFinal, ownerEmailFinal, 'Yeni İşletme Başvurusu',
           `${name} isimli işletme başvurusu yapıldı. Onay bekliyor.`,
           placeId
         ]
@@ -163,7 +173,7 @@ export const POST: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Place application error:', error);
+    logger.error('Place application error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

@@ -33,7 +33,7 @@ try {
     <div class="container-custom">
       <div class="flex items-center justify-between mb-8">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Yorum Moderasyonu</h1>
-        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">â† Admin Panel</a>
+        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">← Admin Panel</a>
       </div>
       
       {pendingReviews.length > 0 ? (
@@ -44,7 +44,7 @@ try {
                 <div>
                   <div class="flex items-center gap-2">
                     <span class="font-semibold text-gray-900 dark:text-white">{review.user_name}</span>
-                    <span class="text-gray-400">â†’</span>
+                    <span class="text-gray-400">→</span>
                     <a href={`/places/${review.place_slug}`} class="text-urfa-600 hover:underline">
                       {review.place_name}
                     </a>

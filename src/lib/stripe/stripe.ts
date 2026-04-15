@@ -69,11 +69,11 @@ export async function createSubscription(
       [userId]
     );
 
-    let customerId = membershipResult?.stripe_customer_id;
+    let customerId = membershipResult?.rows[0]?.stripe_customer_id;
 
     if (!customerId) {
       const userResult = await pool.query(`SELECT email FROM users WHERE id = $1`, [userId]);
-      customerId = await createStripeCustomer(userId, userResult?.email);
+      customerId = await createStripeCustomer(userId, userResult?.rows[0]?.email);
     }
 
     if (!customerId) {

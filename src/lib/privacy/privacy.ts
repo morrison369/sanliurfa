@@ -97,7 +97,7 @@ export async function updatePrivacySettings(
     const updated = await updateDb('privacy_settings', userId, updateData, 'user_id');
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:privacy:${userId}`);
+    await deleteCache(`privacy:${userId}`);
 
     logger.info('Privacy settings updated', { userId, changedFields: Object.keys(settings) });
 
@@ -148,7 +148,7 @@ export async function blockUser(userId: string, blockedUserId: string, reason?: 
     });
 
     // Clear blocking cache
-    await deleteCache(`sanliurfa:blocked:${userId}`);
+    await deleteCache(`blocked:${userId}`);
 
     logger.info('User blocked', { userId, blockedUserId, reason });
     return true;
@@ -172,7 +172,7 @@ export async function unblockUser(userId: string, blockedUserId: string): Promis
     );
 
     // Clear blocking cache
-    await deleteCache(`sanliurfa:blocked:${userId}`);
+    await deleteCache(`blocked:${userId}`);
 
     logger.info('User unblocked', { userId, blockedUserId });
     return true;
@@ -253,7 +253,7 @@ export async function muteUser(userId: string, mutedUserId: string): Promise<boo
       muted_user_id: mutedUserId
     });
 
-    await deleteCache(`sanliurfa:muted:${userId}`);
+    await deleteCache(`muted:${userId}`);
 
     logger.info('User notifications muted', { userId, mutedUserId });
     return true;
@@ -276,7 +276,7 @@ export async function unmuteUser(userId: string, mutedUserId: string): Promise<b
       [userId, mutedUserId]
     );
 
-    await deleteCache(`sanliurfa:muted:${userId}`);
+    await deleteCache(`muted:${userId}`);
 
     logger.info('User notifications unmuted', { userId, mutedUserId });
     return true;

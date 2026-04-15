@@ -7,7 +7,7 @@ import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
 
 export async function getUserPoints(userId: string): Promise<any> {
-  const cacheKey = `sanliurfa:loyalty:balance:${userId}`;
+  const cacheKey = `loyalty:balance:${userId}`;
 
   try {
     // Check cache first (optimized)
@@ -68,7 +68,7 @@ export async function awardPoints(userId: string, points: number, reason: string
     });
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:loyalty:balance:${userId}`);
+    await deleteCache(`loyalty:balance:${userId}`);
 
     logger.info('Points awarded', { userId, points, reason });
     return true;
@@ -111,7 +111,7 @@ export async function spendPoints(userId: string, points: number, reason: string
     });
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:loyalty:balance:${userId}`);
+    await deleteCache(`loyalty:balance:${userId}`);
 
     logger.info('Points spent', { userId, points, reason });
     return true;

@@ -4,13 +4,14 @@
  */
 
 import * as Sentry from '@sentry/astro';
+import { logger } from '../logging';
 
 const SENTRY_DSN = import.meta.env.SENTRY_DSN;
 const ENVIRONMENT = import.meta.env.NODE_ENV || 'development';
 
 export function initSentry(): void {
   if (!SENTRY_DSN) {
-    console.warn('Sentry DSN not configured');
+    logger.warn('Sentry DSN not configured');
     return;
   }
 

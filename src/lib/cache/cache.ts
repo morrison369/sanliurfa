@@ -1,5 +1,6 @@
 // Redis Caching Layer with Namespacing
 import { createClient } from 'redis';
+import { logger } from '../logging';
 
 const redisUrl = process.env.REDIS_URL || import.meta.env.REDIS_URL || 'redis://localhost:6379';
 const KEY_PREFIX = process.env.REDIS_KEY_PREFIX || 'sanliurfa:';
@@ -28,11 +29,11 @@ export async function getRedisClient() {
 
     client.on('error', (err) => {
       connectionError = err;
-      console.error('Redis Client Error:', err);
+      logger.error('Redis Client Error:', err);
     });
 
     client.on('reconnecting', () => {
-      console.warn('Redis reconnecting...');
+      logger.warn('Redis reconnecting...');
       connectionError = null;
     });
 
@@ -41,7 +42,7 @@ export async function getRedisClient() {
     return client;
   } catch (error) {
     connectionError = error instanceof Error ? error : new Error(String(error));
-    console.error('Redis connection failed:', connectionError);
+    logger.error('Redis connection failed:', connectionError);
     throw connectionError;
   }
 }
@@ -73,7 +74,7 @@ export async function getCache<T>(key: string): Promise<T | null> {
     const value = await redis.get(prefixedKey);
     return value ? JSON.parse(value) : null;
   } catch (error) {
-    console.error('Cache get error:', { key, error });
+    logger.error('Cache get error:', { key, error });
     return null;
   }
 }
@@ -90,7 +91,7 @@ export async function setCache(key: string, value: any, ttlSeconds = 3600): Prom
     const prefixedKey = prefixKey(key);
     await redis.setEx(prefixedKey, ttlSeconds, JSON.stringify(value));
   } catch (error) {
-    console.error('Cache set error:', { key, error });
+    logger.error('Cache set error:', { key, error });
   }
 }
 
@@ -106,7 +107,7 @@ export async function deleteCache(key: string): Promise<void> {
     const prefixedKey = prefixKey(key);
     await redis.del(prefixedKey);
   } catch (error) {
-    console.error('Cache delete error:', { key, error });
+    logger.error('Cache delete error:', { key, error });
   }
 }
 
@@ -126,7 +127,7 @@ export async function deleteCachePattern(pattern: string): Promise<void> {
       await redis.del(keys);
     }
   } catch (error) {
-    console.error('Cache pattern delete error:', { pattern, error });
+    logger.error('Cache pattern delete error:', { pattern, error });
   }
 }
 
@@ -164,7 +165,7 @@ export const redis = {
 export async function checkRateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
   try {
     if (!isRedisAvailable()) {
-      console.warn('Redis unavailable for rate limiting, allowing request');
+      logger.warn('Redis unavailable for rate limiting, allowing request');
       return true; // Fail-open with warning
     }
     const redis = await getRedisClient();
@@ -177,7 +178,7 @@ export async function checkRateLimit(key: string, limit: number, windowSeconds: 
 
     return current <= limit;
   } catch (error) {
-    console.error('Rate limit check error:', { key, error });
+    logger.error('Rate limit check error:', { key, error });
     return true; // Allow on error (fail-open)
   }
 }

@@ -45,7 +45,7 @@ export interface EventAttendee {
  */
 export async function getEventById(eventId: string): Promise<Event | null> {
   try {
-    const cacheKey = `sanliurfa:event:${eventId}`;
+    const cacheKey = `event:${eventId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -107,7 +107,7 @@ export async function getEvents(
   filters?: { category?: string; status?: string; placeId?: string }
 ): Promise<{ events: Event[]; total: number }> {
   try {
-    const cacheKey = `sanliurfa:events:list:${limit}:${offset}:${JSON.stringify(filters || {})}`;
+    const cacheKey = `events:list:${limit}:${offset}:${JSON.stringify(filters || {})}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -248,8 +248,8 @@ export async function toggleRsvp(eventId: string, userId: string): Promise<boole
       );
     }
 
-    await deleteCache(`sanliurfa:event:${eventId}`);
-    await deleteCache(`sanliurfa:event:attendees:${eventId}`);
+    await deleteCache(`event:${eventId}`);
+    await deleteCache(`event:attendees:${eventId}`);
 
     logger.info('RSVP toggled', { eventId, userId });
 
@@ -265,7 +265,7 @@ export async function toggleRsvp(eventId: string, userId: string): Promise<boole
  */
 export async function getEventAttendees(eventId: string): Promise<EventAttendee[]> {
   try {
-    const cacheKey = `sanliurfa:event:attendees:${eventId}`;
+    const cacheKey = `event:attendees:${eventId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -320,7 +320,7 @@ export async function hasUserRsvpd(eventId: string, userId: string): Promise<boo
  */
 export async function getUpcomingEvents(limit: number = 10): Promise<Event[]> {
   try {
-    const cacheKey = `sanliurfa:events:upcoming:${limit}`;
+    const cacheKey = `events:upcoming:${limit}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {

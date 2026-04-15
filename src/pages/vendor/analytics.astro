@@ -1,17 +1,34 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import AnalyticsDashboard from '../../components/vendor/AnalyticsDashboard';
+import { query } from '../../lib/postgres';
+
+if (!Astro.locals.user) {
+  return Astro.redirect('/giris?redirect=/vendor/analytics');
+}
+
+const userId = Astro.locals.user.id;
+
+const placeResult = await query(
+  `SELECT id, slug, name FROM places WHERE owner_id = $1 AND status != 'deleted' ORDER BY created_at DESC LIMIT 1`,
+  [userId]
+);
+const firstPlace = placeResult.rows[0];
+
+if (!firstPlace) {
+  return Astro.redirect('/vendor/dashboard');
+}
+
+const vendor = {
+  id: userId,
+  name: Astro.locals.user.fullName || 'İşletme Sahibi',
+  placeId: firstPlace.id,
+};
 
 const seo = {
   title: 'Analitikler - İşletme Paneli',
   description: 'İşletmenizin performans istatistiklerini görüntüleyin',
   noindex: true,
-};
-
-const vendor = {
-  id: 'vendor-001',
-  name: 'Ciğerci Aziz Usta',
-  placeId: 'place-001',
 };
 ---
 

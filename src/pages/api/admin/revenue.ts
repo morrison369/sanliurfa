@@ -24,8 +24,10 @@ export const GET: APIRoute = async ({ request, cookies }) => {
       return apiError(ErrorCode.UNAUTHORIZED, 'Invalid or expired token', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    // Check admin role (would be done via RBAC, for now check if role includes admin)
-    // In real implementation: await hasPermission(sessionData.userId, 'admin.access')
+    if (sessionData.role !== 'admin') {
+      recordRequest('GET', '/api/admin/revenue', HttpStatus.FORBIDDEN, Date.now() - startTime);
+      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
+    }
 
     // Get current active subscriptions by tier
     const subscriptionsByTier = await queryMany(

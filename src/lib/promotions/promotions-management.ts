@@ -39,7 +39,7 @@ export interface PromotionStats {
  */
 export async function getPromotion(promotionId: string): Promise<Promotion | null> {
   try {
-    const cacheKey = `sanliurfa:promotion:${promotionId}`;
+    const cacheKey = `promotion:${promotionId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -89,7 +89,7 @@ export async function getPromotion(promotionId: string): Promise<Promotion | nul
  */
 export async function getPlacePromotions(placeId: string): Promise<Promotion[]> {
   try {
-    const cacheKey = `sanliurfa:place:promotions:${placeId}`;
+    const cacheKey = `place:promotions:${placeId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -276,7 +276,7 @@ export async function redeemPromotion(promotionId: string, userId: string, disco
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:promotion:${promotionId}`);
+    await deleteCache(`promotion:${promotionId}`);
 
     logger.info('Promotion redeemed', { promotionId, userId, discountAmount });
 
@@ -292,7 +292,7 @@ export async function redeemPromotion(promotionId: string, userId: string, disco
  */
 export async function getPromotionStats(placeId: string): Promise<PromotionStats> {
   try {
-    const cacheKey = `sanliurfa:promotion:stats:${placeId}`;
+    const cacheKey = `promotion:stats:${placeId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -345,7 +345,7 @@ export async function getPromotionStats(placeId: string): Promise<PromotionStats
  */
 export async function getTrendingPromotions(limit: number = 10): Promise<Promotion[]> {
   try {
-    const cacheKey = `sanliurfa:promotions:trending:${limit}`;
+    const cacheKey = `promotions:trending:${limit}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {

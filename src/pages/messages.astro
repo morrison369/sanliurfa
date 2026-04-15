@@ -219,12 +219,27 @@ const [conversations, unreadCount] = await Promise.all([
       }
     }
 
-    function startNewConversation() {
+    async function startNewConversation() {
       const username = prompt('Kullanıcı adı veya e-posta girin:');
-      if (!username) return;
-      
-      // Search user and start conversation
-      // Implementation needed
+      if (!username?.trim()) return;
+
+      try {
+        const res = await fetch('/api/social/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'createConversation', recipientIdentifier: username.trim() }),
+        });
+        const data = await res.json();
+        if (data.success && data.conversationId) {
+          currentConversation = data.conversationId;
+          loadConversations();
+          loadConversation(data.conversationId);
+        } else {
+          alert(data.error || 'Kullanıcı bulunamadı');
+        }
+      } catch {
+        alert('Bağlantı hatası');
+      }
     }
 
     function sharePlace() {

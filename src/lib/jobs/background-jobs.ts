@@ -4,7 +4,7 @@
  * Supports email sending, notifications, reports, etc.
  */
 
-import { getCache, setCache } from '../cache';
+import { getCache, setCache, getRedisClient } from '../cache';
 import { logger } from '../logger';
 
 export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'delayed';
@@ -76,7 +76,7 @@ export class BackgroundJobQueue {
     }
 
     try {
-      const key = `sanliurfa:job:${jobId}`;
+      const key = `job:${jobId}`;
       await setCache(key, JSON.stringify(job), 86400 * 7); // 7 days
 
       logger.info('Job enqueued', {
@@ -213,7 +213,7 @@ export class BackgroundJobQueue {
    */
   async getJob(jobId: string): Promise<BackgroundJob | null> {
     try {
-      const key = `sanliurfa:job:${jobId}`;
+      const key = `job:${jobId}`;
       const cached = await getCache(key);
 
       if (!cached) {
@@ -232,7 +232,7 @@ export class BackgroundJobQueue {
    */
   async updateJob(jobId: string, job: BackgroundJob): Promise<void> {
     try {
-      const key = `sanliurfa:job:${jobId}`;
+      const key = `job:${jobId}`;
       await setCache(key, JSON.stringify(job), 86400 * 7);
     } catch (error) {
       logger.error('Failed to update job', error instanceof Error ? error : new Error(String(error)), { jobId });
@@ -257,9 +257,41 @@ export class BackgroundJobQueue {
    * Get pending job IDs (for processing)
    */
   private async getPendingJobIds(): Promise<string[]> {
-    // In production, this would query a database or Redis set
-    // For now, returning empty (jobs would be tracked separately)
-    return [];
+    try {
+      const redis = await getRedisClient();
+      if (!redis) return [];
+
+      // Scan for job keys in Redis
+      const keys: string[] = [];
+      let cursor = '0';
+      do {
+        const [nextCursor, found] = await (redis as any).scan(cursor, 'MATCH', 'sanliurfa:job:job_*', 'COUNT', '100');
+        cursor = nextCursor;
+        keys.push(...found);
+      } while (cursor !== '0');
+
+      // Load and filter pending/delayed jobs
+      const jobs: BackgroundJob[] = [];
+      for (const key of keys) {
+        const raw = await (redis as any).get(key);
+        if (raw) {
+          try {
+            const job: BackgroundJob = JSON.parse(raw);
+            const now = new Date();
+            if (job.status === 'pending' || (job.status === 'delayed' && job.scheduledFor && new Date(job.scheduledFor) <= now)) {
+              jobs.push(job);
+            }
+          } catch { /* skip malformed */ }
+        }
+      }
+
+      // Sort by priority (desc) then creation time (asc)
+      jobs.sort((a, b) => (b.priority - a.priority) || (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+      return jobs.map(j => j.id);
+    } catch (error) {
+      logger.error('Failed to get pending job IDs', error instanceof Error ? error : new Error(String(error)));
+      return [];
+    }
   }
 
   /**

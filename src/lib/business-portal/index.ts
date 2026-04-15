@@ -61,16 +61,41 @@ export async function getBusinessDashboard(
     [`%/place/${placeId}%`, placeId]
   );
 
-  // Get recent reviews
-  const recentReviews = await query(
-    `SELECT r.*, u.name as user_name
-     FROM reviews r
-     LEFT JOIN users u ON r.user_id = u.id
-     WHERE r.place_id = $1
-     ORDER BY r.created_at DESC
-     LIMIT 10`,
-    [placeId]
-  );
+  const [recentReviews, topDays, demographics] = await Promise.all([
+    query(
+      `SELECT r.*, u.name as user_name
+       FROM reviews r
+       LEFT JOIN users u ON r.user_id = u.id
+       WHERE r.place_id = $1
+       ORDER BY r.created_at DESC
+       LIMIT 10`,
+      [placeId]
+    ),
+    query(
+      `SELECT TO_CHAR(created_at, 'Day') as day_name,
+              EXTRACT(DOW FROM created_at) as day_of_week,
+              COUNT(*) as view_count
+       FROM page_views
+       WHERE path LIKE $1
+       AND created_at >= NOW() - INTERVAL '30 days'
+       GROUP BY day_name, day_of_week
+       ORDER BY view_count DESC`,
+      [`%/place/${placeId}%`]
+    ),
+    query(
+      `SELECT device, COUNT(*) as count
+       FROM page_views
+       WHERE path LIKE $1
+       AND created_at >= NOW() - INTERVAL '30 days'
+       GROUP BY device`,
+      [`%/place/${placeId}%`]
+    ),
+  ]);
+
+  const customerDemographics: Record<string, number> = {};
+  demographics.rows.forEach((r: any) => {
+    customerDemographics[r.device || 'unknown'] = parseInt(r.count);
+  });
 
   return {
     placeId,
@@ -83,8 +108,11 @@ export async function getBusinessDashboard(
       monthlyVisitors: parseInt(stats.rows[0].monthly_visitors)
     },
     recentReviews: recentReviews.rows,
-    topPerformingDays: [],
-    customerDemographics: {}
+    topPerformingDays: topDays.rows.map((r: any) => ({
+      day: r.day_name?.trim(),
+      views: parseInt(r.view_count),
+    })),
+    customerDemographics,
   };
 }
 
@@ -180,33 +208,59 @@ export async function getBusinessInsights(
   placeId: string,
   period: 'week' | 'month' | 'year' = 'month'
 ): Promise<BusinessInsight[]> {
-  const interval = period === 'week' ? '7 days' : period === 'month' ? '30 days' : '1 year';
+  const days = period === 'week' ? 7 : period === 'month' ? 30 : 365;
 
-  const [reviews, views] = await Promise.all([
+  const [reviews, reviewsPrev, views, viewsPrev] = await Promise.all([
     query(
-      `SELECT COUNT(*) as count FROM reviews 
-       WHERE place_id = $1 AND created_at >= NOW() - INTERVAL '${interval}'`,
-      [placeId]
+      `SELECT COUNT(*) as count FROM reviews
+       WHERE place_id = $1 AND created_at >= NOW() - ($2 * INTERVAL '1 day')`,
+      [placeId, days]
     ),
     query(
-      `SELECT COUNT(*) as count FROM page_views 
-       WHERE path LIKE $1 AND created_at >= NOW() - INTERVAL '${interval}'`,
-      [`%/place/${placeId}%`]
-    )
+      `SELECT COUNT(*) as count FROM reviews
+       WHERE place_id = $1
+       AND created_at >= NOW() - ($2 * INTERVAL '1 day')
+       AND created_at < NOW() - ($3 * INTERVAL '1 day')`,
+      [placeId, days * 2, days]
+    ),
+    query(
+      `SELECT COUNT(*) as count FROM page_views
+       WHERE path LIKE $1 AND created_at >= NOW() - ($2 * INTERVAL '1 day')`,
+      [`%/place/${placeId}%`, days]
+    ),
+    query(
+      `SELECT COUNT(*) as count FROM page_views
+       WHERE path LIKE $1
+       AND created_at >= NOW() - ($2 * INTERVAL '1 day')
+       AND created_at < NOW() - ($3 * INTERVAL '1 day')`,
+      [`%/place/${placeId}%`, days * 2, days]
+    ),
   ]);
+
+  const reviewCount = parseInt(reviews.rows[0].count);
+  const reviewPrevCount = parseInt(reviewsPrev.rows[0].count);
+  const reviewDiff = reviewPrevCount > 0
+    ? Math.round(((reviewCount - reviewPrevCount) / reviewPrevCount) * 100)
+    : 0;
+
+  const viewCount = parseInt(views.rows[0].count);
+  const viewPrevCount = parseInt(viewsPrev.rows[0].count);
+  const viewDiff = viewPrevCount > 0
+    ? Math.round(((viewCount - viewPrevCount) / viewPrevCount) * 100)
+    : 0;
 
   return [
     {
       type: 'review',
-      count: parseInt(reviews.rows[0].count),
-      trend: 'up',
-      percentage: 15
+      count: reviewCount,
+      trend: reviewDiff > 0 ? 'up' : reviewDiff < 0 ? 'down' : 'stable',
+      percentage: Math.abs(reviewDiff)
     },
     {
       type: 'view',
-      count: parseInt(views.rows[0].count),
-      trend: 'up',
-      percentage: 23
+      count: viewCount,
+      trend: viewDiff > 0 ? 'up' : viewDiff < 0 ? 'down' : 'stable',
+      percentage: Math.abs(viewDiff)
     }
   ];
 }

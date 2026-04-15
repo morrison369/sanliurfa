@@ -44,7 +44,7 @@ const migrationRegistry: Map<string, Migration> = new Map();
  * Initialize migration system
  */
 export async function initMigrations(): Promise<void> {
-  console.log('[Migrations] Initializing migration system...');
+  logger.info('[Migrations] Initializing migration system...');
   
   // Create migrations table if not exists
   await query(`
@@ -63,7 +63,7 @@ export async function initMigrations(): Promise<void> {
     )
   `);
   
-  console.log('[Migrations] Migration table ready');
+  logger.info('[Migrations] Migration table ready');
 }
 
 /**
@@ -114,11 +114,11 @@ export async function migrate(options?: {
     const pending = await getPendingMigrations();
     
     if (pending.length === 0) {
-      console.log('[Migrations] No pending migrations');
+      logger.info('[Migrations] No pending migrations');
       return { success: true, executed: [] };
     }
     
-    console.log(`[Migrations] ${pending.length} pending migrations found`);
+    logger.info(`[Migrations] ${pending.length} pending migrations found`);
     
     for (const migration of pending) {
       // Check if we should stop at specific version
@@ -127,7 +127,7 @@ export async function migrate(options?: {
       }
       
       if (options?.dryRun) {
-        console.log(`[Migrations] Would run: ${migration.version} - ${migration.name}`);
+        logger.info(`[Migrations] Would run: ${migration.version} - ${migration.name}`);
         executed.push(migration.version);
         continue;
       }
@@ -147,10 +147,10 @@ export async function migrate(options?: {
       }
     }
     
-    console.log(`[Migrations] ${executed.length} migrations completed`);
+    logger.info(`[Migrations] ${executed.length} migrations completed`);
     return { success: true, executed };
   } catch (error) {
-    console.error('[Migrations] Migration failed:', error);
+    logger.error('[Migrations] Migration failed:', error);
     return {
       success: false,
       executed,
@@ -163,7 +163,7 @@ export async function migrate(options?: {
  * Run single migration
  */
 async function runMigration(migration: Migration): Promise<boolean> {
-  console.log(`[Migrations] Running: ${migration.version} - ${migration.name}`);
+  logger.info(`[Migrations] Running: ${migration.version} - ${migration.name}`);
   
   const startTime = Date.now();
   
@@ -192,7 +192,7 @@ async function runMigration(migration: Migration): Promise<boolean> {
     `, [migration.version]);
     
     const duration = Date.now() - startTime;
-    console.log(`[Migrations] Completed: ${migration.version} (${duration}ms)`);
+    logger.info(`[Migrations] Completed: ${migration.version} (${duration}ms)`);
     
     return true;
   } catch (error) {
@@ -205,7 +205,7 @@ async function runMigration(migration: Migration): Promise<boolean> {
       WHERE version = $1
     `, [migration.version, error instanceof Error ? error.message : 'Unknown error']);
     
-    console.error(`[Migrations] Failed: ${migration.version}`, error);
+    logger.error(`[Migrations] Failed: ${migration.version}`, error);
     return false;
   }
 }
@@ -252,11 +252,11 @@ export async function rollback(
     for (const record of migrationsToRollback) {
       const migration = migrationRegistry.get(record.version);
       if (!migration) {
-        console.warn(`[Migrations] Migration not found: ${record.version}`);
+        logger.warn(`[Migrations] Migration not found: ${record.version}`);
         continue;
       }
       
-      console.log(`[Migrations] Rolling back: ${migration.version}`);
+      logger.info(`[Migrations] Rolling back: ${migration.version}`);
       
       try {
         await transaction(async (client) => {
@@ -272,9 +272,9 @@ export async function rollback(
         `, [migration.version, options.toVersion]);
         
         rolledBack.push(migration.version);
-        console.log(`[Migrations] Rolled back: ${migration.version}`);
+        logger.info(`[Migrations] Rolled back: ${migration.version}`);
       } catch (error) {
-        console.error(`[Migrations] Rollback failed: ${migration.version}`, error);
+        logger.error(`[Migrations] Rollback failed: ${migration.version}`, error);
         return {
           success: false,
           rolledBack,
@@ -428,6 +428,7 @@ export function createMigrationTemplate(
 ): string {
   return `
 import { registerMigration } from '../lib/migrations/migration-runner';
+import { logger } from '../logging';
 
 export const ${name.replace(/[^a-z0-9]/gi, '_')} = registerMigration(
   '${version}',

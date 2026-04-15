@@ -3,6 +3,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { pool } from '../../../lib/postgres';
 import { getRedisClient, isRedisAvailable } from '../../../lib/cache';
 import { query } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 interface DetailedHealth {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -67,7 +68,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
         dbStatus = 'up';
       }
     } catch (error) {
-      console.error('Database health check failed:', error);
+      logger.error('Database health check failed:', error);
       dbStatus = 'down';
       dbError = error instanceof Error ? error.message : String(error);
     }
@@ -82,7 +83,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
         redisStatus = 'up';
       }
     } catch (error) {
-      console.error('Redis health check failed:', error);
+      logger.error('Redis health check failed:', error);
       redisStatus = 'down';
       redisError = error instanceof Error ? error.message : String(error);
     }
@@ -138,7 +139,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     return apiResponse(healthData, statusCode, requestId);
   } catch (error) {
-    console.error('Detailed health check error:', error);
+    logger.error('Detailed health check error:', error);
     return apiError(ErrorCode.INTERNAL_ERROR, 'Health check failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

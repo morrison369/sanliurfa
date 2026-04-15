@@ -4,6 +4,7 @@
  */
 
 import type { EmailData } from './index';
+import { logger } from '../logging';
 
 export interface EmailProvider {
   name: string;
@@ -71,7 +72,7 @@ export class SMTPProvider implements EmailProvider {
         messageId: result.messageId 
       };
     } catch (error) {
-      console.error('SMTP send error:', error);
+      logger.error('SMTP send error:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'SMTP error' 
@@ -118,7 +119,7 @@ export class MockProvider implements EmailProvider {
   }
 
   async send(data: EmailData): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    console.log('📧 [MOCK EMAIL]', {
+    logger.info('📧 [MOCK EMAIL]', {
       to: data.to,
       subject: data.subject,
       text: data.text?.slice(0, 100) + '...',

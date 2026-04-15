@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 // @ts-nocheck
 /**
  * Performance Monitoring & Optimization
@@ -84,7 +85,7 @@ export async function sendPerformanceMetrics(metrics: PerformanceMetrics): Promi
     });
     return response.ok;
   } catch (error) {
-    console.error('Failed to send performance metrics:', error);
+    logger.error('Failed to send performance metrics:', error);
     return false;
   }
 }

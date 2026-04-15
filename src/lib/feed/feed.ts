@@ -26,7 +26,7 @@ export async function getPersonalizedFeed(
   feedType: string = 'following',
   limit: number = 50
 ): Promise<FeedEntry[]> {
-  const cacheKey = 'sanliurfa:feed:' + userId + ':' + feedType + ':' + limit;
+  const cacheKey = 'feed:' + userId + ':' + feedType + ':' + limit;
 
   try {
     const cached = await getCache<FeedEntry[]>(cacheKey);
@@ -96,7 +96,7 @@ export async function getFollowingFeed(userId: string, limit: number = 50): Prom
 }
 
 export async function getTrendingFeed(limit: number = 50): Promise<FeedEntry[]> {
-  const cacheKey = 'sanliurfa:feed:trending:' + limit;
+  const cacheKey = 'feed:trending:' + limit;
 
   try {
     const cached = await getCache<FeedEntry[]>(cacheKey);
@@ -147,7 +147,7 @@ export async function getTrendingFeed(limit: number = 50): Promise<FeedEntry[]> 
 }
 
 export async function getPopularFeed(limit: number = 50): Promise<FeedEntry[]> {
-  const cacheKey = 'sanliurfa:feed:popular:' + limit;
+  const cacheKey = 'feed:popular:' + limit;
 
   try {
     const cached = await getCache<FeedEntry[]>(cacheKey);
@@ -197,7 +197,7 @@ export async function getPopularFeed(limit: number = 50): Promise<FeedEntry[]> {
 }
 
 export async function getRecentFeed(limit: number = 50): Promise<FeedEntry[]> {
-  const cacheKey = 'sanliurfa:feed:recent:' + limit;
+  const cacheKey = 'feed:recent:' + limit;
 
   try {
     const cached = await getCache<FeedEntry[]>(cacheKey);

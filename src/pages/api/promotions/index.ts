@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
+import { logger } from '../../../lib/logging';
 
 // List promotions
 export const GET: APIRoute = async (context) => {
@@ -48,7 +49,7 @@ export const GET: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('List promotions error:', error);
+    logger.error('List promotions error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -132,7 +133,7 @@ export const POST: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Create promotion error:', error);
+    logger.error('Create promotion error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

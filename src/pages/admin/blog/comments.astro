@@ -69,7 +69,7 @@ const seo = {
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
             <a href="/admin/blog" class="text-gray-600 dark:text-gray-400 hover:text-gray-900">
-              â† Geri
+              ← Geri
             </a>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Yorum Moderasyonu</h1>
           </div>
@@ -135,7 +135,7 @@ const seo = {
                       {comment.author_name}
                     </h4>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                      {comment.author_email && `${comment.author_email} â€¢ `}
+                      {comment.author_email && `${comment.author_email} • `}
                       {new Date(comment.created_at).toLocaleDateString('tr-TR')}
                     </p>
                   </div>
@@ -146,13 +146,13 @@ const seo = {
                           onclick={`approveComment(${comment.id})`}
                           class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
                         >
-                          âœ“ Onayla
+                          ✓ Onayla
                         </button>
                         <button
                           onclick={`rejectComment(${comment.id})`}
                           class="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
                         >
-                          âœ— Reddet
+                          ✗ Reddet
                         </button>
                       </>
                     )}
@@ -160,7 +160,7 @@ const seo = {
                       onclick={`deleteComment(${comment.id})`}
                       class="px-3 py-1 bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-white rounded text-sm hover:bg-gray-400"
                     >
-                      ğŸ—‘ï¸ Sil
+                      🗑ï¸ Sil
                     </button>
                   </div>
                 </div>
@@ -183,7 +183,7 @@ const seo = {
                       ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
                       : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                   }`}>
-                    {comment.status === 'approved' ? 'âœ“ Onaylı' : comment.status === 'pending' ? 'â³ Bekleme' : 'âœ— Reddedildi'}
+                    {comment.status === 'approved' ? '✓ Onaylı' : comment.status === 'pending' ? '⏳ Bekleme' : '✗ Reddedildi'}
                   </span>
                 </div>
               </div>

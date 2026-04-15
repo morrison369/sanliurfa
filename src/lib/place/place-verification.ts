@@ -64,7 +64,7 @@ export async function requestPlaceVerification(
     });
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:place:verification:${placeId}`);
+    await deleteCache(`place:verification:${placeId}`);
 
     logger.info('Place verification requested', { placeId });
 
@@ -87,7 +87,7 @@ export async function requestPlaceVerification(
  */
 export async function getPlaceVerification(placeId: string): Promise<PlaceVerification | null> {
   try {
-    const cacheKey = `sanliurfa:place:verification:${placeId}`;
+    const cacheKey = `place:verification:${placeId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -163,7 +163,7 @@ export async function approveVerification(
     await awardBadge(verification.place_id, 'verified', verifiedBy, reason);
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:place:verification:${verification.place_id}`);
+    await deleteCache(`place:verification:${verification.place_id}`);
 
     logger.info('Verification approved', { verificationId, verifiedBy });
     return true;
@@ -200,7 +200,7 @@ export async function rejectVerification(
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:place:verification:${verification.place_id}`);
+    await deleteCache(`place:verification:${verification.place_id}`);
 
     logger.info('Verification rejected', { verificationId, rejectedBy });
     return true;
@@ -239,7 +239,7 @@ export async function awardBadge(
     });
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:place:badges:${placeId}`);
+    await deleteCache(`place:badges:${placeId}`);
 
     logger.info('Badge awarded', { placeId, badgeType });
 
@@ -263,7 +263,7 @@ export async function awardBadge(
  */
 export async function getPlaceBadges(placeId: string): Promise<PlaceBadge[]> {
   try {
-    const cacheKey = `sanliurfa:place:badges:${placeId}`;
+    const cacheKey = `place:badges:${placeId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -304,7 +304,7 @@ export async function getPlaceBadges(placeId: string): Promise<PlaceBadge[]> {
  */
 export async function getBadgeDefinitions(): Promise<BadgeDefinition[]> {
   try {
-    const cacheKey = 'sanliurfa:badge:definitions';
+    const cacheKey = 'badge:definitions';
     const cached = await getCache(cacheKey);
 
     if (cached) {

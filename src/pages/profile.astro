@@ -4,18 +4,34 @@ import Layout from '../layouts/Layout.astro';
 import { requireAuth } from '../lib/auth';
 import { getUserProfile } from '../lib/user/users';
 import { getSocialStats } from '../lib/social/friendship-db';
-import { getUserReviews } from '../lib/places/reviews';
-import { getUserSubmissions } from '../lib/places/user-submissions';
+import { query } from '../lib/postgres';
 
 const auth = await requireAuth(Astro.request);
 if (auth instanceof Response) return auth;
 
-const [profile, socialStats, reviews, submissions] = await Promise.all([
+const [profile, socialStats, reviewsResult, submissionsResult] = await Promise.all([
   getUserProfile(auth.user.id),
   getSocialStats(auth.user.id),
-  getUserReviews(auth.user.id),
-  getUserSubmissions(auth.user.id),
+  query(
+    `SELECT r.id, r.rating, r.content, r.created_at, r.helpful_count AS likes,
+            p.slug AS place_slug, p.name AS place_name
+     FROM reviews r
+     JOIN places p ON p.id = r.place_id
+     WHERE r.user_id = $1 AND r.status != 'deleted'
+     ORDER BY r.created_at DESC`,
+    [auth.user.id]
+  ),
+  query(
+    `SELECT id, name, category, status, created_at
+     FROM places
+     WHERE owner_id = $1 AND status IN ('draft','pending','active','rejected','needs_info')
+     ORDER BY created_at DESC`,
+    [auth.user.id]
+  ),
 ]);
+
+const reviews    = reviewsResult.rows;
+const submissions = submissionsResult.rows;
 ---
 
 <Layout title={`${profile?.full_name || 'Profil'} - Şanlıurfa Rehberi`}>

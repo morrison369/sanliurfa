@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import ModerationDashboard from '../../components/ModerationDashboard';
 
 // Require admin authentication
-if (!Astro.locals.user?.isAdmin) {
+if (!Astro.locals.isAdmin) {
   return Astro.redirect('/giris');
 }
 ---

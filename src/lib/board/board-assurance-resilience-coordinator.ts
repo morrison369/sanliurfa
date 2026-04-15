@@ -3,7 +3,7 @@
  */
 
 // @ts-nocheck
-import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
 
 export interface BoardResilienceSignal {
   signalId: string;

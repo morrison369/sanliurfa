@@ -1,4 +1,5 @@
 import type { Pool } from 'pg';
+import { logger } from '../logging';
 
 export interface WebhookLog {
   id: string;
@@ -58,7 +59,7 @@ export async function getWebhookLogs(
       total: parseInt((countRes as any).rows?.[0]?.count || '0')
     };
   } catch (error) {
-    console.error('Error getting webhook logs:', error);
+    logger.error('Error getting webhook logs:', error);
     throw error;
   }
 }
@@ -95,7 +96,7 @@ export async function getWebhookLogDetail(
     const rows = (result as any).rows;
     return rows?.[0] || null;
   } catch (error) {
-    console.error('Error getting webhook log detail:', error);
+    logger.error('Error getting webhook log detail:', error);
     throw error;
   }
 }
@@ -147,7 +148,7 @@ export async function getWebhookLogsSummary(
       avgResponseTime: parseInt(row.avg_response_time) || 0
     };
   } catch (error) {
-    console.error('Error getting webhook logs summary:', error);
+    logger.error('Error getting webhook logs summary:', error);
     throw error;
   }
 }
@@ -172,7 +173,7 @@ export async function clearOldWebhookLogs(
 
     return result.rowCount || 0;
   } catch (error) {
-    console.error('Error clearing webhook logs:', error);
+    logger.error('Error clearing webhook logs:', error);
     throw error;
   }
 }

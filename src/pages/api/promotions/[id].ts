@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
+import { logger } from '../../../lib/logging';
 
 export const PUT: APIRoute = async (context) => {
   try {
@@ -81,7 +82,7 @@ export const PUT: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Update promotion error:', error);
+    logger.error('Update promotion error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -112,7 +113,7 @@ export const DELETE: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Delete promotion error:', error);
+    logger.error('Delete promotion error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

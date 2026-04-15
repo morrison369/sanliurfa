@@ -12,7 +12,7 @@ import { getCache, setCache, deleteCache } from '../cache';
  */
 export async function getUserPermissions(userId: string): Promise<Set<string>> {
   try {
-    const cacheKey = `sanliurfa:permissions:${userId}`;
+    const cacheKey = `permissions:${userId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -83,7 +83,7 @@ export async function assignRole(userId: string, roleId: string, assignedBy: str
 
     if ((result.rowCount || 0) > 0) {
       // Cache'i sil
-      await deleteCache(`sanliurfa:permissions:${userId}`);
+      await deleteCache(`permissions:${userId}`);
       logger.info('Role atandi', { userId, roleId, assignedBy });
     }
 
@@ -106,7 +106,7 @@ export async function revokeRole(userId: string, roleId: string): Promise<boolea
 
     if ((result.rowCount || 0) > 0) {
       // Cache'i sil
-      await deleteCache(`sanliurfa:permissions:${userId}`);
+      await deleteCache(`permissions:${userId}`);
       logger.info('Role geri alindi', { userId, roleId });
     }
 

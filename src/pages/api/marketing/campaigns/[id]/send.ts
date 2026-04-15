@@ -21,7 +21,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.user?.isAdmin) {
+    if (!locals.isAdmin) {
       recordRequest('POST', `/api/marketing/campaigns/${params.id}/send`, HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }

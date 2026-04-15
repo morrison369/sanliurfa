@@ -21,7 +21,7 @@ export async function registerVideoMetadata(fileId: string, duration: number, wi
       has_audio: true
     });
 
-    await deleteCache(`sanliurfa:video:${fileId}`);
+    await deleteCache(`video:${fileId}`);
     logger.info('Video metadata registered', { fileId, duration, resolution: `${width}x${height}` });
     return result;
   } catch (error) {
@@ -32,7 +32,7 @@ export async function registerVideoMetadata(fileId: string, duration: number, wi
 
 export async function getVideoMetadata(fileId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:video:${fileId}`;
+    const cacheKey = `video:${fileId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -138,7 +138,7 @@ export async function registerVideoThumbnail(videoFileId: string, thumbnailUrl: 
       is_primary: isPrimary
     });
 
-    await deleteCache(`sanliurfa:thumbnails:${videoFileId}`);
+    await deleteCache(`thumbnails:${videoFileId}`);
     return result;
   } catch (error) {
     logger.error('Failed to register thumbnail', error instanceof Error ? error : new Error(String(error)));
@@ -148,7 +148,7 @@ export async function registerVideoThumbnail(videoFileId: string, thumbnailUrl: 
 
 export async function getVideoThumbnails(videoFileId: string): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:thumbnails:${videoFileId}`;
+    const cacheKey = `thumbnails:${videoFileId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -178,7 +178,7 @@ export async function addVideoCaption(videoFileId: string, language: string, cap
       is_default: isDefault
     });
 
-    await deleteCache(`sanliurfa:captions:${videoFileId}`);
+    await deleteCache(`captions:${videoFileId}`);
     return result;
   } catch (error) {
     logger.error('Failed to add caption', error instanceof Error ? error : new Error(String(error)));
@@ -188,7 +188,7 @@ export async function addVideoCaption(videoFileId: string, language: string, cap
 
 export async function getVideoCaptions(videoFileId: string): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:captions:${videoFileId}`;
+    const cacheKey = `captions:${videoFileId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -224,7 +224,7 @@ export async function configureVideoStreaming(videoFileId: string, adaptiveBitra
       progressive_download_enabled: true
     });
 
-    await deleteCache(`sanliurfa:video:${videoFileId}`);
+    await deleteCache(`video:${videoFileId}`);
     logger.info('Video streaming configured', { videoFileId, adaptiveBitrate, drmEnabled });
     return true;
   } catch (error) {

@@ -43,7 +43,7 @@ export interface UserProfile {
  * Get user profile with all settings
  */
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
-  const cacheKey = `sanliurfa:user:profile:${userId}`;
+  const cacheKey = `user:profile:${userId}`;
 
   try {
     const cached = await getCache<UserProfile>(cacheKey);
@@ -165,7 +165,7 @@ export async function updateUserProfile(
     const result = await queryOne(query_str, values);
 
     // Clear cache
-    await deleteCache(`sanliurfa:user:profile:${userId}`);
+    await deleteCache(`user:profile:${userId}`);
 
     logger.info('User profile updated', { userId, fields: Object.keys(updates) });
 
@@ -275,7 +275,7 @@ export async function updateUserSettings(
     const result = await queryOne(query_str, values);
 
     // Clear cache
-    await deleteCache(`sanliurfa:user:profile:${userId}`);
+    await deleteCache(`user:profile:${userId}`);
 
     logger.info('User settings updated', { userId, fields: Object.keys(updates) });
 
@@ -326,7 +326,7 @@ export async function changePassword(userId: string, newPassword: string): Promi
 
     if ((result.rowCount || 0) > 0) {
       // Clear cache
-      await deleteCache(`sanliurfa:user:profile:${userId}`);
+      await deleteCache(`user:profile:${userId}`);
       logger.info('User password changed', { userId });
       return true;
     }
@@ -370,7 +370,7 @@ export async function updateNotificationPreferences(
     );
 
     if ((result.rowCount || 0) > 0) {
-      await deleteCache(`sanliurfa:user:profile:${userId}`);
+      await deleteCache(`user:profile:${userId}`);
       logger.info('Notification preferences updated', { userId });
       return true;
     }
@@ -413,7 +413,7 @@ export async function updatePrivacySettings(
     );
 
     if ((result.rowCount || 0) > 0) {
-      await deleteCache(`sanliurfa:user:profile:${userId}`);
+      await deleteCache(`user:profile:${userId}`);
       logger.info('Privacy settings updated', { userId });
       return true;
     }
@@ -433,7 +433,7 @@ export async function updatePrivacySettings(
 export async function recordLastLogin(userId: string): Promise<void> {
   try {
     await query('UPDATE users SET last_login_at = NOW() WHERE id = $1', [userId]);
-    await deleteCache(`sanliurfa:user:profile:${userId}`);
+    await deleteCache(`user:profile:${userId}`);
   } catch (error) {
     logger.error('Failed to record last login', error instanceof Error ? error : new Error(String(error)), {
       userId

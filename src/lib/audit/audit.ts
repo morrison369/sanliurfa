@@ -194,10 +194,10 @@ export async function getUserActivitySummary(userId: string, days: number = 7): 
         COUNT(CASE WHEN status = 'success' THEN 1 END) as successful,
         COUNT(CASE WHEN status = 'failure' THEN 1 END) as failed
       FROM audit_logs
-      WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '${days} days'
+      WHERE user_id = $1 AND created_at >= NOW() - ($2 * INTERVAL '1 day')
       GROUP BY action
       ORDER BY count DESC`,
-      [userId]
+      [userId, days]
     );
     return result;
   } catch (error) {
@@ -239,10 +239,11 @@ export async function findSuspiciousActivity(hours: number = 24): Promise<any[]>
         COUNT(CASE WHEN status = 'failure' THEN 1 END) as failed_attempts,
         array_agg(DISTINCT action) as actions
       FROM audit_logs
-      WHERE created_at >= NOW() - INTERVAL '${hours} hours'
+      WHERE created_at >= NOW() - ($1 * INTERVAL '1 hour')
       GROUP BY user_id
       HAVING COUNT(*) > 50 OR COUNT(CASE WHEN status = 'failure' THEN 1 END) > 10
-      ORDER BY action_count DESC`
+      ORDER BY action_count DESC`,
+      [hours]
     );
     return result;
   } catch (error) {
@@ -258,7 +259,8 @@ export async function cleanupOldAuditLogs(daysToKeep: number = 90): Promise<numb
   try {
     const result = await pool.query(
       `DELETE FROM audit_logs
-      WHERE created_at < NOW() - INTERVAL '${daysToKeep} days'`
+      WHERE created_at < NOW() - ($1 * INTERVAL '1 day')`,
+      [daysToKeep]
     );
 
     logger.info(`Eski audit logları temizlendi: ${result?.rowCount || 0} kayıt silindi`);

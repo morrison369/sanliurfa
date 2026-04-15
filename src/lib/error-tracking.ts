@@ -1,3 +1,4 @@
+import { logger } from './logging';
 /**
  * Hata Takip Altyapısı
  *
@@ -95,7 +96,7 @@ export function initErrorTracking(config?: Partial<TrackingConfig>): void {
 
     console.debug('[HataTakip] Sentry başarıyla başlatıldı');
   } catch (error) {
-    console.warn('[HataTakip] Sentry SDK yüklenemedi, yerel takip kullanılacak:', error);
+    logger.warn('[HataTakip] Sentry SDK yüklenemedi, yerel takip kullanılacak:', error);
     isInitialized = true;
   }
 }
@@ -131,12 +132,12 @@ export function captureException(error: Error, context?: ErrorContext): string {
 
       return sentryInstance.captureException(error, { eventId });
     } catch (trackingError) {
-      console.error('[HataTakip] Sentry raporlama hatası:', trackingError);
+      logger.error('[HataTakip] Sentry raporlama hatası:', trackingError);
     }
   }
 
   // Sentry yoksa konsola yazdır
-  console.error(`[HataTakip] ${error.message}`, {
+  logger.error(`[HataTakip] ${error.message}`, {
     eventId,
     stack: error.stack,
     context,
@@ -155,7 +156,7 @@ export function captureMessage(message: string, level: 'info' | 'warning' | 'err
     try {
       return sentryInstance.captureMessage(message, level);
     } catch (trackingError) {
-      console.error('[HataTakip] Sentry mesaj raporlama hatası:', trackingError);
+      logger.error('[HataTakip] Sentry mesaj raporlama hatası:', trackingError);
     }
   }
 
@@ -174,7 +175,7 @@ export function setUserContext(user: { id?: string; email?: string; username?: s
     try {
       sentryInstance.setUser(user);
     } catch (error) {
-      console.error('[HataTakip] Kullanıcı bağlamı ayarlama hatası:', error);
+      logger.error('[HataTakip] Kullanıcı bağlamı ayarlama hatası:', error);
     }
   }
 }
@@ -191,7 +192,7 @@ export function addBreadcrumb(breadcrumb: Breadcrumb): void {
         timestamp: breadcrumb.timestamp || Date.now() / 1000,
       });
     } catch (error) {
-      console.error('[HataTakip]Breadcrumb ekleme hatası:', error);
+      logger.error('[HataTakip]Breadcrumb ekleme hatası:', error);
     }
   }
 
@@ -236,7 +237,7 @@ export function startPerformanceTracking(
       },
     };
   } catch (error) {
-    console.error('[HataTakip] Performans izleme başlatma hatası:', error);
+    logger.error('[HataTakip] Performans izleme başlatma hatası:', error);
     return null;
   }
 }
@@ -366,7 +367,7 @@ export async function reportErrorToApi(
 
     return response.ok;
   } catch (reportError) {
-    console.error('[HataTakip] API raporlama hatası:', reportError);
+    logger.error('[HataTakip] API raporlama hatası:', reportError);
     return false;
   }
 }

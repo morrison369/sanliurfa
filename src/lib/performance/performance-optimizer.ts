@@ -174,7 +174,7 @@ export async function suggestIndexes(): Promise<string[]> {
  * Batch query optimization - combine N queries into one
  */
 export async function getPlacesWithReviewsCombined(placeIds: string[]): Promise<any[]> {
-  const cacheKey = `sanliurfa:places:combined:${placeIds.join(',')}`;
+  const cacheKey = `places:combined:${placeIds.join(',')}`;
 
   return getOrCache(cacheKey, 600, async () => {
     const query = `
@@ -196,7 +196,7 @@ export async function getPlacesWithReviewsCombined(placeIds: string[]): Promise<
  */
 export async function getPaginatedPlaces(page: number = 1, limit: number = 20): Promise<any> {
   const offset = (page - 1) * limit;
-  const cacheKey = `sanliurfa:places:paginated:${page}:${limit}`;
+  const cacheKey = `places:paginated:${page}:${limit}`;
 
   return getOrCache(cacheKey, 600, async () => {
     const items = await queryMany(
@@ -220,7 +220,7 @@ export async function getPaginatedPlaces(page: number = 1, limit: number = 20): 
  * N+1 query prevention - eager loading
  */
 export async function getPlacesWithDetails(filter: string = ''): Promise<any[]> {
-  const cacheKey = `sanliurfa:places:details:${filter}`;
+  const cacheKey = `places:details:${filter}`;
 
   return getOrCache(cacheKey, 600, async () => {
     const query = `

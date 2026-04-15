@@ -112,7 +112,7 @@ export async function unfollowUser(followerId: string, followingId: string): Pro
  * Get user's followers
  */
 export async function getFollowers(userId: string, limit: number = 50): Promise<FollowUser[]> {
-  const cacheKey = `sanliurfa:followers:${userId}`;
+  const cacheKey = `followers:${userId}`;
 
   try {
     const cached = await getCache<FollowUser[]>(cacheKey);
@@ -165,7 +165,7 @@ export async function getFollowers(userId: string, limit: number = 50): Promise<
  * Get users that a user is following
  */
 export async function getFollowing(userId: string, limit: number = 50): Promise<FollowUser[]> {
-  const cacheKey = `sanliurfa:following:${userId}`;
+  const cacheKey = `following:${userId}`;
 
   try {
     const cached = await getCache<FollowUser[]>(cacheKey);
@@ -218,7 +218,7 @@ export async function getFollowing(userId: string, limit: number = 50): Promise<
  * Get mutual friends (users who follow each other)
  */
 export async function getMutualFriends(userId: string, limit: number = 50): Promise<FollowUser[]> {
-  const cacheKey = `sanliurfa:mutual-friends:${userId}`;
+  const cacheKey = `mutual-friends:${userId}`;
 
   try {
     const cached = await getCache<FollowUser[]>(cacheKey);
@@ -326,9 +326,9 @@ export async function isFollowing(followerId: string, followingId: string): Prom
  * Clear follower cache for a user
  */
 async function clearFollowerCache(userId: string): Promise<void> {
-  await deleteCache(`sanliurfa:followers:${userId}`);
-  await deleteCache(`sanliurfa:following:${userId}`);
-  await deleteCache(`sanliurfa:mutual-friends:${userId}`);
+  await deleteCache(`followers:${userId}`);
+  await deleteCache(`following:${userId}`);
+  await deleteCache(`mutual-friends:${userId}`);
 }
 
 

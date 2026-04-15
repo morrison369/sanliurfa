@@ -1,8 +1,8 @@
 ---
 // Category Detail Page
 import Layout from '../../layouts/Layout.astro';
-import { getCategoryBySlug } from '../../lib/places/categories';
 import { getPlaces } from '../../lib/places/db';
+import { query } from '../../lib/postgres';
 import OptimizedImage from '../../components/OptimizedImage.astro';
 
 const { slug } = Astro.params;
@@ -10,10 +10,18 @@ if (!slug) {
   return Astro.redirect('/');
 }
 
-const category = await getCategoryBySlug(slug);
-if (!category) {
+const catResult = await query(
+  `SELECT id, slug, name, description, icon, color, is_active FROM categories WHERE slug = $1`,
+  [slug]
+);
+const catRow = catResult.rows[0];
+if (!catRow) {
   return Astro.redirect('/404');
 }
+const category = {
+  ...catRow,
+  metaDescription: catRow.description,
+};
 
 const { places } = await getPlaces({
   category: slug,

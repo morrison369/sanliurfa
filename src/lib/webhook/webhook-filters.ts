@@ -1,5 +1,6 @@
 import type { Pool } from 'pg';
 import { getCache, setCache, deleteCache } from '../cache';
+import { logger } from '../logging';
 
 export interface WebhookFilter {
   id: string;
@@ -50,11 +51,11 @@ export async function createWebhookFilter(
     }
 
     // Invalidate webhook cache
-    await deleteCache(`sanliurfa:webhook:${webhookId}`);
+    await deleteCache(`webhook:${webhookId}`);
 
     return rows[0];
   } catch (error) {
-    console.error('Error creating webhook filter:', error);
+    logger.error('Error creating webhook filter:', error);
     throw error;
   }
 }
@@ -84,7 +85,7 @@ export async function getWebhookFilters(
       filterValue: JSON.parse(row.filter_value)
     }));
   } catch (error) {
-    console.error('Error getting webhook filters:', error);
+    logger.error('Error getting webhook filters:', error);
     throw error;
   }
 }
@@ -115,11 +116,11 @@ export async function deleteWebhookFilter(
     await pool.query('DELETE FROM webhook_filters WHERE id = $1', [filterId]);
 
     // Invalidate webhook cache
-    await deleteCache(`sanliurfa:webhook:${webhookId}`);
+    await deleteCache(`webhook:${webhookId}`);
 
     return true;
   } catch (error) {
-    console.error('Error deleting webhook filter:', error);
+    logger.error('Error deleting webhook filter:', error);
     throw error;
   }
 }
@@ -169,7 +170,7 @@ export async function updateWebhookSettings(
     }
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:webhook:settings:${webhookId}`);
+    await deleteCache(`webhook:settings:${webhookId}`);
 
     return {
       webhookId: result.rows[0].webhook_id,
@@ -181,7 +182,7 @@ export async function updateWebhookSettings(
       enabled: result.rows[0].enabled
     };
   } catch (error) {
-    console.error('Error updating webhook settings:', error);
+    logger.error('Error updating webhook settings:', error);
     throw error;
   }
 }
@@ -196,7 +197,7 @@ export async function getWebhookSettings(
 ): Promise<WebhookSettings> {
   try {
     // Check cache first
-    const cacheKey = `sanliurfa:webhook:settings:${webhookId}`;
+    const cacheKey = `webhook:settings:${webhookId}`;
     const cached = await getCache(cacheKey);
     if (cached) {
       return JSON.parse(cached as string);
@@ -230,7 +231,7 @@ export async function getWebhookSettings(
 
     return settings;
   } catch (error) {
-    console.error('Error getting webhook settings:', error);
+    logger.error('Error getting webhook settings:', error);
     throw error;
   }
 }

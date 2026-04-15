@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ locals, url }) => {
   try {
@@ -26,7 +27,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
       data: recommendations || []
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
-    console.error('Recommendations error', error);
+    logger.error('Recommendations error', error);
     return new Response(JSON.stringify({ error: 'Failed' }), { status: 500 });
   }
 };

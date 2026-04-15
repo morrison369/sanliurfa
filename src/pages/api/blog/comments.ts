@@ -77,7 +77,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   }
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
   const startTime = Date.now();
   logger.setRequestId(requestId);
@@ -91,7 +91,6 @@ export const POST: APIRoute = async ({ request }) => {
       authorName: { type: 'string' as const, required: true, minLength: 2, maxLength: 100, sanitize: true },
       authorEmail: { type: 'string' as const, required: false, sanitize: true },
       content: { type: 'string' as const, required: true, minLength: 2, maxLength: 5000, sanitize: true },
-      userId: { type: 'string' as const, required: false }
     };
 
     const validation = validateWithSchema(body, commentSchema as any);
@@ -107,11 +106,14 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
+    // Use authenticated user ID if logged in, never trust client-supplied userId
+    const userId = locals.user?.id || null;
+
     // Yorum ekle (onay beklemede)
     const comment = await addBlogComment(validation.data.postId, {
       authorName: validation.data.authorName,
       authorEmail: validation.data.authorEmail,
-      userId: validation.data.userId,
+      userId,
       content: validation.data.content
     });
 
@@ -121,7 +123,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/blog/comments', HttpStatus.CREATED, duration);
-    logger.logMutation('create', 'blog_comments', comment.id, validation.data.userId, { duration });
+    logger.logMutation('create', 'blog_comments', comment.id, userId, { duration });
 
     return apiResponse(
       {

@@ -1,3 +1,4 @@
+import { logger } from './logging';
 // Çevre değişkeni doğrulama ve yönetimi
 
 interface EnvConfig {
@@ -41,7 +42,7 @@ export function validateEnv(): { valid: boolean; missing: string[] } {
   // Check client-side public vars (optional, but log if missing)
   for (const key of requiredClientVars) {
     if (!import.meta.env[key]) {
-      console.warn(`Optional client var missing: ${key}`);
+      logger.warn(`Optional client var missing: ${key}`);
     }
   }
 

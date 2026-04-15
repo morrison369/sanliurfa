@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ request }) => {
         (SELECT COUNT(*) FROM collections WHERE user_id = u.id) as collections_count
       FROM users u
       WHERE u.id = $1
-    `, [user.sub]);
+    `, [user.userId]);
 
     if (result.rows.length === 0) {
       return new Response(JSON.stringify({ success: false, error: 'User not found' }), {
@@ -99,7 +99,7 @@ export const PATCH: APIRoute = async ({ request }) => {
       });
     }
 
-    values.push(user.sub);
+    values.push(user.userId);
     await query(
       `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${values.length}`,
       values

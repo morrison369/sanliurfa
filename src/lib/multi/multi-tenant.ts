@@ -52,7 +52,7 @@ export interface TenantMember {
 
 export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
   try {
-    const cacheKey = `sanliurfa:tenant:slug:${slug}`;
+    const cacheKey = `tenant:slug:${slug}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -80,7 +80,7 @@ export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
 
 export async function getTenantByDomain(domain: string): Promise<Tenant | null> {
   try {
-    const cacheKey = `sanliurfa:tenant:domain:${domain}`;
+    const cacheKey = `tenant:domain:${domain}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -144,7 +144,7 @@ export async function createTenant(
       role: 'owner'
     });
 
-    await deleteCache(`sanliurfa:tenant:slug:${slug}`);
+    await deleteCache(`tenant:slug:${slug}`);
     logger.info('Tenant created', { id: tenant.id, slug });
 
     return tenant;
@@ -159,7 +159,7 @@ export async function createTenant(
 
 export async function getTenantBranding(tenantId: string): Promise<TenantBranding | null> {
   try {
-    const cacheKey = `sanliurfa:branding:${tenantId}`;
+    const cacheKey = `branding:${tenantId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -191,7 +191,7 @@ export async function updateTenantBranding(
 ): Promise<boolean> {
   try {
     await update('tenant_branding', { tenant_id: tenantId }, branding);
-    await deleteCache(`sanliurfa:branding:${tenantId}`);
+    await deleteCache(`branding:${tenantId}`);
     logger.info('Tenant branding updated', { tenantId });
     return true;
   } catch (error) {
@@ -269,7 +269,7 @@ export async function isTenantFeatureEnabled(
   featureKey: string
 ): Promise<boolean> {
   try {
-    const cacheKey = `sanliurfa:feature:${tenantId}:${featureKey}`;
+    const cacheKey = `feature:${tenantId}:${featureKey}`;
     let cached = await getCache(cacheKey);
 
     if (cached !== null) {
@@ -322,7 +322,7 @@ export async function setTenantFeature(
       });
     }
 
-    await deleteCache(`sanliurfa:feature:${tenantId}:${featureKey}`);
+    await deleteCache(`feature:${tenantId}:${featureKey}`);
     logger.info('Tenant feature updated', { tenantId, featureKey, enabled });
 
     return true;

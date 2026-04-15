@@ -5,6 +5,7 @@
 
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { logger } from '../logging';
 
 const execAsync = promisify(exec);
 
@@ -80,7 +81,7 @@ export const testSuites: TestSuite[] = [
  * Run a single test suite
  */
 export async function runSuite(suite: TestSuite): Promise<TestResult> {
-  console.log(`\n[Testing] Running: ${suite.name}`);
+  logger.info(`\n[Testing] Running: ${suite.name}`);
   const startTime = Date.now();
 
   for (let attempt = 0; attempt <= suite.retries; attempt++) {
@@ -113,7 +114,7 @@ export async function runSuite(suite: TestSuite): Promise<TestResult> {
           errors: [error.message, error.stderr].filter(Boolean),
         };
       }
-      console.log(`[Testing] Retry ${attempt + 1}/${suite.retries} for ${suite.name}`);
+      logger.info(`[Testing] Retry ${attempt + 1}/${suite.retries} for ${suite.name}`);
     }
   }
 
@@ -233,12 +234,12 @@ Results:
  * Pre-commit hook tests
  */
 export async function runPreCommitTests(): Promise<boolean> {
-  console.log('[Testing] Running pre-commit tests...');
+  logger.info('[Testing] Running pre-commit tests...');
 
   const suites = ['Unit Tests', 'Security Tests'];
   const results = await runAllSuites({ filter: suites });
 
-  console.log(generateReport(results));
+  logger.info(generateReport(results));
 
   return results.every(r => r.status === 'passed');
 }
@@ -247,11 +248,11 @@ export async function runPreCommitTests(): Promise<boolean> {
  * CI/CD pipeline tests
  */
 export async function runCIPipeline(): Promise<boolean> {
-  console.log('[Testing] Running CI pipeline tests...');
+  logger.info('[Testing] Running CI pipeline tests...');
 
   const results = await runAllSuites();
 
-  console.log(generateReport(results));
+  logger.info(generateReport(results));
 
   // Save results to file
   const fs = await import('fs');
@@ -267,7 +268,7 @@ export async function runCIPipeline(): Promise<boolean> {
  * Smoke tests for deployment
  */
 export async function runSmokeTests(baseUrl: string): Promise<boolean> {
-  console.log(`[Testing] Running smoke tests against ${baseUrl}`);
+  logger.info(`[Testing] Running smoke tests against ${baseUrl}`);
 
   const tests = [
     { name: 'Health Check', url: `${baseUrl}/api/health` },
@@ -289,7 +290,7 @@ export async function runSmokeTests(baseUrl: string): Promise<boolean> {
   const allPassed = results.every(r => r.status);
 
   for (const result of results) {
-    console.log(`${result.status ? '✅' : '❌'} ${result.name}`);
+    logger.info(`${result.status ? '✅' : '❌'} ${result.name}`);
   }
 
   return allPassed;

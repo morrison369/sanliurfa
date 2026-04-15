@@ -29,8 +29,8 @@ export async function uploadPhoto(
     );
 
     // Invalidate place photos cache
-    await deleteCachePattern(`sanliurfa:photos:place:${placeId}*`);
-    await deleteCache(`sanliurfa:places:${placeId}`);
+    await deleteCachePattern(`photos:place:${placeId}*`);
+    await deleteCache(`places:${placeId}`);
 
     logger.info('Photo uploaded', { photoId: photo.id, placeId, uploadedBy });
     return photo;
@@ -45,7 +45,7 @@ export async function uploadPhoto(
  */
 export async function getPlacePhotos(placeId: string, limit = 20): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:photos:place:${placeId}:limit:${limit}`;
+    const cacheKey = `photos:place:${placeId}:limit:${limit}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -144,7 +144,7 @@ export async function voteOnPhoto(
     // Get the photo to find place_id for cache invalidation
     const photo = await getPhotoById(photoId);
     if (photo) {
-      await deleteCachePattern(`sanliurfa:photos:place:${photo.place_id}*`);
+      await deleteCachePattern(`photos:place:${photo.place_id}*`);
     }
 
     return true;
@@ -174,8 +174,8 @@ export async function setFeaturedPhoto(photoId: string, placeId: string, isFeatu
     );
 
     // Invalidate cache
-    await deleteCachePattern(`sanliurfa:photos:place:${placeId}*`);
-    await deleteCache(`sanliurfa:places:${placeId}`);
+    await deleteCachePattern(`photos:place:${placeId}*`);
+    await deleteCache(`places:${placeId}`);
 
     return true;
   } catch (error) {
@@ -200,8 +200,8 @@ export async function deletePhoto(photoId: string): Promise<boolean> {
 
     // Invalidate cache
     if (photo) {
-      await deleteCachePattern(`sanliurfa:photos:place:${photo.place_id}*`);
-      await deleteCache(`sanliurfa:places:${photo.place_id}`);
+      await deleteCachePattern(`photos:place:${photo.place_id}*`);
+      await deleteCache(`places:${photo.place_id}`);
     }
 
     return true;

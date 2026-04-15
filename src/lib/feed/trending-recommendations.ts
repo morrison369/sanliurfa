@@ -72,7 +72,7 @@ export async function getTrendingScores(
   limit: number = 20
 ): Promise<TrendingScore[]> {
   try {
-    const cacheKey = `sanliurfa:trending:${entityType}:${period}`;
+    const cacheKey = `trending:${entityType}:${period}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -152,7 +152,7 @@ export async function updateTrendingScore(
       });
     }
 
-    await deleteCache(`sanliurfa:trending:${entityType}:${period}`);
+    await deleteCache(`trending:${entityType}:${period}`);
     return true;
   } catch (error) {
     logger.error(
@@ -277,7 +277,7 @@ export async function saveUserRecommendation(
 
 export async function getUserRecommendations(userId: string, limit: number = 20): Promise<UserRecommendation[]> {
   try {
-    const cacheKey = `sanliurfa:recommendations:${userId}`;
+    const cacheKey = `recommendations:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -333,7 +333,7 @@ export async function trackUserInterest(userId: string, category: string, weight
       });
     }
 
-    await deleteCache(`sanliurfa:recommendations:${userId}`);
+    await deleteCache(`recommendations:${userId}`);
     return true;
   } catch (error) {
     logger.error(
@@ -446,7 +446,7 @@ export async function getPopularContent(
 
 export async function getTrendingKeywords(period: 'hourly' | 'daily' | 'weekly', limit: number = 20): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:keywords:${period}`;
+    const cacheKey = `keywords:${period}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -476,7 +476,7 @@ export async function getTrendingKeywords(period: 'hourly' | 'daily' | 'weekly',
 
 export async function getDiscoveryFeed(userId: string, limit: number = 50): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:discovery:${userId}`;
+    const cacheKey = `discovery:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -519,7 +519,7 @@ export async function addToDiscoveryFeed(
       created_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:discovery:${userId}`);
+    await deleteCache(`discovery:${userId}`);
     return true;
   } catch (error) {
     logger.error(

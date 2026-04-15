@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { authenticateUser } from '../../../../lib/auth/middleware';
+import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async (context) => {
   try {
@@ -48,7 +49,7 @@ export const GET: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Get ticket error:', error);
+    logger.error('Get ticket error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -86,7 +87,7 @@ export const PUT: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Update ticket error:', error);
+    logger.error('Update ticket error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -131,7 +132,7 @@ export const POST: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Add reply error:', error);
+    logger.error('Add reply error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

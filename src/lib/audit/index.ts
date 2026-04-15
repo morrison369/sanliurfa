@@ -307,35 +307,32 @@ export async function getAuditStats(
   bySeverity: Record<string, number>;
   criticalEvents: AuditLog[];
 }> {
-  const intervalMap = {
-    day: '1 day',
-    week: '7 days',
-    month: '30 days',
-  };
+  const daysMap: Record<string, number> = { day: 1, week: 7, month: 30 };
+  const days = daysMap[period] || 1;
 
   const [totalResult, actionResult, severityResult, criticalResult] = await Promise.all([
     query(
-      `SELECT COUNT(*) FROM audit_logs WHERE created_at >= NOW() - INTERVAL '${intervalMap[period]}'`,
-      []
+      `SELECT COUNT(*) FROM audit_logs WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')`,
+      [days]
     ),
     query(
-      `SELECT action, COUNT(*) as count FROM audit_logs 
-      WHERE created_at >= NOW() - INTERVAL '${intervalMap[period]}'
+      `SELECT action, COUNT(*) as count FROM audit_logs
+      WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
       GROUP BY action`,
-      []
+      [days]
     ),
     query(
-      `SELECT severity, COUNT(*) as count FROM audit_logs 
-      WHERE created_at >= NOW() - INTERVAL '${intervalMap[period]}'
+      `SELECT severity, COUNT(*) as count FROM audit_logs
+      WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
       GROUP BY severity`,
-      []
+      [days]
     ),
     query(
-      `SELECT * FROM audit_logs 
-      WHERE severity = 'critical' AND created_at >= NOW() - INTERVAL '${intervalMap[period]}'
+      `SELECT * FROM audit_logs
+      WHERE severity = 'critical' AND created_at >= NOW() - ($1 * INTERVAL '1 day')
       ORDER BY created_at DESC
       LIMIT 10`,
-      []
+      [days]
     ),
   ]);
 
@@ -368,9 +365,9 @@ export async function detectSuspiciousActivity(
 
   // Check for rapid actions
   const rapidResult = await query(
-    `SELECT COUNT(*) FROM audit_logs 
-    WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '${minutes} minutes'`,
-    [userId]
+    `SELECT COUNT(*) FROM audit_logs
+    WHERE user_id = $1 AND created_at >= NOW() - ($2 * INTERVAL '1 minute')`,
+    [userId, minutes]
   );
 
   const actionCount = parseInt(rapidResult.rows[0].count);

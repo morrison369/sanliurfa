@@ -4,6 +4,7 @@
  */
 
 import { query } from '../postgres';
+import { logger } from '../logging';
 
 export interface Experiment {
   id: string;
@@ -87,7 +88,7 @@ async function refreshExperiments(): Promise<void> {
 
     lastRefresh = now;
   } catch (error) {
-    console.error('Failed to refresh experiments:', error);
+    logger.error('Failed to refresh experiments:', error);
   }
 }
 

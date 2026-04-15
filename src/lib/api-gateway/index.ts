@@ -117,7 +117,7 @@ export async function handleRequest(
     return createResponse(response);
 
   } catch (error: any) {
-    console.error('Gateway error:', error);
+    logger.error('Gateway error:', error);
     return createErrorResponse(500, 'Internal Server Error');
   }
 }
@@ -392,3 +392,4 @@ async function checkDatabase(): Promise<boolean> {
 }
 
 import { query } from '../postgres';
+import { logger } from '../logging';

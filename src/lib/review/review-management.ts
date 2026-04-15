@@ -47,8 +47,8 @@ export async function addReviewResponse(
     });
 
     // Clear review caches
-    await deleteCachePattern(`sanliurfa:review:${reviewId}:*`);
-    await deleteCachePattern(`sanliurfa:place:${placeId}:reviews:*`);
+    await deleteCachePattern(`review:${reviewId}:*`);
+    await deleteCachePattern(`place:${placeId}:reviews:*`);
 
     // Get reviewer info to send notification
     const review = await queryOne('SELECT user_id FROM reviews WHERE id = $1', [reviewId]);
@@ -80,7 +80,7 @@ export async function addReviewResponse(
  * Get responses for a review
  */
 export async function getReviewResponses(reviewId: string): Promise<ReviewResponse[]> {
-  const cacheKey = `sanliurfa:review:${reviewId}:responses`;
+  const cacheKey = `review:${reviewId}:responses`;
 
   try {
     const cached = await getCache<ReviewResponse[]>(cacheKey);
@@ -139,8 +139,8 @@ export async function voteReviewHelpful(
     );
 
     // Clear cache
-    await deleteCache(`sanliurfa:review:${reviewId}:helpful-count`);
-    await deleteCachePattern(`sanliurfa:review:${reviewId}:*`);
+    await deleteCache(`review:${reviewId}:helpful-count`);
+    await deleteCachePattern(`review:${reviewId}:*`);
 
     // Award points for helpful votes
     if (isHelpful) {
@@ -166,7 +166,7 @@ export async function voteReviewHelpful(
  * Get review analytics
  */
 export async function getReviewAnalytics(reviewId: string): Promise<any | null> {
-  const cacheKey = `sanliurfa:review:${reviewId}:analytics`;
+  const cacheKey = `review:${reviewId}:analytics`;
 
   try {
     const cached = await getCache<any>(cacheKey);
@@ -191,7 +191,7 @@ export async function getReviewAnalytics(reviewId: string): Promise<any | null> 
  * Get place review analytics summary
  */
 export async function getPlaceReviewSummary(placeId: string): Promise<any> {
-  const cacheKey = `sanliurfa:place:${placeId}:review-summary`;
+  const cacheKey = `place:${placeId}:review-summary`;
 
   try {
     const cached = await getCache<any>(cacheKey);
@@ -285,8 +285,8 @@ export async function updateReviewResponse(
     );
 
     // Clear cache
-    await deleteCachePattern(`sanliurfa:review:${response.review_id}:*`);
-    await deleteCachePattern(`sanliurfa:place:${response.place_id}:reviews:*`);
+    await deleteCachePattern(`review:${response.review_id}:*`);
+    await deleteCachePattern(`place:${response.place_id}:reviews:*`);
 
     logger.info('Review response updated', { responseId, ownerId });
     return updated;
@@ -314,8 +314,8 @@ export async function deleteReviewResponse(responseId: string, ownerId: string):
     const result = await query('DELETE FROM review_responses WHERE id = $1', [responseId]);
 
     // Clear cache
-    await deleteCachePattern(`sanliurfa:review:${response.review_id}:*`);
-    await deleteCachePattern(`sanliurfa:place:${response.place_id}:reviews:*`);
+    await deleteCachePattern(`review:${response.review_id}:*`);
+    await deleteCachePattern(`place:${response.place_id}:reviews:*`);
 
     logger.info('Review response deleted', { responseId, ownerId });
     return result.rowCount > 0;

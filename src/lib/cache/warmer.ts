@@ -6,12 +6,13 @@
 import { setCache } from './index';
 import { query } from '../postgres';
 import { warmCache } from './strategies';
+import { logger } from '../logging';
 
 /**
  * Warm homepage cache
  */
 export async function warmHomepageCache(): Promise<void> {
-  console.log('🌡️ Warming homepage cache...');
+  logger.info('🌡️ Warming homepage cache...');
 
   // Featured places
   const featuredPlaces = await query(
@@ -44,14 +45,14 @@ export async function warmHomepageCache(): Promise<void> {
 
   await setCache('homepage:stats', stats.rows[0], 3600);
 
-  console.log('✅ Homepage cache warmed');
+  logger.info('✅ Homepage cache warmed');
 }
 
 /**
  * Warm places cache
  */
 export async function warmPlacesCache(): Promise<void> {
-  console.log('🌡️ Warming places cache...');
+  logger.info('🌡️ Warming places cache...');
 
   // Popular places by category
   const categories = ['tarihi-yerler', 'restoran', 'otel', 'kafe'];
@@ -79,14 +80,14 @@ export async function warmPlacesCache(): Promise<void> {
 
   await setCache('places:top_rated', topRated.rows, 3600);
 
-  console.log('✅ Places cache warmed');
+  logger.info('✅ Places cache warmed');
 }
 
 /**
  * Warm blog cache
  */
 export async function warmBlogCache(): Promise<void> {
-  console.log('🌡️ Warming blog cache...');
+  logger.info('🌡️ Warming blog cache...');
 
   // Popular posts
   const popularPosts = await query(
@@ -110,14 +111,14 @@ export async function warmBlogCache(): Promise<void> {
 
   await setCache('blog:categories', categories.rows, 7200);
 
-  console.log('✅ Blog cache warmed');
+  logger.info('✅ Blog cache warmed');
 }
 
 /**
  * Warm search cache
  */
 export async function warmSearchCache(): Promise<void> {
-  console.log('🌡️ Warming search cache...');
+  logger.info('🌡️ Warming search cache...');
 
   // Popular search suggestions
   const popularSearches = await query(
@@ -141,14 +142,14 @@ export async function warmSearchCache(): Promise<void> {
 
   await setCache('search:autocomplete', placeNames.rows, 7200);
 
-  console.log('✅ Search cache warmed');
+  logger.info('✅ Search cache warmed');
 }
 
 /**
  * Warm all caches
  */
 export async function warmAllCaches(): Promise<void> {
-  console.log('🔥 Starting cache warm-up...\n');
+  logger.info('🔥 Starting cache warm-up...\n');
 
   const startTime = Date.now();
 
@@ -159,9 +160,9 @@ export async function warmAllCaches(): Promise<void> {
     await warmSearchCache();
 
     const duration = Date.now() - startTime;
-    console.log(`\n✅ Cache warm-up completed in ${duration}ms`);
+    logger.info(`\n✅ Cache warm-up completed in ${duration}ms`);
   } catch (error) {
-    console.error('❌ Cache warm-up failed:', error);
+    logger.error('❌ Cache warm-up failed:', error);
     throw error;
   }
 }
@@ -170,7 +171,7 @@ export async function warmAllCaches(): Promise<void> {
  * Schedule periodic cache warming
  */
 export function scheduleCacheWarming(intervalMinutes = 30): void {
-  console.log(`📅 Scheduled cache warming every ${intervalMinutes} minutes`);
+  logger.info(`📅 Scheduled cache warming every ${intervalMinutes} minutes`);
 
   // Initial warm
   warmAllCaches().catch(console.error);
@@ -185,7 +186,7 @@ export function scheduleCacheWarming(intervalMinutes = 30): void {
  * Clear and rewarm specific cache
  */
 export async function refreshCache(key: string): Promise<void> {
-  console.log(`🔄 Refreshing cache: ${key}`);
+  logger.info(`🔄 Refreshing cache: ${key}`);
 
   switch (key) {
     case 'homepage':
@@ -204,6 +205,6 @@ export async function refreshCache(key: string): Promise<void> {
       await warmAllCaches();
       break;
     default:
-      console.warn(`Unknown cache key: ${key}`);
+      logger.warn(`Unknown cache key: ${key}`);
   }
 }

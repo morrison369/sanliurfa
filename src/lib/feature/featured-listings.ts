@@ -81,8 +81,8 @@ export async function createFeaturedListing(
     });
 
     // Clear place cache
-    await deleteCachePattern(`sanliurfa:place:${placeId}:*`);
-    await deleteCachePattern(`sanliurfa:featured:*`);
+    await deleteCachePattern(`place:${placeId}:*`);
+    await deleteCachePattern(`featured:*`);
 
     logger.info('Featured listing created', { id: featured.id, placeId, userId });
     return featured;
@@ -97,7 +97,7 @@ export async function createFeaturedListing(
  */
 export async function getFeaturedListing(id: string): Promise<FeaturedListing | null> {
   try {
-    const cacheKey = `sanliurfa:featured:${id}`;
+    const cacheKey = `featured:${id}`;
     const cached = await getCache<FeaturedListing>(cacheKey);
     if (cached) return cached;
 
@@ -119,7 +119,7 @@ export async function getActiveFeaturedListings(limit: number = 10, offset: numb
   listings: (FeaturedListing & { place_name: string; place_slug: string })[];
   total: number;
 }> {
-  const cacheKey = `sanliurfa:featured:active:${limit}:${offset}`;
+  const cacheKey = `featured:active:${limit}:${offset}`;
 
   try {
     const cached = await getCache<any>(cacheKey);
@@ -166,7 +166,7 @@ export async function getActiveFeaturedListings(limit: number = 10, offset: numb
  * Get featured listings for a place owner
  */
 export async function getUserFeaturedListings(userId: string): Promise<FeaturedListing[]> {
-  const cacheKey = `sanliurfa:featured:user:${userId}`;
+  const cacheKey = `featured:user:${userId}`;
 
   try {
     const cached = await getCache<FeaturedListing[]>(cacheKey);
@@ -205,9 +205,9 @@ export async function updateFeaturedListing(
     const updated = await update('featured_listings', { id }, { ...updates, updated_at: new Date() });
 
     // Clear caches
-    await deleteCache(`sanliurfa:featured:${id}`);
-    await deleteCachePattern(`sanliurfa:featured:user:${userId}`);
-    await deleteCachePattern(`sanliurfa:featured:active:*`);
+    await deleteCache(`featured:${id}`);
+    await deleteCachePattern(`featured:user:${userId}`);
+    await deleteCachePattern(`featured:active:*`);
 
     logger.info('Featured listing updated', { id, userId });
     return updated;
@@ -241,7 +241,7 @@ export async function recordFeaturedListingClick(
     );
 
     // Clear caches
-    await deleteCache(`sanliurfa:featured:${featuredListingId}`);
+    await deleteCache(`featured:${featuredListingId}`);
   } catch (error) {
     logger.error('Failed to record featured listing click', error instanceof Error ? error : new Error(String(error)));
   }
@@ -330,7 +330,7 @@ export async function activateScheduledListings(): Promise<number> {
       [now]
     );
 
-    await deleteCachePattern(`sanliurfa:featured:*`);
+    await deleteCachePattern(`featured:*`);
     logger.info('Featured listings activated', { count: result.rowCount });
     return result.rowCount;
   } catch (error) {
@@ -353,7 +353,7 @@ export async function deactivateExpiredListings(): Promise<number> {
       [now]
     );
 
-    await deleteCachePattern(`sanliurfa:featured:*`);
+    await deleteCachePattern(`featured:*`);
     logger.info('Featured listings deactivated', { count: result.rowCount });
     return result.rowCount;
   } catch (error) {
@@ -376,9 +376,9 @@ export async function deleteFeaturedListing(id: string, userId: string): Promise
     const result = await query('DELETE FROM featured_listings WHERE id = $1', [id]);
 
     // Clear caches
-    await deleteCache(`sanliurfa:featured:${id}`);
-    await deleteCachePattern(`sanliurfa:featured:user:${userId}`);
-    await deleteCachePattern(`sanliurfa:featured:active:*`);
+    await deleteCache(`featured:${id}`);
+    await deleteCachePattern(`featured:user:${userId}`);
+    await deleteCachePattern(`featured:active:*`);
 
     logger.info('Featured listing deleted', { id, userId });
     return result.rowCount > 0;

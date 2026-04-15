@@ -8,6 +8,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs';
 import * as path from 'path';
+import { logger } from '../logging';
 
 const execAsync = promisify(exec);
 
@@ -17,13 +18,9 @@ export interface BackupConfig {
   type: 'full' | 'incremental' | 'partial';
   schedule?: string; // cron expression
   retention: number; // days
-  destination: 'local' | 's3' | 'gcs' | 'azure';
+  destination: 'local';
   destinationConfig: {
     path?: string;
-    bucket?: string;
-    region?: string;
-    accessKey?: string;
-    secretKey?: string;
   };
   tables?: string[]; // for partial backup
   compress: boolean;
@@ -191,7 +188,7 @@ export async function restoreBackup(
     // Drop existing data if requested
     if (options.dropExisting) {
       // This is dangerous - only use in development
-      console.warn('Dropping existing data...');
+      logger.warn('Dropping existing data...');
     }
 
     // Build restore command
@@ -273,11 +270,9 @@ export async function cleanupOldBackups(
     `SELECT * FROM backups 
      WHERE config_id = $1 
      AND status = 'completed'
-     AND started_at < NOW() - INTERVAL '${retentionDays} days'
+     AND started_at < NOW() - ($2 * INTERVAL '1 day')
      ORDER BY started_at DESC
-     OFFSET 1`,
-    [configId]
-  );
+     OFFSET 1`, [configId, retentionDays]);
 
   let deleted = 0;
   for (const backup of result.rows) {
@@ -288,7 +283,7 @@ export async function cleanupOldBackups(
       await query(`DELETE FROM backups WHERE id = $1`, [backup.id]);
       deleted++;
     } catch (e) {
-      console.error(`Failed to delete backup ${backup.id}:`, e);
+      logger.error(`Failed to delete backup ${backup.id}:`, e);
     }
   }
 
@@ -352,7 +347,7 @@ export function scheduleBackups(checkIntervalMinutes: number = 5): () => void {
         );
       }
     } catch (error) {
-      console.error('Scheduled backup error:', error);
+      logger.error('Scheduled backup error:', error);
     }
   }, checkIntervalMinutes * 60 * 1000);
 

@@ -4,7 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 import SchemaOrg from '../../components/SchemaOrg.astro';
 import LeafletMap from '../../components/map/LeafletMap.astro';
 import { getPlaceBySlug, getRelatedPlaces, getPlaceReviews } from '../../lib/places/db';
-import { getPlaceRatingBreakdown } from '../../lib/places/reviews';
+import { query } from '../../lib/postgres';
 
 const { slug } = Astro.params;
 if (!slug) {
@@ -16,10 +16,24 @@ if (!place) {
   return Astro.redirect('/404');
 }
 
+async function fetchRatingBreakdown(placeId: string) {
+  const result = await query(
+    `SELECT rating, COUNT(*) AS count
+     FROM reviews WHERE place_id = $1 AND status != 'deleted'
+     GROUP BY rating`,
+    [placeId]
+  );
+  const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (const row of result.rows) {
+    distribution[parseInt(row.rating)] = parseInt(row.count);
+  }
+  return { distribution };
+}
+
 const [relatedPlaces, reviews, ratingBreakdown] = await Promise.all([
   getRelatedPlaces(place, 4),
   getPlaceReviews(place.id, { limit: 5 }),
-  getPlaceRatingBreakdown(place.id),
+  fetchRatingBreakdown(place.id),
 ]);
 
 // Schema.org mapping for place types
@@ -451,9 +465,22 @@ const seo = {
 </Layout>
 
 <script define:vars={{ placeId: place.id }}>
-  function savePlace() {
-    // Implementation for saving place
-    alert('Mekan kaydedildi!');
+  async function savePlace() {
+    try {
+      const res = await fetch(`/api/places/${placeId}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save' }),
+      });
+      const data = await res.json();
+      if (res.status === 401) {
+        window.location.href = '/giris?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+      alert(data.saved ? 'Mekan favorilere eklendi!' : 'Mekan favorilerden çıkarıldı.');
+    } catch {
+      alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+    }
   }
   
   function sharePlace() {

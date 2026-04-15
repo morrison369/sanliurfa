@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Comprehensive error handling and user feedback system
  * SADECE Türkçe - Çok dilli destek KALDIRILMIŞTIR
@@ -216,7 +217,7 @@ export function safeJsonParse<T = unknown>(json: string, defaultValue?: T): T | 
   try {
     return JSON.parse(json) as T;
   } catch (error) {
-    console.warn('JSON parse error:', error);
+    logger.warn('JSON parse error:', error);
     return defaultValue;
   }
 }

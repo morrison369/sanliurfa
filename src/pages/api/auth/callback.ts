@@ -3,6 +3,7 @@
 import type { APIRoute } from 'astro';
 import { queryOne, insert } from '../../../lib/postgres';
 import { createToken } from '../../../lib/auth';
+import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ url, cookies, redirect }) => {
   const code = url.searchParams.get('code');
@@ -11,7 +12,7 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
   const provider = url.searchParams.get('provider') || 'google';
 
   if (error) {
-    console.error('OAuth error:', error, errorDescription);
+    logger.error('OAuth error:', error, errorDescription);
     return redirect(`/giris?error=${encodeURIComponent(errorDescription || error)}`);
   }
 
@@ -26,13 +27,13 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
     // 2. access_token ile user bilgilerini çek
     // 3. DB'de kullanıcı varsa login yap, yoksa oluştur
     
-    console.log(`OAuth callback received for ${provider} with code: ${code.substring(0, 10)}...`);
+    logger.info(`OAuth callback received for ${provider} with code: ${code.substring(0, 10)}...`);
     
     // OAuth implementasyonu tamamlanana kadar hata dön
     return redirect('/giris?error=oauth_not_configured');
     
   } catch (error: any) {
-    console.error('Auth callback error:', error);
+    logger.error('Auth callback error:', error);
     return redirect(`/giris?error=${encodeURIComponent(error.message)}`);
   }
 };

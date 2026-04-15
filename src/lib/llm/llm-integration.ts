@@ -99,7 +99,7 @@ class LLMClient {
     const startTime = Date.now();
 
     // Check cache
-    const cacheKey = `sanliurfa:llm:${model}:${prompt}`;
+    const cacheKey = `llm:${model}:${prompt}`;
     const cached = redis.get(cacheKey);
     if (cached) {
       logger.debug('LLM response retrieved from cache', { model, promptLength: prompt.length });

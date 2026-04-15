@@ -59,8 +59,8 @@ export async function blockUser(blockerId: string, blockedId: string, reason?: s
     }
 
     // Clear caches
-    await deleteCache(`sanliurfa:user:blocks:${blockerId}`);
-    await deleteCache(`sanliurfa:user:blocked_by:${blockedId}`);
+    await deleteCache(`user:blocks:${blockerId}`);
+    await deleteCache(`user:blocked_by:${blockedId}`);
 
     logger.info('User blocked', { blockerId, blockedId });
 
@@ -91,8 +91,8 @@ export async function unblockUser(blockerId: string, blockedId: string): Promise
     );
 
     if ((result.rowCount || 0) > 0) {
-      await deleteCache(`sanliurfa:user:blocks:${blockerId}`);
-      await deleteCache(`sanliurfa:user:blocked_by:${blockedId}`);
+      await deleteCache(`user:blocks:${blockerId}`);
+      await deleteCache(`user:blocked_by:${blockedId}`);
       logger.info('User unblocked', { blockerId, blockedId });
       return true;
     }
@@ -214,7 +214,7 @@ export async function muteUser(muterId: string, mutedId: string, reason?: string
       throw new Error('Susturma başarısız oldu');
     }
 
-    await deleteCache(`sanliurfa:user:mutes:${muterId}`);
+    await deleteCache(`user:mutes:${muterId}`);
     logger.info('User muted', { muterId, mutedId });
 
     return {
@@ -244,7 +244,7 @@ export async function unmuteUser(muterId: string, mutedId: string): Promise<bool
     );
 
     if ((result.rowCount || 0) > 0) {
-      await deleteCache(`sanliurfa:user:mutes:${muterId}`);
+      await deleteCache(`user:mutes:${muterId}`);
       logger.info('User unmuted', { muterId, mutedId });
       return true;
     }

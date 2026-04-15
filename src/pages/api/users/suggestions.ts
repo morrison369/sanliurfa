@@ -31,7 +31,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     const userId = locals.user.id;
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
-    const cacheKey = `sanliurfa:user:suggestions:${userId}`;
+    const cacheKey = `user:suggestions:${userId}`;
 
     // Check cache (30 minutes)
     const cached = await getCache(cacheKey);

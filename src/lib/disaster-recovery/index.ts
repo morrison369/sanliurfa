@@ -7,6 +7,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { logger } from '../logging';
 
 const execAsync = promisify(exec);
 
@@ -115,21 +116,21 @@ export async function pointInTimeRecovery(
   backupFile: string
 ): Promise<void> {
   // 1. Stop application
-  console.log('[DR] Stopping application...');
+  logger.info('[DR] Stopping application...');
 
   // 2. Restore from backup
-  console.log(`[DR] Restoring from ${backupFile}...`);
+  logger.info(`[DR] Restoring from ${backupFile}...`);
   await execAsync(`gunzip -c ${backupFile} | psql ${process.env.DATABASE_URL}`);
 
   // 3. Apply WAL logs up to target time
-  console.log(`[DR] Applying WAL logs until ${targetTime}...`);
+  logger.info(`[DR] Applying WAL logs until ${targetTime}...`);
   // pg_wal_replay...
 
   // 4. Verify data integrity
-  console.log('[DR] Verifying data integrity...');
+  logger.info('[DR] Verifying data integrity...');
 
   // 5. Start application
-  console.log('[DR] Starting application...');
+  logger.info('[DR] Starting application...');
 }
 
 /**
@@ -156,19 +157,19 @@ export async function getReplicationStatus(): Promise<{
  * Failover to secondary region
  */
 export async function failover(targetRegion: string): Promise<void> {
-  console.log(`[DR] Initiating failover to ${targetRegion}...`);
+  logger.info(`[DR] Initiating failover to ${targetRegion}...`);
 
   // 1. Promote replica to primary
-  console.log('[DR] Promoting replica...');
+  logger.info('[DR] Promoting replica...');
 
   // 2. Update DNS
-  console.log('[DR] Updating DNS records...');
+  logger.info('[DR] Updating DNS records...');
 
   // 3. Verify connectivity
-  console.log('[DR] Verifying connectivity...');
+  logger.info('[DR] Verifying connectivity...');
 
   // 4. Resume traffic
-  console.log('[DR] Failover complete!');
+  logger.info('[DR] Failover complete!');
 }
 
 /**
@@ -207,11 +208,11 @@ export async function runDRDrill(): Promise<{
 }
 
 async function backupToS3(name: string, config: any): Promise<void> {
-  console.log(`[Backup] Uploading ${name} to S3/${config.bucket}`);
+  logger.info(`[Backup] Uploading ${name} to S3/${config.bucket}`);
 }
 
 async function backupToLocal(name: string, config: any): Promise<void> {
-  console.log(`[Backup] Saving ${name} to ${config.path}`);
+  logger.info(`[Backup] Saving ${name} to ${config.path}`);
 }
 
 function generateId(): string {

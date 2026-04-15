@@ -207,9 +207,7 @@ export async function getApiKeyUsageStats(keyId: string, days: number = 7): Prom
         COUNT(CASE WHEN status_code < 400 THEN 1 END) as successful_requests,
         COUNT(CASE WHEN status_code >= 400 THEN 1 END) as failed_requests
       FROM api_key_usage
-      WHERE api_key_id = $1 AND created_at >= NOW() - INTERVAL '${days} days'`,
-      [keyId]
-    );
+      WHERE api_key_id = $1 AND created_at >= NOW() - ($2 * INTERVAL '1 day')`, [keyId, days]);
 
     return result || {};
   } catch (error) {

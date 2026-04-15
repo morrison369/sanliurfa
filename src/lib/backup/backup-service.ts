@@ -4,6 +4,7 @@
  */
 
 import { generateId } from '../utils';
+import { logger } from '../logging';
 
 // Backup configuration
 const BACKUP_CONFIG = {
@@ -56,8 +57,8 @@ const backupStore: Map<string, BackupRecord> = new Map();
  * Initialize backup service
  */
 export function initBackupService(): void {
-  console.log('[Backup] Backup service initialized');
-  console.log(`[Backup] Retention: ${BACKUP_CONFIG.retentionDays} days`);
+  logger.info('[Backup] Backup service initialized');
+  logger.info(`[Backup] Retention: ${BACKUP_CONFIG.retentionDays} days`);
 }
 
 /**
@@ -91,7 +92,7 @@ export async function createBackup(
   backupStore.set(backupId, backup);
   
   try {
-    console.log(`[Backup] Starting ${type} backup: ${backupId}`);
+    logger.info(`[Backup] Starting ${type} backup: ${backupId}`);
     
     switch (type) {
       case 'database':
@@ -113,11 +114,11 @@ export async function createBackup(
     // Upload to S3
     await uploadToStorage(backup);
     
-    console.log(`[Backup] Completed: ${backupId} (${formatBytes(backup.size)})`);
+    logger.info(`[Backup] Completed: ${backupId} (${formatBytes(backup.size)})`);
   } catch (error) {
     backup.status = 'failed';
     backup.error = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`[Backup] Failed: ${backupId}`, error);
+    logger.error(`[Backup] Failed: ${backupId}`, error);
   }
   
   return backup;
@@ -130,35 +131,64 @@ async function backupDatabase(
   backup: BackupRecord,
   tables?: string[]
 ): Promise<void> {
-  // In production, use pg_dump or similar
-  // const { exec } = require('child_process');
-  // const cmd = `pg_dump -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} ${tables ? tables.map(t => `-t ${t}`).join(' ') : ''} > ${backup.path}`;
-  // await execPromise(cmd);
-  
-  // Mock implementation
-  const mockSize = Math.floor(Math.random() * 100 * 1024 * 1024); // 0-100MB
-  backup.size = mockSize;
+  const { execFile } = await import('child_process');
+  const { promisify } = await import('util');
+  const { mkdirSync, statSync } = await import('fs');
+  const execFileAsync = promisify(execFile);
+
+  mkdirSync(BACKUP_CONFIG.localPath, { recursive: true });
+
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) throw new Error('DATABASE_URL not set');
+
+  const tableFlags = tables ? tables.map(t => `-t ${t}`).join(' ') : '';
+  await execFileAsync('sh', [
+    '-c',
+    `pg_dump "${dbUrl}" ${tableFlags} | gzip > "${backup.path}.gz"`,
+  ]);
+  backup.path = `${backup.path}.gz`;
+
+  try {
+    backup.size = statSync(backup.path).size;
+  } catch {
+    backup.size = 0;
+  }
   backup.metadata = {
     ...backup.metadata,
     tables: tables || ['all_tables'],
+    compressed: true,
   };
-  
-  await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate backup time
 }
 
 /**
  * Backup files
  */
 async function backupFiles(backup: BackupRecord): Promise<void> {
-  // In production, tar/zip uploads directory
-  const mockSize = Math.floor(Math.random() * 500 * 1024 * 1024); // 0-500MB
-  backup.size = mockSize;
+  const { execFile } = await import('child_process');
+  const { promisify } = await import('util');
+  const { mkdirSync, statSync } = await import('fs');
+  const execFileAsync = promisify(execFile);
+
+  const uploadsDir = process.env.UPLOAD_DIR || 'public/uploads/photos';
+  mkdirSync(BACKUP_CONFIG.localPath, { recursive: true });
+
+  const tarPath = `${backup.path}.tar.gz`;
+  await execFileAsync('sh', [
+    '-c',
+    `tar -czf "${tarPath}" -C "${uploadsDir}" . 2>/dev/null || true`,
+  ]);
+  backup.path = tarPath;
+
+  try {
+    const stat = statSync(tarPath);
+    backup.size = stat.size;
+  } catch {
+    backup.size = 0;
+  }
   backup.metadata = {
     ...backup.metadata,
-    files: Math.floor(Math.random() * 10000),
+    compressed: true,
   };
-  
-  await new Promise(resolve => setTimeout(resolve, 3000));
 }
 
 /**
@@ -174,10 +204,18 @@ async function backupConfig(backup: BackupRecord): Promise<void> {
  * Generate file checksum
  */
 async function generateChecksum(filePath: string): Promise<string> {
-  // In production: const crypto = require('crypto');
-  // const hash = crypto.createHash('sha256');
-  // ...
-  return `sha256:${Math.random().toString(36).substring(2, 15)}`;
+  const { createHash } = await import('crypto');
+  const { createReadStream, existsSync } = await import('fs');
+
+  if (!existsSync(filePath)) return '';
+
+  return new Promise((resolve, reject) => {
+    const hash = createHash('sha256');
+    const stream = createReadStream(filePath);
+    stream.on('data', chunk => hash.update(chunk));
+    stream.on('end', () => resolve(`sha256:${hash.digest('hex')}`));
+    stream.on('error', reject);
+  });
 }
 
 /**
@@ -189,7 +227,7 @@ async function uploadToStorage(backup: BackupRecord): Promise<void> {
   // const fs = require('fs');
   // ...
   
-  console.log(`[Backup] Uploaded to S3: ${backup.id}`);
+  logger.info(`[Backup] Uploaded to S3: ${backup.id}`);
 }
 
 /**
@@ -248,7 +286,7 @@ export async function restoreBackup(
   const startTime = Date.now();
   
   try {
-    console.log(`[Restore] Starting restore: ${backupId}`);
+    logger.info(`[Restore] Starting restore: ${backupId}`);
     
     // Verify checksum if requested
     if (options?.verifyChecksum && backup.checksum) {
@@ -274,7 +312,7 @@ export async function restoreBackup(
     
     const duration = Date.now() - startTime;
     
-    console.log(`[Restore] Completed: ${backupId} (${duration}ms)`);
+    logger.info(`[Restore] Completed: ${backupId} (${duration}ms)`);
     
     return {
       success: true,
@@ -287,7 +325,7 @@ export async function restoreBackup(
   } catch (error) {
     const duration = Date.now() - startTime;
     
-    console.error(`[Restore] Failed: ${backupId}`, error);
+    logger.error(`[Restore] Failed: ${backupId}`, error);
     
     return {
       success: false,
@@ -354,7 +392,7 @@ export async function cleanupOldBackups(): Promise<number> {
     }
   }
   
-  console.log(`[Backup] Cleaned up ${deleted} old backups`);
+  logger.info(`[Backup] Cleaned up ${deleted} old backups`);
   return deleted;
 }
 

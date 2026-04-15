@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Performance Budget
  * Enforce size limits on resources
@@ -203,11 +204,11 @@ export function monitorBudget(
 
         console.group('🚨 Performance Budget Violations');
         report.violations.forEach(v => {
-          console.warn(
+          logger.warn(
             `${v.type.toUpperCase()}: ${v.actual.toFixed(1)}KB (budget: ${v.budget}KB, +${v.overage.toFixed(1)}KB)`
           );
           if (v.files && v.files.length > 0) {
-            console.log('Files:', v.files.slice(0, 5));
+            logger.info('Files:', v.files.slice(0, 5));
           }
         });
         console.groupEnd();

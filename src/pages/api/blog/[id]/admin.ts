@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { authenticateUser } from '../../../../lib/auth/middleware';
+import { logger } from '../../../../lib/logging';
 
 export const PUT: APIRoute = async (context) => {
   try {
@@ -68,7 +69,7 @@ export const PUT: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Update blog post error:', error);
+    logger.error('Update blog post error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -99,7 +100,7 @@ export const DELETE: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Delete blog post error:', error);
+    logger.error('Delete blog post error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

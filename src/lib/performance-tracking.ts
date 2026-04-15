@@ -1,3 +1,4 @@
+import { logger } from './logging';
 /**
  * Performans Takip Altyapısı
  *
@@ -230,7 +231,7 @@ export function logPerformanceReport(report: PerformanceReport): void {
     if (metric) {
       const color = getMetricColor(metric.rating);
       const unit = getMetricUnit(name as MetricType);
-      console.log(
+      logger.info(
         `%c${name}: ${metric.value.toFixed(name === 'CLS' ? 3 : 0)}${unit} (${metric.rating})`,
         `color: ${color}; font-weight: bold`,
       );
@@ -242,7 +243,7 @@ export function logPerformanceReport(report: PerformanceReport): void {
   if (report.navigationTiming) {
     console.group('Navigasyon Zamanlaması');
     Object.entries(report.navigationTiming).forEach(([key, value]) => {
-      console.log(`${key}: ${Math.round(value)}ms`);
+      logger.info(`${key}: ${Math.round(value)}ms`);
     });
     console.groupEnd();
   }
@@ -250,10 +251,10 @@ export function logPerformanceReport(report: PerformanceReport): void {
   // Bağlantı bilgisi
   if (report.connectionInfo) {
     console.group('Bağlantı Bilgisi');
-    console.log(`Tip: ${report.connectionInfo.effectiveType}`);
-    console.log(`Hız: ${report.connectionInfo.downlink} Mbps`);
-    console.log(`RTT: ${report.connectionInfo.rtt}ms`);
-    console.log(`Veri tasarrufu: ${report.connectionInfo.saveData ? 'Açık' : 'Kapalı'}`);
+    logger.info(`Tip: ${report.connectionInfo.effectiveType}`);
+    logger.info(`Hız: ${report.connectionInfo.downlink} Mbps`);
+    logger.info(`RTT: ${report.connectionInfo.rtt}ms`);
+    logger.info(`Veri tasarrufu: ${report.connectionInfo.saveData ? 'Açık' : 'Kapalı'}`);
     console.groupEnd();
   }
 
@@ -528,7 +529,7 @@ export function initPerformanceTracking(
     if (logToConsole) {
       const color = getMetricColor(metric.rating);
       const unit = getMetricUnit(metric.name);
-      console.log(
+      logger.info(
         `[Performans] %c${metric.name}: ${metric.value.toFixed(metric.name === 'CLS' ? 3 : 0)}${unit}`,
         `color: ${color}; font-weight: bold`,
         `(${metric.rating})`,

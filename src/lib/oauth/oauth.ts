@@ -37,7 +37,7 @@ interface OAuthAccount {
 
 export async function getOAuthProvider(providerKey: string): Promise<OAuthProvider | null> {
   try {
-    const cacheKey = `sanliurfa:oauth:provider:${providerKey}`;
+    const cacheKey = `oauth:provider:${providerKey}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -62,7 +62,7 @@ export async function getOAuthProvider(providerKey: string): Promise<OAuthProvid
 
 export async function listOAuthProviders(): Promise<OAuthProvider[]> {
   try {
-    const cacheKey = 'sanliurfa:oauth:providers:list';
+    const cacheKey = 'oauth:providers:list';
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -139,7 +139,7 @@ export async function linkOAuthAccount(userId: string, providerKey: string, oaut
       last_used_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:user:oauth:${userId}`);
+    await deleteCache(`user:oauth:${userId}`);
     logger.info('OAuth account linked', { userId, provider: providerKey });
     return result;
   } catch (error) {
@@ -150,7 +150,7 @@ export async function linkOAuthAccount(userId: string, providerKey: string, oaut
 
 export async function getUserOAuthAccounts(userId: string): Promise<OAuthAccount[]> {
   try {
-    const cacheKey = `sanliurfa:user:oauth:${userId}`;
+    const cacheKey = `user:oauth:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -195,7 +195,7 @@ export async function unlinkOAuthAccount(userId: string, accountId: string): Pro
     // Delete the account
     await queryOne('DELETE FROM user_oauth_accounts WHERE id = $1', [accountId]);
 
-    await deleteCache(`sanliurfa:user:oauth:${userId}`);
+    await deleteCache(`user:oauth:${userId}`);
     logger.info('OAuth account unlinked', { userId, accountId });
     return true;
   } catch (error) {

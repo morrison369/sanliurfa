@@ -45,7 +45,7 @@ export interface EmailQueueItem {
 export async function getEmailTemplate(templateName: string): Promise<EmailTemplate | null> {
   try {
     // Cache'ten kontrol et
-    const cacheKey = `sanliurfa:email:template:${templateName}`;
+    const cacheKey = `email:template:${templateName}`;
     const cached = await getCache(cacheKey);
     if (cached) {
       return JSON.parse(cached);

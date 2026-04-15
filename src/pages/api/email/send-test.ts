@@ -9,7 +9,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.user?.isAdmin) {
+    if (!locals.isAdmin) {
       return apiError(ErrorCode.UNAUTHORIZED, 'Admin islemi', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 

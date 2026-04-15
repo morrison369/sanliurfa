@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 // Favori ID ile silme
 export const DELETE: APIRoute = async ({ params, locals }) => {
@@ -37,7 +38,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error: any) {
-    console.error('Delete favorite error:', error);
+    logger.error('Delete favorite error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

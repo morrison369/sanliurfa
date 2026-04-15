@@ -23,7 +23,7 @@ export interface BackupConfig {
   retention_days: number;
   include_data: boolean;
   include_uploads: boolean;
-  destination: 'local' | 's3' | 'gcs';
+  destination: 'local';
   last_backup: string;
   next_backup: string;
 }
@@ -92,7 +92,7 @@ const backupConfigs: BackupConfig[] = [
     retention_days: 30,
     include_data: true,
     include_uploads: true,
-    destination: 's3',
+    destination: 'local',
     last_backup: new Date().toISOString(),
     next_backup: new Date(Date.now() + 86400000).toISOString()
   }

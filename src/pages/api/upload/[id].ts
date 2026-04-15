@@ -3,6 +3,7 @@ import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { unlink } from 'fs/promises';
 import { join } from 'path';
+import { logger } from '../../../lib/logging';
 
 // Delete photo
 export const DELETE: APIRoute = async (context) => {
@@ -69,7 +70,7 @@ export const DELETE: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Delete photo error:', error);
+    logger.error('Delete photo error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -174,7 +175,7 @@ export const PUT: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Update photo error:', error);
+    logger.error('Update photo error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

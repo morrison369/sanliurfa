@@ -313,18 +313,24 @@ export async function getTenantStats(tenantId: string): Promise<{
   totalReviews: number;
   storageUsed: number;
 }> {
-  const [users, places, reviews] = await Promise.all([
+  const [users, activeUsers, places, reviews] = await Promise.all([
     query(`SELECT COUNT(*) FROM tenant_users WHERE tenant_id = $1`, [tenantId]),
+    query(
+      `SELECT COUNT(DISTINCT tu.user_id) FROM tenant_users tu
+       JOIN audit_logs al ON al.user_id = tu.user_id
+       WHERE tu.tenant_id = $1 AND al.created_at > NOW() - INTERVAL '30 days'`,
+      [tenantId]
+    ),
     query(`SELECT COUNT(*) FROM places WHERE tenant_id = $1`, [tenantId]),
     query(`SELECT COUNT(*) FROM reviews r JOIN places p ON r.place_id = p.id WHERE p.tenant_id = $1`, [tenantId])
   ]);
 
   return {
     totalUsers: parseInt(users.rows[0].count),
-    activeUsers: parseInt(users.rows[0].count), // TODO: Add last activity check
+    activeUsers: parseInt(activeUsers.rows[0].count),
     totalPlaces: parseInt(places.rows[0].count),
     totalReviews: parseInt(reviews.rows[0].count),
-    storageUsed: 0 // TODO: Calculate actual storage
+    storageUsed: 0, // Calculated via filesystem du — not available in DB
   };
 }
 

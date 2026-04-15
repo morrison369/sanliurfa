@@ -2,6 +2,8 @@ import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, getRequestId } from '../../lib/api';
 import { pool, readReplicaPool } from '../../lib/postgres';
 import { getRedisClient, isRedisAvailable } from '../../lib/cache';
+import { metricsCollector } from '../../lib/metrics';
+import { logger } from '../../lib/logging';
 
 /**
  * Prometheus-compatible metrics endpoint
@@ -61,20 +63,43 @@ function percentile(arr: number[], p: number): number {
  */
 export const GET: APIRoute = async ({ request }) => {
   const requestId = getRequestId({ request } as any);
-  
+
   try {
     // Basic auth check (in production, use proper auth)
     const authHeader = request.headers.get('authorization');
     const expectedToken = process.env.METRICS_API_TOKEN;
-    
+
     if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
       return apiError(
-        'UNAUTHORIZED', 
-        'Invalid or missing authorization', 
-        HttpStatus.UNAUTHORIZED, 
-        undefined, 
+        'UNAUTHORIZED',
+        'Invalid or missing authorization',
+        HttpStatus.UNAUTHORIZED,
+        undefined,
         requestId
       );
+    }
+
+    // If the client prefers JSON (e.g. dashboard components), return JSON metrics
+    const acceptHeader = request.headers.get('accept') || '';
+    if (acceptHeader.includes('application/json') || new URL(request.url).searchParams.has('format') && new URL(request.url).searchParams.get('format') === 'json') {
+      const m = metricsCollector.getMetrics();
+      const dbPoolStatus = {
+        active: (pool as any).totalCount - (pool as any).idleCount || 0,
+        idle: (pool as any).idleCount || 0,
+        waiting: (pool as any).waitingCount || 0,
+        size: (pool as any).totalCount || 0,
+      };
+      return apiResponse({
+        requestCount: m.totalRequests,
+        errorCount: m.totalErrors,
+        slowRequestCount: m.slowRequests,
+        avgDuration: m.avgDuration,
+        p95Duration: m.p95Duration,
+        cacheHitRate: m.cacheHitRate,
+        slowestEndpoints: m.slowestEndpoints,
+        slowQueries: [],
+        poolStatus: dbPoolStatus,
+      }, HttpStatus.OK, requestId);
     }
 
     // Collect system metrics
@@ -176,7 +201,7 @@ export const GET: APIRoute = async ({ request }) => {
       },
     });
   } catch (error) {
-    console.error('Metrics endpoint error:', error);
+    logger.error('Metrics endpoint error:', error);
     return apiError(
       'INTERNAL_ERROR',
       'Failed to collect metrics',

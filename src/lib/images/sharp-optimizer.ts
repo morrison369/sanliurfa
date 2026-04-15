@@ -4,6 +4,7 @@
  */
 
 import type { OptimizeOptions, OptimizedImage, ImageMetadata } from './optimizer';
+import { logger } from '../logging';
 
 // Sharp will be dynamically imported to avoid issues when not installed
 let sharp: any;
@@ -13,7 +14,7 @@ async function getSharp() {
     try {
       sharp = (await import('sharp')).default;
     } catch (error) {
-      console.warn('Sharp not installed, using fallback');
+      logger.warn('Sharp not installed, using fallback');
       return null;
     }
   }
@@ -76,7 +77,7 @@ export async function optimizeWithSharp(
       },
     };
   } catch (error) {
-    console.error('Sharp optimization error:', error);
+    logger.error('Sharp optimization error:', error);
     return null;
   }
 }
@@ -149,7 +150,7 @@ export async function createBlurPlaceholder(inputBuffer: Buffer): Promise<string
 
     return `data:image/webp;base64,${data.toString('base64')}`;
   } catch (error) {
-    console.error('Blur placeholder error:', error);
+    logger.error('Blur placeholder error:', error);
     return null;
   }
 }
@@ -168,7 +169,7 @@ export async function getImageDimensions(inputBuffer: Buffer): Promise<{ width: 
     }
     return null;
   } catch (error) {
-    console.error('Metadata error:', error);
+    logger.error('Metadata error:', error);
     return null;
   }
 }

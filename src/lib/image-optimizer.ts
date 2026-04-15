@@ -3,6 +3,8 @@
  * Handles resizing, format conversion, and caching
  */
 
+import sharp from 'sharp';
+
 // Supported image formats
 export type ImageFormat = 'webp' | 'jpeg' | 'png' | 'avif';
 
@@ -291,45 +293,45 @@ export function getContentType(format: ImageFormat): string {
 }
 
 /**
- * Optimize image (stub - implement with sharp in production)
+ * Optimize image using sharp
  */
 export async function optimizeImage(
   buffer: Buffer,
   options: OptimizeOptions
 ): Promise<Buffer> {
-  // In production, use sharp:
-  // const sharp = require('sharp');
-  // let pipeline = sharp(buffer);
-  // 
-  // if (options.width || options.height) {
-  //   pipeline = pipeline.resize(options.width, options.height, {
-  //     fit: options.fit,
-  //     position: options.position,
-  //   });
-  // }
-  // 
-  // if (options.format) {
-  //   pipeline = pipeline.toFormat(options.format, {
-  //     quality: options.quality || 80,
-  //   });
-  // }
-  // 
-  // return pipeline.toBuffer();
-  
-  // For now, return original buffer
-  return buffer;
+  let pipeline = sharp(buffer);
+
+  if (options.width || options.height) {
+    pipeline = pipeline.resize(options.width, options.height, {
+      fit: (options.fit as any) || 'cover',
+      position: options.position || 'center',
+    });
+  }
+
+  const quality = options.quality || 80;
+  const format = options.format || 'webp';
+  pipeline = pipeline.toFormat(format as any, { quality });
+
+  return pipeline.toBuffer();
 }
 
 /**
- * Generate blur hash placeholder (stub)
+ * Generate a simple base64 low-res placeholder (10px wide)
  */
 export async function generateBlurHash(buffer: Buffer): Promise<string> {
-  // In production, use blurhash library
-  return 'LEHV6nWB2yk8pyo0adR*.7kCMdnj';
+  try {
+    const small = await sharp(buffer)
+      .resize(10, 10, { fit: 'inside' })
+      .toFormat('jpeg', { quality: 40 })
+      .toBuffer();
+    return `data:image/jpeg;base64,${small.toString('base64')}`;
+  } catch {
+    return 'LEHV6nWB2yk8pyo0adR*.7kCMdnj';
+  }
 }
 
 /**
- * Get image metadata
+ * Get image metadata using sharp
  */
 export async function getImageMetadata(buffer: Buffer): Promise<{
   width: number;
@@ -337,13 +339,17 @@ export async function getImageMetadata(buffer: Buffer): Promise<{
   format: string;
   size: number;
 }> {
-  // In production, use sharp or probe-image-size
-  return {
-    width: 800,
-    height: 600,
-    format: 'jpeg',
-    size: buffer.length,
-  };
+  try {
+    const meta = await sharp(buffer).metadata();
+    return {
+      width: meta.width || 0,
+      height: meta.height || 0,
+      format: meta.format || 'unknown',
+      size: buffer.length,
+    };
+  } catch {
+    return { width: 0, height: 0, format: 'unknown', size: buffer.length };
+  }
 }
 
 /**

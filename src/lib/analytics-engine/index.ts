@@ -5,6 +5,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { logger } from '../logging';
 
 export interface AnalyticsEvent {
   id: string;
@@ -209,7 +210,7 @@ async function triggerAlert(alertId: string, value: number): Promise<void> {
   const actions = JSON.parse(alert.rows[0].actions);
 
   for (const action of actions) {
-    console.log(`[Alert] ${alert.rows[0].name}: ${value} - ${action.type} to ${action.target}`);
+    logger.info(`[Alert] ${alert.rows[0].name}: ${value} - ${action.type} to ${action.target}`);
   }
 }
 

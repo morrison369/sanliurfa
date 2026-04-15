@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { createToken, hashPassword, validatePasswordStrength } from '../../../lib/auth';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -71,7 +72,7 @@ export const POST: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Register error:', error);
+    logger.error('Register error:', error);
     return new Response(JSON.stringify({ error: 'Sunucu hatası' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

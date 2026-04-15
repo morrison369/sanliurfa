@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Phase 8: Frontend Optimization
  * Image optimization, bundle size analysis, PWA enhancement hints
@@ -234,9 +235,9 @@ export function getServiceWorkerScript(): string {
   return `
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then(registration => {
-        console.log('ServiceWorker registration successful');
+        logger.info('ServiceWorker registration successful');
       }).catch(err => {
-        console.log('ServiceWorker registration failed: ', err);
+        logger.info('ServiceWorker registration failed: ', err);
       });
     }
   `;

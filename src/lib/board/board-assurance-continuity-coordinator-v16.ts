@@ -2,7 +2,7 @@
  * Phase 441: Board Assurance Continuity Coordinator V16
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 export interface BoardAssuranceContinuitySignalV16 {
   signalId: string;

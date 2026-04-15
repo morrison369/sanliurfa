@@ -4,6 +4,7 @@
  */
 
 import type { APIContext } from 'astro';
+import { logger } from '../logging';
 
 export type UserTier = 'free' | 'basic' | 'premium' | 'enterprise' | 'admin';
 
@@ -149,7 +150,7 @@ export async function checkTierRateLimit(
     return result;
   } catch (error) {
     // Fail open if Redis error
-    console.error('Rate limit check error:', error);
+    logger.error('Rate limit check error:', error);
     return {
       allowed: true,
       limit: config.requests,

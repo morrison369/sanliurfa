@@ -125,7 +125,7 @@ async function recordJourneyPath(sessionId: string): Promise<void> {
       });
     }
 
-    await deleteCache('sanliurfa:journey:paths');
+    await deleteCache('journey:paths');
   } catch (error) {
     logger.error('Failed to record journey path', error instanceof Error ? error : new Error(String(error)));
   }
@@ -133,7 +133,7 @@ async function recordJourneyPath(sessionId: string): Promise<void> {
 
 export async function getTopConvertingPaths(limit: number = 10): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:journey:paths:top';
+    const cacheKey = 'journey:paths:top';
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -191,7 +191,7 @@ export async function getJourneyDetails(journeySessionId: string): Promise<any> 
 
 export async function analyzeBehaviorPattern(userId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:behavior:${userId}`;
+    const cacheKey = `behavior:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {

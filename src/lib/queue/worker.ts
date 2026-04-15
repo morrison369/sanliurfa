@@ -4,8 +4,9 @@
  */
 
 import { createWorkers, scheduleRecurringJobs, closeQueues } from './index';
+import { logger } from '../logging';
 
-console.log('[Worker] Starting queue workers...');
+logger.info('[Worker] Starting queue workers...');
 
 // Create workers
 const workers = createWorkers();
@@ -15,15 +16,15 @@ scheduleRecurringJobs().catch(console.error);
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
-  console.log('[Worker] Shutting down...');
+  logger.info('[Worker] Shutting down...');
   await closeQueues();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('[Worker] Shutting down...');
+  logger.info('[Worker] Shutting down...');
   await closeQueues();
   process.exit(0);
 });
 
-console.log(`[Worker] ${workers.length} workers started`);
+logger.info(`[Worker] ${workers.length} workers started`);

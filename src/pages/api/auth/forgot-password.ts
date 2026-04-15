@@ -5,6 +5,7 @@ import type { APIRoute } from 'astro';
 import { queryOne } from '../../../lib/postgres';
 import { sendEmail, getPasswordResetEmailHTML } from '../../../lib/email';
 import crypto from 'crypto';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, redirect }) => {
   try {
@@ -44,7 +45,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
 
     return redirect('/sifremi-unuttum?success=email_sent');
   } catch (err) {
-    console.error('Forgot password error:', err);
+    logger.error('Forgot password error:', err);
     return redirect('/sifremi-unuttum?error=server_error');
   }
 };

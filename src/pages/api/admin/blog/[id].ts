@@ -12,7 +12,7 @@ import { getPostBySlug, updatePost, deletePost, getPostRevisions } from '../../.
 export const GET: APIRoute = async ({ request, url }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (auth instanceof Response) return auth;
+    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const id = url.pathname.split('/').pop();
     if (!id) {
@@ -55,7 +55,7 @@ export const GET: APIRoute = async ({ request, url }) => {
 export const PUT: APIRoute = async ({ request, url }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (auth instanceof Response) return auth;
+    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const id = url.pathname.split('/').pop();
     if (!id) {
@@ -104,7 +104,7 @@ export const PUT: APIRoute = async ({ request, url }) => {
 export const DELETE: APIRoute = async ({ request, url }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (auth instanceof Response) return auth;
+    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const id = url.pathname.split('/').pop();
     if (!id) {

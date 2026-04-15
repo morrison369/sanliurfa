@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     }
 
     // Check cache
-    const cacheKey = `sanliurfa:search:${q}:${type}:${category}:${minRating}:${sort}:${limit}`;
+    const cacheKey = `search:${q}:${type}:${category}:${minRating}:${sort}:${limit}`;
     const cached = await getCache(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/search', HttpStatus.OK, Date.now() - startTime);

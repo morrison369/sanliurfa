@@ -40,7 +40,7 @@ export async function getRewardsList(filters?: { category?: string; tier?: strin
 
 export async function getRewardInfo(rewardId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:reward:${rewardId}`;
+    const cacheKey = `reward:${rewardId}`;
     let reward = await getCache(cacheKey);
 
     if (!reward) {
@@ -121,7 +121,7 @@ export async function processRewardRedemption(userId: string, rewardId: string):
       );
     }
 
-    await deleteCache(`sanliurfa:loyalty:points:${userId}`);
+    await deleteCache(`loyalty:points:${userId}`);
 
     logger.info('Reward redeemed', { userId, rewardId, redemptionCode });
     return { success: true, redemptionCode };
@@ -155,7 +155,7 @@ export async function getRedemptionHistory(userId: string, limit: number = 50): 
 
 export async function getPromotionalOffers(): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:promo:offers';
+    const cacheKey = 'promo:offers';
     let offers = await getCache(cacheKey);
 
     if (!offers) {
@@ -217,8 +217,8 @@ export async function updateRewardInventory(rewardId: string, newStock: number):
       });
     }
 
-    await deleteCache('sanliurfa:reward:' + rewardId);
-    await deleteCache('sanliurfa:rewards:catalog');
+    await deleteCache('reward:' + rewardId);
+    await deleteCache('rewards:catalog');
 
     logger.info('Reward inventory updated', { rewardId, newStock });
     return true;

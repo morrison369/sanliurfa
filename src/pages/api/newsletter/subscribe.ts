@@ -1,6 +1,8 @@
 // API: Newsletter subscription (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { queryOne, insert, update as updateDb } from '../../../lib/postgres';
+import { sendEmail } from '../../../lib/email';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -50,17 +52,22 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // TODO: Send welcome email
+    await sendEmail({
+      to: email,
+      subject: "Şanlıurfa.com Bültenine Hoşgeldiniz!",
+      html: `<p>Bültenimize abone olduğunuz için teşekkür ederiz. Şanlıurfa'daki etkinlikler, mekanlar ve haberlerden ilk siz haberdar olacaksınız.</p>
+<p><a href="${process.env.PUBLIC_APP_URL || 'https://sanliurfa.com'}/newsletter/unsubscribe?email=${encodeURIComponent(email)}">Abonelikten çıkmak için tıklayın</a></p>`,
+    });
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Bültenimize başarıyla abone oldunuz!' 
+      JSON.stringify({
+        success: true,
+        message: 'Bültenimize başarıyla abone oldunuz!'
       }),
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {
-    console.error('Newsletter subscription error:', err);
+    logger.error('Newsletter subscription error:', err);
     return new Response(
       JSON.stringify({ error: 'Bir hata oluştu' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -93,7 +100,7 @@ export const DELETE: APIRoute = async ({ request }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {
-    console.error('Unsubscribe error:', err);
+    logger.error('Unsubscribe error:', err);
     return new Response(
       JSON.stringify({ error: 'Bir hata oluştu' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

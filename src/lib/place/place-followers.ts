@@ -25,8 +25,8 @@ export async function followPlace(userId: string, placeId: string): Promise<bool
     );
 
     // Invalidate caches
-    await deleteCache(`sanliurfa:place:followers:${placeId}`);
-    await deleteCache(`sanliurfa:user:following:places:${userId}`);
+    await deleteCache(`place:followers:${placeId}`);
+    await deleteCache(`user:following:places:${userId}`);
 
     logger.info('Place followed', { userId, placeId });
     return true;
@@ -54,8 +54,8 @@ export async function unfollowPlace(userId: string, placeId: string): Promise<bo
     );
 
     // Invalidate caches
-    await deleteCache(`sanliurfa:place:followers:${placeId}`);
-    await deleteCache(`sanliurfa:user:following:places:${userId}`);
+    await deleteCache(`place:followers:${placeId}`);
+    await deleteCache(`user:following:places:${userId}`);
 
     logger.info('Place unfollowed', { userId, placeId });
     return true;
@@ -86,7 +86,7 @@ export async function isFollowingPlace(userId: string, placeId: string): Promise
  */
 export async function getUserFollowedPlaces(userId: string, limit: number = 50): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:user:following:places:${userId}`;
+    const cacheKey = `user:following:places:${userId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -127,7 +127,7 @@ export async function getUserFollowedPlaces(userId: string, limit: number = 50):
  */
 export async function getPlaceFollowers(placeId: string, limit: number = 20): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:place:followers:${placeId}`;
+    const cacheKey = `place:followers:${placeId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -183,7 +183,7 @@ export async function getPlaceFollowerCount(placeId: string): Promise<number> {
  */
 export async function getTrendingPlacesByFollowers(limit: number = 20): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:places:trending:followers';
+    const cacheKey = 'places:trending:followers';
     const cached = await getCache(cacheKey);
 
     if (cached) {

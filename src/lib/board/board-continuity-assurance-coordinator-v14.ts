@@ -2,7 +2,7 @@
  * Phase 429: Board Continuity Assurance Coordinator V14
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 export interface BoardContinuityAssuranceSignalV14 {
   signalId: string;

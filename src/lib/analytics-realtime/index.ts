@@ -162,16 +162,21 @@ export async function getTimeSeries(
     '1h': '1 hour'
   };
 
-  const result = await query(`
-    SELECT 
-      date_trunc('${intervalMap[interval]}', created_at) as timestamp,
+  const table = metric === 'pageviews' ? 'page_views' : 'tracked_events';
+  const truncUnit = intervalMap[interval] || '5 minutes';
+  const params: any[] = [hours];
+  let sql = `
+    SELECT
+      date_trunc('${truncUnit}', created_at) as timestamp,
       COUNT(*) as value
-    FROM ${metric === 'pageviews' ? 'page_views' : 'tracked_events'}
-    WHERE created_at >= NOW() - INTERVAL '${hours} hours'
-    ${metric !== 'pageviews' ? `AND type = '${metric}'` : ''}
-    GROUP BY 1
-    ORDER BY 1 ASC
-  `);
+    FROM ${table}
+    WHERE created_at >= NOW() - ($1 * INTERVAL '1 hour')`;
+  if (metric !== 'pageviews') {
+    params.push(metric);
+    sql += ` AND type = $${params.length}`;
+  }
+  sql += ' GROUP BY 1 ORDER BY 1 ASC';
+  const result = await query(sql, params);
 
   return result.rows.map(r => ({
     timestamp: new Date(r.timestamp),

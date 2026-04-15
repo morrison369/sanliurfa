@@ -5,6 +5,7 @@
  */
 
 import Layout from '../../../layouts/Layout.astro';
+import { queryOne, queryMany } from '../../../lib/postgres';
 
 const user = Astro.locals.user;
 if (!user || !Astro.locals.isAdmin) {
@@ -15,18 +16,25 @@ let analytics = null;
 let error = '';
 
 try {
-  const response = await fetch('http://localhost:3000/api/blog/analytics', {
-    headers: {
-      'Cookie': `auth-token=${Astro.cookies.get('token')?.value || ''}`
-    }
-  });
+  const [totalPosts, totalViews, totalComments, topPosts, categoryStats] = await Promise.all([
+    queryOne('SELECT COUNT(*) as count FROM blog_posts WHERE status = \'published\''),
+    queryOne('SELECT COALESCE(SUM(view_count), 0) as total FROM blog_posts'),
+    queryOne('SELECT COUNT(*) as count FROM blog_comments WHERE status = \'approved\''),
+    queryMany(`SELECT id, title, slug, view_count, comment_count, created_at
+               FROM blog_posts WHERE status = 'published'
+               ORDER BY view_count DESC NULLS LAST LIMIT 10`),
+    queryMany(`SELECT category, COUNT(*) as post_count, SUM(view_count) as total_views
+               FROM blog_posts WHERE status = 'published'
+               GROUP BY category ORDER BY post_count DESC`),
+  ]);
 
-  if (response.ok) {
-    const data = await response.json();
-    analytics = data.data;
-  } else {
-    error = 'Analitikal veriler yüklenirken hata oluştu';
-  }
+  analytics = {
+    totalPosts: Number(totalPosts?.count || 0),
+    totalViews: Number(totalViews?.total || 0),
+    totalComments: Number(totalComments?.count || 0),
+    topPosts,
+    categoryStats,
+  };
 } catch (err) {
   error = 'Sunucu hatası: ' + String(err);
 }
@@ -45,7 +53,7 @@ const seo = {
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
             <a href="/admin/blog" class="text-gray-600 dark:text-gray-400 hover:text-gray-900">
-              â† Geri
+              ← Geri
             </a>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Blog Analitikleri</h1>
           </div>
@@ -73,13 +81,13 @@ const seo = {
             <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Toplam Görüntüleme</p>
               <p class="text-3xl font-bold text-blue-600">{analytics.posts.totalViews.toLocaleString('tr-TR')}</p>
-              <p class="text-xs text-gray-500 mt-2">âŒ€ {analytics.posts.avgViews} ort./yazı</p>
+              <p class="text-xs text-gray-500 mt-2">⌀ {analytics.posts.avgViews} ort./yazı</p>
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Yorumlar</p>
               <p class="text-3xl font-bold text-green-600">{analytics.comments.approved}</p>
-              <p class="text-xs text-gray-500 mt-2">â³ {analytics.comments.pending} bekleme</p>
+              <p class="text-xs text-gray-500 mt-2">⏳ {analytics.comments.pending} bekleme</p>
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
@@ -119,7 +127,7 @@ const seo = {
                       <a href={`/blog/${post.slug}`} target="_blank" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 truncate">
                         {post.title}
                       </a>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">ğŸ‘ï¸ {post.views} â€¢ â¤ï¸ {post.likes}</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">ğŸ‘ï¸ {post.views} • ❤ï¸ {post.likes}</p>
                     </div>
                   </div>
                 ))}
@@ -168,7 +176,7 @@ const seo = {
                       ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                   }`}>
-                    {post.status === 'published' ? 'âœ“' : post.status === 'draft' ? 'ğŸ“‹' : 'ğŸ—‘ï¸'}
+                    {post.status === 'published' ? '✓' : post.status === 'draft' ? 'ğŸ“‹' : '🗑ï¸'}
                   </span>
                 </div>
               ))}

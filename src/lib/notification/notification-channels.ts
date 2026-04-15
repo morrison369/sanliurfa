@@ -53,7 +53,7 @@ export interface NotificationPreferences {
 
 export async function getUserChannels(userId: string): Promise<NotificationChannel[]> {
   try {
-    const cacheKey = `sanliurfa:channels:${userId}`;
+    const cacheKey = `channels:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -91,7 +91,7 @@ export async function addChannel(
       created_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:channels:${userId}`);
+    await deleteCache(`channels:${userId}`);
     logger.info('Channel added', { userId, type });
 
     return channel as NotificationChannel;
@@ -111,7 +111,7 @@ export async function removeChannel(channelId: string, userId: string): Promise<
       [channelId, userId]
     );
 
-    await deleteCache(`sanliurfa:channels:${userId}`);
+    await deleteCache(`channels:${userId}`);
     return true;
   } catch (error) {
     logger.error(
@@ -140,7 +140,7 @@ export async function addPushSubscription(
       created_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:push:${userId}`);
+    await deleteCache(`push:${userId}`);
     logger.info('Push subscription added', { userId });
 
     return subscription as PushSubscription;
@@ -155,7 +155,7 @@ export async function addPushSubscription(
 
 export async function getUserPushSubscriptions(userId: string): Promise<PushSubscription[]> {
   try {
-    const cacheKey = `sanliurfa:push:${userId}`;
+    const cacheKey = `push:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -195,7 +195,7 @@ export async function removePushSubscription(endpoint: string): Promise<boolean>
 
 export async function getEmailTemplate(key: string): Promise<EmailTemplate | null> {
   try {
-    const cacheKey = `sanliurfa:email:template:${key}`;
+    const cacheKey = `email:template:${key}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -253,7 +253,7 @@ export async function createEmailTemplate(
       created_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:email:template:${key}`);
+    await deleteCache(`email:template:${key}`);
     logger.info('Email template created', { key });
 
     return template as EmailTemplate;
@@ -365,7 +365,7 @@ export async function markEmailFailed(emailId: string, reason?: string): Promise
 
 export async function getNotificationPreferences(userId: string): Promise<NotificationPreferences | null> {
   try {
-    const cacheKey = `sanliurfa:prefs:${userId}`;
+    const cacheKey = `prefs:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -411,7 +411,7 @@ export async function updateNotificationPreferences(
       });
     }
 
-    await deleteCache(`sanliurfa:prefs:${userId}`);
+    await deleteCache(`prefs:${userId}`);
     logger.info('Notification preferences updated', { userId });
 
     return true;

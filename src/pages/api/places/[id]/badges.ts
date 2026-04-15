@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     const { id: placeId } = params;
 
     // Check cache first
-    const cacheKey = `sanliurfa:place:badges:${placeId}`;
+    const cacheKey = `place:badges:${placeId}`;
     const cached = await getCache(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/places/[id]/badges', HttpStatus.OK, Date.now() - startTime);

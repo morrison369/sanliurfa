@@ -4,6 +4,7 @@
  */
 
 import { query } from '../postgres';
+import { logger } from '../logging';
 
 interface RateLimitConfig {
   windowMs: number;  // Zaman penceresi (ms)
@@ -75,7 +76,7 @@ export async function rateLimit(
     };
 
   } catch (error) {
-    console.error('Rate limit error:', error);
+    logger.error('Rate limit error:', error);
     // Hata durumunda izin ver (fail open)
     return { allowed: true, remaining: 1, resetTime: now + conf.windowMs };
   }

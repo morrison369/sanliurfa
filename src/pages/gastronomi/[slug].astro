@@ -17,55 +17,53 @@ const icons = {
   arrowRight: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`,
 };
 
-// TODO: Fetch from Supabase
+import { query } from '../../lib/postgres';
+
+const { slug } = Astro.params;
+
+const foodResult = await query(
+  `SELECT * FROM foods WHERE slug = $1`,
+  [slug]
+);
+
+if (!foodResult.rows[0]) {
+  return Astro.redirect('/gastronomi');
+}
+
+const row = foodResult.rows[0];
+
+// Fetch places that serve this food (restaurants/cafes with matching tags)
+const placesResult = await query(
+  `SELECT id, slug, name, rating, address FROM places
+   WHERE status = 'active' AND category IN ('restaurant', 'cafe', 'lokanta', 'kebapci')
+   ORDER BY rating DESC NULLS LAST LIMIT 3`
+);
+
 const food = {
-  id: 'urfa-kebabi',
-  slug: 'urfa-kebabi',
-  name: 'Urfa Kebabı',
-  description: 'Baharatlı kıymanın odun ateşinde pişirilmesiyle hazırlanan efsane lezzet. Şanlıurfa\'nın dünyaca ünlü gastronomik simgesi.',
-  image: '/images/foods/urfa-kebabi.jpg',
-  gallery: [
-    '/images/foods/urfa-kebabi-1.jpg',
-    '/images/foods/urfa-kebabi-2.jpg',
-    '/images/foods/urfa-kebabi-3.jpg',
-  ],
-  history: 'Urfa kebabının tarihi, şehrin binlerce yıllık geçmişine dayanır. Geleneksel olarak düğün ve özel günlerde hazırlanan bu lezzet, zamanla Şanlıurfa\'nın vazgeçilmezi olmuştur.',
-  ingredients: [
-    'Kuzu kıyma (yağlı)',
-    'Soğan',
-    'Sarımsak',
-    'Kimyon',
-    'Pul biber',
-    'Karabiber',
-    'Tuz',
-    'Maydanoz',
-  ],
-  preparation: `
-    1. Kıyma, rendelenmiş soğan ve baharatlar bir kapta yoğrulur.
-    2. En az 2 saat dinlendirilir.
-    3. Şişlere yassı bir şekilde yerleştirilir.
-    4. Odun ateşinde kızgın köz üzerinde pişirilir.
-    5. Lavaş ekmeği üzerinde servis edilir.
-  `,
-  isSpicy: false,
-  isVegetarian: false,
-  difficulty: 'Zor',
-  prepTime: '45 dk + 2 saat dinlenme',
-  servingSize: '4 kişilik',
-  calories: '450 kcal/porsiyon',
-  rating: 4.9,
-  reviewCount: 2156,
-  whereToEat: [
-    { id: '1', name: 'Ciğerci Aziz Usta', rating: 4.9, address: 'Balıklıgöl' },
-    { id: '2', name: 'Zahter Kahvaltı', rating: 4.7, address: 'Eyyübiye' },
-    { id: '3', name: 'Köprübaşı Kebap', rating: 4.8, address: 'Haliliye' },
-  ],
-  tips: [
-    'Kıymanın yağ oranı en az %20 olmalıdır.',
-    'Odun ateşinde pişirilmesi şarttır.',
-    'Yanında ezme salata ve közlenmiş biber ile servis edilir.',
-    'Sıcak sıcak yenmelidir.',
-  ],
+  id: row.id,
+  slug: row.slug,
+  name: row.name,
+  description: row.description || '',
+  image: row.cover_image || (row.images?.[0]) || '/images/foods/default.jpg',
+  gallery: row.images || [],
+  history: row.history || '',
+  ingredients: row.ingredients || [],
+  preparation: '',
+  isSpicy: row.is_spicy || false,
+  isVegetarian: row.is_vegetarian || false,
+  difficulty: row.difficulty || '',
+  prepTime: row.prep_time ? `${row.prep_time} dk` : '',
+  servingSize: '',
+  calories: '',
+  rating: parseFloat(row.rating) || 0,
+  reviewCount: row.review_count || 0,
+  whereToEat: placesResult.rows.map((p: any) => ({
+    id: p.slug || p.id,
+    name: p.name,
+    rating: parseFloat(p.rating) || 0,
+    address: p.address || '',
+  })),
+  tips: [],
 };
 
 const breadcrumbItems = [

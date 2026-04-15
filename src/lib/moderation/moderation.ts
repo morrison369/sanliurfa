@@ -260,8 +260,8 @@ export async function takeModerationAction(
     await updateReportStatus(reportId, 'resolved', createdBy, `Action taken: ${actionType}`);
 
     // Clear relevant caches
-    await deleteCache(`sanliurfa:user:profile:${targetUserId}`);
-    await deleteCachePattern(`sanliurfa:moderation:*`);
+    await deleteCache(`user:profile:${targetUserId}`);
+    await deleteCachePattern(`moderation:*`);
 
     logger.info('Moderation action taken', {
       reportId,

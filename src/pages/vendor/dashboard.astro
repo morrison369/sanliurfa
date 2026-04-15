@@ -6,19 +6,41 @@ import ReservationManager from '../../components/vendor/ReservationManager';
 import PromotionManager from '../../components/vendor/PromotionManager';
 import PhotoUpload from '../../components/PhotoUpload';
 
+import { query } from '../../lib/postgres';
+
 const seo = {
   title: 'İşletme Paneli - Şanlıurfa.com',
   description: 'İşletme bilgilerinizi yönetin, yorumları yanıtlayın ve performansınızı takip edin.',
   noindex: true,
 };
 
-// Mock - gerçek uygulamada auth kontrolü
+if (!Astro.locals.user) {
+  return Astro.redirect('/giris?redirect=/vendor/dashboard');
+}
+
+const userId = Astro.locals.user.id;
+
+const [placesResult, subResult] = await Promise.all([
+  query(
+    `SELECT id, slug, name FROM places WHERE owner_id = $1 AND status != 'deleted' ORDER BY created_at DESC`,
+    [userId]
+  ),
+  query(
+    `SELECT st.name as plan FROM subscriptions s
+     JOIN subscription_tiers st ON st.id = s.tier_id
+     WHERE s.user_id = $1 AND s.status = 'active'
+     ORDER BY s.created_at DESC LIMIT 1`,
+    [userId]
+  ),
+]);
+
 const vendor = {
-  id: 'vendor-001',
-  name: 'Ciğerci Aziz Usta',
-  email: 'info@cigerciaziz.com',
-  plan: 'premium', // free, premium, enterprise
-  places: ['place-001'],
+  id: userId,
+  name: Astro.locals.user.fullName || 'İşletme Sahibi',
+  email: Astro.locals.user.email,
+  plan: subResult.rows[0]?.plan || 'free',
+  places: placesResult.rows.map((p: any) => p.id),
+  firstPlace: placesResult.rows[0] || null,
 };
 ---
 
@@ -34,15 +56,17 @@ const vendor = {
           </div>
           <div class="flex items-center gap-3">
             <span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
-              {vendor.plan === 'premium' ? 'Premium Plan' : 'Ücretsiz Plan'}
+              {vendor.plan !== 'free' ? `${vendor.plan} Plan` : 'Ücretsiz Plan'}
             </span>
-            <a
-              href={`/places/${vendor.places[0]}`}
-              target="_blank"
-              class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm"
-            >
-              Sayfayı Görüntüle →
-            </a>
+            {vendor.firstPlace && (
+              <a
+                href={`/places/${vendor.firstPlace.slug}`}
+                target="_blank"
+                class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm"
+              >
+                Sayfayı Görüntüle →
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -75,14 +99,27 @@ const vendor = {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Place Management */}
         <div class="lg:col-span-2 space-y-6">
-          <PlaceManager placeId={vendor.places[0]} client:load />
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Fotoğraflar</h2>
-            <PhotoUpload placeId={vendor.places[0]} photos={[]} client:load />
-          </div>
-          <ReservationManager placeId={vendor.places[0]} client:load />
-          <PromotionManager placeId={vendor.places[0]} client:load />
-          <ReviewManager placeId={vendor.places[0]} client:load />
+          {vendor.firstPlace ? (
+            <>
+              <PlaceManager placeId={vendor.firstPlace.id} client:load />
+              <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Fotoğraflar</h2>
+                <PhotoUpload placeId={vendor.firstPlace.id} photos={[]} client:load />
+              </div>
+              <ReservationManager placeId={vendor.firstPlace.id} client:load />
+              <PromotionManager placeId={vendor.firstPlace.id} client:load />
+              <ReviewManager placeId={vendor.firstPlace.id} client:load />
+            </>
+          ) : (
+            <div class="bg-white rounded-xl shadow-sm p-12 text-center text-gray-500">
+              <div class="text-4xl mb-4">🏪</div>
+              <p class="text-lg font-medium mb-2">Henüz işletmeniz yok</p>
+              <p class="text-sm mb-4">İşletmenizi ekleyerek paneli kullanmaya başlayın.</p>
+              <a href="/isletme-kayit" class="inline-block px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                İşletme Ekle
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Right Column - Sidebar */}

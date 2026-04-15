@@ -1,8 +1,8 @@
 /**
- * Feature flags system
+ * Feature flags system — PostgreSQL backed
  */
 
-import { generateId } from '../utils';
+import { query, queryOne } from '../postgres';
 
 export type FlagType = 'boolean' | 'percentage' | 'user' | 'group';
 
@@ -23,125 +23,154 @@ export interface UserContext {
   groups?: string[];
 }
 
-const flagStore: Map<string, FeatureFlag> = new Map();
+// Ensure the feature_flags table exists (idempotent)
+async function ensureTable(): Promise<void> {
+  await query(`
+    CREATE TABLE IF NOT EXISTS feature_flags (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      key VARCHAR(100) UNIQUE NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      type VARCHAR(20) NOT NULL DEFAULT 'boolean',
+      value JSONB NOT NULL DEFAULT 'false',
+      default_value BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  `);
+}
 
-const DEFAULT_FLAGS: FeatureFlag[] = [
-  {
-    id: 'flag_1',
-    key: 'new_search',
-    name: 'New Search Interface',
-    type: 'percentage',
-    value: 50,
-    defaultValue: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'flag_2',
-    key: 'dark_mode',
-    name: 'Dark Mode',
-    type: 'boolean',
-    value: true,
-    defaultValue: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+function rowToFlag(r: any): FeatureFlag {
+  return {
+    id: r.id,
+    key: r.key,
+    name: r.name,
+    description: r.description,
+    type: r.type as FlagType,
+    value: r.value,
+    defaultValue: r.default_value,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
 
-export function initFeatureFlags(): void {
-  for (const flag of DEFAULT_FLAGS) {
-    flagStore.set(flag.key, flag);
+export async function initFeatureFlags(): Promise<void> {
+  await ensureTable();
+  // Seed defaults if table is empty
+  const count = await queryOne(`SELECT COUNT(*) as c FROM feature_flags`);
+  if (parseInt(count?.c || '0') === 0) {
+    await query(`
+      INSERT INTO feature_flags (key, name, type, value, default_value) VALUES
+        ('new_search', 'New Search Interface', 'percentage', '50', false),
+        ('dark_mode', 'Dark Mode', 'boolean', 'true', true)
+      ON CONFLICT (key) DO NOTHING
+    `);
   }
 }
 
-export function isEnabled(key: string, context?: UserContext): boolean {
-  const flag = flagStore.get(key);
-  if (!flag) return false;
-  
-  switch (flag.type) {
-    case 'boolean':
-      return flag.value as boolean;
-    case 'percentage':
-      return checkPercentage(flag.value as number, context?.userId);
-    case 'user':
-      return context?.userId ? (flag.value as string[]).includes(context.userId) : false;
-    case 'group':
-      return context?.groups?.some(g => (flag.value as string[]).includes(g)) ?? false;
-    default:
-      return flag.defaultValue;
+export async function isEnabled(key: string, context?: UserContext): Promise<boolean> {
+  try {
+    const row = await queryOne(`SELECT type, value, default_value FROM feature_flags WHERE key = $1`, [key]);
+    if (!row) return false;
+
+    switch (row.type as FlagType) {
+      case 'boolean':
+        return row.value === true || row.value === 'true';
+      case 'percentage':
+        return checkPercentage(Number(row.value), context?.userId);
+      case 'user':
+        return context?.userId ? (row.value as string[]).includes(context.userId) : false;
+      case 'group':
+        return context?.groups?.some((g) => (row.value as string[]).includes(g)) ?? false;
+      default:
+        return Boolean(row.default_value);
+    }
+  } catch {
+    return false;
   }
 }
 
 function checkPercentage(percentage: number, userId?: string): boolean {
   if (!userId) return Math.random() * 100 < percentage;
-  return (hashString(userId) % 100) < percentage;
-}
-
-function hashString(str: string): number {
   let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+  for (let i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
     hash = hash & hash;
   }
-  return Math.abs(hash);
+  return Math.abs(hash) % 100 < percentage;
 }
 
-export function getAllFlags(context?: UserContext): Record<string, boolean> {
+export async function getAllFlags(context?: UserContext): Promise<Record<string, boolean>> {
+  const flags = await listFlags();
   const result: Record<string, boolean> = {};
-  for (const key of flagStore.keys()) {
-    result[key] = isEnabled(key, context);
+  for (const flag of flags) {
+    result[flag.key] = await isEnabled(flag.key, context);
   }
   return result;
 }
 
-export function listFlags(): FeatureFlag[] {
-  return Array.from(flagStore.values());
+export async function listFlags(): Promise<FeatureFlag[]> {
+  await ensureTable();
+  const result = await query(`SELECT * FROM feature_flags ORDER BY created_at ASC`);
+  return result.rows.map(rowToFlag);
 }
 
-export function updateFlag(key: string, updates: Partial<FeatureFlag>): FeatureFlag | null {
-  const flag = flagStore.get(key);
-  if (!flag) return null;
-  
-  const updated = { ...flag, ...updates, updatedAt: new Date().toISOString() };
-  flagStore.set(key, updated);
-  return updated;
+export async function getFlagStats(): Promise<{ total: number; enabled: number; disabled: number }> {
+  await ensureTable();
+  const result = await query(`
+    SELECT
+      COUNT(*) as total,
+      COUNT(CASE WHEN (value::text = 'true' OR type = 'percentage') THEN 1 END) as enabled
+    FROM feature_flags
+  `);
+  const row = result.rows[0];
+  const total = parseInt(row?.total || '0');
+  const enabled = parseInt(row?.enabled || '0');
+  return { total, enabled, disabled: total - enabled };
 }
 
-export function deleteFlag(key: string): boolean {
-  return flagStore.delete(key);
+export async function updateFlag(key: string, updates: Partial<FeatureFlag>): Promise<FeatureFlag | null> {
+  await ensureTable();
+  const set: string[] = [];
+  const params: any[] = [];
+  let i = 1;
+
+  if (updates.name !== undefined) { set.push(`name = $${i++}`); params.push(updates.name); }
+  if (updates.description !== undefined) { set.push(`description = $${i++}`); params.push(updates.description); }
+  if (updates.type !== undefined) { set.push(`type = $${i++}`); params.push(updates.type); }
+  if (updates.value !== undefined) { set.push(`value = $${i++}`); params.push(JSON.stringify(updates.value)); }
+  if (updates.defaultValue !== undefined) { set.push(`default_value = $${i++}`); params.push(updates.defaultValue); }
+
+  if (set.length === 0) return null;
+  set.push(`updated_at = NOW()`);
+  params.push(key);
+
+  const result = await query(
+    `UPDATE feature_flags SET ${set.join(', ')} WHERE key = $${i} RETURNING *`,
+    params
+  );
+  return result.rows[0] ? rowToFlag(result.rows[0]) : null;
 }
 
-export function createFlag(
+export async function deleteFlag(key: string): Promise<boolean> {
+  await ensureTable();
+  const result = await query(`DELETE FROM feature_flags WHERE key = $1`, [key]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function createFlag(
   key: string,
   name: string,
   type: FlagType,
   value: boolean | number | string[]
-): FeatureFlag {
-  const flag: FeatureFlag = {
-    id: generateId(),
-    key,
-    name,
-    type,
-    value,
-    defaultValue: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  flagStore.set(key, flag);
-  return flag;
+): Promise<FeatureFlag> {
+  await ensureTable();
+  const result = await query(
+    `INSERT INTO feature_flags (key, name, type, value, default_value)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (key) DO UPDATE SET name = EXCLUDED.name, type = EXCLUDED.type, value = EXCLUDED.value, updated_at = NOW()
+     RETURNING *`,
+    [key, name, type, JSON.stringify(value), false]
+  );
+  return rowToFlag(result.rows[0]);
 }
-
-export function getFlagStats(): { total: number; byType: Record<FlagType, number>; enabled: number } {
-  const byType: Record<FlagType, number> = { boolean: 0, percentage: 0, user: 0, group: 0 };
-  let enabled = 0;
-  
-  for (const flag of flagStore.values()) {
-    byType[flag.type]++;
-    if (isEnabled(flag.key)) enabled++;
-  }
-  
-  return { total: flagStore.size, byType, enabled };
-}
-
-initFeatureFlags();

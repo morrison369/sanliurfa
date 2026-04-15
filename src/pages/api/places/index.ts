@@ -3,6 +3,7 @@
 import type { APIRoute } from 'astro';
 import { query, insert } from '../../../lib/postgres';
 import { getCache, setCache, deleteCache } from '../../../lib/cache';
+import { logger } from '../../../lib/logging';
 
 // @ts-nocheck
 /**
@@ -98,7 +99,7 @@ export const GET: APIRoute = async ({ url }) => {
       headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }
     });
   } catch (err) {
-    console.error('Places fetch error:', err);
+    logger.error('Places fetch error:', err);
     return new Response(
       JSON.stringify({ error: 'Mekanlar getirilirken bir hata oluştu' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -124,7 +125,7 @@ async function invalidatePlacesListCache(): Promise<void> {
       await deleteCache(pattern);
     }
   } catch (error) {
-    console.warn('Failed to invalidate places cache:', error);
+    logger.warn('Failed to invalidate places cache:', error);
     // Continue anyway - cache invalidation is not critical
   }
 }
@@ -157,7 +158,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {
-    console.error('Place create error:', err);
+    logger.error('Place create error:', err);
     return new Response(
       JSON.stringify({ error: 'Mekan eklenirken bir hata oluştu' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

@@ -1,5 +1,6 @@
 import type { Pool } from 'pg';
 import { getCache, setCache, deleteCache } from '../cache';
+import { logger } from '../logging';
 
 export interface WebhookTemplate {
   id: string;
@@ -53,11 +54,11 @@ export async function createWebhookTemplate(
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:webhook:templates:${userId}`);
+    await deleteCache(`webhook:templates:${userId}`);
 
     return (result as any).rows?.[0] || result;
   } catch (error) {
-    console.error('Error creating webhook template:', error);
+    logger.error('Error creating webhook template:', error);
     throw error;
   }
 }
@@ -70,7 +71,7 @@ export async function getUserTemplates(
   userId: string
 ): Promise<WebhookTemplate[]> {
   try {
-    const cacheKey = `sanliurfa:webhook:templates:${userId}`;
+    const cacheKey = `webhook:templates:${userId}`;
     const cached = await getCache(cacheKey);
     if (cached) {
       return JSON.parse(cached as string);
@@ -91,7 +92,7 @@ export async function getUserTemplates(
 
     return result.rows;
   } catch (error) {
-    console.error('Error getting webhook templates:', error);
+    logger.error('Error getting webhook templates:', error);
     throw error;
   }
 }
@@ -166,11 +167,11 @@ export async function applyTemplate(
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:webhook:templates:${userId}`);
+    await deleteCache(`webhook:templates:${userId}`);
 
     return webhookId;
   } catch (error) {
-    console.error('Error applying template:', error);
+    logger.error('Error applying template:', error);
     throw error;
   }
 }
@@ -190,11 +191,11 @@ export async function deleteTemplate(
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:webhook:templates:${userId}`);
+    await deleteCache(`webhook:templates:${userId}`);
 
     return (result.rowCount || 0) > 0;
   } catch (error) {
-    console.error('Error deleting template:', error);
+    logger.error('Error deleting template:', error);
     throw error;
   }
 }
@@ -207,7 +208,7 @@ export async function getPopularTemplates(
   limit = 10
 ): Promise<WebhookTemplate[]> {
   try {
-    const cacheKey = 'sanliurfa:webhook:templates:popular';
+    const cacheKey = 'webhook:templates:popular';
     const cached = await getCache(cacheKey);
     if (cached) {
       return JSON.parse(cached as string);
@@ -229,7 +230,7 @@ export async function getPopularTemplates(
 
     return result.rows;
   } catch (error) {
-    console.error('Error getting popular templates:', error);
+    logger.error('Error getting popular templates:', error);
     throw error;
   }
 }

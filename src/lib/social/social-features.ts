@@ -37,7 +37,7 @@ export async function getOrCreateHashtag(tagName: string): Promise<any | null> {
 
 export async function getTrendingHashtags(limit: number = 20, period: string = 'day'): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:trending:hashtags:${period}`;
+    const cacheKey = `trending:hashtags:${period}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -78,7 +78,7 @@ export async function recordHashtagUsage(hashtagId: string, userId: string, cont
       last_used_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:hashtag:${hashtagId}`);
+    await deleteCache(`hashtag:${hashtagId}`);
     return true;
   } catch (error) {
     logger.error('Failed to record hashtag usage', error instanceof Error ? error : new Error(String(error)));
@@ -105,7 +105,7 @@ export async function followUser(followerUserId: string, followingUserId: string
       logger.error('Failed to update follow stats', err instanceof Error ? err : new Error(String(err)));
     });
 
-    await deleteCache(`sanliurfa:follows:${followerUserId}`);
+    await deleteCache(`follows:${followerUserId}`);
     logger.info('User followed', { follower: followerUserId, following: followingUserId });
     return result;
   } catch (error) {
@@ -124,7 +124,7 @@ export async function unfollowUser(followerUserId: string, followingUserId: stri
     await updateFollowStats(followingUserId);
     await updateFollowStats(followerUserId);
 
-    await deleteCache(`sanliurfa:follows:${followerUserId}`);
+    await deleteCache(`follows:${followerUserId}`);
     return true;
   } catch (error) {
     logger.error('Failed to unfollow user', error instanceof Error ? error : new Error(String(error)));
@@ -193,7 +193,7 @@ async function updateFollowStats(userId: string): Promise<void> {
       [userId]
     );
 
-    await deleteCache(`sanliurfa:stats:${userId}`);
+    await deleteCache(`stats:${userId}`);
   } catch (error) {
     logger.error('Failed to update follow stats', error instanceof Error ? error : new Error(String(error)));
   }
@@ -226,7 +226,7 @@ export async function createActivity(userId: string, activityType: string, objec
       await batchInsert('activity_feeds', feedRecords);
     }
 
-    await deleteCache(`sanliurfa:feed:${userId}`);
+    await deleteCache(`feed:${userId}`);
     return result;
   } catch (error) {
     logger.error('Failed to create activity', error instanceof Error ? error : new Error(String(error)));
@@ -236,7 +236,7 @@ export async function createActivity(userId: string, activityType: string, objec
 
 export async function getUserFeed(userId: string, limit: number = 50): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:feed:${userId}`;
+    const cacheKey = `feed:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -264,7 +264,7 @@ export async function getUserFeed(userId: string, limit: number = 50): Promise<a
 
 export async function getTrendingPlaces(limit: number = 20, period: string = 'day'): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:trending:places:${period}`;
+    const cacheKey = `trending:places:${period}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {

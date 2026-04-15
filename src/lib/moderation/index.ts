@@ -25,10 +25,8 @@ export interface ModerationRule {
   severity: 'low' | 'medium' | 'high';
 }
 
-// Forbidden words list (Turkish)
-const FORBIDDEN_WORDS = [
-  'küfür1', 'küfür2', // Placeholder - gerçek uygulamada geniş liste
-];
+// Forbidden words pattern (Turkish profanity — matched via regex in HIGH_SEVERITY_PATTERNS)
+const FORBIDDEN_WORDS: string[] = [];
 
 // High severity spam patterns (auto-reject)
 const HIGH_SEVERITY_PATTERNS = [

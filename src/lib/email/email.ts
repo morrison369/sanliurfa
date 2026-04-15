@@ -3,6 +3,7 @@
  * Queue-based email sending with templates
  */
 
+import { randomBytes } from 'crypto';
 import { insert, queryMany, query, queryOne } from '../postgres';
 import { logger } from '../logger';
 
@@ -138,20 +139,24 @@ export async function markEmailFailed(emailId: string, errorMessage: string): Pr
 }
 
 /**
- * Send email via SMTP (placeholder - would use Resend or similar)
+ * Send queued email via SMTP
  */
 export async function sendEmailViaService(email: any): Promise<boolean> {
   try {
-    logger.info('Email would be sent', {
+    const { sendEmail: smtpSend } = await import('./index');
+    const result = await smtpSend({
       to: email.recipient_email,
       subject: email.subject,
-      template: email.template_type
+      html: email.body_html || email.content || '',
+      text: email.body_text,
     });
-
-    // In production, integrate with Resend, SendGrid, or SMTP
-    // For now, mark as sent immediately
-    await markBasicEmailSent(email.id);
-    return true;
+    if (result.success) {
+      await markBasicEmailSent(email.id);
+      logger.info('Email sent', { to: email.recipient_email, subject: email.subject });
+      return true;
+    }
+    logger.error('Email send failed', new Error(result.error || 'Unknown'), { to: email.recipient_email });
+    return false;
   } catch (error) {
     logger.error('Failed to send email', error instanceof Error ? error : new Error(String(error)));
     return false;
@@ -263,11 +268,18 @@ export function getSubscriptionEmailHTML(placeName: string): string {
  */
 export async function requestEmailVerification(userId: string, email: string): Promise<boolean> {
   try {
-    // Generate verification token and send email
-    const verificationToken = Math.random().toString(36).substring(2, 15);
-    const verificationLink = `https://sanliurfa.com/verify-email?token=${verificationToken}`;
+    // Generate cryptographically secure token and persist it
+    const verificationToken = randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+    await query(
+      `UPDATE users SET email_verification_token = $1, email_verification_token_expires = $2 WHERE id = $3`,
+      [verificationToken, expires.toISOString(), userId]
+    ).catch(() => null); // best-effort; column may not exist in older DBs
+
+    const appUrl = process.env.PUBLIC_APP_URL || 'https://sanliurfa.com';
+    const verificationLink = `${appUrl}/verify-email?token=${verificationToken}`;
     const html = getEmailVerificationHTML(verificationLink);
-    
+
     return await sendEmail(email, 'E-posta Doğrulama', html);
   } catch (error) {
     logger.error('Failed to request email verification', error instanceof Error ? error : new Error(String(error)));
@@ -297,9 +309,24 @@ export async function isEmailVerified(userId: string): Promise<boolean> {
  */
 export async function verifyEmailWithToken(token: string): Promise<boolean> {
   try {
-    // In production, validate token and mark email as verified
-    // For now, just return true
-    logger.info('Email verified with token', { token });
+    const result = await query(
+      `UPDATE users
+       SET email_verified = true,
+           email_verification_token = NULL,
+           email_verification_token_expires = NULL,
+           updated_at = NOW()
+       WHERE email_verification_token = $1
+         AND email_verification_token_expires > NOW()
+         AND email_verified = false`,
+      [token]
+    );
+
+    if ((result.rowCount ?? 0) === 0) {
+      logger.warn('Email verification failed — invalid or expired token');
+      return false;
+    }
+
+    logger.info('Email verified successfully');
     return true;
   } catch (error) {
     logger.error('Failed to verify email', error instanceof Error ? error : new Error(String(error)));

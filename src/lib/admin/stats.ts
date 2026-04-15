@@ -387,7 +387,7 @@ export async function getGrowthChartData(
       COALESCE(p.count, 0) as places,
       COALESCE(r.count, 0) as reviews
     FROM generate_series(
-      CURRENT_DATE - INTERVAL '${days} days',
+      CURRENT_DATE - ($1 * INTERVAL '1 day'),
       CURRENT_DATE,
       INTERVAL '1 day'
     ) d(date)
@@ -403,9 +403,7 @@ export async function getGrowthChartData(
       SELECT DATE(created_at) as date, COUNT(*) as count
       FROM reviews GROUP BY DATE(created_at)
     ) r ON r.date = DATE(d.date)
-    ORDER BY date`,
-    []
-  );
+    ORDER BY date`, [days]);
 
   return result.rows.map(row => ({
     date: row.date,

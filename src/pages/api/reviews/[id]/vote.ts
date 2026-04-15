@@ -71,7 +71,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       );
 
       // Clear cache
-      await deleteCache(`sanliurfa:rating-dist:${review.place_id}`);
+      await deleteCache(`rating-dist:${review.place_id}`);
 
       const duration = Date.now() - startTime;
       recordRequest('POST', `/api/reviews/${params.id}/vote`, HttpStatus.OK, duration);

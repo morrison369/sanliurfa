@@ -283,7 +283,7 @@ export class WebhookQueue {
     avgRetries: number;
   }> {
     try {
-      const cacheKey = 'sanliurfa:webhook:queue:stats';
+      const cacheKey = 'webhook:queue:stats';
       const cached = await getCache(cacheKey);
 
       if (cached) {

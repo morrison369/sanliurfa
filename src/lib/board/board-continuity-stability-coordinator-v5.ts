@@ -2,7 +2,7 @@
  * Phase 375: Board Continuity Stability Coordinator V5
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 export interface BoardContinuityStabilitySignalV5 {
   signalId: string;

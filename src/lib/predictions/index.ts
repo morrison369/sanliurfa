@@ -147,11 +147,9 @@ export async function analyzeVisitTrends(
       DATE(created_at) as date,
       COUNT(*) as visits
     FROM user_activities
-    WHERE created_at >= NOW() - INTERVAL '${days} days'
+    WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
     GROUP BY DATE(created_at)
-    ORDER BY date ASC`,
-    []
-  );
+    ORDER BY date ASC`, [days]);
 
   const data: TimeSeriesPoint[] = result.rows.map(r => ({
     date: new Date(r.date),

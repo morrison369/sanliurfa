@@ -5,6 +5,7 @@
 
 import { query } from '../postgres';
 import { getRedisClient } from '../cache';
+import { logger } from '../logging';
 
 export interface FeatureFlag {
   name: string;
@@ -71,7 +72,7 @@ class FeatureFlagManager {
         JSON.stringify(Object.fromEntries(this.flags))
       );
     } catch (error) {
-      console.error('Failed to load feature flags:', error);
+      logger.error('Failed to load feature flags:', error);
     }
   }
 

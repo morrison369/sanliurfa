@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Real-time Manager (SSE - Server-Sent Events)
  * Connects to /api/realtime/presence for live updates
@@ -87,19 +88,19 @@ class RealtimeManager {
           const data: RealtimeData = JSON.parse(event.data);
           this.handleMessage(data);
         } catch (error) {
-          console.error('Failed to parse SSE message:', error);
+          logger.error('Failed to parse SSE message:', error);
         }
       });
 
       this.eventSource.addEventListener('error', () => {
-        console.warn('SSE connection error, attempting reconnect...');
+        logger.warn('SSE connection error, attempting reconnect...');
         this.reconnect();
       });
 
       this.reconnectAttempts = 0;
-      console.log('Connected to real-time presence');
+      logger.info('Connected to real-time presence');
     } catch (error) {
-      console.error('Failed to connect SSE:', error);
+      logger.error('Failed to connect SSE:', error);
       this.reconnect();
     }
   }
@@ -110,7 +111,7 @@ class RealtimeManager {
   private handleMessage(data: RealtimeData): void {
     switch (data.type) {
       case 'connected':
-        console.log('Real-time connection established');
+        logger.info('Real-time connection established');
         break;
 
       case 'update':
@@ -134,7 +135,7 @@ class RealtimeManager {
         break;
 
       case 'error':
-        console.error('Real-time error:', data.message);
+        logger.error('Real-time error:', data.message);
         break;
     }
   }
@@ -144,14 +145,14 @@ class RealtimeManager {
    */
   private reconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max reconnect attempts reached, giving up');
+      logger.error('Max reconnect attempts reached, giving up');
       return;
     }
 
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
-    console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+    logger.info(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
     setTimeout(() => this.connect(), delay);
   }
 
@@ -165,7 +166,7 @@ class RealtimeManager {
         try {
           callback(data);
         } catch (error) {
-          console.error(`Error in ${event} listener:`, error);
+          logger.error(`Error in ${event} listener:`, error);
         }
       });
     }
@@ -234,19 +235,19 @@ class RealtimeManager {
           const data: RealtimeData = JSON.parse(event.data);
           this.handleMessageData(data);
         } catch (error) {
-          console.error('Failed to parse message SSE:', error);
+          logger.error('Failed to parse message SSE:', error);
         }
       });
 
       this.messageEventSource.addEventListener('error', () => {
-        console.warn('Message SSE connection error, attempting reconnect...');
+        logger.warn('Message SSE connection error, attempting reconnect...');
         this.reconnectMessages();
       });
 
       this.messageReconnectAttempts = 0;
-      console.log('Connected to real-time messages');
+      logger.info('Connected to real-time messages');
     } catch (error) {
-      console.error('Failed to connect message SSE:', error);
+      logger.error('Failed to connect message SSE:', error);
       this.reconnectMessages();
     }
   }
@@ -257,7 +258,7 @@ class RealtimeManager {
   private handleMessageData(data: RealtimeData): void {
     switch (data.type) {
       case 'connected':
-        console.log('Message real-time connection established');
+        logger.info('Message real-time connection established');
         break;
 
       case 'update':
@@ -268,7 +269,7 @@ class RealtimeManager {
         break;
 
       case 'error':
-        console.error('Message real-time error:', data.message);
+        logger.error('Message real-time error:', data.message);
         break;
     }
   }
@@ -278,14 +279,14 @@ class RealtimeManager {
    */
   private reconnectMessages(): void {
     if (this.messageReconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max message reconnect attempts reached');
+      logger.error('Max message reconnect attempts reached');
       return;
     }
 
     this.messageReconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.messageReconnectAttempts - 1);
 
-    console.log(`Reconnecting messages in ${delay}ms (attempt ${this.messageReconnectAttempts})`);
+    logger.info(`Reconnecting messages in ${delay}ms (attempt ${this.messageReconnectAttempts})`);
     setTimeout(() => this.connectToMessages(), delay);
   }
 
@@ -328,19 +329,19 @@ class RealtimeManager {
           const data: RealtimeData = JSON.parse(event.data);
           this.handleNotificationData(data);
         } catch (error) {
-          console.error('Failed to parse notification SSE:', error);
+          logger.error('Failed to parse notification SSE:', error);
         }
       });
 
       this.notificationEventSource.addEventListener('error', () => {
-        console.warn('Notification SSE connection error, attempting reconnect...');
+        logger.warn('Notification SSE connection error, attempting reconnect...');
         this.reconnectNotifications();
       });
 
       this.notificationReconnectAttempts = 0;
-      console.log('Connected to real-time notifications');
+      logger.info('Connected to real-time notifications');
     } catch (error) {
-      console.error('Failed to connect notification SSE:', error);
+      logger.error('Failed to connect notification SSE:', error);
       this.reconnectNotifications();
     }
   }
@@ -351,7 +352,7 @@ class RealtimeManager {
   private handleNotificationData(data: RealtimeData): void {
     switch (data.type) {
       case 'connected':
-        console.log('Notification real-time connection established');
+        logger.info('Notification real-time connection established');
         break;
 
       case 'update':
@@ -365,7 +366,7 @@ class RealtimeManager {
         break;
 
       case 'error':
-        console.error('Notification real-time error:', data.message);
+        logger.error('Notification real-time error:', data.message);
         break;
     }
   }
@@ -375,14 +376,14 @@ class RealtimeManager {
    */
   private reconnectNotifications(): void {
     if (this.notificationReconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max notification reconnect attempts reached');
+      logger.error('Max notification reconnect attempts reached');
       return;
     }
 
     this.notificationReconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.notificationReconnectAttempts - 1);
 
-    console.log(`Reconnecting notifications in ${delay}ms (attempt ${this.notificationReconnectAttempts})`);
+    logger.info(`Reconnecting notifications in ${delay}ms (attempt ${this.notificationReconnectAttempts})`);
     setTimeout(() => this.connectToNotifications(), delay);
   }
 
@@ -421,19 +422,19 @@ class RealtimeManager {
           const data: RealtimeData = JSON.parse(event.data);
           this.handleAnalyticsData(data);
         } catch (error) {
-          console.error('Failed to parse analytics SSE:', error);
+          logger.error('Failed to parse analytics SSE:', error);
         }
       });
 
       this.analyticsEventSource.addEventListener('error', () => {
-        console.warn('Analytics SSE connection error, attempting reconnect...');
+        logger.warn('Analytics SSE connection error, attempting reconnect...');
         this.reconnectAnalytics();
       });
 
       this.analyticsReconnectAttempts = 0;
-      console.log('Connected to real-time analytics');
+      logger.info('Connected to real-time analytics');
     } catch (error) {
-      console.error('Failed to connect analytics SSE:', error);
+      logger.error('Failed to connect analytics SSE:', error);
       this.reconnectAnalytics();
     }
   }
@@ -444,7 +445,7 @@ class RealtimeManager {
   private handleAnalyticsData(data: RealtimeData): void {
     switch (data.type) {
       case 'connected':
-        console.log('Analytics real-time connection established');
+        logger.info('Analytics real-time connection established');
         break;
 
       case 'metrics':
@@ -460,7 +461,7 @@ class RealtimeManager {
         break;
 
       case 'error':
-        console.error('Analytics real-time error:', data.message);
+        logger.error('Analytics real-time error:', data.message);
         break;
     }
   }
@@ -470,14 +471,14 @@ class RealtimeManager {
    */
   private reconnectAnalytics(): void {
     if (this.analyticsReconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max analytics reconnect attempts reached');
+      logger.error('Max analytics reconnect attempts reached');
       return;
     }
 
     this.analyticsReconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.analyticsReconnectAttempts - 1);
 
-    console.log(`Reconnecting analytics in ${delay}ms (attempt ${this.analyticsReconnectAttempts})`);
+    logger.info(`Reconnecting analytics in ${delay}ms (attempt ${this.analyticsReconnectAttempts})`);
     setTimeout(() => this.connectToAnalytics(), delay);
   }
 
@@ -521,19 +522,19 @@ class RealtimeManager {
           const data: RealtimeData = JSON.parse(event.data);
           this.handleFeedData(data);
         } catch (error) {
-          console.error('Failed to parse feed SSE:', error);
+          logger.error('Failed to parse feed SSE:', error);
         }
       });
 
       this.feedEventSource.addEventListener('error', () => {
-        console.warn('Feed SSE connection error, attempting reconnect...');
+        logger.warn('Feed SSE connection error, attempting reconnect...');
         this.reconnectFeed();
       });
 
       this.feedReconnectAttempts = 0;
-      console.log('Connected to real-time feed');
+      logger.info('Connected to real-time feed');
     } catch (error) {
-      console.error('Failed to connect feed SSE:', error);
+      logger.error('Failed to connect feed SSE:', error);
       this.reconnectFeed();
     }
   }
@@ -544,7 +545,7 @@ class RealtimeManager {
   private handleFeedData(data: RealtimeData): void {
     switch (data.type) {
       case 'connected':
-        console.log('Feed real-time connection established');
+        logger.info('Feed real-time connection established');
         break;
 
       case 'feed_update':
@@ -554,7 +555,7 @@ class RealtimeManager {
         break;
 
       case 'error':
-        console.error('Feed real-time error:', data.message);
+        logger.error('Feed real-time error:', data.message);
         break;
     }
   }
@@ -564,14 +565,14 @@ class RealtimeManager {
    */
   private reconnectFeed(): void {
     if (this.feedReconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max feed reconnect attempts reached');
+      logger.error('Max feed reconnect attempts reached');
       return;
     }
 
     this.feedReconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.feedReconnectAttempts - 1);
 
-    console.log(`Reconnecting feed in ${delay}ms (attempt ${this.feedReconnectAttempts})`);
+    logger.info(`Reconnecting feed in ${delay}ms (attempt ${this.feedReconnectAttempts})`);
     setTimeout(() => this.connectToFeed(), delay);
   }
 
@@ -594,31 +595,31 @@ class RealtimeManager {
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
-      console.log('Disconnected from real-time presence');
+      logger.info('Disconnected from real-time presence');
     }
 
     if (this.messageEventSource) {
       this.messageEventSource.close();
       this.messageEventSource = null;
-      console.log('Disconnected from real-time messages');
+      logger.info('Disconnected from real-time messages');
     }
 
     if (this.notificationEventSource) {
       this.notificationEventSource.close();
       this.notificationEventSource = null;
-      console.log('Disconnected from real-time notifications');
+      logger.info('Disconnected from real-time notifications');
     }
 
     if (this.analyticsEventSource) {
       this.analyticsEventSource.close();
       this.analyticsEventSource = null;
-      console.log('Disconnected from real-time analytics');
+      logger.info('Disconnected from real-time analytics');
     }
 
     if (this.feedEventSource) {
       this.feedEventSource.close();
       this.feedEventSource = null;
-      console.log('Disconnected from real-time feed');
+      logger.info('Disconnected from real-time feed');
     }
   }
 }

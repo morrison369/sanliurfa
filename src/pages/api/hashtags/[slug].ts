@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
 
     // Check cache
-    const cacheKey = `sanliurfa:hashtag:slug:${slug}`;
+    const cacheKey = `hashtag:slug:${slug}`;
     const cached = await getCache(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;

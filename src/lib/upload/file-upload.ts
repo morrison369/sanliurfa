@@ -4,6 +4,7 @@
  */
 
 import { generateId } from '../utils';
+import { logger } from '../logging';
 
 // Upload configuration
 const UPLOAD_CONFIG = {
@@ -53,8 +54,8 @@ interface ValidationResult {
  * Initialize upload service
  */
 export function initUploadService(): void {
-  console.log('[Upload] File upload service initialized');
-  console.log(`[Upload] Max file size: ${UPLOAD_CONFIG.maxFileSize / 1024 / 1024}MB`);
+  logger.info('[Upload] File upload service initialized');
+  logger.info(`[Upload] Max file size: ${UPLOAD_CONFIG.maxFileSize / 1024 / 1024}MB`);
 }
 
 /**
@@ -168,7 +169,7 @@ export async function uploadFile(
       ? `${url}?w=300&h=300&fit=cover`
       : undefined;
 
-    console.log('[Upload] File uploaded:', { id: uploadId, filename: uniqueFilename, size: file.size });
+    logger.info('[Upload] File uploaded:', { id: uploadId, filename: uniqueFilename, size: file.size });
 
     return {
       success: true,
@@ -183,7 +184,7 @@ export async function uploadFile(
       height,
     };
   } catch (error) {
-    console.error('[Upload] Upload failed:', error);
+    logger.error('[Upload] Upload failed:', error);
     return {
       success: false,
       id: '',
@@ -224,10 +225,10 @@ async function getImageDimensions(file: File): Promise<{ width: number; height: 
  */
 export async function deleteFile(key: string): Promise<boolean> {
   try {
-    console.log('[Upload] File deleted:', key);
+    logger.info('[Upload] File deleted:', key);
     return true;
   } catch (error) {
-    console.error('[Upload] Delete failed:', error);
+    logger.error('[Upload] Delete failed:', error);
     return false;
   }
 }

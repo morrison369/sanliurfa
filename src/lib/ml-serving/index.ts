@@ -5,6 +5,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { logger } from '../logging';
 
 export interface ModelVersion {
   id: string;
@@ -186,7 +187,7 @@ async function getProductionModelByName(name: string): Promise<ModelVersion | nu
 }
 
 async function loadModelToMemory(model: ModelVersion): Promise<void> {
-  console.log(`[ML Serving] Loading model ${model.name} v${model.version}`);
+  logger.info(`[ML Serving] Loading model ${model.name} v${model.version}`);
 }
 
 async function runInference(model: ModelVersion, input: any): Promise<any> {

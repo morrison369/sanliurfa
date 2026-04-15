@@ -1,4 +1,5 @@
 import type { Pool } from 'pg';
+import { logger } from '../logging';
 
 export interface AuditLog {
   id: string;
@@ -41,7 +42,7 @@ export async function logWebhookAction(
       ]
     );
   } catch (error) {
-    console.error('Error logging webhook action:', error);
+    logger.error('Error logging webhook action:', error);
     // Don't throw - audit logging shouldn't break the main operation
   }
 }
@@ -84,7 +85,7 @@ export async function getWebhookAuditHistory(
       total: parseInt(countRes.rows[0]?.count || '0')
     };
   } catch (error) {
-    console.error('Error getting audit history:', error);
+    logger.error('Error getting audit history:', error);
     throw error;
   }
 }
@@ -147,7 +148,7 @@ export async function getUserActivitySummary(
       recentActivity
     };
   } catch (error) {
-    console.error('Error getting activity summary:', error);
+    logger.error('Error getting activity summary:', error);
     throw error;
   }
 }
@@ -170,7 +171,7 @@ export async function clearOldAuditLogs(
 
     return result.rowCount || 0;
   } catch (error) {
-    console.error('Error clearing audit logs:', error);
+    logger.error('Error clearing audit logs:', error);
     throw error;
   }
 }

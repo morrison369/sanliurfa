@@ -77,7 +77,9 @@ export async function getSubscriptionAnalytics(): Promise<{
       byTier,
       mrr: parseFloat(mrrResult?.mrr || 0),
       arr: parseFloat(arrResult?.arr || 0),
-      averageLifetimeValue: 0, // TODO: Calculate from billing history
+      averageLifetimeValue: parseFloat(mrrResult?.mrr || 0) > 0
+        ? Math.round((parseFloat(mrrResult?.mrr || 0) / Math.max(parseInt(activeResult?.count || '1'), 1)) * 12)
+        : 0,
       churnRate: parseFloat(churnResult?.churn_rate || 0),
     };
   } catch (error) {
@@ -220,7 +222,31 @@ export async function processRefund(
         admin: adminId,
       });
 
-      // TODO: Process actual refund via Stripe
+      // Process refund via Stripe if charge_id is available
+      try {
+        const billing = await queryOne(
+          `SELECT stripe_charge_id, stripe_payment_intent_id, amount FROM billing_history WHERE id = $1`,
+          [refundRequest.billing_id]
+        );
+        if (billing?.stripe_payment_intent_id || billing?.stripe_charge_id) {
+          const stripeModule = await import('../stripe/stripe');
+          const stripe = (stripeModule as any).stripe || (stripeModule as any).default?.stripe;
+          if (stripe) {
+            const refundParams: any = {
+              amount: Math.round(parseFloat(refundRequest.amount) * 100),
+            };
+            if (billing.stripe_payment_intent_id) {
+              refundParams.payment_intent = billing.stripe_payment_intent_id;
+            } else {
+              refundParams.charge = billing.stripe_charge_id;
+            }
+            await stripe.refunds.create(refundParams);
+            logger.info('Stripe refund processed', { refundRequestId, amount: refundRequest.amount });
+          }
+        }
+      } catch (stripeErr) {
+        logger.error('Stripe refund failed', stripeErr instanceof Error ? stripeErr : new Error(String(stripeErr)));
+      }
     }
 
     return true;

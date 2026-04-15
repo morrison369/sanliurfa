@@ -252,7 +252,7 @@ async function getLineChartData(config: WidgetConfig, context?: any): Promise<an
   const result = await query(`
     SELECT DATE(created_at) as date, COUNT(*) as value
     FROM ${config.dataSource}
-    WHERE created_at >= NOW() - INTERVAL '${days} days'
+    WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
     GROUP BY DATE(created_at)
     ORDER BY date ASC
   `);
@@ -314,7 +314,7 @@ async function getTableData(config: WidgetConfig, context?: any): Promise<any> {
     SELECT * FROM ${config.dataSource}
     ORDER BY created_at DESC
     LIMIT $1
-  `, [limit]);
+  `, [limit, days]);
 
   return result.rows;
 }

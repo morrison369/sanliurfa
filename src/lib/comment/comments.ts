@@ -46,7 +46,7 @@ export async function createComment(
     });
 
     // Clear cache
-    await deleteCache(`sanliurfa:comments:${targetType}:${targetId}`);
+    await deleteCache(`comments:${targetType}:${targetId}`);
 
     // Get user info
     const user = await queryOne('SELECT full_name, avatar FROM users WHERE id = $1', [userId]);
@@ -85,7 +85,7 @@ export async function getComments(
   userId?: string,
   limit: number = 50
 ): Promise<Comment[]> {
-  const cacheKey = `sanliurfa:comments:${targetType}:${targetId}:${limit}`;
+  const cacheKey = `comments:${targetType}:${targetId}:${limit}`;
 
   try {
     // Try cache first
@@ -183,7 +183,7 @@ export async function voteOnComment(
       );
 
       // Clear cache
-      await deleteCache(`sanliurfa:comments:${comment.target_type}:${comment.target_id}`);
+      await deleteCache(`comments:${comment.target_type}:${comment.target_id}`);
     }
   } catch (error) {
     // Duplicate vote - ignore (user already voted)
@@ -224,7 +224,7 @@ export async function updateComment(
     );
 
     // Clear cache
-    await deleteCache(`sanliurfa:comments:${comment.target_type}:${comment.target_id}`);
+    await deleteCache(`comments:${comment.target_type}:${comment.target_id}`);
 
     const user = await queryOne('SELECT full_name, avatar FROM users WHERE id = $1', [userId]);
 
@@ -271,7 +271,7 @@ export async function deleteComment(commentId: string, userId: string): Promise<
     await query('UPDATE comments SET deleted_at = NOW() WHERE id = $1', [commentId]);
 
     // Clear cache
-    await deleteCache(`sanliurfa:comments:${comment.target_type}:${comment.target_id}`);
+    await deleteCache(`comments:${comment.target_type}:${comment.target_id}`);
   } catch (error) {
     logger.error('Failed to delete comment', error instanceof Error ? error : new Error(String(error)), {
       commentId,

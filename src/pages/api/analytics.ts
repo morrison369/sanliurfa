@@ -1,10 +1,11 @@
 import type { APIRoute } from 'astro';
 import { queryOne, queryMany } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
 
 export const GET: APIRoute = async ({ locals }) => {
   try {
     // @ts-expect-error - isAdmin property check
-    if (!locals.user?.isAdmin) {
+    if (!locals.isAdmin) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 });
     }
 
@@ -44,7 +45,7 @@ export const GET: APIRoute = async ({ locals }) => {
       }
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
-    console.error('Analytics error', error);
+    logger.error('Analytics error', error);
     return new Response(JSON.stringify({ error: 'Failed' }), { status: 500 });
   }
 };

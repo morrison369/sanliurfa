@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
+import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async (context) => {
   try {
@@ -131,7 +132,7 @@ export const GET: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Admin dashboard error:', error);
+    logger.error('Admin dashboard error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

@@ -18,7 +18,7 @@ export async function createCohort(userId: string, cohortName: string, cohortKey
       is_active: true
     });
 
-    await deleteCache('sanliurfa:cohorts:list');
+    await deleteCache('cohorts:list');
     logger.info('Cohort created', { cohortId: result.id, cohortName });
     return result;
   } catch (error) {
@@ -29,7 +29,7 @@ export async function createCohort(userId: string, cohortName: string, cohortKey
 
 export async function getCohortById(cohortId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:cohort:${cohortId}`;
+    const cacheKey = `cohort:${cohortId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -54,7 +54,7 @@ export async function getCohortById(cohortId: string): Promise<any | null> {
 
 export async function listCohorts(limit: number = 50): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:cohorts:list';
+    const cacheKey = 'cohorts:list';
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -92,7 +92,7 @@ export async function addUserToCohort(cohortId: string, userId: string): Promise
       member_count: parseInt(count?.count || '0')
     });
 
-    await deleteCache(`sanliurfa:cohort:${cohortId}`);
+    await deleteCache(`cohort:${cohortId}`);
     return true;
   } catch (error) {
     logger.error('Failed to add user to cohort', error instanceof Error ? error : new Error(String(error)));
@@ -114,7 +114,7 @@ export async function getCohortMembers(cohortId: string, limit: number = 100): P
 
 export async function getRetentionCurve(cohortId: string): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:retention:${cohortId}`;
+    const cacheKey = `retention:${cohortId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -162,7 +162,7 @@ export async function calculateRetention(cohortId: string, weekNumber: number): 
       retention_rate: retentionRate
     });
 
-    await deleteCache(`sanliurfa:retention:${cohortId}`);
+    await deleteCache(`retention:${cohortId}`);
     logger.info('Retention calculated', { cohortId, week: weekNumber, rate: retentionRate });
     return true;
   } catch (error) {
@@ -173,7 +173,7 @@ export async function calculateRetention(cohortId: string, weekNumber: number): 
 
 export async function getCohortMetrics(cohortId: string, days: number = 30): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:cohort:metrics:${cohortId}`;
+    const cacheKey = `cohort:metrics:${cohortId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {

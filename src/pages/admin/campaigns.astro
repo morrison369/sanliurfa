@@ -9,7 +9,7 @@ import { getAllCampaigns } from '../../lib/email/email-campaigns';
 import { getSequence, getSequenceSteps } from '../../lib/email-automation';
 
 // Check auth
-if (!Astro.locals.user?.isAdmin) {
+if (!Astro.locals.isAdmin) {
   return Astro.redirect('/giris');
 }
 

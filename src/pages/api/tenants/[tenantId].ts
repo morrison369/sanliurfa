@@ -169,9 +169,9 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
         updated_at: new Date()
       });
 
-      await deleteCache(`sanliurfa:tenant:slug:${tenant.slug}`);
+      await deleteCache(`tenant:slug:${tenant.slug}`);
       if (tenant.custom_domain) {
-        await deleteCache(`sanliurfa:tenant:domain:${tenant.custom_domain}`);
+        await deleteCache(`tenant:domain:${tenant.custom_domain}`);
       }
     }
 

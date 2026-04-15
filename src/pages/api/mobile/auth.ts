@@ -1,31 +1,24 @@
-// @ts-nocheck
 /**
  * Mobile App Authentication API
- * JWT-based auth with refresh tokens
+ * Real bcrypt password verification + HMAC-SHA256 JWT + Redis refresh tokens
  */
 
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../lib/postgres';
-import { generateId } from '../../../lib/utils';
+import { comparePassword, createToken } from '../../../lib/auth';
+import { setCache, getCache, deleteCache } from '../../../lib/cache';
+import { logger } from '../../../lib/logging';
 
-const JWT_EXPIRY = '7d';
-const REFRESH_TOKEN_EXPIRY = 30 * 24 * 60 * 60 * 1000;
+const REFRESH_TOKEN_TTL = 30 * 24 * 60 * 60; // 30 days in seconds
 
-// In-memory refresh token store
-const refreshTokens: Map<string, { userId: string; expires: number }> = new Map();
-
-// Simple JWT implementation for mobile
-function generateToken(payload: any, expiresIn: string): string {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const body = btoa(JSON.stringify({ ...payload, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 }));
-  const signature = btoa('mock-signature');
-  return `${header}.${body}.${signature}`;
+function refreshTokenKey(token: string) {
+  return `mobile:refresh:${token}`;
 }
 
 // POST: Login
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { email, password, deviceId } = await request.json();
+    const { email, password } = await request.json();
 
     if (!email || !password) {
       return new Response(
@@ -34,43 +27,54 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Find user (mock for now)
-    const user = {
-      id: 'user_123',
-      email,
-      name: 'Test User',
-      role: 'user',
-      is_verified: true,
-    };
+    const user = await queryOne(
+      `SELECT id, email, full_name, role, password_hash, is_active, is_verified
+       FROM users WHERE email = $1`,
+      [email.toLowerCase().trim()]
+    );
 
-    // Generate tokens
-    const accessToken = generateToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-    }, JWT_EXPIRY);
+    if (!user || !user.is_active) {
+      return new Response(
+        JSON.stringify({ error: 'Geçersiz email veya şifre' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-    const refreshToken = generateToken({
-      userId: user.id,
-      deviceId: deviceId || 'unknown',
-    }, '30d');
+    const valid = await comparePassword(password, user.password_hash);
+    if (!valid) {
+      return new Response(
+        JSON.stringify({ error: 'Geçersiz email veya şifre' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-    refreshTokens.set(refreshToken, {
-      userId: user.id,
-      expires: Date.now() + REFRESH_TOKEN_EXPIRY,
-    });
+    const accessToken = createToken({ userId: user.id, email: user.email, role: user.role });
+
+    const { randomBytes } = await import('crypto');
+    const refreshToken = randomBytes(32).toString('hex');
+    await setCache(
+      refreshTokenKey(refreshToken),
+      { userId: user.id, email: user.email, role: user.role },
+      REFRESH_TOKEN_TTL
+    );
 
     return new Response(
       JSON.stringify({
         success: true,
         accessToken,
         refreshToken,
-        user,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.full_name,
+          role: user.role,
+          isVerified: user.is_verified,
+        },
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Mobile login error:', error);
+    logger.error('Mobile login error:', error);
     return new Response(
       JSON.stringify({ error: 'Giriş yapılırken bir hata oluştu' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -78,69 +82,79 @@ export const POST: APIRoute = async ({ request }) => {
   }
 };
 
-// PUT: Refresh token
+// PUT: Refresh access token
 export const PUT: APIRoute = async ({ request }) => {
   try {
     const { refreshToken } = await request.json();
 
     if (!refreshToken) {
       return new Response(
-        JSON.stringify({ error: 'Refresh token required' }),
+        JSON.stringify({ error: 'Refresh token zorunludur' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const tokenData = refreshTokens.get(refreshToken);
-    if (!tokenData || tokenData.expires < Date.now()) {
+    const data = await getCache<{ userId: string; email: string; role: string }>(
+      refreshTokenKey(refreshToken)
+    );
+    if (!data) {
       return new Response(
-        JSON.stringify({ error: 'Invalid or expired refresh token' }),
+        JSON.stringify({ error: 'Geçersiz veya süresi dolmuş refresh token' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const user = {
-      id: tokenData.userId,
-      email: 'user@example.com',
-      name: 'Test User',
-      role: 'user',
-    };
+    const user = await queryOne(
+      `SELECT id, email, full_name, role, is_active FROM users WHERE id = $1`,
+      [data.userId]
+    );
 
-    const accessToken = generateToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-    }, JWT_EXPIRY);
+    if (!user || !user.is_active) {
+      await deleteCache(refreshTokenKey(refreshToken));
+      return new Response(
+        JSON.stringify({ error: 'Kullanıcı bulunamadı' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const accessToken = createToken({ userId: user.id, email: user.email, role: user.role });
 
     return new Response(
       JSON.stringify({
         success: true,
         accessToken,
-        user,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.full_name,
+          role: user.role,
+        },
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
+    logger.error('Token refresh error:', error);
     return new Response(
-      JSON.stringify({ error: 'Token refresh failed' }),
+      JSON.stringify({ error: 'Token yenileme başarısız' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 };
 
-// DELETE: Logout
+// DELETE: Logout (revoke refresh token)
 export const DELETE: APIRoute = async ({ request }) => {
   try {
     const { refreshToken } = await request.json();
     if (refreshToken) {
-      refreshTokens.delete(refreshToken);
+      await deleteCache(refreshTokenKey(refreshToken));
     }
     return new Response(
-      JSON.stringify({ success: true, message: 'Logged out successfully' }),
+      JSON.stringify({ success: true, message: 'Çıkış yapıldı' }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     return new Response(
-      JSON.stringify({ error: 'Logout failed' }),
+      JSON.stringify({ error: 'Çıkış yapılırken hata oluştu' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

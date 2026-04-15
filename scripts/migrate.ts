@@ -9,9 +9,12 @@
  */
 
 import { readdir } from 'fs/promises';
-import { join, resolve } from 'path';
+import { join, resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { pool } from '../src/lib/postgres';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const MIGRATIONS_DIR = resolve(__dirname, '../src/migrations');
 
 /**

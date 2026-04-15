@@ -1,36 +1,31 @@
 import type { APIRoute } from 'astro';
 import { getSimilarItems } from '../../../lib/ai/recommendations';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { recordRequest } from '../../../lib/metrics';
+import { logger } from '../../../lib/logging';
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, url }) => {
+  const requestId = getRequestId({ request } as any);
+  const startTime = Date.now();
+
   try {
-    const url = new URL(request.url);
     const itemId = url.searchParams.get('id');
     const itemType = url.searchParams.get('type') as 'place' | 'blog' | 'event' || 'place';
-    const limit = parseInt(url.searchParams.get('limit') || '5');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '5'), 20);
 
     if (!itemId) {
-      return new Response(JSON.stringify({ error: 'Missing item id' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      recordRequest('GET', '/api/ai/similar', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'id parametresi gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const similar = await getSimilarItems(itemId, itemType, limit);
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      data: similar,
-      count: similar.length,
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    recordRequest('GET', '/api/ai/similar', HttpStatus.OK, Date.now() - startTime);
+    return apiResponse({ similar, count: similar.length }, HttpStatus.OK, requestId);
 
   } catch (error) {
-    console.error('Similar items error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    recordRequest('GET', '/api/ai/similar', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
+    logger.error('Similar items error', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

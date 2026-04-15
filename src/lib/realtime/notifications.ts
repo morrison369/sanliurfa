@@ -5,6 +5,7 @@
 
 import { query } from '../postgres';
 import { getCache, setCache } from '../cache';
+import { logger } from '../logging';
 
 export interface Notification {
   id: string;
@@ -98,7 +99,7 @@ async function sendUnreadNotifications(
       controller.enqueue(new TextEncoder().encode(data));
     }
   } catch (error) {
-    console.error('Error sending unread notifications:', error);
+    logger.error('Error sending unread notifications:', error);
   }
 }
 

@@ -109,7 +109,7 @@ export const DELETE: APIRoute = async ({ request, params, locals }) => {
     }
 
     await update('content_items', { id: contentId }, { deleted_at: new Date() });
-    await deleteCache(`sanliurfa:content:${contentId}`);
+    await deleteCache(`content:${contentId}`);
 
     const duration = Date.now() - startTime;
     recordRequest('DELETE', `/api/content/${contentId}`, HttpStatus.OK, duration);

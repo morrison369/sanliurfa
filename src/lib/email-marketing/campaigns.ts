@@ -6,6 +6,7 @@
 import { sendEmailMessage, type EmailData } from '../email/email-service';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { logger } from '../logging';
 
 // Campaign types
 export type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
@@ -505,7 +506,7 @@ async function processCampaignQueue(campaignId: string): Promise<void> {
 
         processed++;
       } catch (error) {
-        console.error(`[EmailCampaign] Failed to send to ${recipient.email}:`, error);
+        logger.error(`[EmailCampaign] Failed to send to ${recipient.email}:`, error);
         
         await db.execute(sql`
           UPDATE email_campaign_recipients

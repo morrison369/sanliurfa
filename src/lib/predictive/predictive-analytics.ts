@@ -9,7 +9,7 @@ import { getCache, setCache, deleteCache } from '../cache';
 
 export async function predictUserChurn(userId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:prediction:churn:${userId}`;
+    const cacheKey = `prediction:churn:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -188,7 +188,7 @@ export async function detectAnomalies(metricName: string, threshold: number = 2.
 
 export async function getRecommendations(userId: string): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:recommendations:${userId}`;
+    const cacheKey = `recommendations:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -224,7 +224,7 @@ export async function recordRecommendationFeedback(recommendationId: string, cli
 
 export async function getHighRiskUsers(limit: number = 50): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:users:high_risk';
+    const cacheKey = 'users:high_risk';
     let cached = await getCache(cacheKey);
 
     if (cached) {

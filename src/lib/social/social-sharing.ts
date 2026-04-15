@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Sosyal Ağlara Paylaşım
  * Twitter, Facebook, WhatsApp, LinkedIn, Pinterest
@@ -118,6 +119,6 @@ export async function trackShare(postId: number, platform: string): Promise<void
       body: JSON.stringify({ postId, platform })
     });
   } catch (err) {
-    console.error('Paylaşım takibi başarısız:', err);
+    logger.error('Paylaşım takibi başarısız:', err);
   }
 }

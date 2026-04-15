@@ -53,7 +53,7 @@ export interface PromotionMetrics {
  */
 export async function getPlaceBusinessAnalytics(placeId: string, days: number = 30): Promise<PlaceAnalytics | null> {
   try {
-    const cacheKey = `sanliurfa:analytics:place:${placeId}:${days}`;
+    const cacheKey = `analytics:place:${placeId}:${days}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -71,9 +71,7 @@ export async function getPlaceBusinessAnalytics(placeId: string, days: number = 
 
     const reviewStats = await queryOne(
       `SELECT COUNT(*) as review_count, AVG(rating) as avg_rating
-       FROM reviews WHERE place_id = $1 AND created_at > NOW() - INTERVAL '${days} days'`,
-      [placeId]
-    );
+       FROM reviews WHERE place_id = $1 AND created_at > NOW() - ($2 * INTERVAL '1 day')`, [placeId, days]);
 
     const ratingDist = await queryMany(
       `SELECT CAST(rating as INTEGER) as rating, COUNT(*) as count
@@ -288,7 +286,7 @@ export async function recordAnalyticsSnapshot(placeId: string, metrics: any): Pr
     });
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:analytics:place:${placeId}:30`);
+    await deleteCache(`analytics:place:${placeId}:30`);
 
     logger.info('Analytics snapshot recorded', { placeId });
     return true;
@@ -338,7 +336,7 @@ export async function generateAnalyticsReport(placeId: string, startDate: string
  */
 export async function getPlaceDailyMetrics(placeId: string, days: number = 30): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:metrics:daily:${placeId}:${days}`;
+    const cacheKey = `metrics:daily:${placeId}:${days}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -377,7 +375,7 @@ export async function getPlaceDailyMetrics(placeId: string, days: number = 30): 
  */
 export async function getDashboardOverview(placeId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:dashboard:overview:${placeId}`;
+    const cacheKey = `dashboard:overview:${placeId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {

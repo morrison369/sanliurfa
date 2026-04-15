@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Redis client singleton with connection management
  */
@@ -24,20 +25,20 @@ export function getRedisClient(): any {
     redisClient = redis.createClient({ url });
 
     redisClient.on('error', (err: Error) => {
-      console.error('Redis error:', err);
+      logger.error('Redis error:', err);
     });
 
     redisClient.on('connect', () => {
-      console.log('[Redis] Connected');
+      logger.info('[Redis] Connected');
     });
 
     redisClient.on('ready', () => {
-      console.log('[Redis] Ready');
+      logger.info('[Redis] Ready');
     });
 
     return redisClient;
   } catch (error) {
-    console.error('[Redis] Failed to create client:', error);
+    logger.error('[Redis] Failed to create client:', error);
     return null;
   }
 }
@@ -51,9 +52,9 @@ export async function initializeRedis(): Promise<void> {
 
   try {
     await client.connect();
-    console.log('[Redis] Initialized successfully');
+    logger.info('[Redis] Initialized successfully');
   } catch (error) {
-    console.error('[Redis] Initialization failed:', error);
+    logger.error('[Redis] Initialization failed:', error);
   }
 }
 
@@ -65,9 +66,9 @@ export async function closeRedis(): Promise<void> {
     try {
       await redisClient.quit();
       redisClient = null;
-      console.log('[Redis] Connection closed');
+      logger.info('[Redis] Connection closed');
     } catch (error) {
-      console.error('[Redis] Close failed:', error);
+      logger.error('[Redis] Close failed:', error);
     }
   }
 }

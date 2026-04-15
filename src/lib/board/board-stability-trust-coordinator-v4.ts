@@ -2,7 +2,7 @@
  * Phase 369: Board Stability Trust Coordinator V4
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 export interface BoardStabilityTrustSignalV4 {
   signalId: string;

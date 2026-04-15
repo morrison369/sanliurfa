@@ -4,6 +4,7 @@
  */
 
 import { query } from '../postgres';
+import { logger } from '../logging';
 
 export type ExportFormat = 'json' | 'csv' | 'xlsx';
 
@@ -115,7 +116,7 @@ async function convertToExcel(rows: any[], sheetName: string): Promise<Buffer> {
     
     return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
   } catch (error) {
-    console.error('Excel export error:', error);
+    logger.error('Excel export error:', error);
     // Fallback to CSV
     return Buffer.from(convertToCSV(rows));
   }

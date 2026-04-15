@@ -8,7 +8,7 @@
 import webpush from 'web-push';
 import { pool } from '../postgres';
 import { logger } from '../logger';
-import { prefixKey, getCache, setCache, deleteCache } from '../cache';
+import { getCache, setCache, deleteCache } from '../cache';
 
 // VAPID keys from environment
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
@@ -45,7 +45,7 @@ export async function subscribeUser(
     );
 
     // Clear user subscriptions cache
-    await deleteCache(prefixKey(`push:subscriptions:${userId}`));
+    await deleteCache(`push:subscriptions:${userId}`);
 
     logger.info('Push subscription added', { userId, endpoint: subscription.endpoint });
     return true;
@@ -76,7 +76,7 @@ export async function unsubscribeUser(
     await pool.query(query, params);
 
     if (userId) {
-      await deleteCache(prefixKey(`push:subscriptions:${userId}`));
+      await deleteCache(`push:subscriptions:${userId}`);
     }
 
     logger.info('Push subscription removed', { endpoint, userId });
@@ -92,7 +92,7 @@ export async function unsubscribeUser(
  */
 export async function getUserSubscriptions(userId: string): Promise<PushSubscriptionData[]> {
   try {
-    const cacheKey = prefixKey(`push:subscriptions:${userId}`);
+    const cacheKey = `push:subscriptions:${userId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {

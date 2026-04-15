@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
+import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async (context) => {
   try {
@@ -69,7 +70,7 @@ export const GET: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Admin places error:', error);
+    logger.error('Admin places error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -147,7 +148,7 @@ export const PUT: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Bulk update places error:', error);
+    logger.error('Bulk update places error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

@@ -140,8 +140,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
 
     // Invalidate caches
-    await deleteCache(`sanliurfa:reviews:${placeId}`);
-    await deleteCache(`sanliurfa:places:${placeId}`);
+    await deleteCache(`reviews:${placeId}`);
+    await deleteCache(`places:${placeId}`);
 
     recordRequest('POST', '/api/reviews/post', HttpStatus.CREATED, Date.now() - startTime);
     logger.logMutation('create', 'reviews', review.id, locals.user.id);

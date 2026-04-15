@@ -3,7 +3,8 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getBackupConfigs, updateBackupConfig, simulateBackup } from '../../../../lib/deployment';
+import { getBackupConfigs, updateBackupConfig } from '../../../../lib/deployment';
+import { runBackup } from '../../../../lib/backup';
 import { validateWithSchema } from '../../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
@@ -13,7 +14,7 @@ const updateSchema = {
   enabled: { type: 'boolean' as const, required: false },
   schedule: { type: 'string' as const, required: false, pattern: '^(hourly|daily|weekly)$' },
   retention_days: { type: 'number' as const, required: false, min: 1, max: 365 },
-  destination: { type: 'string' as const, required: false, pattern: '^(local|s3|gcs)$' }
+  destination: { type: 'string' as const, required: false, pattern: '^local$' }
 };
 
 // GET backup configs
@@ -118,7 +119,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       return apiError(ErrorCode.INVALID_INPUT, 'Backup ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
-    const result = simulateBackup(id);
+    const result = await runBackup(id);
 
     if (result.status === 'failed') {
       recordRequest('POST', '/api/admin/deployment/backup', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
@@ -127,7 +128,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/deployment/backup', HttpStatus.OK, duration);
-    logger.info('Backup triggered', { backupId: id, size: result.size_bytes, duration: result.duration_seconds });
+    logger.info('Backup triggered', { backupId: id, size: result.size, duration: result.duration });
 
     return apiResponse({ success: true, data: result }, HttpStatus.OK, requestId);
   } catch (error) {

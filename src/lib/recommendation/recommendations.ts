@@ -1,9 +1,10 @@
 /**
- * AI-Powered Recommendation Engine
- * Placeholder implementation
- * 
- * Note: Full implementation available with ML models
+ * Recommendation Engine
+ * Real PostgreSQL-backed recommendations based on place popularity, ratings, and user history.
  */
+
+import { pool } from '../postgres';
+import { logger } from '../logger';
 
 export interface Recommendation {
   placeId: string;
@@ -22,31 +23,116 @@ export interface UserBehavior {
 
 class RecommendationEngine {
   /**
-   * Get personalized recommendations for a user
+   * Get personalized recommendations for a user.
+   * Returns places the user hasn't visited, ranked by category affinity and popularity.
    */
   async getRecommendationsForUser(userId: string, limit: number = 10): Promise<Recommendation[]> {
-    // Placeholder: Return popular items
-    console.log(`Getting recommendations for user ${userId}`);
-    return [
-      { placeId: '1', score: 0.95, reason: 'Popüler' },
-      { placeId: '2', score: 0.90, reason: 'Yüksek puanlı' },
-      { placeId: '3', score: 0.85, reason: 'Yakınınızda' },
-    ].slice(0, limit);
+    try {
+      // Get places the user has already reviewed or favorited
+      const seen = await pool.query(
+        `SELECT DISTINCT place_id::text FROM reviews WHERE user_id = $1
+         UNION
+         SELECT DISTINCT place_id::text FROM favorites WHERE user_id = $1`,
+        [userId]
+      );
+      const seenIds: string[] = seen.rows.map((r: any) => r.place_id);
+
+      // Find categories the user engages with most
+      const topCategories = await pool.query(
+        `SELECT p.category_id, COUNT(*) as cnt
+         FROM reviews r
+         JOIN places p ON r.place_id = p.id
+         WHERE r.user_id = $1
+         GROUP BY p.category_id
+         ORDER BY cnt DESC
+         LIMIT 3`,
+        [userId]
+      );
+      const catIds: string[] = topCategories.rows.map((r: any) => r.category_id).filter(Boolean);
+
+      // Base query: highly-rated places not yet seen by this user
+      let query: string;
+      let params: any[];
+
+      if (catIds.length > 0 && seenIds.length > 0) {
+        query = `SELECT id::text as place_id,
+                   COALESCE(rating, 0) * 0.6 + COALESCE(review_count, 0)::float / 100.0 * 0.4 as score,
+                   CASE WHEN category_id = ANY($3::uuid[]) THEN 'İlginizi çekebilir' ELSE 'Popüler' END as reason
+                 FROM places
+                 WHERE is_active = true
+                   AND id != ALL($1::uuid[])
+                 ORDER BY (category_id = ANY($3::uuid[])) DESC, score DESC
+                 LIMIT $2`;
+        params = [seenIds, limit, catIds];
+      } else if (seenIds.length > 0) {
+        query = `SELECT id::text as place_id,
+                   COALESCE(rating, 0) * 0.6 + COALESCE(review_count, 0)::float / 100.0 * 0.4 as score,
+                   'Popüler' as reason
+                 FROM places
+                 WHERE is_active = true AND id != ALL($1::uuid[])
+                 ORDER BY score DESC
+                 LIMIT $2`;
+        params = [seenIds, limit];
+      } else {
+        query = `SELECT id::text as place_id,
+                   COALESCE(rating, 0) * 0.6 + COALESCE(review_count, 0)::float / 100.0 * 0.4 as score,
+                   'Popüler' as reason
+                 FROM places
+                 WHERE is_active = true
+                 ORDER BY score DESC
+                 LIMIT $1`;
+        params = [limit];
+      }
+
+      const result = await pool.query(query, params);
+      return result.rows.map((r: any) => ({
+        placeId: r.place_id,
+        score: parseFloat(r.score) || 0,
+        reason: r.reason
+      }));
+    } catch (error) {
+      logger.error('getRecommendationsForUser failed', error instanceof Error ? error : new Error(String(error)));
+      return [];
+    }
   }
 
   /**
-   * Get similar places to a given place
+   * Get similar places based on same category and district.
    */
   async getSimilarPlaces(placeId: string, limit: number = 5): Promise<Recommendation[]> {
-    console.log(`Getting similar places for ${placeId}`);
-    return [
-      { placeId: '4', score: 0.92, reason: 'Benzer kategori' },
-      { placeId: '5', score: 0.88, reason: 'Benzer özellikler' },
-    ].slice(0, limit);
+    try {
+      const base = await pool.query(
+        `SELECT category_id, district_id FROM places WHERE id = $1`,
+        [placeId]
+      );
+      if (!base.rows[0]) return [];
+
+      const { category_id, district_id } = base.rows[0];
+
+      const result = await pool.query(
+        `SELECT id::text as place_id,
+           COALESCE(rating, 0) as score,
+           CASE WHEN district_id = $3 THEN 'Aynı bölge' ELSE 'Benzer kategori' END as reason
+         FROM places
+         WHERE id != $1 AND category_id = $2 AND is_active = true
+         ORDER BY (district_id = $3) DESC, rating DESC
+         LIMIT $4`,
+        [placeId, category_id, district_id, limit]
+      );
+
+      return result.rows.map((r: any) => ({
+        placeId: r.place_id,
+        score: parseFloat(r.score) || 0,
+        reason: r.reason
+      }));
+    } catch (error) {
+      logger.error('getSimilarPlaces failed', error instanceof Error ? error : new Error(String(error)));
+      return [];
+    }
   }
 
   /**
-   * Record user interaction for learning
+   * Record user interaction for future recommendations.
    */
   async recordInteraction(
     userId: string,
@@ -54,24 +140,38 @@ class RecommendationEngine {
     action: 'view' | 'like' | 'review' | 'book',
     metadata?: Record<string, any>
   ): Promise<void> {
-    console.log(`Recording interaction: ${userId} ${action} ${placeId}`);
+    try {
+      await pool.query(
+        `INSERT INTO user_activity (user_id, entity_type, entity_id, action, metadata, created_at)
+         VALUES ($1, 'place', $2, $3, $4, NOW())
+         ON CONFLICT DO NOTHING`,
+        [userId, placeId, action, metadata ? JSON.stringify(metadata) : null]
+      );
+    } catch (error) {
+      logger.error('recordInteraction failed', error instanceof Error ? error : new Error(String(error)));
+    }
   }
 }
 
 // Singleton
 export const recommendationEngine = new RecommendationEngine();
 
-// Helper functions for API compatibility
 export async function getRecommendationsForUser(userId: string, limit: number = 10): Promise<Recommendation[]> {
   return recommendationEngine.getRecommendationsForUser(userId, limit);
 }
 
 export async function recordRecommendationClick(recommendationId: string): Promise<void> {
-  console.log(`Recording click for recommendation ${recommendationId}`);
+  try {
+    await pool.query(
+      `UPDATE user_recommendations SET clicked = true, clicked_at = NOW() WHERE id = $1`,
+      [recommendationId]
+    );
+  } catch {
+    // Non-critical
+  }
 }
 
 export async function generateRecommendations(userId: string): Promise<void> {
-  console.log(`Generating recommendations for user ${userId}`);
   await recommendationEngine.getRecommendationsForUser(userId);
 }
 
@@ -88,12 +188,26 @@ export async function getSimilarPlaces(placeId: string, limit: number = 5): Prom
 }
 
 export async function getTrendingPlaces(limit: number = 10): Promise<Recommendation[]> {
-  // Placeholder: Return trending items
-  return [
-    { placeId: '1', score: 0.95, reason: 'Trend' },
-    { placeId: '2', score: 0.90, reason: 'Popüler' },
-    { placeId: '3', score: 0.85, reason: 'Yeni' },
-  ].slice(0, limit);
+  try {
+    const result = await pool.query(
+      `SELECT id::text as place_id,
+         COALESCE(rating, 0) as score,
+         'Trend' as reason
+       FROM places
+       WHERE is_active = true
+       ORDER BY review_count DESC, rating DESC
+       LIMIT $1`,
+      [limit]
+    );
+    return result.rows.map((r: any) => ({
+      placeId: r.place_id,
+      score: parseFloat(r.score) || 0,
+      reason: r.reason
+    }));
+  } catch (error) {
+    logger.error('getTrendingPlaces failed', error instanceof Error ? error : new Error(String(error)));
+    return [];
+  }
 }
 
 export async function getPersonalizedRecommendations(userId: string, limit: number = 10): Promise<Recommendation[]> {

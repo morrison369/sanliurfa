@@ -1,6 +1,7 @@
 // API: Çıkış yap (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { signOut } from '../../../lib/auth';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ cookies }) => {
   try {
@@ -21,7 +22,7 @@ export const POST: APIRoute = async ({ cookies }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {
-    console.error('Logout error:', err);
+    logger.error('Logout error:', err);
     return new Response(
       JSON.stringify({ error: 'Çıkış işlemi sırasında bir hata oluştu' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

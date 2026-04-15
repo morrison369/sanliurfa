@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
+import { sendEmail } from '../../../lib/email';
+import { logger } from '../../../lib/logging';
 
 // Rezervasyon detayı görüntüle
 export const GET: APIRoute = async (context) => {
@@ -48,7 +50,7 @@ export const GET: APIRoute = async (context) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('Reservation detail error:', error);
+    logger.error('Reservation detail error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -151,7 +153,29 @@ export const PUT: APIRoute = async (context) => {
 
     const updatedReservation = updateResult.rows[0];
 
-    // TODO: Müşteriye durum güncellemesi emaili gönder
+    // Müşteriye durum güncellemesi emaili gönder
+    const r = updatedReservation;
+    if (r.customer_email && r.status) {
+      const statusLabels: Record<string, string> = {
+        confirmed: 'Onaylandı',
+        cancelled: 'İptal Edildi',
+        completed: 'Tamamlandı',
+        rejected: 'Reddedildi',
+      };
+      const label = statusLabels[r.status];
+      if (label) {
+        await sendEmail({
+          to: r.customer_email,
+          subject: `Rezervasyon Durumu: ${label}`,
+          html: `<p>Sayın ${r.customer_name}, rezervasyonunuzun durumu güncellendi:</p>
+<ul>
+  <li><strong>Durum:</strong> ${label}</li>
+  <li><strong>Tarih:</strong> ${r.reservation_date} ${r.reservation_time}</li>
+  <li><strong>Kişi sayısı:</strong> ${r.party_size}</li>
+</ul>`,
+        });
+      }
+    }
 
     return new Response(JSON.stringify({
       success: true,
@@ -162,7 +186,7 @@ export const PUT: APIRoute = async (context) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('Reservation update error:', error);
+    logger.error('Reservation update error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -203,7 +227,7 @@ export const DELETE: APIRoute = async (context) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('Reservation delete error:', error);
+    logger.error('Reservation delete error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

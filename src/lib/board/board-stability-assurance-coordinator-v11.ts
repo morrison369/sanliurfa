@@ -2,7 +2,7 @@
  * Phase 411: Board Stability Assurance Coordinator V11
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 export interface BoardStabilityAssuranceSignalV11 {
   signalId: string;

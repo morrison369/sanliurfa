@@ -33,6 +33,9 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
   }
 };
 
+// PATCH is identical to PUT — both mark a notification as read
+export const PATCH = PUT;
+
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
   const requestId = getRequestId({ request } as any);
   const startTime = Date.now();

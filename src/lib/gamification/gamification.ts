@@ -142,7 +142,7 @@ export async function updateUserLevelIfNeeded(userId: string): Promise<void> {
  */
 export async function getBadgeDefinitions(): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:badge-definitions';
+    const cacheKey = 'badge-definitions';
     const cached = await getCache<any[]>(cacheKey);
     if (cached) return cached;
 
@@ -391,7 +391,7 @@ export async function onReviewHelpfulVote(targetUserId: string): Promise<void> {
 export async function onDailyLogin(userId: string): Promise<void> {
   // Award daily login points only once per day
   const today = new Date().toISOString().split('T')[0];
-  const cacheKey = `sanliurfa:daily-login:${userId}:${today}`;
+  const cacheKey = `daily-login:${userId}:${today}`;
   const hasLoggedIn = await getCache(cacheKey);
 
   if (!hasLoggedIn) {

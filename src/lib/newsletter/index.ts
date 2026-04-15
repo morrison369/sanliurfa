@@ -5,6 +5,7 @@
 
 import { query } from '../postgres';
 import { queueEmail } from '../email';
+import { logger } from '../logging';
 
 export interface Subscriber {
   id: string;
@@ -82,7 +83,7 @@ export async function subscribe(
 
     return { success: true };
   } catch (error) {
-    console.error('Subscribe error:', error);
+    logger.error('Subscribe error:', error);
     return { success: false, error: 'Failed to subscribe' };
   }
 }
@@ -101,7 +102,7 @@ export async function unsubscribe(email: string, token?: string): Promise<boolea
 
     return result.rowCount > 0;
   } catch (error) {
-    console.error('Unsubscribe error:', error);
+    logger.error('Unsubscribe error:', error);
     return false;
   }
 }

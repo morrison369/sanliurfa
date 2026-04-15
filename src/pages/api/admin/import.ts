@@ -10,7 +10,7 @@ import { createPlace } from '../../../lib/places/db';
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (auth instanceof Response) return auth;
+    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const formData = await request.formData();
     const file = formData.get('file') as File;

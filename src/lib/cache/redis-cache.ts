@@ -3,6 +3,8 @@
  * Production-ready caching with Redis
  */
 
+import { getRedisClient, isRedisAvailable, deleteCachePattern as realDeletePattern } from './cache';
+
 // Cache TTL values (in seconds)
 export const CACHE_TTL = {
   SHORT: 60,        // 1 minute
@@ -32,32 +34,14 @@ interface CacheEntry<T> {
   ttl: number;
 }
 
-// In-memory fallback cache
+// In-memory fallback cache (used when Redis is unavailable)
 const memoryCache: Map<string, CacheEntry<any>> = new Map();
 
-// Redis connection status
-let isRedisConnected = false;
-
-/**
- * Initialize Redis connection
- */
 export async function initRedis(): Promise<boolean> {
   try {
-    // In production, connect to actual Redis:
-    // const Redis = require('ioredis');
-    // const redis = new Redis({
-    //   host: process.env.REDIS_HOST || 'localhost',
-    //   port: parseInt(process.env.REDIS_PORT || '6379'),
-    //   password: process.env.REDIS_PASSWORD,
-    //   retryDelayOnFailover: 100,
-    // });
-    
-    // For now, use in-memory cache
-    isRedisConnected = false;
-    console.log('[Cache] Using in-memory cache (Redis not configured)');
+    await getRedisClient();
     return true;
-  } catch (error) {
-    console.error('[Cache] Failed to initialize Redis:', error);
+  } catch {
     return false;
   }
 }
@@ -86,7 +70,7 @@ export async function setCache<T>(
     ttl: ttl * 1000, // Convert to milliseconds
   };
 
-  if (isRedisConnected) {
+  if (isRedisAvailable()) {
     // Redis implementation:
     // await redis.setex(key, ttl, JSON.stringify(entry));
   } else {
@@ -106,7 +90,7 @@ export async function setCache<T>(
  * Get cache entry
  */
 export async function getCache<T>(key: string): Promise<T | null> {
-  if (isRedisConnected) {
+  if (isRedisAvailable()) {
     // Redis implementation:
     // const value = await redis.get(key);
     // if (value) {
@@ -133,7 +117,7 @@ export async function getCache<T>(key: string): Promise<T | null> {
  * Delete cache entry
  */
 export async function deleteCache(key: string): Promise<void> {
-  if (isRedisConnected) {
+  if (isRedisAvailable()) {
     // await redis.del(key);
   } else {
     memoryCache.delete(key);
@@ -144,7 +128,7 @@ export async function deleteCache(key: string): Promise<void> {
  * Delete cache entries by pattern
  */
 export async function deleteCachePattern(pattern: string): Promise<void> {
-  if (isRedisConnected) {
+  if (isRedisAvailable()) {
     // Redis implementation:
     // const keys = await redis.keys(pattern);
     // if (keys.length > 0) {
@@ -164,14 +148,18 @@ export async function deleteCachePattern(pattern: string): Promise<void> {
  * Clear entire cache namespace
  */
 export async function clearNamespace(namespace: string): Promise<void> {
-  await deleteCachePattern(`${namespace}:*`);
+  if (isRedisAvailable()) {
+    await realDeletePattern(`${namespace}:*`);
+  } else {
+    await deleteCachePattern(`${namespace}:*`);
+  }
 }
 
 /**
  * Check if key exists
  */
 export async function exists(key: string): Promise<boolean> {
-  if (isRedisConnected) {
+  if (isRedisAvailable()) {
     // return await redis.exists(key) === 1;
     return false;
   } else {
@@ -247,20 +235,35 @@ export async function getCacheStats(): Promise<{
   memory: number;
   isRedis: boolean;
 }> {
-  if (isRedisConnected) {
-    // Redis implementation:
-    // const info = await redis.info('memory');
-    // const stats = await redis.info('stats');
-    return {
-      entries: 0,
-      hitRate: 0,
-      memory: 0,
-      isRedis: true,
-    };
+  if (isRedisAvailable()) {
+    try {
+      const redis = await getRedisClient();
+      const info = await redis.info('memory');
+      const statsInfo = await redis.info('stats');
+      const dbSize = await redis.dbSize();
+
+      const memMatch = info.match(/used_memory:(\d+)/);
+      const hitsMatch = statsInfo.match(/keyspace_hits:(\d+)/);
+      const missesMatch = statsInfo.match(/keyspace_misses:(\d+)/);
+
+      const usedMemory = memMatch ? parseInt(memMatch[1]) : 0;
+      const hits = hitsMatch ? parseInt(hitsMatch[1]) : 0;
+      const misses = missesMatch ? parseInt(missesMatch[1]) : 0;
+      const total = hits + misses;
+
+      return {
+        entries: dbSize,
+        hitRate: total > 0 ? Math.round((hits / total) * 100) : 0,
+        memory: usedMemory,
+        isRedis: true,
+      };
+    } catch {
+      return { entries: 0, hitRate: 0, memory: 0, isRedis: true };
+    }
   } else {
     return {
       entries: memoryCache.size,
-      hitRate: 0, // Would need hit/miss tracking
+      hitRate: 0,
       memory: 0,
       isRedis: false,
     };
@@ -329,7 +332,7 @@ export async function checkRateLimit(
   const now = Math.floor(Date.now() / 1000);
   const windowStart = Math.floor(now / windowSeconds) * windowSeconds;
   
-  if (isRedisConnected) {
+  if (isRedisAvailable()) {
     // Redis implementation with sliding window
     // const multi = redis.multi();
     // multi.zremrangebyscore(key, 0, windowStart - 1);

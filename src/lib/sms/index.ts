@@ -4,6 +4,7 @@
  */
 
 import { query } from '../postgres';
+import { logger } from '../logging';
 
 export interface SMSMessage {
   to: string;
@@ -88,7 +89,7 @@ async function sendIletisimMakinesi(message: SMSMessage): Promise<SMSResult> {
  * Mock SMS sender (for testing)
  */
 async function sendMock(message: SMSMessage): Promise<SMSResult> {
-  console.log(`[MOCK SMS] To: ${message.to}, Message: ${message.message}`);
+  logger.info(`[MOCK SMS] To: ${message.to}, Message: ${message.message}`);
   
   // Save to database for testing
   await query(

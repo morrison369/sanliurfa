@@ -4,6 +4,7 @@
  */
 import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
+import { sendPushToUser } from '../push/push';
 
 export async function sendNotification(
   userId: string,
@@ -59,28 +60,12 @@ export async function sendNotification(
 
 export async function sendPushNotification(userId: string, notificationId: string, title: string, message: string, data?: any): Promise<void> {
   try {
-    const subscriptions = await getPushSubscriptions(userId);
-    if (subscriptions.length === 0) {
-      await recordDelivery(notificationId, 'push', 'failed', 'No active subscriptions');
-      return;
-    }
+    const result = await sendPushToUser(userId, { title, body: message, data });
 
-    for (const sub of subscriptions) {
-      try {
-        // In production, use web-push library to send actual push notifications
-        // For now, just mark as sent
-        await recordDelivery(notificationId, 'push', 'delivered');
-        await update('push_subscription_stats', { user_id: userId }, {
-          successful_deliveries: (await queryOne(
-            'SELECT COUNT(*) as count FROM notification_delivery_log WHERE delivery_channel = $1 AND status = $2 AND notification_id IN (SELECT id FROM notification_history WHERE user_id = $3)',
-            ['push', 'delivered', userId]
-          )).count || 0,
-          last_push_at: new Date()
-        });
-      } catch (err) {
-        logger.error('Failed to send push to subscription', err instanceof Error ? err : new Error(String(err)));
-        await recordDelivery(notificationId, 'push', 'failed', err instanceof Error ? err.message : String(err));
-      }
+    if (result.sent === 0) {
+      await recordDelivery(notificationId, 'push', 'failed', 'No active subscriptions');
+    } else {
+      await recordDelivery(notificationId, 'push', 'delivered');
     }
   } catch (error) {
     logger.error('Failed to send push notifications', error instanceof Error ? error : new Error(String(error)));

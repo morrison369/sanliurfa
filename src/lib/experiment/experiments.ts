@@ -4,6 +4,7 @@
  */
 
 import { getCache, setCache } from '../cache';
+import { logger } from '../logging';
 
 interface Experiment {
   id: string;
@@ -118,7 +119,7 @@ export async function trackEvent(
   if (!variant) return;
   
   // In production, send to analytics (Google Analytics, Mixpanel, etc.)
-  console.log('[Experiment]', {
+  logger.info('[Experiment]', {
     experimentId,
     userId,
     variant,
@@ -167,7 +168,7 @@ export function stopExperiment(experimentId: string, winner?: string): void {
   const experiment = experiments.get(experimentId);
   if (experiment) {
     experiment.status = 'completed';
-    console.log(`[Experiment] ${experimentId} stopped. Winner: ${winner || 'TBD'}`);
+    logger.info(`[Experiment] ${experimentId} stopped. Winner: ${winner || 'TBD'}`);
   }
 }
 

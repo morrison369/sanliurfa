@@ -40,42 +40,53 @@ export interface BackupConfig {
   enabled: boolean;
   schedule: 'hourly' | 'daily' | 'weekly';
   retention_days: number;
-  destination: 'local' | 's3' | 'gcs';
+  destination: 'local';
   last_backup?: Date;
   next_backup?: Date;
 }
 
-const backupConfigs: Map<string, BackupConfig> = new Map();
+import { query } from '../postgres';
 
 export async function getBackupConfigs(): Promise<BackupConfig[]> {
-  return Array.from(backupConfigs.values());
+  const result = await query(`SELECT * FROM backup_configs ORDER BY name`);
+  return result.rows.map((r: any) => ({
+    id: r.id,
+    enabled: r.enabled ?? true,
+    schedule: r.schedule || 'daily',
+    retention_days: r.retention || 30,
+    destination: 'local' as const,
+    last_backup: r.last_run,
+  }));
 }
 
-export async function updateBackupConfig(id: string, updates: Partial<BackupConfig>): Promise<BackupConfig> {
-  const existing = backupConfigs.get(id) || {
-    id,
-    enabled: false,
-    schedule: 'daily',
-    retention_days: 30,
-    destination: 'local',
-  };
-  const updated = { ...existing, ...updates };
-  backupConfigs.set(id, updated);
-  return updated;
-}
+export async function updateBackupConfig(id: string, updates: Partial<BackupConfig>): Promise<BackupConfig | null> {
+  const fields: string[] = [];
+  const values: any[] = [];
 
-export async function simulateBackup(configId: string): Promise<{
-  success: boolean;
-  duration: number;
-  size: number;
-  files: number;
-}> {
-  return {
-    success: true,
-    duration: 1250,
-    size: 1024 * 1024 * 50, // 50MB
-    files: 150,
-  };
+  if (updates.schedule !== undefined) {
+    fields.push(`schedule = $${values.length + 1}`);
+    values.push(updates.schedule);
+  }
+  if (updates.retention_days !== undefined) {
+    fields.push(`retention = $${values.length + 1}`);
+    values.push(updates.retention_days);
+  }
+
+  if (fields.length === 0) {
+    const result = await query(`SELECT * FROM backup_configs WHERE id = $1`, [id]);
+    if (!result.rows[0]) return null;
+    const r = result.rows[0];
+    return { id: r.id, enabled: true, schedule: r.schedule || 'daily', retention_days: r.retention || 30, destination: 'local' };
+  }
+
+  values.push(id);
+  const result = await query(
+    `UPDATE backup_configs SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${values.length} RETURNING *`,
+    values
+  );
+  if (!result.rows[0]) return null;
+  const r = result.rows[0];
+  return { id: r.id, enabled: true, schedule: r.schedule || 'daily', retention_days: r.retention || 30, destination: 'local' };
 }
 
 // Environment and deployment functions

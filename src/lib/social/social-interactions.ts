@@ -9,7 +9,7 @@ import { deleteCache, deleteCachePattern } from '../cache';
 export async function likePlace(placeId: string, userId: string): Promise<boolean> {
   try {
     await insert('place_likes', { place_id: placeId, user_id: userId, created_at: new Date() });
-    await deleteCachePattern(`sanliurfa:place:${placeId}:*`);
+    await deleteCachePattern(`place:${placeId}:*`);
     logger.info('Place liked', { placeId, userId });
     return true;
   } catch (error) {
@@ -20,7 +20,7 @@ export async function likePlace(placeId: string, userId: string): Promise<boolea
 export async function unlikePlace(placeId: string, userId: string): Promise<boolean> {
   try {
     await query('DELETE FROM place_likes WHERE place_id = $1 AND user_id = $2', [placeId, userId]);
-    await deleteCachePattern(`sanliurfa:place:${placeId}:*`);
+    await deleteCachePattern(`place:${placeId}:*`);
     return true;
   } catch (error) {
     return false;
@@ -50,7 +50,7 @@ export async function addReaction(reviewId: string, userId: string, reactionType
     const validTypes = ['like', 'helpful', 'funny', 'insightful', 'love'];
     if (!validTypes.includes(reactionType)) return false;
     await insert('review_reactions', { review_id: reviewId, user_id: userId, reaction_type: reactionType });
-    await deleteCachePattern(`sanliurfa:review:${reviewId}:*`);
+    await deleteCachePattern(`review:${reviewId}:*`);
     logger.info('Reaction added', { reviewId, userId, reactionType });
     return true;
   } catch (error) {
@@ -61,7 +61,7 @@ export async function addReaction(reviewId: string, userId: string, reactionType
 export async function removeReaction(reviewId: string, userId: string, reactionType: string): Promise<boolean> {
   try {
     await query('DELETE FROM review_reactions WHERE review_id = $1 AND user_id = $2 AND reaction_type = $3', [reviewId, userId, reactionType]);
-    await deleteCachePattern(`sanliurfa:review:${reviewId}:*`);
+    await deleteCachePattern(`review:${reviewId}:*`);
     return true;
   } catch (error) {
     return false;

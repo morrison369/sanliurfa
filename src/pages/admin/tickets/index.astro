@@ -1,6 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yonetimi', noindex: true };
+const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yönetimi', noindex: true };
 ---
 <Layout seo={seo}>
   <div class="min-h-screen bg-gray-50 pt-20 pb-12">
@@ -9,11 +9,11 @@ const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yonetimi',
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-2xl font-bold text-gray-900">Destek Talepleri</h1>
-            <p class="text-gray-500 mt-1">Musteri destek taleplerini yonetin</p>
+            <p class="text-gray-500 mt-1">Müşteri destek taleplerini yönetin</p>
           </div>
           <div class="flex gap-3">
-            <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg"><span class="font-bold" id="openCount">0</span> Acik</div>
-            <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg"><span class="font-bold" id="inProgressCount">0</span> Islemde</div>
+            <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg"><span class="font-bold" id="openCount">0</span> Açık</div>
+            <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg"><span class="font-bold" id="inProgressCount">0</span> İşlemde</div>
           </div>
         </div>
       </div>
@@ -23,11 +23,11 @@ const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yonetimi',
           <thead class="bg-gray-50 border-b">
             <tr>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Ticket</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Gonderen</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Gönderen</th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Konu</th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Durum</th>
               <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Tarih</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Islem</th>
+              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">İşlem</th>
             </tr>
           </thead>
           <tbody id="ticketsTable" class="divide-y">
@@ -40,10 +40,10 @@ const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yonetimi',
 
   <script>
     const statusLabels = {
-      open: { text: 'Acik', class: 'bg-green-100 text-green-700' },
-      in_progress: { text: 'Islemde', class: 'bg-yellow-100 text-yellow-700' },
-      resolved: { text: 'Cozuldu', class: 'bg-blue-100 text-blue-700' },
-      closed: { text: 'Kapandi', class: 'bg-gray-100 text-gray-600' },
+      open: { text: 'Açık', class: 'bg-green-100 text-green-700' },
+      in_progress: { text: 'İşlemde', class: 'bg-yellow-100 text-yellow-700' },
+      resolved: { text: 'Çözüldü', class: 'bg-blue-100 text-blue-700' },
+      closed: { text: 'Kapandı', class: 'bg-gray-100 text-gray-600' },
     };
 
     async function loadTickets() {
@@ -68,7 +68,7 @@ const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yonetimi',
               </td>
               <td class="px-4 py-3 text-sm text-gray-500">${new Date(t.created_at).toLocaleDateString('tr-TR')}</td>
               <td class="px-4 py-3">
-                <button onclick="updateStatus('${t.id}', 'in_progress')" class="text-blue-600 text-sm hover:underline">Isleme Al</button>
+                <button onclick="updateStatus('${t.id}', 'in_progress')" class="text-blue-600 text-sm hover:underline">İşleme Al</button>
               </td>
             </tr>
           `).join('');

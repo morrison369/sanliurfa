@@ -2,6 +2,7 @@
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../lib/postgres';
 import { hashPassword } from '../../../lib/auth';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, redirect }) => {
   try {
@@ -36,7 +37,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
 
     return redirect('/sifre-sifirla?success=true');
   } catch (err) {
-    console.error('Reset password error:', err);
+    logger.error('Reset password error:', err);
     return redirect('/sifre-sifirla?error=server_error');
   }
 };

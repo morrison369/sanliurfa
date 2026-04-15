@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
     const unreadOnly = url.searchParams.get('unread_only') === 'true';
 
     // Check cache
-    const cacheKey = `sanliurfa:mentions:${userId}:${unreadOnly}`;
+    const cacheKey = `mentions:${userId}:${unreadOnly}`;
     const cached = await getCache(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;

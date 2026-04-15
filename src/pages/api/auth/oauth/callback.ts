@@ -95,7 +95,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       extractBrowser(userAgent),
       extractOS(userAgent),
       ipAddress,
-      'unknown', // TODO: Get location from IP
+      request.headers.get('cf-ipcountry') || request.headers.get('x-country-code') || 'unknown',
       false
     );
 

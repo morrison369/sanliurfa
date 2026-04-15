@@ -2,7 +2,7 @@
  * Phase 405: Board Continuity Assurance Coordinator V10
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 export interface BoardContinuityAssuranceSignalV10 {
   signalId: string;

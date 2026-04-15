@@ -4,6 +4,7 @@
  */
 
 import Redis from 'ioredis';
+import { logger } from '../logging';
 
 // Redis Cluster configuration
 const REDIS_CONFIG = {
@@ -42,9 +43,9 @@ class RedisClusterManager {
           port: REDIS_CONFIG.nodes[0].port,
         });
       }
-      console.log('[Redis] Connected');
+      logger.info('[Redis] Connected');
     } catch (error) {
-      console.error('[Redis] Connection failed:', error);
+      logger.error('[Redis] Connection failed:', error);
       this.client = null;
     }
   }

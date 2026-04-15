@@ -4,6 +4,7 @@
  */
 
 import Redis from 'ioredis';
+import { logger } from '../logging';
 
 export interface RedisNode {
   host: string;
@@ -30,9 +31,9 @@ export class RedisCluster {
       enableReadyCheck: true,
     });
 
-    this.cluster.on('connect', () => console.log('[RedisCluster] Connected'));
-    this.cluster.on('error', (err) => console.error('[RedisCluster] Error:', err));
-    this.cluster.on('node error', (err, node) => console.error(`[RedisCluster] Node ${node.options.host} error:`, err));
+    this.cluster.on('connect', () => logger.info('[RedisCluster] Connected'));
+    this.cluster.on('error', (err) => logger.error('[RedisCluster] Error:', err));
+    this.cluster.on('node error', (err, node) => logger.error(`[RedisCluster] Node ${node.options.host} error:`, err));
 
     return this.cluster;
   }

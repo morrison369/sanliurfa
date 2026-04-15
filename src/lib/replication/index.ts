@@ -4,6 +4,7 @@
  */
 
 import { Pool, PoolConfig } from 'pg';
+import { logger } from '../logging';
 
 // Connection configurations
 const PRIMARY_CONFIG: PoolConfig = {
@@ -81,7 +82,7 @@ class DatabaseRouter {
         return await this.replicaPool.query(sql, params);
       } catch (error) {
         // Fallback to primary if replica fails
-        console.warn('[DB] Replica failed, falling back to primary');
+        logger.warn('[DB] Replica failed, falling back to primary');
         return this.primaryPool.query(sql, params);
       }
     }
@@ -150,7 +151,7 @@ class DatabaseRouter {
         await this.primaryPool.query('SELECT 1');
         await this.replicaPool.query('SELECT 1');
       } catch (error) {
-        console.error('[DB] Health check failed:', error);
+        logger.error('[DB] Health check failed:', error);
       }
     }, 30000); // Every 30 seconds
   }

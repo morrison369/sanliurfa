@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { 
+import { logger } from '../../../lib/logging';
   analyzeVisitTrends, 
   predictSearchTrends,
   detectAnomalies,
@@ -38,7 +39,7 @@ export const GET: APIRoute = async ({ request }) => {
     });
 
   } catch (error) {
-    console.error('Predictions error:', error);
+    logger.error('Predictions error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -75,7 +76,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
   } catch (error) {
-    console.error('Anomaly detection error:', error);
+    logger.error('Anomaly detection error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

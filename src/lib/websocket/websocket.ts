@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * WebSocket Manager
  * Real-time notifications placeholder
@@ -19,7 +20,7 @@ class WebSocketManager {
 
   initialize(): void {
     if (this.isInitialized) return;
-    console.log('WebSocket: Install socket.io package for full functionality');
+    logger.info('WebSocket: Install socket.io package for full functionality');
     this.isInitialized = true;
   }
 

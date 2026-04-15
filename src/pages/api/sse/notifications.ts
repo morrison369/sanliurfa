@@ -1,6 +1,6 @@
 // @ts-nocheck
 import type { APIRoute } from 'astro';
-import { registerSSE, getNotifications, markAsRead, markAllAsRead, deleteNotification } from '../../../lib/notifications/realtime-notifications';
+import { registerSSE, unregisterSSE, getNotifications, markAsRead, markAllAsRead, deleteNotification } from '../../../lib/notifications/realtime-notifications';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const userId = locals.user?.id || 'anonymous';
@@ -27,7 +27,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       });
     },
     cancel() {
-      // Client disconnected
+      unregisterSSE(userId);
     },
   });
 
@@ -58,17 +58,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
     switch (action) {
       case 'mark-read':
         if (notificationId) {
-          markAsRead(userId, notificationId);
+          await markAsRead(userId, notificationId);
         }
         break;
-      
+
       case 'mark-all-read':
-        markAllAsRead(userId);
+        await markAllAsRead(userId);
         break;
-      
+
       case 'delete':
         if (notificationId) {
-          deleteNotification(userId, notificationId);
+          await deleteNotification(userId, notificationId);
         }
         break;
     }

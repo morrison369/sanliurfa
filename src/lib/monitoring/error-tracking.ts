@@ -3,6 +3,7 @@
  */
 
 import { generateId } from '../utils';
+import { logger } from '../logging';
 
 export type ErrorSeverity = 'fatal' | 'error' | 'warning' | 'info' | 'debug';
 
@@ -51,7 +52,7 @@ export function captureException(
     errorStore.splice(0, errorStore.length - MAX_ERRORS);
   }
 
-  console.error('[ErrorTracking]', errorEvent);
+  logger.error('[ErrorTracking]', errorEvent);
   return errorId;
 }
 

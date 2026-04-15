@@ -306,11 +306,11 @@ export async function getPopularSearches(days: number = 7, limit: number = 10): 
   const result = await query(`
     SELECT query, COUNT(*) as count
     FROM search_logs
-    WHERE created_at >= NOW() - INTERVAL '${days} days'
+    WHERE created_at >= NOW() - ($2 * INTERVAL '1 day')
     GROUP BY query
     ORDER BY count DESC
     LIMIT $1
-  `, [limit]);
+  `, [limit, days]);
 
   return result.rows.map(r => r.query);
 }

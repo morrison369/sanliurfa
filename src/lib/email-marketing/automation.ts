@@ -266,7 +266,7 @@ async function processWebhook(config: WebhookStepConfig, user: any): Promise<voi
       body: config.body ? JSON.stringify({ ...config.body, user }) : JSON.stringify({ user }),
     });
   } catch (e) {
-    console.error('[Automation] Webhook failed:', e);
+    logger.error('[Automation] Webhook failed:', e);
   }
 }
 
@@ -344,3 +344,4 @@ export async function getWorkflowStats(workflowId: string): Promise<{ entries: n
 }
 
 import { sendEmailMessage } from '../email/email-service';
+import { logger } from '../logging';

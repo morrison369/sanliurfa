@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ locals, url }) => {
   try {
@@ -34,7 +35,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
       }
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
-    console.error('Points history error', error);
+    logger.error('Points history error', error);
     return new Response(JSON.stringify({ error: 'Failed' }), { status: 500 });
   }
 };

@@ -1,6 +1,7 @@
 // API: Event update (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { update } from '../../../../lib/postgres';
+import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
   try {
@@ -44,7 +45,7 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
 
     return redirect('/admin/events?success=updated');
   } catch (err) {
-    console.error('Event update error:', err);
+    logger.error('Event update error:', err);
     return redirect(`/admin/events/edit/${params.id}?error=server_error`);
   }
 };

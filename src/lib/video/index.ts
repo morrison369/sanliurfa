@@ -5,6 +5,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { logger } from '../logging';
 
 export interface VideoUpload {
   id: string;
@@ -90,7 +91,7 @@ async function queueVideoProcessing(videoId: string, file: Buffer): Promise<void
   `);
 
   // In production, this would trigger a background worker
-  console.log(`[Video] Queued processing for ${videoId}`);
+  logger.info(`[Video] Queued processing for ${videoId}`);
 }
 
 /**
@@ -149,7 +150,7 @@ export async function deleteVideo(videoId: string): Promise<void> {
   const variants = JSON.parse(video.rows[0]?.variants as string || '[]');
 
   // Delete files (in production, would use storage API)
-  console.log(`[Video] Deleting ${variants.length} variants for ${videoId}`);
+  logger.info(`[Video] Deleting ${variants.length} variants for ${videoId}`);
 
   await db.execute(sql`DELETE FROM videos WHERE id = ${videoId}`);
 }

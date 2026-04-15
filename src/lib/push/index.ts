@@ -4,6 +4,7 @@
  */
 
 import { query } from '../postgres';
+import { logger } from '../logging';
 
 // Web Push requires these imports in Node environment
 let webPush: any;
@@ -92,7 +93,7 @@ export async function sendNotification(
   notification: PushNotification
 ): Promise<boolean> {
   if (!webPush) {
-    console.warn('web-push not available');
+    logger.warn('web-push not available');
     return false;
   }
 
@@ -117,7 +118,7 @@ export async function sendNotification(
 
     return true;
   } catch (error: any) {
-    console.error('Push notification failed:', error);
+    logger.error('Push notification failed:', error);
 
     // Handle expired subscription
     if (error.statusCode === 410) {

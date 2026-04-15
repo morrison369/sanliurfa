@@ -10,22 +10,37 @@ const icons = {
   mail: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
 };
 
+import { query } from '../../../lib/postgres';
+
+if (!Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin');
+}
+
+let categories: any[] = [];
+let districts: any[] = [];
+
+try {
+  const [catResult, distResult] = await Promise.all([
+    query(
+      `SELECT id, name, slug FROM categories WHERE parent_id IS NOT NULL AND is_active = true ORDER BY sort_order`,
+      []
+    ),
+    query(
+      `SELECT id, name FROM districts ORDER BY is_central DESC, sort_order`,
+      []
+    ),
+  ]);
+  categories = catResult.rows;
+  districts = distResult.rows;
+} catch (e) {
+  console.error('Add place load error:', e);
+}
+
 const seo = {
   title: 'Mekan Ekle - Admin Panel',
   description: 'Yeni mekan ekle',
-  noindex: true
+  noindex: true,
 };
-
-const categories = [
-  { id: 'restaurant', label: 'Restoran' },
-  { id: 'cafe', label: 'Kafe' },
-  { id: 'hotel', label: 'Otel' },
-  { id: 'museum', label: 'Müze' },
-  { id: 'park', label: 'Park' },
-  { id: 'shopping', label: 'Alışveriş' },
-  { id: 'entertainment', label: 'Eğlence' },
-  { id: 'other', label: 'Diğer' },
-];
 
 const amenitiesList = [
   'Otopark', 'Wifi', 'Klima', 'Bahçe', 'Teras', 'Engelli Erişimi',
@@ -52,7 +67,7 @@ const days = [
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
             <a href="/admin" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              â† Geri
+              ← Geri
             </a>
             <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Yeni Mekan Ekle</h1>
           </div>
@@ -61,7 +76,7 @@ const days = [
     </div>
     
     <div class="container-custom py-8">
-      <form action="/api/places/add" method="POST" class="grid lg:grid-cols-3 gap-8" enctype="multipart/form-data">
+      <form action="/api/admin/places/create" method="POST" class="grid lg:grid-cols-3 gap-8" enctype="multipart/form-data">
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
           <!-- Basic Info -->
@@ -82,11 +97,11 @@ const days = [
               
               <div class="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label for="category" class="label dark:text-gray-300">Kategori *</label>
-                  <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <label for="category_id" class="label dark:text-gray-300">Kategori *</label>
+                  <select id="category_id" name="category_id" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <option value="">Kategori seçin</option>
                     {categories.map(cat => (
-                      <option value={cat.id}>{cat.label}</option>
+                      <option value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
                 </div>
@@ -257,17 +272,28 @@ const days = [
                 <span class="text-sm text-gray-700 dark:text-gray-300">Doğrulanmış mekan</span>
               </label>
             </div>
-            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <label for="status" class="label dark:text-gray-300">Durum</label>
-              <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
-                <option value="active">Aktif</option>
-                <option value="pending">Beklemede</option>
-                <option value="inactive">Pasif</option>
-              </select>
+            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+              <div>
+                <label for="district_id" class="label dark:text-gray-300">İlçe</label>
+                <select id="district_id" name="district_id" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
+                  <option value="">İlçe seçin</option>
+                  {districts.map(d => (
+                    <option value={d.id}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label for="status" class="label dark:text-gray-300">Durum</label>
+                <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
+                  <option value="active">Aktif</option>
+                  <option value="pending">Beklemede</option>
+                  <option value="inactive">Pasif</option>
+                </select>
+              </div>
             </div>
             <div class="flex gap-2 mt-4">
               <button type="submit" class="btn-primary flex-1">Kaydet</button>
-              <a href="/admin" class="btn-secondary">İptal</a>
+              <a href="/admin/places.astro" class="btn-secondary">İptal</a>
             </div>
           </div>
           

@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Email Service
  * Nodemailer-based email sending with queue management
@@ -35,7 +36,7 @@ async function getTransporter(): Promise<any> {
   const pass = process.env.SMTP_PASS;
 
   if (!host || !port || !user || !pass) {
-    console.warn('[Email] SMTP not configured, using mock mode');
+    logger.warn('[Email] SMTP not configured, using mock mode');
     return null;
   }
 
@@ -53,7 +54,7 @@ async function getTransporter(): Promise<any> {
     });
     return transporter;
   } catch (error) {
-    console.warn('[Email] Failed to load nodemailer, using mock mode');
+    logger.warn('[Email] Failed to load nodemailer, using mock mode');
     return null;
   }
 }
@@ -65,10 +66,10 @@ export async function verifyEmailConnection(): Promise<boolean> {
 
   try {
     await t.verify();
-    console.log('[Email] SMTP connection verified');
+    logger.info('[Email] SMTP connection verified');
     return true;
   } catch (error) {
-    console.error('[Email] SMTP connection failed:', error);
+    logger.error('[Email] SMTP connection failed:', error);
     return false;
   }
 }
@@ -85,13 +86,13 @@ export async function sendEmail(options: {
 
   // Mock mode for development or when SMTP not configured
   if (process.env.EMAIL_MOCK === 'true') {
-    console.log('[Email] Mock send:', { to, subject });
+    logger.info('[Email] Mock send:', { to, subject });
     return { success: true, messageId: 'mock-' + Date.now() };
   }
 
   const t = await getTransporter();
   if (!t) {
-    console.log('[Email] No transporter available, mock send:', { to, subject });
+    logger.info('[Email] No transporter available, mock send:', { to, subject });
     return { success: true, messageId: 'mock-' + Date.now() };
   }
 
@@ -107,12 +108,12 @@ export async function sendEmail(options: {
     const result = await t.sendMail(mailOptions);
     queueStats.sent++;
 
-    console.log('[Email] Sent:', { to, messageId: result.messageId });
+    logger.info('[Email] Sent:', { to, messageId: result.messageId });
     return { success: true, messageId: result.messageId };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     queueStats.failed++;
-    console.error('[Email] Failed:', { to, error: errorMessage });
+    logger.error('[Email] Failed:', { to, error: errorMessage });
     return { success: false, error: errorMessage };
   }
 }
@@ -199,7 +200,7 @@ export async function processQueue(): Promise<void> {
       item.retries++;
       emailQueue.push(item);
       queueStats.pending++;
-      console.log(`[Email] Re-queued ${item.id}, retry ${item.retries}/${item.maxRetries}`);
+      logger.info(`[Email] Re-queued ${item.id}, retry ${item.retries}/${item.maxRetries}`);
     }
   }
 }

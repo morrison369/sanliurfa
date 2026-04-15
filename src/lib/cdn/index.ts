@@ -5,6 +5,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { logger } from '../logging';
 
 // CDN Configuration
 const CDN_CONFIG = {
@@ -53,7 +54,7 @@ export function getCDNUrl(path: string, options?: { width?: number; height?: num
 export async function purgeCache(tags: string[]): Promise<void> {
   if (!CDN_CONFIG.enabled) return;
 
-  console.log(`[CDN] Purging cache for tags: ${tags.join(', ')}`);
+  logger.info(`[CDN] Purging cache for tags: ${tags.join(', ')}`);
 
   // Call CDN API to purge
   // await fetch(`${CDN_CONFIG.baseUrl}/api/purge`, { ... });
@@ -133,7 +134,7 @@ export function generateEdgeCacheKey(
  * Warm cache for popular content
  */
 export async function warmCache(): Promise<void> {
-  console.log('[CDN] Warming cache...');
+  logger.info('[CDN] Warming cache...');
 
   // Get popular places
   const places = await db.execute(sql`
@@ -147,7 +148,7 @@ export async function warmCache(): Promise<void> {
   for (const place of places.rows) {
     const url = `/api/places/${place.id}`;
     // Trigger edge fetch
-    console.log(`[CDN] Warming: ${url}`);
+    logger.info(`[CDN] Warming: ${url}`);
   }
 }
 

@@ -3,7 +3,7 @@
  */
 
 import { logger } from '../logger';
-import { SignalBook, computeBalancedScore, scorePasses } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses } from './governance-kit';
 
 export interface BoardStabilitySignal {
   signalId: string;

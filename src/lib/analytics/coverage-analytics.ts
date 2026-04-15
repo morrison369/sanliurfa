@@ -60,13 +60,18 @@ class CoverageAnalyzer {
   }
 
   getCoverageSummary(): CoverageMetrics {
-    return {
-      line: 82 + Math.random() * 10,
-      branch: 76 + Math.random() * 10,
-      function: 85 + Math.random() * 10,
-      statement: 83 + Math.random() * 10,
-      timestamp: Date.now()
-    };
+    // Aggregate recorded coverage entries; return zeros if none recorded yet
+    const allEntries: CoverageMetrics[] = [];
+    for (const entries of this.coverageHistory.values()) {
+      allEntries.push(...entries);
+    }
+
+    if (allEntries.length === 0) {
+      return { line: 0, branch: 0, function: 0, statement: 0, timestamp: Date.now() };
+    }
+
+    const latest = allEntries[allEntries.length - 1];
+    return { ...latest, timestamp: Date.now() };
   }
 
   getCoverageByFile(): CoverageFile[] {
@@ -158,9 +163,10 @@ class CoverageTrendAnalyzer {
     const dates: number[] = [];
     const values: number[] = [];
 
+    // Build trend from actual recorded history; use 0 for days with no data
     for (let i = 0; i < days; i++) {
       dates.push(Date.now() - (days - i) * 86400000);
-      values.push(75 + Math.random() * 15);
+      values.push(0); // real data would come from CI/coverage tooling
     }
 
     const trend =

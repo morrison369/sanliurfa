@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { parseNaturalLanguageQuery } from '../../../lib/voice-search';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -24,7 +25,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
   } catch (error) {
-    console.error('Voice parse error:', error);
+    logger.error('Voice parse error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

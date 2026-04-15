@@ -5,6 +5,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { logger } from '../logging';
 
 export interface Presence {
   userId: string;
@@ -212,5 +213,5 @@ function applyToDocument(content: any, op: Operation): void {
 
 function broadcastOperation(documentId: string, op: Operation): void {
   // In production: WebSocket broadcast
-  console.log(`[Collaboration] Broadcasting operation on ${documentId}`);
+  logger.info(`[Collaboration] Broadcasting operation on ${documentId}`);
 }

@@ -134,7 +134,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:places:${placeId}:promotions`);
+    await deleteCache(`places:${placeId}:promotions`);
 
     recordRequest('POST', '/api/promotions/create', HttpStatus.CREATED, Date.now() - startTime);
     logger.logMutation('create', 'promotions', promotion.id, locals.user.id);

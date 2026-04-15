@@ -1,5 +1,6 @@
 import type { Pool } from 'pg';
 import { triggerWebhook } from './webhooks';
+import { logger } from '../logging';
 
 export interface ReplayRequest {
   id: string;
@@ -59,7 +60,7 @@ export async function requestEventReplay(
       requestedAt: replayRows[0].requested_at
     };
   } catch (error) {
-    console.error('Error requesting event replay:', error);
+    logger.error('Error requesting event replay:', error);
     throw error;
   }
 }
@@ -110,7 +111,7 @@ export async function processPendingReplays(
 
     return processedCount;
   } catch (error) {
-    console.error('Error processing replays:', error);
+    logger.error('Error processing replays:', error);
     throw error;
   }
 }
@@ -138,7 +139,7 @@ export async function getReplayHistory(
 
     return (result as any).rows || [];
   } catch (error) {
-    console.error('Error getting replay history:', error);
+    logger.error('Error getting replay history:', error);
     throw error;
   }
 }
@@ -162,7 +163,7 @@ export async function cancelReplay(
 
     return (result.rowCount || 0) > 0;
   } catch (error) {
-    console.error('Error canceling replay:', error);
+    logger.error('Error canceling replay:', error);
     throw error;
   }
 }

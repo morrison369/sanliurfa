@@ -3,9 +3,10 @@
  * Compression, resizing, and format conversion
  */
 
-import { readFile, writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join, dirname, extname, basename } from 'path';
+import sharp from 'sharp';
 
 interface OptimizeOptions {
   width?: number;
@@ -49,43 +50,36 @@ export function hasOptimizedVersion(optimizedPath: string): boolean {
 }
 
 /**
- * Optimize image
- * Note: This is a stub. In production, use Sharp or similar library
+ * Optimize image using sharp
  */
 export async function optimizeImage(
   inputPath: string,
   outputPath: string,
   options: OptimizeOptions
 ): Promise<OptimizedImage> {
-  // Ensure output directory exists
   await mkdir(dirname(outputPath), { recursive: true });
-  
-  try {
-    // Read original file
-    const buffer = await readFile(inputPath);
-    
-    // In production, use Sharp:
-    // const sharp = require('sharp');
-    // const processed = await sharp(buffer)
-    //   .resize(options.width, options.height, { fit: options.fit })
-    //   .toFormat(options.format || 'webp', { quality: options.quality || 80 })
-    //   .toBuffer();
-    // await writeFile(outputPath, processed);
-    
-    // For now, just copy the file
-    await writeFile(outputPath, buffer);
-    
-    return {
-      path: outputPath.replace('./public', ''),
-      width: options.width || 800,
-      height: options.height || 600,
-      format: options.format || 'webp',
-      size: buffer.length,
-    };
-  } catch (error) {
-    console.error('Image optimization error:', error);
-    throw error;
+
+  let pipeline = sharp(inputPath);
+
+  if (options.width || options.height) {
+    pipeline = pipeline.resize(options.width, options.height, {
+      fit: (options.fit as any) || 'cover',
+    });
   }
+
+  const format = options.format || 'webp';
+  pipeline = pipeline.toFormat(format as any, { quality: options.quality || 80 });
+
+  const { data, info } = await pipeline.toBuffer({ resolveWithObject: true });
+  await writeFile(outputPath, data);
+
+  return {
+    path: outputPath.replace('./public', ''),
+    width: info.width,
+    height: info.height,
+    format: info.format,
+    size: info.size,
+  };
 }
 
 /**

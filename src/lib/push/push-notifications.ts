@@ -137,8 +137,9 @@ export async function cleanupInactiveSubscriptions(daysInactive: number = 30): P
       `UPDATE push_subscriptions
        SET is_active = false
        WHERE is_active = true
-       AND last_verified_at < NOW() - INTERVAL '${daysInactive} days'
-       RETURNING COUNT(*) as count`
+       AND last_verified_at < NOW() - ($1 * INTERVAL '1 day')
+       RETURNING COUNT(*) as count`,
+      [daysInactive]
     );
 
     const count = parseInt(result?.count || '0');

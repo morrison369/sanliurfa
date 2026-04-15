@@ -87,7 +87,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Code is valid - create full auth token
-    const authToken = await createToken(userId, sessionData.email, sessionData.role);
+    const authToken = createToken({ userId, email: sessionData.email, role: sessionData.role });
 
     // Set auth cookie
     cookies.set('auth-token', authToken, {

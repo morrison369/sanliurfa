@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { logger } from '../../../../lib/logging';
 
 // TODO: Facebook OAuth implementasyonu
 // Facebook OAuth için app ID ve secret gerekli
@@ -9,7 +10,7 @@ export const GET: APIRoute = async ({ url }) => {
     // Facebook OAuth entegrasyonu henüz yapılmamış
     // Facebook Developer Console'dan app ID ve secret alınmalı
     
-    console.log('Facebook OAuth requested but not configured');
+    logger.info('Facebook OAuth requested but not configured');
     
     return new Response(JSON.stringify({ 
       error: 'Facebook OAuth not configured. Please set up FACEBOOK_APP_ID and FACEBOOK_APP_SECRET.' 

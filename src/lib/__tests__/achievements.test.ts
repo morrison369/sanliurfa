@@ -43,7 +43,7 @@ describe('Achievements Library', () => {
       const result = await getUserAchievements('user-123');
 
       expect(result).toEqual(achievements);
-      expect(mockCache.getCache).toHaveBeenCalledWith('sanliurfa:achievements:user:user-123');
+      expect(mockCache.getCache).toHaveBeenCalledWith('achievements:user:user-123');
     });
 
     it('queries database if not cached', async () => {
@@ -97,7 +97,7 @@ describe('Achievements Library', () => {
         expect.stringContaining('UPDATE user_achievements SET viewed = true'),
         ['achievement-1', 'user-123']
       );
-      expect(mockCache.deleteCache).toHaveBeenCalledWith('sanliurfa:achievements:user:user-123');
+      expect(mockCache.deleteCache).toHaveBeenCalledWith('achievements:user:user-123');
     });
   });
 

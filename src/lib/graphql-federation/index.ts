@@ -5,6 +5,7 @@
 
 import { ApolloGateway, IntrospectAndCompose, RemoteGraphQLDataSource } from '@apollo/gateway';
 import { ApolloServer } from '@apollo/server';
+import { logger } from '../logging';
 
 // Service definitions
 const SERVICE_DEFINITIONS = [
@@ -47,11 +48,11 @@ export function createGateway(): ApolloGateway {
 
   // Health check
   gateway.onSchemaLoadOrUpdate((schemaContext) => {
-    console.log('[Gateway] Schema updated');
+    logger.info('[Gateway] Schema updated');
   });
 
   gateway.onSchemaChange((schemaContext) => {
-    console.log('[Gateway] Schema changed');
+    logger.info('[Gateway] Schema changed');
   });
 
   return gateway;

@@ -18,7 +18,7 @@ export async function createFunnel(userId: string, funnelName: string, funnelKey
       is_active: true
     });
 
-    await deleteCache('sanliurfa:funnels:list');
+    await deleteCache('funnels:list');
     logger.info('Funnel created', { funnelId: result.id, funnelName });
     return result;
   } catch (error) {
@@ -29,7 +29,7 @@ export async function createFunnel(userId: string, funnelName: string, funnelKey
 
 export async function getFunnelById(funnelId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:funnel:${funnelId}`;
+    const cacheKey = `funnel:${funnelId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -54,7 +54,7 @@ export async function getFunnelById(funnelId: string): Promise<any | null> {
 
 export async function listFunnels(): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:funnels:list';
+    const cacheKey = 'funnels:list';
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -117,7 +117,7 @@ export async function completeFunnel(entryId: string): Promise<boolean> {
       completed_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:funnel:analytics:${entryId}`);
+    await deleteCache(`funnel:analytics:${entryId}`);
     return true;
   } catch (error) {
     logger.error('Failed to complete funnel', error instanceof Error ? error : new Error(String(error)));
@@ -142,7 +142,7 @@ export async function recordFunnelDropoff(entryId: string, stepNumber: number, r
 
 export async function getFunnelAnalytics(funnelId: string, days: number = 30): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:funnel:analytics:${funnelId}`;
+    const cacheKey = `funnel:analytics:${funnelId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {

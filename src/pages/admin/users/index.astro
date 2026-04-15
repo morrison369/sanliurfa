@@ -7,14 +7,34 @@ const seo = {
   noindex: true,
 };
 
-// Mock stats
-const stats = {
-  total: 1247,
-  active: 1189,
-  vendors: 45,
-  pending: 13,
-  newToday: 8,
-};
+import { query } from '../../../lib/postgres';
+
+if (!Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/users');
+}
+
+let stats = { total: 0, active: 0, vendors: 0, pending: 0, newToday: 0 };
+try {
+  const result = await query(`
+    SELECT
+      COUNT(*)                                                      AS total,
+      COUNT(*) FILTER (WHERE status = 'active')                    AS active,
+      COUNT(*) FILTER (WHERE role = 'vendor')                      AS vendors,
+      COUNT(*) FILTER (WHERE status = 'pending')                   AS pending,
+      COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE)      AS new_today
+    FROM users WHERE status != 'deleted'
+  `);
+  const r = result.rows[0];
+  stats = {
+    total:    parseInt(r.total    || '0'),
+    active:   parseInt(r.active   || '0'),
+    vendors:  parseInt(r.vendors  || '0'),
+    pending:  parseInt(r.pending  || '0'),
+    newToday: parseInt(r.new_today|| '0'),
+  };
+} catch (e) {
+  console.error('Users stats error:', e);
+}
 ---
 
 <Layout seo={seo}>
@@ -323,14 +343,28 @@ const stats = {
 
     async function suspendUser(userId) {
       if (!confirm('Bu kullanıcıyı askıya almak istediğinize emin misiniz?')) return;
-      // Implementation would go here
-      console.log('Suspend user:', userId);
+      try {
+        const res = await fetch(`/api/admin/users/${userId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'suspend' }),
+        });
+        if (res.ok) loadUsers();
+        else alert('İşlem başarısız');
+      } catch { alert('Bağlantı hatası'); }
     }
 
     async function activateUser(userId) {
       if (!confirm('Bu kullanıcıyı aktifleştirmek istediğinize emin misiniz?')) return;
-      // Implementation would go here
-      console.log('Activate user:', userId);
+      try {
+        const res = await fetch(`/api/admin/users/${userId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'activate' }),
+        });
+        if (res.ok) loadUsers();
+        else alert('İşlem başarısız');
+      } catch { alert('Bağlantı hatası'); }
     }
 
     // Event listeners

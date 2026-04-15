@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
 
     // Check cache
-    const cacheKey = `sanliurfa:leaderboard:badges:${limit}`;
+    const cacheKey = `leaderboard:badges:${limit}`;
     const cached = await getCache<any[]>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;

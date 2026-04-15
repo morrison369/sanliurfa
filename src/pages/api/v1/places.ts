@@ -5,114 +5,77 @@
  */
 
 import type { APIRoute } from 'astro';
+import { query } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
-  const page = parseInt(url.searchParams.get('page') || '1');
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+  const offset = (page - 1) * limit;
   const category = url.searchParams.get('category');
-  
-  // Mock data - in production fetch from database
-  const places = [
-    {
-      id: 'place_1',
-      name: 'Balıklıgöl',
-      slug: 'balikligol',
-      description: 'Şanlıurfa\'nın sembolü, kutsal balıklarıyla ünlü göl.',
-      category: 'religious',
-      rating: 4.8,
-      review_count: 1250,
-      location: { lat: 37.1591, lon: 38.7969 },
-      image: 'https://cdn.sanliurfa.com/places/balikligol.jpg',
-      address: 'Balıklıgöl Mahallesi, Haliliye/Şanlıurfa',
-      is_active: true,
-      created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z',
-    },
-    {
-      id: 'place_2',
-      name: 'Göbeklitepe',
-      slug: 'gobeklitepe',
-      description: 'Dünyanın en eski tapınağı, UNESCO Dünya Mirası.',
-      category: 'historical',
-      rating: 4.9,
-      review_count: 2100,
-      location: { lat: 37.2231, lon: 38.9222 },
-      image: 'https://cdn.sanliurfa.com/places/gobeklitepe.jpg',
-      address: 'Örencik Köyü, Haliliye/Şanlıurfa',
-      is_active: true,
-      created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z',
-    },
-  ];
-  
-  // Filter by category if provided
-  const filtered = category 
-    ? places.filter(p => p.category === category)
-    : places;
-  
-  // Pagination
-  const total = filtered.length;
-  const start = (page - 1) * limit;
-  const paginated = filtered.slice(start, start + limit);
-  
-  return new Response(
-    JSON.stringify({
-      data: paginated,
-      meta: {
-        page,
-        limit,
-        total,
-        total_pages: Math.ceil(total / limit),
-        has_more: start + limit < total,
-      },
-      api_version: 'v1',
-    }),
-    {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Version': 'v1',
-      },
-    }
-  );
-};
 
-// POST: Create place (requires authentication)
-export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
-    
-    // Validation
-    if (!body.name || !body.category) {
-      return new Response(
-        JSON.stringify({
-          error: 'Validation failed',
-          message: 'Name and category are required',
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+    const params: any[] = [];
+    let where = `WHERE p.status = 'active'`;
+    let idx = 1;
+
+    if (category) {
+      where += ` AND (p.category = $${idx} OR c.slug = $${idx})`;
+      params.push(category);
+      idx++;
     }
-    
-    // Create place (mock)
-    const newPlace = {
-      id: `place_${Date.now()}`,
-      ...body,
-      slug: body.name.toLowerCase().replace(/\s+/g, '-'),
-      rating: 0,
-      review_count: 0,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    
+
+    const countResult = await query(
+      `SELECT COUNT(*) FROM places p LEFT JOIN categories c ON c.id = p.category_id ${where}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0].count || '0');
+
+    const dataResult = await query(
+      `SELECT
+         p.id, p.name, p.slug, p.description, p.address,
+         p.latitude, p.longitude, p.rating, p.review_count,
+         p.images, p.status, p.created_at, p.updated_at,
+         COALESCE(p.category, c.slug) AS category
+       FROM places p
+       LEFT JOIN categories c ON c.id = p.category_id
+       ${where}
+       ORDER BY p.rating DESC NULLS LAST
+       LIMIT $${idx} OFFSET $${idx + 1}`,
+      [...params, limit, offset]
+    );
+
+    const places = dataResult.rows.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      description: p.description,
+      category: p.category,
+      rating: parseFloat(p.rating) || 0,
+      review_count: p.review_count || 0,
+      location: p.latitude && p.longitude ? { lat: parseFloat(p.latitude), lon: parseFloat(p.longitude) } : null,
+      image: p.images?.[0] || null,
+      address: p.address,
+      is_active: p.status === 'active',
+      created_at: p.created_at,
+      updated_at: p.updated_at,
+    }));
+
     return new Response(
       JSON.stringify({
-        data: newPlace,
+        data: places,
+        meta: {
+          page,
+          limit,
+          total,
+          total_pages: Math.ceil(total / limit),
+          has_more: offset + limit < total,
+        },
         api_version: 'v1',
       }),
       {
-        status: 201,
+        status: 200,
         headers: {
           'Content-Type': 'application/json',
           'X-API-Version': 'v1',
@@ -120,12 +83,21 @@ export const POST: APIRoute = async ({ request }) => {
       }
     );
   } catch (error) {
+    logger.error('API v1 places error:', error);
     return new Response(
-      JSON.stringify({
-        error: 'Invalid request',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Server error', api_version: 'v1' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', 'X-API-Version': 'v1' } }
     );
   }
+};
+
+// POST: Create place — redirect to the proper apply endpoint
+export const POST: APIRoute = async ({ request }) => {
+  return new Response(
+    JSON.stringify({
+      error: 'Use /api/places/apply to submit a new place',
+      api_version: 'v1',
+    }),
+    { status: 405, headers: { 'Content-Type': 'application/json', 'X-API-Version': 'v1' } }
+  );
 };

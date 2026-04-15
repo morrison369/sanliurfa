@@ -2,7 +2,7 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
 import { convertToCSV, convertToJSON, getContentType, getFileExtension, getFormattedDate } from '../../../lib/export/export';
-import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiError, apiResponse, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
@@ -11,7 +11,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError({ requestId } as any, HttpStatus.UNAUTHORIZED, 'Kimlik dogrulama gerekli');
+      return apiError(ErrorCode.UNAUTHORIZED, 'Kimlik doğrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const url = new URL(request.url);
@@ -67,7 +67,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       }))
     };
 
-    const data = format === 'csv' ? convertToJSON(export_data) : convertToJSON(export_data);
+    const data = format === 'csv' ? convertToCSV(export_data) : convertToJSON(export_data);
     const extension = getFileExtension(format);
     const filename = `personal-data-${getFormattedDate()}.${extension}`;
 

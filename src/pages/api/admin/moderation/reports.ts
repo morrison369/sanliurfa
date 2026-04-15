@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   try {
     const user = locals.user;
 
-    if (!user || !user.isAdmin) {
+    if (!user || !locals.isAdmin) {
       recordRequest('GET', '/api/admin/moderation/reports', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
@@ -87,7 +87,7 @@ export const PUT: APIRoute = async ({ request, locals, url }) => {
   try {
     const user = locals.user;
 
-    if (!user || !user.isAdmin) {
+    if (!user || !locals.isAdmin) {
       recordRequest('PUT', '/api/admin/moderation/reports', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,

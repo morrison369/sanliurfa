@@ -1,203 +1,197 @@
 /**
- * POST /api/places/submissions
- * Submit a new place
- * 
- * GET /api/places/submissions
- * Get user's submissions (or pending for admin)
+ * GET /api/places/submissions  — User's own submitted places (or admin: all pending)
+ * POST /api/places/submissions — Submit / draft / update / submitForReview
  */
 
 import type { APIRoute } from 'astro';
-import { 
-  submitPlace,
-  saveDraft,
-  updateSubmission,
-  submitForReview,
-  getUserSubmissions,
-  getPendingSubmissions,
-  getSubmissionById,
-  findPotentialDuplicates,
-  type SubmissionStatus
-} from '../../../lib/places/user-submissions';
-import { requireAuth, requireRole } from '../../../lib/auth';
+import { query } from '../../../lib/postgres';
+import { requireAuth } from '../../../lib/auth';
+import { logger } from '../../../lib/logging';
+
+// ─── GET ──────────────────────────────────────────────────────────────────────
 
 export const GET: APIRoute = async ({ request, url }) => {
   try {
     const auth = await requireAuth(request);
-    if (auth instanceof Response) return auth;
+    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
-    const searchParams = url.searchParams;
-    const status = searchParams.get('status') as SubmissionStatus | 'pending';
-    const id = searchParams.get('id');
+    const id     = url.searchParams.get('id');
+    const status = url.searchParams.get('status');
 
-    // Get single submission
+    // Single submission
     if (id) {
-      const submission = getSubmissionById(id);
+      const result = await query(
+        `SELECT p.*, d.name AS district_name FROM places p
+         LEFT JOIN districts d ON d.id = p.district_id
+         WHERE p.id = $1`,
+        [id]
+      );
+      const submission = result.rows[0];
       if (!submission) {
-        return new Response(
-          JSON.stringify({ error: 'Submission not found' }),
-          { status: 404, headers: { 'Content-Type': 'application/json' } }
-        );
+        return new Response(JSON.stringify({ error: 'Başvuru bulunamadı' }), {
+          status: 404, headers: { 'Content-Type': 'application/json' },
+        });
       }
-      // Check ownership
-      if (submission.userId !== auth.user.id && auth.user.role !== 'admin') {
-        return new Response(
-          JSON.stringify({ error: 'Unauthorized' }),
-          { status: 403, headers: { 'Content-Type': 'application/json' } }
-        );
+      if (submission.owner_id !== auth.user.id && auth.user.role !== 'admin') {
+        return new Response(JSON.stringify({ error: 'Yetkisiz' }), {
+          status: 403, headers: { 'Content-Type': 'application/json' },
+        });
       }
-      return new Response(
-        JSON.stringify({ submission }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ submission }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Admin: get pending submissions
+    // Admin: all pending submissions
     if (status === 'pending' && auth.user.role === 'admin') {
-      const submissions = getPendingSubmissions();
-      return new Response(
-        JSON.stringify({ submissions }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      const result = await query(
+        `SELECT p.id, p.name, p.description, p.address, p.category, p.status,
+                p.created_at, u.full_name AS owner_name, u.email AS owner_email
+         FROM places p
+         LEFT JOIN users u ON u.id = p.owner_id
+         WHERE p.status IN ('pending', 'needs_info')
+         ORDER BY p.created_at ASC`
       );
+      return new Response(JSON.stringify({ submissions: result.rows }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Get user's submissions
-    const submissions = getUserSubmissions(auth.user.id);
-    return new Response(
-      JSON.stringify({ submissions }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    // User's own submissions
+    const result = await query(
+      `SELECT id, name, description, address, category, status, created_at
+       FROM places
+       WHERE owner_id = $1 AND status IN ('pending', 'draft', 'active', 'rejected', 'needs_info')
+       ORDER BY created_at DESC`,
+      [auth.user.id]
     );
+    return new Response(JSON.stringify({ submissions: result.rows }), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to get submissions';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    logger.error('Submissions GET error:', error);
+    return new Response(JSON.stringify({ error: 'Başvurular alınamadı' }), {
+      status: 500, headers: { 'Content-Type': 'application/json' },
+    });
   }
 };
+
+// ─── POST ─────────────────────────────────────────────────────────────────────
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireAuth(request);
-    if (auth instanceof Response) return auth;
+    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const body = await request.json();
-    const { 
+    const {
       action = 'submit',
       submissionId,
-      name,
-      category,
-      description,
-      shortDescription,
-      address,
-      district,
-      latitude,
-      longitude,
-      phone,
-      website,
-      email,
-      openingHours,
-      features = [],
-      priceRange,
-      photos = [],
-      isOwner = false,
+      name, category, description, shortDescription,
+      address, latitude, longitude, phone, website, email,
+      openingHours, features = [], priceRange, photos = [],
     } = body;
 
-    // Handle different actions
+    // UPDATE existing submission
     if (action === 'update' && submissionId) {
-      const submission = updateSubmission(submissionId, auth.user.id, {
-        name,
-        category,
-        description,
-        shortDescription,
-        address,
-        district,
-        latitude,
-        longitude,
-        phone,
-        website,
-        email,
-        openingHours,
-        features,
-        priceRange,
-        photos,
+      await query(
+        `UPDATE places SET
+           name = COALESCE($1, name),
+           category = COALESCE($2, category),
+           description = COALESCE($3, description),
+           short_description = COALESCE($4, short_description),
+           address = COALESCE($5, address),
+           latitude = COALESCE($6, latitude),
+           longitude = COALESCE($7, longitude),
+           phone = COALESCE($8, phone),
+           website = COALESCE($9, website),
+           email = COALESCE($10, email),
+           open_hours = COALESCE($11, open_hours),
+           tags = COALESCE($12, tags),
+           price_range = COALESCE($13, price_range),
+           images = COALESCE($14, images),
+           updated_at = NOW()
+         WHERE id = $15 AND owner_id = $16 AND status IN ('draft', 'needs_info')`,
+        [name, category, description, shortDescription, address,
+         latitude, longitude, phone, website, email,
+         openingHours, features.length ? features : null,
+         priceRange, photos.length ? photos : null,
+         submissionId, auth.user.id]
+      );
+      const result = await query(`SELECT * FROM places WHERE id = $1`, [submissionId]);
+      return new Response(JSON.stringify({ success: true, submission: result.rows[0] }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
       });
-      return new Response(
-        JSON.stringify({ success: true, submission }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
     }
 
+    // SUBMIT FOR REVIEW (draft → pending)
     if (action === 'submitForReview' && submissionId) {
-      const submission = submitForReview(submissionId, auth.user.id);
-      return new Response(
-        JSON.stringify({ success: true, submission }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      await query(
+        `UPDATE places SET status = 'pending', updated_at = NOW()
+         WHERE id = $1 AND owner_id = $2 AND status = 'draft'`,
+        [submissionId, auth.user.id]
       );
+      const result = await query(`SELECT * FROM places WHERE id = $1`, [submissionId]);
+      return new Response(JSON.stringify({ success: true, submission: result.rows[0] }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      });
     }
 
-    // Validate required fields
+    // Validate for new submission
     if (!name || !category || !description || !address) {
       return new Response(
-        JSON.stringify({ error: 'Name, category, description, and address are required' }),
+        JSON.stringify({ error: 'name, category, description, address zorunludur' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // Check for duplicates
-    const duplicates = findPotentialDuplicates(name, address);
-    if (duplicates.length > 0) {
+    // Duplicate check
+    const dupeResult = await query(
+      `SELECT id, name, address FROM places
+       WHERE LOWER(name) = LOWER($1) AND status != 'deleted'
+       LIMIT 3`,
+      [name]
+    );
+    if (dupeResult.rows.length > 0) {
       return new Response(
-        JSON.stringify({ 
-          warning: 'Potential duplicates found',
-          duplicates,
-          proceed: true 
-        }),
+        JSON.stringify({ warning: 'Benzer mekan mevcut', duplicates: dupeResult.rows, proceed: true }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const submissionData = {
-      userId: auth.user.id,
-      userName: auth.user.full_name || auth.user.username || 'Anonim',
-      userEmail: auth.user.email,
-      name,
-      category,
-      description,
-      shortDescription,
-      address,
-      district: district || 'Merkez',
-      latitude,
-      longitude,
-      phone,
-      website,
-      email,
-      openingHours,
-      features,
-      priceRange,
-      photos,
-      isOwner,
-    };
+    const newStatus = action === 'draft' ? 'draft' : 'pending';
+    const slug = name.toLowerCase()
+      .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
+      .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c')
+      .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')
+      + '-' + Date.now();
 
-    let submission;
-    if (action === 'draft') {
-      submission = saveDraft(submissionData);
-    } else {
-      submission = submitPlace(submissionData);
-    }
+    const result = await query(
+      `INSERT INTO places
+         (name, slug, category, description, short_description, address,
+          latitude, longitude, phone, website, email, open_hours,
+          tags, price_range, images, owner_id, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+       RETURNING *`,
+      [name, slug, category, description, shortDescription || null,
+       address, latitude || null, longitude || null,
+       phone || null, website || null, email || null, openingHours || null,
+       features.length ? features : null, priceRange || null,
+       photos.length ? photos : null, auth.user.id, newStatus]
+    );
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        submission,
-        message: action === 'draft' ? 'Draft saved' : 'Place submitted for review'
+      JSON.stringify({
+        success: true,
+        submission: result.rows[0],
+        message: action === 'draft' ? 'Taslak kaydedildi' : 'Başvuru incelemeye gönderildi',
       }),
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to submit place';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    logger.error('Submissions POST error:', error);
+    return new Response(JSON.stringify({ error: 'Başvuru işlemi başarısız' }), {
+      status: 400, headers: { 'Content-Type': 'application/json' },
+    });
   }
 };

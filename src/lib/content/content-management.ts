@@ -35,7 +35,7 @@ export async function createContent(userId: string, data: any): Promise<any | nu
       changes: { created: true }
     });
 
-    await deleteCache('sanliurfa:content:*');
+    await deleteCache('content:*');
     logger.info('Content created', { contentId: result.id, userId });
     return result;
   } catch (error) {
@@ -46,7 +46,7 @@ export async function createContent(userId: string, data: any): Promise<any | nu
 
 export async function getContentById(contentId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:content:${contentId}`;
+    const cacheKey = `content:${contentId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -101,7 +101,7 @@ export async function updateContent(contentId: string, userId: string, updates: 
       changes: updates
     });
 
-    await deleteCache(`sanliurfa:content:${contentId}`);
+    await deleteCache(`content:${contentId}`);
     return true;
   } catch (error) {
     logger.error('Failed to update content', error instanceof Error ? error : new Error(String(error)));
@@ -133,8 +133,8 @@ export async function publishContent(contentId: string, userId: string): Promise
       changes: { published: true }
     });
 
-    await deleteCache(`sanliurfa:content:${contentId}`);
-    await deleteCache('sanliurfa:content:*');
+    await deleteCache(`content:${contentId}`);
+    await deleteCache('content:*');
     logger.info('Content published', { contentId, userId });
     return true;
   } catch (error) {
@@ -172,7 +172,7 @@ export async function getUserContent(userId: string, limit: number = 20): Promis
 
 export async function getPublishedContent(category?: string, limit: number = 20): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:content:published:${category || 'all'}:${limit}`;
+    const cacheKey = `content:published:${category || 'all'}:${limit}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -244,7 +244,7 @@ export async function recordContentView(contentId: string, userId?: string): Pro
       });
     }
 
-    await deleteCache(`sanliurfa:content:${contentId}`);
+    await deleteCache(`content:${contentId}`);
   } catch (error) {
     logger.error('Failed to record view', error instanceof Error ? error : new Error(String(error)));
   }
@@ -298,7 +298,7 @@ export async function addContentTags(contentId: string, tags: string[]): Promise
         tag_name: tag
       });
     }
-    await deleteCache(`sanliurfa:content:${contentId}`);
+    await deleteCache(`content:${contentId}`);
   } catch (error) {
     logger.error('Failed to add tags', error instanceof Error ? error : new Error(String(error)));
   }
@@ -318,7 +318,7 @@ export async function likeContent(contentId: string, userId: string): Promise<bo
       });
     }
 
-    await deleteCache(`sanliurfa:content:${contentId}`);
+    await deleteCache(`content:${contentId}`);
     return true;
   } catch (error) {
     logger.error('Failed to like content', error instanceof Error ? error : new Error(String(error)));

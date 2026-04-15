@@ -33,7 +33,7 @@ export default function AdminDashboard() {
 
   const loadMetrics = async () => {
     try {
-      const res = await fetch('/api/metrics');
+      const res = await fetch('/api/metrics', { headers: { Accept: 'application/json' } });
       if (!res.ok) throw new Error('Failed to load metrics');
       const data = await res.json();
       setMetrics(data.data || null);

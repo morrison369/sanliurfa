@@ -4,6 +4,7 @@
  */
 
 import { Pool, PoolClient, QueryResult as PgQueryResult } from 'pg';
+import { logger } from '../logging';
 
 // Database configuration
 const DB_CONFIG = {
@@ -44,19 +45,19 @@ export function initPool(): Pool {
     
     // Error handling
     pool.on('error', (err) => {
-      console.error('Unexpected database error:', err);
+      logger.error('Unexpected database error:', err);
     });
     
     pool.on('connect', () => {
-      console.log('[DB] New client connected');
+      logger.info('[DB] New client connected');
     });
     
     pool.on('acquire', () => {
-      console.log('[DB] Client acquired from pool');
+      logger.info('[DB] Client acquired from pool');
     });
     
     pool.on('remove', () => {
-      console.log('[DB] Client removed from pool');
+      logger.info('[DB] Client removed from pool');
     });
   }
   
@@ -85,7 +86,7 @@ export async function query<T = any>(
     const duration = Date.now() - start;
     
     if (duration > 1000) {
-      console.warn(`[DB] Slow query (${duration}ms): ${sql.substring(0, 100)}`);
+      logger.warn(`[DB] Slow query (${duration}ms): ${sql.substring(0, 100)}`);
     }
     
     return {
@@ -365,7 +366,7 @@ export async function closePool(): Promise<void> {
   if (pool) {
     await pool.end();
     pool = null;
-    console.log('[DB] Pool closed');
+    logger.info('[DB] Pool closed');
   }
 }
 

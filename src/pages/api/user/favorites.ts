@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
+import { logger } from '../../../lib/logging';
 
 // List user's favorite places
 export const GET: APIRoute = async (context) => {
@@ -31,7 +32,7 @@ export const GET: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Get favorites error:', error);
+    logger.error('Get favorites error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -90,7 +91,7 @@ export const POST: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Add favorite error:', error);
+    logger.error('Add favorite error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -133,7 +134,7 @@ export const DELETE: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Remove favorite error:', error);
+    logger.error('Remove favorite error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

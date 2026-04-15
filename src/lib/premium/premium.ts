@@ -10,7 +10,7 @@ export async function getUserMembership(userId: string): Promise<{ tier: Members
       `SELECT tier, status FROM memberships WHERE user_id = $1`,
       [userId]
     );
-    return result || { tier: 'free', status: 'active' };
+    return result.rows[0] || { tier: 'free', status: 'active' };
   } catch (error) {
     logger.error('Membership lookup failed', error instanceof Error ? error : new Error(String(error)));
     return { tier: 'free', status: 'active' };

@@ -4,6 +4,7 @@ import { authenticateUser } from '../../../lib/auth/middleware';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import crypto from 'crypto';
+import { logger } from '../../../lib/logging';
 
 // Maximum file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -139,7 +140,7 @@ export const POST: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('Upload error:', error);
+    logger.error('Upload error:', error);
     return new Response(JSON.stringify({ error: 'Upload failed' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -178,7 +179,7 @@ export const GET: APIRoute = async (context) => {
     });
 
   } catch (error) {
-    console.error('List photos error:', error);
+    logger.error('List photos error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

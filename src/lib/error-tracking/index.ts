@@ -4,6 +4,7 @@
  */
 
 import { query } from '../postgres';
+import { logger } from '../logging';
 
 // Sentry DSN from environment
 const SENTRY_DSN = process.env.SENTRY_DSN;
@@ -37,7 +38,7 @@ let sentryClient: any = null;
  */
 export async function initErrorTracking(): Promise<void> {
   if (!SENTRY_DSN) {
-    console.log('[ErrorTracking] SENTRY_DSN not configured, using local error tracking only');
+    logger.info('[ErrorTracking] SENTRY_DSN not configured, using local error tracking only');
     return;
   }
 
@@ -61,9 +62,9 @@ export async function initErrorTracking(): Promise<void> {
     });
 
     sentryClient = Sentry;
-    console.log('[ErrorTracking] Sentry initialized');
+    logger.info('[ErrorTracking] Sentry initialized');
   } catch {
-    console.log('[ErrorTracking] Sentry not available, using local error tracking');
+    logger.info('[ErrorTracking] Sentry not available, using local error tracking');
   }
 }
 
@@ -124,7 +125,7 @@ export async function captureError(
 
   // Console output in development
   if (ENVIRONMENT === 'development') {
-    console.error(`[Error] ${errorEvent.message}`, error instanceof Error ? error.stack : '');
+    logger.error(`[Error] ${errorEvent.message}`, error instanceof Error ? error.stack : '');
   }
 
   return errorId;
@@ -432,18 +433,14 @@ export function addBreadcrumb(
  */
 export async function cleanOldErrors(retentionDays: number = 90): Promise<number> {
   const result = await query(
-    `DELETE FROM error_logs WHERE created_at < NOW() - INTERVAL '${retentionDays} days'
-    RETURNING id`,
-    []
-  );
+    `DELETE FROM error_logs WHERE created_at < NOW() - ($1 * INTERVAL '1 day')
+    RETURNING id`, [retentionDays]);
 
   // Clean up old resolved/ignored fingerprints
   await query(
     `DELETE FROM error_fingerprints 
     WHERE status IN ('resolved', 'ignored') 
-    AND last_seen < NOW() - INTERVAL '${retentionDays} days'`,
-    []
-  );
+    AND last_seen < NOW() - ($1 * INTERVAL '1 day')`, [retentionDays]);
 
   return result.rows.length;
 }

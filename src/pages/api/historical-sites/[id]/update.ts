@@ -1,6 +1,7 @@
 // API: Historical site update (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { update } from '../../../../lib/postgres';
+import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
   try {
@@ -52,7 +53,7 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
 
     return redirect('/admin/historical-sites?success=updated');
   } catch (err) {
-    console.error('Historical site update error:', err);
+    logger.error('Historical site update error:', err);
     return redirect(`/admin/historical-sites/edit/${params.id}?error=server_error`);
   }
 };

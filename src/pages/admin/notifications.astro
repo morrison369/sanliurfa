@@ -5,7 +5,7 @@
  */
 
 // Auth kontrol
-if (!Astro.locals.user?.isAdmin) {
+if (!Astro.locals.isAdmin) {
   return Astro.redirect('/giris');
 }
 
@@ -98,7 +98,7 @@ const pageTitle = 'Bildirimleri Yönet';
                             <!-- Hedef Kitle -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    ğŸ‘¥ Hedef Kitle
+                                    👥 Hedef Kitle
                                 </label>
                                 <select name="target" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                                     <option value="all">Tüm Aboneler</option>
@@ -112,7 +112,7 @@ const pageTitle = 'Bildirimleri Yönet';
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                                        â° Gönderme Zamanı
+                                        ⏰ Gönderme Zamanı
                                     </label>
                                     <input
                                         type="datetime-local"
@@ -145,7 +145,7 @@ const pageTitle = 'Bildirimleri Yönet';
                                     type="submit"
                                     class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
                                 >
-                                    âœˆï¸ Gönder
+                                    ✈️ Gönder
                                 </button>
                             </div>
                         </form>
@@ -204,11 +204,11 @@ const pageTitle = 'Bildirimleri Yönet';
                         <p id="stat-total" class="text-2xl font-bold text-gray-900">0</p>
                     </div>
                     <div class="bg-white rounded-lg shadow p-6">
-                        <p class="text-gray-600 text-sm">âœ… Tıklanan</p>
+                        <p class="text-gray-600 text-sm">✅ Tıklanan</p>
                         <p id="stat-clicked" class="text-2xl font-bold text-green-600">0</p>
                     </div>
                     <div class="bg-white rounded-lg shadow p-6">
-                        <p class="text-gray-600 text-sm">ğŸ‘¥ Abone Sayısı</p>
+                        <p class="text-gray-600 text-sm">👥 Abone Sayısı</p>
                         <p id="stat-subscribers" class="text-2xl font-bold text-blue-600">0</p>
                     </div>
                     <div class="bg-white rounded-lg shadow p-6">
@@ -292,14 +292,14 @@ const pageTitle = 'Bildirimleri Yönet';
                 });
 
                 if (response.ok) {
-                    alert('âœ“ Taslak kaydedildi');
+                    alert('✓ Taslak kaydedildi');
                     form.reset();
                 } else {
-                    alert('âœ— Hata oluştu');
+                    alert('✗ Hata oluştu');
                 }
             } catch (error) {
                 console.error('Hata:', error);
-                alert('âœ— Hata: ' + error.message);
+                alert('✗ Hata: ' + error.message);
             }
         }
 
@@ -317,15 +317,15 @@ const pageTitle = 'Bildirimleri Yönet';
                 });
 
                 if (response.ok) {
-                    alert('âœ“ Bildirim gönderildi');
+                    alert('✓ Bildirim gönderildi');
                     form.reset();
                 } else {
                     const error = await response.json();
-                    alert('âœ— Hata: ' + (error.error || 'Bildirim gönderilemedi'));
+                    alert('✗ Hata: ' + (error.error || 'Bildirim gönderilemedi'));
                 }
             } catch (error) {
                 console.error('Hata:', error);
-                alert('âœ— Hata: ' + error.message);
+                alert('✗ Hata: ' + error.message);
             }
         });
 
@@ -362,9 +362,9 @@ const pageTitle = 'Bildirimleri Yönet';
                             <p class="font-semibold text-gray-900">${DOMPurify.sanitize(n.title)}</p>
                             <p class="text-sm text-gray-600 mt-1">${DOMPurify.sanitize(n.body)}</p>
                             <p class="text-xs text-gray-500 mt-2">
-                                ğŸ“… ${new Date(n.sent_at).toLocaleString('tr-TR')} â€¢
-                                ğŸ‘¥ ${n.recipient_count} kişi â€¢
-                                âœ… ${n.click_count} tıkla
+                                📅 ${new Date(n.sent_at).toLocaleString('tr-TR')} •
+                                👥 ${n.recipient_count} kişi •
+                                ✅ ${n.click_count} tıkla
                             </p>
                         </div>
                     `).join('');
@@ -391,7 +391,7 @@ const pageTitle = 'Bildirimleri Yönet';
                                     <p class="font-semibold text-gray-900">${DOMPurify.sanitize(d.title)}</p>
                                     <p class="text-sm text-gray-600 mt-1">${DOMPurify.sanitize(d.body)}</p>
                                 </div>
-                                <button onclick="deleteDraft(${d.id})" class="text-red-600 hover:text-red-800">ğŸ—‘ï¸</button>
+                                <button onclick="deleteDraft(${d.id})" class="text-red-600 hover:text-red-800">🗑ï¸</button>
                             </div>
                         </div>
                     `).join('');

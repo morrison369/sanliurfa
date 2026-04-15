@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request }) => {
 
   try {
     // Check cache
-    const cacheKey = 'sanliurfa:badge:definitions';
+    const cacheKey = 'badge:definitions';
     const cached = await getCache(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/badges/definitions', HttpStatus.OK, Date.now() - startTime);

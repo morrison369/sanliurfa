@@ -47,7 +47,7 @@ export async function getRewardsCatalog(
     max_cost?: number;
   }
 ): Promise<{ rewards: Reward[]; total: number }> {
-  const cacheKey = `sanliurfa:rewards:catalog:${limit}:${offset}:${JSON.stringify(filters || {})}`;
+  const cacheKey = `rewards:catalog:${limit}:${offset}:${JSON.stringify(filters || {})}`;
 
   try {
     const cached = await getCache<{ rewards: Reward[]; total: number }>(cacheKey);
@@ -80,12 +80,26 @@ export async function getRewardsCatalog(
 
     const rewards = await queryMany(sql, params) as any[];
 
-    const countSql = 'SELECT COUNT(*) as total FROM rewards_catalog WHERE status = $1' +
-      (filters?.tier_requirement ? ` AND (tier_requirement IS NULL OR tier_requirement = '${filters.tier_requirement}')` : '') +
-      (filters?.reward_type ? ` AND reward_type = '${filters.reward_type}'` : '') +
-      (filters?.max_cost ? ` AND points_cost <= ${filters.max_cost}` : '');
+    let countSql = 'SELECT COUNT(*) as total FROM rewards_catalog WHERE status = $1';
+    const countParams: any[] = ['active'];
+    let countIndex = 2;
 
-    const countResult = await queryOne(countSql, []);
+    if (filters?.tier_requirement) {
+      countSql += ` AND (tier_requirement IS NULL OR tier_requirement = $${countIndex})`;
+      countParams.push(filters.tier_requirement);
+      countIndex++;
+    }
+    if (filters?.reward_type) {
+      countSql += ` AND reward_type = $${countIndex}`;
+      countParams.push(filters.reward_type);
+      countIndex++;
+    }
+    if (filters?.max_cost) {
+      countSql += ` AND points_cost <= $${countIndex}`;
+      countParams.push(filters.max_cost);
+    }
+
+    const countResult = await queryOne(countSql, countParams);
 
     const data = {
       rewards: rewards,
@@ -104,7 +118,7 @@ export async function getRewardsCatalog(
  * Get single reward details
  */
 export async function getRewardDetails(rewardId: string): Promise<Reward | null> {
-  const cacheKey = `sanliurfa:reward:${rewardId}`;
+  const cacheKey = `reward:${rewardId}`;
 
   try {
     const cached = await getCache<Reward>(cacheKey);
@@ -168,8 +182,8 @@ export async function redeemReward(
     }
 
     // Clear caches
-    await deleteCache(`sanliurfa:reward:${rewardId}`);
-    await deleteCachePattern(`sanliurfa:rewards:catalog:*`);
+    await deleteCache(`reward:${rewardId}`);
+    await deleteCachePattern(`rewards:catalog:*`);
 
     // Send notification
     await createNotification(
@@ -239,7 +253,7 @@ export async function getUserRedemptions(
  * Get featured rewards
  */
 export async function getFeaturedRewards(limit: number = 8): Promise<Reward[]> {
-  const cacheKey = `sanliurfa:rewards:featured:${limit}`;
+  const cacheKey = `rewards:featured:${limit}`;
 
   try {
     const cached = await getCache<Reward[]>(cacheKey);
@@ -268,7 +282,7 @@ export async function getRewardsByType(
   rewardType: string,
   limit: number = 20
 ): Promise<Reward[]> {
-  const cacheKey = `sanliurfa:rewards:type:${rewardType}:${limit}`;
+  const cacheKey = `rewards:type:${rewardType}:${limit}`;
 
   try {
     const cached = await getCache<Reward[]>(cacheKey);

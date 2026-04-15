@@ -62,7 +62,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       [JSON.stringify(prefs), user.id]
     );
 
-    await deleteCache('sanliurfa:user:' + user.id);
+    await deleteCache('user:' + user.id);
 
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/users/email-preferences', HttpStatus.OK, duration);

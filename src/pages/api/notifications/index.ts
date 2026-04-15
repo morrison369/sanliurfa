@@ -17,7 +17,7 @@ import {
 export const GET: APIRoute = async ({ request, url }) => {
   try {
     const auth = await requireAuth(request);
-    if (auth instanceof Response) return auth;
+    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const searchParams = new URL(url).searchParams;
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request, url }) => {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireAuth(request);
-    if (auth instanceof Response) return auth;
+    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
 
     const body = await request.json();
     const { notificationId, markAll } = body;

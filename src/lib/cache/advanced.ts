@@ -4,6 +4,7 @@
  */
 
 import { getRedisClient, isRedisAvailable } from './cache';
+import { logger } from '../logging';
 
 // Cache configuration
 const DEFAULT_TTL = 3600; // 1 hour
@@ -116,7 +117,7 @@ class AdvancedCacheManager {
       this.updateHitRate();
       return entry.data;
     } catch (error) {
-      console.error('Cache get error:', error);
+      logger.error('Cache get error:', error);
       return null;
     }
   }
@@ -153,7 +154,7 @@ class AdvancedCacheManager {
         await (redis as any).sadd(`cache:tags:${tag}`, cacheKey);
       }
     } catch (error) {
-      console.error('Cache set error:', error);
+      logger.error('Cache set error:', error);
     }
   }
 
@@ -193,7 +194,7 @@ class AdvancedCacheManager {
       await redis.del(cacheKey);
       this.stats.evictions++;
     } catch (error) {
-      console.error('Cache delete error:', error);
+      logger.error('Cache delete error:', error);
     }
   }
 
@@ -217,7 +218,7 @@ class AdvancedCacheManager {
       this.stats.evictions += keys.length;
       return keys.length;
     } catch (error) {
-      console.error('Cache invalidate by tag error:', error);
+      logger.error('Cache invalidate by tag error:', error);
       return 0;
     }
   }
@@ -242,7 +243,7 @@ class AdvancedCacheManager {
         }
       } while (cursor !== 0);
     } catch (error) {
-      console.error('Cache invalidate namespace error:', error);
+      logger.error('Cache invalidate namespace error:', error);
     }
   }
 
@@ -266,7 +267,7 @@ class AdvancedCacheManager {
 
       this.version++;
     } catch (error) {
-      console.error('Cache clear error:', error);
+      logger.error('Cache clear error:', error);
     }
   }
 
@@ -289,7 +290,7 @@ class AdvancedCacheManager {
   }
 
   private triggerBackgroundRefresh(namespace: string, key: string): void {
-    console.log(`Background refresh triggered for ${namespace}:${key}`);
+    logger.info(`Background refresh triggered for ${namespace}:${key}`);
   }
 }
 

@@ -2,7 +2,7 @@
  * Phase 381: Board Stability Continuity Coordinator V6
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 export interface BoardStabilityContinuitySignalV6 {
   signalId: string;

@@ -1,24 +1,14 @@
 /**
  * Real-time notification system
- * WebSocket, SSE, and push notification support
+ * Persistent storage via PostgreSQL, SSE broadcast via in-process Map
  */
 
-import { generateId } from '../utils';
+import { query, queryOne } from '../postgres';
 
-// Notification types
-export type NotificationType = 
-  | 'info'
-  | 'success'
-  | 'warning'
-  | 'error'
-  | 'message'
-  | 'like'
-  | 'comment'
-  | 'follow'
-  | 'mention'
-  | 'system';
+export type NotificationType =
+  | 'info' | 'success' | 'warning' | 'error'
+  | 'message' | 'like' | 'comment' | 'follow' | 'mention' | 'system';
 
-// Notification data
 export interface Notification {
   id: string;
   type: NotificationType;
@@ -31,304 +21,149 @@ export interface Notification {
   expiresAt?: string;
 }
 
-// WebSocket client map
-const wsClients: Map<string, WebSocket> = new Map();
-
-// SSE client map
+// SSE client map (in-process, per-request lifetime is fine for SSE)
 const sseClients: Map<string, ReadableStreamDefaultController> = new Map();
 
-// In-memory notification store (use Redis in production)
-const notificationStore: Map<string, Notification[]> = new Map();
-
 /**
- * Add notification to store
+ * Add notification — persists to DB and broadcasts to connected SSE clients
  */
-export function addNotification(notification: Omit<Notification, 'id' | 'createdAt'>): Notification {
-  const fullNotification: Notification = {
-    ...notification,
-    id: generateId(),
-    createdAt: new Date().toISOString(),
+export async function addNotification(
+  notification: Omit<Notification, 'id' | 'createdAt'>
+): Promise<Notification> {
+  const result = await query(
+    `INSERT INTO notifications (user_id, type, title, message, read, expires_at)
+     VALUES ($1, $2, $3, $4, false, $5)
+     RETURNING id, user_id, type, title, message, read, created_at, expires_at`,
+    [
+      notification.userId || null,
+      notification.type,
+      notification.title,
+      notification.message,
+      notification.expiresAt || null,
+    ]
+  );
+  const row = result.rows[0];
+  const full: Notification = {
+    id: row.id,
+    userId: row.user_id,
+    type: row.type,
+    title: row.title,
+    message: row.message,
+    read: row.read,
+    createdAt: row.created_at,
+    expiresAt: row.expires_at,
   };
 
-  const userId = notification.userId || 'global';
-  const userNotifications = notificationStore.get(userId) || [];
-  userNotifications.unshift(fullNotification);
-  
-  // Keep only last 100 notifications per user
-  if (userNotifications.length > 100) {
-    userNotifications.splice(100);
-  }
-  
-  notificationStore.set(userId, userNotifications);
-
-  // Broadcast to connected clients
-  broadcastToUser(userId, fullNotification);
-
-  return fullNotification;
-}
-
-/**
- * Get notifications for user
- */
-export function getNotifications(userId: string, options?: {
-  unreadOnly?: boolean;
-  limit?: number;
-}): Notification[] {
-  let notifications = notificationStore.get(userId) || [];
-
-  if (options?.unreadOnly) {
-    notifications = notifications.filter(n => !n.read);
+  // Broadcast to connected SSE client
+  if (notification.userId) {
+    broadcastToUser(notification.userId, full);
   }
 
-  if (options?.limit) {
-    notifications = notifications.slice(0, options.limit);
-  }
-
-  return notifications;
+  return full;
 }
 
 /**
- * Mark notification as read
+ * Get notifications for user from DB
  */
-export function markAsRead(userId: string, notificationId: string): boolean {
-  const notifications = notificationStore.get(userId);
-  if (!notifications) return false;
-
-  const notification = notifications.find(n => n.id === notificationId);
-  if (!notification) return false;
-
-  notification.read = true;
-  return true;
+export async function getNotifications(
+  userId: string,
+  options?: { unreadOnly?: boolean; limit?: number }
+): Promise<Notification[]> {
+  const limit = options?.limit || 50;
+  const result = await query(
+    `SELECT id, user_id, type, title, message, read, created_at, expires_at
+     FROM notifications
+     WHERE user_id = $1 AND deleted_at IS NULL
+       ${options?.unreadOnly ? 'AND read = false' : ''}
+       AND (expires_at IS NULL OR expires_at > NOW())
+     ORDER BY created_at DESC
+     LIMIT $2`,
+    [userId, limit]
+  );
+  return result.rows.map(rowToNotification);
 }
 
 /**
- * Mark all as read
+ * Mark a single notification as read
  */
-export function markAllAsRead(userId: string): number {
-  const notifications = notificationStore.get(userId);
-  if (!notifications) return 0;
-
-  let count = 0;
-  for (const notification of notifications) {
-    if (!notification.read) {
-      notification.read = true;
-      count++;
-    }
-  }
-
-  return count;
+export async function markAsRead(userId: string, notificationId: string): Promise<boolean> {
+  const result = await query(
+    `UPDATE notifications SET read = true WHERE id = $1 AND user_id = $2`,
+    [notificationId, userId]
+  );
+  return (result.rowCount ?? 0) > 0;
 }
 
 /**
- * Delete notification
+ * Mark all notifications as read for a user
  */
-export function deleteNotification(userId: string, notificationId: string): boolean {
-  const notifications = notificationStore.get(userId);
-  if (!notifications) return false;
-
-  const index = notifications.findIndex(n => n.id === notificationId);
-  if (index === -1) return false;
-
-  notifications.splice(index, 1);
-  return true;
+export async function markAllAsRead(userId: string): Promise<number> {
+  const result = await query(
+    `UPDATE notifications SET read = true WHERE user_id = $1 AND read = false`,
+    [userId]
+  );
+  return result.rowCount ?? 0;
 }
 
 /**
- * Get unread count
+ * Soft-delete a notification
  */
-export function getUnreadCount(userId: string): number {
-  const notifications = notificationStore.get(userId) || [];
-  return notifications.filter(n => !n.read).length;
+export async function deleteNotification(userId: string, notificationId: string): Promise<boolean> {
+  const result = await query(
+    `UPDATE notifications SET deleted_at = NOW() WHERE id = $1 AND user_id = $2`,
+    [notificationId, userId]
+  );
+  return (result.rowCount ?? 0) > 0;
 }
 
 /**
- * Register WebSocket client
+ * Get unread notification count for user
  */
-export function registerWebSocket(userId: string, ws: WebSocket): void {
-  wsClients.set(userId, ws);
-
-  ws.onclose = () => {
-    wsClients.delete(userId);
-  };
-
-  ws.onerror = () => {
-    wsClients.delete(userId);
-  };
-
-  // Send initial unread count
-  const unreadCount = getUnreadCount(userId);
-  ws.send(JSON.stringify({ type: 'unread_count', count: unreadCount }));
+export async function getUnreadCount(userId: string): Promise<number> {
+  const row = await queryOne(
+    `SELECT COUNT(*) as c FROM notifications
+     WHERE user_id = $1 AND read = false AND deleted_at IS NULL
+       AND (expires_at IS NULL OR expires_at > NOW())`,
+    [userId]
+  );
+  return parseInt(row?.c || '0');
 }
 
 /**
- * Register SSE client
+ * Register SSE client for real-time delivery
  */
 export function registerSSE(userId: string, controller: ReadableStreamDefaultController): void {
   sseClients.set(userId, controller);
-
-  // Send initial data
-  const notifications = getNotifications(userId, { limit: 10 });
-  const data = `data: ${JSON.stringify({ type: 'initial', notifications })}\n\n`;
-  controller.enqueue(new TextEncoder().encode(data));
 }
 
 /**
- * Broadcast notification to user
+ * Unregister SSE client
  */
-export function broadcastToUser(userId: string, notification: Notification): void {
-  const payload = JSON.stringify({ type: 'notification', notification });
-
-  // WebSocket
-  const ws = wsClients.get(userId);
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(payload);
-  }
-
-  // SSE
-  const sse = sseClients.get(userId);
-  if (sse) {
-    const data = `data: ${payload}\n\n`;
-    sse.enqueue(new TextEncoder().encode(data));
-  }
+export function unregisterSSE(userId: string): void {
+  sseClients.delete(userId);
 }
 
-/**
- * Broadcast to all users
- */
-export function broadcastToAll(notification: Omit<Notification, 'id' | 'createdAt'>): void {
-  const fullNotification = addNotification(notification);
-
-  // WebSocket broadcast
-  for (const [userId, ws] of wsClients) {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'notification', notification: fullNotification }));
+function broadcastToUser(userId: string, notification: Notification): void {
+  const controller = sseClients.get(userId);
+  if (controller) {
+    try {
+      const data = `data: ${JSON.stringify(notification)}\n\n`;
+      controller.enqueue(new TextEncoder().encode(data));
+    } catch {
+      sseClients.delete(userId);
     }
   }
-
-  // SSE broadcast
-  for (const [userId, sse] of sseClients) {
-    const data = `data: ${JSON.stringify({ type: 'notification', notification: fullNotification })}\n\n`;
-    sse.enqueue(new TextEncoder().encode(data));
-  }
 }
 
-/**
- * Create notification helpers
- */
-export const notifications = {
-  info(userId: string, title: string, message: string, data?: Record<string, any>) {
-    return addNotification({ type: 'info', title, message, userId, data, read: false });
-  },
-
-  success(userId: string, title: string, message: string, data?: Record<string, any>) {
-    return addNotification({ type: 'success', title, message, userId, data, read: false });
-  },
-
-  warning(userId: string, title: string, message: string, data?: Record<string, any>) {
-    return addNotification({ type: 'warning', title, message, userId, data, read: false });
-  },
-
-  error(userId: string, title: string, message: string, data?: Record<string, any>) {
-    return addNotification({ type: 'error', title, message, userId, data, read: false });
-  },
-
-  message(userId: string, fromUser: string, message: string, data?: Record<string, any>) {
-    return addNotification({
-      type: 'message',
-      title: `Yeni mesaj: ${fromUser}`,
-      message,
-      userId,
-      data,
-      read: false,
-    });
-  },
-
-  like(userId: string, fromUser: string, contentType: string, data?: Record<string, any>) {
-    return addNotification({
-      type: 'like',
-      title: 'Yeni beğeni',
-      message: `${fromUser} ${contentType} içeriğinizi beğendi`,
-      userId,
-      data,
-      read: false,
-    });
-  },
-
-  comment(userId: string, fromUser: string, contentType: string, data?: Record<string, any>) {
-    return addNotification({
-      type: 'comment',
-      title: 'Yeni yorum',
-      message: `${fromUser} ${contentType} içeriğinize yorum yaptı`,
-      userId,
-      data,
-      read: false,
-    });
-  },
-
-  follow(userId: string, fromUser: string, data?: Record<string, any>) {
-    return addNotification({
-      type: 'follow',
-      title: 'Yeni takipçi',
-      message: `${fromUser} sizi takip etmeye başladı`,
-      userId,
-      data,
-      read: false,
-    });
-  },
-
-  mention(userId: string, fromUser: string, contentType: string, data?: Record<string, any>) {
-    return addNotification({
-      type: 'mention',
-      title: 'Bahsedildiniz',
-      message: `${fromUser} sizi ${contentType} içeriğinde bahsetti`,
-      userId,
-      data,
-      read: false,
-    });
-  },
-
-  system(userId: string, title: string, message: string, data?: Record<string, any>) {
-    return addNotification({ type: 'system', title, message, userId, data, read: false });
-  },
-};
-
-/**
- * Clean up old notifications
- */
-export function cleanupOldNotifications(maxAgeDays: number = 30): number {
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
-
-  let deletedCount = 0;
-
-  for (const [userId, notifications] of notificationStore) {
-    const initialLength = notifications.length;
-    const filtered = notifications.filter(n => new Date(n.createdAt) > cutoffDate);
-    deletedCount += initialLength - filtered.length;
-    notificationStore.set(userId, filtered);
-  }
-
-  return deletedCount;
-}
-
-/**
- * Get notification stats
- */
-export function getStats(): {
-  totalUsers: number;
-  totalNotifications: number;
-  wsConnections: number;
-  sseConnections: number;
-} {
-  let totalNotifications = 0;
-  for (const notifications of notificationStore.values()) {
-    totalNotifications += notifications.length;
-  }
-
+function rowToNotification(r: any): Notification {
   return {
-    totalUsers: notificationStore.size,
-    totalNotifications,
-    wsConnections: wsClients.size,
-    sseConnections: sseClients.size,
+    id: r.id,
+    userId: r.user_id,
+    type: r.type as NotificationType,
+    title: r.title,
+    message: r.message,
+    read: r.read,
+    createdAt: r.created_at,
+    expiresAt: r.expires_at,
   };
 }

@@ -357,18 +357,19 @@ export async function getCohortAnalysis(
     retention: number[];
   }>;
 }> {
-  const interval = cohortPeriod === 'week' ? '7 days' : '30 days';
-  
+  const daysPerPeriod = cohortPeriod === 'week' ? 7 : 30;
+  const totalDays = retentionPeriods * daysPerPeriod;
+
   const result = await query(`
     WITH cohorts AS (
-      SELECT 
+      SELECT
         DATE_TRUNC('${cohortPeriod}', created_at) as cohort_period,
         id as user_id
       FROM users
-      WHERE created_at >= NOW() - INTERVAL '${retentionPeriods * (cohortPeriod === 'week' ? 7 : 30)} days'
+      WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
     ),
     activity AS (
-      SELECT 
+      SELECT
         u.cohort_period,
         u.user_id,
         DATE_TRUNC('${cohortPeriod}', pv.created_at) as activity_period
@@ -376,14 +377,14 @@ export async function getCohortAnalysis(
       LEFT JOIN page_views pv ON u.user_id = pv.user_id
       WHERE pv.created_at > u.cohort_period
     )
-    SELECT 
+    SELECT
       cohort_period,
       COUNT(DISTINCT user_id) as total_users,
       COUNT(DISTINCT CASE WHEN activity_period > cohort_period THEN user_id END) as retained
     FROM activity
     GROUP BY cohort_period
     ORDER BY cohort_period DESC
-  `);
+  `, [totalDays]);
 
   return {
     cohorts: result.rows.map((r: any) => ({
@@ -441,8 +442,14 @@ export async function trackConversion(
   value?: number,
   properties?: Record<string, any>
 ): Promise<void> {
+  const sessionResult = await query(
+    `SELECT visitor_id FROM page_views WHERE session_id = $1 LIMIT 1`,
+    [sessionId]
+  );
+  const visitorId = sessionResult.rows[0]?.visitor_id || '';
+
   await trackEvent({
-    visitorId: '', // Will be looked up from session
+    visitorId,
     category: 'conversion',
     action: goalName,
     value,

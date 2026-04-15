@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Weather Integration Module
  * Şanlıurfa hava durumu entegrasyonu
@@ -49,7 +50,7 @@ export async function getWeather(): Promise<WeatherData> {
       updatedAt: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('Weather fetch error:', error);
+    logger.error('Weather fetch error:', error);
     return getMockWeather();
   }
 }

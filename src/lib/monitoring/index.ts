@@ -4,6 +4,7 @@
  */
 
 import { query } from '../postgres';
+import { logger } from '../logging';
 
 export interface PerformanceMetric {
   name: string;
@@ -231,7 +232,7 @@ async function sendAlertNotification(
   const message = `🚨 ALERT: ${rule.name}\nMetric: ${metric.name}\nValue: ${metric.value}${metric.unit}\nThreshold: ${rule.condition} ${rule.threshold}`;
 
   // Log alert
-  console.error(message);
+  logger.error(message);
 
   // Save to database
   await query(
@@ -412,10 +413,8 @@ export async function getSystemHealth(): Promise<{
  */
 export async function cleanOldMetrics(retentionDays: number = 30): Promise<number> {
   const result = await query(
-    `DELETE FROM performance_metrics WHERE timestamp < NOW() - INTERVAL '${retentionDays} days'
-    RETURNING id`,
-    []
-  );
+    `DELETE FROM performance_metrics WHERE timestamp < NOW() - ($1 * INTERVAL '1 day')
+    RETURNING id`, [retentionDays]);
 
   return result.rows.length;
 }

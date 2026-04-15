@@ -5,6 +5,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { logger } from '../logging';
 
 export interface DomainEvent {
   id: string;
@@ -211,7 +212,7 @@ export async function replayProjection(
 
 async function publishEvent(event: DomainEvent): Promise<void> {
   // Publish to message bus
-  console.log(`[EventStore] Published: ${event.type}`);
+  logger.info(`[EventStore] Published: ${event.type}`);
 }
 
 function mapEventFromRow(row: any): DomainEvent {

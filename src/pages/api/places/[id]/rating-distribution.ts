@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ request, params }) => {
 
   try {
     const placeId = params.id;
-    const cacheKey = `sanliurfa:rating-dist:${placeId}`;
+    const cacheKey = `rating-dist:${placeId}`;
 
     // Try cache first
     const cached = await getCache(cacheKey);

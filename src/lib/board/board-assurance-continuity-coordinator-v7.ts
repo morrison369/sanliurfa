@@ -2,7 +2,7 @@
  * Phase 387: Board Assurance Continuity Coordinator V7
  */
 
-import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit-stub';
+import { SignalBook, computeBalancedScore, scorePasses, buildGovernanceReport } from './governance-kit';
 
 export interface BoardAssuranceContinuitySignalV7 {
   signalId: string;

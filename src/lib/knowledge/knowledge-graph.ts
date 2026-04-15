@@ -74,7 +74,7 @@ class KnowledgeGraph {
 
     this.entities.set(id, newEntity);
 
-    const cacheKey = `sanliurfa:entity:${id}`;
+    const cacheKey = `entity:${id}`;
     redis.setex(cacheKey, 86400, JSON.stringify(newEntity));
 
     logger.debug('Entity added', { id, name: entity.name, type: entity.type });
@@ -112,7 +112,7 @@ class KnowledgeGraph {
 
     this.relationships.set(id, relationship);
 
-    const cacheKey = `sanliurfa:relationship:${id}`;
+    const cacheKey = `relationship:${id}`;
     redis.setex(cacheKey, 86400, JSON.stringify(relationship));
 
     logger.debug('Relationship added', {

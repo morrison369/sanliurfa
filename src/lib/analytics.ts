@@ -5,6 +5,7 @@
  */
 
 import { query } from './postgres';
+import { logger } from './logging';
 
 // Check if analytics is enabled
 const isEnabled = import.meta.env.ANALYTICS_ENABLED !== 'false';
@@ -25,7 +26,7 @@ export async function trackPageView(
       [path, userId || null, referrer || null, userAgent?.slice(0, 255)]
     );
   } catch (error) {
-    console.error('Analytics error:', error);
+    logger.error('Analytics error:', error);
   }
 }
 
@@ -44,7 +45,7 @@ export async function trackEvent(
       [eventName, JSON.stringify(properties), userId || null]
     );
   } catch (error) {
-    console.error('Analytics error:', error);
+    logger.error('Analytics error:', error);
   }
 }
 
@@ -74,11 +75,11 @@ export async function getPopularPages(
   const result = await query(
     `SELECT path, COUNT(*)::int as views
      FROM page_views
-     WHERE created_at > NOW() - INTERVAL '${days} days'
+     WHERE created_at > NOW() - ($1 * INTERVAL '1 day')
      GROUP BY path
      ORDER BY views DESC
-     LIMIT $1`,
-    [limit]
+     LIMIT $2`,
+    [days, limit]
   );
 
   return result.rows;
@@ -89,16 +90,16 @@ export async function getDailyStats(
   days: number = 30
 ): Promise<{ date: string; page_views: number; unique_visitors: number }[]> {
   const result = await query(
-    `SELECT 
+    `SELECT
       DATE(created_at) as date,
       COUNT(*)::int as page_views,
       COUNT(DISTINCT user_id) FILTER (WHERE user_id IS NOT NULL)::int +
       COUNT(DISTINCT user_agent) FILTER (WHERE user_id IS NULL)::int as unique_visitors
      FROM page_views
-     WHERE created_at > NOW() - INTERVAL '${days} days'
+     WHERE created_at > NOW() - ($1 * INTERVAL '1 day')
      GROUP BY DATE(created_at)
      ORDER BY date DESC`,
-    []
+    [days]
   );
 
   return result.rows;
@@ -110,16 +111,16 @@ export async function getTopSearches(
   limit: number = 20
 ): Promise<{ query: string; count: number }[]> {
   const result = await query(
-    `SELECT 
+    `SELECT
       properties->>'query' as query,
       COUNT(*)::int as count
      FROM events
      WHERE name = 'search'
-       AND created_at > NOW() - INTERVAL '${days} days'
+       AND created_at > NOW() - ($1 * INTERVAL '1 day')
      GROUP BY properties->>'query'
      ORDER BY count DESC
-     LIMIT $1`,
-    [limit]
+     LIMIT $2`,
+    [days, limit]
   );
 
   return result.rows;
@@ -130,18 +131,18 @@ export async function getDeviceStats(
   days: number = 7
 ): Promise<{ device_type: string; count: number }[]> {
   const result = await query(
-    `SELECT 
-      CASE 
+    `SELECT
+      CASE
         WHEN user_agent ILIKE '%mobile%' THEN 'mobile'
         WHEN user_agent ILIKE '%tablet%' THEN 'tablet'
         ELSE 'desktop'
       END as device_type,
       COUNT(*)::int as count
      FROM page_views
-     WHERE created_at > NOW() - INTERVAL '${days} days'
+     WHERE created_at > NOW() - ($1 * INTERVAL '1 day')
      GROUP BY 1
      ORDER BY count DESC`,
-    []
+    [days]
   );
 
   return result.rows;
@@ -153,9 +154,9 @@ export async function getReferrerStats(
   limit: number = 10
 ): Promise<{ referrer: string; count: number }[]> {
   const result = await query(
-    `SELECT 
+    `SELECT
       COALESCE(
-        CASE 
+        CASE
           WHEN referrer LIKE '%google%' THEN 'Google'
           WHEN referrer LIKE '%facebook%' THEN 'Facebook'
           WHEN referrer LIKE '%twitter%' OR referrer LIKE '%x.com%' THEN 'Twitter/X'
@@ -166,11 +167,11 @@ export async function getReferrerStats(
       ) as referrer,
       COUNT(*)::int as count
      FROM page_views
-     WHERE created_at > NOW() - INTERVAL '${days} days'
+     WHERE created_at > NOW() - ($1 * INTERVAL '1 day')
      GROUP BY 1
      ORDER BY count DESC
-     LIMIT $1`,
-    [limit]
+     LIMIT $2`,
+    [days, limit]
   );
 
   return result.rows;

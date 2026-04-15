@@ -1,6 +1,7 @@
 // API: Historical site create (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { insert } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, redirect, locals }) => {
   try {
@@ -57,7 +58,7 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
 
     return redirect('/admin/historical-sites?success=created');
   } catch (err) {
-    console.error('Historical site create error:', err);
+    logger.error('Historical site create error:', err);
     return redirect('/admin/historical-sites/add?error=server_error');
   }
 };

@@ -4,6 +4,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { getCache, setCache } from '../../../lib/cache';
+import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ url, locals }) => {
   try {
@@ -48,7 +49,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (e: any) {
-    console.error('Nobetci API error:', e);
+    logger.error('Nobetci API error:', e);
     return new Response(JSON.stringify({ error: 'Veri yüklenemedi', pharmacies: [], count: 0 }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

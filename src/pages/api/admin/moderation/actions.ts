@@ -48,7 +48,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const user = locals.user;
 
-    if (!user || !user.isAdmin) {
+    if (!user || !locals.isAdmin) {
       recordRequest('POST', '/api/admin/moderation/actions', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
@@ -131,7 +131,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   try {
     const user = locals.user;
 
-    if (!user || !user.isAdmin) {
+    if (!user || !locals.isAdmin) {
       recordRequest('GET', '/api/admin/moderation/actions', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,

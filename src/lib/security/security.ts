@@ -61,7 +61,7 @@ export async function logSecurityEvent(userId: string | null, eventType: string,
 
     // Clear cache
     if (userId) {
-      await deleteCache(`sanliurfa:user:security:${userId}`);
+      await deleteCache(`user:security:${userId}`);
     }
 
     return result;
@@ -124,7 +124,7 @@ async function isIPGeographicallyDistant(ip1: string, ip2: string): Promise<bool
 // Get suspicious activities for user
 export async function getSuspiciousActivities(userId: string, limit: number = 20): Promise<SecurityEvent[]> {
   try {
-    const cacheKey = `sanliurfa:user:security:${userId}`;
+    const cacheKey = `user:security:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -195,7 +195,7 @@ export async function createUserSession(userId: string, deviceName: string, devi
       invalidated_at: null
     });
 
-    await deleteCache(`sanliurfa:user:sessions:${userId}`);
+    await deleteCache(`user:sessions:${userId}`);
     logger.info('User session created', { userId, sessionToken: sessionToken.substring(0, 8), deviceType });
 
     // Log login event
@@ -222,7 +222,7 @@ export async function createUserSession(userId: string, deviceName: string, devi
 // Get user sessions
 export async function getUserSessions(userId: string): Promise<UserSession[]> {
   try {
-    const cacheKey = `sanliurfa:user:sessions:${userId}`;
+    const cacheKey = `user:sessions:${userId}`;
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -278,7 +278,7 @@ export async function invalidateSession(sessionToken: string): Promise<boolean> 
       invalidated_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:user:sessions:${session.user_id}`);
+    await deleteCache(`user:sessions:${session.user_id}`);
     logger.info('Session invalidated', { userId: session.user_id });
     return true;
   } catch (error) {
@@ -304,7 +304,7 @@ export async function trustDevice(userId: string, deviceId: string, deviceName: 
       last_used_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:user:trusted_devices:${userId}`);
+    await deleteCache(`user:trusted_devices:${userId}`);
     logger.info('Device marked as trusted', { userId, deviceId });
     return true;
   } catch (error) {
@@ -335,7 +335,7 @@ export async function isDeviceTrusted(userId: string, deviceId: string): Promise
 // Encryption key management
 export async function getActiveEncryptionKey(): Promise<any | null> {
   try {
-    const cacheKey = 'sanliurfa:encryption:active_key';
+    const cacheKey = 'encryption:active_key';
     let cached = await getCache(cacheKey);
 
     if (cached) {
@@ -378,7 +378,7 @@ export async function rotateEncryptionKey(): Promise<any | null> {
       rotation_date: new Date()
     });
 
-    await deleteCache('sanliurfa:encryption:active_key');
+    await deleteCache('encryption:active_key');
     logger.info('Encryption key rotated', { keyVersion: result.key_version });
     return result;
   } catch (error) {

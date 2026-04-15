@@ -16,15 +16,15 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const url = new URL(request.url);
     const format = (url.searchParams.get('format') || 'json') as 'csv' | 'json';
-    const days = parseInt(url.searchParams.get('days') || '30');
+    const days = Math.max(1, Math.min(365, parseInt(url.searchParams.get('days') || '30') || 30));
 
     // Popular places
     const placesResult = await pool.query(
       `SELECT place_id, view_count FROM page_views
-       WHERE DATE(created_at) > CURRENT_DATE - INTERVAL '${days} days'
+       WHERE created_at > CURRENT_DATE - ($1 * INTERVAL '1 day')
        GROUP BY place_id
        ORDER BY view_count DESC LIMIT 100`,
-      []
+      [days]
     );
 
     // Daily stats
@@ -34,10 +34,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
         COUNT(*) as total_events,
         COUNT(DISTINCT user_id) as unique_users
        FROM user_actions
-       WHERE created_at > NOW() - INTERVAL '${days} days'
+       WHERE created_at > NOW() - ($1 * INTERVAL '1 day')
        GROUP BY DATE(created_at)
        ORDER BY date DESC`,
-      []
+      [days]
     );
 
     const analytics = {

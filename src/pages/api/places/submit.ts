@@ -1,6 +1,8 @@
 // API: Public place submission (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { insert } from '../../../lib/postgres';
+import { sendEmail } from '../../../lib/email';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, redirect }) => {
   try {
@@ -51,12 +53,22 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       updated_at: new Date().toISOString(),
     });
 
-    // TODO: Send notification email to admin
-    // TODO: Handle image upload
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@sanliurfa.com';
+    await sendEmail({
+      to: adminEmail,
+      subject: `[Yeni Mekan] ${name} - İnceleme Bekliyor`,
+      html: `<p>Yeni mekan önerisi:</p>
+<ul>
+  <li><strong>Ad:</strong> ${name}</li>
+  <li><strong>Kategori:</strong> ${category}</li>
+  <li><strong>Adres:</strong> ${address}</li>
+  <li><strong>Gönderen:</strong> ${submitterName} (${submitterEmail})</li>
+</ul>`,
+    });
 
     return redirect('/places/ekle?success=true');
   } catch (err) {
-    console.error('Place submission error:', err);
+    logger.error('Place submission error:', err);
     return redirect('/places/ekle?error=server_error');
   }
 };

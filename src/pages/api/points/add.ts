@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { query, queryOne, insert } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
@@ -46,7 +47,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
 
   } catch (error) {
-    console.error('Points API error:', error);
+    logger.error('Points API error:', error);
     return new Response(JSON.stringify({ error: 'Server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

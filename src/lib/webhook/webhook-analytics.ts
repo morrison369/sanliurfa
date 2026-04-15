@@ -1,5 +1,6 @@
 import type { Pool } from 'pg';
 import { getCache, setCache } from '../cache';
+import { logger } from '../logging';
 
 export interface WebhookMetrics {
   totalWebhooks: number;
@@ -33,7 +34,7 @@ export interface WebhookMetrics {
  * Get webhook analytics and metrics
  */
 export async function getWebhookMetrics(pool: Pool, userId?: string): Promise<WebhookMetrics> {
-  const cacheKey = userId ? `sanliurfa:webhook:metrics:${userId}` : 'sanliurfa:webhook:metrics:global';
+  const cacheKey = userId ? `webhook:metrics:${userId}` : 'webhook:metrics:global';
 
   // Check cache first (5 min TTL)
   const cached = await getCache(cacheKey);
@@ -148,8 +149,16 @@ export async function getWebhookMetrics(pool: Pool, userId?: string): Promise<We
       ? Math.round((deliveredEvents / totalEvents) * 100 * 100) / 100
       : 0;
 
+    const avgDeliveryTimeRes = await pool.query(
+      `SELECT AVG(delivery_time_ms) as avg_ms
+       FROM webhook_events we
+       JOIN webhooks w ON we.webhook_id = w.id
+       WHERE we.status = 'delivered' AND we.delivery_time_ms IS NOT NULL
+       ${userId ? 'AND w.user_id = $1' : ''}`,
+      params
+    );
     const avgDeliveryTime = deliveredEvents > 0
-      ? Math.round(Math.random() * 500 + 50) // Placeholder calculation
+      ? Math.round(parseFloat((avgDeliveryTimeRes as any).rows[0]?.avg_ms || '0'))
       : 0;
 
     const metrics: WebhookMetrics = {
@@ -170,7 +179,7 @@ export async function getWebhookMetrics(pool: Pool, userId?: string): Promise<We
 
     return metrics;
   } catch (error) {
-    console.error('Error getting webhook metrics:', error);
+    logger.error('Error getting webhook metrics:', error);
     throw error;
   }
 }
@@ -199,17 +208,17 @@ export async function retryFailedWebhooks(
 
     // Invalidate cache
     await Promise.all([
-      getCache(`sanliurfa:webhook:metrics:${userId}`).then(c => {
-        if (c) return setCache(`sanliurfa:webhook:metrics:${userId}`, '', 1);
+      getCache(`webhook:metrics:${userId}`).then(c => {
+        if (c) return setCache(`webhook:metrics:${userId}`, '', 1);
       }),
-      getCache('sanliurfa:webhook:metrics:global').then(c => {
-        if (c) return setCache('sanliurfa:webhook:metrics:global', '', 1);
+      getCache('webhook:metrics:global').then(c => {
+        if (c) return setCache('webhook:metrics:global', '', 1);
       })
     ]);
 
     return result.rowCount || 0;
   } catch (error) {
-    console.error('Error retrying failed webhooks:', error);
+    logger.error('Error retrying failed webhooks:', error);
     throw error;
   }
 }
@@ -250,7 +259,7 @@ export async function getWebhookDeliveryHistory(
       updatedAt: row.updated_at
     }));
   } catch (error) {
-    console.error('Error getting webhook delivery history:', error);
+    logger.error('Error getting webhook delivery history:', error);
     throw error;
   }
 }

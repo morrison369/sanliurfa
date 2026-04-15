@@ -36,7 +36,7 @@ export async function isResourceOwner(
     if (!query) return false;
 
     const result = await pool.query(query, params);
-    return result?.user_id === userId;
+    return result?.rows[0]?.user_id === userId;
   } catch (error) {
     logger.warn('Ownership check failed', Object.assign(new Error('Ownership check failed'), { userId, resourceType, resourceId }));
     return false;

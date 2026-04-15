@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Stream Processor Module
  * Stub for real-time stream processing
@@ -20,12 +21,12 @@ export class StreamProcessor {
 
   start(): void {
     this.processing = true;
-    console.log('[StreamProcessor] Started');
+    logger.info('[StreamProcessor] Started');
   }
 
   stop(): void {
     this.processing = false;
-    console.log('[StreamProcessor] Stopped');
+    logger.info('[StreamProcessor] Stopped');
   }
 
   process(data: unknown): unknown {

@@ -10,7 +10,7 @@ import { createSSEStream } from '../../../lib/notifications/sse';
 export const GET: APIRoute = async ({ request }) => {
   // Authenticate user
   const auth = await requireAuth(request);
-  if (auth instanceof Response) {
+  if (!auth.user) {
     return new Response('Unauthorized', { status: 401 });
   }
 

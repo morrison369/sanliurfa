@@ -1,3 +1,4 @@
+import { logger } from '../logging';
 /**
  * Redis Client Module
  * Stub for Redis connection
@@ -18,7 +19,7 @@ export class RedisClient {
 
   async connect(): Promise<void> {
     this.connected = true;
-    console.log('[Redis] Connected to', this.config.url);
+    logger.info('[Redis] Connected to', this.config.url);
   }
 
   async get(key: string): Promise<string | null> {
@@ -26,11 +27,11 @@ export class RedisClient {
   }
 
   async set(key: string, value: string, ttl?: number): Promise<void> {
-    console.log('[Redis] SET', key, ttl ? `(TTL: ${ttl}s)` : '');
+    logger.info('[Redis] SET', key, ttl ? `(TTL: ${ttl}s)` : '');
   }
 
   async del(key: string): Promise<void> {
-    console.log('[Redis] DEL', key);
+    logger.info('[Redis] DEL', key);
   }
 
   async disconnect(): Promise<void> {

@@ -5,6 +5,7 @@
  */
 
 import pg from 'pg';
+import { logger } from './logging';
 const { Pool: PgPool } = pg;
 
 // Environment-based configuration
@@ -25,7 +26,7 @@ const pool = new PgPool({
 
 // Connection error handling — log but don't crash
 pool.on('error', (err) => {
-  console.error('[postgres] Unexpected pool error:', err.message);
+  logger.error('[postgres] Unexpected pool error:', err.message);
 });
 
 // Slow query threshold (ms)
@@ -47,7 +48,7 @@ export async function query<T = any>(text: string, params?: any[]): Promise<Quer
     const duration = Date.now() - start;
 
     if (duration > SLOW_QUERY_THRESHOLD) {
-      console.warn(`[postgres] Slow query (${duration}ms):`, text.substring(0, 120));
+      logger.warn(`[postgres] Slow query (${duration}ms):`, text.substring(0, 120));
     }
 
     return {
@@ -57,7 +58,7 @@ export async function query<T = any>(text: string, params?: any[]): Promise<Quer
     };
   } catch (error) {
     const duration = Date.now() - start;
-    console.error(`[postgres] Query failed (${duration}ms):`, text.substring(0, 120), error instanceof Error ? error.message : error);
+    logger.error(`[postgres] Query failed (${duration}ms):`, text.substring(0, 120), error instanceof Error ? error.message : error);
     throw error;
   }
 }
@@ -219,6 +220,44 @@ const ALLOWED_TABLES = new Set([
   'search_history',
   'email_subscriptions',
   'contact_submissions',
+  'notification_broadcasts', 'notification_drafts',
+  'client_errors',
+  's3_files', 'push_subscriptions',
+  'two_factor_audit', 'trusted_devices',
+  'place_hours', 'place_analytics_events',
+  'sms_logs', 'phone_verifications', 'feature_flags',
+  // 2FA
+  'user_2fa_methods', 'user_2fa_sessions',
+  'two_fa_verification_attempts', 'two_fa_recovery_codes',
+  // Notifications
+  'notification_history', 'notification_delivery_log',
+  'notification_type_preferences', 'notification_preferences',
+  // File management
+  'file_access_logs', 'file_variants', 'cdn_cache_settings',
+  // Security
+  'security_events', 'login_history', 'ddos_attempts',
+  // Auth / sessions
+  'user_sessions', 'admin_sessions', 'oauth_states', 'user_oauth_accounts',
+  // Email system
+  'email_campaigns', 'email_queue', 'email_preferences',
+  'email_sequence_enrollments', 'email_verifications', 'marketing_campaigns',
+  // Search & analytics
+  'search_analytics', 'search_suggestions', 'autocomplete_index',
+  'zero_result_searches', 'share_analytics', 'funnel_entries',
+  // User profiles & activity
+  'user_sessions', 'user_loyalty', 'user_reputation',
+  'user_recommendations', 'user_predictions', 'user_cohorts',
+  'user_activity_summary', 'user_journey_sessions', 'saved_searches',
+  // Social & content
+  'hashtags', 'leaderboards', 'moderation_queue',
+  'content_flags', 'account_flags', 'content_items',
+  'collaboration_sessions', 'collaboration_participants', 'collaboration_comments',
+  'edit_conflicts', 'journey_paths',
+  // Marketplace / vendor
+  'vendor_profiles', 'tenant_api_keys', 'tenant_branding',
+  // Admin & infrastructure
+  'admin_dashboard_widgets', 'push_subscription_stats',
+  'transcoding_jobs',
 ]);
 
 function validateTable(table: string): void {

@@ -1,6 +1,7 @@
 // @ts-nocheck
 import type { APIRoute } from 'astro';
 import {
+import { logger } from '../../../lib/logging';
   generateCacheKey,
   getOptimalFormat,
   parseSize,
@@ -74,16 +75,24 @@ export const GET: APIRoute = async ({ request, params }) => {
       });
     }
     
-    // In production, fetch actual image from storage
-    // For now, return a placeholder response
-    const placeholderBuffer = Buffer.from(
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-      'base64'
-    );
-    
+    // Read image from local disk (public/uploads/photos/...)
+    const { readFileSync, existsSync } = await import('fs');
+    const { join } = await import('path');
+
+    // imagePath is something like "photos/places/some-file.jpg"
+    // Serve from public/ directory
+    const safePath = imagePath.replace(/\.\./g, '').replace(/^\//, '');
+    const diskPath = join(process.cwd(), 'public', safePath);
+
+    if (!existsSync(diskPath)) {
+      return new Response('Image not found', { status: 404 });
+    }
+
+    const sourceBuffer = readFileSync(diskPath);
+
     // Get image metadata
-    const metadata = await getImageMetadata(placeholderBuffer);
-    
+    const metadata = await getImageMetadata(sourceBuffer);
+
     // Calculate dimensions
     const dimensions = calculateDimensions(
       metadata.width,
@@ -92,9 +101,9 @@ export const GET: APIRoute = async ({ request, params }) => {
       targetHeight,
       fit
     );
-    
+
     // Optimize image
-    const optimizedBuffer = await optimizeImage(placeholderBuffer, {
+    const optimizedBuffer = await optimizeImage(sourceBuffer, {
       width: dimensions.width,
       height: dimensions.height,
       format: format as any,
@@ -122,7 +131,7 @@ export const GET: APIRoute = async ({ request, params }) => {
       },
     });
   } catch (error) {
-    console.error('Image optimization error:', error);
+    logger.error('Image optimization error:', error);
     return new Response('Image processing failed', { status: 500 });
   }
 };
