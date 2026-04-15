@@ -315,3 +315,21 @@ export { toolAdoptionTracker, collaborationPatternAnalyzer, digitalFrictionMonit
 // Phase 232: Operational Risk Management
 export { operationalRiskRegister, riskControlManager, lossEventTracker, riskHeatmapGenerator } from './operational-risk-management';
 
+// Phase 233: Treasury Management
+export { cashPositionManager, liquidityManager, fundingOperationsManager, treasuryRiskAnalyzer } from './treasury-management';
+
+// Phase 234: Financial Risk Analytics
+export { creditRiskScorer, marketRiskMeasurer, concentrationRiskAnalyzer, riskAdjustedReturnCalculator } from './financial-risk-analytics';
+
+// Phase 235: Investment Portfolio Analytics
+export { portfolioManager, performanceAttributor, assetAllocationManager, rebalancingEngine } from './investment-portfolio-analytics';
+
+// Phase 236: Tax Intelligence
+export { taxPositionManager, transferPricingAnalyzer, taxProvisionCalculator, taxRiskTracker } from './tax-intelligence';
+
+// Phase 237: Audit Intelligence
+export { auditEngagementPlanner, auditFindingManager, controlTestingEngine, auditAnalyticsEngine } from './audit-intelligence';
+
+// Phase 238: Financial Forecasting & Budgeting
+export { budgetManager, rollingForecastManager, varianceAnalyzer, financialScenarioModeler } from './financial-forecasting-budgeting';
+
