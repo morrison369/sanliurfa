@@ -192,3 +192,21 @@ export { coSellOpportunityManager, coSellDealRegistration, partnerCommissionTrac
 // Phase 190: Integration Marketplace
 export { integrationCatalogManager, integrationRatingSystem, integrationDeploymentManager, integrationHealthMonitor } from './integration-marketplace';
 
+// Phase 191: Revenue Leakage Detection
+export { leakageDetector, billingReconciliationEngine, unbilledUsageTracker, revenueRecoveryManager } from './revenue-leakage';
+
+// Phase 192: Dynamic Pricing Engine
+export { pricingRuleEngine, demandBasedPricer, competitivePricingAnalyzer, pricingExperimentManager } from './dynamic-pricing';
+
+// Phase 193: Subscription Analytics
+export { churnPredictor, mrrAnalyzer, subscriptionCohortAnalyzer, expansionRevenueTracker } from './subscription-analytics';
+
+// Phase 194: Revenue Forecasting
+export { revenueForecaster, pipelineRevenueCalculator, seasonalityAnalyzer, forecastAccuracyTracker } from './revenue-forecasting';
+
+// Phase 195: CLV Optimization
+export { clvCalculator, customerSegmentOptimizer, retentionROIAnalyzer, lifetimeValueMaximizer } from './clv-optimization';
+
+// Phase 196: Monetization Strategy
+export { monetizationModelEvaluator, pricingStrategyAdvisor, revenueStreamManager, monetizationMetricsTracker } from './monetization-strategy';
+
