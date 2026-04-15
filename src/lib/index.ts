@@ -405,3 +405,21 @@ export { crisisCommandCenter, bcpTestingTracker, rtoRPOManager, crisisCommunicat
 // Phase 262: Intelligent Automation & RPA Analytics
 export { automationBotRegistry, automationROICalculator, processAutomationCoverageTracker, exceptionAnalyzer } from './intelligent-automation-analytics';
 
+// Phase 263: Knowledge Management Intelligence
+export { knowledgeAssetManager, expertiseMappingEngine, knowledgeGapAnalyzer, knowledgeReuseAnalyzer } from './knowledge-management-intelligence';
+
+// Phase 264: Supply Network Intelligence
+export { supplierNetworkMapper, supplyChainLinkTracker, disruptionSimulator, networkResilienceScorer } from './supply-network-intelligence';
+
+// Phase 265: Pricing Intelligence
+export { competitivePriceMonitor, priceElasticityCalculator, dynamicPricingRuleEngine, marginOptimizer } from './pricing-intelligence';
+
+// Phase 266: Customer Retention Intelligence
+export { churnPredictionEngine, retentionInterventionTracker, churnCohortAnalyzer, winBackCampaignManager } from './customer-retention-intelligence';
+
+// Phase 267: Workforce Scheduling Intelligence
+export { demandForecastEngine, shiftScheduler, coverageAnalyzer, schedulingOptimizer } from './workforce-scheduling-intelligence';
+
+// Phase 268: Corporate Performance Management
+export { balancedScorecardManager, kpiCascadeManager, strategyExecutionMonitor, performanceDashboardEngine } from './corporate-performance-management';
+
