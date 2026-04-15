@@ -531,3 +531,21 @@ export { onboardingTracker, adoptionMilestoneTracker, onboardingDropOffAnalyzer,
 // Phase 304: Vendor Performance Intelligence
 export { vendorScorecardManager, vendorSLAMonitor, vendorRiskAnalyzer, vendorContractComplianceTracker } from './vendor-performance-intelligence';
 
+// Phase 305: Contract Lifecycle Intelligence
+export { contractManager, contractObligationTracker, contractRenewalManager, contractPerformanceAnalyzer } from './contract-lifecycle-intelligence';
+
+// Phase 306: Customer Loyalty Intelligence
+export { loyaltyMemberManager, loyaltyTransactionEngine, loyaltyProgramMetricsCalculator, churnPreventionEngine } from './customer-loyalty-intelligence';
+
+// Phase 307: Product Catalog Intelligence
+export { productCatalogManager, pricingOptimizer, catalogHealthAnalyzer, productAffinityAnalyzer } from './product-catalog-intelligence';
+
+// Phase 308: Service Desk Intelligence
+export { ticketManager, agentPerformanceAnalyzer, serviceDeskMetricsEngine, knowledgeBaseAnalyzer } from './service-desk-intelligence';
+
+// Phase 309: Service Knowledge Intelligence
+export { kbArticleManager, searchGapAnalyzer, kbGapAnalyzer, kbContributionTracker } from './service-knowledge-intelligence';
+
+// Phase 310: Corporate Strategy Intelligence
+export { strategicGoalManager, okrTracker, strategicInitiativeManager, strategicRiskRegister } from './corporate-strategy-intelligence';
+
