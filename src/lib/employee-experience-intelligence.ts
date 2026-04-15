@@ -1,232 +1,261 @@
 /**
- * Phase 251: Employee Experience Intelligence
- * EX scoring, pulse surveys, wellbeing tracking, engagement drivers, eNPS
+ * Phase 340: Employee Experience Intelligence
+ * Engagement pulse, sentiment tracking, retention risk, experience journey
  */
 
 import { logger } from './logger';
 
-interface EmployeeExperienceScore {
-  scoreId: string;
+interface EngagementRecord {
+  engagementId: string;
   employeeId: string;
+  employeeName: string;
   department: string;
-  period: string;
-  workLifeBalanceScore: number;   // 0-100
-  growthOpportunityScore: number; // 0-100
-  managerRelationshipScore: number; // 0-100
-  toolsResourcesScore: number;    // 0-100
-  recognitionScore: number;       // 0-100
-  overallEXScore: number;         // weighted composite
-  trend: 'improving' | 'stable' | 'declining';
-  calculatedAt: number;
+  managerId: string;
+  tenureMonths: number;
+  engagementScore: number;         // 0-100
+  eNpsScore: number;               // -100 to 100 (employee NPS)
+  satisfactionScore: number;       // 0-100
+  wellbeingScore: number;          // 0-100
+  growthScore: number;             // perceived career growth 0-100
+  managerScore: number;            // manager effectiveness 0-100
+  peersScore: number;              // team dynamics 0-100
+  purposeScore: number;            // alignment with company mission 0-100
+  workLifeBalanceScore: number;    // 0-100
+  category: 'highly_engaged' | 'engaged' | 'neutral' | 'disengaged' | 'actively_disengaged';
+  trendDirection: 'improving' | 'stable' | 'declining';
+  surveyDate: number;
+  createdAt: number;
 }
 
-interface PulseSurveyResponse {
-  responseId: string;
-  surveyId: string;
+interface RetentionRiskRecord {
+  riskId: string;
   employeeId: string;
+  employeeName: string;
   department: string;
-  responses: Record<string, number>;  // questionId → score
-  sentimentText?: string;
-  npsScore?: number;   // -100 to 100
-  submittedAt: number;
+  role: string;
+  flightRiskPct: number;           // 0-100 probability of leaving
+  riskCategory: 'critical' | 'high' | 'medium' | 'low';
+  riskFactors: string[];
+  replacementCostUSD: number;
+  replacementTimeWeeks: number;
+  isKeyPerson: boolean;
+  retentionActions: string[];
+  actionOwner: string;
+  actionStatus: 'none' | 'planned' | 'in_progress' | 'resolved';
+  assessedAt: number;
 }
 
-interface WellbeingIndicator {
-  indicatorId: string;
+interface ExperienceJourneyRecord {
+  journeyId: string;
   employeeId: string;
-  period: string;
-  stressLevel: number;       // 1-10 (lower = better)
-  burnoutRisk: 'low' | 'medium' | 'high' | 'critical';
-  overtimeHoursPerWeek: number;
-  ptoDaysUsedPct: number;    // % of entitled PTO used
-  absenceRatePct: number;
-  wellbeingScore: number;    // composite 0-100
-  recordedAt: number;
-}
-
-interface EngagementDriver {
-  driverId: string;
-  name: string;
-  category: 'culture' | 'leadership' | 'growth' | 'compensation' | 'tools' | 'autonomy';
-  impactScore: number;    // correlation with engagement
-  currentScore: number;  // how well we're doing
-  benchmarkScore: number;
-  gap: number;
-  priority: 'critical' | 'high' | 'medium' | 'low';
+  employeeName: string;
+  currentStage: 'pre_boarding' | 'onboarding' | 'early_career' | 'growth' | 'senior' | 'transition';
+  stageDurationMonths: number;
+  stageHealthScore: number;
+  keyMilestones: { milestone: string; targetDate: number; completedDate?: number; status: 'pending' | 'complete' | 'overdue' }[];
+  painPoints: string[];
+  highlights: string[];
+  nextAction: string;
+  nextActionDue: number;
+  hrPartner?: string;
   updatedAt: number;
 }
 
-class EXScoreCalculator {
-  private scores: Map<string, EmployeeExperienceScore[]> = new Map();
+interface PulseCheckRecord {
+  pulseId: string;
+  period: string;
+  teamId: string;
+  teamName: string;
+  responseRatePct: number;
+  avgEngagementScore: number;
+  avgSatisfactionScore: number;
+  avgWellbeingScore: number;
+  topConcerns: string[];
+  topHighlights: string[];
+  engagementDistribution: { highly_engaged: number; engaged: number; neutral: number; disengaged: number; actively_disengaged: number };
+  trendVsPrevious: 'improving' | 'stable' | 'declining';
+  actionItems: string[];
+  createdAt: number;
+}
+
+class EngagementTracker {
+  private records: Map<string, EngagementRecord> = new Map();
   private counter = 0;
 
-  calculate(employeeId: string, department: string, period: string, workLifeBalance: number, growth: number, managerRel: number, tools: number, recognition: number): EmployeeExperienceScore {
-    const overall = workLifeBalance * 0.25 + growth * 0.2 + managerRel * 0.25 + tools * 0.15 + recognition * 0.15;
-    const history = this.scores.get(employeeId) || [];
-    const prev = history[history.length - 1];
-    const trend: EmployeeExperienceScore['trend'] = prev
-      ? (overall - prev.overallEXScore > 3 ? 'improving' : prev.overallEXScore - overall > 3 ? 'declining' : 'stable')
+  survey(employeeId: string, employeeName: string, department: string, managerId: string, tenureMonths: number, satisfaction: number, wellbeing: number, growth: number, manager: number, peers: number, purpose: number, workLifeBalance: number, eNps: number): EngagementRecord {
+    const engagementId = `eng-${Date.now()}-${++this.counter}`;
+    const engagementScore = Math.round(
+      satisfaction * 0.15 + wellbeing * 0.15 + growth * 0.15 +
+      manager * 0.20 + peers * 0.10 + purpose * 0.15 + workLifeBalance * 0.10
+    );
+    const category: EngagementRecord['category'] =
+      engagementScore >= 80 ? 'highly_engaged' : engagementScore >= 65 ? 'engaged' :
+      engagementScore >= 45 ? 'neutral' : engagementScore >= 25 ? 'disengaged' : 'actively_disengaged';
+
+    const prev = this.records.get(employeeId);
+    const trend: EngagementRecord['trendDirection'] = prev
+      ? (engagementScore > prev.engagementScore + 3 ? 'improving' : engagementScore < prev.engagementScore - 3 ? 'declining' : 'stable')
       : 'stable';
 
-    const scoreId = `exscore-${Date.now()}-${++this.counter}`;
-    const score: EmployeeExperienceScore = {
-      scoreId, employeeId, department, period,
-      workLifeBalanceScore: Math.max(0, Math.min(100, workLifeBalance)),
-      growthOpportunityScore: Math.max(0, Math.min(100, growth)),
-      managerRelationshipScore: Math.max(0, Math.min(100, managerRel)),
-      toolsResourcesScore: Math.max(0, Math.min(100, tools)),
-      recognitionScore: Math.max(0, Math.min(100, recognition)),
-      overallEXScore: Math.max(0, Math.min(100, overall)), trend, calculatedAt: Date.now()
+    const record: EngagementRecord = {
+      engagementId, employeeId, employeeName, department, managerId, tenureMonths,
+      engagementScore, eNpsScore: Math.max(-100, Math.min(100, eNps)), satisfactionScore: satisfaction,
+      wellbeingScore: wellbeing, growthScore: growth, managerScore: manager, peersScore: peers,
+      purposeScore: purpose, workLifeBalanceScore: workLifeBalance, category, trendDirection: trend,
+      surveyDate: Date.now(), createdAt: Date.now()
     };
-    history.push(score);
-    this.scores.set(employeeId, history);
-    return score;
+    this.records.set(employeeId, record);
+    logger.debug('Engagement surveyed', { employeeId, engagementScore, category, trend });
+    return record;
   }
 
-  getDepartmentAverage(department: string): number {
-    const latest = Array.from(this.scores.values())
-      .map(h => h[h.length - 1])
-      .filter((s): s is EmployeeExperienceScore => !!s && s.department === department);
-    if (!latest.length) return 0;
-    return latest.reduce((s, e) => s + e.overallEXScore, 0) / latest.length;
+  getDisengaged(): EngagementRecord[] {
+    return Array.from(this.records.values()).filter(r => r.category === 'disengaged' || r.category === 'actively_disengaged');
   }
 
-  getAtRisk(threshold = 50): EmployeeExperienceScore[] {
-    return Array.from(this.scores.values())
-      .map(h => h[h.length - 1])
-      .filter((s): s is EmployeeExperienceScore => !!s && s.overallEXScore < threshold)
-      .sort((a, b) => a.overallEXScore - b.overallEXScore);
+  getDeclining(): EngagementRecord[] {
+    return Array.from(this.records.values()).filter(r => r.trendDirection === 'declining');
   }
 
-  getLatest(employeeId: string): EmployeeExperienceScore | undefined {
-    const history = this.scores.get(employeeId) || [];
-    return history[history.length - 1];
+  getAvgEngagementScore(): number {
+    const all = Array.from(this.records.values());
+    return all.length > 0 ? Math.round(all.reduce((s, r) => s + r.engagementScore, 0) / all.length * 10) / 10 : 0;
+  }
+
+  getAll(): EngagementRecord[] {
+    return Array.from(this.records.values());
   }
 }
 
-class PulseSurveyAnalyzer {
-  private responses: Map<string, PulseSurveyResponse[]> = new Map();  // keyed by surveyId
+class RetentionRiskDetector {
+  private risks: Map<string, RetentionRiskRecord> = new Map();
   private counter = 0;
 
-  submit(surveyId: string, employeeId: string, department: string, responses: Record<string, number>, npsScore?: number, sentimentText?: string): PulseSurveyResponse {
-    const responseId = `pulseResp-${Date.now()}-${++this.counter}`;
-    const response: PulseSurveyResponse = {
-      responseId, surveyId, employeeId, department, responses, sentimentText, npsScore, submittedAt: Date.now()
+  assess(employeeId: string, employeeName: string, department: string, role: string, engagement: EngagementRecord, annualSalaryUSD: number, isKeyPerson: boolean, marketDemandMultiplier: number): RetentionRiskRecord {
+    const riskId = `retrisk-${Date.now()}-${++this.counter}`;
+    const riskFactors: string[] = [];
+    if (engagement.engagementScore < 40) riskFactors.push('Very low engagement score');
+    if (engagement.growthScore < 40) riskFactors.push('Perceived lack of growth opportunity');
+    if (engagement.managerScore < 40) riskFactors.push('Poor manager relationship');
+    if (engagement.trendDirection === 'declining') riskFactors.push('Declining engagement trend');
+    if (engagement.tenureMonths >= 18 && engagement.tenureMonths <= 36) riskFactors.push('High-risk tenure window (18-36 months)');
+    if (engagement.eNpsScore < -20) riskFactors.push('Negative employee NPS');
+
+    const baseRisk = 100 - engagement.engagementScore;
+    const flightRisk = Math.min(100, Math.round(baseRisk * 0.7 + riskFactors.length * 5 + (isKeyPerson ? 10 : 0)));
+    const riskCategory: RetentionRiskRecord['riskCategory'] =
+      flightRisk >= 75 ? 'critical' : flightRisk >= 50 ? 'high' : flightRisk >= 25 ? 'medium' : 'low';
+    const replacementCost = Math.round(annualSalaryUSD * 1.5 * marketDemandMultiplier);
+    const replacementWeeks = isKeyPerson ? 24 : 12;
+
+    const actions: string[] = [];
+    if (flightRisk >= 75) actions.push('Schedule 1:1 with HR and senior leadership immediately');
+    if (engagement.growthScore < 50) actions.push('Discuss career development plan and promotion timeline');
+    if (engagement.managerScore < 50) actions.push('Consider manager coaching or team reassignment');
+    if (engagement.wellbeingScore < 50) actions.push('Offer flexible work arrangement or wellness support');
+
+    const record: RetentionRiskRecord = {
+      riskId, employeeId, employeeName, department, role,
+      flightRiskPct: flightRisk, riskCategory, riskFactors,
+      replacementCostUSD: replacementCost, replacementTimeWeeks: replacementWeeks,
+      isKeyPerson, retentionActions: actions, actionOwner: 'HR', actionStatus: 'none',
+      assessedAt: Date.now()
     };
-    const existing = this.responses.get(surveyId) || [];
-    existing.push(response);
-    this.responses.set(surveyId, existing);
-    return response;
+    this.risks.set(employeeId, record);
+    return record;
   }
 
-  getSurveyNPS(surveyId: string): number {
-    const responses = (this.responses.get(surveyId) || []).filter(r => r.npsScore !== undefined);
-    if (!responses.length) return 0;
-    const promoters = responses.filter(r => (r.npsScore || 0) >= 9).length;
-    const detractors = responses.filter(r => (r.npsScore || 0) <= 6).length;
-    return ((promoters - detractors) / responses.length) * 100;
+  getCriticalRisks(): RetentionRiskRecord[] {
+    return Array.from(this.risks.values()).filter(r => r.riskCategory === 'critical');
   }
 
-  getResponseRate(surveyId: string, totalInvited: number): number {
-    const count = (this.responses.get(surveyId) || []).length;
-    return totalInvited > 0 ? (count / totalInvited) * 100 : 0;
+  getTotalReplacementCostAtRisk(): number {
+    return Array.from(this.risks.values())
+      .filter(r => r.riskCategory === 'critical' || r.riskCategory === 'high')
+      .reduce((s, r) => s + r.replacementCostUSD, 0);
   }
 
-  getQuestionAverage(surveyId: string, questionId: string): number {
-    const responses = this.responses.get(surveyId) || [];
-    const scores = responses.map(r => r.responses[questionId]).filter(s => s !== undefined);
-    if (!scores.length) return 0;
-    return scores.reduce((s, v) => s + v, 0) / scores.length;
+  getAll(): RetentionRiskRecord[] {
+    return Array.from(this.risks.values());
   }
 }
 
-class WellbeingMonitor {
-  private indicators: Map<string, WellbeingIndicator[]> = new Map();
+class ExperienceJourneyManager {
+  private journeys: Map<string, ExperienceJourneyRecord> = new Map();
   private counter = 0;
 
-  record(employeeId: string, period: string, stressLevel: number, overtimeHrs: number, ptoDaysUsedPct: number, absenceRatePct: number): WellbeingIndicator {
-    const burnoutRisk: WellbeingIndicator['burnoutRisk'] =
-      stressLevel >= 8 || overtimeHrs >= 20 ? 'critical' :
-      stressLevel >= 7 || overtimeHrs >= 15 ? 'high' :
-      stressLevel >= 5 || overtimeHrs >= 10 ? 'medium' : 'low';
-
-    // Wellbeing: lower stress + reasonable hours + using PTO = better
-    const stressScore = Math.max(0, 100 - stressLevel * 10);
-    const overtimeScore = Math.max(0, 100 - overtimeHrs * 5);
-    const ptoScore = Math.min(100, ptoDaysUsedPct);
-    const absenceScore = Math.max(0, 100 - absenceRatePct * 10);
-    const wellbeingScore = stressScore * 0.4 + overtimeScore * 0.3 + ptoScore * 0.2 + absenceScore * 0.1;
-
-    const indicatorId = `wellbeing-${Date.now()}-${++this.counter}`;
-    const indicator: WellbeingIndicator = {
-      indicatorId, employeeId, period, stressLevel, burnoutRisk, overtimeHoursPerWeek: overtimeHrs,
-      ptoDaysUsedPct, absenceRatePct, wellbeingScore: Math.max(0, Math.min(100, wellbeingScore)), recordedAt: Date.now()
+  setStage(employeeId: string, employeeName: string, stage: ExperienceJourneyRecord['currentStage'], stageHealth: number, milestones: ExperienceJourneyRecord['keyMilestones'], painPoints: string[], highlights: string[], nextAction: string, hrPartner?: string): ExperienceJourneyRecord {
+    const journeyId = `expjrn-${Date.now()}-${++this.counter}`;
+    const nextActionDue = milestones.find(m => m.status === 'pending')?.targetDate || Date.now() + 30 * 86400000;
+    const record: ExperienceJourneyRecord = {
+      journeyId, employeeId, employeeName, currentStage: stage,
+      stageDurationMonths: 0, stageHealthScore: stageHealth,
+      keyMilestones: milestones, painPoints, highlights, nextAction, nextActionDue,
+      hrPartner, updatedAt: Date.now()
     };
-    const history = this.indicators.get(employeeId) || [];
-    history.push(indicator);
-    this.indicators.set(employeeId, history);
-    return indicator;
+    this.journeys.set(employeeId, record);
+    return record;
   }
 
-  getHighBurnoutRisk(): WellbeingIndicator[] {
-    return Array.from(this.indicators.values())
-      .map(h => h[h.length - 1])
-      .filter((i): i is WellbeingIndicator => !!i && (i.burnoutRisk === 'critical' || i.burnoutRisk === 'high'))
-      .sort((a, b) => b.stressLevel - a.stressLevel);
+  getOnboardingAtRisk(): ExperienceJourneyRecord[] {
+    return Array.from(this.journeys.values()).filter(j => j.currentStage === 'onboarding' && j.stageHealthScore < 60);
   }
 
-  getLatest(employeeId: string): WellbeingIndicator | undefined {
-    const history = this.indicators.get(employeeId) || [];
-    return history[history.length - 1];
+  getAll(): ExperienceJourneyRecord[] {
+    return Array.from(this.journeys.values());
   }
 }
 
-class EngagementDriverAnalyzer {
-  private drivers: Map<string, EngagementDriver> = new Map();
+class PulseCheckEngine {
+  private checks: PulseCheckRecord[] = [];
   private counter = 0;
 
-  upsert(name: string, category: EngagementDriver['category'], impactScore: number, currentScore: number, benchmarkScore: number): EngagementDriver {
-    const existing = Array.from(this.drivers.values()).find(d => d.name === name);
-    const gap = benchmarkScore - currentScore;
-    const priority: EngagementDriver['priority'] =
-      gap > 20 && impactScore > 0.7 ? 'critical' :
-      gap > 15 ? 'high' :
-      gap > 8 ? 'medium' : 'low';
-
-    if (existing) {
-      existing.impactScore = impactScore;
-      existing.currentScore = currentScore;
-      existing.benchmarkScore = benchmarkScore;
-      existing.gap = gap;
-      existing.priority = priority;
-      existing.updatedAt = Date.now();
-      return existing;
-    }
-
-    const driverId = `engdriver-${Date.now()}-${++this.counter}`;
-    const driver: EngagementDriver = {
-      driverId, name, category, impactScore, currentScore, benchmarkScore, gap, priority, updatedAt: Date.now()
+  run(period: string, teamId: string, teamName: string, responses: EngagementRecord[], responseRatePct: number, concerns: string[], highlights: string[], actions: string[]): PulseCheckRecord {
+    const pulseId = `pulse-${Date.now()}-${++this.counter}`;
+    const n = responses.length || 1;
+    const avgEng = Math.round(responses.reduce((s, r) => s + r.engagementScore, 0) / n * 10) / 10;
+    const avgSat = Math.round(responses.reduce((s, r) => s + r.satisfactionScore, 0) / n * 10) / 10;
+    const avgWell = Math.round(responses.reduce((s, r) => s + r.wellbeingScore, 0) / n * 10) / 10;
+    const dist = {
+      highly_engaged: responses.filter(r => r.category === 'highly_engaged').length,
+      engaged: responses.filter(r => r.category === 'engaged').length,
+      neutral: responses.filter(r => r.category === 'neutral').length,
+      disengaged: responses.filter(r => r.category === 'disengaged').length,
+      actively_disengaged: responses.filter(r => r.category === 'actively_disengaged').length
     };
-    this.drivers.set(driverId, driver);
-    logger.debug('Engagement driver updated', { name, gap, priority });
-    return driver;
+    const prev = this.checks.filter(c => c.teamId === teamId).slice(-1)[0];
+    const trend: PulseCheckRecord['trendVsPrevious'] = prev
+      ? (avgEng > prev.avgEngagementScore + 3 ? 'improving' : avgEng < prev.avgEngagementScore - 3 ? 'declining' : 'stable')
+      : 'stable';
+
+    const record: PulseCheckRecord = {
+      pulseId, period, teamId, teamName, responseRatePct,
+      avgEngagementScore: avgEng, avgSatisfactionScore: avgSat, avgWellbeingScore: avgWell,
+      topConcerns: concerns, topHighlights: highlights, engagementDistribution: dist,
+      trendVsPrevious: trend, actionItems: actions, createdAt: Date.now()
+    };
+    this.checks.push(record);
+    logger.debug('Pulse check run', { pulseId, teamId, avgEng, trend });
+    return record;
   }
 
-  getTopPriority(limit = 5): EngagementDriver[] {
-    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-    return Array.from(this.drivers.values())
-      .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority] || b.gap - a.gap)
-      .slice(0, limit);
+  getTeamTrend(teamId: string): PulseCheckRecord[] {
+    return this.checks.filter(c => c.teamId === teamId);
   }
 
-  getByCategory(category: EngagementDriver['category']): EngagementDriver[] {
-    return Array.from(this.drivers.values()).filter(d => d.category === category);
+  getLowEngagementTeams(threshold = 55): PulseCheckRecord[] {
+    const latestByTeam = new Map<string, PulseCheckRecord>();
+    this.checks.forEach(c => {
+      const existing = latestByTeam.get(c.teamId);
+      if (!existing || c.createdAt > existing.createdAt) latestByTeam.set(c.teamId, c);
+    });
+    return Array.from(latestByTeam.values()).filter(c => c.avgEngagementScore < threshold);
   }
 }
 
-export const exScoreCalculator = new EXScoreCalculator();
-export const pulseSurveyAnalyzer = new PulseSurveyAnalyzer();
-export const wellbeingMonitor = new WellbeingMonitor();
-export const engagementDriverAnalyzer = new EngagementDriverAnalyzer();
+export const engagementTracker = new EngagementTracker();
+export const retentionRiskDetector = new RetentionRiskDetector();
+export const experienceJourneyManager = new ExperienceJourneyManager();
+export const pulseCheckEngine = new PulseCheckEngine();
 
-export { EmployeeExperienceScore, PulseSurveyResponse, WellbeingIndicator, EngagementDriver };
+export { EngagementRecord, RetentionRiskRecord, ExperienceJourneyRecord, PulseCheckRecord };

@@ -621,3 +621,21 @@ export { leakageDetector, billingAuditor, contractComplianceChecker, recoveryTra
 // Phase 334: Corporate Learning Intelligence
 export { trainingProgramManager, learningOutcomeTracker, ldRoiCalculator, skillDevelopmentManager } from './corporate-learning-intelligence';
 
+// Phase 335: Market Intelligence
+export { marketSizeAnalyzer, competitorTracker, trendMonitor, marketShareTracker } from './market-intelligence';
+
+// Phase 336: Customer Advocacy Intelligence
+export { advocateManager, referralManager, caseStudyManager, advocacyProgramAnalyzer } from './customer-advocacy-intelligence';
+
+// Phase 337: Regulatory Change Intelligence
+export { regulatoryChangeMonitor, impactAssessor, complianceGapManager, changeReadinessAssessor } from './regulatory-change-intelligence';
+
+// Phase 338: Sales Forecasting Intelligence
+export { dealManager, forecastEngine, pipelineHealthAnalyzer, forecastAccuracyTracker } from './sales-forecasting-intelligence';
+
+// Phase 339: Vendor Collaboration Intelligence
+export { vendorCollaborationManager, jointPlanManager, sharedKpiTracker, collaborationHealthMonitor } from './vendor-collaboration-intelligence';
+
+// Phase 340: Employee Experience Intelligence
+export { engagementTracker, retentionRiskDetector, experienceJourneyManager, pulseCheckEngine } from './employee-experience-intelligence';
+
