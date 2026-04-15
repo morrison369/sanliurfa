@@ -459,3 +459,21 @@ export { defectTrackingSystem, qualityCostAnalyzer, supplierQualityManager, cont
 // Phase 280: R&D Intelligence
 export { rdProjectManager, innovationMetricsTracker, technologyReadinessAssessor, researchROICalculator } from './rd-intelligence';
 
+// Phase 281: Corporate Communications Intelligence
+export { communicationsCampaignManager, mediaRelationsTracker, internalCommsAnalyzer, crisisCommunicationsManager } from './corporate-communications-intelligence';
+
+// Phase 282: Grants & Funding Intelligence
+export { grantOpportunityManager, grantApplicationTracker, fundingPortfolioAnalyzer, grantComplianceTracker } from './grants-funding-intelligence';
+
+// Phase 283: Document & Records Management Intelligence
+export { documentLifecycleManager, retentionPolicyEngine, documentAccessAnalyzer, documentComplianceAuditor } from './document-management-intelligence';
+
+// Phase 284: Corporate Social Responsibility Intelligence
+export { csrProgramManager, volunteerEngagementTracker, communityImpactAnalyzer, csrReportingEngine } from './csr-intelligence';
+
+// Phase 285: Competitive Benchmarking Intelligence
+export { competitorProfileManager, benchmarkMetricsEngine, winLossAnalyzer, competitivePositionTracker } from './competitive-benchmarking-intelligence';
+
+// Phase 286: Corporate Travel Intelligence
+export { travelBookingManager, travelPolicyManager, travelSpendAnalyzer, travelerSafetyMonitor } from './corporate-travel-intelligence';
+
