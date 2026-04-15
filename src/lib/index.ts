@@ -279,3 +279,21 @@ export { feedbackTopicExtractor, issueClusteringEngine, feedbackPriorityRanker, 
 // Phase 220: CX Forecasting
 export { cxMetricForecaster, churnRiskPredictor, customerValueForecaster, experienceImpactModeler } from './cx-forecasting';
 
+// Phase 221: Knowledge Graph Management
+export { knowledgeEntityManager, relationshipMapper, knowledgeQueryEngine, graphAnalyticsEngine } from './knowledge-graph-management';
+
+// Phase 222: Learning & Development Intelligence
+export { learningPathManager, learnerProgressTracker, trainingEffectivenessAnalyzer, ldAnalyticsAggregator } from './learning-development-intelligence';
+
+// Phase 223: Innovation Management
+export { ideaPipelineManager, innovationScorer, experimentTracker, innovationPortfolioManager } from './innovation-management';
+
+// Phase 224: Change Management Analytics
+export { changeInitiativeTracker, adoptionMonitor, resistanceAnalyzer, changeImpactAssessor } from './change-management-analytics';
+
+// Phase 225: Strategic Planning Intelligence
+export { strategicObjectiveManager, okrTracker, scenarioPlanningEngine, strategyExecutionAnalyzer } from './strategic-planning-intelligence';
+
+// Phase 226: Competitive Intelligence
+export { competitorProfileManager, marketPositionAnalyzer, winLossAnalyzer, competitiveAlertManager } from './competitive-intelligence';
+
