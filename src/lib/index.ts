@@ -210,3 +210,18 @@ export { clvCalculator, customerSegmentOptimizer, retentionROIAnalyzer, lifetime
 // Phase 196: Monetization Strategy
 export { monetizationModelEvaluator, pricingStrategyAdvisor, revenueStreamManager, monetizationMetricsTracker } from './monetization-strategy';
 
+// Phase 197: Product Analytics
+export { featureUsageTracker, productEventCollector, userJourneyAnalyzer, productHealthMonitor } from './product-analytics';
+
+// Phase 198: Feature Adoption Tracking
+export { featureAdoptionTracker, adoptionFunnelAnalyzer, featureStickinessCalculator, adoptionCampaignManager } from './feature-adoption';
+
+// Phase 199: Roadmap Prioritization
+export { featureRequestManager, prioritizationScorer, roadmapPlanner, impactEstimator } from './roadmap-prioritization';
+
+// Phase 200: Product-Led Growth
+export { plgFunnelTracker, viralLoopAnalyzer, activationTracker, expansionSignalDetector } from './product-led-growth';
+
+// Phase 202: NPS & Satisfaction
+export { npsSurveyManager, satisfactionScoreTracker, feedbackCategorizor, npsTrendAnalyzer } from './nps-satisfaction';
+
