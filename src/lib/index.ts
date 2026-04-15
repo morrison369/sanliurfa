@@ -156,3 +156,21 @@ export { userSessionAnalyzer, heatmapTracker, funnelAnalyzer, uxQualityScorer } 
 // Phase 178: Conversion Intelligence
 export { conversionPredictor, conversionOptimizer, abandonmentDetector, revenueAttributionTracker } from './conversion-intelligence';
 
+// Phase 179: Data Domain Ownership
+export { dataDomainRegistry, dataDomainGovernor, dataDomainMetricsCollector, dataDomainLineageTracker } from './data-domain';
+
+// Phase 180: Data Product Catalog
+export { dataProductRegistry, dataProductVersionManager, dataProductDiscovery, dataProductRatingSystem } from './data-product-catalog';
+
+// Phase 181: Data Contracts
+export { dataContractManager, dataContractValidator, dataContractMonitor, dataContractBreachHandler } from './data-contracts';
+
+// Phase 182: Self-serve Analytics
+export { queryBuilder, analyticsWorkspaceManager, metricsDefinitionRegistry, analyticsDashboardManager } from './self-serve-analytics';
+
+// Phase 183: Data Lineage & Provenance
+export { lineageGraphBuilder, transformationTracker, provenanceManager, impactAnalyzer } from './data-lineage';
+
+// Phase 184: Data Quality SLAs
+export { slaDefinitionManager, slaMonitor, slaBreachNotifier, slaReporter } from './data-quality-sla';
+
