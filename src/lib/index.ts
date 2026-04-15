@@ -477,3 +477,21 @@ export { competitorProfileManager, benchmarkMetricsEngine, winLossAnalyzer, comp
 // Phase 286: Corporate Travel Intelligence
 export { travelBookingManager, travelPolicyManager, travelSpendAnalyzer, travelerSafetyMonitor } from './corporate-travel-intelligence';
 
+// Phase 287: Alumni Network Intelligence
+export { alumniProfileManager, alumniEngagementTracker, mentorshipProgramManager, alumniNetworkValueCalculator } from './alumni-network-intelligence';
+
+// Phase 288: Insurance & Risk Management Intelligence
+export { insurancePolicyManager, insuranceClaimsManager, riskExposureAnalyzer, insuranceProgramAnalyzer } from './insurance-risk-intelligence';
+
+// Phase 289: Mergers & Acquisitions Intelligence
+export { maDealPipelineManager, dueDiligenceTracker, maValuationEngine, integrationMonitor } from './mergers-acquisitions-intelligence';
+
+// Phase 290: Digital Asset Management Intelligence
+export { digitalAssetManager, assetRightsManager, assetUsageAnalyzer, contentPerformanceTracker } from './digital-asset-management-intelligence';
+
+// Phase 291: Franchise Intelligence
+export { franchiseeManager, franchiseePerformanceTracker, franchiseComplianceManager, franchiseExpansionPlanner } from './franchise-intelligence';
+
+// Phase 292: Corporate Events & Hospitality Intelligence
+export { corporateEventManager, hospitalityBudgetManager, guestExperienceTracker, hospitalityComplianceTracker } from './corporate-events-hospitality-intelligence';
+
