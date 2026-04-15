@@ -585,3 +585,21 @@ export { networkNodeManager, bandwidthAnalyzer, capacityPlanner, infrastructureA
 // Phase 322: Sustainability Intelligence
 export { carbonTracker, esgMetricsManager, energyManager, sustainabilityReportGenerator } from './sustainability-intelligence';
 
+// Phase 323: Sales Compensation Intelligence
+export { compensationPlanManager, attainmentTracker, incentiveEventManager, compensationAnalyticsEngine } from './sales-compensation-intelligence';
+
+// Phase 324: Customer Journey Intelligence
+export { journeyTracker, frictionDetector, pathAnalyzer, journeyOptimizer } from './customer-journey-intelligence';
+
+// Phase 325: Digital Asset Intelligence
+export { digitalAssetManager, assetPerformanceAnalyzer, brandConsistencyChecker, assetLifecycleManager } from './digital-asset-intelligence';
+
+// Phase 326: Workforce Capacity Intelligence
+export { workforceCapacityManager, skillsMatrixManager, headcountForecaster, workloadBalancer } from './workforce-capacity-intelligence';
+
+// Phase 327: Operational Risk Intelligence
+export { riskRegister, controlEffectivenessTracker, lossEventTracker, riskAppetiteManager } from './operational-risk-intelligence';
+
+// Phase 328: Product Launch Intelligence
+export { launchManager, launchReadinessAssessor, launchMetricsTracker, adoptionCurveAnalyzer } from './product-launch-intelligence';
+
