@@ -549,3 +549,21 @@ export { kbArticleManager, searchGapAnalyzer, kbGapAnalyzer, kbContributionTrack
 // Phase 310: Corporate Strategy Intelligence
 export { strategicGoalManager, okrTracker, strategicInitiativeManager, strategicRiskRegister } from './corporate-strategy-intelligence';
 
+// Phase 311: Fleet & Transportation Intelligence
+export { vehicleManager, driverPerformanceTracker, routeOptimizer, fleetCostAnalyzer } from './fleet-transportation-intelligence';
+
+// Phase 312: Customer Segmentation Intelligence
+export { rfmAnalyzer, cohortAnalyzer, segmentManager, segmentMigrationTracker } from './customer-segmentation-intelligence';
+
+// Phase 313: Demand Forecasting Intelligence
+export { demandForecaster, demandSensor, seasonalPatternAnalyzer, forecastAccuracyTracker } from './demand-forecasting-intelligence';
+
+// Phase 314: Competitive Pricing Intelligence
+export { competitorPriceMonitor, priceIndexCalculator, discountManager, marginOptimizer } from './competitive-pricing-intelligence';
+
+// Phase 315: Incident Management Intelligence
+export { incidentManager, postMortemTracker, incidentMetricsEngine, incidentTrendAnalyzer } from './incident-management-intelligence';
+
+// Phase 316: Executive Dashboard Intelligence
+export { kpiManager, executiveScorecardGenerator, boardReportGenerator, trendAlertEngine } from './executive-dashboard-intelligence';
+
