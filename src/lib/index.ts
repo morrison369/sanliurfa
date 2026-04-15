@@ -423,3 +423,21 @@ export { demandForecastEngine, shiftScheduler, coverageAnalyzer, schedulingOptim
 // Phase 268: Corporate Performance Management
 export { balancedScorecardManager, kpiCascadeManager, strategyExecutionMonitor, performanceDashboardEngine } from './corporate-performance-management';
 
+// Phase 269: Channel Partner Intelligence
+export { partnerPerformanceTracker, dealRegistrationManager, partnerEnablementManager, channelHealthAnalyzer } from './channel-partner-intelligence';
+
+// Phase 270: Facilities Intelligence
+export { spaceUtilizationTracker, leaseManager, facilitiesCostAnalyzer, workplaceOptimizationAdvisor } from './facilities-intelligence';
+
+// Phase 271: Intellectual Property Intelligence
+export { patentPortfolioManager, trademarkMonitor, ipValuationEngine, licensingManager } from './intellectual-property-intelligence';
+
+// Phase 272: Event & Conference Intelligence
+export { eventManager, sessionPerformanceTracker, sponsorValueTracker, attendeeEngagementAnalyzer } from './event-intelligence';
+
+// Phase 273: Subscription Lifecycle Intelligence
+export { subscriptionHealthMonitor, expansionRevenueEngine, renewalForecastEngine, contractionTracker } from './subscription-lifecycle-intelligence';
+
+// Phase 274: Field Service Intelligence
+export { workOrderManager, technicianPerformanceTracker, slaPerformanceAnalyzer, fieldServiceCostTracker } from './field-service-intelligence';
+
