@@ -297,3 +297,21 @@ export { strategicObjectiveManager, okrTracker, scenarioPlanningEngine, strategy
 // Phase 226: Competitive Intelligence
 export { competitorProfileManager, marketPositionAnalyzer, winLossAnalyzer, competitiveAlertManager } from './competitive-intelligence';
 
+// Phase 227: Productivity Analytics
+export { productivityTracker, teamProductivityAnalyzer, timeUtilizationAnalyzer, productivityBenchmarker } from './productivity-analytics';
+
+// Phase 228: Operations Intelligence
+export { operationalKPITracker, bottleneckDetector, capacityPlanner, opsHealthMonitor } from './operations-intelligence';
+
+// Phase 229: Resource Optimization
+export { resourceManager, allocationTracker, utilizationReporter, optimizationRecommender } from './resource-optimization';
+
+// Phase 230: Process Mining
+export { processEventLogger, processDiscoveryEngine, conformanceChecker, processVariantAnalyzer } from './process-mining';
+
+// Phase 231: Digital Workplace Analytics
+export { toolAdoptionTracker, collaborationPatternAnalyzer, digitalFrictionMonitor, workplaceExperienceScorer } from './digital-workplace-analytics';
+
+// Phase 232: Operational Risk Management
+export { operationalRiskRegister, riskControlManager, lossEventTracker, riskHeatmapGenerator } from './operational-risk-management';
+
