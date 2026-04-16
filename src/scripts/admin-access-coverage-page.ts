@@ -29,6 +29,28 @@ function setLink(id: string, href: string) {
   }
 }
 
+function setAlert(status: CoverageStatus, driftCount: number) {
+  const element = document.getElementById('admin-access-coverage-alert');
+  if (!element) return;
+
+  element.className = 'rounded-2xl border p-4 text-sm font-semibold';
+
+  if (driftCount > 0) {
+    element.classList.add('block', 'border-red-200', 'bg-red-50', 'text-red-700', 'dark:border-red-900', 'dark:bg-red-950/40', 'dark:text-red-200');
+    element.textContent = `Uyarı: ${driftCount} wrapper drift bulundu. İlk dosya detayını aşağıda inceleyin.`;
+    return;
+  }
+
+  if (status !== 'healthy') {
+    element.classList.add('block', 'border-amber-200', 'bg-amber-50', 'text-amber-700', 'dark:border-amber-900', 'dark:bg-amber-950/40', 'dark:text-amber-200');
+    element.textContent = 'Uyarı: Coverage raporu mevcut ama freshness durumu healthy değil.';
+    return;
+  }
+
+  element.classList.add('block', 'border-green-200', 'bg-green-50', 'text-green-700', 'dark:border-green-900', 'dark:bg-green-950/40', 'dark:text-green-200');
+  element.textContent = 'Durum normal: Wrapper coverage drift görünmüyor ve artifact healthy.';
+}
+
 function loadHistory() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -122,6 +144,7 @@ async function loadCoverage() {
     setText('admin-access-coverage-formats', reportFormats.join(', '));
     setText('admin-access-coverage-artifact-status', artifact.status);
     setText('admin-access-coverage-last-refresh', refreshedAt);
+    setAlert(artifact.status, report.driftCount);
     setText(
       'admin-access-coverage-summary',
       `Durum: ${artifact.status}. Coverage %${report.coveragePercent}. Drift: ${report.driftCount}.`
@@ -146,6 +169,7 @@ async function loadCoverage() {
       'admin-access-coverage-generated-at',
       error instanceof Error ? error.message : 'Bilinmeyen hata'
     );
+    setAlert('blocked', 1);
     setText('admin-access-coverage-summary', 'Coverage verisi alınamadı.');
     renderDriftFiles([]);
     renderTrend();
