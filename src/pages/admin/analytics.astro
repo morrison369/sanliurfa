@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import AnalyticsPanel from '../../components/AnalyticsPanel.astro';
-import AdminAnalyticsDashboard from '../../components/AdminAnalyticsDashboard';
+import AdminAnalyticsDashboard from '../../components/AdminAnalyticsDashboard.astro';
 import AdminPerformanceDashboard from '../../components/AdminPerformanceDashboard';
 
 // Check admin access
@@ -33,7 +33,7 @@ const seo = {
         <hr class="dark:border-gray-700" />
         <section>
           <h2 class="text-2xl font-bold mb-6">Platform Analytics</h2>
-          <AdminAnalyticsDashboard client:load />
+          <AdminAnalyticsDashboard />
         </section>
         <hr class="dark:border-gray-700" />
         <section>

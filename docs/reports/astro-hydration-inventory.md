@@ -1,14 +1,13 @@
 # Astro Hydration Inventory
-- Generated at: 2026-04-16T23:47:33.659Z
-- Astro files: 180
-- TSX files: 72
-- Total hydration points: 14
+- Generated at: 2026-04-16T23:55:30.141Z
+- Astro files: 181
+- TSX files: 71
+- Total hydration points: 13
 - Low risk: 0
 - Medium risk: 0
-- High risk: 14
+- High risk: 13
 
 ## Entries
-- [high] src/pages/admin/analytics.astro -> AdminAnalyticsDashboard (client:load)
 - [high] src/pages/admin/analytics.astro -> AdminPerformanceDashboard (client:load)
 - [high] src/pages/admin/dashboard.astro -> ModerationQueueManager (client:load)
 - [high] src/pages/admin/manage.astro -> AdminManager (client:load)
