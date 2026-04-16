@@ -10,6 +10,7 @@ describe('astro migration report helpers', () => {
   it('classifies hydration risk by component type', () => {
     expect(classifyHydrationRisk('PerformanceMonitor').risk).toBe('low');
     expect(classifyHydrationRisk('SearchResults').risk).toBe('medium');
+    expect(classifyHydrationRisk('UserManagementTable').risk).toBe('medium');
     expect(classifyHydrationRisk('WebhookManager').risk).toBe('high');
   });
 

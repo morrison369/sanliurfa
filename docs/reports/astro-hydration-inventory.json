@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T21:41:02.423Z",
-  "astroFiles": 152,
-  "tsxFiles": 104,
-  "totalHydrationPoints": 45,
-  "lowRiskCount": 2,
-  "mediumRiskCount": 27,
+  "generatedAt": "2026-04-16T21:44:23.854Z",
+  "astroFiles": 153,
+  "tsxFiles": 103,
+  "totalHydrationPoints": 44,
+  "lowRiskCount": 0,
+  "mediumRiskCount": 28,
   "highRiskCount": 16,
   "entries": [
     {
@@ -139,6 +139,13 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "AuditLogViewer form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/admin/dashboard.astro",
+      "componentName": "UserManagementTable",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "UserManagementTable form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/admin/loyalty/index.astro",
@@ -307,20 +314,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "VendorDashboard form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/admin/dashboard.astro",
-      "componentName": "UserManagementTable",
-      "directive": "load",
-      "risk": "low",
-      "rationale": "UserManagementTable küçük widget veya sınırlı davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/loyalty/transactions.astro",
-      "componentName": "TransactionHistory",
-      "directive": "load",
-      "risk": "low",
-      "rationale": "TransactionHistory küçük widget veya sınırlı davranış taşıyor."
     }
   ]
 }

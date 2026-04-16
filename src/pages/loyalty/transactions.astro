@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { TransactionHistory } from '../../components/TransactionHistory';
+import TransactionHistory from '../../components/TransactionHistory.astro';
 
 // Redirect if not authenticated
 if (!Astro.locals.user) {
@@ -16,6 +16,6 @@ if (!Astro.locals.user) {
       <p class="text-gray-600">Tüm puan işlemlerinizi görüntüleyin</p>
     </div>
 
-    <TransactionHistory client:load />
+    <TransactionHistory />
   </div>
 </Layout>

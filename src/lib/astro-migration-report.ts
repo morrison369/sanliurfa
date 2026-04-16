@@ -59,6 +59,7 @@ const MEDIUM_RISK_COMPONENTS = new Set([
   'SubscriptionManager',
   'UserProfile',
   'UserPublicProfile',
+  'UserManagementTable',
   'UserSearchResults',
   'UserSettings',
   'UserSuggestionsPanel',
