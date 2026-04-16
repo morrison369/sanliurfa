@@ -128,6 +128,18 @@ export async function fetchAdminAccessCoverageReport(): Promise<AdminAccessCover
   return payload.data;
 }
 
+export function buildAdminAccessCoverageReportUrl(format?: 'json' | 'markdown'): string {
+  const params = new URLSearchParams();
+  if (format) {
+    params.set('format', format);
+  }
+
+  const query = params.toString();
+  return query
+    ? `/api/admin/system/admin-access-coverage?${query}`
+    : '/api/admin/system/admin-access-coverage';
+}
+
 export async function fetchAdminLoyaltyRewards(): Promise<AdminLoyaltyRewardsListData> {
   const payload = await fetchJson<{ data: AdminLoyaltyRewardsListData }>(
     '/api/admin/loyalty/rewards'

@@ -1697,6 +1697,14 @@ const openApiSpec = {
         tags: ['Health'],
         summary: 'Get admin access wrapper coverage report',
         security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'format',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', enum: ['json', 'markdown'] },
+          },
+        ],
         responses: {
           '200': {
             description: 'Admin access coverage report and artifact freshness',
