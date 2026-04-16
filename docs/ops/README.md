@@ -16,6 +16,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 - Admin UI helper / view-model katmanı:
   - `src/lib/admin-index.ts`
   - `src/lib/admin-index-page.ts`
+  - `src/lib/admin-index-view.ts`
   - `src/lib/admin-ops-pages.ts`
   - `src/lib/runtime-monitor.ts`
   - `src/lib/admin-access-coverage-page.ts`
