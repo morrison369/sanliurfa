@@ -13,6 +13,8 @@ type SubscriptionUsersGetResponse =
   paths['/api/admin/subscriptions/users']['get']['responses']['200']['content']['application/json'];
 type SubscriptionAnalyticsGetResponse =
   paths['/api/admin/subscriptions/analytics']['get']['responses']['200']['content']['application/json'];
+type AdminRevenueGetResponse =
+  paths['/api/admin/revenue']['get']['responses']['200']['content']['application/json'];
 type AdminAnalyticsGetResponse =
   paths['/api/admin/analytics']['get']['responses']['200']['content']['application/json'];
 type ReleaseGateSummaryGetResponse =
@@ -177,6 +179,7 @@ export type AdminArtifactHealthData = ArtifactHealthResponse['data']['data'];
 export type AdminDashboardOverviewResponseData = DashboardOverviewResponse['data'];
 export type AdminSubscriptionUsersListData = SubscriptionUsersGetResponse['data'];
 export type AdminSubscriptionAnalyticsData = SubscriptionAnalyticsGetResponse['data'];
+export type AdminRevenueData = AdminRevenueGetResponse['data'];
 export type AdminAnalyticsData = AdminAnalyticsGetResponse['data'];
 export type AdminReleaseGateSummaryData = ReleaseGateSummaryGetResponse['data'];
 export type AdminSubscriptionUsersMutationData = SubscriptionUsersPostResponse['data'];

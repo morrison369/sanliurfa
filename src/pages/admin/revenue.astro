@@ -13,8 +13,6 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
   return Astro.redirect('/?error=unauthorized');
 }
 
-// In a real implementation, we'd fetch data from /api/admin/revenue
-// For now, this is a template showing the structure
 ---
 
 <Layout title="Gelir Yönetimi - Admin Panel">
@@ -137,41 +135,9 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
     </div>
   </div>
 
-  <script>
-    // Fetch revenue data
-    async function loadRevenueData() {
-      try {
-        const response = await fetch('/api/admin/revenue');
-        if (!response.ok) throw new Error('Failed to fetch revenue data');
+  <script type="module">
+    import { initAdminRevenuePage } from '../../scripts/admin-revenue-page.ts';
 
-        const result = await response.json();
-        const { summary, byTier } = result.data;
-
-        // Update summary cards
-        document.getElementById('totalMRR')!.textContent = `$${summary.totalMRR.toFixed(2)}`;
-        document.getElementById('activeSubscriptions')!.textContent = summary.totalActiveSubscriptions.toString();
-        document.getElementById('churnRate')!.textContent = `${summary.churnRatePercent}%`;
-        document.getElementById('totalRevenue')!.textContent = `$${summary.totalRevenueAllTime.toFixed(2)}`;
-
-        // Update tier breakdowns
-        if (byTier.premium) {
-          document.getElementById('premiumTierCount')!.textContent = byTier.premium.count.toString();
-          document.getElementById('premiumTierRevenue')!.textContent = `$${byTier.premium.monthlyRevenue.toFixed(2)}`;
-        }
-
-        if (byTier.pro) {
-          document.getElementById('proTierCount')!.textContent = byTier.pro.count.toString();
-          document.getElementById('proTierRevenue')!.textContent = `$${byTier.pro.monthlyRevenue.toFixed(2)}`;
-        }
-      } catch (error) {
-        console.error('Error loading revenue data:', error);
-      }
-    }
-
-    // Load on page load
-    loadRevenueData();
-
-    // Refresh every 5 minutes
-    setInterval(loadRevenueData, 5 * 60 * 1000);
+    initAdminRevenuePage();
   </script>
 </Layout>

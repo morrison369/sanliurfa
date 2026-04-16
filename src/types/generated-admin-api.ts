@@ -1889,6 +1889,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/revenue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Revenue dashboard summary for admins */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Revenue analytics snapshot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    byTier: {
+                                        [key: string]: {
+                                            count: number;
+                                            monthlyRevenue: number;
+                                        };
+                                    };
+                                    dailyRevenue: {
+                                        date: string;
+                                        revenue: number;
+                                    }[];
+                                    summary: {
+                                        churnRatePercent: number;
+                                        totalActiveSubscriptions: number;
+                                        totalMRR: number;
+                                        totalRevenueAllTime: number;
+                                    };
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Authentication required */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/security/guidelines": {
         parameters: {
             query?: never;
