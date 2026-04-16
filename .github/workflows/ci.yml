@@ -172,7 +172,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: admin-access-coverage
-          path: docs/reports/admin-access-coverage.json
+          path: |
+            docs/reports/admin-access-coverage.json
+            docs/reports/admin-access-coverage.md
           if-no-files-found: ignore
           retention-days: 14
 
