@@ -1,31 +1,16 @@
 import {
-  buildAdminAccessCoverageReportUrl,
-  fetchAdminAccessCoverageReport,
-  fetchAdminPerformanceOptimization,
-} from '../lib/admin-browser-client';
-import {
   buildRuntimeDelta,
   buildRuntimeTrend,
   type RuntimeMonitorHistoryEntry as RuntimeHistoryEntry,
   type RuntimeStatus,
 } from '../lib/admin-ops-pages';
-
-interface RuntimeEndpoint {
-  key: string;
-  url: string;
-  outputId: string;
-  badgeId: string;
-  summaryId?: string;
-  load: () => Promise<unknown>;
-  pickStatus: (payload: any) => RuntimeStatus;
-  summarize?: (payload: any) => string;
-}
-
-const badgeStyles: Record<RuntimeStatus, string> = {
-  healthy: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  degraded: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  blocked: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-};
+import {
+  applyRuntimeMonitorCoverageLinks,
+  buildRuntimeMonitorEndpoints,
+  buildRuntimeMonitorSummaryTone,
+  runtimeMonitorBadgeStyles,
+  type RuntimeMonitorEndpoint,
+} from '../lib/runtime-monitor';
 
 const STORAGE_KEY = 'runtime-monitor-history-v1';
 const history: RuntimeHistoryEntry[] = [];
@@ -35,54 +20,7 @@ async function fetchJson(url: string): Promise<any> {
   return response.json();
 }
 
-const endpoints: RuntimeEndpoint[] = [
-  {
-    key: 'health',
-    url: '/api/health',
-    outputId: 'health-output',
-    badgeId: 'health-badge',
-    load: () => fetchJson('/api/health'),
-    pickStatus: (payload) => payload?.data?.status ?? 'blocked',
-  },
-  {
-    key: 'health-detailed',
-    url: '/api/health/detailed',
-    outputId: 'health-detailed-output',
-    badgeId: 'health-detailed-badge',
-    load: () => fetchJson('/api/health/detailed'),
-    pickStatus: (payload) => payload?.data?.status ?? 'blocked',
-  },
-  {
-    key: 'performance',
-    url: '/api/performance',
-    outputId: 'performance-output',
-    badgeId: 'performance-badge',
-    load: () => fetchJson('/api/performance'),
-    pickStatus: (payload) => payload?.data?.serviceLevelObjectives?.webhookIngestion?.status ?? 'blocked',
-  },
-  {
-    key: 'optimization',
-    url: '/api/admin/performance/optimization',
-    outputId: 'optimization-output',
-    badgeId: 'optimization-badge',
-    load: () => fetchAdminPerformanceOptimization(),
-    pickStatus: (payload) => payload?.artifactHealthSummary?.overall ?? 'blocked',
-  },
-  {
-    key: 'admin-access-coverage',
-    url: '/api/admin/system/admin-access-coverage',
-    outputId: 'admin-access-coverage-output',
-    badgeId: 'admin-access-coverage-badge',
-    summaryId: 'admin-access-coverage-summary',
-    load: () => fetchAdminAccessCoverageReport(),
-    pickStatus: (payload) => payload?.data?.artifact?.status ?? 'blocked',
-    summarize: (payload) => {
-      const report = payload?.data?.report;
-      const firstDrift = report?.driftedFiles?.[0] ?? 'yok';
-      return `Coverage %${report?.coveragePercent ?? 'yok'} • Drift ${report?.driftCount ?? 'yok'} • İlk dosya: ${firstDrift}`;
-    },
-  },
-];
+const endpoints: RuntimeMonitorEndpoint[] = buildRuntimeMonitorEndpoints(fetchJson);
 
 function loadHistory() {
   try {
@@ -109,7 +47,7 @@ function setBadge(badgeId: string, status: RuntimeStatus) {
   const badge = document.getElementById(badgeId);
   if (!badge) return;
   badge.className = 'rounded-full px-3 py-1 text-xs font-semibold';
-  badge.classList.add(...badgeStyles[status].split(' '));
+  badge.classList.add(...runtimeMonitorBadgeStyles[status].split(' '));
   badge.textContent = status;
 }
 
@@ -122,19 +60,7 @@ function setLink(id: string, href: string) {
 function setSummaryTone(id: string, status: RuntimeStatus) {
   const element = document.getElementById(id);
   if (!element) return;
-  element.className = 'mt-4 text-xs';
-
-  if (status === 'blocked') {
-    element.classList.add('text-red-600', 'dark:text-red-300', 'font-semibold');
-    return;
-  }
-
-  if (status === 'degraded') {
-    element.classList.add('text-amber-600', 'dark:text-amber-300', 'font-semibold');
-    return;
-  }
-
-  element.classList.add('text-gray-500', 'dark:text-gray-400');
+  element.className = buildRuntimeMonitorSummaryTone(status);
 }
 
 async function loadEndpoint(endpoint: RuntimeEndpoint) {
@@ -151,8 +77,9 @@ async function loadEndpoint(endpoint: RuntimeEndpoint) {
     }
     if (endpoint.key === 'admin-access-coverage') {
       setSummaryTone('admin-access-coverage-summary', status);
-      setLink('runtime-admin-access-coverage-download-json', buildAdminAccessCoverageReportUrl('json'));
-      setLink('runtime-admin-access-coverage-download-md', buildAdminAccessCoverageReportUrl('markdown'));
+      const links = applyRuntimeMonitorCoverageLinks();
+      setLink('runtime-admin-access-coverage-download-json', links.json);
+      setLink('runtime-admin-access-coverage-download-md', links.markdown);
     }
     setBadge(endpoint.badgeId, status);
     return { key: endpoint.key, status };
