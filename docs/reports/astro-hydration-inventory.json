@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:01:07.398Z",
+  "generatedAt": "2026-04-16T22:03:35.838Z",
   "astroFiles": 156,
-  "tsxFiles": 100,
-  "totalHydrationPoints": 41,
+  "tsxFiles": 99,
+  "totalHydrationPoints": 40,
   "lowRiskCount": 0,
-  "mediumRiskCount": 25,
+  "mediumRiskCount": 24,
   "highRiskCount": 16,
   "entries": [
     {
@@ -251,13 +251,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "LoyaltyDashboard form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/notifications.astro",
-      "componentName": "NotificationCenter",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "NotificationCenter form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/profile.astro",
