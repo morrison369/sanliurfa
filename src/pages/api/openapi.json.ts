@@ -6,6 +6,7 @@ import {
   adminMessageStatusMutationDataSchema,
   adminOpsAuditEntrySchema,
   adminOpsAuditSummarySchema,
+  adminAnalyticsDataSchema,
   adminStatusSummarySchema,
   adminSubscriptionAnalyticsDataSchema,
   adminUserDetailsResponseDataSchema,
@@ -13,15 +14,23 @@ import {
   adminUsersListDataSchema,
   adminVerificationListDataSchema,
   adminVerificationMutationDataSchema,
+  moderationActionMutationDataSchema,
+  moderationActionsListDataSchema,
+  moderationFlagMutationDataSchema,
+  moderationFlagsListDataSchema,
   artifactHealthChecksSchema,
   healthStatusSchema,
   integrationSettingsResponseSchema,
   integrationSummarySchema,
   integrationVerificationSchema,
+  moderationReportsListDataSchema,
+  moderationReportMutationDataSchema,
+  moderationStatsDataSchema,
   moderationQueueListDataSchema,
   moderationQueueMutationDataSchema,
   nightlySummarySchema,
   performanceOptimizationSummarySchema,
+  releaseGateSummaryResponseDataSchema,
   releaseGateSummarySchema,
   subscriptionUsersListDataSchema,
   subscriptionUsersMutationDataSchema,
@@ -1039,6 +1048,302 @@ const openApiSpec = {
           },
           '403': { description: 'Admin access required' },
           '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/moderation/stats': {
+      get: {
+        tags: ['Health'],
+        summary: 'Get moderation statistics and queue preview',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Moderation statistics snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: moderationStatsDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/moderation/flags': {
+      get: {
+        tags: ['Health'],
+        summary: 'List moderation content flags',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'status', in: 'query', schema: { type: 'string' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+          { name: 'offset', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Content flags list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: moderationFlagsListDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+      post: {
+        tags: ['Health'],
+        summary: 'Review moderation content flag',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  flagId: { type: 'string' },
+                  decision: { type: 'string', enum: ['approved', 'rejected', 'escalated'] },
+                  notes: { type: 'string' },
+                },
+                required: ['flagId', 'decision'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Content flag reviewed',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: moderationFlagMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/moderation/actions': {
+      get: {
+        tags: ['Health'],
+        summary: 'Get moderation action history for a user',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'user_id', in: 'query', required: true, schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Moderation action history',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: moderationActionsListDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '400': { description: 'Validation error' },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+      post: {
+        tags: ['Health'],
+        summary: 'Create moderation action',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  report_id: { type: 'string' },
+                  target_user_id: { type: 'string' },
+                  action_type: {
+                    type: 'string',
+                    enum: ['warning', 'content_removed', 'suspend', 'ban', 'appeal_granted'],
+                  },
+                  reason: { type: 'string' },
+                  duration_days: { type: 'integer' },
+                },
+                required: ['report_id', 'target_user_id', 'action_type', 'reason'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Moderation action created',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: moderationActionMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/moderation/reports': {
+      get: {
+        tags: ['Health'],
+        summary: 'List moderation reports',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'status', in: 'query', schema: { type: 'string' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+          { name: 'offset', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Moderation reports list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: moderationReportsListDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+      put: {
+        tags: ['Health'],
+        summary: 'Update moderation report status',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'query', required: true, schema: { type: 'string' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  status: { type: 'string', enum: ['pending', 'under_review', 'resolved', 'dismissed'] },
+                  resolution_note: { type: 'string' },
+                },
+                required: ['status'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Moderation report updated',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: moderationReportMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '400': { description: 'Validation error' },
+          '403': { description: 'Admin access required' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/analytics': {
+      get: {
+        tags: ['Health'],
+        summary: 'Get platform analytics overview for admins',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'days', in: 'query', schema: { type: 'integer' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Analytics dashboard snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: adminAnalyticsDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/system/release-gate-summary': {
+      get: {
+        tags: ['Health'],
+        summary: 'Get release gate summary for admins',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Release gate summary snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: releaseGateSummaryResponseDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
           '429': { description: 'Rate limited' },
         },
       },

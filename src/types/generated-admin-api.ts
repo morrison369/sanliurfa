@@ -1,5 +1,91 @@
 // This file is generated. Do not edit manually.
 export interface paths {
+    "/api/admin/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get platform analytics overview for admins */
+        get: {
+            parameters: {
+                query?: {
+                    days?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Analytics dashboard snapshot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    period: number;
+                                    platformStats: {
+                                        avgSessionDuration: number;
+                                        period: number;
+                                        totalConversions: number;
+                                        totalSessions: number;
+                                        totalTimeSpent: number;
+                                        uniquePages: number;
+                                        uniqueSearches: number;
+                                        uniqueUsers: number;
+                                    };
+                                    searchTrends: {
+                                        avgResults: number;
+                                        count: number;
+                                        query: string;
+                                    }[];
+                                    trendingPlaces: {
+                                        avgRating: number;
+                                        category: string | null;
+                                        id: string;
+                                        name: string | null;
+                                        reviewCount: number;
+                                        totalClicks: number;
+                                        totalLikes: number;
+                                        totalShares: number;
+                                        totalViews: number;
+                                    }[];
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/audit-logs": {
         parameters: {
             query?: never;
@@ -536,6 +622,288 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/moderation/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get moderation action history for a user */
+        get: {
+            parameters: {
+                query: {
+                    user_id: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Moderation action history */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                count: number;
+                                data: {
+                                    appeal_reason: string | null;
+                                    appeal_status: string | null;
+                                    banned_by: string;
+                                    /** Format: date-time */
+                                    created_at: string;
+                                    duration_days: number | null;
+                                    /** Format: date-time */
+                                    expires_at: string | null;
+                                    id: string;
+                                    is_active: boolean;
+                                    reason: string;
+                                    user_id: string;
+                                }[];
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Validation error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Create moderation action */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        action_type: "warning" | "content_removed" | "suspend" | "ban" | "appeal_granted";
+                        duration_days?: number;
+                        reason: string;
+                        report_id: string;
+                        target_user_id: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Moderation action created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    action_type: string;
+                                    /** Format: date-time */
+                                    created_at: string;
+                                    created_by: string;
+                                    duration_days: number | null;
+                                    /** Format: date-time */
+                                    expires_at: string | null;
+                                    id: string;
+                                    reason: string;
+                                    report_id: string | null;
+                                    target_user_id: string;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation error */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/moderation/flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List moderation content flags */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                    offset?: number;
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Content flags list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    count: number;
+                                    flags: {
+                                        content_id: string | null;
+                                        content_type: string | null;
+                                        /** Format: date-time */
+                                        created_at: string | null;
+                                        flag_description: string | null;
+                                        flag_reason: string | null;
+                                        flag_severity: string | null;
+                                        flagged_by_user_id: string | null;
+                                        id: string;
+                                        reporter_email: string | null;
+                                        review_notes: string | null;
+                                        reviewed_by_admin_id: string | null;
+                                        reviewer_email: string | null;
+                                        status: string | null;
+                                    }[];
+                                    limit: number;
+                                    offset: number;
+                                    status: string;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Review moderation content flag */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        decision: "approved" | "rejected" | "escalated";
+                        flagId: string;
+                        notes?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Content flag reviewed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                message: string;
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation error */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/moderation/queue": {
         parameters: {
             query?: never;
@@ -665,6 +1033,232 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/moderation/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List moderation reports */
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                    offset?: number;
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Moderation reports list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                count: number;
+                                data: {
+                                    content_id: string;
+                                    content_type: string;
+                                    /** Format: date-time */
+                                    created_at: string;
+                                    description: string | null;
+                                    id: string;
+                                    reason: string;
+                                    reported_user_id: string | null;
+                                    reporter_id: string;
+                                    resolution_note: string | null;
+                                    /** Format: date-time */
+                                    resolved_at: string | null;
+                                    resolved_by: string | null;
+                                    status: string;
+                                    /** Format: date-time */
+                                    updated_at: string;
+                                }[];
+                                limit: number;
+                                offset: number;
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Update moderation report status */
+        put: {
+            parameters: {
+                query: {
+                    id: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        resolution_note?: string;
+                        /** @enum {string} */
+                        status: "pending" | "under_review" | "resolved" | "dismissed";
+                    };
+                };
+            };
+            responses: {
+                /** @description Moderation report updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    content_id: string;
+                                    content_type: string;
+                                    /** Format: date-time */
+                                    created_at: string;
+                                    description: string | null;
+                                    id: string;
+                                    reason: string;
+                                    reported_user_id: string | null;
+                                    reporter_id: string;
+                                    resolution_note: string | null;
+                                    /** Format: date-time */
+                                    resolved_at: string | null;
+                                    resolved_by: string | null;
+                                    status: string;
+                                    /** Format: date-time */
+                                    updated_at: string;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Validation error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation error */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/moderation/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get moderation statistics and queue preview */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Moderation statistics snapshot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    queue_preview: {
+                                        [key: string]: unknown;
+                                    }[];
+                                    stats: {
+                                        active_bans: number;
+                                        in_review_reports: number;
+                                        pending_reports: number;
+                                        queue_items: number;
+                                        resolved_reports: number;
+                                        total_warnings: number;
+                                    };
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1478,6 +2072,86 @@ export interface paths {
                 };
                 /** @description Admin access required */
                 403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/system/release-gate-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get release gate summary for admins */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Release gate summary snapshot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    advisoryFailedSteps: string[];
+                                    available: boolean;
+                                    blockingFailedSteps: string[];
+                                    failedStepCount: number;
+                                    finalStatus: string;
+                                    /** Format: date-time */
+                                    generatedAt: string | null;
+                                    performanceOptimization: {
+                                        metrics: {
+                                            cacheHitRate: number;
+                                            slowRequestRate: number;
+                                        };
+                                        recommendations: {
+                                            highPriority: number;
+                                            mediumPriority: number;
+                                            total: number;
+                                        };
+                                    } | null;
+                                    steps: {
+                                        advisory: boolean;
+                                        command: string;
+                                        status: string;
+                                        step: string;
+                                    }[];
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };

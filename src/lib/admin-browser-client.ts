@@ -1,7 +1,16 @@
 import type {
   AdminAuditLogsData,
+  AdminAnalyticsData,
+  AdminModerationActionsData,
+  AdminModerationActionMutationData,
+  AdminModerationFlagsData,
+  AdminModerationFlagMutationData,
   AdminModerationQueueListData,
   AdminModerationQueueMutationData,
+  AdminModerationReportsData,
+  AdminModerationReportMutationData,
+  AdminModerationStatsData,
+  AdminReleaseGateSummaryData,
   AdminSubscriptionAnalyticsData,
   AdminUserDetailsData,
   AdminUserMutationData,
@@ -17,6 +26,37 @@ async function fetchJson<T>(url: string): Promise<T> {
   const response = await fetch(url, { credentials: 'same-origin' });
   if (!response.ok) {
     throw new Error(`request-failed:${response.status}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+async function parseError(response: Response): Promise<string> {
+  try {
+    const payload = await response.json();
+    if (typeof payload?.error?.message === 'string') {
+      return payload.error.message;
+    }
+    if (typeof payload?.error === 'string') {
+      return payload.error;
+    }
+  } catch {
+    // no-op
+  }
+
+  return `request-failed:${response.status}`;
+}
+
+async function postJson<T>(url: string, body: Record<string, unknown>, method = 'POST'): Promise<T> {
+  const response = await fetch(url, {
+    method,
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response));
   }
 
   return response.json() as Promise<T>;
@@ -61,40 +101,36 @@ export async function fetchAdminDashboardOverview(days: number): Promise<AdminDa
   return fetchJson<AdminDashboardOverviewResponseData>(`/api/admin/dashboard/overview?days=${days}`);
 }
 
+export async function fetchAdminAnalytics(days = 30, limit = 10): Promise<AdminAnalyticsData> {
+  const payload = await fetchJson<{ data: AdminAnalyticsData }>(`/api/admin/analytics?days=${days}&limit=${limit}`);
+  return payload.data;
+}
+
+export async function fetchAdminReleaseGateSummary(): Promise<AdminReleaseGateSummaryData> {
+  const payload = await fetchJson<{ data: AdminReleaseGateSummaryData }>(
+    '/api/admin/system/release-gate-summary'
+  );
+  return payload.data;
+}
+
 export async function fetchAdminVerifications(limit = 50): Promise<AdminVerificationsListData> {
   const payload = await fetchJson<{ data: AdminVerificationsListData }>(`/api/admin/verifications?limit=${limit}`);
   return payload.data;
 }
 
 export async function approveAdminVerification(id: string, reason?: string): Promise<AdminVerificationApproveData> {
-  const response = await fetch(`/api/admin/verifications/${id}/approve`, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ reason: reason || '' }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`request-failed:${response.status}`);
-  }
-
-  const payload = (await response.json()) as { data: AdminVerificationApproveData };
+  const payload = await postJson<{ data: AdminVerificationApproveData }>(
+    `/api/admin/verifications/${id}/approve`,
+    { reason: reason || '' }
+  );
   return payload.data;
 }
 
 export async function rejectAdminVerification(id: string, reason: string): Promise<AdminVerificationRejectData> {
-  const response = await fetch(`/api/admin/verifications/${id}/reject`, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ reason }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`request-failed:${response.status}`);
-  }
-
-  const payload = (await response.json()) as { data: AdminVerificationRejectData };
+  const payload = await postJson<{ data: AdminVerificationRejectData }>(
+    `/api/admin/verifications/${id}/reject`,
+    { reason }
+  );
   return payload.data;
 }
 
@@ -130,18 +166,7 @@ export async function fetchAdminUserDetails(id: string): Promise<AdminUserDetail
 }
 
 export async function mutateAdminUser(id: string, body: Record<string, unknown>): Promise<AdminUserMutationData> {
-  const response = await fetch(`/api/admin/users/${id}`, {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    throw new Error(`request-failed:${response.status}`);
-  }
-
-  const payload = (await response.json()) as { data: AdminUserMutationData };
+  const payload = await postJson<{ data: AdminUserMutationData }>(`/api/admin/users/${id}`, body);
   return payload.data;
 }
 
@@ -171,17 +196,101 @@ export async function fetchAdminModerationQueue(
 export async function mutateAdminModerationQueue(
   body: Record<string, unknown>
 ): Promise<AdminModerationQueueMutationData> {
-  const response = await fetch('/api/admin/moderation/queue', {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const payload = await postJson<{ data: AdminModerationQueueMutationData }>(
+    '/api/admin/moderation/queue',
+    body
+  );
+  return payload.data;
+}
 
-  if (!response.ok) {
-    throw new Error(`request-failed:${response.status}`);
+export async function fetchAdminModerationStats(): Promise<AdminModerationStatsData> {
+  const payload = await fetchJson<{ data: AdminModerationStatsData }>('/api/admin/moderation/stats');
+  return payload.data;
+}
+
+export interface AdminModerationReportsQuery {
+  status?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export function buildAdminModerationReportsUrl(query: AdminModerationReportsQuery = {}): string {
+  const params = new URLSearchParams();
+  if (query.status) {
+    params.set('status', query.status);
   }
+  params.set('limit', String(query.limit ?? 50));
+  params.set('offset', String(query.offset ?? 0));
+  return `/api/admin/moderation/reports?${params.toString()}`;
+}
 
-  const payload = (await response.json()) as { data: AdminModerationQueueMutationData };
+export async function fetchAdminModerationReports(
+  query: AdminModerationReportsQuery = {}
+): Promise<AdminModerationReportsData> {
+  const payload = await fetchJson<{ data: AdminModerationReportsData }>(
+    buildAdminModerationReportsUrl(query)
+  );
+  return payload.data;
+}
+
+export async function updateAdminModerationReport(
+  id: string,
+  body: { status: string; resolution_note?: string }
+): Promise<AdminModerationReportMutationData> {
+  const payload = await postJson<{ data: AdminModerationReportMutationData }>(
+    `/api/admin/moderation/reports?id=${encodeURIComponent(id)}`,
+    body,
+    'PUT'
+  );
+  return payload.data;
+}
+
+export async function fetchAdminModerationActions(userId: string): Promise<AdminModerationActionsData> {
+  const payload = await fetchJson<{ data: AdminModerationActionsData }>(
+    `/api/admin/moderation/actions?user_id=${encodeURIComponent(userId)}`
+  );
+  return payload.data;
+}
+
+export async function createAdminModerationAction(
+  body: Record<string, unknown>
+): Promise<AdminModerationActionMutationData> {
+  const payload = await postJson<{ data: AdminModerationActionMutationData }>(
+    '/api/admin/moderation/actions',
+    body
+  );
+  return payload.data;
+}
+
+export interface AdminModerationFlagsQuery {
+  status?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export function buildAdminModerationFlagsUrl(query: AdminModerationFlagsQuery = {}): string {
+  const params = new URLSearchParams();
+  params.set('status', query.status ?? 'pending');
+  params.set('limit', String(query.limit ?? 20));
+  params.set('offset', String(query.offset ?? 0));
+  return `/api/admin/moderation/flags?${params.toString()}`;
+}
+
+export async function fetchAdminModerationFlags(
+  query: AdminModerationFlagsQuery = {}
+): Promise<AdminModerationFlagsData> {
+  const payload = await fetchJson<{ data: AdminModerationFlagsData }>(
+    buildAdminModerationFlagsUrl(query)
+  );
+  return payload.data;
+}
+
+export async function reviewAdminModerationFlag(
+  body: Record<string, unknown>
+): Promise<AdminModerationFlagMutationData> {
+  const payload = await postJson<{ data: AdminModerationFlagMutationData }>(
+    '/api/admin/moderation/flags',
+    body
+  );
   return payload.data;
 }

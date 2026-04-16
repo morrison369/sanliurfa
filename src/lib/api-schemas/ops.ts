@@ -304,6 +304,243 @@ export const adminSubscriptionAnalyticsDataSchema = {
   required: ['success', 'subscriptions', 'webhooks', 'timestamp'],
 };
 
+export const adminAnalyticsDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'object',
+      properties: {
+        platformStats: {
+          type: 'object',
+          properties: {
+            totalSessions: { type: 'integer' },
+            uniqueUsers: { type: 'integer' },
+            totalTimeSpent: { type: 'integer' },
+            uniquePages: { type: 'integer' },
+            uniqueSearches: { type: 'integer' },
+            avgSessionDuration: { type: 'integer' },
+            totalConversions: { type: 'integer' },
+            period: { type: 'integer' },
+          },
+          required: ['totalSessions', 'uniqueUsers', 'totalTimeSpent', 'uniquePages', 'uniqueSearches', 'avgSessionDuration', 'totalConversions', 'period'],
+        },
+        trendingPlaces: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: ['string', 'null'] },
+              category: { type: ['string', 'null'] },
+              totalViews: { type: 'integer' },
+              totalClicks: { type: 'integer' },
+              totalLikes: { type: 'integer' },
+              totalShares: { type: 'integer' },
+              avgRating: { type: 'number' },
+              reviewCount: { type: 'integer' },
+            },
+            required: ['id', 'name', 'category', 'totalViews', 'totalClicks', 'totalLikes', 'totalShares', 'avgRating', 'reviewCount'],
+          },
+        },
+        searchTrends: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              query: { type: 'string' },
+              count: { type: 'integer' },
+              avgResults: { type: 'integer' },
+            },
+            required: ['query', 'count', 'avgResults'],
+          },
+        },
+        period: { type: 'integer' },
+      },
+      required: ['platformStats', 'trendingPlaces', 'searchTrends', 'period'],
+    },
+  },
+  required: ['success', 'data'],
+};
+
+export const moderationStatsDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'object',
+      properties: {
+        stats: {
+          type: 'object',
+          properties: {
+            pending_reports: { type: 'integer' },
+            in_review_reports: { type: 'integer' },
+            resolved_reports: { type: 'integer' },
+            active_bans: { type: 'integer' },
+            total_warnings: { type: 'integer' },
+            queue_items: { type: 'integer' },
+          },
+          required: ['pending_reports', 'in_review_reports', 'resolved_reports', 'active_bans', 'total_warnings', 'queue_items'],
+        },
+        queue_preview: {
+          type: 'array',
+          items: { type: 'object', additionalProperties: true },
+        },
+      },
+      required: ['stats', 'queue_preview'],
+    },
+  },
+  required: ['success', 'data'],
+};
+
+export const moderationFlagSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    content_type: { type: ['string', 'null'] },
+    content_id: { type: ['string', 'null'] },
+    flagged_by_user_id: { type: ['string', 'null'] },
+    flag_reason: { type: ['string', 'null'] },
+    flag_description: { type: ['string', 'null'] },
+    flag_severity: { type: ['string', 'null'] },
+    status: { type: ['string', 'null'] },
+    reviewed_by_admin_id: { type: ['string', 'null'] },
+    review_notes: { type: ['string', 'null'] },
+    created_at: { type: ['string', 'null'], format: 'date-time' },
+    reporter_email: { type: ['string', 'null'] },
+    reviewer_email: { type: ['string', 'null'] },
+  },
+  required: ['id', 'content_type', 'content_id', 'flagged_by_user_id', 'flag_reason', 'flag_description', 'flag_severity', 'status', 'reviewed_by_admin_id', 'review_notes', 'created_at', 'reporter_email', 'reviewer_email'],
+};
+
+export const moderationFlagsListDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'object',
+      properties: {
+        flags: {
+          type: 'array',
+          items: moderationFlagSchema,
+        },
+        count: { type: 'integer' },
+        status: { type: 'string' },
+        limit: { type: 'integer' },
+        offset: { type: 'integer' },
+      },
+      required: ['flags', 'count', 'status', 'limit', 'offset'],
+    },
+  },
+  required: ['success', 'data'],
+};
+
+export const moderationFlagMutationDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+  },
+  required: ['success', 'message'],
+};
+
+export const moderationActionDataSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    report_id: { type: ['string', 'null'] },
+    target_user_id: { type: 'string' },
+    action_type: { type: 'string' },
+    reason: { type: 'string' },
+    duration_days: { type: ['integer', 'null'] },
+    created_by: { type: 'string' },
+    expires_at: { type: ['string', 'null'], format: 'date-time' },
+    created_at: { type: 'string', format: 'date-time' },
+  },
+  required: ['id', 'report_id', 'target_user_id', 'action_type', 'reason', 'duration_days', 'created_by', 'expires_at', 'created_at'],
+};
+
+export const moderationActionsListDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          user_id: { type: 'string' },
+          banned_by: { type: 'string' },
+          reason: { type: 'string' },
+          duration_days: { type: ['integer', 'null'] },
+          appeal_reason: { type: ['string', 'null'] },
+          appeal_status: { type: ['string', 'null'] },
+          expires_at: { type: ['string', 'null'], format: 'date-time' },
+          created_at: { type: 'string', format: 'date-time' },
+          is_active: { type: 'boolean' },
+        },
+        required: ['id', 'user_id', 'banned_by', 'reason', 'duration_days', 'appeal_reason', 'appeal_status', 'expires_at', 'created_at', 'is_active'],
+      },
+    },
+    count: { type: 'integer' },
+  },
+  required: ['success', 'data', 'count'],
+};
+
+export const moderationActionMutationDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: moderationActionDataSchema,
+  },
+  required: ['success', 'data'],
+};
+
+export const moderationReportSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    reporter_id: { type: 'string' },
+    reported_user_id: { type: ['string', 'null'] },
+    content_type: { type: 'string' },
+    content_id: { type: 'string' },
+    reason: { type: 'string' },
+    description: { type: ['string', 'null'] },
+    status: { type: 'string' },
+    resolved_by: { type: ['string', 'null'] },
+    resolution_note: { type: ['string', 'null'] },
+    created_at: { type: 'string', format: 'date-time' },
+    updated_at: { type: 'string', format: 'date-time' },
+    resolved_at: { type: ['string', 'null'], format: 'date-time' },
+  },
+  required: ['id', 'reporter_id', 'reported_user_id', 'content_type', 'content_id', 'reason', 'description', 'status', 'resolved_by', 'resolution_note', 'created_at', 'updated_at', 'resolved_at'],
+};
+
+export const moderationReportsListDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'array',
+      items: moderationReportSchema,
+    },
+    count: { type: 'integer' },
+    limit: { type: 'integer' },
+    offset: { type: 'integer' },
+  },
+  required: ['success', 'data', 'count', 'limit', 'offset'],
+};
+
+export const moderationReportMutationDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: moderationReportSchema,
+  },
+  required: ['success', 'data'],
+};
+
 export const adminUserListEntrySchema = {
   type: 'object',
   properties: {
@@ -584,4 +821,13 @@ export const releaseGateSummarySchema = {
     },
   },
   required: ['available', 'generatedAt', 'finalStatus', 'failedStepCount', 'blockingFailedSteps', 'advisoryFailedSteps', 'performanceOptimization', 'steps'],
+};
+
+export const releaseGateSummaryResponseDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: releaseGateSummarySchema,
+  },
+  required: ['success', 'data'],
 };

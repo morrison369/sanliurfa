@@ -9,6 +9,7 @@ import { getContentFlags, reviewContentFlag } from '../../../../lib/admin-modera
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { withAdminOpsReadAccess, withAdminOpsWriteAccess } from '../../../../lib/admin-ops-access';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -16,36 +17,43 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    const user = locals.user;
-
-    if (!user || user.role !== 'admin') {
-      recordRequest('GET', '/api/admin/moderation/flags', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
-
-    const url = new URL(request.url);
-    const status = url.searchParams.get('status') || 'pending';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
-
-    const flags = await getContentFlags(status, limit, offset);
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/admin/moderation/flags', HttpStatus.OK, duration);
-
-    return apiResponse(
+    return await withAdminOpsReadAccess(
       {
-        success: true,
-        data: {
-          flags,
-          count: flags.length,
-          status,
-          limit,
-          offset
-        }
+        request,
+        locals,
+        endpoint: '/api/admin/moderation/flags',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('GET', '/api/admin/moderation/flags', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('GET', '/api/admin/moderation/flags', response.status, duration);
+        },
       },
-      HttpStatus.OK,
-      requestId
+      async () => {
+        const url = new URL(request.url);
+        const status = url.searchParams.get('status') || 'pending';
+        const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 100);
+        const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+
+        const flags = await getContentFlags(status, limit, offset);
+
+        return apiResponse(
+          {
+            success: true,
+            data: {
+              flags,
+              count: flags.length,
+              status,
+              limit,
+              offset
+            }
+          },
+          HttpStatus.OK,
+          requestId
+        );
+      }
     );
   } catch (error) {
     const duration = Date.now() - startTime;
@@ -67,52 +75,57 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    const user = locals.user;
-
-    if (!user || user.role !== 'admin') {
-      recordRequest('POST', '/api/admin/moderation/flags', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
-
-    const body = await request.json();
-    const { flagId, decision, notes } = body;
-
-    if (!flagId || !decision) {
-      recordRequest('POST', '/api/admin/moderation/flags', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'flagId ve decision gereklidir',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        undefined,
-        requestId
-      );
-    }
-
-    if (!['approved', 'rejected', 'escalated'].includes(decision)) {
-      recordRequest('POST', '/api/admin/moderation/flags', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Geçersiz decision değeri',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        undefined,
-        requestId
-      );
-    }
-
-    await reviewContentFlag(flagId, user.id, decision as any, notes || '');
-
-    const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/admin/moderation/flags', HttpStatus.OK, duration);
-
-    logger.info('Content flag reviewed', { flagId, decision, adminId: user.id });
-
-    return apiResponse(
+    return await withAdminOpsWriteAccess(
       {
-        success: true,
-        message: `İçerik bayrağı incelendi: ${decision}`
+        request,
+        locals,
+        endpoint: '/api/admin/moderation/flags',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('POST', '/api/admin/moderation/flags', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('POST', '/api/admin/moderation/flags', response.status, duration);
+        },
       },
-      HttpStatus.OK,
-      requestId
+      async () => {
+        const body = await request.json();
+        const { flagId, decision, notes } = body;
+
+        if (!flagId || !decision) {
+          return apiError(
+            ErrorCode.VALIDATION_ERROR,
+            'flagId ve decision gereklidir',
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            undefined,
+            requestId
+          );
+        }
+
+        if (!['approved', 'rejected', 'escalated'].includes(decision)) {
+          return apiError(
+            ErrorCode.VALIDATION_ERROR,
+            'Geçersiz decision değeri',
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            undefined,
+            requestId
+          );
+        }
+
+        await reviewContentFlag(flagId, locals.user?.id || 'unknown', decision as any, notes || '');
+
+        logger.info('Content flag reviewed', { flagId, decision, adminId: locals.user?.id });
+
+        return apiResponse(
+          {
+            success: true,
+            message: `İçerik bayrağı incelendi: ${decision}`
+          },
+          HttpStatus.OK,
+          requestId
+        );
+      }
     );
   } catch (error) {
     const duration = Date.now() - startTime;

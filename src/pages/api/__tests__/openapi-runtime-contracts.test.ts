@@ -25,6 +25,12 @@ describe('openapi runtime contracts', () => {
     expect(body.paths['/api/admin/users']).toBeDefined();
     expect(body.paths['/api/admin/users/{id}']).toBeDefined();
     expect(body.paths['/api/admin/moderation/queue']).toBeDefined();
+    expect(body.paths['/api/admin/moderation/stats']).toBeDefined();
+    expect(body.paths['/api/admin/moderation/flags']).toBeDefined();
+    expect(body.paths['/api/admin/moderation/actions']).toBeDefined();
+    expect(body.paths['/api/admin/moderation/reports']).toBeDefined();
+    expect(body.paths['/api/admin/analytics']).toBeDefined();
+    expect(body.paths['/api/admin/system/release-gate-summary']).toBeDefined();
     expect(body.paths['/api/admin/subscriptions/users']).toBeDefined();
     expect(body.paths['/api/admin/messages/{id}/status']).toBeDefined();
 
@@ -81,6 +87,24 @@ describe('openapi runtime contracts', () => {
       body.paths['/api/admin/moderation/queue'].get.responses['200'].content['application/json'].schema.properties.data;
     const moderationQueuePostSchema =
       body.paths['/api/admin/moderation/queue'].post.responses['200'].content['application/json'].schema.properties.data;
+    const moderationStatsSchema =
+      body.paths['/api/admin/moderation/stats'].get.responses['200'].content['application/json'].schema.properties.data;
+    const moderationFlagsGetSchema =
+      body.paths['/api/admin/moderation/flags'].get.responses['200'].content['application/json'].schema.properties.data;
+    const moderationFlagsPostSchema =
+      body.paths['/api/admin/moderation/flags'].post.responses['200'].content['application/json'].schema.properties.data;
+    const moderationActionsGetSchema =
+      body.paths['/api/admin/moderation/actions'].get.responses['200'].content['application/json'].schema.properties.data;
+    const moderationActionsPostSchema =
+      body.paths['/api/admin/moderation/actions'].post.responses['201'].content['application/json'].schema.properties.data;
+    const moderationReportsGetSchema =
+      body.paths['/api/admin/moderation/reports'].get.responses['200'].content['application/json'].schema.properties.data;
+    const moderationReportsPutSchema =
+      body.paths['/api/admin/moderation/reports'].put.responses['200'].content['application/json'].schema.properties.data;
+    const adminAnalyticsSchema =
+      body.paths['/api/admin/analytics'].get.responses['200'].content['application/json'].schema.properties.data;
+    const adminReleaseGateSummarySchema =
+      body.paths['/api/admin/system/release-gate-summary'].get.responses['200'].content['application/json'].schema.properties.data;
     const adminSubscriptionsGetSchema =
       body.paths['/api/admin/subscriptions/users'].get.responses['200'].content['application/json'].schema.properties.data;
     const adminSubscriptionsPostSchema =
@@ -163,6 +187,46 @@ describe('openapi runtime contracts', () => {
     expect(moderationQueueGetSchema.required).toEqual(['success', 'data']);
     expect(moderationQueueGetSchema.properties.data.required).toEqual(['items', 'count', 'status', 'limit', 'offset']);
     expect(moderationQueuePostSchema.required).toEqual(['success', 'message']);
+    expect(moderationStatsSchema.required).toEqual(['success', 'data']);
+    expect(moderationStatsSchema.properties.data.required).toEqual(['stats', 'queue_preview']);
+    expect(moderationStatsSchema.properties.data.properties.stats.required).toEqual([
+      'pending_reports',
+      'in_review_reports',
+      'resolved_reports',
+      'active_bans',
+      'total_warnings',
+      'queue_items',
+    ]);
+    expect(moderationFlagsGetSchema.required).toEqual(['success', 'data']);
+    expect(moderationFlagsGetSchema.properties.data.required).toEqual(['flags', 'count', 'status', 'limit', 'offset']);
+    expect(moderationFlagsPostSchema.required).toEqual(['success', 'message']);
+    expect(moderationActionsGetSchema.required).toEqual(['success', 'data', 'count']);
+    expect(moderationActionsPostSchema.required).toEqual(['success', 'data']);
+    expect(moderationReportsGetSchema.required).toEqual(['success', 'data', 'count', 'limit', 'offset']);
+    expect(moderationReportsPutSchema.required).toEqual(['success', 'data']);
+    expect(adminAnalyticsSchema.required).toEqual(['success', 'data']);
+    expect(adminAnalyticsSchema.properties.data.required).toEqual(['platformStats', 'trendingPlaces', 'searchTrends', 'period']);
+    expect(adminAnalyticsSchema.properties.data.properties.platformStats.required).toEqual([
+      'totalSessions',
+      'uniqueUsers',
+      'totalTimeSpent',
+      'uniquePages',
+      'uniqueSearches',
+      'avgSessionDuration',
+      'totalConversions',
+      'period',
+    ]);
+    expect(adminReleaseGateSummarySchema.required).toEqual(['success', 'data']);
+    expect(adminReleaseGateSummarySchema.properties.data.required).toEqual([
+      'available',
+      'generatedAt',
+      'finalStatus',
+      'failedStepCount',
+      'blockingFailedSteps',
+      'advisoryFailedSteps',
+      'performanceOptimization',
+      'steps',
+    ]);
     expect(adminSubscriptionsGetSchema.properties.users.items.required).toEqual(['id', 'email', 'full_name', 'subscription_id', 'tier', 'status', 'created_at']);
     expect(adminSubscriptionsGetSchema.required).toEqual(['success', 'users', 'count']);
     expect(adminSubscriptionsPostSchema.anyOf).toHaveLength(2);

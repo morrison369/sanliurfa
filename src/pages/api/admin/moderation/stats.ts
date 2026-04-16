@@ -8,6 +8,7 @@ import { getModerationStats, getModerationQueue } from '../../../../lib/moderati
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { withAdminOpsReadAccess } from '../../../../lib/admin-ops-access';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -15,35 +16,36 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    const user = locals.user;
-
-    if (!user || !user.isAdmin) {
-      recordRequest('GET', '/api/admin/moderation/stats', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(
-        ErrorCode.FORBIDDEN,
-        'Bu işlem için yönetici yetkisi gerekiyor',
-        HttpStatus.FORBIDDEN,
-        undefined,
-        requestId
-      );
-    }
-
-    const stats = await getModerationStats();
-    const queue = await getModerationQueue('pending', 'urgent', 10);
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/admin/moderation/stats', HttpStatus.OK, duration);
-
-    return apiResponse(
+    return await withAdminOpsReadAccess(
       {
-        success: true,
-        data: {
-          stats,
-          queue_preview: queue.slice(0, 10)
-        }
+        request,
+        locals,
+        endpoint: '/api/admin/moderation/stats',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('GET', '/api/admin/moderation/stats', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('GET', '/api/admin/moderation/stats', response.status, duration);
+        },
       },
-      HttpStatus.OK,
-      requestId
+      async () => {
+        const stats = await getModerationStats();
+        const queue = await getModerationQueue('pending', 'urgent', 10);
+
+        return apiResponse(
+          {
+            success: true,
+            data: {
+              stats,
+              queue_preview: queue.slice(0, 10)
+            }
+          },
+          HttpStatus.OK,
+          requestId
+        );
+      }
     );
   } catch (error) {
     const duration = Date.now() - startTime;

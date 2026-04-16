@@ -4,20 +4,13 @@
  */
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, Clock, Loader } from 'lucide-react';
+import {
+  fetchAdminModerationQueue,
+  mutateAdminModerationQueue,
+} from '../lib/admin-browser-client';
+import type { AdminModerationQueueListData } from '../types/admin-api';
 
-interface QueueItem {
-  id: string;
-  queue_type: string;
-  item_type: string;
-  item_id: string;
-  priority: string;
-  reason: string;
-  submitted_count: number;
-  last_reported_at: string;
-  assigned_to_admin_id: string | null;
-  status: string;
-  created_at: string;
-}
+type QueueItem = AdminModerationQueueListData['data']['items'][number];
 
 export default function ModerationQueueManager() {
   const [items, setItems] = useState<QueueItem[]>([]);
@@ -29,11 +22,10 @@ export default function ModerationQueueManager() {
   const fetchQueue = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/admin/moderation/queue?status=${status}&limit=20`);
-      const json = await res.json();
+      const json = await fetchAdminModerationQueue({ status, limit: 20 });
 
       if (!json.success) {
-        setError(json.error || 'Moderasyon kuyruğu alınırken hata oluştu');
+        setError('Moderasyon kuyruğu alınırken hata oluştu');
         return;
       }
 
@@ -53,17 +45,11 @@ export default function ModerationQueueManager() {
   const handleAssign = async (queueItemId: string) => {
     try {
       setActionInProgress(queueItemId);
-      const res = await fetch('/api/admin/moderation/queue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ queueItemId, action: 'assign' })
-      });
-
-      const json = await res.json();
+      const json = await mutateAdminModerationQueue({ queueItemId, action: 'assign' });
       if (json.success) {
         await fetchQueue();
       } else {
-        setError(json.error || 'İşlem başarısız');
+        setError('İşlem başarısız');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu');
@@ -75,17 +61,15 @@ export default function ModerationQueueManager() {
   const handleResolve = async (queueItemId: string) => {
     try {
       setActionInProgress(queueItemId);
-      const res = await fetch('/api/admin/moderation/queue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ queueItemId, action: 'resolve', resolution: 'resolved' })
+      const json = await mutateAdminModerationQueue({
+        queueItemId,
+        action: 'resolve',
+        resolution: 'resolved'
       });
-
-      const json = await res.json();
       if (json.success) {
         await fetchQueue();
       } else {
-        setError(json.error || 'İşlem başarısız');
+        setError('İşlem başarısız');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu');

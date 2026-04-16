@@ -13,6 +13,10 @@ type SubscriptionUsersGetResponse =
   paths['/api/admin/subscriptions/users']['get']['responses']['200']['content']['application/json'];
 type SubscriptionAnalyticsGetResponse =
   paths['/api/admin/subscriptions/analytics']['get']['responses']['200']['content']['application/json'];
+type AdminAnalyticsGetResponse =
+  paths['/api/admin/analytics']['get']['responses']['200']['content']['application/json'];
+type ReleaseGateSummaryGetResponse =
+  paths['/api/admin/system/release-gate-summary']['get']['responses']['200']['content']['application/json'];
 type SubscriptionUsersPostResponse =
   paths['/api/admin/subscriptions/users']['post']['responses']['200']['content']['application/json'];
 type MessageStatusPostResponse =
@@ -37,6 +41,20 @@ type ModerationQueueGetResponse =
   paths['/api/admin/moderation/queue']['get']['responses']['200']['content']['application/json'];
 type ModerationQueuePostResponse =
   paths['/api/admin/moderation/queue']['post']['responses']['200']['content']['application/json'];
+type ModerationStatsGetResponse =
+  paths['/api/admin/moderation/stats']['get']['responses']['200']['content']['application/json'];
+type ModerationFlagsGetResponse =
+  paths['/api/admin/moderation/flags']['get']['responses']['200']['content']['application/json'];
+type ModerationFlagsPostResponse =
+  paths['/api/admin/moderation/flags']['post']['responses']['200']['content']['application/json'];
+type ModerationActionsGetResponse =
+  paths['/api/admin/moderation/actions']['get']['responses']['200']['content']['application/json'];
+type ModerationActionsPostResponse =
+  paths['/api/admin/moderation/actions']['post']['responses']['201']['content']['application/json'];
+type ModerationReportsGetResponse =
+  paths['/api/admin/moderation/reports']['get']['responses']['200']['content']['application/json'];
+type ModerationReportsPutResponse =
+  paths['/api/admin/moderation/reports']['put']['responses']['200']['content']['application/json'];
 
 export interface IntegrationVerificationState {
   status: string;
@@ -141,6 +159,8 @@ export type AdminArtifactHealthData = ArtifactHealthResponse['data']['data'];
 export type AdminDashboardOverviewResponseData = DashboardOverviewResponse['data'];
 export type AdminSubscriptionUsersListData = SubscriptionUsersGetResponse['data'];
 export type AdminSubscriptionAnalyticsData = SubscriptionAnalyticsGetResponse['data'];
+export type AdminAnalyticsData = AdminAnalyticsGetResponse['data'];
+export type AdminReleaseGateSummaryData = ReleaseGateSummaryGetResponse['data'];
 export type AdminSubscriptionUsersMutationData = SubscriptionUsersPostResponse['data'];
 export type AdminMessageStatusMutationData = MessageStatusPostResponse['data'];
 export type AdminAuditLogsData = AuditLogsResponse['data'];
@@ -153,6 +173,13 @@ export type AdminUserDetailsData = AdminUserGetResponse['data'];
 export type AdminUserMutationData = AdminUserPostResponse['data'];
 export type AdminModerationQueueListData = ModerationQueueGetResponse['data'];
 export type AdminModerationQueueMutationData = ModerationQueuePostResponse['data'];
+export type AdminModerationStatsData = ModerationStatsGetResponse['data'];
+export type AdminModerationFlagsData = ModerationFlagsGetResponse['data'];
+export type AdminModerationFlagMutationData = ModerationFlagsPostResponse['data'];
+export type AdminModerationActionsData = ModerationActionsGetResponse['data'];
+export type AdminModerationActionMutationData = ModerationActionsPostResponse['data'];
+export type AdminModerationReportsData = ModerationReportsGetResponse['data'];
+export type AdminModerationReportMutationData = ModerationReportsPutResponse['data'];
 
 export interface AdminDashboardOverviewLegacyShape {
   overview: {

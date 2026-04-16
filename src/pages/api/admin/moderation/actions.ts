@@ -10,6 +10,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { validateWithSchema } from '../../../../lib/validation';
+import { withAdminOpsReadAccess, withAdminOpsWriteAccess } from '../../../../lib/admin-ops-access';
 
 const actionSchema = {
   report_id: {
@@ -45,68 +46,67 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    const user = locals.user;
-
-    if (!user || !user.isAdmin) {
-      recordRequest('POST', '/api/admin/moderation/actions', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(
-        ErrorCode.FORBIDDEN,
-        'Bu işlem için yönetici yetkisi gerekiyor',
-        HttpStatus.FORBIDDEN,
-        undefined,
-        requestId
-      );
-    }
-
-    const body = await request.json();
-    const validation = validateWithSchema(body, actionSchema);
-
-    if (!validation.valid) {
-      recordRequest('POST', '/api/admin/moderation/actions', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Geçersiz giriş',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        validation.errors,
-        requestId
-      );
-    }
-
-    // Ban action requires duration
-    if (validation.data.action_type === 'ban' && !validation.data.duration_days) {
-      recordRequest('POST', '/api/admin/moderation/actions', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Ban işlemi için duration gereklidir',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        undefined,
-        requestId
-      );
-    }
-
-    const action = await takeModerationAction(
-      validation.data.report_id,
-      validation.data.target_user_id,
-      validation.data.action_type,
-      validation.data.reason,
-      user.id,
-      validation.data.duration_days
-    );
-
-    const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/admin/moderation/actions', HttpStatus.CREATED, duration);
-    logger.logMutation('create', 'moderation_actions', action.id, user.id, {
-      action_type: validation.data.action_type,
-      target_user: validation.data.target_user_id
-    });
-
-    return apiResponse(
+    return await withAdminOpsWriteAccess(
       {
-        success: true,
-        data: action
+        request,
+        locals,
+        endpoint: '/api/admin/moderation/actions',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('POST', '/api/admin/moderation/actions', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('POST', '/api/admin/moderation/actions', response.status, duration);
+        },
       },
-      HttpStatus.CREATED,
-      requestId
+      async () => {
+        const body = await request.json();
+        const validation = validateWithSchema(body, actionSchema);
+
+        if (!validation.valid) {
+          return apiError(
+            ErrorCode.VALIDATION_ERROR,
+            'Geçersiz giriş',
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            validation.errors,
+            requestId
+          );
+        }
+
+        if (validation.data.action_type === 'ban' && !validation.data.duration_days) {
+          return apiError(
+            ErrorCode.VALIDATION_ERROR,
+            'Ban işlemi için duration gereklidir',
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            undefined,
+            requestId
+          );
+        }
+
+        const action = await takeModerationAction(
+          validation.data.report_id,
+          validation.data.target_user_id,
+          validation.data.action_type,
+          validation.data.reason,
+          locals.user?.id || 'unknown',
+          validation.data.duration_days
+        );
+
+        logger.logMutation('create', 'moderation_actions', action.id, locals.user?.id, {
+          action_type: validation.data.action_type,
+          target_user: validation.data.target_user_id
+        });
+
+        return apiResponse(
+          {
+            success: true,
+            data: action
+          },
+          HttpStatus.CREATED,
+          requestId
+        );
+      }
     );
   } catch (error) {
     const duration = Date.now() - startTime;
@@ -128,45 +128,45 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    const user = locals.user;
-
-    if (!user || !user.isAdmin) {
-      recordRequest('GET', '/api/admin/moderation/actions', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(
-        ErrorCode.FORBIDDEN,
-        'Bu işlem için yönetici yetkisi gerekiyor',
-        HttpStatus.FORBIDDEN,
-        undefined,
-        requestId
-      );
-    }
-
-    const userId = url.searchParams.get('user_id');
-
-    if (!userId) {
-      recordRequest('GET', '/api/admin/moderation/actions', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Kullanıcı ID gereklidir',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
-
-    const banHistory = await getUserBanHistory(userId);
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/admin/moderation/actions', HttpStatus.OK, duration);
-
-    return apiResponse(
+    return await withAdminOpsReadAccess(
       {
-        success: true,
-        data: banHistory,
-        count: banHistory.length
+        request,
+        locals,
+        endpoint: '/api/admin/moderation/actions',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('GET', '/api/admin/moderation/actions', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('GET', '/api/admin/moderation/actions', response.status, duration);
+        },
       },
-      HttpStatus.OK,
-      requestId
+      async () => {
+        const userId = url.searchParams.get('user_id');
+
+        if (!userId) {
+          return apiError(
+            ErrorCode.VALIDATION_ERROR,
+            'Kullanıcı ID gereklidir',
+            HttpStatus.BAD_REQUEST,
+            undefined,
+            requestId
+          );
+        }
+
+        const banHistory = await getUserBanHistory(userId);
+
+        return apiResponse(
+          {
+            success: true,
+            data: banHistory,
+            count: banHistory.length
+          },
+          HttpStatus.OK,
+          requestId
+        );
+      }
     );
   } catch (error) {
     const duration = Date.now() - startTime;
