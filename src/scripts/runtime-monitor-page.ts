@@ -1,4 +1,5 @@
 import {
+  buildAdminAccessCoverageReportUrl,
   fetchAdminAccessCoverageReport,
   fetchAdminPerformanceOptimization,
 } from '../lib/admin-browser-client';
@@ -126,6 +127,12 @@ function setBadge(badgeId: string, status: RuntimeStatus) {
   badge.textContent = status;
 }
 
+function setLink(id: string, href: string) {
+  const link = document.getElementById(id) as HTMLAnchorElement | null;
+  if (!link) return;
+  link.href = href;
+}
+
 async function loadEndpoint(endpoint: RuntimeEndpoint) {
   const output = document.getElementById(endpoint.outputId);
   const summary = endpoint.summaryId ? document.getElementById(endpoint.summaryId) : null;
@@ -136,6 +143,10 @@ async function loadEndpoint(endpoint: RuntimeEndpoint) {
     output.textContent = formatPayload(payload);
     if (summary && endpoint.summarize) {
       summary.textContent = endpoint.summarize(payload);
+    }
+    if (endpoint.key === 'admin-access-coverage') {
+      setLink('runtime-admin-access-coverage-download-json', buildAdminAccessCoverageReportUrl('json'));
+      setLink('runtime-admin-access-coverage-download-md', buildAdminAccessCoverageReportUrl('markdown'));
     }
     const status = endpoint.pickStatus(payload);
     setBadge(endpoint.badgeId, status);
