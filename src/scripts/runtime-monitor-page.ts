@@ -17,8 +17,10 @@ interface RuntimeEndpoint {
   url: string;
   outputId: string;
   badgeId: string;
+  summaryId?: string;
   load: () => Promise<unknown>;
   pickStatus: (payload: any) => RuntimeStatus;
+  summarize?: (payload: any) => string;
 }
 
 const badgeStyles: Record<RuntimeStatus, string> = {
@@ -73,8 +75,14 @@ const endpoints: RuntimeEndpoint[] = [
     url: '/api/admin/system/admin-access-coverage',
     outputId: 'admin-access-coverage-output',
     badgeId: 'admin-access-coverage-badge',
+    summaryId: 'admin-access-coverage-summary',
     load: () => fetchAdminAccessCoverageReport(),
     pickStatus: (payload) => payload?.data?.artifact?.status ?? 'blocked',
+    summarize: (payload) => {
+      const report = payload?.data?.report;
+      const firstDrift = report?.driftedFiles?.[0] ?? 'yok';
+      return `Coverage %${report?.coveragePercent ?? 'yok'} • Drift ${report?.driftCount ?? 'yok'} • İlk dosya: ${firstDrift}`;
+    },
   },
 ];
 
@@ -120,16 +128,23 @@ function setBadge(badgeId: string, status: RuntimeStatus) {
 
 async function loadEndpoint(endpoint: RuntimeEndpoint) {
   const output = document.getElementById(endpoint.outputId);
+  const summary = endpoint.summaryId ? document.getElementById(endpoint.summaryId) : null;
   if (!output) return { key: endpoint.key, status: 'blocked' as RuntimeStatus };
 
   try {
     const payload = await endpoint.load();
     output.textContent = formatPayload(payload);
+    if (summary && endpoint.summarize) {
+      summary.textContent = endpoint.summarize(payload);
+    }
     const status = endpoint.pickStatus(payload);
     setBadge(endpoint.badgeId, status);
     return { key: endpoint.key, status };
   } catch (error) {
     output.textContent = formatPayload({ error: error instanceof Error ? error.message : String(error) });
+    if (summary) {
+      summary.textContent = error instanceof Error ? error.message : String(error);
+    }
     setBadge(endpoint.badgeId, 'blocked');
     return { key: endpoint.key, status: 'blocked' as RuntimeStatus };
   }
