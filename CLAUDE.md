@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Şanlıurfa.com** is a production-grade city guide web application built with Astro 6.1, React 19, and TypeScript. Full-stack with bcrypt authentication, Redis caching/sessions/rate-limiting, PostgreSQL, comprehensive observability, API documentation, and E2E testing. Enterprise-ready infrastructure with strict TypeScript, SQL injection prevention, and performance monitoring.
+**Şanlıurfa.com** is a production-grade city guide web application built with Astro 6.1.7, React 19, and TypeScript. Full-stack with bcrypt authentication, Redis caching/sessions/rate-limiting, PostgreSQL, comprehensive observability, API documentation, and E2E testing. Enterprise-ready infrastructure with strict TypeScript, SQL injection prevention, and performance monitoring.
 
 ## Source of Truth & Working Model
 
@@ -117,7 +117,7 @@ src/
 
 ### Technology Stack
 
-- **Framework**: Astro 6.1 (SSR, file-based routing)
+- **Framework**: Astro 6.1.7 (SSR, file-based routing)
 - **UI**: React 19 (client-side interactivity)
 - **Styling**: Tailwind CSS 3.4 + Tailwind Forms
 - **Database**: PostgreSQL (direct `pg` library connection)

@@ -15,6 +15,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
   - [SOURCE_OF_TRUTH_MAP.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\SOURCE_OF_TRUTH_MAP.md)
 - Astro-only mimari geçiş değerlendirmesi:
   - [ASTRO_ONLY_MIGRATION_ASSESSMENT.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\architecture\ASTRO_ONLY_MIGRATION_ASSESSMENT.md)
+  - [ASTRO_ONLY_MIGRATION_BACKLOG.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\architecture\ASTRO_ONLY_MIGRATION_BACKLOG.md)
 - Admin UI helper / view-model katmanı:
   - `src/lib/admin-format.ts`
   - `src/lib/admin-index-data.ts`
@@ -46,6 +47,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
    Admin wrapper coverage için `docs/reports/admin-access-coverage.md`
 4. Hangi dosya karar veriyor belirsizse `SOURCE_OF_TRUTH_MAP.md`
 5. Astro-only / framework migration kararı verilecekse `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md`
+   Uygulama sırası için `docs/architecture/ASTRO_ONLY_MIGRATION_BACKLOG.md`
 6. Admin anahtarları ve readiness için `INTEGRATION_READINESS.md`
 7. Legacy yüzey şüphesi varsa `LEGACY_PHASE_SURFACE.md`
 8. Admin UI davranışı veya ops sayfa metni değişecekse önce helper katmanına bak, sonra `.astro` / page script dosyasını değiştir
