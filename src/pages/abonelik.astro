@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { SubscriptionManager } from '../components/SubscriptionManager';
-import BillingHistory from '../components/BillingHistory';
+import BillingHistory from '../components/BillingHistory.astro';
 
 // Require authentication
 if (!Astro.locals.user) {
@@ -31,7 +31,7 @@ if (!Astro.locals.user) {
       <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
         Ödeme Geçmişi
       </h2>
-      <BillingHistory client:load />
+      <BillingHistory />
     </div>
 
     <!-- Help Section -->

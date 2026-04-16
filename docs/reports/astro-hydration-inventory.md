@@ -1,10 +1,10 @@
 # Astro Hydration Inventory
-- Generated at: 2026-04-16T21:44:23.854Z
-- Astro files: 153
-- TSX files: 103
-- Total hydration points: 44
+- Generated at: 2026-04-16T21:47:36.873Z
+- Astro files: 154
+- TSX files: 102
+- Total hydration points: 43
 - Low risk: 0
-- Medium risk: 28
+- Medium risk: 27
 - High risk: 16
 
 ## Entries
@@ -24,7 +24,6 @@
 - [high] src/pages/veri-ambarı/index.astro -> OLAPExplorer (client:load)
 - [high] src/pages/webhooks.astro -> WebhookAnalyticsDashboard (client:load)
 - [high] src/pages/webhooks.astro -> WebhookManager (client:load)
-- [medium] src/pages/abonelik.astro -> BillingHistory (client:load)
 - [medium] src/pages/abonelik.astro -> SubscriptionManager (client:load)
 - [medium] src/pages/admin/audit-logs.astro -> AuditLogViewer (client:load)
 - [medium] src/pages/admin/dashboard.astro -> UserManagementTable (client:load)

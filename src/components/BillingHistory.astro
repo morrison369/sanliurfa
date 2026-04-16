@@ -1,0 +1,17 @@
+---
+---
+
+<div data-billing-history>
+  <div data-billing-loading class="space-y-3">
+    <div class="h-16 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
+    <div class="h-16 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
+    <div class="h-16 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
+  </div>
+  <div data-billing-content class="hidden"></div>
+</div>
+
+<script>
+  import { initBillingHistory } from '../scripts/billing-history';
+
+  initBillingHistory();
+</script>
