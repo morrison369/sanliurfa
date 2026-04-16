@@ -16,6 +16,7 @@ import {
 } from '../lib/runtime-monitor';
 import { setLinkHref, setTextContent, setElementClassName } from '../lib/admin-dom';
 import { startAutoRefreshPage } from '../lib/admin-page-bootstrap';
+import { formatAdminDateTime } from '../lib/admin-format';
 
 const STORAGE_KEY = 'runtime-monitor-history-v1';
 const history: RuntimeHistoryEntry[] = [];
@@ -106,7 +107,7 @@ async function refreshRuntimeMonitor() {
       `Genel durum: ${overall}. Healthy: ${results.filter((item) => item.status === 'healthy').length}, degraded: ${degradedCount}, blocked: ${blockedCount}.`
     );
   }
-  if (lastRefresh) setTextContent('runtime-monitor-last-refresh', refreshedAt);
+  if (lastRefresh) setTextContent('runtime-monitor-last-refresh', formatAdminDateTime(refreshedAt, '-'));
   if (trendLine) {
     setTextContent('runtime-monitor-trend', buildRuntimeTrend(history));
   }
