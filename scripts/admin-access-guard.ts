@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 
 const ADMIN_API_ROOT = resolve(process.cwd(), 'src', 'pages', 'api', 'admin');
 const REPORT_PATH = resolve(process.cwd(), 'docs', 'reports', 'admin-access-coverage.json');
+const MARKDOWN_REPORT_PATH = resolve(process.cwd(), 'docs', 'reports', 'admin-access-coverage.md');
 const ROUTE_EXPORT_PATTERN = /export const (GET|POST|PUT|DELETE|PATCH): APIRoute/g;
 const ROUTE_EXPORT_DETECT_PATTERN = /export const (GET|POST|PUT|DELETE|PATCH): APIRoute/;
 const WRAPPER_PATTERN = /withAdminOps(Read|Write)Access\s*\(/g;
@@ -67,6 +68,23 @@ function main(): void {
 
   mkdirSync(resolve(process.cwd(), 'docs', 'reports'), { recursive: true });
   writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  writeFileSync(
+    MARKDOWN_REPORT_PATH,
+    [
+      '# Admin Access Coverage',
+      `- Generated at: ${report.generatedAt}`,
+      `- Route files: ${report.routeFiles}`,
+      `- Wrapper files: ${report.wrapperFiles}`,
+      `- Drift count: ${report.driftCount}`,
+      `- Coverage: %${report.coveragePercent}`,
+      `- First drift file: ${report.driftedFiles[0] || 'yok'}`,
+      '',
+      '## Drifted Files',
+      ...(report.driftedFiles.length > 0 ? report.driftedFiles.map((filePath) => `- ${filePath}`) : ['- yok']),
+      '',
+    ].join('\n'),
+    'utf8'
+  );
 
   if (driftedFiles.length > 0) {
     throw new Error(

@@ -81,7 +81,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nightly-e2e-admin-access-coverage
-          path: docs/reports/admin-access-coverage.json
+          path: |
+            docs/reports/admin-access-coverage.json
+            docs/reports/admin-access-coverage.md
           if-no-files-found: ignore
           retention-days: 14
       - name: Apply ops retention
@@ -293,6 +295,7 @@ jobs:
                   `- Generated at: ${releaseGate.generatedAt || 'bilinmiyor'}`,
                   `- Admin access coverage: ${releaseGate.adminAccessCoverage?.coveragePercent ?? 'unknown'}%`,
                   `- Admin access drift count: ${releaseGate.adminAccessCoverage?.driftCount ?? 'unknown'}`,
+                  `- Admin access drift file: ${releaseGate.adminAccessCoverage?.driftedFiles?.[0] ?? 'yok'}`,
                   `- Performance recommendations: ${releaseGate.performanceOptimization?.recommendations?.total ?? 'unknown'}`,
                   `- Slow request rate: ${releaseGate.performanceOptimization?.metrics?.slowRequestRate ?? 'unknown'}%`,
                   ...blocking,
@@ -360,6 +363,7 @@ jobs:
                   `- Recent outcomes: ${(nightlySummary.recentOutcomes || []).join(', ') || 'yok'}`,
                   `- Admin access coverage: ${nightlySummary.adminAccessCoverage?.coveragePercent ?? 'unknown'}%`,
                   `- Admin access drift count: ${nightlySummary.adminAccessCoverage?.driftCount ?? 'unknown'}`,
+                  `- Admin access drift file: ${nightlySummary.adminAccessCoverage?.driftedFiles?.[0] ?? 'yok'}`,
                   `- Performance recommendations: ${nightlySummary.performanceOptimization?.recommendations?.total ?? 'unknown'}`,
                   `- Slow request rate: ${nightlySummary.performanceOptimization?.metrics?.slowRequestRate ?? 'unknown'}%`,
                   `- Cache hit rate: ${nightlySummary.performanceOptimization?.metrics?.cacheHitRate ?? 'unknown'}%`
