@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:23:55.489Z",
-  "astroFiles": 162,
-  "tsxFiles": 93,
-  "totalHydrationPoints": 34,
+  "generatedAt": "2026-04-16T22:28:46.878Z",
+  "astroFiles": 163,
+  "tsxFiles": 92,
+  "totalHydrationPoints": 33,
   "lowRiskCount": 0,
-  "mediumRiskCount": 18,
+  "mediumRiskCount": 17,
   "highRiskCount": 16,
   "entries": [
     {
@@ -160,13 +160,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "UserSettings form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/bildirimler/index.astro",
-      "componentName": "NotificationsCenter",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "NotificationsCenter form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/icerik.astro",
