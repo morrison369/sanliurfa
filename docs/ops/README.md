@@ -19,6 +19,8 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
   - `src/lib/admin-ops-pages.ts`
   - `src/lib/runtime-monitor.ts`
   - `src/lib/admin-access-coverage-page.ts`
+  - `src/lib/admin-dom.ts`
+  - `src/lib/admin-page-bootstrap.ts`
   - browser smoke:
     - `src/scripts/__tests__/runtime-monitor-page.test.ts`
     - `src/scripts/__tests__/admin-access-coverage-page.test.ts`
