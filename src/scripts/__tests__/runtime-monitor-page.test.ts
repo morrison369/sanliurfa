@@ -34,6 +34,12 @@ vi.mock('../../lib/runtime-monitor', () => ({
 vi.mock('../../lib/admin-ops-pages', () => ({
   buildRuntimeTrend: () => 'trend-line',
   buildRuntimeDelta: () => 'delta-line',
+  loadHistoryFromStorage: () => [],
+  persistHistoryToStorage: vi.fn(),
+  prependHistoryEntry: (history: any[], entry: any, limit: number) => {
+    history.unshift(entry);
+    history.splice(limit);
+  },
 }));
 
 type FakeElement = {

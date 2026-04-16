@@ -22,6 +22,12 @@ vi.mock('../../lib/admin-browser-client', () => ({
 vi.mock('../../lib/admin-ops-pages', () => ({
   buildCoverageTrend: () => 'coverage-trend',
   buildCoverageDelta: () => 'coverage-delta',
+  loadHistoryFromStorage: () => [],
+  persistHistoryToStorage: vi.fn(),
+  prependHistoryEntry: (history: any[], entry: any, limit: number) => {
+    history.unshift(entry);
+    history.splice(limit);
+  },
 }));
 
 vi.mock('../../lib/admin-access-coverage-page', () => ({

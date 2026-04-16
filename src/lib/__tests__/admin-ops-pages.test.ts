@@ -6,6 +6,9 @@ import {
   buildRuntimeDelta,
   buildRuntimeTrend,
   getSameStatusSinceMinutes,
+  loadHistoryFromStorage,
+  persistHistoryToStorage,
+  prependHistoryEntry,
 } from '../admin-ops-pages';
 
 describe('admin ops page helpers', () => {
@@ -72,5 +75,27 @@ describe('admin ops page helpers', () => {
     expect(
       buildCoverageAlert({ status: 'healthy', driftCount: 2, firstDriftFile: 'src/pages/api/admin/example.ts' }).text
     ).toContain('example.ts');
+  });
+
+  it('loads, prepends and persists history entries', () => {
+    const storage = new Map<string, string>();
+    (globalThis as any).window = {
+      localStorage: {
+        getItem: (key: string) => storage.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          storage.set(key, value);
+        },
+      },
+    };
+
+    const history = loadHistoryFromStorage<{ value: number }>('missing-key', 20);
+    expect(history).toEqual([]);
+
+    const mutable = [{ value: 1 }, { value: 2 }];
+    prependHistoryEntry(mutable, { value: 3 }, 2);
+    expect(mutable).toEqual([{ value: 3 }, { value: 1 }]);
+
+    persistHistoryToStorage('history-key', mutable, 2);
+    expect(loadHistoryFromStorage<{ value: number }>('history-key', 2)).toEqual([{ value: 3 }, { value: 1 }]);
   });
 });
