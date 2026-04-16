@@ -14,6 +14,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 - Hangi dosya source-of-truth:
   - [SOURCE_OF_TRUTH_MAP.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\SOURCE_OF_TRUTH_MAP.md)
 - Admin UI helper / view-model katmanı:
+  - `src/lib/admin-index-data.ts`
   - `src/lib/admin-index.ts`
   - `src/lib/admin-index-page.ts`
   - `src/lib/admin-index-view.ts`
