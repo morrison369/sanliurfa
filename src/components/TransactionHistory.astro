@@ -1,0 +1,19 @@
+---
+---
+
+<div data-transaction-history class="space-y-6" data-limit="20" data-offset="0" data-selected-type="">
+  <div data-transaction-loading class="space-y-3">
+    <div class="h-16 animate-pulse rounded-lg bg-gray-200"></div>
+    <div class="h-16 animate-pulse rounded-lg bg-gray-200"></div>
+    <div class="h-16 animate-pulse rounded-lg bg-gray-200"></div>
+    <div class="h-16 animate-pulse rounded-lg bg-gray-200"></div>
+    <div class="h-16 animate-pulse rounded-lg bg-gray-200"></div>
+  </div>
+  <div data-transaction-content class="hidden"></div>
+</div>
+
+<script>
+  import { initTransactionHistory } from '../scripts/transaction-history';
+
+  initTransactionHistory();
+</script>

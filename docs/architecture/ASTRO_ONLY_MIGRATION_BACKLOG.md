@@ -15,10 +15,10 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `152`
-- `.tsx`: `104`
-- `client:*` hydration noktası: `45`
-- current generated risk split: `2 low / 27 medium / 16 high`
+- `.astro`: `153`
+- `.tsx`: `103`
+- `client:*` hydration noktası: `44`
+- current generated risk split: `0 low / 28 medium / 16 high`
 
 İlk hedefler:
 
@@ -65,6 +65,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/UserRecommendations.tsx` -> `src/components/UserRecommendations.astro`
 - `src/components/PerformanceMonitor.tsx` -> `src/components/PerformanceMonitor.astro`
 - `src/components/PWAPrompt.tsx` -> `src/components/PWAPrompt.astro`
+- `src/components/TransactionHistory.tsx` -> `src/components/TransactionHistory.astro`
 
 Bu dalga ile:
 
@@ -76,9 +77,10 @@ Bu dalga ile:
 - `src/pages/kesfet/index.astro` içindeki `UserRecommendations` artık React island değil
 - `src/layouts/Layout.astro` içindeki `PerformanceMonitor` artık React island değil
 - `src/components/PWARegister.astro` içindeki `PWAPrompt` artık React island değil
-- toplam `client:*` sayısı `55 -> 45` düştü
+- `src/pages/loyalty/transactions.astro` içindeki `TransactionHistory` artık React island değil
+- toplam `client:*` sayısı `55 -> 44` düştü
 
-### Aday Bileşenler
+### Önceki Düşük Risk Adayları
 
 - `src/components/ShareButton.tsx`
 - `src/components/FollowPlaceButton.tsx`
@@ -232,5 +234,5 @@ Bu repo için doğru hız budur. Daha agresif rewrite, gereksiz risk üretir.
 ## Aktif Inventory Kuralı
 
 - Sonraki Astro migration batch'i seçilmeden önce `npm run astro:migration:inventory` çalıştırılır.
-- Önce `docs/reports/astro-hydration-inventory.md` içindeki `low` bucket değerlendirilir.
+- Önce `docs/reports/astro-hydration-inventory.md` içindeki `low` bucket değerlendirilir; `low=0` ise en ucuz `medium` yüzeyler seçilir.
 - `medium` veya `high` yüzeye ancak açık gerekçe varsa girilir.
