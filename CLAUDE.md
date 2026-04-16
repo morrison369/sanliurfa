@@ -239,6 +239,7 @@ All queries use parameterized statements (`$1`, `$2`, etc.). Direct access via `
 **Admin UI Ops Surfaces**:
 - `/admin/runtime-monitor` — Runtime health / performance / artifact monitor
 - `/admin/audit` — Persistent admin ops audit viewer
+- `/admin/access-coverage` — Admin wrapper coverage monitor and report downloads
 - `/admin` — Admin dashboard overview fed by typed admin client layer
 
 **Authentication**:
@@ -731,6 +732,11 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `docs/SCRIPT_SURFACE_POLICY.md` | Script surface and runner-first policy |
 | `src/types/generated-admin-api.ts` | Generated admin API contract types |
 | `src/types/admin-api.ts` | UI-facing admin type layer |
+| `src/lib/admin-index.ts` | Admin ana sayfa risk/tool view model source |
+| `src/lib/admin-index-page.ts` | Admin ana sayfa badge/card class source |
+| `src/lib/admin-ops-pages.ts` | Runtime monitor + access coverage trend/delta/history source |
+| `src/lib/runtime-monitor.ts` | Runtime monitor endpoint ve coverage summary source |
+| `src/lib/admin-access-coverage-page.ts` | Access coverage alert/summary/drift HTML source |
 
 ### Real-time & Analytics
 | File | Purpose |
@@ -860,6 +866,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 12. **Primary Gates**: Before calling a change green, prefer `npm run typecheck:app`, `npm run test:critical`, and `npm run test:e2e:smoke`. `npm run test` remains broader legacy coverage, not the primary operational gate.
 13. **Phase Workflow**: Phase compatibility is runner-first. Do not reintroduce broad `package.json` phase alias surfaces; use the phase runner and manifest flow documented in `docs/ops/LEGACY_PHASE_SURFACE.md` and `docs/SCRIPT_SURFACE_POLICY.md`.
 14. **Fire-and-Forget**: For non-critical background work (marking mentions as read), queue async queries without awaiting to avoid request timeout.
+15. **Admin UI Ops Pages**: For `/admin`, `/admin/runtime-monitor`, and `/admin/access-coverage`, change helper/view-model modules first (`src/lib/admin-index*.ts`, `src/lib/admin-ops-pages.ts`, `src/lib/runtime-monitor.ts`, `src/lib/admin-access-coverage-page.ts`) and keep the browser smoke tests green.
 
 ### Performance Optimization
 - Cache aggressively (5-10 min TTL for reads, invalidate on mutations)
