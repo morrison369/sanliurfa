@@ -10,6 +10,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 - Artifact freshness / nightly drift:
   - [ARTIFACT_FRESHNESS_POLICY.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\ARTIFACT_FRESHNESS_POLICY.md)
   - [ARTIFACT_RETENTION_POLICY.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\ARTIFACT_RETENTION_POLICY.md)
+  - [admin-access-coverage.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\reports\admin-access-coverage.md)
 - Hangi dosya source-of-truth:
   - [SOURCE_OF_TRUTH_MAP.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\SOURCE_OF_TRUTH_MAP.md)
 - Incident aninda bakilacak sira:
@@ -26,6 +27,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 1. Merge veya deploy bloklandıysa `RELEASE_GATES.md`
 2. Incident varsa `INCIDENT_RUNBOOK.md`
 3. Nightly issue veya artifact bayatlığı varsa `ARTIFACT_FRESHNESS_POLICY.md`
+   Admin wrapper coverage için `docs/reports/admin-access-coverage.md`
 4. Hangi dosya karar veriyor belirsizse `SOURCE_OF_TRUTH_MAP.md`
 5. Admin anahtarları ve readiness için `INTEGRATION_READINESS.md`
 6. Legacy yüzey şüphesi varsa `LEGACY_PHASE_SURFACE.md`
