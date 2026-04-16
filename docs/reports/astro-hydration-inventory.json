@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:06:39.752Z",
-  "astroFiles": 157,
-  "tsxFiles": 98,
-  "totalHydrationPoints": 39,
+  "generatedAt": "2026-04-16T22:10:21.234Z",
+  "astroFiles": 158,
+  "tsxFiles": 97,
+  "totalHydrationPoints": 38,
   "lowRiskCount": 0,
-  "mediumRiskCount": 23,
+  "mediumRiskCount": 22,
   "highRiskCount": 16,
   "entries": [
     {
@@ -139,13 +139,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "AdminLoyaltyPanel form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/aktivitelerim/index.astro",
-      "componentName": "MyActivityLog",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "MyActivityLog form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/arama/gelismis.astro",

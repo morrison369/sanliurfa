@@ -1,6 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import MyActivityLog from "../../components/MyActivityLog";
+import MyActivityLog from "../../components/MyActivityLog.astro";
 
 const { locals, redirect } = Astro;
 if (!locals.user) {
@@ -10,6 +10,6 @@ if (!locals.user) {
 
 <Layout title="Aktivitelerim - Sanliurfa.com">
   <div class="max-w-2xl mx-auto px-4 py-8">
-    <MyActivityLog client:load />
+    <MyActivityLog />
   </div>
 </Layout>
