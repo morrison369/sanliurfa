@@ -1,6 +1,9 @@
 import {
   buildRuntimeDelta,
   buildRuntimeTrend,
+  loadHistoryFromStorage,
+  persistHistoryToStorage,
+  prependHistoryEntry,
   type RuntimeMonitorHistoryEntry as RuntimeHistoryEntry,
   type RuntimeStatus,
 } from '../lib/admin-ops-pages';
@@ -23,20 +26,11 @@ async function fetchJson(url: string): Promise<any> {
 const endpoints: RuntimeMonitorEndpoint[] = buildRuntimeMonitorEndpoints(fetchJson);
 
 function loadHistory() {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      history.splice(0, history.length, ...parsed.slice(0, 20));
-    }
-  } catch {}
+  history.splice(0, history.length, ...loadHistoryFromStorage<RuntimeHistoryEntry>(STORAGE_KEY, 20));
 }
 
 function persistHistory() {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 20)));
-  } catch {}
+  persistHistoryToStorage(STORAGE_KEY, history, 20);
 }
 
 function formatPayload(payload: unknown) {
@@ -108,8 +102,7 @@ async function refreshRuntimeMonitor() {
   const degradedCount = results.filter((item) => item.status === 'degraded').length;
   const overall: RuntimeStatus = blockedCount > 0 ? 'blocked' : degradedCount > 0 ? 'degraded' : 'healthy';
   const refreshedAt = new Date().toISOString();
-  history.unshift({ overall, blockedCount, degradedCount, refreshedAt });
-  history.splice(20);
+  prependHistoryEntry(history, { overall, blockedCount, degradedCount, refreshedAt }, 20);
   persistHistory();
   const previous = history[1];
 

@@ -5,6 +5,9 @@ import {
 import {
   buildCoverageDelta,
   buildCoverageTrend,
+  loadHistoryFromStorage,
+  persistHistoryToStorage,
+  prependHistoryEntry,
   type CoverageHistoryEntry,
   type RuntimeStatus as CoverageStatus,
 } from '../lib/admin-ops-pages';
@@ -40,20 +43,11 @@ function setAlert(status: CoverageStatus, driftCount: number, firstDriftFile?: s
 }
 
 function loadHistory() {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      history.splice(0, history.length, ...parsed.slice(0, 20));
-    }
-  } catch {}
+  history.splice(0, history.length, ...loadHistoryFromStorage<CoverageHistoryEntry>(STORAGE_KEY, 20));
 }
 
 function persistHistory() {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 20)));
-  } catch {}
+  persistHistoryToStorage(STORAGE_KEY, history, 20);
 }
 
 function renderDriftFiles(files: string[]) {
@@ -77,13 +71,12 @@ async function loadCoverage() {
     const { report, artifact, artifactName, reportFormats } = payload.data;
     const refreshedAt = new Date().toISOString();
 
-    history.unshift({
+    prependHistoryEntry(history, {
       status: artifact.status,
       driftCount: report.driftCount,
       coveragePercent: report.coveragePercent,
       refreshedAt,
-    });
-    history.splice(20);
+    }, 20);
     persistHistory();
 
     const previous = history[1];

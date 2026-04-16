@@ -14,6 +14,31 @@ export type CoverageHistoryEntry = {
   refreshedAt: string;
 };
 
+export function loadHistoryFromStorage<T>(storageKey: string, limit: number): T[] {
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed.slice(0, limit) as T[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function persistHistoryToStorage<T>(storageKey: string, history: T[], limit: number) {
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(history.slice(0, limit)));
+  } catch {}
+}
+
+export function prependHistoryEntry<T>(history: T[], entry: T, limit: number) {
+  history.unshift(entry);
+  history.splice(limit);
+}
+
 export function getSameStatusSinceMinutes<T extends { refreshedAt: string }>(
   history: Array<T & ({ overall: RuntimeStatus } | { status: RuntimeStatus })>,
   currentStatus: RuntimeStatus
@@ -104,4 +129,3 @@ export function buildCoverageAlert(options: {
     text: 'Durum normal: Wrapper coverage drift görünmüyor ve artifact healthy.',
   };
 }
-
