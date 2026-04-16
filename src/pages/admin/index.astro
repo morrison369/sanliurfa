@@ -1,6 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
+import { getAdminAccessCoverage } from '../../lib/admin-access-coverage';
+import { buildArtifactHealth } from '../../lib/admin-status';
 
 const user = Astro.locals.user;
 
@@ -9,12 +11,13 @@ if (!user || !Astro.locals.isAdmin) {
 }
 
 // İstatistikler
-const [placesCount, usersCount, reviewsCount, messagesCount, pendingPlaces] = await Promise.all([
+const [placesCount, usersCount, reviewsCount, messagesCount, pendingPlaces, adminAccessCoverage] = await Promise.all([
   query("SELECT COUNT(*) FROM places"),
   query("SELECT COUNT(*) FROM users"),
   query("SELECT COUNT(*) FROM reviews"),
   query("SELECT COUNT(*) FROM contact_messages WHERE status = 'new'"),
   query("SELECT COUNT(*) FROM places WHERE status = 'pending'"),
+  getAdminAccessCoverage(),
 ]);
 
 const stats = {
@@ -24,6 +27,19 @@ const stats = {
   messages: parseInt(messagesCount.rows[0]?.count || '0'),
   pending: parseInt(pendingPlaces.rows[0]?.count || '0'),
 };
+
+const accessCoverageArtifact = buildArtifactHealth({
+  kind: 'adminAccessCoverage',
+  available: adminAccessCoverage.available,
+  generatedAt: adminAccessCoverage.generatedAt,
+});
+
+const accessCoverageBadgeClass =
+  accessCoverageArtifact.status === 'healthy'
+    ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+    : accessCoverageArtifact.status === 'degraded'
+      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+      : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
 
 const seo = { title: 'Admin Panel - Şanlıurfa.com' };
 ---
@@ -90,8 +106,18 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
           <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kalıcı admin ops audit kayıtları</p>
         </a>
         <a href="/admin/access-coverage" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Access Coverage</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Admin wrapper coverage ve drift dosyaları</p>
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Access Coverage</h3>
+            <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', accessCoverageBadgeClass]}>
+              {accessCoverageArtifact.status}
+            </span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
+            %{adminAccessCoverage.coveragePercent} • Drift {adminAccessCoverage.driftCount}
+          </p>
+          <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
+            {adminAccessCoverage.driftedFiles[0] || 'Drift yok'}
+          </p>
         </a>
       </div>
     </div>
