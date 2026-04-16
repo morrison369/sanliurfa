@@ -1,7 +1,7 @@
 ---
 import { Menu, X, User, Search, MapPin, ChevronDown, Sun, Moon } from 'lucide-react';
 import NotificationCenter from './NotificationCenter.astro';
-import NotificationBadge from './NotificationBadge';
+import NotificationBadge from './NotificationBadge.astro';
 
 interface Props {
   user?: any;
@@ -94,7 +94,7 @@ const isCurrentPage = (href: string) => {
         </button>
         
         <!-- Notifications Badge -->
-        <NotificationBadge client:load />
+        <NotificationBadge />
 
         <!-- Notifications -->
         <NotificationCenter user={user} />
