@@ -133,6 +133,24 @@ function setLink(id: string, href: string) {
   link.href = href;
 }
 
+function setSummaryTone(id: string, status: RuntimeStatus) {
+  const element = document.getElementById(id);
+  if (!element) return;
+  element.className = 'mt-4 text-xs';
+
+  if (status === 'blocked') {
+    element.classList.add('text-red-600', 'dark:text-red-300', 'font-semibold');
+    return;
+  }
+
+  if (status === 'degraded') {
+    element.classList.add('text-amber-600', 'dark:text-amber-300', 'font-semibold');
+    return;
+  }
+
+  element.classList.add('text-gray-500', 'dark:text-gray-400');
+}
+
 async function loadEndpoint(endpoint: RuntimeEndpoint) {
   const output = document.getElementById(endpoint.outputId);
   const summary = endpoint.summaryId ? document.getElementById(endpoint.summaryId) : null;
@@ -141,20 +159,24 @@ async function loadEndpoint(endpoint: RuntimeEndpoint) {
   try {
     const payload = await endpoint.load();
     output.textContent = formatPayload(payload);
+    const status = endpoint.pickStatus(payload);
     if (summary && endpoint.summarize) {
       summary.textContent = endpoint.summarize(payload);
     }
     if (endpoint.key === 'admin-access-coverage') {
+      setSummaryTone('admin-access-coverage-summary', status);
       setLink('runtime-admin-access-coverage-download-json', buildAdminAccessCoverageReportUrl('json'));
       setLink('runtime-admin-access-coverage-download-md', buildAdminAccessCoverageReportUrl('markdown'));
     }
-    const status = endpoint.pickStatus(payload);
     setBadge(endpoint.badgeId, status);
     return { key: endpoint.key, status };
   } catch (error) {
     output.textContent = formatPayload({ error: error instanceof Error ? error.message : String(error) });
     if (summary) {
       summary.textContent = error instanceof Error ? error.message : String(error);
+    }
+    if (endpoint.key === 'admin-access-coverage') {
+      setSummaryTone('admin-access-coverage-summary', 'blocked');
     }
     setBadge(endpoint.badgeId, 'blocked');
     return { key: endpoint.key, status: 'blocked' as RuntimeStatus };
