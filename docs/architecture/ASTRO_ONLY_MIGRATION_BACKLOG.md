@@ -15,11 +15,11 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `179`
-- `.tsx`: `73`
-- `client:*` hydration noktası: `15`
-- current generated risk split: `0 low / 0 medium / 15 high`
-- current high-risk feasibility split: `0 first / 3 later / 11 last`
+- `.astro`: `180`
+- `.tsx`: `72`
+- `client:*` hydration noktası: `14`
+- current generated risk split: `0 low / 0 medium / 14 high`
+- current high-risk feasibility split: `0 first / 2 later / 11 last`
 
 İlk hedefler:
 
@@ -94,6 +94,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/admin/AuditLogViewer.tsx` -> `src/components/admin/AuditLogViewer.astro`
 - `src/components/UserManagementTable.tsx` -> `src/components/UserManagementTable.astro`
 - `src/components/AdminDashboardOverview.tsx` -> `src/components/AdminDashboardOverview.astro`
+- `src/components/AnalyticsPanel.tsx` -> `src/components/AnalyticsPanel.astro`
 
 Bu dalga ile:
 
@@ -129,7 +130,8 @@ Bu dalga ile:
 - `src/pages/admin/audit-logs.astro` içindeki `AuditLogViewer` artık React island değil
 - `src/pages/admin/dashboard.astro` içindeki `UserManagementTable` artık React island değil
 - `src/pages/admin/dashboard.astro` içindeki `AdminDashboardOverview` artık React island değil
-- toplam `client:*` sayısı `55 -> 15` düştü
+- `src/pages/admin/analytics.astro` içindeki `AnalyticsPanel` artık React island değil
+- toplam `client:*` sayısı `55 -> 14` düştü
 
 ### Önceki Düşük Risk Adayları
 
@@ -237,11 +239,10 @@ ayrı yazılmalı.
 
 `docs/reports/astro-high-risk-feasibility.md` şu sırayı öneriyor:
 
-1. `AnalyticsPanel`
-2. `AdminAnalyticsDashboard`
-3. `AdminManager`
+1. `AdminAnalyticsDashboard`
+2. `AdminManager`
 
-Bu dört yüzey dışında kalan yüksek-risk bileşenler şu an için son dalga adayıdır.
+Bu yüzeyler dışında kalan yüksek-risk bileşenler şu an için son dalga adayıdır.
 
 ## React'te Kalması Makul Olan Yüzeyler
 
