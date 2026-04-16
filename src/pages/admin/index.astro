@@ -68,6 +68,7 @@ type OpsCard = {
   status: 'healthy' | 'degraded' | 'blocked';
   summary: string;
   detail: string;
+  action: string;
   generatedAt: string | null;
   icon: typeof Activity;
 };
@@ -135,6 +136,7 @@ const riskCards: OpsCard[] = [
     status: releaseGateStatus,
     summary: `${releaseGate.finalStatus} • Hata ${releaseGate.failedStepCount}`,
     detail: releaseGate.blockingFailedSteps[0] || releaseGate.advisoryFailedSteps[0] || 'Blocking hata yok',
+    action: 'Aksiyon: failing step detayını aç',
     generatedAt: releaseGate.generatedAt,
     icon: ShieldAlert,
   },
@@ -144,6 +146,7 @@ const riskCards: OpsCard[] = [
     status: nightlyRegressionStatus,
     summary: `Regression ${nightly.regression.outcome} • %${nightly.regression.successRatePercent ?? 'yok'}`,
     detail: nightly.regression.topFailures[0] || 'Öne çıkan failure yok',
+    action: 'Aksiyon: top failure ve success rate kontrol et',
     generatedAt: nightly.regression.generatedAt,
     icon: Activity,
   },
@@ -153,6 +156,7 @@ const riskCards: OpsCard[] = [
     status: accessCoverageArtifact.status,
     summary: `%${adminAccessCoverage.coveragePercent} • Drift ${adminAccessCoverage.driftCount}`,
     detail: adminAccessCoverage.driftedFiles[0] || 'Drift yok',
+    action: 'Aksiyon: drift dosyasını aç ve wrapper parity düzelt',
     generatedAt: adminAccessCoverage.generatedAt,
     icon: Gauge,
   },
@@ -162,6 +166,7 @@ const riskCards: OpsCard[] = [
     status: artifactHealthSummary.overall,
     summary: `Healthy ${artifactHealthSummary.healthyCount} • Degraded ${artifactHealthSummary.degradedCount} • Blocked ${artifactHealthSummary.blockedCount}`,
     detail: `İlk risk: ${firstProblematicArtifact}`,
+    action: 'Aksiyon: problemli artifact kaynağını dashboarddan doğrula',
     generatedAt: latestArtifactGeneratedAt,
     icon: ShieldCheck,
   },
@@ -215,6 +220,7 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
               </div>
               <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{card.summary}</p>
               <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">{card.detail}</p>
+              <p class="text-gray-700 dark:text-gray-300 text-xs mt-2 font-medium">{card.action}</p>
               <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
                 Son üretim: {formatGeneratedAt(card.generatedAt)}
               </p>
