@@ -11,6 +11,8 @@ type ArtifactHealthResponse =
   paths['/api/admin/system/artifact-health']['get']['responses']['200']['content']['application/json'];
 type SubscriptionUsersGetResponse =
   paths['/api/admin/subscriptions/users']['get']['responses']['200']['content']['application/json'];
+type SubscriptionAnalyticsGetResponse =
+  paths['/api/admin/subscriptions/analytics']['get']['responses']['200']['content']['application/json'];
 type SubscriptionUsersPostResponse =
   paths['/api/admin/subscriptions/users']['post']['responses']['200']['content']['application/json'];
 type MessageStatusPostResponse =
@@ -19,6 +21,22 @@ type AuditLogsResponse =
   paths['/api/admin/audit-logs']['get']['responses']['200']['content']['application/json'];
 type PerformanceOptimizationResponse =
   paths['/api/admin/performance/optimization']['get']['responses']['200']['content']['application/json'];
+type VerificationsGetResponse =
+  paths['/api/admin/verifications']['get']['responses']['200']['content']['application/json'];
+type VerificationApprovePostResponse =
+  paths['/api/admin/verifications/{id}/approve']['post']['responses']['200']['content']['application/json'];
+type VerificationRejectPostResponse =
+  paths['/api/admin/verifications/{id}/reject']['post']['responses']['200']['content']['application/json'];
+type AdminUsersGetResponse =
+  paths['/api/admin/users']['get']['responses']['200']['content']['application/json'];
+type AdminUserGetResponse =
+  paths['/api/admin/users/{id}']['get']['responses']['200']['content']['application/json'];
+type AdminUserPostResponse =
+  paths['/api/admin/users/{id}']['post']['responses']['200']['content']['application/json'];
+type ModerationQueueGetResponse =
+  paths['/api/admin/moderation/queue']['get']['responses']['200']['content']['application/json'];
+type ModerationQueuePostResponse =
+  paths['/api/admin/moderation/queue']['post']['responses']['200']['content']['application/json'];
 
 export interface IntegrationVerificationState {
   status: string;
@@ -122,10 +140,19 @@ export type AdminDeploymentStatusData = DeploymentStatusResponse['data']['data']
 export type AdminArtifactHealthData = ArtifactHealthResponse['data']['data'];
 export type AdminDashboardOverviewResponseData = DashboardOverviewResponse['data'];
 export type AdminSubscriptionUsersListData = SubscriptionUsersGetResponse['data'];
+export type AdminSubscriptionAnalyticsData = SubscriptionAnalyticsGetResponse['data'];
 export type AdminSubscriptionUsersMutationData = SubscriptionUsersPostResponse['data'];
 export type AdminMessageStatusMutationData = MessageStatusPostResponse['data'];
 export type AdminAuditLogsData = AuditLogsResponse['data'];
 export type AdminPerformanceOptimizationData = PerformanceOptimizationResponse['data']['data'];
+export type AdminVerificationsListData = VerificationsGetResponse['data'];
+export type AdminVerificationApproveData = VerificationApprovePostResponse['data'];
+export type AdminVerificationRejectData = VerificationRejectPostResponse['data'];
+export type AdminUsersListData = AdminUsersGetResponse['data'];
+export type AdminUserDetailsData = AdminUserGetResponse['data'];
+export type AdminUserMutationData = AdminUserPostResponse['data'];
+export type AdminModerationQueueListData = ModerationQueueGetResponse['data'];
+export type AdminModerationQueueMutationData = ModerationQueuePostResponse['data'];
 
 export interface AdminDashboardOverviewLegacyShape {
   overview: {

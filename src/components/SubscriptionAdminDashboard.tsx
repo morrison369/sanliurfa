@@ -4,29 +4,13 @@
  */
 
 import React, { useState, useEffect } from 'react';
-
-interface Analytics {
-  subscriptions: {
-    totalSubscriptions: number;
-    activeSubscriptions: number;
-    cancelledSubscriptions: number;
-    byTier: Record<string, number>;
-    mrr: number;
-    arr: number;
-    churnRate: number;
-  };
-  webhooks: {
-    pending: number;
-    failed: number;
-    successful: number;
-    retrying: number;
-  };
-}
+import { fetchAdminSubscriptionAnalytics } from '../lib/admin-browser-client';
+import type { AdminSubscriptionAnalyticsData } from '../types/admin-api';
 
 interface SubscriptionAdminDashboardProps {}
 
 export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboardProps) {
-  const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [analytics, setAnalytics] = useState<AdminSubscriptionAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'webhooks'>('overview');
@@ -35,14 +19,8 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/admin/subscriptions/analytics');
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch analytics');
-        }
-
-        const data = await response.json() as any;
-        setAnalytics(data.subscriptions || null);
+        const data = await fetchAdminSubscriptionAnalytics();
+        setAnalytics(data);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load analytics');

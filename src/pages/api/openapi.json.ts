@@ -7,11 +7,19 @@ import {
   adminOpsAuditEntrySchema,
   adminOpsAuditSummarySchema,
   adminStatusSummarySchema,
+  adminSubscriptionAnalyticsDataSchema,
+  adminUserDetailsResponseDataSchema,
+  adminUserMutationDataSchema,
+  adminUsersListDataSchema,
+  adminVerificationListDataSchema,
+  adminVerificationMutationDataSchema,
   artifactHealthChecksSchema,
   healthStatusSchema,
   integrationSettingsResponseSchema,
   integrationSummarySchema,
   integrationVerificationSchema,
+  moderationQueueListDataSchema,
+  moderationQueueMutationDataSchema,
   nightlySummarySchema,
   performanceOptimizationSummarySchema,
   releaseGateSummarySchema,
@@ -715,6 +723,323 @@ const openApiSpec = {
           },
           '400': { description: 'Validation error' },
           '403': { description: 'Admin access required' },
+        },
+      },
+    },
+    '/api/admin/verifications': {
+      get: {
+        tags: ['Health'],
+        summary: 'List pending place verification requests',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Pending verification list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: adminVerificationListDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/verifications/{id}/approve': {
+      post: {
+        tags: ['Health'],
+        summary: 'Approve place verification request',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  reason: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Verification approved',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: adminVerificationMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '404': { description: 'Verification request not found' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/verifications/{id}/reject': {
+      post: {
+        tags: ['Health'],
+        summary: 'Reject place verification request',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  reason: { type: 'string' },
+                },
+                required: ['reason'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Verification rejected',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: adminVerificationMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '404': { description: 'Verification request not found' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/subscriptions/analytics': {
+      get: {
+        tags: ['Health'],
+        summary: 'Subscription analytics and webhook delivery status',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Subscription analytics snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: adminSubscriptionAnalyticsDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/users': {
+      get: {
+        tags: ['Health'],
+        summary: 'List users for admin management',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'search', in: 'query', schema: { type: 'string' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+          { name: 'offset', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Admin user list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: adminUsersListDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/users/{id}': {
+      get: {
+        tags: ['Health'],
+        summary: 'Get detailed user information',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': {
+            description: 'User detail snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: adminUserDetailsResponseDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '404': { description: 'User not found' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+      post: {
+        tags: ['Health'],
+        summary: 'Perform admin action on user',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  action: { type: 'string', enum: ['flag', 'changeRole', 'log'] },
+                  flagType: { type: 'string' },
+                  reason: { type: 'string' },
+                  severity: { type: 'string' },
+                  newRole: { type: 'string' },
+                  expiresAt: { type: 'string', format: 'date-time' },
+                  actionType: { type: 'string' },
+                  changes: { type: 'object', additionalProperties: true },
+                },
+                required: ['action'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'User action completed',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: adminUserMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/moderation/queue': {
+      get: {
+        tags: ['Health'],
+        summary: 'Get moderation queue items',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'status', in: 'query', schema: { type: 'string' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer' } },
+          { name: 'offset', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Moderation queue snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: moderationQueueListDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+      post: {
+        tags: ['Health'],
+        summary: 'Assign or resolve moderation queue item',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  queueItemId: { type: 'string' },
+                  action: { type: 'string', enum: ['assign', 'resolve'] },
+                  resolution: { type: 'string' },
+                },
+                required: ['queueItemId', 'action'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Moderation queue action completed',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: moderationQueueMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
         },
       },
     },

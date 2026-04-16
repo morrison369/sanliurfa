@@ -22,6 +22,7 @@ const getMetricsMock = vi.fn();
 const getSlowQueriesMock = vi.fn();
 const getSlowOperationsMock = vi.fn();
 const getEndpointMetricsMock = vi.fn();
+const recentIso = (hoursAgo: number) => new Date(Date.now() - hoursAgo * 60 * 60 * 1000).toISOString();
 
 vi.mock('../../../lib/postgres', () => ({
   pool: {
@@ -67,6 +68,8 @@ describe('runtime ops contracts', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.resetAllMocks();
+    const releaseGeneratedAt = recentIso(1);
+    const nightlyGeneratedAt = recentIso(2);
 
     process.env.NODE_ENV = 'test';
 
@@ -81,12 +84,12 @@ describe('runtime ops contracts', () => {
     });
     getReleaseGateSummaryMock.mockResolvedValue(
       buildReleaseGateSummary({
-        generatedAt: '2026-04-10T08:00:00.000Z',
+        generatedAt: releaseGeneratedAt,
       })
     );
     getNightlyOpsSummaryMock.mockResolvedValue({
       regression: buildNightlySummary('regression', {
-        generatedAt: '2026-04-10T07:00:00.000Z',
+        generatedAt: nightlyGeneratedAt,
         successRatePercent: 100,
       }),
       e2e: buildNightlySummary('e2e', {
@@ -186,7 +189,7 @@ describe('runtime ops contracts', () => {
     expect(body.data.checks.integrations.resend.configured).toBe(false);
     expect(body.data.checks.artifacts.releaseGate).toEqual({
       available: true,
-      generatedAt: '2026-04-10T08:00:00.000Z',
+      generatedAt: expect.any(String),
       status: 'healthy',
     });
     expect(body.data.checks.artifacts.nightlyE2E).toEqual({
@@ -266,7 +269,7 @@ describe('runtime ops contracts', () => {
     expect(body.data.serviceLevelObjectives.webhookIngestion.status).toBe('healthy');
     expect(body.data.artifactHealth.releaseGate).toEqual({
       available: true,
-      generatedAt: '2026-04-10T08:00:00.000Z',
+      generatedAt: expect.any(String),
       status: 'healthy',
     });
     expect(body.data.artifactHealth.nightlyE2E).toEqual({

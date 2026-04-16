@@ -4,16 +4,14 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import {
+  approveAdminVerification,
+  fetchAdminVerifications,
+  rejectAdminVerification,
+} from '../lib/admin-browser-client';
+import type { AdminVerificationsListData } from '../types/admin-api';
 
-interface VerificationRequest {
-  id: string;
-  placeId: string;
-  placeName: string;
-  category: string;
-  rating: number;
-  requestedAt: string;
-  reason?: string;
-}
+type VerificationRequest = AdminVerificationsListData['verifications'][number];
 
 interface AdminVerificationQueueProps {
   onRefresh?: () => void;
@@ -34,13 +32,7 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
   const fetchVerifications = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/verifications?limit=50');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch verifications');
-      }
-
-      const data = await response.json();
+      const data = await fetchAdminVerifications(50);
       setVerifications(data.verifications || []);
       setError(null);
     } catch (err) {
@@ -55,17 +47,7 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
     setProcessingId(verificationId);
 
     try {
-      const response = await fetch(`/api/admin/verifications/${verificationId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reason: reason || '' })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to approve verification');
-      }
+      await approveAdminVerification(verificationId, reason);
 
       // Remove from list
       setVerifications(verifications.filter(v => v.id !== verificationId));
@@ -87,17 +69,7 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
     setProcessingId(verificationId);
 
     try {
-      const response = await fetch(`/api/admin/verifications/${verificationId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reason })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to reject verification');
-      }
+      await rejectAdminVerification(verificationId, reason);
 
       // Remove from list
       setVerifications(verifications.filter(v => v.id !== verificationId));
@@ -147,7 +119,8 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
             <div>
               <h4 className="font-semibold text-gray-900">{verification.placeName}</h4>
               <p className="text-sm text-gray-600 mt-1">
-                Kategori: {verification.category} • Rating: {verification.rating.toFixed(1)}⭐
+                Kategori: {verification.category || 'Belirtilmedi'} • Rating:{' '}
+                {typeof verification.rating === 'number' ? `${verification.rating.toFixed(1)}⭐` : 'Yok'}
               </p>
               <p className="text-xs text-gray-500 mt-2">
                 Talep Tarihi: {new Date(verification.requestedAt).toLocaleDateString('tr-TR')}
