@@ -3,6 +3,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { getReleaseGateSummary } from '../../../../lib/release-gate-summary';
+import { withAdminOpsReadAccess } from '../../../../lib/admin-ops-access';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -10,23 +11,31 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    const user = locals.user;
-
-    if (!user || user.role !== 'admin') {
-      recordRequest('GET', '/api/admin/system/release-gate-summary', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
-
-    const summary = await getReleaseGateSummary();
-    recordRequest('GET', '/api/admin/system/release-gate-summary', HttpStatus.OK, Date.now() - startTime);
-
-    return apiResponse(
+    return await withAdminOpsReadAccess(
       {
-        success: true,
-        data: summary
+        request,
+        locals,
+        endpoint: '/api/admin/system/release-gate-summary',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('GET', '/api/admin/system/release-gate-summary', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('GET', '/api/admin/system/release-gate-summary', response.status, duration);
+        },
       },
-      HttpStatus.OK,
-      requestId
+      async () => {
+        const summary = await getReleaseGateSummary();
+        return apiResponse(
+          {
+            success: true,
+            data: summary
+          },
+          HttpStatus.OK,
+          requestId
+        );
+      }
     );
   } catch (error) {
     recordRequest(

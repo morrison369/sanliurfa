@@ -1,25 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import {
+  createAdminModerationAction,
+  fetchAdminModerationReports,
+  fetchAdminModerationStats,
+  updateAdminModerationReport,
+} from '../lib/admin-browser-client';
+import type { AdminModerationReportsData, AdminModerationStatsData } from '../types/admin-api';
 
-interface Report {
-  id: string;
-  reporter_id: string;
-  reported_user_id?: string;
-  content_type: string;
-  content_id: string;
-  reason: string;
-  description?: string;
-  status: string;
-  created_at: string;
-}
-
-interface Stats {
-  pending_reports: number;
-  in_review_reports: number;
-  resolved_reports: number;
-  active_bans: number;
-  total_warnings: number;
-  queue_items: number;
-}
+type Report = AdminModerationReportsData['data'][number];
+type Stats = AdminModerationStatsData['data']['stats'];
 
 export default function ModerationDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -46,19 +35,15 @@ export default function ModerationDashboard() {
       setIsLoading(true);
       setError(null);
 
-      const statsRes = await fetch('/api/admin/moderation/stats');
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats(statsData.data.stats);
-      }
+      const [statsData, reportsData] = await Promise.all([
+        fetchAdminModerationStats(),
+        fetchAdminModerationReports({
+          status: reportFilter === 'all' ? undefined : reportFilter,
+        }),
+      ]);
 
-      const reportsRes = await fetch(
-        `/api/admin/moderation/reports?status=${reportFilter === 'all' ? '' : reportFilter}`
-      );
-      if (reportsRes.ok) {
-        const reportsData = await reportsRes.json();
-        setReports(reportsData.data);
-      }
+      setStats(statsData.data.stats);
+      setReports(reportsData.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     } finally {
@@ -74,16 +59,7 @@ export default function ModerationDashboard() {
     }
 
     try {
-      const response = await fetch('/api/admin/moderation/actions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(actionForm)
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'İşlem gerçekleştirilemedi');
-      }
+      await createAdminModerationAction(actionForm);
 
       setActionForm({
         report_id: '',
@@ -101,18 +77,10 @@ export default function ModerationDashboard() {
 
   const handleReportStatusUpdate = async (reportId: string, newStatus: string) => {
     try {
-      const response = await fetch(`/api/admin/moderation/reports?id=${reportId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: newStatus,
-          resolution_note: 'Yönetici tarafından işlendi'
-        })
+      await updateAdminModerationReport(reportId, {
+        status: newStatus,
+        resolution_note: 'Yönetici tarafından işlendi'
       });
-
-      if (!response.ok) {
-        throw new Error('Durum güncellenemedi');
-      }
 
       await loadData();
     } catch (err) {
