@@ -29,6 +29,7 @@ describe('release gate summary reader', () => {
       expect(summary.available).toBe(false);
       expect(summary.finalStatus).toBe('missing');
       expect(summary.performanceOptimization).toBeNull();
+      expect(summary.adminAccessCoverage).toBeNull();
     } finally {
       if (previous !== null) {
         await mkdir(reportsDir, { recursive: true });
@@ -46,6 +47,15 @@ describe('release gate summary reader', () => {
       blockingFailedSteps: [],
       advisoryFailedSteps: [],
       steps: [],
+      adminAccessCoverage: {
+        available: true,
+        generatedAt: '2026-04-10T00:00:00.000Z',
+        routeFiles: 39,
+        wrapperFiles: 39,
+        driftCount: 0,
+        coveragePercent: 100,
+        driftedFiles: []
+      },
       performanceOptimization: {
         recommendations: { total: 3, highPriority: 1, mediumPriority: 2 },
         metrics: { slowRequestRate: 11, cacheHitRate: 48 }
@@ -57,6 +67,7 @@ describe('release gate summary reader', () => {
 
       expect(summary.available).toBe(true);
       expect(summary.finalStatus).toBe('passed');
+      expect(summary.adminAccessCoverage?.coveragePercent).toBe(100);
       expect(summary.performanceOptimization?.recommendations.total).toBe(3);
       expect(summary.performanceOptimization?.metrics.cacheHitRate).toBe(48);
     } finally {

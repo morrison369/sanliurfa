@@ -51,6 +51,15 @@ describe('nightly ops summary reader', () => {
       successRatePercent: 80,
       recentOutcomes: ['success'],
       topFailures: [],
+      adminAccessCoverage: {
+        available: true,
+        generatedAt: '2026-04-10T00:00:00.000Z',
+        routeFiles: 39,
+        wrapperFiles: 39,
+        driftCount: 0,
+        coveragePercent: 100,
+        driftedFiles: []
+      },
       performanceOptimization: {
         recommendations: { total: 4, highPriority: 2, mediumPriority: 2 },
         metrics: { slowRequestRate: 14, cacheHitRate: 42 }
@@ -70,6 +79,7 @@ describe('nightly ops summary reader', () => {
       const summary = await getNightlyOpsSummary();
 
       expect(summary.regression.available).toBe(true);
+      expect(summary.regression.adminAccessCoverage?.coveragePercent).toBe(100);
       expect(summary.regression.performanceOptimization?.recommendations.total).toBe(4);
       expect(summary.regression.performanceOptimization?.metrics.slowRequestRate).toBe(14);
       expect(summary.e2e.available).toBe(true);

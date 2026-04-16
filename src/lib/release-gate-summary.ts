@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import type { AdminAccessCoverage } from './admin-access-coverage';
 import { logger } from './logging';
 import type { PerformanceOpsSummary } from './performance-ops-summary';
 
@@ -19,6 +20,7 @@ export type ReleaseGateSummary = {
   failedStepCount: number;
   steps: ReleaseGateStepResult[];
   performanceOptimization?: PerformanceOpsSummary | null;
+  adminAccessCoverage?: AdminAccessCoverage | null;
 };
 
 const defaultSummary: ReleaseGateSummary = {
@@ -29,7 +31,8 @@ const defaultSummary: ReleaseGateSummary = {
   advisoryFailedSteps: [],
   failedStepCount: 0,
   steps: [],
-  performanceOptimization: null
+  performanceOptimization: null,
+  adminAccessCoverage: null
 };
 
 export async function getReleaseGateSummary(): Promise<ReleaseGateSummary> {
@@ -52,6 +55,9 @@ export async function getReleaseGateSummary(): Promise<ReleaseGateSummary> {
       steps,
       performanceOptimization: parsed.performanceOptimization && typeof parsed.performanceOptimization === 'object'
         ? parsed.performanceOptimization as PerformanceOpsSummary
+        : null,
+      adminAccessCoverage: parsed.adminAccessCoverage && typeof parsed.adminAccessCoverage === 'object'
+        ? parsed.adminAccessCoverage as AdminAccessCoverage
         : null
     };
   } catch (error) {

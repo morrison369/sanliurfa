@@ -73,6 +73,10 @@ jobs:
         if: always()
         continue-on-error: true
         run: npm exec -- tsx scripts/write-performance-ops-summary.ts
+      - name: Generate admin access coverage report
+        if: always()
+        continue-on-error: true
+        run: npm run governance:admin:access:check
       - name: Apply ops retention
         if: always()
         continue-on-error: true
@@ -127,6 +131,9 @@ jobs:
               successRatePercent,
               recentOutcomes,
               topFailures,
+              adminAccessCoverage: fs.existsSync(path.join(process.cwd(), 'docs', 'reports', 'admin-access-coverage.json'))
+                ? JSON.parse(fs.readFileSync(path.join(process.cwd(), 'docs', 'reports', 'admin-access-coverage.json'), 'utf8'))
+                : null,
               performanceOptimization: fs.existsSync(path.join(process.cwd(), 'docs', 'reports', 'performance-ops-summary.json'))
                 ? JSON.parse(fs.readFileSync(path.join(process.cwd(), 'docs', 'reports', 'performance-ops-summary.json'), 'utf8'))
                 : null
@@ -277,6 +284,8 @@ jobs:
                   `- Branch: ${process.env.RELEASE_GATE_RUN_BRANCH || 'bilinmiyor'}`,
                   `- Final status: ${releaseGate.finalStatus || 'missing'}`,
                   `- Generated at: ${releaseGate.generatedAt || 'bilinmiyor'}`,
+                  `- Admin access coverage: ${releaseGate.adminAccessCoverage?.coveragePercent ?? 'unknown'}%`,
+                  `- Admin access drift count: ${releaseGate.adminAccessCoverage?.driftCount ?? 'unknown'}`,
                   `- Performance recommendations: ${releaseGate.performanceOptimization?.recommendations?.total ?? 'unknown'}`,
                   `- Slow request rate: ${releaseGate.performanceOptimization?.metrics?.slowRequestRate ?? 'unknown'}%`,
                   ...blocking,
@@ -342,6 +351,8 @@ jobs:
                   `- Outcome: ${nightlySummary.outcome}`,
                   `- Success rate: ${nightlySummary.successRatePercent ?? 'unknown'}%`,
                   `- Recent outcomes: ${(nightlySummary.recentOutcomes || []).join(', ') || 'yok'}`,
+                  `- Admin access coverage: ${nightlySummary.adminAccessCoverage?.coveragePercent ?? 'unknown'}%`,
+                  `- Admin access drift count: ${nightlySummary.adminAccessCoverage?.driftCount ?? 'unknown'}`,
                   `- Performance recommendations: ${nightlySummary.performanceOptimization?.recommendations?.total ?? 'unknown'}`,
                   `- Slow request rate: ${nightlySummary.performanceOptimization?.metrics?.slowRequestRate ?? 'unknown'}%`,
                   `- Cache hit rate: ${nightlySummary.performanceOptimization?.metrics?.cacheHitRate ?? 'unknown'}%`
