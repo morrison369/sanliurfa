@@ -15,10 +15,10 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `171`
-- `.tsx`: `83`
-- `client:*` hydration noktası: `24`
-- current generated risk split: `0 low / 8 medium / 16 high`
+- `.astro`: `172`
+- `.tsx`: `82`
+- `client:*` hydration noktası: `22`
+- current generated risk split: `0 low / 6 medium / 16 high`
 
 İlk hedefler:
 
@@ -85,6 +85,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/UserProfile.tsx` -> `src/components/UserProfile.astro`
 - `src/components/CollectionDetail.tsx` -> `src/components/CollectionDetail.astro`
 - `src/components/UserSettings.tsx` -> `src/components/UserSettings.astro`
+- `src/components/SearchResults.tsx` -> `src/components/SearchResults.astro`
 
 Bu dalga ile:
 
@@ -112,7 +113,8 @@ Bu dalga ile:
 - `src/pages/profile.astro` içindeki `UserProfile` artık React island değil
 - `src/pages/koleksiyonlar/[id].astro` içindeki `CollectionDetail` artık React island değil
 - `src/pages/ayarlar.astro` içindeki `UserSettings` artık React island değil
-- toplam `client:*` sayısı `55 -> 24` düştü
+- `src/pages/arama/index.astro` ve `src/pages/arama/gelismis.astro` içindeki `SearchResults` artık React island değil
+- toplam `client:*` sayısı `55 -> 22` düştü
 
 ### Önceki Düşük Risk Adayları
 
@@ -144,7 +146,6 @@ Form/list/tab davranışı olan ama tam dashboard olmayan yüzeyleri Astro-first
 
 ### Aday Bileşenler
 
-- `src/components/SearchResults.tsx`
 - `src/components/AdvancedSearchForm.tsx`
 - `src/components/AdvancedSearchPanel.tsx`
 - `src/components/SearchHistoryViewer.tsx`
