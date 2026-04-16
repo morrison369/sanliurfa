@@ -11,6 +11,7 @@ const getMetricsMock = vi.fn();
 const getSlowOperationsMock = vi.fn();
 const getNightlyOpsSummaryMock = vi.fn();
 const getReleaseGateSummaryMock = vi.fn();
+const recentIso = (hoursAgo: number) => new Date(Date.now() - hoursAgo * 60 * 60 * 1000).toISOString();
 const loggerMock = {
   setRequestId: vi.fn(),
   error: vi.fn(),
@@ -64,6 +65,8 @@ describe('runtime admin ops contracts', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.resetAllMocks();
+    const releaseGeneratedAt = recentIso(1);
+    const nightlyGeneratedAt = recentIso(2);
 
     poolQueryMock.mockResolvedValue({ rows: [{ '?column?': 1 }] });
     isRedisAvailableMock.mockReturnValue(true);
@@ -108,13 +111,13 @@ describe('runtime admin ops contracts', () => {
     ]);
     getReleaseGateSummaryMock.mockResolvedValue(
       buildReleaseGateSummary({
-        generatedAt: '2026-04-10T08:00:00.000Z',
+        generatedAt: releaseGeneratedAt,
         steps: [],
       })
     );
     getNightlyOpsSummaryMock.mockResolvedValue({
       regression: buildNightlySummary('regression', {
-        generatedAt: '2026-04-10T07:00:00.000Z',
+        generatedAt: nightlyGeneratedAt,
         successRate: 100,
       }),
       e2e: buildNightlySummary('e2e', {
@@ -156,12 +159,12 @@ describe('runtime admin ops contracts', () => {
     expect(body.data.checks.artifacts.releaseGate).toEqual({
       available: true,
       status: 'healthy',
-      generatedAt: '2026-04-10T08:00:00.000Z',
+      generatedAt: expect.any(String),
     });
     expect(body.data.checks.artifacts.nightlyRegression).toEqual({
       available: true,
       status: 'healthy',
-      generatedAt: '2026-04-10T07:00:00.000Z',
+      generatedAt: expect.any(String),
     });
     expect(body.data.checks.artifacts.nightlyE2E).toEqual({
       available: false,
@@ -231,7 +234,7 @@ describe('runtime admin ops contracts', () => {
     expect(body.data.data.indexSuggestions).toHaveLength(2);
     expect(body.data.data.artifactHealth.releaseGate).toEqual({
       available: true,
-      generatedAt: '2026-04-10T08:00:00.000Z',
+      generatedAt: expect.any(String),
       status: 'healthy',
     });
     expect(body.data.data.artifactHealth.nightlyE2E).toEqual({

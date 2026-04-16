@@ -234,6 +234,189 @@ export const adminMessageStatusMutationDataSchema = {
   required: ['success'],
 };
 
+export const adminVerificationEntrySchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    placeId: { type: 'string' },
+    placeName: { type: 'string' },
+    category: { type: ['string', 'null'] },
+    rating: { type: ['number', 'null'] },
+    requestedAt: { type: 'string', format: 'date-time' },
+    reason: { type: ['string', 'null'] },
+  },
+  required: ['id', 'placeId', 'placeName', 'category', 'rating', 'requestedAt', 'reason'],
+};
+
+export const adminVerificationListDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    verifications: {
+      type: 'array',
+      items: adminVerificationEntrySchema,
+    },
+    count: { type: 'integer' },
+  },
+  required: ['success', 'verifications', 'count'],
+};
+
+export const adminVerificationMutationDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+  },
+  required: ['success', 'message'],
+};
+
+export const adminSubscriptionAnalyticsDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    subscriptions: {
+      type: 'object',
+      properties: {
+        totalSubscriptions: { type: 'integer' },
+        activeSubscriptions: { type: 'integer' },
+        cancelledSubscriptions: { type: 'integer' },
+        byTier: { type: 'object', additionalProperties: { type: 'integer' } },
+        mrr: { type: 'number' },
+        arr: { type: 'number' },
+        averageLifetimeValue: { type: 'number' },
+        churnRate: { type: 'number' },
+      },
+      required: ['totalSubscriptions', 'activeSubscriptions', 'cancelledSubscriptions', 'byTier', 'mrr', 'arr', 'averageLifetimeValue', 'churnRate'],
+    },
+    webhooks: {
+      type: 'object',
+      properties: {
+        pending: { type: 'integer' },
+        failed: { type: 'integer' },
+        successful: { type: 'integer' },
+        retrying: { type: 'integer' },
+        lastDelivery: { type: ['string', 'null'], format: 'date-time' },
+      },
+      required: ['pending', 'failed', 'successful', 'retrying', 'lastDelivery'],
+    },
+    timestamp: { type: 'string', format: 'date-time' },
+  },
+  required: ['success', 'subscriptions', 'webhooks', 'timestamp'],
+};
+
+export const adminUserListEntrySchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    email: { type: ['string', 'null'] },
+    full_name: { type: ['string', 'null'] },
+    role: { type: ['string', 'null'] },
+    created_at: { type: ['string', 'null'], format: 'date-time' },
+    updated_at: { type: ['string', 'null'], format: 'date-time' },
+    last_login_at: { type: ['string', 'null'], format: 'date-time' },
+    last_activity_at: { type: ['string', 'null'], format: 'date-time' },
+    post_count: { type: ['integer', 'null'] },
+    review_count: { type: ['integer', 'null'] },
+    warning_count: { type: ['integer', 'null'] },
+    suspension_count: { type: ['integer', 'null'] },
+    active_flags: { type: ['integer', 'null'] },
+  },
+  required: ['id', 'email', 'full_name', 'role', 'created_at', 'updated_at', 'last_login_at', 'last_activity_at', 'post_count', 'review_count', 'warning_count', 'suspension_count', 'active_flags'],
+};
+
+export const adminUsersListDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'object',
+      properties: {
+        users: {
+          type: 'array',
+          items: adminUserListEntrySchema,
+        },
+        count: { type: 'integer' },
+        limit: { type: 'integer' },
+        offset: { type: 'integer' },
+        hasMore: { type: 'boolean' },
+      },
+      required: ['users', 'count', 'limit', 'offset', 'hasMore'],
+    },
+  },
+  required: ['success', 'data'],
+};
+
+export const adminUserDetailsResponseDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'object',
+      additionalProperties: true,
+    },
+  },
+  required: ['success', 'data'],
+};
+
+export const adminUserMutationDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+  },
+  required: ['success', 'message'],
+};
+
+export const moderationQueueItemSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    queue_type: { type: ['string', 'null'] },
+    item_type: { type: ['string', 'null'] },
+    item_id: { type: ['string', 'null'] },
+    priority: { type: ['string', 'null'] },
+    reason: { type: ['string', 'null'] },
+    submitted_count: { type: ['integer', 'null'] },
+    last_reported_at: { type: ['string', 'null'], format: 'date-time' },
+    assigned_to_admin_id: { type: ['string', 'null'] },
+    status: { type: ['string', 'null'] },
+    created_at: { type: ['string', 'null'], format: 'date-time' },
+    assigned_admin_email: { type: ['string', 'null'] },
+  },
+  required: ['id', 'queue_type', 'item_type', 'item_id', 'priority', 'reason', 'submitted_count', 'last_reported_at', 'assigned_to_admin_id', 'status', 'created_at', 'assigned_admin_email'],
+};
+
+export const moderationQueueListDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          items: moderationQueueItemSchema,
+        },
+        count: { type: 'integer' },
+        status: { type: 'string' },
+        limit: { type: 'integer' },
+        offset: { type: 'integer' },
+      },
+      required: ['items', 'count', 'status', 'limit', 'offset'],
+    },
+  },
+  required: ['success', 'data'],
+};
+
+export const moderationQueueMutationDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    message: { type: 'string' },
+  },
+  required: ['success', 'message'],
+};
+
 export const adminStatusSummarySchema = {
   type: 'object',
   properties: {

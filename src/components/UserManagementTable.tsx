@@ -4,18 +4,10 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Search, AlertCircle, Eye } from 'lucide-react';
+import { fetchAdminUsers } from '../lib/admin-browser-client';
+import type { AdminUsersListData } from '../types/admin-api';
 
-interface User {
-  id: string;
-  email: string;
-  full_name: string;
-  role: string;
-  created_at: string;
-  last_login_at: string;
-  review_count: number;
-  warning_count: number;
-  active_flags: number;
-}
+type User = AdminUsersListData['data']['users'][number];
 
 export default function UserManagementTable() {
   const [users, setUsers] = useState<User[]>([]);
@@ -27,14 +19,10 @@ export default function UserManagementTable() {
   const fetchUsers = async (query?: string) => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({ limit: '50' });
-      if (query) params.append('search', query);
-
-      const res = await fetch(`/api/admin/users?${params}`);
-      const json = await res.json();
+      const json = await fetchAdminUsers({ search: query, limit: 50 });
 
       if (!json.success) {
-        setError(json.error || 'Kullanıcılar alınırken hata oluştu');
+        setError('Kullanicilar alinirken hata olustu');
         return;
       }
 
@@ -117,18 +105,18 @@ export default function UserManagementTable() {
                     {user.role === 'admin' ? 'Yönetici' : user.role === 'moderator' ? 'Moderatör' : 'Kullanıcı'}
                   </span>
                 </td>
-                <td className="py-3 px-4 text-gray-600">{user.review_count} inceleme</td>
+                <td className="py-3 px-4 text-gray-600">{user.review_count ?? 0} inceleme</td>
                 <td className="py-3 px-4">
                   <div className="flex items-center gap-2">
-                    {user.active_flags > 0 && (
+                    {(user.active_flags ?? 0) > 0 && (
                       <span className="flex items-center gap-1 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
                         <AlertCircle className="w-3 h-3" />
-                        {user.active_flags} bayrak
+                        {user.active_flags ?? 0} bayrak
                       </span>
                     )}
-                    {user.warning_count > 0 && (
+                    {(user.warning_count ?? 0) > 0 && (
                       <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
-                        {user.warning_count} uyarı
+                        {user.warning_count ?? 0} uyarı
                       </span>
                     )}
                   </div>

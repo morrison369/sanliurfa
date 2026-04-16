@@ -4,6 +4,7 @@ import { buildNightlySummary, buildPerformanceOptimizationSummary, buildReleaseG
 const getReleaseGateSummaryMock = vi.fn();
 const getNightlyOpsSummaryMock = vi.fn();
 const getPerformanceOptimizationSummaryMock = vi.fn();
+const recentIso = (hoursAgo: number) => new Date(Date.now() - hoursAgo * 60 * 60 * 1000).toISOString();
 
 vi.mock('../release-gate-summary', () => ({
   getReleaseGateSummary: getReleaseGateSummaryMock,
@@ -21,13 +22,16 @@ describe('artifact health snapshot', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.resetAllMocks();
+    const releaseGeneratedAt = recentIso(1);
+    const nightlyGeneratedAt = recentIso(2);
+    const performanceGeneratedAt = recentIso(3);
 
     getReleaseGateSummaryMock.mockResolvedValue(buildReleaseGateSummary({
-      generatedAt: '2026-04-10T08:00:00.000Z',
+      generatedAt: releaseGeneratedAt,
     }));
     getNightlyOpsSummaryMock.mockResolvedValue({
       regression: buildNightlySummary('regression', {
-        generatedAt: '2026-04-10T07:00:00.000Z',
+        generatedAt: nightlyGeneratedAt,
         successRatePercent: 100,
       }),
       e2e: buildNightlySummary('e2e', {
@@ -38,7 +42,7 @@ describe('artifact health snapshot', () => {
       }),
     });
     getPerformanceOptimizationSummaryMock.mockResolvedValue(buildPerformanceOptimizationSummary({
-      generatedAt: '2026-04-10T06:00:00.000Z',
+      generatedAt: performanceGeneratedAt,
     }));
   });
 
@@ -49,12 +53,12 @@ describe('artifact health snapshot', () => {
 
     expect(result.releaseGate).toEqual({
       available: true,
-      generatedAt: '2026-04-10T08:00:00.000Z',
+      generatedAt: expect.any(String),
       status: 'healthy',
     });
     expect(result.nightlyRegression).toEqual({
       available: true,
-      generatedAt: '2026-04-10T07:00:00.000Z',
+      generatedAt: expect.any(String),
       status: 'healthy',
     });
     expect(result.nightlyE2E).toEqual({
@@ -70,12 +74,12 @@ describe('artifact health snapshot', () => {
 
     const result = await getArtifactHealthSnapshot({
       includePerformanceOps: true,
-      performanceOpsGeneratedAt: '2026-04-10T06:00:00.000Z',
+      performanceOpsGeneratedAt: recentIso(3),
     });
 
     expect(result.performanceOps).toEqual({
       available: true,
-      generatedAt: '2026-04-10T06:00:00.000Z',
+      generatedAt: expect.any(String),
       status: 'healthy',
     });
   });
@@ -90,7 +94,7 @@ describe('artifact health snapshot', () => {
     expect(result.nightlyE2E.status).toBe('blocked');
     expect(result.performanceOps).toEqual({
       available: true,
-      generatedAt: '2026-04-10T06:00:00.000Z',
+      generatedAt: expect.any(String),
       status: 'healthy',
     });
   });

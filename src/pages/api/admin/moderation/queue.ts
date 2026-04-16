@@ -1,51 +1,57 @@
-/**
- * Admin Moderation Queue API
- * GET: Get moderation queue items
- * POST: Take action on queue items
- */
-
 import type { APIRoute } from 'astro';
 import { getModerationQueue, assignModerationQueueItem, resolveModerationQueueItem } from '../../../../lib/admin-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { withAdminOpsReadAccess, withAdminOpsWriteAccess } from '../../../../lib/admin-ops-access';
 
+/**
+ * Admin Moderation Queue API
+ * GET: Get moderation queue items
+ * POST: Take action on queue items
+ */
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    const user = locals.user;
-
-    if (!user || user.role !== 'admin') {
-      recordRequest('GET', '/api/admin/moderation/queue', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
-
-    const url = new URL(request.url);
-    const status = url.searchParams.get('status') || 'pending';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
-
-    const items = await getModerationQueue(status, limit, offset);
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/admin/moderation/queue', HttpStatus.OK, duration);
-
-    return apiResponse(
+    return await withAdminOpsReadAccess(
       {
-        success: true,
-        data: {
-          items,
-          count: items.length,
-          status,
-          limit,
-          offset
-        }
+        request,
+        locals,
+        endpoint: '/api/admin/moderation/queue',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('GET', '/api/admin/moderation/queue', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('GET', '/api/admin/moderation/queue', response.status, duration);
+        },
       },
-      HttpStatus.OK,
-      requestId
+      async () => {
+        const url = new URL(request.url);
+        const status = url.searchParams.get('status') || 'pending';
+        const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 100);
+        const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+        const items = await getModerationQueue(status, limit, offset);
+
+        return apiResponse(
+          {
+            success: true,
+            data: {
+              items,
+              count: items.length,
+              status,
+              limit,
+              offset,
+            },
+          },
+          HttpStatus.OK,
+          requestId
+        );
+      }
     );
   } catch (error) {
     const duration = Date.now() - startTime;
@@ -67,45 +73,55 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    const user = locals.user;
-
-    if (!user || user.role !== 'admin') {
-      recordRequest('POST', '/api/admin/moderation/queue', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
-
-    const body = await request.json();
-    const { queueItemId, action, resolution } = body;
-
-    if (!queueItemId || !action) {
-      recordRequest('POST', '/api/admin/moderation/queue', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'queueItemId ve action gereklidir',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        undefined,
-        requestId
-      );
-    }
-
-    if (action === 'assign') {
-      await assignModerationQueueItem(queueItemId, user.id);
-    } else if (action === 'resolve') {
-      await resolveModerationQueueItem(queueItemId, user.id, resolution || 'resolved');
-    }
-
-    const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/admin/moderation/queue', HttpStatus.OK, duration);
-
-    logger.info('Moderation queue action completed', { queueItemId, action, adminId: user.id });
-
-    return apiResponse(
+    return await withAdminOpsWriteAccess(
       {
-        success: true,
-        message: `Moderasyon işlemi tamamlandı: ${action}`
+        request,
+        locals,
+        endpoint: '/api/admin/moderation/queue',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('POST', '/api/admin/moderation/queue', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('POST', '/api/admin/moderation/queue', response.status, duration);
+        },
       },
-      HttpStatus.OK,
-      requestId
+      async () => {
+        const body = await request.json();
+        const { queueItemId, action, resolution } = body;
+
+        if (!queueItemId || !action) {
+          return apiError(
+            ErrorCode.VALIDATION_ERROR,
+            'queueItemId ve action gereklidir',
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            undefined,
+            requestId
+          );
+        }
+
+        if (action === 'assign') {
+          await assignModerationQueueItem(queueItemId, locals.user?.id || 'unknown');
+        } else if (action === 'resolve') {
+          await resolveModerationQueueItem(queueItemId, locals.user?.id || 'unknown', resolution || 'resolved');
+        }
+
+        logger.info('Moderation queue action completed', {
+          queueItemId,
+          action,
+          adminId: locals.user?.id,
+        });
+
+        return apiResponse(
+          {
+            success: true,
+            message: `Moderasyon işlemi tamamlandı: ${action}`,
+          },
+          HttpStatus.OK,
+          requestId
+        );
+      }
     );
   } catch (error) {
     const duration = Date.now() - startTime;
