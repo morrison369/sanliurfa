@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T23:20:09.662Z",
-  "astroFiles": 175,
-  "tsxFiles": 79,
-  "totalHydrationPoints": 19,
+  "generatedAt": "2026-04-16T23:22:51.932Z",
+  "astroFiles": 176,
+  "tsxFiles": 78,
+  "totalHydrationPoints": 18,
   "lowRiskCount": 0,
-  "mediumRiskCount": 3,
+  "mediumRiskCount": 2,
   "highRiskCount": 16,
   "entries": [
     {
@@ -132,13 +132,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "UserManagementTable form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/admin/loyalty/index.astro",
-      "componentName": "AdminLoyaltyPanel",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "AdminLoyaltyPanel form, liste veya orta seviyeli etkileşim içeriyor."
     }
   ]
 }
