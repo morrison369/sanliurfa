@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import type { AdminAccessCoverage } from './admin-access-coverage';
 import { logger } from './logging';
 import type { PerformanceOpsSummary } from './performance-ops-summary';
 
@@ -12,6 +13,7 @@ export type NightlyOpsSummary = {
   recentOutcomes: string[];
   topFailures: string[];
   performanceOptimization?: PerformanceOpsSummary | null;
+  adminAccessCoverage?: AdminAccessCoverage | null;
 };
 
 function createDefaultSummary(kind: 'regression' | 'e2e'): NightlyOpsSummary {
@@ -23,7 +25,8 @@ function createDefaultSummary(kind: 'regression' | 'e2e'): NightlyOpsSummary {
     successRatePercent: null,
     recentOutcomes: [],
     topFailures: [],
-    performanceOptimization: null
+    performanceOptimization: null,
+    adminAccessCoverage: null
   };
 }
 
@@ -43,6 +46,9 @@ async function readSummaryFile(fileName: string, kind: 'regression' | 'e2e'): Pr
       topFailures: Array.isArray(parsed.topFailures) ? parsed.topFailures.map((item) => String(item)) : [],
       performanceOptimization: parsed.performanceOptimization && typeof parsed.performanceOptimization === 'object'
         ? parsed.performanceOptimization as PerformanceOpsSummary
+        : null,
+      adminAccessCoverage: parsed.adminAccessCoverage && typeof parsed.adminAccessCoverage === 'object'
+        ? parsed.adminAccessCoverage as AdminAccessCoverage
         : null
     };
   } catch (error) {

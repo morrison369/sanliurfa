@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { getAdminAccessCoverage } from '../src/lib/admin-access-coverage';
 import { getPerformanceOpsSummary } from '../src/lib/performance-ops-summary';
 
 type StepResult = {
@@ -50,6 +51,7 @@ async function writeSummary(finalStatus: 'passed' | 'failed'): Promise<void> {
   const performanceReportPath = resolve(reportsDir, 'performance-ops-summary.json');
   mkdirSync(reportsDir, { recursive: true });
   const performanceOptimization = await getPerformanceOpsSummary();
+  const adminAccessCoverage = await getAdminAccessCoverage();
   writeFileSync(
     performanceReportPath,
     `${JSON.stringify(performanceOptimization, null, 2)}\n`,
@@ -64,7 +66,8 @@ async function writeSummary(finalStatus: 'passed' | 'failed'): Promise<void> {
         blockingFailedSteps: stepResults.filter((step) => !step.advisory && step.status === 'failed').map((step) => step.step),
         advisoryFailedSteps: stepResults.filter((step) => step.advisory && step.status === 'failed').map((step) => step.step),
         steps: stepResults,
-        performanceOptimization
+        performanceOptimization,
+        adminAccessCoverage
       },
       null,
       2
@@ -103,6 +106,7 @@ async function main(): Promise<void> {
     run('TypeScript weekly report', 'npm run typecheck:experimental:report');
     runOptional('TypeScript governance gate', 'npm run phase:check:tsconfig');
     run('Critical observability guard', 'npm run observability:critical:check');
+    run('Admin access wrapper coverage guard', 'npm run governance:admin:access:check');
     run('Critical unit smoke (blocking)', 'npm run test:critical:blocking');
     runOptional('Critical unit smoke (advisory)', 'npm run test:critical:advisory');
     run('E2E smoke', 'npm run test:e2e:smoke');
