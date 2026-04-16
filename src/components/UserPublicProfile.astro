@@ -1,0 +1,23 @@
+---
+interface Props {
+  userId: string;
+  currentUserId?: string;
+}
+
+const { userId, currentUserId } = Astro.props;
+---
+
+<div
+  data-user-public-profile
+  data-user-id={userId}
+  data-current-user-id={currentUserId ?? ''}
+>
+  <div data-user-public-profile-loading class="py-12 text-center text-gray-500">Yükleniyor...</div>
+  <div data-user-public-profile-content class="hidden"></div>
+</div>
+
+<script>
+  import { initUserPublicProfile } from '../scripts/user-public-profile';
+
+  initUserPublicProfile();
+</script>
