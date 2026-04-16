@@ -1,10 +1,10 @@
 # Astro Hydration Inventory
-- Generated at: 2026-04-16T22:10:21.234Z
-- Astro files: 158
-- TSX files: 97
-- Total hydration points: 38
+- Generated at: 2026-04-16T22:14:08.996Z
+- Astro files: 159
+- TSX files: 96
+- Total hydration points: 37
 - Low risk: 0
-- Medium risk: 22
+- Medium risk: 21
 - High risk: 16
 
 ## Entries
@@ -44,5 +44,4 @@
 - [medium] src/pages/profile.astro -> UserProfile (client:load)
 - [medium] src/pages/raporlar/index.astro -> ReportManager (client:load)
 - [medium] src/pages/sosyal/index.astro -> HashtagExplorer (client:load)
-- [medium] src/pages/sosyal/index.astro -> UserSuggestionsPanel (client:load)
 - [medium] src/pages/vendor/dashboard.astro -> VendorDashboard (client:load)

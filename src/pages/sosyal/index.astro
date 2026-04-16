@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import ActivityFeed from '../../components/ActivityFeed';
-import UserSuggestionsPanel from '../../components/UserSuggestionsPanel';
+import UserSuggestionsPanel from '../../components/UserSuggestionsPanel.astro';
 import HashtagExplorer from '../../components/HashtagExplorer';
 
 // Auth check
@@ -26,7 +26,7 @@ const initialTag = Astro.url.searchParams.get('tag');
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Sizi Tanıyabileceğiniz Kişiler
           </h2>
-          <UserSuggestionsPanel client:load />
+          <UserSuggestionsPanel />
         </div>
       </div>
 
