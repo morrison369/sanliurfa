@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T23:07:25.817Z",
-  "astroFiles": 171,
-  "tsxFiles": 83,
-  "totalHydrationPoints": 24,
+  "generatedAt": "2026-04-16T23:10:59.882Z",
+  "astroFiles": 172,
+  "tsxFiles": 82,
+  "totalHydrationPoints": 22,
   "lowRiskCount": 0,
-  "mediumRiskCount": 8,
+  "mediumRiskCount": 6,
   "highRiskCount": 16,
   "entries": [
     {
@@ -139,20 +139,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "AdminLoyaltyPanel form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/arama/gelismis.astro",
-      "componentName": "SearchResults",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "SearchResults form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/arama/index.astro",
-      "componentName": "SearchResults",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "SearchResults form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/isletme/analytics.astro",

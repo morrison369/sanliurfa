@@ -1,10 +1,10 @@
 # Astro Hydration Inventory
-- Generated at: 2026-04-16T23:07:25.817Z
-- Astro files: 171
-- TSX files: 83
-- Total hydration points: 24
+- Generated at: 2026-04-16T23:10:59.882Z
+- Astro files: 172
+- TSX files: 82
+- Total hydration points: 22
 - Low risk: 0
-- Medium risk: 8
+- Medium risk: 6
 - High risk: 16
 
 ## Entries
@@ -27,8 +27,6 @@
 - [medium] src/pages/admin/audit-logs.astro -> AuditLogViewer (client:load)
 - [medium] src/pages/admin/dashboard.astro -> UserManagementTable (client:load)
 - [medium] src/pages/admin/loyalty/index.astro -> AdminLoyaltyPanel (client:load)
-- [medium] src/pages/arama/gelismis.astro -> SearchResults (client:load)
-- [medium] src/pages/arama/index.astro -> SearchResults (client:load)
 - [medium] src/pages/isletme/analytics.astro -> BusinessAnalyticsDashboard (client:load)
 - [medium] src/pages/işletme/pazarlama.astro -> FeaturedListingsManager (client:load)
 - [medium] src/pages/işletme/pazarlama.astro -> MarketingCampaignBuilder (client:load)

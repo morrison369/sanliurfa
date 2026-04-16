@@ -1,6 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import SearchResults from "../../components/SearchResults";
+import SearchResults from "../../components/SearchResults.astro";
 
 const query = Astro.url.searchParams.get("q") || "";
 ---
@@ -20,6 +20,6 @@ const query = Astro.url.searchParams.get("q") || "";
         Gelişmiş aramaya geç
       </a>
     </div>
-    <SearchResults client:load query={query} />
+    <SearchResults query={query} />
   </div>
 </Layout>
