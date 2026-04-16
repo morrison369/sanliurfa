@@ -51,15 +51,17 @@ const accessCoverageArtifact = buildArtifactHealth({
   generatedAt: adminAccessCoverage.generatedAt,
 });
 
-const accessCoverageBadgeClass =
-  accessCoverageArtifact.status === 'healthy'
-    ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-    : accessCoverageArtifact.status === 'degraded'
-      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-      : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
-
 const releaseGateStatus = classifyReleaseGateStatus(releaseGate);
 const nightlyRegressionStatus = classifyNightlyStatus(nightly.regression);
+
+type OpsCard = {
+  href: string;
+  title: string;
+  status: 'healthy' | 'degraded' | 'blocked';
+  summary: string;
+  detail: string;
+  generatedAt: string | null;
+};
 
 function getStatusBadgeClass(status: 'healthy' | 'degraded' | 'blocked') {
   return status === 'healthy'
@@ -87,6 +89,37 @@ function formatGeneratedAt(value: string | null): string {
     minute: '2-digit',
   });
 }
+
+function getStatusPriority(status: 'healthy' | 'degraded' | 'blocked'): number {
+  return status === 'blocked' ? 0 : status === 'degraded' ? 1 : 2;
+}
+
+const opsCards: OpsCard[] = [
+  {
+    href: '/admin/dashboard',
+    title: 'Release Gate',
+    status: releaseGateStatus,
+    summary: `${releaseGate.finalStatus} • Hata ${releaseGate.failedStepCount}`,
+    detail: releaseGate.blockingFailedSteps[0] || releaseGate.advisoryFailedSteps[0] || 'Blocking hata yok',
+    generatedAt: releaseGate.generatedAt,
+  },
+  {
+    href: '/admin/dashboard',
+    title: 'Nightly',
+    status: nightlyRegressionStatus,
+    summary: `Regression ${nightly.regression.outcome} • %${nightly.regression.successRatePercent ?? 'yok'}`,
+    detail: nightly.regression.topFailures[0] || 'Öne çıkan failure yok',
+    generatedAt: nightly.regression.generatedAt,
+  },
+  {
+    href: '/admin/access-coverage',
+    title: 'Access Coverage',
+    status: accessCoverageArtifact.status,
+    summary: `%${adminAccessCoverage.coveragePercent} • Drift ${adminAccessCoverage.driftCount}`,
+    detail: adminAccessCoverage.driftedFiles[0] || 'Drift yok',
+    generatedAt: adminAccessCoverage.generatedAt,
+  },
+].sort((left, right) => getStatusPriority(left.status) - getStatusPriority(right.status));
 
 const seo = { title: 'Admin Panel - Şanlıurfa.com' };
 ---
@@ -116,57 +149,21 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
       </div>
       
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <a href="/admin/dashboard" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex items-center justify-between gap-3">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Release Gate</h3>
-            <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(releaseGateStatus)]}>
-              {releaseGateStatus}
-            </span>
-          </div>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
-            {releaseGate.finalStatus} • Hata {releaseGate.failedStepCount}
-          </p>
-          <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
-            {releaseGate.blockingFailedSteps[0] || releaseGate.advisoryFailedSteps[0] || 'Blocking hata yok'}
-          </p>
-          <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
-            Son üretim: {formatGeneratedAt(releaseGate.generatedAt)}
-          </p>
-        </a>
-        <a href="/admin/dashboard" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex items-center justify-between gap-3">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Nightly</h3>
-            <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(nightlyRegressionStatus)]}>
-              {nightlyRegressionStatus}
-            </span>
-          </div>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
-            Regression {nightly.regression.outcome} • %{nightly.regression.successRatePercent ?? 'yok'}
-          </p>
-          <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
-            {nightly.regression.topFailures[0] || 'Öne çıkan failure yok'}
-          </p>
-          <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
-            Son üretim: {formatGeneratedAt(nightly.regression.generatedAt)}
-          </p>
-        </a>
-        <a href="/admin/access-coverage" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex items-center justify-between gap-3">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Access Coverage</h3>
-            <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', accessCoverageBadgeClass]}>
-              {accessCoverageArtifact.status}
-            </span>
-          </div>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
-            %{adminAccessCoverage.coveragePercent} • Drift {adminAccessCoverage.driftCount}
-          </p>
-          <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
-            {adminAccessCoverage.driftedFiles[0] || 'Drift yok'}
-          </p>
-          <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
-            Son üretim: {formatGeneratedAt(adminAccessCoverage.generatedAt)}
-          </p>
-        </a>
+        {opsCards.map((card) => (
+          <a href={card.href} class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="font-semibold text-gray-900 dark:text-white">{card.title}</h3>
+              <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(card.status)]}>
+                {card.status}
+              </span>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{card.summary}</p>
+            <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">{card.detail}</p>
+            <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
+              Son üretim: {formatGeneratedAt(card.generatedAt)}
+            </p>
+          </a>
+        ))}
         <a href="/admin/runtime-monitor" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 class="font-semibold text-gray-900 dark:text-white">Runtime Monitör</h3>
           <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Health, performance ve artifact sinyalleri</p>
