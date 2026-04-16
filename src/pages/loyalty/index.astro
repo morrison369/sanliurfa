@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import LoyaltyDashboard from '../../components/LoyaltyDashboard';
+import LoyaltyDashboard from '../../components/LoyaltyDashboard.astro';
 
 // Redirect if not authenticated
 if (!Astro.locals.user) {
@@ -15,7 +15,7 @@ if (!Astro.locals.user) {
       <p class="text-gray-600">Puanlarınızı kazanın ve harika ödüllerle değerlendirin</p>
     </div>
 
-    <LoyaltyDashboard client:load />
+    <LoyaltyDashboard />
 
     <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
