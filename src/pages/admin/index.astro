@@ -69,6 +69,25 @@ function getStatusBadgeClass(status: 'healthy' | 'degraded' | 'blocked') {
       : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
 }
 
+function formatGeneratedAt(value: string | null): string {
+  if (!value) {
+    return 'Henüz üretilmedi';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString('tr-TR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 const seo = { title: 'Admin Panel - Şanlıurfa.com' };
 ---
 
@@ -97,38 +116,6 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
       </div>
       
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <a href="/admin/places" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Mekanlar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.pending} onay bekleyen</p>
-        </a>
-        <a href="/admin/users" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Kullanıcılar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kullanıcı yönetimi</p>
-        </a>
-        <a href="/admin/reviews" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Yorumlar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Yorum moderasyonu</p>
-        </a>
-        <a href="/admin/blog" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Blog</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Blog yazıları</p>
-        </a>
-        <a href="/admin/events" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Etkinlikler</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Etkinlik yönetimi</p>
-        </a>
-        <a href="/admin/messages" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Mesajlar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.messages} yeni mesaj</p>
-        </a>
-        <a href="/admin/integrations" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Entegrasyon Ayarları</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">RESEND ve Analytics anahtarları</p>
-        </a>
-        <a href="/admin/runtime-monitor" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Runtime Monitör</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Health, performance ve artifact sinyalleri</p>
-        </a>
         <a href="/admin/dashboard" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between gap-3">
             <h3 class="font-semibold text-gray-900 dark:text-white">Release Gate</h3>
@@ -141,6 +128,9 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
           </p>
           <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
             {releaseGate.blockingFailedSteps[0] || releaseGate.advisoryFailedSteps[0] || 'Blocking hata yok'}
+          </p>
+          <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
+            Son üretim: {formatGeneratedAt(releaseGate.generatedAt)}
           </p>
         </a>
         <a href="/admin/dashboard" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -156,10 +146,9 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
           <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
             {nightly.regression.topFailures[0] || 'Öne çıkan failure yok'}
           </p>
-        </a>
-        <a href="/admin/audit" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Admin Audit</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kalıcı admin ops audit kayıtları</p>
+          <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
+            Son üretim: {formatGeneratedAt(nightly.regression.generatedAt)}
+          </p>
         </a>
         <a href="/admin/access-coverage" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div class="flex items-center justify-between gap-3">
@@ -174,6 +163,45 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
           <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
             {adminAccessCoverage.driftedFiles[0] || 'Drift yok'}
           </p>
+          <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
+            Son üretim: {formatGeneratedAt(adminAccessCoverage.generatedAt)}
+          </p>
+        </a>
+        <a href="/admin/runtime-monitor" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Runtime Monitör</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Health, performance ve artifact sinyalleri</p>
+        </a>
+        <a href="/admin/audit" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Admin Audit</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kalıcı admin ops audit kayıtları</p>
+        </a>
+        <a href="/admin/integrations" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Entegrasyon Ayarları</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">RESEND ve Analytics anahtarları</p>
+        </a>
+        <a href="/admin/places" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Mekanlar</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.pending} onay bekleyen</p>
+        </a>
+        <a href="/admin/users" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Kullanıcılar</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kullanıcı yönetimi</p>
+        </a>
+        <a href="/admin/messages" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Mesajlar</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.messages} yeni mesaj</p>
+        </a>
+        <a href="/admin/reviews" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Yorumlar</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Yorum moderasyonu</p>
+        </a>
+        <a href="/admin/blog" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Blog</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Blog yazıları</p>
+        </a>
+        <a href="/admin/events" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <h3 class="font-semibold text-gray-900 dark:text-white">Etkinlikler</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Etkinlik yönetimi</p>
         </a>
       </div>
     </div>
