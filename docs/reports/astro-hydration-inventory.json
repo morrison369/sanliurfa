@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:37:45.304Z",
-  "astroFiles": 166,
-  "tsxFiles": 89,
-  "totalHydrationPoints": 30,
+  "generatedAt": "2026-04-16T22:41:44.705Z",
+  "astroFiles": 167,
+  "tsxFiles": 88,
+  "totalHydrationPoints": 29,
   "lowRiskCount": 0,
-  "mediumRiskCount": 14,
+  "mediumRiskCount": 13,
   "highRiskCount": 16,
   "entries": [
     {
@@ -209,13 +209,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "UserProfile form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/vendor/dashboard.astro",
-      "componentName": "VendorDashboard",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "VendorDashboard form, liste veya orta seviyeli etkileşim içeriyor."
     }
   ]
 }

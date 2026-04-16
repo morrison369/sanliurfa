@@ -1,0 +1,18 @@
+import { describe, expect, it } from 'vitest';
+
+import { renderVendorDashboard } from '../vendor-dashboard';
+
+describe('vendor dashboard helpers', () => {
+  it('renders overview tab by default', () => {
+    const html = renderVendorDashboard({ activeTab: 'overview' });
+    expect(html).toContain('İşletme Paneli');
+    expect(html).toContain('Toplam Görüntüleme');
+    expect(html).toContain('Genel Bakış');
+  });
+
+  it('renders reviews tab state', () => {
+    const html = renderVendorDashboard({ activeTab: 'reviews' });
+    expect(html).toContain('Muhteşem hizmet!');
+    expect(html).toContain('Yorumlar');
+  });
+});
