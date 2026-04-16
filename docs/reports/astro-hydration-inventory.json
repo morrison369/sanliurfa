@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-04-16T21:36:09.408Z",
-  "astroFiles": 150,
-  "tsxFiles": 106,
-  "totalHydrationPoints": 47,
-  "lowRiskCount": 4,
+  "generatedAt": "2026-04-16T21:41:02.423Z",
+  "astroFiles": 152,
+  "tsxFiles": 104,
+  "totalHydrationPoints": 45,
+  "lowRiskCount": 2,
   "mediumRiskCount": 27,
   "highRiskCount": 16,
   "entries": [
@@ -307,20 +307,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "VendorDashboard form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/components/PWARegister.astro",
-      "componentName": "PWAPrompt",
-      "directive": "idle",
-      "risk": "low",
-      "rationale": "PWAPrompt küçük widget veya sınırlı davranış taşıyor."
-    },
-    {
-      "pagePath": "src/layouts/Layout.astro",
-      "componentName": "PerformanceMonitor",
-      "directive": "idle",
-      "risk": "low",
-      "rationale": "PerformanceMonitor küçük widget veya sınırlı davranış taşıyor."
     },
     {
       "pagePath": "src/pages/admin/dashboard.astro",

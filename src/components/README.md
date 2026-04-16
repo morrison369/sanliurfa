@@ -317,8 +317,10 @@ import VendorDashboard from './VendorDashboard';
 #### PWAPrompt
 Prompts users to install the PWA.
 
-```tsx
-import PWAPrompt from './PWAPrompt';
+```astro
+---
+import PWAPrompt from './PWAPrompt.astro';
+---
 
 <PWAPrompt />
 ```

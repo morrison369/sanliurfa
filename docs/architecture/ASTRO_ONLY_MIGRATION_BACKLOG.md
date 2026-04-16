@@ -13,12 +13,12 @@ Amaç:
 
 ## Başarı Ölçütleri
 
-Başlangıç ölçümü:
+Güncel ölçüm:
 
-- `.astro`: `144`
-- `.tsx`: `106`
-- `client:*` hydration noktası: `47`
-- current generated risk split: `4 low / 27 medium / 16 high`
+- `.astro`: `152`
+- `.tsx`: `104`
+- `client:*` hydration noktası: `45`
+- current generated risk split: `2 low / 27 medium / 16 high`
 
 İlk hedefler:
 
@@ -63,6 +63,8 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/LeaderboardsDisplay.tsx` -> `src/components/LeaderboardsDisplay.astro`
 - `src/components/PricingPlans.tsx` -> `src/components/PricingPlans.astro`
 - `src/components/UserRecommendations.tsx` -> `src/components/UserRecommendations.astro`
+- `src/components/PerformanceMonitor.tsx` -> `src/components/PerformanceMonitor.astro`
+- `src/components/PWAPrompt.tsx` -> `src/components/PWAPrompt.astro`
 
 Bu dalga ile:
 
@@ -72,16 +74,16 @@ Bu dalga ile:
 - `src/pages/liderlik-tablosu.astro` ve `src/pages/siralamalar/index.astro` içindeki `LeaderboardsDisplay` artık React island değil
 - `src/pages/fiyatlandirma.astro` içindeki `PricingPlans` artık React island değil
 - `src/pages/kesfet/index.astro` içindeki `UserRecommendations` artık React island değil
-- toplam `client:*` sayısı `55 -> 47` düştü
+- `src/layouts/Layout.astro` içindeki `PerformanceMonitor` artık React island değil
+- `src/components/PWARegister.astro` içindeki `PWAPrompt` artık React island değil
+- toplam `client:*` sayısı `55 -> 45` düştü
 
 ### Aday Bileşenler
 
-- `src/components/NotificationBadge.tsx`
 - `src/components/ShareButton.tsx`
 - `src/components/FollowPlaceButton.tsx`
 - `src/components/RsvpButton.tsx`
 - `src/components/PlaceFollowersCount.tsx`
-- `src/components/QuotaUsageDisplay.tsx`
 - `src/components/PointsDisplay.tsx`
 - `src/components/RealtimeNotificationBadge.tsx`
 - `src/components/ReviewStats.tsx`
