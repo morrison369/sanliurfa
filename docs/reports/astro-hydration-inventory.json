@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:53:35.635Z",
-  "astroFiles": 169,
-  "tsxFiles": 86,
-  "totalHydrationPoints": 26,
+  "generatedAt": "2026-04-16T22:57:16.949Z",
+  "astroFiles": 170,
+  "tsxFiles": 85,
+  "totalHydrationPoints": 25,
   "lowRiskCount": 0,
-  "mediumRiskCount": 10,
+  "mediumRiskCount": 9,
   "highRiskCount": 16,
   "entries": [
     {
@@ -181,13 +181,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "MarketingCampaignBuilder form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/koleksiyonlar/[id].astro",
-      "componentName": "CollectionDetail",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "CollectionDetail form, liste veya orta seviyeli etkileşim içeriyor."
     }
   ]
 }

@@ -1,0 +1,18 @@
+---
+const { collectionId, currentUserId } = Astro.props;
+---
+
+<div
+  data-collection-detail
+  data-collection-id={collectionId}
+  data-current-user-id={currentUserId || ''}
+>
+  <div data-collection-detail-loading class="py-12 text-center">Koleksiyon yükleniyor...</div>
+  <div data-collection-detail-content class="hidden"></div>
+</div>
+
+<script>
+  import { initCollectionDetail } from '../scripts/collection-detail';
+
+  initCollectionDetail();
+</script>
