@@ -4,6 +4,7 @@ import { buildNightlySummary, buildPerformanceOptimizationSummary, buildReleaseG
 const getReleaseGateSummaryMock = vi.fn();
 const getNightlyOpsSummaryMock = vi.fn();
 const getPerformanceOptimizationSummaryMock = vi.fn();
+const getAdminAccessCoverageMock = vi.fn();
 const recentIso = (hoursAgo: number) => new Date(Date.now() - hoursAgo * 60 * 60 * 1000).toISOString();
 
 vi.mock('../release-gate-summary', () => ({
@@ -16,6 +17,10 @@ vi.mock('../nightly-ops-summary', () => ({
 
 vi.mock('../admin-dashboard', () => ({
   getPerformanceOptimizationSummary: getPerformanceOptimizationSummaryMock,
+}));
+
+vi.mock('../admin-access-coverage', () => ({
+  getAdminAccessCoverage: getAdminAccessCoverageMock,
 }));
 
 describe('artifact health snapshot', () => {
@@ -44,6 +49,15 @@ describe('artifact health snapshot', () => {
     getPerformanceOptimizationSummaryMock.mockResolvedValue(buildPerformanceOptimizationSummary({
       generatedAt: performanceGeneratedAt,
     }));
+    getAdminAccessCoverageMock.mockResolvedValue({
+      available: true,
+      generatedAt: recentIso(1),
+      routeFiles: 39,
+      wrapperFiles: 39,
+      driftCount: 0,
+      coveragePercent: 100,
+      driftedFiles: [],
+    });
   });
 
   it('builds release and nightly artifact health snapshot', async () => {
@@ -82,6 +96,7 @@ describe('artifact health snapshot', () => {
       generatedAt: expect.any(String),
       status: 'healthy',
     });
+    expect(result.adminAccessCoverage).toBeUndefined();
   });
 
   it('builds admin artifact health snapshot with performance ops included', async () => {
@@ -107,14 +122,15 @@ describe('artifact health snapshot', () => {
       nightlyRegression: { available: true, generatedAt: '2026-04-10T07:00:00.000Z', status: 'degraded' },
       nightlyE2E: { available: false, generatedAt: null, status: 'blocked' },
       performanceOps: { available: true, generatedAt: '2026-04-10T06:00:00.000Z', status: 'healthy' },
+      adminAccessCoverage: { available: true, generatedAt: '2026-04-10T05:00:00.000Z', status: 'healthy' },
     });
 
     expect(result).toEqual({
       overall: 'blocked',
-      healthyCount: 2,
+      healthyCount: 3,
       degradedCount: 1,
       blockedCount: 1,
-      total: 4,
+      total: 5,
     });
   });
 });

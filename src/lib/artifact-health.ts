@@ -1,4 +1,5 @@
 import { buildArtifactHealth, classifyOverallOpsStatus, type AdminStatusLevel } from './admin-status';
+import { getAdminAccessCoverage } from './admin-access-coverage';
 import { getPerformanceOptimizationSummary } from './admin-dashboard';
 import { getNightlyOpsSummary } from './nightly-ops-summary';
 import { getReleaseGateSummary } from './release-gate-summary';
@@ -10,6 +11,7 @@ export type ArtifactHealthSnapshot = {
   nightlyRegression: ArtifactHealthEntry;
   nightlyE2E: ArtifactHealthEntry;
   performanceOps?: ArtifactHealthEntry;
+  adminAccessCoverage?: ArtifactHealthEntry;
 };
 
 export type RuntimeArtifactHealthSnapshot = Pick<
@@ -66,7 +68,10 @@ export async function getArtifactHealthSnapshot(options?: {
 }
 
 export async function getAdminArtifactHealthSnapshot(): Promise<AdminArtifactHealthSnapshot> {
-  const performanceOptimization = await getPerformanceOptimizationSummary();
+  const [performanceOptimization, adminAccessCoverage] = await Promise.all([
+    getPerformanceOptimizationSummary(),
+    getAdminAccessCoverage()
+  ]);
   const snapshot = await getArtifactHealthSnapshot({
     includePerformanceOps: true,
     performanceOpsGeneratedAt: performanceOptimization?.generatedAt ?? null
@@ -80,6 +85,11 @@ export async function getAdminArtifactHealthSnapshot(): Promise<AdminArtifactHea
       kind: 'performanceOps',
       available: false,
       generatedAt: null
+    }),
+    adminAccessCoverage: buildArtifactHealth({
+      kind: 'adminAccessCoverage',
+      available: adminAccessCoverage.available,
+      generatedAt: adminAccessCoverage.generatedAt
     })
   };
 }

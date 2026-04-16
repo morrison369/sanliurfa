@@ -207,6 +207,7 @@ export function ArtifactHealthCard({
         <ArtifactItem label="Nightly Regression" entry={artifactHealth.nightlyRegression} />
         <ArtifactItem label="Nightly E2E" entry={artifactHealth.nightlyE2E} />
         <ArtifactItem label="Performance Ops" entry={artifactHealth.performanceOps} />
+        <ArtifactItem label="Admin Access Coverage" entry={artifactHealth.adminAccessCoverage} />
       </div>
     </div>
   );

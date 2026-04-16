@@ -5,6 +5,7 @@ export const ARTIFACT_FRESHNESS_HOURS = {
   nightlyRegression: 36,
   nightlyE2E: 36,
   performanceOps: 24,
+  adminAccessCoverage: 24,
 } as const;
 
 export type ArtifactFreshnessKind = keyof typeof ARTIFACT_FRESHNESS_HOURS;

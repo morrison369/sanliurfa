@@ -30,8 +30,9 @@ export const adminArtifactHealthSnapshotSchema = {
     nightlyRegression: artifactHealthEntrySchema,
     nightlyE2E: artifactHealthEntrySchema,
     performanceOps: artifactHealthEntrySchema,
+    adminAccessCoverage: artifactHealthEntrySchema,
   },
-  required: ['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps'],
+  required: ['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps', 'adminAccessCoverage'],
 };
 
 export const adminArtifactHealthSummarySchema = {
@@ -968,8 +969,11 @@ export const nightlySummarySchema = {
       },
       required: ['recommendations', 'metrics'],
     },
+    adminAccessCoverage: {
+      anyOf: [adminAccessCoverageSchema, { type: 'null' }],
+    },
   },
-  required: ['available', 'kind', 'generatedAt', 'outcome', 'successRatePercent', 'recentOutcomes', 'topFailures', 'performanceOptimization'],
+  required: ['available', 'kind', 'generatedAt', 'outcome', 'successRatePercent', 'recentOutcomes', 'topFailures', 'performanceOptimization', 'adminAccessCoverage'],
 };
 
 export const performanceOptimizationSummarySchema = {
@@ -1069,6 +1073,9 @@ export const releaseGateSummarySchema = {
       },
       required: ['recommendations', 'metrics'],
     },
+    adminAccessCoverage: {
+      anyOf: [adminAccessCoverageSchema, { type: 'null' }],
+    },
     steps: {
       type: 'array',
       items: {
@@ -1083,7 +1090,7 @@ export const releaseGateSummarySchema = {
       },
     },
   },
-  required: ['available', 'generatedAt', 'finalStatus', 'failedStepCount', 'blockingFailedSteps', 'advisoryFailedSteps', 'performanceOptimization', 'steps'],
+  required: ['available', 'generatedAt', 'finalStatus', 'failedStepCount', 'blockingFailedSteps', 'advisoryFailedSteps', 'performanceOptimization', 'adminAccessCoverage', 'steps'],
 };
 
 export const releaseGateSummaryResponseDataSchema = {
