@@ -270,6 +270,105 @@ export const adminVerificationMutationDataSchema = {
   required: ['success', 'message'],
 };
 
+export const adminVendorPendingDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'object',
+      properties: {
+        pending: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: true,
+          },
+        },
+        count: { type: 'integer' },
+      },
+      required: ['pending', 'count'],
+    },
+  },
+  required: ['success', 'data'],
+};
+
+export const loyaltyRewardEntrySchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    reward_name: { type: 'string' },
+    description: { type: ['string', 'null'] },
+    category: { type: 'string' },
+    points_cost: { type: 'integer' },
+    tier_requirement: { type: ['string', 'null'] },
+    is_active: { type: 'boolean' },
+    display_order: { type: ['integer', 'null'] },
+  },
+  required: [
+    'id',
+    'reward_name',
+    'description',
+    'category',
+    'points_cost',
+    'tier_requirement',
+    'is_active',
+    'display_order',
+  ],
+};
+
+export const loyaltyRewardsListDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'array',
+      items: loyaltyRewardEntrySchema,
+    },
+  },
+  required: ['success', 'data'],
+};
+
+export const loyaltyRewardMutationDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: loyaltyRewardEntrySchema,
+  },
+  required: ['success', 'data'],
+};
+
+export const loyaltyAwardMutationDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'object',
+      properties: {
+        userId: { type: 'string' },
+        type: { type: 'string', enum: ['points', 'badge'] },
+        reason: { type: 'string' },
+        awarded: {
+          anyOf: [{ type: 'integer' }, { type: 'string' }],
+        },
+      },
+      required: ['userId', 'type', 'reason', 'awarded'],
+    },
+  },
+  required: ['success', 'data'],
+};
+
+export const badgeAwardMutationDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    badge: {
+      type: 'object',
+      additionalProperties: true,
+    },
+  },
+  required: ['success', 'badge'],
+};
+
 export const adminSubscriptionAnalyticsDataSchema = {
   type: 'object',
   properties: {
@@ -361,6 +460,92 @@ export const adminAnalyticsDataSchema = {
     },
   },
   required: ['success', 'data'],
+};
+
+export const securityGuidelinesDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'object',
+      properties: {
+        guidelines: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: true,
+          },
+        },
+        score: {
+          type: 'object',
+          properties: {
+            score: { type: 'integer' },
+            implemented: { type: 'integer' },
+            total: { type: 'integer' },
+          },
+          required: ['score', 'implemented', 'total'],
+        },
+        timestamp: { type: 'string', format: 'date-time' },
+      },
+      required: ['guidelines', 'score', 'timestamp'],
+    },
+  },
+  required: ['success', 'data'],
+};
+
+export const deploymentBackupConfigSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    enabled: { type: 'boolean' },
+    schedule: { type: 'string' },
+    retention_days: { type: 'integer' },
+    destination: { type: 'string' },
+  },
+  required: ['id', 'enabled', 'schedule', 'retention_days', 'destination'],
+};
+
+export const deploymentBackupListDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'object',
+      properties: {
+        backups: {
+          type: 'array',
+          items: deploymentBackupConfigSchema,
+        },
+        count: { type: 'integer' },
+      },
+      required: ['backups', 'count'],
+    },
+  },
+  required: ['success', 'data'],
+};
+
+export const deploymentBackupMutationDataSchema = {
+  anyOf: [
+    {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        data: deploymentBackupConfigSchema,
+      },
+      required: ['success', 'data'],
+    },
+    {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        data: {
+          type: 'object',
+          additionalProperties: true,
+        },
+      },
+      required: ['success', 'data'],
+    },
+  ],
 };
 
 export const moderationStatsDataSchema = {

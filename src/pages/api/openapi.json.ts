@@ -7,6 +7,7 @@ import {
   adminOpsAuditEntrySchema,
   adminOpsAuditSummarySchema,
   adminAnalyticsDataSchema,
+  adminVendorPendingDataSchema,
   adminStatusSummarySchema,
   adminSubscriptionAnalyticsDataSchema,
   adminUserDetailsResponseDataSchema,
@@ -14,6 +15,9 @@ import {
   adminUsersListDataSchema,
   adminVerificationListDataSchema,
   adminVerificationMutationDataSchema,
+  badgeAwardMutationDataSchema,
+  deploymentBackupListDataSchema,
+  deploymentBackupMutationDataSchema,
   moderationActionMutationDataSchema,
   moderationActionsListDataSchema,
   moderationFlagMutationDataSchema,
@@ -23,6 +27,9 @@ import {
   integrationSettingsResponseSchema,
   integrationSummarySchema,
   integrationVerificationSchema,
+  loyaltyAwardMutationDataSchema,
+  loyaltyRewardMutationDataSchema,
+  loyaltyRewardsListDataSchema,
   moderationReportsListDataSchema,
   moderationReportMutationDataSchema,
   moderationStatsDataSchema,
@@ -32,6 +39,7 @@ import {
   performanceOptimizationSummarySchema,
   releaseGateSummaryResponseDataSchema,
   releaseGateSummarySchema,
+  securityGuidelinesDataSchema,
   subscriptionUsersListDataSchema,
   subscriptionUsersMutationDataSchema,
 } from '../../lib/api-schemas/ops';
@@ -735,6 +743,31 @@ const openApiSpec = {
         },
       },
     },
+    '/api/admin/vendor/pending': {
+      get: {
+        tags: ['Health'],
+        summary: 'List pending vendor verification requests',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Pending vendor verification list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: adminVendorPendingDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
     '/api/admin/verifications': {
       get: {
         tags: ['Health'],
@@ -847,6 +880,287 @@ const openApiSpec = {
           '404': { description: 'Verification request not found' },
           '422': { description: 'Validation error' },
           '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/loyalty/rewards': {
+      get: {
+        tags: ['Health'],
+        summary: 'List loyalty rewards for admin catalog management',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Loyalty rewards catalog',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: loyaltyRewardsListDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+      post: {
+        tags: ['Health'],
+        summary: 'Create loyalty reward',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['reward_name', 'category', 'points_cost'],
+                properties: {
+                  reward_name: { type: 'string' },
+                  description: { type: 'string' },
+                  category: { type: 'string' },
+                  points_cost: { type: 'integer' },
+                  stock_quantity: { type: 'integer' },
+                  tier_requirement: { type: 'string' },
+                  is_active: { type: 'boolean' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Loyalty reward created',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: loyaltyRewardMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/loyalty/award': {
+      post: {
+        tags: ['Health'],
+        summary: 'Award loyalty points or badge manually',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['userId', 'type', 'reason'],
+                properties: {
+                  userId: { type: 'string' },
+                  type: { type: 'string', enum: ['points', 'badge'] },
+                  amount: { type: 'integer' },
+                  badgeKey: { type: 'string' },
+                  reason: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Loyalty award completed',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: loyaltyAwardMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '404': { description: 'User not found' },
+          '409': { description: 'Badge already awarded' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/badges/award': {
+      post: {
+        tags: ['Health'],
+        summary: 'Award badge to place',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['placeId', 'badgeType'],
+                properties: {
+                  placeId: { type: 'string' },
+                  badgeType: { type: 'string' },
+                  reason: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Badge awarded to place',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: badgeAwardMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '404': { description: 'Place or badge not found' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/security/guidelines': {
+      get: {
+        tags: ['Health'],
+        summary: 'Security guidelines and score snapshot',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'category', in: 'query', schema: { type: 'string' } },
+          { name: 'filter', in: 'query', schema: { type: 'string', enum: ['all', 'unimplemented', 'critical'] } },
+        ],
+        responses: {
+          '200': {
+            description: 'Security guidelines snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: securityGuidelinesDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/deployment/backup': {
+      get: {
+        tags: ['Health'],
+        summary: 'List backup configurations',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Backup configuration list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: deploymentBackupListDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+      put: {
+        tags: ['Health'],
+        summary: 'Update backup configuration',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  enabled: { type: 'boolean' },
+                  schedule: { type: 'string', enum: ['hourly', 'daily', 'weekly'] },
+                  retention_days: { type: 'integer' },
+                  destination: { type: 'string', enum: ['local', 's3', 'gcs'] },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Backup configuration updated',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: deploymentBackupMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '400': { description: 'Backup ID required' },
+          '403': { description: 'Admin access required' },
+          '404': { description: 'Backup config not found' },
+          '422': { description: 'Validation error' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+      post: {
+        tags: ['Health'],
+        summary: 'Trigger backup job',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'query', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Backup job triggered',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: deploymentBackupMutationDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '400': { description: 'Backup ID required' },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+          '500': { description: 'Backup failed' },
         },
       },
     },

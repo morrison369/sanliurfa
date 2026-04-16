@@ -8,6 +8,7 @@ import { validateWithSchema } from '../../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { withAdminOpsReadAccess, withAdminOpsWriteAccess } from '../../../../lib/admin-ops-access';
 
 const updateSchema = {
   enabled: { type: 'boolean' as const, required: false },
@@ -23,20 +24,28 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
-      recordRequest('GET', '/api/admin/deployment/backup', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
-
-    const backups = getBackupConfigs();
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/admin/deployment/backup', HttpStatus.OK, duration);
-
-    return apiResponse(
-      { success: true, data: { backups, count: backups.length } },
-      HttpStatus.OK,
-      requestId
+    return await withAdminOpsReadAccess(
+      {
+        request,
+        locals,
+        endpoint: '/api/admin/deployment/backup',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('GET', '/api/admin/deployment/backup', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('GET', '/api/admin/deployment/backup', response.status, duration);
+        },
+      },
+      async () => {
+        const backups = getBackupConfigs();
+        return apiResponse(
+          { success: true, data: { backups, count: backups.length } },
+          HttpStatus.OK,
+          requestId
+        );
+      }
     );
   } catch (error) {
     const duration = Date.now() - startTime;
@@ -53,44 +62,59 @@ export const PUT: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
-      recordRequest('PUT', '/api/admin/deployment/backup', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
+    return await withAdminOpsWriteAccess(
+      {
+        request,
+        locals,
+        endpoint: '/api/admin/deployment/backup',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('PUT', '/api/admin/deployment/backup', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('PUT', '/api/admin/deployment/backup', response.status, duration);
+        },
+      },
+      async () => {
+        const id = url.searchParams.get('id');
+        if (!id) {
+          return apiError(
+            ErrorCode.INVALID_INPUT,
+            'Backup ID required',
+            HttpStatus.BAD_REQUEST,
+            undefined,
+            requestId
+          );
+        }
 
-    const id = url.searchParams.get('id');
+        const body = await request.json();
+        const validation = validateWithSchema(body, updateSchema as any);
+        if (!validation.valid) {
+          return apiError(
+            ErrorCode.VALIDATION_ERROR,
+            'Invalid backup configuration',
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            validation.errors,
+            requestId
+          );
+        }
 
-    if (!id) {
-      recordRequest('PUT', '/api/admin/deployment/backup', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.INVALID_INPUT, 'Backup ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
-    }
+        const result = updateBackupConfig(id, validation.data as any);
+        if (!result) {
+          return apiError(
+            ErrorCode.NOT_FOUND,
+            'Backup config not found',
+            HttpStatus.NOT_FOUND,
+            undefined,
+            requestId
+          );
+        }
 
-    const body = await request.json();
-    const validation = validateWithSchema(body, updateSchema as any);
-
-    if (!validation.valid) {
-      recordRequest('PUT', '/api/admin/deployment/backup', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Invalid backup configuration',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        validation.errors,
-        requestId
-      );
-    }
-
-    const result = updateBackupConfig(id, validation.data as any);
-
-    if (!result) {
-      recordRequest('PUT', '/api/admin/deployment/backup', HttpStatus.NOT_FOUND, Date.now() - startTime);
-      return apiError(ErrorCode.NOT_FOUND, 'Backup config not found', HttpStatus.NOT_FOUND, undefined, requestId);
-    }
-
-    const duration = Date.now() - startTime;
-    recordRequest('PUT', '/api/admin/deployment/backup', HttpStatus.OK, duration);
-    logger.logMutation('update', 'backup_configs', id, locals.user?.id);
-
-    return apiResponse({ success: true, data: result }, HttpStatus.OK, requestId);
+        logger.logMutation('update', 'backup_configs', id, locals.user?.id);
+        return apiResponse({ success: true, data: result }, HttpStatus.OK, requestId);
+      }
+    );
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/admin/deployment/backup', HttpStatus.INTERNAL_SERVER_ERROR, duration);
@@ -106,30 +130,51 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
-      recordRequest('POST', '/api/admin/deployment/backup', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
+    return await withAdminOpsWriteAccess(
+      {
+        request,
+        locals,
+        endpoint: '/api/admin/deployment/backup',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('POST', '/api/admin/deployment/backup', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('POST', '/api/admin/deployment/backup', response.status, duration);
+        },
+      },
+      async () => {
+        const id = url.searchParams.get('id');
+        if (!id) {
+          return apiError(
+            ErrorCode.INVALID_INPUT,
+            'Backup ID required',
+            HttpStatus.BAD_REQUEST,
+            undefined,
+            requestId
+          );
+        }
 
-    const id = url.searchParams.get('id');
+        const result = await simulateBackup(id);
+        if (result.status === 'failed') {
+          return apiError(
+            ErrorCode.INTERNAL_ERROR,
+            result.error || 'Backup failed',
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            undefined,
+            requestId
+          );
+        }
 
-    if (!id) {
-      recordRequest('POST', '/api/admin/deployment/backup', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.INVALID_INPUT, 'Backup ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
-    }
-
-    const result = await simulateBackup(id);
-
-    if (result.status === 'failed') {
-      recordRequest('POST', '/api/admin/deployment/backup', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
-      return apiError(ErrorCode.INTERNAL_ERROR, result.error || 'Backup failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
-    }
-
-    const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/admin/deployment/backup', HttpStatus.OK, duration);
-    logger.info('Backup triggered', { backupId: id, size: result.size_bytes, duration: result.duration_seconds });
-
-    return apiResponse({ success: true, data: result }, HttpStatus.OK, requestId);
+        logger.info('Backup triggered', {
+          backupId: id,
+          size: result.size_bytes,
+          duration: result.duration_seconds,
+        });
+        return apiResponse({ success: true, data: result }, HttpStatus.OK, requestId);
+      }
+    );
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/deployment/backup', HttpStatus.INTERNAL_SERVER_ERROR, duration);

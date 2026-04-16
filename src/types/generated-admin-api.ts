@@ -193,6 +193,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/badges/award": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Award badge to place */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        badgeType: string;
+                        placeId: string;
+                        reason?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Badge awarded to place */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                badge: {
+                                    [key: string]: unknown;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Place or badge not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation error */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/dashboard/overview": {
         parameters: {
             query?: never;
@@ -439,6 +518,220 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/deployment/backup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List backup configurations */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Backup configuration list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    backups: {
+                                        destination: string;
+                                        enabled: boolean;
+                                        id: string;
+                                        retention_days: number;
+                                        schedule: string;
+                                    }[];
+                                    count: number;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Update backup configuration */
+        put: {
+            parameters: {
+                query: {
+                    id: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        destination?: "local" | "s3" | "gcs";
+                        enabled?: boolean;
+                        retention_days?: number;
+                        /** @enum {string} */
+                        schedule?: "hourly" | "daily" | "weekly";
+                    };
+                };
+            };
+            responses: {
+                /** @description Backup configuration updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    destination: string;
+                                    enabled: boolean;
+                                    id: string;
+                                    retention_days: number;
+                                    schedule: string;
+                                };
+                                success: boolean;
+                            } | {
+                                data: {
+                                    [key: string]: unknown;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Backup ID required */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Backup config not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation error */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Trigger backup job */
+        post: {
+            parameters: {
+                query: {
+                    id: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Backup job triggered */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    destination: string;
+                                    enabled: boolean;
+                                    id: string;
+                                    retention_days: number;
+                                    schedule: string;
+                                };
+                                success: boolean;
+                            } | {
+                                data: {
+                                    [key: string]: unknown;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Backup ID required */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Backup failed */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/deployment/status": {
         parameters: {
             query?: never;
@@ -546,6 +839,230 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/loyalty/award": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Award loyalty points or badge manually */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        amount?: number;
+                        badgeKey?: string;
+                        reason: string;
+                        /** @enum {string} */
+                        type: "points" | "badge";
+                        userId: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Loyalty award completed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    awarded: number | string;
+                                    reason: string;
+                                    /** @enum {string} */
+                                    type: "points" | "badge";
+                                    userId: string;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description User not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Badge already awarded */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation error */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/loyalty/rewards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List loyalty rewards for admin catalog management */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Loyalty rewards catalog */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    category: string;
+                                    description: string | null;
+                                    display_order: number | null;
+                                    id: string;
+                                    is_active: boolean;
+                                    points_cost: number;
+                                    reward_name: string;
+                                    tier_requirement: string | null;
+                                }[];
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Create loyalty reward */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        category: string;
+                        description?: string;
+                        is_active?: boolean;
+                        points_cost: number;
+                        reward_name: string;
+                        stock_quantity?: number;
+                        tier_requirement?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Loyalty reward created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    category: string;
+                                    description: string | null;
+                                    display_order: number | null;
+                                    id: string;
+                                    is_active: boolean;
+                                    points_cost: number;
+                                    reward_name: string;
+                                    tier_requirement: string | null;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Validation error */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1357,6 +1874,75 @@ export interface paths {
                 };
                 /** @description Admin access required */
                 403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/security/guidelines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Security guidelines and score snapshot */
+        get: {
+            parameters: {
+                query?: {
+                    category?: string;
+                    filter?: "all" | "unimplemented" | "critical";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Security guidelines snapshot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    guidelines: {
+                                        [key: string]: unknown;
+                                    }[];
+                                    score: {
+                                        implemented: number;
+                                        score: number;
+                                        total: number;
+                                    };
+                                    /** Format: date-time */
+                                    timestamp: string;
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -2375,6 +2961,66 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/vendor/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List pending vendor verification requests */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Pending vendor verification list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    count: number;
+                                    pending: {
+                                        [key: string]: unknown;
+                                    }[];
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;

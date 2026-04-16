@@ -13,6 +13,7 @@ import {
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { withAdminOpsReadAccess } from '../../../../lib/admin-ops-access';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
   const requestId = getRequestId({ request } as any);
@@ -20,43 +21,52 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
-      recordRequest('GET', '/api/admin/security/guidelines', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
-    }
-
-    const category = url.searchParams.get('category');
-    const filter = url.searchParams.get('filter'); // 'all', 'unimplemented', 'critical'
-
-    let data;
-
-    if (filter === 'unimplemented') {
-      data = getUnimplementedGuidelines();
-    } else if (filter === 'critical') {
-      data = getCriticalItems();
-    } else if (category) {
-      data = getGuidelinesByCategory(category);
-    } else {
-      data = getAllGuidelines();
-    }
-
-    const score = calculateSecurityScore();
-
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/admin/security/guidelines', HttpStatus.OK, duration);
-    logger.info('Security guidelines retrieved', { filter, category, score: score.score });
-
-    return apiResponse(
+    return await withAdminOpsReadAccess(
       {
-        success: true,
-        data: {
-          guidelines: data,
-          score,
-          timestamp: new Date().toISOString()
-        }
+        request,
+        locals,
+        endpoint: '/api/admin/security/guidelines',
+        requestId,
+        startTime,
+        onDenied: (_response, statusCode, duration) => {
+          recordRequest('GET', '/api/admin/security/guidelines', statusCode, duration);
+        },
+        onSuccess: (response, duration) => {
+          recordRequest('GET', '/api/admin/security/guidelines', response.status, duration);
+        },
       },
-      HttpStatus.OK,
-      requestId
+      async () => {
+        const category = url.searchParams.get('category');
+        const filter = url.searchParams.get('filter');
+
+        let data;
+
+        if (filter === 'unimplemented') {
+          data = getUnimplementedGuidelines();
+        } else if (filter === 'critical') {
+          data = getCriticalItems();
+        } else if (category) {
+          data = getGuidelinesByCategory(category);
+        } else {
+          data = getAllGuidelines();
+        }
+
+        const score = calculateSecurityScore();
+        logger.info('Security guidelines retrieved', { filter, category, score: score.score });
+
+        return apiResponse(
+          {
+            success: true,
+            data: {
+              guidelines: data,
+              score,
+              timestamp: new Date().toISOString(),
+            },
+          },
+          HttpStatus.OK,
+          requestId
+        );
+      }
     );
   } catch (error) {
     const duration = Date.now() - startTime;
