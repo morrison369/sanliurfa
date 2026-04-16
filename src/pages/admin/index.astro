@@ -11,10 +11,9 @@ import {
   buildAdminIndexToolCards,
 } from '../../lib/admin-index';
 import {
-  formatAdminIndexGeneratedAt,
-  getAdminIndexRiskCardClass,
-  getAdminIndexStatusBadgeClass,
-} from '../../lib/admin-index-page';
+  buildAdminIndexRiskCardViews,
+  buildAdminIndexToolCardViews,
+} from '../../lib/admin-index-view';
 import {
   buildArtifactHealth,
   classifyNightlyStatus,
@@ -85,6 +84,8 @@ const toolCards = buildAdminIndexToolCards({
   pending: stats.pending,
   messages: stats.messages,
 });
+const riskCardViews = buildAdminIndexRiskCardViews(riskCards);
+const toolCardViews = buildAdminIndexToolCardViews(toolCards);
 
 const seo = { title: 'Admin Panel - Şanlıurfa.com' };
 ---
@@ -119,24 +120,24 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
           <p class="text-sm text-gray-600 dark:text-gray-400">Bloke veya bozulmuş sinyaller üstte gösterilir.</p>
         </div>
         <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {riskCards.map((card) => {
+          {riskCardViews.map((card) => {
             const Icon = card.icon;
             return (
-            <a href={card.href} class:list={['rounded-xl p-6 transition-shadow', getAdminIndexRiskCardClass(card.status)]}>
+            <a href={card.href} class:list={['rounded-xl p-6 transition-shadow', card.cardClassName]}>
               <div class="flex items-center justify-between gap-3">
                 <div class="flex items-center gap-2 min-w-0">
                   <Icon class="w-4 h-4 shrink-0 text-gray-500 dark:text-gray-300" />
                   <h3 class="font-semibold text-gray-900 dark:text-white truncate">{card.title}</h3>
                 </div>
-                <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getAdminIndexStatusBadgeClass(card.status)]}>
+                <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', card.badgeClassName]}>
                   {card.status}
                 </span>
               </div>
               <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{card.summary}</p>
               <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">{card.detail}</p>
-              <p class="text-gray-700 dark:text-gray-300 text-xs mt-2 font-medium">{card.action[card.status]}</p>
+              <p class="text-gray-700 dark:text-gray-300 text-xs mt-2 font-medium">{card.actionText}</p>
               <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
-                Son üretim: {formatAdminIndexGeneratedAt(card.generatedAt)}
+                Son üretim: {card.generatedAtLabel}
               </p>
             </a>
           )})}
@@ -149,7 +150,7 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
           <p class="text-sm text-gray-600 dark:text-gray-400">Operasyon dışı içerik ve yönetim yüzeyleri.</p>
         </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {toolCards.map((card) => {
+          {toolCardViews.map((card) => {
             const Icon = card.icon;
             return (
               <a href={card.href} class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
