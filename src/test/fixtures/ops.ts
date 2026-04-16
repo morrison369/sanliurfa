@@ -38,6 +38,15 @@ export function buildReleaseGateSummary(overrides: Partial<any> = {}) {
       recommendations: { total: 4, highPriority: 2, mediumPriority: 2 },
       metrics: { slowRequestRate: 14, cacheHitRate: 42 },
     },
+    adminAccessCoverage: {
+      available: true,
+      generatedAt: '2026-04-10T00:00:00.000Z',
+      routeFiles: 39,
+      wrapperFiles: 39,
+      driftCount: 0,
+      coveragePercent: 100,
+      driftedFiles: [],
+    },
     steps: [
       {
         step: 'TypeScript app gate',
@@ -62,6 +71,15 @@ export function buildNightlySummary(kind: 'regression' | 'e2e', overrides: Parti
     performanceOptimization: {
       recommendations: { total: kind === 'regression' ? 4 : 3, highPriority: kind === 'regression' ? 2 : 1, mediumPriority: 2 },
       metrics: { slowRequestRate: kind === 'regression' ? 14 : 9, cacheHitRate: kind === 'regression' ? 42 : 48 },
+    },
+    adminAccessCoverage: {
+      available: true,
+      generatedAt: kind === 'regression' ? '2026-04-10T01:00:00.000Z' : '2026-04-10T02:00:00.000Z',
+      routeFiles: 39,
+      wrapperFiles: 39,
+      driftCount: 0,
+      coveragePercent: 100,
+      driftedFiles: [],
     },
     ...overrides,
   };

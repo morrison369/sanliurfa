@@ -269,6 +269,9 @@ export function ReleaseGateCard({
       <div className="text-xs text-gray-500 mt-2">
         Perf: {releaseGate.performanceOptimization?.recommendations.total ?? 'yok'} öneri • Slow request %{releaseGate.performanceOptimization?.metrics.slowRequestRate ?? 'yok'} • Cache %{releaseGate.performanceOptimization?.metrics.cacheHitRate ?? 'yok'}
       </div>
+      <div className="text-xs text-gray-500 mt-2">
+        Access coverage: %{releaseGate.adminAccessCoverage?.coveragePercent ?? 'yok'} • Drift {releaseGate.adminAccessCoverage?.driftCount ?? 'yok'}
+      </div>
       {releaseGate.steps && releaseGate.steps.length > 0 && (
         <details className="mt-4">
           <summary className="cursor-pointer text-sm font-medium text-gray-700">
@@ -357,6 +360,9 @@ function NightlyItem({
       <div className="text-xs text-gray-500 mt-2">Failure: {summary.topFailures[0] || 'yok'}</div>
       <div className="text-xs text-gray-500 mt-2">
         Perf: {summary.performanceOptimization?.recommendations.total ?? 'yok'} öneri • Slow request %{summary.performanceOptimization?.metrics.slowRequestRate ?? 'yok'}
+      </div>
+      <div className="text-xs text-gray-500 mt-2">
+        Access coverage: %{summary.adminAccessCoverage?.coveragePercent ?? 'yok'} • Drift {summary.adminAccessCoverage?.driftCount ?? 'yok'}
       </div>
     </div>
   );

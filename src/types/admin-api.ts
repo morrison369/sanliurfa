@@ -128,6 +128,15 @@ export interface ReleaseGateSummary {
     recommendations: { total: number; highPriority: number; mediumPriority: number };
     metrics: { slowRequestRate: number; cacheHitRate: number };
   } | null;
+  adminAccessCoverage?: {
+    available: boolean;
+    generatedAt: string | null;
+    routeFiles: number;
+    wrapperFiles: number;
+    driftCount: number;
+    coveragePercent: number;
+    driftedFiles: string[];
+  } | null;
 }
 
 export interface NightlySummary {
@@ -141,6 +150,15 @@ export interface NightlySummary {
   performanceOptimization?: {
     recommendations: { total: number; highPriority: number; mediumPriority: number };
     metrics: { slowRequestRate: number; cacheHitRate: number };
+  } | null;
+  adminAccessCoverage?: {
+    available: boolean;
+    generatedAt: string | null;
+    routeFiles: number;
+    wrapperFiles: number;
+    driftCount: number;
+    coveragePercent: number;
+    driftedFiles: string[];
   } | null;
 }
 

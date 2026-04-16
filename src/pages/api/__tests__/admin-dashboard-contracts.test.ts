@@ -202,11 +202,15 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.integrations.verification.resend.status).toBe('verified');
     expect(body.data.data.releaseGate.finalStatus).toBe('passed');
     expect(body.data.data.releaseGate.failedStepCount).toBe(0);
+    expect(body.data.data.releaseGate.adminAccessCoverage.coveragePercent).toBe(100);
+    expect(body.data.data.releaseGate.adminAccessCoverage.driftCount).toBe(0);
     expect(body.data.data.releaseGate.performanceOptimization.recommendations.total).toBe(4);
     expect(body.data.data.releaseGate.steps[0].step).toBe('TypeScript app gate');
     expect(body.data.data.nightly.regression.successRatePercent).toBe(86);
+    expect(body.data.data.nightly.regression.adminAccessCoverage.coveragePercent).toBe(100);
     expect(body.data.data.nightly.regression.performanceOptimization.metrics.slowRequestRate).toBe(14);
     expect(body.data.data.nightly.e2e.outcome).toBe('failure');
+    expect(body.data.data.nightly.e2e.adminAccessCoverage.driftCount).toBe(0);
     expect(body.data.data.nightly.e2e.performanceOptimization.recommendations.total).toBe(3);
     expect(body.data.data.statusSummary.overall).toBe('degraded');
     expect(body.data.data.operational.oauth.callback.sampleSize).toBe(12);
@@ -242,7 +246,9 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.pendingWork.flagCount).toBe(3);
     expect(body.data.data.health.integrations.summary.configuredCount).toBe(1);
     expect(body.data.data.nightly.regression.successRatePercent).toBe(86);
+    expect(body.data.data.nightly.regression.adminAccessCoverage.coveragePercent).toBe(100);
     expect(body.data.data.releaseGate.finalStatus).toBe('passed');
+    expect(body.data.data.releaseGate.adminAccessCoverage.coveragePercent).toBe(100);
     expect(body.data.data.statusSummary.integrations).toBe('degraded');
     expect(body.data.data.statusSummary.regression).toBe('healthy');
     expect(body.data.data.statusSummary.e2e).toBe('degraded');
