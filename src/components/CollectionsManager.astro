@@ -1,0 +1,21 @@
+---
+interface Props {
+  userId: string;
+}
+
+const { userId } = Astro.props;
+---
+
+<div data-collections-manager data-user-id={userId}>
+  <div data-collections-manager-content>
+    <div class="py-12 text-center text-gray-600 dark:text-gray-400">
+      Koleksiyonlar yükleniyor...
+    </div>
+  </div>
+</div>
+
+<script>
+  import { initCollectionsManager } from '../scripts/collections-manager';
+
+  initCollectionsManager();
+</script>
