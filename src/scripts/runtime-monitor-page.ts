@@ -14,6 +14,7 @@ import {
   runtimeMonitorBadgeStyles,
   type RuntimeMonitorEndpoint,
 } from '../lib/runtime-monitor';
+import { setLinkHref, setTextContent, setElementClassName } from '../lib/admin-dom';
 
 const STORAGE_KEY = 'runtime-monitor-history-v1';
 const history: RuntimeHistoryEntry[] = [];
@@ -45,16 +46,8 @@ function setBadge(badgeId: string, status: RuntimeStatus) {
   badge.textContent = status;
 }
 
-function setLink(id: string, href: string) {
-  const link = document.getElementById(id) as HTMLAnchorElement | null;
-  if (!link) return;
-  link.href = href;
-}
-
 function setSummaryTone(id: string, status: RuntimeStatus) {
-  const element = document.getElementById(id);
-  if (!element) return;
-  element.className = buildRuntimeMonitorSummaryTone(status);
+  setElementClassName(id, buildRuntimeMonitorSummaryTone(status));
 }
 
 async function loadEndpoint(endpoint: RuntimeEndpoint) {
@@ -64,23 +57,23 @@ async function loadEndpoint(endpoint: RuntimeEndpoint) {
 
   try {
     const payload = await endpoint.load();
-    output.textContent = formatPayload(payload);
+    setTextContent(endpoint.outputId, formatPayload(payload));
     const status = endpoint.pickStatus(payload);
     if (summary && endpoint.summarize) {
-      summary.textContent = endpoint.summarize(payload);
+      setTextContent(endpoint.summaryId!, endpoint.summarize(payload));
     }
     if (endpoint.key === 'admin-access-coverage') {
       setSummaryTone('admin-access-coverage-summary', status);
       const links = applyRuntimeMonitorCoverageLinks();
-      setLink('runtime-admin-access-coverage-download-json', links.json);
-      setLink('runtime-admin-access-coverage-download-md', links.markdown);
+      setLinkHref('runtime-admin-access-coverage-download-json', links.json);
+      setLinkHref('runtime-admin-access-coverage-download-md', links.markdown);
     }
     setBadge(endpoint.badgeId, status);
     return { key: endpoint.key, status };
   } catch (error) {
-    output.textContent = formatPayload({ error: error instanceof Error ? error.message : String(error) });
+    setTextContent(endpoint.outputId, formatPayload({ error: error instanceof Error ? error.message : String(error) }));
     if (summary) {
-      summary.textContent = error instanceof Error ? error.message : String(error);
+      setTextContent(endpoint.summaryId!, error instanceof Error ? error.message : String(error));
     }
     if (endpoint.key === 'admin-access-coverage') {
       setSummaryTone('admin-access-coverage-summary', 'blocked');
@@ -95,7 +88,7 @@ async function refreshRuntimeMonitor() {
   const trendLine = document.getElementById('runtime-monitor-trend');
   const lastRefresh = document.getElementById('runtime-monitor-last-refresh');
   const deltaLine = document.getElementById('runtime-monitor-delta');
-  if (statusLine) statusLine.textContent = 'Veriler yenileniyor.';
+  if (statusLine) setTextContent('runtime-monitor-status', 'Veriler yenileniyor.');
 
   const results = await Promise.all(endpoints.map(loadEndpoint));
   const blockedCount = results.filter((item) => item.status === 'blocked').length;
@@ -107,14 +100,17 @@ async function refreshRuntimeMonitor() {
   const previous = history[1];
 
   if (statusLine) {
-    statusLine.textContent = `Genel durum: ${overall}. Healthy: ${results.filter((item) => item.status === 'healthy').length}, degraded: ${degradedCount}, blocked: ${blockedCount}.`;
+    setTextContent(
+      'runtime-monitor-status',
+      `Genel durum: ${overall}. Healthy: ${results.filter((item) => item.status === 'healthy').length}, degraded: ${degradedCount}, blocked: ${blockedCount}.`
+    );
   }
-  if (lastRefresh) lastRefresh.textContent = refreshedAt;
+  if (lastRefresh) setTextContent('runtime-monitor-last-refresh', refreshedAt);
   if (trendLine) {
-    trendLine.textContent = buildRuntimeTrend(history);
+    setTextContent('runtime-monitor-trend', buildRuntimeTrend(history));
   }
   if (deltaLine) {
-    deltaLine.textContent = buildRuntimeDelta(previous, history[0]!, history);
+    setTextContent('runtime-monitor-delta', buildRuntimeDelta(previous, history[0]!, history));
   }
 }
 
@@ -125,11 +121,11 @@ export function initRuntimeMonitorPage() {
   loadHistory();
   const trendLine = document.getElementById('runtime-monitor-trend');
   if (trendLine && history.length > 0) {
-    trendLine.textContent = buildRuntimeTrend(history);
+    setTextContent('runtime-monitor-trend', buildRuntimeTrend(history));
   }
   const deltaLine = document.getElementById('runtime-monitor-delta');
   if (deltaLine && history.length > 1) {
-    deltaLine.textContent = buildRuntimeDelta(history[1], history[0], history);
+    setTextContent('runtime-monitor-delta', buildRuntimeDelta(history[1], history[0], history));
   }
   void refreshRuntimeMonitor();
   window.setInterval(() => {
