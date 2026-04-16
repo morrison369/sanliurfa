@@ -15,10 +15,10 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `162`
-- `.tsx`: `93`
-- `client:*` hydration noktası: `34`
-- current generated risk split: `0 low / 18 medium / 16 high`
+- `.astro`: `163`
+- `.tsx`: `92`
+- `client:*` hydration noktası: `33`
+- current generated risk split: `0 low / 17 medium / 16 high`
 
 İlk hedefler:
 
@@ -70,6 +70,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/RewardsCatalog.tsx` -> `src/components/RewardsCatalog.astro`
 - `src/components/NotificationPreferencesManager.tsx` -> `src/components/NotificationPreferencesManager.astro`
 - `src/components/NotificationCenter.tsx` -> `src/components/NotificationCenter.astro`
+- `src/components/NotificationsCenter.tsx` -> `src/components/NotificationsCenter.astro`
 - `src/components/SubscriptionManager.tsx` -> `src/components/SubscriptionManager.astro`
 - `src/components/MyActivityLog.tsx` -> `src/components/MyActivityLog.astro`
 - `src/components/UserSuggestionsPanel.tsx` -> `src/components/UserSuggestionsPanel.astro`
@@ -94,7 +95,8 @@ Bu dalga ile:
 - `src/pages/kullanıcılar.astro` içindeki `UserSearchResults` artık React island değil
 - `src/pages/sosyal/index.astro` içindeki `HashtagExplorer` artık React island değil
 - `src/pages/koleksiyonlar/index.astro` içindeki `CollectionsManager` artık React island değil
-- toplam `client:*` sayısı `55 -> 34` düştü
+- `src/pages/bildirimler/index.astro` içindeki `NotificationsCenter` artık React island değil
+- toplam `client:*` sayısı `55 -> 33` düştü
 
 ### Önceki Düşük Risk Adayları
 
