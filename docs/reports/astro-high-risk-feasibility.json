@@ -1,0 +1,265 @@
+{
+  "generatedAt": "2026-04-16T23:36:17.049Z",
+  "totalHighRiskComponents": 15,
+  "firstCount": 1,
+  "laterCount": 3,
+  "lastCount": 11,
+  "entries": [
+    {
+      "componentName": "AdminDashboardOverview",
+      "componentPath": "src/components/AdminDashboardOverview.tsx",
+      "pagePaths": [
+        "src/pages/admin/dashboard.astro"
+      ],
+      "usageCount": 1,
+      "lines": 78,
+      "useStateCount": 2,
+      "useEffectCount": 0,
+      "fetchCount": 0,
+      "typedClientCount": 0,
+      "adminSurface": true,
+      "complexityScore": 28,
+      "migrationPriority": "first",
+      "recommendation": "AdminDashboardOverview yüksek riskte olsa da sınırlı yüzey taşıyor; ilk yüksek-risk deneme adayı."
+    },
+    {
+      "componentName": "AnalyticsPanel",
+      "componentPath": "src/components/AnalyticsPanel.tsx",
+      "pagePaths": [
+        "src/pages/admin/analytics.astro"
+      ],
+      "usageCount": 1,
+      "lines": 90,
+      "useStateCount": 3,
+      "useEffectCount": 2,
+      "fetchCount": 1,
+      "typedClientCount": 0,
+      "adminSurface": true,
+      "complexityScore": 48,
+      "migrationPriority": "later",
+      "recommendation": "AnalyticsPanel taşınabilir ama önce daha dar yüzeyli adaylar bitmeli."
+    },
+    {
+      "componentName": "AdminAnalyticsDashboard",
+      "componentPath": "src/components/AdminAnalyticsDashboard.tsx",
+      "pagePaths": [
+        "src/pages/admin/analytics.astro"
+      ],
+      "usageCount": 1,
+      "lines": 154,
+      "useStateCount": 5,
+      "useEffectCount": 2,
+      "fetchCount": 0,
+      "typedClientCount": 2,
+      "adminSurface": true,
+      "complexityScore": 51,
+      "migrationPriority": "later",
+      "recommendation": "AdminAnalyticsDashboard taşınabilir ama önce daha dar yüzeyli adaylar bitmeli."
+    },
+    {
+      "componentName": "AdminManager",
+      "componentPath": "src/components/admin/AdminManager.tsx",
+      "pagePaths": [
+        "src/pages/admin/manage.astro"
+      ],
+      "usageCount": 1,
+      "lines": 176,
+      "useStateCount": 5,
+      "useEffectCount": 0,
+      "fetchCount": 0,
+      "typedClientCount": 0,
+      "adminSurface": true,
+      "complexityScore": 52,
+      "migrationPriority": "later",
+      "recommendation": "AdminManager taşınabilir ama önce daha dar yüzeyli adaylar bitmeli."
+    },
+    {
+      "componentName": "WebhookAnalyticsDashboard",
+      "componentPath": "src/components/WebhookAnalyticsDashboard.tsx",
+      "pagePaths": [
+        "src/pages/webhooks.astro"
+      ],
+      "usageCount": 1,
+      "lines": 211,
+      "useStateCount": 5,
+      "useEffectCount": 2,
+      "fetchCount": 1,
+      "typedClientCount": 0,
+      "adminSurface": false,
+      "complexityScore": 57,
+      "migrationPriority": "last",
+      "recommendation": "WebhookAnalyticsDashboard yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
+    },
+    {
+      "componentName": "LiveAnalyticsDashboard",
+      "componentPath": "src/components/LiveAnalyticsDashboard.tsx",
+      "pagePaths": [
+        "src/pages/canli-analitik/index.astro"
+      ],
+      "usageCount": 1,
+      "lines": 270,
+      "useStateCount": 5,
+      "useEffectCount": 2,
+      "fetchCount": 0,
+      "typedClientCount": 0,
+      "adminSurface": false,
+      "complexityScore": 58,
+      "migrationPriority": "last",
+      "recommendation": "LiveAnalyticsDashboard yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
+    },
+    {
+      "componentName": "ModerationQueueManager",
+      "componentPath": "src/components/ModerationQueueManager.tsx",
+      "pagePaths": [
+        "src/pages/admin/dashboard.astro"
+      ],
+      "usageCount": 1,
+      "lines": 182,
+      "useStateCount": 6,
+      "useEffectCount": 2,
+      "fetchCount": 0,
+      "typedClientCount": 2,
+      "adminSurface": true,
+      "complexityScore": 59,
+      "migrationPriority": "last",
+      "recommendation": "ModerationQueueManager yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
+    },
+    {
+      "componentName": "SubscriptionAdminDashboard",
+      "componentPath": "src/components/SubscriptionAdminDashboard.tsx",
+      "pagePaths": [
+        "src/pages/admin/subscriptions.astro"
+      ],
+      "usageCount": 1,
+      "lines": 227,
+      "useStateCount": 5,
+      "useEffectCount": 2,
+      "fetchCount": 0,
+      "typedClientCount": 2,
+      "adminSurface": true,
+      "complexityScore": 61,
+      "migrationPriority": "last",
+      "recommendation": "SubscriptionAdminDashboard yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
+    },
+    {
+      "componentName": "AdminVerificationQueue",
+      "componentPath": "src/components/AdminVerificationQueue.tsx",
+      "pagePaths": [
+        "src/pages/admin/verifications.astro"
+      ],
+      "usageCount": 1,
+      "lines": 189,
+      "useStateCount": 7,
+      "useEffectCount": 2,
+      "fetchCount": 0,
+      "typedClientCount": 2,
+      "adminSurface": true,
+      "complexityScore": 62,
+      "migrationPriority": "last",
+      "recommendation": "AdminVerificationQueue yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
+    },
+    {
+      "componentName": "OLAPExplorer",
+      "componentPath": "src/components/OLAPExplorer.tsx",
+      "pagePaths": [
+        "src/pages/veri-ambarı/index.astro"
+      ],
+      "usageCount": 1,
+      "lines": 172,
+      "useStateCount": 9,
+      "useEffectCount": 2,
+      "fetchCount": 2,
+      "typedClientCount": 0,
+      "adminSurface": false,
+      "complexityScore": 68,
+      "migrationPriority": "last",
+      "recommendation": "OLAPExplorer yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
+    },
+    {
+      "componentName": "AdminPerformanceDashboard",
+      "componentPath": "src/components/AdminPerformanceDashboard.tsx",
+      "pagePaths": [
+        "src/pages/admin/analytics.astro"
+      ],
+      "usageCount": 1,
+      "lines": 208,
+      "useStateCount": 5,
+      "useEffectCount": 2,
+      "fetchCount": 2,
+      "typedClientCount": 0,
+      "adminSurface": true,
+      "complexityScore": 73,
+      "migrationPriority": "last",
+      "recommendation": "AdminPerformanceDashboard yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
+    },
+    {
+      "componentName": "MessagingInbox",
+      "componentPath": "src/components/MessagingInbox.tsx",
+      "pagePaths": [
+        "src/pages/mesajlar/index.astro"
+      ],
+      "usageCount": 1,
+      "lines": 115,
+      "useStateCount": 6,
+      "useEffectCount": 3,
+      "fetchCount": 7,
+      "typedClientCount": 0,
+      "adminSurface": false,
+      "complexityScore": 73,
+      "migrationPriority": "last",
+      "recommendation": "MessagingInbox yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
+    },
+    {
+      "componentName": "WebhookManager",
+      "componentPath": "src/components/WebhookManager.tsx",
+      "pagePaths": [
+        "src/pages/webhooks.astro"
+      ],
+      "usageCount": 1,
+      "lines": 250,
+      "useStateCount": 6,
+      "useEffectCount": 2,
+      "fetchCount": 3,
+      "typedClientCount": 0,
+      "adminSurface": false,
+      "complexityScore": 73,
+      "migrationPriority": "last",
+      "recommendation": "WebhookManager yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
+    },
+    {
+      "componentName": "ActivityFeed",
+      "componentPath": "src/components/ActivityFeed.tsx",
+      "pagePaths": [
+        "src/pages/akis.astro",
+        "src/pages/sosyal/index.astro"
+      ],
+      "usageCount": 2,
+      "lines": 264,
+      "useStateCount": 7,
+      "useEffectCount": 2,
+      "fetchCount": 1,
+      "typedClientCount": 0,
+      "adminSurface": false,
+      "complexityScore": 83,
+      "migrationPriority": "last",
+      "recommendation": "ActivityFeed yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
+    },
+    {
+      "componentName": "ModerationDashboard",
+      "componentPath": "src/components/ModerationDashboard.tsx",
+      "pagePaths": [
+        "src/pages/admin/moderation.astro"
+      ],
+      "usageCount": 1,
+      "lines": 336,
+      "useStateCount": 9,
+      "useEffectCount": 2,
+      "fetchCount": 0,
+      "typedClientCount": 4,
+      "adminSurface": true,
+      "complexityScore": 84,
+      "migrationPriority": "last",
+      "recommendation": "ModerationDashboard yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
+    }
+  ]
+}

@@ -31,6 +31,7 @@ Framework direction:
 - Default to Astro-first for new pages and new UI surfaces.
 - Do not assume the repo is already Astro-only; check `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md` before proposing React removal or large migration work.
 - Before choosing the next Astro migration batch, refresh `docs/reports/astro-hydration-inventory.md` with `npm run astro:migration:inventory` and use that risk split instead of guessing.
+- If `medium=0`, rank the remaining `high` bucket with `npm run astro:migration:high-risk` before choosing the next panel.
 
 ## Quick Start Commands
 
@@ -59,6 +60,7 @@ Framework direction:
 - `npm run branch:protection:drift:check` — Required checks / docs parity
 - `npm run ops:retention:apply` — Local artifact and audit retention cleanup
 - `npm run astro:migration:inventory` — Current Astro hydration inventory and risk split
+- `npm run astro:migration:high-risk` — Ranked feasibility report for remaining high-risk hydration surfaces
 - `npm run phase:scripts:report` — Phase compatibility status
 - `npm run phase:compat:cleanup` — Cleanup compatibility manifest state
 

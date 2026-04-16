@@ -18,6 +18,7 @@ Bu belge, `Şanlıurfa.com` kod tabanının mevcut Astro + React island mimarisi
 - `.astro` dosyalarında `client:*` hydration kullanımı: `16`
 - `astro.config.mjs` içinde aktif React entegrasyonu: `@astrojs/react`
 - generated inventory: `docs/reports/astro-hydration-inventory.md` (`0 low / 0 medium / 16 high`)
+- high-risk feasibility report: `docs/reports/astro-high-risk-feasibility.md` (`1 first / 3 later / 11 last`)
 
 Mevcut yapı:
 
@@ -137,6 +138,16 @@ Bu yüzeyleri Astro-only yapmak mümkündür, ama maliyeti yüksektir. Kısa vad
 - `src/pages/canli-analitik/index.astro`
 
 Bu liste, migration sıralamasında öncelik değil; maliyet haritasıdır.
+
+## Güncel Yüksek Risk Sırası
+
+`docs/reports/astro-high-risk-feasibility.md` çıktısına göre:
+
+- ilk yüksek-risk aday: `AdminDashboardOverview`
+- ikinci dalga adayları: `AnalyticsPanel`, `AdminAnalyticsDashboard`, `AdminManager`
+- son dalga adayları: `AdminVerificationQueue`, `ModerationQueueManager`, `ModerationDashboard`, `MessagingInbox`, `WebhookManager`, `ActivityFeed`, `OLAPExplorer`, `LiveAnalyticsDashboard`, `SubscriptionAdminDashboard`, `AdminPerformanceDashboard`, `WebhookAnalyticsDashboard`
+
+Bu sonuç önemli çünkü artık `medium` bucket yok. Bundan sonraki yanlış seçim doğrudan pahalı rewrite anlamına gelir.
 
 ## Kısa Vadede Yapılmaması Gerekenler
 

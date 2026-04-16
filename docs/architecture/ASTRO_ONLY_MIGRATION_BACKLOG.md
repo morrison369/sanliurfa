@@ -19,6 +19,7 @@ Güncel ölçüm:
 - `.tsx`: `76`
 - `client:*` hydration noktası: `16`
 - current generated risk split: `0 low / 0 medium / 16 high`
+- current high-risk feasibility split: `1 first / 3 later / 11 last`
 
 İlk hedefler:
 
@@ -229,6 +230,17 @@ Her yüzey için:
 - business risk
 
 ayrı yazılmalı.
+
+### Güncel Sıralama
+
+`docs/reports/astro-high-risk-feasibility.md` şu sırayı öneriyor:
+
+1. `AdminDashboardOverview`
+2. `AnalyticsPanel`
+3. `AdminAnalyticsDashboard`
+4. `AdminManager`
+
+Bu dört yüzey dışında kalan yüksek-risk bileşenler şu an için son dalga adayıdır.
 
 ## React'te Kalması Makul Olan Yüzeyler
 
