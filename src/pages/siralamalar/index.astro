@@ -1,6 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import LeaderboardsDisplay from "../../components/LeaderboardsDisplay";
+import LeaderboardsDisplay from "../../components/LeaderboardsDisplay.astro";
 ---
 
 <Layout title="Sıralamalar - Şanlıurfa.com">
@@ -9,6 +9,6 @@ import LeaderboardsDisplay from "../../components/LeaderboardsDisplay";
       <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Sıralamalar</h1>
       <p class="text-gray-600 dark:text-gray-400">En aktif ve başarılı kullanıcılar</p>
     </div>
-    <LeaderboardsDisplay client:load />
+    <LeaderboardsDisplay />
   </div>
 </Layout>

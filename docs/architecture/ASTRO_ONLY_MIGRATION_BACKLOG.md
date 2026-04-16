@@ -17,7 +17,7 @@ Başlangıç ölçümü:
 
 - `.astro`: `144`
 - `.tsx`: `113`
-- `client:*` hydration noktası: `53`
+- `client:*` hydration noktası: `49`
 
 İlk hedefler:
 
@@ -58,12 +58,16 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 
 - `src/components/NotificationBadge.tsx` -> `src/components/NotificationBadge.astro`
 - `src/components/QuotaUsageDisplay.tsx` -> `src/components/QuotaUsageDisplay.astro`
+- `src/components/TrendingPlaces.tsx` -> `src/components/TrendingPlaces.astro`
+- `src/components/LeaderboardsDisplay.tsx` -> `src/components/LeaderboardsDisplay.astro`
 
 Bu dalga ile:
 
 - `Header.astro` içindeki `NotificationBadge` artık React island değil
 - `src/pages/ayarlar/kotalar.astro` içindeki `QuotaUsageDisplay` artık React island değil
-- toplam `client:*` sayısı `55 -> 53` düştü
+- `src/pages/trend/index.astro` ve `src/pages/kesfet/index.astro` içindeki `TrendingPlaces` artık React island değil
+- `src/pages/liderlik-tablosu.astro` ve `src/pages/siralamalar/index.astro` içindeki `LeaderboardsDisplay` artık React island değil
+- toplam `client:*` sayısı `55 -> 49` düştü
 
 ### Aday Bileşenler
 
