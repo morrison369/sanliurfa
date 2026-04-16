@@ -2,7 +2,13 @@
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
 import { getAdminAccessCoverage } from '../../lib/admin-access-coverage';
-import { buildArtifactHealth } from '../../lib/admin-status';
+import {
+  buildArtifactHealth,
+  classifyNightlyStatus,
+  classifyReleaseGateStatus,
+} from '../../lib/admin-status';
+import { getReleaseGateSummary } from '../../lib/release-gate-summary';
+import { getNightlyOpsSummary } from '../../lib/nightly-ops-summary';
 
 const user = Astro.locals.user;
 
@@ -11,13 +17,24 @@ if (!user || !Astro.locals.isAdmin) {
 }
 
 // İstatistikler
-const [placesCount, usersCount, reviewsCount, messagesCount, pendingPlaces, adminAccessCoverage] = await Promise.all([
+const [
+  placesCount,
+  usersCount,
+  reviewsCount,
+  messagesCount,
+  pendingPlaces,
+  adminAccessCoverage,
+  releaseGate,
+  nightly,
+] = await Promise.all([
   query("SELECT COUNT(*) FROM places"),
   query("SELECT COUNT(*) FROM users"),
   query("SELECT COUNT(*) FROM reviews"),
   query("SELECT COUNT(*) FROM contact_messages WHERE status = 'new'"),
   query("SELECT COUNT(*) FROM places WHERE status = 'pending'"),
   getAdminAccessCoverage(),
+  getReleaseGateSummary(),
+  getNightlyOpsSummary(),
 ]);
 
 const stats = {
@@ -40,6 +57,17 @@ const accessCoverageBadgeClass =
     : accessCoverageArtifact.status === 'degraded'
       ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
       : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
+
+const releaseGateStatus = classifyReleaseGateStatus(releaseGate);
+const nightlyRegressionStatus = classifyNightlyStatus(nightly.regression);
+
+function getStatusBadgeClass(status: 'healthy' | 'degraded' | 'blocked') {
+  return status === 'healthy'
+    ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+    : status === 'degraded'
+      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+      : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
+}
 
 const seo = { title: 'Admin Panel - Şanlıurfa.com' };
 ---
@@ -100,6 +128,34 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
         <a href="/admin/runtime-monitor" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 class="font-semibold text-gray-900 dark:text-white">Runtime Monitör</h3>
           <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Health, performance ve artifact sinyalleri</p>
+        </a>
+        <a href="/admin/dashboard" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Release Gate</h3>
+            <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(releaseGateStatus)]}>
+              {releaseGateStatus}
+            </span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
+            {releaseGate.finalStatus} • Hata {releaseGate.failedStepCount}
+          </p>
+          <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
+            {releaseGate.blockingFailedSteps[0] || releaseGate.advisoryFailedSteps[0] || 'Blocking hata yok'}
+          </p>
+        </a>
+        <a href="/admin/dashboard" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Nightly</h3>
+            <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(nightlyRegressionStatus)]}>
+              {nightlyRegressionStatus}
+            </span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
+            Regression {nightly.regression.outcome} • %{nightly.regression.successRatePercent ?? 'yok'}
+          </p>
+          <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
+            {nightly.regression.topFailures[0] || 'Öne çıkan failure yok'}
+          </p>
         </a>
         <a href="/admin/audit" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 class="font-semibold text-gray-900 dark:text-white">Admin Audit</h3>
