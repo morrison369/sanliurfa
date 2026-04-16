@@ -1,4 +1,5 @@
 ---
+import { Activity, Gauge, ShieldAlert, ShieldCheck } from 'lucide-react';
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
 import { getAdminAccessCoverage } from '../../lib/admin-access-coverage';
@@ -68,6 +69,7 @@ type OpsCard = {
   summary: string;
   detail: string;
   generatedAt: string | null;
+  icon: typeof Activity;
 };
 
 function getStatusBadgeClass(status: 'healthy' | 'degraded' | 'blocked') {
@@ -134,6 +136,7 @@ const riskCards: OpsCard[] = [
     summary: `${releaseGate.finalStatus} • Hata ${releaseGate.failedStepCount}`,
     detail: releaseGate.blockingFailedSteps[0] || releaseGate.advisoryFailedSteps[0] || 'Blocking hata yok',
     generatedAt: releaseGate.generatedAt,
+    icon: ShieldAlert,
   },
   {
     href: '/admin/dashboard',
@@ -142,6 +145,7 @@ const riskCards: OpsCard[] = [
     summary: `Regression ${nightly.regression.outcome} • %${nightly.regression.successRatePercent ?? 'yok'}`,
     detail: nightly.regression.topFailures[0] || 'Öne çıkan failure yok',
     generatedAt: nightly.regression.generatedAt,
+    icon: Activity,
   },
   {
     href: '/admin/access-coverage',
@@ -150,6 +154,7 @@ const riskCards: OpsCard[] = [
     summary: `%${adminAccessCoverage.coveragePercent} • Drift ${adminAccessCoverage.driftCount}`,
     detail: adminAccessCoverage.driftedFiles[0] || 'Drift yok',
     generatedAt: adminAccessCoverage.generatedAt,
+    icon: Gauge,
   },
   {
     href: '/admin/dashboard',
@@ -158,6 +163,7 @@ const riskCards: OpsCard[] = [
     summary: `Healthy ${artifactHealthSummary.healthyCount} • Degraded ${artifactHealthSummary.degradedCount} • Blocked ${artifactHealthSummary.blockedCount}`,
     detail: `İlk risk: ${firstProblematicArtifact}`,
     generatedAt: latestArtifactGeneratedAt,
+    icon: ShieldCheck,
   },
 ].sort((left, right) => getStatusPriority(left.status) - getStatusPriority(right.status));
 
@@ -194,10 +200,15 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
           <p class="text-sm text-gray-600 dark:text-gray-400">Bloke veya bozulmuş sinyaller üstte gösterilir.</p>
         </div>
         <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {riskCards.map((card) => (
+          {riskCards.map((card) => {
+            const Icon = card.icon;
+            return (
             <a href={card.href} class:list={['rounded-xl p-6 transition-shadow', getRiskCardClass(card.status)]}>
               <div class="flex items-center justify-between gap-3">
-                <h3 class="font-semibold text-gray-900 dark:text-white">{card.title}</h3>
+                <div class="flex items-center gap-2 min-w-0">
+                  <Icon class="w-4 h-4 shrink-0 text-gray-500 dark:text-gray-300" />
+                  <h3 class="font-semibold text-gray-900 dark:text-white truncate">{card.title}</h3>
+                </div>
                 <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(card.status)]}>
                   {card.status}
                 </span>
@@ -208,7 +219,7 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
                 Son üretim: {formatGeneratedAt(card.generatedAt)}
               </p>
             </a>
-          ))}
+          )})}
         </div>
       </div>
 
