@@ -273,6 +273,9 @@ export function ReleaseGateCard({
       <div className="text-xs text-gray-500 mt-2">
         Access coverage: %{releaseGate.adminAccessCoverage?.coveragePercent ?? 'yok'} • Drift {releaseGate.adminAccessCoverage?.driftCount ?? 'yok'}
       </div>
+      <div className="text-xs text-gray-500 mt-2 truncate">
+        Drift file: {releaseGate.adminAccessCoverage?.driftedFiles?.[0] || 'yok'}
+      </div>
       {releaseGate.steps && releaseGate.steps.length > 0 && (
         <details className="mt-4">
           <summary className="cursor-pointer text-sm font-medium text-gray-700">
@@ -364,6 +367,9 @@ function NightlyItem({
       </div>
       <div className="text-xs text-gray-500 mt-2">
         Access coverage: %{summary.adminAccessCoverage?.coveragePercent ?? 'yok'} • Drift {summary.adminAccessCoverage?.driftCount ?? 'yok'}
+      </div>
+      <div className="text-xs text-gray-500 mt-2 truncate">
+        Drift file: {summary.adminAccessCoverage?.driftedFiles?.[0] || 'yok'}
       </div>
     </div>
   );

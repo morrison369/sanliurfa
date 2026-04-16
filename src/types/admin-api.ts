@@ -273,6 +273,7 @@ export interface AdminDashboardOverviewLegacyShape {
     nightlyRegression: ArtifactHealthEntry;
     nightlyE2E: ArtifactHealthEntry;
     performanceOps: ArtifactHealthEntry;
+    adminAccessCoverage: ArtifactHealthEntry;
   };
   artifactHealthSummary?: ArtifactHealthSummary;
   releaseGate?: ReleaseGateSummary;
