@@ -1,4 +1,5 @@
 import type { AdminStatusLevel } from './admin-status';
+import { formatAdminDateTime } from './admin-format';
 
 export function getAdminIndexStatusBadgeClass(status: AdminStatusLevel) {
   return status === 'healthy'
@@ -17,20 +18,5 @@ export function getAdminIndexRiskCardClass(status: AdminStatusLevel) {
 }
 
 export function formatAdminIndexGeneratedAt(value: string | null): string {
-  if (!value) {
-    return 'Henüz üretilmedi';
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString('tr-TR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatAdminDateTime(value, 'Henüz üretilmedi');
 }

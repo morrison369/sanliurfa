@@ -18,6 +18,7 @@ import {
 } from '../lib/admin-access-coverage-page';
 import { setElementClassName, setElementHtml, setLinkHref, setTextContent } from '../lib/admin-dom';
 import { startAutoRefreshPage } from '../lib/admin-page-bootstrap';
+import { formatAdminDateTime } from '../lib/admin-format';
 
 const STORAGE_KEY = 'admin-access-coverage-history-v1';
 const history: CoverageHistoryEntry[] = [];
@@ -69,11 +70,11 @@ async function loadCoverage() {
     setTextContent('admin-access-coverage-percent', `%${report.coveragePercent}`);
     setTextContent('admin-access-coverage-routes', `${report.routeFiles} / ${report.wrapperFiles}`);
     setTextContent('admin-access-coverage-drift-count', String(report.driftCount));
-    setTextContent('admin-access-coverage-generated-at', report.generatedAt || 'Henüz yok');
+    setTextContent('admin-access-coverage-generated-at', formatAdminDateTime(report.generatedAt, 'Henüz yok'));
     setTextContent('admin-access-coverage-artifact', artifactName);
     setTextContent('admin-access-coverage-formats', reportFormats.join(', '));
     setTextContent('admin-access-coverage-artifact-status', artifact.status);
-    setTextContent('admin-access-coverage-last-refresh', refreshedAt);
+    setTextContent('admin-access-coverage-last-refresh', formatAdminDateTime(refreshedAt, '-'));
     setAlert(artifact.status, report.driftCount, report.driftedFiles[0]);
     setTextContent(
       'admin-access-coverage-summary',
