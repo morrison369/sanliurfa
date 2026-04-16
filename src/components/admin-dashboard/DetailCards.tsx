@@ -138,6 +138,45 @@ export function AdminOpsAuditCard({
   );
 }
 
+export function AdminAccessCoverageCard({
+  adminAccessCoverage,
+}: {
+  adminAccessCoverage?: AdminDashboardOverviewData extends { adminAccessCoverage?: infer T } ? T : never;
+}) {
+  if (!adminAccessCoverage) return null;
+  return (
+    <div className={cardClassName()}>
+      <h3 className="font-semibold text-gray-900 mb-4">Admin Access Coverage</h3>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Coverage</div>
+          <div className="text-xl font-bold text-gray-900">%{adminAccessCoverage.coveragePercent}</div>
+          <div className="text-xs text-gray-500">{adminAccessCoverage.available ? 'rapor var' : 'rapor yok'}</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Route / Wrapper</div>
+          <div className="text-xl font-bold text-gray-900">
+            {adminAccessCoverage.routeFiles} / {adminAccessCoverage.wrapperFiles}
+          </div>
+          <div className="text-xs text-gray-500">admin api dosya kapsaması</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Drift Count</div>
+          <div className={`text-xl font-bold ${adminAccessCoverage.driftCount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+            {adminAccessCoverage.driftCount}
+          </div>
+          <div className="text-xs text-gray-500">wrapper dışı route dosyası</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500 mb-1">Son Üretim</div>
+          <div className="text-sm font-semibold text-gray-900">{adminAccessCoverage.generatedAt || 'Henüz yok'}</div>
+          <div className="text-xs text-gray-500 truncate">{adminAccessCoverage.driftedFiles[0] || 'Drift yok'}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ArtifactHealthCard({
   artifactHealth,
   artifactHealthSummary,

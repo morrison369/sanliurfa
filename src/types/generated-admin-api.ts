@@ -298,6 +298,16 @@ export interface paths {
                         "application/json": {
                             data: {
                                 data: {
+                                    adminAccessCoverage: {
+                                        available: boolean;
+                                        coveragePercent: number;
+                                        driftCount: number;
+                                        driftedFiles: string[];
+                                        /** Format: date-time */
+                                        generatedAt: string | null;
+                                        routeFiles: number;
+                                        wrapperFiles: number;
+                                    };
                                     adminOpsAudit: {
                                         deniedCount: number;
                                         /** Format: date-time */
@@ -2546,6 +2556,16 @@ export interface paths {
                         "application/json": {
                             data: {
                                 data: {
+                                    adminAccessCoverage: {
+                                        available: boolean;
+                                        coveragePercent: number;
+                                        driftCount: number;
+                                        driftedFiles: string[];
+                                        /** Format: date-time */
+                                        generatedAt: string | null;
+                                        routeFiles: number;
+                                        wrapperFiles: number;
+                                    };
                                     adminOpsAudit: {
                                         deniedCount: number;
                                         /** Format: date-time */

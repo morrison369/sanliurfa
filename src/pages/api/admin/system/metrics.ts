@@ -22,6 +22,7 @@ import { getRuntimeIntegrationSettings } from '../../../../lib/runtime-integrati
 import { getAdminArtifactHealthSnapshot, summarizeArtifactHealth } from '../../../../lib/artifact-health';
 import { summarizeAdminOpsAudit } from '../../../../lib/admin-ops-audit';
 import { withAdminOpsReadAccess } from '../../../../lib/admin-ops-access';
+import { getAdminAccessCoverage } from '../../../../lib/admin-access-coverage';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -42,14 +43,15 @@ export const GET: APIRoute = async ({ request, locals }) => {
         recordRequest('GET', '/api/admin/system/metrics', HttpStatus.OK, duration);
       }
     }, async () => {
-      const [systemMetrics, modStats, integrationSettings, operational, performanceOptimization, nightly, releaseGate] = await Promise.all([
+      const [systemMetrics, modStats, integrationSettings, operational, performanceOptimization, nightly, releaseGate, adminAccessCoverage] = await Promise.all([
         getSystemMetrics(),
         getModerationStats(),
         getRuntimeIntegrationSettings(),
         getOperationalSnapshot(7),
         getPerformanceOptimizationSummary(),
         getNightlyOpsSummary(),
-        getReleaseGateSummary()
+        getReleaseGateSummary(),
+        getAdminAccessCoverage()
       ]);
       const artifactHealth = await getAdminArtifactHealthSnapshot();
       const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
@@ -102,6 +104,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
             operational,
             performanceOptimization,
             adminOpsAudit,
+            adminAccessCoverage,
             artifactHealth,
             artifactHealthSummary,
             nightly,
