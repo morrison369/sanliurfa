@@ -1,27 +1,10 @@
 {
-  "generatedAt": "2026-04-16T23:41:54.972Z",
-  "totalHighRiskComponents": 14,
+  "generatedAt": "2026-04-16T23:47:33.765Z",
+  "totalHighRiskComponents": 13,
   "firstCount": 0,
-  "laterCount": 3,
+  "laterCount": 2,
   "lastCount": 11,
   "entries": [
-    {
-      "componentName": "AnalyticsPanel",
-      "componentPath": "src/components/AnalyticsPanel.tsx",
-      "pagePaths": [
-        "src/pages/admin/analytics.astro"
-      ],
-      "usageCount": 1,
-      "lines": 90,
-      "useStateCount": 3,
-      "useEffectCount": 2,
-      "fetchCount": 1,
-      "typedClientCount": 0,
-      "adminSurface": true,
-      "complexityScore": 48,
-      "migrationPriority": "later",
-      "recommendation": "AnalyticsPanel taşınabilir ama önce daha dar yüzeyli adaylar bitmeli."
-    },
     {
       "componentName": "AdminAnalyticsDashboard",
       "componentPath": "src/components/AdminAnalyticsDashboard.tsx",
