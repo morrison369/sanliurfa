@@ -15,6 +15,7 @@ import {
   type RuntimeMonitorEndpoint,
 } from '../lib/runtime-monitor';
 import { setLinkHref, setTextContent, setElementClassName } from '../lib/admin-dom';
+import { startAutoRefreshPage } from '../lib/admin-page-bootstrap';
 
 const STORAGE_KEY = 'runtime-monitor-history-v1';
 const history: RuntimeHistoryEntry[] = [];
@@ -115,20 +116,21 @@ async function refreshRuntimeMonitor() {
 }
 
 export function initRuntimeMonitorPage() {
-  document.getElementById('refresh-runtime-monitor')?.addEventListener('click', () => {
-    void refreshRuntimeMonitor();
-  });
   loadHistory();
-  const trendLine = document.getElementById('runtime-monitor-trend');
-  if (trendLine && history.length > 0) {
-    setTextContent('runtime-monitor-trend', buildRuntimeTrend(history));
-  }
-  const deltaLine = document.getElementById('runtime-monitor-delta');
-  if (deltaLine && history.length > 1) {
-    setTextContent('runtime-monitor-delta', buildRuntimeDelta(history[1], history[0], history));
-  }
-  void refreshRuntimeMonitor();
-  window.setInterval(() => {
-    void refreshRuntimeMonitor();
-  }, 60000);
+  startAutoRefreshPage({
+    refreshButtonId: 'refresh-runtime-monitor',
+    initialRender: () => {
+      const trendLine = document.getElementById('runtime-monitor-trend');
+      if (trendLine && history.length > 0) {
+        setTextContent('runtime-monitor-trend', buildRuntimeTrend(history));
+      }
+      const deltaLine = document.getElementById('runtime-monitor-delta');
+      if (deltaLine && history.length > 1) {
+        setTextContent('runtime-monitor-delta', buildRuntimeDelta(history[1], history[0], history));
+      }
+    },
+    refresh: () => {
+      void refreshRuntimeMonitor();
+    },
+  });
 }

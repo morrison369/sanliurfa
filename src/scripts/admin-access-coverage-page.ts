@@ -17,6 +17,7 @@ import {
   buildCoverageSummaryText,
 } from '../lib/admin-access-coverage-page';
 import { setElementClassName, setElementHtml, setLinkHref, setTextContent } from '../lib/admin-dom';
+import { startAutoRefreshPage } from '../lib/admin-page-bootstrap';
 
 const STORAGE_KEY = 'admin-access-coverage-history-v1';
 const history: CoverageHistoryEntry[] = [];
@@ -103,19 +104,17 @@ async function loadCoverage() {
 }
 
 export function initAdminAccessCoveragePage() {
-  document.getElementById('refresh-admin-access-coverage')?.addEventListener('click', () => {
-    void loadCoverage();
-  });
-
   loadHistory();
-  renderTrend();
-
-  if (history.length > 1) {
-    setTextContent('admin-access-coverage-delta', buildCoverageDelta(history[1], history[0], history));
-  }
-
-  void loadCoverage();
-  window.setInterval(() => {
-    void loadCoverage();
-  }, 60000);
+  startAutoRefreshPage({
+    refreshButtonId: 'refresh-admin-access-coverage',
+    initialRender: () => {
+      renderTrend();
+      if (history.length > 1) {
+        setTextContent('admin-access-coverage-delta', buildCoverageDelta(history[1], history[0], history));
+      }
+    },
+    refresh: () => {
+      void loadCoverage();
+    },
+  });
 }
