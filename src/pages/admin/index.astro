@@ -1,5 +1,17 @@
 ---
-import { Activity, Gauge, ShieldAlert, ShieldCheck } from 'lucide-react';
+import {
+  Activity,
+  FileText,
+  Gauge,
+  MessageSquare,
+  Settings,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldEllipsis,
+  Store,
+  Users,
+  CalendarDays,
+} from 'lucide-react';
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
 import { getAdminAccessCoverage } from '../../lib/admin-access-coverage';
@@ -74,6 +86,13 @@ type OpsCard = {
     blocked: string;
   };
   generatedAt: string | null;
+  icon: typeof Activity;
+};
+
+type ToolCard = {
+  href: string;
+  title: string;
+  description: string;
   icon: typeof Activity;
 };
 
@@ -192,6 +211,63 @@ const riskCards: OpsCard[] = [
   },
 ].sort((left, right) => getStatusPriority(left.status) - getStatusPriority(right.status));
 
+const toolCards: ToolCard[] = [
+  {
+    href: '/admin/runtime-monitor',
+    title: 'Runtime Monitör',
+    description: 'Health, performance ve artifact sinyalleri',
+    icon: Activity,
+  },
+  {
+    href: '/admin/integrations',
+    title: 'Entegrasyon Ayarları',
+    description: 'RESEND ve Analytics anahtarları',
+    icon: Settings,
+  },
+  {
+    href: '/admin/users',
+    title: 'Kullanıcılar',
+    description: 'Kullanıcı yönetimi',
+    icon: Users,
+  },
+  {
+    href: '/admin/audit',
+    title: 'Admin Audit',
+    description: 'Kalıcı admin ops audit kayıtları',
+    icon: ShieldEllipsis,
+  },
+  {
+    href: '/admin/places',
+    title: 'Mekanlar',
+    description: `${stats.pending} onay bekleyen`,
+    icon: Store,
+  },
+  {
+    href: '/admin/messages',
+    title: 'Mesajlar',
+    description: `${stats.messages} yeni mesaj`,
+    icon: MessageSquare,
+  },
+  {
+    href: '/admin/reviews',
+    title: 'Yorumlar',
+    description: 'Yorum moderasyonu',
+    icon: FileText,
+  },
+  {
+    href: '/admin/blog',
+    title: 'Blog',
+    description: 'Blog yazıları',
+    icon: FileText,
+  },
+  {
+    href: '/admin/events',
+    title: 'Etkinlikler',
+    description: 'Etkinlik yönetimi',
+    icon: CalendarDays,
+  },
+];
+
 const seo = { title: 'Admin Panel - Şanlıurfa.com' };
 ---
 
@@ -255,42 +331,18 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
           <p class="text-sm text-gray-600 dark:text-gray-400">Operasyon dışı içerik ve yönetim yüzeyleri.</p>
         </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <a href="/admin/runtime-monitor" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Runtime Monitör</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Health, performance ve artifact sinyalleri</p>
-          </a>
-          <a href="/admin/integrations" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Entegrasyon Ayarları</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">RESEND ve Analytics anahtarları</p>
-          </a>
-          <a href="/admin/users" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Kullanıcılar</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kullanıcı yönetimi</p>
-          </a>
-          <a href="/admin/audit" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Admin Audit</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kalıcı admin ops audit kayıtları</p>
-          </a>
-          <a href="/admin/places" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Mekanlar</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.pending} onay bekleyen</p>
-          </a>
-          <a href="/admin/messages" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Mesajlar</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.messages} yeni mesaj</p>
-          </a>
-          <a href="/admin/reviews" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Yorumlar</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Yorum moderasyonu</p>
-          </a>
-          <a href="/admin/blog" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Blog</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Blog yazıları</p>
-          </a>
-          <a href="/admin/events" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Etkinlikler</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Etkinlik yönetimi</p>
-          </a>
+          {toolCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <a href={card.href} class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center gap-2">
+                  <Icon class="w-4 h-4 shrink-0 text-gray-500 dark:text-gray-300" />
+                  <h3 class="font-semibold text-gray-900 dark:text-white">{card.title}</h3>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{card.description}</p>
+              </a>
+            );
+          })}
         </div>
       </div>
     </div>
