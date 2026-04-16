@@ -1,0 +1,89 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const user = Astro.locals.user;
+
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/access-coverage');
+}
+
+const seo = {
+  title: 'Admin Access Coverage - Şanlıurfa.com',
+  description: 'Admin API wrapper coverage raporunu ve drift dosyalarını inceleyin.',
+};
+---
+
+<Layout seo={seo}>
+  <section class="min-h-screen bg-gray-100 dark:bg-gray-950 py-8">
+    <div class="container-custom space-y-6">
+      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-[0.24em] text-urfa-600">Admin Access Coverage</p>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Wrapper coverage raporu</h1>
+          <p class="mt-2 max-w-3xl text-sm text-gray-600 dark:text-gray-400">
+            `api/admin` ağacındaki route dosyalarının ortak admin access wrapper standardına uyumunu okuyun.
+          </p>
+        </div>
+        <button
+          id="refresh-admin-access-coverage"
+          class="inline-flex items-center justify-center rounded-xl bg-urfa-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-urfa-700"
+          type="button"
+        >
+          Yenile
+        </button>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-4">
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div class="text-xs text-gray-500">Durum</div>
+          <div id="admin-access-coverage-status" class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">-</div>
+          <div class="mt-2 text-xs text-gray-500">Artifact freshness sonucu</div>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div class="text-xs text-gray-500">Coverage</div>
+          <div id="admin-access-coverage-percent" class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">-</div>
+          <div id="admin-access-coverage-routes" class="mt-2 text-xs text-gray-500">-</div>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div class="text-xs text-gray-500">Drift Count</div>
+          <div id="admin-access-coverage-drift-count" class="mt-2 text-2xl font-bold text-gray-900 dark:text-white">-</div>
+          <div class="mt-2 text-xs text-gray-500">Wrapper dışı route dosyası</div>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div class="text-xs text-gray-500">Son Üretim</div>
+          <div id="admin-access-coverage-generated-at" class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">-</div>
+          <div id="admin-access-coverage-formats" class="mt-2 text-xs text-gray-500">-</div>
+        </div>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Artifact Meta</h2>
+          <dl class="mt-4 space-y-3 text-sm">
+            <div class="flex items-center justify-between gap-4">
+              <dt class="text-gray-500">Artifact adı</dt>
+              <dd id="admin-access-coverage-artifact" class="font-medium text-gray-900 dark:text-white">-</dd>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <dt class="text-gray-500">Artifact durumu</dt>
+              <dd id="admin-access-coverage-artifact-status" class="font-medium text-gray-900 dark:text-white">-</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Drifted Files</h2>
+          <ul id="admin-access-drift-files" class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-200">
+            <li>Yükleniyor...</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script type="module">
+    import { initAdminAccessCoveragePage } from '../../scripts/admin-access-coverage-page.ts';
+
+    initAdminAccessCoveragePage();
+  </script>
+</Layout>
