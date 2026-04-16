@@ -27,10 +27,28 @@ type PerformanceOptimizationResponse =
   paths['/api/admin/performance/optimization']['get']['responses']['200']['content']['application/json'];
 type VerificationsGetResponse =
   paths['/api/admin/verifications']['get']['responses']['200']['content']['application/json'];
+type VendorPendingGetResponse =
+  paths['/api/admin/vendor/pending']['get']['responses']['200']['content']['application/json'];
 type VerificationApprovePostResponse =
   paths['/api/admin/verifications/{id}/approve']['post']['responses']['200']['content']['application/json'];
 type VerificationRejectPostResponse =
   paths['/api/admin/verifications/{id}/reject']['post']['responses']['200']['content']['application/json'];
+type LoyaltyRewardsGetResponse =
+  paths['/api/admin/loyalty/rewards']['get']['responses']['200']['content']['application/json'];
+type LoyaltyRewardsPostResponse =
+  paths['/api/admin/loyalty/rewards']['post']['responses']['201']['content']['application/json'];
+type LoyaltyAwardPostResponse =
+  paths['/api/admin/loyalty/award']['post']['responses']['200']['content']['application/json'];
+type BadgeAwardPostResponse =
+  paths['/api/admin/badges/award']['post']['responses']['201']['content']['application/json'];
+type SecurityGuidelinesGetResponse =
+  paths['/api/admin/security/guidelines']['get']['responses']['200']['content']['application/json'];
+type DeploymentBackupGetResponse =
+  paths['/api/admin/deployment/backup']['get']['responses']['200']['content']['application/json'];
+type DeploymentBackupPutResponse =
+  paths['/api/admin/deployment/backup']['put']['responses']['200']['content']['application/json'];
+type DeploymentBackupPostResponse =
+  paths['/api/admin/deployment/backup']['post']['responses']['200']['content']['application/json'];
 type AdminUsersGetResponse =
   paths['/api/admin/users']['get']['responses']['200']['content']['application/json'];
 type AdminUserGetResponse =
@@ -166,8 +184,17 @@ export type AdminMessageStatusMutationData = MessageStatusPostResponse['data'];
 export type AdminAuditLogsData = AuditLogsResponse['data'];
 export type AdminPerformanceOptimizationData = PerformanceOptimizationResponse['data']['data'];
 export type AdminVerificationsListData = VerificationsGetResponse['data'];
+export type AdminVendorPendingData = VendorPendingGetResponse['data'];
 export type AdminVerificationApproveData = VerificationApprovePostResponse['data'];
 export type AdminVerificationRejectData = VerificationRejectPostResponse['data'];
+export type AdminLoyaltyRewardsListData = LoyaltyRewardsGetResponse['data'];
+export type AdminLoyaltyRewardMutationData = LoyaltyRewardsPostResponse['data'];
+export type AdminLoyaltyAwardMutationData = LoyaltyAwardPostResponse['data'];
+export type AdminBadgeAwardMutationData = BadgeAwardPostResponse['data'];
+export type AdminSecurityGuidelinesData = SecurityGuidelinesGetResponse['data'];
+export type AdminDeploymentBackupListData = DeploymentBackupGetResponse['data'];
+export type AdminDeploymentBackupMutationData = DeploymentBackupPutResponse['data'];
+export type AdminDeploymentBackupTriggerData = DeploymentBackupPostResponse['data'];
 export type AdminUsersListData = AdminUsersGetResponse['data'];
 export type AdminUserDetailsData = AdminUserGetResponse['data'];
 export type AdminUserMutationData = AdminUserPostResponse['data'];

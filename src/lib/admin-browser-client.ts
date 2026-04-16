@@ -11,6 +11,7 @@ import type {
   AdminModerationReportMutationData,
   AdminModerationStatsData,
   AdminReleaseGateSummaryData,
+  AdminLoyaltyRewardsListData,
   AdminSubscriptionAnalyticsData,
   AdminUserDetailsData,
   AdminUserMutationData,
@@ -109,6 +110,13 @@ export async function fetchAdminAnalytics(days = 30, limit = 10): Promise<AdminA
 export async function fetchAdminReleaseGateSummary(): Promise<AdminReleaseGateSummaryData> {
   const payload = await fetchJson<{ data: AdminReleaseGateSummaryData }>(
     '/api/admin/system/release-gate-summary'
+  );
+  return payload.data;
+}
+
+export async function fetchAdminLoyaltyRewards(): Promise<AdminLoyaltyRewardsListData> {
+  const payload = await fetchJson<{ data: AdminLoyaltyRewardsListData }>(
+    '/api/admin/loyalty/rewards'
   );
   return payload.data;
 }

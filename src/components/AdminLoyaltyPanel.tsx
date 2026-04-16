@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { fetchAdminLoyaltyRewards } from "../lib/admin-browser-client";
 
 interface Reward {
   id: string;
@@ -18,9 +19,7 @@ export default function AdminLoyaltyPanel() {
 
   const loadRewards = async () => {
     try {
-      const response = await fetch("/api/admin/loyalty/rewards");
-      if (!response.ok) throw new Error("Failed");
-      const data = await response.json();
+      const data = await fetchAdminLoyaltyRewards();
       setRewards(data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");

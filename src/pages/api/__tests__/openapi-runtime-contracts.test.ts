@@ -18,9 +18,15 @@ describe('openapi runtime contracts', () => {
     expect(body.paths['/api/admin/system/metrics']).toBeDefined();
     expect(body.paths['/api/admin/system/integration-settings']).toBeDefined();
     expect(body.paths['/api/admin/audit-logs']).toBeDefined();
+    expect(body.paths['/api/admin/vendor/pending']).toBeDefined();
     expect(body.paths['/api/admin/verifications']).toBeDefined();
     expect(body.paths['/api/admin/verifications/{id}/approve']).toBeDefined();
     expect(body.paths['/api/admin/verifications/{id}/reject']).toBeDefined();
+    expect(body.paths['/api/admin/loyalty/rewards']).toBeDefined();
+    expect(body.paths['/api/admin/loyalty/award']).toBeDefined();
+    expect(body.paths['/api/admin/badges/award']).toBeDefined();
+    expect(body.paths['/api/admin/security/guidelines']).toBeDefined();
+    expect(body.paths['/api/admin/deployment/backup']).toBeDefined();
     expect(body.paths['/api/admin/subscriptions/analytics']).toBeDefined();
     expect(body.paths['/api/admin/users']).toBeDefined();
     expect(body.paths['/api/admin/users/{id}']).toBeDefined();
@@ -69,12 +75,30 @@ describe('openapi runtime contracts', () => {
       body.paths['/api/admin/system/integration-settings'].put.responses['200'].content['application/json'].schema.properties.data.properties.data;
     const adminAuditLogsSchema =
       body.paths['/api/admin/audit-logs'].get.responses['200'].content['application/json'].schema.properties.data.properties;
+    const adminVendorPendingSchema =
+      body.paths['/api/admin/vendor/pending'].get.responses['200'].content['application/json'].schema.properties.data;
     const adminVerificationsSchema =
       body.paths['/api/admin/verifications'].get.responses['200'].content['application/json'].schema.properties.data;
     const adminVerificationApproveSchema =
       body.paths['/api/admin/verifications/{id}/approve'].post.responses['200'].content['application/json'].schema.properties.data;
     const adminVerificationRejectSchema =
       body.paths['/api/admin/verifications/{id}/reject'].post.responses['200'].content['application/json'].schema.properties.data;
+    const loyaltyRewardsGetSchema =
+      body.paths['/api/admin/loyalty/rewards'].get.responses['200'].content['application/json'].schema.properties.data;
+    const loyaltyRewardsPostSchema =
+      body.paths['/api/admin/loyalty/rewards'].post.responses['201'].content['application/json'].schema.properties.data;
+    const loyaltyAwardSchema =
+      body.paths['/api/admin/loyalty/award'].post.responses['200'].content['application/json'].schema.properties.data;
+    const badgeAwardSchema =
+      body.paths['/api/admin/badges/award'].post.responses['201'].content['application/json'].schema.properties.data;
+    const securityGuidelinesSchema =
+      body.paths['/api/admin/security/guidelines'].get.responses['200'].content['application/json'].schema.properties.data;
+    const deploymentBackupGetSchema =
+      body.paths['/api/admin/deployment/backup'].get.responses['200'].content['application/json'].schema.properties.data;
+    const deploymentBackupPutSchema =
+      body.paths['/api/admin/deployment/backup'].put.responses['200'].content['application/json'].schema.properties.data;
+    const deploymentBackupPostSchema =
+      body.paths['/api/admin/deployment/backup'].post.responses['200'].content['application/json'].schema.properties.data;
     const adminSubscriptionsAnalyticsSchema =
       body.paths['/api/admin/subscriptions/analytics'].get.responses['200'].content['application/json'].schema.properties.data;
     const adminUsersSchema =
@@ -150,10 +174,33 @@ describe('openapi runtime contracts', () => {
     expect(adminAuditLogsSchema.summary.required).toEqual(['generatedAt', 'windowHours', 'total', 'deniedCount', 'rateLimitedCount', 'writeCount', 'readCount', 'lastDeniedAt']);
     expect(adminAuditLogsSchema.filters.required).toEqual(['requestId', 'startDate', 'endDate']);
     expect(adminAuditLogsSchema.totalFiltered.type).toBe('integer');
+    expect(adminVendorPendingSchema.required).toEqual(['success', 'data']);
+    expect(adminVendorPendingSchema.properties.data.required).toEqual(['pending', 'count']);
     expect(adminVerificationsSchema.required).toEqual(['success', 'verifications', 'count']);
     expect(adminVerificationsSchema.properties.verifications.items.required).toEqual(['id', 'placeId', 'placeName', 'category', 'rating', 'requestedAt', 'reason']);
     expect(adminVerificationApproveSchema.required).toEqual(['success', 'message']);
     expect(adminVerificationRejectSchema.required).toEqual(['success', 'message']);
+    expect(loyaltyRewardsGetSchema.required).toEqual(['success', 'data']);
+    expect(loyaltyRewardsGetSchema.properties.data.items.required).toEqual([
+      'id',
+      'reward_name',
+      'description',
+      'category',
+      'points_cost',
+      'tier_requirement',
+      'is_active',
+      'display_order',
+    ]);
+    expect(loyaltyRewardsPostSchema.required).toEqual(['success', 'data']);
+    expect(loyaltyAwardSchema.required).toEqual(['success', 'data']);
+    expect(loyaltyAwardSchema.properties.data.properties.type.enum).toEqual(['points', 'badge']);
+    expect(badgeAwardSchema.required).toEqual(['success', 'badge']);
+    expect(securityGuidelinesSchema.required).toEqual(['success', 'data']);
+    expect(securityGuidelinesSchema.properties.data.required).toEqual(['guidelines', 'score', 'timestamp']);
+    expect(deploymentBackupGetSchema.required).toEqual(['success', 'data']);
+    expect(deploymentBackupGetSchema.properties.data.required).toEqual(['backups', 'count']);
+    expect(deploymentBackupPutSchema.anyOf).toHaveLength(2);
+    expect(deploymentBackupPostSchema.anyOf).toHaveLength(2);
     expect(adminSubscriptionsAnalyticsSchema.required).toEqual(['success', 'subscriptions', 'webhooks', 'timestamp']);
     expect(adminSubscriptionsAnalyticsSchema.properties.subscriptions.required).toEqual([
       'totalSubscriptions',
