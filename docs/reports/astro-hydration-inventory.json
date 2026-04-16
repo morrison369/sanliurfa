@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T21:44:23.854Z",
-  "astroFiles": 153,
-  "tsxFiles": 103,
-  "totalHydrationPoints": 44,
+  "generatedAt": "2026-04-16T21:47:36.873Z",
+  "astroFiles": 154,
+  "tsxFiles": 102,
+  "totalHydrationPoints": 43,
   "lowRiskCount": 0,
-  "mediumRiskCount": 28,
+  "mediumRiskCount": 27,
   "highRiskCount": 16,
   "entries": [
     {
@@ -118,13 +118,6 @@
       "directive": "load",
       "risk": "high",
       "rationale": "WebhookManager yoğun state veya dashboard tipi davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/abonelik.astro",
-      "componentName": "BillingHistory",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "BillingHistory form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/abonelik.astro",

@@ -13,18 +13,18 @@ Bu belge, `Şanlıurfa.com` kod tabanının mevcut Astro + React island mimarisi
 
 2026-04-16 itibarıyla ölçülen yüzey:
 
-- `src/**/*.astro`: `153`
-- `src/**/*.tsx`: `103`
-- `.astro` dosyalarında `client:*` hydration kullanımı: `44`
+- `src/**/*.astro`: `154`
+- `src/**/*.tsx`: `102`
+- `.astro` dosyalarında `client:*` hydration kullanımı: `43`
 - `astro.config.mjs` içinde aktif React entegrasyonu: `@astrojs/react`
-- generated inventory: `docs/reports/astro-hydration-inventory.md` (`0 low / 28 medium / 16 high`)
+- generated inventory: `docs/reports/astro-hydration-inventory.md` (`0 low / 27 medium / 16 high`)
 
 Mevcut yapı:
 
 - SSR ve routing katmanı Astro ile çalışıyor.
 - İnteraktif panellerin önemli bölümü React island olarak hydrate ediliyor.
 - Admin, analytics, search, social, subscriptions, notifications ve messaging yüzeyleri React bağımlılığını yoğun kullanıyor.
-- İlk migration dalgalarında `NotificationBadge`, `QuotaUsageDisplay`, `TrendingPlaces`, `LeaderboardsDisplay`, `PricingPlans`, `UserRecommendations`, `PerformanceMonitor`, `PWAPrompt` ve `TransactionHistory` React island olmaktan çıkarıldı.
+- İlk migration dalgalarında `NotificationBadge`, `QuotaUsageDisplay`, `TrendingPlaces`, `LeaderboardsDisplay`, `PricingPlans`, `UserRecommendations`, `PerformanceMonitor`, `PWAPrompt`, `TransactionHistory` ve `BillingHistory` React island olmaktan çıkarıldı.
 
 ## Astro-Only Hedefinin Anlamı
 
@@ -84,7 +84,6 @@ Bunlar:
 - `src/components/SearchResults.tsx`
 - `src/components/AdvancedSearchForm.tsx`
 - `src/components/UserSettings.tsx`
-- `src/components/BillingHistory.tsx`
 - `src/components/NotificationsCenter.tsx`
 - `src/components/RewardsCatalog.tsx`
 

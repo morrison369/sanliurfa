@@ -15,10 +15,10 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `153`
-- `.tsx`: `103`
-- `client:*` hydration noktası: `44`
-- current generated risk split: `0 low / 28 medium / 16 high`
+- `.astro`: `154`
+- `.tsx`: `102`
+- `client:*` hydration noktası: `43`
+- current generated risk split: `0 low / 27 medium / 16 high`
 
 İlk hedefler:
 
@@ -66,6 +66,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/PerformanceMonitor.tsx` -> `src/components/PerformanceMonitor.astro`
 - `src/components/PWAPrompt.tsx` -> `src/components/PWAPrompt.astro`
 - `src/components/TransactionHistory.tsx` -> `src/components/TransactionHistory.astro`
+- `src/components/BillingHistory.tsx` -> `src/components/BillingHistory.astro`
 
 Bu dalga ile:
 
@@ -78,7 +79,8 @@ Bu dalga ile:
 - `src/layouts/Layout.astro` içindeki `PerformanceMonitor` artık React island değil
 - `src/components/PWARegister.astro` içindeki `PWAPrompt` artık React island değil
 - `src/pages/loyalty/transactions.astro` içindeki `TransactionHistory` artık React island değil
-- toplam `client:*` sayısı `55 -> 44` düştü
+- `src/pages/abonelik.astro` içindeki `BillingHistory` artık React island değil
+- toplam `client:*` sayısı `55 -> 43` düştü
 
 ### Önceki Düşük Risk Adayları
 
@@ -114,7 +116,6 @@ Form/list/tab davranışı olan ama tam dashboard olmayan yüzeyleri Astro-first
 - `src/components/AdvancedSearchForm.tsx`
 - `src/components/AdvancedSearchPanel.tsx`
 - `src/components/UserSettings.tsx`
-- `src/components/BillingHistory.tsx`
 - `src/components/NotificationsCenter.tsx`
 - `src/components/RewardsCatalog.tsx`
 - `src/components/SubscriptionManager.tsx`
