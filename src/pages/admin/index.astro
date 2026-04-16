@@ -78,6 +78,14 @@ function getStatusBadgeClass(status: 'healthy' | 'degraded' | 'blocked') {
       : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
 }
 
+function getRiskCardClass(status: 'healthy' | 'degraded' | 'blocked') {
+  return status === 'healthy'
+    ? 'bg-white dark:bg-gray-800 border border-transparent shadow-sm hover:shadow-md'
+    : status === 'degraded'
+      ? 'bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 shadow-sm hover:shadow-md'
+      : 'bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 shadow-md hover:shadow-lg';
+}
+
 function formatGeneratedAt(value: string | null): string {
   if (!value) {
     return 'Henüz üretilmedi';
@@ -187,7 +195,7 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
         </div>
         <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
           {riskCards.map((card) => (
-            <a href={card.href} class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <a href={card.href} class:list={['rounded-xl p-6 transition-shadow', getRiskCardClass(card.status)]}>
               <div class="flex items-center justify-between gap-3">
                 <h3 class="font-semibold text-gray-900 dark:text-white">{card.title}</h3>
                 <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(card.status)]}>
