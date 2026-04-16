@@ -25,6 +25,12 @@ This file is a high-signal working guide, not the only source of truth. For oper
 
 For long-form architecture notes, prefer `docs/architecture/README.md` and keep this file focused on daily execution rules.
 
+Framework direction:
+
+- Astro is the primary framework.
+- Default to Astro-first for new pages and new UI surfaces.
+- Do not assume the repo is already Astro-only; check `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md` before proposing React removal or large migration work.
+
 ## Quick Start Commands
 
 ### Daily Development
@@ -181,6 +187,18 @@ src/
 8. **Component Strategy**:
    - Astro (.astro) for static, server-rendered content
    - React (.tsx) for interactive UI with explicit hydration directives (client:load, client:idle)
+
+### Astro-Only Direction
+
+- Target direction is Astro-first, not immediate React removal.
+- `@astrojs/react` is still an active production dependency.
+- Before planning a framework migration batch, read:
+  - `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md`
+  - `astro.config.mjs`
+- Migration rule:
+  - low-interactivity widgets can move to Astro + plain TypeScript first
+  - medium/high-state admin and analytics panels must be evaluated individually
+  - do not propose big-bang React removal
 
 ### Database
 
