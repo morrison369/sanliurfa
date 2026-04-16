@@ -17,7 +17,7 @@ Başlangıç ölçümü:
 
 - `.astro`: `144`
 - `.tsx`: `113`
-- `client:*` hydration noktası: `55`
+- `client:*` hydration noktası: `53`
 
 İlk hedefler:
 
@@ -53,6 +53,17 @@ En sona bırakılacaklar:
 ### Hedef
 
 Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini azaltmak.
+
+### Tamamlananlar
+
+- `src/components/NotificationBadge.tsx` -> `src/components/NotificationBadge.astro`
+- `src/components/QuotaUsageDisplay.tsx` -> `src/components/QuotaUsageDisplay.astro`
+
+Bu dalga ile:
+
+- `Header.astro` içindeki `NotificationBadge` artık React island değil
+- `src/pages/ayarlar/kotalar.astro` içindeki `QuotaUsageDisplay` artık React island değil
+- toplam `client:*` sayısı `55 -> 53` düştü
 
 ### Aday Bileşenler
 

@@ -15,7 +15,7 @@ Bu belge, `Şanlıurfa.com` kod tabanının mevcut Astro + React island mimarisi
 
 - `src/**/*.astro`: `144`
 - `src/**/*.tsx`: `113`
-- `.astro` dosyalarında `client:*` hydration kullanımı: `55`
+- `.astro` dosyalarında `client:*` hydration kullanımı: `53`
 - `astro.config.mjs` içinde aktif React entegrasyonu: `@astrojs/react`
 
 Mevcut yapı:
@@ -23,6 +23,7 @@ Mevcut yapı:
 - SSR ve routing katmanı Astro ile çalışıyor.
 - İnteraktif panellerin önemli bölümü React island olarak hydrate ediliyor.
 - Admin, analytics, search, social, subscriptions, notifications ve messaging yüzeyleri React bağımlılığını yoğun kullanıyor.
+- İlk migration dalgasında `NotificationBadge` ve `QuotaUsageDisplay` React island olmaktan çıkarıldı.
 
 ## Astro-Only Hedefinin Anlamı
 
