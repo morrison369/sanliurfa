@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:48:13.140Z",
-  "astroFiles": 168,
-  "tsxFiles": 87,
-  "totalHydrationPoints": 27,
+  "generatedAt": "2026-04-16T22:53:35.635Z",
+  "astroFiles": 169,
+  "tsxFiles": 86,
+  "totalHydrationPoints": 26,
   "lowRiskCount": 0,
-  "mediumRiskCount": 11,
+  "mediumRiskCount": 10,
   "highRiskCount": 16,
   "entries": [
     {
@@ -188,13 +188,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "CollectionDetail form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/profile.astro",
-      "componentName": "UserProfile",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "UserProfile form, liste veya orta seviyeli etkileşim içeriyor."
     }
   ]
 }
