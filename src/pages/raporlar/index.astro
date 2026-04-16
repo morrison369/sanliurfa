@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import ReportManager from '../../components/ReportManager';
+import ReportManager from '../../components/ReportManager.astro';
 
 // Auth check
 const userId = Astro.locals.user?.id;
@@ -16,6 +16,6 @@ if (!userId) {
       <p class="text-gray-600">Raporları çalıştırın, dışa aktarın ve şablonları yönetin</p>
     </div>
 
-    <ReportManager client:load />
+    <ReportManager />
   </div>
 </Layout>

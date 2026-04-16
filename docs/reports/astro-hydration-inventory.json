@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:34:49.382Z",
-  "astroFiles": 165,
-  "tsxFiles": 90,
-  "totalHydrationPoints": 31,
+  "generatedAt": "2026-04-16T22:37:45.304Z",
+  "astroFiles": 166,
+  "tsxFiles": 89,
+  "totalHydrationPoints": 30,
   "lowRiskCount": 0,
-  "mediumRiskCount": 15,
+  "mediumRiskCount": 14,
   "highRiskCount": 16,
   "entries": [
     {
@@ -209,13 +209,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "UserProfile form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/raporlar/index.astro",
-      "componentName": "ReportManager",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "ReportManager form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/vendor/dashboard.astro",
