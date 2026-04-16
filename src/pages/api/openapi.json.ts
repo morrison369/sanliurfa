@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import {
   adminAuditLogsDataSchema,
   adminAccessCoverageSchema,
+  adminAccessCoverageReportDataSchema,
   adminArtifactHealthSnapshotSchema,
   adminArtifactHealthSummarySchema,
   adminMessageStatusMutationDataSchema,
@@ -1680,6 +1681,38 @@ const openApiSpec = {
                   type: 'object',
                   properties: {
                     data: releaseGateSummaryResponseDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/system/admin-access-coverage': {
+      get: {
+        tags: ['Health'],
+        summary: 'Get admin access wrapper coverage report',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Admin access coverage report and artifact freshness',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        success: { type: 'boolean' },
+                        data: adminAccessCoverageReportDataSchema,
+                      },
+                      required: ['success', 'data'],
+                    },
                   },
                   required: ['data'],
                 },

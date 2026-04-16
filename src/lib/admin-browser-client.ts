@@ -1,6 +1,7 @@
 import type {
   AdminAuditLogsData,
   AdminAnalyticsData,
+  AdminAccessCoverageReportData,
   AdminRevenueData,
   AdminModerationActionsData,
   AdminModerationActionMutationData,
@@ -116,6 +117,13 @@ export async function fetchAdminRevenue(): Promise<AdminRevenueData> {
 export async function fetchAdminReleaseGateSummary(): Promise<AdminReleaseGateSummaryData> {
   const payload = await fetchJson<{ data: AdminReleaseGateSummaryData }>(
     '/api/admin/system/release-gate-summary'
+  );
+  return payload.data;
+}
+
+export async function fetchAdminAccessCoverageReport(): Promise<AdminAccessCoverageReportData> {
+  const payload = await fetchJson<{ data: AdminAccessCoverageReportData }>(
+    '/api/admin/system/admin-access-coverage'
   );
   return payload.data;
 }

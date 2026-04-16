@@ -163,6 +163,20 @@ export const adminAccessCoverageSchema = {
   required: ['available', 'generatedAt', 'routeFiles', 'wrapperFiles', 'driftCount', 'coveragePercent', 'driftedFiles'],
 };
 
+export const adminAccessCoverageReportDataSchema = {
+  type: 'object',
+  properties: {
+    report: adminAccessCoverageSchema,
+    artifact: artifactHealthEntrySchema,
+    artifactName: { type: 'string' },
+    reportFormats: {
+      type: 'array',
+      items: { type: 'string', enum: ['json', 'markdown'] },
+    },
+  },
+  required: ['report', 'artifact', 'artifactName', 'reportFormats'],
+};
+
 export const adminOpsAuditWidgetSchema = {
   type: 'object',
   properties: {

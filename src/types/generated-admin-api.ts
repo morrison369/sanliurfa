@@ -2312,6 +2312,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/system/admin-access-coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get admin access wrapper coverage report */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Admin access coverage report and artifact freshness */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                data: {
+                                    artifact: {
+                                        available: boolean;
+                                        /** Format: date-time */
+                                        generatedAt: string | null;
+                                        /** @enum {string} */
+                                        status: "healthy" | "degraded" | "blocked";
+                                    };
+                                    artifactName: string;
+                                    report: {
+                                        available: boolean;
+                                        coveragePercent: number;
+                                        driftCount: number;
+                                        driftedFiles: string[];
+                                        /** Format: date-time */
+                                        generatedAt: string | null;
+                                        routeFiles: number;
+                                        wrapperFiles: number;
+                                    };
+                                    reportFormats: ("json" | "markdown")[];
+                                };
+                                success: boolean;
+                            };
+                        };
+                    };
+                };
+                /** @description Admin access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Rate limited */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/system/artifact-health": {
         parameters: {
             query?: never;
