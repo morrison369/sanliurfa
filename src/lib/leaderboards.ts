@@ -2,12 +2,17 @@
  * Leaderboards Library
  * Leaderboard calculations and management
  */
-import { queryOne, queryRows, insert, update } from './postgres';
+import { insert, queryOne, queryRows, update } from './postgres';
 import { logger } from './logging';
 
-export async function getLeaderboard(leaderboardType: string, limit: number = 100, period: string = 'all_time'): Promise<any[]> {
+export async function getLeaderboard(
+  leaderboardType: string,
+  limit: number = 100,
+  period: string = 'all_time',
+): Promise<any[]> {
   try {
-    const users = await queryRows(`
+    const users = await queryRows(
+      `
       SELECT
         lb.rank,
         lb.score,
@@ -21,20 +26,32 @@ export async function getLeaderboard(leaderboardType: string, limit: number = 10
       WHERE lb.leaderboard_type = $1 AND lb.period = $2
       ORDER BY lb.rank ASC
       LIMIT $3
-    `, [leaderboardType, period, limit]);
+    `,
+      [leaderboardType, period, limit],
+    );
     return users;
   } catch (error) {
-    logger.error('Failed to get leaderboard', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Failed to get leaderboard',
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return [];
   }
 }
 
-export async function getUserLeaderboardRank(userId: string, leaderboardType: string, period: string = 'all_time'): Promise<any> {
+export async function getUserLeaderboardRank(
+  userId: string,
+  leaderboardType: string,
+  period: string = 'all_time',
+): Promise<any> {
   try {
-    const result = await queryOne(`
+    const result = await queryOne(
+      `
       SELECT rank, score FROM leaderboards
       WHERE user_id = $1 AND leaderboard_type = $2 AND period = $3
-    `, [userId, leaderboardType, period]);
+    `,
+      [userId, leaderboardType, period],
+    );
 
     if (!result) {
       return { rank: 0, score: 0 };
@@ -42,19 +59,24 @@ export async function getUserLeaderboardRank(userId: string, leaderboardType: st
 
     return {
       rank: result.rank,
-      score: result.score
+      score: result.score,
     };
   } catch (error) {
-    logger.error('Failed to get user rank', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Failed to get user rank',
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return { rank: 0, score: 0 };
   }
 }
 
-export async function updateLeaderboard(leaderboardType: string, period: string = 'all_time'): Promise<void> {
+export async function updateLeaderboard(
+  leaderboardType: string,
+  period: string = 'all_time',
+): Promise<void> {
   try {
-    // Get all users with their scores based on leaderboard type
     let query = '';
-    
+
     if (leaderboardType === 'reputation') {
       query = `
         SELECT u.id, r.total_score as score
@@ -83,33 +105,40 @@ export async function updateLeaderboard(leaderboardType: string, period: string 
 
     const rankings = await queryRows(query);
 
-    for (let i = 0; i < rankings.length; i++) {
-      const user = rankings[i];
+    for (let index = 0; index < rankings.length; index += 1) {
+      const user = rankings[index];
       const existing = await queryOne(
         'SELECT id FROM leaderboards WHERE user_id = $1 AND leaderboard_type = $2 AND period = $3',
-        [user.id, leaderboardType, period]
+        [user.id, leaderboardType, period],
       );
 
       if (existing) {
-        await update('leaderboards', { user_id: user.id, leaderboard_type: leaderboardType, period }, {
-          rank: i + 1,
-          score: user.score,
-          updated_at: new Date()
-        });
+        await update(
+          'leaderboards',
+          { user_id: user.id, leaderboard_type: leaderboardType, period },
+          {
+            rank: index + 1,
+            score: user.score,
+            updated_at: new Date(),
+          },
+        );
       } else {
         await insert('leaderboards', {
           leaderboard_type: leaderboardType,
           user_id: user.id,
-          rank: i + 1,
+          rank: index + 1,
           score: user.score,
-          period
+          period,
         });
       }
     }
 
     logger.info('Leaderboard updated', { leaderboardType, period, count: rankings.length });
   } catch (error) {
-    logger.error('Failed to update leaderboard', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Failed to update leaderboard',
+      error instanceof Error ? error : new Error(String(error)),
+    );
   }
 }
 
@@ -121,14 +150,21 @@ export async function saveLeaderboardSnapshot(leaderboardType: string): Promise<
   try {
     const topUsers = await getLeaderboard(leaderboardType, 100);
 
-    await insert('leaderboard_snapshots', {
-      leaderboard_type: leaderboardType,
-      snapshot_date: new Date().toISOString().split('T')[0],
-      top_users: JSON.stringify(topUsers)
-    }, true);
+    await insert(
+      'leaderboard_snapshots',
+      {
+        leaderboard_type: leaderboardType,
+        snapshot_date: new Date().toISOString().split('T')[0],
+        top_users: JSON.stringify(topUsers),
+      },
+      true,
+    );
 
     logger.info('Leaderboard snapshot saved', { leaderboardType });
   } catch (error) {
-    logger.error('Failed to save snapshot', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Failed to save snapshot',
+      error instanceof Error ? error : new Error(String(error)),
+    );
   }
 }

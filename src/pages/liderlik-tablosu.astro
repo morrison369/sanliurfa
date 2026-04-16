@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import LeaderboardsDisplay from '../components/LeaderboardsDisplay';
+import LeaderboardsDisplay from '../components/LeaderboardsDisplay.astro';
 ---
 
 <Layout title="Liderlik Tablosu - Şanlıurfa.com">
@@ -10,6 +10,6 @@ import LeaderboardsDisplay from '../components/LeaderboardsDisplay';
       <p class="text-gray-600 dark:text-gray-400 mt-2">Topluluğun en etkin üyelerini keşfet ve onlarla yarışa</p>
     </div>
 
-    <LeaderboardsDisplay client:load currentUserId={Astro.locals.user?.id} />
+    <LeaderboardsDisplay currentUserId={Astro.locals.user?.id} />
   </div>
 </Layout>
