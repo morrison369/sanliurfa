@@ -163,11 +163,13 @@ describe('openapi runtime contracts', () => {
     expect(deploymentArtifactHealthSummarySchema.required).toEqual(['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total']);
     expect(dashboardOverviewSchema.artifactHealth.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps']);
     expect(dashboardOverviewSchema.adminOpsAudit.required).toEqual(['generatedAt', 'windowHours', 'total', 'deniedCount', 'rateLimitedCount', 'writeCount', 'readCount', 'lastDeniedAt']);
+    expect(dashboardOverviewSchema.adminAccessCoverage.required).toEqual(['available', 'generatedAt', 'routeFiles', 'wrapperFiles', 'driftCount', 'coveragePercent', 'driftedFiles']);
     expect(dashboardOverviewSchema.artifactHealthSummary.required).toEqual(['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total']);
     expect(dashboardOverviewSchema.statusSummary.required).toEqual(['integrations', 'regression', 'e2e', 'releaseGate', 'overall']);
     expect(dashboardOverviewSchema.releaseGate.required).toEqual(['available', 'generatedAt', 'finalStatus', 'failedStepCount', 'blockingFailedSteps', 'advisoryFailedSteps', 'performanceOptimization', 'steps']);
     expect(metricsSchema.artifactHealth.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps']);
     expect(metricsSchema.adminOpsAudit.required).toEqual(['generatedAt', 'windowHours', 'total', 'deniedCount', 'rateLimitedCount', 'writeCount', 'readCount', 'lastDeniedAt']);
+    expect(metricsSchema.adminAccessCoverage.required).toEqual(['available', 'generatedAt', 'routeFiles', 'wrapperFiles', 'driftCount', 'coveragePercent', 'driftedFiles']);
     expect(metricsSchema.artifactHealthSummary.required).toEqual(['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total']);
     expect(metricsSchema.statusSummary.required).toEqual(['integrations', 'regression', 'e2e', 'releaseGate', 'overall']);
     expect(integrationSettingsGetSchema.properties.resend.required).toEqual(['configured', 'source', 'maskedValue']);

@@ -145,6 +145,38 @@ export const adminOpsAuditSummarySchema = {
   required: ['generatedAt', 'windowHours', 'total', 'deniedCount', 'rateLimitedCount', 'writeCount', 'readCount', 'lastDeniedAt'],
 };
 
+export const adminAccessCoverageSchema = {
+  type: 'object',
+  properties: {
+    available: { type: 'boolean' },
+    generatedAt: { type: ['string', 'null'], format: 'date-time' },
+    routeFiles: { type: 'integer' },
+    wrapperFiles: { type: 'integer' },
+    driftCount: { type: 'integer' },
+    coveragePercent: { type: 'number' },
+    driftedFiles: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+  },
+  required: ['available', 'generatedAt', 'routeFiles', 'wrapperFiles', 'driftCount', 'coveragePercent', 'driftedFiles'],
+};
+
+export const adminOpsAuditWidgetSchema = {
+  type: 'object',
+  properties: {
+    generatedAt: { type: 'string', format: 'date-time' },
+    windowHours: { type: 'integer' },
+    total: { type: 'integer' },
+    deniedCount: { type: 'integer' },
+    rateLimitedCount: { type: 'integer' },
+    writeCount: { type: 'integer' },
+    readCount: { type: 'integer' },
+    lastDeniedAt: { type: ['string', 'null'], format: 'date-time' },
+  },
+  required: ['generatedAt', 'windowHours', 'total', 'deniedCount', 'rateLimitedCount', 'writeCount', 'readCount', 'lastDeniedAt'],
+};
+
 export const adminOpsAuditFiltersSchema = {
   type: 'object',
   properties: {

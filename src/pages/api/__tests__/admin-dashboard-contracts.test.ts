@@ -14,6 +14,7 @@ const verifyRuntimeIntegrationSettingsMock = vi.fn();
 const getReleaseGateSummaryMock = vi.fn();
 const getNightlyOpsSummaryMock = vi.fn();
 const summarizeAdminOpsAuditMock = vi.fn();
+const getAdminAccessCoverageMock = vi.fn();
 const recentIso = (hoursAgo: number) => new Date(Date.now() - hoursAgo * 60 * 60 * 1000).toISOString();
 const loggerMock = {
   setRequestId: vi.fn(),
@@ -56,6 +57,10 @@ vi.mock('../../../lib/nightly-ops-summary', () => ({
 
 vi.mock('../../../lib/admin-ops-audit', () => ({
   summarizeAdminOpsAudit: summarizeAdminOpsAuditMock,
+}));
+
+vi.mock('../../../lib/admin-access-coverage', () => ({
+  getAdminAccessCoverage: getAdminAccessCoverageMock,
 }));
 
 vi.mock('../../../lib/admin-ops-access', () => ({
@@ -154,6 +159,15 @@ describe('admin dashboard contracts', () => {
       readCount: 0,
       lastDeniedAt: null,
     });
+    getAdminAccessCoverageMock.mockResolvedValue({
+      available: true,
+      generatedAt: recentIso(1),
+      routeFiles: 39,
+      wrapperFiles: 39,
+      driftCount: 0,
+      coveragePercent: 100,
+      driftedFiles: [],
+    });
   });
 
   it('rejects unauthorized admin dashboard overview access', async () => {
@@ -202,6 +216,8 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.performanceOptimization.slowOperations[0].type).toBe('query');
     expect(body.data.data.adminOpsAudit.deniedCount).toBe(0);
     expect(body.data.data.adminOpsAudit.readCount).toBe(0);
+    expect(body.data.data.adminAccessCoverage.coveragePercent).toBe(100);
+    expect(body.data.data.adminAccessCoverage.driftCount).toBe(0);
     expect(body.data.data.artifactHealth.releaseGate.available).toBe(true);
     expect(body.data.data.artifactHealth.releaseGate.status).toBe('healthy');
     expect(body.data.data.artifactHealth.nightlyRegression.status).toBe('healthy');
@@ -237,6 +253,8 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.performanceOptimization.cacheStrategies.count).toBe(2);
     expect(body.data.data.adminOpsAudit.windowHours).toBe(24);
     expect(body.data.data.adminOpsAudit.total).toBe(0);
+    expect(body.data.data.adminAccessCoverage.routeFiles).toBe(39);
+    expect(body.data.data.adminAccessCoverage.wrapperFiles).toBe(39);
     expect(body.data.data.artifactHealth.releaseGate.status).toBe('healthy');
     expect(body.data.data.artifactHealth.performanceOps.status).toBe('healthy');
     expect(body.data.data.artifactHealthSummary.overall).toBe('healthy');
