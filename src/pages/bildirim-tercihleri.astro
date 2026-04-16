@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import NotificationPreferencesManager from '../components/NotificationPreferencesManager';
+import NotificationPreferencesManager from '../components/NotificationPreferencesManager.astro';
 
 const { locals } = Astro;
 
@@ -13,7 +13,7 @@ if (!locals.user) {
 <Layout title="Bildirim Tercihleri | Şanlıurfa.com">
   <div class="min-h-screen bg-gray-50">
     <div class="max-w-3xl mx-auto px-4 py-8">
-      <NotificationPreferencesManager client:load />
+      <NotificationPreferencesManager />
     </div>
   </div>
 </Layout>
