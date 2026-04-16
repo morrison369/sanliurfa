@@ -17,6 +17,11 @@ Recommended split:
 - cache and invalidation strategy details
 - admin UI data dependency maps
 - realtime / SSE architecture notes
+- Astro-only migration assessments and framework transition notes
+
+Current long-form notes:
+
+- [ASTRO_ONLY_MIGRATION_ASSESSMENT.md](/D:/sanliurfa.com/sanliurfa-ops-batch-all/docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md)
 
 Rule:
 
