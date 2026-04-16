@@ -5,7 +5,7 @@
  */
 
 import Layout from '../layouts/Layout.astro';
-import UserSearchResults from '../components/UserSearchResults';
+import UserSearchResults from '../components/UserSearchResults.astro';
 ---
 
 <Layout title="Kullanıcıları Keşfet - Şanlıurfa.com">
@@ -15,6 +15,6 @@ import UserSearchResults from '../components/UserSearchResults';
       <p class="text-gray-600 dark:text-gray-400 mt-2">Toplulumuzu keşfet ve diğer kullanıcılarla bağlantı kur</p>
     </div>
 
-    <UserSearchResults client:load currentUserId={Astro.locals.user?.id} />
+    <UserSearchResults currentUserId={Astro.locals.user?.id} />
   </div>
 </Layout>
