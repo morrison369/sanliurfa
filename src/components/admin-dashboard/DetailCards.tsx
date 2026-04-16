@@ -207,7 +207,11 @@ export function ArtifactHealthCard({
         <ArtifactItem label="Nightly Regression" entry={artifactHealth.nightlyRegression} />
         <ArtifactItem label="Nightly E2E" entry={artifactHealth.nightlyE2E} />
         <ArtifactItem label="Performance Ops" entry={artifactHealth.performanceOps} />
-        <ArtifactItem label="Admin Access Coverage" entry={artifactHealth.adminAccessCoverage} />
+        <ArtifactItem
+          label="Admin Access Coverage"
+          entry={artifactHealth.adminAccessCoverage}
+          note="Rapor: JSON + Markdown"
+        />
       </div>
     </div>
   );
@@ -330,9 +334,11 @@ function Metric({ label, value, tone }: { label: string; value: number; tone: st
 function ArtifactItem({
   label,
   entry,
+  note,
 }: {
   label: string;
   entry: NonNullable<AdminDashboardOverviewData['artifactHealth']>[keyof NonNullable<AdminDashboardOverviewData['artifactHealth']>];
+  note?: string;
 }) {
   return (
     <div>
@@ -340,6 +346,7 @@ function ArtifactItem({
       <div className="text-sm font-semibold text-gray-900">{entry.available ? 'var' : 'yok'}</div>
       <div className={`text-xs ${statusTone(entry.status)}`}>{entry.status}</div>
       <div className="text-xs text-gray-500">{entry.generatedAt || 'Henüz yok'}</div>
+      {note && <div className="text-xs text-gray-500">{note}</div>}
     </div>
   );
 }

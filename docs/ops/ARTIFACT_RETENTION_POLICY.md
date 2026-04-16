@@ -7,9 +7,12 @@ Bu politika CI artifact lifecycle ve kalici admin ops audit saklama kurallarini 
 - `weekly-typecheck-report`: 14 gun
 - `release-gate-summary`: 14 gun
 - `performance-ops-summary`: 14 gun
+- `admin-access-coverage`: 14 gun
 - `nightly-unit-regression`: 14 gun
 - `nightly-playwright-report`: 14 gun
 - `nightly-performance-ops-summary`: 14 gun
+- `nightly-regression-admin-access-coverage`: 14 gun
+- `nightly-e2e-admin-access-coverage`: 14 gun
 
 ## Local Retention
 
