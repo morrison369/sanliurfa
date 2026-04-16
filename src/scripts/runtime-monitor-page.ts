@@ -3,15 +3,12 @@ import {
   fetchAdminAccessCoverageReport,
   fetchAdminPerformanceOptimization,
 } from '../lib/admin-browser-client';
-
-type RuntimeStatus = 'healthy' | 'degraded' | 'blocked';
-
-interface RuntimeHistoryEntry {
-  overall: RuntimeStatus;
-  blockedCount: number;
-  degradedCount: number;
-  refreshedAt: string;
-}
+import {
+  buildRuntimeDelta,
+  buildRuntimeTrend,
+  type RuntimeMonitorHistoryEntry as RuntimeHistoryEntry,
+  type RuntimeStatus,
+} from '../lib/admin-ops-pages';
 
 interface RuntimeEndpoint {
   key: string;
@@ -104,17 +101,6 @@ function persistHistory() {
   } catch {}
 }
 
-function getSameStatusSinceMinutes(overall: RuntimeStatus) {
-  let oldestMatching = history[0];
-  for (const entry of history) {
-    if (entry.overall !== overall) break;
-    oldestMatching = entry;
-  }
-  return Math.round(
-    (new Date(history[0].refreshedAt).getTime() - new Date(oldestMatching.refreshedAt).getTime()) / 60000
-  );
-}
-
 function formatPayload(payload: unknown) {
   return JSON.stringify(payload, null, 2);
 }
@@ -205,17 +191,10 @@ async function refreshRuntimeMonitor() {
   }
   if (lastRefresh) lastRefresh.textContent = refreshedAt;
   if (trendLine) {
-    trendLine.textContent = history
-      .slice(0, 5)
-      .map((entry) => `${entry.refreshedAt.slice(11, 19)} ${entry.overall} (d:${entry.degradedCount} b:${entry.blockedCount})`)
-      .join(' | ');
+    trendLine.textContent = buildRuntimeTrend(history);
   }
   if (deltaLine) {
-    if (!previous) {
-      deltaLine.textContent = 'İlk snapshot alındı.';
-    } else {
-      deltaLine.textContent = `${previous.overall} -> ${overall} • yaklaşık ${getSameStatusSinceMinutes(overall)} dk`;
-    }
+    deltaLine.textContent = buildRuntimeDelta(previous, history[0]!, history);
   }
 }
 
@@ -226,14 +205,11 @@ export function initRuntimeMonitorPage() {
   loadHistory();
   const trendLine = document.getElementById('runtime-monitor-trend');
   if (trendLine && history.length > 0) {
-    trendLine.textContent = history
-      .slice(0, 5)
-      .map((entry) => `${entry.refreshedAt.slice(11, 19)} ${entry.overall} (d:${entry.degradedCount} b:${entry.blockedCount})`)
-      .join(' | ');
+    trendLine.textContent = buildRuntimeTrend(history);
   }
   const deltaLine = document.getElementById('runtime-monitor-delta');
   if (deltaLine && history.length > 1) {
-    deltaLine.textContent = `${history[1].overall} -> ${history[0].overall}`;
+    deltaLine.textContent = buildRuntimeDelta(history[1], history[0], history);
   }
   void refreshRuntimeMonitor();
   window.setInterval(() => {

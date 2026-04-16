@@ -2,15 +2,13 @@ import {
   buildAdminAccessCoverageReportUrl,
   fetchAdminAccessCoverageReport,
 } from '../lib/admin-browser-client';
-
-type CoverageStatus = 'healthy' | 'degraded' | 'blocked';
-
-interface CoverageHistoryEntry {
-  status: CoverageStatus;
-  driftCount: number;
-  coveragePercent: number;
-  refreshedAt: string;
-}
+import {
+  buildCoverageAlert,
+  buildCoverageDelta,
+  buildCoverageTrend,
+  type CoverageHistoryEntry,
+  type RuntimeStatus as CoverageStatus,
+} from '../lib/admin-ops-pages';
 
 const STORAGE_KEY = 'admin-access-coverage-history-v1';
 const history: CoverageHistoryEntry[] = [];
@@ -34,21 +32,17 @@ function setAlert(status: CoverageStatus, driftCount: number, firstDriftFile?: s
   if (!element) return;
 
   element.className = 'rounded-2xl border p-4 text-sm font-semibold';
+  const alert = buildCoverageAlert({ status, driftCount, firstDriftFile });
 
-  if (driftCount > 0) {
+  if (alert.tone === 'blocked') {
     element.classList.add('block', 'border-red-200', 'bg-red-50', 'text-red-700', 'dark:border-red-900', 'dark:bg-red-950/40', 'dark:text-red-200');
-    element.textContent = `Uyarı: ${driftCount} wrapper drift bulundu. İlk dosya: ${firstDriftFile || 'bilinmiyor'}.`;
-    return;
-  }
-
-  if (status !== 'healthy') {
+  } else if (alert.tone === 'degraded') {
     element.classList.add('block', 'border-amber-200', 'bg-amber-50', 'text-amber-700', 'dark:border-amber-900', 'dark:bg-amber-950/40', 'dark:text-amber-200');
-    element.textContent = 'Uyarı: Coverage raporu mevcut ama freshness durumu healthy değil.';
-    return;
+  } else {
+    element.classList.add('block', 'border-green-200', 'bg-green-50', 'text-green-700', 'dark:border-green-900', 'dark:bg-green-950/40', 'dark:text-green-200');
   }
 
-  element.classList.add('block', 'border-green-200', 'bg-green-50', 'text-green-700', 'dark:border-green-900', 'dark:bg-green-950/40', 'dark:text-green-200');
-  element.textContent = 'Durum normal: Wrapper coverage drift görünmüyor ve artifact healthy.';
+  element.textContent = alert.text;
 }
 
 function loadHistory() {
@@ -85,34 +79,10 @@ function renderDriftFiles(files: string[]) {
     .join('');
 }
 
-function getSameStatusSinceMinutes(status: CoverageStatus) {
-  let oldestMatching = history[0];
-  for (const entry of history) {
-    if (entry.status !== status) break;
-    oldestMatching = entry;
-  }
-
-  return Math.round(
-    (new Date(history[0].refreshedAt).getTime() - new Date(oldestMatching.refreshedAt).getTime()) / 60000
-  );
-}
-
 function renderTrend() {
   const trendLine = document.getElementById('admin-access-coverage-trend');
   if (!trendLine) return;
-
-  if (history.length === 0) {
-    trendLine.textContent = 'Henüz veri yok.';
-    return;
-  }
-
-  trendLine.textContent = history
-    .slice(0, 5)
-    .map(
-      (entry) =>
-        `${entry.refreshedAt.slice(11, 19)} ${entry.status} (%${entry.coveragePercent}, drift:${entry.driftCount})`
-    )
-    .join(' | ');
+  trendLine.textContent = buildCoverageTrend(history);
 }
 
 async function loadCoverage() {
@@ -151,12 +121,9 @@ async function loadCoverage() {
     );
 
     if (!previous) {
-      setText('admin-access-coverage-delta', 'İlk snapshot alındı.');
+      setText('admin-access-coverage-delta', buildCoverageDelta(undefined, history[0]!, history));
     } else {
-      setText(
-        'admin-access-coverage-delta',
-        `${previous.status} -> ${artifact.status} • yaklaşık ${getSameStatusSinceMinutes(artifact.status)} dk`
-      );
+      setText('admin-access-coverage-delta', buildCoverageDelta(previous, history[0]!, history));
     }
 
     setLink('admin-access-coverage-download-json', buildAdminAccessCoverageReportUrl('json'));
@@ -185,7 +152,7 @@ export function initAdminAccessCoveragePage() {
   renderTrend();
 
   if (history.length > 1) {
-    setText('admin-access-coverage-delta', `${history[1].status} -> ${history[0].status}`);
+    setText('admin-access-coverage-delta', buildCoverageDelta(history[1], history[0], history));
   }
 
   void loadCoverage();
