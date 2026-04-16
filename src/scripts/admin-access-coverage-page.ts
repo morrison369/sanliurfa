@@ -16,30 +16,17 @@ import {
   buildCoverageDriftFilesHtml,
   buildCoverageSummaryText,
 } from '../lib/admin-access-coverage-page';
+import { setElementClassName, setElementHtml, setLinkHref, setTextContent } from '../lib/admin-dom';
 
 const STORAGE_KEY = 'admin-access-coverage-history-v1';
 const history: CoverageHistoryEntry[] = [];
-
-function setText(id: string, value: string) {
-  const element = document.getElementById(id);
-  if (element) {
-    element.textContent = value;
-  }
-}
-
-function setLink(id: string, href: string) {
-  const element = document.getElementById(id) as HTMLAnchorElement | null;
-  if (element) {
-    element.href = href;
-  }
-}
 
 function setAlert(status: CoverageStatus, driftCount: number, firstDriftFile?: string) {
   const element = document.getElementById('admin-access-coverage-alert');
   if (!element) return;
   const alert = buildCoverageAlertClass(status, driftCount, firstDriftFile);
-  element.className = alert.className;
-  element.textContent = alert.text;
+  setElementClassName('admin-access-coverage-alert', alert.className);
+  setTextContent('admin-access-coverage-alert', alert.text);
 }
 
 function loadHistory() {
@@ -51,20 +38,16 @@ function persistHistory() {
 }
 
 function renderDriftFiles(files: string[]) {
-  const container = document.getElementById('admin-access-drift-files');
-  if (!container) return;
-  container.innerHTML = buildCoverageDriftFilesHtml(files);
+  setElementHtml('admin-access-drift-files', buildCoverageDriftFilesHtml(files));
 }
 
 function renderTrend() {
-  const trendLine = document.getElementById('admin-access-coverage-trend');
-  if (!trendLine) return;
-  trendLine.textContent = buildCoverageTrend(history);
+  setTextContent('admin-access-coverage-trend', buildCoverageTrend(history));
 }
 
 async function loadCoverage() {
-  setText('admin-access-coverage-summary', 'Coverage verileri yenileniyor.');
-  setText('admin-access-coverage-status', 'Yükleniyor...');
+  setTextContent('admin-access-coverage-summary', 'Coverage verileri yenileniyor.');
+  setTextContent('admin-access-coverage-status', 'Yükleniyor...');
 
   try {
     const payload = await fetchAdminAccessCoverageReport();
@@ -81,36 +64,39 @@ async function loadCoverage() {
 
     const previous = history[1];
 
-    setText('admin-access-coverage-status', artifact.status);
-    setText('admin-access-coverage-percent', `%${report.coveragePercent}`);
-    setText('admin-access-coverage-routes', `${report.routeFiles} / ${report.wrapperFiles}`);
-    setText('admin-access-coverage-drift-count', String(report.driftCount));
-    setText('admin-access-coverage-generated-at', report.generatedAt || 'Henüz yok');
-    setText('admin-access-coverage-artifact', artifactName);
-    setText('admin-access-coverage-formats', reportFormats.join(', '));
-    setText('admin-access-coverage-artifact-status', artifact.status);
-    setText('admin-access-coverage-last-refresh', refreshedAt);
+    setTextContent('admin-access-coverage-status', artifact.status);
+    setTextContent('admin-access-coverage-percent', `%${report.coveragePercent}`);
+    setTextContent('admin-access-coverage-routes', `${report.routeFiles} / ${report.wrapperFiles}`);
+    setTextContent('admin-access-coverage-drift-count', String(report.driftCount));
+    setTextContent('admin-access-coverage-generated-at', report.generatedAt || 'Henüz yok');
+    setTextContent('admin-access-coverage-artifact', artifactName);
+    setTextContent('admin-access-coverage-formats', reportFormats.join(', '));
+    setTextContent('admin-access-coverage-artifact-status', artifact.status);
+    setTextContent('admin-access-coverage-last-refresh', refreshedAt);
     setAlert(artifact.status, report.driftCount, report.driftedFiles[0]);
-    setText('admin-access-coverage-summary', buildCoverageSummaryText(artifact.status, report.coveragePercent, report.driftCount));
+    setTextContent(
+      'admin-access-coverage-summary',
+      buildCoverageSummaryText(artifact.status, report.coveragePercent, report.driftCount)
+    );
 
     if (!previous) {
-      setText('admin-access-coverage-delta', buildCoverageDelta(undefined, history[0]!, history));
+      setTextContent('admin-access-coverage-delta', buildCoverageDelta(undefined, history[0]!, history));
     } else {
-      setText('admin-access-coverage-delta', buildCoverageDelta(previous, history[0]!, history));
+      setTextContent('admin-access-coverage-delta', buildCoverageDelta(previous, history[0]!, history));
     }
 
-    setLink('admin-access-coverage-download-json', buildAdminAccessCoverageReportUrl('json'));
-    setLink('admin-access-coverage-download-md', buildAdminAccessCoverageReportUrl('markdown'));
+    setLinkHref('admin-access-coverage-download-json', buildAdminAccessCoverageReportUrl('json'));
+    setLinkHref('admin-access-coverage-download-md', buildAdminAccessCoverageReportUrl('markdown'));
     renderDriftFiles(report.driftedFiles);
     renderTrend();
   } catch (error) {
-    setText('admin-access-coverage-status', 'hata');
-    setText(
+    setTextContent('admin-access-coverage-status', 'hata');
+    setTextContent(
       'admin-access-coverage-generated-at',
       error instanceof Error ? error.message : 'Bilinmeyen hata'
     );
     setAlert('blocked', 1, 'coverage-fetch-failed');
-    setText('admin-access-coverage-summary', 'Coverage verisi alınamadı.');
+    setTextContent('admin-access-coverage-summary', 'Coverage verisi alınamadı.');
     renderDriftFiles([]);
     renderTrend();
   }
@@ -125,7 +111,7 @@ export function initAdminAccessCoveragePage() {
   renderTrend();
 
   if (history.length > 1) {
-    setText('admin-access-coverage-delta', buildCoverageDelta(history[1], history[0], history));
+    setTextContent('admin-access-coverage-delta', buildCoverageDelta(history[1], history[0], history));
   }
 
   void loadCoverage();
