@@ -15,11 +15,11 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `178`
-- `.tsx`: `76`
-- `client:*` hydration noktası: `16`
-- current generated risk split: `0 low / 0 medium / 16 high`
-- current high-risk feasibility split: `1 first / 3 later / 11 last`
+- `.astro`: `179`
+- `.tsx`: `73`
+- `client:*` hydration noktası: `15`
+- current generated risk split: `0 low / 0 medium / 15 high`
+- current high-risk feasibility split: `0 first / 3 later / 11 last`
 
 İlk hedefler:
 
@@ -93,6 +93,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/AdminLoyaltyPanel.tsx` -> `src/components/AdminLoyaltyPanel.astro`
 - `src/components/admin/AuditLogViewer.tsx` -> `src/components/admin/AuditLogViewer.astro`
 - `src/components/UserManagementTable.tsx` -> `src/components/UserManagementTable.astro`
+- `src/components/AdminDashboardOverview.tsx` -> `src/components/AdminDashboardOverview.astro`
 
 Bu dalga ile:
 
@@ -127,7 +128,8 @@ Bu dalga ile:
 - `src/pages/admin/loyalty/index.astro` içindeki `AdminLoyaltyPanel` artık React island değil
 - `src/pages/admin/audit-logs.astro` içindeki `AuditLogViewer` artık React island değil
 - `src/pages/admin/dashboard.astro` içindeki `UserManagementTable` artık React island değil
-- toplam `client:*` sayısı `55 -> 16` düştü
+- `src/pages/admin/dashboard.astro` içindeki `AdminDashboardOverview` artık React island değil
+- toplam `client:*` sayısı `55 -> 15` düştü
 
 ### Önceki Düşük Risk Adayları
 
@@ -235,10 +237,9 @@ ayrı yazılmalı.
 
 `docs/reports/astro-high-risk-feasibility.md` şu sırayı öneriyor:
 
-1. `AdminDashboardOverview`
-2. `AnalyticsPanel`
-3. `AdminAnalyticsDashboard`
-4. `AdminManager`
+1. `AnalyticsPanel`
+2. `AdminAnalyticsDashboard`
+3. `AdminManager`
 
 Bu dört yüzey dışında kalan yüksek-risk bileşenler şu an için son dalga adayıdır.
 
@@ -289,7 +290,8 @@ Bu repo için doğru hız budur. Daha agresif rewrite, gereksiz risk üretir.
 
 - Sonraki Astro migration batch'i seçilmeden önce `npm run astro:migration:inventory` çalıştırılır.
 - Önce `docs/reports/astro-hydration-inventory.md` içindeki `low` bucket değerlendirilir; `low=0` ise en ucuz `medium` yüzeyler seçilir.
-- `medium` veya `high` yüzeye ancak açık gerekçe varsa girilir.
+- `medium` biterse `npm run astro:migration:high-risk` çalıştırılır ve sıralama oradan alınır.
+- `high` yüzeye ancak üretilen feasibility raporu bunu destekliyorsa girilir.
 
 
 

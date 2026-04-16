@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import AdminDashboardOverview from '../../components/AdminDashboardOverview';
+import AdminDashboardOverview from '../../components/AdminDashboardOverview.astro';
 import ModerationQueueManager from '../../components/ModerationQueueManager';
 import UserManagementTable from '../../components/UserManagementTable.astro';
 import { requireAdminRedirectPath } from '../../lib/admin-guard';
@@ -51,7 +51,7 @@ if (redirectPath) {
 
       {/* Content Sections */}
       <div id="overview-section">
-        <AdminDashboardOverview client:load />
+        <AdminDashboardOverview />
       </div>
 
       <div id="moderation-section" class="hidden">

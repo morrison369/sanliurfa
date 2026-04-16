@@ -1,12 +1,11 @@
 # Astro High Risk Migration Report
-- Generated at: 2026-04-16T23:36:17.049Z
-- Total high-risk components: 15
-- First candidates: 1
+- Generated at: 2026-04-16T23:41:54.972Z
+- Total high-risk components: 14
+- First candidates: 0
 - Later candidates: 3
 - Last candidates: 11
 
 ## Ranked Entries
-- [first] AdminDashboardOverview | score=28 | usage=1 | lines=78 | state=2 | effect=0 | fetch=0 | typed=0 | admin=yes
 - [later] AnalyticsPanel | score=48 | usage=1 | lines=90 | state=3 | effect=2 | fetch=1 | typed=0 | admin=yes
 - [later] AdminAnalyticsDashboard | score=51 | usage=1 | lines=154 | state=5 | effect=2 | fetch=0 | typed=2 | admin=yes
 - [later] AdminManager | score=52 | usage=1 | lines=176 | state=5 | effect=0 | fetch=0 | typed=0 | admin=yes
