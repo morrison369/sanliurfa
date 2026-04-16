@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:57:16.949Z",
-  "astroFiles": 170,
-  "tsxFiles": 85,
-  "totalHydrationPoints": 25,
+  "generatedAt": "2026-04-16T23:07:25.817Z",
+  "astroFiles": 171,
+  "tsxFiles": 83,
+  "totalHydrationPoints": 24,
   "lowRiskCount": 0,
-  "mediumRiskCount": 9,
+  "mediumRiskCount": 8,
   "highRiskCount": 16,
   "entries": [
     {
@@ -153,13 +153,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "SearchResults form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/ayarlar.astro",
-      "componentName": "UserSettings",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "UserSettings form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/isletme/analytics.astro",

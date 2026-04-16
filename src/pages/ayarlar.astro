@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import UserSettings from '../components/UserSettings';
+import UserSettings from '../components/UserSettings.astro';
 
 // Require authentication
 if (!Astro.locals.user) {
@@ -15,6 +15,6 @@ if (!Astro.locals.user) {
       <p class="text-gray-600 dark:text-gray-400">Profil bilgilerinizi ve tercihlerinizi yönetin</p>
     </div>
 
-    <UserSettings client:load />
+    <UserSettings />
   </div>
 </Layout>
