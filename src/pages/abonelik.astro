@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { SubscriptionManager } from '../components/SubscriptionManager';
+import SubscriptionManager from '../components/SubscriptionManager.astro';
 import BillingHistory from '../components/BillingHistory.astro';
 
 // Require authentication
@@ -11,7 +11,6 @@ if (!Astro.locals.user) {
 
 <Layout title="Abonelik Yönetimi - Şanlıurfa">
   <div class="max-w-4xl mx-auto px-4 py-8">
-    <!-- Header -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
         Abonelik Yönetimi
@@ -21,12 +20,10 @@ if (!Astro.locals.user) {
       </p>
     </div>
 
-    <!-- Subscription Manager -->
     <div class="mb-12">
-      <SubscriptionManager client:load onUpgrade={() => window.location.href = '/fiyatlandirma'} />
+      <SubscriptionManager />
     </div>
 
-    <!-- Billing History -->
     <div class="mb-8">
       <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
         Ödeme Geçmişi
@@ -34,7 +31,6 @@ if (!Astro.locals.user) {
       <BillingHistory />
     </div>
 
-    <!-- Help Section -->
     <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
       <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-2">
         Yardıma İhtiyacınız var mı?

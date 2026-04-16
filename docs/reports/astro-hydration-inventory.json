@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:03:35.838Z",
-  "astroFiles": 156,
-  "tsxFiles": 99,
-  "totalHydrationPoints": 40,
+  "generatedAt": "2026-04-16T22:06:39.752Z",
+  "astroFiles": 157,
+  "tsxFiles": 98,
+  "totalHydrationPoints": 39,
   "lowRiskCount": 0,
-  "mediumRiskCount": 24,
+  "mediumRiskCount": 23,
   "highRiskCount": 16,
   "entries": [
     {
@@ -118,13 +118,6 @@
       "directive": "load",
       "risk": "high",
       "rationale": "WebhookManager yoğun state veya dashboard tipi davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/abonelik.astro",
-      "componentName": "SubscriptionManager",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "SubscriptionManager form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/admin/audit-logs.astro",
