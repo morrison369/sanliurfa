@@ -1,0 +1,18 @@
+---
+---
+
+<div data-user-management-table>
+  <div
+    data-user-management-loading
+    class="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400"
+  >
+    Yükleniyor...
+  </div>
+  <div data-user-management-content class="hidden"></div>
+</div>
+
+<script>
+  import { initUserManagementTable } from '../scripts/user-management-table';
+
+  initUserManagementTable();
+</script>
