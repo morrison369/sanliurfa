@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:10:21.234Z",
-  "astroFiles": 158,
-  "tsxFiles": 97,
-  "totalHydrationPoints": 38,
+  "generatedAt": "2026-04-16T22:14:08.996Z",
+  "astroFiles": 159,
+  "tsxFiles": 96,
+  "totalHydrationPoints": 37,
   "lowRiskCount": 0,
-  "mediumRiskCount": 22,
+  "mediumRiskCount": 21,
   "highRiskCount": 16,
   "entries": [
     {
@@ -258,13 +258,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "HashtagExplorer form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/sosyal/index.astro",
-      "componentName": "UserSuggestionsPanel",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "UserSuggestionsPanel form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/vendor/dashboard.astro",
