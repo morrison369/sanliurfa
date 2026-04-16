@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T23:15:29.930Z",
-  "astroFiles": 173,
-  "tsxFiles": 81,
-  "totalHydrationPoints": 21,
+  "generatedAt": "2026-04-16T23:20:09.662Z",
+  "astroFiles": 175,
+  "tsxFiles": 79,
+  "totalHydrationPoints": 19,
   "lowRiskCount": 0,
-  "mediumRiskCount": 5,
+  "mediumRiskCount": 3,
   "highRiskCount": 16,
   "entries": [
     {
@@ -139,20 +139,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "AdminLoyaltyPanel form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/işletme/pazarlama.astro",
-      "componentName": "FeaturedListingsManager",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "FeaturedListingsManager form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/işletme/pazarlama.astro",
-      "componentName": "MarketingCampaignBuilder",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "MarketingCampaignBuilder form, liste veya orta seviyeli etkileşim içeriyor."
     }
   ]
 }
