@@ -1,0 +1,17 @@
+---
+---
+
+<div data-notification-preferences>
+  <div data-preferences-loading class="space-y-4">
+    <div class="h-24 animate-pulse rounded-lg bg-gray-200"></div>
+    <div class="h-40 animate-pulse rounded-lg bg-gray-200"></div>
+    <div class="h-40 animate-pulse rounded-lg bg-gray-200"></div>
+  </div>
+  <div data-preferences-content class="hidden"></div>
+</div>
+
+<script>
+  import { initNotificationPreferences } from '../scripts/notification-preferences';
+
+  initNotificationPreferences();
+</script>

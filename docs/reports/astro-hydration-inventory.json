@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T21:57:49.117Z",
-  "astroFiles": 155,
-  "tsxFiles": 101,
-  "totalHydrationPoints": 42,
+  "generatedAt": "2026-04-16T22:01:07.398Z",
+  "astroFiles": 156,
+  "tsxFiles": 100,
+  "totalHydrationPoints": 41,
   "lowRiskCount": 0,
-  "mediumRiskCount": 26,
+  "mediumRiskCount": 25,
   "highRiskCount": 16,
   "entries": [
     {
@@ -174,13 +174,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "UserSettings form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/bildirim-tercihleri.astro",
-      "componentName": "NotificationPreferencesManager",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "NotificationPreferencesManager form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/bildirimler/index.astro",
