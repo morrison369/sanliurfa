@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import CollectionsManager from '../../components/CollectionsManager';
+import CollectionsManager from '../../components/CollectionsManager.astro';
 
 // Get user from locals
 const user = Astro.locals.user;
@@ -16,6 +16,6 @@ if (!user) {
     <h1 class="text-4xl font-bold mb-2">Koleksiyonlarım</h1>
     <p class="text-gray-600 mb-8">Mekanları organize edebileceğiniz kişisel listeleriniz</p>
 
-    <CollectionsManager client:load userId={user.id} />
+    <CollectionsManager userId={user.id} />
   </div>
 </Layout>
