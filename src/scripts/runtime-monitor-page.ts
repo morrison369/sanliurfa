@@ -1,4 +1,7 @@
-import { fetchAdminPerformanceOptimization } from '../lib/admin-browser-client';
+import {
+  fetchAdminAccessCoverageReport,
+  fetchAdminPerformanceOptimization,
+} from '../lib/admin-browser-client';
 
 type RuntimeStatus = 'healthy' | 'degraded' | 'blocked';
 
@@ -64,6 +67,14 @@ const endpoints: RuntimeEndpoint[] = [
     badgeId: 'optimization-badge',
     load: () => fetchAdminPerformanceOptimization(),
     pickStatus: (payload) => payload?.artifactHealthSummary?.overall ?? 'blocked',
+  },
+  {
+    key: 'admin-access-coverage',
+    url: '/api/admin/system/admin-access-coverage',
+    outputId: 'admin-access-coverage-output',
+    badgeId: 'admin-access-coverage-badge',
+    load: () => fetchAdminAccessCoverageReport(),
+    pickStatus: (payload) => payload?.data?.artifact?.status ?? 'blocked',
   },
 ];
 
