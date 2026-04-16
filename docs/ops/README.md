@@ -13,6 +13,15 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
   - [admin-access-coverage.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\reports\admin-access-coverage.md)
 - Hangi dosya source-of-truth:
   - [SOURCE_OF_TRUTH_MAP.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\SOURCE_OF_TRUTH_MAP.md)
+- Admin UI helper / view-model katmanı:
+  - `src/lib/admin-index.ts`
+  - `src/lib/admin-index-page.ts`
+  - `src/lib/admin-ops-pages.ts`
+  - `src/lib/runtime-monitor.ts`
+  - `src/lib/admin-access-coverage-page.ts`
+  - browser smoke:
+    - `src/scripts/__tests__/runtime-monitor-page.test.ts`
+    - `src/scripts/__tests__/admin-access-coverage-page.test.ts`
 - Incident aninda bakilacak sira:
   - [INCIDENT_RUNBOOK.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\INCIDENT_RUNBOOK.md)
 - Admin entegrasyon readiness:
@@ -31,6 +40,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 4. Hangi dosya karar veriyor belirsizse `SOURCE_OF_TRUTH_MAP.md`
 5. Admin anahtarları ve readiness için `INTEGRATION_READINESS.md`
 6. Legacy yüzey şüphesi varsa `LEGACY_PHASE_SURFACE.md`
+7. Admin UI davranışı veya ops sayfa metni değişecekse önce helper katmanına bak, sonra `.astro` / page script dosyasını değiştir
 
 ## Kural
 
