@@ -28,6 +28,7 @@ describe('openapi runtime contracts', () => {
     expect(body.paths['/api/admin/security/guidelines']).toBeDefined();
     expect(body.paths['/api/admin/deployment/backup']).toBeDefined();
     expect(body.paths['/api/admin/subscriptions/analytics']).toBeDefined();
+    expect(body.paths['/api/admin/revenue']).toBeDefined();
     expect(body.paths['/api/admin/users']).toBeDefined();
     expect(body.paths['/api/admin/users/{id}']).toBeDefined();
     expect(body.paths['/api/admin/moderation/queue']).toBeDefined();
@@ -101,6 +102,8 @@ describe('openapi runtime contracts', () => {
       body.paths['/api/admin/deployment/backup'].post.responses['200'].content['application/json'].schema.properties.data;
     const adminSubscriptionsAnalyticsSchema =
       body.paths['/api/admin/subscriptions/analytics'].get.responses['200'].content['application/json'].schema.properties.data;
+    const adminRevenueSchema =
+      body.paths['/api/admin/revenue'].get.responses['200'].content['application/json'].schema.properties.data;
     const adminUsersSchema =
       body.paths['/api/admin/users'].get.responses['200'].content['application/json'].schema.properties.data;
     const adminUserDetailsSchema =
@@ -211,6 +214,14 @@ describe('openapi runtime contracts', () => {
       'arr',
       'averageLifetimeValue',
       'churnRate',
+    ]);
+    expect(adminRevenueSchema.required).toEqual(['success', 'data']);
+    expect(adminRevenueSchema.properties.data.required).toEqual(['summary', 'byTier', 'dailyRevenue']);
+    expect(adminRevenueSchema.properties.data.properties.summary.required).toEqual([
+      'totalMRR',
+      'totalActiveSubscriptions',
+      'churnRatePercent',
+      'totalRevenueAllTime',
     ]);
     expect(adminUsersSchema.required).toEqual(['success', 'data']);
     expect(adminUsersSchema.properties.data.required).toEqual(['users', 'count', 'limit', 'offset', 'hasMore']);

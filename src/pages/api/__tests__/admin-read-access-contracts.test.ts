@@ -6,6 +6,8 @@ const performHealthCheckMock = vi.fn();
 const getMonitoringDashboardMock = vi.fn();
 const getCriticalAlertsMock = vi.fn();
 const exportMonitoringDataMock = vi.fn();
+const verifyTokenMock = vi.fn();
+const hasPermissionMock = vi.fn();
 const queryOneMock = vi.fn();
 const queryRowsMock = vi.fn();
 const loggerMock = {
@@ -54,6 +56,14 @@ vi.mock('../../../lib/monitoring', () => ({
   exportMonitoringData: exportMonitoringDataMock,
 }));
 
+vi.mock('../../../lib/auth', () => ({
+  verifyToken: verifyTokenMock,
+}));
+
+vi.mock('../../../lib/rbac', () => ({
+  hasPermission: hasPermissionMock,
+}));
+
 vi.mock('../../../lib/postgres', () => ({
   queryOne: queryOneMock,
   queryRows: queryRowsMock,
@@ -77,6 +87,11 @@ describe('admin read access contracts', () => {
     });
     getCriticalAlertsMock.mockReturnValue([{ id: 'c1' }]);
     exportMonitoringDataMock.mockReturnValue({ exported: true });
+    verifyTokenMock.mockResolvedValue({
+      userId: 'admin-1',
+      role: 'admin',
+    });
+    hasPermissionMock.mockResolvedValue(true);
     queryOneMock.mockResolvedValue({
       total_metrics: 10,
       avg_ttfb: 120,
@@ -173,5 +188,31 @@ describe('admin read access contracts', () => {
     expect(body.data.success).toBe(true);
     expect(body.data.data.recommendations.length).toBeGreaterThan(1);
     expect(body.data.data.recommendations[0].priority).toBe('high');
+  });
+
+  it('returns revenue summary for authenticated admin access', async () => {
+    queryRowsMock
+      .mockResolvedValueOnce([{ tier: 'premium', count: 2 }])
+      .mockResolvedValueOnce([{ tier: 'premium', subscriber_count: 2, tier_mrr: 5.98 }])
+      .mockResolvedValueOnce([{ date: '2026-04-16', revenue: 5.98 }]);
+    queryOneMock
+      .mockResolvedValueOnce({ churned_30d: 1 })
+      .mockResolvedValueOnce({ total: 19.95 });
+
+    const { GET } = await import('../admin/revenue.ts');
+    const request = new Request('https://example.com/api/admin/revenue');
+    const response = await GET({
+      request,
+      cookies: {
+        get: () => ({ value: 'token-1' }),
+      },
+      locals: {},
+    } as any);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.success).toBe(true);
+    expect(body.data.data.summary.totalMRR).toBe(5.98);
+    expect(body.data.data.dailyRevenue).toHaveLength(1);
   });
 });

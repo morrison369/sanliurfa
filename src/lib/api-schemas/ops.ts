@@ -548,6 +548,52 @@ export const deploymentBackupMutationDataSchema = {
   ],
 };
 
+export const adminRevenueDataSchema = {
+  type: 'object',
+  properties: {
+    success: { type: 'boolean' },
+    data: {
+      type: 'object',
+      properties: {
+        summary: {
+          type: 'object',
+          properties: {
+            totalMRR: { type: 'number' },
+            totalActiveSubscriptions: { type: 'integer' },
+            churnRatePercent: { type: 'number' },
+            totalRevenueAllTime: { type: 'number' },
+          },
+          required: ['totalMRR', 'totalActiveSubscriptions', 'churnRatePercent', 'totalRevenueAllTime'],
+        },
+        byTier: {
+          type: 'object',
+          additionalProperties: {
+            type: 'object',
+            properties: {
+              count: { type: 'integer' },
+              monthlyRevenue: { type: 'number' },
+            },
+            required: ['count', 'monthlyRevenue'],
+          },
+        },
+        dailyRevenue: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              date: { type: 'string' },
+              revenue: { type: 'number' },
+            },
+            required: ['date', 'revenue'],
+          },
+        },
+      },
+      required: ['summary', 'byTier', 'dailyRevenue'],
+    },
+  },
+  required: ['success', 'data'],
+};
+
 export const moderationStatsDataSchema = {
   type: 'object',
   properties: {

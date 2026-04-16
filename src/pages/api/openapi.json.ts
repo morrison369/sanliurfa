@@ -10,6 +10,7 @@ import {
   adminVendorPendingDataSchema,
   adminStatusSummarySchema,
   adminSubscriptionAnalyticsDataSchema,
+  adminRevenueDataSchema,
   adminUserDetailsResponseDataSchema,
   adminUserMutationDataSchema,
   adminUsersListDataSchema,
@@ -1184,6 +1185,32 @@ const openApiSpec = {
               },
             },
           },
+          '403': { description: 'Admin access required' },
+          '429': { description: 'Rate limited' },
+        },
+      },
+    },
+    '/api/admin/revenue': {
+      get: {
+        tags: ['Health'],
+        summary: 'Revenue dashboard summary for admins',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Revenue analytics snapshot',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: adminRevenueDataSchema,
+                  },
+                  required: ['data'],
+                },
+              },
+            },
+          },
+          '401': { description: 'Authentication required' },
           '403': { description: 'Admin access required' },
           '429': { description: 'Rate limited' },
         },

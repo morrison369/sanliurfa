@@ -1,6 +1,7 @@
 import type {
   AdminAuditLogsData,
   AdminAnalyticsData,
+  AdminRevenueData,
   AdminModerationActionsData,
   AdminModerationActionMutationData,
   AdminModerationFlagsData,
@@ -104,6 +105,11 @@ export async function fetchAdminDashboardOverview(days: number): Promise<AdminDa
 
 export async function fetchAdminAnalytics(days = 30, limit = 10): Promise<AdminAnalyticsData> {
   const payload = await fetchJson<{ data: AdminAnalyticsData }>(`/api/admin/analytics?days=${days}&limit=${limit}`);
+  return payload.data;
+}
+
+export async function fetchAdminRevenue(): Promise<AdminRevenueData> {
+  const payload = await fetchJson<{ data: AdminRevenueData }>('/api/admin/revenue');
   return payload.data;
 }
 
