@@ -304,4 +304,22 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.artifacts.performanceOps.generatedAt).toBeDefined();
     expect(body.data.data.artifacts.adminAccessCoverage.status).toBe('healthy');
   });
+
+  it('returns admin access coverage via dedicated admin endpoint', async () => {
+    const { GET } = await import('../admin/system/admin-access-coverage.ts');
+    const request = new Request('https://example.com/api/admin/system/admin-access-coverage');
+
+    const response = await GET({
+      request,
+      locals: { user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data.data.report.coveragePercent).toBe(100);
+    expect(body.data.data.report.driftCount).toBe(0);
+    expect(body.data.data.artifact.status).toBe('healthy');
+    expect(body.data.data.artifactName).toBe('admin-access-coverage');
+    expect(body.data.data.reportFormats).toEqual(['json', 'markdown']);
+  });
 });

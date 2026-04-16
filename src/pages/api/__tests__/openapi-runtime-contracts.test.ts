@@ -13,6 +13,7 @@ describe('openapi runtime contracts', () => {
     expect(body.paths['/api/performance']).toBeDefined();
     expect(body.paths['/api/admin/performance/optimization']).toBeDefined();
     expect(body.paths['/api/admin/system/artifact-health']).toBeDefined();
+    expect(body.paths['/api/admin/system/admin-access-coverage']).toBeDefined();
     expect(body.paths['/api/admin/deployment/status']).toBeDefined();
     expect(body.paths['/api/admin/dashboard/overview']).toBeDefined();
     expect(body.paths['/api/admin/system/metrics']).toBeDefined();
@@ -62,6 +63,8 @@ describe('openapi runtime contracts', () => {
       body.paths['/api/admin/performance/optimization'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties.artifactHealthSummary;
     const adminArtifactHealthSchema =
       body.paths['/api/admin/system/artifact-health'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties;
+    const adminAccessCoverageReportSchema =
+      body.paths['/api/admin/system/admin-access-coverage'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties;
     const deploymentArtifactHealthSchema =
       body.paths['/api/admin/deployment/status'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties.artifactHealth;
     const deploymentArtifactHealthSummarySchema =
@@ -159,6 +162,10 @@ describe('openapi runtime contracts', () => {
     expect(adminArtifactHealthSchema.artifacts.properties.performanceOps.properties.available.type).toBe('boolean');
     expect(adminArtifactHealthSchema.artifacts.properties.performanceOps.properties.generatedAt.type).toEqual(['string', 'null']);
     expect(adminArtifactHealthSchema.artifacts.properties.adminAccessCoverage.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
+    expect(adminAccessCoverageReportSchema.report.required).toEqual(['available', 'generatedAt', 'routeFiles', 'wrapperFiles', 'driftCount', 'coveragePercent', 'driftedFiles']);
+    expect(adminAccessCoverageReportSchema.artifact.required).toEqual(['available', 'status', 'generatedAt']);
+    expect(adminAccessCoverageReportSchema.artifactName.type).toBe('string');
+    expect(adminAccessCoverageReportSchema.reportFormats.items.enum).toEqual(['json', 'markdown']);
     expect(deploymentArtifactHealthSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps', 'adminAccessCoverage']);
     expect(deploymentArtifactHealthSchema.properties.performanceOps.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(deploymentArtifactHealthSchema.properties.adminAccessCoverage.properties.generatedAt.type).toEqual(['string', 'null']);
