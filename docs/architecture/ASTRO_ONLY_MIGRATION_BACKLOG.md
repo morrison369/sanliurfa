@@ -15,10 +15,10 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `173`
-- `.tsx`: `81`
-- `client:*` hydration noktası: `21`
-- current generated risk split: `0 low / 5 medium / 16 high`
+- `.astro`: `175`
+- `.tsx`: `79`
+- `client:*` hydration noktası: `19`
+- current generated risk split: `0 low / 3 medium / 16 high`
 
 İlk hedefler:
 
@@ -87,6 +87,8 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/UserSettings.tsx` -> `src/components/UserSettings.astro`
 - `src/components/SearchResults.tsx` -> `src/components/SearchResults.astro`
 - `src/components/BusinessAnalyticsDashboard.tsx` -> `src/components/BusinessAnalyticsDashboard.astro`
+- `src/components/FeaturedListingsManager.tsx` -> `src/components/FeaturedListingsManager.astro`
+- `src/components/MarketingCampaignBuilder.tsx` -> `src/components/MarketingCampaignBuilder.astro`
 
 Bu dalga ile:
 
@@ -116,7 +118,9 @@ Bu dalga ile:
 - `src/pages/ayarlar.astro` içindeki `UserSettings` artık React island değil
 - `src/pages/arama/index.astro` ve `src/pages/arama/gelismis.astro` içindeki `SearchResults` artık React island değil
 - `src/pages/isletme/analytics.astro` içindeki `BusinessAnalyticsDashboard` artık React island değil
-- toplam `client:*` sayısı `55 -> 21` düştü
+- `src/pages/işletme/pazarlama.astro` içindeki `FeaturedListingsManager` artık React island değil
+- `src/pages/işletme/pazarlama.astro` içindeki `MarketingCampaignBuilder` artık React island değil
+- toplam `client:*` sayısı `55 -> 19` düştü
 
 ### Önceki Düşük Risk Adayları
 

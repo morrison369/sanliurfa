@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import FeaturedListingsManager from '../../components/FeaturedListingsManager';
-import MarketingCampaignBuilder from '../../components/MarketingCampaignBuilder';
+import FeaturedListingsManager from '../../components/FeaturedListingsManager.astro';
+import MarketingCampaignBuilder from '../../components/MarketingCampaignBuilder.astro';
 
 // Check if user is authenticated
 if (!Astro.locals.user) {
@@ -41,7 +41,7 @@ const seo = {
               Daha fazla görünürlük kazanın, müşteri trafiğini artırın ve başarıyı ölçün.
             </p>
           </div>
-          <FeaturedListingsManager client:load />
+          <FeaturedListingsManager />
         </div>
 
         {/* Marketing Campaigns */}
@@ -55,7 +55,7 @@ const seo = {
               ve detaylı analizler ile başarınızı maksimize edin.
             </p>
           </div>
-          <MarketingCampaignBuilder client:load />
+          <MarketingCampaignBuilder />
         </div>
       </div>
 
