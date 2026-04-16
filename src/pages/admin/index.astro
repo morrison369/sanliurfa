@@ -1,26 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { query } from '../../lib/postgres';
-import { getAdminAccessCoverage } from '../../lib/admin-access-coverage';
-import {
-  getAdminArtifactHealthSnapshot,
-  summarizeArtifactHealth,
-} from '../../lib/artifact-health';
-import {
-  buildAdminIndexRiskCards,
-  buildAdminIndexToolCards,
-} from '../../lib/admin-index';
-import {
-  buildAdminIndexRiskCardViews,
-  buildAdminIndexToolCardViews,
-} from '../../lib/admin-index-view';
-import {
-  buildArtifactHealth,
-  classifyNightlyStatus,
-  classifyReleaseGateStatus,
-} from '../../lib/admin-status';
-import { getReleaseGateSummary } from '../../lib/release-gate-summary';
-import { getNightlyOpsSummary } from '../../lib/nightly-ops-summary';
+import { getAdminIndexData } from '../../lib/admin-index-data';
 
 const user = Astro.locals.user;
 
@@ -28,64 +8,7 @@ if (!user || !Astro.locals.isAdmin) {
   return Astro.redirect('/giris?redirect=/admin');
 }
 
-// İstatistikler
-const [
-  placesCount,
-  usersCount,
-  reviewsCount,
-  messagesCount,
-  pendingPlaces,
-  adminAccessCoverage,
-  artifactHealth,
-  releaseGate,
-  nightly,
-] = await Promise.all([
-  query("SELECT COUNT(*) FROM places"),
-  query("SELECT COUNT(*) FROM users"),
-  query("SELECT COUNT(*) FROM reviews"),
-  query("SELECT COUNT(*) FROM contact_messages WHERE status = 'new'"),
-  query("SELECT COUNT(*) FROM places WHERE status = 'pending'"),
-  getAdminAccessCoverage(),
-  getAdminArtifactHealthSnapshot(),
-  getReleaseGateSummary(),
-  getNightlyOpsSummary(),
-]);
-
-const stats = {
-  places: parseInt(placesCount.rows[0]?.count || '0'),
-  users: parseInt(usersCount.rows[0]?.count || '0'),
-  reviews: parseInt(reviewsCount.rows[0]?.count || '0'),
-  messages: parseInt(messagesCount.rows[0]?.count || '0'),
-  pending: parseInt(pendingPlaces.rows[0]?.count || '0'),
-};
-
-const accessCoverageArtifact = buildArtifactHealth({
-  kind: 'adminAccessCoverage',
-  available: adminAccessCoverage.available,
-  generatedAt: adminAccessCoverage.generatedAt,
-});
-const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
-
-const releaseGateStatus = classifyReleaseGateStatus(releaseGate);
-const nightlyRegressionStatus = classifyNightlyStatus(nightly.regression);
-
-const riskCards = buildAdminIndexRiskCards({
-  releaseGate,
-  releaseGateStatus,
-  nightlyRegression: nightly.regression,
-  nightlyRegressionStatus,
-  adminAccessCoverage,
-  accessCoverageStatus: accessCoverageArtifact.status,
-  artifactHealthSummary,
-  artifactHealth,
-});
-
-const toolCards = buildAdminIndexToolCards({
-  pending: stats.pending,
-  messages: stats.messages,
-});
-const riskCardViews = buildAdminIndexRiskCardViews(riskCards);
-const toolCardViews = buildAdminIndexToolCardViews(toolCards);
+const { stats, riskCardViews, toolCardViews } = await getAdminIndexData();
 
 const seo = { title: 'Admin Panel - Şanlıurfa.com' };
 ---
