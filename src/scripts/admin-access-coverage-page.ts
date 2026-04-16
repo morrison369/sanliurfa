@@ -29,7 +29,7 @@ function setLink(id: string, href: string) {
   }
 }
 
-function setAlert(status: CoverageStatus, driftCount: number) {
+function setAlert(status: CoverageStatus, driftCount: number, firstDriftFile?: string) {
   const element = document.getElementById('admin-access-coverage-alert');
   if (!element) return;
 
@@ -37,7 +37,7 @@ function setAlert(status: CoverageStatus, driftCount: number) {
 
   if (driftCount > 0) {
     element.classList.add('block', 'border-red-200', 'bg-red-50', 'text-red-700', 'dark:border-red-900', 'dark:bg-red-950/40', 'dark:text-red-200');
-    element.textContent = `Uyarı: ${driftCount} wrapper drift bulundu. İlk dosya detayını aşağıda inceleyin.`;
+    element.textContent = `Uyarı: ${driftCount} wrapper drift bulundu. İlk dosya: ${firstDriftFile || 'bilinmiyor'}.`;
     return;
   }
 
@@ -144,7 +144,7 @@ async function loadCoverage() {
     setText('admin-access-coverage-formats', reportFormats.join(', '));
     setText('admin-access-coverage-artifact-status', artifact.status);
     setText('admin-access-coverage-last-refresh', refreshedAt);
-    setAlert(artifact.status, report.driftCount);
+    setAlert(artifact.status, report.driftCount, report.driftedFiles[0]);
     setText(
       'admin-access-coverage-summary',
       `Durum: ${artifact.status}. Coverage %${report.coveragePercent}. Drift: ${report.driftCount}.`
@@ -169,7 +169,7 @@ async function loadCoverage() {
       'admin-access-coverage-generated-at',
       error instanceof Error ? error.message : 'Bilinmeyen hata'
     );
-    setAlert('blocked', 1);
+    setAlert('blocked', 1, 'coverage-fetch-failed');
     setText('admin-access-coverage-summary', 'Coverage verisi alınamadı.');
     renderDriftFiles([]);
     renderTrend();
