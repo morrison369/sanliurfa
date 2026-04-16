@@ -33,6 +33,33 @@ const seo = {
         </button>
       </div>
 
+      <div
+        id="admin-access-coverage-summary"
+        class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+      >
+        Coverage verileri yükleniyor.
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-3">
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+          <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Son yenileme</div>
+          <div id="admin-access-coverage-last-refresh" class="mt-2 text-lg font-semibold text-gray-900 dark:text-white">-</div>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+          <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Auto refresh</div>
+          <div class="mt-2 text-lg font-semibold text-gray-900 dark:text-white">60 saniye</div>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+          <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Incident Delta</div>
+          <div id="admin-access-coverage-delta" class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Henüz veri yok.</div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Kısa geçmiş</div>
+        <div id="admin-access-coverage-trend" class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Henüz veri yok.</div>
+      </div>
+
       <div class="grid gap-4 md:grid-cols-4">
         <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div class="text-xs text-gray-500">Durum</div>
