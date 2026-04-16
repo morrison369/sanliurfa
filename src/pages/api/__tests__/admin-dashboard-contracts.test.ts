@@ -322,4 +322,37 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.artifactName).toBe('admin-access-coverage');
     expect(body.data.data.reportFormats).toEqual(['json', 'markdown']);
   });
+
+  it('returns markdown download for admin access coverage report', async () => {
+    const { GET } = await import('../admin/system/admin-access-coverage.ts');
+    const request = new Request('https://example.com/api/admin/system/admin-access-coverage?format=markdown');
+
+    const response = await GET({
+      request,
+      locals: { user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('text/markdown');
+    expect(response.headers.get('content-disposition')).toContain('admin-access-coverage.md');
+    const body = await response.text();
+    expect(body).toContain('# Admin Access Coverage');
+  });
+
+  it('returns json download for admin access coverage report', async () => {
+    const { GET } = await import('../admin/system/admin-access-coverage.ts');
+    const request = new Request('https://example.com/api/admin/system/admin-access-coverage?format=json');
+
+    const response = await GET({
+      request,
+      locals: { user: { id: 'admin-1', role: 'admin' } },
+    } as any);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('application/json');
+    expect(response.headers.get('content-disposition')).toContain('admin-access-coverage.json');
+    const body = await response.json();
+    expect(body.coveragePercent).toBe(100);
+    expect(body.driftCount).toBe(0);
+  });
 });

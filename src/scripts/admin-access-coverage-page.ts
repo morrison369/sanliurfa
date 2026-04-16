@@ -1,9 +1,19 @@
-import { fetchAdminAccessCoverageReport } from '../lib/admin-browser-client';
+import {
+  buildAdminAccessCoverageReportUrl,
+  fetchAdminAccessCoverageReport,
+} from '../lib/admin-browser-client';
 
 function setText(id: string, value: string) {
   const element = document.getElementById(id);
   if (element) {
     element.textContent = value;
+  }
+}
+
+function setLink(id: string, href: string) {
+  const element = document.getElementById(id) as HTMLAnchorElement | null;
+  if (element) {
+    element.href = href;
   }
 }
 
@@ -39,6 +49,8 @@ async function loadCoverage() {
     setText('admin-access-coverage-artifact', artifactName);
     setText('admin-access-coverage-formats', reportFormats.join(', '));
     setText('admin-access-coverage-artifact-status', artifact.status);
+    setLink('admin-access-coverage-download-json', buildAdminAccessCoverageReportUrl('json'));
+    setLink('admin-access-coverage-download-md', buildAdminAccessCoverageReportUrl('markdown'));
     renderDriftFiles(report.driftedFiles);
   } catch (error) {
     setText('admin-access-coverage-status', 'hata');

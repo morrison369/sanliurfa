@@ -65,6 +65,8 @@ describe('openapi runtime contracts', () => {
       body.paths['/api/admin/system/artifact-health'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties;
     const adminAccessCoverageReportSchema =
       body.paths['/api/admin/system/admin-access-coverage'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties;
+    const adminAccessCoverageReportParameters =
+      body.paths['/api/admin/system/admin-access-coverage'].get.parameters;
     const deploymentArtifactHealthSchema =
       body.paths['/api/admin/deployment/status'].get.responses['200'].content['application/json'].schema.properties.data.properties.data.properties.artifactHealth;
     const deploymentArtifactHealthSummarySchema =
@@ -166,6 +168,9 @@ describe('openapi runtime contracts', () => {
     expect(adminAccessCoverageReportSchema.artifact.required).toEqual(['available', 'status', 'generatedAt']);
     expect(adminAccessCoverageReportSchema.artifactName.type).toBe('string');
     expect(adminAccessCoverageReportSchema.reportFormats.items.enum).toEqual(['json', 'markdown']);
+    expect(adminAccessCoverageReportParameters).toHaveLength(1);
+    expect(adminAccessCoverageReportParameters[0].name).toBe('format');
+    expect(adminAccessCoverageReportParameters[0].schema.enum).toEqual(['json', 'markdown']);
     expect(deploymentArtifactHealthSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps', 'adminAccessCoverage']);
     expect(deploymentArtifactHealthSchema.properties.performanceOps.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(deploymentArtifactHealthSchema.properties.adminAccessCoverage.properties.generatedAt.type).toEqual(['string', 'null']);

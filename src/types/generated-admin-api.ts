@@ -2322,7 +2322,9 @@ export interface paths {
         /** Get admin access wrapper coverage report */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    format?: "json" | "markdown";
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
