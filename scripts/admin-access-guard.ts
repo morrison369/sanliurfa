@@ -1,5 +1,9 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import {
+  buildAdminAccessCoverageMarkdown,
+  createAdminAccessCoverageReport,
+} from '../src/lib/admin-access-coverage-report';
 
 const ADMIN_API_ROOT = resolve(process.cwd(), 'src', 'pages', 'api', 'admin');
 const REPORT_PATH = resolve(process.cwd(), 'docs', 'reports', 'admin-access-coverage.json');
@@ -54,37 +58,14 @@ function main(): void {
     return wrapperCount < routeCount;
   });
 
-  const report = {
-    generatedAt: new Date().toISOString(),
+  const report = createAdminAccessCoverageReport({
     routeFiles: routeFiles.length,
-    wrapperFiles: routeFiles.length - driftedFiles.length,
-    driftCount: driftedFiles.length,
-    coveragePercent:
-      routeFiles.length > 0
-        ? Number((((routeFiles.length - driftedFiles.length) / routeFiles.length) * 100).toFixed(2))
-        : 100,
     driftedFiles: driftedFiles.map((filePath) => toRelativePath(filePath)),
-  };
+  });
 
   mkdirSync(resolve(process.cwd(), 'docs', 'reports'), { recursive: true });
   writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  writeFileSync(
-    MARKDOWN_REPORT_PATH,
-    [
-      '# Admin Access Coverage',
-      `- Generated at: ${report.generatedAt}`,
-      `- Route files: ${report.routeFiles}`,
-      `- Wrapper files: ${report.wrapperFiles}`,
-      `- Drift count: ${report.driftCount}`,
-      `- Coverage: %${report.coveragePercent}`,
-      `- First drift file: ${report.driftedFiles[0] || 'yok'}`,
-      '',
-      '## Drifted Files',
-      ...(report.driftedFiles.length > 0 ? report.driftedFiles.map((filePath) => `- ${filePath}`) : ['- yok']),
-      '',
-    ].join('\n'),
-    'utf8'
-  );
+  writeFileSync(MARKDOWN_REPORT_PATH, buildAdminAccessCoverageMarkdown(report), 'utf8');
 
   if (driftedFiles.length > 0) {
     throw new Error(
