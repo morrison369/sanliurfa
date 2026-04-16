@@ -1,11 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { BusinessAnalyticsDashboard } from '../../components/BusinessAnalyticsDashboard';
+import BusinessAnalyticsDashboard from '../../components/BusinessAnalyticsDashboard.astro';
 
 // Redirect if not authenticated
 if (!Astro.locals.user) {
   return Astro.redirect('/giris');
 }
+
+const placeId = Astro.url.searchParams.get('placeId') || '';
 ---
 
 <Layout title="İşletme Analitikleri - Şanlıurfa">
@@ -15,7 +17,7 @@ if (!Astro.locals.user) {
       <p class="text-gray-600">Mekanınız hakkında detaylı istatistikler ve AI-destekli öneriler</p>
     </div>
 
-    <BusinessAnalyticsDashboard client:load />
+    <BusinessAnalyticsDashboard placeId={placeId} />
 
     <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
