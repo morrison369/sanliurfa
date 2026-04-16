@@ -15,10 +15,10 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `163`
-- `.tsx`: `92`
-- `client:*` hydration noktası: `33`
-- current generated risk split: `0 low / 17 medium / 16 high`
+- `.astro`: `164`
+- `.tsx`: `91`
+- `client:*` hydration noktası: `32`
+- current generated risk split: `0 low / 16 medium / 16 high`
 
 İlk hedefler:
 
@@ -77,6 +77,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/UserSearchResults.tsx` -> `src/components/UserSearchResults.astro`
 - `src/components/HashtagExplorer.tsx` -> `src/components/HashtagExplorer.astro`
 - `src/components/CollectionsManager.tsx` -> `src/components/CollectionsManager.astro`
+- `src/components/ContentManager.tsx` -> `src/components/ContentManager.astro`
 
 Bu dalga ile:
 
@@ -96,7 +97,8 @@ Bu dalga ile:
 - `src/pages/sosyal/index.astro` içindeki `HashtagExplorer` artık React island değil
 - `src/pages/koleksiyonlar/index.astro` içindeki `CollectionsManager` artık React island değil
 - `src/pages/bildirimler/index.astro` içindeki `NotificationsCenter` artık React island değil
-- toplam `client:*` sayısı `55 -> 33` düştü
+- `src/pages/icerik.astro` içindeki `ContentManager` artık React island değil
+- toplam `client:*` sayısı `55 -> 32` düştü
 
 ### Önceki Düşük Risk Adayları
 
