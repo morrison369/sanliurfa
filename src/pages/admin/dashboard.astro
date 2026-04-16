@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import AdminDashboardOverview from '../../components/AdminDashboardOverview';
 import ModerationQueueManager from '../../components/ModerationQueueManager';
-import UserManagementTable from '../../components/UserManagementTable';
+import UserManagementTable from '../../components/UserManagementTable.astro';
 import { requireAdminRedirectPath } from '../../lib/admin-guard';
 
 const { locals } = Astro;
@@ -64,7 +64,7 @@ if (redirectPath) {
       <div id="users-section" class="hidden">
         <div class="bg-white border border-gray-200 rounded-lg p-6">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">Kullanıcı Yönetimi</h2>
-          <UserManagementTable client:load />
+          <UserManagementTable />
         </div>
       </div>
     </div>

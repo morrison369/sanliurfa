@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T23:26:48.540Z",
-  "astroFiles": 177,
-  "tsxFiles": 77,
-  "totalHydrationPoints": 17,
+  "generatedAt": "2026-04-16T23:31:54.421Z",
+  "astroFiles": 178,
+  "tsxFiles": 76,
+  "totalHydrationPoints": 16,
   "lowRiskCount": 0,
-  "mediumRiskCount": 1,
+  "mediumRiskCount": 0,
   "highRiskCount": 16,
   "entries": [
     {
@@ -118,13 +118,6 @@
       "directive": "load",
       "risk": "high",
       "rationale": "WebhookManager yoğun state veya dashboard tipi davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/admin/dashboard.astro",
-      "componentName": "UserManagementTable",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "UserManagementTable form, liste veya orta seviyeli etkileşim içeriyor."
     }
   ]
 }
