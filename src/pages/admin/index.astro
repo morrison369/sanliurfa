@@ -93,6 +93,7 @@ type ToolCard = {
   href: string;
   title: string;
   description: string;
+  meta: string;
   icon: typeof Activity;
 };
 
@@ -216,54 +217,63 @@ const toolCards: ToolCard[] = [
     href: '/admin/runtime-monitor',
     title: 'Runtime Monitör',
     description: 'Health, performance ve artifact sinyalleri',
+    meta: 'Öncelik: Kritik izleme',
     icon: Activity,
   },
   {
     href: '/admin/integrations',
     title: 'Entegrasyon Ayarları',
     description: 'RESEND ve Analytics anahtarları',
+    meta: 'Öncelik: Konfigürasyon',
     icon: Settings,
   },
   {
     href: '/admin/users',
     title: 'Kullanıcılar',
     description: 'Kullanıcı yönetimi',
+    meta: 'Öncelik: Yönetim',
     icon: Users,
   },
   {
     href: '/admin/audit',
     title: 'Admin Audit',
     description: 'Kalıcı admin ops audit kayıtları',
+    meta: 'Öncelik: İnceleme',
     icon: ShieldEllipsis,
   },
   {
     href: '/admin/places',
     title: 'Mekanlar',
     description: `${stats.pending} onay bekleyen`,
+    meta: 'Öncelik: İçerik bakımı',
     icon: Store,
   },
   {
     href: '/admin/messages',
     title: 'Mesajlar',
     description: `${stats.messages} yeni mesaj`,
+    meta: 'Öncelik: Gelen kutusu',
     icon: MessageSquare,
   },
   {
     href: '/admin/reviews',
     title: 'Yorumlar',
     description: 'Yorum moderasyonu',
+    meta: 'Öncelik: Moderasyon',
     icon: FileText,
   },
   {
     href: '/admin/blog',
     title: 'Blog',
     description: 'Blog yazıları',
+    meta: 'Öncelik: İçerik yayını',
     icon: FileText,
   },
   {
     href: '/admin/events',
     title: 'Etkinlikler',
     description: 'Etkinlik yönetimi',
+    meta: 'Öncelik: Takvim akışı',
     icon: CalendarDays,
   },
 ];
@@ -340,6 +350,7 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
                   <h3 class="font-semibold text-gray-900 dark:text-white">{card.title}</h3>
                 </div>
                 <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{card.description}</p>
+                <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">{card.meta}</p>
               </a>
             );
           })}
