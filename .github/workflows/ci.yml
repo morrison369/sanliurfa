@@ -167,6 +167,14 @@ jobs:
           path: docs/reports/performance-ops-summary.json
           if-no-files-found: ignore
           retention-days: 14
+      - name: Upload admin access coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-access-coverage
+          path: docs/reports/admin-access-coverage.json
+          if-no-files-found: ignore
+          retention-days: 14
 
   e2e_smoke_advisory:
     name: e2e-smoke-advisory

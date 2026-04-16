@@ -60,15 +60,6 @@ jobs:
             nightly-e2e.log
           if-no-files-found: ignore
           retention-days: 14
-      - name: Upload performance ops summary
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: nightly-performance-ops-summary
-          path: docs/reports/performance-ops-summary.json
-          if-no-files-found: ignore
-          retention-days: 14
-
       - name: Write performance ops summary
         if: always()
         continue-on-error: true
@@ -77,6 +68,22 @@ jobs:
         if: always()
         continue-on-error: true
         run: npm run governance:admin:access:check
+      - name: Upload performance ops summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-performance-ops-summary
+          path: docs/reports/performance-ops-summary.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Upload admin access coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-e2e-admin-access-coverage
+          path: docs/reports/admin-access-coverage.json
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Apply ops retention
         if: always()
         continue-on-error: true
