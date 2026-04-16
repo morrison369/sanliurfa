@@ -3,6 +3,10 @@ import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
 import { getAdminAccessCoverage } from '../../lib/admin-access-coverage';
 import {
+  getAdminArtifactHealthSnapshot,
+  summarizeArtifactHealth,
+} from '../../lib/artifact-health';
+import {
   buildArtifactHealth,
   classifyNightlyStatus,
   classifyReleaseGateStatus,
@@ -24,6 +28,7 @@ const [
   messagesCount,
   pendingPlaces,
   adminAccessCoverage,
+  artifactHealth,
   releaseGate,
   nightly,
 ] = await Promise.all([
@@ -33,6 +38,7 @@ const [
   query("SELECT COUNT(*) FROM contact_messages WHERE status = 'new'"),
   query("SELECT COUNT(*) FROM places WHERE status = 'pending'"),
   getAdminAccessCoverage(),
+  getAdminArtifactHealthSnapshot(),
   getReleaseGateSummary(),
   getNightlyOpsSummary(),
 ]);
@@ -50,6 +56,7 @@ const accessCoverageArtifact = buildArtifactHealth({
   available: adminAccessCoverage.available,
   generatedAt: adminAccessCoverage.generatedAt,
 });
+const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
 
 const releaseGateStatus = classifyReleaseGateStatus(releaseGate);
 const nightlyRegressionStatus = classifyNightlyStatus(nightly.regression);
@@ -93,6 +100,23 @@ function formatGeneratedAt(value: string | null): string {
 function getStatusPriority(status: 'healthy' | 'degraded' | 'blocked'): number {
   return status === 'blocked' ? 0 : status === 'degraded' ? 1 : 2;
 }
+
+const artifactEntries = [
+  { label: 'Release Gate', ...artifactHealth.releaseGate },
+  { label: 'Nightly Regression', ...artifactHealth.nightlyRegression },
+  { label: 'Nightly E2E', ...artifactHealth.nightlyE2E },
+  { label: 'Performance Ops', ...artifactHealth.performanceOps },
+  { label: 'Access Coverage', ...artifactHealth.adminAccessCoverage },
+];
+
+const firstProblematicArtifact =
+  artifactEntries.find((entry) => entry.status !== 'healthy')?.label ?? 'Sorun yok';
+
+const latestArtifactGeneratedAt =
+  artifactEntries
+    .map((entry) => entry.generatedAt)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null;
 
 const opsCards: OpsCard[] = [
   {
@@ -164,6 +188,23 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
             </p>
           </a>
         ))}
+        <a href="/admin/dashboard" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Artifact Health</h3>
+            <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(artifactHealthSummary.overall)]}>
+              {artifactHealthSummary.overall}
+            </span>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
+            Healthy {artifactHealthSummary.healthyCount} • Degraded {artifactHealthSummary.degradedCount} • Blocked {artifactHealthSummary.blockedCount}
+          </p>
+          <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
+            İlk risk: {firstProblematicArtifact}
+          </p>
+          <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
+            Son üretim: {formatGeneratedAt(latestArtifactGeneratedAt)}
+          </p>
+        </a>
         <a href="/admin/runtime-monitor" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <h3 class="font-semibold text-gray-900 dark:text-white">Runtime Monitör</h3>
           <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Health, performance ve artifact sinyalleri</p>
