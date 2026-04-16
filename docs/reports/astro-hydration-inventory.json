@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:31:51.033Z",
-  "astroFiles": 164,
-  "tsxFiles": 91,
-  "totalHydrationPoints": 32,
+  "generatedAt": "2026-04-16T22:34:49.382Z",
+  "astroFiles": 165,
+  "tsxFiles": 90,
+  "totalHydrationPoints": 31,
   "lowRiskCount": 0,
-  "mediumRiskCount": 16,
+  "mediumRiskCount": 15,
   "highRiskCount": 16,
   "entries": [
     {
@@ -188,13 +188,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "CollectionDetail form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/kullanıcı/[id].astro",
-      "componentName": "UserPublicProfile",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "UserPublicProfile form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/kullanici/sadakat.astro",
