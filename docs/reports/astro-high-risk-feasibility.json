@@ -1,27 +1,10 @@
 {
-  "generatedAt": "2026-04-16T23:47:33.765Z",
-  "totalHighRiskComponents": 13,
+  "generatedAt": "2026-04-16T23:55:30.184Z",
+  "totalHighRiskComponents": 12,
   "firstCount": 0,
-  "laterCount": 2,
+  "laterCount": 1,
   "lastCount": 11,
   "entries": [
-    {
-      "componentName": "AdminAnalyticsDashboard",
-      "componentPath": "src/components/AdminAnalyticsDashboard.tsx",
-      "pagePaths": [
-        "src/pages/admin/analytics.astro"
-      ],
-      "usageCount": 1,
-      "lines": 154,
-      "useStateCount": 5,
-      "useEffectCount": 2,
-      "fetchCount": 0,
-      "typedClientCount": 2,
-      "adminSurface": true,
-      "complexityScore": 51,
-      "migrationPriority": "later",
-      "recommendation": "AdminAnalyticsDashboard taşınabilir ama önce daha dar yüzeyli adaylar bitmeli."
-    },
     {
       "componentName": "AdminManager",
       "componentPath": "src/components/admin/AdminManager.tsx",

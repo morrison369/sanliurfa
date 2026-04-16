@@ -15,11 +15,11 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `180`
-- `.tsx`: `72`
-- `client:*` hydration noktası: `14`
-- current generated risk split: `0 low / 0 medium / 14 high`
-- current high-risk feasibility split: `0 first / 2 later / 11 last`
+- `.astro`: `181`
+- `.tsx`: `71`
+- `client:*` hydration noktası: `13`
+- current generated risk split: `0 low / 0 medium / 13 high`
+- current high-risk feasibility split: `0 first / 1 later / 11 last`
 
 İlk hedefler:
 
@@ -95,6 +95,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/UserManagementTable.tsx` -> `src/components/UserManagementTable.astro`
 - `src/components/AdminDashboardOverview.tsx` -> `src/components/AdminDashboardOverview.astro`
 - `src/components/AnalyticsPanel.tsx` -> `src/components/AnalyticsPanel.astro`
+- `src/components/AdminAnalyticsDashboard.tsx` -> `src/components/AdminAnalyticsDashboard.astro`
 
 Bu dalga ile:
 
@@ -131,7 +132,8 @@ Bu dalga ile:
 - `src/pages/admin/dashboard.astro` içindeki `UserManagementTable` artık React island değil
 - `src/pages/admin/dashboard.astro` içindeki `AdminDashboardOverview` artık React island değil
 - `src/pages/admin/analytics.astro` içindeki `AnalyticsPanel` artık React island değil
-- toplam `client:*` sayısı `55 -> 14` düştü
+- `src/pages/admin/analytics.astro` içindeki `AdminAnalyticsDashboard` artık React island değil
+- toplam `client:*` sayısı `55 -> 13` düştü
 
 ### Önceki Düşük Risk Adayları
 
@@ -241,6 +243,8 @@ ayrı yazılmalı.
 
 1. `AdminAnalyticsDashboard`
 2. `AdminManager`
+
+`AdminAnalyticsDashboard` de taşındığı için güncel feasibility raporunda en ucuz sonraki aday doğrudan `AdminManager` oldu.
 
 Bu yüzeyler dışında kalan yüksek-risk bileşenler şu an için son dalga adayıdır.
 

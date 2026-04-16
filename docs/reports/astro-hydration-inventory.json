@@ -1,19 +1,12 @@
 {
-  "generatedAt": "2026-04-16T23:47:33.659Z",
-  "astroFiles": 180,
-  "tsxFiles": 72,
-  "totalHydrationPoints": 14,
+  "generatedAt": "2026-04-16T23:55:30.141Z",
+  "astroFiles": 181,
+  "tsxFiles": 71,
+  "totalHydrationPoints": 13,
   "lowRiskCount": 0,
   "mediumRiskCount": 0,
-  "highRiskCount": 14,
+  "highRiskCount": 13,
   "entries": [
-    {
-      "pagePath": "src/pages/admin/analytics.astro",
-      "componentName": "AdminAnalyticsDashboard",
-      "directive": "load",
-      "risk": "high",
-      "rationale": "AdminAnalyticsDashboard yoğun state veya dashboard tipi davranış taşıyor."
-    },
     {
       "pagePath": "src/pages/admin/analytics.astro",
       "componentName": "AdminPerformanceDashboard",
