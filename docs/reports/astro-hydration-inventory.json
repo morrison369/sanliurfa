@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T23:10:59.882Z",
-  "astroFiles": 172,
-  "tsxFiles": 82,
-  "totalHydrationPoints": 22,
+  "generatedAt": "2026-04-16T23:15:29.930Z",
+  "astroFiles": 173,
+  "tsxFiles": 81,
+  "totalHydrationPoints": 21,
   "lowRiskCount": 0,
-  "mediumRiskCount": 6,
+  "mediumRiskCount": 5,
   "highRiskCount": 16,
   "entries": [
     {
@@ -139,13 +139,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "AdminLoyaltyPanel form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/isletme/analytics.astro",
-      "componentName": "BusinessAnalyticsDashboard",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "BusinessAnalyticsDashboard form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/işletme/pazarlama.astro",

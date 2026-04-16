@@ -1,0 +1,22 @@
+---
+interface Props {
+  placeId?: string;
+}
+
+const { placeId = '' } = Astro.props;
+---
+
+<div data-business-analytics-dashboard data-place-id={placeId} data-days="30">
+  <div data-business-analytics-loading class="space-y-4">
+    {Array.from({ length: 6 }).map(() => (
+      <div class="h-20 animate-pulse rounded-lg bg-gray-200"></div>
+    ))}
+  </div>
+  <div data-business-analytics-content class="hidden"></div>
+</div>
+
+<script>
+  import { initBusinessAnalyticsDashboard } from '../scripts/business-analytics-dashboard';
+
+  initBusinessAnalyticsDashboard();
+</script>
