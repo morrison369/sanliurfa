@@ -16,8 +16,8 @@ Amaç:
 Başlangıç ölçümü:
 
 - `.astro`: `144`
-- `.tsx`: `113`
-- `client:*` hydration noktası: `49`
+- `.tsx`: `106`
+- `client:*` hydration noktası: `47`
 
 İlk hedefler:
 
@@ -60,6 +60,8 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/QuotaUsageDisplay.tsx` -> `src/components/QuotaUsageDisplay.astro`
 - `src/components/TrendingPlaces.tsx` -> `src/components/TrendingPlaces.astro`
 - `src/components/LeaderboardsDisplay.tsx` -> `src/components/LeaderboardsDisplay.astro`
+- `src/components/PricingPlans.tsx` -> `src/components/PricingPlans.astro`
+- `src/components/UserRecommendations.tsx` -> `src/components/UserRecommendations.astro`
 
 Bu dalga ile:
 
@@ -67,7 +69,9 @@ Bu dalga ile:
 - `src/pages/ayarlar/kotalar.astro` içindeki `QuotaUsageDisplay` artık React island değil
 - `src/pages/trend/index.astro` ve `src/pages/kesfet/index.astro` içindeki `TrendingPlaces` artık React island değil
 - `src/pages/liderlik-tablosu.astro` ve `src/pages/siralamalar/index.astro` içindeki `LeaderboardsDisplay` artık React island değil
-- toplam `client:*` sayısı `55 -> 49` düştü
+- `src/pages/fiyatlandirma.astro` içindeki `PricingPlans` artık React island değil
+- `src/pages/kesfet/index.astro` içindeki `UserRecommendations` artık React island değil
+- toplam `client:*` sayısı `55 -> 47` düştü
 
 ### Aday Bileşenler
 

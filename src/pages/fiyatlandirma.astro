@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import PricingPlans from '../components/PricingPlans';
+import PricingPlans from '../components/PricingPlans.astro';
 ---
 
 <Layout title="Fiyatlandırma - Şanlıurfa">
@@ -17,7 +17,7 @@ import PricingPlans from '../components/PricingPlans';
       </div>
 
       <!-- Pricing Plans Component -->
-      <PricingPlans client:load />
+      <PricingPlans />
 
       <!-- FAQ Section -->
       <div class="mt-20">

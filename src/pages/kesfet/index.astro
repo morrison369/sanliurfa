@@ -1,7 +1,7 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import TrendingPlaces from "../../components/TrendingPlaces.astro";
-import UserRecommendations from "../../components/UserRecommendations";
+import UserRecommendations from "../../components/UserRecommendations.astro";
 
 const { locals, redirect } = Astro;
 if (!locals.user) {
@@ -25,7 +25,7 @@ if (!locals.user) {
 
       <div class="space-y-6">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-          <UserRecommendations client:load />
+          <UserRecommendations />
         </div>
 
         <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
