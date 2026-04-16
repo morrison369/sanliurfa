@@ -321,6 +321,13 @@ export interface paths {
                                         writeCount: number;
                                     };
                                     artifactHealth: {
+                                        adminAccessCoverage: {
+                                            available: boolean;
+                                            /** Format: date-time */
+                                            generatedAt: string | null;
+                                            /** @enum {string} */
+                                            status: "healthy" | "degraded" | "blocked";
+                                        };
                                         nightlyE2E: {
                                             available: boolean;
                                             /** Format: date-time */
@@ -394,6 +401,16 @@ export interface paths {
                                     };
                                     nightly: {
                                         e2e: {
+                                            adminAccessCoverage: {
+                                                available: boolean;
+                                                coveragePercent: number;
+                                                driftCount: number;
+                                                driftedFiles: string[];
+                                                /** Format: date-time */
+                                                generatedAt: string | null;
+                                                routeFiles: number;
+                                                wrapperFiles: number;
+                                            } | null;
                                             available: boolean;
                                             /** Format: date-time */
                                             generatedAt: string | null;
@@ -415,6 +432,16 @@ export interface paths {
                                             topFailures: string[];
                                         };
                                         regression: {
+                                            adminAccessCoverage: {
+                                                available: boolean;
+                                                coveragePercent: number;
+                                                driftCount: number;
+                                                driftedFiles: string[];
+                                                /** Format: date-time */
+                                                generatedAt: string | null;
+                                                routeFiles: number;
+                                                wrapperFiles: number;
+                                            } | null;
                                             available: boolean;
                                             /** Format: date-time */
                                             generatedAt: string | null;
@@ -468,6 +495,16 @@ export interface paths {
                                     };
                                     period: number;
                                     releaseGate: {
+                                        adminAccessCoverage: {
+                                            available: boolean;
+                                            coveragePercent: number;
+                                            driftCount: number;
+                                            driftedFiles: string[];
+                                            /** Format: date-time */
+                                            generatedAt: string | null;
+                                            routeFiles: number;
+                                            wrapperFiles: number;
+                                        } | null;
                                         advisoryFailedSteps: string[];
                                         available: boolean;
                                         blockingFailedSteps: string[];
@@ -769,6 +806,13 @@ export interface paths {
                             data: {
                                 data: {
                                     artifactHealth: {
+                                        adminAccessCoverage: {
+                                            available: boolean;
+                                            /** Format: date-time */
+                                            generatedAt: string | null;
+                                            /** @enum {string} */
+                                            status: "healthy" | "degraded" | "blocked";
+                                        };
                                         nightlyE2E: {
                                             available: boolean;
                                             /** Format: date-time */
@@ -2295,6 +2339,13 @@ export interface paths {
                             data: {
                                 data: {
                                     artifacts: {
+                                        adminAccessCoverage: {
+                                            available: boolean;
+                                            /** Format: date-time */
+                                            generatedAt: string | null;
+                                            /** @enum {string} */
+                                            status: "healthy" | "degraded" | "blocked";
+                                        };
                                         nightlyE2E: {
                                             available: boolean;
                                             /** Format: date-time */
@@ -2579,6 +2630,13 @@ export interface paths {
                                         writeCount: number;
                                     };
                                     artifactHealth: {
+                                        adminAccessCoverage: {
+                                            available: boolean;
+                                            /** Format: date-time */
+                                            generatedAt: string | null;
+                                            /** @enum {string} */
+                                            status: "healthy" | "degraded" | "blocked";
+                                        };
                                         nightlyE2E: {
                                             available: boolean;
                                             /** Format: date-time */
@@ -2639,6 +2697,16 @@ export interface paths {
                                     };
                                     nightly: {
                                         e2e: {
+                                            adminAccessCoverage: {
+                                                available: boolean;
+                                                coveragePercent: number;
+                                                driftCount: number;
+                                                driftedFiles: string[];
+                                                /** Format: date-time */
+                                                generatedAt: string | null;
+                                                routeFiles: number;
+                                                wrapperFiles: number;
+                                            } | null;
                                             available: boolean;
                                             /** Format: date-time */
                                             generatedAt: string | null;
@@ -2660,6 +2728,16 @@ export interface paths {
                                             topFailures: string[];
                                         };
                                         regression: {
+                                            adminAccessCoverage: {
+                                                available: boolean;
+                                                coveragePercent: number;
+                                                driftCount: number;
+                                                driftedFiles: string[];
+                                                /** Format: date-time */
+                                                generatedAt: string | null;
+                                                routeFiles: number;
+                                                wrapperFiles: number;
+                                            } | null;
                                             available: boolean;
                                             /** Format: date-time */
                                             generatedAt: string | null;
@@ -2712,6 +2790,16 @@ export interface paths {
                                         }[];
                                     };
                                     releaseGate: {
+                                        adminAccessCoverage: {
+                                            available: boolean;
+                                            coveragePercent: number;
+                                            driftCount: number;
+                                            driftedFiles: string[];
+                                            /** Format: date-time */
+                                            generatedAt: string | null;
+                                            routeFiles: number;
+                                            wrapperFiles: number;
+                                        } | null;
                                         advisoryFailedSteps: string[];
                                         available: boolean;
                                         blockingFailedSteps: string[];
@@ -2798,6 +2886,16 @@ export interface paths {
                         "application/json": {
                             data: {
                                 data: {
+                                    adminAccessCoverage: {
+                                        available: boolean;
+                                        coveragePercent: number;
+                                        driftCount: number;
+                                        driftedFiles: string[];
+                                        /** Format: date-time */
+                                        generatedAt: string | null;
+                                        routeFiles: number;
+                                        wrapperFiles: number;
+                                    } | null;
                                     advisoryFailedSteps: string[];
                                     available: boolean;
                                     blockingFailedSteps: string[];

@@ -158,16 +158,19 @@ describe('openapi runtime contracts', () => {
     expect(adminArtifactHealthSchema.summary.properties.overall.enum).toEqual(['healthy', 'degraded', 'blocked']);
     expect(adminArtifactHealthSchema.artifacts.properties.performanceOps.properties.available.type).toBe('boolean');
     expect(adminArtifactHealthSchema.artifacts.properties.performanceOps.properties.generatedAt.type).toEqual(['string', 'null']);
-    expect(deploymentArtifactHealthSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps']);
+    expect(adminArtifactHealthSchema.artifacts.properties.adminAccessCoverage.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
+    expect(deploymentArtifactHealthSchema.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps', 'adminAccessCoverage']);
     expect(deploymentArtifactHealthSchema.properties.performanceOps.properties.status.enum).toEqual(['healthy', 'degraded', 'blocked']);
+    expect(deploymentArtifactHealthSchema.properties.adminAccessCoverage.properties.generatedAt.type).toEqual(['string', 'null']);
     expect(deploymentArtifactHealthSummarySchema.required).toEqual(['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total']);
-    expect(dashboardOverviewSchema.artifactHealth.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps']);
+    expect(dashboardOverviewSchema.artifactHealth.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps', 'adminAccessCoverage']);
     expect(dashboardOverviewSchema.adminOpsAudit.required).toEqual(['generatedAt', 'windowHours', 'total', 'deniedCount', 'rateLimitedCount', 'writeCount', 'readCount', 'lastDeniedAt']);
     expect(dashboardOverviewSchema.adminAccessCoverage.required).toEqual(['available', 'generatedAt', 'routeFiles', 'wrapperFiles', 'driftCount', 'coveragePercent', 'driftedFiles']);
     expect(dashboardOverviewSchema.artifactHealthSummary.required).toEqual(['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total']);
     expect(dashboardOverviewSchema.statusSummary.required).toEqual(['integrations', 'regression', 'e2e', 'releaseGate', 'overall']);
-    expect(dashboardOverviewSchema.releaseGate.required).toEqual(['available', 'generatedAt', 'finalStatus', 'failedStepCount', 'blockingFailedSteps', 'advisoryFailedSteps', 'performanceOptimization', 'steps']);
-    expect(metricsSchema.artifactHealth.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps']);
+    expect(dashboardOverviewSchema.releaseGate.required).toEqual(['available', 'generatedAt', 'finalStatus', 'failedStepCount', 'blockingFailedSteps', 'advisoryFailedSteps', 'performanceOptimization', 'adminAccessCoverage', 'steps']);
+    expect(dashboardOverviewSchema.nightly.properties.regression.required).toEqual(['available', 'kind', 'generatedAt', 'outcome', 'successRatePercent', 'recentOutcomes', 'topFailures', 'performanceOptimization', 'adminAccessCoverage']);
+    expect(metricsSchema.artifactHealth.required).toEqual(['releaseGate', 'nightlyRegression', 'nightlyE2E', 'performanceOps', 'adminAccessCoverage']);
     expect(metricsSchema.adminOpsAudit.required).toEqual(['generatedAt', 'windowHours', 'total', 'deniedCount', 'rateLimitedCount', 'writeCount', 'readCount', 'lastDeniedAt']);
     expect(metricsSchema.adminAccessCoverage.required).toEqual(['available', 'generatedAt', 'routeFiles', 'wrapperFiles', 'driftCount', 'coveragePercent', 'driftedFiles']);
     expect(metricsSchema.artifactHealthSummary.required).toEqual(['overall', 'healthyCount', 'degradedCount', 'blockedCount', 'total']);
@@ -285,6 +288,7 @@ describe('openapi runtime contracts', () => {
       'blockingFailedSteps',
       'advisoryFailedSteps',
       'performanceOptimization',
+      'adminAccessCoverage',
       'steps',
     ]);
     expect(adminSubscriptionsGetSchema.properties.users.items.required).toEqual(['id', 'email', 'full_name', 'subscription_id', 'tier', 'status', 'created_at']);

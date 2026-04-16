@@ -226,8 +226,9 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.artifactHealth.releaseGate.status).toBe('healthy');
     expect(body.data.data.artifactHealth.nightlyRegression.status).toBe('healthy');
     expect(body.data.data.artifactHealth.performanceOps.generatedAt).toBeDefined();
+    expect(body.data.data.artifactHealth.adminAccessCoverage.status).toBe('healthy');
     expect(body.data.data.artifactHealthSummary.overall).toBe('healthy');
-    expect(body.data.data.artifactHealthSummary.healthyCount).toBe(4);
+    expect(body.data.data.artifactHealthSummary.healthyCount).toBe(5);
   });
 
   it('returns system metrics with health and operational summary', async () => {
@@ -263,8 +264,9 @@ describe('admin dashboard contracts', () => {
     expect(body.data.data.adminAccessCoverage.wrapperFiles).toBe(39);
     expect(body.data.data.artifactHealth.releaseGate.status).toBe('healthy');
     expect(body.data.data.artifactHealth.performanceOps.status).toBe('healthy');
+    expect(body.data.data.artifactHealth.adminAccessCoverage.status).toBe('healthy');
     expect(body.data.data.artifactHealthSummary.overall).toBe('healthy');
-    expect(body.data.data.artifactHealthSummary.total).toBe(4);
+    expect(body.data.data.artifactHealthSummary.total).toBe(5);
   });
 
   it('returns release gate summary via dedicated admin endpoint', async () => {
@@ -294,11 +296,12 @@ describe('admin dashboard contracts', () => {
     expect(response.status).toBe(200);
     const body = await response.json();
     expect(body.data.data.summary.overall).toBe('healthy');
-    expect(body.data.data.summary.healthyCount).toBe(4);
+    expect(body.data.data.summary.healthyCount).toBe(5);
     expect(body.data.data.artifacts.releaseGate.available).toBe(true);
     expect(body.data.data.artifacts.releaseGate.status).toBe('healthy');
     expect(body.data.data.artifacts.nightlyRegression.status).toBe('healthy');
     expect(body.data.data.artifacts.nightlyE2E.status).toBe('healthy');
     expect(body.data.data.artifacts.performanceOps.generatedAt).toBeDefined();
+    expect(body.data.data.artifacts.adminAccessCoverage.status).toBe('healthy');
   });
 });
