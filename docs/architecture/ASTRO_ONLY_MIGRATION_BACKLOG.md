@@ -15,10 +15,10 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `167`
-- `.tsx`: `88`
-- `client:*` hydration noktası: `29`
-- current generated risk split: `0 low / 13 medium / 16 high`
+- `.astro`: `168`
+- `.tsx`: `87`
+- `client:*` hydration noktası: `27`
+- current generated risk split: `0 low / 11 medium / 16 high`
 
 İlk hedefler:
 
@@ -81,6 +81,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/UserPublicProfile.tsx` -> `src/components/UserPublicProfile.astro`
 - `src/components/ReportManager.tsx` -> `src/components/ReportManager.astro`
 - `src/components/VendorDashboard.tsx` -> `src/components/VendorDashboard.astro`
+- `src/components/LoyaltyDashboard.tsx` -> `src/components/LoyaltyDashboard.astro`
 
 Bu dalga ile:
 
@@ -104,7 +105,8 @@ Bu dalga ile:
 - `src/pages/kullanıcı/[id].astro` içindeki `UserPublicProfile` artık React island değil
 - `src/pages/raporlar/index.astro` içindeki `ReportManager` artık React island değil
 - `src/pages/vendor/dashboard.astro` içindeki `VendorDashboard` artık React island değil
-- toplam `client:*` sayısı `55 -> 29` düştü
+- `src/pages/loyalty/index.astro` ve `src/pages/kullanici/sadakat.astro` içindeki `LoyaltyDashboard` artık React island değil
+- toplam `client:*` sayısı `55 -> 27` düştü
 
 ### Önceki Düşük Risk Adayları
 
@@ -258,6 +260,7 @@ Bu repo için doğru hız budur. Daha agresif rewrite, gereksiz risk üretir.
 - Sonraki Astro migration batch'i seçilmeden önce `npm run astro:migration:inventory` çalıştırılır.
 - Önce `docs/reports/astro-hydration-inventory.md` içindeki `low` bucket değerlendirilir; `low=0` ise en ucuz `medium` yüzeyler seçilir.
 - `medium` veya `high` yüzeye ancak açık gerekçe varsa girilir.
+
 
 
 
