@@ -11,6 +11,11 @@ import {
   buildAdminIndexToolCards,
 } from '../../lib/admin-index';
 import {
+  formatAdminIndexGeneratedAt,
+  getAdminIndexRiskCardClass,
+  getAdminIndexStatusBadgeClass,
+} from '../../lib/admin-index-page';
+import {
   buildArtifactHealth,
   classifyNightlyStatus,
   classifyReleaseGateStatus,
@@ -65,41 +70,6 @@ const artifactHealthSummary = summarizeArtifactHealth(artifactHealth);
 const releaseGateStatus = classifyReleaseGateStatus(releaseGate);
 const nightlyRegressionStatus = classifyNightlyStatus(nightly.regression);
 
-function getStatusBadgeClass(status: 'healthy' | 'degraded' | 'blocked') {
-  return status === 'healthy'
-    ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-    : status === 'degraded'
-      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-      : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
-}
-
-function getRiskCardClass(status: 'healthy' | 'degraded' | 'blocked') {
-  return status === 'healthy'
-    ? 'bg-white dark:bg-gray-800 border border-transparent shadow-sm hover:shadow-md'
-    : status === 'degraded'
-      ? 'bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 shadow-sm hover:shadow-md'
-      : 'bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 shadow-md hover:shadow-lg';
-}
-
-function formatGeneratedAt(value: string | null): string {
-  if (!value) {
-    return 'Henüz üretilmedi';
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString('tr-TR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 const riskCards = buildAdminIndexRiskCards({
   releaseGate,
   releaseGateStatus,
@@ -152,13 +122,13 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
           {riskCards.map((card) => {
             const Icon = card.icon;
             return (
-            <a href={card.href} class:list={['rounded-xl p-6 transition-shadow', getRiskCardClass(card.status)]}>
+            <a href={card.href} class:list={['rounded-xl p-6 transition-shadow', getAdminIndexRiskCardClass(card.status)]}>
               <div class="flex items-center justify-between gap-3">
                 <div class="flex items-center gap-2 min-w-0">
                   <Icon class="w-4 h-4 shrink-0 text-gray-500 dark:text-gray-300" />
                   <h3 class="font-semibold text-gray-900 dark:text-white truncate">{card.title}</h3>
                 </div>
-                <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(card.status)]}>
+                <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getAdminIndexStatusBadgeClass(card.status)]}>
                   {card.status}
                 </span>
               </div>
@@ -166,7 +136,7 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
               <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">{card.detail}</p>
               <p class="text-gray-700 dark:text-gray-300 text-xs mt-2 font-medium">{card.action[card.status]}</p>
               <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
-                Son üretim: {formatGeneratedAt(card.generatedAt)}
+                Son üretim: {formatAdminIndexGeneratedAt(card.generatedAt)}
               </p>
             </a>
           )})}
