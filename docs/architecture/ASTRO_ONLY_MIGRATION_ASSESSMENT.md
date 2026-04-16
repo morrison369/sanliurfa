@@ -17,6 +17,7 @@ Bu belge, `Şanlıurfa.com` kod tabanının mevcut Astro + React island mimarisi
 - `src/**/*.tsx`: `106`
 - `.astro` dosyalarında `client:*` hydration kullanımı: `47`
 - `astro.config.mjs` içinde aktif React entegrasyonu: `@astrojs/react`
+- generated inventory: `docs/reports/astro-hydration-inventory.md` (`4 low / 27 medium / 16 high`)
 
 Mevcut yapı:
 

@@ -1,0 +1,340 @@
+{
+  "generatedAt": "2026-04-16T21:36:09.408Z",
+  "astroFiles": 150,
+  "tsxFiles": 106,
+  "totalHydrationPoints": 47,
+  "lowRiskCount": 4,
+  "mediumRiskCount": 27,
+  "highRiskCount": 16,
+  "entries": [
+    {
+      "pagePath": "src/pages/admin/analytics.astro",
+      "componentName": "AdminAnalyticsDashboard",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "AdminAnalyticsDashboard yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/admin/analytics.astro",
+      "componentName": "AdminPerformanceDashboard",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "AdminPerformanceDashboard yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/admin/analytics.astro",
+      "componentName": "AnalyticsPanel",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "AnalyticsPanel yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/admin/dashboard.astro",
+      "componentName": "AdminDashboardOverview",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "AdminDashboardOverview yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/admin/dashboard.astro",
+      "componentName": "ModerationQueueManager",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "ModerationQueueManager yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/admin/manage.astro",
+      "componentName": "AdminManager",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "AdminManager yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/admin/moderation.astro",
+      "componentName": "ModerationDashboard",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "ModerationDashboard yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/admin/subscriptions.astro",
+      "componentName": "SubscriptionAdminDashboard",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "SubscriptionAdminDashboard yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/admin/verifications.astro",
+      "componentName": "AdminVerificationQueue",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "AdminVerificationQueue yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/akis.astro",
+      "componentName": "ActivityFeed",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "ActivityFeed yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/canli-analitik/index.astro",
+      "componentName": "LiveAnalyticsDashboard",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "LiveAnalyticsDashboard yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/mesajlar/index.astro",
+      "componentName": "MessagingInbox",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "MessagingInbox yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/sosyal/index.astro",
+      "componentName": "ActivityFeed",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "ActivityFeed yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/veri-ambarı/index.astro",
+      "componentName": "OLAPExplorer",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "OLAPExplorer yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/webhooks.astro",
+      "componentName": "WebhookAnalyticsDashboard",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "WebhookAnalyticsDashboard yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/webhooks.astro",
+      "componentName": "WebhookManager",
+      "directive": "load",
+      "risk": "high",
+      "rationale": "WebhookManager yoğun state veya dashboard tipi davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/abonelik.astro",
+      "componentName": "BillingHistory",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "BillingHistory form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/abonelik.astro",
+      "componentName": "SubscriptionManager",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "SubscriptionManager form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/admin/audit-logs.astro",
+      "componentName": "AuditLogViewer",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "AuditLogViewer form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/admin/loyalty/index.astro",
+      "componentName": "AdminLoyaltyPanel",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "AdminLoyaltyPanel form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/aktivitelerim/index.astro",
+      "componentName": "MyActivityLog",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "MyActivityLog form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/arama/gelismis.astro",
+      "componentName": "SearchResults",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "SearchResults form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/arama/index.astro",
+      "componentName": "SearchResults",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "SearchResults form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/ayarlar.astro",
+      "componentName": "UserSettings",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "UserSettings form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/bildirim-tercihleri.astro",
+      "componentName": "NotificationPreferencesManager",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "NotificationPreferencesManager form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/bildirimler/index.astro",
+      "componentName": "NotificationsCenter",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "NotificationsCenter form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/icerik.astro",
+      "componentName": "ContentManager",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "ContentManager form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/isletme/analytics.astro",
+      "componentName": "BusinessAnalyticsDashboard",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "BusinessAnalyticsDashboard form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/işletme/pazarlama.astro",
+      "componentName": "FeaturedListingsManager",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "FeaturedListingsManager form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/işletme/pazarlama.astro",
+      "componentName": "MarketingCampaignBuilder",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "MarketingCampaignBuilder form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/koleksiyonlar/[id].astro",
+      "componentName": "CollectionDetail",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "CollectionDetail form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/koleksiyonlar/index.astro",
+      "componentName": "CollectionsManager",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "CollectionsManager form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/kullanıcı/[id].astro",
+      "componentName": "UserPublicProfile",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "UserPublicProfile form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/kullanıcılar.astro",
+      "componentName": "UserSearchResults",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "UserSearchResults form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/kullanici/sadakat.astro",
+      "componentName": "LoyaltyDashboard",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "LoyaltyDashboard form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/loyalty/index.astro",
+      "componentName": "LoyaltyDashboard",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "LoyaltyDashboard form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/loyalty/rewards.astro",
+      "componentName": "RewardsCatalog",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "RewardsCatalog form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/notifications.astro",
+      "componentName": "NotificationCenter",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "NotificationCenter form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/profile.astro",
+      "componentName": "UserProfile",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "UserProfile form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/raporlar/index.astro",
+      "componentName": "ReportManager",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "ReportManager form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/sosyal/index.astro",
+      "componentName": "HashtagExplorer",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "HashtagExplorer form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/sosyal/index.astro",
+      "componentName": "UserSuggestionsPanel",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "UserSuggestionsPanel form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/pages/vendor/dashboard.astro",
+      "componentName": "VendorDashboard",
+      "directive": "load",
+      "risk": "medium",
+      "rationale": "VendorDashboard form, liste veya orta seviyeli etkileşim içeriyor."
+    },
+    {
+      "pagePath": "src/components/PWARegister.astro",
+      "componentName": "PWAPrompt",
+      "directive": "idle",
+      "risk": "low",
+      "rationale": "PWAPrompt küçük widget veya sınırlı davranış taşıyor."
+    },
+    {
+      "pagePath": "src/layouts/Layout.astro",
+      "componentName": "PerformanceMonitor",
+      "directive": "idle",
+      "risk": "low",
+      "rationale": "PerformanceMonitor küçük widget veya sınırlı davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/admin/dashboard.astro",
+      "componentName": "UserManagementTable",
+      "directive": "load",
+      "risk": "low",
+      "rationale": "UserManagementTable küçük widget veya sınırlı davranış taşıyor."
+    },
+    {
+      "pagePath": "src/pages/loyalty/transactions.astro",
+      "componentName": "TransactionHistory",
+      "directive": "load",
+      "risk": "low",
+      "rationale": "TransactionHistory küçük widget veya sınırlı davranış taşıyor."
+    }
+  ]
+}

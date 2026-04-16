@@ -1,0 +1,57 @@
+# Astro Hydration Inventory
+- Generated at: 2026-04-16T21:36:09.408Z
+- Astro files: 150
+- TSX files: 106
+- Total hydration points: 47
+- Low risk: 4
+- Medium risk: 27
+- High risk: 16
+
+## Entries
+- [high] src/pages/admin/analytics.astro -> AdminAnalyticsDashboard (client:load)
+- [high] src/pages/admin/analytics.astro -> AdminPerformanceDashboard (client:load)
+- [high] src/pages/admin/analytics.astro -> AnalyticsPanel (client:load)
+- [high] src/pages/admin/dashboard.astro -> AdminDashboardOverview (client:load)
+- [high] src/pages/admin/dashboard.astro -> ModerationQueueManager (client:load)
+- [high] src/pages/admin/manage.astro -> AdminManager (client:load)
+- [high] src/pages/admin/moderation.astro -> ModerationDashboard (client:load)
+- [high] src/pages/admin/subscriptions.astro -> SubscriptionAdminDashboard (client:load)
+- [high] src/pages/admin/verifications.astro -> AdminVerificationQueue (client:load)
+- [high] src/pages/akis.astro -> ActivityFeed (client:load)
+- [high] src/pages/canli-analitik/index.astro -> LiveAnalyticsDashboard (client:load)
+- [high] src/pages/mesajlar/index.astro -> MessagingInbox (client:load)
+- [high] src/pages/sosyal/index.astro -> ActivityFeed (client:load)
+- [high] src/pages/veri-ambarı/index.astro -> OLAPExplorer (client:load)
+- [high] src/pages/webhooks.astro -> WebhookAnalyticsDashboard (client:load)
+- [high] src/pages/webhooks.astro -> WebhookManager (client:load)
+- [medium] src/pages/abonelik.astro -> BillingHistory (client:load)
+- [medium] src/pages/abonelik.astro -> SubscriptionManager (client:load)
+- [medium] src/pages/admin/audit-logs.astro -> AuditLogViewer (client:load)
+- [medium] src/pages/admin/loyalty/index.astro -> AdminLoyaltyPanel (client:load)
+- [medium] src/pages/aktivitelerim/index.astro -> MyActivityLog (client:load)
+- [medium] src/pages/arama/gelismis.astro -> SearchResults (client:load)
+- [medium] src/pages/arama/index.astro -> SearchResults (client:load)
+- [medium] src/pages/ayarlar.astro -> UserSettings (client:load)
+- [medium] src/pages/bildirim-tercihleri.astro -> NotificationPreferencesManager (client:load)
+- [medium] src/pages/bildirimler/index.astro -> NotificationsCenter (client:load)
+- [medium] src/pages/icerik.astro -> ContentManager (client:load)
+- [medium] src/pages/isletme/analytics.astro -> BusinessAnalyticsDashboard (client:load)
+- [medium] src/pages/işletme/pazarlama.astro -> FeaturedListingsManager (client:load)
+- [medium] src/pages/işletme/pazarlama.astro -> MarketingCampaignBuilder (client:load)
+- [medium] src/pages/koleksiyonlar/[id].astro -> CollectionDetail (client:load)
+- [medium] src/pages/koleksiyonlar/index.astro -> CollectionsManager (client:load)
+- [medium] src/pages/kullanıcı/[id].astro -> UserPublicProfile (client:load)
+- [medium] src/pages/kullanıcılar.astro -> UserSearchResults (client:load)
+- [medium] src/pages/kullanici/sadakat.astro -> LoyaltyDashboard (client:load)
+- [medium] src/pages/loyalty/index.astro -> LoyaltyDashboard (client:load)
+- [medium] src/pages/loyalty/rewards.astro -> RewardsCatalog (client:load)
+- [medium] src/pages/notifications.astro -> NotificationCenter (client:load)
+- [medium] src/pages/profile.astro -> UserProfile (client:load)
+- [medium] src/pages/raporlar/index.astro -> ReportManager (client:load)
+- [medium] src/pages/sosyal/index.astro -> HashtagExplorer (client:load)
+- [medium] src/pages/sosyal/index.astro -> UserSuggestionsPanel (client:load)
+- [medium] src/pages/vendor/dashboard.astro -> VendorDashboard (client:load)
+- [low] src/components/PWARegister.astro -> PWAPrompt (client:idle)
+- [low] src/layouts/Layout.astro -> PerformanceMonitor (client:idle)
+- [low] src/pages/admin/dashboard.astro -> UserManagementTable (client:load)
+- [low] src/pages/loyalty/transactions.astro -> TransactionHistory (client:load)

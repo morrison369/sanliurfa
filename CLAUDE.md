@@ -30,6 +30,7 @@ Framework direction:
 - Astro is the primary framework.
 - Default to Astro-first for new pages and new UI surfaces.
 - Do not assume the repo is already Astro-only; check `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md` before proposing React removal or large migration work.
+- Before choosing the next Astro migration batch, refresh `docs/reports/astro-hydration-inventory.md` with `npm run astro:migration:inventory` and use that risk split instead of guessing.
 
 ## Quick Start Commands
 
@@ -57,6 +58,7 @@ Framework direction:
 - `npm run release:gate` — Release gate summary and decision
 - `npm run branch:protection:drift:check` — Required checks / docs parity
 - `npm run ops:retention:apply` — Local artifact and audit retention cleanup
+- `npm run astro:migration:inventory` — Current Astro hydration inventory and risk split
 - `npm run phase:scripts:report` — Phase compatibility status
 - `npm run phase:compat:cleanup` — Cleanup compatibility manifest state
 
@@ -760,6 +762,8 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `src/lib/admin-access-coverage-page.ts` | Access coverage alert/summary/drift HTML source |
 | `src/lib/admin-dom.ts` | Admin ops sayfaları için ortak DOM update helper source |
 | `src/lib/admin-page-bootstrap.ts` | Admin ops sayfaları için ortak refresh/interval bootstrap source |
+| `src/lib/astro-migration-report.ts` | Astro hydration risk inventory source |
+| `scripts/astro-hydration-inventory.ts` | Astro hydration inventory report generator |
 
 ### Real-time & Analytics
 | File | Purpose |
@@ -890,6 +894,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 13. **Phase Workflow**: Phase compatibility is runner-first. Do not reintroduce broad `package.json` phase alias surfaces; use the phase runner and manifest flow documented in `docs/ops/LEGACY_PHASE_SURFACE.md` and `docs/SCRIPT_SURFACE_POLICY.md`.
 14. **Fire-and-Forget**: For non-critical background work (marking mentions as read), queue async queries without awaiting to avoid request timeout.
 15. **Admin UI Ops Pages**: For `/admin`, `/admin/runtime-monitor`, and `/admin/access-coverage`, change helper/view-model modules first (`src/lib/admin-format.ts`, `src/lib/admin-index-data.ts`, `src/lib/admin-index*.ts`, `src/lib/admin-ops-pages.ts`, `src/lib/runtime-monitor.ts`, `src/lib/admin-access-coverage-page.ts`, `src/lib/admin-dom.ts`, `src/lib/admin-page-bootstrap.ts`) and keep the browser smoke tests green. For `/admin`, prefer `src/lib/admin-index-data.ts` for SSR data collection and `src/lib/admin-index-view.ts` for page render decisions before editing `index.astro`.
+16. **Astro Migration Planning**: Do not pick the next React-to-Astro target from intuition alone. Refresh `npm run astro:migration:inventory`, read `docs/reports/astro-hydration-inventory.md`, and take the low-risk bucket first unless there is a documented reason to take a medium/high-risk surface.
 
 ### Performance Optimization
 - Cache aggressively (5-10 min TTL for reads, invalidate on mutations)

@@ -18,6 +18,7 @@ Başlangıç ölçümü:
 - `.astro`: `144`
 - `.tsx`: `106`
 - `client:*` hydration noktası: `47`
+- current generated risk split: `4 low / 27 medium / 16 high`
 
 İlk hedefler:
 
@@ -225,3 +226,9 @@ Her Astro migration batch'i şu çıktıları birlikte üretmeli:
 4. bu dalga için ayrı migration raporu yaz
 
 Bu repo için doğru hız budur. Daha agresif rewrite, gereksiz risk üretir.
+
+## Aktif Inventory Kuralı
+
+- Sonraki Astro migration batch'i seçilmeden önce `npm run astro:migration:inventory` çalıştırılır.
+- Önce `docs/reports/astro-hydration-inventory.md` içindeki `low` bucket değerlendirilir.
+- `medium` veya `high` yüzeye ancak açık gerekçe varsa girilir.
