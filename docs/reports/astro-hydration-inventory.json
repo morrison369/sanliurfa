@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T23:22:51.932Z",
-  "astroFiles": 176,
-  "tsxFiles": 78,
-  "totalHydrationPoints": 18,
+  "generatedAt": "2026-04-16T23:26:48.540Z",
+  "astroFiles": 177,
+  "tsxFiles": 77,
+  "totalHydrationPoints": 17,
   "lowRiskCount": 0,
-  "mediumRiskCount": 2,
+  "mediumRiskCount": 1,
   "highRiskCount": 16,
   "entries": [
     {
@@ -118,13 +118,6 @@
       "directive": "load",
       "risk": "high",
       "rationale": "WebhookManager yoğun state veya dashboard tipi davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/admin/audit-logs.astro",
-      "componentName": "AuditLogViewer",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "AuditLogViewer form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/admin/dashboard.astro",

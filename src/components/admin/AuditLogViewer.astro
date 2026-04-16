@@ -1,0 +1,15 @@
+---
+---
+
+<div data-audit-log-viewer>
+  <div data-audit-log-loading class="flex items-center justify-center p-8 text-gray-600 dark:text-gray-400">
+    Yükleniyor...
+  </div>
+  <div data-audit-log-content class="hidden"></div>
+</div>
+
+<script>
+  import { initAuditLogViewer } from '../../scripts/audit-log-viewer';
+
+  initAuditLogViewer();
+</script>
