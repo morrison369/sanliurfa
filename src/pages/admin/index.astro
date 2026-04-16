@@ -118,7 +118,7 @@ const latestArtifactGeneratedAt =
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null;
 
-const opsCards: OpsCard[] = [
+const riskCards: OpsCard[] = [
   {
     href: '/admin/dashboard',
     title: 'Release Gate',
@@ -142,6 +142,14 @@ const opsCards: OpsCard[] = [
     summary: `%${adminAccessCoverage.coveragePercent} • Drift ${adminAccessCoverage.driftCount}`,
     detail: adminAccessCoverage.driftedFiles[0] || 'Drift yok',
     generatedAt: adminAccessCoverage.generatedAt,
+  },
+  {
+    href: '/admin/dashboard',
+    title: 'Artifact Health',
+    status: artifactHealthSummary.overall,
+    summary: `Healthy ${artifactHealthSummary.healthyCount} • Degraded ${artifactHealthSummary.degradedCount} • Blocked ${artifactHealthSummary.blockedCount}`,
+    detail: `İlk risk: ${firstProblematicArtifact}`,
+    generatedAt: latestArtifactGeneratedAt,
   },
 ].sort((left, right) => getStatusPriority(left.status) - getStatusPriority(right.status));
 
@@ -172,75 +180,73 @@ const seo = { title: 'Admin Panel - Şanlıurfa.com' };
         </div>
       </div>
       
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {opsCards.map((card) => (
-          <a href={card.href} class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between gap-3">
-              <h3 class="font-semibold text-gray-900 dark:text-white">{card.title}</h3>
-              <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(card.status)]}>
-                {card.status}
-              </span>
-            </div>
-            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{card.summary}</p>
-            <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">{card.detail}</p>
-            <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
-              Son üretim: {formatGeneratedAt(card.generatedAt)}
-            </p>
+      <div class="mb-8">
+        <div class="mb-4">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Operasyon Riski</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Bloke veya bozulmuş sinyaller üstte gösterilir.</p>
+        </div>
+        <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {riskCards.map((card) => (
+            <a href={card.href} class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div class="flex items-center justify-between gap-3">
+                <h3 class="font-semibold text-gray-900 dark:text-white">{card.title}</h3>
+                <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(card.status)]}>
+                  {card.status}
+                </span>
+              </div>
+              <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{card.summary}</p>
+              <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">{card.detail}</p>
+              <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
+                Son üretim: {formatGeneratedAt(card.generatedAt)}
+              </p>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div class="mb-4">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Yönetim Araçları</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400">Operasyon dışı içerik ve yönetim yüzeyleri.</p>
+        </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <a href="/admin/runtime-monitor" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Runtime Monitör</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Health, performance ve artifact sinyalleri</p>
           </a>
-        ))}
-        <a href="/admin/dashboard" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex items-center justify-between gap-3">
-            <h3 class="font-semibold text-gray-900 dark:text-white">Artifact Health</h3>
-            <span class:list={['rounded-full px-3 py-1 text-xs font-semibold', getStatusBadgeClass(artifactHealthSummary.overall)]}>
-              {artifactHealthSummary.overall}
-            </span>
-          </div>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
-            Healthy {artifactHealthSummary.healthyCount} • Degraded {artifactHealthSummary.degradedCount} • Blocked {artifactHealthSummary.blockedCount}
-          </p>
-          <p class="text-gray-500 dark:text-gray-400 text-xs mt-1 truncate">
-            İlk risk: {firstProblematicArtifact}
-          </p>
-          <p class="text-gray-500 dark:text-gray-400 text-xs mt-2">
-            Son üretim: {formatGeneratedAt(latestArtifactGeneratedAt)}
-          </p>
-        </a>
-        <a href="/admin/runtime-monitor" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Runtime Monitör</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Health, performance ve artifact sinyalleri</p>
-        </a>
-        <a href="/admin/audit" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Admin Audit</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kalıcı admin ops audit kayıtları</p>
-        </a>
-        <a href="/admin/integrations" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Entegrasyon Ayarları</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">RESEND ve Analytics anahtarları</p>
-        </a>
-        <a href="/admin/places" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Mekanlar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.pending} onay bekleyen</p>
-        </a>
-        <a href="/admin/users" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Kullanıcılar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kullanıcı yönetimi</p>
-        </a>
-        <a href="/admin/messages" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Mesajlar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.messages} yeni mesaj</p>
-        </a>
-        <a href="/admin/reviews" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Yorumlar</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Yorum moderasyonu</p>
-        </a>
-        <a href="/admin/blog" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Blog</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Blog yazıları</p>
-        </a>
-        <a href="/admin/events" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Etkinlikler</h3>
-          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Etkinlik yönetimi</p>
-        </a>
+          <a href="/admin/audit" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Admin Audit</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kalıcı admin ops audit kayıtları</p>
+          </a>
+          <a href="/admin/integrations" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Entegrasyon Ayarları</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">RESEND ve Analytics anahtarları</p>
+          </a>
+          <a href="/admin/places" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Mekanlar</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.pending} onay bekleyen</p>
+          </a>
+          <a href="/admin/users" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Kullanıcılar</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Kullanıcı yönetimi</p>
+          </a>
+          <a href="/admin/messages" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Mesajlar</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{stats.messages} yeni mesaj</p>
+          </a>
+          <a href="/admin/reviews" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Yorumlar</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Yorum moderasyonu</p>
+          </a>
+          <a href="/admin/blog" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Blog</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Blog yazıları</p>
+          </a>
+          <a href="/admin/events" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <h3 class="font-semibold text-gray-900 dark:text-white">Etkinlikler</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Etkinlik yönetimi</p>
+          </a>
+        </div>
       </div>
     </div>
   </div>
