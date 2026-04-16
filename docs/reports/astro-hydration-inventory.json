@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T22:28:46.878Z",
-  "astroFiles": 163,
-  "tsxFiles": 92,
-  "totalHydrationPoints": 33,
+  "generatedAt": "2026-04-16T22:31:51.033Z",
+  "astroFiles": 164,
+  "tsxFiles": 91,
+  "totalHydrationPoints": 32,
   "lowRiskCount": 0,
-  "mediumRiskCount": 17,
+  "mediumRiskCount": 16,
   "highRiskCount": 16,
   "entries": [
     {
@@ -160,13 +160,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "UserSettings form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/icerik.astro",
-      "componentName": "ContentManager",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "ContentManager form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/isletme/analytics.astro",
