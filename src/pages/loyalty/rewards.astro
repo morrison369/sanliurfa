@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { RewardsCatalog } from '../../components/RewardsCatalog';
+import RewardsCatalog from '../../components/RewardsCatalog.astro';
 
 // Redirect if not authenticated
 if (!Astro.locals.user) {
@@ -16,7 +16,7 @@ if (!Astro.locals.user) {
       <p class="text-gray-600">Puanlarınızı harika ödüllere dönüştürün</p>
     </div>
 
-    <RewardsCatalog client:load />
+    <RewardsCatalog />
 
     <div class="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
       <h2 class="font-semibold text-lg mb-4">❓ Sıkça Sorulan Sorular</h2>

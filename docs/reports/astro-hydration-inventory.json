@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-16T21:47:36.873Z",
-  "astroFiles": 154,
-  "tsxFiles": 102,
-  "totalHydrationPoints": 43,
+  "generatedAt": "2026-04-16T21:57:49.117Z",
+  "astroFiles": 155,
+  "tsxFiles": 101,
+  "totalHydrationPoints": 42,
   "lowRiskCount": 0,
-  "mediumRiskCount": 27,
+  "mediumRiskCount": 26,
   "highRiskCount": 16,
   "entries": [
     {
@@ -258,13 +258,6 @@
       "directive": "load",
       "risk": "medium",
       "rationale": "LoyaltyDashboard form, liste veya orta seviyeli etkileşim içeriyor."
-    },
-    {
-      "pagePath": "src/pages/loyalty/rewards.astro",
-      "componentName": "RewardsCatalog",
-      "directive": "load",
-      "risk": "medium",
-      "rationale": "RewardsCatalog form, liste veya orta seviyeli etkileşim içeriyor."
     },
     {
       "pagePath": "src/pages/notifications.astro",
