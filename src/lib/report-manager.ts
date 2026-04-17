@@ -77,7 +77,7 @@ function renderReportList(state: ReportManagerState): string {
   }
 
   if (state.reports.length === 0) {
-    return '<p class="text-gray-600">Henüz rapor bulunmuyor.</p>';
+    return '<p class="text-gray-600">Henüz görüntülenecek rapor bulunmuyor.</p>';
   }
 
   return `
