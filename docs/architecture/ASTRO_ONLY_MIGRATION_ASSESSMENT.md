@@ -1,6 +1,6 @@
 # Astro-Only Migration Assessment
 
-Bu belge, `Şanlıurfa.com` kod tabanının mevcut Astro + React island mimarisinden daha Astro-merkezli bir yapıya nasıl taşınabileceğini değerlendirir.
+Bu belge, `Şanlıurfa.com` kod tabanının Astro-merkezli yapıya geçişini ve geçiş sonrası bakım kararlarını değerlendirir.
 
 ## Karar Özeti
 
@@ -26,8 +26,8 @@ Mevcut yapı:
 
 - SSR ve routing katmanı Astro ile çalışıyor.
 - İnteraktif paneller plain TS + Astro shell yapısına taşındı; aktif React island kalmadı.
-- React paket kaldırma işi aktif hedef değildir; kalan `.tsx` ve React hook import yüzeyi yalnızca bakım/audit amacıyla izlenmelidir.
-- Admin, analytics, search, social, subscriptions, notifications ve messaging yüzeyleri React bağımlılığını yoğun kullanıyordu; kalan yüzey artık yalnızca son dalga high-risk panellerdir.
+- React paket kaldırma işi aktif hedef değildir; `@astrojs/react` kontrollü compatibility layer olarak tutulur.
+- Admin, analytics, search, social, subscriptions, notifications ve messaging yüzeyleri React bağımlılığını yoğun kullanıyordu; bu yüzeylerin tamamı Astro + plain TS modeline taşındı.
 - İlk migration dalgalarında `NotificationBadge`, `QuotaUsageDisplay`, `TrendingPlaces`, `LeaderboardsDisplay`, `PricingPlans`, `UserRecommendations`, `PerformanceMonitor`, `PWAPrompt`, `TransactionHistory`, `BillingHistory`, `RewardsCatalog`, `NotificationPreferencesManager`, `NotificationCenter`, `NotificationsCenter`, `SubscriptionManager`, `MyActivityLog`, `UserSuggestionsPanel`, `UserSearchResults`, `HashtagExplorer`, `CollectionsManager`, `ContentManager`, `UserPublicProfile`, `ReportManager`, `VendorDashboard`, `LoyaltyDashboard`, `UserProfile`, `CollectionDetail`, `UserSettings`, `SearchResults`, `BusinessAnalyticsDashboard`, `FeaturedListingsManager`, `MarketingCampaignBuilder`, `AdminLoyaltyPanel`, `AuditLogViewer`, `UserManagementTable`, `AdminDashboardOverview`, `AnalyticsPanel`, `AdminAnalyticsDashboard`, `AdminManager`, `WebhookAnalyticsDashboard`, `LiveAnalyticsDashboard`, `ModerationQueueManager`, `SubscriptionAdminDashboard`, `AdminVerificationQueue`, `OLAPExplorer`, `AdminPerformanceDashboard` ve `MessagingInbox`, `WebhookManager`, `ActivityFeed`, `ModerationDashboard` React island olmaktan çıkarıldı.
 
 ## Astro-Only Hedefinin Anlamı
@@ -47,103 +47,58 @@ Bu hedef, sadece framework adı değiştirmek değildir. Aşağıdakiler de değ
 - hydration maliyeti
 - test stratejisi
 
-## Mevcut React Yüzeyinin Sınıflandırması
+## Migration Sonrası Öğrenimler
 
-### 1. Düşük Riskli Taşınabilir Yüzeyler
+Tamamlanan migration, üç pratik sınıf gösterdi:
 
-Bunlar çoğunlukla:
+### 1. Düşük Riskli Yüzeyler
 
-- küçük widget'lar
-- tek buton / tek form davranışı
-- az state kullanan client parçaları
-- server render + hafif script ile çözülebilecek bileşenler
+- küçük widget
+- tek aksiyonlu buton/form
+- sınırlı polling veya badge durumu
 
-Örnek adaylar:
-
-- `src/components/NotificationBadge.tsx`
-- `src/components/ShareButton.tsx`
-- `src/components/FollowPlaceButton.tsx`
-- `src/components/RsvpButton.tsx`
-- `src/components/PlaceFollowersCount.tsx`
-- `src/components/QuotaUsageDisplay.tsx`
-
-Taşıma yaklaşımı:
-
-- `.astro` bileşen + küçük inline/client script
-- server prop ile render edilen markup
-- gerektiğinde `fetch` + `data-*` attribute yaklaşımı
+Bu grup en hızlı şekilde `.astro` + küçük browser helper modeline taşındı.
 
 ### 2. Orta Riskli Yüzeyler
 
-Bunlar:
-
 - filtreleme
 - tablo/list view
-- form state
 - pagination/search UI
 - birden fazla event handler
 
-Örnek adaylar:
+Bu grup için doğru yaklaşım doğrudan rewrite değil, önce helper ayrımı oldu:
 
-- `src/components/SearchResults.tsx`
-- `src/components/AdvancedSearchForm.tsx`
-- `src/components/NotificationsCenter.tsx`
-- `src/components/RewardsCatalog.tsx`
-
-Taşıma yaklaşımı:
-
-- server-rendered Astro shell
-- ortak browser helper katmanı
-- küçük view-model helper'ları
-- gerekiyorsa ada ada vanilla TypeScript module
+- data normalize helper
+- render/view-model helper
+- page bootstrap script
 
 ### 3. Yüksek Riskli Yüzeyler
 
-Bunlar pratikte mini SPA davranışı gösterir:
-
-- admin dashboard'lar
-- live analytics panelleri
-- moderation queue
+- admin dashboard
+- analytics
+- moderation
+- messaging
 - webhook yönetimi
-- sosyal feed ve messaging
-- yoğun tab/state + async orchestration kullanan ekranlar
+- OLAP explorer
 
-Örnekler:
+Bu grup taşınabildi; ama maliyet yalnızca framework değişimi değildi. Başarılı batch'ler aynı zamanda:
 
-- `src/components/AdminAnalyticsDashboard.tsx`
-- `src/components/AdminPerformanceDashboard.tsx`
-- `src/components/ModerationDashboard.tsx`
-- `src/components/WebhookAnalyticsDashboard.tsx`
-- `src/components/MessagingInbox.tsx`
-- `src/components/LiveAnalyticsDashboard.tsx`
-
-Bu yüzeyleri Astro-only yapmak mümkündür, ama maliyeti yüksektir. Kısa vadede bunları React'te bırakmak daha ekonomik olabilir.
+- endpoint drift düzeltti
+- nested API envelope unwrap boşluklarını kapattı
+- polling / mutation owner'larını tek script altında topladı
 
 ## En Yoğun Hydration Bölgeleri
 
-`client:*` kullanan önemli sayfalar:
+Aktif `client:*` kullanan sayfa kalmadı.
 
-- `src/pages/admin/dashboard.astro`
-- `src/pages/admin/analytics.astro`
-- `src/pages/admin/moderation.astro`
-- `src/pages/admin/subscriptions.astro`
-- `src/pages/admin/verifications.astro`
-- `src/pages/admin/loyalty/index.astro`
-- `src/pages/abonelik.astro`
-- `src/pages/ayarlar.astro`
-- `src/pages/sosyal/index.astro`
-- `src/pages/webhooks.astro`
-- `src/pages/mesajlar/index.astro`
-- `src/pages/canli-analitik/index.astro`
-
-Bu liste, migration sıralamasında öncelik değil; maliyet haritasıdır.
+Bu başlık artık tarihsel maliyet haritası olarak düşünülmeli; yeni hydration eklenirse aynı sayfalar yeniden riskli kümeye dönebilir.
 
 ## Güncel Yüksek Risk Sırası
 
 `docs/reports/astro-high-risk-feasibility.md` çıktısına göre:
 
-- `later` bucket kapandı; kalan tüm yüzeyler doğrudan pahalı `last` grubunda
-- son dalga adayı kalmadı; hydration yüzeyi tamamen kapandı
+- `first`, `later` ve `last` bucket'larının tamamı `0`
+- hydration yüzeyi tamamen kapandı
 
 Bu sonuç önemli çünkü artık `medium` bucket yok. Bundan sonraki yanlış seçim doğrudan pahalı rewrite anlamına gelir.
 
@@ -169,9 +124,9 @@ Source-of-truth:
 2026-04-17 itibarıyla bu raporlar:
 
 - paket kaldırma kararı üretmek için değil
-- kalan React yüzeyini görünür kılmak için
+- config dışı React yüzeyinin geri dönmesini izlemek için
 - gerekirse gelecekte seçili React geri dönüşlerini kontrollü yapmak için tutulur
-- son bakım batch'i ile React hook/lib blokörü `0`a indi; kalan görünür runtime blokörü artık yalnızca `astro.config.mjs`
+- son bakım batch'i ile `.tsx` ve React hook/lib blokörü `0`a indi; kalan görünür runtime blokörü yalnızca `astro.config.mjs`
 
 ## Kısa Vadede Yapılmaması Gerekenler
 
@@ -221,10 +176,7 @@ Hedef:
 - shared browser helper'ları çoğaltmak
 - Astro shell + vanilla TS modelini yerleştirmek
 
-Başarı metriği:
-
-- `client:*` sayısı düşer
-- React bağımlı küçük bileşen sayısı azalır
+Bu faz tamamlandı.
 
 ### Faz 3: Orta Riskli Ekranları Böl
 
@@ -235,7 +187,7 @@ Doğrudan rewrite yerine önce parçala:
 - DOM/update helper
 - bootstrap helper
 
-Bu repo'da admin ops ekranlarında yapılan son modülerleşme buna iyi örnektir.
+Bu repo'da admin ops ekranları ve kullanıcı panel yüzeyleri bu modelle taşındı.
 
 ### Faz 4: Yüksek Riskli Yüzeyleri Tek Tek Değerlendir
 
@@ -245,11 +197,7 @@ Her büyük panel için ayrı karar verilmelidir:
 - React island olarak kalacak mı?
 - hibrit mi olacak?
 
-Özellikle şu alanlarda “React kalsın” kararı teknik olarak makul olabilir:
-
-- moderation queues
-- complex analytics dashboards
-- messaging inbox
+Bu faz da tamamlandı; kalan karar artık framework migration değil, React compatibility layer'ın korunma biçimidir.
 
 ## Teknik Geçiş Kuralları
 

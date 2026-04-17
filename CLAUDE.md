@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Şanlıurfa.com** is a production-grade city guide web application built with Astro 6.1.7, React 19, and TypeScript. Full-stack with bcrypt authentication, Redis caching/sessions/rate-limiting, PostgreSQL, comprehensive observability, API documentation, and E2E testing. Enterprise-ready infrastructure with strict TypeScript, SQL injection prevention, and performance monitoring.
+**Şanlıurfa.com** is a production-grade city guide web application built with Astro 6.1.7 and TypeScript. React packages remain installed as an allowed Astro integration compatibility layer, but active UI runtime is Astro + plain TypeScript. Full-stack with bcrypt authentication, Redis caching/sessions/rate-limiting, PostgreSQL, comprehensive observability, API documentation, and E2E testing. Enterprise-ready infrastructure with strict TypeScript, SQL injection prevention, and performance monitoring.
 
 ## Source of Truth & Working Model
 
@@ -65,7 +65,7 @@ Framework direction:
 - `npm run astro:migration:high-risk` — Ranked feasibility report for remaining high-risk hydration surfaces
 - `npm run astro:react:audit` — Package-level React surface visibility after hydration reaches zero
 - `npm run astro:react:classify` — File-level React maintenance classification after hydration reaches zero
-- `npm run astro:react:guard` — Guard that fails if runtime-linked `.tsx` surface returns
+- `npm run astro:react:guard` — Guard that fails if runtime-linked React UI surface returns
 - `npm run phase:scripts:report` — Phase compatibility status
 - `npm run phase:compat:cleanup` — Cleanup compatibility manifest state
 
@@ -89,7 +89,7 @@ Framework direction:
 
 ```
 src/
-├── components/        # Astro + React UI components
+├── components/        # Astro UI components
 ├── pages/            # File-based routing (Astro pages + API routes)
 │   ├── api/          # REST API endpoints (health, auth, places, reviews, metrics, performance, docs, admin, loyalty, social, realtime, webhooks)
 │   ├── admin/        # Admin management pages (users, moderation, loyalty, analytics)
@@ -127,7 +127,7 @@ src/
 ### Technology Stack
 
 - **Framework**: Astro 6.1.7 (SSR, file-based routing)
-- **UI**: React 19 (client-side interactivity)
+- **UI**: Astro components + plain TypeScript browser helpers
 - **Styling**: Tailwind CSS 3.4 + Tailwind Forms
 - **Database**: PostgreSQL (direct `pg` library connection)
 - **Cache/Session/Rate Limit**: Redis (namespaced `sanliurfa:*` keys)
@@ -194,8 +194,9 @@ src/
    - /api/docs → Swagger UI, /api/openapi.json → OpenAPI 3.1 spec
 
 8. **Component Strategy**:
-   - Astro (.astro) for static, server-rendered content
-   - React (.tsx) for interactive UI with explicit hydration directives (client:load, client:idle)
+   - Astro (.astro) for server-rendered content
+   - plain TypeScript browser helpers for interaction, polling, mutation, and DOM updates
+   - React integration is retained only as a compatibility option, not as the default UI owner
 
 ### Astro-Only Direction
 
