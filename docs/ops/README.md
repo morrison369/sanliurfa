@@ -7,6 +7,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 - Release gate / merge blocker:
   - [RELEASE_GATES.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\RELEASE_GATES.md)
   - [BRANCH_PROTECTION.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\BRANCH_PROTECTION.md)
+  - [RELEASE_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\RELEASE_RUNTIME_STATE.md)
 - Artifact freshness / nightly drift:
   - [ARTIFACT_FRESHNESS_POLICY.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\ARTIFACT_FRESHNESS_POLICY.md)
   - [ARTIFACT_RETENTION_POLICY.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\ARTIFACT_RETENTION_POLICY.md)
@@ -49,6 +50,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 ## Hızlı kullanım sırası
 
 1. Merge veya deploy bloklandıysa `RELEASE_GATES.md`
+   kısa runtime/gate özeti için `docs/ops/RELEASE_RUNTIME_STATE.md`
 2. Incident varsa `INCIDENT_RUNBOOK.md`
 3. Nightly issue veya artifact bayatlığı varsa `ARTIFACT_FRESHNESS_POLICY.md`
    Admin wrapper coverage için `docs/reports/admin-access-coverage.md`
