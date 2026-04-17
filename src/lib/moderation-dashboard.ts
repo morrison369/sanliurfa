@@ -135,7 +135,7 @@ function statusClass(status: string): string {
 
 export function renderModerationDashboard(state: ModerationDashboardState): string {
   if (state.loading && !state.stats) {
-    return '<div class="text-center py-8">Yükleniyor...</div>';
+    return '<div class="text-center py-8">Moderasyon verileri yükleniyor...</div>';
   }
 
   const tabs = [
