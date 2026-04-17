@@ -98,7 +98,7 @@ export function renderWebhookManager(state: WebhookManagerState): string {
     ? `
       <form data-webhook-form class="rounded-xl border border-slate-200 bg-slate-50 p-5 space-y-4">
         <div>
-          <label class="mb-2 block text-sm font-medium text-slate-700">Olay Turu</label>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Olay türü</label>
           <select data-webhook-event class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900">
             <option value="">Seçin...</option>
             ${EVENT_OPTIONS.map((event) => `<option value="${event}" ${state.form.event === event ? 'selected' : ''}>${event}</option>`).join('')}
@@ -106,7 +106,7 @@ export function renderWebhookManager(state: WebhookManagerState): string {
         </div>
         <div>
           <label class="mb-2 block text-sm font-medium text-slate-700">URL</label>
-          <input data-webhook-url type="url" value="${escapeHtml(state.form.url)}" placeholder="https://example.com/webhook" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900" />
+          <input data-webhook-url type="url" value="${escapeHtml(state.form.url)}" placeholder="https://ornek.com/webhook" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900" />
         </div>
         <div>
           <label class="mb-2 block text-sm font-medium text-slate-700">Gizli anahtar</label>
@@ -131,7 +131,7 @@ export function renderWebhookManager(state: WebhookManagerState): string {
             <span class="rounded-full px-3 py-1 text-xs font-semibold ${webhook.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}">${webhook.active ? 'Aktif' : 'Pasif'}</span>
           </div>
           <div class="mt-4 grid gap-3 md:grid-cols-2 text-sm text-slate-600">
-            <div><span class="font-semibold text-slate-900">Oluşturulma:</span> ${escapeHtml(formatAdminDateTime(webhook.createdAt, '-'))}</div>
+            <div><span class="font-semibold text-slate-900">Oluşturulma tarihi:</span> ${escapeHtml(formatAdminDateTime(webhook.createdAt, '-'))}</div>
             <div><span class="font-semibold text-slate-900">Son tetikleme:</span> ${escapeHtml(formatAdminDateTime(webhook.lastTriggeredAt, 'Henüz tetiklenmedi'))}</div>
           </div>
           <div class="mt-4 flex flex-wrap gap-2">
