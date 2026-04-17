@@ -48,7 +48,7 @@ export function renderUserSuggestionsPanel(users: SuggestedUser[], error: string
   if (users.length === 0) {
     return `
       <div class="py-8 text-center text-gray-500 dark:text-gray-400">
-        Şu an için öneri yok
+        Şu anda öneri bulunmuyor.
       </div>
     `;
   }
@@ -67,7 +67,7 @@ export function renderUserSuggestionsPanel(users: SuggestedUser[], error: string
             user.matchingInterests > 0
               ? `
                 <div class="rounded bg-blue-50 p-2 text-center dark:bg-blue-900/30">
-                  <p class="text-blue-600 dark:text-blue-400">Ortak İlgi</p>
+                  <p class="text-blue-600 dark:text-blue-400">Ortak ilgi</p>
                   <p class="font-bold text-blue-700 dark:text-blue-300">${user.matchingInterests}</p>
                 </div>
               `
@@ -85,7 +85,7 @@ export function renderUserSuggestionsPanel(users: SuggestedUser[], error: string
 
               <div class="mb-3 grid grid-cols-2 gap-2 text-xs">
                 <div class="rounded bg-gray-50 p-2 text-center dark:bg-gray-700">
-                  <p class="text-gray-600 dark:text-gray-400">Aktivite</p>
+                  <p class="text-gray-600 dark:text-gray-400">Etkinlik</p>
                   <p class="font-bold text-gray-900 dark:text-white">${user.activityCount}</p>
                 </div>
                 ${matchingInterests || '<div></div>'}
@@ -97,14 +97,14 @@ export function renderUserSuggestionsPanel(users: SuggestedUser[], error: string
                 data-user-suggestion-following="${String(user.isFollowing)}"
                 class="w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors ${user.isFollowing ? 'bg-gray-200 text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600' : 'bg-blue-600 text-white hover:bg-blue-700'}"
               >
-                ${user.isFollowing ? 'Takip Ediliyor' : 'Takip Et'}
+                ${user.isFollowing ? 'Takip ediliyor' : 'Takip et'}
               </button>
 
               <a
                 href="/kullanıcı/${user.id}"
                 class="mt-2 block py-1 text-center text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
               >
-                Profili Görüntüle
+                Profili görüntüle
               </a>
             </div>
           `;
@@ -116,7 +116,7 @@ export function renderUserSuggestionsPanel(users: SuggestedUser[], error: string
       data-user-suggestions-refresh
       class="w-full rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 dark:border-blue-400 dark:text-blue-400 dark:hover:text-blue-300"
     >
-      Yeni Öneriler Yükle
+      Yeni öneriler yükle
     </button>
   `;
 }

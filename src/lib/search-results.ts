@@ -175,7 +175,7 @@ function renderUsers(users: SearchUser[]): string {
                 }
                 <div>
                   <p class="font-medium text-gray-900 dark:text-white">${escapeHtml(user.full_name)}</p>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">@${escapeHtml(user.username || 'kullanici')}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">@${escapeHtml(user.username || 'kullanıcı')}</p>
                 </div>
               </a>
             `,
@@ -215,15 +215,15 @@ export function renderSearchResults(state: SearchResultsState): string {
 
   let body = '';
   if (state.query.trim().length < 2) {
-    body = '<p class="text-center text-gray-600 dark:text-gray-400">En az 2 karakter girin</p>';
+    body = '<p class="text-center text-gray-600 dark:text-gray-400">En az 2 karakter girin.</p>';
   } else if (state.isLoading) {
-    body = '<p class="text-center text-gray-600 dark:text-gray-400">Aranıyor...</p>';
+    body = '<p class="text-center text-gray-600 dark:text-gray-400">Arama yapılıyor...</p>';
   } else if (state.error) {
     body = `<p class="text-center text-red-600 dark:text-red-400">${escapeHtml(state.error)}</p>`;
   } else if (!state.hasSearched) {
-    body = '<p class="text-center text-gray-600 dark:text-gray-400">Aramaya başlamak için yazın</p>';
+    body = '<p class="text-center text-gray-600 dark:text-gray-400">Aramaya başlamak için yazın.</p>';
   } else if (!sections) {
-    body = '<p class="text-center text-gray-600 dark:text-gray-400">Sonuç bulunamadı</p>';
+    body = '<p class="text-center text-gray-600 dark:text-gray-400">Sonuç bulunamadı.</p>';
   } else {
     body = `<div class="space-y-8">${sections}</div>`;
   }
