@@ -31,9 +31,9 @@ function renderRewardsTable(rewards: AdminLoyaltyReward[]): string {
     <table class="w-full text-sm">
       <thead>
         <tr>
-          <th class="px-4 py-2 text-left">Ödül</th>
-          <th class="px-4 py-2 text-left">Kategori</th>
-          <th class="px-4 py-2 text-right">Puan</th>
+          <th class="px-4 py-2 text-left">Ödül adı</th>
+          <th class="px-4 py-2 text-left">Ödül kategorisi</th>
+          <th class="px-4 py-2 text-right">Puan değeri</th>
         </tr>
       </thead>
       <tbody>
@@ -66,7 +66,7 @@ export function renderAdminLoyaltyPanel(options: {
           data-admin-loyalty-tab="rewards"
           class="border-b-2 border-blue-600 px-4 py-2 font-medium text-blue-600"
         >
-          Ödüller
+          Ödül listesi
         </button>
       </div>
       ${options.error ? `<div class="text-red-600">${options.error}</div>` : ''}

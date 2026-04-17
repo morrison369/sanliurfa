@@ -104,7 +104,7 @@ function renderDayButtons(days: number): string {
               data-business-analytics-days="${value}"
               class="rounded-lg px-4 py-2 font-medium transition ${active}"
             >
-              ${value} Gün
+              ${value} gün
             </button>
           `;
         })
@@ -117,19 +117,19 @@ function renderAnalyticsCards(analytics: Analytics): string {
   return `
     <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
       <div class="rounded-lg border border-blue-200 bg-blue-50 p-6">
-        <p class="text-sm text-gray-600">Toplam Ziyaretçi</p>
+        <p class="text-sm text-gray-600">Toplam ziyaretçi</p>
         <p class="mt-2 text-3xl font-bold text-blue-600">${analytics.totalVisitors.toLocaleString('tr-TR')}</p>
       </div>
       <div class="rounded-lg border border-green-200 bg-green-50 p-6">
-        <p class="text-sm text-gray-600">Ortalama Puan</p>
+        <p class="text-sm text-gray-600">Ortalama puan</p>
         <p class="mt-2 text-3xl font-bold text-green-600">${analytics.avgRating.toFixed(1)}</p>
       </div>
       <div class="rounded-lg border border-purple-200 bg-purple-50 p-6">
-        <p class="text-sm text-gray-600">İnceleme Sayısı</p>
+        <p class="text-sm text-gray-600">İnceleme sayısı</p>
         <p class="mt-2 text-3xl font-bold text-purple-600">${analytics.reviewCount.toLocaleString('tr-TR')}</p>
       </div>
       <div class="rounded-lg border border-orange-200 bg-orange-50 p-6">
-        <p class="text-sm text-gray-600">Takipçi</p>
+        <p class="text-sm text-gray-600">Takipçi sayısı</p>
         <p class="mt-2 text-3xl font-bold text-orange-600">${analytics.followerCount.toLocaleString('tr-TR')}</p>
       </div>
     </div>
@@ -149,15 +149,15 @@ function renderPeriodMetrics(metrics: Metric[]): string {
   return `
     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
       <div class="rounded-lg bg-white p-6 shadow">
-        <p class="text-sm text-gray-600">Bu Dönemde Görüntülenme</p>
+        <p class="text-sm text-gray-600">Bu dönemde görüntülenme</p>
         <p class="mt-2 text-2xl font-bold">${total.views.toLocaleString('tr-TR')}</p>
       </div>
       <div class="rounded-lg bg-white p-6 shadow">
-        <p class="text-sm text-gray-600">Bu Dönemde İnceleme</p>
+        <p class="text-sm text-gray-600">Bu dönemde inceleme</p>
         <p class="mt-2 text-2xl font-bold">${total.reviews.toLocaleString('tr-TR')}</p>
       </div>
       <div class="rounded-lg bg-white p-6 shadow">
-        <p class="text-sm text-gray-600">Yeni Takipçiler</p>
+        <p class="text-sm text-gray-600">Yeni takipçiler</p>
         <p class="mt-2 text-2xl font-bold">${total.followers.toLocaleString('tr-TR')}</p>
       </div>
     </div>
@@ -169,7 +169,7 @@ function renderInsights(insights: Insight[]): string {
 
   return `
     <div class="space-y-3">
-      <h3 class="text-lg font-semibold">AI Önerileri</h3>
+      <h3 class="text-lg font-semibold">AI önerileri</h3>
       ${insights
         .map((insight) => {
           const tone =
@@ -185,14 +185,14 @@ function renderInsights(insights: Insight[]): string {
                   <h4 class="font-semibold">${insight.title}</h4>
                   <p class="mt-1 text-sm text-gray-700">${insight.description}</p>
                   <p class="mt-2 text-xs text-gray-600">Öneri: ${insight.action_recommendation}</p>
-                  <p class="mt-1 text-xs text-gray-600">Beklenen Etki: ${insight.estimated_impact}</p>
+                  <p class="mt-1 text-xs text-gray-600">Beklenen etki: ${insight.estimated_impact}</p>
                 </div>
                 <button
                   type="button"
                   data-business-analytics-acknowledge="${insight.id}"
                   class="rounded border border-gray-300 bg-white px-3 py-1 text-xs hover:bg-gray-100"
                 >
-                  Anladım
+                  Okudum
                 </button>
               </div>
             </div>
@@ -208,10 +208,10 @@ function renderTrends(metrics: Metric[]): string {
 
   return `
     <div class="rounded-lg bg-white p-6 shadow">
-      <h3 class="mb-4 text-lg font-semibold">Günlük Trendler</h3>
+      <h3 class="mb-4 text-lg font-semibold">Günlük trendler</h3>
       <div class="space-y-2 text-sm">
         <p>${metrics.length} günlük veri bulundu</p>
-        <p class="text-gray-500">Grafik görüntülemesi yakında eklenecek</p>
+        <p class="text-gray-500">Grafik görünümü yakında eklenecek</p>
       </div>
     </div>
   `;
@@ -225,7 +225,7 @@ export function renderBusinessAnalyticsDashboard(options: {
   error: string | null;
 }): string {
   if (!options.placeId) {
-    return '<div class="p-4 text-center text-gray-500">Mekan seçilmedi</div>';
+    return '<div class="p-4 text-center text-gray-500">Mekan seçilmedi.</div>';
   }
 
   if (options.error) {
@@ -233,7 +233,7 @@ export function renderBusinessAnalyticsDashboard(options: {
   }
 
   if (!options.data) {
-    return '<div class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-600">Analitik verisi yüklenemedi.</div>';
+    return '<div class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-600">İşletme analitiği yüklenemedi.</div>';
   }
 
   return `

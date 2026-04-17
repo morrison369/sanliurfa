@@ -102,7 +102,7 @@ export function extractWebhookManagerData(payload: unknown): ManagedWebhook[] {
 
 export function renderWebhookManager(state: WebhookManagerState): string {
   if (state.loading) {
-    return '<div class="flex items-center justify-center py-12 text-sm text-slate-500">Webhook\'lar yükleniyor...</div>';
+    return '<div class="flex items-center justify-center py-12 text-sm text-slate-500">Webhook yönetimi yükleniyor...</div>';
   }
 
   const errorHtml = state.error
@@ -151,12 +151,12 @@ export function renderWebhookManager(state: WebhookManagerState): string {
           </div>
           <div class="mt-4 flex flex-wrap gap-2">
             <button type="button" data-webhook-test="${webhook.id}" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100">Test et</button>
-            <button type="button" data-webhook-copy="${webhook.id}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Kimliği kopyala</button>
-            <button type="button" data-webhook-delete="${webhook.id}" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100">Sil</button>
+            <button type="button" data-webhook-copy="${webhook.id}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Webhook kimliğini kopyala</button>
+            <button type="button" data-webhook-delete="${webhook.id}" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100">Kaldır</button>
           </div>
         </article>
       `).join('')
-    : '<div class="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">Henüz kayıtlı webhook bulunmuyor.</div>';
+    : '<div class="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">Henüz gösterilecek webhook bulunmuyor.</div>';
 
   return `
     <div class="space-y-6">
