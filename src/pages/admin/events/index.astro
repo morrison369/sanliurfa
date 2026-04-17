@@ -39,7 +39,7 @@ const statsResult = await query(
 const stats = statsResult.rows[0];
 
 const seo = {
-  title: 'Etkinlik Yönetimi - Yönetim Paneli',
+  title: 'Etkinlik yönetimi - Yönetim Paneli',
   noindex: true
 };
 ---
@@ -102,7 +102,7 @@ const seo = {
                         <p class="text-xs text-gray-500 dark:text-gray-400">{getCategoryLabel(event.category)}</p>
                         {event.is_featured && (
                           <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-urfa-100 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300 text-xs rounded mt-1">
-                            ⭐ Öne Çıkan
+                            ⭐ Öne çıkan
                           </span>
                         )}
                       </div>
@@ -157,7 +157,7 @@ const seo = {
                 <tr>
                   <td colspan="5" class="py-8 text-center text-gray-500 dark:text-gray-400">
                     Henüz etkinlik bulunmuyor.
-                    <a href="/admin/events/add" class="text-urfa-600 hover:underline ml-1">İlk etkinliği ekle</a>
+                    <a href="/admin/events/add" class="text-urfa-600 hover:underline ml-1">İlk etkinliği ekleyin</a>
                   </td>
                 </tr>
               )}
