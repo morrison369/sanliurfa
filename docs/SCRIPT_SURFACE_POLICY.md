@@ -1,9 +1,9 @@
-# Script Surface Policy
+# Script Yüzeyi Politikası
 
-The repository exposes two script layers.
+Depo iki script katmanı sunar.
 
-## Runner-First Commands
-These are the only commands operators should treat as the primary interface:
+## Çalıştırıcı Öncelikli Komutlar
+Operatörlerin birincil arayüz olarak görmesi gereken tek komutlar şunlardır:
 - `npm run test:phase:range -- <range>`
 - `npm run test:phase:batch -- <range-a> <range-b> <range-c>`
 - `npm run phase:prepare:block:preferred -- --phase-script test:phase:<range>`
@@ -12,19 +12,19 @@ These are the only commands operators should treat as the primary interface:
 - `npm run phase:changelog:normalize`
 - `npm run phase:scripts:report`
 
-## Compatibility Surface
-- `test:phase:<range>` entries exist so generated phase blocks remain directly invokable.
-- They are compatibility surface, not the preferred operator interface.
-- New docs, handoff notes, and runbooks should reference runner-first commands, not individual `test:phase:<range>` commands.
-- Stale compatibility entries should be pruned with `npm run phase:compat:prune-stale`.
+## Uyumluluk Yüzeyi
+- `test:phase:<range>` girdileri, üretilmiş faz bloklarının doğrudan çağrılabilir kalması için vardır.
+- Bunlar uyumluluk yüzeyidir; tercih edilen operatör arayüzü değildir.
+- Yeni dokümanlar, handoff notları ve runbook'lar tekil `test:phase:<range>` komutları yerine çalıştırıcı öncelikli komutlara referans vermelidir.
+- Bayat uyumluluk girdileri `npm run phase:compat:prune-stale` ile temizlenmelidir.
 
-## Reduction Policy
-- Do not add new top-level operator docs that depend on individual `test:phase:<range>` scripts.
-- Keep only still-used compatibility entries in the manifest; stale ranges belong in archive docs, not active compatibility surface.
-- Review the current script count with `npm run phase:scripts:report`.
-- Review and prune stale compatibility entries with `npm run phase:compat:cleanup` and `npm run phase:compat:prune-stale`.
-- Active blocking decisions must stay on `quick-gate`, `full-gate`, `test:critical:blocking`, and `test:e2e:smoke`.
-- Legacy phase workflow is manual-only; see `docs/ops/LEGACY_PHASE_SURFACE.md`.
+## Azaltma Politikası
+- Tekil `test:phase:<range>` script'lerine bağımlı yeni üst seviye operatör dokümanı ekleme.
+- Manifest içinde yalnızca hâlâ kullanılan uyumluluk girdilerini tut; bayat range'ler aktif uyumluluk yüzeyinde değil, archive dokümanlarında olmalı.
+- Güncel script sayısını `npm run phase:scripts:report` ile gözden geçir.
+- Bayat compatibility girdilerini `npm run phase:compat:cleanup` ve `npm run phase:compat:prune-stale` ile gözden geçirip temizle.
+- Aktif blocking kararları `quick-gate`, `full-gate`, `test:critical:blocking` ve `test:e2e:smoke` üzerinde kalmalıdır.
+- Legacy phase workflow yalnızca manueldir; `docs/ops/LEGACY_PHASE_SURFACE.md` dosyasına bak.
 
-## Change Policy
-- Script surface changes belong in dedicated ops PRs, not mixed into dependency-only PRs unless the change is needed for validation.
+## Değişiklik Politikası
+- Script surface değişiklikleri, doğrulama için zorunlu değilse dependency-only PR'lara karıştırılmaz; ayrı ops PR'larında taşınır.
