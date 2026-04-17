@@ -15,11 +15,11 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `181`
-- `.tsx`: `71`
-- `client:*` hydration noktası: `13`
-- current generated risk split: `0 low / 0 medium / 13 high`
-- current high-risk feasibility split: `0 first / 1 later / 11 last`
+- `.astro`: `182`
+- `.tsx`: `70`
+- `client:*` hydration noktası: `12`
+- current generated risk split: `0 low / 0 medium / 12 high`
+- current high-risk feasibility split: `0 first / 0 later / 11 last`
 
 İlk hedefler:
 
@@ -96,6 +96,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/AdminDashboardOverview.tsx` -> `src/components/AdminDashboardOverview.astro`
 - `src/components/AnalyticsPanel.tsx` -> `src/components/AnalyticsPanel.astro`
 - `src/components/AdminAnalyticsDashboard.tsx` -> `src/components/AdminAnalyticsDashboard.astro`
+- `src/components/admin/AdminManager.tsx` -> `src/components/admin/AdminManager.astro`
 
 Bu dalga ile:
 
@@ -133,7 +134,8 @@ Bu dalga ile:
 - `src/pages/admin/dashboard.astro` içindeki `AdminDashboardOverview` artık React island değil
 - `src/pages/admin/analytics.astro` içindeki `AnalyticsPanel` artık React island değil
 - `src/pages/admin/analytics.astro` içindeki `AdminAnalyticsDashboard` artık React island değil
-- toplam `client:*` sayısı `55 -> 13` düştü
+- `src/pages/admin/manage.astro` içindeki `AdminManager` artık React island değil
+- toplam `client:*` sayısı `55 -> 12` düştü
 
 ### Önceki Düşük Risk Adayları
 
@@ -241,10 +243,12 @@ ayrı yazılmalı.
 
 `docs/reports/astro-high-risk-feasibility.md` şu sırayı öneriyor:
 
-1. `AdminAnalyticsDashboard`
-2. `AdminManager`
+`docs/reports/astro-high-risk-feasibility.md` artık `later` bucket bırakmıyor.
 
-`AdminAnalyticsDashboard` de taşındığı için güncel feasibility raporunda en ucuz sonraki aday doğrudan `AdminManager` oldu.
+Bu şu anlama gelir:
+
+1. sıradaki tüm yüzeyler pahalı `last` dalgasına girdi
+2. sonraki seçim artık sadece “en ucuz high-risk” değil, business-risk sırasıyla yapılmalı
 
 Bu yüzeyler dışında kalan yüksek-risk bileşenler şu an için son dalga adayıdır.
 

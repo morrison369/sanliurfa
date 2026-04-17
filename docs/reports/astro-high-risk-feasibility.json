@@ -1,27 +1,10 @@
 {
-  "generatedAt": "2026-04-16T23:55:30.184Z",
-  "totalHighRiskComponents": 12,
+  "generatedAt": "2026-04-17T00:00:11.162Z",
+  "totalHighRiskComponents": 11,
   "firstCount": 0,
-  "laterCount": 1,
+  "laterCount": 0,
   "lastCount": 11,
   "entries": [
-    {
-      "componentName": "AdminManager",
-      "componentPath": "src/components/admin/AdminManager.tsx",
-      "pagePaths": [
-        "src/pages/admin/manage.astro"
-      ],
-      "usageCount": 1,
-      "lines": 176,
-      "useStateCount": 5,
-      "useEffectCount": 0,
-      "fetchCount": 0,
-      "typedClientCount": 0,
-      "adminSurface": true,
-      "complexityScore": 52,
-      "migrationPriority": "later",
-      "recommendation": "AdminManager taşınabilir ama önce daha dar yüzeyli adaylar bitmeli."
-    },
     {
       "componentName": "WebhookAnalyticsDashboard",
       "componentPath": "src/components/WebhookAnalyticsDashboard.tsx",
