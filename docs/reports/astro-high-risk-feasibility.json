@@ -1,27 +1,10 @@
 {
-  "generatedAt": "2026-04-17T00:30:07.507Z",
-  "totalHighRiskComponents": 6,
+  "generatedAt": "2026-04-17T00:34:17.933Z",
+  "totalHighRiskComponents": 5,
   "firstCount": 0,
   "laterCount": 0,
-  "lastCount": 6,
+  "lastCount": 5,
   "entries": [
-    {
-      "componentName": "OLAPExplorer",
-      "componentPath": "src/components/OLAPExplorer.tsx",
-      "pagePaths": [
-        "src/pages/veri-ambarı/index.astro"
-      ],
-      "usageCount": 1,
-      "lines": 172,
-      "useStateCount": 9,
-      "useEffectCount": 2,
-      "fetchCount": 2,
-      "typedClientCount": 0,
-      "adminSurface": false,
-      "complexityScore": 68,
-      "migrationPriority": "last",
-      "recommendation": "OLAPExplorer yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
-    },
     {
       "componentName": "AdminPerformanceDashboard",
       "componentPath": "src/components/AdminPerformanceDashboard.tsx",

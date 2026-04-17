@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import OLAPExplorer from '../../components/OLAPExplorer';
+import OLAPExplorer from '../../components/OLAPExplorer.astro';
 
 // Admin-only access
 const userId = Astro.locals.user?.id;
@@ -18,6 +18,6 @@ if (!userId || !isAdmin) {
       <p class="text-gray-600">Çok boyutlu analitik sorgular ve veri keşfi</p>
     </div>
 
-    <OLAPExplorer client:load />
+    <OLAPExplorer />
   </div>
 </Layout>
