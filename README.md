@@ -1,6 +1,6 @@
 # Şanlıurfa.com
 
-Şanlıurfa.com, Astro SSR tabanlı şehir rehberi ve topluluk platformudur. Aktif UI runtime Astro + plain TypeScript modelindedir; React entegrasyonu ise kontrollü compatibility layer olarak korunur.
+Şanlıurfa.com, Astro SSR tabanlı şehir rehberi ve topluluk platformudur. Aktif arayüz çalışma zamanı Astro + düz TypeScript modelindedir; React entegrasyonu ise kontrollü uyumluluk katmanı olarak korunur.
 
 ## Önce Bunları Aç
 
@@ -11,11 +11,11 @@
 
 ## Güncel Kısa Durum
 
-- framework: Astro SSR
-- adapter: `@astrojs/node`
+- çatı sistemi: Astro SSR
+- adaptör: `@astrojs/node`
 - aktif `.tsx` yüzeyi: `0`
 - aktif hydration: `0`
-- React paketleri: korunuyor, ama aktif UI owner değil
+- React paketleri: korunuyor, ama aktif arayüz sahibi değil
 
 Detay için:
 
@@ -35,15 +35,15 @@ npm run release:gate
 
 ## Operasyon Giriş Noktaları
 
-- ops entrypoint:
+- ops giriş noktası:
   - [docs/ops/README.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\README.md)
-- architecture entrypoint:
+- mimari giriş noktası:
   - [docs/architecture/README.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\architecture\README.md)
-- source-of-truth map:
+- kaynak gerçek haritası:
   - [docs/ops/SOURCE_OF_TRUTH_MAP.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\SOURCE_OF_TRUTH_MAP.md)
 
 ## Kural
 
 - Günlük karar için önce kısa özet yüzeyleri aç.
-- Owner belirsizse `docs/ops/SOURCE_OF_TRUTH_MAP.md` kullan.
+- sahiplik belirsizse `docs/ops/SOURCE_OF_TRUTH_MAP.md` kullan.
 - Tarihsel kayıt gerekiyorsa `docs/archive/` altına git; aktif karar için archive kullanma.

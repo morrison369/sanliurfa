@@ -1,17 +1,17 @@
-# Release Runtime Durumu
+# Surum Runtime Durumu
 
-Bu belge, release gate ve runtime sinyallerinin aktif durum mantığını tek yerde özetler.
+Bu belge, surum kapisi ve runtime sinyallerinin aktif durum mantigini tek yerde ozetler.
 
 ## Güncel Çalışma Modeli
 
-- merge kararı:
+- birlestirme karari:
   - `quick-gate`
-- protected branch push kararı:
+- korumali dal push karari:
   - `full-gate`
-- advisory görünürlük:
+- tavsiye niteligindeki gorunurluk:
   - `critical-contracts-advisory`
   - `e2e-smoke-advisory`
-- runtime artifact health statü dili:
+- runtime artefact saglik durum dili:
   - `healthy`
   - `degraded`
   - `blocked`
@@ -32,25 +32,25 @@ Bu belge, release gate ve runtime sinyallerinin aktif durum mantığını tek ye
 
 ## Aktif Karar
 
-- Blocking karar step adıyla değil job adıyla verilir.
-- Artifact health tek başına iş akışının tamamen doğru olduğunu garanti etmez; yalnızca artifact'in varlığını ve tazeliğini gösterir.
-- Release/runtime drift varsa önce source-of-truth policy düzeltilir, sonra türev raporlar ve paneller hizalanır.
+- Engelleyici karar step adiyla degil job adiyla verilir.
+- Artefact sagligi tek basina is akisinin tamamen dogru oldugunu garanti etmez; yalnizca artefact'in varligini ve tazeligini gosterir.
+- Surum/runtime kaymasi varsa once kaynak gercek policy duzeltilir, sonra turev raporlar ve paneller hizalanir.
 
 ## Hızlı Operasyon Sırası
 
-### Release gate düştüyse
+### Surum kapisi dustuyse
 
 1. `docs/reports/release-gate-summary.json`
 2. `npm run test:critical:blocking`
 3. `npm run test:critical:advisory`
 
-### Artifact health bozulduysa
+### Artefact sagligi bozulduysa
 
 1. `GET /api/admin/system/artifact-health`
 2. `GET /api/admin/deployment/status`
 3. `ARTIFACT_FRESHNESS_POLICY.md`
 
-### Root health bozulduysa
+### Kok saglik bozulduysa
 
 1. `GET /api/health`
 2. `GET /api/health/detailed`
@@ -58,8 +58,8 @@ Bu belge, release gate ve runtime sinyallerinin aktif durum mantığını tek ye
 
 ## Not
 
-Bu belge özet yüzeydir. Eşik, gate sırası veya protection kararı değişirse:
+Bu belge ozet yuzeydir. Esik, kapi sirasi veya protection karari degisirse:
 
-1. source policy dosyası güncellenir
-2. bu özet güncellenir
-3. ilgili drift/gate komutları yeniden çalıştırılır
+1. kaynak policy dosyasi guncellenir
+2. bu ozet guncellenir
+3. ilgili drift/kapi komutlari yeniden calistirilir
