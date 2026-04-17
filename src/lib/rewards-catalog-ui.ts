@@ -163,7 +163,7 @@ function renderCategoryFilter(rewards: RewardCatalogItem[], selectedCategory: st
         type="button"
         data-reward-category="all"
         class="rounded-lg px-4 py-2 font-medium transition ${allButtonClass}"
-      >Tümü</button>
+      >Tüm ödüller</button>
       ${categories
         .map((category) => {
           const className =
@@ -193,7 +193,7 @@ function renderRewardCard(state: RewardsCatalogState, reward: RewardCatalogItem)
     : isRedeeming
       ? 'bg-blue-400 text-white cursor-wait'
       : 'bg-blue-600 text-white hover:bg-blue-700';
-  const buttonLabel = isRedeeming ? 'İşleniyor...' : 'Puan Kullan';
+  const buttonLabel = isRedeeming ? 'İşleniyor...' : 'Puan kullan';
 
   return `
     <div class="overflow-hidden rounded-lg bg-white shadow-md transition hover:shadow-lg">
@@ -203,7 +203,7 @@ function renderRewardCard(state: RewardsCatalogState, reward: RewardCatalogItem)
         <p class="mb-3 text-sm text-gray-600">${reward.description ?? ''}</p>
         <div class="mb-4 flex items-center justify-between gap-3">
           <span class="text-2xl font-bold text-blue-600">${reward.points_cost.toLocaleString('tr-TR')}</span>
-          <span class="rounded bg-gray-100 px-2 py-1 text-xs">${reward.category ?? 'genel'}</span>
+          <span class="rounded bg-gray-100 px-2 py-1 text-xs">${reward.category ?? 'genel kategori'}</span>
         </div>
         ${isOutOfStock ? '<div class="mb-2 text-sm font-medium text-red-600">Tükenmiş</div>' : ''}
         ${stock !== null && stock > 0 ? `<p class="mb-3 text-xs text-gray-500">${stock} adet kaldı</p>` : ''}

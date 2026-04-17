@@ -94,7 +94,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
 
   const form = `
     <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-      <h2 class="mb-4 text-2xl font-bold">Yeni Koleksiyon Oluştur</h2>
+      <h2 class="mb-4 text-2xl font-bold">Yeni koleksiyon oluştur</h2>
       <form data-collections-create-form class="space-y-4">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
@@ -103,7 +103,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
               type="text"
               name="name"
               value="${escapeHtml(state.form.name)}"
-              placeholder="Örn: Favori Restoranlar"
+              placeholder="Örn: Favori restoranlar"
               class="w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
             />
           </div>
@@ -133,7 +133,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
             <input type="checkbox" name="is_public" ${state.form.is_public ? 'checked' : ''} class="h-4 w-4" />
             <span class="text-sm font-medium">Herkese açık yap</span>
           </label>
-          <p class="mt-1 text-xs text-gray-500">Açık koleksiyonlar diğer kullanıcılar tarafından görülüp takip edilebilir</p>
+          <p class="mt-1 text-xs text-gray-500">Açık koleksiyonlar diğer kullanıcılar tarafından görülebilir ve takip edilebilir.</p>
         </div>
         ${error}
         <button
@@ -141,7 +141,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
           ${state.isCreating ? 'disabled' : ''}
           class="w-full rounded bg-blue-500 py-2 font-medium text-white hover:bg-blue-600 disabled:opacity-50"
         >
-          ${state.isCreating ? 'Oluşturuluyor...' : 'Koleksiyon Oluştur'}
+          ${state.isCreating ? 'Oluşturuluyor...' : 'Koleksiyonu oluştur'}
         </button>
       </form>
     </div>
@@ -150,7 +150,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
   const list = state.isLoading
     ? '<div class="py-12 text-center">Koleksiyonlar yükleniyor...</div>'
     : state.collections.length === 0
-      ? '<div class="py-12 text-center text-gray-500">Henüz bir koleksiyon oluşturmadınız</div>'
+      ? '<div class="py-12 text-center text-gray-500">Henüz koleksiyon oluşturmadınız.</div>'
       : `
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           ${state.collections
@@ -162,7 +162,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
                       <span class="text-3xl">${escapeHtml(collection.icon || '📍')}</span>
                       <div>
                         <h3 class="text-lg font-bold">${escapeHtml(collection.name)}</h3>
-                        ${collection.is_public ? '<span class="rounded bg-green-100 px-2 py-1 text-xs text-green-800">🌍 Açık</span>' : ''}
+                        ${collection.is_public ? '<span class="rounded bg-green-100 px-2 py-1 text-xs text-green-800">🌍 Herkese açık</span>' : ''}
                       </div>
                     </div>
                   </div>
@@ -183,7 +183,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
                       href="/koleksiyonlar/${collection.id}"
                       class="flex-1 rounded bg-blue-100 px-3 py-2 text-center text-sm font-medium text-blue-700 transition hover:bg-blue-200"
                     >
-                      Aç
+                      Görüntüle
                     </a>
                     <button
                       type="button"

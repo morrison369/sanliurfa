@@ -35,7 +35,7 @@ export function renderLeaderboardUsers(users: LeaderboardUser[]): string {
           </div>
           <div class="text-right">
             <p class="text-lg font-bold text-gray-900 dark:text-white">${user.points}</p>
-            <p class="text-xs text-gray-600 dark:text-gray-400">Level ${user.level}</p>
+            <p class="text-xs text-gray-600 dark:text-gray-400">Seviye ${user.level}</p>
           </div>
         </a>
       `;

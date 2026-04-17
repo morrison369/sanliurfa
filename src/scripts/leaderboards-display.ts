@@ -28,11 +28,11 @@ async function loadLeaderboard(root: LeaderboardsRoot, sortBy: LeaderboardSort) 
 
   try {
     const response = await fetch(`/api/leaderboards/users?sortBy=${sortBy}&limit=50`);
-    if (!response.ok) throw new Error('Failed to load');
+    if (!response.ok) throw new Error('Liderlik tablosu yüklenemedi');
     const payload = (await response.json()) as { data?: LeaderboardUser[] };
     setElementHtml(content, renderLeaderboardUsers(payload.data || []));
   } catch (error) {
-    console.error('Error loading leaderboard', error);
+    console.error('Liderlik tablosu yüklenemedi:', error);
     setElementHtml(
       content,
       '<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">Liderlik tablosu yüklenemedi.</div>',
