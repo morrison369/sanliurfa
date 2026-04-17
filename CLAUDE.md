@@ -1,131 +1,131 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Bu dosya, bu depoda çalışırken Claude Code için günlük uygulama rehberi sağlar.
 
-## Project Overview
+## Proje Özeti
 
-**Şanlıurfa.com** is a production-grade city guide web application built with Astro 6.1.7 and TypeScript. React packages remain installed as an allowed Astro integration compatibility layer, but active UI runtime is Astro + plain TypeScript. Full-stack with bcrypt authentication, Redis caching/sessions/rate-limiting, PostgreSQL, comprehensive observability, API documentation, and E2E testing. Enterprise-ready infrastructure with strict TypeScript, SQL injection prevention, and performance monitoring.
+**Şanlıurfa.com**, Astro 6.1.7 ve TypeScript ile kurulmuş üretim seviyesi bir şehir rehberi web uygulamasıdır. React paketleri, izin verilen bir Astro entegrasyonu uyumluluk katmanı olarak kurulu kalır; ancak aktif UI runtime Astro + plain TypeScript'tir. bcrypt tabanlı kimlik doğrulama, Redis cache/session/rate-limit, PostgreSQL, kapsamlı gözlemlenebilirlik, API dokümantasyonu ve E2E test içeren full-stack bir yapıya sahiptir. Altyapı; strict TypeScript, SQL injection önleme ve performans izleme ile kurumsal düzeyde hazırlanmıştır.
 
-## Source of Truth & Working Model
+## Source Of Truth ve Çalışma Modeli
 
-This file is a high-signal working guide, not the only source of truth. For operational decisions, open these files first:
+Bu dosya yüksek sinyalli bir çalışma rehberidir; tek source of truth değildir. Operasyonel kararlar için önce şu dosyaları aç:
 
-- `docs/ops/README.md` — entry point for ops documents
-- `docs/ops/SOURCE_OF_TRUTH_MAP.md` — which file owns which decision
-- `docs/architecture/ASTRO_RUNTIME_STATE.md` — active Astro runtime status after migration closure
-- `docs/RELEASE_GATES.md` — release and merge gate behavior
-- `docs/ops/BRANCH_PROTECTION.md` — required checks / branch protection parity
-- `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` — artifact freshness semantics
-- `docs/ops/ARTIFACT_RETENTION_POLICY.md` — retention and cleanup rules
-- `docs/ops/INTEGRATION_READINESS.md` — admin integration readiness behavior
-- `docs/ops/INCIDENT_RUNBOOK.md` — incident response order
-- `docs/ops/LEGACY_PHASE_SURFACE.md` and `docs/SCRIPT_SURFACE_POLICY.md` — legacy phase and script surface policy
-- `src/pages/api/openapi.json.ts` — current API contract source
-- `src/types/generated-admin-api.ts` — generated admin API types from OpenAPI
-- `src/types/admin-api.ts` — UI-facing admin type layer
+- `docs/ops/README.md` — ops dokümanları için giriş noktası
+- `docs/ops/SOURCE_OF_TRUTH_MAP.md` — hangi kararın hangi dosyaya ait olduğunu gösterir
+- `docs/architecture/ASTRO_RUNTIME_STATE.md` — migration kapanışı sonrası aktif Astro runtime durumu
+- `docs/RELEASE_GATES.md` — release ve merge gate davranışı
+- `docs/ops/BRANCH_PROTECTION.md` — zorunlu kontroller / branch protection parity
+- `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` — artefact freshness semantiği
+- `docs/ops/ARTIFACT_RETENTION_POLICY.md` — retention ve cleanup kuralları
+- `docs/ops/INTEGRATION_READINESS.md` — admin integration readiness davranışı
+- `docs/ops/INCIDENT_RUNBOOK.md` — incident müdahale sırası
+- `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` — legacy phase ve script yüzeyi politikası
+- `src/pages/api/openapi.json.ts` — güncel API kontratı kaynağı
+- `src/types/generated-admin-api.ts` — OpenAPI'den üretilmiş admin API tipleri
+- `src/types/admin-api.ts` — UI-facing admin tip katmanı
 
-For long-form architecture notes, prefer `docs/architecture/README.md` and keep this file focused on daily execution rules.
+Uzun mimari notlar için `docs/architecture/README.md` dosyasını tercih et; bu dosyayı günlük yürütme kurallarına odaklı tut.
 
-Framework direction:
+Framework yönü:
 
-- Astro is the primary framework.
-- Default to Astro-first for new pages and new UI surfaces.
-- Do not assume the repo is already Astro-only; check `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md` before proposing React removal or large migration work.
-- Migration backlog is closed. Only refresh `docs/reports/astro-hydration-inventory.md` with `npm run astro:migration:inventory` if a new React UI surface or hydration owner is intentionally introduced.
-- If migration is reopened and `medium=0`, rank the remaining `high` bucket with `npm run astro:migration:high-risk` before choosing the next panel.
-- If hydration is already `0`, do not assume React should be removed. `@astrojs/react` remains an allowed production dependency unless the user explicitly asks for package removal.
-- Use `npm run astro:react:audit` and `npm run astro:react:classify` for visibility only, not as an automatic uninstall trigger.
+- Astro birincil framework'tür.
+- Yeni sayfalar ve yeni UI yüzeylerinde varsayılan yaklaşım Astro-first olmalıdır.
+- Deponun zaten Astro-only olduğunu varsayma; React kaldırma veya büyük migration işi önermeden önce `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md` dosyasını kontrol et.
+- Migration backlog kapalıdır. Yeni bir React UI yüzeyi veya hydration owner bilinçli olarak geri eklenirse ancak o zaman `docs/reports/astro-hydration-inventory.md` dosyasını `npm run astro:migration:inventory` ile yenile.
+- Migration yeniden açılır ve `medium=0` ise, sonraki paneli seçmeden önce kalan `high` bucket'ı `npm run astro:migration:high-risk` ile sırala.
+- Hydration zaten `0` ise React'in kaldırılması gerektiğini varsayma. Kullanıcı açıkça paket kaldırma istemedikçe `@astrojs/react` izin verilen production bağımlılığı olarak kalır.
+- `npm run astro:react:audit` ve `npm run astro:react:classify` komutlarını yalnızca görünürlük için kullan; otomatik uninstall tetikleyicisi yapma.
 
-## Quick Start Commands
+## Hızlı Başlangıç Komutları
 
-### Daily Development
-- `npm run dev` — Start dev server
-- `npm run dev:1111` — Preferred local strict-port dev server
-- `npm run dev:wsl` — Dev server for WSL / external host access
+### Günlük Geliştirme
+- `npm run dev` — Geliştirme sunucusunu başlat
+- `npm run dev:1111` — Tercih edilen yerel strict-port geliştirme sunucusu
+- `npm run dev:wsl` — WSL / dış host erişimi için geliştirme sunucusu
 - `npm run build` — Production build
-- `npm run lint` — TypeScript + Astro validation
-- `npm run format` — Prettier (including Astro)
+- `npm run lint` — TypeScript + Astro doğrulaması
+- `npm run format` — Prettier (Astro dahil)
 
-### Primary Quality Gates
-- `npm run typecheck:app` — Canonical app typecheck
-- `npm run test:critical:blocking` — Blocking contract tests
-- `npm run test:critical:advisory` — Advisory contract tests
-- `npm run test:critical` — Full critical gate
-- `npm run test:e2e:smoke` — Canonical smoke suite
+### Birincil Kalite Gate'leri
+- `npm run typecheck:app` — Kanonik uygulama typecheck'i
+- `npm run test:critical:blocking` — Blocking kontrat testleri
+- `npm run test:critical:advisory` — Advisory kontrat testleri
+- `npm run test:critical` — Tam kritik gate
+- `npm run test:e2e:smoke` — Kanonik smoke suite
 
-### Admin API Contract & Types
-- `npm run types:admin:generate` — Regenerate admin API types from OpenAPI
-- `npm run types:admin:drift:check` — Fail if generated types are stale
-- `npm run test:critical:advisory` — Includes admin contract and OpenAPI contract checks
+### Admin API Kontratı ve Tipler
+- `npm run types:admin:generate` — Admin API tiplerini OpenAPI'den yeniden üret
+- `npm run types:admin:drift:check` — Üretilmiş tipler bayatsa fail ver
+- `npm run test:critical:advisory` — Admin kontratı ve OpenAPI kontrat kontrollerini içerir
 
-### Release, Governance & Ops
-- `npm run release:gate` — Release gate summary and decision
-- `npm run branch:protection:drift:check` — Required checks / docs parity
-- `npm run ops:retention:apply` — Local artifact and audit retention cleanup
-- `npm run astro:migration:inventory` — Current Astro hydration inventory and risk split
-- `npm run astro:migration:high-risk` — Ranked feasibility report for remaining high-risk hydration surfaces
-- `npm run astro:react:audit` — Package-level React surface visibility after hydration reaches zero
-- `npm run astro:react:classify` — File-level React maintenance classification after hydration reaches zero
-- `npm run astro:react:guard` — Guard that fails if runtime-linked React UI surface returns
-- `npm run phase:scripts:report` — Phase compatibility status
-- `npm run phase:compat:cleanup` — Cleanup compatibility manifest state
+### Release, Governance ve Ops
+- `npm run release:gate` — Release gate özeti ve kararı
+- `npm run branch:protection:drift:check` — Zorunlu kontroller / doküman parity doğrulaması
+- `npm run ops:retention:apply` — Yerel artefact ve audit retention cleanup'ı
+- `npm run astro:migration:inventory` — Güncel Astro hydration envanteri ve risk dağılımı
+- `npm run astro:migration:high-risk` — Kalan yüksek riskli hydration yüzeyleri için sıralı feasibility raporu
+- `npm run astro:react:audit` — Hydration sıfıra indikten sonra paket seviyesinde React yüzeyi görünürlüğü
+- `npm run astro:react:classify` — Hydration sıfıra indikten sonra dosya seviyesinde React bakım sınıflandırması
+- `npm run astro:react:guard` — Runtime-linked React UI yüzeyi geri dönerse fail veren guard
+- `npm run phase:scripts:report` — Faz uyumluluk durumu
+- `npm run phase:compat:cleanup` — Uyumluluk manifest cleanup durumu
 
-### Database & Services
-- `npm run db:start` — Start PostgreSQL Docker container
-- `npm run db:stop` — Stop database
-- `npm run db:reset` — Reset database (drops volumes)
-- `npm run db:psql` — Open psql shell to database
-- `npm run db:logs` — View database logs
+### Veritabanı ve Servisler
+- `npm run db:start` — PostgreSQL Docker container'ını başlat
+- `npm run db:stop` — Veritabanını durdur
+- `npm run db:reset` — Veritabanını sıfırla (volume'ları düşürür)
+- `npm run db:psql` — Veritabanına psql shell aç
+- `npm run db:logs` — Veritabanı loglarını görüntüle
 
-### Extended Test Commands
-- `npm run test:unit` — Full Vitest unit suite
-- `npm run test:unit:watch` — Vitest watch mode
-- `npm run test:e2e` — Full Playwright suite
-- `npm run test:e2e:ui` — Playwright UI mode
-- `npm run test` — Legacy broad suite, not the primary merge signal
+### Genişletilmiş Test Komutları
+- `npm run test:unit` — Tam Vitest unit suite
+- `npm run test:unit:watch` — Vitest watch modu
+- `npm run test:e2e` — Tam Playwright suite
+- `npm run test:e2e:ui` — Playwright UI modu
+- `npm run test` — Legacy geniş suite; birincil merge sinyali değildir
 
-## Architecture
+## Mimari
 
-### Directory Structure
+### Dizin Yapısı
 
 ```
 src/
-├── components/        # Astro UI components
-├── pages/            # File-based routing (Astro pages + API routes)
-│   ├── api/          # REST API endpoints (health, auth, places, reviews, metrics, performance, docs, admin, loyalty, social, realtime, webhooks)
-│   ├── admin/        # Admin management pages (users, moderation, loyalty, analytics)
-│   ├── kullanıcı/    # User profiles and settings
-│   ├── sosyal/       # Social features (feed, hashtag explorer)
-│   ├── canli-analitik/ # Real-time analytics dashboard
-│   └── [more pages]
-├── layouts/          # Page layout templates
-├── lib/              # Core utilities (TypeScript strict)
-│   ├── postgres.ts   # PostgreSQL pool, parameterized queries, table allowlist security
-│   ├── auth.ts       # Bcrypt hashing, Redis sessions, token management
-│   ├── cache.ts      # Redis client, namespaced key prefixing (sanliurfa:), rate limiting
-│   ├── validation.ts # Schema-based input validation with XSS sanitization
-│   ├── logging.ts    # Structured logging with request ID tracking
-│   ├── metrics.ts    # Request/query metrics, slow operation detection, performance stats
-│   ├── api.ts        # Response formatters, error codes, validation helpers
-│   ├── env.ts        # Environment variable validation
-│   ├── realtime-sse.ts # Server-Sent Events manager for real-time features
-│   ├── loyalty-points.ts # Loyalty points logic
-│   ├── badges.ts     # Badge management and awarding
-│   ├── achievements.ts # Achievement tracking and unlocking
-│   ├── gamification.ts # Gamification event hooks
-│   ├── social-features.ts # Hashtags, mentions, activity tracking
-│   ├── business-analytics.ts # KPI and performance metrics
-│   ├── subscriptions.ts # Premium tier management
-│   ├── feature-gating.ts # Feature availability by tier
-│   └── [more utilities]
-├── middleware.ts     # Request auth, CORS, rate limiting, security headers
-├── types/            # TypeScript type definitions
-├── content/          # Markdown/MDX content files
+├── components/        # Astro UI bileşenleri
+├── pages/            # Dosya tabanlı routing (Astro sayfaları + API route'ları)
+│   ├── api/          # REST API endpoint'leri (health, auth, places, reviews, metrics, performance, docs, admin, loyalty, social, realtime, webhooks)
+│   ├── admin/        # Admin yönetim sayfaları (users, moderation, loyalty, analytics)
+│   ├── kullanıcı/    # Kullanıcı profilleri ve ayarlar
+│   ├── sosyal/       # Sosyal özellikler (feed, hashtag explorer)
+│   ├── canli-analitik/ # Gerçek zamanlı analitik paneli
+│   └── [diğer sayfalar]
+├── layouts/          # Sayfa şablonları
+├── lib/              # Çekirdek yardımcılar (TypeScript strict)
+│   ├── postgres.ts   # PostgreSQL pool, parametrik sorgular, table allowlist güvenliği
+│   ├── auth.ts       # bcrypt hashleme, Redis session'lar, token yönetimi
+│   ├── cache.ts      # Redis istemcisi, namespace prefix'leri (sanliurfa:), rate limit
+│   ├── validation.ts # XSS sanitization ile schema tabanlı giriş doğrulama
+│   ├── logging.ts    # Request ID takibi ile structured logging
+│   ├── metrics.ts    # Request/query metrikleri, slow operation tespiti, performans istatistikleri
+│   ├── api.ts        # Response formatlayıcılar, hata kodları, doğrulama yardımcıları
+│   ├── env.ts        # Ortam değişkeni doğrulama
+│   ├── realtime-sse.ts # Gerçek zamanlı özellikler için Server-Sent Events yöneticisi
+│   ├── loyalty-points.ts # Sadakat puanı mantığı
+│   ├── badges.ts     # Rozet yönetimi ve atama
+│   ├── achievements.ts # Başarım takibi ve kilit açma
+│   ├── gamification.ts # Oyunlaştırma event hook'ları
+│   ├── social-features.ts # Hashtag, mention ve aktivite takibi
+│   ├── business-analytics.ts # KPI ve performans metrikleri
+│   ├── subscriptions.ts # Premium katman yönetimi
+│   ├── feature-gating.ts # Paket bazlı özellik erişimi
+│   └── [diğer yardımcılar]
+├── middleware.ts     # Request auth, CORS, rate limit, security header'ları
+├── types/            # TypeScript tip tanımları
+├── content/          # Markdown/MDX içerik dosyaları
 ├── styles/           # Tailwind CSS
-└── data/             # Static data
+└── data/             # Statik veri
 ```
 
-### Technology Stack
+### Teknoloji Yığını
 
 - **Framework**: Astro 6.1.7 (SSR, file-based routing)
 - **UI**: Astro components + plain TypeScript browser helpers
@@ -139,7 +139,7 @@ src/
 - **Testing**: Vitest (unit) + Playwright (E2E)
 - **Code Quality**: TypeScript strict mode, Astro Check, Prettier, pre-commit linting
 
-### Key Architectural Decisions
+### Temel Mimari Kararlar
 
 1. **Database Security**:
    - Parameterized queries via `pool.query($1, [$param])` syntax prevent SQL injection
@@ -199,7 +199,7 @@ src/
    - plain TypeScript browser helpers for interaction, polling, mutation, and DOM updates
    - React integration is retained only as a compatibility option, not as the default UI owner
 
-### Astro-Only Direction
+### Astro-Only Yönü
 
 - Target direction is Astro-first, not immediate React removal.
 - `@astrojs/react` is an accepted production dependency and should remain unless there is an explicit package-removal decision.
@@ -212,7 +212,7 @@ src/
   - do not propose big-bang React removal
   - after hydration reaches zero, use audit reports for visibility; do not turn them into an automatic removal task
 
-### Database
+### Veritabanı
 
 PostgreSQL with connection pool. Key tables:
 - `users` — Accounts with roles (user/admin/moderator), bcrypt password hashes
@@ -222,7 +222,7 @@ PostgreSQL with connection pool. Key tables:
 
 All queries use parameterized statements (`$1`, `$2`, etc.). Direct access via `npm run db:psql`.
 
-### Authentication & Authorization
+### Kimlik Doğrulama ve Yetkilendirme
 
 **Flow**:
 1. POST `/api/auth/register` or `/api/auth/login` with email + password
@@ -244,7 +244,7 @@ All queries use parameterized statements (`$1`, `$2`, etc.). Direct access via `
 - `/api/admin/*` requires `isAdmin` role (returns 403 FORBIDDEN if not)
 - `/api/health/detailed` and `/api/performance` (admin-only)
 
-### API Endpoints
+### API Endpoint'leri
 
 **Health & Observability**:
 - `GET /api/health` — Database/Redis status, response times
@@ -330,7 +330,7 @@ All queries use parameterized statements (`$1`, `$2`, etc.). Direct access via `
 - `GET /api/openapi.json` — OpenAPI 3.1 specification
 - `GET /api/docs` — Swagger UI viewer
 
-### Security
+### Güvenlik
 
 - **SQL Injection**: Table allowlist in `postgres.ts` (ALLOWED_TABLES set), parameterized queries
 - **XSS**: Input sanitization via `sanitizeInput()` in validation
@@ -340,7 +340,7 @@ All queries use parameterized statements (`$1`, `$2`, etc.). Direct access via `
 - **Session Hijacking**: httpOnly + secure cookies, strict sameSite policy
 - **Password**: Bcrypt (12 rounds), never logged, legacy SHA-256 migration built-in
 
-### Real-time Features
+### Gerçek Zamanlı Özellikler
 
 The application supports real-time updates via **Server-Sent Events (SSE)** for low-latency features without WebSocket overhead.
 
@@ -368,7 +368,7 @@ The application supports real-time updates via **Server-Sent Events (SSE)** for 
 - `onFeedUpdate(callback)` — Register callback to receive feed updates
 - Auto-disconnects on component unmount via `disconnect()`
 
-### Loyalty & Rewards System
+### Sadakat ve Ödül Sistemi
 
 Complete gamification system with points, badges, achievements, tiers, and redeemable rewards.
 
@@ -404,7 +404,7 @@ Complete gamification system with points, badges, achievements, tiers, and redee
 - `sanliurfa:achievements:stats:{userId}` — Achievement stats (TTL: 300s)
 - `sanliurfa:admin:rewards:catalog` — Admin rewards list (TTL: 120s)
 
-### Social Features
+### Sosyal Özellikler
 
 Social networking elements: hashtags, mentions, activity feed, trending content.
 
@@ -446,7 +446,7 @@ Social networking elements: hashtags, mentions, activity feed, trending content.
 - `sanliurfa:hashtag:slug:{slug}` — Hashtag detail (TTL: 10 min)
 - `sanliurfa:mentions:{userId}:{unreadOnly}` — User mentions (TTL: 2 min)
 
-### Premium Subscriptions & Feature Gating
+### Premium Abonelikler ve Özellik Kısıtlama
 
 Tier-based access control for premium features.
 
@@ -470,9 +470,9 @@ Tier-based access control for premium features.
 - `user_subscriptions` — Active subscriptions (user_id, tier_name, status, stripe_subscription_id, current_period_start, current_period_end)
 - `subscription_usage` — Monthly feature quotas (user_id, feature_key, usage_count, period_start, period_end)
 
-## Common Development Tasks
+## Yaygın Geliştirme Görevleri
 
-### Adding a New API Endpoint
+### Yeni Bir API Endpoint Ekleme
 
 1. Create file at `src/pages/api/resource/action.ts` (follows REST naming)
 2. Import types, validation, logger, metrics, database functions
@@ -524,7 +524,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 ```
 
-### Caching Data
+### Veri Cacheleme
 
 ```typescript
 import { getCache, setCache, deleteCache, deleteCachePattern } from '../../../lib/cache';
@@ -544,7 +544,7 @@ await deleteCache('sanliurfa:places:123');
 await deleteCachePattern('sanliurfa:places:list:*');
 ```
 
-### Adding Request Validation
+### Request Doğrulaması Ekleme
 
 1. Define schema in `src/lib/validation.ts` under `commonSchemas`
 2. Use in API endpoint: `validateWithSchema(body, commonSchemas.mySchema)`
@@ -568,7 +568,7 @@ const mySchema = {
 } as ValidationSchema;
 ```
 
-### Monitoring Performance
+### Performans İzleme
 
 Check slow queries and request metrics:
 ```bash
@@ -589,7 +589,7 @@ curl -H "Cookie: auth-token=YOUR_TOKEN" http://localhost:3000/api/metrics
 - Slow queries — database operations > 100ms
 - Database pool — connection utilization percentage
 
-### Debugging Slow Operations
+### Yavaş Operasyonları Hata Ayıklama
 
 Slow operations are logged and trackable:
 ```typescript
@@ -599,7 +599,7 @@ const slowQueries = metricsCollector.getSlowQueries(10);  // Last 10 slow querie
 const slowOps = metricsCollector.getSlowOperations(20);   // Last 20 slow operations
 ```
 
-### Real-time SSE Endpoints
+### Gerçek Zamanlı SSE Endpoint'leri
 
 SSE endpoints follow a consistent pattern for low-latency real-time updates:
 
@@ -664,7 +664,7 @@ const RealtimeManager = {
 - Fire-and-forget background queries for non-critical updates
 - Exponential backoff reconnection (max 60s)
 
-### Gamification & Event Hooks
+### Oyunlaştırma ve Event Hook'ları
 
 Achievement unlocking is triggered by user actions via event hooks:
 
@@ -695,7 +695,7 @@ export async function checkCommonAchievements(userId: string) {
 - `onPhotoUploaded(userId)` — Check upload-related achievements
 - `onDailyLogin(userId)` — Check streak/login-related achievements
 
-### Testing
+### Testler
 
 ```bash
 # Unit tests
@@ -712,9 +712,9 @@ npm run test
 
 Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 
-## Important Files
+## Önemli Dosyalar
 
-### Core Infrastructure
+### Çekirdek Altyapı
 | File | Purpose |
 |------|---------|
 | `DEPLOYMENT.md` | Complete CentOS Web Panel production deployment guide (PM2, Nginx, SSL, backups) |
@@ -724,7 +724,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `docker-compose.yml` | Development stack with PostgreSQL, Redis, Node.js (local development only) |
 | `ecosystem.config.js` | PM2 configuration for production (created during deployment) |
 
-### Core Libraries
+### Çekirdek Kütüphaneler
 | File | Purpose |
 |------|---------|
 | `src/middleware.ts` | Request auth, CORS, rate limiting, security headers |
@@ -737,7 +737,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `src/lib/api.ts` | Response/error formatters, HTTP constants, validation helpers |
 | `src/lib/env.ts` | Environment variable validation |
 
-### Health & Observability
+### Sağlık ve Gözlemlenebilirlik
 | File | Purpose |
 |------|---------|
 | `src/pages/api/health.ts` | Health check endpoint (basic status) |
@@ -747,7 +747,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `src/pages/api/openapi.json.ts` | OpenAPI 3.1 specification |
 | `src/pages/api/docs.ts` | Swagger UI endpoint |
 
-### Ops Governance & Source Of Truth
+### Ops Governance ve Source Of Truth
 | File | Purpose |
 |------|---------|
 | `docs/ops/README.md` | Ops document entry point |
@@ -775,7 +775,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `src/lib/astro-migration-report.ts` | Astro hydration risk inventory source |
 | `scripts/astro-hydration-inventory.ts` | Astro hydration inventory report generator |
 
-### Real-time & Analytics
+### Gerçek Zamanlı ve Analitik
 | File | Purpose |
 |------|---------|
 | `src/lib/realtime-sse.ts` | Server-Sent Events manager, reconnection logic, event listeners |
@@ -785,7 +785,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `src/components/LiveAnalyticsDashboard.tsx` | Real-time metrics display with color-coded health |
 | `src/pages/canli-analitik/index.astro` | Admin analytics dashboard page |
 
-### Loyalty & Rewards System
+### Sadakat ve Ödül Sistemi
 | File | Purpose |
 |------|---------|
 | `src/lib/loyalty-points.ts` | Points transactions, balance tracking |
@@ -803,7 +803,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `src/components/AdminLoyaltyPanel.tsx` | Admin 3-tab panel: rewards catalog, manual awards, statistics |
 | `src/pages/admin/loyalty/index.astro` | Admin loyalty management page |
 
-### Social Features
+### Sosyal Özellikler
 | File | Purpose |
 |------|---------|
 | `src/lib/social-features.ts` | Hashtag trending logic, mention detection |
@@ -816,7 +816,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `src/components/UserPublicProfile.tsx` | Public user profile display |
 | `src/pages/sosyal/index.astro` | Social exploration page with feed and hashtag explorer |
 
-### Subscriptions & User Management
+### Abonelikler ve Kullanıcı Yönetimi
 | File | Purpose |
 |------|---------|
 | `src/lib/subscriptions.ts` | Stripe integration, subscription tier management |
@@ -837,12 +837,12 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `src/pages/abonelik/index.astro` | Subscription management page |
 | `src/components/UserSettings.tsx` | User settings UI |
 
-### Testing
+### Testler
 | File | Purpose |
 |------|---------|
 | `e2e/` | Playwright end-to-end tests |
 
-## Environment Variables
+## Ortam Değişkenleri
 
 **Critical** (must be set for production):
 - `DATABASE_URL` — PostgreSQL connection string (required)
@@ -859,14 +859,14 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 - OAuth keys (Google, Facebook)
 - Email service API keys (Resend)
 
-## Deployment
+## Dağıtım
 
-### Development Stack (Docker)
+### Geliştirme Stack'i (Docker)
 - **Docker Compose**: `docker-compose.yml` with PostgreSQL, Redis, Node.js services
 - **Usage**: `docker-compose up` for full local stack with all dependencies
 - **Purpose**: Consistent development environment, mirrors production services
 
-### Production Deployment (CentOS Web Panel)
+### Production Dağıtımı (CentOS Web Panel)
 - **Platform**: Shared hosting on CentOS Web Panel (not Docker)
 - **Service Manager**: PM2 (recommended) or Systemd
 - **Process**:
@@ -886,9 +886,9 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 - **Database**: PostgreSQL provided, create user and database, run migrations on first startup
 - **Monitoring**: Use `/api/health` endpoint, PM2 logs, crontab health check script
 
-## Notes for Future Development
+## Sonraki Geliştirme İçin Notlar
 
-### Critical Rules
+### Kritik Kurallar
 1. **TypeScript Strict Mode**: Never relax `strict: true` in tsconfig.json. All errors must be fixed or marked with `// @ts-expect-error` with explanation.
 2. **Parameterized Queries**: Always use `$1`, `$2`, etc. syntax in SQL. Never interpolate user input.
 3. **Table Name Allowlist**: If adding new tables, update `ALLOWED_TABLES` set in `postgres.ts`.
@@ -906,14 +906,14 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 15. **Admin UI Ops Pages**: For `/admin`, `/admin/runtime-monitor`, and `/admin/access-coverage`, change helper/view-model modules first (`src/lib/admin-format.ts`, `src/lib/admin-index-data.ts`, `src/lib/admin-index*.ts`, `src/lib/admin-ops-pages.ts`, `src/lib/runtime-monitor.ts`, `src/lib/admin-access-coverage-page.ts`, `src/lib/admin-dom.ts`, `src/lib/admin-page-bootstrap.ts`) and keep the browser smoke tests green. For `/admin`, prefer `src/lib/admin-index-data.ts` for SSR data collection and `src/lib/admin-index-view.ts` for page render decisions before editing `index.astro`.
 16. **Astro Migration Planning**: Migration backlog is currently closed. If React UI or hydration is intentionally reintroduced, do not pick the next React-to-Astro target from intuition alone. Refresh `npm run astro:migration:inventory`, read `docs/reports/astro-hydration-inventory.md`, and take the low-risk bucket first unless there is a documented reason to take a medium/high-risk surface.
 
-### Performance Optimization
+### Performans Optimizasyonu
 - Cache aggressively (5-10 min TTL for reads, invalidate on mutations)
 - Monitor database pool: if utilization > 80%, investigate slow queries
 - Use `/api/performance` to identify bottlenecks before they become incidents
 - Slow queries (> 1000ms) auto-logged with warnings, investigate immediately
 - Slow requests (> 500ms) tracked, review aggregates to identify trending issues
 
-### Adding Features
+### Özellik Ekleme
 
 **New Database Tables**:
 - Update `ALLOWED_TABLES` in `postgres.ts`
@@ -965,7 +965,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 - Add to `recordRequest()` calls or custom `recordSlowOperation()` calls
 - Aggregated in `/api/metrics` endpoint (viewable by admins)
 
-### Testing
+### Testler
 - Minimum pre-commit / pre-push gate:
   - `npm run typecheck:app`
   - `npm run test:critical`
@@ -975,7 +975,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 - Use `npm run release:gate` when the change affects release readiness, branch protection parity, summaries, or ops decisions
 - `npm run test` is still useful for broad regression coverage, but it is not the primary blocker signal
 
-### Monitoring
+### İzleme
 - Check `/api/health` on every deployment
 - Monitor `/api/metrics` for error rate increases or cache miss spikes
 - Review slow queries in `/api/performance` weekly for optimization opportunities

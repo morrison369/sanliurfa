@@ -44,40 +44,40 @@ export function summarizeReactSurfaceAudit(input: {
 
 export function buildReactSurfaceAuditMarkdown(report: ReactSurfaceAuditReport): string {
   const lines = [
-    '# React Removal Audit',
-    `- Generated at: ${new Date().toISOString()}`,
-    `- TSX files: ${report.tsxCount}`,
-    `- React hook/lib files: ${report.hookCount}`,
-    `- Runtime React usages: ${report.runtimeUsageCount}`,
-    `- Can remove @astrojs/react integration: ${report.canRemoveAstroReactIntegration ? 'yes' : 'no'}`,
-    `- Can remove react/react-dom packages now: ${report.canRemoveReactPackages ? 'yes' : 'no'}`,
+    '# React Kaldırma Audit Raporu',
+    `- Uretilme zamani: ${new Date().toISOString()}`,
+    `- TSX dosyalari: ${report.tsxCount}`,
+    `- React hook/lib dosyalari: ${report.hookCount}`,
+    `- Runtime React kullanimlari: ${report.runtimeUsageCount}`,
+    `- @astrojs/react entegrasyonu kaldirilabilir mi: ${report.canRemoveAstroReactIntegration ? 'evet' : 'hayir'}`,
+    `- react/react-dom paketleri simdi kaldirilabilir mi: ${report.canRemoveReactPackages ? 'evet' : 'hayir'}`,
     '',
-    '## Blockers',
+    '## Blokorler',
   ];
 
   if (report.blockers.length === 0) {
-    lines.push('- none');
+    lines.push('- yok');
   } else {
     for (const blocker of report.blockers) lines.push(`- ${blocker}`);
   }
 
-  lines.push('', '## Runtime Usages');
+  lines.push('', '## Runtime Kullanimlari');
   if (report.runtimeUsages.length === 0) {
-    lines.push('- none');
+    lines.push('- yok');
   } else {
     for (const usage of report.runtimeUsages) lines.push(`- ${usage}`);
   }
 
-  lines.push('', '## Remaining TSX Files');
+  lines.push('', '## Kalan TSX Dosyalari');
   if (report.deadTsx.length === 0) {
-    lines.push('- none');
+    lines.push('- yok');
   } else {
     for (const file of report.deadTsx) lines.push(`- ${file}`);
   }
 
-  lines.push('', '## Remaining Hook Files');
+  lines.push('', '## Kalan Hook Dosyalari');
   if (report.hookFiles.length === 0) {
-    lines.push('- none');
+    lines.push('- yok');
   } else {
     for (const file of report.hookFiles) lines.push(`- ${file}`);
   }

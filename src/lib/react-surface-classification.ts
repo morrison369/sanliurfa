@@ -52,36 +52,36 @@ export function buildReactSurfaceClassificationMarkdown(
   report: ReactSurfaceClassificationReport,
 ): string {
   const lines = [
-    '# React Surface Classification',
-    `- Generated at: ${new Date().toISOString()}`,
-    `- TSX files: ${report.tsxCount}`,
-    `- Server-only candidates: ${report.serverOnlyCount}`,
-    `- Dead TSX files: ${report.deadCount}`,
-    `- Migrate-required TSX files: ${report.migrateCount}`,
-    `- Keep blockers: ${report.keepCount}`,
-    `- Runtime roots: ${report.runtimeRootCount}`,
+    '# React Yuzey Siniflandirmasi',
+    `- Uretilme zamani: ${new Date().toISOString()}`,
+    `- TSX dosyalari: ${report.tsxCount}`,
+    `- Server-only adaylari: ${report.serverOnlyCount}`,
+    `- Olu TSX dosyalari: ${report.deadCount}`,
+    `- Migration gereken TSX dosyalari: ${report.migrateCount}`,
+    `- Korunacak blokorler: ${report.keepCount}`,
+    `- Runtime root dosyalari: ${report.runtimeRootCount}`,
     '',
-    '## Next Steps',
+    '## Sonraki Adimlar',
   ];
 
   if (report.nextSteps.length === 0) {
-    lines.push('- none');
+    lines.push('- yok');
   } else {
     for (const step of report.nextSteps) lines.push(`- ${step}`);
   }
 
   const sections: Array<[string, string[]]> = [
-    ['Runtime Roots', report.runtimeRoots],
-    ['Server-only Candidates', report.serverOnly],
-    ['Dead TSX Files', report.dead],
-    ['Migrate-required TSX Files', report.migrate],
-    ['Keep Blockers', report.keep],
+    ['Runtime Root Dosyalari', report.runtimeRoots],
+    ['Server-only Adaylari', report.serverOnly],
+    ['Olu TSX Dosyalari', report.dead],
+    ['Migration Gereken TSX Dosyalari', report.migrate],
+    ['Korunacak Blokorler', report.keep],
   ];
 
   for (const [title, entries] of sections) {
     lines.push('', `## ${title}`);
     if (entries.length === 0) {
-      lines.push('- none');
+      lines.push('- yok');
     } else {
       for (const entry of entries) lines.push(`- ${entry}`);
     }

@@ -1,62 +1,62 @@
-# Phase Operations Guide
+# Faz Operasyon Rehberi
 
-## Baseline
-- Work from a clean `git worktree` created from `origin/master`.
-- Use Node `22.13.0+`; `.nvmrc` is authoritative.
-- Do not run parallel Astro build or gate commands inside one worktree.
-- Do not use a dirty local root worktree as a phase source of truth; use it only for residual diff inventory.
-- Run `npm run phase:doctor` whenever source-of-truth docs or changelog behavior changed.
-- `phase:doctor:advisory` is now a required green check in CI despite the legacy job name.
-- Keep [STALE_WORKTREE.md](STALE_WORKTREE.md), [ROOT_INVENTORY_ONLY_POLICY.md](ROOT_INVENTORY_ONLY_POLICY.md), and [docs/ACTIVE_DOCS.md](docs/ACTIVE_DOCS.md) aligned.
-- Keep [ARCHITECTURE.md](ARCHITECTURE.md), [docs/DEPENDENCY_TRIAGE.md](docs/DEPENDENCY_TRIAGE.md), and [docs/SCRIPT_SURFACE_POLICY.md](docs/SCRIPT_SURFACE_POLICY.md) aligned with operator reality.
+## Temel Çizgi
+- `origin/master` üzerinden açılmış temiz bir `git worktree` ile çalış.
+- Node `22.13.0+` kullan; otorite dosyası `.nvmrc`'dir.
+- Aynı worktree içinde Astro build veya gate komutlarını paralel çalıştırma.
+- Kirli yerel root worktree'yi faz otoritesi olarak kullanma; yalnızca artık diff envanteri için kullan.
+- Source-of-truth dokümanları veya changelog davranışı değiştiğinde `npm run phase:doctor` çalıştır.
+- Legacy job adı korunmuş olsa da `phase:doctor:advisory` artık CI içinde zorunlu yeşil kontroldür.
+- [STALE_WORKTREE.md](STALE_WORKTREE.md), [ROOT_INVENTORY_ONLY_POLICY.md](ROOT_INVENTORY_ONLY_POLICY.md) ve [docs/ACTIVE_DOCS.md](docs/ACTIVE_DOCS.md) birbiriyle uyumlu kalmalıdır.
+- [ARCHITECTURE.md](ARCHITECTURE.md), [docs/DEPENDENCY_TRIAGE.md](docs/DEPENDENCY_TRIAGE.md) ve [docs/SCRIPT_SURFACE_POLICY.md](docs/SCRIPT_SURFACE_POLICY.md) operatör gerçeğiyle hizalı kalmalıdır.
 
-## Standard Delivery Flow
-1. Generate the phase block files and exports.
-   - Preferred write path: `npm run phase:generate:block:write -- scripts/phase-blocks/phase-803-808.json`
-2. Update `package.json`, `PHASE_INDEX.md`, `TASK_TRACKER.md`, `memory.md`, and `tsconfig.phase.json`.
-3. Run one of:
+## Standart Teslimat Akışı
+1. Faz blok dosyalarını ve export'ları üret.
+   - Tercih edilen yazma yolu: `npm run phase:generate:block:write -- scripts/phase-blocks/phase-803-808.json`
+2. `package.json`, `PHASE_INDEX.md`, `TASK_TRACKER.md`, `memory.md` ve `tsconfig.phase.json` dosyalarını güncelle.
+3. Şunlardan birini çalıştır:
    - `npm run phase:prepare:block -- --phase-script test:phase:<range>`
    - `npm run phase:prepare:batch -- --phase-script test:phase:<range-a> --phase-script test:phase:<range-b>`
    - `npm run test:phase:range -- <range>`
    - `npm run test:phase:batch -- <range-a> <range-b> <range-c>`
-4. Commit phase content.
-5. Capture the phase commit hash and run `npm run phase:changelog -- --ref <phase-commit>`, then commit the changelog update.
-6. Do not append changelog-maintenance chore rows for `update/normalize/finalize/refresh phase changelog`.
-7. If `phase:doctor` reports changelog drift, run `npm run phase:changelog:normalize` and commit the cleanup before PR open.
-8. Push the branch, open the PR, wait for checks, merge, and verify remote merge state.
+4. Faz içeriğini commit et.
+5. Faz commit hash'ini al, `npm run phase:changelog -- --ref <phase-commit>` çalıştır ve ardından changelog güncellemesini commit et.
+6. `update/normalize/finalize/refresh phase changelog` için changelog bakım satırı ekleme.
+7. `phase:doctor` changelog drift raporlarsa, PR açmadan önce `npm run phase:changelog:normalize` çalıştır ve cleanup'ı commit et.
+8. Branch'i push et, PR aç, check'leri bekle, merge et ve uzak merge durumunu doğrula.
 
-## Locking Rules
-- `phase:prepare:block`, `phase:prepare:batch`, `test:phase:gate`, and `test:phase:gate:ci` take a worktree lock through `.phase-worktree.lock`.
-- If a prior run crashes, inspect the lock file before removing it.
-- Treat an existing live lock as an operational error, not a retry signal.
-- Validate lock behavior through `src/lib/__tests__/phase-automation-scripts.test.ts` when changing lock or gate logic.
+## Kilit Kuralları
+- `phase:prepare:block`, `phase:prepare:batch`, `test:phase:gate` ve `test:phase:gate:ci` `.phase-worktree.lock` üzerinden worktree kilidi alır.
+- Önceki bir çalıştırma çöktüyse kilit dosyasını silmeden önce incele.
+- Canlı bir kilit varsa bunu tekrar deneme sinyali değil, operasyonel hata olarak ele al.
+- Kilit veya gate mantığı değiştiğinde davranışı `src/lib/__tests__/phase-automation-scripts.test.ts` üzerinden doğrula.
 
-## PR and Merge Policy
-- Keep phase content and changelog as two separate commits.
-- Cleanup verification PRs must not append cleanup-only rows to `PHASE_CHANGELOG.md`.
-- Open PRs with `npm run phase:pr:open:file -- <repo> <base> <head> <title-file> <body-file>`.
-- Wait for checks with `npm run phase:checks:wait -- <pr> --repo titanai777/sanliurfa`.
-- Verify merge with `npm run phase:pr:view -- titanai777/sanliurfa <pr>`.
+## PR ve Merge Politikası
+- Faz içeriği ile changelog'u iki ayrı commit olarak tut.
+- Cleanup doğrulama PR'ları `PHASE_CHANGELOG.md` dosyasına cleanup-only satırlar eklememelidir.
+- PR'ları `npm run phase:pr:open:file -- <repo> <base> <head> <title-file> <body-file>` ile aç.
+- Check'leri `npm run phase:checks:wait -- <pr> --repo titanai777/sanliurfa` ile bekle.
+- Merge durumunu `npm run phase:pr:view -- titanai777/sanliurfa <pr>` ile doğrula.
 
-## Documentation Hygiene
-- Keep active operational docs in root only when they are part of the current delivery surface.
-- Move historical phase reports and dated cleanup verification notes under `docs/archive/`.
-- `PHASE_INDEX.md` is the canonical map for both active root docs and archived locations.
-- `README.md`, `AGENTS.md`, `PHASE_OPERATIONS_GUIDE.md`, and `docs/WORKTREE_SOURCE_OF_TRUTH.md` must not drift on source-of-truth policy.
-- `STALE_WORKTREE.md` and `ROOT_INVENTORY_ONLY_POLICY.md` are mandatory visible guards in repo root.
+## Doküman Hijyeni
+- Aktif operasyon dokümanlarını yalnızca mevcut teslimat yüzeyinin parçasıysa root'ta tut.
+- Tarihsel faz raporları ile tarihli cleanup doğrulama notlarını `docs/archive/` altına taşı.
+- `PHASE_INDEX.md`, hem aktif root dokümanlar hem de arşiv konumları için kanonik haritadır.
+- `README.md`, `AGENTS.md`, `PHASE_OPERATIONS_GUIDE.md` ve `docs/WORKTREE_SOURCE_OF_TRUTH.md`, source-of-truth politikasında drift üretmemelidir.
+- `STALE_WORKTREE.md` ve `ROOT_INVENTORY_ONLY_POLICY.md` repo root'unda görünür zorunlu guard'lardır.
 
-## Script Surface Policy
-- Prefer runner-based commands:
+## Script Yüzeyi Politikası
+- Çalıştırıcı tabanlı komutları tercih et:
   - `test:phase:range`
   - `test:phase:batch`
   - `phase:prepare:block:preferred`
   - `phase:prepare:batch:preferred`
-- Treat single `test:phase:<range>` entries as compatibility surface for generated phase blocks, not the primary operator interface.
-- Review the current surface with `npm run phase:scripts:report` before changing package scripts.
-- Use `docs/SCRIPT_SURFACE_POLICY.md` as the repo-level rule for compatibility vs runner-first commands.
+- Tekil `test:phase:<range>` girdilerini, birincil operatör arayüzü değil, üretilmiş faz blokları için uyumluluk yüzeyi olarak gör.
+- `package.json` script yüzeyini değiştirmeden önce `npm run phase:scripts:report` ile mevcut durumu gözden geçir.
+- Uyumluluk ile çalıştırıcı önceliği arasındaki repo kuralı için `docs/SCRIPT_SURFACE_POLICY.md` dosyasını kullan.
 
-## Astro-Specific Guardrails
-- The repo is SSR-first with `@astrojs/node`.
-- Avoid route collisions and keep content collection loader/schema changes paired.
-- Build and gate wrappers are serialized because `.astro/` and `dist/` artifacts are not concurrency-safe.
-- Use `ARCHITECTURE.md` as the runtime source for Astro invariants; keep this guide focused on phase operations.
+## Astro'ya Özgü Guardrail'ler
+- Repo, `@astrojs/node` ile SSR-first çalışır.
+- Route çakışmalarından kaçın ve content collection loader/schema değişikliklerini eşlenik tut.
+- `.astro/` ve `dist/` artefact'ları eşzamanlı çalıştırmaya güvenli olmadığı için build ve gate wrapper'ları seri kalmalıdır.
+- Astro runtime invariant'ları için kaynak dosya `ARCHITECTURE.md`'dir; bu rehberi faz operasyonlarına odaklı tut.

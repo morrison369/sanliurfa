@@ -1,26 +1,26 @@
-# React Surface Classification
-- Generated at: 2026-04-17T01:34:22.434Z
-- TSX files: 0
-- Server-only candidates: 0
-- Dead TSX files: 0
-- Migrate-required TSX files: 0
-- Keep blockers: 0
-- Runtime roots: 1
+# React Yuzey Siniflandirmasi
+- Uretilme zamani: 2026-04-17T01:54:40.381Z
+- TSX dosyalari: 0
+- Server-only adaylari: 0
+- Olu TSX dosyalari: 0
+- Migration gereken TSX dosyalari: 0
+- Korunacak blokorler: 0
+- Runtime root dosyalari: 1
 
-## Next Steps
+## Sonraki Adimlar
 - 1 adet runtime owner dosyada React entegrasyonunu kaldir
 
-## Runtime Roots
+## Runtime Root Dosyalari
 - astro.config.mjs
 
-## Server-only Candidates
-- none
+## Server-only Adaylari
+- yok
 
-## Dead TSX Files
-- none
+## Olu TSX Dosyalari
+- yok
 
-## Migrate-required TSX Files
-- none
+## Migration Gereken TSX Dosyalari
+- yok
 
-## Keep Blockers
-- none
+## Korunacak Blokorler
+- yok

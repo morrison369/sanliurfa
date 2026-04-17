@@ -1,22 +1,22 @@
-# Stale Root Worktree Warning
+# Bayat Root Worktree Uyarısı
 
-This repository may exist locally as a dirty or stale root worktree.
+Bu depo, yerel ortamda kirli veya bayat bir root worktree olarak bulunabilir.
 
-## Binding Rule
-- Do not use `D:\sanliurfa.com\sanliurfa` as a delivery surface when it is behind `origin/master` or contains residual diffs.
-- Delivery, cleanup, and release work must start from a clean `git worktree` created from `origin/master`.
-- The dirty root worktree is inventory-only. It is valid for forensic inspection, not for source-of-truth decisions.
+## Bağlayıcı Kural
+- `D:\sanliurfa.com\sanliurfa`, `origin/master` gerisindeyse veya artık diff içeriyorsa teslimat yüzeyi olarak kullanılamaz.
+- Teslimat, cleanup ve release işi; `origin/master` üzerinden açılmış temiz bir `git worktree` ile başlamalıdır.
+- Kirli root worktree yalnızca envanter içindir. Adli inceleme için geçerlidir; source-of-truth kararı için değildir.
 
-## Use Instead
+## Bunun Yerine Kullan
 - [README.md](README.md)
 - [AGENTS.md](AGENTS.md)
 - [PHASE_OPERATIONS_GUIDE.md](PHASE_OPERATIONS_GUIDE.md)
 - [docs/WORKTREE_SOURCE_OF_TRUTH.md](docs/WORKTREE_SOURCE_OF_TRUTH.md)
 - [ROOT_INVENTORY_ONLY_POLICY.md](ROOT_INVENTORY_ONLY_POLICY.md)
 
-## Minimum Safe Flow
+## Asgari Güvenli Akış
 1. `git fetch origin`
 2. `git worktree add <path> -b <branch> origin/master`
-3. run phase or cleanup work in the clean worktree
-4. validate with `npm run phase:doctor`
-5. open PR and merge from the clean worktree
+3. faz veya cleanup işini temiz worktree içinde çalıştır
+4. `npm run phase:doctor` ile doğrula
+5. PR'ı temiz worktree'den aç ve merge et
