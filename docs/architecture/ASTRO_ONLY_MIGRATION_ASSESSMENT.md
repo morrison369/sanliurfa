@@ -156,6 +156,9 @@ Hydration yüzeyi kapandığı için sıradaki karar runtime değil paket seviye
   - `scripts/react-surface-audit.ts`
   - `src/lib/react-surface-audit.ts`
   - `docs/reports/react-surface-audit.md`
+  - `scripts/react-surface-classification.ts`
+  - `src/lib/react-surface-classification.ts`
+  - `docs/reports/react-surface-classification.md`
 
 2026-04-17 itibarıyla audit sonucu:
 
@@ -168,6 +171,13 @@ Bu şu anlama gelir:
 - hydration bazında Astro-only hedefi kapandı
 - `@astrojs/react` kaldırma adaylığı teknik olarak açıldı
 - ama paketleri silmeden önce kalan `.tsx` yüzeyi ve React hook importları temizlenmeli
+
+Dosya bazlı sınıflama bundan sonra ikinci karar katmanıdır:
+
+- `server-only`: runtime'a bağlı ama React hook gerektirmeyen yüzey
+- `dead`: runtime'a bağlı olmayan, silinmeye aday yüzey
+- `migrate`: runtime'a hâlâ bağlı ve dönüştürülmesi gereken yüzey
+- `keep`: React paketini tutan hook/lib blokörleri
 
 ## Kısa Vadede Yapılmaması Gerekenler
 

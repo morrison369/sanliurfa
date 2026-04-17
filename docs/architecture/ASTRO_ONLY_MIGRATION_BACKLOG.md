@@ -21,6 +21,7 @@ Güncel ölçüm:
 - current generated risk split: `0 low / 0 medium / 0 high`
 - current high-risk feasibility split: `0 first / 0 later / 0 last`
 - current package removal blockers: `59 tsx / 3 hook-lib / 1 runtime`
+- current classification goal: `server-only / dead / migrate / keep`
 
 İlk hedefler:
 
@@ -29,6 +30,7 @@ Güncel ölçüm:
 3. yeni açılan UI yüzeylerinde varsayılan olarak React kullanmamak
 4. migration yapılan her sayfa için helper + smoke/test zemini kurmak
 5. hydration `0` olduktan sonra `npm run astro:react:audit` ile paket kaldırma blokörlerini sıfırlamak
+6. kalan `.tsx` yüzeyi için `npm run astro:react:classify` ile sil/tut/migrate listesini üretmek
 
 ## Öncelik Kuralları
 

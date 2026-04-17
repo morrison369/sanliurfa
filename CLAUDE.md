@@ -33,6 +33,7 @@ Framework direction:
 - Before choosing the next Astro migration batch, refresh `docs/reports/astro-hydration-inventory.md` with `npm run astro:migration:inventory` and use that risk split instead of guessing.
 - If `medium=0`, rank the remaining `high` bucket with `npm run astro:migration:high-risk` before choosing the next panel.
 - If hydration is already `0`, do not remove `react` packages blindly; run `npm run astro:react:audit` first and use `docs/reports/react-surface-audit.md`.
+- After the audit, run `npm run astro:react:classify` before any delete wave so the remaining `.tsx` surface is split into `server-only / dead / migrate / keep`.
 
 ## Quick Start Commands
 
@@ -63,6 +64,7 @@ Framework direction:
 - `npm run astro:migration:inventory` — Current Astro hydration inventory and risk split
 - `npm run astro:migration:high-risk` — Ranked feasibility report for remaining high-risk hydration surfaces
 - `npm run astro:react:audit` — Package-level React removal blockers after hydration reaches zero
+- `npm run astro:react:classify` — File-level React cleanup classification after hydration reaches zero
 - `npm run phase:scripts:report` — Phase compatibility status
 - `npm run phase:compat:cleanup` — Cleanup compatibility manifest state
 
