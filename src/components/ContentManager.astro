@@ -1,9 +1,16 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
 ---
 
 <div data-content-manager>
-  <div data-content-manager-loading class="p-4 text-center text-gray-500">İçerikler yükleniyor...</div>
-  <div data-content-manager-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="p-4 text-center text-gray-500"
+    loadingDataAttr="data-content-manager-loading"
+    message={UI_COPY_TR.content.loading}
+    contentDataAttr="data-content-manager-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>
