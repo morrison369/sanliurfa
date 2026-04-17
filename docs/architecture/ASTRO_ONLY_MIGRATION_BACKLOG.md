@@ -15,11 +15,11 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `184`
-- `.tsx`: `68`
-- `client:*` hydration noktası: `10`
-- current generated risk split: `0 low / 0 medium / 10 high`
-- current high-risk feasibility split: `0 first / 0 later / 10 last`
+- `.astro`: `185`
+- `.tsx`: `67`
+- `client:*` hydration noktası: `9`
+- current generated risk split: `0 low / 0 medium / 9 high`
+- current high-risk feasibility split: `0 first / 0 later / 8 last`
 
 İlk hedefler:
 
@@ -99,6 +99,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/admin/AdminManager.tsx` -> `src/components/admin/AdminManager.astro`
 - `src/components/WebhookAnalyticsDashboard.tsx` -> `src/components/WebhookAnalyticsDashboard.astro`
 - `src/components/LiveAnalyticsDashboard.tsx` -> `src/components/LiveAnalyticsDashboard.astro`
+- `src/components/ModerationQueueManager.tsx` -> `src/components/ModerationQueueManager.astro`
 
 Bu dalga ile:
 
@@ -139,7 +140,8 @@ Bu dalga ile:
 - `src/pages/admin/manage.astro` içindeki `AdminManager` artık React island değil
 - `src/pages/webhooks.astro` içindeki `WebhookAnalyticsDashboard` artık React island değil
 - `src/pages/canli-analitik/index.astro` içindeki `LiveAnalyticsDashboard` artık React island değil
-- toplam `client:*` sayısı `55 -> 10` düştü
+- `src/pages/admin/dashboard.astro` içindeki `ModerationQueueManager` artık React island değil
+- toplam `client:*` sayısı `55 -> 9` düştü
 
 ### Önceki Düşük Risk Adayları
 
@@ -223,7 +225,6 @@ eklenmeli.
 - `src/components/AdminAnalyticsDashboard.tsx`
 - `src/components/AdminPerformanceDashboard.tsx`
 - `src/components/ModerationDashboard.tsx`
-- `src/components/ModerationQueueManager.tsx`
 - `src/components/WebhookManager.tsx`
 - `src/components/WebhookAnalyticsDashboard.tsx`
 - `src/components/MessagingInbox.tsx`
