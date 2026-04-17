@@ -21,8 +21,8 @@ describe('admin loyalty panel helpers', () => {
       error: null,
     });
 
-    expect(html).toContain('Ödüller');
+    expect(html).toContain('Ödül listesi');
     expect(html).toContain('Ücretsiz Kahve');
-    expect(html).toContain('Kategori');
+    expect(html).toContain('Ödül kategorisi');
   });
 });
