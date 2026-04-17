@@ -87,7 +87,7 @@ export function renderAdminDashboardOverview(options: {
       metric(
         'Genel durum',
         data.statusSummary?.overall || 'blocked',
-        `Release: ${releaseGateLevel} • Reg: ${nightlyRegressionLevel} • E2E: ${nightlyE2eLevel}`,
+        `Sürüm: ${releaseGateLevel} • Regresyon: ${nightlyRegressionLevel} • E2E: ${nightlyE2eLevel}`,
         tone(data.statusSummary?.overall || 'blocked'),
       ),
     ),
@@ -128,12 +128,12 @@ export function renderAdminDashboardOverview(options: {
     card(
       'Entegrasyonlar',
       metric(
-        'Configured',
+        'Yapılandırma',
         `${data.integrations?.summary?.configuredCount ?? 0}/${data.integrations?.summary?.total ?? 2}`,
         `Durum: ${integrationLevel}`,
         tone(integrationLevel),
       ) +
-        `<div class="mt-2 text-xs text-gray-500 dark:text-gray-400">RESEND: ${data.integrations?.resend?.source || 'none'} • Analytics: ${data.integrations?.analytics?.source || 'none'}</div>`,
+        `<div class="mt-2 text-xs text-gray-500 dark:text-gray-400">RESEND: ${data.integrations?.resend?.source || 'yok'} • Analitik: ${data.integrations?.analytics?.source || 'yok'}</div>`,
     ),
   ];
 
@@ -164,7 +164,7 @@ export function renderAdminDashboardOverview(options: {
     ? card(
         'Performans Optimizasyonu',
         `<div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-          ${metric('Öneriler', String(data.performanceOptimization.recommendations.total), `High: ${data.performanceOptimization.recommendations.highPriority} • Medium: ${data.performanceOptimization.recommendations.mediumPriority}`)}
+          ${metric('Öneriler', String(data.performanceOptimization.recommendations.total), `Yüksek: ${data.performanceOptimization.recommendations.highPriority} • Orta: ${data.performanceOptimization.recommendations.mediumPriority}`)}
           ${metric('Yavaş query/request', `${data.performanceOptimization.metrics.slowQueriesCount} / %${data.performanceOptimization.metrics.slowRequestRate}`, `Avg: ${data.performanceOptimization.metrics.avgRequestDuration}ms • p95: ${data.performanceOptimization.metrics.p95Duration}ms`)}
           ${metric('Cache/Index', `%${data.performanceOptimization.metrics.cacheHitRate} / ${data.performanceOptimization.indexSuggestions.count}`, `Strategy: ${data.performanceOptimization.cacheStrategies.count}`)}
           ${metric('Son yavaş operasyon', data.performanceOptimization.slowOperations[0] ? `${data.performanceOptimization.slowOperations[0].type} • ${data.performanceOptimization.slowOperations[0].duration}ms` : 'yok', data.performanceOptimization.slowOperations[0]?.message || 'Kayıt yok')}
@@ -174,7 +174,7 @@ export function renderAdminDashboardOverview(options: {
 
   const auditCard = (data as any).adminOpsAudit
     ? card(
-        'Admin Ops Audit',
+        'Admin Ops Denetimi',
         `<div class="grid grid-cols-1 gap-4 md:grid-cols-4">
           ${metric('Toplam / pencere', String((data as any).adminOpsAudit.total), `${(data as any).adminOpsAudit.windowHours} saat`)}
           ${metric('Denied / rate limit', `${(data as any).adminOpsAudit.deniedCount} / ${(data as any).adminOpsAudit.rateLimitedCount}`, `Son denied: ${(data as any).adminOpsAudit.lastDeniedAt || 'yok'}`)}
@@ -186,9 +186,9 @@ export function renderAdminDashboardOverview(options: {
 
   const accessCoverageCard = (data as any).adminAccessCoverage
     ? card(
-        'Admin Access Coverage',
+        'Admin Erişim Kapsaması',
         `<div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-          ${metric('Coverage', `%${(data as any).adminAccessCoverage.coveragePercent}`, (data as any).adminAccessCoverage.available ? 'rapor var' : 'rapor yok')}
+          ${metric('Kapsama', `%${(data as any).adminAccessCoverage.coveragePercent}`, (data as any).adminAccessCoverage.available ? 'rapor var' : 'rapor yok')}
           ${metric('Route / wrapper', `${(data as any).adminAccessCoverage.routeFiles} / ${(data as any).adminAccessCoverage.wrapperFiles}`, 'admin api kapsaması')}
           ${metric('Drift', String((data as any).adminAccessCoverage.driftCount), 'wrapper dışı dosya', (data as any).adminAccessCoverage.driftCount > 0 ? 'text-red-600 dark:text-red-300' : 'text-green-600 dark:text-green-300')}
           ${metric('Son üretim', (data as any).adminAccessCoverage.generatedAt || 'Henüz yok', (data as any).adminAccessCoverage.driftedFiles?.[0] || 'Drift yok')}
@@ -198,14 +198,14 @@ export function renderAdminDashboardOverview(options: {
 
   const artifactCard = data.artifactHealth
     ? card(
-        'Artifact Health',
-        `<div class="mb-4 text-xs text-gray-500 dark:text-gray-400">Healthy: ${data.artifactHealthSummary?.healthyCount ?? 0} • Degraded: ${data.artifactHealthSummary?.degradedCount ?? 0} • Blocked: ${data.artifactHealthSummary?.blockedCount ?? 0}</div>
+        'Artefact Sağlığı',
+        `<div class="mb-4 text-xs text-gray-500 dark:text-gray-400">Sağlıklı: ${data.artifactHealthSummary?.healthyCount ?? 0} • Bozulmuş: ${data.artifactHealthSummary?.degradedCount ?? 0} • Engelli: ${data.artifactHealthSummary?.blockedCount ?? 0}</div>
         <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
-          ${metric('Release Gate', data.artifactHealth.releaseGate.available ? 'var' : 'yok', `${data.artifactHealth.releaseGate.status} • ${data.artifactHealth.releaseGate.generatedAt || 'Henüz yok'}`, tone(data.artifactHealth.releaseGate.status))}
-          ${metric('Nightly Regression', data.artifactHealth.nightlyRegression.available ? 'var' : 'yok', `${data.artifactHealth.nightlyRegression.status} • ${data.artifactHealth.nightlyRegression.generatedAt || 'Henüz yok'}`, tone(data.artifactHealth.nightlyRegression.status))}
-          ${metric('Nightly E2E', data.artifactHealth.nightlyE2E.available ? 'var' : 'yok', `${data.artifactHealth.nightlyE2E.status} • ${data.artifactHealth.nightlyE2E.generatedAt || 'Henüz yok'}`, tone(data.artifactHealth.nightlyE2E.status))}
-          ${metric('Performance Ops', data.artifactHealth.performanceOps.available ? 'var' : 'yok', `${data.artifactHealth.performanceOps.status} • ${data.artifactHealth.performanceOps.generatedAt || 'Henüz yok'}`, tone(data.artifactHealth.performanceOps.status))}
-          ${metric('Access Coverage', data.artifactHealth.adminAccessCoverage.available ? 'var' : 'yok', `${data.artifactHealth.adminAccessCoverage.status} • ${data.artifactHealth.adminAccessCoverage.generatedAt || 'Henüz yok'}`, tone(data.artifactHealth.adminAccessCoverage.status))}
+          ${metric('Sürüm Kapısı', data.artifactHealth.releaseGate.available ? 'var' : 'yok', `${data.artifactHealth.releaseGate.status} • ${data.artifactHealth.releaseGate.generatedAt || 'Henüz yok'}`, tone(data.artifactHealth.releaseGate.status))}
+          ${metric('Gece Regresyonu', data.artifactHealth.nightlyRegression.available ? 'var' : 'yok', `${data.artifactHealth.nightlyRegression.status} • ${data.artifactHealth.nightlyRegression.generatedAt || 'Henüz yok'}`, tone(data.artifactHealth.nightlyRegression.status))}
+          ${metric('Gece E2E', data.artifactHealth.nightlyE2E.available ? 'var' : 'yok', `${data.artifactHealth.nightlyE2E.status} • ${data.artifactHealth.nightlyE2E.generatedAt || 'Henüz yok'}`, tone(data.artifactHealth.nightlyE2E.status))}
+          ${metric('Performans Ops', data.artifactHealth.performanceOps.available ? 'var' : 'yok', `${data.artifactHealth.performanceOps.status} • ${data.artifactHealth.performanceOps.generatedAt || 'Henüz yok'}`, tone(data.artifactHealth.performanceOps.status))}
+          ${metric('Erişim Kapsaması', data.artifactHealth.adminAccessCoverage.available ? 'var' : 'yok', `${data.artifactHealth.adminAccessCoverage.status} • ${data.artifactHealth.adminAccessCoverage.generatedAt || 'Henüz yok'}`, tone(data.artifactHealth.adminAccessCoverage.status))}
         </div>`,
       )
     : '';
@@ -215,7 +215,7 @@ export function renderAdminDashboardOverview(options: {
         'Entegrasyon Doğrulama',
         `<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           ${metric('RESEND', data.integrations.verification.resend.status, data.integrations.verification.resend.message)}
-          ${metric('Analytics', data.integrations.verification.analytics.status, data.integrations.verification.analytics.message)}
+          ${metric('Analitik', data.integrations.verification.analytics.status, data.integrations.verification.analytics.message)}
         </div>
         <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">Son kontrol: ${data.integrations.verification.summary.checkedAt}</div>`,
       )
@@ -223,31 +223,31 @@ export function renderAdminDashboardOverview(options: {
 
   const releaseGateCard = data.releaseGate
     ? card(
-        'Release Gate',
+        'Sürüm Kapısı',
         `<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          ${metric('Durum', releaseGateLevel, `Final: ${data.releaseGate.finalStatus}`, tone(releaseGateLevel))}
-          ${metric('Hata sayısı', String(data.releaseGate.failedStepCount), `Blocking: ${data.releaseGate.blockingFailedSteps[0] || 'yok'}`)}
-          ${metric('Son üretim', data.releaseGate.generatedAt || 'Henüz yok', `Advisory: ${data.releaseGate.advisoryFailedSteps[0] || 'yok'}`)}
+          ${metric('Durum', releaseGateLevel, `Nihai: ${data.releaseGate.finalStatus}`, tone(releaseGateLevel))}
+          ${metric('Hata sayısı', String(data.releaseGate.failedStepCount), `Bloklayıcı: ${data.releaseGate.blockingFailedSteps[0] || 'yok'}`)}
+          ${metric('Son üretim', data.releaseGate.generatedAt || 'Henüz yok', `Danışma: ${data.releaseGate.advisoryFailedSteps[0] || 'yok'}`)}
         </div>
-        <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">Access coverage: %${data.releaseGate.adminAccessCoverage?.coveragePercent ?? 'yok'} • Drift ${data.releaseGate.adminAccessCoverage?.driftCount ?? 'yok'} • Drift file: ${data.releaseGate.adminAccessCoverage?.driftedFiles?.[0] || 'yok'}</div>`,
+        <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">Erişim kapsaması: %${data.releaseGate.adminAccessCoverage?.coveragePercent ?? 'yok'} • Drift ${data.releaseGate.adminAccessCoverage?.driftCount ?? 'yok'} • Drift dosyası: ${data.releaseGate.adminAccessCoverage?.driftedFiles?.[0] || 'yok'}</div>`,
       )
     : '';
 
   const nightlyCard = data.nightly
     ? card(
-        'Nightly Trend',
+        'Gece Trendi',
         `<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-            <div class="mb-1 text-xs text-gray-500 dark:text-gray-400">Regression</div>
+            <div class="mb-1 text-xs text-gray-500 dark:text-gray-400">Regresyon</div>
             <div class="text-xl font-bold ${tone(nightlyRegressionLevel)}">${nightlyRegressionLevel}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Outcome: ${data.nightly.regression.outcome} • Success rate: ${data.nightly.regression.successRatePercent ?? 'yok'}%</div>
-            <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">Failure: ${data.nightly.regression.topFailures[0] || 'yok'}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">Sonuç: ${data.nightly.regression.outcome} • Başarı oranı: ${data.nightly.regression.successRatePercent ?? 'yok'}%</div>
+            <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">Hata: ${data.nightly.regression.topFailures[0] || 'yok'}</div>
           </div>
           <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
             <div class="mb-1 text-xs text-gray-500 dark:text-gray-400">E2E</div>
             <div class="text-xl font-bold ${tone(nightlyE2eLevel)}">${nightlyE2eLevel}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Outcome: ${data.nightly.e2e.outcome} • Success rate: ${data.nightly.e2e.successRatePercent ?? 'yok'}%</div>
-            <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">Failure: ${data.nightly.e2e.topFailures[0] || 'yok'}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">Sonuç: ${data.nightly.e2e.outcome} • Başarı oranı: ${data.nightly.e2e.successRatePercent ?? 'yok'}%</div>
+            <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">Hata: ${data.nightly.e2e.topFailures[0] || 'yok'}</div>
           </div>
         </div>`,
       )
