@@ -1,0 +1,20 @@
+---
+interface Props {
+  currentUserId: string;
+}
+
+const { currentUserId } = Astro.props;
+---
+
+<div data-messaging-inbox data-current-user-id={currentUserId}>
+  <div data-messaging-inbox-loading class="flex items-center justify-center p-8">
+    <div class="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
+  </div>
+  <div data-messaging-inbox-content class="hidden"></div>
+</div>
+
+<script>
+  import { initMessagingInbox } from '../scripts/messaging-inbox';
+
+  initMessagingInbox();
+</script>

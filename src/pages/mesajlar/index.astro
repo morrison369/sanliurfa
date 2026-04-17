@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import MessagingInbox from '../../components/MessagingInbox';
+import MessagingInbox from '../../components/MessagingInbox.astro';
 
 // Redirect if not logged in
 if (!Astro.locals.user) {
@@ -10,7 +10,7 @@ if (!Astro.locals.user) {
 
 <Layout title="Mesajlar - Şanlıurfa Rehberi">
   <div class="min-h-screen bg-gray-50">
-    <MessagingInbox client:load />
+    <MessagingInbox currentUserId={Astro.locals.user.id} />
   </div>
 </Layout>
 
