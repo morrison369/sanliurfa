@@ -31,7 +31,7 @@ const campaigns = await getAllCampaigns(100);
         role="tab"
         data-tab="campaigns"
       >
-        Kampanyalar
+        Kampanya listesi
       </button>
       <button
         class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
@@ -85,19 +85,19 @@ const campaigns = await getAllCampaigns(100);
 
               <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
                 <div>
-                  <span class="text-gray-600">Gönderilen:</span>
+                  <span class="text-gray-600">Gönderim:</span>
                   <span class="font-semibold ml-2">{campaign.sendCount}</span>
                 </div>
                 <div>
-                  <span class="text-gray-600">Açılan:</span>
+                  <span class="text-gray-600">Açılma:</span>
                   <span class="font-semibold ml-2">{campaign.openCount} ({campaign.sendCount > 0 ? Math.round((campaign.openCount / campaign.sendCount) * 100) : 0}%)</span>
                 </div>
                 <div>
-                  <span class="text-gray-600">Tıklanan:</span>
+                  <span class="text-gray-600">Tıklama:</span>
                   <span class="font-semibold ml-2">{campaign.clickCount} ({campaign.sendCount > 0 ? Math.round((campaign.clickCount / campaign.sendCount) * 100) : 0}%)</span>
                 </div>
                 <div>
-                  <span class="text-gray-600">Abonelikten Çıkan:</span>
+                  <span class="text-gray-600">Abonelikten çıkış:</span>
                   <span class="font-semibold ml-2">{campaign.unsubscribeCount}</span>
                 </div>
               </div>
@@ -126,7 +126,7 @@ const campaigns = await getAllCampaigns(100);
           ))
         ) : (
           <div class="bg-gray-50 p-8 rounded-lg text-center">
-            <p class="text-gray-600">Henüz kampanya yok</p>
+            <p class="text-gray-600">Henüz kampanya bulunmuyor</p>
             <button onclick="switchTab('create')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
               İlk kampanyanızı oluşturun
             </button>
@@ -185,7 +185,7 @@ const campaigns = await getAllCampaigns(100);
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1">Segment</label>
+            <label class="block text-sm font-medium mb-1">Hedef kitle</label>
             <select name="segment" required class="w-full px-4 py-2 border border-gray-300 rounded">
               <option value="">Seç...</option>
               <option value="all_users">Tüm Kullanıcılar</option>

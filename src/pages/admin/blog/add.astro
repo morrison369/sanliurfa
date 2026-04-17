@@ -19,7 +19,7 @@ try {
 }
 
 const seo = {
-  title: 'Yeni Blog Yazısı - Yönetim Paneli',
+  title: 'Yeni blog yazısı - Yönetim Paneli',
   description: 'Blog yazısı ekle',
   noindex: true
 };
@@ -39,7 +39,7 @@ const post = null;
               ← Geri
             </a>
             <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">
-              {isEdit ? 'Yazıyı Düzenle' : 'Yeni Yazı'}
+              {isEdit ? 'Yazıyı düzenle' : 'Yeni yazı'}
             </h1>
           </div>
           <div class="flex items-center gap-2">
@@ -106,7 +106,7 @@ const post = null;
                   placeholder="Yazı içeriği... (HTML veya Markdown desteklenir)"
                 >{post?.content || ''}</textarea>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Desteklenen HTML etiketleri: &lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;img&gt; ve benzerleri.
+                  Desteklenen HTML etiketleri: &lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;img&gt; ve benzeri etiketler.
                 </p>
               </div>
             </div>
@@ -179,7 +179,7 @@ const post = null;
         <aside class="space-y-6">
           <!-- Publish Settings -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayın Ayarları</h3>
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayın ayarları</h3>
             
             <div class="space-y-4">
               <div>
@@ -192,7 +192,7 @@ const post = null;
               </div>
               
               <div>
-                <label for="publishedAt" class="label dark:text-gray-300">Yayın Tarihi (Planlanmış Yazılar için)</label>
+                <label for="publishedAt" class="label dark:text-gray-300">Yayın tarihi (planlı yazılar için)</label>
                 <input
                   type="datetime-local"
                   id="publishedAt"
