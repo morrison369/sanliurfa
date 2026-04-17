@@ -20,6 +20,7 @@ Bu belge, `Şanlıurfa.com` kod tabanının mevcut Astro + React island mimarisi
 - generated inventory: `docs/reports/astro-hydration-inventory.md` (`0 low / 0 medium / 0 high`)
 - high-risk feasibility report: `docs/reports/astro-high-risk-feasibility.md` (`0 first / 0 later / 0 last`)
 - package removal audit: `docs/reports/react-surface-audit.md`
+- config owner: `astro.config.mjs`
 
 Mevcut yapı:
 
@@ -153,6 +154,8 @@ Hydration yüzeyi kapanmış olsa da paket kararı nettir:
 - `@astrojs/react` kalacak.
 - `react` ve `react-dom` kalacak.
 - Kalan audit raporları uninstall planı değil, sadece bakım görünürlüğü içindir.
+- Canlı config owner:
+  - `astro.config.mjs` içindeki `react()` integration satırı
 
 Source-of-truth:
 

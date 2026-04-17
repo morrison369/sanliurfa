@@ -21,6 +21,7 @@ Güncel ölçüm:
 - current generated risk split: `0 low / 0 medium / 0 high`
 - current high-risk feasibility split: `0 first / 0 later / 0 last`
 - current package removal blockers: `0 tsx / 0 hook-lib / 1 runtime`
+- current runtime owner: `astro.config.mjs`
 - current classification goal: `server-only / dead / migrate / keep`
 
 İlk hedefler:

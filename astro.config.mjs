@@ -16,6 +16,8 @@ export default defineConfig({
   }),
   integrations: [
     tailwind(),
+    // React integration is intentionally kept as an allowed compatibility layer.
+    // Current runtime owner is this config entry; UI hydration no longer depends on .tsx surfaces.
     react(),
     sitemap({
       filter: (page) => !page.includes('/admin') && !page.includes('/profil') && !page.includes('/api'),
