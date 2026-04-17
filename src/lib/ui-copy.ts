@@ -50,6 +50,9 @@ export const UI_COPY_TR = {
     empty: 'Henüz gösterilecek webhook bulunmuyor.',
     copyId: 'Webhook kimliğini kopyala',
   },
+  webhookAnalytics: {
+    loading: 'Webhook analitiği yükleniyor...',
+  },
   verificationQueue: {
     title: 'Doğrulama kuyruğu',
     loading: 'Doğrulama talepleri yükleniyor...',
@@ -69,9 +72,19 @@ export const UI_COPY_TR = {
   profile: {
     loading: 'Profil yükleniyor...',
     settingsLoading: 'Kullanıcı ayarları yükleniyor...',
+    publicLoading: 'Açık profil yükleniyor...',
     title: 'Profilim',
     favoritesEmpty: 'Henüz favori mekan bulunmuyor.',
     activityEmpty: 'Henüz etkinlik bulunmuyor.',
+  },
+  search: {
+    loading: 'Arama sonuçları yükleniyor...',
+  },
+  recommendations: {
+    loading: 'Öneriler yükleniyor...',
+  },
+  collectionDetail: {
+    loading: 'Koleksiyon ayrıntıları yükleniyor...',
   },
 } as const;
 

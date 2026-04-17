@@ -1,8 +1,16 @@
+---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
+---
+
 <div class="space-y-4" data-user-recommendations>
-  <div data-user-recommendations-loading class="py-8 text-center text-gray-600 dark:text-gray-300">
-    Öneriler yükleniyor...
-  </div>
-  <div data-user-recommendations-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="py-8 text-center text-gray-600 dark:text-gray-300"
+    loadingDataAttr="data-user-recommendations-loading"
+    message={UI_COPY_TR.recommendations.loading}
+    contentDataAttr="data-user-recommendations-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>
