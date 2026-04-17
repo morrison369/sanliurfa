@@ -1,3 +1,6 @@
+import { extractEnvelopeMessage, resolveEnvelopeData, resolveNestedEnvelopeData } from './api-envelope';
+import { renderEmptyState, renderErrorState, renderLoadingState } from './render-states';
+
 export interface SearchPlace {
   id: string;
   name: string;
@@ -29,21 +32,6 @@ export interface SearchResultsState {
   collections: SearchCollection[];
 }
 
-function resolveEnvelopeData(payload: unknown): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object') return {};
-
-  const outerData = 'data' in payload ? (payload as { data?: unknown }).data : undefined;
-  if (outerData && typeof outerData === 'object') {
-    const nestedData = 'data' in outerData ? (outerData as { data?: unknown }).data : undefined;
-    if (nestedData && typeof nestedData === 'object' && !Array.isArray(nestedData)) {
-      return nestedData as Record<string, unknown>;
-    }
-    return outerData as Record<string, unknown>;
-  }
-
-  return payload as Record<string, unknown>;
-}
-
 function escapeHtml(value: string | number | null | undefined): string {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -66,23 +54,31 @@ export function createSearchResultsState(initialQuery = ''): SearchResultsState 
 }
 
 export function extractPlaceResults(payload: unknown): SearchPlace[] {
-  const data = resolveEnvelopeData(payload);
+  const data = resolveNestedEnvelopeData(payload);
   const results = Array.isArray(data.results) ? data.results : [];
   return results as SearchPlace[];
 }
 
 export function extractUserResults(payload: unknown): SearchUser[] {
-  const data = resolveEnvelopeData(payload);
-  const users = Array.isArray(data.data) ? data.data : Array.isArray(data.results) ? data.results : [];
+  const data = resolveNestedEnvelopeData(payload);
+  const users = Array.isArray(data)
+    ? data
+    : Array.isArray(data.data)
+      ? data.data
+      : Array.isArray(data.results)
+        ? data.results
+        : [];
   return users as SearchUser[];
 }
 
 export function extractCollectionResults(payload: unknown, query: string): SearchCollection[] {
-  const data = resolveEnvelopeData(payload);
-  const collections = Array.isArray(data.data)
-    ? (data.data as SearchCollection[])
-    : Array.isArray(data.results)
-      ? (data.results as SearchCollection[])
+  const data = resolveNestedEnvelopeData(payload);
+  const collections = Array.isArray(data)
+    ? (data as SearchCollection[])
+    : Array.isArray(data.data)
+      ? (data.data as SearchCollection[])
+      : Array.isArray(data.results)
+        ? (data.results as SearchCollection[])
       : [];
 
   const normalizedQuery = query.trim().toLocaleLowerCase('tr-TR');
@@ -94,21 +90,7 @@ export function extractCollectionResults(payload: unknown, query: string): Searc
 }
 
 export function extractSearchResultsMessage(payload: unknown, fallback: string): string {
-  const data = resolveEnvelopeData(payload);
-  if (typeof data.message === 'string' && data.message.trim().length > 0) {
-    return data.message;
-  }
-
-  if (payload && typeof payload === 'object') {
-    const error = 'error' in payload ? (payload as { error?: unknown }).error : undefined;
-    if (typeof error === 'string' && error.trim().length > 0) return error;
-    if (error && typeof error === 'object') {
-      const message = 'message' in error ? (error as { message?: unknown }).message : undefined;
-      if (typeof message === 'string' && message.trim().length > 0) return message;
-    }
-  }
-
-  return fallback;
+  return extractEnvelopeMessage(payload, fallback);
 }
 
 function renderSearchInput(query: string): string {
@@ -215,15 +197,15 @@ export function renderSearchResults(state: SearchResultsState): string {
 
   let body = '';
   if (state.query.trim().length < 2) {
-    body = '<p class="text-center text-gray-600 dark:text-gray-400">En az 2 karakter girin.</p>';
+    body = renderEmptyState('En az 2 karakter girin.', 'text-center text-gray-600 dark:text-gray-400');
   } else if (state.isLoading) {
-    body = '<p class="text-center text-gray-600 dark:text-gray-400">Arama yapılıyor...</p>';
+    body = renderLoadingState('Arama yapılıyor...', 'text-center text-gray-600 dark:text-gray-400');
   } else if (state.error) {
-    body = `<p class="text-center text-red-600 dark:text-red-400">${escapeHtml(state.error)}</p>`;
+    body = renderErrorState(state.error);
   } else if (!state.hasSearched) {
-    body = '<p class="text-center text-gray-600 dark:text-gray-400">Aramaya başlamak için yazın.</p>';
+    body = renderEmptyState('Aramaya başlamak için yazın.', 'text-center text-gray-600 dark:text-gray-400');
   } else if (!sections) {
-    body = '<p class="text-center text-gray-600 dark:text-gray-400">Sonuç bulunamadı.</p>';
+    body = renderEmptyState('Sonuç bulunamadı.', 'text-center text-gray-600 dark:text-gray-400');
   } else {
     body = `<div class="space-y-8">${sections}</div>`;
   }

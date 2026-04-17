@@ -58,8 +58,8 @@ describe('business analytics dashboard helpers', () => {
       error: null,
     });
 
-    expect(html).toContain('Toplam Ziyaretçi');
-    expect(html).toContain('30 Gün');
-    expect(html).toContain('AI Önerileri');
+    expect(html).toContain('Toplam ziyaretçi');
+    expect(html).toContain('30 gün');
+    expect(html).toContain('AI önerileri');
   });
 });
