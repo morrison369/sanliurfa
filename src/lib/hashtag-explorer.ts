@@ -133,7 +133,7 @@ function renderHashtagButtons(hashtags: HashtagItem[], selectedHashtag: string |
 
 function renderTaggedContent(content: TaggedContent) {
   if (content.places_count === 0 && content.reviews_count === 0) {
-    return '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz içerik bulunmuyor.</div>';
+    return '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz gösterilecek içerik bulunmuyor.</div>';
   }
 
   return `
@@ -242,12 +242,12 @@ export function renderHashtagExplorer(state: HashtagExplorerState) {
                   `
                   : state.taggedContent
                     ? renderTaggedContent(state.taggedContent)
-                    : '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz içerik bulunmuyor.</div>'
+                    : '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz gösterilecek içerik bulunmuyor.</div>'
               }
             </div>
           `
           : state.hashtags.length === 0
-            ? '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz trend konu bulunmuyor.</div>'
+            ? '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz gösterilecek trend konu bulunmuyor.</div>'
             : ''
       }
     </div>
