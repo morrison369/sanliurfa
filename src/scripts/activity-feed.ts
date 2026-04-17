@@ -83,7 +83,7 @@ async function fetchActivities(root: ActivityFeedRoot, reset = false) {
   });
   const payload = await readJson(response);
   if (!response.ok) {
-    throw new Error(getError(payload, 'Aktivite akisi yuklenemedi'));
+    throw new Error(getError(payload, 'Etkinlik akışı yüklenemedi'));
   }
 
   const incoming = extractActivityFeedItems(payload);
@@ -120,7 +120,7 @@ function bindInteractions(root: ActivityFeedRoot, content: HTMLElement) {
           ...current,
           loading: false,
           loadingMore: false,
-          error: error instanceof Error ? error.message : 'Aktivite akisi yuklenemedi',
+          error: error instanceof Error ? error.message : 'Etkinlik akışı yüklenemedi',
         });
         renderRoot(root);
       });
@@ -137,7 +137,7 @@ function bindInteractions(root: ActivityFeedRoot, content: HTMLElement) {
         ...current,
         loading: false,
         loadingMore: false,
-        error: error instanceof Error ? error.message : 'Daha fazla aktivite yuklenemedi',
+          error: error instanceof Error ? error.message : 'Daha fazla etkinlik yüklenemedi',
       });
       renderRoot(root);
     });
@@ -157,7 +157,7 @@ export function initActivityFeed() {
         ...state,
         loading: false,
         loadingMore: false,
-        error: error instanceof Error ? error.message : 'Aktivite akisi yuklenemedi',
+        error: error instanceof Error ? error.message : 'Etkinlik akışı yüklenemedi',
       });
       renderRoot(root);
     });

@@ -80,7 +80,7 @@ function renderCollectionHeader(collection: CollectionData, options: { canFollow
             <span class="text-5xl">${collection.icon || '📚'}</span>
             <div>
               <h1 class="text-3xl font-bold">${collection.name}</h1>
-              ${collection.is_public ? '<span class="inline-block rounded bg-green-100 px-2 py-1 text-sm text-green-800">🌍 Herkese Açık</span>' : ''}
+              ${collection.is_public ? '<span class="inline-block rounded bg-green-100 px-2 py-1 text-sm text-green-800">🌍 Herkese açık</span>' : ''}
             </div>
           </div>
 
@@ -101,7 +101,7 @@ function renderCollectionHeader(collection: CollectionData, options: { canFollow
                   ${options.isFollowingLoading ? 'disabled' : ''}
                   class="whitespace-nowrap rounded px-4 py-2 font-medium text-white ${options.isFollowing ? 'bg-gray-600 hover:bg-gray-700' : 'bg-blue-500 hover:bg-blue-600'} disabled:opacity-50"
                 >
-                  ${options.isFollowingLoading ? 'İşleniyor...' : options.isFollowing ? 'Takipten Çık' : 'Takip Et'}
+                  ${options.isFollowingLoading ? 'İşleniyor...' : options.isFollowing ? 'Takipten çık' : 'Takip et'}
                 </button>`
               : ''
           }
@@ -119,7 +119,7 @@ function renderCollectionHeader(collection: CollectionData, options: { canFollow
 
 function renderItemsGrid(items: CollectionItem[], isOwner: boolean): string {
   if (items.length === 0) {
-    return '<div class="py-12 text-center text-gray-500">Bu koleksiyonda henüz mekan eklenmemiş</div>';
+    return '<div class="py-12 text-center text-gray-500">Bu koleksiyona henüz mekan eklenmemiş.</div>';
   }
 
   return `
@@ -148,7 +148,7 @@ function renderItemsGrid(items: CollectionItem[], isOwner: boolean): string {
 
                 <div class="flex gap-2">
                   <a href="/mekan/${item.place_id}" class="flex-1 rounded bg-blue-100 px-3 py-2 text-center text-sm font-medium text-blue-700 transition hover:bg-blue-200">
-                    Mekanı Gör
+                    Mekanı gör
                   </a>
                   ${
                     isOwner
@@ -184,7 +184,7 @@ export function renderCollectionDetail(options: {
   }
 
   if (!options.collection) {
-    return '<div class="py-12 text-center text-gray-500">Koleksiyon bulunamadı</div>';
+    return '<div class="py-12 text-center text-gray-500">Koleksiyon bulunamadı.</div>';
   }
 
   const isOwner = Boolean(options.currentUserId && options.currentUserId === options.collection.user_id);
