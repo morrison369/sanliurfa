@@ -31,7 +31,7 @@ async function loadRevenueData(): Promise<void> {
       setText('proTierRevenue', `$${byTier.pro.monthlyRevenue.toFixed(2)}`);
     }
   } catch (error) {
-    console.error('Error loading revenue data:', error);
+    console.error('Gelir verileri yüklenemedi:', error);
   }
 }
 
