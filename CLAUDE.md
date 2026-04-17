@@ -127,207 +127,207 @@ src/
 
 ### Teknoloji Yığını
 
-- **Framework**: Astro 6.1.7 (SSR, file-based routing)
-- **UI**: Astro components + plain TypeScript browser helpers
+- **Framework**: Astro 6.1.7 (SSR, dosya tabanlı routing)
+- **UI**: Astro bileşenleri + plain TypeScript tarayıcı yardımcıları
 - **Styling**: Tailwind CSS 3.4 + Tailwind Forms
-- **Database**: PostgreSQL (direct `pg` library connection)
-- **Cache/Session/Rate Limit**: Redis (namespaced `sanliurfa:*` keys)
-- **Auth**: JWT + bcrypt (passwords), Redis sessions (24h TTL, sliding window)
-- **Password Hashing**: bcryptjs (12 rounds), SHA-256 migration path for legacy hashes
-- **Input Validation**: Schema-based with sanitization
-- **Observability**: Structured logging, request ID tracking, metrics aggregation, slow query detection
-- **Testing**: Vitest (unit) + Playwright (E2E)
-- **Code Quality**: TypeScript strict mode, Astro Check, Prettier, pre-commit linting
+- **Veritabanı**: PostgreSQL (doğrudan `pg` kütüphanesi bağlantısı)
+- **Cache/Session/Rate Limit**: Redis (`sanliurfa:*` namespace anahtarları)
+- **Auth**: JWT + bcrypt (şifreler), Redis session'ları (24 saat TTL, kayan pencere)
+- **Şifre Hashleme**: bcryptjs (12 tur), eski hash'ler için SHA-256 migration yolu
+- **Giriş Doğrulama**: Sanitization ile schema tabanlı doğrulama
+- **Gözlemlenebilirlik**: Structured logging, request ID takibi, metrik toplama, yavaş sorgu tespiti
+- **Test**: Vitest (unit) + Playwright (E2E)
+- **Kod Kalitesi**: TypeScript strict mode, Astro Check, Prettier, pre-commit linting
 
 ### Temel Mimari Kararlar
 
-1. **Database Security**:
-   - Parameterized queries via `pool.query($1, [$param])` syntax prevent SQL injection
-   - Table name allowlist in `postgres.ts` validates all table references
-   - Connection pool with min 2, max 20 connections, idle timeout 30s
-   - Auto-reconnect on pool error
+1. **Veritabanı Güvenliği**:
+   - `pool.query($1, [$param])` sözdizimiyle kullanılan parametrik sorgular SQL injection'ı önler
+   - `postgres.ts` içindeki table allowlist, tüm tablo referanslarını doğrular
+   - Connection pool en az 2, en fazla 20 bağlantı ve 30 saniye idle timeout ile çalışır
+   - Pool hatasında otomatik yeniden bağlanma yapılır
 
-2. **Authentication**:
-   - **Password**: Bcrypt (12 rounds) hashes stored in DB. Legacy SHA-256 hashes auto-migrated to bcrypt on next successful login
-   - **Sessions**: Redis-backed JWT tokens, not in-memory. Key format: `sanliurfa:session:{token}`
-   - **Flow**: Login → bcrypt verify → create token → `SET session` in Redis (TTL 86400s) → return cookie
-   - **Verification**: Middleware reads `auth-token` cookie → `GET session` from Redis → validate expiry → set `context.locals.user`
-   - **Sliding Window**: Token TTL refreshed on each successful verification (users stay logged in while active)
+2. **Kimlik Doğrulama**:
+   - **Şifre**: Veritabanında Bcrypt (12 tur) hash'leri tutulur. Eski SHA-256 hash'ler bir sonraki başarılı girişte otomatik olarak bcrypt'e taşınır
+   - **Session'lar**: Bellek içi değil, Redis destekli JWT token'ları kullanılır. Anahtar biçimi: `sanliurfa:session:{token}`
+   - **Akış**: Giriş → bcrypt doğrulama → token üretimi → Redis'te `SET session` (TTL 86400s) → cookie döndürme
+   - **Doğrulama**: Middleware `auth-token` cookie'sini okur → Redis'ten `GET session` yapar → süreyi doğrular → `context.locals.user` ayarlar
+   - **Kayan Pencere**: Her başarılı doğrulamada token TTL yenilenir; aktif kullanıcılar oturumunu korur
 
-3. **Caching Strategy**:
-   - **Redis Namespacing**: All keys prefixed `sanliurfa:` to isolate from other projects on shared Redis
-   - **Cache Patterns**:
-     - Places list: `sanliurfa:places:list:{filter}` (5 min TTL)
-     - Place detail: `sanliurfa:places:{id}` (10 min TTL)
-     - Reviews: `sanliurfa:reviews:{placeId}` (10 min TTL)
-     - User favorites: `sanliurfa:favorites:{userId}` (5 min TTL)
-   - **Invalidation**: Pattern deletion on mutations (POST/PUT/DELETE)
-   - **Metrics**: Cache hit/miss tracked per endpoint, aggregated in `/api/metrics`
+3. **Cache Stratejisi**:
+   - **Redis Namespace Kullanımı**: Tüm anahtarlar, paylaşılan Redis üzerinde diğer projelerden ayrışması için `sanliurfa:` ile başlar
+   - **Cache Kalıpları**:
+     - Mekan listesi: `sanliurfa:places:list:{filter}` (5 dakika TTL)
+     - Mekan detayı: `sanliurfa:places:{id}` (10 dakika TTL)
+     - Yorumlar: `sanliurfa:reviews:{placeId}` (10 dakika TTL)
+     - Kullanıcı favorileri: `sanliurfa:favorites:{userId}` (5 dakika TTL)
+   - **Invalidation**: Mutation'larda (POST/PUT/DELETE) pattern silme uygulanır
+   - **Metrikler**: Her endpoint için cache hit/miss izlenir ve `/api/metrics` altında toplanır
 
 4. **Rate Limiting**:
-   - **Mechanism**: Redis key `sanliurfa:ratelimit:{ip}` with counter and TTL (15 min window)
-   - **Limit**: 100 requests per 15 minutes per IP
-   - **Fallback**: If Redis unavailable, uses in-memory map (fail-open with warning log)
-   - **IP Detection**: Extracts rightmost IP from `x-forwarded-for` header (prevents spoofing)
+   - **Mekanizma**: Sayaç ve TTL içeren `sanliurfa:ratelimit:{ip}` Redis anahtarı (15 dakikalık pencere)
+   - **Limit**: IP başına 15 dakikada 100 istek
+   - **Fallback**: Redis erişilemezse uyarı log'u ile in-memory map kullanılır (fail-open)
+   - **IP Tespiti**: `x-forwarded-for` header'ındaki en sağdaki IP alınır; spoofing'i sınırlar
 
-5. **Input Validation**:
-   - Schema-based validation in `src/lib/validation.ts` with `validateWithSchema()`
-   - Schemas defined in `commonSchemas` (login, register, review, place)
-   - XSS sanitization via `sanitizeInput()` (HTML escape)
-   - Returns `{valid, errors, data}` structure
-   - 422 UNPROCESSABLE_ENTITY on validation failure
+5. **Giriş Doğrulama**:
+   - `src/lib/validation.ts` içinde `validateWithSchema()` ile schema tabanlı doğrulama yapılır
+   - Şemalar `commonSchemas` içinde tanımlanır (login, register, review, place)
+   - `sanitizeInput()` ile XSS sanitization uygulanır (HTML escape)
+   - `{valid, errors, data}` yapısı döner
+   - Doğrulama hatasında 422 `UNPROCESSABLE_ENTITY` döner
 
-6. **Observability**:
-   - **Request Metrics**: Every endpoint calls `recordRequest(method, path, status, duration)` → aggregated stats
-   - **Query Metrics**: Every DB query recorded with duration, row count, slow detection
-   - **Slow Detection**:
-     - Queries > 100ms: debug log
-     - Queries > 1000ms: warning log with stack trace
-     - Requests > 500ms: recorded as slow, added to slow operations list
-   - **Pool Monitoring**: Database connection utilization (active/idle/waiting) updated every 30s
-   - **Dashboards**: `/api/metrics` (aggregated), `/api/performance` (detailed, admin-only)
+6. **Gözlemlenebilirlik**:
+   - **Request Metrikleri**: Her endpoint `recordRequest(method, path, status, duration)` çağırır → toplu istatistik üretilir
+   - **Sorgu Metrikleri**: Her DB sorgusu süre, satır sayısı ve yavaşlık tespiti ile kaydedilir
+   - **Yavaşlık Tespiti**:
+     - 100ms üzeri sorgular: debug log
+     - 1000ms üzeri sorgular: stack trace ile warning log
+     - 500ms üzeri istekler: yavaş olarak kaydedilir ve slow operations listesine eklenir
+   - **Pool İzleme**: Veritabanı bağlantı kullanımı (active/idle/waiting) her 30 saniyede güncellenir
+   - **Paneller**: `/api/metrics` (toplu), `/api/performance` (detaylı, admin-only)
 
-7. **API Conventions**:
-   - All endpoints return JSON: `{ success: boolean, data?: T, error?: string }`
-   - Status codes: 200 (OK), 400 (bad input), 401 (auth required), 403 (forbidden), 404 (not found), 409 (conflict), 422 (validation failed), 429 (rate limited), 500 (server error)
-   - X-Request-ID header in all responses for distributed tracing
-   - X-Cache header (HIT/MISS) on cached endpoints
-   - /api/docs → Swagger UI, /api/openapi.json → OpenAPI 3.1 spec
+7. **API Sözleşmeleri**:
+   - Tüm endpoint'ler JSON döner: `{ success: boolean, data?: T, error?: string }`
+   - Durum kodları: 200 (OK), 400 (bad input), 401 (auth required), 403 (forbidden), 404 (not found), 409 (conflict), 422 (validation failed), 429 (rate limited), 500 (server error)
+   - Dağıtık izleme için tüm yanıtlarda `X-Request-ID` header'ı bulunur
+   - Cache'lenen endpoint'lerde `X-Cache` header'ı (HIT/MISS) bulunur
+   - `/api/docs` → Swagger UI, `/api/openapi.json` → OpenAPI 3.1 spec
 
-8. **Component Strategy**:
-   - Astro (.astro) for server-rendered content
-   - plain TypeScript browser helpers for interaction, polling, mutation, and DOM updates
-   - React integration is retained only as a compatibility option, not as the default UI owner
+8. **Bileşen Stratejisi**:
+   - Sunucu tarafı render edilen içerik için Astro (`.astro`) kullanılır
+   - Etkileşim, polling, mutation ve DOM güncellemeleri için plain TypeScript tarayıcı yardımcıları kullanılır
+   - React entegrasyonu yalnızca uyumluluk seçeneği olarak korunur; varsayılan UI sahibi değildir
 
 ### Astro-Only Yönü
 
-- Target direction is Astro-first, not immediate React removal.
-- `@astrojs/react` is an accepted production dependency and should remain unless there is an explicit package-removal decision.
-- Before planning a framework migration batch, read:
+- Hedef yön Astro-first'tür; anlık React kaldırma değildir.
+- `@astrojs/react`, açık paket kaldırma kararı yoksa kabul edilen production bağımlılığı olarak kalmalıdır.
+- Bir framework migration batch'i planlamadan önce şunları oku:
   - `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md`
   - `astro.config.mjs`
-- Migration rule:
-  - low-interactivity widgets can move to Astro + plain TypeScript first
-  - medium/high-state admin and analytics panels must be evaluated individually
-  - do not propose big-bang React removal
-  - after hydration reaches zero, use audit reports for visibility; do not turn them into an automatic removal task
+- Migration kuralı:
+  - düşük etkileşimli widget'lar önce Astro + plain TypeScript'e taşınabilir
+  - medium/high-state admin ve analytics panelleri tek tek değerlendirilmelidir
+  - big-bang React removal önerme
+  - hydration sıfıra indikten sonra audit raporlarını yalnızca görünürlük için kullan; otomatik removal işine çevirme
 
 ### Veritabanı
 
-PostgreSQL with connection pool. Key tables:
-- `users` — Accounts with roles (user/admin/moderator), bcrypt password hashes
-- `places` — Locations with category, coordinates, ratings
-- `reviews` / `comments` — User feedback
-- `favorites`, `blog_posts`, `events`, `historical_sites` — Content
+Connection pool ile PostgreSQL kullanılır. Temel tablolar:
+- `users` — roller (user/admin/moderator) ve bcrypt şifre hash'leri ile hesaplar
+- `places` — kategori, koordinat ve puan bilgisi içeren mekanlar
+- `reviews` / `comments` — kullanıcı geri bildirimleri
+- `favorites`, `blog_posts`, `events`, `historical_sites` — içerik yüzeyleri
 
-All queries use parameterized statements (`$1`, `$2`, etc.). Direct access via `npm run db:psql`.
+Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim `npm run db:psql` ile yapılır.
 
 ### Kimlik Doğrulama ve Yetkilendirme
 
-**Flow**:
-1. POST `/api/auth/register` or `/api/auth/login` with email + password
-2. Validate credentials with bcrypt.compare()
-3. Create JWT token, store session in Redis with 24h TTL
-4. Return token in `auth-token` cookie (httpOnly, secure, sameSite=strict)
-5. Middleware validates token on every request, sets `context.locals.user`
-6. Routes check `context.locals.isAdmin` for role-based access
+**Akış**:
+1. E-posta + şifre ile `POST /api/auth/register` veya `POST /api/auth/login`
+2. Kimlik bilgilerini `bcrypt.compare()` ile doğrula
+3. JWT token oluştur, session'ı 24 saat TTL ile Redis'e yaz
+4. Token'ı `auth-token` cookie'si içinde döndür (`httpOnly`, `secure`, `sameSite=strict`)
+5. Middleware her istekte token'ı doğrular ve `context.locals.user` ayarlar
+6. Route'lar rol bazlı erişim için `context.locals.isAdmin` kontrolü yapar
 
-**Key Functions** (`src/lib/auth.ts`):
-- `signUp(email, password, fullName)` — Create account
-- `signIn(email, password)` — Verify credentials, create session
-- `verifyToken(token)` — Validate session in Redis
-- `createToken(userId, email, role)` — Generate JWT
-- `signOut(token)` — Delete session from Redis
+**Temel Fonksiyonlar** (`src/lib/auth.ts`):
+- `signUp(email, password, fullName)` — hesap oluşturur
+- `signIn(email, password)` — kimlik doğrular, session oluşturur
+- `verifyToken(token)` — Redis içindeki session'ı doğrular
+- `createToken(userId, email, role)` — JWT üretir
+- `signOut(token)` — Redis içindeki session'ı siler
 
-**Protected Routes**:
-- `/admin/*` requires `isAdmin` role (checked in middleware, redirects to login if unauthorized)
-- `/api/admin/*` requires `isAdmin` role (returns 403 FORBIDDEN if not)
-- `/api/health/detailed` and `/api/performance` (admin-only)
+**Korumalı Route'lar**:
+- `/admin/*` `isAdmin` rolü ister; middleware içinde kontrol edilir, yetkisizse login'e yönlendirilir
+- `/api/admin/*` `isAdmin` rolü ister; yoksa 403 `FORBIDDEN` döner
+- `/api/health/detailed` ve `/api/performance` yalnızca admin içindir
 
 ### API Endpoint'leri
 
-**Health & Observability**:
-- `GET /api/health` — Database/Redis status, response times
-- `GET /api/health/detailed` (admin) — System metrics, pool info, error details
-- `GET /api/metrics` (admin) — Aggregated request metrics, error rates, cache stats, slowest endpoints
-- `GET /api/performance` (admin) — Slow queries, slow operations, pool utilization, performance dashboard
+**Sağlık ve Gözlemlenebilirlik**:
+- `GET /api/health` — Veritabanı/Redis durumu ve yanıt süreleri
+- `GET /api/health/detailed` (admin) — Sistem metrikleri, pool bilgisi ve hata detayları
+- `GET /api/metrics` (admin) — Toplu request metrikleri, hata oranları, cache istatistikleri ve en yavaş endpoint'ler
+- `GET /api/performance` (admin) — Yavaş sorgular, yavaş operasyonlar, pool kullanımı ve performans paneli
 
-**Ops & Admin Contract Surfaces**:
-- `GET /api/admin/dashboard/overview` — Admin dashboard summary surface
-- `GET /api/admin/system/metrics` — Admin metrics and normalized status summary
-- `GET /api/admin/system/artifact-health` — Artifact snapshot + summary
-- `GET /api/admin/deployment/status` — Deployment readiness + artifact health
-- `GET /api/admin/audit-logs` — Admin audit sink + filters + CSV export
+**Ops ve Admin Kontrat Yüzeyleri**:
+- `GET /api/admin/dashboard/overview` — Admin panel özet yüzeyi
+- `GET /api/admin/system/metrics` — Admin metrikleri ve normalize durum özeti
+- `GET /api/admin/system/artifact-health` — Artefact snapshot ve özet
+- `GET /api/admin/deployment/status` — Deployment readiness ve artefact health
+- `GET /api/admin/audit-logs` — Admin audit kaydı, filtreler ve CSV dışa aktarım
 - `GET /api/admin/system/integration-settings` — Integration readiness snapshot
-- `PUT /api/admin/system/integration-settings` — Integration settings mutation
-- `GET /api/admin/performance/optimization` — Performance optimization summary
-- `GET /api/admin/subscriptions/users` — Subscription user list
-- `POST /api/admin/subscriptions/users` — Subscription management actions
-- `POST /api/admin/messages/{id}/status` — Contact message status mutation
-- `GET /api/openapi.json` — Current contract source for generated admin types
+- `PUT /api/admin/system/integration-settings` — Integration ayar mutation'ı
+- `GET /api/admin/performance/optimization` — Performans optimizasyon özeti
+- `GET /api/admin/subscriptions/users` — Abonelik kullanıcı listesi
+- `POST /api/admin/subscriptions/users` — Abonelik yönetim aksiyonları
+- `POST /api/admin/messages/{id}/status` — İletişim mesajı durum mutation'ı
+- `GET /api/openapi.json` — Üretilmiş admin tipleri için güncel kontrat kaynağı
 
-**Admin UI Ops Surfaces**:
-- `/admin/runtime-monitor` — Runtime health / performance / artifact monitor
-- `/admin/audit` — Persistent admin ops audit viewer
-- `/admin/access-coverage` — Admin wrapper coverage monitor and report downloads
-- `/admin` — Admin dashboard overview fed by typed admin client layer
+**Admin UI Ops Yüzeyleri**:
+- `/admin/runtime-monitor` — Runtime sağlık / performans / artefact izleme yüzeyi
+- `/admin/audit` — Kalıcı admin ops audit görüntüleyicisi
+- `/admin/access-coverage` — Admin wrapper coverage izleme ve rapor indirme yüzeyi
+- `/admin` — Typed admin client katmanından beslenen admin ana panel özeti
 
-**Authentication**:
-- `POST /api/auth/register` — Create account (schema: email, password min 8 chars with uppercase/number/special)
-- `POST /api/auth/login` — Login (email, password)
-- `POST /api/auth/logout` — Logout (clears session from Redis)
+**Kimlik Doğrulama**:
+- `POST /api/auth/register` — Hesap oluşturur (şema: e-posta, en az 8 karakter, büyük harf/sayı/özel karakter içeren şifre)
+- `POST /api/auth/login` — Giriş yapar (e-posta, şifre)
+- `POST /api/auth/logout` — Çıkış yapar; session'ı Redis'ten temizler
 
-**Data & Content**:
-- `GET /api/places` — List places (cached 5 min)
-- `GET /api/places/:id` — Place detail (cached 10 min)
-- `GET /api/reviews?placeId=:id` — Place reviews (cached 10 min)
-- `POST /api/reviews` — Create review (invalidates reviews cache)
-- `GET /api/favorites` — User's saved places (cached 5 min, per-user)
-- `POST /api/favorites` — Save place (invalidates favorites cache)
-- `DELETE /api/favorites/:id` — Remove saved place (invalidates cache)
+**Veri ve İçerik**:
+- `GET /api/places` — Mekanları listeler (5 dakika cache)
+- `GET /api/places/:id` — Mekan detayını döner (10 dakika cache)
+- `GET /api/reviews?placeId=:id` — Mekan yorumlarını döner (10 dakika cache)
+- `POST /api/reviews` — Yorum oluşturur; yorum cache'ini invalidate eder
+- `GET /api/favorites` — Kullanıcının kaydettiği mekanlar (5 dakika cache, kullanıcı bazlı)
+- `POST /api/favorites` — Mekan kaydeder; favori cache'ini invalidate eder
+- `DELETE /api/favorites/:id` — Kayıtlı mekanı kaldırır; cache'i invalidate eder
 
-**Loyalty & Rewards**:
-- `GET /api/loyalty/points` — User's points balance and history (auth required)
-- `GET /api/loyalty/rewards` — Available rewards catalog (public)
-- `GET /api/loyalty/achievements` — User achievements (auth required, supports view=all/unviewed/stats)
-- `POST /api/loyalty/achievements` — Mark achievement as viewed (auth required)
-- `GET /api/loyalty/tiers` — User tier and tier list (auth required)
-- `POST /api/admin/loyalty/rewards` (admin) — Create new reward
-- `GET /api/admin/loyalty/rewards` (admin) — List all rewards (active + inactive)
-- `POST /api/admin/loyalty/award` (admin) — Manually award points or badge to user
+**Sadakat ve Ödüller**:
+- `GET /api/loyalty/points` — Kullanıcının puan bakiyesi ve geçmişi (auth gerekli)
+- `GET /api/loyalty/rewards` — Kullanılabilir ödül kataloğu (public)
+- `GET /api/loyalty/achievements` — Kullanıcı başarımları (auth gerekli, view=all/unviewed/stats destekli)
+- `POST /api/loyalty/achievements` — Başarım görüntülendi olarak işaretler (auth gerekli)
+- `GET /api/loyalty/tiers` — Kullanıcının seviyesi ve seviye listesi (auth gerekli)
+- `POST /api/admin/loyalty/rewards` (admin) — Yeni ödül oluşturur
+- `GET /api/admin/loyalty/rewards` (admin) — Tüm ödülleri listeler (aktif + pasif)
+- `POST /api/admin/loyalty/award` (admin) — Kullanıcıya manuel puan veya rozet verir
 
-**Social Features**:
-- `GET /api/hashtags` — Trending hashtags (cached 30 min)
-- `GET /api/hashtags/:slug` — Hashtag detail with tagged places/reviews (cached 10 min)
-- `GET /api/users/:id/mentions` — User mentions and notifications (auth required)
-- `GET /api/realtime/feed` — SSE: Real-time social feed updates (cursor-based, 15s polling)
-- `GET /api/leaderboards/users` — Top users leaderboard (supports sortBy=points/reviews, limit param)
+**Sosyal Özellikler**:
+- `GET /api/hashtags` — Trend hashtag'leri döner (30 dakika cache)
+- `GET /api/hashtags/:slug` — Hashtag detayını, etiketli mekan ve yorumlarla döner (10 dakika cache)
+- `GET /api/users/:id/mentions` — Kullanıcı mention ve bildirimlerini döner (auth gerekli)
+- `GET /api/realtime/feed` — SSE: gerçek zamanlı sosyal akış güncellemeleri (cursor tabanlı, 15sn polling)
+- `GET /api/leaderboards/users` — En iyi kullanıcı liderlik tablosu (sortBy=points/reviews ve limit destekli)
 
-**Real-time Analytics** (admin):
-- `GET /api/realtime/analytics` — SSE: Live metrics (5s) + KPIs (30s polling)
+**Gerçek Zamanlı Analitik** (admin):
+- `GET /api/realtime/analytics` — SSE: canlı metrikler (5sn) + KPI'lar (30sn polling)
 
-**User Management**:
-- `GET /api/users/:id/profile` — Public user profile
-- `GET /api/users/me` — Current user info (auth required)
-- `PUT /api/users/me` — Update user profile (auth required)
-- `GET /api/user/quotas` — Feature usage quotas (auth required)
-- `POST /api/blocking/block` — Block user (auth required)
-- `GET /api/blocking/check` — Check if blocked (auth required)
-- `DELETE /api/blocking/unblock` — Unblock user (auth required)
+**Kullanıcı Yönetimi**:
+- `GET /api/users/:id/profile` — Herkese açık kullanıcı profili
+- `GET /api/users/me` — Geçerli kullanıcı bilgisi (auth gerekli)
+- `PUT /api/users/me` — Kullanıcı profilini günceller (auth gerekli)
+- `GET /api/user/quotas` — Özellik kullanım kotaları (auth gerekli)
+- `POST /api/blocking/block` — Kullanıcıyı engeller (auth gerekli)
+- `GET /api/blocking/check` — Engelli durumunu kontrol eder (auth gerekli)
+- `DELETE /api/blocking/unblock` — Kullanıcının engelini kaldırır (auth gerekli)
 
-**Admin Moderation**:
-- `POST /api/reports/submit` — Submit content report
-- `GET /api/admin/moderation/reports` (admin) — List reports
-- `POST /api/admin/moderation/resolve` (admin) — Resolve report
-- `DELETE /api/admin/moderation/remove-content` (admin) — Remove reported content
+**Admin Moderasyonu**:
+- `POST /api/reports/submit` — İçerik raporu gönderir
+- `GET /api/admin/moderation/reports` (admin) — Raporları listeler
+- `POST /api/admin/moderation/resolve` (admin) — Raporu çözer
+- `DELETE /api/admin/moderation/remove-content` (admin) — Raporlanan içeriği kaldırır
 
-**Subscriptions & Payments**:
-- `GET /api/subscriptions/tiers` — Available subscription tiers
-- `POST /api/subscriptions/checkout` — Create Stripe checkout session
-- `POST /api/subscriptions/webhook` — Stripe webhook handler
+**Abonelikler ve Ödemeler**:
+- `GET /api/subscriptions/tiers` — Kullanılabilir abonelik katmanlarını döner
+- `POST /api/subscriptions/checkout` — Stripe checkout oturumu oluşturur
+- `POST /api/subscriptions/webhook` — Stripe webhook işleyicisi
 
-**Documentation**:
-- `GET /api/openapi.json` — OpenAPI 3.1 specification
+**Dokümantasyon**:
+- `GET /api/openapi.json` — OpenAPI 3.1 tanımı
 - `GET /api/docs` — Swagger UI viewer
 
 ### Güvenlik
@@ -370,15 +370,15 @@ The application supports real-time updates via **Server-Sent Events (SSE)** for 
 
 ### Sadakat ve Ödül Sistemi
 
-Complete gamification system with points, badges, achievements, tiers, and redeemable rewards.
+Puanlar, rozetler, başarımlar, seviyeler ve kullanılabilir ödüller içeren tam oyunlaştırma sistemi.
 
-**Components**:
-- `src/lib/loyalty-points.ts` — Points transactions, balance tracking, history
-- `src/lib/badges.ts` — Badge definitions and award logic
-- `src/lib/achievements.ts` — Achievement definitions, unlock conditions, stats
-- `src/lib/gamification.ts` — Event hooks to trigger achievements (review created, photo uploaded, daily login)
+**Bileşenler**:
+- `src/lib/loyalty-points.ts` — Puan işlemleri, bakiye takibi ve geçmiş
+- `src/lib/badges.ts` — Rozet tanımları ve verme mantığı
+- `src/lib/achievements.ts` — Başarım tanımları, açılma koşulları ve istatistikler
+- `src/lib/gamification.ts` — Başarımları tetikleyen event hook'ları (yorum oluşturma, fotoğraf yükleme, günlük giriş)
 
-**Database Tables**:
+**Veritabanı Tabloları**:
 - `loyalty_points` — Point transactions (user_id, amount, type, reason, created_at)
 - `user_badges` — Awarded badges (user_id, badge_key, awarded_at, reason)
 - `user_achievements` — Unlocked achievements (user_id, achievement_id, unlocked_at, viewed_at)
@@ -387,64 +387,63 @@ Complete gamification system with points, badges, achievements, tiers, and redee
 - `reward_inventory` — Stock tracking (reward_id, available_stock, total_stock)
 - `user_tier_history` — Tier progression log (user_id, tier_name, previous_tier, achieved_at, points_at_achievement)
 
-**Key Flows**:
-1. **Earning Points**: `awardPoints(userId, amount, reason)` creates transaction, updates `loyalty_tiers.current_points`, checks tier upgrade
-2. **Unlocking Achievements**: `checkCommonAchievements(userId)` called from gamification hooks, auto-unlocks based on conditions
-3. **Awarding Badges**: `awardBadgeToUser(userId, badgeKey, reason)` inserts record, returns false if already awarded
-4. **Redeeming Rewards**: User selects reward if they have enough points, deducts points via transaction
+**Temel Akışlar**:
+1. **Puan Kazanma**: `awardPoints(userId, amount, reason)` işlem oluşturur, `loyalty_tiers.current_points` değerini günceller ve seviye yükseltmesini kontrol eder
+2. **Başarım Açma**: `checkCommonAchievements(userId)` oyunlaştırma hook'larından çağrılır, koşullar sağlanırsa otomatik açar
+3. **Rozet Verme**: `awardBadgeToUser(userId, badgeKey, reason)` kayıt ekler; rozet zaten verilmişse `false` döner
+4. **Ödül Kullanma**: Kullanıcı yeterli puanı varsa ödülü seçer, puanlar işlem üzerinden düşülür
 
-**Admin Management**:
-- `GET /api/admin/loyalty/rewards` — List all rewards (active + inactive), cached 2 min
-- `POST /api/admin/loyalty/rewards` — Create new reward with optional inventory
-- `POST /api/admin/loyalty/award` — Manually award points/badge to user
+**Admin Yönetimi**:
+- `GET /api/admin/loyalty/rewards` — Tüm ödülleri listeler (aktif + pasif), 2 dakika cache
+- `POST /api/admin/loyalty/rewards` — İsteğe bağlı envanterle yeni ödül oluşturur
+- `POST /api/admin/loyalty/award` — Kullanıcıya manuel puan/rozet verir
 
-**Caching**:
-- `sanliurfa:loyalty:balance:{userId}` — User's points balance (TTL: 300s)
-- `sanliurfa:tier:user:{userId}` — User's current tier (TTL: 300s)
-- `sanliurfa:achievements:stats:{userId}` — Achievement stats (TTL: 300s)
-- `sanliurfa:admin:rewards:catalog` — Admin rewards list (TTL: 120s)
+**Cache**:
+- `sanliurfa:loyalty:balance:{userId}` — Kullanıcının puan bakiyesi (TTL: 300s)
+- `sanliurfa:tier:user:{userId}` — Kullanıcının güncel seviyesi (TTL: 300s)
+- `sanliurfa:achievements:stats:{userId}` — Başarım istatistikleri (TTL: 300s)
+- `sanliurfa:admin:rewards:catalog` — Admin ödül listesi (TTL: 120s)
 
 ### Sosyal Özellikler
 
-Social networking elements: hashtags, mentions, activity feed, trending content.
+Hashtag, mention, aktivite akışı ve trend içerik içeren sosyal ağ öğeleri.
 
-**Components**:
-- `src/lib/social-features.ts` — Hashtag trends, mention detection
-- `src/components/HashtagExplorer.tsx` — Browse trending hashtags and associated content
-- `src/components/MentionNotifications.tsx` — User mention notifications
-- Activity feed via real-time SSE endpoint
+**Bileşenler**:
+- `src/lib/social-features.ts` — Hashtag trend mantığı ve mention tespiti
+- `src/components/HashtagExplorer.astro` — Trend hashtag'leri ve ilişkili içeriği gezme yüzeyi
+- Aktivite akışı, gerçek zamanlı SSE endpoint'i üzerinden sağlanır
 
-**Features**:
-1. **Hashtags** (`/api/hashtags` and `/api/hashtags/:slug`)
-   - Trending hashtags extracted from place/review descriptions
-   - Endpoint returns: hashtag name, usage count, trending period
-   - Detail view shows places and reviews tagged with hashtag
-   - Cached: 30 min (list), 10 min (detail)
+**Özellikler**:
+1. **Hashtag'ler** (`/api/hashtags` ve `/api/hashtags/:slug`)
+   - Trend hashtag'ler mekan/yorum açıklamalarından çıkarılır
+   - Endpoint; hashtag adı, kullanım sayısı ve trend dönemini döner
+   - Detay görünümü, hashtag ile etiketli mekan ve yorumları gösterir
+   - Cache: 30 dakika (liste), 10 dakika (detay)
 
-2. **Mentions** (`/api/users/:id/mentions`)
-   - Track @mentions in reviews/comments
-   - User notification system with view status
-   - Fire-and-forget background query marks mentions as read
-   - Cached: 2 min per user
+2. **Mention'lar** (`/api/users/:id/mentions`)
+   - Yorum ve açıklamalardaki @mention'ları izler
+   - Görüntülenme durumlu kullanıcı bildirim sistemi sağlar
+   - Fire-and-forget arka plan sorgusu mention'ları okundu işaretler
+   - Kullanıcı başına 2 dakika cache
 
-3. **Activity Feed** (Real-time SSE: `/api/realtime/feed`)
-   - User activities: reviews, uploads, tier achievements
-   - Cursor-based tracking (only new activities since last fetch)
-   - 15-second polling interval
+3. **Aktivite Akışı** (Gerçek zamanlı SSE: `/api/realtime/feed`)
+   - Kullanıcı aktiviteleri: yorumlar, yüklemeler, seviye başarımları
+   - Cursor tabanlı takip ile yalnızca son fetch'ten sonraki yeni aktiviteleri döner
+   - 15 saniyelik polling aralığı kullanır
 
-4. **User Profiles** (`/api/users/:id/profile`)
-   - Public profile with stats: reviews written, badges, tier, achievements
-   - Follower/following counts
+4. **Kullanıcı Profilleri** (`/api/users/:id/profile`)
+   - Yazılan yorumlar, rozetler, seviye ve başarımlar dahil herkese açık profil istatistikleri sunar
+   - Takipçi/takip edilen sayıları gösterir
 
-**Database Tables**:
+**Veritabanı Tabloları**:
 - `user_activity` — Activity log (user_id, activity_type, related_id, created_at)
 - `followers` — Follow relationships (follower_id, following_id, created_at)
 - `mentions` — @mentions (user_id, mentioned_by_id, review_id, viewed_at)
 
-**Caching**:
-- `sanliurfa:hashtags:list:{period}:{limit}` — Trending hashtags (TTL: 30 min)
-- `sanliurfa:hashtag:slug:{slug}` — Hashtag detail (TTL: 10 min)
-- `sanliurfa:mentions:{userId}:{unreadOnly}` — User mentions (TTL: 2 min)
+**Cache**:
+- `sanliurfa:hashtags:list:{period}:{limit}` — Trend hashtag'ler (TTL: 30 dakika)
+- `sanliurfa:hashtag:slug:{slug}` — Hashtag detayı (TTL: 10 dakika)
+- `sanliurfa:mentions:{userId}:{unreadOnly}` — Kullanıcı mention'ları (TTL: 2 dakika)
 
 ### Premium Abonelikler ve Özellik Kısıtlama
 
@@ -715,53 +714,53 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 ## Önemli Dosyalar
 
 ### Çekirdek Altyapı
-| File | Purpose |
-|------|---------|
-| `DEPLOYMENT.md` | Complete CentOS Web Panel production deployment guide (PM2, Nginx, SSL, backups) |
-| `tsconfig.json` | TypeScript strict mode (must not relax) |
-| `.env.example` | Environment variables template (critical: DATABASE_URL, JWT_SECRET, REDIS_URL) |
-| `Dockerfile` | Development container image (for local docker-compose stack) |
-| `docker-compose.yml` | Development stack with PostgreSQL, Redis, Node.js (local development only) |
-| `ecosystem.config.js` | PM2 configuration for production (created during deployment) |
+| Dosya | Amaç |
+|------|------|
+| `DEPLOYMENT.md` | PM2, Nginx, SSL ve yedeklerle tam CentOS Web Panel production dağıtım rehberi |
+| `tsconfig.json` | TypeScript strict mode; gevşetilmemelidir |
+| `.env.example` | Ortam değişkeni şablonu (kritik: DATABASE_URL, JWT_SECRET, REDIS_URL) |
+| `Dockerfile` | Yerel docker-compose stack'i için geliştirme container imajı |
+| `docker-compose.yml` | PostgreSQL, Redis ve Node.js içeren geliştirme stack'i (yalnızca yerel geliştirme) |
+| `ecosystem.config.js` | Production için PM2 yapılandırması (dağıtım sırasında oluşturulur) |
 
 ### Çekirdek Kütüphaneler
-| File | Purpose |
-|------|---------|
-| `src/middleware.ts` | Request auth, CORS, rate limiting, security headers |
-| `src/lib/postgres.ts` | Database pool, parameterized queries, table allowlist, slow query monitoring |
-| `src/lib/auth.ts` | Bcrypt hashing, Redis sessions, token creation/verification |
-| `src/lib/cache.ts` | Redis client, namespaced keys, rate limiting, cache operations |
-| `src/lib/validation.ts` | Schema-based validation with sanitization |
-| `src/lib/logging.ts` | Structured logging with request ID tracking |
-| `src/lib/metrics.ts` | Request/query metrics, aggregation, performance stats |
-| `src/lib/api.ts` | Response/error formatters, HTTP constants, validation helpers |
-| `src/lib/env.ts` | Environment variable validation |
+| Dosya | Amaç |
+|------|------|
+| `src/middleware.ts` | Request auth, CORS, rate limiting ve security header'ları |
+| `src/lib/postgres.ts` | Veritabanı pool'u, parametrik sorgular, table allowlist ve yavaş sorgu izleme |
+| `src/lib/auth.ts` | Bcrypt hashleme, Redis session'ları, token üretim/doğrulama |
+| `src/lib/cache.ts` | Redis istemcisi, namespaced key'ler, rate limiting ve cache işlemleri |
+| `src/lib/validation.ts` | Sanitization ile schema tabanlı doğrulama |
+| `src/lib/logging.ts` | Request ID takibi ile structured logging |
+| `src/lib/metrics.ts` | Request/query metrikleri, aggregation ve performans istatistikleri |
+| `src/lib/api.ts` | Response/error formatlayıcılar, HTTP sabitleri ve doğrulama yardımcıları |
+| `src/lib/env.ts` | Ortam değişkeni doğrulama |
 
 ### Sağlık ve Gözlemlenebilirlik
-| File | Purpose |
-|------|---------|
-| `src/pages/api/health.ts` | Health check endpoint (basic status) |
-| `src/pages/api/health/detailed.ts` | Detailed health (admin, system metrics, pool info) |
-| `src/pages/api/metrics.ts` | Aggregated metrics dashboard (admin) |
-| `src/pages/api/performance.ts` | Performance monitoring (admin, slow queries, slow ops, pool) |
-| `src/pages/api/openapi.json.ts` | OpenAPI 3.1 specification |
-| `src/pages/api/docs.ts` | Swagger UI endpoint |
+| Dosya | Amaç |
+|------|------|
+| `src/pages/api/health.ts` | Health check endpoint'i (temel durum) |
+| `src/pages/api/health/detailed.ts` | Detaylı sağlık endpoint'i (admin, sistem metrikleri, pool bilgisi) |
+| `src/pages/api/metrics.ts` | Toplu metrik paneli (admin) |
+| `src/pages/api/performance.ts` | Performans izleme endpoint'i (admin, yavaş sorgular, yavaş operasyonlar, pool) |
+| `src/pages/api/openapi.json.ts` | OpenAPI 3.1 tanımı |
+| `src/pages/api/docs.ts` | Swagger UI endpoint'i |
 
 ### Ops Governance ve Source Of Truth
-| File | Purpose |
-|------|---------|
-| `docs/ops/README.md` | Ops document entry point |
-| `docs/ops/SOURCE_OF_TRUTH_MAP.md` | Which file owns which decision |
-| `docs/RELEASE_GATES.md` | Release gate behavior and decision model |
-| `docs/ops/BRANCH_PROTECTION.md` | Required checks and parity rules |
-| `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` | Artifact freshness status semantics |
-| `docs/ops/ARTIFACT_RETENTION_POLICY.md` | Artifact and audit retention rules |
-| `docs/ops/INCIDENT_RUNBOOK.md` | Incident response order |
-| `docs/ops/INTEGRATION_READINESS.md` | Admin integration readiness policy |
-| `docs/ops/LEGACY_PHASE_SURFACE.md` | Legacy phase compatibility boundaries |
-| `docs/SCRIPT_SURFACE_POLICY.md` | Script surface and runner-first policy |
-| `src/types/generated-admin-api.ts` | Generated admin API contract types |
-| `src/types/admin-api.ts` | UI-facing admin type layer |
+| Dosya | Amaç |
+|------|------|
+| `docs/ops/README.md` | Ops doküman giriş noktası |
+| `docs/ops/SOURCE_OF_TRUTH_MAP.md` | Hangi kararın hangi dosyaya ait olduğunu gösterir |
+| `docs/RELEASE_GATES.md` | Release gate davranışı ve karar modeli |
+| `docs/ops/BRANCH_PROTECTION.md` | Zorunlu kontroller ve parity kuralları |
+| `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` | Artefact freshness durum semantiği |
+| `docs/ops/ARTIFACT_RETENTION_POLICY.md` | Artefact ve audit retention kuralları |
+| `docs/ops/INCIDENT_RUNBOOK.md` | Incident müdahale sırası |
+| `docs/ops/INTEGRATION_READINESS.md` | Admin integration readiness politikası |
+| `docs/ops/LEGACY_PHASE_SURFACE.md` | Legacy phase uyumluluk sınırları |
+| `docs/SCRIPT_SURFACE_POLICY.md` | Script yüzeyi ve runner-first politikası |
+| `src/types/generated-admin-api.ts` | Üretilmiş admin API kontrat tipleri |
+| `src/types/admin-api.ts` | UI-facing admin tip katmanı |
 | `src/lib/admin-format.ts` | Admin ops ortak tarih/fallback format source |
 | `src/lib/admin-index-data.ts` | Admin ana sayfa SSR data loader source |
 | `src/lib/admin-index.ts` | Admin ana sayfa risk/tool view model source |
@@ -776,18 +775,18 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `scripts/astro-hydration-inventory.ts` | Astro hydration inventory report generator |
 
 ### Gerçek Zamanlı ve Analitik
-| File | Purpose |
-|------|---------|
-| `src/lib/realtime-sse.ts` | Server-Sent Events manager, reconnection logic, event listeners |
-| `src/lib/business-analytics.ts` | KPI calculations, performance metrics aggregation |
-| `src/pages/api/realtime/analytics.ts` | Real-time metrics/KPIs SSE endpoint (admin-only) |
-| `src/pages/api/realtime/feed.ts` | Real-time social feed updates SSE endpoint (auth required) |
-| `src/components/LiveAnalyticsDashboard.tsx` | Real-time metrics display with color-coded health |
-| `src/pages/canli-analitik/index.astro` | Admin analytics dashboard page |
+| Dosya | Amaç |
+|------|------|
+| `src/lib/realtime-sse.ts` | Server-Sent Events yöneticisi, yeniden bağlanma mantığı ve event listener'lar |
+| `src/lib/business-analytics.ts` | KPI hesapları ve performans metriği toplama |
+| `src/pages/api/realtime/analytics.ts` | Gerçek zamanlı metrik/KPI SSE endpoint'i (yalnızca admin) |
+| `src/pages/api/realtime/feed.ts` | Gerçek zamanlı sosyal akış SSE endpoint'i (auth gerekli) |
+| `src/components/LiveAnalyticsDashboard.astro` | Renk kodlu sağlık durumuyla canlı metrik görünümü |
+| `src/pages/canli-analitik/index.astro` | Admin analitik panel sayfası |
 
 ### Sadakat ve Ödül Sistemi
-| File | Purpose |
-|------|---------|
+| Dosya | Amaç |
+|------|------|
 | `src/lib/loyalty-points.ts` | Points transactions, balance tracking |
 | `src/lib/badges.ts` | Badge definitions and award logic |
 | `src/lib/achievements.ts` | Achievement definitions, unlock conditions |
@@ -798,63 +797,62 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `src/pages/api/loyalty/tiers.ts` | User tier and tier progression endpoint |
 | `src/pages/api/admin/loyalty/rewards.ts` | Admin rewards management (GET list, POST create) |
 | `src/pages/api/admin/loyalty/award.ts` | Admin manual award endpoint (points or badge) |
-| `src/components/LoyaltyDashboard.tsx` | User loyalty status and rewards display |
-| `src/components/RewardsPanel.tsx` | Public rewards catalog browsing and redemption UI |
-| `src/components/AdminLoyaltyPanel.tsx` | Admin 3-tab panel: rewards catalog, manual awards, statistics |
-| `src/pages/admin/loyalty/index.astro` | Admin loyalty management page |
+| `src/components/LoyaltyDashboard.astro` | Kullanıcının sadakat durumu ve ödül görünümü |
+| `src/components/AdminLoyaltyPanel.astro` | Ödül kataloğu, manuel ödül verme ve istatistiklerden oluşan admin 3-tab paneli |
+| `src/pages/admin/loyalty/index.astro` | Admin sadakat yönetim sayfası |
 
 ### Sosyal Özellikler
-| File | Purpose |
-|------|---------|
-| `src/lib/social-features.ts` | Hashtag trending logic, mention detection |
-| `src/pages/api/hashtags/index.ts` | Trending hashtags endpoint |
-| `src/pages/api/hashtags/[slug].ts` | Hashtag detail with tagged places/reviews |
-| `src/pages/api/users/[id]/mentions.ts` | User mentions and notifications endpoint |
-| `src/pages/api/users/[id]/profile.ts` | Public user profile endpoint |
-| `src/pages/api/leaderboards/users.ts` | Top users leaderboard endpoint |
-| `src/components/HashtagExplorer.tsx` | Hashtag browsing and trending display |
-| `src/components/UserPublicProfile.tsx` | Public user profile display |
-| `src/pages/sosyal/index.astro` | Social exploration page with feed and hashtag explorer |
+| Dosya | Amaç |
+|------|------|
+| `src/lib/social-features.ts` | Hashtag trend mantığı ve mention tespiti |
+| `src/pages/api/hashtags/index.ts` | Trend hashtag endpoint'i |
+| `src/pages/api/hashtags/[slug].ts` | Etiketli mekan/yorumlarla hashtag detay endpoint'i |
+| `src/pages/api/users/[id]/mentions.ts` | Kullanıcı mention ve bildirim endpoint'i |
+| `src/pages/api/users/[id]/profile.ts` | Herkese açık kullanıcı profil endpoint'i |
+| `src/pages/api/leaderboards/users.ts` | En iyi kullanıcı liderlik tablosu endpoint'i |
+| `src/components/HashtagExplorer.astro` | Hashtag gezme ve trend görünümü |
+| `src/components/UserPublicProfile.astro` | Herkese açık kullanıcı profil görünümü |
+| `src/pages/sosyal/index.astro` | Feed ve hashtag explorer içeren sosyal keşif sayfası |
 
 ### Abonelikler ve Kullanıcı Yönetimi
-| File | Purpose |
-|------|---------|
-| `src/lib/subscriptions.ts` | Stripe integration, subscription tier management |
-| `src/lib/feature-gating.ts` | Feature availability checking by subscription tier |
-| `src/pages/api/subscriptions/checkout.ts` | Stripe checkout session creation |
-| `src/pages/api/subscriptions/webhook.ts` | Stripe webhook event handler |
-| `src/pages/api/subscriptions/tiers.ts` | Available subscription tiers endpoint |
-| `src/pages/api/user/quotas.ts` | Feature usage quotas endpoint |
-| `src/pages/api/blocking/block.ts` | Block user endpoint |
-| `src/pages/api/blocking/check.ts` | Check if user is blocked endpoint |
-| `src/pages/api/blocking/unblock.ts` | Unblock user endpoint |
-| `src/pages/api/reports/submit.ts` | Content report submission |
-| `src/pages/api/admin/moderation/reports.ts` | Admin moderation reports list |
-| `src/pages/api/admin/moderation/resolve.ts` | Admin report resolution |
-| `src/pages/api/admin/moderation/remove-content.ts` | Admin content removal |
-| `src/pages/ayarlar/index.astro` | User settings page |
-| `src/pages/fiyatlandirma/index.astro` | Subscription pricing page |
-| `src/pages/abonelik/index.astro` | Subscription management page |
-| `src/components/UserSettings.tsx` | User settings UI |
+| Dosya | Amaç |
+|------|------|
+| `src/lib/subscriptions.ts` | Stripe entegrasyonu ve abonelik katmanı yönetimi |
+| `src/lib/feature-gating.ts` | Abonelik katmanına göre özellik erişim kontrolü |
+| `src/pages/api/subscriptions/checkout.ts` | Stripe checkout session oluşturma |
+| `src/pages/api/subscriptions/webhook.ts` | Stripe webhook event işleyicisi |
+| `src/pages/api/subscriptions/tiers.ts` | Kullanılabilir abonelik katmanları endpoint'i |
+| `src/pages/api/user/quotas.ts` | Özellik kullanım kotası endpoint'i |
+| `src/pages/api/blocking/block.ts` | Kullanıcı engelleme endpoint'i |
+| `src/pages/api/blocking/check.ts` | Kullanıcı engelli mi kontrol endpoint'i |
+| `src/pages/api/blocking/unblock.ts` | Kullanıcı engel kaldırma endpoint'i |
+| `src/pages/api/reports/submit.ts` | İçerik raporu gönderimi |
+| `src/pages/api/admin/moderation/reports.ts` | Admin moderasyon rapor listesi |
+| `src/pages/api/admin/moderation/resolve.ts` | Admin rapor çözümleme |
+| `src/pages/api/admin/moderation/remove-content.ts` | Admin içerik kaldırma |
+| `src/pages/ayarlar/index.astro` | Kullanıcı ayar sayfası |
+| `src/pages/fiyatlandirma/index.astro` | Abonelik fiyatlandırma sayfası |
+| `src/pages/abonelik/index.astro` | Abonelik yönetim sayfası |
+| `src/components/UserSettings.astro` | Kullanıcı ayar arayüzü |
 
 ### Testler
-| File | Purpose |
-|------|---------|
-| `e2e/` | Playwright end-to-end tests |
+| Dosya | Amaç |
+|------|------|
+| `e2e/` | Playwright uçtan uca testleri |
 
 ## Ortam Değişkenleri
 
-**Critical** (must be set for production):
+**Kritik** (production için zorunlu):
 - `DATABASE_URL` — PostgreSQL connection string (required)
 - `JWT_SECRET` — Secret for token signing (min 32 chars, required)
 - `REDIS_URL` — Redis connection string (required, includes namespace prefix logic)
 - `REDIS_KEY_PREFIX` — Redis key namespace (default: `sanliurfa:`, isolates from other projects)
 
-**Recommended**:
+**Önerilen**:
 - `CORS_ORIGINS` — Comma-separated allowed origins (default: https://sanliurfa.com)
 - `NODE_ENV` — `production` or `development` (affects SSL, logging, error messages)
 
-**Optional**:
+**İsteğe Bağlı**:
 - Supabase keys (legacy, for backward compatibility)
 - OAuth keys (Google, Facebook)
 - Email service API keys (Resend)
@@ -862,14 +860,14 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 ## Dağıtım
 
 ### Geliştirme Stack'i (Docker)
-- **Docker Compose**: `docker-compose.yml` with PostgreSQL, Redis, Node.js services
-- **Usage**: `docker-compose up` for full local stack with all dependencies
-- **Purpose**: Consistent development environment, mirrors production services
+- **Docker Compose**: PostgreSQL, Redis ve Node.js servisleriyle `docker-compose.yml`
+- **Kullanım**: Tüm bağımlılıklarla tam yerel stack için `docker-compose up`
+- **Amaç**: Tutarlı geliştirme ortamı; production servislerini taklit eder
 
 ### Production Dağıtımı (CentOS Web Panel)
-- **Platform**: Shared hosting on CentOS Web Panel (not Docker)
-- **Service Manager**: PM2 (recommended) or Systemd
-- **Process**:
+- **Platform**: CentOS Web Panel üzerinde paylaşımlı barındırma (Docker değil)
+- **Servis Yöneticisi**: PM2 (önerilen) veya Systemd
+- **Süreç**:
   1. Clone repo to `~/sanliurfa` (user's home directory)
   2. Install Node.js via NVM
   3. `npm install --legacy-peer-deps` and `npm run build`
@@ -879,12 +877,12 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
   7. Setup Let's Encrypt SSL (via CWP SSL Manager)
   8. Schedule automated backups via crontab
 
-**See `DEPLOYMENT.md`** for complete CentOS Web Panel production setup guide.
+Tam CentOS Web Panel production kurulum rehberi için **`DEPLOYMENT.md`** dosyasına bak.
 
-- **Env**: Set critical vars in `.env` file on server
-- **Redis**: Must be accessible (redis-cli ping), usually provided by hosting
-- **Database**: PostgreSQL provided, create user and database, run migrations on first startup
-- **Monitoring**: Use `/api/health` endpoint, PM2 logs, crontab health check script
+- **Env**: Kritik değişkenleri sunucudaki `.env` dosyasında ayarla
+- **Redis**: Erişilebilir olmalı (`redis-cli ping`); çoğu zaman hosting tarafından sağlanır
+- **Veritabanı**: PostgreSQL sağlanır; kullanıcı ve veritabanı oluştur, ilk açılışta migration'ları çalıştır
+- **İzleme**: `/api/health` endpoint'i, PM2 logları ve crontab health check script'i kullan
 
 ## Sonraki Geliştirme İçin Notlar
 
