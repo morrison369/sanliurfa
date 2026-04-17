@@ -29,7 +29,7 @@ Uzun mimari notlar için `docs/architecture/README.md` dosyasını tercih et; bu
 Cati sistemi yonu:
 
 - Astro birincil çatı sistemidir.
-- Yeni sayfalar ve yeni arayüz yüzeylerinde varsayılan yaklaşım Astro-first olmalıdır.
+- Yeni sayfalar ve yeni arayüz yüzeylerinde varsayılan yaklaşım Astro-öncelikli olmalıdır.
 - Deponun zaten Astro-only olduğunu varsayma; React kaldırma veya büyük migration işi önermeden önce `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md` dosyasını kontrol et.
 - Migration backlog kapalıdır. Yeni bir React arayüz yüzeyi veya hydration sahibi bilinçli olarak geri eklenirse ancak o zaman `docs/reports/astro-hydration-inventory.md` dosyasını `npm run astro:migration:inventory` ile yenile.
 - Migration yeniden açılır ve `medium=0` ise, sonraki paneli seçmeden önce kalan `high` bucket'ı `npm run astro:migration:high-risk` ile sırala.
@@ -42,7 +42,7 @@ Cati sistemi yonu:
 - `npm run dev` — Geliştirme sunucusunu başlat
 - `npm run dev:1111` — Tercih edilen yerel sabit port geliştirme sunucusu
 - `npm run dev:wsl` — WSL / dış host erişimi için geliştirme sunucusu
-- `npm run build` — Production build
+- `npm run build` — Üretim derlemesi
 - `npm run lint` — TypeScript + Astro doğrulaması
 - `npm run format` — Prettier (Astro dahil)
 
@@ -92,7 +92,7 @@ Cati sistemi yonu:
 src/
 ├── components/        # Astro arayüz bileşenleri
 ├── pages/            # Dosya tabanlı yönlendirme (Astro sayfaları + API route'ları)
-│   ├── api/          # REST API uçları (health, auth, places, reviews, metrics, performance, docs, admin, loyalty, social, realtime, webhooks)
+│   ├── api/          # REST API uçları (sağlık, kimlik, mekanlar, yorumlar, metrikler, performans, dokümanlar, admin, sadakat, sosyal, gerçek zamanlı, webhook'lar)
 │   ├── admin/        # Admin yönetim sayfaları (users, moderation, loyalty, analytics)
 │   ├── kullanıcı/    # Kullanıcı profilleri ve ayarlar
 │   ├── sosyal/       # Sosyal özellikler (akış, hashtag gezgini)
@@ -195,7 +195,7 @@ src/
    - `/api/docs` → Swagger arayüzü, `/api/openapi.json` → OpenAPI 3.1 tanımı
 
 8. **Bileşen Stratejisi**:
-   - Sunucu tarafı render edilen içerik için Astro (`.astro`) kullanılır
+   - Sunucu tarafı işlenen içerik için Astro (`.astro`) kullanılır
    - Etkileşim, yoklama, değişiklik ve DOM güncellemeleri için düz TypeScript tarayıcı yardımcıları kullanılır
    - React entegrasyonu yalnızca uyumluluk seçeneği olarak korunur; varsayılan arayüz sahibi değildir
 
@@ -389,12 +389,12 @@ Puanlar, rozetler, başarımlar, seviyeler ve kullanılabilir ödüller içeren 
 
 **Temel Akışlar**:
 1. **Puan Kazanma**: `awardPoints(userId, amount, reason)` işlem oluşturur, `loyalty_tiers.current_points` değerini günceller ve seviye yükseltmesini kontrol eder
-2. **Başarım Açma**: `checkCommonAchievements(userId)` oyunlaştırma hook'larından çağrılır, koşullar sağlanırsa otomatik açar
+2. **Başarım Açma**: `checkCommonAchievements(userId)` oyunlaştırma kancalarından çağrılır, koşullar sağlanırsa otomatik açar
 3. **Rozet Verme**: `awardBadgeToUser(userId, badgeKey, reason)` kayıt ekler; rozet zaten verilmişse `false` döner
 4. **Ödül Kullanma**: Kullanıcı yeterli puanı varsa ödülü seçer, puanlar işlem üzerinden düşülür
 
 **Admin Yönetimi**:
-- `GET /api/admin/loyalty/rewards` — Tüm ödülleri listeler (aktif + pasif), 2 dakika cache
+- `GET /api/admin/loyalty/rewards` — Tüm ödülleri listeler (aktif + pasif), 2 dakika önbellek
 - `POST /api/admin/loyalty/rewards` — İsteğe bağlı envanterle yeni ödül oluşturur
 - `POST /api/admin/loyalty/award` — Kullanıcıya manuel puan/rozet verir
 
@@ -424,7 +424,7 @@ Hashtag, mention, aktivite akışı ve trend içerik içeren sosyal ağ öğeler
    - Yorum ve açıklamalardaki @mention'ları izler
    - Görüntülenme durumlu kullanıcı bildirim sistemi sağlar
    - Fire-and-forget arka plan sorgusu mention'ları okundu işaretler
-   - Kullanıcı başına 2 dakika cache
+   - Kullanıcı başına 2 dakika önbellek
 
 3. **Aktivite Akışı** (Gerçek zamanlı SSE: `/api/realtime/feed`)
    - Kullanıcı aktiviteleri: yorumlar, yüklemeler, seviye başarımları
@@ -528,11 +528,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
 ```typescript
 import { getCache, setCache, deleteCache, deleteCachePattern } from '../../../lib/cache';
 
-// Read from cache
+// Önbellekten oku
 const cached = await getCache('sanliurfa:places:list:all');
 if (cached) return JSON.parse(cached);
 
-// Write to cache (5 min TTL)
+// Önbelleğe yaz (5 dk TTL)
 const places = await queryMany('SELECT * FROM places');
 await setCache('sanliurfa:places:list:all', JSON.stringify(places), 300);
 
@@ -659,18 +659,18 @@ const RealtimeManager = {
 **Ana Kalıplar**:
 - Backpressure yönetimi için `ReadableStream` kullan
 - Sunucuyu belirli aralıklarla yokla (feed için 15sn, metrikler için 5sn)
-- Yalnızca yeni veriyi göndermek için cursor tabanlı takip uygula
+- Yalnızca yeni veriyi göndermek için imleç tabanlı takip uygula
 - Kritik olmayan güncellemelerde beklemesiz arka plan sorguları kullan
 - Üstel geri çekilme ile yeniden bağlan (en fazla 60sn)
 
 ### Oyunlaştırma ve Event Hook'ları
 
-Başarım kilit açma akışı kullanıcı eylemlerinden tetiklenen event hook'larıyla çalışır:
+Başarım kilit açma akışı kullanıcı eylemlerinden tetiklenen olay kancalarıyla çalışır:
 
 ```typescript
 // src/lib/gamification.ts kalıbı
 export async function onReviewCreated(userId: string) {
-  // Mevcut hook'lar
+  // Mevcut kancalar
   await checkAndGrantBadges(userId, 'review');
   await updateUserLevelIfNeeded(userId);
 
@@ -729,7 +729,7 @@ npm run test
 | `src/middleware.ts` | İstek kimlik doğrulama, CORS, rate limiting ve güvenlik başlıkları |
 | `src/lib/postgres.ts` | Veritabanı pool'u, parametrik sorgular, tablo izin listesi ve yavaş sorgu izleme |
 | `src/lib/auth.ts` | Bcrypt hashleme, Redis oturumları, token üretim/doğrulama |
-| `src/lib/cache.ts` | Redis istemcisi, ad alanlı anahtarlar, rate limiting ve cache işlemleri |
+| `src/lib/cache.ts` | Redis istemcisi, ad alanlı anahtarlar, istek sınırı ve önbellek işlemleri |
 | `src/lib/validation.ts` | Sanitization ile şema tabanlı doğrulama |
 | `src/lib/logging.ts` | İstek kimliği takibi ile yapılandırılmış loglama |
 | `src/lib/metrics.ts` | İstek/sorgu metrikleri, toplulaştırma ve performans istatistikleri |
@@ -790,7 +790,7 @@ npm run test
 | `src/lib/loyalty-points.ts` | Puan işlemleri ve bakiye takibi |
 | `src/lib/badges.ts` | Rozet tanımları ve verme mantığı |
 | `src/lib/achievements.ts` | Başarım tanımları ve kilit açma koşulları |
-| `src/lib/gamification.ts` | Otomatik başarım açma için olay hook'ları |
+| `src/lib/gamification.ts` | Otomatik başarım açma için olay kancaları |
 | `src/pages/api/loyalty/points.ts` | Kullanıcı puan bakiyesi ve geçmiş uç noktası |
 | `src/pages/api/loyalty/rewards.ts` | Herkese açık ödül kataloğu uç noktası |
 | `src/pages/api/loyalty/achievements.ts` | Kullanıcı başarım uç noktası (GET all/unviewed/stats, POST mark viewed) |
@@ -845,7 +845,7 @@ npm run test
 **Kritik** (üretim için zorunlu):
 - `DATABASE_URL` — PostgreSQL bağlantı dizgesi (zorunlu)
 - `JWT_SECRET` — Token imzalama sırrı (en az 32 karakter, zorunlu)
-- `REDIS_URL` — Redis bağlantı dizgesi (zorunlu, namespace prefix mantığını içerir)
+- `REDIS_URL` — Redis bağlantı dizgesi (zorunlu, ad alanı öneki mantığını içerir)
 - `REDIS_KEY_PREFIX` — Redis anahtar ad alanı (varsayılan: `sanliurfa:`, diğer projelerden ayırır)
 
 **Önerilen**:
@@ -905,7 +905,7 @@ Tam CentOS Web Panel üretim kurulum rehberi için **`DEPLOYMENT.md`** dosyasın
 16. **Astro Migration Planlaması**: Migration backlog şu anda kapalıdır. React UI veya hydration bilinçli olarak geri getirilirse bir sonraki React-to-Astro hedefini sezgisel seçme. `npm run astro:migration:inventory` komutunu yeniden çalıştır, `docs/reports/astro-hydration-inventory.md` dosyasını oku ve belgelenmiş farklı bir gerekçe yoksa önce düşük riskli bucket'tan ilerle.
 
 ### Performans Optimizasyonu
-- Okuma yüzeylerinde cache'i agresif kullan (5-10 dakika TTL, mutation'da temizle)
+- Okuma yüzeylerinde önbelleği agresif kullan (5-10 dakika TTL, mutation'da temizle)
 - Veritabanı pool'unu izle: kullanım %80'i aşarsa yavaş sorguları araştır
 - Darboğazları incidente dönüşmeden önce görmek için `/api/performance` kullan
 - 1000ms üzeri yavaş sorgular otomatik uyarı log'una düşer; hemen incele

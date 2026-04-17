@@ -1,6 +1,6 @@
 # Astro Calisma Zamani Durumu
 
-Bu belge, migration kapandıktan sonraki aktif runtime durumunu tek yerde özetler.
+Bu belge, migration kapandıktan sonraki aktif çalışma zamanı durumunu tek yerde özetler.
 
 ## Güncel Durum
 
@@ -9,7 +9,7 @@ Bu belge, migration kapandıktan sonraki aktif runtime durumunu tek yerde özetl
 - aktif `.tsx` yüzeyi: `0`
 - aktif `client:*` hydration: `0`
 - React hook/lib blokörü: `0`
-- config dışı runtime React sahibi: `0`
+- config dışı çalışma zamanı React sahibi: `0`
 - kalan tek uyumluluk sahibi:
   - `astro.config.mjs`
 
