@@ -87,7 +87,9 @@ describe('admin-dashboard-overview', () => {
 
     expect(html).toContain('Ops Durumu');
     expect(html).toContain('Kullanıcılar');
-    expect(html).toContain('Admin Access Coverage');
+    expect(html).toContain('Admin Erişim Kapsaması');
+    expect(html).toContain('Sürüm Kapısı');
+    expect(html).toContain('Gece Trendi');
     expect(html).toContain('data-admin-dashboard-period="30"');
   });
 
