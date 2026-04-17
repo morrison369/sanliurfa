@@ -85,7 +85,7 @@ export function renderModerationQueueManager(options: {
         options.error
           ? `<div class="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
               <div>
-                <h3 class="font-medium text-red-900">Hata</h3>
+                <h3 class="font-medium text-red-900">İşlem hatası</h3>
                 <p class="text-sm text-red-700">${options.error}</p>
               </div>
             </div>`
@@ -101,7 +101,7 @@ export function renderModerationQueueManager(options: {
       <div class="space-y-2">
         ${
           options.items.length === 0
-            ? '<div class="py-8 text-center text-gray-500">Kuyruk boş</div>'
+            ? '<div class="py-8 text-center text-gray-500">Kuyrukta gösterilecek kayıt bulunmuyor.</div>'
             : options.items
                 .map((item) => renderQueueItem(item, options.status, options.actionInProgress))
                 .join('')

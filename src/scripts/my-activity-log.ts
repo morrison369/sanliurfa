@@ -11,7 +11,7 @@ async function renderActivityRoot(root: ActivityRoot) {
   try {
     const response = await fetch('/api/activity?limit=50');
     if (!response.ok) {
-      throw new Error('Aktivite yüklenemedi');
+      throw new Error('Etkinlik geçmişi yüklenemedi');
     }
 
     const activities = extractMyActivity(await response.json());
@@ -19,7 +19,7 @@ async function renderActivityRoot(root: ActivityRoot) {
   } catch (error) {
     setElementHtml(
       content,
-      renderMyActivityLog([], error instanceof Error ? error.message : 'Aktivite yüklenemedi'),
+      renderMyActivityLog([], error instanceof Error ? error.message : 'Etkinlik geçmişi yüklenemedi'),
     );
   } finally {
     setElementClassName(loading, 'hidden');
