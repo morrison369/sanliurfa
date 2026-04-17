@@ -125,13 +125,13 @@ async function loadQuotaDisplay(root: QuotaRoot) {
   try {
     const response = await fetch('/api/user/quotas');
     if (!response.ok) {
-      throw new Error('Failed to fetch quotas');
+      throw new Error('Kota bilgileri alınamadı');
     }
 
     const data = (await response.json()) as QuotaResponse;
     setElementHtml(content, renderQuotaContent(data, root.dataset.compact === 'true'));
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to load quotas';
+    const message = error instanceof Error ? error.message : 'Kota bilgileri yüklenemedi';
     setElementHtml(content, renderQuotaError(message));
   } finally {
     setElementClassName(loading, 'hidden');
