@@ -15,13 +15,13 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
 
 ---
 
-<Layout title="Gelir Yönetimi - Admin Panel">
+<Layout title="Gelir Yönetimi - Yönetim Paneli">
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
     <div class="container max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">💰 Gelir Yönetimi</h1>
-        <p class="text-gray-600 dark:text-gray-400">Abonelik geliri, MRR ve çurluk oranı analitikleri</p>
+        <p class="text-gray-600 dark:text-gray-400">Abonelik geliri, aylık yinelenen gelir ve abonelik kaybı analitiği</p>
       </div>
 
       <!-- Summary Cards -->
@@ -53,7 +53,7 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
         <!-- Churn Rate -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Çurluk Oranı (30g)</h3>
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Abonelik Kaybı Oranı (30g)</h3>
             <span class="text-2xl">📉</span>
           </div>
           <div class="text-3xl font-bold text-red-600 dark:text-red-400" id="churnRate">
@@ -87,7 +87,7 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
 
             {tier === 'free' && (
               <div class="text-sm text-gray-600 dark:text-gray-300">
-                <p class="mb-4">Ücretli olmayan hesaplar. Ücretsiz özellikler sunarlar.</p>
+                <p class="mb-4">Ücretli olmayan hesaplar. Temel özellikleri kullanırlar.</p>
                 <div class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                   <span id="freeTierCount">0</span> kullanıcı
                 </div>
@@ -127,9 +127,9 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
 
       <!-- Note -->
       <div class="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-        <h3 class="font-semibold text-blue-900 dark:text-blue-200 mb-2">📊 Grafik Yükleniyor</h3>
+        <h3 class="font-semibold text-blue-900 dark:text-blue-200 mb-2">📊 Grafik yükleniyor</h3>
         <p class="text-sm text-blue-800 dark:text-blue-300">
-          Günlük gelir grafiği burada gösterilecek (Chart.js ile). Son 30 günün gelir trendini takip et.
+          Günlük gelir grafiği burada gösterilecek. Son 30 günün gelir trendini buradan izleyin.
         </p>
       </div>
     </div>
