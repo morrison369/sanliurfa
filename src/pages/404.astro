@@ -20,7 +20,6 @@ const popularLinks = [
   <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-urfa-50">
     <div class="container-custom py-20">
       <div class="max-w-2xl mx-auto text-center">
-        <!-- 404 Illustration -->
         <div class="relative mb-8">
           <div class="text-9xl font-bold text-urfa-200 select-none">404</div>
           <div class="absolute inset-0 flex items-center justify-center">
@@ -38,13 +37,12 @@ const popularLinks = [
           <br />Şanlıurfa'nın diğer güzelliklerini keşfetmeye ne dersiniz?
         </p>
         
-        <!-- Search Box -->
         <form action="/arama" class="max-w-md mx-auto mb-12">
           <div class="relative">
             <input 
               type="search"
               name="q"
-              placeholder="Mekan veya yer ara..."
+              placeholder="Mekan, yer veya kategori ara..."
               class="w-full pl-12 pr-4 py-4 bg-white rounded-xl shadow-sm border border-gray-200 focus:border-urfa-500 focus:ring-2 focus:ring-urfa-200 outline-none transition-all"
             />
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -57,7 +55,6 @@ const popularLinks = [
           </div>
         </form>
         
-        <!-- Quick Links -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           {popularLinks.map(link => (
             <a 
@@ -72,13 +69,12 @@ const popularLinks = [
           ))}
         </div>
         
-        <!-- Back Button -->
         <button 
           onclick="history.back()"
           class="inline-flex items-center gap-2 text-urfa-600 hover:text-urfa-700 font-medium"
         >
           <ArrowLeft className="w-5 h-5" />
-          Geri Dön
+          Geri dön
         </button>
       </div>
     </div>
