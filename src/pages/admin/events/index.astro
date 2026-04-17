@@ -16,6 +16,19 @@ const eventsResult = await query(
 );
 const events = eventsResult.rows;
 
+const getCategoryLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    'kultur-sanat': 'Kültür & Sanat',
+    gastronomi: 'Gastronomi',
+    muzik: 'Müzik',
+    spor: 'Spor',
+    egitim: 'Eğitim',
+    diger: 'Diğer',
+  };
+
+  return labels[category] || category;
+};
+
 const statsResult = await query(
   `SELECT 
     COUNT(*) as total,
@@ -26,7 +39,7 @@ const statsResult = await query(
 const stats = statsResult.rows[0];
 
 const seo = {
-  title: 'Etkinlik Yönetimi - Admin Panel',
+  title: 'Etkinlik Yönetimi - Yönetim Paneli',
   noindex: true
 };
 ---
@@ -86,7 +99,7 @@ const seo = {
                       </div>
                       <div>
                         <p class="font-medium text-gray-900 dark:text-white text-sm">{event.title}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">{event.category}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{getCategoryLabel(event.category)}</p>
                         {event.is_featured && (
                           <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-urfa-100 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300 text-xs rounded mt-1">
                             ⭐ Öne Çıkan
