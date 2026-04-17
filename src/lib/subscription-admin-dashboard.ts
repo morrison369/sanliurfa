@@ -57,7 +57,7 @@ function renderOverview(analytics: AdminSubscriptionAnalyticsData): string {
           <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">₺${mrrDisplay}</p>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Churn Oranı</h3>
+          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Kaybedilen Abonelik Oranı</h3>
           <p class="text-3xl font-bold text-red-600 dark:text-red-400">${churnDisplay}%</p>
         </div>
       </div>
@@ -106,12 +106,12 @@ function renderOverview(analytics: AdminSubscriptionAnalyticsData): string {
 function renderUsersTab(): string {
   return `
     <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-      <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Kullanıcı Yönetimi</h3>
+      <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Kullanıcı yönetimi</h3>
       <p class="mb-4 text-gray-600 dark:text-gray-400">
-        Kullanıcıların abonelik durumunu ve planlarını yönetin. Aşağıdaki linke tıklayarak detaylı yönetim sayfasına gidin.
+        Kullanıcıların abonelik durumunu ve planlarını yönetin. Aşağıdaki bağlantıyla ayrıntılı yönetim sayfasına gidin.
       </p>
       <a href="/admin/subscriptions/users" class="inline-block rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition hover:bg-blue-700">
-        Kullanıcı Yönetim Paneli →
+        Kullanıcı yönetim paneline git →
       </a>
     </div>
   `;
@@ -141,7 +141,7 @@ function renderWebhooksTab(analytics: AdminSubscriptionAnalyticsData): string {
 
       <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
         <p class="text-sm text-blue-800 dark:text-blue-300">
-          Webhook delivery status'ını izleyin. Başarısız webhook'lar işleniyor ve otomatik olarak yeniden deniyor.
+          Webhook iletim durumunu izleyin. Başarısız webhook'lar işleniyor ve otomatik olarak yeniden deneniyor.
         </p>
       </div>
     </div>
@@ -158,7 +158,7 @@ export function renderSubscriptionAdminDashboard(options: {
   }
 
   if (!options.analytics) {
-    return `<div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-700 dark:bg-gray-800"><p class="text-gray-600 dark:text-gray-400">Veri yüklenemedi</p></div>`;
+    return `<div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-700 dark:bg-gray-800"><p class="text-gray-600 dark:text-gray-400">Veriler yüklenemedi</p></div>`;
   }
 
   return `

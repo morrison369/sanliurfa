@@ -88,7 +88,7 @@ function renderVerificationCard(options: {
         <div>
           <h3 class="font-semibold text-gray-900">${escapeHtml(verification.placeName)}</h3>
           <p class="mt-1 text-sm text-gray-600">
-            Kategori: ${escapeHtml(verification.category || 'Belirtilmedi')} • Rating: ${rating}
+            Kategori: ${escapeHtml(verification.category || 'Belirtilmedi')} • Puan: ${rating}
           </p>
           <p class="mt-2 text-xs text-gray-500">
             Talep Tarihi: ${new Date(verification.requestedAt).toLocaleDateString('tr-TR')}

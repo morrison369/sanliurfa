@@ -242,7 +242,7 @@ const seo = {
             <div id="write-review" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <MessageSquare className="w-5 h-5" />
-                Değerlendirme Yaz
+                Değerlendirme yaz
               </h2>
               <form id="review-form" class="space-y-4">
                 <input type="hidden" name="place_id" value={place.id} />
@@ -297,16 +297,16 @@ const seo = {
           {!user && (
             <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-xl border border-urfa-200 dark:border-urfa-800 p-6 text-center">
               <MessageSquare className="w-12 h-12 text-urfa-600 dark:text-urfa-400 mx-auto mb-3" />
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Değerlendirme Yaz</h3>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Değerlendirme yaz</h3>
               <p class="text-gray-600 dark:text-gray-400 mb-4">Yorum yapmak için giriş yapmanız gerekiyor.</p>
-              <a href={`/giris?redirect=/places/${place.slug}`} class="btn-primary">Giriş Yap</a>
+              <a href={`/giris?redirect=/places/${place.slug}`} class="btn-primary">Giriş yap</a>
             </div>
           )}
           
           {user && hasUserReviewed && (
             <div class="bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800 p-6 text-center">
               <Check className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-3" />
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Değerlendirme Yaptınız</h3>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Değerlendirme yaptınız</h3>
               <p class="text-gray-600 dark:text-gray-400">Bu mekan için zaten yorum yaptınız.</p>
             </div>
           )}
@@ -394,7 +394,7 @@ const seo = {
                 <div class="flex items-start gap-3">
                   <Globe className="w-5 h-5 text-urfa-600 flex-shrink-0" />
                   <div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-white">Web Sitesi</p>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">Web sitesi</p>
                     <a href={place.website} target="_blank" rel="noopener noreferrer" class="text-sm text-urfa-600 dark:text-urfa-400 hover:underline break-all">
                       {place.website.replace('https://', '')}
                     </a>
@@ -593,7 +593,7 @@ const seo = {
         await navigator.share({ title: document.title, url: window.location.href });
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        alert('Link kopyalandı!');
+        alert('Bağlantı kopyalandı!');
       }
     } catch (error) {}
   });
