@@ -14,7 +14,7 @@ Bu belge, `Şanlıurfa.com` kod tabanının mevcut Astro + React island mimarisi
 2026-04-17 itibarıyla ölçülen yüzey:
 
 - `src/**/*.astro`: `193`
-- `src/**/*.tsx`: `59`
+- `src/**/*.tsx`: `0`
 - `.astro` dosyalarında `client:*` hydration kullanımı: `0`
 - `astro.config.mjs` içinde aktif React entegrasyonu: `@astrojs/react`
 - generated inventory: `docs/reports/astro-hydration-inventory.md` (`0 low / 0 medium / 0 high`)
@@ -168,7 +168,7 @@ Source-of-truth:
 - paket kaldırma kararı üretmek için değil
 - kalan React yüzeyini görünür kılmak için
 - gerekirse gelecekte seçili React geri dönüşlerini kontrollü yapmak için tutulur
-- son bakım batch'i ile React hook/lib blokörü `0`a indi; kalan görünür blokör artık esasen `astro.config.mjs`
+- son bakım batch'i ile React hook/lib blokörü `0`a indi; kalan görünür runtime blokörü artık yalnızca `astro.config.mjs`
 
 ## Kısa Vadede Yapılmaması Gerekenler
 
