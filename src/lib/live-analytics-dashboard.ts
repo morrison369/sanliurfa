@@ -143,7 +143,7 @@ function renderSlowestEndpoints(metrics: LiveAnalyticsMetricsData): string {
 
   return `
     <div class="rounded-lg bg-white p-6 shadow">
-      <h3 class="mb-4 text-lg font-semibold text-gray-900">En Yavaş Uç Noktalar (Top 5)</h3>
+      <h3 class="mb-4 text-lg font-semibold text-gray-900">En yavaş uç noktalar (İlk 5)</h3>
       <div class="space-y-3">
         ${metrics.slowestEndpoints
           .map(
@@ -200,7 +200,7 @@ function renderKpiPanel(kpi: LiveAnalyticsKpiData | null): string {
                 )
                 .join('')}
             </div>`
-          : '<p class="text-sm text-gray-600">Henüz hiç KPI tanımlanmamış.</p>'
+          : '<p class="text-sm text-gray-600">Henüz KPI tanımlanmamış.</p>'
       }
     </div>
   `;
@@ -217,7 +217,7 @@ export function renderLiveAnalyticsDashboard(options: {
   return `
     <div class="space-y-8">
       <div class="flex items-center justify-between">
-        <h2 class="text-3xl font-bold text-gray-900">Canlı Analitik Gösterge Paneli</h2>
+        <h2 class="text-3xl font-bold text-gray-900">Canlı analitik gösterge paneli</h2>
         <div class="flex items-center gap-2">
           <div class="h-3 w-3 rounded-full ${connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}"></div>
           <span class="text-sm text-gray-600">${connected ? 'Canlı' : 'Bağlantısız'}${
