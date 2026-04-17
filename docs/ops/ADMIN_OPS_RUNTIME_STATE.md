@@ -1,4 +1,4 @@
-# Admin Ops Runtime Durumu
+# Admin Ops Calisma Zamani Durumu
 
 Bu belge, admin ve operasyon yüzeyinin aktif runtime durumunu tek yerde özetler.
 
@@ -6,7 +6,7 @@ Bu belge, admin ve operasyon yüzeyinin aktif runtime durumunu tek yerde özetle
 
 2026-04-17 itibarıyla:
 
-- admin wrapper coverage hedefi:
+- admin sarmalayici kapsama hedefi:
   - `route_files=40`
   - `wrapper_files=40`
   - `coverage=100%`
@@ -15,7 +15,7 @@ Bu belge, admin ve operasyon yüzeyinin aktif runtime durumunu tek yerde özetle
   - `/admin/runtime-monitor`
   - `/admin/access-coverage`
 - admin ops sayfaları Astro + plain TS helper modeliyle çalışır
-- source-of-truth helper katmanı:
+- kaynak gercek yardimci katmani:
   - `src/lib/admin-index-data.ts`
   - `src/lib/admin-index.ts`
   - `src/lib/admin-index-page.ts`
@@ -34,9 +34,9 @@ Bu belge, admin ve operasyon yüzeyinin aktif runtime durumunu tek yerde özetle
 
 ## Aktif Karar
 
-- Admin API route'ları wrapper coverage dışında bırakılamaz.
-- Admin UI davranışı `.astro` içine gömülmez; helper/view-model/bootstrap katmanı korunur.
-- Rapor drift'i varsa önce source helper düzeltilir, sonra sayfa ve rapor yüzeyleri hizalanır.
+- Admin API route'lari sarmalayici kapsama disinda birakilamaz.
+- Admin arayuz davranisi `.astro` icine gomulmez; yardimci/gorunum modeli/baslatma katmani korunur.
+- Rapor kaymasi varsa once kaynak yardimci duzeltilir, sonra sayfa ve rapor yuzeyleri hizalanir.
 
 ## İlk Bakılacak Kaynaklar
 

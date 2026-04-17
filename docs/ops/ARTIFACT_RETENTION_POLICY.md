@@ -19,16 +19,16 @@ Bu politika CI artifact lifecycle ve kalici admin ops audit saklama kurallarini 
 - `logs/admin-ops-audit.jsonl`: 30 gun
 - `docs/reports/` altindaki timestamped summary/log dosyalari: 14 gun
 
-## Source Of Truth
+## Kaynak Gercek
 
 - CI retention: [.github/workflows/ci.yml](D:\sanliurfa.com\sanliurfa-ops-batch-all\.github\workflows\ci.yml)
 - Nightly retention:
   - [.github/workflows/nightly-regression.yml](D:\sanliurfa.com\sanliurfa-ops-batch-all\.github\workflows\nightly-regression.yml)
   - [.github/workflows/nightly-e2e.yml](D:\sanliurfa.com\sanliurfa-ops-batch-all\.github\workflows\nightly-e2e.yml)
-- Local cleanup script:
+- Yerel temizlik script'i:
   - [apply-ops-retention.ts](D:\sanliurfa.com\sanliurfa-ops-batch-all\scripts\apply-ops-retention.ts)
 
 ## Enforcement
 
 - CI ve nightly workflow'lari artifact upload sirasinda retention gunu belirtir.
-- `npm run ops:retention:apply` local retention cleanup uygular.
+- `npm run ops:retention:apply` yerel retention temizligi uygular.

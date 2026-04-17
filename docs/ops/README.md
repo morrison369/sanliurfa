@@ -17,7 +17,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 - Cati sistemi/runtime:
   - [ASTRO_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\architecture\ASTRO_RUNTIME_STATE.md)
 
-Detay policy ve source-of-truth yüzeyleri:
+Detay politika ve kaynak-gercek yuzeyleri:
 
 - [SOURCE_OF_TRUTH_MAP.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\SOURCE_OF_TRUTH_MAP.md)
 - [RELEASE_GATES.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\RELEASE_GATES.md)
@@ -40,9 +40,9 @@ Detay policy ve source-of-truth yüzeyleri:
 
 1. Önce ilgili kısa özet yüzeyi aç.
 2. Karar hâlâ net değilse ilgili policy dosyasına git.
-3. Hangi dosya owner belirsizse `SOURCE_OF_TRUTH_MAP.md`.
+3. Hangi dosyanin sahipligi belirsizse `SOURCE_OF_TRUTH_MAP.md`.
 4. Admin UI davranışı veya ops sayfa metni değişecekse önce helper katmanına bak, sonra `.astro` / page script dosyasını değiştir.
 
 ## Kural
 
-- Yeni operasyon yüzeyi eklenirse önce bu index, sonra source-of-truth haritası güncellenir.
+- Yeni operasyon yuzeyi eklenirse once bu indeks, sonra kaynak-gercek haritasi guncellenir.
