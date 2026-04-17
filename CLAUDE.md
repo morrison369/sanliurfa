@@ -196,25 +196,25 @@ src/
 
 8. **Bileşen Stratejisi**:
    - Sunucu tarafı render edilen içerik için Astro (`.astro`) kullanılır
-   - Etkileşim, polling, mutation ve DOM güncellemeleri için plain TypeScript tarayıcı yardımcıları kullanılır
-   - React entegrasyonu yalnızca uyumluluk seçeneği olarak korunur; varsayılan UI sahibi değildir
+   - Etkileşim, yoklama, değişiklik ve DOM güncellemeleri için düz TypeScript tarayıcı yardımcıları kullanılır
+   - React entegrasyonu yalnızca uyumluluk seçeneği olarak korunur; varsayılan arayüz sahibi değildir
 
 ### Astro-Only Yönü
 
 - Hedef yön Astro-first'tür; anlık React kaldırma değildir.
 - `@astrojs/react`, açık paket kaldırma kararı yoksa kabul edilen üretim bağımlılığı olarak kalmalıdır.
-- Bir framework migration batch'i planlamadan önce şunları oku:
+- Bir framework migration toplu işi planlamadan önce şunları oku:
   - `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md`
   - `astro.config.mjs`
 - Migration kuralı:
-  - düşük etkileşimli widget'lar önce Astro + plain TypeScript'e taşınabilir
+  - düşük etkileşimli widget'lar önce Astro + düz TypeScript'e taşınabilir
   - orta/yüksek durum taşıyan admin ve analitik paneller tek tek değerlendirilmelidir
   - tek hamlede React kaldırma önerme
   - hydration sıfıra indikten sonra denetim raporlarını yalnızca görünürlük için kullan; otomatik kaldırma işine çevirme
 
 ### Veritabanı
 
-Connection pool ile PostgreSQL kullanılır. Temel tablolar:
+Bağlantı havuzu ile PostgreSQL kullanılır. Temel tablolar:
 - `users` — roller (user/admin/moderator) ve bcrypt şifre hash'leri ile hesaplar
 - `places` — kategori, koordinat ve puan bilgisi içeren mekanlar
 - `reviews` / `comments` — kullanıcı geri bildirimleri
@@ -227,17 +227,17 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 **Akış**:
 1. E-posta + şifre ile `POST /api/auth/register` veya `POST /api/auth/login`
 2. Kimlik bilgilerini `bcrypt.compare()` ile doğrula
-3. JWT token oluştur, session'ı 24 saat TTL ile Redis'e yaz
+3. JWT token oluştur, oturumu 24 saat TTL ile Redis'e yaz
 4. Token'ı `auth-token` cookie'si içinde döndür (`httpOnly`, `secure`, `sameSite=strict`)
 5. Middleware her istekte token'ı doğrular ve `context.locals.user` ayarlar
 6. Route'lar rol bazlı erişim için `context.locals.isAdmin` kontrolü yapar
 
 **Temel Fonksiyonlar** (`src/lib/auth.ts`):
 - `signUp(email, password, fullName)` — hesap oluşturur
-- `signIn(email, password)` — kimlik doğrular, session oluşturur
-- `verifyToken(token)` — Redis içindeki session'ı doğrular
+- `signIn(email, password)` — kimlik doğrular, oturum oluşturur
+- `verifyToken(token)` — Redis içindeki oturumu doğrular
 - `createToken(userId, email, role)` — JWT üretir
-- `signOut(token)` — Redis içindeki session'ı siler
+- `signOut(token)` — Redis içindeki oturumu siler
 
 **Korumalı Route'lar**:
 - `/admin/*` `isAdmin` rolü ister; middleware içinde kontrol edilir, yetkisizse giriş sayfasına yönlendirilir
@@ -258,33 +258,33 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 - `GET /api/admin/system/artifact-health` — Artefact snapshot ve özet
 - `GET /api/admin/deployment/status` — Deployment readiness ve artefact health
 - `GET /api/admin/audit-logs` — Admin audit kaydı, filtreler ve CSV dışa aktarım
-- `GET /api/admin/system/integration-settings` — Integration readiness snapshot
-- `PUT /api/admin/system/integration-settings` — Integration ayar mutation'ı
+- `GET /api/admin/system/integration-settings` — Entegrasyon readiness anlık görünümü
+- `PUT /api/admin/system/integration-settings` — Entegrasyon ayar değişikliği
 - `GET /api/admin/performance/optimization` — Performans optimizasyon özeti
 - `GET /api/admin/subscriptions/users` — Abonelik kullanıcı listesi
 - `POST /api/admin/subscriptions/users` — Abonelik yönetim aksiyonları
-- `POST /api/admin/messages/{id}/status` — İletişim mesajı durum mutation'ı
+- `POST /api/admin/messages/{id}/status` — İletişim mesajı durum değişikliği
 - `GET /api/openapi.json` — Üretilmiş admin tipleri için güncel kontrat kaynağı
 
-**Admin UI Ops Yüzeyleri**:
-- `/admin/runtime-monitor` — Runtime sağlık / performans / artefact izleme yüzeyi
+**Admin Arayüz Ops Yüzeyleri**:
+- `/admin/runtime-monitor` — Çalışma zamanı sağlık / performans / artefact izleme yüzeyi
 - `/admin/audit` — Kalıcı admin ops audit görüntüleyicisi
-- `/admin/access-coverage` — Admin wrapper coverage izleme ve rapor indirme yüzeyi
-- `/admin` — Typed admin client katmanından beslenen admin ana panel özeti
+- `/admin/access-coverage` — Admin sarmalayıcı kapsama izleme ve rapor indirme yüzeyi
+- `/admin` — Türlü admin istemci katmanından beslenen admin ana panel özeti
 
 **Kimlik Doğrulama**:
 - `POST /api/auth/register` — Hesap oluşturur (şema: e-posta, en az 8 karakter, büyük harf/sayı/özel karakter içeren şifre)
 - `POST /api/auth/login` — Giriş yapar (e-posta, şifre)
-- `POST /api/auth/logout` — Çıkış yapar; session'ı Redis'ten temizler
+- `POST /api/auth/logout` — Çıkış yapar; oturumu Redis'ten temizler
 
 **Veri ve İçerik**:
-- `GET /api/places` — Mekanları listeler (5 dakika cache)
-- `GET /api/places/:id` — Mekan detayını döner (10 dakika cache)
-- `GET /api/reviews?placeId=:id` — Mekan yorumlarını döner (10 dakika cache)
-- `POST /api/reviews` — Yorum oluşturur; yorum cache'ini invalidate eder
-- `GET /api/favorites` — Kullanıcının kaydettiği mekanlar (5 dakika cache, kullanıcı bazlı)
-- `POST /api/favorites` — Mekan kaydeder; favori cache'ini invalidate eder
-- `DELETE /api/favorites/:id` — Kayıtlı mekanı kaldırır; cache'i invalidate eder
+- `GET /api/places` — Mekanları listeler (5 dakika önbellek)
+- `GET /api/places/:id` — Mekan detayını döner (10 dakika önbellek)
+- `GET /api/reviews?placeId=:id` — Mekan yorumlarını döner (10 dakika önbellek)
+- `POST /api/reviews` — Yorum oluşturur; yorum önbelleğini temizler
+- `GET /api/favorites` — Kullanıcının kaydettiği mekanlar (5 dakika önbellek, kullanıcı bazlı)
+- `POST /api/favorites` — Mekan kaydeder; favori önbelleğini temizler
+- `DELETE /api/favorites/:id` — Kayıtlı mekanı kaldırır; önbelleği temizler
 
 **Sadakat ve Ödüller**:
 - `GET /api/loyalty/points` — Kullanıcının puan bakiyesi ve geçmişi (auth gerekli)
@@ -297,14 +297,14 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 - `POST /api/admin/loyalty/award` (admin) — Kullanıcıya manuel puan veya rozet verir
 
 **Sosyal Özellikler**:
-- `GET /api/hashtags` — Trend hashtag'leri döner (30 dakika cache)
-- `GET /api/hashtags/:slug` — Hashtag detayını, etiketli mekan ve yorumlarla döner (10 dakika cache)
+- `GET /api/hashtags` — Trend hashtag'leri döner (30 dakika önbellek)
+- `GET /api/hashtags/:slug` — Hashtag detayını, etiketli mekan ve yorumlarla döner (10 dakika önbellek)
 - `GET /api/users/:id/mentions` — Kullanıcı mention ve bildirimlerini döner (auth gerekli)
-- `GET /api/realtime/feed` — SSE: gerçek zamanlı sosyal akış güncellemeleri (cursor tabanlı, 15sn polling)
+- `GET /api/realtime/feed` — SSE: gerçek zamanlı sosyal akış güncellemeleri (cursor tabanlı, 15sn yoklama)
 - `GET /api/leaderboards/users` — En iyi kullanıcı liderlik tablosu (sortBy=points/reviews ve limit destekli)
 
 **Gerçek Zamanlı Analitik** (admin):
-- `GET /api/realtime/analytics` — SSE: canlı metrikler (5sn) + KPI'lar (30sn polling)
+- `GET /api/realtime/analytics` — SSE: canlı metrikler (5sn) + KPI'lar (30sn yoklama)
 
 **Kullanıcı Yönetimi**:
 - `GET /api/users/:id/profile` — Herkese açık kullanıcı profili
@@ -323,35 +323,35 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 
 **Abonelikler ve Ödemeler**:
 - `GET /api/subscriptions/tiers` — Kullanılabilir abonelik katmanlarını döner
-- `POST /api/subscriptions/checkout` — Stripe checkout oturumu oluşturur
+- `POST /api/subscriptions/checkout` — Stripe ödeme oturumu oluşturur
 - `POST /api/subscriptions/webhook` — Stripe webhook işleyicisi
 
 **Dokümantasyon**:
 - `GET /api/openapi.json` — OpenAPI 3.1 tanımı
-- `GET /api/docs` — Swagger UI viewer
+- `GET /api/docs` — Swagger arayüz görüntüleyicisi
 
 ### Güvenlik
 
 - **SQL Injection**: `postgres.ts` içindeki table allowlist (`ALLOWED_TABLES` set'i) ve parametrik sorgular kullanılır
-- **XSS**: `sanitizeInput()` üzerinden giriş sanitization uygulanır
+- **XSS**: `sanitizeInput()` üzerinden giriş temizleme uygulanır
 - **Rate Limiting**: Redis üzerinden IP başına 15 dakikada 100 istek sınırı vardır (`/api/auth/register` ve login endpoint'leri ek dikkat gerektirir)
 - **CORS**: Middleware içinde yapılandırılır; origin doğrulaması `CORS_ORIGINS` env değişkenine göre yapılır
 - **Güvenlik Header'ları**: Content-Type, X-Frame-Options, X-XSS-Protection ve CSP uygulanır
-- **Session Hijacking**: `httpOnly` + `secure` cookie'ler ve strict `sameSite` politikası kullanılır
-- **Şifreler**: Bcrypt (12 tur) ile saklanır, asla log'lanmaz; legacy SHA-256 migration gömülüdür
+- **Oturum Ele Geçirme**: `httpOnly` + `secure` cookie'ler ve sıkı `sameSite` politikası kullanılır
+- **Şifreler**: Bcrypt (12 tur) ile saklanır, asla log'lanmaz; eski SHA-256 geçiş yolu gömülüdür
 
 ### Gerçek Zamanlı Özellikler
 
 Uygulama, WebSocket ek yükü olmadan düşük gecikmeli özellikler için **Server-Sent Events (SSE)** ile gerçek zamanlı güncellemeleri destekler.
 
 **Mimari**:
-- `src/lib/realtime-sse.ts` — event source yönetimi ve exponential backoff ile otomatik yeniden bağlanma içeren `RealtimeManager` singleton'ı
+- `src/lib/realtime-sse.ts` — olay kaynağı yönetimi ve üstel geri çekilme ile otomatik yeniden bağlanma içeren `RealtimeManager` tekil nesnesi
 - Çift amaçlı endpoint'ler: metrikler her 5 saniyede, KPI'lar her 30 saniyede güncellenir
-- Akış güncellemeleri için cursor tabanlı pagination kullanılır; yalnızca son fetch'ten sonraki yeni öğeler alınır
-- Yanıtı bloklamamak için fire-and-forget arka plan sorguları kullanılır
+- Akış güncellemeleri için cursor tabanlı sayfalama kullanılır; yalnızca son fetch'ten sonraki yeni öğeler alınır
+- Yanıtı bloklamamak için beklemesiz arka plan sorguları kullanılır
 
 **Uygulanan Akışlar**:
-1. **Sosyal Akış** (`GET /api/realtime/feed`, 15sn polling)
+1. **Sosyal Akış** (`GET /api/realtime/feed`, 15sn yoklama)
    - Takip edilen mekan ve kullanıcılardan gelen aktiviteleri taşır
    - Cursor `lastActivityId` olarak izlenir; yalnızca yeni aktiviteler yayımlanır
    - Sorgular: `user_activity`, `followers` ve `users` ile join edilir
@@ -460,7 +460,7 @@ Premium özellikler için katman tabanlı erişim kontrolü uygulanır.
 - Kota zorlaması `/api/user/quotas` endpoint'i üzerinden yapılır
 
 **Stripe Entegrasyonu**:
-- `POST /api/subscriptions/checkout` — Stripe checkout session oluşturur
+- `POST /api/subscriptions/checkout` — Stripe ödeme oturumu oluşturur
 - `POST /api/subscriptions/webhook` — Stripe event'lerini dinler (`subscription.updated`, `invoice.payment_succeeded`)
 - Webhook güvenliği için HMAC-SHA256 imza doğrulaması kullanılır
 - Webhook hatalarında exponential backoff retry uygulanır
@@ -728,7 +728,7 @@ npm run test
 |------|------|
 | `src/middleware.ts` | İstek kimlik doğrulama, CORS, rate limiting ve güvenlik başlıkları |
 | `src/lib/postgres.ts` | Veritabanı pool'u, parametrik sorgular, tablo izin listesi ve yavaş sorgu izleme |
-| `src/lib/auth.ts` | Bcrypt hashleme, Redis session'ları, token üretim/doğrulama |
+| `src/lib/auth.ts` | Bcrypt hashleme, Redis oturumları, token üretim/doğrulama |
 | `src/lib/cache.ts` | Redis istemcisi, ad alanlı anahtarlar, rate limiting ve cache işlemleri |
 | `src/lib/validation.ts` | Sanitization ile şema tabanlı doğrulama |
 | `src/lib/logging.ts` | İstek kimliği takibi ile yapılandırılmış loglama |
@@ -739,12 +739,12 @@ npm run test
 ### Sağlık ve Gözlemlenebilirlik
 | Dosya | Amaç |
 |------|------|
-| `src/pages/api/health.ts` | Health check endpoint'i (temel durum) |
+| `src/pages/api/health.ts` | Sağlık kontrol endpoint'i (temel durum) |
 | `src/pages/api/health/detailed.ts` | Detaylı sağlık endpoint'i (admin, sistem metrikleri, pool bilgisi) |
 | `src/pages/api/metrics.ts` | Toplu metrik paneli (admin) |
 | `src/pages/api/performance.ts` | Performans izleme endpoint'i (admin, yavaş sorgular, yavaş operasyonlar, pool) |
 | `src/pages/api/openapi.json.ts` | OpenAPI 3.1 tanımı |
-| `src/pages/api/docs.ts` | Swagger UI endpoint'i |
+| `src/pages/api/docs.ts` | Swagger arayüz endpoint'i |
 
 ### Ops Governance ve Kaynak Gerçekler
 | Dosya | Amaç |
@@ -760,16 +760,16 @@ npm run test
 | `docs/ops/LEGACY_PHASE_SURFACE.md` | Eski faz uyumluluk sınırları |
 | `docs/SCRIPT_SURFACE_POLICY.md` | Script yüzeyi ve runner-first politikası |
 | `src/types/generated-admin-api.ts` | Üretilmiş admin API kontrat tipleri |
-| `src/types/admin-api.ts` | UI-facing admin tip katmanı |
+| `src/types/admin-api.ts` | Arayüz odaklı admin tip katmanı |
 | `src/lib/admin-format.ts` | Admin ops ortak tarih/fallback format kaynağı |
 | `src/lib/admin-index-data.ts` | Admin ana sayfa SSR veri yükleyici kaynağı |
 | `src/lib/admin-index.ts` | Admin ana sayfa risk/araç görünüm modeli kaynağı |
 | `src/lib/admin-index-page.ts` | Admin ana sayfa badge/kart sınıf kaynağı |
 | `src/lib/admin-index-view.ts` | Admin ana sayfa render görünüm modeli kaynağı |
 | `src/lib/admin-ops-pages.ts` | Runtime monitor + access coverage trend/delta/geçmiş kaynağı |
-| `src/lib/runtime-monitor.ts` | Runtime monitor endpoint ve coverage özet kaynağı |
-| `src/lib/admin-access-coverage-page.ts` | Access coverage uyarı/özet/drift HTML kaynağı |
-| `src/lib/admin-dom.ts` | Admin ops sayfaları için ortak DOM güncelleme helper kaynağı |
+| `src/lib/runtime-monitor.ts` | Çalışma zamanı izleme endpoint ve kapsama özet kaynağı |
+| `src/lib/admin-access-coverage-page.ts` | Erişim kapsama uyarı/özet/drift HTML kaynağı |
+| `src/lib/admin-dom.ts` | Admin ops sayfaları için ortak DOM güncelleme yardımcısı kaynağı |
 | `src/lib/admin-page-bootstrap.ts` | Admin ops sayfaları için ortak refresh/interval bootstrap kaynağı |
 | `src/lib/astro-migration-report.ts` | Astro hydration risk envanteri kaynağı |
 | `scripts/astro-hydration-inventory.ts` | Astro hydration envanter raporu üreticisi |
@@ -790,13 +790,13 @@ npm run test
 | `src/lib/loyalty-points.ts` | Puan işlemleri ve bakiye takibi |
 | `src/lib/badges.ts` | Rozet tanımları ve verme mantığı |
 | `src/lib/achievements.ts` | Başarım tanımları ve kilit açma koşulları |
-| `src/lib/gamification.ts` | Otomatik başarım açma için event hook'ları |
-| `src/pages/api/loyalty/points.ts` | User points balance and history endpoint |
-| `src/pages/api/loyalty/rewards.ts` | Public rewards catalog endpoint |
-| `src/pages/api/loyalty/achievements.ts` | User achievements endpoint (GET all/unviewed/stats, POST mark viewed) |
-| `src/pages/api/loyalty/tiers.ts` | User tier and tier progression endpoint |
-| `src/pages/api/admin/loyalty/rewards.ts` | Admin rewards management (GET list, POST create) |
-| `src/pages/api/admin/loyalty/award.ts` | Admin manual award endpoint (points or badge) |
+| `src/lib/gamification.ts` | Otomatik başarım açma için olay hook'ları |
+| `src/pages/api/loyalty/points.ts` | Kullanıcı puan bakiyesi ve geçmiş endpoint'i |
+| `src/pages/api/loyalty/rewards.ts` | Herkese açık ödül kataloğu endpoint'i |
+| `src/pages/api/loyalty/achievements.ts` | Kullanıcı başarım endpoint'i (GET all/unviewed/stats, POST mark viewed) |
+| `src/pages/api/loyalty/tiers.ts` | Kullanıcı seviye ve ilerleme endpoint'i |
+| `src/pages/api/admin/loyalty/rewards.ts` | Admin ödül yönetimi (GET list, POST create) |
+| `src/pages/api/admin/loyalty/award.ts` | Admin manuel ödül endpoint'i (puan veya rozet) |
 | `src/components/LoyaltyDashboard.astro` | Kullanıcının sadakat durumu ve ödül görünümü |
 | `src/components/AdminLoyaltyPanel.astro` | Ödül kataloğu, manuel ödül verme ve istatistiklerden oluşan admin 3-tab paneli |
 | `src/pages/admin/loyalty/index.astro` | Admin sadakat yönetim sayfası |
