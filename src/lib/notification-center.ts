@@ -1,3 +1,6 @@
+import { renderEmptyState, renderErrorState } from './render-states';
+import { UI_COPY_TR } from './ui-copy';
+
 export interface NotificationCenterItem {
   id: string;
   notification_type: string;
@@ -74,15 +77,6 @@ function formatNotificationDate(value: string): string {
   });
 }
 
-function renderError(message: string): string {
-  return `
-    <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-      <h3 class="font-medium text-red-900">İşlem hatası</h3>
-      <p class="text-sm text-red-700">${message}</p>
-    </div>
-  `;
-}
-
 function renderToggle(showArchived: boolean): string {
   const currentClass = !showArchived
     ? 'bg-blue-600 text-white'
@@ -115,12 +109,12 @@ function renderNotificationItem(state: NotificationCenterState, item: Notificati
       </div>
       <div class="flex flex-shrink-0 items-center gap-2">
         ${!item.is_read && !state.showArchived ? `
-          <button type="button" data-notification-action="read:${item.id}" ${busy ? 'disabled' : ''} class="rounded-lg p-2 transition-colors hover:bg-gray-200 disabled:opacity-50" title="Okundu olarak işaretle">
-            ${busy ? 'İşleniyor...' : 'Okundu olarak işaretle'}
+          <button type="button" data-notification-action="read:${item.id}" ${busy ? 'disabled' : ''} class="rounded-lg p-2 transition-colors hover:bg-gray-200 disabled:opacity-50" title="${UI_COPY_TR.notifications.markRead}">
+            ${busy ? UI_COPY_TR.common.processing : UI_COPY_TR.notifications.markRead}
           </button>
         ` : ''}
-        <button type="button" data-notification-action="archive:${item.id}" ${busy ? 'disabled' : ''} class="rounded-lg p-2 transition-colors hover:bg-gray-200 disabled:opacity-50" title="${state.showArchived ? 'Kaldır' : 'Arşive taşı'}">
-          ${busy ? 'İşleniyor...' : state.showArchived ? 'Kaldır' : 'Arşive taşı'}
+        <button type="button" data-notification-action="archive:${item.id}" ${busy ? 'disabled' : ''} class="rounded-lg p-2 transition-colors hover:bg-gray-200 disabled:opacity-50" title="${state.showArchived ? UI_COPY_TR.common.remove : UI_COPY_TR.notifications.archive}">
+          ${busy ? UI_COPY_TR.common.processing : state.showArchived ? UI_COPY_TR.common.remove : UI_COPY_TR.notifications.archive}
         </button>
       </div>
     </div>
@@ -133,19 +127,15 @@ export function renderNotificationCenter(state: NotificationCenterState): string
     : '';
 
   const list = state.notifications.length === 0
-    ? `
-      <div class="py-12 text-center text-gray-500">
-        <p>${state.showArchived ? 'Arşivlenmiş bildirim bulunmuyor.' : 'Gösterilecek yeni bildirim bulunmuyor.'}</p>
-      </div>
-    `
+    ? renderEmptyState(state.showArchived ? 'Arşivlenmiş bildirim bulunmuyor.' : 'Gösterilecek yeni bildirim bulunmuyor.')
     : `<div class="space-y-2">${state.notifications.map((item) => renderNotificationItem(state, item)).join('')}</div>`;
 
   return `
     <div class="space-y-4">
-      ${state.error ? renderError(state.error) : ''}
+      ${state.error ? renderErrorState(state.error) : ''}
       <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <h1 class="text-2xl font-bold text-gray-900">Bildirim merkezi</h1>
+          <h1 class="text-2xl font-bold text-gray-900">${UI_COPY_TR.notifications.centerTitle}</h1>
           ${badge}
         </div>
       </div>

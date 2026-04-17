@@ -212,7 +212,7 @@ export function renderActivityFeed(state: ActivityFeedState): string {
     `).join('');
 
     const loadMore = state.hasMore
-      ? `<div class="mt-8 flex justify-center"><button type="button" data-activity-load-more class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">${state.loadingMore ? 'Yukleniyor...' : 'Daha Fazla Yukle'}</button></div>`
+      ? `<div class="mt-8 flex justify-center"><button type="button" data-activity-load-more class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">${state.loadingMore ? 'Yükleniyor...' : 'Daha fazla yükle'}</button></div>`
       : '';
 
     bodyHtml = `<div class="space-y-4">${itemsHtml}</div>${loadMore}`;

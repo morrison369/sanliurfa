@@ -40,8 +40,8 @@ describe('collections-manager', () => {
       form: { name: '', description: '', icon: '📍', is_public: false },
     });
 
-    expect(html).toContain('Yeni Koleksiyon Oluştur');
+    expect(html).toContain('Yeni koleksiyon oluştur');
     expect(html).toContain('Favoriler');
-    expect(html).toContain('🌍 Açık');
+    expect(html).toContain('🌍 Herkese açık');
   });
 });

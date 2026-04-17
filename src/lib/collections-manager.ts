@@ -1,3 +1,6 @@
+import { renderEmptyState, renderLoadingState } from './render-states';
+import { UI_COPY_TR } from './ui-copy';
+
 export interface ManagedCollection {
   id: string;
   user_id: string;
@@ -94,7 +97,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
 
   const form = `
     <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-      <h2 class="mb-4 text-2xl font-bold">Yeni koleksiyon oluştur</h2>
+      <h2 class="mb-4 text-2xl font-bold">${UI_COPY_TR.collections.createTitle}</h2>
       <form data-collections-create-form class="space-y-4">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
@@ -124,7 +127,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
           <textarea
             name="description"
             rows="3"
-            placeholder="Koleksiyon hakkında kısa bir açıklama yazın..."
+            placeholder="${UI_COPY_TR.collections.descriptionPlaceholder}"
             class="w-full rounded border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
           >${escapeHtml(state.form.description)}</textarea>
         </div>
@@ -133,7 +136,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
             <input type="checkbox" name="is_public" ${state.form.is_public ? 'checked' : ''} class="h-4 w-4" />
             <span class="text-sm font-medium">Herkese açık yap</span>
           </label>
-          <p class="mt-1 text-xs text-gray-500">Herkese açık koleksiyonlar diğer kullanıcılar tarafından görüntülenebilir ve takip edilebilir.</p>
+          <p class="mt-1 text-xs text-gray-500">${UI_COPY_TR.collections.publicHint}</p>
         </div>
         ${error}
         <button
@@ -148,9 +151,9 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
   `;
 
   const list = state.isLoading
-    ? '<div class="py-12 text-center">Koleksiyonlarım yükleniyor...</div>'
+    ? renderLoadingState(UI_COPY_TR.collections.loadingMine, 'py-12 text-center')
     : state.collections.length === 0
-      ? '<div class="py-12 text-center text-gray-500">Henüz oluşturulmuş koleksiyon bulunmuyor.</div>'
+      ? renderEmptyState(UI_COPY_TR.collections.empty)
       : `
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           ${state.collections
@@ -183,7 +186,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
                       href="/koleksiyonlar/${collection.id}"
                       class="flex-1 rounded bg-blue-100 px-3 py-2 text-center text-sm font-medium text-blue-700 transition hover:bg-blue-200"
                     >
-                      Koleksiyonu görüntüle
+                      ${UI_COPY_TR.collections.view}
                     </a>
                     <button
                       type="button"
@@ -191,7 +194,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
                       data-collection-name="${escapeHtml(collection.name)}"
                       class="flex-1 rounded bg-red-100 px-3 py-2 text-center text-sm font-medium text-red-700 transition hover:bg-red-200"
                     >
-                      Kaldır
+                      ${UI_COPY_TR.common.remove}
                     </button>
                   </div>
                 </div>
@@ -205,7 +208,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
     <div class="space-y-8">
       ${form}
       <div>
-        <h2 class="mb-4 text-2xl font-bold">Koleksiyon listem</h2>
+        <h2 class="mb-4 text-2xl font-bold">${UI_COPY_TR.collections.listTitle}</h2>
         ${list}
       </div>
     </div>
