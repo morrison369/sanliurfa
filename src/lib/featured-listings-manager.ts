@@ -84,7 +84,7 @@ function renderForm(form: FeaturedListingFormData): string {
           <input
             name="title"
             type="text"
-            placeholder="Başlık"
+            placeholder="Liste başlığı"
             value="${form.title}"
             class="rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             required
@@ -95,13 +95,13 @@ function renderForm(form: FeaturedListingFormData): string {
           >
             <option value="standard" ${form.position_tier === 'standard' ? 'selected' : ''}>Standart</option>
             <option value="premium" ${form.position_tier === 'premium' ? 'selected' : ''}>Premium</option>
-            <option value="featured" ${form.position_tier === 'featured' ? 'selected' : ''}>Öne Çıkan</option>
+            <option value="featured" ${form.position_tier === 'featured' ? 'selected' : ''}>Öne çıkan</option>
           </select>
         </div>
         <textarea
           name="description"
           rows="3"
-          placeholder="Açıklama"
+          placeholder="Liste açıklaması"
           class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
         >${form.description}</textarea>
         <div class="grid grid-cols-3 gap-4">
@@ -125,12 +125,12 @@ function renderForm(form: FeaturedListingFormData): string {
             step="0.01"
             min="0"
             value="${form.cost_per_day}"
-            placeholder="Günlük Maliyet"
+            placeholder="Günlük maliyet"
             class="rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           />
         </div>
         <div class="flex gap-2">
-          <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700">Oluştur</button>
+          <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700">Listeyi oluştur</button>
           <button type="button" data-featured-listings-cancel class="rounded-lg bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400">İptal et</button>
         </div>
       </form>
@@ -158,7 +158,7 @@ function renderListings(listings: FeaturedListing[]): string {
                   <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${listing.title}</h3>
                   <div class="mt-2 flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                     <span class="rounded bg-gray-100 px-2 py-1 capitalize dark:bg-gray-700">
-                      ${listing.position_tier === 'standard' ? 'Standart' : listing.position_tier === 'premium' ? 'Premium' : 'Öne Çıkan'}
+                      ${listing.position_tier === 'standard' ? 'Standart' : listing.position_tier === 'premium' ? 'Premium' : 'Öne çıkan'}
                     </span>
                     <span class="rounded bg-blue-100 px-2 py-1 capitalize text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                       ${listing.status === 'active' ? 'Aktif' : listing.status === 'scheduled' ? 'Planlanmış' : 'Süresi Dolmuş'}
@@ -176,7 +176,7 @@ function renderListings(listings: FeaturedListing[]): string {
                   data-featured-listing-delete="${listing.id}"
                   class="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
-                  Sil
+                  Kaldır
                 </button>
               </div>
             </div>
