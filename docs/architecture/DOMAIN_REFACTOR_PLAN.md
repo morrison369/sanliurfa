@@ -61,6 +61,38 @@
 3. domain bazlı test dosyalarını birlikte taşı
 4. her dalga sonrası `typecheck`, `astro:react:guard`, `copy:visible:audit`
 
+## Tamamlanan dalgalar
+
+- `shared`
+- `account`
+- `subscription`
+- `analytics`
+- `social`
+- `discovery`
+- `admin`
+- `content`
+- `vendor`
+
+## Enforcement
+
+- `npm run domain:refactor:guard`
+- CI quick gate içinde blocking adım
+- advisory kritik test zincirine bağlı
+
+## Shim listesi
+
+Kök `src/lib` altında domain'e taşınmış modüller artık yalnızca re-export shim olarak kalır:
+
+- `shared/*`
+- `account/*`
+- `subscription/*`
+- `analytics/*`
+- `social/*`
+- `discovery/*`
+- `admin/*`
+- `content/*`
+- `vendor/*`
+
 ## Riskler
 
 - import path kırılması

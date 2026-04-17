@@ -65,6 +65,8 @@ jobs:
         run: npm run copy:visible:audit
       - name: Loading wrapper guard
         run: npm run loading:wrapper:guard
+      - name: Domain refactor guard
+        run: npm run domain:refactor:guard
       - name: Typecheck app scope
         run: npm run typecheck:app
       - name: Generated admin API types drift check
