@@ -65,6 +65,7 @@ Framework direction:
 - `npm run astro:migration:high-risk` — Ranked feasibility report for remaining high-risk hydration surfaces
 - `npm run astro:react:audit` — Package-level React surface visibility after hydration reaches zero
 - `npm run astro:react:classify` — File-level React maintenance classification after hydration reaches zero
+- `npm run astro:react:guard` — Guard that fails if runtime-linked `.tsx` surface returns
 - `npm run phase:scripts:report` — Phase compatibility status
 - `npm run phase:compat:cleanup` — Cleanup compatibility manifest state
 
