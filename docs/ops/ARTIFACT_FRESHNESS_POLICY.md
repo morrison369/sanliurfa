@@ -1,10 +1,10 @@
-# Artifact Freshness Policy
+# Artefact Tazelik Politikasi
 
-Bu dokuman, runtime health, admin API ve admin panel tarafinda gorunen artifact health sinyalinin nasil uretildigini tanimlar.
+Bu dokuman, calisma zamani sagligi, admin API ve admin panel tarafinda gorunen artefact saglik sinyalinin nasil uretildigini tanimlar.
 
 ## Kapsam
 
-Artifact health sinyali su yuzeylerde kullanilir:
+Artefact saglik sinyali su yuzeylerde kullanilir:
 
 - `GET /api/health`
 - `GET /api/health/detailed`
@@ -14,9 +14,9 @@ Artifact health sinyali su yuzeylerde kullanilir:
 - `GET /api/admin/system/metrics`
 - `GET /api/admin/system/artifact-health`
 - `GET /api/admin/deployment/status`
-- Admin dashboard `Artifact Health` karti
+- Admin paneli `Artifact Health` karti
 
-Takip edilen artifact gruplari:
+Takip edilen artefact gruplari:
 
 - `releaseGate`
 - `nightlyRegression`
@@ -25,7 +25,7 @@ Takip edilen artifact gruplari:
 
 ## Durum Dili
 
-Tum artifact durumlari ortak statü dilini kullanir:
+Tum artefact durumlari ortak durum dilini kullanir:
 
 - `healthy`
 - `degraded`
@@ -35,22 +35,22 @@ Tum artifact durumlari ortak statü dilini kullanir:
 
 ### 1. `blocked`
 
-Asagidaki durumlarda artifact `blocked` kabul edilir:
+Asagidaki durumlarda artefact `blocked` kabul edilir:
 
-- artifact yoksa
+- artefact yoksa
 - `available=false` ise
 - `generatedAt` bos ise
 - `generatedAt` parse edilemiyorsa
 
 Bu durum tipik olarak su anlamlara gelir:
 
-- ilgili workflow hic artifact uretmemis
-- summary dosyasi okunamamis
-- artifact kontrati kirilmis
+- ilgili workflow hic artefact uretmemis
+- ozet dosyasi okunamamis
+- artefact kontrati kirilmis
 
 ### 2. `degraded`
 
-Artifact var ama bayat ise `degraded` kabul edilir.
+Artefact var ama bayat ise `degraded` kabul edilir.
 
 Esikler:
 
@@ -63,15 +63,15 @@ Esikler:
 
 ### 3. `healthy`
 
-Artifact var, `generatedAt` gecerli ve yas esigi asilmadiysa `healthy` kabul edilir.
+Artefact var, `generatedAt` gecerli ve yas esigi asilmadiysa `healthy` kabul edilir.
 
-## Artifact Uretim Noktalari
+## Artefact Uretim Noktalari
 
 ### Release Gate
 
 - Workflow: `.github/workflows/ci.yml`
 - Job: `full-gate`
-- Artifact'ler:
+- Artefact'lar:
   - `release-gate-summary`
   - `performance-ops-summary`
 
@@ -100,7 +100,7 @@ Nightly summary dosyasi:
 
 - `docs/reports/nightly-e2e-summary.json`
 
-## Source Of Truth
+## Kaynak Gercek
 
 Kod tarafindaki siniflandirma helper'i:
 
@@ -122,7 +122,7 @@ Bu dokuman ile helper mantigi drift etmemelidir. Esik degisirse:
 
 ## Operasyon Notu
 
-Artifact health, is akisinin tam dogru calistigini garanti etmez. Sadece:
+Artefact sagligi, is akisinin tam dogru calistigini garanti etmez. Sadece:
 
 - summary dosyasinin uretildigini
 - uretim zamaninin beklenen aralikta oldugunu
