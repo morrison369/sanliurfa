@@ -139,7 +139,7 @@ try {
   <!-- Newsletter Formu -->
   <div class="bg-gradient-to-br from-blue-600 to-blue-700 dark:from-blue-700 dark:to-blue-800 rounded-lg shadow p-6 text-white">
     <h3 class="font-semibold mb-2 flex items-center gap-2">
-      <span class="text-lg">📧</span> Bültenimize Abone Olun
+      <span class="text-lg">📧</span> E-posta bültenine abone olun
     </h3>
     <p class="text-sm text-blue-100 mb-4">
       En yeni yazılardan ilk siz haberdar olun.
@@ -156,11 +156,11 @@ try {
         type="submit"
         class="w-full py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
       >
-        Abone Ol
+        Abone ol
       </button>
     </form>
     <p class="text-xs text-blue-200 mt-3">
-      ✓ Spam göndermiş değiliz
+      ✓ Gereksiz e-posta göndermeyiz
     </p>
   </div>
 </aside>
@@ -181,7 +181,7 @@ try {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Başarıyla abone oldunuz!');
+        alert('Abonelik işlemi başarıyla tamamlandı!');
         form.reset();
       } else {
         alert(data.error || 'Abone olurken hata oluştu');
