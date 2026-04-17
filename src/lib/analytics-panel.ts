@@ -1,3 +1,6 @@
+import { renderEmptyState, renderErrorState } from './render-states';
+import { UI_COPY_TR } from './ui-copy';
+
 export interface AnalyticsPanelPlatformStats {
   avgSessionDuration: number;
   period: number;
@@ -79,7 +82,7 @@ function renderMetricCard(label: string, value: string, tone = 'default'): strin
 
 function renderTrendingPlaces(places: AnalyticsPanelTrendingPlace[]): string {
   if (places.length === 0) {
-    return '<p class="text-sm text-gray-600 dark:text-gray-400">Trend mekan verisi bulunmuyor.</p>';
+    return renderEmptyState('Trend mekan verisi bulunmuyor.', 'text-sm text-gray-600 dark:text-gray-400');
   }
 
   return `
@@ -111,7 +114,7 @@ function renderTrendingPlaces(places: AnalyticsPanelTrendingPlace[]): string {
 
 function renderSearchTrends(trends: AnalyticsPanelSearchTrend[]): string {
   if (trends.length === 0) {
-    return '<p class="text-sm text-gray-600 dark:text-gray-400">Popüler arama verisi bulunmuyor.</p>';
+    return renderEmptyState('Popüler arama verisi bulunmuyor.', 'text-sm text-gray-600 dark:text-gray-400');
   }
 
   return `
@@ -158,7 +161,7 @@ export function renderAnalyticsPanel(options: {
           .join('')}
       </div>
 
-      ${options.error ? `<div class="rounded bg-red-50 p-4 text-red-600">${options.error}</div>` : ''}
+      ${options.error ? renderErrorState(options.error) : ''}
 
       ${
         data
@@ -171,7 +174,7 @@ export function renderAnalyticsPanel(options: {
             </div>
 
             <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Platform özeti</h3>
+              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">${UI_COPY_TR.analytics.platformSummary}</h3>
               <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <div class="text-center">
                   <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">Ort. oturum süresi</p>
@@ -193,17 +196,17 @@ export function renderAnalyticsPanel(options: {
             </div>
 
             <div>
-              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Trend olan mekanlar</h3>
+              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">${UI_COPY_TR.analytics.trendingPlaces}</h3>
               ${renderTrendingPlaces(data.trendingPlaces)}
             </div>
 
             <div>
-              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Popüler aramalar</h3>
+              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">${UI_COPY_TR.analytics.popularSearches}</h3>
               ${renderSearchTrends(data.searchTrends)}
             </div>
           `
           : !options.error
-            ? '<div class="rounded border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">Analitik verisi bulunmuyor.</div>'
+            ? renderEmptyState(UI_COPY_TR.analytics.unavailable, 'rounded border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400')
             : ''
       }
     </div>

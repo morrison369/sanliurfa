@@ -1,3 +1,7 @@
+import { extractEnvelopeMessage, resolveEnvelopeData, resolveNestedEnvelopeData } from './api-envelope';
+import { renderErrorState, renderLoadingState } from './render-states';
+import { UI_COPY_TR } from './ui-copy';
+
 export interface UserProfileData {
   id: string;
   email: string;
@@ -18,17 +22,6 @@ export interface ActivityItem {
 
 export type UserProfileTab = 'profile' | 'favorites' | 'activity' | 'settings' | 'security';
 
-function resolveEnvelopeData(payload: unknown): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object') return {};
-
-  const outerData = 'data' in payload ? (payload as { data?: unknown }).data : undefined;
-  if (outerData && typeof outerData === 'object') {
-    return outerData as Record<string, unknown>;
-  }
-
-  return payload as Record<string, unknown>;
-}
-
 export function extractUserProfile(payload: unknown): UserProfileData | null {
   const data = resolveEnvelopeData(payload);
   const nested = data.data;
@@ -42,37 +35,14 @@ export function extractUserProfile(payload: unknown): UserProfileData | null {
 }
 
 export function extractActivityItems(payload: unknown): ActivityItem[] {
-  const data = resolveEnvelopeData(payload);
-  const nested = data.data;
-
-  if (Array.isArray(nested)) {
-    return nested as ActivityItem[];
-  }
-
-  if (nested && typeof nested === 'object' && Array.isArray((nested as { data?: unknown }).data)) {
-    return (nested as { data: ActivityItem[] }).data;
-  }
-
+  const nested = resolveNestedEnvelopeData(payload);
+  if (Array.isArray(nested)) return nested as unknown as ActivityItem[];
+  if (Array.isArray(nested.data)) return nested.data as ActivityItem[];
   return [];
 }
 
 export function extractProfileMessage(payload: unknown, fallback: string): string {
-  const data = resolveEnvelopeData(payload);
-
-  if (typeof data.message === 'string' && data.message.trim().length > 0) {
-    return data.message;
-  }
-
-  if (payload && typeof payload === 'object') {
-    const error = 'error' in payload ? (payload as { error?: unknown }).error : undefined;
-    if (typeof error === 'string' && error.trim().length > 0) return error;
-    if (error && typeof error === 'object') {
-      const message = 'message' in error ? (error as { message?: unknown }).message : undefined;
-      if (typeof message === 'string' && message.trim().length > 0) return message;
-    }
-  }
-
-  return fallback;
+  return extractEnvelopeMessage(payload, fallback);
 }
 
 function getActivityIcon(actionType: string): string {
@@ -212,7 +182,7 @@ function renderFavoritesTab(): string {
     <div class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
         <div class="py-12 text-center text-gray-500 dark:text-gray-400">
           <p class="mb-2 text-lg">❤️</p>
-          <p>Henüz favori mekan bulunmuyor.</p>
+          <p>${UI_COPY_TR.profile.favoritesEmpty}</p>
           <a href="/arama" class="mt-2 block text-blue-600 hover:underline">Yerleri keşfedin →</a>
         </div>
     </div>
@@ -225,7 +195,7 @@ function renderActivityTab(activity: ActivityItem[]): string {
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
         <div class="py-12 text-center text-gray-500 dark:text-gray-400">
           <p class="mb-2 text-lg">📊</p>
-          <p>Henüz etkinlik bulunmuyor.</p>
+          <p>${UI_COPY_TR.profile.activityEmpty}</p>
           <a href="/arama" class="mt-2 block text-blue-600 hover:underline">Yerleri keşfedin ve yorum yazmaya başlayın →</a>
         </div>
       </div>
@@ -328,15 +298,11 @@ export function renderUserProfile(options: {
   message: string | null;
 }): string {
   if (options.error) {
-    return `
-      <div class="container-custom py-12">
-        <div class="rounded border border-red-300 bg-red-100 px-4 py-3 text-red-700">${options.error}</div>
-      </div>
-    `;
+    return `<div class="container-custom py-12">${renderErrorState(options.error)}</div>`;
   }
 
   if (!options.user) {
-    return '<div class="container-custom py-12 text-center text-gray-600">Profil bilgileri yükleniyor...</div>';
+    return `<div class="container-custom py-12">${renderLoadingState(UI_COPY_TR.profile.loading, 'text-center text-gray-600')}</div>`;
   }
 
   let content = '';
@@ -355,7 +321,7 @@ export function renderUserProfile(options: {
   return `
     <div class="container-custom py-12">
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Profilim</h1>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">${UI_COPY_TR.profile.title}</h1>
         <p class="mt-2 text-gray-600 dark:text-gray-400">Profil bilgilerinizi ve tercihlerinizi buradan yönetin.</p>
       </div>
       ${renderTabs(options.activeTab)}

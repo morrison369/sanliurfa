@@ -38,6 +38,12 @@ export const UI_COPY_TR = {
     run: 'Raporu çalıştır',
     download: 'Raporu indir',
   },
+  subscription: {
+    loading: 'Abonelik bilgileri yükleniyor...',
+    activePlan: 'Aktif plan',
+    managePlans: 'Planları gör',
+    upgrade: "Premium'a yükselt",
+  },
   webhooks: {
     title: 'Webhook yönetimi',
     loading: 'Webhook yönetimi yükleniyor...',
@@ -51,14 +57,22 @@ export const UI_COPY_TR = {
     rejectReasonLabel: 'Reddetme nedeni (minimum 10 karakter)',
   },
   analytics: {
-    loading: 'Analitik verileri yükleniyor...',
+    loading: 'Analitik paneli yükleniyor...',
     unavailable: 'Analitik verisi bulunmuyor.',
+    platformSummary: 'Platform özeti',
+    popularSearches: 'Popüler aramalar',
+    trendingPlaces: 'Trend olan mekanlar',
+  },
+  adminDashboard: {
+    loading: 'Yönetim panosu yükleniyor...',
   },
   profile: {
     loading: 'Profil yükleniyor...',
     settingsLoading: 'Kullanıcı ayarları yükleniyor...',
+    title: 'Profilim',
+    favoritesEmpty: 'Henüz favori mekan bulunmuyor.',
+    activityEmpty: 'Henüz etkinlik bulunmuyor.',
   },
 } as const;
 
 export type UiCopyDictionary = typeof UI_COPY_TR;
-

@@ -50,7 +50,7 @@ describe('user-profile helpers', () => {
     });
 
     expect(profileHtml).toContain('Profilim');
-    expect(profileHtml).toContain('Değişiklikleri Kaydet');
+    expect(profileHtml).toContain('Değişiklikleri kaydet');
     expect(activityHtml).toContain('Göbeklitepe');
     expect(activityHtml).toContain('yorum yaptı');
   });

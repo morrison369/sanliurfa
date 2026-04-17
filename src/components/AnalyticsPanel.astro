@@ -1,12 +1,16 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
 ---
 
-<div data-analytics-panel>
-  <div data-analytics-panel-loading class="flex items-center justify-center p-8">
-    <div class="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-  </div>
-  <div data-analytics-panel-content class="hidden"></div>
-</div>
+<LoadingWrapper
+  contentClass="hidden"
+  contentDataAttr="data-analytics-panel-content"
+  loadingClass="flex items-center justify-center p-8"
+  loadingDataAttr="data-analytics-panel-loading"
+  message={UI_COPY_TR.analytics.loading}
+  spinner={true}
+/>
 
 <script>
   import { initAnalyticsPanel } from '../scripts/analytics-panel';

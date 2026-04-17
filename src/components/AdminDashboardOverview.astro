@@ -1,15 +1,15 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
 ---
 
-<div data-admin-dashboard-overview>
-  <div
-    data-admin-dashboard-overview-loading
-    class="flex items-center justify-center p-8 text-gray-500 dark:text-gray-400"
-  >
-    Yönetim panosu yükleniyor...
-  </div>
-  <div data-admin-dashboard-overview-content class="hidden"></div>
-</div>
+<LoadingWrapper
+  contentClass="hidden"
+  contentDataAttr="data-admin-dashboard-overview-content"
+  loadingClass="flex items-center justify-center p-8 text-gray-500 dark:text-gray-400"
+  loadingDataAttr="data-admin-dashboard-overview-loading"
+  message={UI_COPY_TR.adminDashboard.loading}
+/>
 
 <script>
   import { initAdminDashboardOverview } from '../scripts/admin-dashboard-overview';
