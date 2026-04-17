@@ -63,8 +63,8 @@ function renderTabs(tab: 'reports' | 'templates'): string {
 
   return `
     <div class="flex space-x-2 border-b border-gray-200">
-      <button type="button" data-report-manager-tab="reports" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('reports')}">📊 Reports</button>
-      <button type="button" data-report-manager-tab="templates" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('templates')}">📋 Templates</button>
+      <button type="button" data-report-manager-tab="reports" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('reports')}">📊 Raporlar</button>
+      <button type="button" data-report-manager-tab="templates" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('templates')}">📋 Şablonlar</button>
     </div>
   `;
 }
@@ -77,7 +77,7 @@ function renderReportList(state: ReportManagerState): string {
   }
 
   if (state.reports.length === 0) {
-    return '<p class="text-gray-600">No reports yet</p>';
+    return '<p class="text-gray-600">Henüz rapor bulunmuyor.</p>';
   }
 
   return `
@@ -96,7 +96,7 @@ function renderReportList(state: ReportManagerState): string {
                   <p class="text-sm text-gray-600">${report.report_type ?? ''} • ${report.format}</p>
                 </div>
                 <span class="rounded px-2 py-1 text-xs ${report.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}">
-                  ${report.is_active ? 'Active' : 'Inactive'}
+                  ${report.is_active ? 'Aktif' : 'Pasif'}
                 </span>
               </div>
             </div>
@@ -112,7 +112,7 @@ function renderExportOptions(state: ReportManagerState): string {
 
   return `
     <div class="rounded border bg-gray-50 p-4">
-      <h3 class="mb-3 font-semibold">Export Options</h3>
+      <h3 class="mb-3 font-semibold">Dışa aktarma seçenekleri</h3>
       <div class="flex space-x-2">
         <select data-report-manager-format class="rounded border border-gray-300 px-3 py-2">
           <option value="csv" ${state.exportFormat === 'csv' ? 'selected' : ''}>CSV</option>
@@ -120,10 +120,10 @@ function renderExportOptions(state: ReportManagerState): string {
           <option value="excel" ${state.exportFormat === 'excel' ? 'selected' : ''}>Excel</option>
         </select>
         <button type="button" data-report-manager-run class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 ${state.loading ? 'opacity-50' : ''}">
-          Run
+          Çalıştır
         </button>
         <button type="button" data-report-manager-download class="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700">
-          Download
+          İndir
         </button>
       </div>
     </div>
@@ -139,15 +139,15 @@ export function renderReportManager(state: ReportManagerState): string {
         state.tab === 'reports'
           ? `
             <div class="space-y-4">
-              <h2 class="text-2xl font-bold">Reports</h2>
+              <h2 class="text-2xl font-bold">Raporlar</h2>
               ${renderReportList(state)}
               ${renderExportOptions(state)}
             </div>
           `
           : `
             <div class="space-y-4">
-              <h2 class="text-2xl font-bold">Export Templates</h2>
-              <p class="text-gray-600">Manage your custom export templates</p>
+              <h2 class="text-2xl font-bold">Dışa aktarma şablonları</h2>
+              <p class="text-gray-600">Özel dışa aktarma şablonlarınızı yönetin.</p>
             </div>
           `
       }

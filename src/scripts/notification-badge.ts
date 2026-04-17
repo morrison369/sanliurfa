@@ -30,7 +30,7 @@ async function loadUnreadCount(root: NotificationBadgeRoot) {
     const data = (await response.json()) as { count?: number };
     updateNotificationBadge(root, data.count ?? 0);
   } catch (error) {
-    console.error('Failed to load unread count', error);
+    console.error('Okunmamış bildirim sayısı alınamadı:', error);
   }
 }
 
