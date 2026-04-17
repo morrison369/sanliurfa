@@ -7,8 +7,8 @@ export interface VendorDashboardState {
 const tabs: Array<{ id: VendorDashboardTab; label: string }> = [
   { id: 'overview', label: 'Genel bakış' },
   { id: 'listings', label: 'İşletmelerim' },
-  { id: 'reviews', label: 'Yorumlar' },
-  { id: 'ads', label: 'Reklamlar' },
+  { id: 'reviews', label: 'Yorum yönetimi' },
+  { id: 'ads', label: 'Reklam yönetimi' },
 ];
 
 function renderTabs(activeTab: VendorDashboardTab): string {
@@ -72,7 +72,7 @@ function renderReviews(): string {
     <div class="space-y-4">
       <div class="border-l-4 border-yellow-500 bg-yellow-50 p-4 dark:bg-yellow-900/20">
         <p class="font-semibold text-gray-900 dark:text-white">Muhteşem hizmet!</p>
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">⭐⭐⭐⭐⭐ - User123</p>
+        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">⭐⭐⭐⭐⭐ - Örnek kullanıcı</p>
         <button class="mt-2 text-sm text-blue-600 hover:underline">Yanıt ver</button>
       </div>
     </div>

@@ -164,10 +164,10 @@ export function renderAnalyticsPanel(options: {
         data
           ? `
             <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-              ${renderMetricCard('Aktif Kullanıcı', stats?.uniqueUsers.toLocaleString('tr-TR') || '0')}
-              ${renderMetricCard('Toplam Oturum', stats?.totalSessions.toLocaleString('tr-TR') || '0')}
-              ${renderMetricCard('Benzersiz Sayfa', stats?.uniquePages.toLocaleString('tr-TR') || '0')}
-              ${renderMetricCard('Toplam Arama', stats?.uniqueSearches.toLocaleString('tr-TR') || '0', 'accent')}
+              ${renderMetricCard('Aktif kullanıcı', stats?.uniqueUsers.toLocaleString('tr-TR') || '0')}
+              ${renderMetricCard('Toplam oturum', stats?.totalSessions.toLocaleString('tr-TR') || '0')}
+              ${renderMetricCard('Benzersiz sayfa', stats?.uniquePages.toLocaleString('tr-TR') || '0')}
+              ${renderMetricCard('Toplam arama', stats?.uniqueSearches.toLocaleString('tr-TR') || '0', 'accent')}
             </div>
 
             <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">

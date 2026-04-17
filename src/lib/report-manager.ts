@@ -63,7 +63,7 @@ function renderTabs(tab: 'reports' | 'templates'): string {
 
   return `
     <div class="flex space-x-2 border-b border-gray-200">
-      <button type="button" data-report-manager-tab="reports" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('reports')}">📊 Raporlar</button>
+      <button type="button" data-report-manager-tab="reports" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('reports')}">📊 Rapor listesi</button>
       <button type="button" data-report-manager-tab="templates" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('templates')}">📋 Dışa aktarma şablonları</button>
     </div>
   `;
@@ -123,7 +123,7 @@ function renderExportOptions(state: ReportManagerState): string {
           Raporu çalıştır
         </button>
         <button type="button" data-report-manager-download class="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700">
-          İndir
+          Raporu indir
         </button>
       </div>
     </div>
