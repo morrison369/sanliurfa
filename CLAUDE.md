@@ -16,10 +16,10 @@ Bu dosya yüksek sinyalli bir çalışma rehberidir; tek karar kaynağı değild
 - `docs/RELEASE_GATES.md` — sürüm ve birleştirme kapısı davranışı
 - `docs/ops/BRANCH_PROTECTION.md` — zorunlu kontroller / branch protection parity
 - `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` — artefact freshness semantiği
-- `docs/ops/ARTIFACT_RETENTION_POLICY.md` — saklama ve temizlik kuralları
+- `docs/ops/ARTIFACT_RETENTION_POLICY.md` — saklama ve temizlik politikaları
 - `docs/ops/INTEGRATION_READINESS.md` — admin entegrasyon hazırlık davranışı
 - `docs/ops/INCIDENT_RUNBOOK.md` — incident müdahale sırası
-- `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` — eski faz ve betik yüzeyi politikası
+- `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` — eski faz ve betik yüzeyi kuralları
 - `src/pages/api/openapi.json.ts` — güncel API kontratı kaynağı
 - `src/types/generated-admin-api.ts` — OpenAPI'den üretilmiş admin API tipleri
 - `src/types/admin-api.ts` — arayüz odaklı admin tip katmanı
@@ -61,14 +61,14 @@ Cati sistemi yonu:
 ### Surum, Governance ve Ops
 - `npm run release:gate` — Surum kapisi ozeti ve karari
 - `npm run branch:protection:drift:check` — Zorunlu kontroller / doküman eşliği doğrulaması
-- `npm run ops:retention:apply` — Yerel artefact ve denetim saklama temizligi
+- `npm run ops:retention:apply` — Yerel artefact ve denetim saklama temizliği
 - `npm run astro:migration:inventory` — Güncel Astro hydration envanteri ve risk dağılımı
 - `npm run astro:migration:high-risk` — Kalan yüksek riskli hydration yüzeyleri için sıralı feasibility raporu
 - `npm run astro:react:audit` — Hydration sıfıra indikten sonra paket seviyesinde React yüzeyi görünürlüğü
 - `npm run astro:react:classify` — Hydration sıfıra indikten sonra dosya seviyesinde React bakım sınıflandırması
 - `npm run astro:react:guard` — Çalışma zamanına bağlı React arayüz yüzeyi geri dönerse hata üreten koruma
 - `npm run phase:scripts:report` — Faz uyumluluk durumu
-- `npm run phase:compat:cleanup` — Uyumluluk manifest temizlik durumu
+- `npm run phase:compat:cleanup` — Uyumluluk manifest temizleme durumu
 
 ### Veritabanı ve Servisler
 - `npm run db:start` — PostgreSQL Docker container'ını başlat
@@ -546,7 +546,7 @@ await deleteCachePattern('sanliurfa:places:list:*');
 ### Request Doğrulaması Ekleme
 
 1. Define schema in `src/lib/validation.ts` under `commonSchemas`
-2. Use in API endpoint: `validateWithSchema(body, commonSchemas.mySchema)`
+2. API endpoint'inde kullan: `validateWithSchema(body, commonSchemas.mySchema)`
 3. Schema fields: type, required, minLength, maxLength, min, max, pattern, custom validator, sanitize
 
 ```typescript
@@ -571,10 +571,10 @@ const mySchema = {
 
 Check slow queries and request metrics:
 ```bash
-# Get detailed performance dashboard (requires admin auth)
+# Ayrıntılı performans panelini getir (admin kimliği gerekir)
 curl -H "Cookie: auth-token=YOUR_TOKEN" http://localhost:3000/api/performance
 
-# Get aggregated metrics
+# Toplu metrikleri getir
 curl -H "Cookie: auth-token=YOUR_TOKEN" http://localhost:3000/api/metrics
 ```
 
@@ -592,7 +592,7 @@ curl -H "Cookie: auth-token=YOUR_TOKEN" http://localhost:3000/api/metrics
 
 Slow operations are logged and trackable:
 ```typescript
-// Get slow queries from metrics
+// Metriklerden yavas sorgulari al
 import { metricsCollector } from '../../../lib/metrics';
 const slowQueries = metricsCollector.getSlowQueries(10);  // Last 10 slow queries
 const slowOps = metricsCollector.getSlowOperations(20);   // Last 20 slow operations
