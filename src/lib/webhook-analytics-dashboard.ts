@@ -1,3 +1,5 @@
+import { renderEmptyState, renderErrorState } from './render-states';
+
 export interface WebhookAnalyticsActivity {
   time: string;
   sent: number;
@@ -161,7 +163,7 @@ function renderEvents(metrics: WebhookAnalyticsMetrics): string {
 
 function renderFailed(metrics: WebhookAnalyticsMetrics): string {
   if (metrics.topFailedEvents.length === 0) {
-    return '<p class="py-8 text-center text-gray-500">Başarısız olay kaydı bulunmuyor.</p>';
+    return renderEmptyState('Başarısız olay kaydı bulunmuyor.', 'py-8 text-center text-gray-500');
   }
 
   return `
@@ -192,11 +194,7 @@ export function renderWebhookAnalyticsDashboard(options: {
   activeTab: WebhookAnalyticsTab;
 }): string {
   if (options.error || !options.metrics) {
-    return `
-      <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-        <p class="text-red-700">${options.error || 'Webhook analitiği yüklenemedi.'}</p>
-      </div>
-    `;
+    return renderErrorState(options.error || 'Webhook analitiği yüklenemedi.');
   }
 
   const metrics = options.metrics;

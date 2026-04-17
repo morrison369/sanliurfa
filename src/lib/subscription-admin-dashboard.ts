@@ -1,4 +1,5 @@
 import type { AdminSubscriptionAnalyticsData } from '../types/admin-api';
+import { renderEmptyState, renderErrorState } from './render-states';
 
 export type SubscriptionAdminTab = 'overview' | 'users' | 'webhooks';
 
@@ -154,11 +155,14 @@ export function renderSubscriptionAdminDashboard(options: {
   activeTab: SubscriptionAdminTab;
 }): string {
   if (options.error) {
-    return `<div class="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-900/20"><p class="text-red-700 dark:text-red-300">${options.error}</p></div>`;
+    return renderErrorState(options.error);
   }
 
   if (!options.analytics) {
-    return `<div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-700 dark:bg-gray-800"><p class="text-gray-600 dark:text-gray-400">Abonelik verileri yüklenemedi.</p></div>`;
+    return renderEmptyState(
+      'Abonelik verileri yüklenemedi.',
+      'rounded-lg border border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-700 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
+    );
   }
 
   return `

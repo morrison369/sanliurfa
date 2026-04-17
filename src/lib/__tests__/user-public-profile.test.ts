@@ -48,7 +48,7 @@ describe('user public profile helpers', () => {
     });
 
     expect(html).toContain('Ali Veli');
-    expect(html).toContain('Takip Et');
+    expect(html).toContain('Takip et');
   });
 
   it('extracts nested message', () => {

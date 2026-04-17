@@ -1,3 +1,7 @@
+import { extractEnvelopeMessage, resolveNestedEnvelopeData } from './api-envelope';
+import { renderEmptyState, renderErrorState, renderLoadingState } from './render-states';
+import { UI_COPY_TR } from './ui-copy';
+
 export interface UserPublicProfileStats {
   followers: number;
   following: number;
@@ -35,45 +39,24 @@ export interface UserPublicProfileState {
   currentUserId?: string;
 }
 
-function resolveEnvelopeData(payload: unknown): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object') return {};
-  const outerData = 'data' in payload ? (payload as { data?: unknown }).data : undefined;
-  if (outerData && typeof outerData === 'object') {
-    const nestedData = 'data' in outerData ? (outerData as { data?: unknown }).data : undefined;
-    if (nestedData && typeof nestedData === 'object') return nestedData as Record<string, unknown>;
-    return outerData as Record<string, unknown>;
-  }
-  return payload as Record<string, unknown>;
-}
-
 export function extractUserPublicProfile(payload: unknown): UserPublicProfileData | null {
-  const data = resolveEnvelopeData(payload);
+  const data = resolveNestedEnvelopeData(payload);
   if (!data || typeof data.id !== 'string') return null;
   return data as unknown as UserPublicProfileData;
 }
 
 export function extractUserPublicProfileFollowStatus(payload: unknown): boolean {
-  const data = resolveEnvelopeData(payload);
+  const data = resolveNestedEnvelopeData(payload);
   return Boolean(data.is_following);
 }
 
 export function extractUserPublicProfileBlockedStatus(payload: unknown): boolean {
-  const data = resolveEnvelopeData(payload);
+  const data = resolveNestedEnvelopeData(payload);
   return Boolean(data.blocked_user);
 }
 
 export function extractUserPublicProfileMessage(payload: unknown, fallback: string): string {
-  const data = resolveEnvelopeData(payload);
-  if (typeof data.message === 'string' && data.message.trim()) return data.message;
-  if (payload && typeof payload === 'object') {
-    const error = 'error' in payload ? (payload as { error?: unknown }).error : undefined;
-    if (typeof error === 'string' && error.trim()) return error;
-    if (error && typeof error === 'object') {
-      const message = 'message' in error ? (error as { message?: unknown }).message : undefined;
-      if (typeof message === 'string' && message.trim()) return message;
-    }
-  }
-  return fallback;
+  return extractEnvelopeMessage(payload, fallback);
 }
 
 function formatDate(value: string): string {
@@ -85,11 +68,7 @@ function formatDate(value: string): string {
 }
 
 function renderError(message: string): string {
-  return `
-    <div class="rounded border border-red-300 bg-red-100 px-4 py-3 text-red-700">
-      ${message}
-    </div>
-  `;
+  return renderErrorState(message);
 }
 
 function formatActivityType(type: string): string {
@@ -111,7 +90,7 @@ function formatActivityType(type: string): string {
 
 function renderActivity(activity: UserPublicProfileActivity[]): string {
   if (activity.length === 0) {
-    return '<p class="text-sm text-gray-500">Henüz görünür etkinlik bulunmuyor.</p>';
+    return renderEmptyState('Henüz görünür etkinlik bulunmuyor.', 'text-sm text-gray-500');
   }
 
   return `
@@ -135,7 +114,7 @@ function renderActivity(activity: UserPublicProfileActivity[]): string {
 
 export function renderUserPublicProfile(state: UserPublicProfileState): string {
   if (state.isLoading) {
-    return '<div class="py-12 text-center text-gray-500">Kullanıcı profili yükleniyor...</div>';
+    return renderLoadingState(UI_COPY_TR.profile.loading, 'py-12 text-center text-gray-500');
   }
 
   if (state.error) {
@@ -143,7 +122,7 @@ export function renderUserPublicProfile(state: UserPublicProfileState): string {
   }
 
   if (!state.profile) {
-    return '<div class="py-12 text-center text-gray-500">Kullanıcı profili bulunamadı.</div>';
+    return renderEmptyState('Kullanıcı profili bulunamadı.', 'py-12 text-center text-gray-500');
   }
 
   const profile = state.profile;
@@ -168,10 +147,10 @@ export function renderUserPublicProfile(state: UserPublicProfileState): string {
                   <a href="/mesajlar" class="inline-block rounded bg-blue-500 px-4 py-2 text-white">Mesaj gönder</a>
                 ` : ''}
                 <button type="button" data-user-public-profile-follow class="rounded px-4 py-2 text-white ${state.isFollowing ? 'bg-gray-600 hover:bg-gray-700' : 'bg-green-600 hover:bg-green-700'}" ${state.isFollowingLoading ? 'disabled' : ''}>
-                  ${state.isFollowingLoading ? 'İşleniyor...' : state.isFollowing ? 'Takibi bırak' : 'Takip et'}
+                  ${state.isFollowingLoading ? UI_COPY_TR.common.processing : state.isFollowing ? 'Takibi bırak' : 'Takip et'}
                 </button>
                 <button type="button" data-user-public-profile-block class="rounded px-4 py-2 text-white ${state.isBlocked ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-red-600 hover:bg-red-700'}" ${state.isBlocking ? 'disabled' : ''}>
-                  ${state.isBlocking ? 'İşleniyor...' : state.isBlocked ? 'Engeli kaldır' : 'Engelle'}
+                  ${state.isBlocking ? UI_COPY_TR.common.processing : state.isBlocked ? 'Engeli kaldır' : 'Engelle'}
                 </button>
               </div>
             ` : ''}

@@ -1,3 +1,5 @@
+import { renderEmptyState } from './render-states';
+
 export type VendorDashboardTab = 'overview' | 'listings' | 'reviews' | 'ads';
 
 export interface VendorDashboardState {
@@ -61,7 +63,7 @@ function renderOverview(): string {
 function renderListings(): string {
   return `
     <div class="py-8 text-center text-gray-600 dark:text-gray-400">
-      <p class="mb-4">İşletmeleriniz burada listelenecek.</p>
+      <div class="mb-4">${renderEmptyState('İşletmeleriniz burada listelenecek.', 'text-gray-600 dark:text-gray-400')}</div>
       <button class="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700">+ İşletme ekle</button>
     </div>
   `;
