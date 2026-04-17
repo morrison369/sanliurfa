@@ -52,7 +52,7 @@ try {
   comments = result;
 } catch (err) {
   error = 'Yorumlar yüklenirken hata oluştu';
-  console.error('Comments moderation error:', err);
+  console.error('Yorum moderasyon sayfası yüklenemedi:', err);
 }
 
 const seo = {
@@ -207,10 +207,10 @@ const seo = {
     });
 
     if (response.ok) {
-      alert('Yorum onaylandı');
+      alert('Yorum onaylandı.');
       window.location.reload();
     } else {
-      alert('Yorum onaylanırken hata oluştu');
+      alert('Yorum onaylanamadı.');
     }
   }
 
@@ -221,10 +221,10 @@ const seo = {
     });
 
     if (response.ok) {
-      alert('Yorum reddedildi');
+      alert('Yorum reddedildi.');
       window.location.reload();
     } else {
-      alert('Yorum reddedilirken hata oluştu');
+      alert('Yorum reddedilemedi.');
     }
   }
 
@@ -236,10 +236,10 @@ const seo = {
     });
 
     if (response.ok) {
-      alert('Yorum silindi');
+      alert('Yorum silindi.');
       window.location.reload();
     } else {
-      alert('Yorum silinirken hata oluştu');
+      alert('Yorum silinemedi.');
     }
   }
 </script>
