@@ -292,7 +292,7 @@ function renderVerificationBanner(state: UserSettingsState): string {
           <p class="text-sm text-yellow-800 dark:text-yellow-300">Hesabınızın güvenliği için e-posta adresinizi doğrulayın: ${escapeHtml(state.profile.email)}</p>
         </div>
         <button type="button" data-user-settings-resend-verification ${state.resendingVerification ? 'disabled' : ''} class="rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-yellow-700 disabled:cursor-not-allowed disabled:opacity-50">
-          ${state.resendingVerification ? 'Gönderiliyor...' : 'Doğrula'}
+          ${state.resendingVerification ? 'Doğrulama gönderiliyor...' : 'Doğrulama bağlantısı gönder'}
         </button>
       </div>
     </div>
@@ -333,7 +333,7 @@ function renderProfileTab(state: UserSettingsState): string {
         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">${state.profileForm.bio.length}/500</p>
       </div>
       <button type="submit" ${state.saving ? 'disabled' : ''} class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-        ${state.saving ? 'Kaydediliyor...' : 'Profili kaydet'}
+        ${state.saving ? 'Kaydediliyor...' : 'Profili güncelle'}
       </button>
     </form>
   `;
@@ -354,7 +354,7 @@ function renderSettingsTab(state: UserSettingsState): string {
         <select data-user-settings-field="theme_preference" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
           <option value="light" ${state.settingsForm.theme_preference === 'light' ? 'selected' : ''}>Açık</option>
           <option value="dark" ${state.settingsForm.theme_preference === 'dark' ? 'selected' : ''}>Koyu</option>
-          <option value="auto" ${state.settingsForm.theme_preference === 'auto' ? 'selected' : ''}>Otomatik</option>
+          <option value="auto" ${state.settingsForm.theme_preference === 'auto' ? 'selected' : ''}>Sistemle eşleştir</option>
         </select>
       </div>
       <h3 class="pt-4 text-base font-semibold text-gray-900 dark:text-white">Bildirim tercihleri</h3>
@@ -373,7 +373,7 @@ function renderSettingsTab(state: UserSettingsState): string {
         </select>
       </div>
       <button type="submit" ${state.saving ? 'disabled' : ''} class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-        ${state.saving ? 'Kaydediliyor...' : 'Ayarları kaydet'}
+        ${state.saving ? 'Kaydediliyor...' : 'Genel ayarları kaydet'}
       </button>
     </form>
   `;
@@ -402,7 +402,7 @@ function renderPrivacyTab(state: UserSettingsState): string {
           .join('')}
       </div>
       <button type="submit" ${state.saving ? 'disabled' : ''} class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-        ${state.saving ? 'Kaydediliyor...' : 'Gizlilik ayarlarını kaydet'}
+        ${state.saving ? 'Kaydediliyor...' : 'Gizlilik tercihlerini kaydet'}
       </button>
     </form>
   `;
@@ -425,7 +425,7 @@ function renderPasswordTab(state: UserSettingsState): string {
         <input data-user-settings-password="confirm_password" type="password" value="${escapeHtml(state.passwordForm.confirm_password)}" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
       </div>
       <button type="submit" ${state.saving ? 'disabled' : ''} class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-        ${state.saving ? 'Kaydediliyor...' : 'Şifreyi değiştir'}
+        ${state.saving ? 'Kaydediliyor...' : 'Şifreyi güncelle'}
       </button>
     </form>
   `;
@@ -451,7 +451,7 @@ function renderSecurityTab(state: UserSettingsState): string {
             <button type="button" data-user-settings-2fa-verify ${state.twoFactor.verifying || state.twoFactor.verificationCode.length !== 6 ? 'disabled' : ''} class="rounded-lg bg-green-600 px-6 py-2 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50">${state.twoFactor.verifying ? 'Doğrulanıyor...' : 'Doğrula'}</button>
           </div>
         </div>
-        <button type="button" data-user-settings-2fa-cancel class="w-full text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">İptal Et</button>
+        <button type="button" data-user-settings-2fa-cancel class="w-full text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">İptal et</button>
       </div>
     `;
   }
@@ -461,7 +461,7 @@ function renderSecurityTab(state: UserSettingsState): string {
       <div class="flex items-center justify-between gap-4">
         <div>
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">İki Faktörlü Kimlik Doğrulama</h2>
-          <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Hesabınızı ek güvenlik katmanı ile koruyun</p>
+          <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Hesabınızı ek bir güvenlik katmanıyla koruyun.</p>
         </div>
         <div class="flex items-center gap-2">
           <span class="${status?.enabled ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}">${status?.enabled ? '✓' : '—'}</span>
@@ -475,7 +475,7 @@ function renderSecurityTab(state: UserSettingsState): string {
       }
       ${
         !status?.enabled
-          ? `<button type="button" data-user-settings-2fa-start ${state.twoFactor.loading ? 'disabled' : ''} class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">${state.twoFactor.loading ? 'Kuruluyor...' : 'Etkinleştir'}</button>`
+          ? `<button type="button" data-user-settings-2fa-start ${state.twoFactor.loading ? 'disabled' : ''} class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">${state.twoFactor.loading ? 'Kurulum hazırlanıyor...' : '2FA etkinleştir'}</button>`
           : `
             ${
               state.twoFactor.setup.backupCodes.length > 0
@@ -486,7 +486,7 @@ function renderSecurityTab(state: UserSettingsState): string {
               <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">2FA'yı kapatmak için şifrenizi girin</label>
               <div class="flex gap-2">
                 <input data-user-settings-2fa-disable-password type="password" value="${escapeHtml(state.twoFactor.disablePassword)}" placeholder="Şifreniz" class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-                <button type="button" data-user-settings-2fa-disable ${state.twoFactor.disabling || !state.twoFactor.disablePassword ? 'disabled' : ''} class="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">${state.twoFactor.disabling ? 'Kapatılıyor...' : 'Kapat'}</button>
+                <button type="button" data-user-settings-2fa-disable ${state.twoFactor.disabling || !state.twoFactor.disablePassword ? 'disabled' : ''} class="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">${state.twoFactor.disabling ? 'Kapatılıyor...' : '2FA kapat'}</button>
               </div>
             </div>
           `
