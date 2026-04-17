@@ -90,6 +90,8 @@ function formatNotificationType(type: string): string {
   if (normalized === 'subscription') return 'Abonelik bildirimi';
   if (normalized === 'warning') return 'Uyarı';
   if (normalized === 'security') return 'Güvenlik bildirimi';
+  if (normalized === 'reply') return 'Yanıt';
+  if (normalized === 'admin') return 'Yönetici bildirimi';
 
   return type;
 }
