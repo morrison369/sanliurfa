@@ -86,6 +86,10 @@ function formatNotificationType(type: string): string {
   if (normalized === 'follow' || normalized === 'new_follower') return 'Yeni takipçi';
   if (normalized === 'mention') return 'Bahsedilme';
   if (normalized === 'system') return 'Sistem bildirimi';
+  if (normalized === 'verification') return 'Doğrulama bildirimi';
+  if (normalized === 'subscription') return 'Abonelik bildirimi';
+  if (normalized === 'warning') return 'Uyarı';
+  if (normalized === 'security') return 'Güvenlik bildirimi';
 
   return type;
 }

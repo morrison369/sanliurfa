@@ -101,6 +101,10 @@ function formatActivityType(type: string): string {
   if (normalized === 'follow') return 'Takip';
   if (normalized === 'badge') return 'Rozet';
   if (normalized === 'checkin') return 'Ziyaret';
+  if (normalized === 'message') return 'Mesaj';
+  if (normalized === 'mention') return 'Bahsedilme';
+  if (normalized === 'level_up') return 'Seviye atlama';
+  if (normalized === 'loyalty_points') return 'Puan kazanımı';
 
   return type;
 }
