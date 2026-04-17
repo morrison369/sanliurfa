@@ -288,7 +288,7 @@ function renderVerificationBanner(state: UserSettingsState): string {
     <div class="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/30">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h3 class="mb-1 font-semibold text-yellow-900 dark:text-yellow-200">E-posta Doğrulanmadı</h3>
+          <h3 class="mb-1 font-semibold text-yellow-900 dark:text-yellow-200">E-posta doğrulanmadı</h3>
           <p class="text-sm text-yellow-800 dark:text-yellow-300">Hesabınızın güvenliği için e-posta adresinizi doğrulayın: ${escapeHtml(state.profile.email)}</p>
         </div>
         <button type="button" data-user-settings-resend-verification ${state.resendingVerification ? 'disabled' : ''} class="rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-yellow-700 disabled:cursor-not-allowed disabled:opacity-50">
@@ -302,11 +302,11 @@ function renderVerificationBanner(state: UserSettingsState): string {
 function renderProfileTab(state: UserSettingsState): string {
   return `
     <form data-user-settings-profile-form class="rounded-lg bg-white p-6 space-y-4 dark:bg-gray-800">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Profil Bilgileriniz</h2>
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Profil bilgileriniz</h2>
       <div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
         <div class="flex items-center justify-between gap-2">
           <div>
-            <p class="text-sm text-gray-600 dark:text-gray-400">E-posta Adresi</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">E-posta adresi</p>
             <p class="font-medium text-gray-900 dark:text-white">${escapeHtml(state.profile?.email)}</p>
           </div>
           <div class="flex items-center gap-2">
@@ -316,15 +316,15 @@ function renderProfileTab(state: UserSettingsState): string {
         </div>
       </div>
       <div>
-        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Ad Soyad</label>
+        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Ad soyad</label>
         <input data-user-settings-field="full_name" type="text" value="${escapeHtml(state.profileForm.full_name)}" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
       </div>
       <div>
-        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Kullanıcı Adı</label>
+        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Kullanıcı adı</label>
         <input data-user-settings-field="username" type="text" value="${escapeHtml(state.profileForm.username)}" placeholder="Boş bırakabilirsiniz" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
       </div>
       <div>
-        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Avatar URL</label>
+        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Avatar bağlantısı</label>
         <input data-user-settings-field="avatar_url" type="url" value="${escapeHtml(state.profileForm.avatar_url)}" placeholder="https://..." class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
       </div>
       <div>
@@ -333,7 +333,7 @@ function renderProfileTab(state: UserSettingsState): string {
         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">${state.profileForm.bio.length}/500</p>
       </div>
       <button type="submit" ${state.saving ? 'disabled' : ''} class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-        ${state.saving ? 'Kaydediliyor...' : 'Profili Kaydet'}
+        ${state.saving ? 'Kaydediliyor...' : 'Profili kaydet'}
       </button>
     </form>
   `;
@@ -342,7 +342,7 @@ function renderProfileTab(state: UserSettingsState): string {
 function renderSettingsTab(state: UserSettingsState): string {
   return `
     <form data-user-settings-settings-form class="rounded-lg bg-white p-6 space-y-4 dark:bg-gray-800">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Genel Ayarlar</h2>
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Genel ayarlar</h2>
       <div>
         <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Dil</label>
         <select data-user-settings-field="language_preference" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
@@ -357,14 +357,14 @@ function renderSettingsTab(state: UserSettingsState): string {
           <option value="auto" ${state.settingsForm.theme_preference === 'auto' ? 'selected' : ''}>Otomatik</option>
         </select>
       </div>
-      <h3 class="pt-4 text-base font-semibold text-gray-900 dark:text-white">Bildirim Tercihleri</h3>
+      <h3 class="pt-4 text-base font-semibold text-gray-900 dark:text-white">Bildirim tercihleri</h3>
       <div class="space-y-3">
         <label class="flex cursor-pointer items-center"><input data-user-settings-preference="email" type="checkbox" ${state.preferencesForm.email ? 'checked' : ''} class="h-4 w-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500" /><span class="ml-3 text-gray-700 dark:text-gray-300">E-posta bildirimleri</span></label>
         <label class="flex cursor-pointer items-center"><input data-user-settings-preference="push" type="checkbox" ${state.preferencesForm.push ? 'checked' : ''} class="h-4 w-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500" /><span class="ml-3 text-gray-700 dark:text-gray-300">Push bildirimleri</span></label>
         <label class="flex cursor-pointer items-center"><input data-user-settings-preference="in_app" type="checkbox" ${state.preferencesForm.in_app ? 'checked' : ''} class="h-4 w-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-500" /><span class="ml-3 text-gray-700 dark:text-gray-300">Uygulama içi bildirimler</span></label>
       </div>
       <div>
-        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Özet Sıklığı</label>
+        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Özet sıklığı</label>
         <select data-user-settings-preference="digest" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
           <option value="never" ${state.preferencesForm.digest === 'never' ? 'selected' : ''}>Asla</option>
           <option value="daily" ${state.preferencesForm.digest === 'daily' ? 'selected' : ''}>Günlük</option>
@@ -373,7 +373,7 @@ function renderSettingsTab(state: UserSettingsState): string {
         </select>
       </div>
       <button type="submit" ${state.saving ? 'disabled' : ''} class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-        ${state.saving ? 'Kaydediliyor...' : 'Ayarları Kaydet'}
+        ${state.saving ? 'Kaydediliyor...' : 'Ayarları kaydet'}
       </button>
     </form>
   `;
@@ -388,7 +388,7 @@ function renderPrivacyTab(state: UserSettingsState): string {
 
   return `
     <form data-user-settings-privacy-form class="rounded-lg bg-white p-6 space-y-4 dark:bg-gray-800">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Gizlilik Ayarları</h2>
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Gizlilik ayarları</h2>
       <div class="space-y-3">
         ${options
           .map(
@@ -402,7 +402,7 @@ function renderPrivacyTab(state: UserSettingsState): string {
           .join('')}
       </div>
       <button type="submit" ${state.saving ? 'disabled' : ''} class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-        ${state.saving ? 'Kaydediliyor...' : 'Gizlilik Ayarlarını Kaydet'}
+        ${state.saving ? 'Kaydediliyor...' : 'Gizlilik ayarlarını kaydet'}
       </button>
     </form>
   `;
@@ -411,21 +411,21 @@ function renderPrivacyTab(state: UserSettingsState): string {
 function renderPasswordTab(state: UserSettingsState): string {
   return `
     <form data-user-settings-password-form class="rounded-lg bg-white p-6 space-y-4 dark:bg-gray-800">
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Şifre Değiştir</h2>
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Şifre değiştir</h2>
       <div>
-        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Mevcut Şifre</label>
+        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Mevcut şifre</label>
         <input data-user-settings-password="current_password" type="password" value="${escapeHtml(state.passwordForm.current_password)}" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
       </div>
       <div>
-        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Yeni Şifre</label>
+        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Yeni şifre</label>
         <input data-user-settings-password="new_password" type="password" value="${escapeHtml(state.passwordForm.new_password)}" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
       </div>
       <div>
-        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Şifreyi Onayla</label>
+        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Şifreyi onayla</label>
         <input data-user-settings-password="confirm_password" type="password" value="${escapeHtml(state.passwordForm.confirm_password)}" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
       </div>
       <button type="submit" ${state.saving ? 'disabled' : ''} class="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-        ${state.saving ? 'Kaydediliyor...' : 'Şifreyi Değiştir'}
+        ${state.saving ? 'Kaydediliyor...' : 'Şifreyi değiştir'}
       </button>
     </form>
   `;
@@ -438,7 +438,7 @@ function renderSecurityTab(state: UserSettingsState): string {
   if (setupMode) {
     return `
       <div class="space-y-4 rounded-lg bg-white p-6 dark:bg-gray-800">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">2FA Kurulumu</h2>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">2FA kurulumu</h2>
         <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
           <strong>Adım 1:</strong> Kimlik doğrulayıcı uygulamanızla QR bağlantısını açın veya gizli anahtarı girin.
         </div>
@@ -497,7 +497,7 @@ function renderSecurityTab(state: UserSettingsState): string {
 
 export function renderUserSettings(state: UserSettingsState): string {
   if (!state.profile && state.loading) {
-    return '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Yükleniyor...</div>';
+    return '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Ayarlar yükleniyor...</div>';
   }
 
   if (!state.profile) {
