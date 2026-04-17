@@ -36,7 +36,9 @@ function walkFiles(dir: string): string[] {
 
 function resolveComponentPath(componentName: string): string {
   const files = walkFiles(COMPONENTS_DIR);
-  const exact = files.find((file) => file.endsWith(`${componentName}.tsx`));
+  const exact =
+    files.find((file) => file.endsWith(`${componentName}.tsx`)) ??
+    files.find((file) => file.endsWith(`${componentName}.astro`));
   if (!exact) {
     throw new Error(`component-not-found:${componentName}`);
   }

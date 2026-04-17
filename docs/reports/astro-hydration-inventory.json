@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-04-17T00:17:20.100Z",
-  "astroFiles": 186,
-  "tsxFiles": 66,
-  "totalHydrationPoints": 8,
+  "generatedAt": "2026-04-17T00:29:03.464Z",
+  "astroFiles": 187,
+  "tsxFiles": 65,
+  "totalHydrationPoints": 7,
   "lowRiskCount": 0,
   "mediumRiskCount": 0,
-  "highRiskCount": 8,
+  "highRiskCount": 7,
   "entries": [
     {
       "pagePath": "src/pages/admin/analytics.astro",
@@ -20,13 +20,6 @@
       "directive": "load",
       "risk": "high",
       "rationale": "ModerationDashboard yoğun state veya dashboard tipi davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/admin/verifications.astro",
-      "componentName": "AdminVerificationQueue",
-      "directive": "load",
-      "risk": "high",
-      "rationale": "AdminVerificationQueue yoğun state veya dashboard tipi davranış taşıyor."
     },
     {
       "pagePath": "src/pages/akis.astro",

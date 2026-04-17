@@ -1,12 +1,11 @@
 # Astro High Risk Migration Report
-- Generated at: 2026-04-17T00:17:20.167Z
-- Total high-risk components: 7
+- Generated at: 2026-04-17T00:30:07.507Z
+- Total high-risk components: 6
 - First candidates: 0
 - Later candidates: 0
-- Last candidates: 7
+- Last candidates: 6
 
 ## Ranked Entries
-- [last] AdminVerificationQueue | score=62 | usage=1 | lines=189 | state=7 | effect=2 | fetch=0 | typed=2 | admin=yes
 - [last] OLAPExplorer | score=68 | usage=1 | lines=172 | state=9 | effect=2 | fetch=2 | typed=0 | admin=no
 - [last] AdminPerformanceDashboard | score=73 | usage=1 | lines=208 | state=5 | effect=2 | fetch=2 | typed=0 | admin=yes
 - [last] MessagingInbox | score=73 | usage=1 | lines=115 | state=6 | effect=3 | fetch=7 | typed=0 | admin=no

@@ -1,0 +1,27 @@
+---
+export interface Props {
+  title?: string;
+}
+
+const { title = 'Doğrulama Kuyruğu' } = Astro.props;
+---
+
+<section data-admin-verification-queue class="space-y-4" aria-live="polite">
+  <header class="space-y-1">
+    <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
+    <p class="text-sm text-gray-600 dark:text-gray-400">
+      Bekleyen mekan doğrulama taleplerini inceleyin, onaylayın veya gerekçeyle reddedin.
+    </p>
+  </header>
+
+  <div data-admin-verification-queue-loading class="py-8 text-center text-gray-500">
+    Doğrulama talepleri yükleniyor...
+  </div>
+  <div data-admin-verification-queue-content class="hidden"></div>
+</section>
+
+<script>
+  import { initAdminVerificationQueue } from '../scripts/admin-verification-queue';
+
+  initAdminVerificationQueue();
+</script>
