@@ -28,7 +28,7 @@ describe('react surface audit helpers', () => {
       }),
     );
 
-    expect(markdown).toContain('Can remove @astrojs/react integration: yes');
-    expect(markdown).toContain('## Blockers');
+    expect(markdown).toContain('@astrojs/react entegrasyonu kaldirilabilir mi: evet');
+    expect(markdown).toContain('## Blokorler');
   });
 });

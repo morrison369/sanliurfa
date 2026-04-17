@@ -1,19 +1,19 @@
-# React Removal Audit
-- Generated at: 2026-04-17T01:29:21.252Z
-- TSX files: 0
-- React hook/lib files: 0
-- Runtime React usages: 1
-- Can remove @astrojs/react integration: no
-- Can remove react/react-dom packages now: no
+# React Kaldırma Audit Raporu
+- Uretilme zamani: 2026-04-17T01:54:36.483Z
+- TSX dosyalari: 0
+- React hook/lib dosyalari: 0
+- Runtime React kullanimlari: 1
+- @astrojs/react entegrasyonu kaldirilabilir mi: hayir
+- react/react-dom paketleri simdi kaldirilabilir mi: hayir
 
-## Blockers
+## Blokorler
 - 1 adet runtime kullanim noktasi hala React entegrasyonuna bagli
 
-## Runtime Usages
+## Runtime Kullanimlari
 - astro.config.mjs
 
-## Remaining TSX Files
-- none
+## Kalan TSX Dosyalari
+- yok
 
-## Remaining Hook Files
-- none
+## Kalan Hook Dosyalari
+- yok

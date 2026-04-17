@@ -34,7 +34,7 @@ describe('react surface classification helpers', () => {
       }),
     );
 
-    expect(markdown).toContain('Server-only candidates: 1');
-    expect(markdown).toContain('## Server-only Candidates');
+    expect(markdown).toContain('Server-only adaylari: 1');
+    expect(markdown).toContain('## Server-only Adaylari');
   });
 });

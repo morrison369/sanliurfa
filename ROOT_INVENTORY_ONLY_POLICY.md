@@ -1,21 +1,21 @@
-# Root Inventory-Only Policy
+# Root Sadece Envanter Politikası
 
-## Decision
-- The dirty local root worktree is not an implementation source.
-- No runtime, webhook, page, weather, E2E, or support-file patch may be replayed from the dirty root without explicit file-level justification.
-- Clean `origin/master` worktrees remain the only delivery surface.
+## Karar
+- Kirli yerel root worktree bir implementasyon kaynağı değildir.
+- Açık dosya bazlı gerekçe olmadan kirli root'tan runtime, webhook, page, weather, E2E veya support-file patch'i geri oynatılamaz.
+- Temiz `origin/master` worktree'leri tek teslimat yüzeyi olmaya devam eder.
 
-## Allowed Use
-- Read-only diff inspection
-- Residual bucket classification
-- Recovery planning before a clean branch is opened
+## İzinli Kullanım
+- Salt-okunur diff inceleme
+- Artık bucket sınıflandırması
+- Temiz branch açılmadan önce recovery planlama
 
-## Not Allowed
-- Do not update trackers, changelog, or phase metadata from the dirty root.
-- Do not open release or phase PRs from the dirty root.
-- Do not use bulk restore or broad replay from dirty root inventory.
+## Yasak Olanlar
+- Tracker'ları, changelog'u veya faz metadata'sını kirli root'tan güncelleme.
+- Kirli root'tan release veya faz PR'ı açma.
+- Kirli root envanterinden toplu restore veya geniş replay kullanma.
 
-## Related Docs
+## İlgili Dokümanlar
 - [STALE_WORKTREE.md](STALE_WORKTREE.md)
 - [docs/WORKTREE_SOURCE_OF_TRUTH.md](docs/WORKTREE_SOURCE_OF_TRUTH.md)
 - [docs/ACTIVE_DOCS.md](docs/ACTIVE_DOCS.md)

@@ -1,50 +1,50 @@
-# Dependency Triage
+# Bağımlılık Önceliklendirmesi
 
-This repository keeps dependency upgrades separate from phase delivery.
+Bu depo, bağımlılık yükseltmelerini faz teslimatından ayrı tutar.
 
-## Current Audit Baseline
-- Last verified on: `2026-04-09`
-- Command: `npm audit --json`
-- Result: `0` known vulnerabilities
-- Severity split:
+## Güncel Audit Temel Çizgisi
+- Son doğrulama tarihi: `2026-04-09`
+- Komut: `npm audit --json`
+- Sonuç: `0` bilinen zafiyet
+- Şiddet dağılımı:
   - `0` high
   - `0` moderate
 
-## Runtime Priorities
+## Runtime Öncelikleri
 - `vite`
-  - Severity: `resolved`
-  - Type: transitive runtime dependency through Astro toolchain
-  - Action taken: upgraded Astro React integration and pinned `vite` with an override to a non-vulnerable line
+  - Durum: `resolved`
+  - Tür: Astro toolchain üzerinden gelen transitif runtime bağımlılığı
+  - Alınan aksiyon: Astro React entegrasyonu yükseltildi ve `vite`, zafiyetsiz bir hatta override ile sabitlendi
 
 - `xlsx`
-  - Severity: `resolved`
-  - Type: former direct runtime dependency
-  - Action taken: removed from the runtime path and replaced with write-only `exceljs` export generation
-  - Guardrail: validate workbook generation through `src/lib/__tests__/report-engine-excel-smoke.test.ts`
+  - Durum: `resolved`
+  - Tür: Eski doğrudan runtime bağımlılığı
+  - Alınan aksiyon: Runtime yolundan çıkarıldı ve yerine yalnızca yazma yapan `exceljs` export üretimi kondu
+  - Guardrail: Workbook üretimini `src/lib/__tests__/report-engine-excel-smoke.test.ts` üzerinden doğrula
 
-## Dev-Only Priorities
+## Yalnızca Geliştirme Ortamı Öncelikleri
 - `basic-ftp`
-  - Severity: `resolved`
-  - Source: transitive dependency in the Lighthouse/LHCI path
-  - Action taken: pinned via override to the patched `5.2.1` line
+  - Durum: `resolved`
+  - Kaynak: Lighthouse/LHCI yolundaki transitif bağımlılık
+  - Alınan aksiyon: Patched `5.2.1` hattına override ile sabitlendi
 
 - `@astrojs/check` / `@astrojs/language-server` / YAML chain
-  - Severity: `resolved`
-  - Action taken: upgraded `@astrojs/check` and pinned patched YAML chain packages with overrides
+  - Durum: `resolved`
+  - Alınan aksiyon: `@astrojs/check` yükseltildi ve patched YAML zinciri override'larla sabitlendi
 
-## Operating Rules
-- Do not mix dependency upgrades with phase delivery PRs.
-- Run `npm run deps:audit:triage` before opening a dependency PR.
-- Prioritize runtime dependencies before dev-only tooling.
-- Remove vulnerable runtime dependencies entirely when a narrow replacement is available.
-- Prefer one small dependency PR per risk bucket:
+## İşletim Kuralları
+- Bağımlılık yükseltmelerini faz teslimat PR'larıyla karıştırma.
+- Bir bağımlılık PR'ı açmadan önce `npm run deps:audit:triage` çalıştır.
+- Runtime bağımlılıklarını, yalnızca geliştirme araçlarından önce önceliklendir.
+- Dar bir alternatif varsa zafiyetli runtime bağımlılığını tamamen kaldır.
+- Her risk bucket'ı için küçük ve ayrı bir bağımlılık PR'ı tercih et:
   - runtime/high
   - dev/high
   - moderate/tooling
 
-## Exit Criteria For A Dependency PR
+## Bağımlılık PR'ı İçin Çıkış Kriteri
 - `npm ci`
 - `npm run phase:doctor`
 - `npm run test:phase:gate:ci`
 - `npm run build`
-- changelog untouched unless the PR also ships a phase delivery
+- PR aynı anda faz teslimatı da taşımıyorsa changelog'a dokunma
