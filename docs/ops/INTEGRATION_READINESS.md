@@ -12,7 +12,7 @@ Bu dokuman, kod tarafinda otomatiklestirilemeyen ama release kalitesini dogrudan
   - `GA_TRACKING_ID=G-...`
 
 Notlar:
-- Placeholder degerler (`re_xxx`, `G-XXXXXXXXXX`, `YOUR_*`) readiness sayilmaz.
+- Yer tutucu degerler (`re_xxx`, `G-XXXXXXXXXX`, `YOUR_*`) hazirlik sayilmaz.
 - `GET /api/health` endpoint'i bu alanlari `checks.integrations` altinda gorunur kilacak sekilde guncellenmistir.
 - `GET /api/health` ve `GET /api/health/detailed` endpoint'leri artifact freshness ozetini de `checks.artifacts` altinda gorunur kilacak sekilde guncellenmistir.
 - Env'de bu alanlar bos olsa bile admin panelden girilen global degerler runtime'da otomatik kullanilir.
@@ -28,7 +28,7 @@ Notlar:
 - Panelden kaydedilen/silinen degerler icin runtime cache otomatik temizlenir.
 - Admin degisiklikleri `user_audit_log` uzerinden kayda alinacak sekilde guncellenmistir.
 
-## 2) Release Oncesi Kontrol
+## 2) Surum Oncesi Kontrol
 
 Asagidaki komut release oncesi yerel kontrat/gate kontrolu icin kullanilir:
 
