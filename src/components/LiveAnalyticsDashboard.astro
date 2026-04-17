@@ -1,0 +1,27 @@
+---
+---
+
+<div data-live-analytics-dashboard>
+  <div data-live-analytics-loading class="flex items-center justify-center h-96">
+    <div class="text-center">
+      <div class="mb-2 text-lg font-semibold text-gray-700">Bağlantı kuruluyor...</div>
+      <div class="animate-spin">
+        <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M13 10V3L4 14h7v7l9-11h-7z"
+          ></path>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div data-live-analytics-content class="hidden"></div>
+</div>
+
+<script>
+  import { initLiveAnalyticsDashboard } from '../scripts/live-analytics-dashboard';
+
+  initLiveAnalyticsDashboard();
+</script>

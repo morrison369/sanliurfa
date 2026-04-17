@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-04-17T00:03:27.552Z",
-  "astroFiles": 183,
-  "tsxFiles": 69,
-  "totalHydrationPoints": 11,
+  "generatedAt": "2026-04-17T00:10:26.598Z",
+  "astroFiles": 184,
+  "tsxFiles": 68,
+  "totalHydrationPoints": 10,
   "lowRiskCount": 0,
   "mediumRiskCount": 0,
-  "highRiskCount": 11,
+  "highRiskCount": 10,
   "entries": [
     {
       "pagePath": "src/pages/admin/analytics.astro",
@@ -48,13 +48,6 @@
       "directive": "load",
       "risk": "high",
       "rationale": "ActivityFeed yoğun state veya dashboard tipi davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/canli-analitik/index.astro",
-      "componentName": "LiveAnalyticsDashboard",
-      "directive": "load",
-      "risk": "high",
-      "rationale": "LiveAnalyticsDashboard yoğun state veya dashboard tipi davranış taşıyor."
     },
     {
       "pagePath": "src/pages/mesajlar/index.astro",
