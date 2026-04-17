@@ -257,7 +257,7 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 - `GET /api/admin/system/metrics` — Admin metrikleri ve normalize durum özeti
 - `GET /api/admin/system/artifact-health` — Artefact anlik ozeti ve genel durum
 - `GET /api/admin/deployment/status` — Dağıtım hazırlığı ve artefact durumu
-- `GET /api/admin/audit-logs` — Admin audit kaydı, filtreler ve CSV dışa aktarım
+- `GET /api/admin/audit-logs` — Admin denetim kaydı, filtreler ve CSV dışa aktarım
 - `GET /api/admin/system/integration-settings` — Entegrasyon hazırlık anlık görünümü
 - `PUT /api/admin/system/integration-settings` — Entegrasyon ayar değişikliği
 - `GET /api/admin/performance/optimization` — Performans optimizasyon özeti
@@ -268,7 +268,7 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 
 **Admin Arayüz Ops Yüzeyleri**:
 - `/admin/runtime-monitor` — Çalışma zamanı sağlık / performans / artefact izleme yüzeyi
-- `/admin/audit` — Kalıcı admin ops audit görüntüleyicisi
+- `/admin/audit` — Kalıcı admin ops denetim görüntüleyicisi
 - `/admin/access-coverage` — Admin sarmalayıcı kapsama izleme ve rapor indirme yüzeyi
 - `/admin` — Türlendirilmiş admin istemci katmanından beslenen admin ana panel özeti
 
@@ -334,7 +334,7 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 
 - **SQL Injection**: `postgres.ts` içindeki table allowlist (`ALLOWED_TABLES` set'i) ve parametrik sorgular kullanılır
 - **XSS**: `sanitizeInput()` üzerinden giriş temizleme uygulanır
-- **İstek Sınırı**: Redis üzerinden IP başına 15 dakikada 100 istek sınırı vardır (`/api/auth/register` ve giriş endpoint'leri ek dikkat gerektirir)
+- **İstek Sınırı**: Redis üzerinden IP başına 15 dakikada 100 istek sınırı vardır (`/api/auth/register` ve giriş uç noktaları ek dikkat gerektirir)
 - **CORS**: Middleware içinde yapılandırılır; origin doğrulaması `CORS_ORIGINS` env değişkenine göre yapılır
 - **Güvenlik Header'ları**: Content-Type, X-Frame-Options, X-XSS-Protection ve CSP uygulanır
 - **Oturum Ele Geçirme**: `httpOnly` + `secure` cookie'ler ve sıkı `sameSite` politikası kullanılır
@@ -411,7 +411,7 @@ Hashtag, mention, aktivite akışı ve trend içerik içeren sosyal ağ öğeler
 **Bileşenler**:
 - `src/lib/social-features.ts` — Hashtag trend mantığı ve mention tespiti
 - `src/components/HashtagExplorer.astro` — Trend hashtag'leri ve ilişkili içeriği gezme yüzeyi
-- Aktivite akışı, gerçek zamanlı SSE endpoint'i üzerinden sağlanır
+- Aktivite akışı, gerçek zamanlı SSE uç noktası üzerinden sağlanır
 
 **Özellikler**:
 1. **Hashtag'ler** (`/api/hashtags` ve `/api/hashtags/:slug`)
@@ -457,7 +457,7 @@ Premium özellikler için katman tabanlı erişim kontrolü uygulanır.
 **Özellik Kısıtlama**:
 - `src/lib/feature-gating.ts` — `isFeatureAvailable(userId, featureKey)` ile kullanıcının katmanını ve özellik erişimini kontrol eder
 - `PREMIUM_FEATURES` sabiti, özellik → katman eşlemesini tanımlar
-- Kota zorlaması `/api/user/quotas` endpoint'i üzerinden yapılır
+- Kota zorlaması `/api/user/quotas` uç noktası üzerinden yapılır
 
 **Stripe Entegrasyonu**:
 - `POST /api/subscriptions/checkout` — Stripe ödeme oturumu oluşturur
@@ -546,7 +546,7 @@ await deleteCachePattern('sanliurfa:places:list:*');
 ### Request Doğrulaması Ekleme
 
 1. Define schema in `src/lib/validation.ts` under `commonSchemas`
-2. API endpoint'inde kullan: `validateWithSchema(body, commonSchemas.mySchema)`
+2. API uç noktasında kullan: `validateWithSchema(body, commonSchemas.mySchema)`
 3. Schema fields: type, required, minLength, maxLength, min, max, pattern, custom validator, sanitize
 
 ```typescript
@@ -600,7 +600,7 @@ const slowOps = metricsCollector.getSlowOperations(20);   // Last 20 slow operat
 
 ### Gerçek Zamanlı SSE Endpoint'leri
 
-SSE endpoints follow a consistent pattern for low-latency real-time updates:
+Düşük gecikmeli gerçek zamanlı güncellemeler için SSE uç noktaları tutarlı bir kalıp izler:
 
 ```typescript
 // Server-side pattern (src/pages/api/realtime/example.ts)
@@ -754,7 +754,7 @@ npm run test
 | `docs/RELEASE_GATES.md` | Surum kapisi davranisi ve karar modeli |
 | `docs/ops/BRANCH_PROTECTION.md` | Zorunlu kontroller ve parity kuralları |
 | `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` | Artefact freshness durum semantiği |
-| `docs/ops/ARTIFACT_RETENTION_POLICY.md` | Artefact ve audit retention kuralları |
+| `docs/ops/ARTIFACT_RETENTION_POLICY.md` | Artefact ve denetim saklama kuralları |
 | `docs/ops/INCIDENT_RUNBOOK.md` | Olay mudahale sirasi |
 | `docs/ops/INTEGRATION_READINESS.md` | Admin entegrasyon hazirlik politikasi |
 | `docs/ops/LEGACY_PHASE_SURFACE.md` | Eski faz uyumluluk sınırları |
@@ -805,11 +805,11 @@ npm run test
 | Dosya | Amaç |
 |------|------|
 | `src/lib/social-features.ts` | Hashtag trend mantığı ve mention tespiti |
-| `src/pages/api/hashtags/index.ts` | Trend hashtag endpoint'i |
-| `src/pages/api/hashtags/[slug].ts` | Etiketli mekan/yorumlarla hashtag detay endpoint'i |
-| `src/pages/api/users/[id]/mentions.ts` | Kullanıcı mention ve bildirim endpoint'i |
-| `src/pages/api/users/[id]/profile.ts` | Herkese açık kullanıcı profil endpoint'i |
-| `src/pages/api/leaderboards/users.ts` | En iyi kullanıcı liderlik tablosu endpoint'i |
+| `src/pages/api/hashtags/index.ts` | Trend hashtag uç noktası |
+| `src/pages/api/hashtags/[slug].ts` | Etiketli mekan/yorumlarla hashtag detay uç noktası |
+| `src/pages/api/users/[id]/mentions.ts` | Kullanıcı mention ve bildirim uç noktası |
+| `src/pages/api/users/[id]/profile.ts` | Herkese açık kullanıcı profil uç noktası |
+| `src/pages/api/leaderboards/users.ts` | En iyi kullanıcı liderlik tablosu uç noktası |
 | `src/components/HashtagExplorer.astro` | Hashtag gezme ve trend görünümü |
 | `src/components/UserPublicProfile.astro` | Herkese açık kullanıcı profil görünümü |
 | `src/pages/sosyal/index.astro` | Akış ve hashtag gezgini içeren sosyal keşif sayfası |
@@ -821,11 +821,11 @@ npm run test
 | `src/lib/feature-gating.ts` | Abonelik katmanına göre özellik erişim kontrolü |
 | `src/pages/api/subscriptions/checkout.ts` | Stripe ödeme oturumu oluşturma |
 | `src/pages/api/subscriptions/webhook.ts` | Stripe webhook event işleyicisi |
-| `src/pages/api/subscriptions/tiers.ts` | Kullanılabilir abonelik katmanları endpoint'i |
-| `src/pages/api/user/quotas.ts` | Özellik kullanım kotası endpoint'i |
-| `src/pages/api/blocking/block.ts` | Kullanıcı engelleme endpoint'i |
-| `src/pages/api/blocking/check.ts` | Kullanıcı engelli mi kontrol endpoint'i |
-| `src/pages/api/blocking/unblock.ts` | Kullanıcı engel kaldırma endpoint'i |
+| `src/pages/api/subscriptions/tiers.ts` | Kullanılabilir abonelik katmanları uç noktası |
+| `src/pages/api/user/quotas.ts` | Özellik kullanım kotası uç noktası |
+| `src/pages/api/blocking/block.ts` | Kullanıcı engelleme uç noktası |
+| `src/pages/api/blocking/check.ts` | Kullanıcı engelli mi kontrol uç noktası |
+| `src/pages/api/blocking/unblock.ts` | Kullanıcı engel kaldırma uç noktası |
 | `src/pages/api/reports/submit.ts` | İçerik raporu gönderimi |
 | `src/pages/api/admin/moderation/reports.ts` | Admin moderasyon rapor listesi |
 | `src/pages/api/admin/moderation/resolve.ts` | Admin rapor çözümleme |
@@ -941,13 +941,13 @@ Tam CentOS Web Panel üretim kurulum rehberi için **`DEPLOYMENT.md`** dosyasın
 
 **Yeni Sadakat Özellikleri**:
 - Yeni başarımları `src/lib/achievements.ts` içindeki `ACHIEVEMENT_DEFINITIONS` listesine ekle
-- `checkCommonAchievements(userId)` çağrısını ilgili gamification hook'larına bağla
+- `checkCommonAchievements(userId)` çağrısını ilgili oyunlaştırma kancalarına bağla
 - Yeni ödülleri `POST /api/admin/loyalty/rewards` üzerinden oluştur (UI veya doğrudan DB insert)
 - Yeni rozetleri badge tanımlarına ekle ve kazanıldığında `awardBadgeToUser()` çağır
 - Yeni puan işlemlerinde anlamlı neden dizeleriyle `awardPoints(userId, amount, reason)` kullan
 
 **Yeni Gerçek Zamanlı Akışlar**:
-- `/pages/api/realtime/example.ts` altında SSE endpoint'i oluştur
+- `/pages/api/realtime/example.ts` altında SSE uç noktası oluştur
 - Polling aralığıyla birlikte `ReadableStream` kullan
 - Cursor tabanlı pagination uygula (`lastActivityId`, `lastTimestamp` vb. takibi)
 - `src/lib/realtime-sse.ts` içine `connectToExample()`, `handleExampleData()` ve listener metodunu ekle
@@ -957,11 +957,11 @@ Tam CentOS Web Panel üretim kurulum rehberi için **`DEPLOYMENT.md`** dosyasın
 - Özellik anahtarını `src/lib/feature-gating.ts` içindeki `PREMIUM_FEATURES` listesine ekle
 - Özellik → gerekli katman eşlemesini yap (Free/Premium/Business)
 - Kullanılabilirliği `isFeatureAvailable(userId, featureKey)` ile kontrol et
-- Kota limitlerini `/api/user/quotas` endpoint'i ile uygula
+- Kota limitlerini `/api/user/quotas` uç noktası ile uygula
 
 **Yeni Metrikler**:
 - `recordRequest()` çağrılarına veya özel `recordSlowOperation()` çağrılarına ekle
-- Metrikler `/api/metrics` endpoint'inde toplanır ve adminler tarafından görüntülenebilir
+- Metrikler `/api/metrics` uç noktasında toplanır ve adminler tarafından görüntülenebilir
 
 ### Testler
 - Minimum pre-commit / pre-push gate:
