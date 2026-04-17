@@ -165,7 +165,7 @@ export function renderNotificationsCenter(state: NotificationsCenterState): stri
         </div>
         ${canMarkAll ? `
           <button type="button" data-notifications-center-mark-all ${state.bulkActionInProgress ? 'disabled' : ''} class="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50">
-            ${state.bulkActionInProgress ? 'İşleniyor...' : 'Tümünü okundu olarak işaretle'}
+            ${state.bulkActionInProgress ? 'İşleniyor...' : 'Okunmamışların tümünü okundu olarak işaretle'}
           </button>
         ` : ''}
       </div>
