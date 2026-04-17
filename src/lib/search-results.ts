@@ -118,7 +118,7 @@ function renderSearchInput(query: string): string {
         type="text"
         data-search-results-input
         value="${escapeHtml(query)}"
-        placeholder="Mekan, kullanıcı veya koleksiyon ara..."
+        placeholder="Mekan, kullanıcı ya da koleksiyon ara..."
         class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
       />
     </div>
@@ -130,7 +130,7 @@ function renderPlaces(places: SearchPlace[]): string {
 
   return `
     <div>
-      <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Mekanlar (${places.length})</h3>
+      <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Mekan sonuçları (${places.length})</h3>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         ${places
           .map(
@@ -162,7 +162,7 @@ function renderUsers(users: SearchUser[]): string {
 
   return `
     <div>
-      <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Kullanıcılar (${users.length})</h3>
+      <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Kullanıcı sonuçları (${users.length})</h3>
       <div class="space-y-2">
         ${users
           .map(
@@ -191,7 +191,7 @@ function renderCollections(collections: SearchCollection[]): string {
 
   return `
     <div>
-      <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Koleksiyonlar (${collections.length})</h3>
+      <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Koleksiyon sonuçları (${collections.length})</h3>
       <div class="space-y-2">
         ${collections
           .map(

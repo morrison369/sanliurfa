@@ -171,22 +171,22 @@ export function renderAnalyticsPanel(options: {
             </div>
 
             <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Platform Özeti</h3>
+              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Platform özeti</h3>
               <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <div class="text-center">
-                  <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">Ort. Oturum Süresi</p>
+                  <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">Ort. oturum süresi</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white">${stats?.avgSessionDuration.toLocaleString('tr-TR') || '0'} sn</p>
                 </div>
                 <div class="text-center">
-                  <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">Toplam Süre</p>
+                  <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">Toplam süre</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white">${totalTimeHours.toLocaleString('tr-TR')} saat</p>
                 </div>
                 <div class="text-center">
-                  <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">Toplam Dönüşüm</p>
+                  <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">Toplam dönüşüm</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white">${stats?.totalConversions.toLocaleString('tr-TR') || '0'}</p>
                 </div>
                 <div class="text-center">
-                  <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">Analiz Periyodu</p>
+                  <p class="mb-2 text-sm text-gray-600 dark:text-gray-400">Analiz periyodu</p>
                   <p class="text-2xl font-bold text-gray-900 dark:text-white">${data.period.toLocaleString('tr-TR')} gün</p>
                 </div>
               </div>
