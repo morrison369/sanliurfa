@@ -16,20 +16,55 @@ type MessagingInboxTimers = {
 };
 
 const timers = new WeakMap<MessagingInboxRoot, MessagingInboxTimers>();
+const MESSAGING_SELECTED_KEY = 'sanliurfa:messaging-inbox:selected-conversation';
+const MESSAGING_SEARCH_KEY = 'sanliurfa:messaging-inbox:search-query';
+
+function readStorage(key: string): string {
+  try {
+    return window.localStorage?.getItem(key) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function writeStorage(key: string, value: string) {
+  try {
+    if (value) {
+      window.localStorage?.setItem(key, value);
+    } else {
+      window.localStorage?.removeItem(key);
+    }
+  } catch {
+    // no-op
+  }
+}
 
 function readState(root: MessagingInboxRoot): MessagingInboxState {
   const raw = root.dataset.state;
-  if (!raw) return createMessagingInboxState();
+  if (!raw) {
+    const initial = createMessagingInboxState();
+    initial.selectedConversationId = readStorage(MESSAGING_SELECTED_KEY) || null;
+    initial.searchQuery = readStorage(MESSAGING_SEARCH_KEY);
+    return initial;
+  }
 
   try {
-    return JSON.parse(raw) as MessagingInboxState;
+    const parsed = JSON.parse(raw) as MessagingInboxState;
+    parsed.selectedConversationId ||= readStorage(MESSAGING_SELECTED_KEY) || null;
+    parsed.searchQuery ||= readStorage(MESSAGING_SEARCH_KEY);
+    return parsed;
   } catch {
-    return createMessagingInboxState();
+    const initial = createMessagingInboxState();
+    initial.selectedConversationId = readStorage(MESSAGING_SELECTED_KEY) || null;
+    initial.searchQuery = readStorage(MESSAGING_SEARCH_KEY);
+    return initial;
   }
 }
 
 function writeState(root: MessagingInboxRoot, state: MessagingInboxState) {
   root.dataset.state = JSON.stringify(state);
+  writeStorage(MESSAGING_SELECTED_KEY, state.selectedConversationId ?? '');
+  writeStorage(MESSAGING_SEARCH_KEY, state.searchQuery);
 }
 
 function readCurrentUserId(root: MessagingInboxRoot): string {
