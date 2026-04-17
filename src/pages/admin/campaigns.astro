@@ -17,7 +17,7 @@ if (!Astro.locals.user?.isAdmin) {
 const campaigns = await getAllCampaigns(100);
 ---
 
-<Layout title="Kampanyalar - Admin">
+<Layout title="Kampanyalar - Yönetim Paneli">
   <div class="container mx-auto px-4 py-8">
     <div class="mb-8">
       <h1 class="text-3xl font-bold mb-2">E-posta Kampanyaları</h1>
@@ -128,7 +128,7 @@ const campaigns = await getAllCampaigns(100);
           <div class="bg-gray-50 p-8 rounded-lg text-center">
             <p class="text-gray-600">Henüz kampanya yok</p>
             <button onclick="switchTab('create')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-              İlk Kampanyanızı Oluşturun
+              İlk kampanyanızı oluşturun
             </button>
           </div>
         )}
@@ -303,16 +303,16 @@ const campaigns = await getAllCampaigns(100);
 
   // Campaign actions
   function sendCampaign(campaignId: number) {
-    if (confirm('Kampanyayı gönder?')) {
+    if (confirm('Kampanya gönderilsin mi?')) {
       // Send to API
       fetch(`/api/marketing/campaigns/${campaignId}/send`, { method: 'POST' })
         .then(r => r.json())
         .then(data => {
           if (data.success) {
-            alert('Kampanya gönderilmeye başladı!');
+            alert('Kampanya gönderimi başlatıldı.');
             location.reload();
           } else {
-            alert('Hata: ' + data.error);
+            alert('Kampanya gönderilemedi: ' + data.error);
           }
         });
     }
@@ -325,17 +325,17 @@ const campaigns = await getAllCampaigns(100);
       body: JSON.stringify({ testMode: true })
     })
       .then(r => r.json())
-      .then(data => {
+        .then(data => {
         if (data.success) {
-          alert('Test emaili admin hesabına gönderildi!');
+          alert('Test e-postası yönetici hesabına gönderildi.');
         } else {
-          alert('Hata: ' + data.error);
+          alert('Test gönderimi başarısız: ' + data.error);
         }
       });
   }
 
   function editCampaign(campaignId: number) {
-    alert('Kampanya düzenleme yakında gelecek');
+    alert('Kampanya düzenleme özelliği yakında eklenecek.');
   }
 
   // Form submission
@@ -363,11 +363,11 @@ const campaigns = await getAllCampaigns(100);
 
     const result = await response.json();
     if (result.success) {
-      alert('Kampanya oluşturuldu!');
+      alert('Kampanya oluşturuldu.');
       form.reset();
       location.reload();
     } else {
-      alert('Hata: ' + result.error);
+      alert('Kampanya oluşturulamadı: ' + result.error);
     }
   });
 </script>
