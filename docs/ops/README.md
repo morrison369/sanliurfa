@@ -56,6 +56,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
    High bucket sıralaması için `docs/reports/astro-high-risk-feasibility.md`
    Paket seviyesinde React görünürlüğü için `docs/reports/react-surface-audit.md`
    Dosya bazlı React bakım sınıflaması için `docs/reports/react-surface-classification.md`
+   Runtime-linked `.tsx` geri gelmesin diye `npm run astro:react:guard`
 6. Admin anahtarları ve readiness için `INTEGRATION_READINESS.md`
 7. Legacy yüzey şüphesi varsa `LEGACY_PHASE_SURFACE.md`
 8. Admin UI davranışı veya ops sayfa metni değişecekse önce helper katmanına bak, sonra `.astro` / page script dosyasını değiştir
