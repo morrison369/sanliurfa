@@ -31,7 +31,7 @@ describe('notification center helpers', () => {
       error: extractNotificationCenterMessage({ data: { success: true, message: 'Tamam' } }, 'Hata'),
     });
 
-    expect(html).toContain('Bildirimler');
+    expect(html).toContain('Bildirim merkezi');
     expect(html).toContain('Başlık');
     expect(html).toContain('Tamam');
   });

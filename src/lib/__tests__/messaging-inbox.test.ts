@@ -66,6 +66,6 @@ describe('messaging inbox helpers', () => {
     expect(state.selectedConversationId).toBe('conv-1');
     expect(html).toContain('Mesajlar');
     expect(html).toContain('Ali Veli');
-    expect(html).toContain('Konusmayi gizle');
+    expect(html).toContain('Konuşmayı gizle');
   });
 });

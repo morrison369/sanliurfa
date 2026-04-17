@@ -19,6 +19,6 @@ describe('user recommendations helpers', () => {
 
     expect(html).toContain('/kullanici/user-1');
     expect(html).toContain('Ali Veli');
-    expect(html).toContain('Takibi Bırak');
+    expect(html).toContain('Takibi bırak');
   });
 });
