@@ -60,7 +60,7 @@ describe('user-settings helpers', () => {
     state.twoFactor.setupMode = true;
     state.twoFactor.setup.secret = 'SECRET123';
     const securityHtml = renderUserSettings(state);
-    expect(securityHtml).toContain('2FA Kurulumu');
+    expect(securityHtml).toContain('2FA kurulumu');
     expect(securityHtml).toContain('SECRET123');
   });
 
