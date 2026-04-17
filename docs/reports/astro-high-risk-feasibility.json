@@ -1,27 +1,10 @@
 {
-  "generatedAt": "2026-04-17T00:40:49.698Z",
-  "totalHighRiskComponents": 4,
+  "generatedAt": "2026-04-17T00:49:47.498Z",
+  "totalHighRiskComponents": 3,
   "firstCount": 0,
   "laterCount": 0,
-  "lastCount": 4,
+  "lastCount": 3,
   "entries": [
-    {
-      "componentName": "MessagingInbox",
-      "componentPath": "src/components/MessagingInbox.tsx",
-      "pagePaths": [
-        "src/pages/mesajlar/index.astro"
-      ],
-      "usageCount": 1,
-      "lines": 115,
-      "useStateCount": 6,
-      "useEffectCount": 3,
-      "fetchCount": 7,
-      "typedClientCount": 0,
-      "adminSurface": false,
-      "complexityScore": 73,
-      "migrationPriority": "last",
-      "recommendation": "MessagingInbox yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
-    },
     {
       "componentName": "WebhookManager",
       "componentPath": "src/components/WebhookManager.tsx",
