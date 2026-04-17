@@ -4,6 +4,7 @@ Use archive folders for historical records, not for active delivery decisions.
 
 ## Paths
 - `docs/archive/cleanup/`: dated cleanup, dirty-worktree, and verification records
+- `docs/archive/migration/`: completed framework migration history and closure records
 - `docs/archive/phases/`: legacy phase and summary references
 
 ## Rule

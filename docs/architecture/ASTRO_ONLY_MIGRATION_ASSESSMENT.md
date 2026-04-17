@@ -28,7 +28,8 @@ Mevcut yapı:
 - İnteraktif paneller plain TS + Astro shell yapısına taşındı; aktif React island kalmadı.
 - React paket kaldırma işi aktif hedef değildir; `@astrojs/react` kontrollü compatibility layer olarak tutulur.
 - Admin, analytics, search, social, subscriptions, notifications ve messaging yüzeyleri React bağımlılığını yoğun kullanıyordu; bu yüzeylerin tamamı Astro + plain TS modeline taşındı.
-- İlk migration dalgalarında `NotificationBadge`, `QuotaUsageDisplay`, `TrendingPlaces`, `LeaderboardsDisplay`, `PricingPlans`, `UserRecommendations`, `PerformanceMonitor`, `PWAPrompt`, `TransactionHistory`, `BillingHistory`, `RewardsCatalog`, `NotificationPreferencesManager`, `NotificationCenter`, `NotificationsCenter`, `SubscriptionManager`, `MyActivityLog`, `UserSuggestionsPanel`, `UserSearchResults`, `HashtagExplorer`, `CollectionsManager`, `ContentManager`, `UserPublicProfile`, `ReportManager`, `VendorDashboard`, `LoyaltyDashboard`, `UserProfile`, `CollectionDetail`, `UserSettings`, `SearchResults`, `BusinessAnalyticsDashboard`, `FeaturedListingsManager`, `MarketingCampaignBuilder`, `AdminLoyaltyPanel`, `AuditLogViewer`, `UserManagementTable`, `AdminDashboardOverview`, `AnalyticsPanel`, `AdminAnalyticsDashboard`, `AdminManager`, `WebhookAnalyticsDashboard`, `LiveAnalyticsDashboard`, `ModerationQueueManager`, `SubscriptionAdminDashboard`, `AdminVerificationQueue`, `OLAPExplorer`, `AdminPerformanceDashboard` ve `MessagingInbox`, `WebhookManager`, `ActivityFeed`, `ModerationDashboard` React island olmaktan çıkarıldı.
+- Tarihsel taşınan yüzey listesi arşive alındı:
+  - [ASTRO_MIGRATION_CLOSURE_2026-04-17.md](/D:/sanliurfa.com/sanliurfa-ops-batch-all/docs/archive/migration/ASTRO_MIGRATION_CLOSURE_2026-04-17.md)
 
 ## Astro-Only Hedefinin Anlamı
 
