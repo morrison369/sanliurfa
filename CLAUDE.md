@@ -332,41 +332,41 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 
 ### Güvenlik
 
-- **SQL Injection**: Table allowlist in `postgres.ts` (ALLOWED_TABLES set), parameterized queries
-- **XSS**: Input sanitization via `sanitizeInput()` in validation
-- **Rate Limiting**: 100 req/15min per IP via Redis (`/api/auth/register` and login endpoints flagged for extra attention)
-- **CORS**: Configured in middleware, origin validation against `CORS_ORIGINS` env
-- **Security Headers**: Content-Type, X-Frame-Options, X-XSS-Protection, CSP
-- **Session Hijacking**: httpOnly + secure cookies, strict sameSite policy
-- **Password**: Bcrypt (12 rounds), never logged, legacy SHA-256 migration built-in
+- **SQL Injection**: `postgres.ts` içindeki table allowlist (`ALLOWED_TABLES` set'i) ve parametrik sorgular kullanılır
+- **XSS**: `sanitizeInput()` üzerinden giriş sanitization uygulanır
+- **Rate Limiting**: Redis üzerinden IP başına 15 dakikada 100 istek sınırı vardır (`/api/auth/register` ve login endpoint'leri ek dikkat gerektirir)
+- **CORS**: Middleware içinde yapılandırılır; origin doğrulaması `CORS_ORIGINS` env değişkenine göre yapılır
+- **Güvenlik Header'ları**: Content-Type, X-Frame-Options, X-XSS-Protection ve CSP uygulanır
+- **Session Hijacking**: `httpOnly` + `secure` cookie'ler ve strict `sameSite` politikası kullanılır
+- **Şifreler**: Bcrypt (12 tur) ile saklanır, asla log'lanmaz; legacy SHA-256 migration gömülüdür
 
 ### Gerçek Zamanlı Özellikler
 
-The application supports real-time updates via **Server-Sent Events (SSE)** for low-latency features without WebSocket overhead.
+Uygulama, WebSocket ek yükü olmadan düşük gecikmeli özellikler için **Server-Sent Events (SSE)** ile gerçek zamanlı güncellemeleri destekler.
 
-**Architecture**:
-- `src/lib/realtime-sse.ts` — RealtimeManager singleton with event source management, auto-reconnect with exponential backoff
-- Dual-purpose endpoints: metrics update every 5s, KPIs every 30s
-- Cursor-based pagination for feed updates (only new items since last fetch)
-- Fire-and-forget background queries to avoid blocking response
+**Mimari**:
+- `src/lib/realtime-sse.ts` — event source yönetimi ve exponential backoff ile otomatik yeniden bağlanma içeren `RealtimeManager` singleton'ı
+- Çift amaçlı endpoint'ler: metrikler her 5 saniyede, KPI'lar her 30 saniyede güncellenir
+- Akış güncellemeleri için cursor tabanlı pagination kullanılır; yalnızca son fetch'ten sonraki yeni öğeler alınır
+- Yanıtı bloklamamak için fire-and-forget arka plan sorguları kullanılır
 
-**Implemented Streams**:
-1. **Social Feed** (`GET /api/realtime/feed`, 15s polling)
-   - User activities from followed places/users
-   - Cursor tracked as `lastActivityId`, only new activities emitted
-   - Queries: `user_activity` joined with `followers` and `users`
+**Uygulanan Akışlar**:
+1. **Sosyal Akış** (`GET /api/realtime/feed`, 15sn polling)
+   - Takip edilen mekan ve kullanıcılardan gelen aktiviteleri taşır
+   - Cursor `lastActivityId` olarak izlenir; yalnızca yeni aktiviteler yayımlanır
+   - Sorgular: `user_activity`, `followers` ve `users` ile join edilir
 
-2. **Live Analytics** (`GET /api/realtime/analytics`, 5s metrics + 30s KPIs)
-   - Real-time request metrics: Error Rate, Avg Response, P95 Response, Cache Hit, DB Pool Utilization
-   - KPIs: Top 5 slowest endpoints
-   - Uses `metricsCollector.getMetrics()` and `getKPIs(true)` from business-analytics
+2. **Canlı Analitik** (`GET /api/realtime/analytics`, 5sn metrik + 30sn KPI)
+   - Gerçek zamanlı request metrikleri: Error Rate, Avg Response, P95 Response, Cache Hit, DB Pool Utilization
+   - KPI'lar: En yavaş 5 endpoint
+   - `business-analytics` içindeki `metricsCollector.getMetrics()` ve `getKPIs(true)` fonksiyonlarını kullanır
 
-**Client-side Integration** (`src/lib/realtime-sse.ts`):
-- `connectToFeed()` — Opens EventSource connection, sets auto-reconnect timer
-- `handleFeedData(data)` — Parses and triggers `onFeedUpdate()` listener
-- `reconnectFeed()` — Exponential backoff (1s, 2s, 4s... up to 60s)
-- `onFeedUpdate(callback)` — Register callback to receive feed updates
-- Auto-disconnects on component unmount via `disconnect()`
+**İstemci Tarafı Entegrasyonu** (`src/lib/realtime-sse.ts`):
+- `connectToFeed()` — EventSource bağlantısını açar ve otomatik yeniden bağlanma zamanlayıcısını kurar
+- `handleFeedData(data)` — Veriyi parse eder ve `onFeedUpdate()` dinleyicisini tetikler
+- `reconnectFeed()` — Exponential backoff uygular (1sn, 2sn, 4sn... en fazla 60sn)
+- `onFeedUpdate(callback)` — Akış güncellemelerini almak için callback kaydeder
+- `disconnect()` ile component unmount olduğunda otomatik ayrılır
 
 ### Sadakat ve Ödül Sistemi
 
@@ -379,13 +379,13 @@ Puanlar, rozetler, başarımlar, seviyeler ve kullanılabilir ödüller içeren 
 - `src/lib/gamification.ts` — Başarımları tetikleyen event hook'ları (yorum oluşturma, fotoğraf yükleme, günlük giriş)
 
 **Veritabanı Tabloları**:
-- `loyalty_points` — Point transactions (user_id, amount, type, reason, created_at)
-- `user_badges` — Awarded badges (user_id, badge_key, awarded_at, reason)
-- `user_achievements` — Unlocked achievements (user_id, achievement_id, unlocked_at, viewed_at)
-- `loyalty_tiers` — User tier assignments (user_id, tier_name, total_points_earned, current_points, achieved_at)
-- `rewards` — Reward catalog (reward_name, description, category, points_cost, tier_requirement, is_active, display_order)
-- `reward_inventory` — Stock tracking (reward_id, available_stock, total_stock)
-- `user_tier_history` — Tier progression log (user_id, tier_name, previous_tier, achieved_at, points_at_achievement)
+- `loyalty_points` — Puan işlemleri (`user_id`, `amount`, `type`, `reason`, `created_at`)
+- `user_badges` — Verilen rozetler (`user_id`, `badge_key`, `awarded_at`, `reason`)
+- `user_achievements` — Açılmış başarımlar (`user_id`, `achievement_id`, `unlocked_at`, `viewed_at`)
+- `loyalty_tiers` — Kullanıcı seviye atamaları (`user_id`, `tier_name`, `total_points_earned`, `current_points`, `achieved_at`)
+- `rewards` — Ödül kataloğu (`reward_name`, `description`, `category`, `points_cost`, `tier_requirement`, `is_active`, `display_order`)
+- `reward_inventory` — Stok takibi (`reward_id`, `available_stock`, `total_stock`)
+- `user_tier_history` — Seviye ilerleme günlüğü (`user_id`, `tier_name`, `previous_tier`, `achieved_at`, `points_at_achievement`)
 
 **Temel Akışlar**:
 1. **Puan Kazanma**: `awardPoints(userId, amount, reason)` işlem oluşturur, `loyalty_tiers.current_points` değerini günceller ve seviye yükseltmesini kontrol eder
@@ -447,42 +447,42 @@ Hashtag, mention, aktivite akışı ve trend içerik içeren sosyal ağ öğeler
 
 ### Premium Abonelikler ve Özellik Kısıtlama
 
-Tier-based access control for premium features.
+Premium özellikler için katman tabanlı erişim kontrolü uygulanır.
 
-**Subscription Tiers**:
-- **Free** (default) — Basic features (view places, create 1 review/month)
-- **Premium** — Enhanced features (unlimited reviews, priority listings, advanced analytics)
-- **Business** — Commercial features (multi-user management, API access, custom integrations)
+**Abonelik Katmanları**:
+- **Free** (varsayılan) — Temel özellikler (mekan görüntüleme, ayda 1 yorum oluşturma)
+- **Premium** — Gelişmiş özellikler (sınırsız yorum, öncelikli listeleme, gelişmiş analitik)
+- **Business** — Ticari özellikler (çok kullanıcılı yönetim, API erişimi, özel entegrasyonlar)
 
-**Feature Gating**:
-- `src/lib/feature-gating.ts` — `isFeatureAvailable(userId, featureKey)` checks user's tier and feature availability
-- PREMIUM_FEATURES constant defines feature → tier mapping
-- Quota enforcement via `/api/user/quotas` endpoint
+**Özellik Kısıtlama**:
+- `src/lib/feature-gating.ts` — `isFeatureAvailable(userId, featureKey)` ile kullanıcının katmanını ve özellik erişimini kontrol eder
+- `PREMIUM_FEATURES` sabiti, özellik → katman eşlemesini tanımlar
+- Kota zorlaması `/api/user/quotas` endpoint'i üzerinden yapılır
 
-**Stripe Integration**:
-- `POST /api/subscriptions/checkout` — Creates Stripe checkout session
-- `POST /api/subscriptions/webhook` — Listens for Stripe events (subscription.updated, invoice.payment_succeeded)
-- Webhook security: HMAC-SHA256 signature validation
-- Exponential backoff retry for webhook failures
+**Stripe Entegrasyonu**:
+- `POST /api/subscriptions/checkout` — Stripe checkout session oluşturur
+- `POST /api/subscriptions/webhook` — Stripe event'lerini dinler (`subscription.updated`, `invoice.payment_succeeded`)
+- Webhook güvenliği için HMAC-SHA256 imza doğrulaması kullanılır
+- Webhook hatalarında exponential backoff retry uygulanır
 
-**Database Tables**:
-- `user_subscriptions` — Active subscriptions (user_id, tier_name, status, stripe_subscription_id, current_period_start, current_period_end)
-- `subscription_usage` — Monthly feature quotas (user_id, feature_key, usage_count, period_start, period_end)
+**Veritabanı Tabloları**:
+- `user_subscriptions` — Aktif abonelikler (`user_id`, `tier_name`, `status`, `stripe_subscription_id`, `current_period_start`, `current_period_end`)
+- `subscription_usage` — Aylık özellik kotaları (`user_id`, `feature_key`, `usage_count`, `period_start`, `period_end`)
 
 ## Yaygın Geliştirme Görevleri
 
 ### Yeni Bir API Endpoint Ekleme
 
-1. Create file at `src/pages/api/resource/action.ts` (follows REST naming)
-2. Import types, validation, logger, metrics, database functions
-3. Use Astro's `APIRoute` type and async handler
-4. Validate input: `validateWithSchema(body, commonSchemas.mySchema)` → return 422 if invalid
-5. Execute business logic (query DB, call external API)
-6. Record metrics: `recordRequest(method, path, statusCode, duration)`
-7. Log important events: `logger.logMutation('create', 'places', recordId, userId)`
-8. Return JSON response with request ID in header
+1. `src/pages/api/resource/action.ts` yolunda dosyayı oluştur (REST isimlendirmesini izler)
+2. Tipleri, validation, logger, metrics ve veritabanı fonksiyonlarını içe aktar
+3. Astro'nun `APIRoute` tipini ve async handler'ı kullan
+4. Girişi doğrula: `validateWithSchema(body, commonSchemas.mySchema)` → geçersizse 422 döndür
+5. İş mantığını çalıştır (DB sorgusu, dış API çağrısı vb.)
+6. Metrikleri kaydet: `recordRequest(method, path, statusCode, duration)`
+7. Önemli olayları log'la: `logger.logMutation('create', 'places', recordId, userId)`
+8. Request ID header'ı ile JSON yanıt döndür
 
-**Example**:
+**Örnek**:
 ```typescript
 import type { APIRoute } from 'astro';
 import { queryOne, update } from '../../../lib/postgres';
@@ -497,18 +497,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    // Validate input
+    // Girdiyi doğrula
     const body = await request.json();
     const validation = validateWithSchema(body, commonSchemas.mySchema);
     if (!validation.valid) {
       recordRequest('POST', '/api/resource', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid input', HttpStatus.UNPROCESSABLE_ENTITY, validation.errors, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Gecersiz girdi', HttpStatus.UNPROCESSABLE_ENTITY, validation.errors, requestId);
     }
 
-    // Business logic
+    // Is mantigi
     const result = await update('places', { id: body.id }, { name: validation.data.name });
 
-    // Log and record metrics
+    // Logla ve metrikleri kaydet
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/resource', HttpStatus.CREATED, duration);
     logger.logMutation('update', 'places', body.id, locals.user?.id, { duration });
@@ -913,55 +913,55 @@ Tam CentOS Web Panel production kurulum rehberi için **`DEPLOYMENT.md`** dosyas
 
 ### Özellik Ekleme
 
-**New Database Tables**:
-- Update `ALLOWED_TABLES` in `postgres.ts`
-- Create migration file in `migrations/` (timestamp_description.sql)
-- Run migration on all environments before deploying endpoint code
+**Yeni Veritabanı Tabloları**:
+- `postgres.ts` içindeki `ALLOWED_TABLES` listesini güncelle
+- `migrations/` altında migration dosyası oluştur (`timestamp_description.sql`)
+- Endpoint kodunu dağıtmadan önce migration'ı tüm ortamlarda çalıştır
 
-**New API Endpoints**:
-- Follow response formatter pattern from `src/lib/api.ts`
-- For admin endpoints, use the shared admin ops access wrapper instead of ad hoc inline role checks
-- Validate input via `validateWithSchema()` before using
-- Record metrics: `recordRequest(method, path, status, duration)`
-- Log important mutations: `logger.logMutation(action, table, recordId, userId, details)`
-- Return X-Request-ID in response headers
-- If the endpoint is consumed by admin UI or changes admin contract shape, update `src/pages/api/openapi.json.ts`
-- Regenerate admin API types with `npm run types:admin:generate`
-- Keep `npm run types:admin:drift:check` green
-- For SSE endpoints, use `ReadableStream` pattern, include proper headers, implement client-side reconnection
+**Yeni API Endpoint'leri**:
+- `src/lib/api.ts` içindeki response formatter kalıbını izle
+- Admin endpoint'lerinde ad hoc inline rol kontrolü yerine ortak admin ops access wrapper'ını kullan
+- Kullanmadan önce `validateWithSchema()` ile girdi doğrulaması yap
+- Metrikleri kaydet: `recordRequest(method, path, status, duration)`
+- Önemli mutation'ları log'la: `logger.logMutation(action, table, recordId, userId, details)`
+- Yanıt header'larında `X-Request-ID` döndür
+- Endpoint admin UI tarafından tüketiliyorsa veya admin kontrat şeklini değiştiriyorsa `src/pages/api/openapi.json.ts` dosyasını güncelle
+- `npm run types:admin:generate` ile admin API tiplerini yeniden üret
+- `npm run types:admin:drift:check` komutunu yeşil tut
+- SSE endpoint'lerinde `ReadableStream` kalıbını kullan, gerekli header'ları ekle ve istemci tarafı yeniden bağlanmayı uygula
 
-**New Validations**:
-- Add to `commonSchemas` in validation.ts
-- Include sanitization for user-facing text (set `sanitize: true`)
+**Yeni Doğrulamalar**:
+- `validation.ts` içindeki `commonSchemas` listesine ekle
+- Kullanıcıya görünen metinler için sanitization ekle (`sanitize: true`)
 
-**New Caching**:
-- Use `prefixKey()` helper (or hardcode `sanliurfa:` prefix)
-- Document TTL in comments (5 min = 300s, 10 min = 600s, etc.)
-- Always invalidate on mutations using `deleteCache()` or `deleteCachePattern()`
+**Yeni Cache Kullanımı**:
+- `prefixKey()` yardımcısını kullan (veya `sanliurfa:` prefix'ini açıkça yaz)
+- TTL değerini yorumlarda belgele (5 dakika = 300sn, 10 dakika = 600sn vb.)
+- Mutation'larda her zaman `deleteCache()` veya `deleteCachePattern()` ile invalidation yap
 
-**New Loyalty Features**:
-- New achievements: add to `ACHIEVEMENT_DEFINITIONS` in `src/lib/achievements.ts`
-- Wire `checkCommonAchievements(userId)` into relevant gamification hooks
-- New rewards: create via `POST /api/admin/loyalty/rewards` (UI or direct DB insert)
-- New badges: add to badge definitions and call `awardBadgeToUser()` when earned
-- New points: use `awardPoints(userId, amount, reason)` with meaningful reason strings
+**Yeni Sadakat Özellikleri**:
+- Yeni başarımları `src/lib/achievements.ts` içindeki `ACHIEVEMENT_DEFINITIONS` listesine ekle
+- `checkCommonAchievements(userId)` çağrısını ilgili gamification hook'larına bağla
+- Yeni ödülleri `POST /api/admin/loyalty/rewards` üzerinden oluştur (UI veya doğrudan DB insert)
+- Yeni rozetleri badge tanımlarına ekle ve kazanıldığında `awardBadgeToUser()` çağır
+- Yeni puan işlemlerinde anlamlı neden dizeleriyle `awardPoints(userId, amount, reason)` kullan
 
-**New Real-time Streams**:
-- Create SSE endpoint in `/pages/api/realtime/example.ts`
-- Use `ReadableStream` with polling interval
-- Implement cursor-based pagination (track `lastActivityId`, `lastTimestamp`, etc.)
-- Update `src/lib/realtime-sse.ts` with `connectToExample()`, `handleExampleData()`, listener method
-- Implement client-side reconnection logic with exponential backoff
+**Yeni Gerçek Zamanlı Akışlar**:
+- `/pages/api/realtime/example.ts` altında SSE endpoint'i oluştur
+- Polling aralığıyla birlikte `ReadableStream` kullan
+- Cursor tabanlı pagination uygula (`lastActivityId`, `lastTimestamp` vb. takibi)
+- `src/lib/realtime-sse.ts` içine `connectToExample()`, `handleExampleData()` ve listener metodunu ekle
+- İstemci tarafı yeniden bağlanma mantığını exponential backoff ile uygula
 
-**New Feature Gates**:
-- Add feature key to `PREMIUM_FEATURES` in `src/lib/feature-gating.ts`
-- Map feature → required tier (Free/Premium/Business)
-- Check availability with `isFeatureAvailable(userId, featureKey)`
-- Enforce quota limits via `/api/user/quotas` endpoint
+**Yeni Özellik Gate'leri**:
+- Özellik anahtarını `src/lib/feature-gating.ts` içindeki `PREMIUM_FEATURES` listesine ekle
+- Özellik → gerekli katman eşlemesini yap (Free/Premium/Business)
+- Kullanılabilirliği `isFeatureAvailable(userId, featureKey)` ile kontrol et
+- Kota limitlerini `/api/user/quotas` endpoint'i ile uygula
 
-**New Metrics**:
-- Add to `recordRequest()` calls or custom `recordSlowOperation()` calls
-- Aggregated in `/api/metrics` endpoint (viewable by admins)
+**Yeni Metrikler**:
+- `recordRequest()` çağrılarına veya özel `recordSlowOperation()` çağrılarına ekle
+- Metrikler `/api/metrics` endpoint'inde toplanır ve adminler tarafından görüntülenebilir
 
 ### Testler
 - Minimum pre-commit / pre-push gate:
