@@ -6,6 +6,47 @@ import {
 } from '../lib/billing-history';
 
 type BillingHistoryRoot = HTMLElement & { dataset: DOMStringMap };
+const BILLING_STATUS_STORAGE_KEY = 'sanliurfa:billing-history:selected-status';
+
+function readSelectedStatus(root: BillingHistoryRoot): string {
+  if (root.dataset.selectedStatus) return root.dataset.selectedStatus;
+
+  try {
+    return window.localStorage.getItem(BILLING_STATUS_STORAGE_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function writeSelectedStatus(root: BillingHistoryRoot, value: string) {
+  root.dataset.selectedStatus = value;
+
+  try {
+    if (value) {
+      window.localStorage.setItem(BILLING_STATUS_STORAGE_KEY, value);
+    } else {
+      window.localStorage.removeItem(BILLING_STATUS_STORAGE_KEY);
+    }
+  } catch {
+    // no-op
+  }
+}
+
+function readRecords(root: BillingHistoryRoot) {
+  const raw = root.dataset.billingJson;
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRecords(root: BillingHistoryRoot, records: unknown[]) {
+  root.dataset.billingJson = JSON.stringify(records);
+}
 
 async function renderBillingHistoryRoot(root: BillingHistoryRoot) {
   const loading = root.querySelector<HTMLElement>('[data-billing-loading]');
@@ -13,13 +54,33 @@ async function renderBillingHistoryRoot(root: BillingHistoryRoot) {
   if (!loading || !content) return;
 
   try {
-    const response = await fetch('/api/user/subscription/billing');
-    if (!response.ok) {
-      throw new Error('Ödeme geçmişi alınamadı');
+    const selectedStatus = readSelectedStatus(root);
+    let records = readRecords(root);
+
+    if (records.length === 0) {
+      const response = await fetch('/api/user/subscription/billing');
+      if (!response.ok) {
+        throw new Error('Ödeme geçmişi alınamadı');
+      }
+
+      records = extractBillingHistory(await response.json());
+      writeRecords(root, records);
     }
 
-    const records = extractBillingHistory(await response.json());
-    setElementHtml(content, renderBillingHistory(records));
+    setElementHtml(
+      content,
+      renderBillingHistory({
+        records,
+        selectedStatus,
+      }),
+    );
+
+    content.querySelectorAll<HTMLElement>('[data-billing-status]').forEach((button) => {
+      button.addEventListener('click', () => {
+        writeSelectedStatus(root, button.dataset.billingStatus || '');
+        void renderBillingHistoryRoot(root);
+      });
+    });
   } catch (error) {
     setElementHtml(
       content,
@@ -39,6 +100,7 @@ export function initBillingHistory() {
   for (const root of roots) {
     if (root.dataset.initialized === 'true') continue;
     root.dataset.initialized = 'true';
+    root.dataset.selectedStatus = readSelectedStatus(root);
     void renderBillingHistoryRoot(root);
   }
 }

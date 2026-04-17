@@ -9,6 +9,31 @@ import {
 type TransactionHistoryRoot = HTMLElement & {
   dataset: DOMStringMap;
 };
+const TRANSACTION_TYPE_STORAGE_KEY = 'sanliurfa:transaction-history:selected-type';
+
+function readSelectedType(root: TransactionHistoryRoot): string {
+  if (root.dataset.selectedType) return root.dataset.selectedType;
+
+  try {
+    return window.localStorage.getItem(TRANSACTION_TYPE_STORAGE_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function writeSelectedType(root: TransactionHistoryRoot, value: string) {
+  root.dataset.selectedType = value;
+
+  try {
+    if (value) {
+      window.localStorage.setItem(TRANSACTION_TYPE_STORAGE_KEY, value);
+    } else {
+      window.localStorage.removeItem(TRANSACTION_TYPE_STORAGE_KEY);
+    }
+  } catch {
+    // no-op
+  }
+}
 
 function getPaginationState(root: TransactionHistoryRoot): LoyaltyTransactionPagination {
   return {
@@ -66,7 +91,7 @@ async function renderTransactionHistoryRoot(root: TransactionHistoryRoot) {
 
     content.querySelectorAll<HTMLElement>('[data-transaction-type]').forEach((button) => {
       button.addEventListener('click', () => {
-        root.dataset.selectedType = button.dataset.transactionType || '';
+        writeSelectedType(root, button.dataset.transactionType || '');
         root.dataset.offset = '0';
         void renderTransactionHistoryRoot(root);
       });
@@ -107,6 +132,7 @@ export function initTransactionHistory() {
     if (root.dataset.initialized === 'true') continue;
     root.dataset.initialized = 'true';
     root.dataset.total = root.dataset.total || '0';
+    root.dataset.selectedType = readSelectedType(root);
     void renderTransactionHistoryRoot(root);
   }
 }
