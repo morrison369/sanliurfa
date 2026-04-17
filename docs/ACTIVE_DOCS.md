@@ -8,7 +8,7 @@ Bu dokümanlar, bu depo için aktif operasyon yüzeyidir.
 - `docs/architecture/README.md`
 - `docs/ops/SOURCE_OF_TRUTH_MAP.md`
 
-## Runtime Durum Özetleri
+## Calisma Zamani Durum Ozetleri
 - `docs/architecture/ASTRO_RUNTIME_STATE.md`
 - `docs/ops/RELEASE_RUNTIME_STATE.md`
 - `docs/ops/ADMIN_OPS_RUNTIME_STATE.md`

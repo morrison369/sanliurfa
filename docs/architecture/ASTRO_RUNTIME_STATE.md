@@ -1,4 +1,4 @@
-# Astro Runtime Durumu
+# Astro Calisma Zamani Durumu
 
 Bu belge, migration kapandıktan sonraki aktif runtime durumunu tek yerde özetler.
 
@@ -10,15 +10,15 @@ Bu belge, migration kapandıktan sonraki aktif runtime durumunu tek yerde özetl
 - aktif `client:*` hydration: `0`
 - React hook/lib blokörü: `0`
 - config dışı runtime React owner: `0`
-- kalan tek compatibility owner:
+- kalan tek uyumluluk sahibi:
   - `astro.config.mjs`
 
 ## Anlamı
 
-- Uygulamanın aktif UI runtime'ı Astro + plain TypeScript modelindedir.
+- Uygulamanin aktif arayuz calisma zamani Astro + duz TypeScript modelindedir.
 - `@astrojs/react` kaldırılmamıştır.
 - `react` ve `react-dom` kaldırılmamıştır.
-- Bu paketler aktif UI owner olarak değil, kontrollü compatibility layer olarak tutulur.
+- Bu paketler aktif arayuz sahibi olarak degil, kontrollu uyumluluk katmani olarak tutulur.
 
 ## Aktif Karar
 
