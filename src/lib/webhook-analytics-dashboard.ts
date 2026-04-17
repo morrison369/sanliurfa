@@ -195,13 +195,13 @@ export function renderWebhookAnalyticsDashboard(options: {
           data-webhook-analytics-refresh
           class="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white transition hover:bg-blue-700"
         >
-          Verileri yenile
+          Analitiği yenile
         </button>
       </div>
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <div class="rounded-lg bg-white p-4 shadow-md">
-          <p class="text-sm text-gray-600">Toplam webhook sayısı</p>
+          <p class="text-sm text-gray-600">Webhook sayısı</p>
           <p class="text-3xl font-bold text-gray-900">${metrics.totalWebhooks}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
