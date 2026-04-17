@@ -171,7 +171,7 @@ function renderKpiPanel(kpi: LiveAnalyticsKpiData | null): string {
   return `
     <div class="rounded-lg bg-white p-6 shadow">
       <div class="mb-4 flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-gray-900">KPI İzlemesi</h3>
+        <h3 class="text-lg font-semibold text-gray-900">KPI izlemesi</h3>
         ${
           kpi.alertCount > 0
             ? `<div class="flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 text-red-800"><span class="h-2 w-2 animate-pulse rounded-full bg-red-600"></span><span class="text-sm font-semibold">${kpi.alertCount} uyarı</span></div>`
@@ -228,7 +228,7 @@ export function renderLiveAnalyticsDashboard(options: {
 
       <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         ${renderMetricCard({
-          title: 'Hata Oranı',
+          title: 'Hata oranı',
           value: `${metrics.errorRate.toFixed(2)}%`,
           valueClass: getLiveAnalyticsErrorRateClass(metrics.errorRate),
           progressWidth: metrics.errorRate * 20,
@@ -237,7 +237,7 @@ export function renderLiveAnalyticsDashboard(options: {
             metrics.errorRate < 2 ? '✓ İyi' : metrics.errorRate < 5 ? '⚠ Dikkat' : '✗ Kritik',
         })}
         ${renderMetricCard({
-          title: 'Ortalama Yanıt Süresi',
+          title: 'Ortalama yanıt süresi',
           value: `${metrics.avgDuration}ms`,
           valueClass: getLiveAnalyticsResponseClass(metrics.avgDuration),
           progressWidth: (metrics.avgDuration / 500) * 100,
@@ -246,7 +246,7 @@ export function renderLiveAnalyticsDashboard(options: {
             metrics.avgDuration < 200 ? '✓ İyi' : metrics.avgDuration < 500 ? '⚠ Normal' : '✗ Yavaş',
         })}
         ${renderMetricCard({
-          title: 'P95 Yanıt Süresi',
+          title: 'P95 yanıt süresi',
           value: `${metrics.p95Duration}ms`,
           valueClass: 'text-blue-600',
           progressWidth: (metrics.p95Duration / 1000) * 100,
@@ -254,7 +254,7 @@ export function renderLiveAnalyticsDashboard(options: {
           helper: '95. yüzdelik gecikme',
         })}
         ${renderMetricCard({
-          title: 'Önbellek İsabet Oranı',
+          title: 'Önbellek isabet oranı',
           value: `${metrics.cacheHitRate.toFixed(1)}%`,
           valueClass: 'text-green-600',
           progressWidth: metrics.cacheHitRate,
@@ -262,7 +262,7 @@ export function renderLiveAnalyticsDashboard(options: {
           helper: metrics.cacheHitRate > 70 ? '✓ Mükemmel' : '⚠ İyileştir',
         })}
         ${renderMetricCard({
-          title: 'DB Havuzu Kullanımı',
+          title: 'DB havuzu kullanımı',
           value: `${metrics.dbPool?.utilization.toFixed(1) || '0.0'}%`,
           valueClass:
             metrics.dbPool && metrics.dbPool.utilization < 80 ? 'text-green-600' : 'text-red-600',
@@ -273,7 +273,7 @@ export function renderLiveAnalyticsDashboard(options: {
           footer: `Aktif: ${metrics.dbPool?.active || 0} • Boşta: ${metrics.dbPool?.idle || 0} • Beklemede: ${metrics.dbPool?.waiting || 0}`,
         })}
         ${renderMetricCard({
-          title: 'Toplam İstekler',
+          title: 'Toplam istek',
           value: metrics.totalRequests.toLocaleString('tr-TR'),
           valueClass: 'text-indigo-600',
           helper: `Yavaş istekler: <span class="font-semibold text-orange-600">${metrics.slowRequests}</span>`,
