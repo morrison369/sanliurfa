@@ -236,6 +236,24 @@ const pageTitle = 'Bildirimleri Yönet';
             stats: 'content-stats'
         };
 
+        function getTargetLabel(value) {
+            const labels = {
+                all: 'Tüm Aboneler',
+                blog: 'Blog Aboneleri',
+                new: 'Yeni Kullanıcılar',
+                active: 'Aktif Kullanıcılar'
+            };
+
+            return labels[value] || 'Tüm Aboneler';
+        }
+
+        function syncPreview(form) {
+            document.getElementById('preview-title').textContent = form.title.value || 'Bildirim Başlığı';
+            document.getElementById('preview-body').textContent = form.body.value || 'Bildirim açıklaması burada gösterilir';
+            document.getElementById('preview-target').textContent = getTargetLabel(form.target.value);
+            document.getElementById('preview-time').textContent = form.scheduled_for.value ? 'Zamanlanmış' : 'Hemen';
+        }
+
         Object.keys(tabs).forEach(tabName => {
             document.getElementById(`tab-${tabName}`).addEventListener('click', () => {
                 // Tüm tab'ları gizle
@@ -273,10 +291,7 @@ const pageTitle = 'Bildirimleri Yönet';
         // Form preview
         document.getElementById('notification-form').addEventListener('input', (e) => {
             const form = e.target.form;
-            document.getElementById('preview-title').textContent = form.title.value || 'Bildirim Başlığı';
-            document.getElementById('preview-body').textContent = form.body.value || 'Bildirim açıklaması burada gösterilir';
-            document.getElementById('preview-target').textContent = form.target.value;
-            document.getElementById('preview-time').textContent = form.scheduled_for.value ? 'Zamanlanmış' : 'Hemen';
+            syncPreview(form);
         });
 
         // Taslak kaydet
@@ -294,6 +309,7 @@ const pageTitle = 'Bildirimleri Yönet';
                 if (response.ok) {
                     alert('✓ Taslak kaydedildi');
                     form.reset();
+                    syncPreview(form);
                 } else {
                     alert('✗ Hata oluştu');
                 }
@@ -319,6 +335,7 @@ const pageTitle = 'Bildirimleri Yönet';
                 if (response.ok) {
                     alert('✓ Bildirim gönderildi');
                     form.reset();
+                    syncPreview(form);
                 } else {
                     const error = await response.json();
                     alert('✗ Hata: ' + (error.error || 'Bildirim gönderilemedi'));
@@ -415,6 +432,8 @@ const pageTitle = 'Bildirimleri Yönet';
                 }
             }
         }
+
+        syncPreview(document.getElementById('notification-form'));
     </script>
 </body>
 </html>
