@@ -1,27 +1,10 @@
 {
-  "generatedAt": "2026-04-17T00:34:17.933Z",
-  "totalHighRiskComponents": 5,
+  "generatedAt": "2026-04-17T00:40:49.698Z",
+  "totalHighRiskComponents": 4,
   "firstCount": 0,
   "laterCount": 0,
-  "lastCount": 5,
+  "lastCount": 4,
   "entries": [
-    {
-      "componentName": "AdminPerformanceDashboard",
-      "componentPath": "src/components/AdminPerformanceDashboard.tsx",
-      "pagePaths": [
-        "src/pages/admin/analytics.astro"
-      ],
-      "usageCount": 1,
-      "lines": 208,
-      "useStateCount": 5,
-      "useEffectCount": 2,
-      "fetchCount": 2,
-      "typedClientCount": 0,
-      "adminSurface": true,
-      "complexityScore": 73,
-      "migrationPriority": "last",
-      "recommendation": "AdminPerformanceDashboard yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
-    },
     {
       "componentName": "MessagingInbox",
       "componentPath": "src/components/MessagingInbox.tsx",

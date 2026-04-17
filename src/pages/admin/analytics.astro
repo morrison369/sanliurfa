@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import AnalyticsPanel from '../../components/AnalyticsPanel.astro';
 import AdminAnalyticsDashboard from '../../components/AdminAnalyticsDashboard.astro';
-import AdminPerformanceDashboard from '../../components/AdminPerformanceDashboard';
+import AdminPerformanceDashboard from '../../components/AdminPerformanceDashboard.astro';
 
 // Check admin access
 const user = Astro.locals.user;
@@ -28,7 +28,7 @@ const seo = {
       <div class="space-y-12">
         <section>
           <h2 class="text-2xl font-bold mb-6">Performance Monitoring</h2>
-          <AdminPerformanceDashboard client:load />
+          <AdminPerformanceDashboard />
         </section>
         <hr class="dark:border-gray-700" />
         <section>
