@@ -12,6 +12,10 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
   - [ARTIFACT_FRESHNESS_POLICY.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\ARTIFACT_FRESHNESS_POLICY.md)
   - [ARTIFACT_RETENTION_POLICY.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\ARTIFACT_RETENTION_POLICY.md)
   - [admin-access-coverage.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\reports\admin-access-coverage.md)
+- Integration readiness kısa özet:
+  - [INTEGRATION_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\INTEGRATION_RUNTIME_STATE.md)
+- Incident kısa özet:
+  - [INCIDENT_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\INCIDENT_RUNTIME_STATE.md)
 - Hangi dosya source-of-truth:
   - [SOURCE_OF_TRUTH_MAP.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\SOURCE_OF_TRUTH_MAP.md)
 - Admin/ops runtime özet durumu:
@@ -52,6 +56,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 1. Merge veya deploy bloklandıysa `RELEASE_GATES.md`
    kısa runtime/gate özeti için `docs/ops/RELEASE_RUNTIME_STATE.md`
 2. Incident varsa `INCIDENT_RUNBOOK.md`
+   hızlı ilk ayrım için `docs/ops/INCIDENT_RUNTIME_STATE.md`
 3. Nightly issue veya artifact bayatlığı varsa `ARTIFACT_FRESHNESS_POLICY.md`
    Admin wrapper coverage için `docs/reports/admin-access-coverage.md`
 4. Hangi dosya karar veriyor belirsizse `SOURCE_OF_TRUTH_MAP.md`
@@ -65,6 +70,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
    Dosya bazlı React bakım sınıflaması için `docs/reports/react-surface-classification.md`
    Runtime-linked React UI yüzeyi geri gelmesin diye `npm run astro:react:guard`
 6. Admin anahtarları ve readiness için `INTEGRATION_READINESS.md`
+   kısa readiness özeti için `docs/ops/INTEGRATION_RUNTIME_STATE.md`
 7. Legacy yüzey şüphesi varsa `LEGACY_PHASE_SURFACE.md`
 8. Admin UI davranışı veya ops sayfa metni değişecekse önce helper katmanına bak, sonra `.astro` / page script dosyasını değiştir
 
