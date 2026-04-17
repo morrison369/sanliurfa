@@ -14,7 +14,7 @@ const countResult = await query(
 const restaurantCount = parseInt(countResult.rows[0]?.count || '0');
 
 const seo = {
-  title: 'Gastronomi Rehberi - Urfa Lezzetleri',
+  title: 'Gastronomi rehberi - Urfa lezzetleri',
   description: 'Şanlıurfa mutfağının eşsiz lezzetlerini keşfedin. Ciğer kebabı, çiğ köfte, isot ve daha fazlası.',
 };
 
@@ -71,18 +71,18 @@ const featuredFoods = [
         </span>
         <h1 class="text-4xl lg:text-6xl font-display font-bold text-white mb-6">
           Şanlıurfa<br />
-          <span class="text-urfa-200">Gastronomi Rehberi</span>
+          <span class="text-urfa-200">Gastronomi rehberi</span>
         </h1>
         <p class="text-xl text-urfa-100 mb-8 leading-relaxed">
           UNESCO Gastronomi Şehri adayı Şanlıurfa'nın dünyaca ünlü mutfağını keşfedin.
         </p>
         <div class="flex flex-wrap gap-4">
           <a href="#yemekler" class="btn-accent">
-            Lezzetleri Keşfet
+            Lezzetleri keşfet
             <ArrowRight className="w-4 h-4 ml-2" />
           </a>
           <a href="#restoranlar" class="btn bg-white/10 text-white hover:bg-white/20">
-            En İyi Restoranlar
+            En iyi restoranlar
           </a>
         </div>
       </div>
@@ -113,9 +113,9 @@ const featuredFoods = [
       <div class="text-center max-w-2xl mx-auto mb-12">
         <span class="inline-flex items-center gap-2 text-isot-600 font-medium mb-2">
           <Utensils className="w-5 h-5" />
-          Yöresel Lezzetler
+          Yöresel lezzetler
         </span>
-        <h2 class="section-title dark:text-white">Efsane Lezzetler</h2>
+        <h2 class="section-title dark:text-white">Efsane lezzetler</h2>
         <p class="section-subtitle dark:text-gray-400">
           Şanlıurfa mutfağının vazgeçilmez lezzetlerini keşfedin.
         </p>
@@ -173,13 +173,13 @@ const featuredFoods = [
             <ChefHat className="w-5 h-5" />
             Restoranlar
           </span>
-          <h2 class="section-title dark:text-white">En İyi Restoranlar</h2>
+          <h2 class="section-title dark:text-white">En iyi restoranlar</h2>
           <p class="section-subtitle max-w-2xl dark:text-gray-400">
             Usta ellerden çıkan, geleneksel tariflerle hazırlanan lezzetleri sunan en iyi restoranlar.
           </p>
         </div>
         <a href="/places?category=restaurant" class="btn-outline inline-flex items-center gap-2">
-          Tüm Restoranları Gör
+          Tüm restoranları gör
           <ArrowRight className="w-4 h-4" />
         </a>
       </div>
@@ -220,7 +220,7 @@ const featuredFoods = [
         
         {(!restaurants || restaurants.length === 0) && (
           <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
-            Henüz restoran bulunmuyor.
+            Henüz gösterilecek restoran bulunmuyor.
           </div>
         )}
       </div>
