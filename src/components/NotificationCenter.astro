@@ -1,9 +1,16 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
 import { UI_COPY_TR } from '../lib/ui-copy';
 ---
 
 <div data-notification-center>
-  <div data-notification-center-loading class="py-8 text-center text-gray-500">{UI_COPY_TR.notifications.loading}</div>
+  <LoadingWrapper
+    className="py-8 text-center text-gray-500"
+    loadingText={UI_COPY_TR.notifications.loading}
+    srText={UI_COPY_TR.notifications.loading}
+    wrapperClassName=""
+    dataAttributes={{ 'data-notification-center-loading': '' }}
+  />
   <div data-notification-center-content class="hidden"></div>
 </div>
 
