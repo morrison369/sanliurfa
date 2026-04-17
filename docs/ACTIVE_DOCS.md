@@ -40,7 +40,7 @@ Bu dokümanlar, bu depo için aktif operasyon yüzeyidir.
 - `docs/reports/admin-access-coverage.md`
 
 ## Arşiv Sınırı
-- Tarihli cleanup doğrulama dosyaları `docs/archive/cleanup/` altında tutulur.
+- Tarihli temizlik doğrulama dosyaları `docs/archive/cleanup/` altında tutulur.
 - Tarihli migration kapanış kayıtları `docs/archive/migration/` altında tutulur.
 - Eski veya geçersiz hale gelmiş faz referansları `docs/archive/phases/` altında tutulur.
 - Kök dizinde yalnızca güncel operasyon politikası ve aktif teslimat artefact'ları tutulmalıdır.
