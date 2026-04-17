@@ -4,7 +4,7 @@ Bu dosya, bu depoda çalışırken Claude Code için günlük uygulama rehberi s
 
 ## Proje Özeti
 
-**Şanlıurfa.com**, Astro 6.1.7 ve TypeScript ile kurulmuş üretim seviyesi bir şehir rehberi web uygulamasıdır. React paketleri, izin verilen bir Astro entegrasyonu uyumluluk katmanı olarak kurulu kalır; ancak aktif UI runtime Astro + plain TypeScript'tir. bcrypt tabanlı kimlik doğrulama, Redis cache/session/rate-limit, PostgreSQL, kapsamlı gözlemlenebilirlik, API dokümantasyonu ve E2E test içeren full-stack bir yapıya sahiptir. Altyapı; strict TypeScript, SQL injection önleme ve performans izleme ile kurumsal düzeyde hazırlanmıştır.
+**Şanlıurfa.com**, Astro 6.1.7 ve TypeScript ile kurulmuş üretim seviyesi bir şehir rehberi web uygulamasıdır. React paketleri, izin verilen bir Astro entegrasyonu uyumluluk katmanı olarak kurulu kalır; ancak aktif arayüz çalışma zamanı Astro + düz TypeScript'tir. bcrypt tabanlı kimlik doğrulama, Redis önbellek/oturum/rate-limit, PostgreSQL, kapsamlı gözlemlenebilirlik, API dokümantasyonu ve E2E test içeren tam kapsamlı bir yapıya sahiptir. Altyapı; sıkı TypeScript, SQL injection önleme ve performans izleme ile kurumsal düzeyde hazırlanmıştır.
 
 ## Kaynak Gerçekler ve Çalışma Modeli
 
@@ -12,35 +12,35 @@ Bu dosya yüksek sinyalli bir çalışma rehberidir; tek karar kaynağı değild
 
 - `docs/ops/README.md` — ops dokümanları için giriş noktası
 - `docs/ops/SOURCE_OF_TRUTH_MAP.md` — hangi kararın hangi dosyaya ait olduğunu gösterir
-- `docs/architecture/ASTRO_RUNTIME_STATE.md` — migration kapanışı sonrası aktif Astro runtime durumu
+- `docs/architecture/ASTRO_RUNTIME_STATE.md` — migration kapanışı sonrası aktif Astro çalışma zamanı durumu
 - `docs/RELEASE_GATES.md` — release ve merge gate davranışı
 - `docs/ops/BRANCH_PROTECTION.md` — zorunlu kontroller / branch protection parity
 - `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` — artefact freshness semantiği
 - `docs/ops/ARTIFACT_RETENTION_POLICY.md` — retention ve cleanup kuralları
-- `docs/ops/INTEGRATION_READINESS.md` — admin integration readiness davranışı
+- `docs/ops/INTEGRATION_READINESS.md` — admin entegrasyon readiness davranışı
 - `docs/ops/INCIDENT_RUNBOOK.md` — incident müdahale sırası
-- `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` — legacy phase ve script yüzeyi politikası
+- `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` — eski faz ve script yüzeyi politikası
 - `src/pages/api/openapi.json.ts` — güncel API kontratı kaynağı
 - `src/types/generated-admin-api.ts` — OpenAPI'den üretilmiş admin API tipleri
-- `src/types/admin-api.ts` — UI-facing admin tip katmanı
+- `src/types/admin-api.ts` — arayüz odaklı admin tip katmanı
 
 Uzun mimari notlar için `docs/architecture/README.md` dosyasını tercih et; bu dosyayı günlük yürütme kurallarına odaklı tut.
 
 Framework yönü:
 
 - Astro birincil framework'tür.
-- Yeni sayfalar ve yeni UI yüzeylerinde varsayılan yaklaşım Astro-first olmalıdır.
+- Yeni sayfalar ve yeni arayüz yüzeylerinde varsayılan yaklaşım Astro-first olmalıdır.
 - Deponun zaten Astro-only olduğunu varsayma; React kaldırma veya büyük migration işi önermeden önce `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md` dosyasını kontrol et.
 - Migration backlog kapalıdır. Yeni bir React UI yüzeyi veya hydration owner bilinçli olarak geri eklenirse ancak o zaman `docs/reports/astro-hydration-inventory.md` dosyasını `npm run astro:migration:inventory` ile yenile.
 - Migration yeniden açılır ve `medium=0` ise, sonraki paneli seçmeden önce kalan `high` bucket'ı `npm run astro:migration:high-risk` ile sırala.
-- Hydration zaten `0` ise React'in kaldırılması gerektiğini varsayma. Kullanıcı açıkça paket kaldırma istemedikçe `@astrojs/react` izin verilen production bağımlılığı olarak kalır.
+- Hydration zaten `0` ise React'in kaldırılması gerektiğini varsayma. Kullanıcı açıkça paket kaldırma istemedikçe `@astrojs/react` izin verilen üretim bağımlılığı olarak kalır.
 - `npm run astro:react:audit` ve `npm run astro:react:classify` komutlarını yalnızca görünürlük için kullan; otomatik uninstall tetikleyicisi yapma.
 
 ## Hızlı Başlangıç Komutları
 
 ### Günlük Geliştirme
 - `npm run dev` — Geliştirme sunucusunu başlat
-- `npm run dev:1111` — Tercih edilen yerel strict-port geliştirme sunucusu
+- `npm run dev:1111` — Tercih edilen yerel sabit port geliştirme sunucusu
 - `npm run dev:wsl` — WSL / dış host erişimi için geliştirme sunucusu
 - `npm run build` — Production build
 - `npm run lint` — TypeScript + Astro doğrulaması
@@ -48,10 +48,10 @@ Framework yönü:
 
 ### Birincil Kalite Gate'leri
 - `npm run typecheck:app` — Kanonik uygulama typecheck'i
-- `npm run test:critical:blocking` — Blocking kontrat testleri
-- `npm run test:critical:advisory` — Advisory kontrat testleri
+- `npm run test:critical:blocking` — Bloklayıcı kontrat testleri
+- `npm run test:critical:advisory` — Danışma amaçlı kontrat testleri
 - `npm run test:critical` — Tam kritik gate
-- `npm run test:e2e:smoke` — Kanonik smoke suite
+- `npm run test:e2e:smoke` — Kanonik duman testi paketi
 
 ### Admin API Kontratı ve Tipler
 - `npm run types:admin:generate` — Admin API tiplerini OpenAPI'den yeniden üret
@@ -60,7 +60,7 @@ Framework yönü:
 
 ### Release, Governance ve Ops
 - `npm run release:gate` — Release gate özeti ve kararı
-- `npm run branch:protection:drift:check` — Zorunlu kontroller / doküman parity doğrulaması
+- `npm run branch:protection:drift:check` — Zorunlu kontroller / doküman eşliği doğrulaması
 - `npm run ops:retention:apply` — Yerel artefact ve audit retention cleanup'ı
 - `npm run astro:migration:inventory` — Güncel Astro hydration envanteri ve risk dağılımı
 - `npm run astro:migration:high-risk` — Kalan yüksek riskli hydration yüzeyleri için sıralı feasibility raporu
@@ -91,34 +91,34 @@ Framework yönü:
 ```
 src/
 ├── components/        # Astro UI bileşenleri
-├── pages/            # Dosya tabanlı routing (Astro sayfaları + API route'ları)
+├── pages/            # Dosya tabanlı yönlendirme (Astro sayfaları + API route'ları)
 │   ├── api/          # REST API endpoint'leri (health, auth, places, reviews, metrics, performance, docs, admin, loyalty, social, realtime, webhooks)
 │   ├── admin/        # Admin yönetim sayfaları (users, moderation, loyalty, analytics)
 │   ├── kullanıcı/    # Kullanıcı profilleri ve ayarlar
-│   ├── sosyal/       # Sosyal özellikler (feed, hashtag explorer)
+│   ├── sosyal/       # Sosyal özellikler (akış, hashtag gezgini)
 │   ├── canli-analitik/ # Gerçek zamanlı analitik paneli
 │   └── [diğer sayfalar]
 ├── layouts/          # Sayfa şablonları
-├── lib/              # Çekirdek yardımcılar (TypeScript strict)
-│   ├── postgres.ts   # PostgreSQL pool, parametrik sorgular, table allowlist güvenliği
-│   ├── auth.ts       # bcrypt hashleme, Redis session'lar, token yönetimi
-│   ├── cache.ts      # Redis istemcisi, namespace prefix'leri (sanliurfa:), rate limit
-│   ├── validation.ts # XSS sanitization ile schema tabanlı giriş doğrulama
-│   ├── logging.ts    # Request ID takibi ile structured logging
-│   ├── metrics.ts    # Request/query metrikleri, slow operation tespiti, performans istatistikleri
-│   ├── api.ts        # Response formatlayıcılar, hata kodları, doğrulama yardımcıları
+├── lib/              # Çekirdek yardımcılar (sıkı TypeScript)
+│   ├── postgres.ts   # PostgreSQL bağlantı havuzu, parametrik sorgular, tablo izin listesi güvenliği
+│   ├── auth.ts       # bcrypt hashleme, Redis oturumları, token yönetimi
+│   ├── cache.ts      # Redis istemcisi, ad alanı önekleri (sanliurfa:), rate limit
+│   ├── validation.ts # XSS temizleme ile şema tabanlı giriş doğrulama
+│   ├── logging.ts    # İstek kimliği takibi ile yapılandırılmış loglama
+│   ├── metrics.ts    # İstek/sorgu metrikleri, yavaş operasyon tespiti, performans istatistikleri
+│   ├── api.ts        # Yanıt formatlayıcılar, hata kodları, doğrulama yardımcıları
 │   ├── env.ts        # Ortam değişkeni doğrulama
 │   ├── realtime-sse.ts # Gerçek zamanlı özellikler için Server-Sent Events yöneticisi
 │   ├── loyalty-points.ts # Sadakat puanı mantığı
 │   ├── badges.ts     # Rozet yönetimi ve atama
 │   ├── achievements.ts # Başarım takibi ve kilit açma
-│   ├── gamification.ts # Oyunlaştırma event hook'ları
+│   ├── gamification.ts # Oyunlaştırma olay hook'ları
 │   ├── social-features.ts # Hashtag, mention ve aktivite takibi
 │   ├── business-analytics.ts # KPI ve performans metrikleri
 │   ├── subscriptions.ts # Premium katman yönetimi
 │   ├── feature-gating.ts # Paket bazlı özellik erişimi
 │   └── [diğer yardımcılar]
-├── middleware.ts     # Request auth, CORS, rate limit, security header'ları
+├── middleware.ts     # İstek kimlik doğrulama, CORS, rate limit, güvenlik başlıkları
 ├── types/            # TypeScript tip tanımları
 ├── content/          # Markdown/MDX içerik dosyaları
 ├── styles/           # Tailwind CSS
@@ -127,42 +127,42 @@ src/
 
 ### Teknoloji Yığını
 
-- **Framework**: Astro 6.1.7 (SSR, dosya tabanlı routing)
-- **UI**: Astro bileşenleri + plain TypeScript tarayıcı yardımcıları
+- **Framework**: Astro 6.1.7 (SSR, dosya tabanlı yönlendirme)
+- **Arayüz**: Astro bileşenleri + düz TypeScript tarayıcı yardımcıları
 - **Styling**: Tailwind CSS 3.4 + Tailwind Forms
 - **Veritabanı**: PostgreSQL (doğrudan `pg` kütüphanesi bağlantısı)
-- **Cache/Session/Rate Limit**: Redis (`sanliurfa:*` namespace anahtarları)
-- **Auth**: JWT + bcrypt (şifreler), Redis session'ları (24 saat TTL, kayan pencere)
+- **Önbellek/Oturum/Rate Limit**: Redis (`sanliurfa:*` ad alanı anahtarları)
+- **Kimlik Doğrulama**: JWT + bcrypt (şifreler), Redis oturumları (24 saat TTL, kayan pencere)
 - **Şifre Hashleme**: bcryptjs (12 tur), eski hash'ler için SHA-256 migration yolu
-- **Giriş Doğrulama**: Sanitization ile schema tabanlı doğrulama
-- **Gözlemlenebilirlik**: Structured logging, request ID takibi, metrik toplama, yavaş sorgu tespiti
-- **Test**: Vitest (unit) + Playwright (E2E)
-- **Kod Kalitesi**: TypeScript strict mode, Astro Check, Prettier, pre-commit linting
+- **Giriş Doğrulama**: Sanitization ile şema tabanlı doğrulama
+- **Gözlemlenebilirlik**: Yapılandırılmış loglama, istek kimliği takibi, metrik toplama, yavaş sorgu tespiti
+- **Test**: Vitest (birim) + Playwright (E2E)
+- **Kod Kalitesi**: Sıkı TypeScript modu, Astro Check, Prettier, commit öncesi lint
 
 ### Temel Mimari Kararlar
 
 1. **Veritabanı Güvenliği**:
    - `pool.query($1, [$param])` sözdizimiyle kullanılan parametrik sorgular SQL injection'ı önler
-   - `postgres.ts` içindeki table allowlist, tüm tablo referanslarını doğrular
-   - Connection pool en az 2, en fazla 20 bağlantı ve 30 saniye idle timeout ile çalışır
+   - `postgres.ts` içindeki tablo izin listesi, tüm tablo referanslarını doğrular
+   - Bağlantı havuzu en az 2, en fazla 20 bağlantı ve 30 saniye boşta zaman aşımı ile çalışır
    - Pool hatasında otomatik yeniden bağlanma yapılır
 
 2. **Kimlik Doğrulama**:
    - **Şifre**: Veritabanında Bcrypt (12 tur) hash'leri tutulur. Eski SHA-256 hash'ler bir sonraki başarılı girişte otomatik olarak bcrypt'e taşınır
-   - **Session'lar**: Bellek içi değil, Redis destekli JWT token'ları kullanılır. Anahtar biçimi: `sanliurfa:session:{token}`
-   - **Akış**: Giriş → bcrypt doğrulama → token üretimi → Redis'te `SET session` (TTL 86400s) → cookie döndürme
+   - **Oturumlar**: Bellek içi değil, Redis destekli JWT token'ları kullanılır. Anahtar biçimi: `sanliurfa:session:{token}`
+   - **Akış**: Giriş → bcrypt doğrulama → token üretimi → Redis'te `SET session` (TTL 86400sn) → cookie döndürme
    - **Doğrulama**: Middleware `auth-token` cookie'sini okur → Redis'ten `GET session` yapar → süreyi doğrular → `context.locals.user` ayarlar
    - **Kayan Pencere**: Her başarılı doğrulamada token TTL yenilenir; aktif kullanıcılar oturumunu korur
 
 3. **Cache Stratejisi**:
-   - **Redis Namespace Kullanımı**: Tüm anahtarlar, paylaşılan Redis üzerinde diğer projelerden ayrışması için `sanliurfa:` ile başlar
+   - **Redis Ad Alanı Kullanımı**: Tüm anahtarlar, paylaşılan Redis üzerinde diğer projelerden ayrışması için `sanliurfa:` ile başlar
    - **Cache Kalıpları**:
      - Mekan listesi: `sanliurfa:places:list:{filter}` (5 dakika TTL)
      - Mekan detayı: `sanliurfa:places:{id}` (10 dakika TTL)
      - Yorumlar: `sanliurfa:reviews:{placeId}` (10 dakika TTL)
      - Kullanıcı favorileri: `sanliurfa:favorites:{userId}` (5 dakika TTL)
-   - **Invalidation**: Mutation'larda (POST/PUT/DELETE) pattern silme uygulanır
-   - **Metrikler**: Her endpoint için cache hit/miss izlenir ve `/api/metrics` altında toplanır
+   - **Temizleme**: Mutation'larda (POST/PUT/DELETE) desen bazlı silme uygulanır
+   - **Metrikler**: Her endpoint için önbellek isabet/kaçırma durumu izlenir ve `/api/metrics` altında toplanır
 
 4. **Rate Limiting**:
    - **Mekanizma**: Sayaç ve TTL içeren `sanliurfa:ratelimit:{ip}` Redis anahtarı (15 dakikalık pencere)
@@ -812,14 +812,14 @@ npm run test
 | `src/pages/api/leaderboards/users.ts` | En iyi kullanıcı liderlik tablosu endpoint'i |
 | `src/components/HashtagExplorer.astro` | Hashtag gezme ve trend görünümü |
 | `src/components/UserPublicProfile.astro` | Herkese açık kullanıcı profil görünümü |
-| `src/pages/sosyal/index.astro` | Feed ve hashtag explorer içeren sosyal keşif sayfası |
+| `src/pages/sosyal/index.astro` | Akış ve hashtag gezgini içeren sosyal keşif sayfası |
 
 ### Abonelikler ve Kullanıcı Yönetimi
 | Dosya | Amaç |
 |------|------|
 | `src/lib/subscriptions.ts` | Stripe entegrasyonu ve abonelik katmanı yönetimi |
 | `src/lib/feature-gating.ts` | Abonelik katmanına göre özellik erişim kontrolü |
-| `src/pages/api/subscriptions/checkout.ts` | Stripe checkout session oluşturma |
+| `src/pages/api/subscriptions/checkout.ts` | Stripe ödeme oturumu oluşturma |
 | `src/pages/api/subscriptions/webhook.ts` | Stripe webhook event işleyicisi |
 | `src/pages/api/subscriptions/tiers.ts` | Kullanılabilir abonelik katmanları endpoint'i |
 | `src/pages/api/user/quotas.ts` | Özellik kullanım kotası endpoint'i |
@@ -862,7 +862,7 @@ npm run test
 ### Geliştirme Stack'i (Docker)
 - **Docker Compose**: PostgreSQL, Redis ve Node.js servisleriyle `docker-compose.yml`
 - **Kullanım**: Tüm bağımlılıklarla tam yerel yapı için `docker-compose up`
-- **Amaç**: Tutarlı geliştirme ortamı; production servislerini taklit eder
+- **Amaç**: Tutarlı geliştirme ortamı; üretim servislerini taklit eder
 
 ### Production Dağıtımı (CentOS Web Panel)
 - **Platform**: CentOS Web Panel üzerinde paylaşımlı barındırma (Docker değil)
@@ -877,12 +877,12 @@ npm run test
   7. CWP SSL Manager ile Let's Encrypt SSL kur
   8. Crontab ile otomatik yedekleme planla
 
-Tam CentOS Web Panel production kurulum rehberi için **`DEPLOYMENT.md`** dosyasına bak.
+Tam CentOS Web Panel üretim kurulum rehberi için **`DEPLOYMENT.md`** dosyasına bak.
 
 - **Env**: Kritik değişkenleri sunucudaki `.env` dosyasında ayarla
 - **Redis**: Erişilebilir olmalı (`redis-cli ping`); çoğu zaman hosting tarafından sağlanır
 - **Veritabanı**: PostgreSQL sağlanır; kullanıcı ve veritabanı oluştur, ilk açılışta migration'ları çalıştır
-- **İzleme**: `/api/health` endpoint'i, PM2 logları ve crontab health check script'i kullan
+- **İzleme**: `/api/health` endpoint'i, PM2 logları ve crontab sağlık kontrol script'i kullan
 
 ## Sonraki Geliştirme İçin Notlar
 
