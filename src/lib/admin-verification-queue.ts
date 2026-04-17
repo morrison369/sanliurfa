@@ -41,7 +41,7 @@ function renderRejectForm(verificationId: string, reason: string, processingId: 
   return `
     <div class="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
       <label class="mb-2 block text-sm font-medium text-gray-700">
-        Reddetme Nedeni (Minimum 10 karakter)
+        Reddetme nedeni (minimum 10 karakter)
       </label>
       <textarea
         data-admin-verification-reason="${verificationId}"
@@ -91,7 +91,7 @@ function renderVerificationCard(options: {
             Kategori: ${escapeHtml(verification.category || 'Belirtilmedi')} • Puan: ${rating}
           </p>
           <p class="mt-2 text-xs text-gray-500">
-            Talep Tarihi: ${new Date(verification.requestedAt).toLocaleDateString('tr-TR')}
+            Talep tarihi: ${new Date(verification.requestedAt).toLocaleDateString('tr-TR')}
           </p>
           <p class="mt-2 text-sm text-gray-700">${escapeHtml(verification.reason || 'Açıklama bulunmuyor')}</p>
         </div>
