@@ -3,7 +3,7 @@ import Layout from '../../../layouts/Layout.astro';
 import { MapPin, Upload, Clock, Phone, Globe, Mail } from 'lucide-react';
 
 const seo = {
-  title: 'Mekan Ekle - Admin Panel',
+  title: 'Mekan ekle - Yönetim Paneli',
   description: 'Yeni mekan ekle',
   noindex: true
 };
@@ -46,7 +46,7 @@ const days = [
             <a href="/admin" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
               ← Geri
             </a>
-            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Yeni Mekan Ekle</h1>
+            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Yeni mekan ekle</h1>
           </div>
         </div>
       </div>
@@ -58,7 +58,7 @@ const days = [
         <div class="lg:col-span-2 space-y-6">
           <!-- Basic Info -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel Bilgiler</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel bilgiler</h2>
             <div class="space-y-4">
               <div>
                 <label for="name" class="label dark:text-gray-300">Mekan Adı *</label>
@@ -121,7 +121,7 @@ const days = [
           
           <!-- Contact Info -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">İletişim Bilgileri</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">İletişim bilgileri</h2>
             <div class="space-y-4">
               <div>
                 <label for="address" class="label dark:text-gray-300">Adres *</label>
@@ -185,7 +185,7 @@ const days = [
           
           <!-- Opening Hours -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Çalışma Saatleri</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Çalışma saatleri</h2>
             <div class="space-y-3">
               {days.map(day => (
                 <div class="flex items-center gap-4">
@@ -229,7 +229,7 @@ const days = [
               </div>
             </div>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              Koordinatları Google Maps'ten alabilirsiniz.
+              Koordinatları Google Haritalar'dan alabilirsiniz.
             </p>
           </div>
         </div>
@@ -238,7 +238,7 @@ const days = [
         <aside class="space-y-6">
           <!-- Publish -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayın ayarları</h3>
             <div class="space-y-3">
               <label class="flex items-center gap-2">
                 <input type="checkbox" name="is_featured" class="rounded border-gray-300 text-urfa-600" />
@@ -268,7 +268,7 @@ const days = [
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görseller</h3>
             <div class="space-y-4">
               <div>
-                <label for="cover_image" class="label dark:text-gray-300">Kapak Fotoğrafı</label>
+                <label for="cover_image" class="label dark:text-gray-300">Kapak fotoğrafı</label>
                 <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-urfa-500 transition-colors">
                   <div class="space-y-1 text-center">
                     <Upload className="mx-auto h-12 w-12 text-gray-400" />
@@ -278,13 +278,13 @@ const days = [
                         <input id="cover_image" name="cover_image" type="file" accept="image/*" class="sr-only" />
                       </label>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG up to 5MB</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, en fazla 5 MB</p>
                   </div>
                 </div>
               </div>
               
               <div>
-                <label for="gallery" class="label dark:text-gray-300">Galeri Fotoğrafları</label>
+                <label for="gallery" class="label dark:text-gray-300">Galeri fotoğrafları</label>
                 <input 
                   type="file" 
                   id="gallery" 

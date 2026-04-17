@@ -74,11 +74,11 @@ const seo = {
         <!-- Main Content -->
         <main class="lg:col-span-3">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="font-display font-bold text-xl text-gray-900 dark:text-white mb-4">Profil Bilgileri</h2>
+            <h2 class="font-display font-bold text-xl text-gray-900 dark:text-white mb-4">Profil bilgileri</h2>
             
             <div class="grid md:grid-cols-2 gap-6">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ad Soyad</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ad soyad</label>
                 <p class="text-gray-900 dark:text-white">{profile?.full_name || '-'}</p>
               </div>
               <div>
@@ -86,11 +86,11 @@ const seo = {
                 <p class="text-gray-900 dark:text-white">{user.email}</p>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kullanıcı Adı</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kullanıcı adı</label>
                 <p class="text-gray-900 dark:text-white">{profile?.username || '-'}</p>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Üyelik Tarihi</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Üyelik tarihi</label>
                 <p class="text-gray-900 dark:text-white">
                   {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('tr-TR') : '-'}
                 </p>
