@@ -1,14 +1,13 @@
 # React Removal Audit
-- Generated at: 2026-04-17T01:12:16.131Z
+- Generated at: 2026-04-17T01:22:00.392Z
 - TSX files: 59
-- React hook/lib files: 3
+- React hook/lib files: 0
 - Runtime React usages: 1
 - Can remove @astrojs/react integration: no
 - Can remove react/react-dom packages now: no
 
 ## Blockers
 - 59 adet kalan .tsx dosyasi React import ediyor
-- 3 adet kalan hook/lib dosyasi React hook import ediyor
 - 1 adet runtime kullanim noktasi hala React entegrasyonuna bagli
 
 ## Runtime Usages
@@ -76,6 +75,4 @@
 - src/components/admin/AdminDashboard.tsx
 
 ## Remaining Hook Files
-- src/hooks/useFeatureAccess.ts
-- src/hooks/useQuotaCheck.ts
-- src/lib/useApiError.ts
+- none

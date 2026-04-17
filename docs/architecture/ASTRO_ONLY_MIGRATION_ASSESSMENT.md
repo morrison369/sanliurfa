@@ -168,6 +168,7 @@ Source-of-truth:
 - paket kaldırma kararı üretmek için değil
 - kalan React yüzeyini görünür kılmak için
 - gerekirse gelecekte seçili React geri dönüşlerini kontrollü yapmak için tutulur
+- son bakım batch'i ile React hook/lib blokörü `0`a indi; kalan görünür blokör artık esasen `astro.config.mjs`
 
 ## Kısa Vadede Yapılmaması Gerekenler
 
