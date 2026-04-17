@@ -1,4 +1,4 @@
-# Incident Runbook
+# Olay Mudahale Calisma Kilavuzu
 
 Bu runbook, operasyon sinyali kırıldığında bakılacak sırayı tanımlar.
 
@@ -40,7 +40,7 @@ Bu runbook, operasyon sinyali kırıldığında bakılacak sırayı tanımlar.
 3. Source `env/admin/none` ayrımını doğrula
 4. Deployment status içindeki integration summary’yi kontrol et
 
-## Source Of Truth
+## Kaynak Gercekler
 
 - [SOURCE_OF_TRUTH_MAP.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\SOURCE_OF_TRUTH_MAP.md)
 - [ARTIFACT_FRESHNESS_POLICY.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\ARTIFACT_FRESHNESS_POLICY.md)
