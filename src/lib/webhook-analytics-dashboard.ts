@@ -205,7 +205,7 @@ export function renderWebhookAnalyticsDashboard(options: {
           <p class="text-3xl font-bold text-gray-900">${metrics.totalWebhooks}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
-          <p class="text-sm text-gray-600">Toplam olay</p>
+          <p class="text-sm text-gray-600">Toplam olay sayısı</p>
           <p class="text-3xl font-bold text-gray-900">${metrics.totalEvents}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
@@ -217,7 +217,7 @@ export function renderWebhookAnalyticsDashboard(options: {
           <p class="text-3xl font-bold text-red-600">${metrics.failedEvents}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
-          <p class="text-sm text-gray-600">Başarı oranı</p>
+          <p class="text-sm text-gray-600">Genel başarı oranı</p>
           <p class="text-3xl font-bold ${getWebhookStatusColor(metrics.successRate)}">${metrics.successRate.toFixed(1)}%</p>
         </div>
       </div>
