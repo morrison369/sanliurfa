@@ -117,13 +117,13 @@ const seo = {
     const analyticsPattern = /^G-[A-Z0-9]+$/;
 
     function formatStatus(name, payload) {
-      const state = payload.configured ? 'hazır' : 'eksik';
-      const value = payload.configured ? payload.maskedValue : 'boş';
+      const state = payload.configured ? 'tanımlı' : 'eksik';
+      const value = payload.configured ? payload.maskedValue : 'tanımlı değil';
       return `${name}: ${state} (${payload.source}) • ${value}`;
     }
 
     function formatVerificationStatus(value) {
-      if (!value) return 'bilinmiyor';
+      if (!value) return 'durum bilinmiyor';
       if (value === 'healthy') return 'sağlıklı';
       if (value === 'degraded') return 'bozulmuş';
       return value;
@@ -142,7 +142,7 @@ const seo = {
       const summary = verification.summary?.healthy ? 'sağlıklı' : 'bozulmuş';
       verificationBox.innerHTML = `
         <div class="space-y-1">
-          <div>Genel durum: ${summary} • ${verification.summary?.checkedAt || 'bilinmiyor'}</div>
+          <div>Genel durum: ${summary} • ${verification.summary?.checkedAt || 'zaman bilgisi yok'}</div>
           <div>RESEND: ${formatVerificationStatus(verification.resend?.status)} • ${verification.resend?.message || 'Açıklama bulunmuyor'}</div>
           <div>Analitik: ${formatVerificationStatus(verification.analytics?.status)} • ${verification.analytics?.message || 'Açıklama bulunmuyor'}</div>
         </div>
