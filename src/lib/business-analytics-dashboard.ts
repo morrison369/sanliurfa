@@ -1,3 +1,6 @@
+import { extractEnvelopeMessage, resolveEnvelopeData, resolveNestedEnvelopeData } from './api-envelope';
+import { renderEmptyState, renderErrorState } from './render-states';
+
 export interface Analytics {
   totalVisitors: number;
   avgRating: number;
@@ -27,17 +30,6 @@ export interface BusinessAnalyticsData {
   metrics: Metric[];
 }
 
-function resolveEnvelopeData(payload: unknown): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object') return {};
-
-  const outerData = 'data' in payload ? (payload as { data?: unknown }).data : undefined;
-  if (outerData && typeof outerData === 'object') {
-    return outerData as Record<string, unknown>;
-  }
-
-  return payload as Record<string, unknown>;
-}
-
 export function extractBusinessAnalyticsData(payload: unknown): BusinessAnalyticsData | null {
   const data = resolveEnvelopeData(payload);
   const nested = data.data;
@@ -60,8 +52,7 @@ export function extractBusinessAnalyticsData(payload: unknown): BusinessAnalytic
 }
 
 export function extractBusinessInsights(payload: unknown): Insight[] {
-  const data = resolveEnvelopeData(payload);
-  const nested = data.data;
+  const nested = resolveNestedEnvelopeData(payload);
 
   if (!Array.isArray(nested)) {
     return [];
@@ -71,22 +62,7 @@ export function extractBusinessInsights(payload: unknown): Insight[] {
 }
 
 export function extractBusinessMessage(payload: unknown, fallback: string): string {
-  const data = resolveEnvelopeData(payload);
-
-  if (typeof data.message === 'string' && data.message.trim().length > 0) {
-    return data.message;
-  }
-
-  if (payload && typeof payload === 'object') {
-    const error = 'error' in payload ? (payload as { error?: unknown }).error : undefined;
-    if (typeof error === 'string' && error.trim().length > 0) return error;
-    if (error && typeof error === 'object') {
-      const message = 'message' in error ? (error as { message?: unknown }).message : undefined;
-      if (typeof message === 'string' && message.trim().length > 0) return message;
-    }
-  }
-
-  return fallback;
+  return extractEnvelopeMessage(payload, fallback);
 }
 
 function renderDayButtons(days: number): string {
@@ -225,15 +201,15 @@ export function renderBusinessAnalyticsDashboard(options: {
   error: string | null;
 }): string {
   if (!options.placeId) {
-    return '<div class="p-4 text-center text-gray-500">Mekan seçilmedi.</div>';
+    return renderEmptyState('Mekan seçilmedi.', 'p-4 text-center text-gray-500');
   }
 
   if (options.error) {
-    return `<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">${options.error}</div>`;
+    return renderErrorState(options.error);
   }
 
   if (!options.data) {
-    return '<div class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-600">İşletme analitiği yüklenemedi.</div>';
+    return renderEmptyState('İşletme analitiği yüklenemedi.', 'rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-600');
   }
 
   return `

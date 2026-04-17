@@ -1,3 +1,7 @@
+import { extractEnvelopeMessage, resolveNestedEnvelopeData } from './api-envelope';
+import { renderEmptyState, renderErrorState } from './render-states';
+import { UI_COPY_TR } from './ui-copy';
+
 export interface ContentManagerItem {
   id: string;
   title: string;
@@ -35,27 +39,11 @@ export const defaultContentManagerForm = (): ContentManagerFormData => ({
   content_type: 'article',
 });
 
-function resolveEnvelopeData(payload: unknown): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object') return {};
-
-  const outerData = 'data' in payload ? (payload as { data?: unknown }).data : undefined;
-  if (outerData && typeof outerData === 'object') {
-    const nestedData = 'data' in outerData ? (outerData as { data?: unknown }).data : undefined;
-    if (Array.isArray(nestedData)) {
-      return { data: nestedData };
-    }
-    if (nestedData && typeof nestedData === 'object') {
-      return nestedData as Record<string, unknown>;
-    }
-    return outerData as Record<string, unknown>;
-  }
-
-  return payload as Record<string, unknown>;
-}
-
 export function extractContentManagerItems(payload: unknown): ContentManagerItem[] {
-  const data = resolveEnvelopeData(payload);
-  const items = Array.isArray(data.data)
+  const data = resolveNestedEnvelopeData(payload);
+  const items = Array.isArray(data)
+    ? data
+    : Array.isArray(data.data)
     ? data.data
     : Array.isArray(data.items)
       ? data.items
@@ -65,19 +53,7 @@ export function extractContentManagerItems(payload: unknown): ContentManagerItem
 }
 
 export function extractContentManagerMessage(payload: unknown, fallback: string): string {
-  const data = resolveEnvelopeData(payload);
-  if (typeof data.message === 'string' && data.message.trim().length > 0) return data.message;
-
-  if (payload && typeof payload === 'object') {
-    const error = 'error' in payload ? (payload as { error?: unknown }).error : undefined;
-    if (typeof error === 'string' && error.trim().length > 0) return error;
-    if (error && typeof error === 'object') {
-      const message = 'message' in error ? (error as { message?: unknown }).message : undefined;
-      if (typeof message === 'string' && message.trim().length > 0) return message;
-    }
-  }
-
-  return fallback;
+  return extractEnvelopeMessage(payload, fallback);
 }
 
 function formatDate(value: string): string {
@@ -85,11 +61,7 @@ function formatDate(value: string): string {
 }
 
 function renderError(message: string): string {
-  return `
-    <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-      <p class="text-sm text-red-700">${message}</p>
-    </div>
-  `;
+  return renderErrorState(message);
 }
 
 function renderCreateForm(state: ContentManagerState): string {
@@ -109,10 +81,10 @@ function renderCreateForm(state: ContentManagerState): string {
       </div>
       <div class="flex gap-2">
         <button type="submit" ${state.saving ? 'disabled' : ''} class="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-          ${state.saving ? 'İşleniyor...' : 'İçeriği oluştur'}
+          ${state.saving ? UI_COPY_TR.common.processing : 'İçeriği oluştur'}
         </button>
         <button type="button" data-content-manager-cancel class="rounded-lg bg-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-400">
-          İptal et
+          ${UI_COPY_TR.common.cancel}
         </button>
       </div>
     </form>
@@ -156,9 +128,7 @@ function renderContentItem(item: ContentManagerItem): string {
 export function renderContentManager(state: ContentManagerState): string {
   const list = state.items.length === 0
     ? `
-      <div class="py-12 text-center text-gray-500">
-        <p class="text-lg">Henüz içerik bulunmuyor.</p>
-      </div>
+      ${renderEmptyState('Henüz içerik bulunmuyor.', 'py-12 text-center text-gray-500')}
     `
     : `<div class="space-y-3">${state.items.map(renderContentItem).join('')}</div>`;
 

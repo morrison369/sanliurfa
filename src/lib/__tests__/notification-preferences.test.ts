@@ -42,8 +42,8 @@ describe('notification preferences helpers', () => {
       message: { type: 'success', text: extractNotificationPreferencesSuccessMessage({ data: { success: true, message: 'Tercihler güncellendi' } }) },
     });
 
-    expect(html).toContain('Bildirim Tercihleri');
-    expect(html).toContain('Yeni Mesajlar');
+    expect(html).toContain('Bildirim tercihleri');
+    expect(html).toContain('Yeni mesajlar');
     expect(html).toContain('Tercihler güncellendi');
   });
 });

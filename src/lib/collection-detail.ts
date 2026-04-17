@@ -1,3 +1,7 @@
+import { extractEnvelopeMessage, resolveEnvelopeData } from './api-envelope';
+import { renderEmptyState, renderErrorState } from './render-states';
+import { UI_COPY_TR } from './ui-copy';
+
 export interface CollectionItem {
   id: string;
   place_id: string;
@@ -23,17 +27,6 @@ export interface CollectionData {
   updated_at: string;
 }
 
-function resolveEnvelopeData(payload: unknown): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object') return {};
-
-  const outerData = 'data' in payload ? (payload as { data?: unknown }).data : undefined;
-  if (outerData && typeof outerData === 'object') {
-    return outerData as Record<string, unknown>;
-  }
-
-  return payload as Record<string, unknown>;
-}
-
 export function extractCollectionDetail(payload: unknown): { collection: CollectionData; items: CollectionItem[] } | null {
   const data = resolveEnvelopeData(payload);
   const nested = data.data;
@@ -53,22 +46,7 @@ export function extractCollectionDetail(payload: unknown): { collection: Collect
 }
 
 export function extractCollectionMessage(payload: unknown, fallback: string): string {
-  const data = resolveEnvelopeData(payload);
-
-  if (typeof data.message === 'string' && data.message.trim().length > 0) {
-    return data.message;
-  }
-
-  if (payload && typeof payload === 'object') {
-    const error = 'error' in payload ? (payload as { error?: unknown }).error : undefined;
-    if (typeof error === 'string' && error.trim().length > 0) return error;
-    if (error && typeof error === 'object') {
-      const message = 'message' in error ? (error as { message?: unknown }).message : undefined;
-      if (typeof message === 'string' && message.trim().length > 0) return message;
-    }
-  }
-
-  return fallback;
+  return extractEnvelopeMessage(payload, fallback);
 }
 
 function renderCollectionHeader(collection: CollectionData, options: { canFollow: boolean; isFollowing: boolean; isFollowingLoading: boolean; isOwner: boolean }): string {
@@ -101,7 +79,7 @@ function renderCollectionHeader(collection: CollectionData, options: { canFollow
                   ${options.isFollowingLoading ? 'disabled' : ''}
                   class="whitespace-nowrap rounded px-4 py-2 font-medium text-white ${options.isFollowing ? 'bg-gray-600 hover:bg-gray-700' : 'bg-blue-500 hover:bg-blue-600'} disabled:opacity-50"
                 >
-                  ${options.isFollowingLoading ? 'İşleniyor...' : options.isFollowing ? 'Takibi bırak' : 'Takip et'}
+                  ${options.isFollowingLoading ? UI_COPY_TR.common.processing : options.isFollowing ? 'Takibi bırak' : 'Takip et'}
                 </button>`
               : ''
           }
@@ -119,7 +97,7 @@ function renderCollectionHeader(collection: CollectionData, options: { canFollow
 
 function renderItemsGrid(items: CollectionItem[], isOwner: boolean): string {
   if (items.length === 0) {
-    return '<div class="py-12 text-center text-gray-500">Bu koleksiyona henüz mekan eklenmemiş.</div>';
+    return renderEmptyState('Bu koleksiyona henüz mekan eklenmemiş.', 'py-12 text-center text-gray-500');
   }
 
   return `
@@ -180,11 +158,11 @@ export function renderCollectionDetail(options: {
   isFollowingLoading: boolean;
 }): string {
   if (options.error) {
-    return `<div class="rounded border border-red-300 bg-red-100 px-4 py-3 text-red-700">${options.error}</div>`;
+    return renderErrorState(options.error);
   }
 
   if (!options.collection) {
-    return '<div class="py-12 text-center text-gray-500">Koleksiyon kaydı bulunamadı.</div>';
+    return renderEmptyState('Koleksiyon kaydı bulunamadı.', 'py-12 text-center text-gray-500');
   }
 
   const isOwner = Boolean(options.currentUserId && options.currentUserId === options.collection.user_id);

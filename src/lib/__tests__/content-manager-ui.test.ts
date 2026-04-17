@@ -53,6 +53,6 @@ describe('content manager ui helpers', () => {
 
     expect(html).toContain('Başlık');
     expect(html).toContain('Tamam');
-    expect(html).toContain('Oluştur');
+    expect(html).toContain('İçeriği oluştur');
   });
 });

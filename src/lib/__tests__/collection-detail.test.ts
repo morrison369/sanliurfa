@@ -52,7 +52,7 @@ describe('collection-detail helpers', () => {
     });
 
     expect(html).toContain('Favoriler');
-    expect(html).toContain('Takip Et');
+    expect(html).toContain('Takip et');
     expect(html).toContain('Göbeklitepe');
   });
 });

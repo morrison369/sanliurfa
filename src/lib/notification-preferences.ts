@@ -1,3 +1,6 @@
+import { extractEnvelopeMessage, resolveNestedEnvelopeData } from './api-envelope';
+import { renderErrorState } from './render-states';
+
 export interface NotificationTypeDefinition {
   key: string;
   label: string;
@@ -36,24 +39,8 @@ export function createDefaultNotificationPreferences(): NotificationPreferencesS
   );
 }
 
-function resolveEnvelopeData(payload: unknown): Record<string, unknown> {
-  if (!payload || typeof payload !== 'object') return {};
-
-  const outerData = 'data' in payload ? (payload as { data?: unknown }).data : undefined;
-  if (outerData && typeof outerData === 'object') {
-    const nestedData = 'data' in outerData ? (outerData as { data?: unknown }).data : undefined;
-    if (nestedData && typeof nestedData === 'object') {
-      return nestedData as Record<string, unknown>;
-    }
-
-    return outerData as Record<string, unknown>;
-  }
-
-  return payload as Record<string, unknown>;
-}
-
 export function extractNotificationPreferenceValue(payload: unknown): NotificationPreferenceValue {
-  const data = resolveEnvelopeData(payload);
+  const data = resolveNestedEnvelopeData(payload);
   const preferences =
     data.preferences && typeof data.preferences === 'object'
       ? (data.preferences as Partial<NotificationPreferenceValue>)
@@ -68,30 +55,15 @@ export function extractNotificationPreferenceValue(payload: unknown): Notificati
 }
 
 export function extractNotificationPreferencesSuccessMessage(payload: unknown): string {
-  const data = resolveEnvelopeData(payload);
-  const message = typeof data.message === 'string' ? data.message : null;
-  return message && message.trim().length > 0 ? message : 'Tercihler kaydedildi.';
+  return extractEnvelopeMessage(payload, 'Tercihler kaydedildi.');
 }
 
 export function extractNotificationPreferencesError(payload: unknown, fallback: string): string {
-  if (payload && typeof payload === 'object') {
-    const error = 'error' in payload ? (payload as { error?: unknown }).error : undefined;
-    if (typeof error === 'string' && error.trim().length > 0) return error;
-    if (error && typeof error === 'object') {
-      const message = 'message' in error ? (error as { message?: unknown }).message : undefined;
-      if (typeof message === 'string' && message.trim().length > 0) return message;
-    }
-  }
-
-  return fallback;
+  return extractEnvelopeMessage(payload, fallback);
 }
 
 export function renderNotificationPreferencesError(message: string): string {
-  return `
-    <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-      <p class="text-sm text-red-700">${message}</p>
-    </div>
-  `;
+  return renderErrorState(message);
 }
 
 function renderNotificationMessage(type: 'success' | 'error', text: string): string {
