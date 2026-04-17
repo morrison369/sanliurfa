@@ -53,7 +53,7 @@ const mapId = `map-${hashValue(`${latitude}:${longitude}:${name}:${address}:${zo
         <p class="text-gray-900 dark:text-white font-medium mb-1">{name}</p>
         {address && <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">{address}</p>}
         <span class="text-urfa-600 dark:text-urfa-400 text-sm font-medium">
-          Google Maps'te Aç →
+          Google Haritalar'da aç →
         </span>
       </div>
     </div>
@@ -100,7 +100,7 @@ const mapId = `map-${hashValue(`${latitude}:${longitude}:${name}:${address}:${zo
         this.innerHTML = originalHTML;
       }, 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error('Koordinatlar kopyalanamadı:', err);
     }
   });
 </script>

@@ -15,7 +15,7 @@ try {
   categories = await getBlogCategories();
 } catch (err) {
   error = 'Kategoriler yüklenirken hata oluştu';
-  console.error('Blog add error:', err);
+  console.error('Yeni blog yazısı sayfası yüklenemedi:', err);
 }
 
 const seo = {
@@ -65,7 +65,7 @@ const post = null;
         <div class="lg:col-span-2 space-y-6">
           <!-- Basic Info -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Yazı Bilgileri</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Yazı bilgileri</h2>
             
             <div class="space-y-4">
               <div>
@@ -114,7 +114,7 @@ const post = null;
           
           <!-- Arama motoru ayarları -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">SEO Ayarları</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">SEO ayarları</h2>
             
             <div class="space-y-4">
               <div>
@@ -307,15 +307,15 @@ const post = null;
 
           const result = await response.json();
 
-          if (!response.ok) {
-            alert(result.error || 'Yazı oluşturulamadı');
+        if (!response.ok) {
+            alert(result.error || 'Yazı oluşturulamadı.');
             return;
           }
 
-          alert('Yazı başarıyla oluşturuldu');
+          alert('Yazı oluşturuldu.');
           window.location.href = '/admin/blog';
         } catch (err) {
-          alert('Hata: ' + String(err));
+          alert('Yazı oluşturulamadı: ' + String(err));
         }
       });
     }
