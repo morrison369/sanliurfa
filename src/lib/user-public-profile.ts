@@ -94,7 +94,7 @@ function renderError(message: string): string {
 
 function renderActivity(activity: UserPublicProfileActivity[]): string {
   if (activity.length === 0) {
-    return '<p class="text-sm text-gray-500">Son etkinlik bulunmuyor.</p>';
+    return '<p class="text-sm text-gray-500">Henüz etkinlik bulunmuyor.</p>';
   }
 
   return `

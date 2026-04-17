@@ -136,7 +136,7 @@ export function renderWebhookManager(state: WebhookManagerState): string {
           </div>
           <div class="mt-4 flex flex-wrap gap-2">
             <button type="button" data-webhook-test="${webhook.id}" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100">Test et</button>
-            <button type="button" data-webhook-copy="${webhook.id}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">ID kopyala</button>
+            <button type="button" data-webhook-copy="${webhook.id}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Kimliği kopyala</button>
             <button type="button" data-webhook-delete="${webhook.id}" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100">Sil</button>
           </div>
         </article>
