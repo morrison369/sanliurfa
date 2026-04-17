@@ -100,7 +100,7 @@ function renderUsers(users: SearchUser[], currentUserId?: string) {
                   data-user-search-message="${user.id}"
                   class="flex-1 py-1 text-center text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                 >
-                  💬 Mesaj
+                  💬 Mesaj gönder
                 </button>
               `
               : '';
@@ -175,11 +175,11 @@ export function renderUserSearchResults(state: UserSearchState) {
 
     ${
       state.isLoading
-        ? '<div class="flex justify-center py-12"><p class="text-gray-600 dark:text-gray-400">Aranıyor...</p></div>'
+        ? '<div class="flex justify-center py-12"><p class="text-gray-600 dark:text-gray-400">Kullanıcılar aranıyor...</p></div>'
         : !state.hasSearched
-          ? '<div class="text-center py-16"><p class="mb-4 text-4xl">🔍</p><p class="text-lg text-gray-600 dark:text-gray-400">Kullanıcı aramak için arama kutusunu kullanın</p><p class="mt-2 text-sm text-gray-500 dark:text-gray-500">En az 2 karakter girin</p></div>'
+          ? '<div class="text-center py-16"><p class="mb-4 text-4xl">🔍</p><p class="text-lg text-gray-600 dark:text-gray-400">Kullanıcı aramak için arama kutusunu kullanın.</p><p class="mt-2 text-sm text-gray-500 dark:text-gray-500">En az 2 karakter girin.</p></div>'
           : state.users.length === 0
-            ? '<div class="text-center py-12"><p class="mb-2 text-gray-600 dark:text-gray-400">😕</p><p class="text-gray-600 dark:text-gray-400">Sonuç bulunamadı</p></div>'
+            ? '<div class="text-center py-12"><p class="mb-2 text-gray-600 dark:text-gray-400">😕</p><p class="text-gray-600 dark:text-gray-400">Sonuç bulunamadı.</p></div>'
             : renderUsers(state.users, state.currentUserId)
     }
   `;
