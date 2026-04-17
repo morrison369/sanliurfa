@@ -9,7 +9,7 @@ type PricingRoot = HTMLElement & { dataset: DOMStringMap };
 
 async function fetchPricingData() {
   const tiersResponse = await fetch('/api/subscriptions/tiers');
-  if (!tiersResponse.ok) throw new Error('Failed to fetch tiers');
+  if (!tiersResponse.ok) throw new Error('Planlar alınamadı');
   const tiersPayload = (await tiersResponse.json()) as {
     data?: { tiers?: SubscriptionTier[] };
     tiers?: SubscriptionTier[];
@@ -46,7 +46,7 @@ async function handleCheckout(root: PricingRoot, tierId: string) {
 
     if (!response.ok) {
       const errorData = (await response.json()) as { error?: string };
-      throw new Error(errorData.error || 'Checkout oturumu oluşturulamadı');
+      throw new Error(errorData.error || 'Ödeme oturumu oluşturulamadı');
     }
 
     const payload = (await response.json()) as {
@@ -56,7 +56,7 @@ async function handleCheckout(root: PricingRoot, tierId: string) {
     };
     const data = payload.data ?? payload;
     if (!data.success || !data.checkoutUrl) {
-      throw new Error('Checkout URL alınamadı');
+      throw new Error('Ödeme bağlantısı alınamadı');
     }
 
     window.location.href = data.checkoutUrl;
@@ -97,7 +97,7 @@ async function renderPricingRoot(root: PricingRoot) {
     setElementHtml(
       content,
       renderPricingError(
-        error instanceof Error ? error.message : 'Failed to load pricing plans',
+        error instanceof Error ? error.message : 'Fiyatlandırma planları yüklenemedi',
       ),
     );
   } finally {

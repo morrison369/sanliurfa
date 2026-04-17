@@ -61,7 +61,7 @@ function renderUpgradeCta(): string {
     <div class="rounded-lg border-2 border-blue-300 bg-blue-50 p-6">
       <h3 class="mb-2 text-lg font-semibold text-gray-900">Premium'a Yükselt</h3>
       <p class="mb-4 text-gray-600">Premium özellikleri keşfedin ve daha fazla avantaj alın.</p>
-      <a href="/fiyatlandirma" class="inline-flex rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700">Planları Gör</a>
+      <a href="/fiyatlandirma" class="inline-flex rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700">Planları gör</a>
     </div>
   `;
 }
@@ -86,12 +86,12 @@ function renderSubscriptionCard(subscription: ActiveSubscription, cancelling: bo
 
       <div class="mb-6 space-y-3 border-b border-gray-200 pb-6">
         <div class="flex items-center justify-between">
-          <span class="text-sm text-gray-600">Başlangıç Tarihi</span>
+          <span class="text-sm text-gray-600">Başlangıç tarihi</span>
           <span class="text-sm font-medium text-gray-900">${new Date(subscription.startDate).toLocaleDateString('tr-TR')}</span>
         </div>
         ${subscription.nextBillingDate ? `
           <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-600">Sonraki Ödeme</span>
+            <span class="text-sm text-gray-600">Sonraki ödeme</span>
             <span class="text-sm font-medium text-gray-900">
               ${new Date(subscription.nextBillingDate).toLocaleDateString('tr-TR')}
               ${daysUntilBilling && daysUntilBilling > 0 ? `<span class="ml-2 text-gray-500">(${daysUntilBilling} gün)</span>` : ''}
@@ -99,7 +99,7 @@ function renderSubscriptionCard(subscription: ActiveSubscription, cancelling: bo
           </div>
         ` : ''}
         <div class="flex items-center justify-between">
-          <span class="text-sm text-gray-600">Otomatik Yenileme</span>
+          <span class="text-sm text-gray-600">Otomatik yenileme</span>
           <span class="text-sm font-medium ${subscription.autoRenew ? 'text-green-600' : 'text-gray-600'}">${subscription.autoRenew ? 'Aktif' : 'Pasif'}</span>
         </div>
       </div>
@@ -107,7 +107,7 @@ function renderSubscriptionCard(subscription: ActiveSubscription, cancelling: bo
       <div class="flex gap-3">
         <a href="/fiyatlandirma" class="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-center font-medium text-white transition-colors hover:bg-blue-700">Yükselt</a>
         <button type="button" data-subscription-cancel ${cancelling ? 'disabled' : ''} class="flex-1 rounded-lg bg-red-100 px-4 py-2 font-medium text-red-700 transition-colors hover:bg-red-200 disabled:bg-gray-200">
-          ${cancelling ? 'İptal Ediliyor...' : 'İptal Et'}
+          ${cancelling ? 'İptal ediliyor...' : 'Aboneliği iptal et'}
         </button>
       </div>
     </div>

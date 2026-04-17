@@ -105,7 +105,7 @@ function renderPricingCard(
               ? 'İşleniyor...'
               : isCurrent
                 ? 'Mevcut Plan'
-                : 'Seç'
+                : 'Planı seç'
           }
         </button>
       </div>

@@ -84,7 +84,7 @@ function renderTransactionTypeFilters(types: string[], selectedType: string): st
 
   return `
     <div class="flex flex-wrap gap-2">
-      ${renderButton('', 'Tümü')}
+      ${renderButton('', 'Tüm işlemler')}
       ${types.map((type) => renderButton(type, type.replace(/_/g, ' '))).join('')}
     </div>
   `;
@@ -212,7 +212,7 @@ export function renderTransactionHistory(payload: TransactionHistoryPayload): st
     return `
       ${renderTransactionTypeFilters(types, payload.selectedType)}
       <div class="py-12 text-center text-gray-500">
-        <p class="text-lg">İşlem geçmişi yok.</p>
+        <p class="text-lg">Henüz işlem geçmişi bulunmuyor.</p>
       </div>
     `;
   }

@@ -15,7 +15,7 @@ async function renderBillingHistoryRoot(root: BillingHistoryRoot) {
   try {
     const response = await fetch('/api/user/subscription/billing');
     if (!response.ok) {
-      throw new Error('Ödeme geçmişi yüklenemedi');
+      throw new Error('Ödeme geçmişi alınamadı');
     }
 
     const records = extractBillingHistory(await response.json());
