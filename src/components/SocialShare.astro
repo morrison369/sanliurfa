@@ -50,7 +50,7 @@ const shareLinks = [
 ---
 
 <div class="flex items-center gap-2">
-  <span class="mr-2 text-sm text-gray-500 dark:text-gray-400">Paylaş</span>
+  <span class="mr-2 text-sm text-gray-500 dark:text-gray-400">Bu sayfayı paylaş</span>
   
   {shareLinks.map(link => (
     <a
@@ -99,11 +99,11 @@ const shareLinks = [
       
       // Show toast if available
       if (window.toast) {
-        window.toast.success('Bağlantı kopyalandı!');
+        window.toast.success('Bağlantı kopyalandı.');
       }
     } catch (err) {
       if (window.toast) {
-        window.toast.error('Bağlantı kopyalanamadı');
+        window.toast.error('Bağlantı kopyalanamadı.');
       }
     }
   });

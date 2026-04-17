@@ -46,7 +46,7 @@ const shareLinks = [
 ---
 
 <div class="flex items-center gap-2">
-  <span class="text-sm text-gray-500">Paylaş</span>
+  <span class="text-sm text-gray-500">Bu sayfayı paylaş</span>
   <div class="flex items-center gap-1">
     {shareLinks.map(link => (
       <a
@@ -78,7 +78,7 @@ const shareLinks = [
       if (window.toast) {
         window.toast.success('Bağlantı kopyalandı!');
       } else {
-        alert('Bağlantı kopyalandı!');
+        alert('Bağlantı kopyalandı.');
       }
     } catch (err) {
       console.error('Kopyalama hatası:', err);
