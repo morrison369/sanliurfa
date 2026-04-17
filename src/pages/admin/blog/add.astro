@@ -5,7 +5,7 @@ import { getBlogCategories } from '../../../lib/blog';
 
 const user = Astro.locals.user;
 if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/login');
+  return Astro.redirect('/giris');
 }
 
 let categories = [];
@@ -30,7 +30,7 @@ const post = null;
 
 <Layout seo={seo}>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Admin Header -->
+    <!-- Yönetim başlığı -->
     <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div class="container-custom py-4">
         <div class="flex items-center justify-between">
@@ -106,13 +106,13 @@ const post = null;
                   placeholder="Yazı içeriği... (HTML veya Markdown desteklenir)"
                 >{post?.content || ''}</textarea>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  HTML etiketleri desteklenir: &lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;img&gt;, vb.
+                  Desteklenen HTML etiketleri: &lt;p&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;img&gt; ve benzerleri.
                 </p>
               </div>
             </div>
           </div>
           
-          <!-- SEO -->
+          <!-- Arama motoru ayarları -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">SEO Ayarları</h2>
             
@@ -154,7 +154,7 @@ const post = null;
               </div>
               
               <div>
-                <label for="slug" class="label dark:text-gray-300">URL Slug</label>
+                <label for="slug" class="label dark:text-gray-300">URL Kısa Adı</label>
                 <div class="flex">
                   <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
                     /blog/
@@ -232,7 +232,7 @@ const post = null;
 
             <div class="space-y-4">
               <div>
-                <label for="featuredImage" class="label dark:text-gray-300">Kapak Görseli URL</label>
+                <label for="featuredImage" class="label dark:text-gray-300">Kapak görseli bağlantısı</label>
                 <input
                   type="url"
                   id="featuredImage"
@@ -243,7 +243,7 @@ const post = null;
               </div>
 
               <div>
-                <label for="thumbnail" class="label dark:text-gray-300">Küçük Resim URL</label>
+                <label for="thumbnail" class="label dark:text-gray-300">Küçük görsel bağlantısı</label>
                 <input
                   type="url"
                   id="thumbnail"

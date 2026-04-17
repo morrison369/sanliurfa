@@ -1,7 +1,7 @@
 /**
- * Blog Sitemap (XML)
+ * Blog site haritası (XML)
  * GET /blog/sitemap.xml
- * Tüm yayınlanmış yazıları içeren dinamik sitemap
+ * Tüm yayınlanmış yazıları içeren dinamik site haritası
  */
 
 import type { APIRoute } from 'astro';
@@ -31,7 +31,7 @@ export const GET: APIRoute = async () => {
       status: 200,
       headers: {
         'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600' // 1 saat cache
+        'Cache-Control': 'public, max-age=3600' // 1 saat önbellek
       }
     });
   } catch (err) {
