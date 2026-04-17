@@ -9,10 +9,10 @@ export type AdminPerformanceDashboardTab =
   | 'artifacts';
 
 const TAB_LABELS: Record<AdminPerformanceDashboardTab, string> = {
-  summary: 'Ozet',
-  recommendations: 'Oneriler',
-  'slow-operations': 'Yavas Operasyonlar',
-  artifacts: 'Artifact Health',
+  summary: 'Özet',
+  recommendations: 'Öneriler',
+  'slow-operations': 'Yavaş operasyonlar',
+  artifacts: 'Artefact sağlığı',
 };
 
 function escapeHtml(value: string): string {
@@ -59,15 +59,15 @@ function statusClasses(status: AdminStatusLevel): string {
 }
 
 function statusLabel(status: AdminStatusLevel): string {
-  if (status === 'healthy') return 'Saglikli';
-  if (status === 'degraded') return 'Degrede';
-  return 'Bloklu';
+  if (status === 'healthy') return 'Sağlıklı';
+  if (status === 'degraded') return 'Bozulmuş';
+  return 'Engelli';
 }
 
 function recommendationPriorityLabel(priority: string): string {
-  if (priority === 'high') return 'Yuksek';
+  if (priority === 'high') return 'Yüksek';
   if (priority === 'medium') return 'Orta';
-  return 'Dusuk';
+  return 'Düşük';
 }
 
 function recommendationPriorityClasses(priority: string): string {
@@ -119,17 +119,17 @@ export function renderAdminPerformanceDashboard(options: {
     ? `<div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">${escapeHtml(options.error)}</div>`
     : options.data
       ? renderTabContent(options.tab, options.data)
-      : '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Performans verisi bulunamadi.</div>';
+      : '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Performans verisi bulunamadı.</div>';
 
   const generatedAt = options.data
-    ? formatAdminDateTime(asString((options.data as Record<string, unknown>).timestamp), 'Henüz uretilmedi')
-    : 'Henüz uretilmedi';
+    ? formatAdminDateTime(asString((options.data as Record<string, unknown>).timestamp), 'Henüz üretilmedi')
+    : 'Henüz üretilmedi';
 
   return `
     <div class="space-y-6">
       <div class="flex flex-wrap gap-3">${tabs}</div>
       ${body}
-      <div class="text-xs text-slate-500">Son uretim: ${escapeHtml(generatedAt)}</div>
+      <div class="text-xs text-slate-500">Son üretim: ${escapeHtml(generatedAt)}</div>
     </div>
   `;
 }
@@ -146,14 +146,14 @@ function renderSummary(data: AdminPerformanceOptimizationData): string {
   const metrics = asRecord(root.metrics) ?? {};
   const summary = [
     {
-      label: 'Yavas sorgu',
+      label: 'Yavaş sorgu',
       value: String(asNumber(metrics.slowQueriesCount)),
-      detail: '100ms ustu sorgular',
+      detail: '100 ms üstü sorgular',
     },
     {
-      label: 'Yavas istek orani',
+      label: 'Yavaş istek oranı',
       value: formatPercent(asNumber(metrics.slowRequestRate)),
-      detail: '500ms ustu istekler',
+      detail: '500 ms üstü istekler',
     },
     {
       label: 'Cache hit rate',
@@ -163,17 +163,17 @@ function renderSummary(data: AdminPerformanceOptimizationData): string {
     {
       label: 'Ort. sure',
       value: formatMilliseconds(asNumber(metrics.avgRequestDuration)),
-      detail: 'Tum request ortalamasi',
+      detail: 'Tüm istek ortalaması',
     },
     {
-      label: 'P95 sure',
+      label: 'P95 süre',
       value: formatMilliseconds(asNumber(metrics.p95Duration)),
-      detail: 'Yuzde 95 kesimi',
+      detail: 'Yüzde 95 kesimi',
     },
     {
-      label: 'Oneriler',
+      label: 'Öneriler',
       value: String(asArray(root.recommendations).length),
-      detail: `${asArray(root.recommendations).filter((item) => asRecord(item)?.priority === 'high').length} yuksek oncelik`,
+      detail: `${asArray(root.recommendations).filter((item) => asRecord(item)?.priority === 'high').length} yüksek öncelik`,
     },
   ]
     .map(
@@ -198,13 +198,13 @@ function renderSummary(data: AdminPerformanceOptimizationData): string {
       <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">${summary}</div>
       <div class="grid gap-4 xl:grid-cols-2">
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-5">
-          <h3 class="text-sm font-semibold text-slate-900">Cache Stratejileri</h3>
+          <h3 class="text-sm font-semibold text-slate-900">Cache stratejileri</h3>
           <p class="mt-2 text-3xl font-bold text-slate-900">${asNumber(cacheStrategies?.strategiesCount)}</p>
-          <p class="mt-1 text-sm text-slate-600">Tanimli cache stratejisi sayisi</p>
+          <p class="mt-1 text-sm text-slate-600">Tanımlı cache stratejisi sayısı</p>
         </div>
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-5">
-          <h3 class="text-sm font-semibold text-slate-900">Index Onerileri</h3>
-          ${indexSuggestions ? `<ul class="mt-3 space-y-2 text-sm text-slate-700">${indexSuggestions}</ul>` : '<p class="mt-2 text-sm text-slate-600">Acil index onerisi yok.</p>'}
+          <h3 class="text-sm font-semibold text-slate-900">İndeks önerileri</h3>
+          ${indexSuggestions ? `<ul class="mt-3 space-y-2 text-sm text-slate-700">${indexSuggestions}</ul>` : '<p class="mt-2 text-sm text-slate-600">Acil indeks önerisi yok.</p>'}
         </div>
       </div>
     </div>
@@ -214,7 +214,7 @@ function renderSummary(data: AdminPerformanceOptimizationData): string {
 function renderRecommendations(data: AdminPerformanceOptimizationData): string {
   const recommendations = asArray<Record<string, unknown>>((data as Record<string, unknown>).recommendations);
   if (!recommendations.length) {
-    return '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Aktif performans onerisi bulunmuyor.</div>';
+    return '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Aktif performans önerisi bulunmuyor.</div>';
   }
 
   return `<div class="space-y-4">${recommendations
@@ -223,7 +223,7 @@ function renderRecommendations(data: AdminPerformanceOptimizationData): string {
       return `
         <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div class="flex flex-wrap items-center gap-3">
-            <h3 class="text-base font-semibold text-slate-900">${escapeHtml(asString(recommendation.title, 'Oneri'))}</h3>
+          <h3 class="text-base font-semibold text-slate-900">${escapeHtml(asString(recommendation.title, 'Öneri'))}</h3>
             <span class="rounded-full px-2.5 py-1 text-xs font-semibold ${recommendationPriorityClasses(priority)}">${recommendationPriorityLabel(priority)}</span>
           </div>
           <p class="mt-3 text-sm text-slate-700">${escapeHtml(asString(recommendation.description, ''))}</p>
@@ -237,7 +237,7 @@ function renderRecommendations(data: AdminPerformanceOptimizationData): string {
 function renderSlowOperations(data: AdminPerformanceOptimizationData): string {
   const operations = asArray<Record<string, unknown>>((data as Record<string, unknown>).slowOperations);
   if (!operations.length) {
-    return '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Yavas operasyon bulunmuyor.</div>';
+    return '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Yavaş operasyon bulunmuyor.</div>';
   }
 
   const rows = operations
@@ -260,7 +260,7 @@ function renderSlowOperations(data: AdminPerformanceOptimizationData): string {
           <tr>
             <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Tip</th>
             <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Mesaj</th>
-            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Sure</th>
+            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Süre</th>
             <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Zaman</th>
           </tr>
         </thead>
@@ -284,7 +284,7 @@ function renderArtifacts(data: AdminPerformanceOptimizationData): string {
             <h3 class="text-sm font-semibold">${escapeHtml(name)}</h3>
             <span class="rounded-full bg-white/70 px-2.5 py-1 text-xs font-semibold">${statusLabel(status)}</span>
           </div>
-          <p class="mt-2 text-sm">Son uretim: ${escapeHtml(formatAdminDateTime(asString(record.generatedAt), 'Henüz uretilmedi'))}</p>
+          <p class="mt-2 text-sm">Son üretim: ${escapeHtml(formatAdminDateTime(asString(record.generatedAt), 'Henüz üretilmedi'))}</p>
         </div>
       `;
     })
@@ -292,9 +292,9 @@ function renderArtifacts(data: AdminPerformanceOptimizationData): string {
 
   return `
     <div class="space-y-6">
-      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">${cards || '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Artifact health verisi bulunamadi.</div>'}</div>
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">${cards || '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Artefact sağlığı verisi bulunamadı.</div>'}</div>
       <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 class="text-sm font-semibold text-slate-900">Genel Durum</h3>
+        <h3 class="text-sm font-semibold text-slate-900">Genel durum</h3>
         <div class="mt-3 grid gap-3 md:grid-cols-4 text-sm text-slate-700">
           <div><span class="font-semibold">Overall:</span> ${escapeHtml(statusLabel(asStatus(summary.overall)))}</div>
           <div><span class="font-semibold">Saglikli:</span> ${asNumber(summary.healthyCount)}</div>
