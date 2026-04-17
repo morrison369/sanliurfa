@@ -25,15 +25,15 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
 
     // Common
     common: {
-      loading: 'Yükleniyor...',
-      error: 'Hata oluştu',
-      success: 'Başarılı',
+      loading: 'İçerik yükleniyor...',
+      error: 'Bir hata oluştu.',
+      success: 'İşlem başarılı',
       save: 'Kaydet',
       cancel: 'İptal',
       delete: 'Sil',
       edit: 'Düzenle',
       view: 'Görüntüle',
-      more: 'Daha Fazla',
+      more: 'Daha fazla',
       close: 'Kapat',
       submit: 'Gönder',
       search: 'Ara',
