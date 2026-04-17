@@ -50,7 +50,7 @@ const shareLinks = [
 ---
 
 <div class="flex items-center gap-2">
-  <span class="text-sm text-gray-500 dark:text-gray-400 mr-2">Paylaş:</span>
+  <span class="mr-2 text-sm text-gray-500 dark:text-gray-400">Paylaş</span>
   
   {shareLinks.map(link => (
     <a
@@ -59,7 +59,7 @@ const shareLinks = [
       rel="noopener noreferrer"
       class={`p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 transition-all duration-200 ${link.color}`}
       aria-label={`${link.name} üzerinde paylaş`}
-      title={link.name}
+      title={`${link.name} üzerinde paylaş`}
     >
       <Fragment set:html={link.icon} />
     </a>

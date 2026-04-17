@@ -46,7 +46,7 @@ const shareLinks = [
 ---
 
 <div class="flex items-center gap-2">
-  <span class="text-sm text-gray-500">Paylaş:</span>
+  <span class="text-sm text-gray-500">Paylaş</span>
   <div class="flex items-center gap-1">
     {shareLinks.map(link => (
       <a
@@ -54,7 +54,7 @@ const shareLinks = [
         target="_blank"
         rel="noopener noreferrer"
         class={`w-8 h-8 ${link.color} text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors`}
-        title={link.name}
+        title={`${link.name} üzerinde paylaş`}
       >
         {link.icon}
       </a>
