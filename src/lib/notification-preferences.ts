@@ -14,12 +14,12 @@ export interface NotificationPreferenceValue {
 export type NotificationPreferencesState = Record<string, NotificationPreferenceValue>;
 
 export const NOTIFICATION_TYPES: NotificationTypeDefinition[] = [
-  { key: 'message', label: 'Yeni Mesajlar', description: 'Kullanıcılardan mesaj aldığında' },
-  { key: 'review', label: 'Yorum Bildirimleri', description: 'İncelemelerinize yorum yazıldığında' },
-  { key: 'like', label: 'Beğeni Bildirimleri', description: 'İçeriğiniz beğenildiğinde' },
-  { key: 'follow', label: 'Takip Bildirimleri', description: 'Birisi sizi takip ettiğinde' },
-  { key: 'mention', label: 'Bahsedilme Bildirimleri', description: 'Bahsedildiğinizde' },
-  { key: 'marketing', label: 'Pazarlama E-postaları', description: 'Özel teklifler ve haberler' },
+  { key: 'message', label: 'Yeni mesajlar', description: 'Kullanıcılardan mesaj aldığınızda' },
+  { key: 'review', label: 'Yorum bildirimleri', description: 'Değerlendirmenize yorum yazıldığında' },
+  { key: 'like', label: 'Beğeni bildirimleri', description: 'İçeriğiniz beğenildiğinde' },
+  { key: 'follow', label: 'Takip bildirimleri', description: 'Birisi sizi takip ettiğinde' },
+  { key: 'mention', label: 'Bahsedilme bildirimleri', description: 'Sizden bahsedildiğinde' },
+  { key: 'marketing', label: 'Pazarlama e-postaları', description: 'Özel teklifler ve haberler' },
 ];
 
 export function createDefaultNotificationPreferences(): NotificationPreferencesState {
@@ -121,7 +121,7 @@ function renderPreferenceCard(
       <div class="mb-4 space-y-3">
         <label class="flex items-center gap-3">
           <input type="checkbox" data-pref-toggle="${type.key}:inAppEnabled" ${preferences.inAppEnabled ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300" />
-          <span class="text-sm text-gray-700">Uygulamada bildir</span>
+          <span class="text-sm text-gray-700">Uygulama içinde bildir</span>
         </label>
         <label class="flex items-center gap-3">
           <input type="checkbox" data-pref-toggle="${type.key}:pushEnabled" ${preferences.pushEnabled ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300" />
@@ -156,7 +156,7 @@ export function renderNotificationPreferencesContent(options: {
   return `
     <div class="space-y-6">
       <div class="mb-6 flex items-center gap-3">
-        <h1 class="text-2xl font-bold text-gray-900">Bildirim Tercihleri</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Bildirim tercihleri</h1>
       </div>
       ${options.message ? renderNotificationMessage(options.message.type, options.message.text) : ''}
       <div class="space-y-4">
