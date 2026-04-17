@@ -34,7 +34,7 @@ describe('user-suggestions-panel', () => {
 
     expect(html).toContain('Ali Kaya');
     expect(html).toContain('@alikaya');
-    expect(html).toContain('Yeni Öneriler Yükle');
-    expect(html).toContain('Takip Et');
+    expect(html).toContain('Yeni öneriler yükle');
+    expect(html).toContain('Takip et');
   });
 });
