@@ -19,7 +19,7 @@ const result = await query(sql, values);
 const sites = result.rows;
 
 const seo = {
-  title: 'Tarihi Yerler - Şanlıurfa\'nın Zengin Tarihi',
+  title: 'Tarihi yerler - Şanlıurfa\'nın zengin tarihi',
   description: 'Göbeklitepe, Harran, Balıklıgöl ve daha fazlası. Şanlıurfa\'nın binlerce yıllık tarihi mirasını keşfedin.',
 };
 ---
@@ -27,7 +27,7 @@ const seo = {
 <Layout seo={seo}>
   <div class="page-header">
     <div class="page-header-content">
-      <h1 class="page-header-title">Tarihi Yerler</h1>
+      <h1 class="page-header-title">Tarihi yerler</h1>
       <p class="page-header-description">
         Tarihin sıfır noktası Şanlıurfa'nın eşsiz mirasını keşfedin.
       </p>
@@ -67,7 +67,7 @@ const seo = {
                 )}
                 {site.is_featured && (
                   <div class="absolute top-4 right-4">
-                    <span class="badge bg-urfa-600 text-white">Öne Çıkan</span>
+                    <span class="badge bg-urfa-600 text-white">Öne çıkan</span>
                   </div>
                 )}
               </div>
@@ -98,7 +98,7 @@ const seo = {
                     <Camera className="w-4 h-4" />
                     {site.images?.length || 0} fotoğraf
                   </span>
-                  <span>Detaylar →</span>
+                  <span>Ayrıntıları gör →</span>
                 </div>
               </div>
             </a>
