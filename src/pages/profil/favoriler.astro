@@ -108,7 +108,7 @@ const seo = {
   <script is:inline>
     async function removeFavorite(btn) {
       const id = btn.dataset.favoriteId;
-      if (!confirm('Favorilerden kaldırmak istediğinize emin misiniz?')) return;
+      if (!confirm('Bu mekanı favorilerden kaldırmak istediğinize emin misiniz?')) return;
       
       try {
         const response = await fetch(`/api/favorites`, {
