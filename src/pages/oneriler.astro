@@ -2,18 +2,18 @@
 import Layout from '../layouts/Layout.astro';
 import { getPersonalizedRecommendations, getTrendingPlaces } from '../lib/recommendations';
 
-// Check if user is authenticated
+// Kullanıcı oturumu var mı kontrol et
 const token = Astro.cookies.get('auth-token')?.value;
 let recommendations = [];
 let isPersonalized = false;
 
 if (token) {
-  // For personalized recommendations, we'd need to verify the token and get userId
-  // In this implementation, we'll fetch trending as fallback since actual impl needs token verification
+  // Kişiselleştirme için token doğrulaması ve kullanıcı kimliği gerekir.
+  // Bu sürümde doğrulama katmanı olmadığı için popüler yerler yedek akış olarak gösterilir.
   recommendations = await getTrendingPlaces(12);
   isPersonalized = true;
 } else {
-  // Anonymous users get trending places
+  // Giriş yapmayan kullanıcılar popüler yerleri görür.
   recommendations = await getTrendingPlaces(12);
 }
 ---
@@ -100,7 +100,7 @@ if (token) {
                 <!-- View Count (if available) -->
                 {place.view_count && (
                   <div class="text-xs text-gray-500 dark:text-gray-400">
-                    👁️ {place.view_count.toLocaleString()} görüş
+                    👁️ {place.view_count.toLocaleString()} görüntülenme
                   </div>
                 )}
               </div>
@@ -108,7 +108,7 @@ if (token) {
               <!-- Hover Overlay -->
               <div class="hidden group-hover:block absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-all">
                 <button class="px-6 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600">
-                  Detayları Gör →
+                  Detayları gör →
                 </button>
               </div>
             </a>
