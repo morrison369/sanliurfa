@@ -94,7 +94,7 @@ function renderToggle(showArchived: boolean): string {
   return `
     <div class="flex gap-2">
       <button type="button" data-notifications-filter="current" class="rounded-lg px-4 py-2 text-sm font-medium transition-colors ${currentClass}">Güncel bildirimler</button>
-      <button type="button" data-notifications-filter="archived" class="rounded-lg px-4 py-2 text-sm font-medium transition-colors ${archivedClass}">Arşivlenenler</button>
+      <button type="button" data-notifications-filter="archived" class="rounded-lg px-4 py-2 text-sm font-medium transition-colors ${archivedClass}">Arşivlenen bildirimler</button>
     </div>
   `;
 }
@@ -135,7 +135,7 @@ export function renderNotificationCenter(state: NotificationCenterState): string
   const list = state.notifications.length === 0
     ? `
       <div class="py-12 text-center text-gray-500">
-        <p>${state.showArchived ? 'Arşivlenmiş bildirim bulunmuyor.' : 'Yeni bildirim bulunmuyor.'}</p>
+        <p>${state.showArchived ? 'Arşivlenmiş bildirim bulunmuyor.' : 'Gösterilecek yeni bildirim bulunmuyor.'}</p>
       </div>
     `
     : `<div class="space-y-2">${state.notifications.map((item) => renderNotificationItem(state, item)).join('')}</div>`;

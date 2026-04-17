@@ -64,7 +64,7 @@ function renderRejectForm(verificationId: string, reason: string, processingId: 
           ${busy ? 'disabled' : ''}
           class="rounded-lg bg-gray-300 px-4 py-2 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-400 disabled:opacity-50"
         >
-          İptal
+          İptal et
         </button>
       </div>
     </div>
@@ -93,7 +93,7 @@ function renderVerificationCard(options: {
           <p class="mt-2 text-xs text-gray-500">
             Talep Tarihi: ${new Date(verification.requestedAt).toLocaleDateString('tr-TR')}
           </p>
-          <p class="mt-2 text-sm text-gray-700">${escapeHtml(verification.reason || 'Açıklama yok')}</p>
+          <p class="mt-2 text-sm text-gray-700">${escapeHtml(verification.reason || 'Açıklama bulunmuyor')}</p>
         </div>
       </div>
 
@@ -147,7 +147,7 @@ export function renderAdminVerificationQueue(options: {
   if (options.verifications.length === 0) {
     return `
       <div class="py-12 text-center">
-        <p class="text-gray-500">Bekleme listesinde doğrulama talebi yok.</p>
+        <p class="text-gray-500">Bekleme listesinde doğrulama talebi bulunmuyor.</p>
       </div>
     `;
   }
