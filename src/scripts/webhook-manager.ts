@@ -98,7 +98,7 @@ async function fetchWebhooks(root: WebhookManagerRoot) {
   const response = await fetch('/api/webhooks', { credentials: 'same-origin' });
   const payload = await readJson(response);
   if (!response.ok) {
-    throw new Error(getMessage(payload, 'Webhookler yuklenemedi'));
+    throw new Error(getMessage(payload, 'Webhook\'lar yüklenemedi.'));
   }
 
   const webhooks = extractWebhookManagerData(payload);
@@ -119,7 +119,7 @@ async function submitCreate(root: WebhookManagerRoot) {
   const secret = state.form.secret.trim();
 
   if (!event || !url) {
-    writeState(root, { ...state, error: 'Olay turu ve URL zorunludur.' });
+    writeState(root, { ...state, error: 'Olay türü ve bağlantı zorunludur.' });
     renderRoot(root);
     return;
   }
@@ -137,7 +137,7 @@ async function submitCreate(root: WebhookManagerRoot) {
   setLoading(root, false);
 
   if (!response.ok || !isSuccess(payload)) {
-    throw new Error(getMessage(payload, 'Webhook olusturulamadi'));
+    throw new Error(getMessage(payload, 'Webhook oluşturulamadı.'));
   }
 
   writeState(root, {
@@ -146,7 +146,7 @@ async function submitCreate(root: WebhookManagerRoot) {
     form: { event: '', url: '', secret: '' },
     error: null,
   });
-  setFlash(root, getMessage(payload, 'Webhook olusturuldu'));
+  setFlash(root, getMessage(payload, 'Webhook oluşturuldu.'));
   await fetchWebhooks(root);
 }
 
@@ -163,7 +163,7 @@ async function deleteWebhook(root: WebhookManagerRoot, webhookId: string) {
     throw new Error(getMessage(payload, 'Webhook silinemedi'));
   }
 
-  setFlash(root, getMessage(payload, 'Webhook silindi'));
+  setFlash(root, getMessage(payload, 'Webhook silindi.'));
   await fetchWebhooks(root);
 }
 
@@ -181,17 +181,17 @@ async function testWebhook(root: WebhookManagerRoot, webhookId: string) {
   setLoading(root, false);
 
   if (!response.ok || !isSuccess(payload)) {
-    throw new Error(getMessage(payload, 'Webhook testi gonderilemedi'));
+    throw new Error(getMessage(payload, 'Webhook testi gönderilemedi.'));
   }
 
-  setFlash(root, getMessage(payload, 'Test olayi gonderildi'));
+  setFlash(root, getMessage(payload, 'Test olayı gönderildi.'));
   renderRoot(root);
 }
 
 async function copyWebhookId(root: WebhookManagerRoot, webhookId: string) {
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(webhookId);
-    setFlash(root, 'Webhook ID kopyalandi');
+    setFlash(root, 'Webhook kimliği kopyalandı.');
   } else {
     setFlash(root, webhookId);
   }
@@ -258,7 +258,7 @@ function bindInteractions(root: WebhookManagerRoot, content: HTMLElement) {
       writeState(root, {
         ...state,
         loading: false,
-        error: error instanceof Error ? error.message : 'Webhook olusturulamadi',
+        error: error instanceof Error ? error.message : 'Webhook oluşturulamadı.',
       });
       renderRoot(root);
     });
@@ -285,7 +285,7 @@ function bindInteractions(root: WebhookManagerRoot, content: HTMLElement) {
         const state = readState(root);
         writeState(root, {
           ...state,
-          error: error instanceof Error ? error.message : 'Webhook testi gonderilemedi',
+          error: error instanceof Error ? error.message : 'Webhook testi gönderilemedi.',
         });
         renderRoot(root);
       });
@@ -309,7 +309,7 @@ function bindInteractions(root: WebhookManagerRoot, content: HTMLElement) {
         const state = readState(root);
         writeState(root, {
           ...state,
-          error: error instanceof Error ? error.message : 'Webhook silinemedi',
+          error: error instanceof Error ? error.message : 'Webhook silinemedi.',
         });
         renderRoot(root);
       });

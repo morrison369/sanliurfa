@@ -229,6 +229,18 @@ const seo = {
         : 'text-sm text-green-600 dark:text-green-400';
     }
 
+    function getFriendlyErrorMessage(error, fallback) {
+      if (error instanceof Error && error.message?.trim()) {
+        return error.message;
+      }
+
+      if (typeof error === 'string' && error.trim()) {
+        return error;
+      }
+
+      return fallback;
+    }
+
     function applyServerValidationMessage(payload, message, result) {
       const field = result?.error?.details?.field;
       if (field === 'resendApiKey' || field === 'analyticsId') {
@@ -292,7 +304,7 @@ const seo = {
         await save({ resendApiKey });
         resendInput.value = '';
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : String(error), true);
+        setMessage(getFriendlyErrorMessage(error, 'RESEND ayarı kaydedilemedi.'), true);
       }
     });
 
@@ -312,7 +324,7 @@ const seo = {
         await save({ analyticsId });
         analyticsInput.value = '';
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : String(error), true);
+        setMessage(getFriendlyErrorMessage(error, 'Analitik ayarı kaydedilemedi.'), true);
       }
     });
 
@@ -323,7 +335,7 @@ const seo = {
         resendInput.value = '';
         setMessage('RESEND ayarı temizlendi.');
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : String(error), true);
+        setMessage(getFriendlyErrorMessage(error, 'RESEND ayarı temizlenemedi.'), true);
       }
     });
 
@@ -334,7 +346,7 @@ const seo = {
         analyticsInput.value = '';
         setMessage('Analitik ayarı temizlendi.');
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : String(error), true);
+        setMessage(getFriendlyErrorMessage(error, 'Analitik ayarı temizlenemedi.'), true);
       }
     });
 
@@ -344,14 +356,14 @@ const seo = {
         await loadStatus(true);
         setMessage('Canlı doğrulama tamamlandı.');
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : String(error), true);
+        setMessage(getFriendlyErrorMessage(error, 'Canlı doğrulama tamamlanamadı.'), true);
       } finally {
         setLoadingState(false);
       }
     });
 
     loadStatus().catch((error) => {
-      setMessage(error instanceof Error ? error.message : String(error), true);
+      setMessage(getFriendlyErrorMessage(error, 'Entegrasyon ayarları yüklenemedi.'), true);
     });
   </script>
 </Layout>
