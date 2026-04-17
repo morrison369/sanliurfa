@@ -14,21 +14,21 @@ if (!user || !user.isAdmin) {
     <div class="bg-white rounded-lg shadow-lg p-6 space-y-8">
       <div>
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Webhook Yönetimi</h1>
-        <p class="text-gray-600">Webhooks oluşturun, test edin ve performansını takip edin</p>
+        <p class="text-gray-600">Webhook'lar oluşturun, test edin ve performansını takip edin</p>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
           <h3 class="font-semibold text-blue-900 mb-2">💡 Webhook Nedir?</h3>
           <p class="text-sm text-blue-800">
-            Webhooks, belirli olaylar gerçekleştiğinde dış uygulamalara HTTP POST istekleri göndererek entegrasyonlar sağlar.
+            Webhook'lar, belirli olaylar gerçekleştiğinde dış uygulamalara HTTP POST istekleri göndererek entegrasyonlar sağlar.
           </p>
         </div>
 
         <div class="bg-green-50 rounded-lg p-4 border border-green-200">
           <h3 class="font-semibold text-green-900 mb-2">🔒 Güvenlik</h3>
           <p class="text-sm text-green-800">
-            Her webhook isteği HMAC-SHA256 imzası ile doğrulanır. Secret sağlarsanız imza denetlenebilir.
+            Her webhook isteği HMAC-SHA256 imzası ile doğrulanır. Gizli anahtar sağlarsanız imza denetlenebilir.
           </p>
         </div>
 
@@ -90,11 +90,11 @@ if (!user || !user.isAdmin) {
       <div class="border-t pt-6">
         <h2 class="text-xl font-bold text-gray-900 mb-4">İmza Örneği</h2>
         <div class="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto text-sm font-mono">
-          <code>{`// X-Signature header'ı HMAC-SHA256'dır
+          <code>{`// X-Signature başlığı HMAC-SHA256'dır
 const signature = HMAC-SHA256(JSON.stringify(body), secret);
 // İmzayı doğrula
 if (signature !== req.headers['x-signature']) {
-  reject('Invalid signature');
+  reject('Gecersiz imza');
 }`}</code>
         </div>
       </div>
