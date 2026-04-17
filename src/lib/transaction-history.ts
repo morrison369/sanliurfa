@@ -62,6 +62,25 @@ function getTransactionTypes(transactions: LoyaltyTransaction[]): string[] {
   return Array.from(new Set(transactions.map((transaction) => transaction.transaction_type))).sort();
 }
 
+function getTransactionTypeLabel(type: string): string {
+  switch (type) {
+    case 'earn':
+      return 'Puan kazanımı';
+    case 'spend':
+      return 'Puan harcaması';
+    case 'redeem':
+      return 'Ödül kullanımı';
+    case 'expire':
+      return 'Süresi dolan puanlar';
+    case 'birthday_bonus':
+      return 'Doğum günü bonusu';
+    case 'annual_reset':
+      return 'Yıllık sıfırlama';
+    default:
+      return type.replace(/_/g, ' ');
+  }
+}
+
 function renderTransactionTypeFilters(types: string[], selectedType: string): string {
   if (types.length === 0) return '';
 
@@ -85,7 +104,7 @@ function renderTransactionTypeFilters(types: string[], selectedType: string): st
   return `
     <div class="flex flex-wrap gap-2">
       ${renderButton('', 'Tüm işlemler')}
-      ${types.map((type) => renderButton(type, type.replace(/_/g, ' '))).join('')}
+      ${types.map((type) => renderButton(type, getTransactionTypeLabel(type))).join('')}
     </div>
   `;
 }

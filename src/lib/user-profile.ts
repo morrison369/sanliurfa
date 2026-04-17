@@ -165,7 +165,7 @@ function renderProfileTab(user: UserProfileData, saving: boolean, message: strin
         </div>
 
         <div>
-          <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Ad Soyad</label>
+          <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Ad soyad</label>
           <input
             type="text"
             data-user-profile-full-name
@@ -185,7 +185,7 @@ function renderProfileTab(user: UserProfileData, saving: boolean, message: strin
         </div>
 
         <div>
-          <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Katılım Tarihi</label>
+          <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Katılım tarihi</label>
           <input
             type="text"
             value="${new Date(user.created_at).toLocaleDateString('tr-TR')}"
@@ -200,7 +200,7 @@ function renderProfileTab(user: UserProfileData, saving: boolean, message: strin
           ${saving ? 'disabled' : ''}
           class="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
         >
-          ${saving ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
+          ${saving ? 'Kaydediliyor...' : 'Değişiklikleri kaydet'}
         </button>
       </div>
     </div>
@@ -212,7 +212,7 @@ function renderFavoritesTab(): string {
     <div class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
         <div class="py-12 text-center text-gray-500 dark:text-gray-400">
           <p class="mb-2 text-lg">❤️</p>
-          <p>Henüz favori yeriniz yok</p>
+          <p>Henüz favori mekan bulunmuyor.</p>
           <a href="/arama" class="mt-2 block text-blue-600 hover:underline">Yerleri keşfedin →</a>
         </div>
     </div>
@@ -225,7 +225,7 @@ function renderActivityTab(activity: ActivityItem[]): string {
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
         <div class="py-12 text-center text-gray-500 dark:text-gray-400">
           <p class="mb-2 text-lg">📊</p>
-          <p>Henüz bir aktivite yok</p>
+          <p>Henüz etkinlik bulunmuyor.</p>
           <a href="/arama" class="mt-2 block text-blue-600 hover:underline">Yerleri keşfedin ve yorum yazmaya başlayın →</a>
         </div>
       </div>
@@ -266,7 +266,7 @@ function renderSettingsTab(): string {
     <div class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
       <div class="space-y-6">
         <div>
-          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Bildirim Tercihlerim</h3>
+          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Bildirim tercihlerim</h3>
           <div class="space-y-3">
             <label class="flex cursor-pointer items-center gap-3">
               <input type="checkbox" checked class="rounded" />
@@ -284,7 +284,7 @@ function renderSettingsTab(): string {
         </div>
 
         <button type="button" class="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700">
-          Kaydet
+          Tercihleri kaydet
         </button>
       </div>
     </div>
@@ -296,22 +296,22 @@ function renderSecurityTab(): string {
     <div class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
       <div class="space-y-6">
         <div>
-          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Şifremi Değiştir</h3>
+          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Şifremi değiştir</h3>
           <div class="space-y-4">
             <input type="password" placeholder="Eski şifre" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
             <input type="password" placeholder="Yeni şifre" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
             <input type="password" placeholder="Yeni şifre (tekrar)" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-            <button type="button" class="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700">Şifreyi Güncelle</button>
+            <button type="button" class="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700">Şifreyi güncelle</button>
           </div>
         </div>
 
         <hr class="border-gray-200 dark:border-gray-700" />
 
         <div>
-          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Kişisel Verilerim</h3>
+          <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Kişisel verilerim</h3>
           <p class="mb-4 text-gray-600 dark:text-gray-400">Tüm kişisel verilerinizi indirin (KVKK kapsamı)</p>
           <a href="/api/export/user-data?format=json" class="inline-block rounded-lg bg-gray-600 px-6 py-2 font-medium text-white transition-colors hover:bg-gray-700">
-            Verileri İndir
+            Verileri indir
           </a>
         </div>
       </div>
@@ -336,7 +336,7 @@ export function renderUserProfile(options: {
   }
 
   if (!options.user) {
-    return '<div class="container-custom py-12 text-center text-gray-600">Yükleniyor...</div>';
+    return '<div class="container-custom py-12 text-center text-gray-600">Profil bilgileri yükleniyor...</div>';
   }
 
   let content = '';
@@ -356,7 +356,7 @@ export function renderUserProfile(options: {
     <div class="container-custom py-12">
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Profilim</h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-400">Profil bilgilerinizi ve tercihlerinizi yönetin</p>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">Profil bilgilerinizi ve tercihlerinizi buradan yönetin.</p>
       </div>
       ${renderTabs(options.activeTab)}
       ${content}
