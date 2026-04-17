@@ -51,9 +51,9 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
    Admin wrapper coverage için `docs/reports/admin-access-coverage.md`
 4. Hangi dosya karar veriyor belirsizse `SOURCE_OF_TRUTH_MAP.md`
 5. Astro-only / framework migration kararı verilecekse `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md`
-   Uygulama sırası için `docs/architecture/ASTRO_ONLY_MIGRATION_BACKLOG.md`
-   Somut hydration risk listesi için `docs/reports/astro-hydration-inventory.md`
-   High bucket sıralaması için `docs/reports/astro-high-risk-feasibility.md`
+   Kapanış ve regresyon kuralları için `docs/architecture/ASTRO_ONLY_MIGRATION_BACKLOG.md`
+   Yeni hydration açılırsa somut risk listesi için `docs/reports/astro-hydration-inventory.md`
+   Yeni high-risk sıralaması gerekirse `docs/reports/astro-high-risk-feasibility.md`
    Paket seviyesinde React görünürlüğü için `docs/reports/react-surface-audit.md`
    Dosya bazlı React bakım sınıflaması için `docs/reports/react-surface-classification.md`
    Runtime-linked React UI yüzeyi geri gelmesin diye `npm run astro:react:guard`

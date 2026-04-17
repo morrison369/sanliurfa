@@ -100,7 +100,7 @@ Bu başlık artık tarihsel maliyet haritası olarak düşünülmeli; yeni hydra
 - `first`, `later` ve `last` bucket'larının tamamı `0`
 - hydration yüzeyi tamamen kapandı
 
-Bu sonuç önemli çünkü artık `medium` bucket yok. Bundan sonraki yanlış seçim doğrudan pahalı rewrite anlamına gelir.
+Bu sonuç önemli çünkü migration sıralama işi aktif backlog olmaktan çıktı. Yeni hydration açılırsa aynı raporlar yeniden karar girdisi olarak kullanılmalıdır.
 
 ## Paket Seviyesi React Kararı
 
