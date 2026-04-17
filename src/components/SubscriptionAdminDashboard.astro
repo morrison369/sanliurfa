@@ -1,14 +1,19 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
 ---
 
 <div data-subscription-admin-dashboard>
-  <div data-subscription-admin-loading class="space-y-6">
-    <div class="h-32 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
-    <div class="h-32 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
-    <div class="h-32 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
-    <div class="h-32 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
-  </div>
-  <div data-subscription-admin-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="space-y-6"
+    loadingDataAttr="data-subscription-admin-loading"
+    message={UI_COPY_TR.subscriptionAdmin.loading}
+    variant="skeleton"
+    skeletonCount={4}
+    skeletonItemClass="h-32 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"
+    contentDataAttr="data-subscription-admin-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>

@@ -1,4 +1,7 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
+
 interface Props {
   placeId?: string;
 }
@@ -7,12 +10,16 @@ const { placeId = '' } = Astro.props;
 ---
 
 <div data-business-analytics-dashboard data-place-id={placeId} data-days="30">
-  <div data-business-analytics-loading class="space-y-4">
-    {Array.from({ length: 6 }).map(() => (
-      <div class="h-20 animate-pulse rounded-lg bg-gray-200"></div>
-    ))}
-  </div>
-  <div data-business-analytics-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="space-y-4"
+    loadingDataAttr="data-business-analytics-loading"
+    message={UI_COPY_TR.businessAnalytics.loading}
+    variant="skeleton"
+    skeletonCount={6}
+    skeletonItemClass="h-20 animate-pulse rounded-lg bg-gray-200"
+    contentDataAttr="data-business-analytics-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>

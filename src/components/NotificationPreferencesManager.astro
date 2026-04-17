@@ -1,13 +1,19 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
 ---
 
 <div data-notification-preferences>
-  <div data-preferences-loading class="space-y-4">
-    <div class="h-24 animate-pulse rounded-lg bg-gray-200"></div>
-    <div class="h-40 animate-pulse rounded-lg bg-gray-200"></div>
-    <div class="h-40 animate-pulse rounded-lg bg-gray-200"></div>
-  </div>
-  <div data-preferences-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="space-y-4"
+    loadingDataAttr="data-preferences-loading"
+    message={UI_COPY_TR.preferences.loading}
+    variant="skeleton"
+    skeletonCount={3}
+    skeletonItemClass="h-40 animate-pulse rounded-lg bg-gray-200"
+    contentDataAttr="data-preferences-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>
