@@ -105,12 +105,12 @@ function renderForm(form: CampaignFormData): string {
           step="0.01"
           min="0"
           value="${form.budget}"
-          placeholder="Bütçe"
+          placeholder="Toplam bütçe"
           class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           required
         />
         <div class="flex gap-2">
-          <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700">Oluştur</button>
+          <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700">Kampanyayı oluştur</button>
           <button type="button" data-marketing-campaign-cancel class="rounded-lg bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400">İptal et</button>
         </div>
       </form>
@@ -141,19 +141,19 @@ function renderCampaigns(campaigns: Campaign[]): string {
                       ${campaign.campaign_type === 'promotion' ? 'Promosyon' : campaign.campaign_type === 'awareness' ? 'Farkındalık' : campaign.campaign_type === 'conversion' ? 'Dönüşüm' : 'Müşteri Tutma'}
                     </span>
                     <span class="rounded px-2 py-1 capitalize ${campaign.status === 'published' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : campaign.status === 'paused' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'}">
-                      ${campaign.status === 'published' ? 'Yayında' : campaign.status === 'paused' ? 'Duraklatıldı' : 'Taslak'}
+                      ${campaign.status === 'published' ? 'Yayında' : campaign.status === 'paused' ? 'Duraklatıldı' : 'Taslak durumda'}
                     </span>
                   </div>
                   <div class="mt-3 flex flex-wrap items-center gap-6 text-sm">
                     <div><span class="text-gray-600 dark:text-gray-400">Bütçe: </span><span class="font-semibold">₺${campaign.budget.toFixed(2)}</span></div>
                     <div><span class="text-gray-600 dark:text-gray-400">Harcanan: </span><span class="font-semibold">₺${campaign.spent.toFixed(2)}</span></div>
-                    <div><span class="text-gray-600 dark:text-gray-400">Oluşturma: </span><span>${formatDate(campaign.created_at)}</span></div>
+                    <div><span class="text-gray-600 dark:text-gray-400">Oluşturulma: </span><span>${formatDate(campaign.created_at)}</span></div>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  ${campaign.status === 'draft' ? `<button type="button" data-marketing-campaign-action="publish:${campaign.id}" class="rounded-lg p-2 text-green-600 transition-colors hover:bg-green-50 dark:hover:bg-green-900/20">Yayınla</button>` : ''}
+                  ${campaign.status === 'draft' ? `<button type="button" data-marketing-campaign-action="publish:${campaign.id}" class="rounded-lg p-2 text-green-600 transition-colors hover:bg-green-50 dark:hover:bg-green-900/20">Yayına al</button>` : ''}
                   ${campaign.status === 'published' ? `<button type="button" data-marketing-campaign-action="pause:${campaign.id}" class="rounded-lg p-2 text-yellow-600 transition-colors hover:bg-yellow-50 dark:hover:bg-yellow-900/20">Duraklat</button>` : ''}
-                  ${campaign.status === 'draft' || campaign.status === 'paused' ? `<button type="button" data-marketing-campaign-delete="${campaign.id}" class="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20">Sil</button>` : ''}
+                  ${campaign.status === 'draft' || campaign.status === 'paused' ? `<button type="button" data-marketing-campaign-delete="${campaign.id}" class="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20">Kaldır</button>` : ''}
                 </div>
               </div>
             </div>
