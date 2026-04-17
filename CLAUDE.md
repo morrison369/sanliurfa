@@ -6,9 +6,9 @@ Bu dosya, bu depoda çalışırken Claude Code için günlük uygulama rehberi s
 
 **Şanlıurfa.com**, Astro 6.1.7 ve TypeScript ile kurulmuş üretim seviyesi bir şehir rehberi web uygulamasıdır. React paketleri, izin verilen bir Astro entegrasyonu uyumluluk katmanı olarak kurulu kalır; ancak aktif UI runtime Astro + plain TypeScript'tir. bcrypt tabanlı kimlik doğrulama, Redis cache/session/rate-limit, PostgreSQL, kapsamlı gözlemlenebilirlik, API dokümantasyonu ve E2E test içeren full-stack bir yapıya sahiptir. Altyapı; strict TypeScript, SQL injection önleme ve performans izleme ile kurumsal düzeyde hazırlanmıştır.
 
-## Source Of Truth ve Çalışma Modeli
+## Kaynak Gerçekler ve Çalışma Modeli
 
-Bu dosya yüksek sinyalli bir çalışma rehberidir; tek source of truth değildir. Operasyonel kararlar için önce şu dosyaları aç:
+Bu dosya yüksek sinyalli bir çalışma rehberidir; tek karar kaynağı değildir. Operasyonel kararlar için önce şu dosyaları aç:
 
 - `docs/ops/README.md` — ops dokümanları için giriş noktası
 - `docs/ops/SOURCE_OF_TRUTH_MAP.md` — hangi kararın hangi dosyaya ait olduğunu gösterir
@@ -181,18 +181,18 @@ src/
    - **Request Metrikleri**: Her endpoint `recordRequest(method, path, status, duration)` çağırır → toplu istatistik üretilir
    - **Sorgu Metrikleri**: Her DB sorgusu süre, satır sayısı ve yavaşlık tespiti ile kaydedilir
    - **Yavaşlık Tespiti**:
-     - 100ms üzeri sorgular: debug log
-     - 1000ms üzeri sorgular: stack trace ile warning log
-     - 500ms üzeri istekler: yavaş olarak kaydedilir ve slow operations listesine eklenir
-   - **Pool İzleme**: Veritabanı bağlantı kullanımı (active/idle/waiting) her 30 saniyede güncellenir
-   - **Paneller**: `/api/metrics` (toplu), `/api/performance` (detaylı, admin-only)
+     - 100ms üzeri sorgular: hata ayıklama günlüğü
+     - 1000ms üzeri sorgular: stack trace ile uyarı günlüğü
+     - 500ms üzeri istekler: yavaş olarak kaydedilir ve yavaş operasyonlar listesine eklenir
+   - **Pool İzleme**: Veritabanı bağlantı kullanımı (aktif/boşta/bekleyen) her 30 saniyede güncellenir
+   - **Paneller**: `/api/metrics` (toplu), `/api/performance` (detaylı, yalnızca admin)
 
 7. **API Sözleşmeleri**:
    - Tüm endpoint'ler JSON döner: `{ success: boolean, data?: T, error?: string }`
-   - Durum kodları: 200 (OK), 400 (bad input), 401 (auth required), 403 (forbidden), 404 (not found), 409 (conflict), 422 (validation failed), 429 (rate limited), 500 (server error)
-   - Dağıtık izleme için tüm yanıtlarda `X-Request-ID` header'ı bulunur
-   - Cache'lenen endpoint'lerde `X-Cache` header'ı (HIT/MISS) bulunur
-   - `/api/docs` → Swagger UI, `/api/openapi.json` → OpenAPI 3.1 spec
+   - Durum kodları: 200 (başarılı), 400 (geçersiz girdi), 401 (kimlik doğrulama gerekli), 403 (yasak), 404 (bulunamadı), 409 (çakışma), 422 (doğrulama hatası), 429 (rate limit), 500 (sunucu hatası)
+   - Dağıtık izleme için tüm yanıtlarda `X-Request-ID` başlığı bulunur
+   - Cache'lenen endpoint'lerde `X-Cache` başlığı (`HIT/MISS`) bulunur
+   - `/api/docs` → Swagger arayüzü, `/api/openapi.json` → OpenAPI 3.1 tanımı
 
 8. **Bileşen Stratejisi**:
    - Sunucu tarafı render edilen içerik için Astro (`.astro`) kullanılır
@@ -202,15 +202,15 @@ src/
 ### Astro-Only Yönü
 
 - Hedef yön Astro-first'tür; anlık React kaldırma değildir.
-- `@astrojs/react`, açık paket kaldırma kararı yoksa kabul edilen production bağımlılığı olarak kalmalıdır.
+- `@astrojs/react`, açık paket kaldırma kararı yoksa kabul edilen üretim bağımlılığı olarak kalmalıdır.
 - Bir framework migration batch'i planlamadan önce şunları oku:
   - `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md`
   - `astro.config.mjs`
 - Migration kuralı:
   - düşük etkileşimli widget'lar önce Astro + plain TypeScript'e taşınabilir
-  - medium/high-state admin ve analytics panelleri tek tek değerlendirilmelidir
-  - big-bang React removal önerme
-  - hydration sıfıra indikten sonra audit raporlarını yalnızca görünürlük için kullan; otomatik removal işine çevirme
+  - orta/yüksek durum taşıyan admin ve analitik paneller tek tek değerlendirilmelidir
+  - tek hamlede React kaldırma önerme
+  - hydration sıfıra indikten sonra denetim raporlarını yalnızca görünürlük için kullan; otomatik kaldırma işine çevirme
 
 ### Veritabanı
 
@@ -240,7 +240,7 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 - `signOut(token)` — Redis içindeki session'ı siler
 
 **Korumalı Route'lar**:
-- `/admin/*` `isAdmin` rolü ister; middleware içinde kontrol edilir, yetkisizse login'e yönlendirilir
+- `/admin/*` `isAdmin` rolü ister; middleware içinde kontrol edilir, yetkisizse giriş sayfasına yönlendirilir
 - `/api/admin/*` `isAdmin` rolü ister; yoksa 403 `FORBIDDEN` döner
 - `/api/health/detailed` ve `/api/performance` yalnızca admin içindir
 
@@ -639,7 +639,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   });
 };
 
-// Client-side pattern (React/Astro component)
+// İstemci tarafı kalıbı
 const RealtimeManager = {
   async connectToFeed() {
     const eventSource = new EventSource('/api/realtime/feed');
@@ -648,7 +648,7 @@ const RealtimeManager = {
       this.onFeedUpdate?.(data);
     });
   },
-  // Auto-reconnect with exponential backoff
+  // Üstel geri çekilme ile otomatik yeniden bağlan
   reconnect(attempt = 0) {
     const delay = Math.min(1000 * Math.pow(2, attempt), 60000);
     setTimeout(() => this.connectToFeed(), delay);
@@ -656,84 +656,84 @@ const RealtimeManager = {
 };
 ```
 
-**Key Patterns**:
-- Use `ReadableStream` for backpressure handling
-- Poll server every N seconds (15s for feed, 5s for metrics)
-- Cursor-based tracking to only send new data
-- Fire-and-forget background queries for non-critical updates
-- Exponential backoff reconnection (max 60s)
+**Ana Kalıplar**:
+- Backpressure yönetimi için `ReadableStream` kullan
+- Sunucuyu belirli aralıklarla yokla (feed için 15sn, metrikler için 5sn)
+- Yalnızca yeni veriyi göndermek için cursor tabanlı takip uygula
+- Kritik olmayan güncellemelerde beklemesiz arka plan sorguları kullan
+- Üstel geri çekilme ile yeniden bağlan (en fazla 60sn)
 
 ### Oyunlaştırma ve Event Hook'ları
 
-Achievement unlocking is triggered by user actions via event hooks:
+Başarım kilit açma akışı kullanıcı eylemlerinden tetiklenen event hook'larıyla çalışır:
 
 ```typescript
-// src/lib/gamification.ts pattern
+// src/lib/gamification.ts kalıbı
 export async function onReviewCreated(userId: string) {
-  // Existing hooks
+  // Mevcut hook'lar
   await checkAndGrantBadges(userId, 'review');
   await updateUserLevelIfNeeded(userId);
 
-  // NEW: Auto-unlock achievements
-  await checkCommonAchievements(userId); // From achievements.ts
+  // YENİ: Başarımları otomatik aç
+  await checkCommonAchievements(userId); // achievements.ts içinden
 }
 
 // src/lib/achievements.ts
 export async function checkCommonAchievements(userId: string) {
   try {
-    // Internal logic: get user stats, check conditions, unlock matching achievements
-    // No throw: has internal try/catch
+    // İç mantık: kullanıcı istatistiklerini al, koşulları kontrol et, eşleşen başarımları aç
+    // Dışarı hata fırlatmaz: iç try/catch içerir
   } catch (err) {
-    logger.error('Achievement check failed', err);
+    logger.error('Başarım kontrolü başarısız', err);
   }
 }
 ```
 
-**Wired Event Hooks**:
-- `onReviewCreated(userId)` — Check review-related achievements
-- `onPhotoUploaded(userId)` — Check upload-related achievements
-- `onDailyLogin(userId)` — Check streak/login-related achievements
+**Bağlı Event Hook'ları**:
+- `onReviewCreated(userId)` — Yorumla ilgili başarımları kontrol eder
+- `onPhotoUploaded(userId)` — Yükleme ile ilgili başarımları kontrol eder
+- `onDailyLogin(userId)` — Seri/giriş ile ilgili başarımları kontrol eder
 
 ### Testler
 
 ```bash
-# Unit tests
+# Birim testleri
 npm run test:unit
 npm run test:unit:watch
 
-# E2E tests (requires app running)
+# E2E testleri (uygulama çalışıyor olmalı)
 npm run test:e2e
 npm run test:e2e:ui
 
-# All tests
+# Tüm testler
 npm run test
 ```
 
-Test files in `e2e/` for end-to-end testing (auth, places, admin access).
+`e2e/` altındaki test dosyaları uçtan uca akışları kapsar (auth, mekanlar, admin erişimi).
 
 ## Önemli Dosyalar
 
 ### Çekirdek Altyapı
 | Dosya | Amaç |
 |------|------|
-| `DEPLOYMENT.md` | PM2, Nginx, SSL ve yedeklerle tam CentOS Web Panel production dağıtım rehberi |
-| `tsconfig.json` | TypeScript strict mode; gevşetilmemelidir |
+| `DEPLOYMENT.md` | PM2, Nginx, SSL ve yedeklerle tam CentOS Web Panel üretim dağıtım rehberi |
+| `tsconfig.json` | TypeScript strict modu; gevşetilmemelidir |
 | `.env.example` | Ortam değişkeni şablonu (kritik: DATABASE_URL, JWT_SECRET, REDIS_URL) |
-| `Dockerfile` | Yerel docker-compose stack'i için geliştirme container imajı |
-| `docker-compose.yml` | PostgreSQL, Redis ve Node.js içeren geliştirme stack'i (yalnızca yerel geliştirme) |
-| `ecosystem.config.js` | Production için PM2 yapılandırması (dağıtım sırasında oluşturulur) |
+| `Dockerfile` | Yerel docker-compose yapısı için geliştirme container imajı |
+| `docker-compose.yml` | PostgreSQL, Redis ve Node.js içeren geliştirme yapısı (yalnızca yerel geliştirme) |
+| `ecosystem.config.js` | Üretim için PM2 yapılandırması (dağıtım sırasında oluşturulur) |
 
 ### Çekirdek Kütüphaneler
 | Dosya | Amaç |
 |------|------|
-| `src/middleware.ts` | Request auth, CORS, rate limiting ve security header'ları |
-| `src/lib/postgres.ts` | Veritabanı pool'u, parametrik sorgular, table allowlist ve yavaş sorgu izleme |
+| `src/middleware.ts` | İstek kimlik doğrulama, CORS, rate limiting ve güvenlik başlıkları |
+| `src/lib/postgres.ts` | Veritabanı pool'u, parametrik sorgular, tablo izin listesi ve yavaş sorgu izleme |
 | `src/lib/auth.ts` | Bcrypt hashleme, Redis session'ları, token üretim/doğrulama |
-| `src/lib/cache.ts` | Redis istemcisi, namespaced key'ler, rate limiting ve cache işlemleri |
-| `src/lib/validation.ts` | Sanitization ile schema tabanlı doğrulama |
-| `src/lib/logging.ts` | Request ID takibi ile structured logging |
-| `src/lib/metrics.ts` | Request/query metrikleri, aggregation ve performans istatistikleri |
-| `src/lib/api.ts` | Response/error formatlayıcılar, HTTP sabitleri ve doğrulama yardımcıları |
+| `src/lib/cache.ts` | Redis istemcisi, ad alanlı anahtarlar, rate limiting ve cache işlemleri |
+| `src/lib/validation.ts` | Sanitization ile şema tabanlı doğrulama |
+| `src/lib/logging.ts` | İstek kimliği takibi ile yapılandırılmış loglama |
+| `src/lib/metrics.ts` | İstek/sorgu metrikleri, toplulaştırma ve performans istatistikleri |
+| `src/lib/api.ts` | Yanıt/hata formatlayıcılar, HTTP sabitleri ve doğrulama yardımcıları |
 | `src/lib/env.ts` | Ortam değişkeni doğrulama |
 
 ### Sağlık ve Gözlemlenebilirlik
@@ -746,7 +746,7 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `src/pages/api/openapi.json.ts` | OpenAPI 3.1 tanımı |
 | `src/pages/api/docs.ts` | Swagger UI endpoint'i |
 
-### Ops Governance ve Source Of Truth
+### Ops Governance ve Kaynak Gerçekler
 | Dosya | Amaç |
 |------|------|
 | `docs/ops/README.md` | Ops doküman giriş noktası |
@@ -756,23 +756,23 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 | `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` | Artefact freshness durum semantiği |
 | `docs/ops/ARTIFACT_RETENTION_POLICY.md` | Artefact ve audit retention kuralları |
 | `docs/ops/INCIDENT_RUNBOOK.md` | Incident müdahale sırası |
-| `docs/ops/INTEGRATION_READINESS.md` | Admin integration readiness politikası |
-| `docs/ops/LEGACY_PHASE_SURFACE.md` | Legacy phase uyumluluk sınırları |
+| `docs/ops/INTEGRATION_READINESS.md` | Admin entegrasyon readiness politikası |
+| `docs/ops/LEGACY_PHASE_SURFACE.md` | Eski faz uyumluluk sınırları |
 | `docs/SCRIPT_SURFACE_POLICY.md` | Script yüzeyi ve runner-first politikası |
 | `src/types/generated-admin-api.ts` | Üretilmiş admin API kontrat tipleri |
 | `src/types/admin-api.ts` | UI-facing admin tip katmanı |
-| `src/lib/admin-format.ts` | Admin ops ortak tarih/fallback format source |
-| `src/lib/admin-index-data.ts` | Admin ana sayfa SSR data loader source |
-| `src/lib/admin-index.ts` | Admin ana sayfa risk/tool view model source |
-| `src/lib/admin-index-page.ts` | Admin ana sayfa badge/card class source |
-| `src/lib/admin-index-view.ts` | Admin ana sayfa render view model source |
-| `src/lib/admin-ops-pages.ts` | Runtime monitor + access coverage trend/delta/history source |
-| `src/lib/runtime-monitor.ts` | Runtime monitor endpoint ve coverage summary source |
-| `src/lib/admin-access-coverage-page.ts` | Access coverage alert/summary/drift HTML source |
-| `src/lib/admin-dom.ts` | Admin ops sayfaları için ortak DOM update helper source |
-| `src/lib/admin-page-bootstrap.ts` | Admin ops sayfaları için ortak refresh/interval bootstrap source |
-| `src/lib/astro-migration-report.ts` | Astro hydration risk inventory source |
-| `scripts/astro-hydration-inventory.ts` | Astro hydration inventory report generator |
+| `src/lib/admin-format.ts` | Admin ops ortak tarih/fallback format kaynağı |
+| `src/lib/admin-index-data.ts` | Admin ana sayfa SSR veri yükleyici kaynağı |
+| `src/lib/admin-index.ts` | Admin ana sayfa risk/araç görünüm modeli kaynağı |
+| `src/lib/admin-index-page.ts` | Admin ana sayfa badge/kart sınıf kaynağı |
+| `src/lib/admin-index-view.ts` | Admin ana sayfa render görünüm modeli kaynağı |
+| `src/lib/admin-ops-pages.ts` | Runtime monitor + access coverage trend/delta/geçmiş kaynağı |
+| `src/lib/runtime-monitor.ts` | Runtime monitor endpoint ve coverage özet kaynağı |
+| `src/lib/admin-access-coverage-page.ts` | Access coverage uyarı/özet/drift HTML kaynağı |
+| `src/lib/admin-dom.ts` | Admin ops sayfaları için ortak DOM güncelleme helper kaynağı |
+| `src/lib/admin-page-bootstrap.ts` | Admin ops sayfaları için ortak refresh/interval bootstrap kaynağı |
+| `src/lib/astro-migration-report.ts` | Astro hydration risk envanteri kaynağı |
+| `scripts/astro-hydration-inventory.ts` | Astro hydration envanter raporu üreticisi |
 
 ### Gerçek Zamanlı ve Analitik
 | Dosya | Amaç |
@@ -787,10 +787,10 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 ### Sadakat ve Ödül Sistemi
 | Dosya | Amaç |
 |------|------|
-| `src/lib/loyalty-points.ts` | Points transactions, balance tracking |
-| `src/lib/badges.ts` | Badge definitions and award logic |
-| `src/lib/achievements.ts` | Achievement definitions, unlock conditions |
-| `src/lib/gamification.ts` | Event hooks for automatic achievement unlocking |
+| `src/lib/loyalty-points.ts` | Puan işlemleri ve bakiye takibi |
+| `src/lib/badges.ts` | Rozet tanımları ve verme mantığı |
+| `src/lib/achievements.ts` | Başarım tanımları ve kilit açma koşulları |
+| `src/lib/gamification.ts` | Otomatik başarım açma için event hook'ları |
 | `src/pages/api/loyalty/points.ts` | User points balance and history endpoint |
 | `src/pages/api/loyalty/rewards.ts` | Public rewards catalog endpoint |
 | `src/pages/api/loyalty/achievements.ts` | User achievements endpoint (GET all/unviewed/stats, POST mark viewed) |
@@ -842,40 +842,40 @@ Test files in `e2e/` for end-to-end testing (auth, places, admin access).
 
 ## Ortam Değişkenleri
 
-**Kritik** (production için zorunlu):
-- `DATABASE_URL` — PostgreSQL connection string (required)
-- `JWT_SECRET` — Secret for token signing (min 32 chars, required)
-- `REDIS_URL` — Redis connection string (required, includes namespace prefix logic)
-- `REDIS_KEY_PREFIX` — Redis key namespace (default: `sanliurfa:`, isolates from other projects)
+**Kritik** (üretim için zorunlu):
+- `DATABASE_URL` — PostgreSQL bağlantı dizgesi (zorunlu)
+- `JWT_SECRET` — Token imzalama sırrı (en az 32 karakter, zorunlu)
+- `REDIS_URL` — Redis bağlantı dizgesi (zorunlu, namespace prefix mantığını içerir)
+- `REDIS_KEY_PREFIX` — Redis anahtar ad alanı (varsayılan: `sanliurfa:`, diğer projelerden ayırır)
 
 **Önerilen**:
-- `CORS_ORIGINS` — Comma-separated allowed origins (default: https://sanliurfa.com)
-- `NODE_ENV` — `production` or `development` (affects SSL, logging, error messages)
+- `CORS_ORIGINS` — Virgülle ayrılmış izinli origin listesi (varsayılan: https://sanliurfa.com)
+- `NODE_ENV` — `production` veya `development` (SSL, loglama ve hata mesajlarını etkiler)
 
 **İsteğe Bağlı**:
-- Supabase keys (legacy, for backward compatibility)
-- OAuth keys (Google, Facebook)
-- Email service API keys (Resend)
+- Supabase anahtarları (eski uyumluluk için)
+- OAuth anahtarları (Google, Facebook)
+- E-posta servis API anahtarları (Resend)
 
 ## Dağıtım
 
 ### Geliştirme Stack'i (Docker)
 - **Docker Compose**: PostgreSQL, Redis ve Node.js servisleriyle `docker-compose.yml`
-- **Kullanım**: Tüm bağımlılıklarla tam yerel stack için `docker-compose up`
+- **Kullanım**: Tüm bağımlılıklarla tam yerel yapı için `docker-compose up`
 - **Amaç**: Tutarlı geliştirme ortamı; production servislerini taklit eder
 
 ### Production Dağıtımı (CentOS Web Panel)
 - **Platform**: CentOS Web Panel üzerinde paylaşımlı barındırma (Docker değil)
 - **Servis Yöneticisi**: PM2 (önerilen) veya Systemd
 - **Süreç**:
-  1. Clone repo to `~/sanliurfa` (user's home directory)
-  2. Install Node.js via NVM
-  3. `npm install --legacy-peer-deps` and `npm run build`
-  4. Configure PostgreSQL/Redis (provided by hosting)
-  5. Setup PM2 with `ecosystem.config.js`
-  6. Configure Nginx reverse proxy in CWP panel (port 6000)
-  7. Setup Let's Encrypt SSL (via CWP SSL Manager)
-  8. Schedule automated backups via crontab
+  1. Depoyu `~/sanliurfa` altına klonla
+  2. NVM ile Node.js kur
+  3. `npm install --legacy-peer-deps` ve `npm run build` çalıştır
+  4. PostgreSQL/Redis'i yapılandır
+  5. `ecosystem.config.js` ile PM2 ayarla
+  6. CWP panelinde Nginx reverse proxy ayarla (port 6000)
+  7. CWP SSL Manager ile Let's Encrypt SSL kur
+  8. Crontab ile otomatik yedekleme planla
 
 Tam CentOS Web Panel production kurulum rehberi için **`DEPLOYMENT.md`** dosyasına bak.
 
@@ -887,29 +887,29 @@ Tam CentOS Web Panel production kurulum rehberi için **`DEPLOYMENT.md`** dosyas
 ## Sonraki Geliştirme İçin Notlar
 
 ### Kritik Kurallar
-1. **TypeScript Strict Mode**: Never relax `strict: true` in tsconfig.json. All errors must be fixed or marked with `// @ts-expect-error` with explanation.
-2. **Parameterized Queries**: Always use `$1`, `$2`, etc. syntax in SQL. Never interpolate user input.
-3. **Table Name Allowlist**: If adding new tables, update `ALLOWED_TABLES` set in `postgres.ts`.
-4. **Redis Namespacing**: All new cache keys must start with `sanliurfa:` prefix (handled via `prefixKey()` helper). **CRITICAL**: namespace isolation prevents cache collision with other projects on shared Redis.
-5. **Input Validation**: Every API endpoint must validate input via `validateWithSchema()` before using.
-6. **Error Handling**: Catch errors in API routes, never throw raw errors to clients. Log to stdout/stderr for server visibility.
-7. **SSE Implementation**: Always use `ReadableStream` for real-time endpoints, include `Cache-Control: no-cache` and `Connection: keep-alive` headers, implement client-side exponential backoff reconnection with max 60s delay.
-8. **Gamification Hooks**: `checkCommonAchievements()` must be called from event hooks, not directly. It has internal try/catch so it cannot throw.
-9. **Cache Invalidation**: On any mutation (POST/PUT/DELETE), invalidate related cache patterns. For loyalty changes, invalidate `sanliurfa:loyalty:*` and `sanliurfa:tier:*` patterns.
-10. **Admin Guard**: New admin API endpoints must use `withAdminOpsReadAccess(...)` or `withAdminOpsWriteAccess(...)`. Admin pages may redirect; admin API routes must return API-style 403/429/422 responses, not redirects.
-11. **Admin API Contract**: If an admin endpoint changes, update `src/pages/api/openapi.json.ts`, regenerate `src/types/generated-admin-api.ts`, and keep `src/types/admin-api.ts` aligned. Treat `npm run types:admin:drift:check` as authoritative.
-12. **Primary Gates**: Before calling a change green, prefer `npm run typecheck:app`, `npm run test:critical`, and `npm run test:e2e:smoke`. `npm run test` remains broader legacy coverage, not the primary operational gate.
-13. **Phase Workflow**: Phase compatibility is runner-first. Do not reintroduce broad `package.json` phase alias surfaces; use the phase runner and manifest flow documented in `docs/ops/LEGACY_PHASE_SURFACE.md` and `docs/SCRIPT_SURFACE_POLICY.md`.
-14. **Fire-and-Forget**: For non-critical background work (marking mentions as read), queue async queries without awaiting to avoid request timeout.
-15. **Admin UI Ops Pages**: For `/admin`, `/admin/runtime-monitor`, and `/admin/access-coverage`, change helper/view-model modules first (`src/lib/admin-format.ts`, `src/lib/admin-index-data.ts`, `src/lib/admin-index*.ts`, `src/lib/admin-ops-pages.ts`, `src/lib/runtime-monitor.ts`, `src/lib/admin-access-coverage-page.ts`, `src/lib/admin-dom.ts`, `src/lib/admin-page-bootstrap.ts`) and keep the browser smoke tests green. For `/admin`, prefer `src/lib/admin-index-data.ts` for SSR data collection and `src/lib/admin-index-view.ts` for page render decisions before editing `index.astro`.
-16. **Astro Migration Planning**: Migration backlog is currently closed. If React UI or hydration is intentionally reintroduced, do not pick the next React-to-Astro target from intuition alone. Refresh `npm run astro:migration:inventory`, read `docs/reports/astro-hydration-inventory.md`, and take the low-risk bucket first unless there is a documented reason to take a medium/high-risk surface.
+1. **TypeScript Strict Modu**: `tsconfig.json` içindeki `strict: true` ayarı gevşetilmez. Tüm hatalar düzeltilmeli veya açıklamalı `// @ts-expect-error` ile işaretlenmelidir.
+2. **Parametrik Sorgular**: SQL'de her zaman `$1`, `$2` vb. sözdizimini kullan. Kullanıcı girdisini doğrudan sorguya gömme.
+3. **Tablo İzin Listesi**: Yeni tablo eklersen `postgres.ts` içindeki `ALLOWED_TABLES` kümesini güncelle.
+4. **Redis Ad Alanı**: Yeni tüm cache anahtarları `sanliurfa:` prefix'i ile başlamalıdır (`prefixKey()` helper'ı bunu yönetir). **KRİTİK**: ad alanı izolasyonu, paylaşılan Redis üzerinde diğer projelerle çakışmayı önler.
+5. **Girdi Doğrulama**: Her API endpoint'i kullanmadan önce `validateWithSchema()` ile girdi doğrulaması yapmalıdır.
+6. **Hata Yönetimi**: API route'larında hataları yakala; ham hataları istemciye fırlatma. Sunucu görünürlüğü için stdout/stderr'a logla.
+7. **SSE Uygulaması**: Gerçek zamanlı endpoint'lerde her zaman `ReadableStream` kullan, `Cache-Control: no-cache` ve `Connection: keep-alive` başlıklarını ekle, istemci tarafında en fazla 60sn gecikmeli üstel geri bağlanma uygula.
+8. **Oyunlaştırma Hook'ları**: `checkCommonAchievements()` doğrudan değil event hook'ları içinden çağrılmalıdır. İç try/catch kullandığı için dışarı hata fırlatmamalıdır.
+9. **Cache Invalidation**: Her mutation'da (POST/PUT/DELETE) ilgili cache pattern'lerini temizle. Sadakat değişimlerinde `sanliurfa:loyalty:*` ve `sanliurfa:tier:*` pattern'lerini temizle.
+10. **Admin Koruması**: Yeni admin API endpoint'leri `withAdminOpsReadAccess(...)` veya `withAdminOpsWriteAccess(...)` kullanmalıdır. Admin sayfaları yönlendirme yapabilir; admin API route'ları yönlendirme değil, API tarzı 403/429/422 yanıtları döndürmelidir.
+11. **Admin API Kontratı**: Bir admin endpoint'i değişirse `src/pages/api/openapi.json.ts` dosyasını güncelle, `src/types/generated-admin-api.ts` dosyasını yeniden üret ve `src/types/admin-api.ts` ile hizalı tut. `npm run types:admin:drift:check` komutunu otoriter kabul et.
+12. **Birincil Gate'ler**: Bir değişikliği yeşil saymadan önce `npm run typecheck:app`, `npm run test:critical` ve `npm run test:e2e:smoke` komutlarını tercih et. `npm run test` daha geniş eski regresyon kapsamıdır; birincil operasyonel gate değildir.
+13. **Faz İş Akışı**: Faz uyumluluğu runner-first yaklaşımıyla yürür. `package.json` içinde geniş faz alias yüzeylerini geri getirme; `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` içinde tanımlı runner ve manifest akışını kullan.
+14. **Beklemesiz Arka Plan İşleri**: Kritik olmayan arka plan işleri için (örneğin mention'ları okundu işaretlemek) istek timeout'una yol açmamak adına sorguları `await` etmeden kuyruğa al.
+15. **Admin UI Ops Sayfaları**: `/admin`, `/admin/runtime-monitor` ve `/admin/access-coverage` için önce helper/view-model modüllerini değiştir (`src/lib/admin-format.ts`, `src/lib/admin-index-data.ts`, `src/lib/admin-index*.ts`, `src/lib/admin-ops-pages.ts`, `src/lib/runtime-monitor.ts`, `src/lib/admin-access-coverage-page.ts`, `src/lib/admin-dom.ts`, `src/lib/admin-page-bootstrap.ts`) ve tarayıcı smoke testlerini yeşil tut. `/admin` için `index.astro` dosyasını düzenlemeden önce SSR veri toplama için `src/lib/admin-index-data.ts`, render kararları için `src/lib/admin-index-view.ts` dosyasını tercih et.
+16. **Astro Migration Planlaması**: Migration backlog şu anda kapalıdır. React UI veya hydration bilinçli olarak geri getirilirse bir sonraki React-to-Astro hedefini sezgisel seçme. `npm run astro:migration:inventory` komutunu yeniden çalıştır, `docs/reports/astro-hydration-inventory.md` dosyasını oku ve belgelenmiş farklı bir gerekçe yoksa önce düşük riskli bucket'tan ilerle.
 
 ### Performans Optimizasyonu
-- Cache aggressively (5-10 min TTL for reads, invalidate on mutations)
-- Monitor database pool: if utilization > 80%, investigate slow queries
-- Use `/api/performance` to identify bottlenecks before they become incidents
-- Slow queries (> 1000ms) auto-logged with warnings, investigate immediately
-- Slow requests (> 500ms) tracked, review aggregates to identify trending issues
+- Okuma yüzeylerinde cache'i agresif kullan (5-10 dakika TTL, mutation'da temizle)
+- Veritabanı pool'unu izle: kullanım %80'i aşarsa yavaş sorguları araştır
+- Darboğazları incidente dönüşmeden önce görmek için `/api/performance` kullan
+- 1000ms üzeri yavaş sorgular otomatik uyarı log'una düşer; hemen incele
+- 500ms üzeri istekler takip edilir; trend sorunları görmek için toplu veriyi düzenli incele
 
 ### Özellik Ekleme
 
@@ -919,8 +919,8 @@ Tam CentOS Web Panel production kurulum rehberi için **`DEPLOYMENT.md`** dosyas
 - Endpoint kodunu dağıtmadan önce migration'ı tüm ortamlarda çalıştır
 
 **Yeni API Endpoint'leri**:
-- `src/lib/api.ts` içindeki response formatter kalıbını izle
-- Admin endpoint'lerinde ad hoc inline rol kontrolü yerine ortak admin ops access wrapper'ını kullan
+- `src/lib/api.ts` içindeki yanıt formatlayıcı kalıbını izle
+- Admin endpoint'lerinde dağınık inline rol kontrolü yerine ortak admin ops access wrapper'ını kullan
 - Kullanmadan önce `validateWithSchema()` ile girdi doğrulaması yap
 - Metrikleri kaydet: `recordRequest(method, path, status, duration)`
 - Önemli mutation'ları log'la: `logger.logMutation(action, table, recordId, userId, details)`
@@ -951,7 +951,7 @@ Tam CentOS Web Panel production kurulum rehberi için **`DEPLOYMENT.md`** dosyas
 - Polling aralığıyla birlikte `ReadableStream` kullan
 - Cursor tabanlı pagination uygula (`lastActivityId`, `lastTimestamp` vb. takibi)
 - `src/lib/realtime-sse.ts` içine `connectToExample()`, `handleExampleData()` ve listener metodunu ekle
-- İstemci tarafı yeniden bağlanma mantığını exponential backoff ile uygula
+- İstemci tarafı yeniden bağlanma mantığını üstel geri çekilme ile uygula
 
 **Yeni Özellik Gate'leri**:
 - Özellik anahtarını `src/lib/feature-gating.ts` içindeki `PREMIUM_FEATURES` listesine ekle
@@ -968,14 +968,14 @@ Tam CentOS Web Panel production kurulum rehberi için **`DEPLOYMENT.md`** dosyas
   - `npm run typecheck:app`
   - `npm run test:critical`
   - `npm run test:e2e:smoke`
-- Admin contract changes also require:
+- Admin kontrat değişikliklerinde ayrıca şunlar gerekir:
   - `npm run types:admin:drift:check`
-- Use `npm run release:gate` when the change affects release readiness, branch protection parity, summaries, or ops decisions
-- `npm run test` is still useful for broad regression coverage, but it is not the primary blocker signal
+- Değişiklik release readiness, branch protection parity, özetler veya ops kararlarını etkiliyorsa `npm run release:gate` kullan
+- `npm run test` geniş regresyon kapsamı için hâlâ faydalıdır; ancak birincil bloklayıcı sinyal değildir
 
 ### İzleme
-- Check `/api/health` on every deployment
-- Monitor `/api/metrics` for error rate increases or cache miss spikes
-- Review slow queries in `/api/performance` weekly for optimization opportunities
-- Database pool saturation (> 80% active) indicates scaling needs
-- All errors logged to stdout with request ID for distributed tracing
+- Her dağıtımdan sonra `/api/health` kontrol et
+- Hata oranı artışı veya cache miss sıçramaları için `/api/metrics` izle
+- Optimizasyon fırsatları için `/api/performance` içindeki yavaş sorguları haftalık gözden geçir
+- Veritabanı pool doygunluğu (>%80 aktif) ölçekleme ihtiyacına işaret eder
+- Tüm hatalar dağıtık izleme için istek kimliğiyle birlikte stdout'a loglanır
