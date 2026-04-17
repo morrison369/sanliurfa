@@ -235,7 +235,6 @@ eklenmeli.
 - `src/components/AdminAnalyticsDashboard.tsx`
 - `src/components/AdminPerformanceDashboard.tsx`
 - `src/components/ModerationDashboard.tsx`
-- `src/components/WebhookManager.tsx`
 - `src/components/WebhookAnalyticsDashboard.tsx`
 - `src/components/MessagingInbox.tsx`
 - `src/components/ActivityFeed.tsx`
@@ -259,7 +258,6 @@ ayrı yazılmalı.
 
 `docs/reports/astro-high-risk-feasibility.md` artık `later` bucket bırakmıyor; kalan sıralama:
 
-- `WebhookManager`
 - `ActivityFeed`
 - `ModerationDashboard`
 
@@ -276,7 +274,6 @@ Bu yüzeyler dışında kalan yüksek-risk bileşenler şu an için son dalga ad
 
 - moderation queue
 - live analytics dashboards
-- webhook management
 - messaging inbox
 - sosyal feed benzeri yüksek etkileşimli yüzeyler
 
@@ -319,6 +316,7 @@ Bu repo için doğru hız budur. Daha agresif rewrite, gereksiz risk üretir.
 - Önce `docs/reports/astro-hydration-inventory.md` içindeki `low` bucket değerlendirilir; `low=0` ise en ucuz `medium` yüzeyler seçilir.
 - `medium` biterse `npm run astro:migration:high-risk` çalıştırılır ve sıralama oradan alınır.
 - `high` yüzeye ancak üretilen feasibility raporu bunu destekliyorsa girilir.
+
 
 
 

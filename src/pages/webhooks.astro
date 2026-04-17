@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import WebhookManager from '../components/WebhookManager';
+import WebhookManager from '../components/WebhookManager.astro';
 import WebhookAnalyticsDashboard from '../components/WebhookAnalyticsDashboard.astro';
 
 // Check if user is authenticated
@@ -54,7 +54,7 @@ const authToken = Astro.cookies.get('auth-token')?.value || '';
 
     <!-- Webhook Manager -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-      <WebhookManager client:load userId={user.id} token={authToken} />
+      <WebhookManager />
     </div>
 
     <!-- Webhook Analytics Dashboard -->
@@ -117,3 +117,4 @@ const authToken = Astro.cookies.get('auth-token')?.value || '';
     </div>
   </div>
 </Layout>
+

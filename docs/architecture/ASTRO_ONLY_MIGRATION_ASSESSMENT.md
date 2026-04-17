@@ -110,7 +110,6 @@ Bunlar pratikte mini SPA davranışı gösterir:
 - `src/components/AdminAnalyticsDashboard.tsx`
 - `src/components/AdminPerformanceDashboard.tsx`
 - `src/components/ModerationDashboard.tsx`
-- `src/components/WebhookManager.tsx`
 - `src/components/WebhookAnalyticsDashboard.tsx`
 - `src/components/MessagingInbox.tsx`
 - `src/components/ActivityFeed.tsx`
@@ -142,7 +141,7 @@ Bu liste, migration sıralamasında öncelik değil; maliyet haritasıdır.
 `docs/reports/astro-high-risk-feasibility.md` çıktısına göre:
 
 - `later` bucket kapandı; kalan tüm yüzeyler doğrudan pahalı `last` grubunda
-- son dalga adayları: `WebhookManager`, `ActivityFeed`, `ModerationDashboard`
+- son dalga adayları: `ActivityFeed`, `ModerationDashboard`
 
 Bu sonuç önemli çünkü artık `medium` bucket yok. Bundan sonraki yanlış seçim doğrudan pahalı rewrite anlamına gelir.
 
@@ -223,7 +222,6 @@ Her büyük panel için ayrı karar verilmelidir:
 - moderation queues
 - complex analytics dashboards
 - messaging inbox
-- webhook management
 
 ## Teknik Geçiş Kuralları
 
@@ -283,6 +281,7 @@ Bugün itibarıyla doğru mühendislik kararı şudur:
 - Ama kısa vadede “tam Astro-only” hedefi için big-bang rewrite yapılmamalı.
 
 Bu repo için en savunulabilir yaklaşım, Astro-only hedefini mimari yön olarak kabul edip, uygulamayı yüzey bazlı ve ölçülü migration ile yürütmektir.
+
 
 
 
