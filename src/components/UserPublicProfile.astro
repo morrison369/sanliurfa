@@ -1,4 +1,7 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
+
 interface Props {
   userId: string;
   currentUserId?: string;
@@ -12,8 +15,13 @@ const { userId, currentUserId } = Astro.props;
   data-user-id={userId}
   data-current-user-id={currentUserId ?? ''}
 >
-  <div data-user-public-profile-loading class="py-12 text-center text-gray-500">Açık profil yükleniyor...</div>
-  <div data-user-public-profile-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="py-12 text-center text-gray-500"
+    loadingDataAttr="data-user-public-profile-loading"
+    message={UI_COPY_TR.profile.publicLoading}
+    contentDataAttr="data-user-public-profile-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>

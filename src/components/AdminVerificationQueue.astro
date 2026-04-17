@@ -1,9 +1,12 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
+
 export interface Props {
   title?: string;
 }
 
-const { title = 'Doğrulama kuyruğu' } = Astro.props;
+const { title = UI_COPY_TR.verificationQueue.title } = Astro.props;
 ---
 
 <section data-admin-verification-queue class="space-y-4" aria-live="polite">
@@ -13,11 +16,13 @@ const { title = 'Doğrulama kuyruğu' } = Astro.props;
       Bekleyen mekan doğrulama taleplerini inceleyin, onaylayın veya gerekçeyle reddedin.
     </p>
   </header>
-
-  <div data-admin-verification-queue-loading class="py-8 text-center text-gray-500">
-    Doğrulama talepleri yükleniyor...
-  </div>
-  <div data-admin-verification-queue-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="py-8 text-center text-gray-500"
+    loadingDataAttr="data-admin-verification-queue-loading"
+    message={UI_COPY_TR.verificationQueue.loading}
+    contentDataAttr="data-admin-verification-queue-content"
+    contentClass="hidden"
+  />
 </section>
 
 <script>

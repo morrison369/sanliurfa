@@ -1,10 +1,18 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
+
 const { token = '' } = Astro.props;
 ---
 
 <div data-webhook-analytics-dashboard data-token={token}>
-  <div data-webhook-analytics-loading class="text-center py-8 text-gray-500">Webhook analitiği yükleniyor...</div>
-  <div data-webhook-analytics-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="text-center py-8 text-gray-500"
+    loadingDataAttr="data-webhook-analytics-loading"
+    message={UI_COPY_TR.webhookAnalytics.loading}
+    contentDataAttr="data-webhook-analytics-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>

@@ -1,4 +1,7 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
+
 interface Props {
   query?: string;
 }
@@ -7,10 +10,13 @@ const { query = '' } = Astro.props;
 ---
 
 <div data-search-results data-query={query}>
-  <div data-search-results-loading class="py-8 text-center text-gray-600 dark:text-gray-400">
-    Arama sonuçları yükleniyor...
-  </div>
-  <div data-search-results-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="py-8 text-center text-gray-600 dark:text-gray-400"
+    loadingDataAttr="data-search-results-loading"
+    message={UI_COPY_TR.search.loading}
+    contentDataAttr="data-search-results-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>

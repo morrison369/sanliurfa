@@ -1,4 +1,7 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
+
 const { collectionId, currentUserId } = Astro.props;
 ---
 
@@ -7,8 +10,13 @@ const { collectionId, currentUserId } = Astro.props;
   data-collection-id={collectionId}
   data-current-user-id={currentUserId || ''}
 >
-  <div data-collection-detail-loading class="py-12 text-center">Koleksiyon ayrıntıları yükleniyor...</div>
-  <div data-collection-detail-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="py-12 text-center"
+    loadingDataAttr="data-collection-detail-loading"
+    message={UI_COPY_TR.collectionDetail.loading}
+    contentDataAttr="data-collection-detail-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>
