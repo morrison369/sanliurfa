@@ -36,7 +36,7 @@ describe('user-management-table', () => {
     expect(html).toContain('User One');
     expect(html).toContain('Gösterilen kullanıcı: 1.');
     expect(html).toContain('2 bayrak');
-    expect(html).toContain('Detay');
+    expect(html).toContain('Ayrıntı');
   });
 
   it('renders detail modal when details exist', () => {
@@ -70,7 +70,7 @@ describe('user-management-table', () => {
       details,
     });
 
-    expect(html).toContain('Kullanıcı Detayı');
+    expect(html).toContain('Kullanıcı detayı');
     expect(html).toContain('user@example.com');
     expect(html).toContain('Aktif bayrak yok');
   });

@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import LoyaltyDashboard from '../../components/LoyaltyDashboard.astro';
 
-// Check if user is authenticated
+// Kullanıcı giriş yapmadıysa yönlendir
 if (!Astro.locals.user) {
   return Astro.redirect('/giris');
 }
@@ -42,9 +42,9 @@ const seo = {
         <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
           <h3 class="font-semibold text-purple-900 dark:text-purple-100 mb-2">⭐ Seviye Avantajları</h3>
           <ul class="text-sm text-purple-800 dark:text-purple-200 space-y-2">
-            <li>✓ Bonus puan kazanç</li>
-            <li>✓ Eksklusif ödüller</li>
-            <li>✓ Frühe Zugang</li>
+            <li>✓ Bonus puan kazancı</li>
+            <li>✓ Özel ödüller</li>
+            <li>✓ Erken erişim</li>
             <li>✓ VIP desteği</li>
           </ul>
         </div>
@@ -63,7 +63,7 @@ const seo = {
           <div>
             <h3 class="font-semibold mb-2">Puanlarımı nasıl kullanabilirim?</h3>
             <p class="text-gray-600 dark:text-gray-400">
-              Ödüller sayfasına giderek puanlarınızı harika ödüllere dönüştürebilirsiniz. Indirim kuponlarından premium özelliklere kadar birçok seçeneğiniz vardır.
+              Ödüller sayfasına giderek puanlarınızı harika ödüllere dönüştürebilirsiniz. İndirim kuponlarından premium özelliklere kadar birçok seçeneğiniz vardır.
             </p>
           </div>
           <div>

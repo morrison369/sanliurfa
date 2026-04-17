@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import LoyaltyDashboard from '../../components/LoyaltyDashboard.astro';
 
-// Redirect if not authenticated
+// Kullanıcı giriş yapmadıysa yönlendir
 if (!Astro.locals.user) {
   return Astro.redirect('/giris');
 }
@@ -12,7 +12,7 @@ if (!Astro.locals.user) {
   <div class="container mx-auto px-4 py-8">
     <div class="mb-8">
       <h1 class="text-4xl font-bold mb-2">Sadakat Programı</h1>
-      <p class="text-gray-600">Puanlarınızı kazanın ve harika ödüllerle değerlendirin</p>
+      <p class="text-gray-600">Puan kazanın ve onları değerli ödüllerde kullanın</p>
     </div>
 
     <LoyaltyDashboard />
@@ -21,7 +21,7 @@ if (!Astro.locals.user) {
       <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
         <h3 class="font-semibold mb-2 text-blue-900">🎯 Nasıl Kazanılır?</h3>
         <ul class="text-sm text-gray-700 space-y-2">
-          <li>• Tesisler hakkında inceleme yazın</li>
+          <li>• Mekanlar hakkında yorum yazın</li>
           <li>• Favori ekleyin ve paylaşın</li>
           <li>• Diğer kullanıcıların incelemelerini beğenin</li>
           <li>• İnsanları takip edin</li>
@@ -44,7 +44,7 @@ if (!Astro.locals.user) {
           <li>• Özel ayrıcalıklar</li>
           <li>• Erken etkinlik erişimi</li>
           <li>• Özel indirimler</li>
-          <li>• VIP öznitelikler</li>
+          <li>• VIP ayrıcalıkları</li>
         </ul>
       </div>
     </div>

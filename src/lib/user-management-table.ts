@@ -39,7 +39,7 @@ function renderDetailModal(details: AdminUserDetailsPayload | null): string {
       <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
         <div class="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Kullanıcı Detayı</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Kullanıcı detayı</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400">${details.user.full_name || 'Adı yok'} · ${details.user.email}</p>
           </div>
           <button
@@ -103,10 +103,10 @@ function renderDetailModal(details: AdminUserDetailsPayload | null): string {
           </div>
 
           <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-            <h4 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Audit Kayıtları</h4>
+            <h4 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Denetim kayıtları</h4>
             ${
               auditLog.length === 0
-                ? '<p class="text-sm text-gray-500 dark:text-gray-400">Audit kaydı yok</p>'
+                ? '<p class="text-sm text-gray-500 dark:text-gray-400">Denetim kaydı yok</p>'
                 : `<ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">${auditLog
                     .slice(0, 5)
                     .map(
@@ -161,7 +161,7 @@ function renderRows(users: AdminUserListEntry[]): string {
               ${
                 (user.warning_count ?? 0) > 0
                   ? `<span class="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">${user.warning_count ?? 0} uyarı</span>`
-                  : '<span class="text-xs text-gray-400 dark:text-gray-500">Temiz</span>'
+                  : '<span class="text-xs text-gray-400 dark:text-gray-500">Sorun yok</span>'
               }
             </div>
           </td>
@@ -171,7 +171,7 @@ function renderRows(users: AdminUserListEntry[]): string {
               data-user-management-detail="${user.id}"
               class="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
             >
-              Detay
+              Ayrıntı
             </button>
           </td>
         </tr>
