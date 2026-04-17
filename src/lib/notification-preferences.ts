@@ -17,9 +17,9 @@ export const NOTIFICATION_TYPES: NotificationTypeDefinition[] = [
   { key: 'message', label: 'Yeni mesajlar', description: 'Kullanıcılardan mesaj aldığınızda' },
   { key: 'review', label: 'Yorum bildirimleri', description: 'Değerlendirmenize yorum yazıldığında' },
   { key: 'like', label: 'Beğeni bildirimleri', description: 'İçeriğiniz beğenildiğinde' },
-  { key: 'follow', label: 'Takip bildirimleri', description: 'Birisi sizi takip ettiğinde' },
+  { key: 'follow', label: 'Takip bildirimleri', description: 'Bir kullanıcı sizi takip ettiğinde' },
   { key: 'mention', label: 'Bahsedilme bildirimleri', description: 'Sizden bahsedildiğinde' },
-  { key: 'marketing', label: 'Pazarlama e-postaları', description: 'Özel teklifler ve haberler' },
+  { key: 'marketing', label: 'Pazarlama e-postaları', description: 'Özel teklifler, kampanyalar ve haberler' },
 ];
 
 export function createDefaultNotificationPreferences(): NotificationPreferencesState {
@@ -70,7 +70,7 @@ export function extractNotificationPreferenceValue(payload: unknown): Notificati
 export function extractNotificationPreferencesSuccessMessage(payload: unknown): string {
   const data = resolveEnvelopeData(payload);
   const message = typeof data.message === 'string' ? data.message : null;
-  return message && message.trim().length > 0 ? message : 'Tercihler kaydedildi';
+  return message && message.trim().length > 0 ? message : 'Tercihler kaydedildi.';
 }
 
 export function extractNotificationPreferencesError(payload: unknown, fallback: string): string {
@@ -142,7 +142,7 @@ function renderPreferenceCard(
         </select>
       </div>
       <button type="button" data-pref-save="${type.key}" ${isSaving ? 'disabled' : ''} class="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-        ${isSaving ? 'Kaydediliyor...' : 'Kaydet'}
+        ${isSaving ? 'Kaydediliyor...' : 'Tercihleri kaydet'}
       </button>
     </div>
   `;

@@ -129,7 +129,7 @@ export function renderWebhookManager(state: WebhookManagerState): string {
         </div>
         <div class="flex gap-3">
           <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700">Webhook oluştur</button>
-          <button type="button" data-webhook-cancel class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-white">İptal</button>
+          <button type="button" data-webhook-cancel class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-white">İptal et</button>
         </div>
       </form>
     `
@@ -163,7 +163,7 @@ export function renderWebhookManager(state: WebhookManagerState): string {
       ${errorHtml}
       <div class="flex items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-slate-900">Webhook'lar</h2>
+          <h2 class="text-2xl font-bold text-slate-900">Webhook yönetimi</h2>
           <p class="mt-1 text-sm text-slate-600">Gerçek zamanlı entegrasyon bağlantılarını buradan yönetin.</p>
         </div>
         <button type="button" data-webhook-toggle class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">${state.showForm ? 'Formu kapat' : 'Yeni webhook'}</button>
