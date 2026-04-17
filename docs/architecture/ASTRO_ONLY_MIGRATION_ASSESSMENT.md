@@ -19,11 +19,13 @@ Bu belge, `Şanlıurfa.com` kod tabanının mevcut Astro + React island mimarisi
 - `astro.config.mjs` içinde aktif React entegrasyonu: `@astrojs/react`
 - generated inventory: `docs/reports/astro-hydration-inventory.md` (`0 low / 0 medium / 0 high`)
 - high-risk feasibility report: `docs/reports/astro-high-risk-feasibility.md` (`0 first / 0 later / 0 last`)
+- package removal audit: `docs/reports/react-surface-audit.md`
 
 Mevcut yapı:
 
 - SSR ve routing katmanı Astro ile çalışıyor.
 - İnteraktif paneller plain TS + Astro shell yapısına taşındı; aktif React island kalmadı.
+- Paket kaldırma seviyesi henüz kapanmadı; kalan `.tsx` ve React hook import yüzeyi ayrı audit ile izlenmeli.
 - Admin, analytics, search, social, subscriptions, notifications ve messaging yüzeyleri React bağımlılığını yoğun kullanıyordu; kalan yüzey artık yalnızca son dalga high-risk panellerdir.
 - İlk migration dalgalarında `NotificationBadge`, `QuotaUsageDisplay`, `TrendingPlaces`, `LeaderboardsDisplay`, `PricingPlans`, `UserRecommendations`, `PerformanceMonitor`, `PWAPrompt`, `TransactionHistory`, `BillingHistory`, `RewardsCatalog`, `NotificationPreferencesManager`, `NotificationCenter`, `NotificationsCenter`, `SubscriptionManager`, `MyActivityLog`, `UserSuggestionsPanel`, `UserSearchResults`, `HashtagExplorer`, `CollectionsManager`, `ContentManager`, `UserPublicProfile`, `ReportManager`, `VendorDashboard`, `LoyaltyDashboard`, `UserProfile`, `CollectionDetail`, `UserSettings`, `SearchResults`, `BusinessAnalyticsDashboard`, `FeaturedListingsManager`, `MarketingCampaignBuilder`, `AdminLoyaltyPanel`, `AuditLogViewer`, `UserManagementTable`, `AdminDashboardOverview`, `AnalyticsPanel`, `AdminAnalyticsDashboard`, `AdminManager`, `WebhookAnalyticsDashboard`, `LiveAnalyticsDashboard`, `ModerationQueueManager`, `SubscriptionAdminDashboard`, `AdminVerificationQueue`, `OLAPExplorer`, `AdminPerformanceDashboard` ve `MessagingInbox`, `WebhookManager`, `ActivityFeed`, `ModerationDashboard` React island olmaktan çıkarıldı.
 
@@ -143,6 +145,29 @@ Bu liste, migration sıralamasında öncelik değil; maliyet haritasıdır.
 - son dalga adayı kalmadı; hydration yüzeyi tamamen kapandı
 
 Bu sonuç önemli çünkü artık `medium` bucket yok. Bundan sonraki yanlış seçim doğrudan pahalı rewrite anlamına gelir.
+
+## Paket Seviyesi React Removal Kararı
+
+Hydration yüzeyi kapandığı için sıradaki karar runtime değil paket seviyesidir:
+
+- `@astrojs/react` entegrasyonu artık aktif island taşımıyor.
+- Ama `react`, `react-dom` ve `@astrojs/react` paketlerini hemen silmek güvenli değil.
+- Bunun için source-of-truth:
+  - `scripts/react-surface-audit.ts`
+  - `src/lib/react-surface-audit.ts`
+  - `docs/reports/react-surface-audit.md`
+
+2026-04-17 itibarıyla audit sonucu:
+
+- kalan `.tsx` dosyası: `59`
+- React hook/lib import dosyası: `3`
+- runtime React usage: `1`
+
+Bu şu anlama gelir:
+
+- hydration bazında Astro-only hedefi kapandı
+- `@astrojs/react` kaldırma adaylığı teknik olarak açıldı
+- ama paketleri silmeden önce kalan `.tsx` yüzeyi ve React hook importları temizlenmeli
 
 ## Kısa Vadede Yapılmaması Gerekenler
 

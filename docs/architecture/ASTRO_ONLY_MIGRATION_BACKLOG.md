@@ -20,6 +20,7 @@ Güncel ölçüm:
 - `client:*` hydration noktası: `0`
 - current generated risk split: `0 low / 0 medium / 0 high`
 - current high-risk feasibility split: `0 first / 0 later / 0 last`
+- current package removal blockers: `59 tsx / 3 hook-lib / 1 runtime`
 
 İlk hedefler:
 
@@ -27,6 +28,7 @@ Güncel ölçüm:
 2. `client:*` yüzeyini ilk dalgada `55` altına indirmek
 3. yeni açılan UI yüzeylerinde varsayılan olarak React kullanmamak
 4. migration yapılan her sayfa için helper + smoke/test zemini kurmak
+5. hydration `0` olduktan sonra `npm run astro:react:audit` ile paket kaldırma blokörlerini sıfırlamak
 
 ## Öncelik Kuralları
 

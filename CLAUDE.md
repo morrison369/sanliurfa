@@ -32,6 +32,7 @@ Framework direction:
 - Do not assume the repo is already Astro-only; check `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md` before proposing React removal or large migration work.
 - Before choosing the next Astro migration batch, refresh `docs/reports/astro-hydration-inventory.md` with `npm run astro:migration:inventory` and use that risk split instead of guessing.
 - If `medium=0`, rank the remaining `high` bucket with `npm run astro:migration:high-risk` before choosing the next panel.
+- If hydration is already `0`, do not remove `react` packages blindly; run `npm run astro:react:audit` first and use `docs/reports/react-surface-audit.md`.
 
 ## Quick Start Commands
 
@@ -61,6 +62,7 @@ Framework direction:
 - `npm run ops:retention:apply` — Local artifact and audit retention cleanup
 - `npm run astro:migration:inventory` — Current Astro hydration inventory and risk split
 - `npm run astro:migration:high-risk` — Ranked feasibility report for remaining high-risk hydration surfaces
+- `npm run astro:react:audit` — Package-level React removal blockers after hydration reaches zero
 - `npm run phase:scripts:report` — Phase compatibility status
 - `npm run phase:compat:cleanup` — Cleanup compatibility manifest state
 
@@ -195,7 +197,7 @@ src/
 ### Astro-Only Direction
 
 - Target direction is Astro-first, not immediate React removal.
-- `@astrojs/react` is still an active production dependency.
+- `@astrojs/react` may remain only as a package-level compatibility dependency after hydration reaches zero.
 - Before planning a framework migration batch, read:
   - `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md`
   - `astro.config.mjs`
@@ -203,6 +205,7 @@ src/
   - low-interactivity widgets can move to Astro + plain TypeScript first
   - medium/high-state admin and analytics panels must be evaluated individually
   - do not propose big-bang React removal
+  - after hydration reaches zero, convert package removal into an audit-first task, not an uninstall-first task
 
 ### Database
 
