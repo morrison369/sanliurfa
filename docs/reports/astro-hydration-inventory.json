@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-04-17T00:49:47.270Z",
-  "astroFiles": 190,
-  "tsxFiles": 62,
-  "totalHydrationPoints": 4,
+  "generatedAt": "2026-04-17T00:55:54.397Z",
+  "astroFiles": 191,
+  "tsxFiles": 61,
+  "totalHydrationPoints": 3,
   "lowRiskCount": 0,
   "mediumRiskCount": 0,
-  "highRiskCount": 4,
+  "highRiskCount": 3,
   "entries": [
     {
       "pagePath": "src/pages/admin/moderation.astro",
@@ -27,13 +27,6 @@
       "directive": "load",
       "risk": "high",
       "rationale": "ActivityFeed yoğun state veya dashboard tipi davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/webhooks.astro",
-      "componentName": "WebhookManager",
-      "directive": "load",
-      "risk": "high",
-      "rationale": "WebhookManager yoğun state veya dashboard tipi davranış taşıyor."
     }
   ]
 }

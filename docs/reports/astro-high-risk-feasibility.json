@@ -1,27 +1,10 @@
 {
-  "generatedAt": "2026-04-17T00:49:47.498Z",
-  "totalHighRiskComponents": 3,
+  "generatedAt": "2026-04-17T00:55:54.517Z",
+  "totalHighRiskComponents": 2,
   "firstCount": 0,
   "laterCount": 0,
-  "lastCount": 3,
+  "lastCount": 2,
   "entries": [
-    {
-      "componentName": "WebhookManager",
-      "componentPath": "src/components/WebhookManager.tsx",
-      "pagePaths": [
-        "src/pages/webhooks.astro"
-      ],
-      "usageCount": 1,
-      "lines": 250,
-      "useStateCount": 6,
-      "useEffectCount": 2,
-      "fetchCount": 3,
-      "typedClientCount": 0,
-      "adminSurface": false,
-      "complexityScore": 73,
-      "migrationPriority": "last",
-      "recommendation": "WebhookManager yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
-    },
     {
       "componentName": "ActivityFeed",
       "componentPath": "src/components/ActivityFeed.tsx",
