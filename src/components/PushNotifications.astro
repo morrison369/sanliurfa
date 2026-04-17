@@ -16,7 +16,7 @@ const { user } = Astro.props;
           </svg>
         </div>
         <div class="flex-1">
-          <h3 class="font-semibold text-gray-900 dark:text-white">Bildirimlere İzin Ver</h3>
+          <h3 class="font-semibold text-gray-900 dark:text-white">Bildirimlere izin ver</h3>
           <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Yeni yorumlar, seviye atlama ve rozet bildirimlerini anında alın.
           </p>
@@ -25,13 +25,13 @@ const { user } = Astro.props;
               id="enable-push"
               class="px-4 py-2 bg-urfa-600 text-white text-sm rounded-lg hover:bg-urfa-700 transition-colors"
             >
-              İzin Ver
+              İzin ver
             </button>
             <button 
               id="dismiss-push"
               class="px-4 py-2 text-gray-600 dark:text-gray-400 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
-              Şimdi Değil
+              Şimdi değil
             </button>
           </div>
         </div>
@@ -84,11 +84,11 @@ const { user } = Astro.props;
         prompt?.classList.add('hidden');
         
         if (window.toast) {
-          window.toast.success('Bildirimler etkinleştirildi!');
+          window.toast.success('Bildirimler etkinleştirildi.');
         }
       }
     } catch (error) {
-      console.error('Push subscription failed:', error);
+      console.error('Push bildirim aboneliği başarısız oldu:', error);
     }
   });
 
