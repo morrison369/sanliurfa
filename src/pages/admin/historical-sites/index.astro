@@ -22,7 +22,7 @@ const statsResult = await query(
 const stats = statsResult.rows[0];
 
 const seo = {
-  title: 'Tarihi Yerler Yönetimi - Yönetim Paneli',
+  title: 'Tarihi yerler yönetimi - Yönetim Paneli',
   noindex: true
 };
 ---
@@ -55,7 +55,7 @@ const seo = {
           <p class="text-2xl font-bold text-blue-800 dark:text-blue-300">{stats.unesco}</p>
         </div>
         <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-xl p-4 border border-urfa-200 dark:border-urfa-800">
-          <p class="text-sm text-urfa-700 dark:text-urfa-400">Öne Çıkan</p>
+          <p class="text-sm text-urfa-700 dark:text-urfa-400">Öne çıkan</p>
           <p class="text-2xl font-bold text-urfa-800 dark:text-urfa-300">{stats.featured}</p>
         </div>
         <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
@@ -93,7 +93,7 @@ const seo = {
                         )}
                         {site.is_featured && !site.is_unesco && (
                           <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-urfa-100 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300 text-xs rounded mt-1">
-                            ⭐ Öne Çıkan
+                            ⭐ Öne çıkan
                           </span>
                         )}
                       </div>
@@ -141,7 +141,7 @@ const seo = {
                 <tr>
                   <td colspan="5" class="py-8 text-center text-gray-500 dark:text-gray-400">
                     Henüz tarihi yer bulunmuyor.
-                    <a href="/admin/historical-sites/add" class="text-urfa-600 hover:underline ml-1">İlk yeri ekle</a>
+                    <a href="/admin/historical-sites/add" class="text-urfa-600 hover:underline ml-1">İlk yeri ekleyin</a>
                   </td>
                 </tr>
               )}
