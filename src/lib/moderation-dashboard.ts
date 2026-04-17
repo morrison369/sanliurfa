@@ -122,8 +122,8 @@ export function extractModerationReports(payload: unknown): ModerationReport[] {
 
 function statusLabel(status: string): string {
   if (status === 'pending') return 'Beklemede';
-  if (status === 'under_review') return 'Incelemede';
-  if (status === 'resolved') return 'Cozumlendi';
+  if (status === 'under_review') return 'İncelemede';
+  if (status === 'resolved') return 'Çözümlendi';
   return status;
 }
 
@@ -135,13 +135,13 @@ function statusClass(status: string): string {
 
 export function renderModerationDashboard(state: ModerationDashboardState): string {
   if (state.loading && !state.stats) {
-    return '<div class="text-center py-8">Yukleniyor...</div>';
+    return '<div class="text-center py-8">Yükleniyor...</div>';
   }
 
   const tabs = [
-    ['overview', 'Ozet'],
+    ['overview', 'Özet'],
     ['reports', 'Raporlar'],
-    ['actions', 'Islemler'],
+    ['actions', 'İşlemler'],
   ].map(([value, label]) => `
     <button type="button" data-moderation-tab="${value}" class="px-4 py-2 font-medium border-b-2 transition-colors ${state.selectedTab === value ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 dark:text-gray-400'}">${label}</button>
   `).join('');
@@ -154,11 +154,11 @@ export function renderModerationDashboard(state: ModerationDashboardState): stri
     ? `
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-red-600">${state.stats.pending_reports}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Beklemede Raporlar</div></div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-yellow-600">${state.stats.in_review_reports}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Incelemede Raporlar</div></div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-green-600">${state.stats.resolved_reports}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Cozumlenen Raporlar</div></div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-orange-600">${state.stats.active_bans}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Aktif Banlar</div></div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-blue-600">${state.stats.total_warnings}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Toplam Uyarilar</div></div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-purple-600">${state.stats.queue_items}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Kuyrukta Itemler</div></div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-yellow-600">${state.stats.in_review_reports}</div><div class="text-gray-600 dark:text-gray-400 text-sm">İncelemedeki Raporlar</div></div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-green-600">${state.stats.resolved_reports}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Çözümlenen Raporlar</div></div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-orange-600">${state.stats.active_bans}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Aktif Yasaklamalar</div></div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-blue-600">${state.stats.total_warnings}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Toplam Uyarılar</div></div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-purple-600">${state.stats.queue_items}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Kuyruktaki Kayıtlar</div></div>
       </div>
     `
     : '';
@@ -168,12 +168,12 @@ export function renderModerationDashboard(state: ModerationDashboardState): stri
       <div class="space-y-4">
         <div class="flex gap-2">
           ${['all', 'pending', 'under_review', 'resolved'].map((status) => `
-            <button type="button" data-moderation-filter="${status}" class="px-4 py-2 rounded-lg font-medium transition-colors ${state.reportFilter === status ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}">${status === 'all' ? 'Tumu' : statusLabel(status)}</button>
+            <button type="button" data-moderation-filter="${status}" class="px-4 py-2 rounded-lg font-medium transition-colors ${state.reportFilter === status ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}">${status === 'all' ? 'Tümü' : statusLabel(status)}</button>
           `).join('')}
         </div>
         <div class="space-y-3">
           ${state.reports.length === 0
-            ? '<div class="text-center py-8 text-gray-500 dark:text-gray-400">Rapor bulunamadi</div>'
+            ? '<div class="text-center py-8 text-gray-500 dark:text-gray-400">Rapor bulunamadı</div>'
             : state.reports.map((report) => `
               <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                 <div class="flex justify-between items-start mb-2">
@@ -186,10 +186,10 @@ export function renderModerationDashboard(state: ModerationDashboardState): stri
                 ${report.description ? `<p class="text-sm text-gray-700 dark:text-gray-300 mb-3">${escapeHtml(report.description)}</p>` : ''}
                 <div class="flex gap-2">
                   ${report.status === 'pending' ? `
-                    <button type="button" data-moderation-open-action="${report.id}" data-moderation-target-user="${report.reported_user_id ?? ''}" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Islem Al</button>
-                    <button type="button" data-moderation-report-status="${report.id}:under_review" class="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700">Incelemede Isaretle</button>
+                    <button type="button" data-moderation-open-action="${report.id}" data-moderation-target-user="${report.reported_user_id ?? ''}" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">İşlem uygula</button>
+                    <button type="button" data-moderation-report-status="${report.id}:under_review" class="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700">İncelemede işaretle</button>
                   ` : ''}
-                  ${report.status === 'under_review' ? `<button type="button" data-moderation-report-status="${report.id}:resolved" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">Cozumlendi Isaretle</button>` : ''}
+                  ${report.status === 'under_review' ? `<button type="button" data-moderation-report-status="${report.id}:resolved" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">Çözümlendi işaretle</button>` : ''}
                 </div>
               </div>
             `).join('')}
@@ -201,7 +201,7 @@ export function renderModerationDashboard(state: ModerationDashboardState): stri
   const actionsHtml = state.selectedTab === 'actions'
     ? `
       <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <p class="text-sm text-gray-600 dark:text-gray-400">Moderasyon islemleri rapor kartlarindaki “Islem Al” aksiyonu ile acilir.</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Moderasyon işlemleri rapor kartlarındaki “İşlem uygula” düğmesi ile açılır.</p>
       </div>
     `
     : '';
@@ -210,12 +210,17 @@ export function renderModerationDashboard(state: ModerationDashboardState): stri
     ? `
       <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" data-moderation-modal>
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Moderasyon Islemi Al</h3>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Moderasyon işlemi uygula</h3>
           <form data-moderation-action-form class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Islem Tipi</label>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">İşlem tipi</label>
               <select data-moderation-action-type class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                ${['warning', 'content_removed', 'suspend', 'ban'].map((value) => `<option value="${value}" ${state.actionForm.action_type === value ? 'selected' : ''}>${value}</option>`).join('')}
+                ${[
+                  ['warning', 'Uyarı'],
+                  ['content_removed', 'İçeriği kaldır'],
+                  ['suspend', 'Askıya al'],
+                  ['ban', 'Yasakla'],
+                ].map(([value, label]) => `<option value="${value}" ${state.actionForm.action_type === value ? 'selected' : ''}>${label}</option>`).join('')}
               </select>
             </div>
             <div>
@@ -223,11 +228,11 @@ export function renderModerationDashboard(state: ModerationDashboardState): stri
               <textarea data-moderation-action-reason rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">${escapeHtml(state.actionForm.reason)}</textarea>
             </div>
             ${['suspend', 'ban'].includes(state.actionForm.action_type)
-              ? `<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gun Sayisi</label><input data-moderation-action-duration type="number" min="1" max="365" value="${state.actionForm.duration_days}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>`
+              ? `<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gün sayısı</label><input data-moderation-action-duration type="number" min="1" max="365" value="${state.actionForm.duration_days}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>`
               : ''}
             <div class="flex gap-3">
-              <button type="button" data-moderation-close-action class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Iptal</button>
-              <button type="submit" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Islemi Al</button>
+              <button type="button" data-moderation-close-action class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">İptal</button>
+              <button type="submit" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">İşlemi uygula</button>
             </div>
           </form>
         </div>
