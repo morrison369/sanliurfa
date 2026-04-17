@@ -85,19 +85,19 @@ const campaigns = await getAllCampaigns(100);
 
               <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
                 <div>
-                  <span class="text-gray-600">Gönderim:</span>
+                  <span class="text-gray-600">Toplam gönderim:</span>
                   <span class="font-semibold ml-2">{campaign.sendCount}</span>
                 </div>
                 <div>
-                  <span class="text-gray-600">Açılma:</span>
+                  <span class="text-gray-600">Açılma sayısı:</span>
                   <span class="font-semibold ml-2">{campaign.openCount} ({campaign.sendCount > 0 ? Math.round((campaign.openCount / campaign.sendCount) * 100) : 0}%)</span>
                 </div>
                 <div>
-                  <span class="text-gray-600">Tıklama:</span>
+                  <span class="text-gray-600">Tıklama sayısı:</span>
                   <span class="font-semibold ml-2">{campaign.clickCount} ({campaign.sendCount > 0 ? Math.round((campaign.clickCount / campaign.sendCount) * 100) : 0}%)</span>
                 </div>
                 <div>
-                  <span class="text-gray-600">Abonelikten çıkış:</span>
+                  <span class="text-gray-600">Abonelikten çıkış sayısı:</span>
                   <span class="font-semibold ml-2">{campaign.unsubscribeCount}</span>
                 </div>
               </div>
