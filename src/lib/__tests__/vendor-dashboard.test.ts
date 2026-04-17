@@ -5,14 +5,14 @@ import { renderVendorDashboard } from '../vendor-dashboard';
 describe('vendor dashboard helpers', () => {
   it('renders overview tab by default', () => {
     const html = renderVendorDashboard({ activeTab: 'overview' });
-    expect(html).toContain('İşletme Paneli');
-    expect(html).toContain('Toplam Görüntüleme');
-    expect(html).toContain('Genel Bakış');
+    expect(html).toContain('İşletme paneli');
+    expect(html).toContain('Toplam görüntüleme');
+    expect(html).toContain('Genel bakış');
   });
 
   it('renders reviews tab state', () => {
     const html = renderVendorDashboard({ activeTab: 'reviews' });
     expect(html).toContain('Muhteşem hizmet!');
-    expect(html).toContain('Yorumlar');
+    expect(html).toContain('Yorum yönetimi');
   });
 });

@@ -66,8 +66,8 @@ describe('subscription admin dashboard helpers', () => {
       },
     });
 
-    expect(html).toContain('Toplam Abonelik');
-    expect(html).toContain('Plan Dağılımı');
+    expect(html).toContain('Toplam abonelik');
+    expect(html).toContain('Plan dağılımı');
     expect(html).toContain('₺1200.00');
   });
 });

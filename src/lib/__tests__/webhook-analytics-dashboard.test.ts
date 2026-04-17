@@ -59,8 +59,8 @@ describe('webhook analytics dashboard helpers', () => {
       },
     });
 
-    expect(html).toContain('Olay Türleri Başarı Oranları');
-    expect(html).toContain('place.created');
-    expect(html).toContain('Toplam Webhooks');
+    expect(html).toContain('Olay türü başarı oranları');
+    expect(html).toContain('Mekan oluşturuldu');
+    expect(html).toContain('Webhook sayısı');
   });
 });
