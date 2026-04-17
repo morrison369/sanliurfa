@@ -1,6 +1,6 @@
-# Release Gates
+# Release Gate'leri
 
-## Required Gate Sequence
+## Zorunlu Gate Sırası
 1. `npm run env:contract:check`
 2. `npm run repo:stabilize:check`
 3. `npm run security:secrets:scan`
@@ -30,12 +30,12 @@
 
 > Not: `migrate:status` local ortamda DB yoksa advisory fallback ile raporlanır; CI içinde ayrı adım olarak zorunlu çalışır.
 
-## Single Command
+## Tek Komut
 ```bash
 npm run release:gate
 ```
 
-## Local Command
+## Yerel Komut
 ```bash
 npm run release:gate:local
 ```
@@ -55,13 +55,13 @@ npm run release:gate:local
   - `governance:querymany:check`: `queryMany(...).rows` kalıbını tamamen yasaklar
   - `governance:migrations:contract:check`: migration kontrat drift’ini tamamen yasaklar
 
-## CI Enforcement
-- `.github/workflows/ci.yml` (master) runs env contract, stabilization, secret scan, governance import guard, db drift, test DB bootstrap, migrate status + dry-run, app typecheck and e2e smoke.
-- Full E2E runs in advisory mode (`continue-on-error`) to keep merge path deterministic.
+## CI Zorlaması
+- `.github/workflows/ci.yml` (master) env contract, stabilization, secret scan, governance import guard, db drift, test DB bootstrap, migrate status + dry-run, app typecheck ve e2e smoke çalıştırır.
+- Full E2E, merge yolunu deterministik tutmak için advisory modda (`continue-on-error`) çalışır.
 - `.github/workflows/phase-gate.yml` legacy phase compatibility workflow'udur; merge kararı vermez ve manuel çalıştırılır.
 - Merge ve release kararı `.github/workflows/ci.yml` içindeki `quick-gate` ve `full-gate` job'ları üzerinden verilir.
 - Artifact freshness ve admin panelde gorunen `healthy/degraded/blocked` policy'si icin `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` dosyasini source of truth kabul et.
 
-## SLO Note
+## SLO Notu
 - `test:e2e:smoke` route başına yanıt süresi bütçesi uygular (`SMOKE_MAX_MS`, varsayılan `2000`).
 - `test:e2e:pwa` manifest, service worker ve offline fallback artefact’larını Chromium browser smoke ile doğrular.

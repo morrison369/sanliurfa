@@ -1,22 +1,22 @@
-# Branch Protection Baseline
+# Branch Koruma Temel Çizgisi
 
-Apply these rules on `main` and `master`:
+Bu kuralları `main` ve `master` üzerinde uygula:
 
-- Require pull request before merge.
-- Require status checks to pass before merge.
-- Require up-to-date branch before merge.
-- Block force-push and branch deletion.
+- Merge öncesi pull request zorunlu olsun.
+- Merge öncesi status check'lerin geçmesi zorunlu olsun.
+- Merge öncesi branch'in güncel olması zorunlu olsun.
+- Force-push ve branch silme engellensin.
 
-Required checks:
+Zorunlu kontroller:
 - `quick-gate`
 
-Protected branch push checks:
+Korunan branch push kontrolleri:
 - `full-gate`
 
-Recommended advisory checks:
+Önerilen advisory kontroller:
 - `critical-contracts-advisory`
 - `e2e-smoke-advisory`
 
-Operational note:
-- `critical-contracts-advisory` is intentionally non-blocking to keep PR velocity while still surfacing drift in broader contract suites.
+Operasyon notu:
+- `critical-contracts-advisory`, daha geniş kontrat drift'ini görünür kılarken PR hızını korumak için bilinçli olarak blocking değildir.
 - Blocking karar sadece job isimleri üzerinden verilir; step isimleri branch protection required check listesine yazılmaz.
