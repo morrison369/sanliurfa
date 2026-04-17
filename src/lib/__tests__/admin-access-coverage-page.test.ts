@@ -14,7 +14,7 @@ describe('admin access coverage page helpers', () => {
   });
 
   it('builds healthy summary text', () => {
-    expect(buildCoverageSummaryText('healthy', 100, 0)).toBe('Durum: healthy. Coverage %100. Drift: 0.');
+    expect(buildCoverageSummaryText('healthy', 100, 0)).toBe('Durum: healthy. Kapsama %100. Drift: 0.');
   });
 
   it('builds drift files html with empty and filled states', () => {

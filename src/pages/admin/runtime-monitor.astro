@@ -8,8 +8,8 @@ if (!user || !Astro.locals.isAdmin) {
 }
 
 const seo = {
-  title: 'Runtime Monitör - Şanlıurfa.com',
-  description: 'Health, performance ve artifact health özetlerini tek ekranda izleyin.',
+  title: 'Çalışma Zamanı Monitörü - Şanlıurfa.com',
+  description: 'Sağlık, performans ve artefact sağlığı özetlerini tek ekranda izleyin.',
 };
 ---
 
@@ -18,10 +18,10 @@ const seo = {
     <div class="container-custom space-y-6">
       <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p class="text-sm font-semibold uppercase tracking-[0.24em] text-urfa-600">Runtime Monitör</p>
+          <p class="text-sm font-semibold uppercase tracking-[0.24em] text-urfa-600">Çalışma Zamanı Monitörü</p>
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Operasyon sinyalleri</h1>
           <p class="mt-2 max-w-3xl text-sm text-gray-600 dark:text-gray-400">
-            Health, detailed health, performance, admin optimization ve access coverage sinyalleri aynı ekranda.
+            Sağlık, detaylı sağlık, performans, admin optimizasyonu ve erişim kapsaması sinyalleri aynı ekranda.
           </p>
         </div>
         <button
@@ -42,7 +42,7 @@ const seo = {
           <div id="runtime-monitor-last-refresh" class="mt-2 text-lg font-semibold text-gray-900 dark:text-white">-</div>
         </div>
         <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-          <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Auto refresh</div>
+          <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Otomatik yenileme</div>
           <div class="mt-2 text-lg font-semibold text-gray-900 dark:text-white">60 saniye</div>
         </div>
         <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
@@ -50,7 +50,7 @@ const seo = {
           <div id="runtime-monitor-trend" class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Henüz veri yok.</div>
         </div>
         <div class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-          <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Incident Delta</div>
+          <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Olay farkı</div>
           <div id="runtime-monitor-delta" class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Henüz veri yok.</div>
         </div>
       </div>
@@ -59,7 +59,7 @@ const seo = {
         <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Root Health</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Kök sağlık</h2>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">`/api/health`</p>
             </div>
             <span id="health-badge" class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">-</span>
@@ -70,7 +70,7 @@ const seo = {
         <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Detailed Health</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Detaylı sağlık</h2>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">`/api/health/detailed`</p>
             </div>
             <span id="health-detailed-badge" class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">-</span>
@@ -81,7 +81,7 @@ const seo = {
         <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Performance</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Performans</h2>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">`/api/performance`</p>
             </div>
             <span id="performance-badge" class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">-</span>
@@ -92,7 +92,7 @@ const seo = {
         <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Performance Optimization</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Performans optimizasyonu</h2>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">`/api/admin/performance/optimization`</p>
             </div>
             <span id="optimization-badge" class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">-</span>
@@ -103,7 +103,7 @@ const seo = {
         <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Admin Access Coverage</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Admin erişim kapsaması</h2>
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">`/api/admin/system/admin-access-coverage`</p>
             </div>
             <span id="admin-access-coverage-badge" class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200">-</span>
@@ -114,7 +114,7 @@ const seo = {
               href="/admin/access-coverage"
               class="inline-flex items-center justify-center rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-urfa-600 hover:text-urfa-700 dark:border-gray-700 dark:text-gray-200"
             >
-              Coverage Sayfasını Aç
+              Kapsama sayfasını aç
             </a>
             <a
               id="runtime-admin-access-coverage-download-json"
