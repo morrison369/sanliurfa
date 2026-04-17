@@ -28,7 +28,7 @@ import type {
 async function fetchJson<T>(url: string): Promise<T> {
   const response = await fetch(url, { credentials: 'same-origin' });
   if (!response.ok) {
-    throw new Error(`request-failed:${response.status}`);
+    throw new Error(`İstek başarısız: ${response.status}`);
   }
 
   return response.json() as Promise<T>;
@@ -47,7 +47,7 @@ async function parseError(response: Response): Promise<string> {
     // no-op
   }
 
-  return `request-failed:${response.status}`;
+  return `İstek başarısız: ${response.status}`;
 }
 
 async function postJson<T>(url: string, body: Record<string, unknown>, method = 'POST'): Promise<T> {
