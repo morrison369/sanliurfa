@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-04-17T00:00:11.064Z",
-  "astroFiles": 182,
-  "tsxFiles": 70,
-  "totalHydrationPoints": 12,
+  "generatedAt": "2026-04-17T00:03:27.552Z",
+  "astroFiles": 183,
+  "tsxFiles": 69,
+  "totalHydrationPoints": 11,
   "lowRiskCount": 0,
   "mediumRiskCount": 0,
-  "highRiskCount": 12,
+  "highRiskCount": 11,
   "entries": [
     {
       "pagePath": "src/pages/admin/analytics.astro",
@@ -76,13 +76,6 @@
       "directive": "load",
       "risk": "high",
       "rationale": "OLAPExplorer yoğun state veya dashboard tipi davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/webhooks.astro",
-      "componentName": "WebhookAnalyticsDashboard",
-      "directive": "load",
-      "risk": "high",
-      "rationale": "WebhookAnalyticsDashboard yoğun state veya dashboard tipi davranış taşıyor."
     },
     {
       "pagePath": "src/pages/webhooks.astro",

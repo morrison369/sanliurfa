@@ -13,19 +13,19 @@ Bu belge, `Şanlıurfa.com` kod tabanının mevcut Astro + React island mimarisi
 
 2026-04-17 itibarıyla ölçülen yüzey:
 
-- `src/**/*.astro`: `182`
-- `src/**/*.tsx`: `70`
-- `.astro` dosyalarında `client:*` hydration kullanımı: `12`
+- `src/**/*.astro`: `183`
+- `src/**/*.tsx`: `69`
+- `.astro` dosyalarında `client:*` hydration kullanımı: `11`
 - `astro.config.mjs` içinde aktif React entegrasyonu: `@astrojs/react`
-- generated inventory: `docs/reports/astro-hydration-inventory.md` (`0 low / 0 medium / 12 high`)
-- high-risk feasibility report: `docs/reports/astro-high-risk-feasibility.md` (`0 first / 0 later / 11 last`)
+- generated inventory: `docs/reports/astro-hydration-inventory.md` (`0 low / 0 medium / 11 high`)
+- high-risk feasibility report: `docs/reports/astro-high-risk-feasibility.md` (`0 first / 0 later / 10 last`)
 
 Mevcut yapı:
 
 - SSR ve routing katmanı Astro ile çalışıyor.
 - İnteraktif panellerin önemli bölümü React island olarak hydrate ediliyor.
 - Admin, analytics, search, social, subscriptions, notifications ve messaging yüzeyleri React bağımlılığını yoğun kullanıyor.
-- İlk migration dalgalarında `NotificationBadge`, `QuotaUsageDisplay`, `TrendingPlaces`, `LeaderboardsDisplay`, `PricingPlans`, `UserRecommendations`, `PerformanceMonitor`, `PWAPrompt`, `TransactionHistory`, `BillingHistory`, `RewardsCatalog`, `NotificationPreferencesManager`, `NotificationCenter`, `NotificationsCenter`, `SubscriptionManager`, `MyActivityLog`, `UserSuggestionsPanel`, `UserSearchResults`, `HashtagExplorer`, `CollectionsManager`, `ContentManager`, `UserPublicProfile`, `ReportManager`, `VendorDashboard`, `LoyaltyDashboard`, `UserProfile`, `CollectionDetail`, `UserSettings`, `SearchResults`, `BusinessAnalyticsDashboard`, `FeaturedListingsManager`, `MarketingCampaignBuilder`, `AdminLoyaltyPanel`, `AuditLogViewer`, `UserManagementTable`, `AdminDashboardOverview`, `AnalyticsPanel`, `AdminAnalyticsDashboard` ve `AdminManager` React island olmaktan çıkarıldı.
+- İlk migration dalgalarında `NotificationBadge`, `QuotaUsageDisplay`, `TrendingPlaces`, `LeaderboardsDisplay`, `PricingPlans`, `UserRecommendations`, `PerformanceMonitor`, `PWAPrompt`, `TransactionHistory`, `BillingHistory`, `RewardsCatalog`, `NotificationPreferencesManager`, `NotificationCenter`, `NotificationsCenter`, `SubscriptionManager`, `MyActivityLog`, `UserSuggestionsPanel`, `UserSearchResults`, `HashtagExplorer`, `CollectionsManager`, `ContentManager`, `UserPublicProfile`, `ReportManager`, `VendorDashboard`, `LoyaltyDashboard`, `UserProfile`, `CollectionDetail`, `UserSettings`, `SearchResults`, `BusinessAnalyticsDashboard`, `FeaturedListingsManager`, `MarketingCampaignBuilder`, `AdminLoyaltyPanel`, `AuditLogViewer`, `UserManagementTable`, `AdminDashboardOverview`, `AnalyticsPanel`, `AdminAnalyticsDashboard`, `AdminManager` ve `WebhookAnalyticsDashboard` React island olmaktan çıkarıldı.
 
 ## Astro-Only Hedefinin Anlamı
 

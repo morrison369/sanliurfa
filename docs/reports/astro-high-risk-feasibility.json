@@ -1,27 +1,10 @@
 {
-  "generatedAt": "2026-04-17T00:00:11.162Z",
-  "totalHighRiskComponents": 11,
+  "generatedAt": "2026-04-17T00:03:27.651Z",
+  "totalHighRiskComponents": 10,
   "firstCount": 0,
   "laterCount": 0,
-  "lastCount": 11,
+  "lastCount": 10,
   "entries": [
-    {
-      "componentName": "WebhookAnalyticsDashboard",
-      "componentPath": "src/components/WebhookAnalyticsDashboard.tsx",
-      "pagePaths": [
-        "src/pages/webhooks.astro"
-      ],
-      "usageCount": 1,
-      "lines": 211,
-      "useStateCount": 5,
-      "useEffectCount": 2,
-      "fetchCount": 1,
-      "typedClientCount": 0,
-      "adminSurface": false,
-      "complexityScore": 57,
-      "migrationPriority": "last",
-      "recommendation": "WebhookAnalyticsDashboard yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
-    },
     {
       "componentName": "LiveAnalyticsDashboard",
       "componentPath": "src/components/LiveAnalyticsDashboard.tsx",
