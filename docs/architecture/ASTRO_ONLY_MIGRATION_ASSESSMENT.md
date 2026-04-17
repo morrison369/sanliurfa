@@ -112,7 +112,6 @@ Bunlar pratikte mini SPA davranışı gösterir:
 - `src/components/ModerationDashboard.tsx`
 - `src/components/WebhookAnalyticsDashboard.tsx`
 - `src/components/MessagingInbox.tsx`
-- `src/components/ActivityFeed.tsx`
 - `src/components/LiveAnalyticsDashboard.tsx`
 
 Bu yüzeyleri Astro-only yapmak mümkündür, ama maliyeti yüksektir. Kısa vadede bunları React'te bırakmak daha ekonomik olabilir.
@@ -141,7 +140,7 @@ Bu liste, migration sıralamasında öncelik değil; maliyet haritasıdır.
 `docs/reports/astro-high-risk-feasibility.md` çıktısına göre:
 
 - `later` bucket kapandı; kalan tüm yüzeyler doğrudan pahalı `last` grubunda
-- son dalga adayları: `ActivityFeed`, `ModerationDashboard`
+- son dalga adayı: `ModerationDashboard`
 
 Bu sonuç önemli çünkü artık `medium` bucket yok. Bundan sonraki yanlış seçim doğrudan pahalı rewrite anlamına gelir.
 
