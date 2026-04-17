@@ -15,11 +15,11 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `187`
-- `.tsx`: `65`
-- `client:*` hydration noktası: `7`
-- current generated risk split: `0 low / 0 medium / 7 high`
-- current high-risk feasibility split: `0 first / 0 later / 6 last`
+- `.astro`: `188`
+- `.tsx`: `64`
+- `client:*` hydration noktası: `6`
+- current generated risk split: `0 low / 0 medium / 6 high`
+- current high-risk feasibility split: `0 first / 0 later / 5 last`
 
 İlk hedefler:
 
@@ -102,6 +102,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/ModerationQueueManager.tsx` -> `src/components/ModerationQueueManager.astro`
 - `src/components/SubscriptionAdminDashboard.tsx` -> `src/components/SubscriptionAdminDashboard.astro`
 - `src/components/AdminVerificationQueue.tsx` -> `src/components/AdminVerificationQueue.astro`
+- `src/components/OLAPExplorer.tsx` -> `src/components/OLAPExplorer.astro`
 
 Bu dalga ile:
 
@@ -145,7 +146,8 @@ Bu dalga ile:
 - `src/pages/admin/dashboard.astro` içindeki `ModerationQueueManager` artık React island değil
 - `src/pages/admin/subscriptions.astro` içindeki `SubscriptionAdminDashboard` artık React island değil
 - `src/pages/admin/verifications.astro` içindeki `AdminVerificationQueue` artık React island değil
-- toplam `client:*` sayısı `55 -> 7` düştü
+- `src/pages/veri-ambarı/index.astro` içindeki `OLAPExplorer` artık React island değil
+- toplam `client:*` sayısı `55 -> 6` düştü
 
 ### Önceki Düşük Risk Adayları
 
@@ -253,7 +255,6 @@ ayrı yazılmalı.
 
 `docs/reports/astro-high-risk-feasibility.md` artık `later` bucket bırakmıyor; kalan sıralama:
 
-- `OLAPExplorer`
 - `AdminPerformanceDashboard`
 - `MessagingInbox`
 - `WebhookManager`
