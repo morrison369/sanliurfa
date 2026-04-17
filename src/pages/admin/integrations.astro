@@ -116,10 +116,17 @@ const seo = {
     const resendPattern = /^re_[a-z0-9]+$/i;
     const analyticsPattern = /^G-[A-Z0-9]+$/;
 
+    function formatSource(value) {
+      if (value === 'env') return 'ortam değişkeni';
+      if (value === 'database') return 'panel ayarı';
+      if (value === 'default') return 'varsayılan değer';
+      return 'kaynak bilinmiyor';
+    }
+
     function formatStatus(name, payload) {
-      const state = payload.configured ? 'tanımlı' : 'eksik';
-      const value = payload.configured ? payload.maskedValue : 'tanımlı değil';
-      return `${name}: ${state} (${payload.source}) • ${value}`;
+      const state = payload.configured ? 'tanımlı' : 'tanımlı değil';
+      const value = payload.configured ? payload.maskedValue : 'değer girilmemiş';
+      return `${name}: ${state} (${formatSource(payload.source)}) • ${value}`;
     }
 
     function formatVerificationStatus(value) {

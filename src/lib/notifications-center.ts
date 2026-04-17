@@ -77,6 +77,19 @@ function formatNotificationDate(value: string): string {
   });
 }
 
+function formatNotificationType(type: string): string {
+  const normalized = type.trim().toLowerCase();
+
+  if (normalized === 'message' || normalized === 'new_message') return 'Yeni mesaj';
+  if (normalized === 'comment' || normalized === 'new_comment') return 'Yeni yorum';
+  if (normalized === 'like' || normalized === 'new_like') return 'Yeni beğeni';
+  if (normalized === 'follow' || normalized === 'new_follower') return 'Yeni takipçi';
+  if (normalized === 'mention') return 'Bahsedilme';
+  if (normalized === 'system') return 'Sistem bildirimi';
+
+  return type;
+}
+
 function renderError(message: string): string {
   return `
     <div class="rounded-lg border border-red-200 bg-red-50 p-4">
@@ -105,7 +118,7 @@ function renderNotificationItem(state: NotificationsCenterState, item: Notificat
     <div class="rounded-lg border p-4 ${cardClass}">
       <div class="flex items-start justify-between gap-4">
         <div class="min-w-0 flex-1">
-          <p class="font-medium text-gray-900">${item.type}</p>
+          <p class="font-medium text-gray-900">${formatNotificationType(item.type)}</p>
           <p class="mt-1 text-sm text-gray-600">${item.message}</p>
           <p class="mt-2 text-xs text-gray-500">${formatNotificationDate(item.created_at)}</p>
         </div>

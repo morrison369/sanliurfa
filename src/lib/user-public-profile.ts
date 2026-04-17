@@ -92,6 +92,19 @@ function renderError(message: string): string {
   `;
 }
 
+function formatActivityType(type: string): string {
+  const normalized = type.trim().toLowerCase();
+
+  if (normalized === 'review') return 'Değerlendirme';
+  if (normalized === 'comment') return 'Yorum';
+  if (normalized === 'favorite') return 'Favori';
+  if (normalized === 'follow') return 'Takip';
+  if (normalized === 'badge') return 'Rozet';
+  if (normalized === 'checkin') return 'Ziyaret';
+
+  return type;
+}
+
 function renderActivity(activity: UserPublicProfileActivity[]): string {
   if (activity.length === 0) {
     return '<p class="text-sm text-gray-500">Henüz etkinlik bulunmuyor.</p>';
@@ -104,7 +117,7 @@ function renderActivity(activity: UserPublicProfileActivity[]): string {
           (item) => `
             <div class="rounded-lg border border-gray-200 bg-white p-3">
               <div class="flex items-center justify-between gap-3">
-                <span class="text-xs font-medium uppercase tracking-wide text-gray-500">${item.type}</span>
+                <span class="text-xs font-medium uppercase tracking-wide text-gray-500">${formatActivityType(item.type)}</span>
                 <span class="text-xs text-gray-500">${formatDate(item.created_at)}</span>
               </div>
               <p class="mt-2 text-sm text-gray-700">${item.content}</p>
