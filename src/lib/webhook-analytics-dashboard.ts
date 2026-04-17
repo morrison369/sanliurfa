@@ -194,7 +194,7 @@ export function renderWebhookAnalyticsDashboard(options: {
   if (options.error || !options.metrics) {
     return `
       <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-        <p class="text-red-700">${options.error || 'Webhook analitikleri yüklenemedi.'}</p>
+        <p class="text-red-700">${options.error || 'Webhook analitiği yüklenemedi.'}</p>
       </div>
     `;
   }
@@ -204,7 +204,7 @@ export function renderWebhookAnalyticsDashboard(options: {
   return `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-900">Webhook analitikleri</h2>
+        <h2 class="text-2xl font-bold text-gray-900">Webhook analitiği</h2>
         <button
           type="button"
           data-webhook-analytics-refresh
