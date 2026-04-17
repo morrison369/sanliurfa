@@ -5,7 +5,7 @@
  */
 
 import Layout from '../../layouts/Layout.astro';
-import { AdminVerificationQueue } from '../../components/AdminVerificationQueue';
+import AdminVerificationQueue from '../../components/AdminVerificationQueue.astro';
 
 // Check admin access
 const user = Astro.locals.user;
@@ -28,7 +28,7 @@ const seo = {
         <p class="text-gray-600 dark:text-gray-400">Mekan sahiplerinin doğrulama başvurularını inceleyin ve yönetin.</p>
       </div>
 
-      <AdminVerificationQueue client:load />
+      <AdminVerificationQueue />
     </div>
   </div>
 </Layout>

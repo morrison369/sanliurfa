@@ -1,27 +1,10 @@
 {
-  "generatedAt": "2026-04-17T00:17:20.167Z",
-  "totalHighRiskComponents": 7,
+  "generatedAt": "2026-04-17T00:30:07.507Z",
+  "totalHighRiskComponents": 6,
   "firstCount": 0,
   "laterCount": 0,
-  "lastCount": 7,
+  "lastCount": 6,
   "entries": [
-    {
-      "componentName": "AdminVerificationQueue",
-      "componentPath": "src/components/AdminVerificationQueue.tsx",
-      "pagePaths": [
-        "src/pages/admin/verifications.astro"
-      ],
-      "usageCount": 1,
-      "lines": 189,
-      "useStateCount": 7,
-      "useEffectCount": 2,
-      "fetchCount": 0,
-      "typedClientCount": 2,
-      "adminSurface": true,
-      "complexityScore": 62,
-      "migrationPriority": "last",
-      "recommendation": "AdminVerificationQueue yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
-    },
     {
       "componentName": "OLAPExplorer",
       "componentPath": "src/components/OLAPExplorer.tsx",
