@@ -80,7 +80,7 @@ function formatNotificationDate(value: string): string {
 function renderError(message: string): string {
   return `
     <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-      <h3 class="font-medium text-red-900">Hata</h3>
+      <h3 class="font-medium text-red-900">İşlem hatası</h3>
       <p class="text-sm text-red-700">${message}</p>
     </div>
   `;

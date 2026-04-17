@@ -122,6 +122,13 @@ const seo = {
       return `${name}: ${state} (${payload.source}) • ${value}`;
     }
 
+    function formatVerificationStatus(value) {
+      if (!value) return 'bilinmiyor';
+      if (value === 'healthy') return 'sağlıklı';
+      if (value === 'degraded') return 'bozulmuş';
+      return value;
+    }
+
     function renderVerification(verification) {
       if (!verificationBox) {
         return;
@@ -136,8 +143,8 @@ const seo = {
       verificationBox.innerHTML = `
         <div class="space-y-1">
           <div>Genel durum: ${summary} • ${verification.summary?.checkedAt || 'bilinmiyor'}</div>
-          <div>RESEND: ${verification.resend?.status || 'bilinmiyor'} • ${verification.resend?.message || 'Mesaj yok'}</div>
-          <div>Analitik: ${verification.analytics?.status || 'bilinmiyor'} • ${verification.analytics?.message || 'Mesaj yok'}</div>
+          <div>RESEND: ${formatVerificationStatus(verification.resend?.status)} • ${verification.resend?.message || 'Mesaj bulunmuyor'}</div>
+          <div>Analitik: ${formatVerificationStatus(verification.analytics?.status)} • ${verification.analytics?.message || 'Mesaj bulunmuyor'}</div>
         </div>
       `;
     }

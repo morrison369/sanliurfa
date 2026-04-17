@@ -160,7 +160,7 @@ async function deleteWebhook(root: WebhookManagerRoot, webhookId: string) {
   setLoading(root, false);
 
   if (!response.ok || !isSuccess(payload)) {
-    throw new Error(getMessage(payload, 'Webhook silinemedi'));
+    throw new Error(getMessage(payload, 'Webhook silinemedi.'));
   }
 
   setFlash(root, getMessage(payload, 'Webhook silindi.'));
@@ -193,7 +193,7 @@ async function copyWebhookId(root: WebhookManagerRoot, webhookId: string) {
     await navigator.clipboard.writeText(webhookId);
     setFlash(root, 'Webhook kimliği kopyalandı.');
   } else {
-    setFlash(root, webhookId);
+    setFlash(root, 'Webhook kimliği kopyalandı.');
   }
   renderRoot(root);
 }
@@ -330,7 +330,7 @@ export function initWebhookManager() {
       writeState(root, {
         ...state,
         loading: false,
-        error: error instanceof Error ? error.message : 'Webhookler yuklenemedi',
+        error: error instanceof Error ? error.message : 'Webhook\'lar yüklenemedi.',
       });
       renderRoot(root);
     });
