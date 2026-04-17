@@ -45,14 +45,14 @@ const campaigns = await getAllCampaigns(100);
         role="tab"
         data-tab="analytics"
       >
-        Analitik
+        Kampanya analitiği
       </button>
       <button
         class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
         role="tab"
         data-tab="sequences"
       >
-        Otomasyon
+        Otomasyon akışları
       </button>
     </div>
 
@@ -187,7 +187,7 @@ const campaigns = await getAllCampaigns(100);
           <div>
             <label class="block text-sm font-medium mb-1">Hedef kitle</label>
             <select name="segment" required class="w-full px-4 py-2 border border-gray-300 rounded">
-              <option value="">Seç...</option>
+              <option value="">Hedef kitle seçin...</option>
               <option value="all_users">Tüm Kullanıcılar</option>
               <option value="subscribers">Abone Olanlar</option>
               <option value="premium">Premium Üyeler</option>
@@ -219,7 +219,7 @@ const campaigns = await getAllCampaigns(100);
               Kampanya oluştur
             </button>
             <button type="reset" class="px-6 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
-              Temizle
+              Formu temizle
             </button>
           </div>
         </div>
@@ -256,15 +256,15 @@ const campaigns = await getAllCampaigns(100);
         <ul class="mt-4 space-y-2 text-sm">
           <li class="flex items-center gap-2">
             <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-            <span><strong>Hoş Geldin Serisi:</strong> Yeni üye kaydolduğunda başlayıp 7 gün süren selamlaşma</span>
+            <span><strong>Hoş geldin serisi:</strong> Yeni üye kaydolduğunda başlayıp 7 gün süren selamlama akışı</span>
           </li>
           <li class="flex items-center gap-2">
             <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span><strong>Premium Onboarding:</strong> Premium abonelik başladığında başlayan selamlaşma</span>
+            <span><strong>Premium karşılama:</strong> Premium abonelik başladığında devreye giren karşılama akışı</span>
           </li>
           <li class="flex items-center gap-2">
             <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
-            <span><strong>Geri Kazanım:</strong> 30+ gün inaktif kullanıcılara yeniden katılım daveti</span>
+            <span><strong>Geri kazanım:</strong> 30+ gün pasif kullanıcılara yeniden katılım daveti</span>
           </li>
         </ul>
       </div>
