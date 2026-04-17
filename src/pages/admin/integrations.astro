@@ -25,7 +25,7 @@ const seo = {
 
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
         <section class="space-y-3">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Mevcut Durum</h2>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Mevcut durum</h2>
           <div id="status-box" class="text-sm text-gray-600 dark:text-gray-300">
             Yükleniyor...
           </div>
@@ -36,7 +36,7 @@ const seo = {
             id="refresh-verification"
             class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium"
           >
-            Canlı Doğrulama Yap
+            Canlı doğrulama yap
           </button>
         </section>
 
@@ -68,7 +68,7 @@ const seo = {
         </section>
 
         <section class="space-y-4">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Google Analitik Kimliği</h2>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Google analitik kimliği</h2>
           <input
             id="analyticsId"
             type="text"
@@ -156,7 +156,7 @@ const seo = {
       const response = await fetch(endpoint);
       const payload = await response.json();
       if (!response.ok || !payload?.data) {
-        throw new Error(payload?.error?.message || 'Ayarlar yüklenemedi');
+        throw new Error(payload?.error?.message || 'Ayarlar yüklenemedi.');
       }
 
       const resend = payload.data.resend;
