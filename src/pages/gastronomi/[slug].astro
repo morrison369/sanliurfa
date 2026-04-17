@@ -63,7 +63,7 @@ const breadcrumbItems = [
 ];
 
 const seo = {
-  title: `${food.name} - Şanlıurfa'nın Efsane Lezzeti`,
+  title: `${food.name} - Şanlıurfa'nın efsane lezzeti`,
   description: food.description,
   image: food.image,
   schema: {
@@ -201,7 +201,7 @@ const seo = {
         <aside class="space-y-6">
           {/* Where to Eat */}
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Nerede Yenir?</h3>
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Nerede yenir?</h3>
             <div class="space-y-3">
               {food.whereToEat.map(place => (
                 <a href={`/places/${place.slug}`} class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
@@ -220,7 +220,7 @@ const seo = {
               ))}
             </div>
             <a href="/places?category=restaurant" class="btn-outline w-full mt-4 text-sm flex items-center justify-center gap-2">
-              Tüm Restoranlar
+              Tüm restoranları gör
               <ArrowRight className="w-4 h-4" />
             </a>
           </div>
@@ -250,12 +250,12 @@ const seo = {
           
           {/* CTA */}
           <div class="bg-isot-600 rounded-xl p-6 text-white">
-            <h3 class="font-semibold mb-2">Mekanınızı Ekleyin</h3>
+            <h3 class="font-semibold mb-2">Mekanınızı ekleyin</h3>
             <p class="text-sm text-white/80 mb-4">
               Restoranınızı platformumuza ekleyerek binlerce kullanıcıya ulaşın.
             </p>
             <a href="/places/ekle" class="block w-full py-2 bg-white text-isot-600 rounded-lg font-medium text-center hover:bg-isot-50 transition-colors">
-              Ücretsiz Kaydol
+              Ücretsiz kaydol
             </a>
           </div>
         </aside>
