@@ -361,9 +361,12 @@ const pageTitle = 'Bildirimleri yönet';
                     document.getElementById('stat-clicked').textContent = data.clicked || '0';
                     document.getElementById('stat-subscribers').textContent = data.subscribers || '0';
                     document.getElementById('stat-rate').textContent = (data.rate || 0).toFixed(1) + '%';
+                } else {
+                    document.getElementById('stats-detail').textContent = 'İstatistikler yüklenemedi.';
                 }
             } catch (error) {
                 console.error('İstatistik yükleme hatası:', error);
+                document.getElementById('stats-detail').textContent = 'İstatistikler yüklenemedi.';
             }
         }
 
@@ -391,6 +394,7 @@ const pageTitle = 'Bildirimleri yönet';
                 }
             } catch (error) {
                 console.error('Geçmiş yükleme hatası:', error);
+                list.textContent = 'Bildirim geçmişi yüklenemedi.';
             }
         }
 
@@ -418,6 +422,7 @@ const pageTitle = 'Bildirimleri yönet';
                 }
             } catch (error) {
                 console.error('Taslak yükleme hatası:', error);
+                list.textContent = 'Taslaklar yüklenemedi.';
             }
         }
 

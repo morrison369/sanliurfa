@@ -314,6 +314,10 @@ const campaigns = await getAllCampaigns(100);
           } else {
             alert('Kampanya gönderilemedi: ' + data.error);
           }
+        })
+        .catch(error => {
+          console.error('Kampanya gönderimi başlatılamadı:', error);
+          alert('Kampanya gönderilemedi. Lütfen tekrar deneyin.');
         });
     }
   }
@@ -331,6 +335,10 @@ const campaigns = await getAllCampaigns(100);
         } else {
           alert('Test gönderimi başarısız: ' + data.error);
         }
+      })
+      .catch(error => {
+        console.error('Test gönderimi başlatılamadı:', error);
+        alert('Test gönderimi başarısız. Lütfen tekrar deneyin.');
       });
   }
 
@@ -355,19 +363,24 @@ const campaigns = await getAllCampaigns(100);
       status: 'draft'
     };
 
-    const response = await fetch('/api/marketing/campaigns', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    try {
+      const response = await fetch('/api/marketing/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-    const result = await response.json();
-    if (result.success) {
-      alert('Kampanya oluşturuldu.');
-      form.reset();
-      location.reload();
-    } else {
-      alert('Kampanya oluşturulamadı: ' + result.error);
+      const result = await response.json();
+      if (result.success) {
+        alert('Kampanya oluşturuldu.');
+        form.reset();
+        location.reload();
+      } else {
+        alert('Kampanya oluşturulamadı: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Kampanya oluşturulamadı:', error);
+      alert('Kampanya oluşturulamadı. Lütfen tekrar deneyin.');
     }
   });
 </script>
