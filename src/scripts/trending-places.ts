@@ -10,11 +10,11 @@ async function loadTrendingPlaces(root: TrendingRoot) {
 
   try {
     const response = await fetch('/api/discovery/trending?limit=10');
-    if (!response.ok) throw new Error('Failed to fetch trending');
+    if (!response.ok) throw new Error('Trend mekanlar alınamadı');
     const payload = (await response.json()) as { data?: TrendingPlace[] };
     setElementHtml(content, renderTrendingPlaces(payload.data || []));
   } catch (error) {
-    console.error('Failed to fetch trending', error);
+    console.error('Trend mekanlar alınamadı:', error);
     setElementHtml(
       content,
       '<div class="p-4 text-sm text-red-600 dark:text-red-400">Trend mekanlar yüklenemedi.</div>',
