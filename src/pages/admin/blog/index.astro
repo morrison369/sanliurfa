@@ -5,7 +5,7 @@ import { queryRows, queryOne } from '../../../lib/postgres';
 
 const user = Astro.locals.user;
 if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/login');
+  return Astro.redirect('/giris');
 }
 
 // Tüm yazıları getir (taslak ve yayınlanan)
