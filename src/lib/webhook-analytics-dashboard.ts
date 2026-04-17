@@ -34,6 +34,21 @@ export interface WebhookAnalyticsMetrics {
 
 export type WebhookAnalyticsTab = 'overview' | 'events' | 'failed';
 
+function formatWebhookEventLabel(event: string): string {
+  const labels: Record<string, string> = {
+    'place.created': 'Mekan oluşturuldu',
+    'place.updated': 'Mekan güncellendi',
+    'place.deleted': 'Mekan silindi',
+    'review.created': 'Değerlendirme oluşturuldu',
+    'review.deleted': 'Değerlendirme silindi',
+    'user.registered': 'Kullanıcı kaydoldu',
+    'user.blocked': 'Kullanıcı engellendi',
+    'message.sent': 'Mesaj gönderildi',
+  };
+
+  return labels[event] ?? event;
+}
+
 function isMetrics(value: unknown): value is WebhookAnalyticsMetrics {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<WebhookAnalyticsMetrics>;
@@ -124,7 +139,7 @@ function renderEvents(metrics: WebhookAnalyticsMetrics): string {
           ([event, stats]) => `
             <div class="rounded-lg bg-gray-50 p-4">
               <div class="mb-2 flex items-start justify-between">
-                <h4 class="font-medium text-gray-900">${event}</h4>
+                <h4 class="font-medium text-gray-900">${formatWebhookEventLabel(event)}</h4>
                 <span class="text-sm font-semibold ${getWebhookStatusColor(stats.successRate)}">${stats.successRate}%</span>
               </div>
               <div class="mb-2 h-2 w-full rounded-full bg-gray-200">
@@ -158,7 +173,7 @@ function renderFailed(metrics: WebhookAnalyticsMetrics): string {
             <div class="rounded-lg border border-red-200 bg-red-50 p-4">
               <div class="flex items-start justify-between">
                 <div>
-                  <h4 class="font-medium text-gray-900">${item.event}</h4>
+                  <h4 class="font-medium text-gray-900">${formatWebhookEventLabel(item.event)}</h4>
                   <p class="mt-1 text-sm text-gray-600">${item.failedCount} başarısız, ${item.attempts} toplam deneme</p>
                 </div>
                 <button class="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700">Tekrar dene</button>
