@@ -146,7 +146,7 @@ function renderEvents(metrics: WebhookAnalyticsMetrics): string {
 
 function renderFailed(metrics: WebhookAnalyticsMetrics): string {
   if (metrics.topFailedEvents.length === 0) {
-    return '<p class="py-8 text-center text-gray-500">Başarısız olay bulunmuyor.</p>';
+    return '<p class="py-8 text-center text-gray-500">Başarısız olay kaydı bulunmuyor.</p>';
   }
 
   return `
@@ -161,7 +161,7 @@ function renderFailed(metrics: WebhookAnalyticsMetrics): string {
                   <h4 class="font-medium text-gray-900">${item.event}</h4>
                   <p class="mt-1 text-sm text-gray-600">${item.failedCount} başarısız, ${item.attempts} toplam deneme</p>
                 </div>
-                <button class="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700">Yeniden dene</button>
+                <button class="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700">Tekrar dene</button>
               </div>
             </div>
           `,

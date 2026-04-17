@@ -8,7 +8,7 @@ if (!user || !Astro.locals.isAdmin) {
 
 const seo = {
   title: 'Entegrasyon ayarları - Yönetim Paneli',
-  description: 'E-posta ve analitik entegrasyon anahtarlarını yönet.',
+  description: 'E-posta ve analitik entegrasyon ayarlarını yönet.',
   noindex: true
 };
 ---
@@ -135,7 +135,7 @@ const seo = {
       }
 
       if (!verification) {
-        verificationBox.innerHTML = '<div>Canlı doğrulama henüz çalıştırılmadı.</div>';
+        verificationBox.innerHTML = '<div>Canlı doğrulama henüz başlatılmadı.</div>';
         return;
       }
 
@@ -143,8 +143,8 @@ const seo = {
       verificationBox.innerHTML = `
         <div class="space-y-1">
           <div>Genel durum: ${summary} • ${verification.summary?.checkedAt || 'bilinmiyor'}</div>
-          <div>RESEND: ${formatVerificationStatus(verification.resend?.status)} • ${verification.resend?.message || 'Mesaj bulunmuyor'}</div>
-          <div>Analitik: ${formatVerificationStatus(verification.analytics?.status)} • ${verification.analytics?.message || 'Mesaj bulunmuyor'}</div>
+          <div>RESEND: ${formatVerificationStatus(verification.resend?.status)} • ${verification.resend?.message || 'Açıklama bulunmuyor'}</div>
+          <div>Analitik: ${formatVerificationStatus(verification.analytics?.status)} • ${verification.analytics?.message || 'Açıklama bulunmuyor'}</div>
         </div>
       `;
     }
