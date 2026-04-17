@@ -29,8 +29,8 @@ describe('featured listings manager helpers', () => {
       form: createEmptyFeaturedListingFormData('p1'),
     });
 
-    expect(html).toContain('Yeminli Listeler');
-    expect(html).toContain('Yeni Yeminli Liste Oluştur');
+    expect(html).toContain('Öne çıkarılan listeler');
+    expect(html).toContain('Yeni öne çıkarılan liste oluştur');
     expect(html).toContain('Öne Çıkan');
   });
 });

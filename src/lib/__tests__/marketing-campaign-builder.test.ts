@@ -29,8 +29,8 @@ describe('marketing campaign builder helpers', () => {
       form: createEmptyCampaignFormData('p1'),
     });
 
-    expect(html).toContain('Pazarlama Kampanyaları');
-    expect(html).toContain('Yeni Kampanya Oluştur');
+    expect(html).toContain('Pazarlama kampanyaları');
+    expect(html).toContain('Yeni reklam kampanyası oluştur');
     expect(html).toContain('İlk Kampanya');
   });
 });
