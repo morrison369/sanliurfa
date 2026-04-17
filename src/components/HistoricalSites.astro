@@ -15,7 +15,7 @@ const sites = result.rows;
         <Camera className="w-5 h-5" />
         Tarihi Miras
       </span>
-      <h2 class="section-title dark:text-white">Tarihi Yerler</h2>
+      <h2 class="section-title dark:text-white">Tarihi yerler</h2>
       <p class="section-subtitle dark:text-gray-400">
         12.000 yıllık tarihe tanıklık eden Şanlıurfa'nın en önemli tarihi ve kültürel mekanlarını keşfedin.
       </p>
@@ -43,7 +43,7 @@ const sites = result.rows;
               
               {site.is_featured && !site.is_unesco && (
                 <div class="absolute top-4 left-4">
-                  <span class="badge bg-urfa-600 text-white">Öne Çıkan</span>
+                  <span class="badge bg-urfa-600 text-white">Öne çıkan</span>
                 </div>
               )}
               
@@ -80,7 +80,7 @@ const sites = result.rows;
       
       {(!sites || sites.length === 0) && (
         <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
-          Henüz tarihi yer bulunmuyor.
+          Henüz gösterilecek tarihi yer bulunmuyor.
         </div>
       )}
     </div>

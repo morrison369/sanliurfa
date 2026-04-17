@@ -34,7 +34,7 @@ const getCategoryLabel = (category: string) => {
           <TrendingUp className="w-5 h-5" />
           Popüler mekanlar
         </span>
-        <h2 class="section-title dark:text-white">Öne Çıkan Mekanlar</h2>
+        <h2 class="section-title dark:text-white">Öne çıkan mekanlar</h2>
         <p class="section-subtitle max-w-2xl dark:text-gray-400">
           Şanlıurfa'nın en çok ziyaret edilen ve en yüksek puan alan mekanlarını keşfedin.
         </p>
@@ -70,7 +70,7 @@ const getCategoryLabel = (category: string) => {
             
             <div class="absolute top-3 left-3 flex flex-wrap gap-2">
               {place.is_featured && (
-                <span class="badge-accent">Öne Çıkan</span>
+                <span class="badge-accent">Öne çıkan</span>
               )}
               {place.is_verified && (
                 <span class="badge bg-blue-600 text-white">Doğrulanmış</span>
@@ -128,7 +128,7 @@ const getCategoryLabel = (category: string) => {
       
       {(!places || places.length === 0) && (
         <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
-          Henüz mekan bulunmuyor.
+          Henüz gösterilecek mekan bulunmuyor.
         </div>
       )}
     </div>
