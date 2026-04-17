@@ -1,12 +1,11 @@
 # Astro High Risk Migration Report
-- Generated at: 2026-04-17T00:00:11.162Z
-- Total high-risk components: 11
+- Generated at: 2026-04-17T00:03:27.651Z
+- Total high-risk components: 10
 - First candidates: 0
 - Later candidates: 0
-- Last candidates: 11
+- Last candidates: 10
 
 ## Ranked Entries
-- [last] WebhookAnalyticsDashboard | score=57 | usage=1 | lines=211 | state=5 | effect=2 | fetch=1 | typed=0 | admin=no
 - [last] LiveAnalyticsDashboard | score=58 | usage=1 | lines=270 | state=5 | effect=2 | fetch=0 | typed=0 | admin=no
 - [last] ModerationQueueManager | score=59 | usage=1 | lines=182 | state=6 | effect=2 | fetch=0 | typed=2 | admin=yes
 - [last] SubscriptionAdminDashboard | score=61 | usage=1 | lines=227 | state=5 | effect=2 | fetch=0 | typed=2 | admin=yes

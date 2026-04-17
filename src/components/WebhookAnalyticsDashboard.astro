@@ -1,0 +1,14 @@
+---
+const { token = '' } = Astro.props;
+---
+
+<div data-webhook-analytics-dashboard data-token={token}>
+  <div data-webhook-analytics-loading class="text-center py-8 text-gray-500">Yükleniyor...</div>
+  <div data-webhook-analytics-content class="hidden"></div>
+</div>
+
+<script>
+  import { initWebhookAnalyticsDashboard } from '../scripts/webhook-analytics-dashboard';
+
+  initWebhookAnalyticsDashboard();
+</script>
