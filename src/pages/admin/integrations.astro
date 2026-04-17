@@ -8,7 +8,7 @@ if (!user || !Astro.locals.isAdmin) {
 
 const seo = {
   title: 'Entegrasyon Ayarları - Admin',
-  description: 'Email ve analytics entegrasyon anahtarlarını yönet.',
+  description: 'E-posta ve analitik entegrasyon anahtarlarını yönet.',
   noindex: true
 };
 ---
@@ -68,7 +68,7 @@ const seo = {
         </section>
 
         <section class="space-y-4">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Google Analytics ID</h2>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Google Analitik Kimliği</h2>
           <input
             id="analyticsId"
             type="text"
@@ -83,13 +83,13 @@ const seo = {
               id="save-analytics"
               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
             >
-              Analytics ID Kaydet
+              Analitik kimliğini kaydet
             </button>
             <button
               id="clear-analytics"
               class="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 text-sm font-medium dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
             >
-              Analytics Ayarını Temizle
+              Analitik ayarını temizle
             </button>
           </div>
         </section>
@@ -132,12 +132,12 @@ const seo = {
         return;
       }
 
-      const summary = verification.summary?.healthy ? 'healthy' : 'degraded';
+      const summary = verification.summary?.healthy ? 'sağlıklı' : 'bozulmuş';
       verificationBox.innerHTML = `
         <div class="space-y-1">
           <div>Genel durum: ${summary} • ${verification.summary?.checkedAt || 'bilinmiyor'}</div>
-          <div>RESEND: ${verification.resend?.status || 'unknown'} • ${verification.resend?.message || 'Mesaj yok'}</div>
-          <div>Analytics: ${verification.analytics?.status || 'unknown'} • ${verification.analytics?.message || 'Mesaj yok'}</div>
+          <div>RESEND: ${verification.resend?.status || 'bilinmiyor'} • ${verification.resend?.message || 'Mesaj yok'}</div>
+          <div>Analitik: ${verification.analytics?.status || 'bilinmiyor'} • ${verification.analytics?.message || 'Mesaj yok'}</div>
         </div>
       `;
     }
@@ -157,7 +157,7 @@ const seo = {
       statusBox.innerHTML = `
         <div class="space-y-1">
           <div>${formatStatus('RESEND', resend)}</div>
-          <div>${formatStatus('Analytics', analytics)}</div>
+          <div>${formatStatus('Analitik', analytics)}</div>
         </div>
       `;
       renderVerification(payload.data.verification);
@@ -191,7 +191,7 @@ const seo = {
 
     function validateInput(field, value) {
       if (!value) {
-        return `${field === 'resendApiKey' ? 'RESEND API anahtarı' : 'Analytics ID'} boş olamaz`;
+        return `${field === 'resendApiKey' ? 'RESEND API anahtarı' : 'Analitik kimliği'} boş olamaz`;
       }
 
       if (field === 'resendApiKey' && !resendPattern.test(value)) {
@@ -199,7 +199,7 @@ const seo = {
       }
 
       if (field === 'analyticsId' && !analyticsPattern.test(value)) {
-        return 'Geçersiz Analytics ID formatı. Örnek: G-ABC123XYZ';
+        return 'Geçersiz analitik kimliği biçimi. Örnek: G-ABC123XYZ';
       }
 
       return null;
@@ -273,7 +273,7 @@ const seo = {
         }
 
         await loadStatus();
-        setMessage('Ayar kaydedildi. Runtime cache yenilendi.');
+        setMessage('Ayar kaydedildi. Çalışma zamanı önbelleği yenilendi.');
       } finally {
         setLoadingState(false);
       }
@@ -332,7 +332,7 @@ const seo = {
         clearFieldErrors();
         await save({ analyticsId: '' });
         analyticsInput.value = '';
-        setMessage('Analytics ayarı temizlendi.');
+        setMessage('Analitik ayarı temizlendi.');
       } catch (error) {
         setMessage(error instanceof Error ? error.message : String(error), true);
       }
