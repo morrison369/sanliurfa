@@ -2,6 +2,13 @@
 
 This repository is an Astro SSR application with a separate phase-delivery operations layer. Treat them as two systems that share one repo.
 
+Open these first:
+
+- `docs/ACTIVE_DOCS.md`
+- `docs/architecture/ASTRO_RUNTIME_STATE.md`
+- `docs/ops/README.md`
+- `docs/ops/SOURCE_OF_TRUTH_MAP.md`
+
 ## Delivery Model
 - Authoritative delivery surface: clean `git worktree` from `origin/master`
 - Non-authoritative local surface: dirty root worktree, inventory only
@@ -14,7 +21,8 @@ This repository is an Astro SSR application with a separate phase-delivery opera
 - Framework: Astro SSR
 - Output mode: `server`
 - Adapter: `@astrojs/node`
-- UI islands: React where needed, Astro pages/layouts for route delivery
+- Active UI runtime: Astro pages/layouts + plain TypeScript browser helpers
+- React integration: allowed compatibility layer, not an active UI owner
 - Shared logic: `src/lib/`
 - Content collections: `src/content/` + `src/content.config.ts`
 
