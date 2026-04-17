@@ -141,7 +141,7 @@ export function renderNotificationsCenter(state: NotificationsCenterState): stri
       ${state.error ? renderError(state.error) : ''}
       <div class="mb-6 flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <h2 class="text-2xl font-bold text-gray-900">Bildirimler</h2>
+          <h2 class="text-2xl font-bold text-gray-900">Bildirim merkezi</h2>
           ${unreadCount > 0 ? `<span class="rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white">${unreadCount}</span>` : ''}
         </div>
         ${canMarkAll ? `

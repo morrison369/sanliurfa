@@ -52,12 +52,12 @@ async function fetchMetrics(root: WebhookAnalyticsRoot) {
 
   const payload = await response.json();
   if (!response.ok) {
-    throw new Error((payload && payload.error) || 'Webhook analitikleri yüklenemedi');
+    throw new Error((payload && payload.error) || 'Webhook analitikleri yüklenemedi.');
   }
 
   const metrics = extractWebhookAnalyticsMetrics(payload);
   if (!metrics) {
-    throw new Error('Webhook analitikleri yüklenemedi');
+    throw new Error('Webhook analitikleri yüklenemedi.');
   }
 
   writeMetrics(root, metrics);
@@ -104,12 +104,12 @@ async function renderRoot(root: WebhookAnalyticsRoot) {
     );
     bindInteractions(root, content);
   } catch (error) {
-    setError(root, error instanceof Error ? error.message : 'Webhook analitikleri yüklenemedi');
+    setError(root, error instanceof Error ? error.message : 'Webhook analitikleri yüklenemedi.');
     setElementHtml(
       content,
       renderWebhookAnalyticsDashboard({
         metrics: null,
-        error: root.dataset.error || 'Webhook analitikleri yüklenemedi',
+        error: root.dataset.error || 'Webhook analitikleri yüklenemedi.',
         activeTab: readTab(root),
       }),
     );

@@ -79,7 +79,7 @@ export function getWebhookStatusColor(rate: number): string {
 
 function renderTabButton(tab: WebhookAnalyticsTab, activeTab: WebhookAnalyticsTab): string {
   const label =
-    tab === 'overview' ? 'Genel Bakış' : tab === 'events' ? 'Olaylar' : 'Başarısız';
+    tab === 'overview' ? 'Genel görünüm' : tab === 'events' ? 'Olaylar' : 'Başarısız';
   const active =
     activeTab === tab
       ? 'text-blue-600 border-b-2 border-blue-600'
@@ -161,7 +161,7 @@ function renderFailed(metrics: WebhookAnalyticsMetrics): string {
                   <h4 class="font-medium text-gray-900">${item.event}</h4>
                   <p class="mt-1 text-sm text-gray-600">${item.failedCount} başarısız, ${item.attempts} toplam deneme</p>
                 </div>
-                <button class="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700">Yeniden Dene</button>
+                <button class="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700">Yeniden dene</button>
               </div>
             </div>
           `,
@@ -179,7 +179,7 @@ export function renderWebhookAnalyticsDashboard(options: {
   if (options.error || !options.metrics) {
     return `
       <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-        <p class="text-red-700">${options.error || 'Webhook analitikleri yüklenemedi'}</p>
+        <p class="text-red-700">${options.error || 'Webhook analitikleri yüklenemedi.'}</p>
       </div>
     `;
   }
@@ -189,7 +189,7 @@ export function renderWebhookAnalyticsDashboard(options: {
   return `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-900">Webhook Analitikleri</h2>
+        <h2 class="text-2xl font-bold text-gray-900">Webhook analitikleri</h2>
         <button
           type="button"
           data-webhook-analytics-refresh
@@ -201,7 +201,7 @@ export function renderWebhookAnalyticsDashboard(options: {
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <div class="rounded-lg bg-white p-4 shadow-md">
-          <p class="text-sm text-gray-600">Toplam Webhooks</p>
+          <p class="text-sm text-gray-600">Toplam webhook</p>
           <p class="text-3xl font-bold text-gray-900">${metrics.totalWebhooks}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
