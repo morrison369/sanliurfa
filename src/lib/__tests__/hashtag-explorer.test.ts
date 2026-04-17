@@ -52,6 +52,6 @@ describe('hashtag-explorer', () => {
 
     expect(html).toContain('#urfa');
     expect(html).toContain('Balıklıgöl');
-    expect(html).toContain('İşaretlenen Mekanlar');
+    expect(html).toContain('İşaretlenen mekanlar');
   });
 });
