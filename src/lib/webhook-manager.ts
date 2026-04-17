@@ -87,7 +87,7 @@ export function extractWebhookManagerData(payload: unknown): ManagedWebhook[] {
 
 export function renderWebhookManager(state: WebhookManagerState): string {
   if (state.loading) {
-    return '<div class="flex items-center justify-center py-12 text-sm text-slate-500">Webhookler yukleniyor...</div>';
+    return '<div class="flex items-center justify-center py-12 text-sm text-slate-500">Webhook\'lar yükleniyor...</div>';
   }
 
   const errorHtml = state.error
@@ -100,7 +100,7 @@ export function renderWebhookManager(state: WebhookManagerState): string {
         <div>
           <label class="mb-2 block text-sm font-medium text-slate-700">Olay Turu</label>
           <select data-webhook-event class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900">
-            <option value="">Seciniz...</option>
+            <option value="">Seçin...</option>
             ${EVENT_OPTIONS.map((event) => `<option value="${event}" ${state.form.event === event ? 'selected' : ''}>${event}</option>`).join('')}
           </select>
         </div>
@@ -109,12 +109,12 @@ export function renderWebhookManager(state: WebhookManagerState): string {
           <input data-webhook-url type="url" value="${escapeHtml(state.form.url)}" placeholder="https://example.com/webhook" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900" />
         </div>
         <div>
-          <label class="mb-2 block text-sm font-medium text-slate-700">Secret</label>
-          <input data-webhook-secret type="password" value="${escapeHtml(state.form.secret)}" placeholder="Istege bagli imza anahtari" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900" />
+          <label class="mb-2 block text-sm font-medium text-slate-700">Gizli anahtar</label>
+          <input data-webhook-secret type="password" value="${escapeHtml(state.form.secret)}" placeholder="İsteğe bağlı imza anahtarı" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900" />
         </div>
         <div class="flex gap-3">
-          <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700">Webhook Olustur</button>
-          <button type="button" data-webhook-cancel class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-white">Iptal</button>
+          <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700">Webhook oluştur</button>
+          <button type="button" data-webhook-cancel class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-white">İptal</button>
         </div>
       </form>
     `
@@ -128,11 +128,11 @@ export function renderWebhookManager(state: WebhookManagerState): string {
               <h3 class="text-base font-semibold text-slate-900">${escapeHtml(webhook.event)}</h3>
               <p class="mt-2 break-all text-sm text-slate-600">${escapeHtml(webhook.url)}</p>
             </div>
-            <span class="rounded-full px-3 py-1 text-xs font-semibold ${webhook.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}">${webhook.active ? 'Aktif' : 'Inaktif'}</span>
+            <span class="rounded-full px-3 py-1 text-xs font-semibold ${webhook.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}">${webhook.active ? 'Aktif' : 'Pasif'}</span>
           </div>
           <div class="mt-4 grid gap-3 md:grid-cols-2 text-sm text-slate-600">
-            <div><span class="font-semibold text-slate-900">Olusturulma:</span> ${escapeHtml(formatAdminDateTime(webhook.createdAt, '-'))}</div>
-            <div><span class="font-semibold text-slate-900">Son tetikleme:</span> ${escapeHtml(formatAdminDateTime(webhook.lastTriggeredAt, 'Henuz tetiklenmedi'))}</div>
+            <div><span class="font-semibold text-slate-900">Oluşturulma:</span> ${escapeHtml(formatAdminDateTime(webhook.createdAt, '-'))}</div>
+            <div><span class="font-semibold text-slate-900">Son tetikleme:</span> ${escapeHtml(formatAdminDateTime(webhook.lastTriggeredAt, 'Henüz tetiklenmedi'))}</div>
           </div>
           <div class="mt-4 flex flex-wrap gap-2">
             <button type="button" data-webhook-test="${webhook.id}" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100">Test et</button>
@@ -141,15 +141,15 @@ export function renderWebhookManager(state: WebhookManagerState): string {
           </div>
         </article>
       `).join('')
-    : '<div class="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">Henuz webhook tanimi bulunmuyor.</div>';
+    : '<div class="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">Henüz webhook tanımı bulunmuyor.</div>';
 
   return `
     <div class="space-y-6">
       ${errorHtml}
       <div class="flex items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-slate-900">Webhookler</h2>
-          <p class="mt-1 text-sm text-slate-600">Gercek zamanli entegrasyon URL'lerini buradan yonetin.</p>
+          <h2 class="text-2xl font-bold text-slate-900">Webhook'lar</h2>
+          <p class="mt-1 text-sm text-slate-600">Gerçek zamanlı entegrasyon bağlantılarını buradan yönetin.</p>
         </div>
         <button type="button" data-webhook-toggle class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">${state.showForm ? 'Formu kapat' : 'Yeni webhook'}</button>
       </div>
