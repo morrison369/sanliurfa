@@ -46,4 +46,4 @@ npm run release:gate
 
 - Günlük karar için önce kısa özet yüzeyleri aç.
 - sahiplik belirsizse `docs/ops/SOURCE_OF_TRUTH_MAP.md` kullan.
-- Tarihsel kayıt gerekiyorsa `docs/archive/` altına git; aktif karar için archive kullanma.
+- Tarihsel kayıt gerekiyorsa `docs/archive/` altına git; aktif karar için arşiv kullanma.

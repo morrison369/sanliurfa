@@ -34,7 +34,7 @@ Cati sistemi yonu:
 - Migration backlog kapalıdır. Yeni bir React arayüz yüzeyi veya hydration sahibi bilinçli olarak geri eklenirse ancak o zaman `docs/reports/astro-hydration-inventory.md` dosyasını `npm run astro:migration:inventory` ile yenile.
 - Migration yeniden açılır ve `medium=0` ise, sonraki paneli seçmeden önce kalan `high` bucket'ı `npm run astro:migration:high-risk` ile sırala.
 - Hydration zaten `0` ise React'in kaldırılması gerektiğini varsayma. Kullanıcı açıkça paket kaldırma istemedikçe `@astrojs/react` izin verilen üretim bağımlılığı olarak kalır.
-- `npm run astro:react:audit` ve `npm run astro:react:classify` komutlarını yalnızca görünürlük için kullan; otomatik kaldırma tetikleyicisi yapma.
+- `npm run astro:react:audit` ve `npm run astro:react:classify` komutlarını yalnızca görünürlük için kullan; otomatik kaldırma başlatıcısı yapma.
 
 ## Hızlı Başlangıç Komutları
 
@@ -51,7 +51,7 @@ Cati sistemi yonu:
 - `npm run test:critical:blocking` — Bloklayıcı kontrat testleri
 - `npm run test:critical:advisory` — Danışma amaçlı kontrat testleri
 - `npm run test:critical` — Tam kritik kontrol kapısı
-- `npm run test:e2e:smoke` — Kanonik duman test paketi
+- `npm run test:e2e:smoke` — Kanonik duman testi paketi
 
 ### Admin API Kontratı ve Tipler
 - `npm run types:admin:generate` — Admin API tiplerini OpenAPI'den yeniden üret
@@ -203,7 +203,7 @@ src/
 
 - Hedef yön Astro-first'tür; anlık React kaldırma değildir.
 - `@astrojs/react`, açık paket kaldırma kararı yoksa kabul edilen üretim bağımlılığı olarak kalmalıdır.
-- Bir framework migration toplu işi planlamadan önce şunları oku:
+- Bir çatı sistemi geçişi toplu işi planlamadan önce şunları oku:
   - `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md`
   - `astro.config.mjs`
 - Migration kuralı:
@@ -255,7 +255,7 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 **Ops ve Admin Kontrat Yüzeyleri**:
 - `GET /api/admin/dashboard/overview` — Admin panel özet yüzeyi
 - `GET /api/admin/system/metrics` — Admin metrikleri ve normalize durum özeti
-- `GET /api/admin/system/artifact-health` — Artefact anlik ozeti ve genel durum
+- `GET /api/admin/system/artifact-health` — Artefact anlık özeti ve genel durum
 - `GET /api/admin/deployment/status` — Dağıtım hazırlığı ve artefact durumu
 - `GET /api/admin/audit-logs` — Admin denetim kaydı, filtreler ve CSV dışa aktarım
 - `GET /api/admin/system/integration-settings` — Entegrasyon hazırlık anlık görünümü
@@ -300,7 +300,7 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 - `GET /api/hashtags` — Trend hashtag'leri döner (30 dakika önbellek)
 - `GET /api/hashtags/:slug` — Hashtag detayını, etiketli mekan ve yorumlarla döner (10 dakika önbellek)
 - `GET /api/users/:id/mentions` — Kullanıcı mention ve bildirimlerini döner (kimlik doğrulama gerekli)
-- `GET /api/realtime/feed` — SSE: gerçek zamanlı sosyal akış güncellemeleri (cursor tabanlı, 15sn yoklama)
+- `GET /api/realtime/feed` — SSE: gerçek zamanlı sosyal akış güncellemeleri (imleç tabanlı, 15sn yoklama)
 - `GET /api/leaderboards/users` — En iyi kullanıcı liderlik tablosu (sortBy=points/reviews ve limit destekli)
 
 **Gerçek Zamanlı Analitik** (admin):
@@ -358,7 +358,7 @@ Uygulama, WebSocket ek yükü olmadan düşük gecikmeli özellikler için **Ser
 
 2. **Canlı Analitik** (`GET /api/realtime/analytics`, 5sn metrik + 30sn KPI)
    - Gerçek zamanlı istek metrikleri: Error Rate, Avg Response, P95 Response, Cache Hit, DB Pool Utilization
-   - KPI'lar: En yavaş 5 endpoint
+   - KPI'lar: En yavaş 5 uç nokta
    - `business-analytics` içindeki `metricsCollector.getMetrics()` ve `getKPIs(true)` fonksiyonlarını kullanır
 
 **İstemci Tarafı Entegrasyonu** (`src/lib/realtime-sse.ts`):
@@ -366,7 +366,7 @@ Uygulama, WebSocket ek yükü olmadan düşük gecikmeli özellikler için **Ser
 - `handleFeedData(data)` — Veriyi parse eder ve `onFeedUpdate()` dinleyicisini tetikler
 - `reconnectFeed()` — Exponential backoff uygular (1sn, 2sn, 4sn... en fazla 60sn)
 - `onFeedUpdate(callback)` — Akış güncellemelerini almak için callback kaydeder
-- `disconnect()` ile component unmount olduğunda otomatik ayrılır
+- `disconnect()` ile bileşen unmount olduğunda otomatik ayrılır
 
 ### Sadakat ve Ödül Sistemi
 
@@ -428,7 +428,7 @@ Hashtag, mention, aktivite akışı ve trend içerik içeren sosyal ağ öğeler
 
 3. **Aktivite Akışı** (Gerçek zamanlı SSE: `/api/realtime/feed`)
    - Kullanıcı aktiviteleri: yorumlar, yüklemeler, seviye başarımları
-   - Cursor tabanlı takip ile yalnızca son fetch'ten sonraki yeni aktiviteleri döner
+   - İmleç tabanlı takip ile yalnızca son çekimden sonraki yeni aktiviteleri döner
    - 15 saniyelik polling aralığı kullanır
 
 4. **Kullanıcı Profilleri** (`/api/users/:id/profile`)
@@ -461,7 +461,7 @@ Premium özellikler için katman tabanlı erişim kontrolü uygulanır.
 
 **Stripe Entegrasyonu**:
 - `POST /api/subscriptions/checkout` — Stripe ödeme oturumu oluşturur
-- `POST /api/subscriptions/webhook` — Stripe event'lerini dinler (`subscription.updated`, `invoice.payment_succeeded`)
+- `POST /api/subscriptions/webhook` — Stripe olaylarını dinler (`subscription.updated`, `invoice.payment_succeeded`)
 - Webhook güvenliği için HMAC-SHA256 imza doğrulaması kullanılır
 - Webhook hatalarında exponential backoff retry uygulanır
 
@@ -777,7 +777,7 @@ npm run test
 ### Gerçek Zamanlı ve Analitik
 | Dosya | Amaç |
 |------|------|
-| `src/lib/realtime-sse.ts` | Server-Sent Events yöneticisi, yeniden bağlanma mantığı ve event listener'lar |
+| `src/lib/realtime-sse.ts` | Server-Sent Events yöneticisi, yeniden bağlanma mantığı ve olay dinleyicileri |
 | `src/lib/business-analytics.ts` | KPI hesapları ve performans metriği toplama |
 | `src/pages/api/realtime/analytics.ts` | Gerçek zamanlı metrik/KPI SSE uç noktası (yalnızca admin) |
 | `src/pages/api/realtime/feed.ts` | Gerçek zamanlı sosyal akış SSE uç noktası (auth gerekli) |
@@ -820,7 +820,7 @@ npm run test
 | `src/lib/subscriptions.ts` | Stripe entegrasyonu ve abonelik katmanı yönetimi |
 | `src/lib/feature-gating.ts` | Abonelik katmanına göre özellik erişim kontrolü |
 | `src/pages/api/subscriptions/checkout.ts` | Stripe ödeme oturumu oluşturma |
-| `src/pages/api/subscriptions/webhook.ts` | Stripe webhook event işleyicisi |
+| `src/pages/api/subscriptions/webhook.ts` | Stripe webhook olay işleyicisi |
 | `src/pages/api/subscriptions/tiers.ts` | Kullanılabilir abonelik katmanları uç noktası |
 | `src/pages/api/user/quotas.ts` | Özellik kullanım kotası uç noktası |
 | `src/pages/api/blocking/block.ts` | Kullanıcı engelleme uç noktası |
@@ -890,18 +890,18 @@ Tam CentOS Web Panel üretim kurulum rehberi için **`DEPLOYMENT.md`** dosyasın
 1. **TypeScript Strict Modu**: `tsconfig.json` içindeki `strict: true` ayarı gevşetilmez. Tüm hatalar düzeltilmeli veya açıklamalı `// @ts-expect-error` ile işaretlenmelidir.
 2. **Parametrik Sorgular**: SQL'de her zaman `$1`, `$2` vb. sözdizimini kullan. Kullanıcı girdisini doğrudan sorguya gömme.
 3. **Tablo İzin Listesi**: Yeni tablo eklersen `postgres.ts` içindeki `ALLOWED_TABLES` kümesini güncelle.
-4. **Redis Ad Alanı**: Yeni tüm cache anahtarları `sanliurfa:` prefix'i ile başlamalıdır (`prefixKey()` helper'ı bunu yönetir). **KRİTİK**: ad alanı izolasyonu, paylaşılan Redis üzerinde diğer projelerle çakışmayı önler.
+4. **Redis Ad Alanı**: Yeni tüm önbellek anahtarları `sanliurfa:` öneki ile başlamalıdır (`prefixKey()` yardımcısı bunu yönetir). **KRİTİK**: ad alanı izolasyonu, paylaşılan Redis üzerinde diğer projelerle çakışmayı önler.
 5. **Girdi Doğrulama**: Her API uç noktası kullanılmadan önce `validateWithSchema()` ile girdi doğrulaması yapmalıdır.
 6. **Hata Yönetimi**: API route'larında hataları yakala; ham hataları istemciye fırlatma. Sunucu görünürlüğü için stdout/stderr'a logla.
 7. **SSE Uygulaması**: Gerçek zamanlı uç noktalarda her zaman `ReadableStream` kullan, `Cache-Control: no-cache` ve `Connection: keep-alive` başlıklarını ekle, istemci tarafında en fazla 60sn gecikmeli üstel geri bağlanma uygula.
-8. **Oyunlaştırma Hook'ları**: `checkCommonAchievements()` doğrudan değil event hook'ları içinden çağrılmalıdır. İç try/catch kullandığı için dışarı hata fırlatmamalıdır.
+8. **Oyunlaştırma Kancaları**: `checkCommonAchievements()` doğrudan değil olay kancaları içinden çağrılmalıdır. İç try/catch kullandığı için dışarı hata fırlatmamalıdır.
 9. **Cache Invalidation**: Her mutation'da (POST/PUT/DELETE) ilgili cache pattern'lerini temizle. Sadakat değişimlerinde `sanliurfa:loyalty:*` ve `sanliurfa:tier:*` pattern'lerini temizle.
 10. **Admin Koruması**: Yeni admin API uç noktaları `withAdminOpsReadAccess(...)` veya `withAdminOpsWriteAccess(...)` kullanmalıdır. Admin sayfaları yönlendirme yapabilir; admin API route'ları yönlendirme değil, API tarzı 403/429/422 yanıtları döndürmelidir.
 11. **Admin API Kontratı**: Bir admin uç noktası değişirse `src/pages/api/openapi.json.ts` dosyasını güncelle, `src/types/generated-admin-api.ts` dosyasını yeniden üret ve `src/types/admin-api.ts` ile hizalı tut. `npm run types:admin:drift:check` komutunu otoriter kabul et.
 12. **Birincil Gate'ler**: Bir değişikliği yeşil saymadan önce `npm run typecheck:app`, `npm run test:critical` ve `npm run test:e2e:smoke` komutlarını tercih et. `npm run test` daha geniş eski regresyon kapsamıdır; birincil operasyonel gate değildir.
 13. **Faz İş Akışı**: Faz uyumluluğu runner-first yaklaşımıyla yürür. `package.json` içinde geniş faz alias yüzeylerini geri getirme; `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` içinde tanımlı runner ve manifest akışını kullan.
 14. **Beklemesiz Arka Plan İşleri**: Kritik olmayan arka plan işleri için (örneğin mention'ları okundu işaretlemek) istek timeout'una yol açmamak adına sorguları `await` etmeden kuyruğa al.
-15. **Admin UI Ops Sayfaları**: `/admin`, `/admin/runtime-monitor` ve `/admin/access-coverage` için önce helper/view-model modüllerini değiştir (`src/lib/admin-format.ts`, `src/lib/admin-index-data.ts`, `src/lib/admin-index*.ts`, `src/lib/admin-ops-pages.ts`, `src/lib/runtime-monitor.ts`, `src/lib/admin-access-coverage-page.ts`, `src/lib/admin-dom.ts`, `src/lib/admin-page-bootstrap.ts`) ve tarayıcı smoke testlerini yeşil tut. `/admin` için `index.astro` dosyasını düzenlemeden önce SSR veri toplama için `src/lib/admin-index-data.ts`, render kararları için `src/lib/admin-index-view.ts` dosyasını tercih et.
+15. **Admin Arayüzü Ops Sayfaları**: `/admin`, `/admin/runtime-monitor` ve `/admin/access-coverage` için önce yardımcı/görünüm-modeli modüllerini değiştir (`src/lib/admin-format.ts`, `src/lib/admin-index-data.ts`, `src/lib/admin-index*.ts`, `src/lib/admin-ops-pages.ts`, `src/lib/runtime-monitor.ts`, `src/lib/admin-access-coverage-page.ts`, `src/lib/admin-dom.ts`, `src/lib/admin-page-bootstrap.ts`) ve tarayıcı duman testlerini yeşil tut. `/admin` için `index.astro` dosyasını düzenlemeden önce SSR veri toplama için `src/lib/admin-index-data.ts`, render kararları için `src/lib/admin-index-view.ts` dosyasını tercih et.
 16. **Astro Migration Planlaması**: Migration backlog şu anda kapalıdır. React UI veya hydration bilinçli olarak geri getirilirse bir sonraki React-to-Astro hedefini sezgisel seçme. `npm run astro:migration:inventory` komutunu yeniden çalıştır, `docs/reports/astro-hydration-inventory.md` dosyasını oku ve belgelenmiş farklı bir gerekçe yoksa önce düşük riskli bucket'tan ilerle.
 
 ### Performans Optimizasyonu
@@ -950,7 +950,7 @@ Tam CentOS Web Panel üretim kurulum rehberi için **`DEPLOYMENT.md`** dosyasın
 - `/pages/api/realtime/example.ts` altında SSE uç noktası oluştur
 - Polling aralığıyla birlikte `ReadableStream` kullan
 - Cursor tabanlı pagination uygula (`lastActivityId`, `lastTimestamp` vb. takibi)
-- `src/lib/realtime-sse.ts` içine `connectToExample()`, `handleExampleData()` ve listener metodunu ekle
+- `src/lib/realtime-sse.ts` içine `connectToExample()`, `handleExampleData()` ve dinleyici metodunu ekle
 - İstemci tarafı yeniden bağlanma mantığını üstel geri çekilme ile uygula
 
 **Yeni Özellik Gate'leri**:
