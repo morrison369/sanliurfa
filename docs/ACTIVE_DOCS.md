@@ -1,21 +1,21 @@
-# Active Docs
+# Aktif Dokümanlar
 
-These documents are the active operational surface for this repository.
+Bu dokümanlar, bu depo için aktif operasyon yüzeyidir.
 
-## Primary Entry Points
+## Birincil Giriş Noktaları
 - `CLAUDE.md`
 - `docs/ops/README.md`
 - `docs/architecture/README.md`
 - `docs/ops/SOURCE_OF_TRUTH_MAP.md`
 
-## Runtime State Summaries
+## Runtime Durum Özetleri
 - `docs/architecture/ASTRO_RUNTIME_STATE.md`
 - `docs/ops/RELEASE_RUNTIME_STATE.md`
 - `docs/ops/ADMIN_OPS_RUNTIME_STATE.md`
 - `docs/ops/INTEGRATION_RUNTIME_STATE.md`
 - `docs/ops/INCIDENT_RUNTIME_STATE.md`
 
-## Required For Delivery
+## Teslimat İçin Gerekli
 - `README.md`
 - `AGENTS.md`
 - `ARCHITECTURE.md`
@@ -26,21 +26,21 @@ These documents are the active operational surface for this repository.
 - `STALE_WORKTREE.md`
 - `ROOT_INVENTORY_ONLY_POLICY.md`
 
-## Phase Metadata
+## Faz Metaverisi
 - `PHASE_INDEX.md`
 - `TASK_TRACKER.md`
 - `memory.md`
 - `PHASE_CHANGELOG.md`
 
-## Generated Visibility Reports
+## Üretilen Görünürlük Raporları
 - `docs/reports/astro-hydration-inventory.md`
 - `docs/reports/astro-high-risk-feasibility.md`
 - `docs/reports/react-surface-audit.md`
 - `docs/reports/react-surface-classification.md`
 - `docs/reports/admin-access-coverage.md`
 
-## Archive Boundary
-- Dated cleanup verification files belong under `docs/archive/cleanup/`.
-- Dated migration closure records belong under `docs/archive/migration/`.
-- Legacy or superseded phase references belong under `docs/archive/phases/`.
-- Root should keep current operational policy and active delivery artifacts only.
+## Arşiv Sınırı
+- Tarihli cleanup doğrulama dosyaları `docs/archive/cleanup/` altında tutulur.
+- Tarihli migration kapanış kayıtları `docs/archive/migration/` altında tutulur.
+- Eski veya geçersiz hale gelmiş faz referansları `docs/archive/phases/` altında tutulur.
+- Kök dizinde yalnızca güncel operasyon politikası ve aktif teslimat artefact'ları tutulmalıdır.

@@ -1,4 +1,4 @@
-# Incident Runtime State
+# Incident Runtime Durumu
 
 Bu belge, incident anında ilk ayrımı tek bakışta vermek için kısa özet yüzeyidir.
 

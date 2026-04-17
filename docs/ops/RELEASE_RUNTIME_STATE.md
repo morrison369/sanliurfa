@@ -1,4 +1,4 @@
-# Release Runtime State
+# Release Runtime Durumu
 
 Bu belge, release gate ve runtime sinyallerinin aktif durum mantığını tek yerde özetler.
 

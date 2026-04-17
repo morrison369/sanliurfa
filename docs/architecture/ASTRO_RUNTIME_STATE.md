@@ -1,4 +1,4 @@
-# Astro Runtime State
+# Astro Runtime Durumu
 
 Bu belge, migration kapandıktan sonraki aktif runtime durumunu tek yerde özetler.
 

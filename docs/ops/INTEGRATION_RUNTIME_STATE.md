@@ -1,4 +1,4 @@
-# Integration Runtime State
+# Entegrasyon Runtime Durumu
 
 Bu belge, entegrasyon readiness tarafının aktif karar özetidir.
 
