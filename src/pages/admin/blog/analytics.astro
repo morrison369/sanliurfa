@@ -1,6 +1,6 @@
 ---
 /**
- * Blog Analitikleri Dashboardi
+ * Blog analitikleri panosu
  * İstatistikler, en çok okunan yazılar, kategori performansı
  */
 
@@ -8,7 +8,7 @@ import Layout from '../../../layouts/Layout.astro';
 
 const user = Astro.locals.user;
 if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/login');
+  return Astro.redirect('/giris');
 }
 
 let analytics = null;
@@ -25,7 +25,7 @@ try {
     const data = await response.json();
     analytics = data.data;
   } else {
-    error = 'Analitikal veriler yüklenirken hata oluştu';
+    error = 'Analitik veriler yüklenirken hata oluştu';
   }
 } catch (err) {
   error = 'Sunucu hatası: ' + String(err);
@@ -79,7 +79,7 @@ const seo = {
             <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Yorumlar</p>
               <p class="text-3xl font-bold text-green-600">{analytics.comments.approved}</p>
-              <p class="text-xs text-gray-500 mt-2">⏳ {analytics.comments.pending} bekleme</p>
+              <p class="text-xs text-gray-500 mt-2">⏳ {analytics.comments.pending} onay bekliyor</p>
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
