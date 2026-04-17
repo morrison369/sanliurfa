@@ -15,11 +15,11 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `190`
-- `.tsx`: `62`
-- `client:*` hydration noktası: `4`
-- current generated risk split: `0 low / 0 medium / 4 high`
-- current high-risk feasibility split: `0 first / 0 later / 3 last`
+- `.astro`: `193`
+- `.tsx`: `59`
+- `client:*` hydration noktası: `0`
+- current generated risk split: `0 low / 0 medium / 0 high`
+- current high-risk feasibility split: `0 first / 0 later / 0 last`
 
 İlk hedefler:
 
@@ -314,6 +314,7 @@ Bu repo için doğru hız budur. Daha agresif rewrite, gereksiz risk üretir.
 - Önce `docs/reports/astro-hydration-inventory.md` içindeki `low` bucket değerlendirilir; `low=0` ise en ucuz `medium` yüzeyler seçilir.
 - `medium` biterse `npm run astro:migration:high-risk` çalıştırılır ve sıralama oradan alınır.
 - `high` yüzeye ancak üretilen feasibility raporu bunu destekliyorsa girilir.
+
 
 
 

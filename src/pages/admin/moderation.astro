@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import ModerationDashboard from '../../components/ModerationDashboard';
+import ModerationDashboard from '../../components/ModerationDashboard.astro';
 
 // Require admin authentication
 if (!Astro.locals.user?.isAdmin) {
@@ -15,6 +15,7 @@ if (!Astro.locals.user?.isAdmin) {
       <p class="text-gray-600 dark:text-gray-400">Raporları inceleyin ve moderasyon işlemleri gerçekleştirin</p>
     </div>
 
-    <ModerationDashboard client:load />
+    <ModerationDashboard />
   </div>
 </Layout>
+

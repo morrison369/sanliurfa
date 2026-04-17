@@ -1,26 +1,8 @@
 {
-  "generatedAt": "2026-04-17T01:00:39.575Z",
-  "totalHighRiskComponents": 1,
+  "generatedAt": "2026-04-17T01:05:15.246Z",
+  "totalHighRiskComponents": 0,
   "firstCount": 0,
   "laterCount": 0,
-  "lastCount": 1,
-  "entries": [
-    {
-      "componentName": "ModerationDashboard",
-      "componentPath": "src/components/ModerationDashboard.tsx",
-      "pagePaths": [
-        "src/pages/admin/moderation.astro"
-      ],
-      "usageCount": 1,
-      "lines": 336,
-      "useStateCount": 9,
-      "useEffectCount": 2,
-      "fetchCount": 0,
-      "typedClientCount": 4,
-      "adminSurface": true,
-      "complexityScore": 84,
-      "migrationPriority": "last",
-      "recommendation": "ModerationDashboard yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
-    }
-  ]
+  "lastCount": 0,
+  "entries": []
 }
