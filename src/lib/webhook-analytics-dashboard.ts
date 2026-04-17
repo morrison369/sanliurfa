@@ -92,7 +92,7 @@ function renderOverview(metrics: WebhookAnalyticsMetrics): string {
   return `
     <div class="space-y-6">
       <div>
-        <h3 class="mb-4 font-semibold text-gray-900">Son Saat Aktivitesi</h3>
+        <h3 class="mb-4 font-semibold text-gray-900">Son saat etkinliği</h3>
         <div class="max-h-96 space-y-2 overflow-y-auto">
           ${metrics.lastHourActivity
             .slice(0, 20)
@@ -103,7 +103,7 @@ function renderOverview(metrics: WebhookAnalyticsMetrics): string {
                   <div class="flex gap-4">
                     <span class="text-blue-600">Gönderilen: ${activity.sent}</span>
                     <span class="text-green-600">Teslim: ${activity.delivered}</span>
-                    <span class="text-red-600">Hata: ${activity.failed}</span>
+                    <span class="text-red-600">Başarısız: ${activity.failed}</span>
                   </div>
                 </div>
               `,
@@ -118,7 +118,7 @@ function renderOverview(metrics: WebhookAnalyticsMetrics): string {
 function renderEvents(metrics: WebhookAnalyticsMetrics): string {
   return `
     <div class="space-y-4">
-      <h3 class="mb-4 font-semibold text-gray-900">Olay Türleri Başarı Oranları</h3>
+      <h3 class="mb-4 font-semibold text-gray-900">Olay türü başarı oranları</h3>
       ${Object.entries(metrics.byEvent)
         .map(
           ([event, stats]) => `
@@ -151,7 +151,7 @@ function renderFailed(metrics: WebhookAnalyticsMetrics): string {
 
   return `
     <div class="space-y-4">
-      <h3 class="mb-4 font-semibold text-gray-900">En Çok Başarısız Olaylar</h3>
+      <h3 class="mb-4 font-semibold text-gray-900">En çok başarısız olaylar</h3>
       ${metrics.topFailedEvents
         .map(
           (item) => `
@@ -205,7 +205,7 @@ export function renderWebhookAnalyticsDashboard(options: {
           <p class="text-3xl font-bold text-gray-900">${metrics.totalWebhooks}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
-          <p class="text-sm text-gray-600">Toplam Olaylar</p>
+          <p class="text-sm text-gray-600">Toplam olay</p>
           <p class="text-3xl font-bold text-gray-900">${metrics.totalEvents}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
@@ -217,7 +217,7 @@ export function renderWebhookAnalyticsDashboard(options: {
           <p class="text-3xl font-bold text-red-600">${metrics.failedEvents}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
-          <p class="text-sm text-gray-600">Başarı Oranı</p>
+          <p class="text-sm text-gray-600">Başarı oranı</p>
           <p class="text-3xl font-bold ${getWebhookStatusColor(metrics.successRate)}">${metrics.successRate.toFixed(1)}%</p>
         </div>
       </div>
