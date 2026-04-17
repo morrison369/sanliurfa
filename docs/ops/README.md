@@ -13,6 +13,8 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
   - [admin-access-coverage.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\reports\admin-access-coverage.md)
 - Hangi dosya source-of-truth:
   - [SOURCE_OF_TRUTH_MAP.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\SOURCE_OF_TRUTH_MAP.md)
+- Admin/ops runtime özet durumu:
+  - [ADMIN_OPS_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\ADMIN_OPS_RUNTIME_STATE.md)
 - Astro-only mimari geçiş değerlendirmesi:
   - [ASTRO_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\architecture\ASTRO_RUNTIME_STATE.md) - aktif runtime özeti
   - [ASTRO_ONLY_MIGRATION_ASSESSMENT.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\architecture\ASTRO_ONLY_MIGRATION_ASSESSMENT.md)
@@ -51,6 +53,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 3. Nightly issue veya artifact bayatlığı varsa `ARTIFACT_FRESHNESS_POLICY.md`
    Admin wrapper coverage için `docs/reports/admin-access-coverage.md`
 4. Hangi dosya karar veriyor belirsizse `SOURCE_OF_TRUTH_MAP.md`
+   Admin ve ops yüzeyinin canlı durumu için `docs/ops/ADMIN_OPS_RUNTIME_STATE.md`
 5. Astro-only / framework migration kararı verilecekse `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md`
    Güncel runtime özeti için `docs/architecture/ASTRO_RUNTIME_STATE.md`
    Kapanış ve regresyon kuralları için `docs/architecture/ASTRO_ONLY_MIGRATION_BACKLOG.md`
