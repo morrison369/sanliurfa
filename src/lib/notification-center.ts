@@ -145,7 +145,7 @@ export function renderNotificationCenter(state: NotificationCenterState): string
       ${state.error ? renderError(state.error) : ''}
       <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <h1 class="text-2xl font-bold text-gray-900">Bildirimler</h1>
+          <h1 class="text-2xl font-bold text-gray-900">Bildirim merkezi</h1>
           ${badge}
         </div>
       </div>
