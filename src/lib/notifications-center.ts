@@ -110,7 +110,7 @@ function renderFilters(filter: 'all' | 'unread'): string {
   return `
     <div class="flex gap-2">
       <button type="button" data-notifications-center-filter="all" class="${base} ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">Tüm bildirimler</button>
-      <button type="button" data-notifications-center-filter="unread" class="${base} ${filter === 'unread' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">Okunmamış bildirimler</button>
+      <button type="button" data-notifications-center-filter="unread" class="${base} ${filter === 'unread' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">Sadece okunmamışlar</button>
     </div>
   `;
 }
@@ -150,7 +150,7 @@ export function renderNotificationsCenter(state: NotificationsCenterState): stri
   const list = state.notifications.length === 0
     ? `
       <div class="py-12 text-center text-gray-500">
-        <p>${state.filter === 'unread' ? 'Henüz okunmamış bildirim bulunmuyor.' : 'Henüz gösterilecek bildirim bulunmuyor.'}</p>
+        <p>${state.filter === 'unread' ? 'Okunmamış bildirim bulunmuyor.' : 'Henüz gösterilecek bildirim bulunmuyor.'}</p>
       </div>
     `
     : `<div class="space-y-2">${state.notifications.map((item) => renderNotificationItem(state, item)).join('')}</div>`;
