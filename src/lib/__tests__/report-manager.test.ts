@@ -31,9 +31,9 @@ describe('report manager helpers', () => {
       exportFormat: 'csv',
     });
 
-    expect(html).toContain('Reports');
+    expect(html).toContain('Rapor listesi');
     expect(html).toContain('Test');
     expect(html).toContain('Tamam');
-    expect(html).toContain('Download');
+    expect(html).toContain('Raporu indir');
   });
 });

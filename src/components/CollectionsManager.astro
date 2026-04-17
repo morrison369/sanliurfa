@@ -1,4 +1,5 @@
 ---
+import { UI_COPY_TR } from '../lib/ui-copy';
 interface Props {
   userId: string;
 }
@@ -9,7 +10,7 @@ const { userId } = Astro.props;
 <div data-collections-manager data-user-id={userId}>
   <div data-collections-manager-content>
     <div class="py-12 text-center text-gray-600 dark:text-gray-400">
-      Koleksiyon listesi yükleniyor...
+      {UI_COPY_TR.collections.loading}
     </div>
   </div>
 </div>

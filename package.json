@@ -34,6 +34,7 @@
     "astro:react:audit": "npm exec -- tsx scripts/react-surface-audit.ts",
     "astro:react:classify": "npm exec -- tsx scripts/react-surface-classification.ts",
     "astro:react:guard": "npm run astro:react:classify && npm exec -- tsx scripts/react-runtime-detached-guard.ts",
+    "copy:visible:audit": "npm exec -- tsx scripts/visible-text-audit.ts",
     "typecheck:experimental": "tsc --noEmit -p tsconfig.experimental.json",
     "typecheck:experimental:exclude:guard": "npm exec -- tsx scripts/experimental-exclude-guard.ts",
     "typecheck:experimental:report": "npm exec -- tsx scripts/weekly-typecheck-report.ts",

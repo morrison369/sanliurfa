@@ -1,3 +1,6 @@
+import { renderEmptyState, renderErrorState } from './render-states';
+import { UI_COPY_TR } from './ui-copy';
+
 export interface ReportManagerItem {
   id: string;
   name: string;
@@ -51,10 +54,6 @@ export function extractReportManagerMessage(payload: unknown, fallback: string):
   return fallback;
 }
 
-function renderError(message: string): string {
-  return `<div class="rounded border border-red-200 bg-red-50 p-4 text-red-800">${message}</div>`;
-}
-
 function renderTabs(tab: 'reports' | 'templates'): string {
   const tabClass = (key: 'reports' | 'templates') =>
     tab === key
@@ -63,8 +62,8 @@ function renderTabs(tab: 'reports' | 'templates'): string {
 
   return `
     <div class="flex space-x-2 border-b border-gray-200">
-      <button type="button" data-report-manager-tab="reports" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('reports')}">📊 Rapor listesi</button>
-      <button type="button" data-report-manager-tab="templates" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('templates')}">📋 Dışa aktarma şablonları</button>
+      <button type="button" data-report-manager-tab="reports" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('reports')}">📊 ${UI_COPY_TR.reports.listTitle}</button>
+      <button type="button" data-report-manager-tab="templates" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('templates')}">📋 ${UI_COPY_TR.reports.templatesTitle}</button>
     </div>
   `;
 }
@@ -77,7 +76,7 @@ function renderReportList(state: ReportManagerState): string {
   }
 
   if (state.reports.length === 0) {
-    return '<p class="text-gray-600">Henüz görüntülenecek rapor bulunmuyor.</p>';
+    return renderEmptyState(UI_COPY_TR.reports.empty, 'text-gray-600');
   }
 
   return `
@@ -120,10 +119,10 @@ function renderExportOptions(state: ReportManagerState): string {
           <option value="excel" ${state.exportFormat === 'excel' ? 'selected' : ''}>Excel</option>
         </select>
         <button type="button" data-report-manager-run class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 ${state.loading ? 'opacity-50' : ''}">
-          Raporu çalıştır
+          ${UI_COPY_TR.reports.run}
         </button>
         <button type="button" data-report-manager-download class="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700">
-          Raporu indir
+          ${UI_COPY_TR.reports.download}
         </button>
       </div>
     </div>
@@ -134,19 +133,19 @@ export function renderReportManager(state: ReportManagerState): string {
   return `
     <div class="space-y-6">
       ${renderTabs(state.tab)}
-      ${state.error ? renderError(state.error) : ''}
+      ${state.error ? renderErrorState(state.error) : ''}
       ${
         state.tab === 'reports'
           ? `
             <div class="space-y-4">
-              <h2 class="text-2xl font-bold">Rapor listesi</h2>
+              <h2 class="text-2xl font-bold">${UI_COPY_TR.reports.listTitle}</h2>
               ${renderReportList(state)}
               ${renderExportOptions(state)}
             </div>
           `
           : `
             <div class="space-y-4">
-              <h2 class="text-2xl font-bold">Dışa aktarma şablonları</h2>
+              <h2 class="text-2xl font-bold">${UI_COPY_TR.reports.templatesTitle}</h2>
               <p class="text-gray-600">Özel dışa aktarma şablonlarınızı yönetin.</p>
             </div>
           `

@@ -1,3 +1,5 @@
+import { renderEmptyState, renderErrorState, renderLoadingState } from './render-states';
+import { UI_COPY_TR } from './ui-copy';
 import { formatAdminDateTime } from './admin-format';
 
 export interface ManagedWebhook {
@@ -102,11 +104,11 @@ export function extractWebhookManagerData(payload: unknown): ManagedWebhook[] {
 
 export function renderWebhookManager(state: WebhookManagerState): string {
   if (state.loading) {
-    return '<div class="flex items-center justify-center py-12 text-sm text-slate-500">Webhook yönetimi yükleniyor...</div>';
+    return renderLoadingState(UI_COPY_TR.webhooks.loading, 'flex items-center justify-center py-12 text-sm text-slate-500');
   }
 
   const errorHtml = state.error
-    ? `<div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">${escapeHtml(state.error)}</div>`
+    ? renderErrorState(state.error)
     : '';
 
   const formHtml = state.showForm
@@ -151,19 +153,19 @@ export function renderWebhookManager(state: WebhookManagerState): string {
           </div>
           <div class="mt-4 flex flex-wrap gap-2">
             <button type="button" data-webhook-test="${webhook.id}" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100">Test et</button>
-            <button type="button" data-webhook-copy="${webhook.id}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Webhook kimliğini kopyala</button>
-            <button type="button" data-webhook-delete="${webhook.id}" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100">Kaldır</button>
+            <button type="button" data-webhook-copy="${webhook.id}" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">${UI_COPY_TR.webhooks.copyId}</button>
+            <button type="button" data-webhook-delete="${webhook.id}" class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100">${UI_COPY_TR.common.remove}</button>
           </div>
         </article>
       `).join('')
-    : '<div class="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">Henüz gösterilecek webhook bulunmuyor.</div>';
+    : renderEmptyState(UI_COPY_TR.webhooks.empty, 'rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500');
 
   return `
     <div class="space-y-6">
       ${errorHtml}
       <div class="flex items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-slate-900">Webhook yönetimi</h2>
+          <h2 class="text-2xl font-bold text-slate-900">${UI_COPY_TR.webhooks.title}</h2>
           <p class="mt-1 text-sm text-slate-600">Gerçek zamanlı entegrasyon bağlantılarını buradan yönetin.</p>
         </div>
         <button type="button" data-webhook-toggle class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">${state.showForm ? 'Formu kapat' : 'Yeni webhook'}</button>
