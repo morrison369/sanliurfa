@@ -21,7 +21,7 @@ const campaigns = await getAllCampaigns(100);
   <div class="container mx-auto px-4 py-8">
     <div class="mb-8">
       <h1 class="text-3xl font-bold mb-2">E-posta kampanyaları</h1>
-      <p class="text-gray-600">Pazarlama kampanyalarını ve otomasyon akışlarını yönet</p>
+      <p class="text-gray-600">Pazarlama kampanyalarını ve otomasyon akışlarını yönetin.</p>
     </div>
 
     <!-- Tabs -->
@@ -38,7 +38,7 @@ const campaigns = await getAllCampaigns(100);
         role="tab"
         data-tab="create"
       >
-        Yeni Kampanya
+        Yeni kampanya
       </button>
       <button
         class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
@@ -107,13 +107,13 @@ const campaigns = await getAllCampaigns(100);
                   class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
                   onclick="sendCampaign({campaign.id})"
                 >
-                  Hemen Gönder
+                  Hemen gönder
                 </button>
                 <button
                   class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm"
                   onclick="testCampaign({campaign.id})"
                 >
-                  Test Gönder
+                  Test gönder
                 </button>
                 <button
                   class="px-4 py-2 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 text-sm"
@@ -140,7 +140,7 @@ const campaigns = await getAllCampaigns(100);
       <form id="campaign-form" class="bg-white p-6 rounded-lg shadow max-w-2xl">
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1">Kampanya Adı</label>
+            <label class="block text-sm font-medium mb-1">Kampanya adı</label>
             <input
               type="text"
               name="name"
@@ -163,7 +163,7 @@ const campaigns = await getAllCampaigns(100);
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium mb-1">Gönderici Adı</label>
+            <label class="block text-sm font-medium mb-1">Gönderici adı</label>
               <input
                 type="text"
                 name="fromName"
@@ -173,7 +173,7 @@ const campaigns = await getAllCampaigns(100);
               />
             </div>
             <div>
-              <label class="block text-sm font-medium mb-1">Gönderici E-posta</label>
+            <label class="block text-sm font-medium mb-1">Gönderici e-posta</label>
               <input
                 type="email"
                 name="fromEmail"
@@ -196,7 +196,7 @@ const campaigns = await getAllCampaigns(100);
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1">HTML İçerik</label>
+            <label class="block text-sm font-medium mb-1">HTML içerik</label>
             <textarea
               name="htmlContent"
               required
@@ -209,7 +209,7 @@ const campaigns = await getAllCampaigns(100);
           <div>
             <label class="block text-sm font-medium mb-1">Zamanlama</label>
             <select name="timing" class="w-full px-4 py-2 border border-gray-300 rounded">
-              <option value="now">Hemen Gönder</option>
+              <option value="now">Hemen gönder</option>
               <option value="schedule">Zamanla...</option>
             </select>
           </div>
@@ -230,7 +230,7 @@ const campaigns = await getAllCampaigns(100);
     <div id="analytics-tab" class="tab-content hidden">
       <div class="grid grid-cols-2 gap-4">
         <div class="bg-white p-6 rounded-lg shadow">
-          <h3 class="text-gray-600 text-sm font-medium mb-2">Ortalama Açılma Oranı</h3>
+          <h3 class="text-gray-600 text-sm font-medium mb-2">Ortalama açılma oranı</h3>
           <p class="text-3xl font-bold">
             {campaigns.length > 0 ? (
               campaigns.reduce((sum, c) => sum + (c.sendCount > 0 ? (c.openCount / c.sendCount) * 100 : 0), 0) / campaigns.length
@@ -238,7 +238,7 @@ const campaigns = await getAllCampaigns(100);
           </p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow">
-          <h3 class="text-gray-600 text-sm font-medium mb-2">Ortalama Tıklama Oranı</h3>
+          <h3 class="text-gray-600 text-sm font-medium mb-2">Ortalama tıklama oranı</h3>
           <p class="text-3xl font-bold">
             {campaigns.length > 0 ? (
               campaigns.reduce((sum, c) => sum + (c.sendCount > 0 ? (c.clickCount / c.sendCount) * 100 : 0), 0) / campaigns.length
@@ -251,8 +251,8 @@ const campaigns = await getAllCampaigns(100);
     <!-- Sequences Tab -->
     <div id="sequences-tab" class="tab-content hidden">
       <div class="bg-white p-6 rounded-lg shadow">
-        <h3 class="font-bold mb-4">Otomasyon Akışları</h3>
-        <p class="text-gray-600">Otomasyon akışları kullanıcıların belirli olaylara yanıt olarak tetiklenen e-posta serileridir.</p>
+        <h3 class="font-bold mb-4">Otomasyon akışları</h3>
+        <p class="text-gray-600">Otomasyon akışları, belirli olaylara yanıt olarak tetiklenen e-posta serileridir.</p>
         <ul class="mt-4 space-y-2 text-sm">
           <li class="flex items-center gap-2">
             <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
