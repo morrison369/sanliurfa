@@ -142,8 +142,8 @@ export function renderUserPublicProfile(state: UserPublicProfileState): string {
             <h1 class="mb-2 text-3xl font-bold">${profile.full_name}</h1>
             ${profile.bio ? `<p class="mb-4 text-gray-600">${profile.bio}</p>` : ''}
             <div class="mb-4 flex gap-4">
-              <div><p class="text-2xl font-bold">${profile.stats.followers}</p><p class="text-sm">Takipçi sayısı</p></div>
-              <div><p class="text-2xl font-bold">${profile.stats.following}</p><p class="text-sm">Takip edilen hesaplar</p></div>
+              <div><p class="text-2xl font-bold">${profile.stats.followers}</p><p class="text-sm">Takipçiler</p></div>
+              <div><p class="text-2xl font-bold">${profile.stats.following}</p><p class="text-sm">Takip edilenler</p></div>
             </div>
             ${canInteract ? `
               <div class="flex gap-2">

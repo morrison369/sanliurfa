@@ -64,7 +64,7 @@ export function renderBillingHistory(records: BillingRecord[]): string {
   if (records.length === 0) {
     return `
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800">
-        <p class="text-gray-600 dark:text-gray-400">Henüz ödeme geçmişi bulunmuyor.</p>
+        <p class="text-gray-600 dark:text-gray-400">Ödeme geçmişi kaydı bulunmuyor.</p>
       </div>
     `;
   }
