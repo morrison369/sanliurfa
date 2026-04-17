@@ -1,15 +1,19 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
 ---
 
 <div data-transaction-history class="space-y-6" data-limit="20" data-offset="0" data-selected-type="">
-  <div data-transaction-loading class="space-y-3">
-    <div class="h-16 animate-pulse rounded-lg bg-gray-200"></div>
-    <div class="h-16 animate-pulse rounded-lg bg-gray-200"></div>
-    <div class="h-16 animate-pulse rounded-lg bg-gray-200"></div>
-    <div class="h-16 animate-pulse rounded-lg bg-gray-200"></div>
-    <div class="h-16 animate-pulse rounded-lg bg-gray-200"></div>
-  </div>
-  <div data-transaction-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="space-y-3"
+    loadingDataAttr="data-transaction-loading"
+    message={UI_COPY_TR.transactions.loading}
+    variant="skeleton"
+    skeletonCount={5}
+    skeletonItemClass="h-16 animate-pulse rounded-lg bg-gray-200"
+    contentDataAttr="data-transaction-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>

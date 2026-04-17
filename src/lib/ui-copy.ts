@@ -44,6 +44,9 @@ export const UI_COPY_TR = {
     managePlans: 'Planları gör',
     upgrade: "Premium'a yükselt",
   },
+  subscriptionAdmin: {
+    loading: 'Abonelik yönetimi yükleniyor...',
+  },
   webhooks: {
     title: 'Webhook yönetimi',
     loading: 'Webhook yönetimi yükleniyor...',
@@ -66,8 +69,20 @@ export const UI_COPY_TR = {
     popularSearches: 'Popüler aramalar',
     trendingPlaces: 'Trend olan mekanlar',
   },
+  businessAnalytics: {
+    loading: 'İşletme analitiği yükleniyor...',
+  },
   adminDashboard: {
     loading: 'Yönetim panosu yükleniyor...',
+  },
+  billing: {
+    loading: 'Ödeme geçmişi yükleniyor...',
+  },
+  transactions: {
+    loading: 'İşlem geçmişi yükleniyor...',
+  },
+  preferences: {
+    loading: 'Bildirim tercihleri yükleniyor...',
   },
   profile: {
     loading: 'Profil yükleniyor...',

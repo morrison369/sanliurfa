@@ -1,13 +1,18 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
 ---
 
 <div data-billing-history>
-  <div data-billing-loading class="space-y-3">
-    <div class="h-16 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
-    <div class="h-16 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
-    <div class="h-16 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
-  </div>
-  <div data-billing-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="space-y-3"
+    loadingDataAttr="data-billing-loading"
+    message={UI_COPY_TR.billing.loading}
+    variant="skeleton"
+    skeletonCount={3}
+    contentDataAttr="data-billing-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>

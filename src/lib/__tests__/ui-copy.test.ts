@@ -7,6 +7,8 @@ describe('ui-copy', () => {
     expect(UI_COPY_TR.notifications.loading).toBe('Bildirim merkezi yükleniyor...');
     expect(UI_COPY_TR.collections.empty).toContain('Henüz oluşturulmuş koleksiyon');
     expect(UI_COPY_TR.reports.download).toBe('Raporu indir');
+    expect(UI_COPY_TR.billing.loading).toBe('Ödeme geçmişi yükleniyor...');
+    expect(UI_COPY_TR.preferences.loading).toBe('Bildirim tercihleri yükleniyor...');
   });
 
   it('uses normalized common actions', () => {
@@ -15,4 +17,3 @@ describe('ui-copy', () => {
     expect(UI_COPY_TR.common.viewDetails).toBe('Ayrıntıları gör');
   });
 });
-

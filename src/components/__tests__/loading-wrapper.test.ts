@@ -12,5 +12,8 @@ describe('LoadingWrapper', () => {
     expect(source).toContain('data-loading-wrapper-loading');
     expect(source).toContain('data-loading-wrapper-content');
     expect(source).toContain('sr-only');
+    expect(source).toContain("variant === 'skeleton'");
+    expect(source).toContain('skeletonCount');
+    expect(source).toContain('skeletonItemClass');
   });
 });
