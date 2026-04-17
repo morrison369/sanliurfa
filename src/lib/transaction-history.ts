@@ -231,7 +231,7 @@ export function renderTransactionHistory(payload: TransactionHistoryPayload): st
     return `
       ${renderTransactionTypeFilters(types, payload.selectedType)}
       <div class="py-12 text-center text-gray-500">
-        <p class="text-lg">Henüz işlem geçmişi bulunmuyor.</p>
+        <p class="text-lg">Henüz görüntülenecek işlem geçmişi bulunmuyor.</p>
       </div>
     `;
   }
