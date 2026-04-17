@@ -76,7 +76,7 @@ const seo = {
             </span>
             {isPast && (
               <span class="inline-block px-3 py-1 bg-gray-600 text-white text-sm rounded-full">
-                Geçmiş Etkinlik
+                Geçmiş etkinlik
               </span>
             )}
           </div>
@@ -140,7 +140,7 @@ const seo = {
             <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
               <a href="/etkinlikler" class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
                 <ArrowLeft className="w-4 h-4" />
-                Tüm Etkinlikler
+                Tüm etkinlikler
               </a>
               <button class="p-2 text-gray-500 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors" aria-label="Paylaş">
                 <Share2 className="w-5 h-5" />
@@ -173,14 +173,14 @@ const seo = {
             
             {!isPast && (
               <button class="w-full mt-6 btn-primary">
-                Katılım İçin Bilgi Al
+                Katılım bilgisi al
               </button>
             )}
           </div>
           
           {relatedEvents && relatedEvents.length > 0 && (
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Benzer Etkinlikler</h3>
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Benzer etkinlikler</h3>
               <div class="space-y-4">
                 {relatedEvents.map((related: any) => (
                   <a href={`/etkinlikler/${related.slug}`} class="flex gap-3 group">

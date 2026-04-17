@@ -1,16 +1,16 @@
 ---
 /**
- * Email verification page
+ * E-posta doğrulama sayfası
  * URL: /verify-email?token=xxx
- * Shows status of email verification
+ * E-posta doğrulama sonucunu gösterir
  */
 
 import Layout from '../layouts/Layout.astro';
 
-// Get token from URL
+// URL'den token al
 const token = Astro.url.searchParams.get('token');
 
-// Verification status will be handled by client-side component
+// Doğrulama durumu istemci tarafında gösterilir
 ---
 
 <Layout title="E-posta Doğrulama - Şanlıurfa.com">
@@ -44,7 +44,7 @@ const token = Astro.url.searchParams.get('token');
 
   <script define:vars={{ token }}>
     if (token) {
-      // Verify email with token
+      // E-postayı token ile doğrula
       fetch(`/api/users/verify-email?token=${encodeURIComponent(token)}`)
         .then((res) => res.json())
         .then((data) => {
@@ -55,7 +55,7 @@ const token = Astro.url.searchParams.get('token');
             statusEl.remove();
 
             if (data.success) {
-              // Create success result
+              // Başarılı sonucu oluştur
               resultEl.innerHTML = '';
 
               const emoji = document.createElement('div');
@@ -79,7 +79,7 @@ const token = Astro.url.searchParams.get('token');
               link.textContent = 'Ayarlarına Git';
               resultEl.appendChild(link);
             } else {
-              // Create error result
+              // Hata sonucunu oluştur
               resultEl.innerHTML = '';
 
               const emoji = document.createElement('div');
@@ -121,7 +121,7 @@ const token = Astro.url.searchParams.get('token');
 
             const title = document.createElement('h1');
             title.className = 'text-2xl font-bold text-red-600 mb-4';
-            title.textContent = 'Bir Hata Oluştu';
+            title.textContent = 'Bir hata oluştu';
             resultEl.appendChild(title);
 
             const desc = document.createElement('p');
