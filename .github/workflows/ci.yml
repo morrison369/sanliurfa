@@ -63,6 +63,8 @@ jobs:
         run: npm run db:test:bootstrap
       - name: Visible text audit
         run: npm run copy:visible:audit
+      - name: Loading wrapper guard
+        run: npm run loading:wrapper:guard
       - name: Typecheck app scope
         run: npm run typecheck:app
       - name: Generated admin API types drift check

@@ -1,8 +1,16 @@
+---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
+---
+
 <div data-activity-feed>
-  <div data-activity-feed-loading class="flex justify-center py-12">
-    <p class="text-gray-600 dark:text-gray-400">Etkinlik akışı yükleniyor...</p>
-  </div>
-  <div data-activity-feed-content class="hidden"></div>
+  <LoadingWrapper
+    loadingClass="flex justify-center py-12 text-gray-600 dark:text-gray-400"
+    loadingDataAttr="data-activity-feed-loading"
+    message={UI_COPY_TR.activityFeed.loading}
+    contentDataAttr="data-activity-feed-content"
+    contentClass="hidden"
+  />
 </div>
 
 <script>

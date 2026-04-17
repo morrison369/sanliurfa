@@ -9,6 +9,8 @@ describe('ui-copy', () => {
     expect(UI_COPY_TR.reports.download).toBe('Raporu indir');
     expect(UI_COPY_TR.billing.loading).toBe('Ödeme geçmişi yükleniyor...');
     expect(UI_COPY_TR.preferences.loading).toBe('Bildirim tercihleri yükleniyor...');
+    expect(UI_COPY_TR.content.loading).toBe('İçerikler yükleniyor...');
+    expect(UI_COPY_TR.activityFeed.loading).toBe('Etkinlik akışı yükleniyor...');
   });
 
   it('uses normalized common actions', () => {

@@ -69,6 +69,9 @@ export const UI_COPY_TR = {
     popularSearches: 'Popüler aramalar',
     trendingPlaces: 'Trend olan mekanlar',
   },
+  content: {
+    loading: 'İçerikler yükleniyor...',
+  },
   businessAnalytics: {
     loading: 'İşletme analitiği yükleniyor...',
   },
@@ -98,8 +101,14 @@ export const UI_COPY_TR = {
   recommendations: {
     loading: 'Öneriler yükleniyor...',
   },
+  userSuggestions: {
+    loading: 'Kullanıcı önerileri yükleniyor...',
+  },
   collectionDetail: {
     loading: 'Koleksiyon ayrıntıları yükleniyor...',
+  },
+  activityFeed: {
+    loading: 'Etkinlik akışı yükleniyor...',
   },
 } as const;
 
