@@ -47,11 +47,11 @@ function renderFullQuota(quota: QuotaItem): string {
         </div>
         <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
           <span>${quota.percentageUsed}% kullanılmış</span>
-          ${quota.resetDate ? `<span>Sıfırlanma: ${formatQuotaResetDate(quota.resetDate)}</span>` : ''}
+          ${quota.resetDate ? `<span>Sıfırlanma tarihi: ${formatQuotaResetDate(quota.resetDate)}</span>` : ''}
         </div>
       `
       : `
-        <p class="text-sm text-green-600 dark:text-green-400">Sınırsız ✓</p>
+        <p class="text-sm text-green-600 dark:text-green-400">Sınırsız erişim ✓</p>
       `;
 
   return `
@@ -72,7 +72,7 @@ function renderQuotaContent(data: QuotaResponse, compact: boolean): string {
   if (!data || data.quotas.length === 0) {
     return `
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-800">
-        <p class="text-sm text-gray-600 dark:text-gray-400">Kota bilgisi yüklenmedi</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Kota bilgileri görüntülenemedi.</p>
       </div>
     `;
   }
@@ -89,14 +89,14 @@ function renderQuotaContent(data: QuotaResponse, compact: boolean): string {
 
   return `
     <div>
-      <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Kullanım Kotaları</h3>
+      <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Kullanım kotaları</h3>
       <div class="space-y-4">${data.quotas.map(renderFullQuota).join('')}</div>
       ${
         data.tier && limitedQuotas.length > 0
           ? `
             <div class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
               <p class="text-sm text-blue-900 dark:text-blue-300">
-                <span class="font-semibold">Mevcut plan:</span> ${data.tier.name}
+                <span class="font-semibold">Aktif plan:</span> ${data.tier.name}
               </p>
               <p class="mt-2 text-sm text-blue-800 dark:text-blue-400">
                 Premium plana yükseltin ve tüm kotalı özelliklere sınırsız erişim elde edin.
