@@ -7,7 +7,7 @@ if (!user || !Astro.locals.isAdmin) {
 }
 
 const seo = {
-  title: 'Entegrasyon Ayarları - Yönetim Paneli',
+  title: 'Entegrasyon ayarları - Yönetim Paneli',
   description: 'E-posta ve analitik entegrasyon anahtarlarını yönet.',
   noindex: true
 };
@@ -17,7 +17,7 @@ const seo = {
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
     <div class="container-custom max-w-3xl">
       <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Entegrasyon Ayarları</h1>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Entegrasyon ayarları</h1>
         <p class="text-gray-600 dark:text-gray-400 mt-2">
           Buradan girilen değerler ortam değişkeni boşsa çalışma zamanında otomatik olarak kullanılacaktır.
         </p>
@@ -41,7 +41,7 @@ const seo = {
         </section>
 
         <section class="space-y-4">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">RESEND API Anahtarı</h2>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">RESEND API anahtarı</h2>
           <input
             id="resendApiKey"
             type="password"
@@ -202,7 +202,7 @@ const seo = {
       }
 
       if (field === 'resendApiKey' && !resendPattern.test(value)) {
-        return 'Geçersiz RESEND formatı. Örnek: re_abc123';
+        return 'Geçersiz RESEND biçimi. Örnek: re_abc123';
       }
 
       if (field === 'analyticsId' && !analyticsPattern.test(value)) {

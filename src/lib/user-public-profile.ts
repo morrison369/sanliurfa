@@ -143,7 +143,7 @@ export function renderUserPublicProfile(state: UserPublicProfileState): string {
             ${profile.bio ? `<p class="mb-4 text-gray-600">${profile.bio}</p>` : ''}
             <div class="mb-4 flex gap-4">
               <div><p class="text-2xl font-bold">${profile.stats.followers}</p><p class="text-sm">Takipçi sayısı</p></div>
-              <div><p class="text-2xl font-bold">${profile.stats.following}</p><p class="text-sm">Takip edilen kişi</p></div>
+              <div><p class="text-2xl font-bold">${profile.stats.following}</p><p class="text-sm">Takip edilen kişi sayısı</p></div>
             </div>
             ${canInteract ? `
               <div class="flex gap-2">

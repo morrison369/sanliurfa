@@ -146,7 +146,7 @@ function renderEvents(metrics: WebhookAnalyticsMetrics): string {
 
 function renderFailed(metrics: WebhookAnalyticsMetrics): string {
   if (metrics.topFailedEvents.length === 0) {
-    return '<p class="py-8 text-center text-gray-500">Başarısız olay yok 🎉</p>';
+    return '<p class="py-8 text-center text-gray-500">Başarısız olay bulunmuyor.</p>';
   }
 
   return `
@@ -195,7 +195,7 @@ export function renderWebhookAnalyticsDashboard(options: {
           data-webhook-analytics-refresh
           class="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white transition hover:bg-blue-700"
         >
-          Yenile
+          Verileri yenile
         </button>
       </div>
 
@@ -209,11 +209,11 @@ export function renderWebhookAnalyticsDashboard(options: {
           <p class="text-3xl font-bold text-gray-900">${metrics.totalEvents}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
-          <p class="text-sm text-gray-600">Başarılı</p>
+          <p class="text-sm text-gray-600">Başarılı olay</p>
           <p class="text-3xl font-bold text-green-600">${metrics.deliveredEvents}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
-          <p class="text-sm text-gray-600">Başarısız</p>
+          <p class="text-sm text-gray-600">Başarısız olay</p>
           <p class="text-3xl font-bold text-red-600">${metrics.failedEvents}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
