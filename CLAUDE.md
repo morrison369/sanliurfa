@@ -162,7 +162,7 @@ src/
      - Yorumlar: `sanliurfa:reviews:{placeId}` (10 dakika TTL)
      - Kullanıcı favorileri: `sanliurfa:favorites:{userId}` (5 dakika TTL)
    - **Temizleme**: Mutation'larda (POST/PUT/DELETE) desen bazlı silme uygulanır
-   - **Metrikler**: Her endpoint için önbellek isabet/kaçırma durumu izlenir ve `/api/metrics` altında toplanır
+   - **Metrikler**: Her uç nokta için önbellek isabet/kaçırma durumu izlenir ve `/api/metrics` altında toplanır
 
 4. **Rate Limiting**:
    - **Mekanizma**: Sayaç ve TTL içeren `sanliurfa:ratelimit:{ip}` Redis anahtarı (15 dakikalık pencere)
@@ -178,7 +178,7 @@ src/
    - Doğrulama hatasında 422 `UNPROCESSABLE_ENTITY` döner
 
 6. **Gözlemlenebilirlik**:
-   - **İstek Metrikleri**: Her endpoint `recordRequest(method, path, status, duration)` çağırır → toplu istatistik üretilir
+   - **İstek Metrikleri**: Her uç nokta `recordRequest(method, path, status, duration)` çağırır → toplu istatistik üretilir
    - **Sorgu Metrikleri**: Her DB sorgusu süre, satır sayısı ve yavaşlık tespiti ile kaydedilir
    - **Yavaşlık Tespiti**:
      - 100ms üzeri sorgular: hata ayıklama günlüğü
@@ -188,10 +188,10 @@ src/
    - **Paneller**: `/api/metrics` (toplu), `/api/performance` (detaylı, yalnızca admin)
 
 7. **API Sözleşmeleri**:
-   - Tüm endpoint'ler JSON döner: `{ success: boolean, data?: T, error?: string }`
+   - Tüm uç noktalar JSON döner: `{ success: boolean, data?: T, error?: string }`
    - Durum kodları: 200 (başarılı), 400 (geçersiz girdi), 401 (kimlik doğrulama gerekli), 403 (yasak), 404 (bulunamadı), 409 (çakışma), 422 (doğrulama hatası), 429 (istek sınırı), 500 (sunucu hatası)
    - Dağıtık izleme için tüm yanıtlarda `X-Request-ID` başlığı bulunur
-   - Önbelleğe alınan endpoint'lerde `X-Cache` başlığı (`HIT/MISS`) bulunur
+   - Önbelleğe alınan uç noktalarda `X-Cache` başlığı (`HIT/MISS`) bulunur
    - `/api/docs` → Swagger arayüzü, `/api/openapi.json` → OpenAPI 3.1 tanımı
 
 8. **Bileşen Stratejisi**:
@@ -249,7 +249,7 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 **Sağlık ve Gözlemlenebilirlik**:
 - `GET /api/health` — Veritabanı/Redis durumu ve yanıt süreleri
 - `GET /api/health/detailed` (admin) — Sistem metrikleri, pool bilgisi ve hata detayları
-- `GET /api/metrics` (admin) — Toplu istek metrikleri, hata oranları, önbellek istatistikleri ve en yavaş endpoint'ler
+- `GET /api/metrics` (admin) — Toplu istek metrikleri, hata oranları, önbellek istatistikleri ve en yavaş uç noktalar
 - `GET /api/performance` (admin) — Yavaş sorgular, yavaş operasyonlar, pool kullanımı ve performans paneli
 
 **Ops ve Admin Kontrat Yüzeyleri**:
@@ -739,12 +739,12 @@ npm run test
 ### Sağlık ve Gözlemlenebilirlik
 | Dosya | Amaç |
 |------|------|
-| `src/pages/api/health.ts` | Sağlık kontrol endpoint'i (temel durum) |
-| `src/pages/api/health/detailed.ts` | Detaylı sağlık endpoint'i (admin, sistem metrikleri, pool bilgisi) |
+| `src/pages/api/health.ts` | Sağlık kontrol uç noktası (temel durum) |
+| `src/pages/api/health/detailed.ts` | Detaylı sağlık uç noktası (admin, sistem metrikleri, pool bilgisi) |
 | `src/pages/api/metrics.ts` | Toplu metrik paneli (admin) |
-| `src/pages/api/performance.ts` | Performans izleme endpoint'i (admin, yavaş sorgular, yavaş operasyonlar, pool) |
+| `src/pages/api/performance.ts` | Performans izleme uç noktası (admin, yavaş sorgular, yavaş operasyonlar, pool) |
 | `src/pages/api/openapi.json.ts` | OpenAPI 3.1 tanımı |
-| `src/pages/api/docs.ts` | Swagger arayüz endpoint'i |
+| `src/pages/api/docs.ts` | Swagger arayüz uç noktası |
 
 ### Ops Governance ve Kaynak Gerçekler
 | Dosya | Amaç |
@@ -882,7 +882,7 @@ Tam CentOS Web Panel üretim kurulum rehberi için **`DEPLOYMENT.md`** dosyasın
 - **Env**: Kritik değişkenleri sunucudaki `.env` dosyasında ayarla
 - **Redis**: Erişilebilir olmalı (`redis-cli ping`); çoğu zaman hosting tarafından sağlanır
 - **Veritabanı**: PostgreSQL sağlanır; kullanıcı ve veritabanı oluştur, ilk açılışta migration'ları çalıştır
-- **İzleme**: `/api/health` endpoint'i, PM2 logları ve crontab sağlık kontrol script'i kullan
+- **İzleme**: `/api/health` uç noktasını, PM2 loglarını ve crontab sağlık kontrol betiğini kullan
 
 ## Sonraki Geliştirme İçin Notlar
 
@@ -891,13 +891,13 @@ Tam CentOS Web Panel üretim kurulum rehberi için **`DEPLOYMENT.md`** dosyasın
 2. **Parametrik Sorgular**: SQL'de her zaman `$1`, `$2` vb. sözdizimini kullan. Kullanıcı girdisini doğrudan sorguya gömme.
 3. **Tablo İzin Listesi**: Yeni tablo eklersen `postgres.ts` içindeki `ALLOWED_TABLES` kümesini güncelle.
 4. **Redis Ad Alanı**: Yeni tüm cache anahtarları `sanliurfa:` prefix'i ile başlamalıdır (`prefixKey()` helper'ı bunu yönetir). **KRİTİK**: ad alanı izolasyonu, paylaşılan Redis üzerinde diğer projelerle çakışmayı önler.
-5. **Girdi Doğrulama**: Her API endpoint'i kullanmadan önce `validateWithSchema()` ile girdi doğrulaması yapmalıdır.
+5. **Girdi Doğrulama**: Her API uç noktası kullanılmadan önce `validateWithSchema()` ile girdi doğrulaması yapmalıdır.
 6. **Hata Yönetimi**: API route'larında hataları yakala; ham hataları istemciye fırlatma. Sunucu görünürlüğü için stdout/stderr'a logla.
-7. **SSE Uygulaması**: Gerçek zamanlı endpoint'lerde her zaman `ReadableStream` kullan, `Cache-Control: no-cache` ve `Connection: keep-alive` başlıklarını ekle, istemci tarafında en fazla 60sn gecikmeli üstel geri bağlanma uygula.
+7. **SSE Uygulaması**: Gerçek zamanlı uç noktalarda her zaman `ReadableStream` kullan, `Cache-Control: no-cache` ve `Connection: keep-alive` başlıklarını ekle, istemci tarafında en fazla 60sn gecikmeli üstel geri bağlanma uygula.
 8. **Oyunlaştırma Hook'ları**: `checkCommonAchievements()` doğrudan değil event hook'ları içinden çağrılmalıdır. İç try/catch kullandığı için dışarı hata fırlatmamalıdır.
 9. **Cache Invalidation**: Her mutation'da (POST/PUT/DELETE) ilgili cache pattern'lerini temizle. Sadakat değişimlerinde `sanliurfa:loyalty:*` ve `sanliurfa:tier:*` pattern'lerini temizle.
-10. **Admin Koruması**: Yeni admin API endpoint'leri `withAdminOpsReadAccess(...)` veya `withAdminOpsWriteAccess(...)` kullanmalıdır. Admin sayfaları yönlendirme yapabilir; admin API route'ları yönlendirme değil, API tarzı 403/429/422 yanıtları döndürmelidir.
-11. **Admin API Kontratı**: Bir admin endpoint'i değişirse `src/pages/api/openapi.json.ts` dosyasını güncelle, `src/types/generated-admin-api.ts` dosyasını yeniden üret ve `src/types/admin-api.ts` ile hizalı tut. `npm run types:admin:drift:check` komutunu otoriter kabul et.
+10. **Admin Koruması**: Yeni admin API uç noktaları `withAdminOpsReadAccess(...)` veya `withAdminOpsWriteAccess(...)` kullanmalıdır. Admin sayfaları yönlendirme yapabilir; admin API route'ları yönlendirme değil, API tarzı 403/429/422 yanıtları döndürmelidir.
+11. **Admin API Kontratı**: Bir admin uç noktası değişirse `src/pages/api/openapi.json.ts` dosyasını güncelle, `src/types/generated-admin-api.ts` dosyasını yeniden üret ve `src/types/admin-api.ts` ile hizalı tut. `npm run types:admin:drift:check` komutunu otoriter kabul et.
 12. **Birincil Gate'ler**: Bir değişikliği yeşil saymadan önce `npm run typecheck:app`, `npm run test:critical` ve `npm run test:e2e:smoke` komutlarını tercih et. `npm run test` daha geniş eski regresyon kapsamıdır; birincil operasyonel gate değildir.
 13. **Faz İş Akışı**: Faz uyumluluğu runner-first yaklaşımıyla yürür. `package.json` içinde geniş faz alias yüzeylerini geri getirme; `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` içinde tanımlı runner ve manifest akışını kullan.
 14. **Beklemesiz Arka Plan İşleri**: Kritik olmayan arka plan işleri için (örneğin mention'ları okundu işaretlemek) istek timeout'una yol açmamak adına sorguları `await` etmeden kuyruğa al.
@@ -920,15 +920,15 @@ Tam CentOS Web Panel üretim kurulum rehberi için **`DEPLOYMENT.md`** dosyasın
 
 **Yeni API Endpoint'leri**:
 - `src/lib/api.ts` içindeki yanıt formatlayıcı kalıbını izle
-- Admin endpoint'lerinde dağınık inline rol kontrolü yerine ortak admin ops access wrapper'ını kullan
+- Admin uç noktalarında dağınık inline rol kontrolü yerine ortak admin ops access wrapper'ını kullan
 - Kullanmadan önce `validateWithSchema()` ile girdi doğrulaması yap
 - Metrikleri kaydet: `recordRequest(method, path, status, duration)`
 - Önemli mutation'ları log'la: `logger.logMutation(action, table, recordId, userId, details)`
 - Yanıt header'larında `X-Request-ID` döndür
-- Endpoint admin UI tarafından tüketiliyorsa veya admin kontrat şeklini değiştiriyorsa `src/pages/api/openapi.json.ts` dosyasını güncelle
+- Uç nokta admin arayüzü tarafından tüketiliyorsa veya admin kontrat şeklini değiştiriyorsa `src/pages/api/openapi.json.ts` dosyasını güncelle
 - `npm run types:admin:generate` ile admin API tiplerini yeniden üret
 - `npm run types:admin:drift:check` komutunu yeşil tut
-- SSE endpoint'lerinde `ReadableStream` kalıbını kullan, gerekli header'ları ekle ve istemci tarafı yeniden bağlanmayı uygula
+- SSE uç noktalarında `ReadableStream` kalıbını kullan, gerekli header'ları ekle ve istemci tarafı yeniden bağlanmayı uygula
 
 **Yeni Doğrulamalar**:
 - `validation.ts` içindeki `commonSchemas` listesine ekle
