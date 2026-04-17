@@ -1,6 +1,6 @@
 {
   "tsxCount": 59,
-  "hookCount": 3,
+  "hookCount": 0,
   "runtimeUsageCount": 1,
   "runtimeUsages": [
     "astro.config.mjs"
@@ -67,16 +67,11 @@
     "src/components/WebhookDeliveryLogs.tsx",
     "src/components/admin/AdminDashboard.tsx"
   ],
-  "hookFiles": [
-    "src/hooks/useFeatureAccess.ts",
-    "src/hooks/useQuotaCheck.ts",
-    "src/lib/useApiError.ts"
-  ],
+  "hookFiles": [],
   "canRemoveAstroReactIntegration": false,
   "canRemoveReactPackages": false,
   "blockers": [
     "59 adet kalan .tsx dosyasi React import ediyor",
-    "3 adet kalan hook/lib dosyasi React hook import ediyor",
     "1 adet runtime kullanim noktasi hala React entegrasyonuna bagli"
   ]
 }

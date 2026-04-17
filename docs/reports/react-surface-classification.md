@@ -1,15 +1,14 @@
 # React Surface Classification
-- Generated at: 2026-04-17T01:15:35.121Z
+- Generated at: 2026-04-17T01:22:09.526Z
 - TSX files: 59
 - Server-only candidates: 0
 - Dead TSX files: 59
 - Migrate-required TSX files: 0
-- Keep blockers: 3
+- Keep blockers: 0
 - Runtime roots: 1
 
 ## Next Steps
 - 59 adet baglantisiz .tsx dosyasini sil veya arsivle
-- 3 adet React blokor dosyayi plain TS veya Astro karsiligina tasit
 - 1 adet runtime owner dosyada React entegrasyonunu kaldir
 
 ## Runtime Roots
@@ -83,6 +82,4 @@
 - none
 
 ## Keep Blockers
-- src/hooks/useFeatureAccess.ts
-- src/hooks/useQuotaCheck.ts
-- src/lib/useApiError.ts
+- none

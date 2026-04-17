@@ -461,16 +461,16 @@ import { t } from '../lib/i18n';
 Use form validation utilities:
 
 ```tsx
-import { useFormError } from '../lib/useApiError';
 import { validateForm, validators } from '../lib/form-errors';
 
 export function MyForm() {
-  const { handleSubmit, error } = useFormError();
   const [data, setData] = useState({});
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError(null);
 
     const validationErrors = validateForm(data, {
       email: validators.email,
@@ -482,7 +482,11 @@ export function MyForm() {
       return;
     }
 
-    await handleSubmit(() => submitData(data));
+    try {
+      await submitData(data);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Form gonderimi basarisiz');
+    }
   };
 
   return (

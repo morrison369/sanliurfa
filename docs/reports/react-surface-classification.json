@@ -3,7 +3,7 @@
   "serverOnlyCount": 0,
   "deadCount": 59,
   "migrateCount": 0,
-  "keepCount": 3,
+  "keepCount": 0,
   "runtimeRootCount": 1,
   "serverOnly": [],
   "dead": [
@@ -68,17 +68,12 @@
     "src/components/admin/AdminDashboard.tsx"
   ],
   "migrate": [],
-  "keep": [
-    "src/hooks/useFeatureAccess.ts",
-    "src/hooks/useQuotaCheck.ts",
-    "src/lib/useApiError.ts"
-  ],
+  "keep": [],
   "runtimeRoots": [
     "astro.config.mjs"
   ],
   "nextSteps": [
     "59 adet baglantisiz .tsx dosyasini sil veya arsivle",
-    "3 adet React blokor dosyayi plain TS veya Astro karsiligina tasit",
     "1 adet runtime owner dosyada React entegrasyonunu kaldir"
   ]
 }
