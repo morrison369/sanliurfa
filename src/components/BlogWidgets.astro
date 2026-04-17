@@ -40,7 +40,7 @@ try {
   // Kategorileri getir
   categories = await getBlogCategories();
 } catch (err) {
-  error = 'Widget verileri yüklenirken hata oluştu';
+  error = 'Blog bileşenleri yüklenirken hata oluştu';
   console.error('Blog bileşenleri yüklenemedi:', err);
 }
 ---
@@ -184,10 +184,10 @@ try {
         alert('Abonelik işlemi başarıyla tamamlandı!');
         form.reset();
       } else {
-        alert(data.error || 'Abone olurken hata oluştu');
+        alert(data.error || 'Abonelik sırasında bir hata oluştu');
       }
     } catch (err) {
-      alert('Hata: ' + String(err));
+      alert('Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');
     }
   }
 </script>
