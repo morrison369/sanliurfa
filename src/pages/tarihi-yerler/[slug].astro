@@ -44,7 +44,7 @@ const seo = {
             </span>
           )}
           {site.is_featured && !site.is_unesco && (
-            <span class="badge bg-urfa-600 text-white">Öne Çıkan</span>
+            <span class="badge bg-urfa-600 text-white">Öne çıkan</span>
           )}
           <span class="badge bg-white/20 text-white">{site.period || 'Tarihi'}</span>
         </div>
@@ -96,13 +96,13 @@ const seo = {
         
         <aside class="space-y-6">
           <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-24">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Ziyaret Bilgileri</h3>
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Ziyaret bilgileri</h3>
             
             <div class="space-y-4">
               <div class="flex items-start gap-3">
                 <Clock className="w-5 h-5 text-urfa-600 mt-0.5" />
                 <div>
-                  <p class="font-medium text-gray-900 dark:text-white">Çalışma Saatleri</p>
+                  <p class="font-medium text-gray-900 dark:text-white">Çalışma saatleri</p>
                   <p class="text-gray-600 dark:text-gray-400">{site.opening_hours || '08:00 - 18:00'}</p>
                 </div>
               </div>
@@ -110,7 +110,7 @@ const seo = {
               <div class="flex items-start gap-3">
                 <Ticket className="w-5 h-5 text-urfa-600 mt-0.5" />
                 <div>
-                  <p class="font-medium text-gray-900 dark:text-white">Giriş Ücreti</p>
+                  <p class="font-medium text-gray-900 dark:text-white">Giriş ücreti</p>
                   <p class="text-gray-600 dark:text-gray-400">{site.entry_fee || 'Ücretsiz'}</p>
                 </div>
               </div>
@@ -140,7 +140,7 @@ const seo = {
                   class="btn-primary w-full flex items-center justify-center gap-2"
                 >
                   <Navigation className="w-5 h-5" />
-                  Yol Tarifi Al
+                  Yol tarifi al
                 </a>
               </div>
             )}
@@ -148,7 +148,7 @@ const seo = {
           
           {nearbySites && nearbySites.length > 0 && (
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Diğer Tarihi Yerler</h3>
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Diğer tarihi yerler</h3>
               <div class="space-y-3">
                 {nearbySites.map((place: any) => (
                   <a href={`/tarihi-yerler/${place.slug}`} class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
