@@ -14,6 +14,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 - Hangi dosya source-of-truth:
   - [SOURCE_OF_TRUTH_MAP.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\SOURCE_OF_TRUTH_MAP.md)
 - Astro-only mimari geçiş değerlendirmesi:
+  - [ASTRO_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\architecture\ASTRO_RUNTIME_STATE.md) - aktif runtime özeti
   - [ASTRO_ONLY_MIGRATION_ASSESSMENT.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\architecture\ASTRO_ONLY_MIGRATION_ASSESSMENT.md)
   - [ASTRO_ONLY_MIGRATION_BACKLOG.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\architecture\ASTRO_ONLY_MIGRATION_BACKLOG.md) - kapanış ve regresyon kuralları
   - [astro-hydration-inventory.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\reports\astro-hydration-inventory.md)
@@ -51,6 +52,7 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
    Admin wrapper coverage için `docs/reports/admin-access-coverage.md`
 4. Hangi dosya karar veriyor belirsizse `SOURCE_OF_TRUTH_MAP.md`
 5. Astro-only / framework migration kararı verilecekse `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md`
+   Güncel runtime özeti için `docs/architecture/ASTRO_RUNTIME_STATE.md`
    Kapanış ve regresyon kuralları için `docs/architecture/ASTRO_ONLY_MIGRATION_BACKLOG.md`
    Yeni hydration açılırsa somut risk listesi için `docs/reports/astro-hydration-inventory.md`
    Yeni high-risk sıralaması gerekirse `docs/reports/astro-high-risk-feasibility.md`

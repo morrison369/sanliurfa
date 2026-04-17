@@ -12,6 +12,7 @@ This file is a high-signal working guide, not the only source of truth. For oper
 
 - `docs/ops/README.md` — entry point for ops documents
 - `docs/ops/SOURCE_OF_TRUTH_MAP.md` — which file owns which decision
+- `docs/architecture/ASTRO_RUNTIME_STATE.md` — active Astro runtime status after migration closure
 - `docs/RELEASE_GATES.md` — release and merge gate behavior
 - `docs/ops/BRANCH_PROTECTION.md` — required checks / branch protection parity
 - `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` — artifact freshness semantics
