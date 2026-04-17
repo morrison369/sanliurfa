@@ -346,8 +346,8 @@ Uygulama, WebSocket ek yükü olmadan düşük gecikmeli özellikler için **Ser
 
 **Mimari**:
 - `src/lib/realtime-sse.ts` — olay kaynağı yönetimi ve üstel geri çekilme ile otomatik yeniden bağlanma içeren `RealtimeManager` tekil nesnesi
-- Çift amaçlı endpoint'ler: metrikler her 5 saniyede, KPI'lar her 30 saniyede güncellenir
-- Akış güncellemeleri için cursor tabanlı sayfalama kullanılır; yalnızca son fetch'ten sonraki yeni öğeler alınır
+- Çift amaçlı uç noktalar: metrikler her 5 saniyede, KPI'lar her 30 saniyede güncellenir
+- Akış güncellemeleri için imleç tabanlı sayfalama kullanılır; yalnızca son çekimden sonraki yeni öğeler alınır
 - Yanıtı bloklamamak için beklemesiz arka plan sorguları kullanılır
 
 **Uygulanan Akışlar**:
@@ -766,11 +766,11 @@ npm run test
 | `src/lib/admin-index.ts` | Admin ana sayfa risk/araç görünüm modeli kaynağı |
 | `src/lib/admin-index-page.ts` | Admin ana sayfa badge/kart sınıf kaynağı |
 | `src/lib/admin-index-view.ts` | Admin ana sayfa gorunum modeli kaynagi |
-| `src/lib/admin-ops-pages.ts` | Runtime izleme + erisim kapsama trend/delta/gecmis kaynagi |
-| `src/lib/runtime-monitor.ts` | Çalışma zamanı izleme endpoint ve kapsama özet kaynağı |
-| `src/lib/admin-access-coverage-page.ts` | Erişim kapsama uyarı/özet/drift HTML kaynağı |
+| `src/lib/admin-ops-pages.ts` | Çalışma zamanı izleme + erişim kapsama trend/delta/geçmiş kaynağı |
+| `src/lib/runtime-monitor.ts` | Çalışma zamanı izleme uç noktası ve kapsama özet kaynağı |
+| `src/lib/admin-access-coverage-page.ts` | Erişim kapsama uyarı/özet/kayma HTML kaynağı |
 | `src/lib/admin-dom.ts` | Admin ops sayfaları için ortak DOM güncelleme yardımcısı kaynağı |
-| `src/lib/admin-page-bootstrap.ts` | Admin ops sayfalari icin ortak yenileme/aralik baslatma kaynagi |
+| `src/lib/admin-page-bootstrap.ts` | Admin ops sayfaları için ortak yenileme/aralık başlatma kaynağı |
 | `src/lib/astro-migration-report.ts` | Astro hydration risk envanteri kaynağı |
 | `scripts/astro-hydration-inventory.ts` | Astro hydration envanter raporu üreticisi |
 
@@ -779,8 +779,8 @@ npm run test
 |------|------|
 | `src/lib/realtime-sse.ts` | Server-Sent Events yöneticisi, yeniden bağlanma mantığı ve event listener'lar |
 | `src/lib/business-analytics.ts` | KPI hesapları ve performans metriği toplama |
-| `src/pages/api/realtime/analytics.ts` | Gerçek zamanlı metrik/KPI SSE endpoint'i (yalnızca admin) |
-| `src/pages/api/realtime/feed.ts` | Gerçek zamanlı sosyal akış SSE endpoint'i (auth gerekli) |
+| `src/pages/api/realtime/analytics.ts` | Gerçek zamanlı metrik/KPI SSE uç noktası (yalnızca admin) |
+| `src/pages/api/realtime/feed.ts` | Gerçek zamanlı sosyal akış SSE uç noktası (auth gerekli) |
 | `src/components/LiveAnalyticsDashboard.astro` | Renk kodlu sağlık durumuyla canlı metrik görünümü |
 | `src/pages/canli-analitik/index.astro` | Admin analitik panel sayfası |
 
@@ -791,12 +791,12 @@ npm run test
 | `src/lib/badges.ts` | Rozet tanımları ve verme mantığı |
 | `src/lib/achievements.ts` | Başarım tanımları ve kilit açma koşulları |
 | `src/lib/gamification.ts` | Otomatik başarım açma için olay hook'ları |
-| `src/pages/api/loyalty/points.ts` | Kullanıcı puan bakiyesi ve geçmiş endpoint'i |
-| `src/pages/api/loyalty/rewards.ts` | Herkese açık ödül kataloğu endpoint'i |
-| `src/pages/api/loyalty/achievements.ts` | Kullanıcı başarım endpoint'i (GET all/unviewed/stats, POST mark viewed) |
-| `src/pages/api/loyalty/tiers.ts` | Kullanıcı seviye ve ilerleme endpoint'i |
+| `src/pages/api/loyalty/points.ts` | Kullanıcı puan bakiyesi ve geçmiş uç noktası |
+| `src/pages/api/loyalty/rewards.ts` | Herkese açık ödül kataloğu uç noktası |
+| `src/pages/api/loyalty/achievements.ts` | Kullanıcı başarım uç noktası (GET all/unviewed/stats, POST mark viewed) |
+| `src/pages/api/loyalty/tiers.ts` | Kullanıcı seviye ve ilerleme uç noktası |
 | `src/pages/api/admin/loyalty/rewards.ts` | Admin ödül yönetimi (GET list, POST create) |
-| `src/pages/api/admin/loyalty/award.ts` | Admin manuel ödül endpoint'i (puan veya rozet) |
+| `src/pages/api/admin/loyalty/award.ts` | Admin manuel ödül uç noktası (puan veya rozet) |
 | `src/components/LoyaltyDashboard.astro` | Kullanıcının sadakat durumu ve ödül görünümü |
 | `src/components/AdminLoyaltyPanel.astro` | Ödül kataloğu, manuel ödül verme ve istatistiklerden oluşan admin 3-tab paneli |
 | `src/pages/admin/loyalty/index.astro` | Admin sadakat yönetim sayfası |
