@@ -95,11 +95,11 @@ function renderError(message: string): string {
 function renderCreateForm(state: ContentManagerState): string {
   return `
     <form data-content-manager-form class="rounded-lg bg-white p-6 shadow space-y-4">
-      <input data-content-field="title" type="text" placeholder="Başlık" required value="${state.form.title}" class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      <textarea data-content-field="description" placeholder="Açıklama" class="h-24 w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">${state.form.description}</textarea>
-      <textarea data-content-field="content" placeholder="İçerik" required class="h-40 w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">${state.form.content}</textarea>
+      <input data-content-field="title" type="text" placeholder="İçerik başlığı" required value="${state.form.title}" class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <textarea data-content-field="description" placeholder="Kısa açıklama" class="h-24 w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">${state.form.description}</textarea>
+      <textarea data-content-field="content" placeholder="İçerik metni" required class="h-40 w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">${state.form.content}</textarea>
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <input data-content-field="category" type="text" placeholder="Kategori" value="${state.form.category}" class="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input data-content-field="category" type="text" placeholder="İçerik kategorisi" value="${state.form.category}" class="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
         <select data-content-field="content_type" class="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="article" ${state.form.content_type === 'article' ? 'selected' : ''}>Makale</option>
           <option value="guide" ${state.form.content_type === 'guide' ? 'selected' : ''}>Rehber</option>
@@ -144,7 +144,7 @@ function renderContentItem(item: ContentManagerItem): string {
           <a href="/content/${item.id}" class="rounded bg-blue-100 px-3 py-1 text-sm text-blue-700 hover:bg-blue-200">Düzenle</a>
           ${item.status !== 'published' ? `
             <button type="button" data-content-manager-publish="${item.id}" class="rounded bg-green-100 px-3 py-1 text-sm text-green-700 hover:bg-green-200">
-              Yayınla
+              Yayına al
             </button>
           ` : ''}
         </div>

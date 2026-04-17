@@ -82,7 +82,7 @@ function renderReviews(): string {
 function renderAds(): string {
   return `
     <div class="py-8 text-center">
-      <p class="mb-4 text-gray-600 dark:text-gray-400">Reklam kampanyalarınızı burada yöneteceksiniz.</p>
+      <p class="mb-4 text-gray-600 dark:text-gray-400">Reklam kampanyalarınızı burada oluşturup yöneteceksiniz.</p>
       <button class="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700">+ Reklam oluştur</button>
     </div>
   `;

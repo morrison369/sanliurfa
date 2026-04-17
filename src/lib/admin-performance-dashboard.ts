@@ -156,12 +156,12 @@ function renderSummary(data: AdminPerformanceOptimizationData): string {
       detail: '500 ms üstü istekler',
     },
     {
-      label: 'Cache hit rate',
+      label: 'Önbellek isabet oranı',
       value: formatPercent(asNumber(metrics.cacheHitRate)),
       detail: 'Hedef > %60',
     },
     {
-      label: 'Ort. sure',
+      label: 'Ort. süre',
       value: formatMilliseconds(asNumber(metrics.avgRequestDuration)),
       detail: 'Tüm istek ortalaması',
     },
@@ -190,7 +190,7 @@ function renderSummary(data: AdminPerformanceOptimizationData): string {
   const cacheStrategies = asRecord(root.cacheStrategies);
   const indexSuggestions = asArray<Record<string, unknown>>(root.indexSuggestions)
     .slice(0, 5)
-    .map((item) => `<li>${escapeHtml(asString(item.table, 'Tablo'))}: ${escapeHtml(asString(item.reason, 'Index onerisi'))}</li>`)
+    .map((item) => `<li>${escapeHtml(asString(item.table, 'Tablo'))}: ${escapeHtml(asString(item.reason, 'İndeks önerisi'))}</li>`)
     .join('');
 
   return `
@@ -296,10 +296,10 @@ function renderArtifacts(data: AdminPerformanceOptimizationData): string {
       <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 class="text-sm font-semibold text-slate-900">Genel durum</h3>
         <div class="mt-3 grid gap-3 md:grid-cols-4 text-sm text-slate-700">
-          <div><span class="font-semibold">Overall:</span> ${escapeHtml(statusLabel(asStatus(summary.overall)))}</div>
-          <div><span class="font-semibold">Saglikli:</span> ${asNumber(summary.healthyCount)}</div>
-          <div><span class="font-semibold">Degrede:</span> ${asNumber(summary.degradedCount)}</div>
-          <div><span class="font-semibold">Bloklu:</span> ${asNumber(summary.blockedCount)}</div>
+          <div><span class="font-semibold">Genel durum:</span> ${escapeHtml(statusLabel(asStatus(summary.overall)))}</div>
+          <div><span class="font-semibold">Sağlıklı:</span> ${asNumber(summary.healthyCount)}</div>
+          <div><span class="font-semibold">Bozulmuş:</span> ${asNumber(summary.degradedCount)}</div>
+          <div><span class="font-semibold">Engelli:</span> ${asNumber(summary.blockedCount)}</div>
         </div>
       </div>
     </div>
