@@ -142,7 +142,7 @@ function renderListings(listings: FeaturedListing[]): string {
   if (listings.length === 0) {
     return `
       <div class="py-8 text-center text-gray-500">
-        Henüz yeminli liste yok. Yeni bir tane oluşturmak için yukarıdaki butona tıklayın.
+        Henüz yeminli liste bulunmuyor. Yeni bir kayıt oluşturmak için yukarıdaki düğmeyi kullanın.
       </div>
     `;
   }

@@ -61,7 +61,7 @@ export function getSameStatusSinceMinutes<T extends { refreshedAt: string }>(
 
 export function buildRuntimeTrend(history: RuntimeMonitorHistoryEntry[]): string {
   if (history.length === 0) {
-    return 'Henüz veri yok.';
+    return 'Henüz veri bulunmuyor.';
   }
 
   return history
@@ -72,7 +72,7 @@ export function buildRuntimeTrend(history: RuntimeMonitorHistoryEntry[]): string
 
 export function buildCoverageTrend(history: CoverageHistoryEntry[]): string {
   if (history.length === 0) {
-    return 'Henüz veri yok.';
+    return 'Henüz veri bulunmuyor.';
   }
 
   return history
