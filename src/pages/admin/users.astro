@@ -8,7 +8,7 @@ if (!user || !Astro.locals.isAdmin) {
   return Astro.redirect('/giris?redirect=/admin/users');
 }
 
-const seo = { title: 'Kullanıcı Yönetimi - Admin' };
+const seo = { title: 'Kullanıcı Yönetimi - Yönetim Paneli' };
 ---
 
 <Layout seo={seo}>
@@ -16,7 +16,7 @@ const seo = { title: 'Kullanıcı Yönetimi - Admin' };
     <div class="container-custom">
       <div class="flex items-center justify-between mb-8">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Kullanıcılar</h1>
-        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">← Admin Panel</a>
+        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">← Yönetim paneli</a>
       </div>
       
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">

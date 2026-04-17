@@ -26,6 +26,15 @@ export interface LoyaltyDashboardData {
 
 export type LoyaltyDashboardTab = 'overview' | 'rewards' | 'achievements';
 
+function formatTierName(tier: string): string {
+  const normalized = tier.trim().toLowerCase();
+  if (normalized === 'bronze') return 'Bronz';
+  if (normalized === 'silver') return 'Gümüş';
+  if (normalized === 'gold') return 'Altın';
+  if (normalized === 'platinum') return 'Platin';
+  return tier;
+}
+
 function resolveEnvelopeData(payload: unknown): Record<string, unknown> {
   if (!payload || typeof payload !== 'object') return {};
 
@@ -76,7 +85,7 @@ function renderHeader(data: LoyaltyDashboardData): string {
       <div class="flex items-start justify-between">
         <div>
           <h1 class="mb-2 text-3xl font-bold">Sadakat Programı</h1>
-          <p class="text-blue-100">Harcadığınız her para için puan kazanın ve özel ödüller açın</p>
+          <p class="text-blue-100">Platformdaki etkinliklerinizle puan kazanın ve özel ödüllerin kilidini açın</p>
         </div>
         <span class="text-5xl opacity-80">🏆</span>
       </div>
@@ -92,7 +101,7 @@ function renderHeader(data: LoyaltyDashboardData): string {
         </div>
         <div class="rounded-lg bg-white/10 p-4">
           <div class="mb-1 text-sm text-blue-100">Mevcut Seviye</div>
-          <div class="text-3xl font-bold capitalize">${data.balance.current_tier}</div>
+          <div class="text-3xl font-bold">${formatTierName(data.balance.current_tier)}</div>
         </div>
       </div>
     </div>
@@ -113,7 +122,7 @@ function renderTierProgress(data: LoyaltyDashboardData): string {
       <h2 class="mb-4 text-xl font-semibold">Sonraki Seviyeye İlerle</h2>
       <div class="space-y-3">
         <div class="flex items-center justify-between">
-          <span class="font-medium capitalize">${data.balance.current_tier}</span>
+          <span class="font-medium">${formatTierName(data.balance.current_tier)}</span>
           <span class="text-sm text-gray-600 dark:text-gray-400">${pointsToNextTier.toLocaleString('tr-TR')} puan kaldı</span>
         </div>
         <div class="h-3 w-full rounded-full bg-gray-200 dark:bg-gray-700">
@@ -179,7 +188,7 @@ function renderOverviewTab(data: LoyaltyDashboardData): string {
                 <div class="rounded-lg border-2 p-4 transition-all ${classes}">
                   <div class="mb-2 flex items-start justify-between">
                     <div>
-                      <h4 class="font-semibold capitalize">${tier.tier_name}</h4>
+                      <h4 class="font-semibold">${formatTierName(tier.tier_name)}</h4>
                       <p class="text-sm text-gray-600 dark:text-gray-400">${tier.min_points.toLocaleString('tr-TR')}+ puan</p>
                     </div>
                     ${current ? '<span class="rounded bg-blue-600 px-2 py-1 text-xs text-white">Mevcut</span>' : ''}
@@ -196,7 +205,7 @@ function renderOverviewTab(data: LoyaltyDashboardData): string {
         <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
           <div class="mb-2 flex items-center gap-3">
             <span class="text-2xl text-yellow-500">⚡</span>
-            <div class="text-sm text-gray-600 dark:text-gray-400">Yaşam Süresi Puanları</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">Toplam kazanılan puan</div>
           </div>
           <div class="text-3xl font-bold">${data.balance.lifetime_points.toLocaleString('tr-TR')}</div>
         </div>
@@ -207,7 +216,7 @@ function renderOverviewTab(data: LoyaltyDashboardData): string {
           </div>
           <div class="text-3xl font-bold">${data.achievements.total_unlocked.toLocaleString('tr-TR')}</div>
           <div class="mt-1 text-xs text-gray-500">
-            ${(data.achievements.total_available - data.achievements.total_unlocked).toLocaleString('tr-TR')} kalmadı
+            ${(data.achievements.total_available - data.achievements.total_unlocked).toLocaleString('tr-TR')} başarı kaldı
           </div>
         </div>
       </div>
@@ -244,7 +253,7 @@ function renderAchievementsTab(data: LoyaltyDashboardData): string {
       <div class="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 p-6 dark:border-blue-800 dark:from-blue-900/20 dark:to-purple-900/20">
         <h4 class="mb-2 font-semibold">💡 İpucu</h4>
         <p class="text-sm text-gray-700 dark:text-gray-300">
-          Daha fazla başarıyı açmak için tesisler hakkında incelemeler yazın ve favori ekleyin.
+          Daha fazla başarı açmak için mekanlar hakkında yorum yazın ve favorilere yer ekleyin.
         </p>
       </div>
     </div>

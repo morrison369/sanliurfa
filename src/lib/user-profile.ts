@@ -103,7 +103,7 @@ function getActivityDescription(item: ActivityItem): string {
     case 'badge_earned':
       return `"${String(item.metadata?.badgeName || 'Rozet')}" rozeti kazandı`;
     case 'level_up':
-      return `Level ${String(item.metadata?.newLevel || '?')} oldu`;
+      return `Seviye ${String(item.metadata?.newLevel || '?')} oldu`;
     case 'comment_posted':
       return 'Blog yazısına yorum yaptı';
     case 'points_earned':
@@ -116,8 +116,8 @@ function getActivityDescription(item: ActivityItem): string {
 function renderTabs(activeTab: UserProfileTab): string {
   const tabs: Array<{ id: UserProfileTab; label: string; icon: string }> = [
     { id: 'profile', label: 'Profil', icon: '👤' },
-    { id: 'favorites', label: 'Favorileri', icon: '❤️' },
-    { id: 'activity', label: 'Aktivite', icon: '📊' },
+    { id: 'favorites', label: 'Favoriler', icon: '❤️' },
+    { id: 'activity', label: 'Etkinlik Geçmişi', icon: '📊' },
     { id: 'settings', label: 'Ayarlar', icon: '⚙️' },
     { id: 'security', label: 'Güvenlik', icon: '🔒' },
   ];
@@ -309,7 +309,7 @@ function renderSecurityTab(): string {
 
         <div>
           <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Kişisel Verilerim</h3>
-          <p class="mb-4 text-gray-600 dark:text-gray-400">Tüm kişisel verilerinizi indir (GDPR)</p>
+          <p class="mb-4 text-gray-600 dark:text-gray-400">Tüm kişisel verilerinizi indirin (KVKK kapsamı)</p>
           <a href="/api/export/user-data?format=json" class="inline-block rounded-lg bg-gray-600 px-6 py-2 font-medium text-white transition-colors hover:bg-gray-700">
             Verileri İndir
           </a>
