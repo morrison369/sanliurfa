@@ -41,8 +41,8 @@ const popularSearches = [
       <!-- Main Heading -->
       <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-bold text-white leading-tight">
         Şanlıurfa'yı
-        <span class="block text-urfa-200">Keşfetmenin</span>
-        <span class="block">En İyi Yolu</span>
+        <span class="block text-urfa-200">keşfetmenin</span>
+        <span class="block">en iyi yolu</span>
       </h1>
       
       <!-- Subtitle -->
@@ -59,7 +59,7 @@ const popularSearches = [
             <input 
               type="search"
               name="q"
-              placeholder="Mekan, tarihi yer veya yemek ara..."
+              placeholder="Mekan, tarihi yer veya lezzet ara..."
               class="w-full pl-14 pr-36 py-5 text-lg bg-white rounded-2xl shadow-2xl placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-urfa-500/20"
             />
             <button 
@@ -73,7 +73,7 @@ const popularSearches = [
         
         <!-- Popular Searches -->
         <div class="mt-4 flex flex-wrap items-center gap-2">
-          <span class="text-white/70 text-sm">Popüler:</span>
+          <span class="text-white/70 text-sm">Popüler aramalar:</span>
           {popularSearches.map((term) => (
             <a 
               href={`/arama?q=${encodeURIComponent(term)}`}
