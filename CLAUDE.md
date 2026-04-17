@@ -13,11 +13,11 @@ Bu dosya yüksek sinyalli bir çalışma rehberidir; tek karar kaynağı değild
 - `docs/ops/README.md` — ops dokümanları için giriş noktası
 - `docs/ops/SOURCE_OF_TRUTH_MAP.md` — hangi kararın hangi dosyaya ait olduğunu gösterir
 - `docs/architecture/ASTRO_RUNTIME_STATE.md` — migration kapanışı sonrası aktif Astro çalışma zamanı durumu
-- `docs/RELEASE_GATES.md` — release ve merge gate davranışı
+- `docs/RELEASE_GATES.md` — sürüm ve merge gate davranışı
 - `docs/ops/BRANCH_PROTECTION.md` — zorunlu kontroller / branch protection parity
 - `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` — artefact freshness semantiği
 - `docs/ops/ARTIFACT_RETENTION_POLICY.md` — retention ve cleanup kuralları
-- `docs/ops/INTEGRATION_READINESS.md` — admin entegrasyon readiness davranışı
+- `docs/ops/INTEGRATION_READINESS.md` — admin entegrasyon hazırlık davranışı
 - `docs/ops/INCIDENT_RUNBOOK.md` — incident müdahale sırası
 - `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` — eski faz ve script yüzeyi politikası
 - `src/pages/api/openapi.json.ts` — güncel API kontratı kaynağı
@@ -28,10 +28,10 @@ Uzun mimari notlar için `docs/architecture/README.md` dosyasını tercih et; bu
 
 Framework yönü:
 
-- Astro birincil framework'tür.
+- Astro birincil çatı sistemidir.
 - Yeni sayfalar ve yeni arayüz yüzeylerinde varsayılan yaklaşım Astro-first olmalıdır.
 - Deponun zaten Astro-only olduğunu varsayma; React kaldırma veya büyük migration işi önermeden önce `docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md` dosyasını kontrol et.
-- Migration backlog kapalıdır. Yeni bir React UI yüzeyi veya hydration owner bilinçli olarak geri eklenirse ancak o zaman `docs/reports/astro-hydration-inventory.md` dosyasını `npm run astro:migration:inventory` ile yenile.
+- Migration backlog kapalıdır. Yeni bir React arayüz yüzeyi veya hydration sahibi bilinçli olarak geri eklenirse ancak o zaman `docs/reports/astro-hydration-inventory.md` dosyasını `npm run astro:migration:inventory` ile yenile.
 - Migration yeniden açılır ve `medium=0` ise, sonraki paneli seçmeden önce kalan `high` bucket'ı `npm run astro:migration:high-risk` ile sırala.
 - Hydration zaten `0` ise React'in kaldırılması gerektiğini varsayma. Kullanıcı açıkça paket kaldırma istemedikçe `@astrojs/react` izin verilen üretim bağımlılığı olarak kalır.
 - `npm run astro:react:audit` ve `npm run astro:react:classify` komutlarını yalnızca görünürlük için kullan; otomatik uninstall tetikleyicisi yapma.
@@ -50,7 +50,7 @@ Framework yönü:
 - `npm run typecheck:app` — Kanonik uygulama typecheck'i
 - `npm run test:critical:blocking` — Bloklayıcı kontrat testleri
 - `npm run test:critical:advisory` — Danışma amaçlı kontrat testleri
-- `npm run test:critical` — Tam kritik gate
+- `npm run test:critical` — Tam kritik kapı
 - `npm run test:e2e:smoke` — Kanonik duman testi paketi
 
 ### Admin API Kontratı ve Tipler
@@ -66,7 +66,7 @@ Framework yönü:
 - `npm run astro:migration:high-risk` — Kalan yüksek riskli hydration yüzeyleri için sıralı feasibility raporu
 - `npm run astro:react:audit` — Hydration sıfıra indikten sonra paket seviyesinde React yüzeyi görünürlüğü
 - `npm run astro:react:classify` — Hydration sıfıra indikten sonra dosya seviyesinde React bakım sınıflandırması
-- `npm run astro:react:guard` — Runtime-linked React UI yüzeyi geri dönerse fail veren guard
+- `npm run astro:react:guard` — Çalışma zamanına bağlı React arayüz yüzeyi geri dönerse hata veren koruma
 - `npm run phase:scripts:report` — Faz uyumluluk durumu
 - `npm run phase:compat:cleanup` — Uyumluluk manifest cleanup durumu
 
@@ -81,7 +81,7 @@ Framework yönü:
 - `npm run test:unit` — Tam Vitest unit suite
 - `npm run test:unit:watch` — Vitest watch modu
 - `npm run test:e2e` — Tam Playwright suite
-- `npm run test:e2e:ui` — Playwright UI modu
+- `npm run test:e2e:ui` — Playwright arayüz modu
 - `npm run test` — Legacy geniş suite; birincil merge sinyali değildir
 
 ## Mimari
@@ -90,9 +90,9 @@ Framework yönü:
 
 ```
 src/
-├── components/        # Astro UI bileşenleri
+├── components/        # Astro arayüz bileşenleri
 ├── pages/            # Dosya tabanlı yönlendirme (Astro sayfaları + API route'ları)
-│   ├── api/          # REST API endpoint'leri (health, auth, places, reviews, metrics, performance, docs, admin, loyalty, social, realtime, webhooks)
+│   ├── api/          # REST API uçları (health, auth, places, reviews, metrics, performance, docs, admin, loyalty, social, realtime, webhooks)
 │   ├── admin/        # Admin yönetim sayfaları (users, moderation, loyalty, analytics)
 │   ├── kullanıcı/    # Kullanıcı profilleri ve ayarlar
 │   ├── sosyal/       # Sosyal özellikler (akış, hashtag gezgini)
@@ -102,7 +102,7 @@ src/
 ├── lib/              # Çekirdek yardımcılar (sıkı TypeScript)
 │   ├── postgres.ts   # PostgreSQL bağlantı havuzu, parametrik sorgular, tablo izin listesi güvenliği
 │   ├── auth.ts       # bcrypt hashleme, Redis oturumları, token yönetimi
-│   ├── cache.ts      # Redis istemcisi, ad alanı önekleri (sanliurfa:), rate limit
+│   ├── cache.ts      # Redis istemcisi, ad alanı önekleri (sanliurfa:), istek sınırı
 │   ├── validation.ts # XSS temizleme ile şema tabanlı giriş doğrulama
 │   ├── logging.ts    # İstek kimliği takibi ile yapılandırılmış loglama
 │   ├── metrics.ts    # İstek/sorgu metrikleri, yavaş operasyon tespiti, performans istatistikleri
@@ -112,13 +112,13 @@ src/
 │   ├── loyalty-points.ts # Sadakat puanı mantığı
 │   ├── badges.ts     # Rozet yönetimi ve atama
 │   ├── achievements.ts # Başarım takibi ve kilit açma
-│   ├── gamification.ts # Oyunlaştırma olay hook'ları
+│   ├── gamification.ts # Oyunlaştırma olay kancaları
 │   ├── social-features.ts # Hashtag, mention ve aktivite takibi
 │   ├── business-analytics.ts # KPI ve performans metrikleri
 │   ├── subscriptions.ts # Premium katman yönetimi
 │   ├── feature-gating.ts # Paket bazlı özellik erişimi
 │   └── [diğer yardımcılar]
-├── middleware.ts     # İstek kimlik doğrulama, CORS, rate limit, güvenlik başlıkları
+├── middleware.ts     # İstek kimlik doğrulama, CORS, istek sınırı, güvenlik başlıkları
 ├── types/            # TypeScript tip tanımları
 ├── content/          # Markdown/MDX içerik dosyaları
 ├── styles/           # Tailwind CSS
@@ -173,12 +173,12 @@ src/
 5. **Giriş Doğrulama**:
    - `src/lib/validation.ts` içinde `validateWithSchema()` ile schema tabanlı doğrulama yapılır
    - Şemalar `commonSchemas` içinde tanımlanır (login, register, review, place)
-   - `sanitizeInput()` ile XSS sanitization uygulanır (HTML escape)
+   - `sanitizeInput()` ile XSS temizleme uygulanır (HTML escape)
    - `{valid, errors, data}` yapısı döner
    - Doğrulama hatasında 422 `UNPROCESSABLE_ENTITY` döner
 
 6. **Gözlemlenebilirlik**:
-   - **Request Metrikleri**: Her endpoint `recordRequest(method, path, status, duration)` çağırır → toplu istatistik üretilir
+   - **İstek Metrikleri**: Her endpoint `recordRequest(method, path, status, duration)` çağırır → toplu istatistik üretilir
    - **Sorgu Metrikleri**: Her DB sorgusu süre, satır sayısı ve yavaşlık tespiti ile kaydedilir
    - **Yavaşlık Tespiti**:
      - 100ms üzeri sorgular: hata ayıklama günlüğü
@@ -189,9 +189,9 @@ src/
 
 7. **API Sözleşmeleri**:
    - Tüm endpoint'ler JSON döner: `{ success: boolean, data?: T, error?: string }`
-   - Durum kodları: 200 (başarılı), 400 (geçersiz girdi), 401 (kimlik doğrulama gerekli), 403 (yasak), 404 (bulunamadı), 409 (çakışma), 422 (doğrulama hatası), 429 (rate limit), 500 (sunucu hatası)
+   - Durum kodları: 200 (başarılı), 400 (geçersiz girdi), 401 (kimlik doğrulama gerekli), 403 (yasak), 404 (bulunamadı), 409 (çakışma), 422 (doğrulama hatası), 429 (istek sınırı), 500 (sunucu hatası)
    - Dağıtık izleme için tüm yanıtlarda `X-Request-ID` başlığı bulunur
-   - Cache'lenen endpoint'lerde `X-Cache` başlığı (`HIT/MISS`) bulunur
+   - Önbelleğe alınan endpoint'lerde `X-Cache` başlığı (`HIT/MISS`) bulunur
    - `/api/docs` → Swagger arayüzü, `/api/openapi.json` → OpenAPI 3.1 tanımı
 
 8. **Bileşen Stratejisi**:
@@ -249,16 +249,16 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 **Sağlık ve Gözlemlenebilirlik**:
 - `GET /api/health` — Veritabanı/Redis durumu ve yanıt süreleri
 - `GET /api/health/detailed` (admin) — Sistem metrikleri, pool bilgisi ve hata detayları
-- `GET /api/metrics` (admin) — Toplu request metrikleri, hata oranları, cache istatistikleri ve en yavaş endpoint'ler
+- `GET /api/metrics` (admin) — Toplu istek metrikleri, hata oranları, önbellek istatistikleri ve en yavaş endpoint'ler
 - `GET /api/performance` (admin) — Yavaş sorgular, yavaş operasyonlar, pool kullanımı ve performans paneli
 
 **Ops ve Admin Kontrat Yüzeyleri**:
 - `GET /api/admin/dashboard/overview` — Admin panel özet yüzeyi
 - `GET /api/admin/system/metrics` — Admin metrikleri ve normalize durum özeti
 - `GET /api/admin/system/artifact-health` — Artefact snapshot ve özet
-- `GET /api/admin/deployment/status` — Deployment readiness ve artefact health
+- `GET /api/admin/deployment/status` — Dağıtım hazırlığı ve artefact sağlığı
 - `GET /api/admin/audit-logs` — Admin audit kaydı, filtreler ve CSV dışa aktarım
-- `GET /api/admin/system/integration-settings` — Entegrasyon readiness anlık görünümü
+- `GET /api/admin/system/integration-settings` — Entegrasyon hazırlık anlık görünümü
 - `PUT /api/admin/system/integration-settings` — Entegrasyon ayar değişikliği
 - `GET /api/admin/performance/optimization` — Performans optimizasyon özeti
 - `GET /api/admin/subscriptions/users` — Abonelik kullanıcı listesi
@@ -270,7 +270,7 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 - `/admin/runtime-monitor` — Çalışma zamanı sağlık / performans / artefact izleme yüzeyi
 - `/admin/audit` — Kalıcı admin ops audit görüntüleyicisi
 - `/admin/access-coverage` — Admin sarmalayıcı kapsama izleme ve rapor indirme yüzeyi
-- `/admin` — Türlü admin istemci katmanından beslenen admin ana panel özeti
+- `/admin` — Türlendirilmiş admin istemci katmanından beslenen admin ana panel özeti
 
 **Kimlik Doğrulama**:
 - `POST /api/auth/register` — Hesap oluşturur (şema: e-posta, en az 8 karakter, büyük harf/sayı/özel karakter içeren şifre)
@@ -287,11 +287,11 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 - `DELETE /api/favorites/:id` — Kayıtlı mekanı kaldırır; önbelleği temizler
 
 **Sadakat ve Ödüller**:
-- `GET /api/loyalty/points` — Kullanıcının puan bakiyesi ve geçmişi (auth gerekli)
-- `GET /api/loyalty/rewards` — Kullanılabilir ödül kataloğu (public)
-- `GET /api/loyalty/achievements` — Kullanıcı başarımları (auth gerekli, view=all/unviewed/stats destekli)
-- `POST /api/loyalty/achievements` — Başarım görüntülendi olarak işaretler (auth gerekli)
-- `GET /api/loyalty/tiers` — Kullanıcının seviyesi ve seviye listesi (auth gerekli)
+- `GET /api/loyalty/points` — Kullanıcının puan bakiyesi ve geçmişi (kimlik doğrulama gerekli)
+- `GET /api/loyalty/rewards` — Kullanılabilir ödül kataloğu (herkese açık)
+- `GET /api/loyalty/achievements` — Kullanıcı başarımları (kimlik doğrulama gerekli, `view=all/unviewed/stats` destekli)
+- `POST /api/loyalty/achievements` — Başarım görüntülendi olarak işaretler (kimlik doğrulama gerekli)
+- `GET /api/loyalty/tiers` — Kullanıcının seviyesi ve seviye listesi (kimlik doğrulama gerekli)
 - `POST /api/admin/loyalty/rewards` (admin) — Yeni ödül oluşturur
 - `GET /api/admin/loyalty/rewards` (admin) — Tüm ödülleri listeler (aktif + pasif)
 - `POST /api/admin/loyalty/award` (admin) — Kullanıcıya manuel puan veya rozet verir
@@ -299,7 +299,7 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 **Sosyal Özellikler**:
 - `GET /api/hashtags` — Trend hashtag'leri döner (30 dakika önbellek)
 - `GET /api/hashtags/:slug` — Hashtag detayını, etiketli mekan ve yorumlarla döner (10 dakika önbellek)
-- `GET /api/users/:id/mentions` — Kullanıcı mention ve bildirimlerini döner (auth gerekli)
+- `GET /api/users/:id/mentions` — Kullanıcı mention ve bildirimlerini döner (kimlik doğrulama gerekli)
 - `GET /api/realtime/feed` — SSE: gerçek zamanlı sosyal akış güncellemeleri (cursor tabanlı, 15sn yoklama)
 - `GET /api/leaderboards/users` — En iyi kullanıcı liderlik tablosu (sortBy=points/reviews ve limit destekli)
 
@@ -308,12 +308,12 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 
 **Kullanıcı Yönetimi**:
 - `GET /api/users/:id/profile` — Herkese açık kullanıcı profili
-- `GET /api/users/me` — Geçerli kullanıcı bilgisi (auth gerekli)
-- `PUT /api/users/me` — Kullanıcı profilini günceller (auth gerekli)
-- `GET /api/user/quotas` — Özellik kullanım kotaları (auth gerekli)
-- `POST /api/blocking/block` — Kullanıcıyı engeller (auth gerekli)
-- `GET /api/blocking/check` — Engelli durumunu kontrol eder (auth gerekli)
-- `DELETE /api/blocking/unblock` — Kullanıcının engelini kaldırır (auth gerekli)
+- `GET /api/users/me` — Geçerli kullanıcı bilgisi (kimlik doğrulama gerekli)
+- `PUT /api/users/me` — Kullanıcı profilini günceller (kimlik doğrulama gerekli)
+- `GET /api/user/quotas` — Özellik kullanım kotaları (kimlik doğrulama gerekli)
+- `POST /api/blocking/block` — Kullanıcıyı engeller (kimlik doğrulama gerekli)
+- `GET /api/blocking/check` — Engelli durumunu kontrol eder (kimlik doğrulama gerekli)
+- `DELETE /api/blocking/unblock` — Kullanıcının engelini kaldırır (kimlik doğrulama gerekli)
 
 **Admin Moderasyonu**:
 - `POST /api/reports/submit` — İçerik raporu gönderir
@@ -328,13 +328,13 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 
 **Dokümantasyon**:
 - `GET /api/openapi.json` — OpenAPI 3.1 tanımı
-- `GET /api/docs` — Swagger arayüz görüntüleyicisi
+- `GET /api/docs` — Swagger arayüz göstericisi
 
 ### Güvenlik
 
 - **SQL Injection**: `postgres.ts` içindeki table allowlist (`ALLOWED_TABLES` set'i) ve parametrik sorgular kullanılır
 - **XSS**: `sanitizeInput()` üzerinden giriş temizleme uygulanır
-- **Rate Limiting**: Redis üzerinden IP başına 15 dakikada 100 istek sınırı vardır (`/api/auth/register` ve login endpoint'leri ek dikkat gerektirir)
+- **İstek Sınırı**: Redis üzerinden IP başına 15 dakikada 100 istek sınırı vardır (`/api/auth/register` ve giriş endpoint'leri ek dikkat gerektirir)
 - **CORS**: Middleware içinde yapılandırılır; origin doğrulaması `CORS_ORIGINS` env değişkenine göre yapılır
 - **Güvenlik Header'ları**: Content-Type, X-Frame-Options, X-XSS-Protection ve CSP uygulanır
 - **Oturum Ele Geçirme**: `httpOnly` + `secure` cookie'ler ve sıkı `sameSite` politikası kullanılır
@@ -354,10 +354,10 @@ Uygulama, WebSocket ek yükü olmadan düşük gecikmeli özellikler için **Ser
 1. **Sosyal Akış** (`GET /api/realtime/feed`, 15sn yoklama)
    - Takip edilen mekan ve kullanıcılardan gelen aktiviteleri taşır
    - Cursor `lastActivityId` olarak izlenir; yalnızca yeni aktiviteler yayımlanır
-   - Sorgular: `user_activity`, `followers` ve `users` ile join edilir
+   - Sorgular: `user_activity`, `followers` ve `users` tabloları birleştirilir
 
 2. **Canlı Analitik** (`GET /api/realtime/analytics`, 5sn metrik + 30sn KPI)
-   - Gerçek zamanlı request metrikleri: Error Rate, Avg Response, P95 Response, Cache Hit, DB Pool Utilization
+   - Gerçek zamanlı istek metrikleri: Error Rate, Avg Response, P95 Response, Cache Hit, DB Pool Utilization
    - KPI'lar: En yavaş 5 endpoint
    - `business-analytics` içindeki `metricsCollector.getMetrics()` ve `getKPIs(true)` fonksiyonlarını kullanır
 
@@ -376,7 +376,7 @@ Puanlar, rozetler, başarımlar, seviyeler ve kullanılabilir ödüller içeren 
 - `src/lib/loyalty-points.ts` — Puan işlemleri, bakiye takibi ve geçmiş
 - `src/lib/badges.ts` — Rozet tanımları ve verme mantığı
 - `src/lib/achievements.ts` — Başarım tanımları, açılma koşulları ve istatistikler
-- `src/lib/gamification.ts` — Başarımları tetikleyen event hook'ları (yorum oluşturma, fotoğraf yükleme, günlük giriş)
+- `src/lib/gamification.ts` — Başarımları tetikleyen olay kancaları (yorum oluşturma, fotoğraf yükleme, günlük giriş)
 
 **Veritabanı Tabloları**:
 - `loyalty_points` — Puan işlemleri (`user_id`, `amount`, `type`, `reason`, `created_at`)
