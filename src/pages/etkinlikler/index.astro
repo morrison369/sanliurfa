@@ -24,6 +24,19 @@ const formatDate = (dateStr: string) => {
   });
 };
 
+const getCategoryLabel = (category: string) => {
+  const labels: Record<string, string> = {
+    'kultur-sanat': 'Kültür & Sanat',
+    gastronomi: 'Gastronomi',
+    muzik: 'Müzik',
+    spor: 'Spor',
+    egitim: 'Eğitim',
+    diger: 'Diğer',
+  };
+
+  return labels[category] || category;
+};
+
 const seo = {
   title: 'Etkinlikler - Şanlıurfa\'da Bugün ve Yakında',
   description: 'Şanlıurfa\'daki konserler, festivaller, sergiler ve diğer etkinlikler. Kültürel etkinlikleri takip edin.',
@@ -70,7 +83,7 @@ const seo = {
               
               <div class="flex-1 p-6">
                 <div class="flex flex-wrap items-center gap-2 mb-2">
-                  <span class="badge-primary">{event.category}</span>
+                  <span class="badge-primary">{getCategoryLabel(event.category)}</span>
                   {event.is_featured && (
                     <span class="badge bg-urfa-600 text-white">Öne Çıkan</span>
                   )}

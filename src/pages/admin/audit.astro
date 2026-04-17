@@ -8,8 +8,8 @@ if (!user || !Astro.locals.isAdmin) {
 }
 
 const seo = {
-  title: 'Admin Audit - Şanlıurfa.com',
-  description: 'Admin ops audit kayitlarini endpoint, method ve sonuc bazinda inceleyin.',
+  title: 'Admin Denetimi - Şanlıurfa.com',
+  description: 'Admin işlem denetim kayıtlarını uç nokta, yöntem ve sonuç bazında inceleyin.',
 };
 ---
 
@@ -18,10 +18,10 @@ const seo = {
     <div class="container-custom space-y-6">
       <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p class="text-sm font-semibold uppercase tracking-[0.24em] text-urfa-600">Admin Audit</p>
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Admin ops audit kayıtları</h1>
+          <p class="text-sm font-semibold uppercase tracking-[0.24em] text-urfa-600">Admin Denetimi</p>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Admin işlem denetim kayıtları</h1>
           <p class="mt-2 max-w-3xl text-sm text-gray-600 dark:text-gray-400">
-            Kalıcı admin ops audit sink verisini endpoint, method, mode ve statusCode bazında filtreleyin.
+            Kalıcı admin işlem denetim verisini uç nokta, yöntem, kip ve durum kodu bazında filtreleyin.
           </p>
         </div>
         <button
@@ -34,28 +34,28 @@ const seo = {
       </div>
 
       <div class="grid gap-4 md:grid-cols-8">
-        <input id="audit-endpoint" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="endpoint filtre" />
-        <input id="audit-actor" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="actorKey filtre" />
-        <input id="audit-request-id" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="requestId filtre" />
+        <input id="audit-endpoint" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="uç nokta filtresi" />
+        <input id="audit-actor" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="aktör anahtarı filtresi" />
+        <input id="audit-request-id" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="istek kimliği filtresi" />
         <select id="audit-mode" class="rounded-xl border border-gray-300 px-3 py-2 text-sm">
-          <option value="">Tüm mode</option>
-          <option value="read">read</option>
-          <option value="write">write</option>
+          <option value="">Tüm kipler</option>
+          <option value="read">okuma</option>
+          <option value="write">yazma</option>
         </select>
         <select id="audit-outcome" class="rounded-xl border border-gray-300 px-3 py-2 text-sm">
-          <option value="">Tüm outcome</option>
-          <option value="allowed">allowed</option>
-          <option value="denied">denied</option>
-          <option value="error">error</option>
+          <option value="">Tüm sonuçlar</option>
+          <option value="allowed">izin verildi</option>
+          <option value="denied">reddedildi</option>
+          <option value="error">hata</option>
         </select>
-        <input id="audit-status" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="status code" />
+        <input id="audit-status" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" placeholder="durum kodu" />
         <input id="audit-start-date" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" type="datetime-local" />
         <input id="audit-end-date" class="rounded-xl border border-gray-300 px-3 py-2 text-sm" type="datetime-local" />
       </div>
 
       <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <p class="text-xs text-gray-500 dark:text-gray-400">
-          Tarih alanları server-side filtre uygular. Diğer alanlar yüklü kayıtlar üzerinde lokal filtrelenir.
+          Tarih alanları sunucu taraflı filtre uygular. Diğer alanlar yüklü kayıtlar üzerinde yerel filtrelenir.
         </p>
         <button
           id="export-admin-audit-csv"
@@ -67,7 +67,7 @@ const seo = {
       </div>
 
       <div id="audit-summary" class="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-        Audit verileri yükleniyor.
+        Denetim verileri yükleniyor.
       </div>
 
       <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -76,12 +76,12 @@ const seo = {
             <thead class="bg-gray-50 dark:bg-gray-900/40">
               <tr>
                 <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Zaman</th>
-                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Endpoint</th>
-                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Method</th>
-                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Mode</th>
-                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Outcome</th>
-                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Status</th>
-                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Actor</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Uç nokta</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Yöntem</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Kip</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Sonuç</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Durum</th>
+                <th class="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Aktör</th>
               </tr>
             </thead>
             <tbody id="audit-rows" class="divide-y divide-gray-100 dark:divide-gray-800">
