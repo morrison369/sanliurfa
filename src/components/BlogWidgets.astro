@@ -41,7 +41,7 @@ try {
   categories = await getBlogCategories();
 } catch (err) {
   error = 'Widget verileri yüklenirken hata oluştu';
-  console.error('Blog widgets error:', err);
+  console.error('Blog bileşenleri yüklenemedi:', err);
 }
 ---
 
@@ -84,7 +84,7 @@ try {
   {recentPosts.length > 0 && (
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
       <h3 class="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-        <span class="text-lg">📝</span> Son Yazılar
+        <span class="text-lg">📝</span> Son yazılar
       </h3>
       <div class="space-y-3">
         {recentPosts.map((post: any) => (
