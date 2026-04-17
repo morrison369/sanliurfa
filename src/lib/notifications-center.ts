@@ -150,7 +150,7 @@ export function renderNotificationsCenter(state: NotificationsCenterState): stri
   const list = state.notifications.length === 0
     ? `
       <div class="py-12 text-center text-gray-500">
-        <p>${state.filter === 'unread' ? 'Henüz okunmamış bildirim bulunmuyor.' : 'Henüz gösterilecek bildirim bulunmuyor.'}</p>
+        <p>${state.filter === 'unread' ? 'Henüz okunmamış bildirim bulunmuyor.' : 'Şu anda gösterilecek bildirim bulunmuyor.'}</p>
       </div>
     `
     : `<div class="space-y-2">${state.notifications.map((item) => renderNotificationItem(state, item)).join('')}</div>`;
