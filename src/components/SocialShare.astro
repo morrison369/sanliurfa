@@ -58,19 +58,19 @@ const shareLinks = [
       target="_blank"
       rel="noopener noreferrer"
       class={`p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 transition-all duration-200 ${link.color}`}
-      aria-label={`${link.name}'da paylaş`}
+      aria-label={`${link.name} üzerinde paylaş`}
       title={link.name}
     >
       <Fragment set:html={link.icon} />
     </a>
   ))}
   
-  <!-- Copy Link -->
+  <!-- Bağlantıyı Kopyala -->
   <button
     id="copy-link-btn"
     class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-urfa-600 hover:text-white transition-all duration-200"
-    aria-label="Linki kopyala"
-    title="Linki kopyala"
+    aria-label="Bağlantıyı kopyala"
+    title="Bağlantıyı kopyala"
     data-url={url}
   >
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
