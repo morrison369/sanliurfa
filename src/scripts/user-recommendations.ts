@@ -38,7 +38,7 @@ async function renderRecommendations(root: RecommendationsRoot, followingIds: Se
 
   try {
     const response = await fetch('/api/recommendations/users?limit=6');
-    if (!response.ok) throw new Error('Failed');
+    if (!response.ok) throw new Error('Öneriler alınamadı');
     const payload = (await response.json()) as { data?: RecommendedUser[] };
     const users = payload.data || [];
 
@@ -49,7 +49,7 @@ async function renderRecommendations(root: RecommendationsRoot, followingIds: Se
       bindFollowButtons(content, users, followingIds);
     }
   } catch (error) {
-    console.error('Error', error);
+    console.error('Kullanıcı önerileri yüklenemedi:', error);
     setElementHtml(
       content,
       '<div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">Öneriler yüklenemedi.</div>',

@@ -10,7 +10,7 @@ export function renderUserRecommendations(users: RecommendedUser[], followingIds
   if (users.length === 0) return '';
 
   return `
-    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Kime Takip Etmelisin?</h3>
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Kimi takip etmelisiniz?</h3>
     <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
       ${users
         .map((user) => {
@@ -25,14 +25,14 @@ export function renderUserRecommendations(users: RecommendedUser[], followingIds
                 ${avatar}
                 <div class="flex-1">
                   <p class="font-medium text-gray-900 dark:text-white">${user.full_name}</p>
-                  <p class="text-xs text-gray-600 dark:text-gray-400">Level ${user.level} • ${user.review_count} inceleme</p>
+                  <p class="text-xs text-gray-600 dark:text-gray-400">Seviye ${user.level} • ${user.review_count} inceleme</p>
                 </div>
               </a>
               <button
                 data-user-follow="${user.id}"
                 class="rounded px-3 py-1 text-sm font-medium text-white ${isFollowing ? 'bg-gray-500 hover:bg-gray-600' : 'bg-blue-500 hover:bg-blue-600'}"
               >
-                ${isFollowing ? 'Takibi Bırak' : 'Takip Et'}
+                ${isFollowing ? 'Takibi bırak' : 'Takip et'}
               </button>
             </div>
           `;
