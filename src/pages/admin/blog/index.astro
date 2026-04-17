@@ -42,7 +42,7 @@ try {
   }
 } catch (err) {
   error = 'Blog yazıları yüklenirken hata oluştu';
-  console.error('Blog admin error:', err);
+  console.error('Blog yönetim sayfası yüklenemedi:', err);
 }
 
 const seo = {
@@ -198,13 +198,13 @@ const seo = {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Yazı başarıyla silindi');
+        alert('Yazı silindi.');
         window.location.reload();
       } else {
-        alert(data.error || 'Yazı silinirken hata oluştu');
+        alert(data.error || 'Yazı silinemedi.');
       }
     } catch (err) {
-      alert('Yazı silinirken bir hata oluştu: ' + String(err));
+      alert('Yazı silinemedi: ' + String(err));
     }
   }
 </script>
