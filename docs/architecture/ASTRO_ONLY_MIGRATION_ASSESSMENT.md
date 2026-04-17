@@ -20,13 +20,13 @@ Bu belge, `Şanlıurfa.com` kod tabanının Astro-merkezli yapıya geçişini ve
 - generated inventory: `docs/reports/astro-hydration-inventory.md` (`0 low / 0 medium / 0 high`)
 - high-risk feasibility report: `docs/reports/astro-high-risk-feasibility.md` (`0 first / 0 later / 0 last`)
 - package removal audit: `docs/reports/react-surface-audit.md`
-- config owner: `astro.config.mjs`
+- config sahibi: `astro.config.mjs`
 
 Mevcut yapı:
 
 - SSR ve routing katmanı Astro ile çalışıyor.
 - İnteraktif paneller plain TS + Astro shell yapısına taşındı; aktif React island kalmadı.
-- React paket kaldırma işi aktif hedef değildir; `@astrojs/react` kontrollü compatibility layer olarak tutulur.
+- React paket kaldırma işi aktif hedef değildir; `@astrojs/react` kontrollü uyumluluk katmanı olarak tutulur.
 - Admin, analytics, search, social, subscriptions, notifications ve messaging yüzeyleri React bağımlılığını yoğun kullanıyordu; bu yüzeylerin tamamı Astro + plain TS modeline taşındı.
 - Tarihsel taşınan yüzey listesi arşive alındı:
   - [ASTRO_MIGRATION_CLOSURE_2026-04-17.md](/D:/sanliurfa.com/sanliurfa-ops-batch-all/docs/archive/migration/ASTRO_MIGRATION_CLOSURE_2026-04-17.md)
@@ -43,8 +43,8 @@ Bu repo için `Astro-only` ifadesi aşağıdaki anlama gelir:
 Bu hedef, sadece framework adı değiştirmek değildir. Aşağıdakiler de değişir:
 
 - UI state yönetim modeli
-- component composition biçimi
-- fetch/render ayrımı
+- bileşen bileşimi biçimi
+- veri çekme/görünüm ayrımı
 - hydration maliyeti
 - test stratejisi
 
@@ -58,7 +58,7 @@ Tamamlanan migration, üç pratik sınıf gösterdi:
 - tek aksiyonlu buton/form
 - sınırlı polling veya badge durumu
 
-Bu grup en hızlı şekilde `.astro` + küçük browser helper modeline taşındı.
+Bu grup en hızlı şekilde `.astro` + küçük tarayıcı yardımcısı modeline taşındı.
 
 ### 2. Orta Riskli Yüzeyler
 
@@ -67,11 +67,11 @@ Bu grup en hızlı şekilde `.astro` + küçük browser helper modeline taşınd
 - pagination/search UI
 - birden fazla event handler
 
-Bu grup için doğru yaklaşım doğrudan rewrite değil, önce helper ayrımı oldu:
+Bu grup için doğru yaklaşım doğrudan yeniden yazım değil, önce yardımcı ayrımı oldu:
 
-- data normalize helper
-- render/view-model helper
-- page bootstrap script
+- veri normalize yardımcısı
+- görünüm/görünüm-modeli yardımcısı
+- sayfa başlatma betiği
 
 ### 3. Yüksek Riskli Yüzeyler
 
@@ -84,9 +84,9 @@ Bu grup için doğru yaklaşım doğrudan rewrite değil, önce helper ayrımı 
 
 Bu grup taşınabildi; ama maliyet yalnızca framework değişimi değildi. Başarılı batch'ler aynı zamanda:
 
-- endpoint drift düzeltti
-- nested API envelope unwrap boşluklarını kapattı
-- polling / mutation owner'larını tek script altında topladı
+- endpoint kaymasını düzeltti
+- iç içe API zarf açma boşluklarını kapattı
+- polling / mutation sahiplerini tek betik altında topladı
 
 ## En Yoğun Hydration Bölgeleri
 
@@ -147,7 +147,7 @@ Admin ekranları en çok state taşıyan alanlardan biridir. Astro-only denemesi
 
 ### 3. Test Katmanını Taşımadan UI Rewrite Yapmak
 
-Önce behavior helper + smoke test zemini, sonra component dönüşümü yapılmalıdır.
+Önce davranış yardımcısı + smoke test zemini, sonra bileşen dönüşümü yapılmalıdır.
 
 ## Önerilen Migration Stratejisi
 
@@ -163,7 +163,7 @@ Bu fazda:
 
 - `CLAUDE.md`
 - architecture docs
-- source-of-truth notları
+- kaynak-gerçek notları
 
 güncel tutulmalı.
 
@@ -174,7 +174,7 @@ güncel tutulmalı.
 Hedef:
 
 - düşük bağımlı `client:*` yüzeyleri azaltmak
-- shared browser helper'ları çoğaltmak
+- ortak tarayıcı yardımcılarını çoğaltmak
 - Astro shell + vanilla TS modelini yerleştirmek
 
 Bu faz tamamlandı.
@@ -185,8 +185,8 @@ Doğrudan rewrite yerine önce parçala:
 
 - data loader
 - view model
-- DOM/update helper
-- bootstrap helper
+- DOM/güncelleme yardımcısı
+- başlatma yardımcısı
 
 Bu repo'da admin ops ekranları ve kullanıcı panel yüzeyleri bu modelle taşındı.
 
@@ -198,32 +198,32 @@ Her büyük panel için ayrı karar verilmelidir:
 - React island olarak kalacak mı?
 - hibrit mi olacak?
 
-Bu faz da tamamlandı; kalan karar artık framework migration değil, React compatibility layer'ın korunma biçimidir.
+Bu faz da tamamlandı; kalan karar artık çatı sistemi migration'ı değil, React uyumluluk katmanının korunma biçimidir.
 
 ## Teknik Geçiş Kuralları
 
 Astro-only migration sırasında şu kurallar uygulanmalı:
 
-1. Yeni interaktif behavior önce helper katmanına çıkarılmalı.
+1. Yeni etkileşimli davranış önce yardımcı katmanına çıkarılmalı.
 2. DOM güncellemeleri ortak util'lere alınmalı.
 3. Local history/refresh/polling tekrar etmemeli.
-4. Server veri toplama `.astro` içine gömülmemeli; ayrı data helper kullanılmalı.
+4. Sunucu veri toplama `.astro` içine gömülmemeli; ayrı veri yardımcısı kullanılmalı.
 5. Her migration batch'i test eklemeden kapanmamalı.
 
 ## Test Stratejisi
 
 React'ten Astro-only yapıya geçerken korunması gereken test katmanları:
 
-- helper unit testleri
-- browser-level smoke testler
+- yardımcı unit testleri
+- tarayıcı düzeyi smoke testler
 - contract/OpenAPI testleri
 - kritik admin gate'ler
 
 Özellikle admin örneğinde doğru model şudur:
 
-- data helper testli
-- view helper testli
-- page bootstrap helper testli
+- veri yardımcısı testli
+- görünüm yardımcısı testli
+- sayfa başlatma yardımcısı testli
 - browser smoke testli
 
 ## Somut Backlog Önerisi

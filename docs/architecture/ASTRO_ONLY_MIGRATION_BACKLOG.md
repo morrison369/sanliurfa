@@ -12,8 +12,8 @@ Bu belge aktif migration backlog'u olmaktan çıktı. Migration hattı runtime d
 - risk split: `0 low / 0 medium / 0 high`
 - high-risk feasibility: `0 first / 0 later / 0 last`
 - React hook/lib blokörü: `0`
-- config dışı runtime React owner: `0`
-- kalan tek compatibility owner:
+- config dışı runtime React sahibi: `0`
+- kalan tek uyumluluk sahibi:
   - `astro.config.mjs`
 
 ## Migration Sonucu
@@ -23,7 +23,7 @@ Tamamlanan dalgalar sonunda:
 - tüm aktif React island yüzeyi kaldırıldı
 - kullanıcı, işletme, admin, analytics, webhook, messaging ve moderation panelleri `.astro` + plain TS modeline taşındı
 - eski `.tsx` yüzeyi runtime'dan koptuktan sonra tamamen temizlendi
-- React paketleri ise ekip kararıyla compatibility layer olarak korundu
+- React paketleri ise ekip kararıyla uyumluluk katmanı olarak korundu
 
 ## Bundan Sonraki Kural
 
@@ -32,7 +32,7 @@ Bu dosya artık “hangi panel sıradaki aday” listesini değil, regresyon kur
 ### 1. Yeni varsayılan
 
 - yeni UI yüzeyi varsayılan olarak `.astro`
-- etkileşim gerekiyorsa plain TypeScript browser helper
+- etkileşim gerekiyorsa düz TypeScript tarayıcı yardımcısı
 - React ancak açık ve bilinçli karar ile geri dönebilir
 
 ### 2. Guard zorunluluğu
@@ -47,7 +47,7 @@ Aşağıdaki komutlar görünürlük ve regresyon kontrolü için korunur:
 
 Özellikle:
 
-- `astro:react:guard` config dışı runtime-linked React UI yüzeyi geri dönerse fail vermelidir
+- `astro:react:guard` config dışı runtime bağlantılı React arayüz yüzeyi geri dönerse fail vermelidir
 
 ### 3. React paket kararı
 
@@ -67,7 +67,7 @@ Gelecekte React tekrar kullanılır ve yeni hydration oluşursa sıra yeniden ş
 
 ## Kapanış Çıktıları
 
-Migration hattının kapanışında sabitlenen source-of-truth yüzeyleri:
+Migration hattının kapanışında sabitlenen kaynak-gerçek yüzeyleri:
 
 - [ASTRO_ONLY_MIGRATION_ASSESSMENT.md](/D:/sanliurfa.com/sanliurfa-ops-batch-all/docs/architecture/ASTRO_ONLY_MIGRATION_ASSESSMENT.md)
 - [astro-hydration-inventory.md](/D:/sanliurfa.com/sanliurfa-ops-batch-all/docs/reports/astro-hydration-inventory.md)

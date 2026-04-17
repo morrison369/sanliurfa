@@ -16,17 +16,17 @@ Bu dosya yüksek sinyalli bir çalışma rehberidir; tek karar kaynağı değild
 - `docs/RELEASE_GATES.md` — sürüm ve birleştirme kapısı davranışı
 - `docs/ops/BRANCH_PROTECTION.md` — zorunlu kontroller / branch protection parity
 - `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` — artefact freshness semantiği
-- `docs/ops/ARTIFACT_RETENTION_POLICY.md` — retention ve cleanup kuralları
+- `docs/ops/ARTIFACT_RETENTION_POLICY.md` — saklama ve temizlik kuralları
 - `docs/ops/INTEGRATION_READINESS.md` — admin entegrasyon hazırlık davranışı
 - `docs/ops/INCIDENT_RUNBOOK.md` — incident müdahale sırası
-- `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` — eski faz ve script yüzeyi politikası
+- `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` — eski faz ve betik yüzeyi politikası
 - `src/pages/api/openapi.json.ts` — güncel API kontratı kaynağı
 - `src/types/generated-admin-api.ts` — OpenAPI'den üretilmiş admin API tipleri
 - `src/types/admin-api.ts` — arayüz odaklı admin tip katmanı
 
 Uzun mimari notlar için `docs/architecture/README.md` dosyasını tercih et; bu dosyayı günlük yürütme kurallarına odaklı tut.
 
-Framework yönü:
+Cati sistemi yonu:
 
 - Astro birincil çatı sistemidir.
 - Yeni sayfalar ve yeni arayüz yüzeylerinde varsayılan yaklaşım Astro-first olmalıdır.
@@ -61,14 +61,14 @@ Framework yönü:
 ### Surum, Governance ve Ops
 - `npm run release:gate` — Surum kapisi ozeti ve karari
 - `npm run branch:protection:drift:check` — Zorunlu kontroller / doküman eşliği doğrulaması
-- `npm run ops:retention:apply` — Yerel artefact ve audit retention cleanup'ı
+- `npm run ops:retention:apply` — Yerel artefact ve denetim saklama temizligi
 - `npm run astro:migration:inventory` — Güncel Astro hydration envanteri ve risk dağılımı
 - `npm run astro:migration:high-risk` — Kalan yüksek riskli hydration yüzeyleri için sıralı feasibility raporu
 - `npm run astro:react:audit` — Hydration sıfıra indikten sonra paket seviyesinde React yüzeyi görünürlüğü
 - `npm run astro:react:classify` — Hydration sıfıra indikten sonra dosya seviyesinde React bakım sınıflandırması
 - `npm run astro:react:guard` — Çalışma zamanına bağlı React arayüz yüzeyi geri dönerse hata üreten koruma
 - `npm run phase:scripts:report` — Faz uyumluluk durumu
-- `npm run phase:compat:cleanup` — Uyumluluk manifest cleanup durumu
+- `npm run phase:compat:cleanup` — Uyumluluk manifest temizlik durumu
 
 ### Veritabanı ve Servisler
 - `npm run db:start` — PostgreSQL Docker container'ını başlat
