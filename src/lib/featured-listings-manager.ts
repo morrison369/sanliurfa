@@ -78,7 +78,7 @@ function formatDate(value: string): string {
 function renderForm(form: FeaturedListingFormData): string {
   return `
     <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-      <h3 class="mb-4 text-lg font-semibold">Yeni yeminli liste oluştur</h3>
+      <h3 class="mb-4 text-lg font-semibold">Yeni öne çıkarılan liste oluştur</h3>
       <form data-featured-listing-form class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <input
@@ -142,7 +142,7 @@ function renderListings(listings: FeaturedListing[]): string {
   if (listings.length === 0) {
     return `
       <div class="py-8 text-center text-gray-500">
-        Henüz yeminli liste bulunmuyor. Yeni bir kayıt oluşturmak için yukarıdaki düğmeyi kullanın.
+        Henüz öne çıkarılan liste bulunmuyor. Yeni bir kayıt oluşturmak için yukarıdaki düğmeyi kullanın.
       </div>
     `;
   }
@@ -161,7 +161,7 @@ function renderListings(listings: FeaturedListing[]): string {
                       ${listing.position_tier === 'standard' ? 'Standart' : listing.position_tier === 'premium' ? 'Premium' : 'Öne çıkan'}
                     </span>
                     <span class="rounded bg-blue-100 px-2 py-1 capitalize text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                      ${listing.status === 'active' ? 'Aktif' : listing.status === 'scheduled' ? 'Planlanmış' : 'Süresi Dolmuş'}
+                      ${listing.status === 'active' ? 'Aktif' : listing.status === 'scheduled' ? 'Planlandı' : 'Süresi doldu'}
                     </span>
                   </div>
                   <div class="mt-3 grid grid-cols-1 gap-4 text-sm md:grid-cols-4">
@@ -217,7 +217,7 @@ export function renderFeaturedListingsManager(options: {
   return `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Yeminli listeler</h2>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Öne çıkarılan listeler</h2>
         <button
           type="button"
           data-featured-listings-toggle

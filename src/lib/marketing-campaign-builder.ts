@@ -72,7 +72,7 @@ function formatDate(value: string): string {
 function renderForm(form: CampaignFormData): string {
   return `
     <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-      <h3 class="mb-4 text-lg font-semibold">Yeni kampanya oluştur</h3>
+      <h3 class="mb-4 text-lg font-semibold">Yeni reklam kampanyası oluştur</h3>
       <form data-marketing-campaign-form class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <input
@@ -90,7 +90,7 @@ function renderForm(form: CampaignFormData): string {
             <option value="promotion" ${form.campaign_type === 'promotion' ? 'selected' : ''}>Promosyon</option>
             <option value="awareness" ${form.campaign_type === 'awareness' ? 'selected' : ''}>Farkındalık</option>
             <option value="conversion" ${form.campaign_type === 'conversion' ? 'selected' : ''}>Dönüşüm</option>
-            <option value="retention" ${form.campaign_type === 'retention' ? 'selected' : ''}>Müşteri Tutma</option>
+            <option value="retention" ${form.campaign_type === 'retention' ? 'selected' : ''}>Müşteri tutma</option>
           </select>
         </div>
         <textarea
@@ -122,7 +122,7 @@ function renderCampaigns(campaigns: Campaign[]): string {
   if (campaigns.length === 0) {
     return `
       <div class="py-8 text-center text-gray-500">
-        Henüz kampanya bulunmuyor. Yeni bir kampanya oluşturmak için yukarıdaki düğmeyi kullanın.
+        Henüz reklam kampanyası bulunmuyor. Yeni bir kampanya oluşturmak için yukarıdaki düğmeyi kullanın.
       </div>
     `;
   }
@@ -138,16 +138,16 @@ function renderCampaigns(campaigns: Campaign[]): string {
                   <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${campaign.name}</h3>
                   <div class="mt-2 flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                     <span class="rounded bg-gray-100 px-2 py-1 capitalize dark:bg-gray-700">
-                      ${campaign.campaign_type === 'promotion' ? 'Promosyon' : campaign.campaign_type === 'awareness' ? 'Farkındalık' : campaign.campaign_type === 'conversion' ? 'Dönüşüm' : 'Müşteri Tutma'}
+                      ${campaign.campaign_type === 'promotion' ? 'Promosyon' : campaign.campaign_type === 'awareness' ? 'Farkındalık' : campaign.campaign_type === 'conversion' ? 'Dönüşüm' : 'Müşteri tutma'}
                     </span>
                     <span class="rounded px-2 py-1 capitalize ${campaign.status === 'published' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : campaign.status === 'paused' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'}">
                       ${campaign.status === 'published' ? 'Yayında' : campaign.status === 'paused' ? 'Duraklatıldı' : 'Taslak durumda'}
                     </span>
                   </div>
                   <div class="mt-3 flex flex-wrap items-center gap-6 text-sm">
-                    <div><span class="text-gray-600 dark:text-gray-400">Bütçe: </span><span class="font-semibold">₺${campaign.budget.toFixed(2)}</span></div>
-                    <div><span class="text-gray-600 dark:text-gray-400">Harcanan: </span><span class="font-semibold">₺${campaign.spent.toFixed(2)}</span></div>
-                    <div><span class="text-gray-600 dark:text-gray-400">Oluşturulma: </span><span>${formatDate(campaign.created_at)}</span></div>
+                    <div><span class="text-gray-600 dark:text-gray-400">Toplam bütçe: </span><span class="font-semibold">₺${campaign.budget.toFixed(2)}</span></div>
+                    <div><span class="text-gray-600 dark:text-gray-400">Harcanan tutar: </span><span class="font-semibold">₺${campaign.spent.toFixed(2)}</span></div>
+                    <div><span class="text-gray-600 dark:text-gray-400">Oluşturulma tarihi: </span><span>${formatDate(campaign.created_at)}</span></div>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">

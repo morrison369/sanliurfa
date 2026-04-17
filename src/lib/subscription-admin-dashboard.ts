@@ -27,7 +27,7 @@ export function extractSubscriptionAdminAnalytics(
 }
 
 function renderTabButton(tab: SubscriptionAdminTab, activeTab: SubscriptionAdminTab): string {
-  const label = tab === 'overview' ? 'Özet' : tab === 'users' ? 'Kullanıcılar' : "Webhook'lar";
+  const label = tab === 'overview' ? 'Genel bakış' : tab === 'users' ? 'Abone kullanıcılar' : "Webhook yönetimi";
   const classes =
     activeTab === tab
       ? 'border-blue-600 text-blue-600'
@@ -45,25 +45,25 @@ function renderOverview(analytics: AdminSubscriptionAnalyticsData): string {
     <div class="space-y-6">
       <div class="grid gap-4 md:grid-cols-4">
         <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Toplam Abonelik</h3>
+          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Toplam abonelik</h3>
           <p class="text-3xl font-bold text-gray-900 dark:text-white">${analytics.subscriptions.totalSubscriptions}</p>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Aktif</h3>
+          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Aktif abonelik</h3>
           <p class="text-3xl font-bold text-green-600 dark:text-green-400">${analytics.subscriptions.activeSubscriptions}</p>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Aylık Gelir (MRR)</h3>
+          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Aylık gelir (MRR)</h3>
           <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">₺${mrrDisplay}</p>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Kaybedilen Abonelik Oranı</h3>
+          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Abonelik kayıp oranı</h3>
           <p class="text-3xl font-bold text-red-600 dark:text-red-400">${churnDisplay}%</p>
         </div>
       </div>
 
       <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-        <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Plan Dağılımı</h3>
+        <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Plan dağılımı</h3>
         <div class="space-y-3">
           ${Object.entries(analytics.subscriptions.byTier)
             .map(([tier, count]) => {
@@ -87,14 +87,14 @@ function renderOverview(analytics: AdminSubscriptionAnalyticsData): string {
       </div>
 
       <div class="rounded-lg border border-green-200 bg-gradient-to-r from-green-50 to-blue-50 p-6 dark:border-green-800 dark:from-green-900/20 dark:to-blue-900/20">
-        <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Gelir Özeti</h3>
+        <h3 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Gelir özeti</h3>
         <div class="grid gap-6 md:grid-cols-2">
           <div>
-            <p class="mb-1 text-sm text-gray-600 dark:text-gray-400">Aylık Gelir (MRR)</p>
+            <p class="mb-1 text-sm text-gray-600 dark:text-gray-400">Aylık gelir (MRR)</p>
             <p class="text-2xl font-bold text-green-600 dark:text-green-400">₺${mrrDisplay}</p>
           </div>
           <div>
-            <p class="mb-1 text-sm text-gray-600 dark:text-gray-400">Yıllık Değerleme (ARR)</p>
+            <p class="mb-1 text-sm text-gray-600 dark:text-gray-400">Yıllık değerleme (ARR)</p>
             <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">₺${arrDisplay}</p>
           </div>
         </div>
@@ -111,7 +111,7 @@ function renderUsersTab(): string {
         Kullanıcıların abonelik durumunu ve planlarını yönetin. Aşağıdaki bağlantıyla ayrıntılı yönetim sayfasına gidin.
       </p>
       <a href="/admin/subscriptions/users" class="inline-block rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition hover:bg-blue-700">
-        Kullanıcı yönetim paneline git →
+        Kullanıcı yönetimine git →
       </a>
     </div>
   `;
@@ -122,19 +122,19 @@ function renderWebhooksTab(analytics: AdminSubscriptionAnalyticsData): string {
     <div class="space-y-4">
       <div class="grid gap-4 md:grid-cols-4">
         <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Başarılı</h3>
+          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Başarılı gönderim</h3>
           <p class="text-3xl font-bold text-green-600">${analytics.webhooks?.successful || 0}</p>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Beklemede</h3>
+          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Bekleyen gönderim</h3>
           <p class="text-3xl font-bold text-yellow-600">${analytics.webhooks?.pending || 0}</p>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Yeniden Deniyor</h3>
+          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Yeniden deneniyor</h3>
           <p class="text-3xl font-bold text-blue-600">${analytics.webhooks?.retrying || 0}</p>
         </div>
         <div class="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Başarısız</h3>
+          <h3 class="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Başarısız gönderim</h3>
           <p class="text-3xl font-bold text-red-600">${analytics.webhooks?.failed || 0}</p>
         </div>
       </div>
@@ -158,7 +158,7 @@ export function renderSubscriptionAdminDashboard(options: {
   }
 
   if (!options.analytics) {
-    return `<div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-700 dark:bg-gray-800"><p class="text-gray-600 dark:text-gray-400">Veriler yüklenemedi</p></div>`;
+    return `<div class="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-700 dark:bg-gray-800"><p class="text-gray-600 dark:text-gray-400">Abonelik verileri yüklenemedi.</p></div>`;
   }
 
   return `

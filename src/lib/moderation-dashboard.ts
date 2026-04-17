@@ -153,12 +153,12 @@ export function renderModerationDashboard(state: ModerationDashboardState): stri
   const overviewHtml = state.selectedTab === 'overview' && state.stats
     ? `
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-red-600">${state.stats.pending_reports}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Beklemede Raporlar</div></div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-yellow-600">${state.stats.in_review_reports}</div><div class="text-gray-600 dark:text-gray-400 text-sm">İncelemedeki Raporlar</div></div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-green-600">${state.stats.resolved_reports}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Çözümlenen Raporlar</div></div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-orange-600">${state.stats.active_bans}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Aktif Yasaklamalar</div></div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-blue-600">${state.stats.total_warnings}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Toplam Uyarılar</div></div>
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-purple-600">${state.stats.queue_items}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Kuyruktaki Kayıtlar</div></div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-red-600">${state.stats.pending_reports}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Bekleyen raporlar</div></div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-yellow-600">${state.stats.in_review_reports}</div><div class="text-gray-600 dark:text-gray-400 text-sm">İncelemedeki raporlar</div></div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-green-600">${state.stats.resolved_reports}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Çözümlenen raporlar</div></div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-orange-600">${state.stats.active_bans}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Aktif yasaklamalar</div></div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-blue-600">${state.stats.total_warnings}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Toplam uyarılar</div></div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"><div class="text-3xl font-bold text-purple-600">${state.stats.queue_items}</div><div class="text-gray-600 dark:text-gray-400 text-sm">Kuyruktaki kayıtlar</div></div>
       </div>
     `
     : '';
@@ -173,7 +173,7 @@ export function renderModerationDashboard(state: ModerationDashboardState): stri
         </div>
         <div class="space-y-3">
           ${state.reports.length === 0
-            ? '<div class="text-center py-8 text-gray-500 dark:text-gray-400">Rapor bulunamadı</div>'
+            ? '<div class="text-center py-8 text-gray-500 dark:text-gray-400">Gösterilecek rapor bulunmuyor.</div>'
             : state.reports.map((report) => `
               <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                 <div class="flex justify-between items-start mb-2">
@@ -201,7 +201,7 @@ export function renderModerationDashboard(state: ModerationDashboardState): stri
   const actionsHtml = state.selectedTab === 'actions'
     ? `
       <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <p class="text-sm text-gray-600 dark:text-gray-400">Moderasyon işlemleri rapor kartlarındaki “İşlem uygula” düğmesi ile açılır.</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Moderasyon işlemleri rapor kartlarındaki “İşlem uygula” düğmesiyle açılır.</p>
       </div>
     `
     : '';
@@ -231,7 +231,7 @@ export function renderModerationDashboard(state: ModerationDashboardState): stri
               ? `<div><label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gün sayısı</label><input data-moderation-action-duration type="number" min="1" max="365" value="${state.actionForm.duration_days}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" /></div>`
               : ''}
             <div class="flex gap-3">
-              <button type="button" data-moderation-close-action class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">İptal</button>
+              <button type="button" data-moderation-close-action class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">İptal et</button>
               <button type="submit" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">İşlemi uygula</button>
             </div>
           </form>
