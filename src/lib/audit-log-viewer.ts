@@ -75,7 +75,7 @@ function renderFilters(): string {
           data-audit-log-export
           class="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
         >
-          CSV İndir
+          CSV indir
         </button>
       </div>
     </div>
@@ -86,7 +86,7 @@ function renderRows(entries: AuditLogEntry[]): string {
   if (entries.length === 0) {
     return `
       <tr>
-        <td colspan="7" class="px-6 py-8 text-center text-gray-600 dark:text-gray-400">Kayıt bulunamadı</td>
+        <td colspan="7" class="px-6 py-8 text-center text-gray-600 dark:text-gray-400">Kayıt bulunamadı.</td>
       </tr>
     `;
   }
@@ -161,7 +161,7 @@ export function renderAuditLogViewer(options: {
     <div class="container-custom py-8">
       <div class="mb-8">
         <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">Denetim kayıtları</h1>
-        <p class="text-gray-600 dark:text-gray-400">Sistem etkinliğini ve değişiklikleri izleyin</p>
+        <p class="text-gray-600 dark:text-gray-400">Sistem etkinliğini ve değişiklikleri izleyin.</p>
       </div>
       ${renderFilters()}
       ${options.error ? `<div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-900 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">${options.error}</div>` : ''}
