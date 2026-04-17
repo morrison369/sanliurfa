@@ -62,7 +62,7 @@ export function extractMessagingInboxConversations(payload: unknown): MessagingI
 
   return list.map((item) => ({
     id: asString(item.id),
-    participantName: asString(item.full_name, 'Bilinmeyen kullanici'),
+    participantName: asString(item.full_name, 'Bilinmeyen kullanıcı'),
     lastMessage: asString(item.content, 'Mesaj yok'),
     lastMessageTime: asString(item.msg_time || item.last_activity_at),
     unreadCount: asNumber(item.unread),
@@ -107,7 +107,7 @@ export function applyMessagingInboxSelection(state: MessagingInboxState): Messag
 
 export function renderMessagingInbox(state: MessagingInboxState, currentUserId: string): string {
   if (state.loading) {
-    return '<div class="flex h-[70vh] items-center justify-center text-sm text-slate-500">Mesajlar yukleniyor...</div>';
+    return '<div class="flex h-[70vh] items-center justify-center text-sm text-slate-500">Mesajlar yükleniyor...</div>';
   }
 
   if (state.error) {
@@ -138,7 +138,7 @@ export function renderMessagingInbox(state: MessagingInboxState, currentUserId: 
           </button>
         `;
       }).join('')
-    : '<div class="p-4 text-sm text-slate-500">Aramaniza uygun konusma bulunamadi.</div>';
+    : '<div class="p-4 text-sm text-slate-500">Aramanıza uygun konuşma bulunamadı.</div>';
 
   const messagesHtml = selectedConversation
     ? (state.messages.length
@@ -153,8 +153,8 @@ export function renderMessagingInbox(state: MessagingInboxState, currentUserId: 
             </div>
           `;
         }).join('')
-      : '<div class="text-sm text-slate-500">Bu konusmada henuz mesaj yok.</div>')
-    : '<div class="flex h-full items-center justify-center text-sm text-slate-500">Goruntulemek icin bir konusma secin.</div>';
+      : '<div class="text-sm text-slate-500">Bu konuşmada henüz mesaj yok.</div>')
+    : '<div class="flex h-full items-center justify-center text-sm text-slate-500">Görüntülemek için bir konuşma seçin.</div>';
 
   return `
     <div class="flex h-[70vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -162,7 +162,7 @@ export function renderMessagingInbox(state: MessagingInboxState, currentUserId: 
         <div class="border-b border-slate-200 p-4">
           <h2 class="text-xl font-bold text-slate-900">Mesajlar</h2>
           <div class="mt-4">
-            <input data-message-search-input type="search" value="${escapeHtml(state.searchQuery)}" placeholder="Konusma ara" class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-blue-500" />
+            <input data-message-search-input type="search" value="${escapeHtml(state.searchQuery)}" placeholder="Konuşma ara" class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 outline-none ring-0 transition focus:border-blue-500" />
           </div>
         </div>
         <div class="min-h-0 flex-1 overflow-y-auto">${listHtml}</div>
@@ -170,17 +170,17 @@ export function renderMessagingInbox(state: MessagingInboxState, currentUserId: 
       <section class="flex min-w-0 flex-1 flex-col">
         <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
-            <h3 class="font-semibold text-slate-900">${escapeHtml(selectedConversation?.participantName || 'Konusma secilmedi')}</h3>
+            <h3 class="font-semibold text-slate-900">${escapeHtml(selectedConversation?.participantName || 'Konuşma seçilmedi')}</h3>
             <p class="text-xs text-slate-500">${selectedConversation ? 'Direkt mesaj kutusu' : 'Liste sol panelde'}</p>
           </div>
-          ${selectedConversation ? '<button type="button" data-message-delete class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Konusmayi gizle</button>' : ''}
+          ${selectedConversation ? '<button type="button" data-message-delete class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Konuşmayı gizle</button>' : ''}
         </div>
         <div class="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-5"><div class="space-y-4">${messagesHtml}</div></div>
         ${selectedConversation ? `
           <form data-message-send-form class="border-t border-slate-200 bg-white p-4">
             <div class="flex gap-3">
-              <input data-message-draft-input type="text" value="${escapeHtml(state.draft)}" placeholder="Mesajinizi yazin" class="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500" />
-              <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Gonder</button>
+              <input data-message-draft-input type="text" value="${escapeHtml(state.draft)}" placeholder="Mesajınızı yazın" class="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500" />
+              <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Gönder</button>
             </div>
           </form>
         ` : ''}

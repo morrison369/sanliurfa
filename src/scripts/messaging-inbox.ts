@@ -38,7 +38,7 @@ function readCurrentUserId(root: MessagingInboxRoot): string {
 
 async function fetchConversations(root: MessagingInboxRoot) {
   const response = await fetch('/api/messages?limit=50', { credentials: 'same-origin' });
-  if (!response.ok) throw new Error('Konusma listesi yuklenemedi');
+  if (!response.ok) throw new Error('Konuşma listesi yüklenemedi');
 
   const payload = await response.json();
   const nextState = applyMessagingInboxSelection({
@@ -58,7 +58,7 @@ async function fetchMessages(root: MessagingInboxRoot) {
   }
 
   const response = await fetch(`/api/messages/${state.selectedConversationId}?limit=100`, { credentials: 'same-origin' });
-  if (!response.ok) throw new Error('Mesajlar yuklenemedi');
+  if (!response.ok) throw new Error('Mesajlar yüklenemedi');
 
   const payload = await response.json();
   writeState(root, {
@@ -154,7 +154,7 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
 
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
-        const message = payload?.error?.message || payload?.error || 'Mesaj gonderilemedi';
+        const message = payload?.error?.message || payload?.error || 'Mesaj gönderilemedi';
         writeState(root, { ...state, error: message, loading: false });
         await refreshRoot(root);
         return;
@@ -178,7 +178,7 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
 
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
-        const message = payload?.error?.message || payload?.error || 'Konusma gizlenemedi';
+        const message = payload?.error?.message || payload?.error || 'Konuşma gizlenemedi';
         writeState(root, { ...state, error: message, loading: false });
         await refreshRoot(root);
         return;
