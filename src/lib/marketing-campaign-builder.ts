@@ -122,7 +122,7 @@ function renderCampaigns(campaigns: Campaign[]): string {
   if (campaigns.length === 0) {
     return `
       <div class="py-8 text-center text-gray-500">
-        Henüz kampanya yok. Yeni bir kampanya oluşturmak için yukarıdaki butona tıklayın.
+        Henüz kampanya bulunmuyor. Yeni bir kampanya oluşturmak için yukarıdaki düğmeyi kullanın.
       </div>
     `;
   }
