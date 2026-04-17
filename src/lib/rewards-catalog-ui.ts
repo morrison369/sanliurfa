@@ -103,7 +103,7 @@ function renderPromotionalOffers(promos: PromotionalOfferItem[]): string {
 
   return `
     <div class="rounded-lg border border-orange-200 bg-gradient-to-r from-red-50 to-orange-50 p-4">
-      <h3 class="mb-3 font-semibold text-orange-900">🎉 Özel Teklifler</h3>
+      <h3 class="mb-3 font-semibold text-orange-900">🎉 Özel teklifler</h3>
       <div class="space-y-2">
         ${promos
           .map((promo) => {
@@ -228,7 +228,7 @@ export function renderRewardsCatalog(state: RewardsCatalogState): string {
   if (filteredRewards.length === 0) {
     rewardsSection = `
       <div class="py-12 text-center text-gray-500">
-        <p class="text-lg">Bu kategoride ödül bulunamadı.</p>
+        <p class="text-lg">Bu kategoride gösterilecek ödül bulunmuyor.</p>
       </div>
     `;
   } else {

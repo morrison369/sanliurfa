@@ -24,7 +24,7 @@ export function extractAdminLoyaltyRewards(
 
 function renderRewardsTable(rewards: AdminLoyaltyReward[]): string {
   if (rewards.length === 0) {
-    return '<p class="text-sm text-gray-600">Ödül bulunamadı.</p>';
+    return '<p class="text-sm text-gray-600">Henüz ödül bulunmuyor.</p>';
   }
 
   return `

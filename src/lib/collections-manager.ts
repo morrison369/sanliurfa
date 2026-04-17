@@ -133,7 +133,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
             <input type="checkbox" name="is_public" ${state.form.is_public ? 'checked' : ''} class="h-4 w-4" />
             <span class="text-sm font-medium">Herkese açık yap</span>
           </label>
-          <p class="mt-1 text-xs text-gray-500">Açık koleksiyonlar diğer kullanıcılar tarafından görülebilir ve takip edilebilir.</p>
+          <p class="mt-1 text-xs text-gray-500">Herkese açık koleksiyonlar diğer kullanıcılar tarafından görülebilir ve takip edilebilir.</p>
         </div>
         ${error}
         <button
@@ -150,7 +150,7 @@ export function renderCollectionsManager(state: CollectionsManagerState) {
   const list = state.isLoading
     ? '<div class="py-12 text-center">Koleksiyonlar yükleniyor...</div>'
     : state.collections.length === 0
-      ? '<div class="py-12 text-center text-gray-500">Henüz koleksiyon oluşturmadınız.</div>'
+      ? '<div class="py-12 text-center text-gray-500">Henüz oluşturulmuş koleksiyon bulunmuyor.</div>'
       : `
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           ${state.collections
