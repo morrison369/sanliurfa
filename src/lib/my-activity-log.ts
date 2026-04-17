@@ -86,12 +86,12 @@ export function renderMyActivityLog(items: ActivityLogItem[], error: string | nu
   }
 
   if (items.length === 0) {
-    return '<p class="py-8 text-center text-gray-600">Henüz aktivite yok</p>';
+    return '<p class="py-8 text-center text-gray-600">Henüz etkinlik kaydı bulunmuyor.</p>';
   }
 
   return `
     <div class="space-y-4">
-      <h2 class="text-2xl font-bold text-gray-900">Benim Aktivitelerim</h2>
+      <h2 class="text-2xl font-bold text-gray-900">Etkinlik geçmişim</h2>
       <div class="space-y-2">
         ${items.map((item) => renderActivityItem(item)).join('')}
       </div>
