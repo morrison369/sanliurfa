@@ -5,7 +5,7 @@ export interface VendorDashboardState {
 }
 
 const tabs: Array<{ id: VendorDashboardTab; label: string }> = [
-  { id: 'overview', label: 'Genel Bakış' },
+  { id: 'overview', label: 'Genel bakış' },
   { id: 'listings', label: 'İşletmelerim' },
   { id: 'reviews', label: 'Yorumlar' },
   { id: 'ads', label: 'Reklamlar' },
@@ -39,19 +39,19 @@ function renderOverview(): string {
   return `
     <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
       <div class="rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 p-4 dark:from-blue-900/20 dark:to-blue-800/20">
-        <p class="text-sm text-gray-600 dark:text-gray-400">Toplam Görüntüleme</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Toplam görüntüleme</p>
         <p class="text-2xl font-bold text-gray-900 dark:text-white">1,234</p>
       </div>
       <div class="rounded-lg bg-gradient-to-br from-green-50 to-green-100 p-4 dark:from-green-900/20 dark:to-green-800/20">
-        <p class="text-sm text-gray-600 dark:text-gray-400">Yorum Yanıt Oranı</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Yorum yanıt oranı</p>
         <p class="text-2xl font-bold text-gray-900 dark:text-white">85%</p>
       </div>
       <div class="rounded-lg bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 dark:from-yellow-900/20 dark:to-yellow-800/20">
-        <p class="text-sm text-gray-600 dark:text-gray-400">Ortalama Puan</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Ortalama puan</p>
         <p class="text-2xl font-bold text-gray-900 dark:text-white">4.7 ⭐</p>
       </div>
       <div class="rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 p-4 dark:from-purple-900/20 dark:to-purple-800/20">
-        <p class="text-sm text-gray-600 dark:text-gray-400">Aktif Reklamlar</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Aktif reklamlar</p>
         <p class="text-2xl font-bold text-gray-900 dark:text-white">3</p>
       </div>
     </div>
@@ -61,8 +61,8 @@ function renderOverview(): string {
 function renderListings(): string {
   return `
     <div class="py-8 text-center text-gray-600 dark:text-gray-400">
-      <p class="mb-4">İşletmeleriniz burada görünecek</p>
-      <button class="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700">+ İşletme Ekle</button>
+      <p class="mb-4">İşletmeleriniz burada listelenecek.</p>
+      <button class="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700">+ İşletme ekle</button>
     </div>
   `;
 }
@@ -73,7 +73,7 @@ function renderReviews(): string {
       <div class="border-l-4 border-yellow-500 bg-yellow-50 p-4 dark:bg-yellow-900/20">
         <p class="font-semibold text-gray-900 dark:text-white">Muhteşem hizmet!</p>
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">⭐⭐⭐⭐⭐ - User123</p>
-        <button class="mt-2 text-sm text-blue-600 hover:underline">Yanıt Ver</button>
+        <button class="mt-2 text-sm text-blue-600 hover:underline">Yanıt ver</button>
       </div>
     </div>
   `;
@@ -82,8 +82,8 @@ function renderReviews(): string {
 function renderAds(): string {
   return `
     <div class="py-8 text-center">
-      <p class="mb-4 text-gray-600 dark:text-gray-400">Reklam kampanyaları yönetilecek</p>
-      <button class="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700">+ Reklam Oluştur</button>
+      <p class="mb-4 text-gray-600 dark:text-gray-400">Reklam kampanyalarınızı burada yöneteceksiniz.</p>
+      <button class="rounded-lg bg-blue-600 px-6 py-2 text-white hover:bg-blue-700">+ Reklam oluştur</button>
     </div>
   `;
 }
@@ -100,7 +100,7 @@ export function renderVendorDashboard(state: VendorDashboardState): string {
 
   return `
     <div class="container-custom py-8">
-      <h1 class="mb-8 text-3xl font-bold text-gray-900 dark:text-white">İşletme Paneli</h1>
+      <h1 class="mb-8 text-3xl font-bold text-gray-900 dark:text-white">İşletme paneli</h1>
       ${renderTabs(state.activeTab)}
       <div class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
         ${tabBody}

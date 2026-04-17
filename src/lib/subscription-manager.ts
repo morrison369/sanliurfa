@@ -59,7 +59,7 @@ function renderSubscriptionError(message: string): string {
 function renderUpgradeCta(): string {
   return `
     <div class="rounded-lg border-2 border-blue-300 bg-blue-50 p-6">
-      <h3 class="mb-2 text-lg font-semibold text-gray-900">Premium'a Yükselt</h3>
+      <h3 class="mb-2 text-lg font-semibold text-gray-900">Premium'a yükselt</h3>
       <p class="mb-4 text-gray-600">Premium özellikleri keşfedin ve daha fazla avantaj alın.</p>
       <a href="/fiyatlandirma" class="inline-flex rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700">Planları gör</a>
     </div>
@@ -75,7 +75,7 @@ function renderSubscriptionCard(subscription: ActiveSubscription, cancelling: bo
     <div class="rounded-lg border border-gray-200 bg-white p-6">
       <div class="mb-6 flex items-center justify-between">
         <div>
-          <h3 class="text-lg font-semibold text-gray-900">Aktif Plan</h3>
+          <h3 class="text-lg font-semibold text-gray-900">Aktif plan</h3>
           <p class="mt-1 text-gray-600">${subscription.tier.displayName}</p>
         </div>
         <div class="text-right">
