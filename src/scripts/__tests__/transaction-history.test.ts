@@ -47,6 +47,14 @@ function createTransactionRoot() {
 describe('transaction history script', () => {
   beforeEach(() => {
     vi.resetModules();
+    const storage = new Map<string, string>();
+    (globalThis as any).window = {
+      localStorage: {
+        getItem: vi.fn((key: string) => storage.get(key) ?? null),
+        setItem: vi.fn((key: string, value: string) => storage.set(key, value)),
+        removeItem: vi.fn((key: string) => storage.delete(key)),
+      },
+    };
   });
 
   it('renders transaction response and hides skeleton', async () => {
@@ -92,5 +100,36 @@ describe('transaction history script', () => {
     expect(content.className).toBe('');
     expect(root.dataset.initialized).toBe('true');
     expect(root.dataset.total).toBe('1');
+  });
+
+  it('restores selected type from local storage before fetching', async () => {
+    const { root } = createTransactionRoot();
+    (globalThis as any).window.localStorage.getItem.mockReturnValue('earn');
+
+    (globalThis as any).document = {
+      querySelectorAll: () => [root],
+    };
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          success: true,
+          data: {
+            transactions: [],
+            pagination: { limit: 20, offset: 0, total: 0 },
+          },
+        },
+      }),
+    });
+    (globalThis as any).fetch = fetchMock;
+
+    const { initTransactionHistory } = await import('../transaction-history');
+    initTransactionHistory();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(root.dataset.selectedType).toBe('earn');
+    expect(fetchMock).toHaveBeenCalledWith('/api/loyalty/transactions?limit=20&offset=0&type=earn');
   });
 });

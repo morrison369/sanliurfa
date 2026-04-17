@@ -12,6 +12,11 @@ export interface BillingRecord {
   createdAt: string;
 }
 
+export interface BillingHistoryPayload {
+  records: BillingRecord[];
+  selectedStatus: string;
+}
+
 export function extractBillingHistory(payload: unknown): BillingRecord[] {
   const directData =
     payload && typeof payload === 'object' && 'data' in payload
@@ -29,12 +34,33 @@ export function extractBillingHistory(payload: unknown): BillingRecord[] {
   return Array.isArray(billing) ? (billing as BillingRecord[]) : [];
 }
 
+function getBillingStatuses(records: BillingRecord[]): string[] {
+  return Array.from(new Set(records.map((record) => record.status))).sort();
+}
+
 function formatBillingDate(value: string): string {
   return new Date(value).toLocaleDateString('tr-TR');
 }
 
+function getBillingStatusLabel(status: string): string {
+  const normalized = status.toLowerCase();
+
+  return normalized === 'paid' ||
+    normalized === 'succeeded' ||
+    normalized === 'completed'
+    ? 'Ödendi'
+    : normalized === 'pending' || normalized === 'processing'
+      ? 'Beklemede'
+      : normalized === 'refunded'
+        ? 'İade edildi'
+        : normalized === 'canceled' || normalized === 'cancelled'
+          ? 'İptal edildi'
+          : 'Başarısız';
+}
+
 function renderBillingStatus(status: string): string {
   const normalized = status.toLowerCase();
+  const label = getBillingStatusLabel(status);
 
   const className =
     normalized === 'paid' ||
@@ -49,20 +75,41 @@ function renderBillingStatus(status: string): string {
             ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
             : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
 
-  const label =
-    normalized === 'paid' ||
-    normalized === 'succeeded' ||
-    normalized === 'completed'
-      ? 'Ödendi'
-      : normalized === 'pending' || normalized === 'processing'
-        ? 'Beklemede'
-        : normalized === 'refunded'
-          ? 'İade edildi'
-          : normalized === 'canceled' || normalized === 'cancelled'
-            ? 'İptal edildi'
-            : 'Başarısız';
-
   return `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${className}">${label}</span>`;
+}
+
+function renderBillingStatusFilters(
+  statuses: string[],
+  selectedStatus: string,
+): string {
+  if (statuses.length === 0) return '';
+
+  const renderButton = (status: string, label: string) => {
+    const active = selectedStatus === status;
+
+    return `
+      <button
+        type="button"
+        data-billing-status="${status}"
+        class="rounded-lg px-3 py-1 text-sm font-medium transition ${
+          active
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        }"
+      >
+        ${label}
+      </button>
+    `;
+  };
+
+  return `
+    <div class="mb-4 flex flex-wrap gap-2">
+      ${renderButton('', 'Tüm kayıtlar')}
+      ${statuses
+        .map((status) => renderButton(status, getBillingStatusLabel(status)))
+        .join('')}
+    </div>
+  `;
 }
 
 function renderBillingRow(record: BillingRecord): string {
@@ -78,8 +125,13 @@ function renderBillingRow(record: BillingRecord): string {
   `;
 }
 
-export function renderBillingHistory(records: BillingRecord[]): string {
-  if (records.length === 0) {
+export function renderBillingHistory(payload: BillingHistoryPayload): string {
+  const statuses = getBillingStatuses(payload.records);
+  const filteredRecords = payload.selectedStatus
+    ? payload.records.filter((record) => record.status === payload.selectedStatus)
+    : payload.records;
+
+  if (payload.records.length === 0) {
     return `
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800">
         <p class="text-gray-600 dark:text-gray-400">Henüz ödeme geçmişi kaydı bulunmuyor.</p>
@@ -87,7 +139,17 @@ export function renderBillingHistory(records: BillingRecord[]): string {
     `;
   }
 
+  if (filteredRecords.length === 0) {
+    return `
+      ${renderBillingStatusFilters(statuses, payload.selectedStatus)}
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800">
+        <p class="text-gray-600 dark:text-gray-400">Bu durum için ödeme kaydı bulunmuyor.</p>
+      </div>
+    `;
+  }
+
   return `
+    ${renderBillingStatusFilters(statuses, payload.selectedStatus)}
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead>
@@ -99,7 +161,7 @@ export function renderBillingHistory(records: BillingRecord[]): string {
           </tr>
         </thead>
         <tbody>
-          ${records.map(renderBillingRow).join('')}
+          ${filteredRecords.map(renderBillingRow).join('')}
         </tbody>
       </table>
     </div>
