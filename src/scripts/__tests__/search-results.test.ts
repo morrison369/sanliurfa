@@ -74,12 +74,18 @@ describe('search-results script', () => {
 
   it('loads initial query and renders place, user and collection results', async () => {
     const { root, loading, content } = createRoot();
+    const localStorageStore = new Map<string, string>();
     (globalThis as any).document = {
       querySelectorAll: () => [root],
     };
     (globalThis as any).window = {
       location: { href: 'https://sanliurfa.com/arama?q=urfa' },
       history: { replaceState: vi.fn() },
+      localStorage: {
+        getItem: (key: string) => localStorageStore.get(key) ?? null,
+        setItem: (key: string, value: string) => localStorageStore.set(key, value),
+        removeItem: (key: string) => localStorageStore.delete(key),
+      },
     };
 
     const fetchMock = vi.fn(async (input: string) => {
@@ -120,5 +126,6 @@ describe('search-results script', () => {
     expect(content.innerHTML).toContain('Urfa Koleksiyonu');
     expect(loading.className).toBe('hidden');
     expect(content.className).toBe('');
+    expect(localStorageStore.get('sanliurfa:search-results:query')).toBe('urfa');
   });
 });

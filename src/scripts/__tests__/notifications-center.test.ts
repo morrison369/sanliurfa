@@ -90,9 +90,17 @@ describe('notifications center script', () => {
 
   it('loads notifications and runs read-all action with correct methods', async () => {
     const { root, loading, content } = createNotificationsRoot();
+    const localStorageStore = new Map<string, string>();
 
     (globalThis as any).document = {
       querySelectorAll: () => [root],
+    };
+    (globalThis as any).window = {
+      localStorage: {
+        getItem: (key: string) => localStorageStore.get(key) ?? null,
+        setItem: (key: string, value: string) => localStorageStore.set(key, value),
+        removeItem: (key: string) => localStorageStore.delete(key),
+      },
     };
 
     const fetchMock = vi.fn(async (input: string, init?: { method?: string }) => {
@@ -141,11 +149,12 @@ describe('notifications center script', () => {
     initNotificationsCenter();
     await flushPromises();
 
-    expect(content.innerHTML).toContain('Bildirimler');
+    expect(content.innerHTML).toContain('Bildirim merkezi');
     expect(content.innerHTML).toContain('Detay');
-    expect(content.innerHTML).toContain('Tümünü Oku');
+    expect(content.innerHTML).toContain('Tüm okunmamışları okundu olarak işaretle');
     expect(loading.className).toBe('hidden');
     expect(content.className).toBe('');
+    expect(localStorageStore.get('sanliurfa:notifications-center:filter')).toBe('all');
 
     const markAllButton = content.querySelector('[data-notifications-center-mark-all]');
     await markAllButton?.listeners?.click?.[0]?.();

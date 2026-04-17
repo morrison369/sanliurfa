@@ -82,6 +82,7 @@ describe('messaging inbox script', () => {
 
   it('loads conversations and messages, then switches conversation', async () => {
     const { root, content, loading } = createMessagingRoot();
+    const localStorageStore = new Map<string, string>();
 
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ success: true, data: [{ id: 'conv-1', full_name: 'Ali', content: 'Selam', msg_time: '2026-04-17T08:10:00.000Z', unread: '1' }, { id: 'conv-2', full_name: 'Ayse', content: 'Merhaba', msg_time: '2026-04-17T08:12:00.000Z', unread: '0' }] }) })
@@ -92,6 +93,13 @@ describe('messaging inbox script', () => {
     (globalThis as any).fetch = fetchMock;
     (globalThis as any).document = {
       querySelectorAll: () => [root],
+    };
+    (globalThis as any).window = {
+      localStorage: {
+        getItem: (key: string) => localStorageStore.get(key) ?? null,
+        setItem: (key: string, value: string) => localStorageStore.set(key, value),
+        removeItem: (key: string) => localStorageStore.delete(key),
+      },
     };
     (globalThis as any).setInterval = vi.fn(() => 1);
 
@@ -114,5 +122,6 @@ describe('messaging inbox script', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/messages/conv-2?limit=100', { credentials: 'same-origin' });
     expect(content.innerHTML).toContain('Ayse');
     expect(content.innerHTML).toContain('Merhaba');
+    expect(localStorageStore.get('sanliurfa:messaging-inbox:selected-conversation')).toBe('conv-2');
   });
 });

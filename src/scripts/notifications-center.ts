@@ -7,11 +7,28 @@ import {
 } from '../lib/notifications-center';
 
 type NotificationsCenterRoot = HTMLElement & { dataset: DOMStringMap };
+const NOTIFICATIONS_CENTER_FILTER_KEY = 'sanliurfa:notifications-center:filter';
+
+function readStoredFilter(): 'all' | 'unread' {
+  try {
+    return window.localStorage?.getItem(NOTIFICATIONS_CENTER_FILTER_KEY) === 'unread' ? 'unread' : 'all';
+  } catch {
+    return 'all';
+  }
+}
+
+function writeStoredFilter(filter: 'all' | 'unread') {
+  try {
+    window.localStorage?.setItem(NOTIFICATIONS_CENTER_FILTER_KEY, filter);
+  } catch {
+    // no-op
+  }
+}
 
 function readState(root: NotificationsCenterRoot): NotificationsCenterState {
   return {
     notifications: [],
-    filter: root.dataset.filter === 'unread' ? 'unread' : 'all',
+    filter: root.dataset.filter === 'unread' ? 'unread' : readStoredFilter(),
     actionInProgress: root.dataset.actionInProgress || null,
     bulkActionInProgress: root.dataset.bulkActionInProgress === 'true',
     error: root.dataset.error || null,
@@ -28,6 +45,7 @@ function setError(root: NotificationsCenterRoot, message: string | null) {
 
 async function loadNotifications(root: NotificationsCenterRoot) {
   const filter = root.dataset.filter === 'unread' ? 'unread' : 'all';
+  writeStoredFilter(filter);
   const response = await fetch(`/api/notifications?filter=${filter}&limit=50`);
   const payload = await response.json();
 
@@ -107,6 +125,7 @@ function bindActions(root: NotificationsCenterRoot, content: HTMLElement) {
       const nextFilter = button.dataset.notificationsCenterFilter === 'unread' ? 'unread' : 'all';
       if ((root.dataset.filter || 'all') === nextFilter) return;
       root.dataset.filter = nextFilter;
+      writeStoredFilter(nextFilter);
       void reloadNotifications(root);
     });
   });
@@ -134,7 +153,7 @@ export function initNotificationsCenter() {
   for (const root of roots) {
     if (root.dataset.initialized === 'true') continue;
     root.dataset.initialized = 'true';
-    root.dataset.filter = 'all';
+    root.dataset.filter = readStoredFilter();
     void reloadNotifications(root);
   }
 }

@@ -12,11 +12,47 @@ import {
 type SearchResultsRoot = HTMLElement & { dataset: DOMStringMap };
 
 const states = new WeakMap<SearchResultsRoot, SearchResultsState>();
+const SEARCH_RESULTS_STORAGE_KEY = 'sanliurfa:search-results:query';
+
+function readStoredQuery(): string {
+  try {
+    return window.localStorage?.getItem(SEARCH_RESULTS_STORAGE_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function writeStoredQuery(query: string) {
+  try {
+    if (query.trim()) {
+      window.localStorage?.setItem(SEARCH_RESULTS_STORAGE_KEY, query.trim());
+    } else {
+      window.localStorage?.removeItem(SEARCH_RESULTS_STORAGE_KEY);
+    }
+  } catch {
+    // no-op
+  }
+}
+
+function readInitialQuery(root: SearchResultsRoot): string {
+  const datasetQuery = (root.dataset.query || '').trim();
+  if (datasetQuery) return datasetQuery;
+
+  try {
+    const current = new URL(window.location.href);
+    const urlQuery = current.searchParams.get('q')?.trim();
+    if (urlQuery) return urlQuery;
+  } catch {
+    // no-op
+  }
+
+  return readStoredQuery();
+}
 
 function getState(root: SearchResultsRoot): SearchResultsState {
   const existing = states.get(root);
   if (existing) return existing;
-  const next = createSearchResultsState(root.dataset.query || '');
+  const next = createSearchResultsState(readInitialQuery(root));
   states.set(root, next);
   return next;
 }
@@ -28,13 +64,17 @@ async function fetchJson(input: string) {
 }
 
 function updateUrl(query: string) {
-  const current = new URL(window.location.href);
-  if (query.trim()) {
-    current.searchParams.set('q', query.trim());
-  } else {
-    current.searchParams.delete('q');
+  try {
+    const current = new URL(window.location.href);
+    if (query.trim()) {
+      current.searchParams.set('q', query.trim());
+    } else {
+      current.searchParams.delete('q');
+    }
+    window.history.replaceState({}, '', `${current.pathname}${current.search}`);
+  } catch {
+    // no-op
   }
-  window.history.replaceState({}, '', `${current.pathname}${current.search}`);
 }
 
 async function performSearch(root: SearchResultsRoot) {
@@ -47,6 +87,8 @@ async function performSearch(root: SearchResultsRoot) {
     state.places = [];
     state.users = [];
     state.collections = [];
+    writeStoredQuery(state.query);
+    updateUrl(state.query);
     await renderRoot(root);
     return;
   }
@@ -78,6 +120,7 @@ async function performSearch(root: SearchResultsRoot) {
     state.places = extractPlaceResults(placesResult.payload);
     state.users = extractUserResults(usersResult.payload);
     state.collections = extractCollectionResults(collectionsResult.payload, query);
+    writeStoredQuery(query);
     updateUrl(query);
   } catch (error) {
     state.error = error instanceof Error ? error.message : 'Arama başarısız oldu';
@@ -98,6 +141,7 @@ function bindActions(root: SearchResultsRoot, content: HTMLElement) {
   let debounce: ReturnType<typeof setTimeout> | undefined;
   input.addEventListener('input', () => {
     state.query = input.value;
+    writeStoredQuery(state.query);
     if (debounce) clearTimeout(debounce);
     debounce = setTimeout(() => {
       void performSearch(root);
@@ -123,7 +167,7 @@ export function initSearchResults() {
     if (root.dataset.initialized === 'true') continue;
     root.dataset.initialized = 'true';
     void renderRoot(root);
-    const initialQuery = (root.dataset.query || '').trim();
+    const initialQuery = readInitialQuery(root).trim();
     if (initialQuery.length >= 2) {
       void performSearch(root);
     }
