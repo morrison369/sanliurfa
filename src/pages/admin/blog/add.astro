@@ -20,7 +20,7 @@ try {
 
 const seo = {
   title: 'Yeni blog yazısı - Yönetim Paneli',
-  description: 'Blog yazısı ekle',
+  description: 'Yeni blog yazısı ekleyin.',
   noindex: true
 };
 
@@ -39,7 +39,7 @@ const post = null;
               ← Geri
             </a>
             <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">
-              {isEdit ? 'Yazıyı düzenle' : 'Yeni yazı'}
+              {isEdit ? 'Yazıyı düzenle' : 'Yeni yazı oluştur'}
             </h1>
           </div>
           <div class="flex items-center gap-2">
@@ -92,7 +92,7 @@ const post = null;
                   placeholder="Yazının kısa özeti (150-200 karakter)"
                   maxlength="200"
                 >{post?.excerpt || ''}</textarea>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">SEO için önemli, 150-200 karakter önerilir.</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">SEO için önemlidir; 150-200 karakter önerilir.</p>
               </div>
               
               <div>
