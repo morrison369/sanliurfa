@@ -87,7 +87,7 @@ export function buildRuntimeDelta(
   history: RuntimeMonitorHistoryEntry[]
 ): string {
   if (!previous) {
-    return 'İlk snapshot alındı.';
+    return 'İlk kayıt alındı.';
   }
 
   return `${previous.overall} -> ${current.overall} • yaklaşık ${getSameStatusSinceMinutes(history, current.overall)} dk`;
@@ -99,7 +99,7 @@ export function buildCoverageDelta(
   history: CoverageHistoryEntry[]
 ): string {
   if (!previous) {
-    return 'İlk snapshot alındı.';
+    return 'İlk kayıt alındı.';
   }
 
   return `${previous.status} -> ${current.status} • yaklaşık ${getSameStatusSinceMinutes(history, current.status)} dk`;
@@ -113,19 +113,19 @@ export function buildCoverageAlert(options: {
   if (options.driftCount > 0) {
     return {
       tone: 'blocked',
-      text: `Uyarı: ${options.driftCount} wrapper drift bulundu. İlk dosya: ${options.firstDriftFile || 'bilinmiyor'}.`,
+      text: `Uyarı: ${options.driftCount} wrapper uyumsuzluğu bulundu. İlk dosya: ${options.firstDriftFile || 'bilinmiyor'}.`,
     };
   }
 
   if (options.status !== 'healthy') {
     return {
       tone: 'degraded',
-      text: 'Uyarı: Coverage raporu mevcut ama freshness durumu healthy değil.',
+      text: 'Uyarı: Kapsama raporu mevcut ancak güncellik durumu healthy değil.',
     };
   }
 
   return {
     tone: 'healthy',
-    text: 'Durum normal: Wrapper coverage drift görünmüyor ve artifact healthy.',
+    text: 'Durum normal: Wrapper kapsama uyumsuzluğu görünmüyor ve artefact healthy.',
   };
 }

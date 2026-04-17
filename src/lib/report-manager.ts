@@ -64,7 +64,7 @@ function renderTabs(tab: 'reports' | 'templates'): string {
   return `
     <div class="flex space-x-2 border-b border-gray-200">
       <button type="button" data-report-manager-tab="reports" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('reports')}">📊 Raporlar</button>
-      <button type="button" data-report-manager-tab="templates" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('templates')}">📋 Şablonlar</button>
+      <button type="button" data-report-manager-tab="templates" class="border-b-2 px-4 py-2 font-medium transition ${tabClass('templates')}">📋 Dışa aktarma şablonları</button>
     </div>
   `;
 }
@@ -96,7 +96,7 @@ function renderReportList(state: ReportManagerState): string {
                   <p class="text-sm text-gray-600">${report.report_type ?? ''} • ${report.format}</p>
                 </div>
                 <span class="rounded px-2 py-1 text-xs ${report.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}">
-                  ${report.is_active ? 'Aktif' : 'Pasif'}
+                  ${report.is_active ? 'Aktif durumda' : 'Pasif durumda'}
                 </span>
               </div>
             </div>
@@ -120,7 +120,7 @@ function renderExportOptions(state: ReportManagerState): string {
           <option value="excel" ${state.exportFormat === 'excel' ? 'selected' : ''}>Excel</option>
         </select>
         <button type="button" data-report-manager-run class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 ${state.loading ? 'opacity-50' : ''}">
-          Çalıştır
+          Raporu çalıştır
         </button>
         <button type="button" data-report-manager-download class="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700">
           İndir
@@ -139,7 +139,7 @@ export function renderReportManager(state: ReportManagerState): string {
         state.tab === 'reports'
           ? `
             <div class="space-y-4">
-              <h2 class="text-2xl font-bold">Raporlar</h2>
+              <h2 class="text-2xl font-bold">Rapor listesi</h2>
               ${renderReportList(state)}
               ${renderExportOptions(state)}
             </div>
