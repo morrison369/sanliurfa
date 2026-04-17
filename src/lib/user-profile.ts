@@ -210,11 +210,11 @@ function renderProfileTab(user: UserProfileData, saving: boolean, message: strin
 function renderFavoritesTab(): string {
   return `
     <div class="rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
-      <div class="py-12 text-center text-gray-500 dark:text-gray-400">
-        <p class="mb-2 text-lg">❤️</p>
-        <p>Henüz favori yeriniz yok</p>
-        <a href="/arama" class="mt-2 block text-blue-600 hover:underline">Yerleri keşfet →</a>
-      </div>
+        <div class="py-12 text-center text-gray-500 dark:text-gray-400">
+          <p class="mb-2 text-lg">❤️</p>
+          <p>Henüz favori yeriniz yok</p>
+          <a href="/arama" class="mt-2 block text-blue-600 hover:underline">Yerleri keşfedin →</a>
+        </div>
     </div>
   `;
 }
@@ -226,7 +226,7 @@ function renderActivityTab(activity: ActivityItem[]): string {
         <div class="py-12 text-center text-gray-500 dark:text-gray-400">
           <p class="mb-2 text-lg">📊</p>
           <p>Henüz bir aktivite yok</p>
-          <a href="/arama" class="mt-2 block text-blue-600 hover:underline">Yerleri keşfet ve yorum yazmaya başla →</a>
+          <a href="/arama" class="mt-2 block text-blue-600 hover:underline">Yerleri keşfedin ve yorum yazmaya başlayın →</a>
         </div>
       </div>
     `;
@@ -356,7 +356,7 @@ export function renderUserProfile(options: {
     <div class="container-custom py-12">
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Profilim</h1>
-        <p class="mt-2 text-gray-600 dark:text-gray-400">Profil bilgileri ve tercihlerini yönet</p>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">Profil bilgilerinizi ve tercihlerinizi yönetin</p>
       </div>
       ${renderTabs(options.activeTab)}
       ${content}

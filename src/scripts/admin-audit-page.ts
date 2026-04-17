@@ -74,7 +74,7 @@ function applyFilters() {
   if (summary) {
     const deniedCount = filtered.filter((entry) => (entry as any).outcome === 'denied').length;
     const writeCount = filtered.filter((entry) => (entry as any).mode === 'write').length;
-    summary.textContent = `Görünen kayıt: ${filtered.length}. Denied: ${deniedCount}. Write: ${writeCount}.`;
+    summary.textContent = `Görünen kayıt: ${filtered.length}. Reddedilen: ${deniedCount}. Yazma işlemi: ${writeCount}.`;
   }
 }
 
@@ -83,7 +83,7 @@ async function loadAudit() {
   allEntries.splice(0, allEntries.length, ...(payload.logs.slice(0, 100) as AdminAuditEntry[]));
   const summary = document.getElementById('audit-summary');
   if (summary && payload.summary) {
-    summary.textContent = `Server filtresi sonrası ${payload.totalFiltered ?? payload.count} kayıt. Son ${payload.summary.windowHours} saatte toplam ${payload.summary.total} kayıt. Denied: ${payload.summary.deniedCount}. Rate limit: ${payload.summary.rateLimitedCount}.`;
+    summary.textContent = `Sunucu filtresi sonrası ${payload.totalFiltered ?? payload.count} kayıt. Son ${payload.summary.windowHours} saatte toplam ${payload.summary.total} kayıt. Reddedilen: ${payload.summary.deniedCount}. Hız sınırına takılan: ${payload.summary.rateLimitedCount}.`;
   }
   applyFilters();
 }
