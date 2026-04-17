@@ -18,7 +18,7 @@ Bu dosya yüksek sinyalli bir çalışma rehberidir; tek karar kaynağı değild
 - `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` — artefact freshness semantiği
 - `docs/ops/ARTIFACT_RETENTION_POLICY.md` — saklama ve temizlik politikaları
 - `docs/ops/INTEGRATION_READINESS.md` — admin entegrasyon hazırlık davranışı
-- `docs/ops/INCIDENT_RUNBOOK.md` — incident müdahale sırası
+- `docs/ops/INCIDENT_RUNBOOK.md` — olay müdahale sırası
 - `docs/ops/LEGACY_PHASE_SURFACE.md` ve `docs/SCRIPT_SURFACE_POLICY.md` — eski faz ve betik yüzeyi kuralları
 - `src/pages/api/openapi.json.ts` — güncel API kontratı kaynağı
 - `src/types/generated-admin-api.ts` — OpenAPI'den üretilmiş admin API tipleri
@@ -34,7 +34,7 @@ Cati sistemi yonu:
 - Migration backlog kapalıdır. Yeni bir React arayüz yüzeyi veya hydration sahibi bilinçli olarak geri eklenirse ancak o zaman `docs/reports/astro-hydration-inventory.md` dosyasını `npm run astro:migration:inventory` ile yenile.
 - Migration yeniden açılır ve `medium=0` ise, sonraki paneli seçmeden önce kalan `high` bucket'ı `npm run astro:migration:high-risk` ile sırala.
 - Hydration zaten `0` ise React'in kaldırılması gerektiğini varsayma. Kullanıcı açıkça paket kaldırma istemedikçe `@astrojs/react` izin verilen üretim bağımlılığı olarak kalır.
-- `npm run astro:react:audit` ve `npm run astro:react:classify` komutlarını yalnızca görünürlük için kullan; otomatik uninstall tetikleyicisi yapma.
+- `npm run astro:react:audit` ve `npm run astro:react:classify` komutlarını yalnızca görünürlük için kullan; otomatik kaldırma tetikleyicisi yapma.
 
 ## Hızlı Başlangıç Komutları
 
@@ -51,15 +51,15 @@ Cati sistemi yonu:
 - `npm run test:critical:blocking` — Bloklayıcı kontrat testleri
 - `npm run test:critical:advisory` — Danışma amaçlı kontrat testleri
 - `npm run test:critical` — Tam kritik kontrol kapısı
-- `npm run test:e2e:smoke` — Kanonik duman testi paketi
+- `npm run test:e2e:smoke` — Kanonik duman test paketi
 
 ### Admin API Kontratı ve Tipler
 - `npm run types:admin:generate` — Admin API tiplerini OpenAPI'den yeniden üret
-- `npm run types:admin:drift:check` — Üretilmiş tipler bayatsa fail ver
+- `npm run types:admin:drift:check` — Üretilmiş tipler bayatsa hata ver
 - `npm run test:critical:advisory` — Admin kontratı ve OpenAPI kontrat kontrollerini içerir
 
 ### Surum, Governance ve Ops
-- `npm run release:gate` — Surum kapisi ozeti ve karari
+- `npm run release:gate` — Sürüm kapısı özeti ve kararı
 - `npm run branch:protection:drift:check` — Zorunlu kontroller / doküman eşliği doğrulaması
 - `npm run ops:retention:apply` — Yerel artefact ve denetim saklama temizliği
 - `npm run astro:migration:inventory` — Güncel Astro hydration envanteri ve risk dağılımı
