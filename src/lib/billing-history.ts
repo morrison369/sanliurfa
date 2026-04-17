@@ -75,7 +75,7 @@ export function renderBillingHistory(records: BillingRecord[]): string {
         <thead>
           <tr class="border-b border-gray-200 dark:border-gray-700">
             <th class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Tarih</th>
-            <th class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Miktar</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Tutar</th>
             <th class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Dönem</th>
             <th class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Durum</th>
           </tr>
@@ -91,6 +91,7 @@ export function renderBillingHistory(records: BillingRecord[]): string {
 export function renderBillingHistoryError(message: string): string {
   return `
     <div class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+      <p class="mb-1 font-medium text-red-800 dark:text-red-200">Ödeme geçmişi yüklenemedi</p>
       <p class="text-red-700 dark:text-red-300">${message}</p>
     </div>
   `;
