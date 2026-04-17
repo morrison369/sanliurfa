@@ -1,66 +1,66 @@
-# Architecture
+# Mimari
 
-This repository is an Astro SSR application with a separate phase-delivery operations layer. Treat them as two systems that share one repo.
+Bu depo, ayrı bir faz-teslim operasyon katmanına sahip Astro SSR uygulamasıdır. Tek depoyu paylaşan iki ayrı sistem gibi düşünülmelidir.
 
-Open these first:
+Önce bunları aç:
 
 - `docs/ACTIVE_DOCS.md`
 - `docs/architecture/ASTRO_RUNTIME_STATE.md`
 - `docs/ops/README.md`
 - `docs/ops/SOURCE_OF_TRUTH_MAP.md`
 
-## Delivery Model
-- Authoritative delivery surface: clean `git worktree` from `origin/master`
-- Non-authoritative local surface: dirty root worktree, inventory only
-- Operational policy references:
+## Teslimat Modeli
+- Otoritatif teslimat yüzeyi: `origin/master` üzerinden açılmış temiz `git worktree`
+- Otoritatif olmayan yerel yüzey: kirli root worktree, yalnızca envanter amaçlı
+- Operasyon politika referansları:
   - `STALE_WORKTREE.md`
   - `ROOT_INVENTORY_ONLY_POLICY.md`
   - `docs/WORKTREE_SOURCE_OF_TRUTH.md`
 
-## Application Runtime
-- Framework: Astro SSR
-- Output mode: `server`
-- Adapter: `@astrojs/node`
-- Active UI runtime: Astro pages/layouts + plain TypeScript browser helpers
-- React integration: allowed compatibility layer, not an active UI owner
-- Shared logic: `src/lib/`
-- Content collections: `src/content/` + `src/content.config.ts`
+## Uygulama Runtime'ı
+- Çerçeve: Astro SSR
+- Çıktı modu: `server`
+- Adaptör: `@astrojs/node`
+- Aktif UI runtime: Astro sayfaları/layout'ları + düz TypeScript tarayıcı yardımcıları
+- React entegrasyonu: izin verilen compatibility layer, aktif UI owner değil
+- Ortak mantık: `src/lib/`
+- İçerik koleksiyonları: `src/content/` + `src/content.config.ts`
 
-## Astro Invariants
-- Do not create route collisions like `src/pages/x.ts` and `src/pages/x/index.ts`.
-- Do not run parallel Astro build or phase-gate chains in the same worktree.
-- Do not convert scripts using `import.meta.env` into `is:inline`; that bypasses Astro/Vite transforms.
-- Treat `sw.js` as the emitted PWA worker artifact when adjusting compression or exclusion rules.
-- Pair content collection loader and schema changes; `src/content/` and `src/content.config.ts` move together.
+## Astro Değişmezleri
+- `src/pages/x.ts` ve `src/pages/x/index.ts` gibi route çakışmaları üretmeyin.
+- Aynı worktree içinde paralel Astro build veya phase-gate zinciri çalıştırmayın.
+- `import.meta.env` kullanan scriptleri `is:inline` haline çevirmeyin; bu, Astro/Vite dönüşümlerini bypass eder.
+- Sıkıştırma veya exclusion kuralı değiştirirken `sw.js` dosyasını üretilen PWA worker artefact'ı olarak ele alın.
+- İçerik koleksiyonu loader ve schema değişikliklerini birlikte taşıyın; `src/content/` ile `src/content.config.ts` birlikte hareket eder.
 
-## Operational Runtime
-- Phase delivery is runner-first:
+## Operasyonel Runtime
+- Faz teslim modeli runner-first'tür:
   - `test:phase:range`
   - `test:phase:batch`
   - `phase:prepare:block:preferred`
   - `phase:prepare:batch:preferred`
   - `phase:doctor`
-- `test:phase:<range>` entries are compatibility surface for generated blocks, not the preferred operator API.
+- `test:phase:<range>` girdileri üretilmiş bloklar için compatibility yüzeyidir; tercih edilen operatör API'si değildir.
 
-## State Files
-- Active metadata:
+## Durum Dosyaları
+- Aktif metaveri:
   - `PHASE_INDEX.md`
   - `TASK_TRACKER.md`
   - `memory.md`
   - `PHASE_CHANGELOG.md`
-- `PHASE_CHANGELOG.md` records phase rows only. Changelog maintenance chores do not belong in the changelog.
+- `PHASE_CHANGELOG.md` yalnızca faz satırlarını kaydeder. Changelog bakım işleri changelog içine yazılmaz.
 
-## Dependency Policy
-- Dependency upgrades do not ship inside routine phase-delivery PRs.
-- Use `npm run deps:audit:triage` and `docs/DEPENDENCY_TRIAGE.md` to classify risk before any dependency PR.
-- Runtime dependency fixes come before dev-only tooling fixes.
+## Bağımlılık Politikası
+- Bağımlılık yükseltmeleri rutin faz-teslim PR'ları içinde taşınmaz.
+- Her bağımlılık PR'ından önce riski sınıflamak için `npm run deps:audit:triage` ve `docs/DEPENDENCY_TRIAGE.md` kullanın.
+- Runtime bağımlılık düzeltmeleri, yalnızca dev-tooling düzeltmelerinden önce gelir.
 
-## Build And Gate Boundary
-- Build/gate correctness is validated through:
+## Build ve Gate Sınırı
+- Build/gate doğruluğu şu yüzeylerle doğrulanır:
   - `npm run phase:doctor`
   - `npm run test:phase:gate:ci`
   - `npm run build`
-- CI required checks stay minimal and deterministic:
+- CI required check listesi minimal ve deterministik tutulur:
   - `phase:check:tsconfig`
   - `test:phase:gate:ci`
-- Advisory checks may expand, but required checks should remain stable unless there is a clear failure mode they need to cover.
+- Advisory check'ler genişleyebilir, ancak required check'ler ancak açık bir hata modu kapatılacaksa değiştirilmelidir.

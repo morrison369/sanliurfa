@@ -1,4 +1,4 @@
-# Admin Ops Runtime State
+# Admin Ops Runtime Durumu
 
 Bu belge, admin ve operasyon yüzeyinin aktif runtime durumunu tek yerde özetler.
 
