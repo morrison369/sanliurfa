@@ -41,7 +41,7 @@ const mapId = `place-map-${hashValue(`${centerLat}:${centerLng}:${zoom}:${places
       <input
         type="text"
         id={`search-${mapId}`}
-        placeholder="Yer ara..."
+        placeholder="Haritada yer ara..."
         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500"
       />
     </div>
@@ -190,7 +190,7 @@ const mapId = `place-map-${hashValue(`${centerLat}:${centerLng}:${zoom}:${places
         <h3 class="font-bold text-sm">${place.name}</h3>
         <p class="text-xs text-gray-600">${place.category}</p>
         ${place.rating ? `<p class="text-xs">⭐ ${place.rating.toFixed(1)}</p>` : ''}
-        <a href="/places/${place.slug}" class="text-blue-600 text-xs hover:underline">Detaylar →</a>
+        <a href="/places/${place.slug}" class="text-blue-600 text-xs hover:underline">Ayrıntıları gör →</a>
       </div>
     `;
   }
