@@ -13,7 +13,7 @@ Bu dosya yüksek sinyalli bir çalışma rehberidir; tek karar kaynağı değild
 - `docs/ops/README.md` — ops dokümanları için giriş noktası
 - `docs/ops/SOURCE_OF_TRUTH_MAP.md` — hangi kararın hangi dosyaya ait olduğunu gösterir
 - `docs/architecture/ASTRO_RUNTIME_STATE.md` — migration kapanışı sonrası aktif Astro çalışma zamanı durumu
-- `docs/RELEASE_GATES.md` — sürüm ve merge gate davranışı
+- `docs/RELEASE_GATES.md` — sürüm ve birleştirme kapısı davranışı
 - `docs/ops/BRANCH_PROTECTION.md` — zorunlu kontroller / branch protection parity
 - `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` — artefact freshness semantiği
 - `docs/ops/ARTIFACT_RETENTION_POLICY.md` — retention ve cleanup kuralları
@@ -50,7 +50,7 @@ Framework yönü:
 - `npm run typecheck:app` — Kanonik uygulama typecheck'i
 - `npm run test:critical:blocking` — Bloklayıcı kontrat testleri
 - `npm run test:critical:advisory` — Danışma amaçlı kontrat testleri
-- `npm run test:critical` — Tam kritik kapı
+- `npm run test:critical` — Tam kritik kontrol kapısı
 - `npm run test:e2e:smoke` — Kanonik duman testi paketi
 
 ### Admin API Kontratı ve Tipler
@@ -66,7 +66,7 @@ Framework yönü:
 - `npm run astro:migration:high-risk` — Kalan yüksek riskli hydration yüzeyleri için sıralı feasibility raporu
 - `npm run astro:react:audit` — Hydration sıfıra indikten sonra paket seviyesinde React yüzeyi görünürlüğü
 - `npm run astro:react:classify` — Hydration sıfıra indikten sonra dosya seviyesinde React bakım sınıflandırması
-- `npm run astro:react:guard` — Çalışma zamanına bağlı React arayüz yüzeyi geri dönerse hata veren koruma
+- `npm run astro:react:guard` — Çalışma zamanına bağlı React arayüz yüzeyi geri dönerse hata üreten koruma
 - `npm run phase:scripts:report` — Faz uyumluluk durumu
 - `npm run phase:compat:cleanup` — Uyumluluk manifest cleanup durumu
 
@@ -81,7 +81,7 @@ Framework yönü:
 - `npm run test:unit` — Tam Vitest unit suite
 - `npm run test:unit:watch` — Vitest watch modu
 - `npm run test:e2e` — Tam Playwright suite
-- `npm run test:e2e:ui` — Playwright arayüz modu
+- `npm run test:e2e:ui` — Playwright görsel arayüz modu
 - `npm run test` — Legacy geniş suite; birincil merge sinyali değildir
 
 ## Mimari
@@ -256,7 +256,7 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 - `GET /api/admin/dashboard/overview` — Admin panel özet yüzeyi
 - `GET /api/admin/system/metrics` — Admin metrikleri ve normalize durum özeti
 - `GET /api/admin/system/artifact-health` — Artefact snapshot ve özet
-- `GET /api/admin/deployment/status` — Dağıtım hazırlığı ve artefact sağlığı
+- `GET /api/admin/deployment/status` — Dağıtım hazırlığı ve artefact durumu
 - `GET /api/admin/audit-logs` — Admin audit kaydı, filtreler ve CSV dışa aktarım
 - `GET /api/admin/system/integration-settings` — Entegrasyon hazırlık anlık görünümü
 - `PUT /api/admin/system/integration-settings` — Entegrasyon ayar değişikliği
