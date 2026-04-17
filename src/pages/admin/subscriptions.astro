@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import SubscriptionAdminDashboard from '../../components/SubscriptionAdminDashboard';
+import SubscriptionAdminDashboard from '../../components/SubscriptionAdminDashboard.astro';
 
 // Check admin access
 if (!Astro.locals.isAdmin) {
@@ -21,7 +21,7 @@ if (!Astro.locals.isAdmin) {
     </div>
 
     <!-- Admin Dashboard Component -->
-    <SubscriptionAdminDashboard client:load />
+    <SubscriptionAdminDashboard />
 
     <!-- Navigation Links -->
     <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">

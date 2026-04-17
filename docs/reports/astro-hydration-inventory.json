@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-04-17T00:13:46.642Z",
-  "astroFiles": 185,
-  "tsxFiles": 67,
-  "totalHydrationPoints": 9,
+  "generatedAt": "2026-04-17T00:17:20.100Z",
+  "astroFiles": 186,
+  "tsxFiles": 66,
+  "totalHydrationPoints": 8,
   "lowRiskCount": 0,
   "mediumRiskCount": 0,
-  "highRiskCount": 9,
+  "highRiskCount": 8,
   "entries": [
     {
       "pagePath": "src/pages/admin/analytics.astro",
@@ -20,13 +20,6 @@
       "directive": "load",
       "risk": "high",
       "rationale": "ModerationDashboard yoğun state veya dashboard tipi davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/admin/subscriptions.astro",
-      "componentName": "SubscriptionAdminDashboard",
-      "directive": "load",
-      "risk": "high",
-      "rationale": "SubscriptionAdminDashboard yoğun state veya dashboard tipi davranış taşıyor."
     },
     {
       "pagePath": "src/pages/admin/verifications.astro",

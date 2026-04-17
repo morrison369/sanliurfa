@@ -13,19 +13,19 @@ Bu belge, `Şanlıurfa.com` kod tabanının mevcut Astro + React island mimarisi
 
 2026-04-17 itibarıyla ölçülen yüzey:
 
-- `src/**/*.astro`: `185`
-- `src/**/*.tsx`: `67`
-- `.astro` dosyalarında `client:*` hydration kullanımı: `9`
+- `src/**/*.astro`: `186`
+- `src/**/*.tsx`: `66`
+- `.astro` dosyalarında `client:*` hydration kullanımı: `8`
 - `astro.config.mjs` içinde aktif React entegrasyonu: `@astrojs/react`
-- generated inventory: `docs/reports/astro-hydration-inventory.md` (`0 low / 0 medium / 9 high`)
-- high-risk feasibility report: `docs/reports/astro-high-risk-feasibility.md` (`0 first / 0 later / 8 last`)
+- generated inventory: `docs/reports/astro-hydration-inventory.md` (`0 low / 0 medium / 8 high`)
+- high-risk feasibility report: `docs/reports/astro-high-risk-feasibility.md` (`0 first / 0 later / 7 last`)
 
 Mevcut yapı:
 
 - SSR ve routing katmanı Astro ile çalışıyor.
 - İnteraktif panellerin önemli bölümü React island olarak hydrate ediliyor.
-- Admin, analytics, search, social, subscriptions, notifications ve messaging yüzeyleri React bağımlılığını yoğun kullanıyor.
-- İlk migration dalgalarında `NotificationBadge`, `QuotaUsageDisplay`, `TrendingPlaces`, `LeaderboardsDisplay`, `PricingPlans`, `UserRecommendations`, `PerformanceMonitor`, `PWAPrompt`, `TransactionHistory`, `BillingHistory`, `RewardsCatalog`, `NotificationPreferencesManager`, `NotificationCenter`, `NotificationsCenter`, `SubscriptionManager`, `MyActivityLog`, `UserSuggestionsPanel`, `UserSearchResults`, `HashtagExplorer`, `CollectionsManager`, `ContentManager`, `UserPublicProfile`, `ReportManager`, `VendorDashboard`, `LoyaltyDashboard`, `UserProfile`, `CollectionDetail`, `UserSettings`, `SearchResults`, `BusinessAnalyticsDashboard`, `FeaturedListingsManager`, `MarketingCampaignBuilder`, `AdminLoyaltyPanel`, `AuditLogViewer`, `UserManagementTable`, `AdminDashboardOverview`, `AnalyticsPanel`, `AdminAnalyticsDashboard`, `AdminManager`, `WebhookAnalyticsDashboard`, `LiveAnalyticsDashboard` ve `ModerationQueueManager` React island olmaktan çıkarıldı.
+- Admin, analytics, search, social, subscriptions, notifications ve messaging yüzeyleri React bağımlılığını yoğun kullanıyordu; kalan yüzey artık yalnızca son dalga high-risk panellerdir.
+- İlk migration dalgalarında `NotificationBadge`, `QuotaUsageDisplay`, `TrendingPlaces`, `LeaderboardsDisplay`, `PricingPlans`, `UserRecommendations`, `PerformanceMonitor`, `PWAPrompt`, `TransactionHistory`, `BillingHistory`, `RewardsCatalog`, `NotificationPreferencesManager`, `NotificationCenter`, `NotificationsCenter`, `SubscriptionManager`, `MyActivityLog`, `UserSuggestionsPanel`, `UserSearchResults`, `HashtagExplorer`, `CollectionsManager`, `ContentManager`, `UserPublicProfile`, `ReportManager`, `VendorDashboard`, `LoyaltyDashboard`, `UserProfile`, `CollectionDetail`, `UserSettings`, `SearchResults`, `BusinessAnalyticsDashboard`, `FeaturedListingsManager`, `MarketingCampaignBuilder`, `AdminLoyaltyPanel`, `AuditLogViewer`, `UserManagementTable`, `AdminDashboardOverview`, `AnalyticsPanel`, `AdminAnalyticsDashboard`, `AdminManager`, `WebhookAnalyticsDashboard`, `LiveAnalyticsDashboard`, `ModerationQueueManager` ve `SubscriptionAdminDashboard` React island olmaktan çıkarıldı.
 
 ## Astro-Only Hedefinin Anlamı
 
@@ -115,7 +115,6 @@ Bunlar pratikte mini SPA davranışı gösterir:
 - `src/components/MessagingInbox.tsx`
 - `src/components/ActivityFeed.tsx`
 - `src/components/LiveAnalyticsDashboard.tsx`
-- `src/components/SubscriptionAdminDashboard.tsx`
 
 Bu yüzeyleri Astro-only yapmak mümkündür, ama maliyeti yüksektir. Kısa vadede bunları React'te bırakmak daha ekonomik olabilir.
 
@@ -143,7 +142,7 @@ Bu liste, migration sıralamasında öncelik değil; maliyet haritasıdır.
 `docs/reports/astro-high-risk-feasibility.md` çıktısına göre:
 
 - `later` bucket kapandı; kalan tüm yüzeyler doğrudan pahalı `last` grubunda
-- son dalga adayları: `AdminVerificationQueue`, `ModerationDashboard`, `MessagingInbox`, `WebhookManager`, `ActivityFeed`, `OLAPExplorer`, `SubscriptionAdminDashboard`, `AdminPerformanceDashboard`
+- son dalga adayları: `AdminVerificationQueue`, `OLAPExplorer`, `AdminPerformanceDashboard`, `MessagingInbox`, `WebhookManager`, `ActivityFeed`, `ModerationDashboard`
 
 Bu sonuç önemli çünkü artık `medium` bucket yok. Bundan sonraki yanlış seçim doğrudan pahalı rewrite anlamına gelir.
 

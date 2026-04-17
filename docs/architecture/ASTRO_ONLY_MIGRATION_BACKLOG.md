@@ -15,11 +15,11 @@ Amaç:
 
 Güncel ölçüm:
 
-- `.astro`: `185`
-- `.tsx`: `67`
-- `client:*` hydration noktası: `9`
-- current generated risk split: `0 low / 0 medium / 9 high`
-- current high-risk feasibility split: `0 first / 0 later / 8 last`
+- `.astro`: `186`
+- `.tsx`: `66`
+- `client:*` hydration noktası: `8`
+- current generated risk split: `0 low / 0 medium / 8 high`
+- current high-risk feasibility split: `0 first / 0 later / 7 last`
 
 İlk hedefler:
 
@@ -100,6 +100,7 @@ Astro + plain TypeScript ile kolay taşınabilecek küçük React bileşenlerini
 - `src/components/WebhookAnalyticsDashboard.tsx` -> `src/components/WebhookAnalyticsDashboard.astro`
 - `src/components/LiveAnalyticsDashboard.tsx` -> `src/components/LiveAnalyticsDashboard.astro`
 - `src/components/ModerationQueueManager.tsx` -> `src/components/ModerationQueueManager.astro`
+- `src/components/SubscriptionAdminDashboard.tsx` -> `src/components/SubscriptionAdminDashboard.astro`
 
 Bu dalga ile:
 
@@ -141,7 +142,8 @@ Bu dalga ile:
 - `src/pages/webhooks.astro` içindeki `WebhookAnalyticsDashboard` artık React island değil
 - `src/pages/canli-analitik/index.astro` içindeki `LiveAnalyticsDashboard` artık React island değil
 - `src/pages/admin/dashboard.astro` içindeki `ModerationQueueManager` artık React island değil
-- toplam `client:*` sayısı `55 -> 9` düştü
+- `src/pages/admin/subscriptions.astro` içindeki `SubscriptionAdminDashboard` artık React island değil
+- toplam `client:*` sayısı `55 -> 8` düştü
 
 ### Önceki Düşük Risk Adayları
 
@@ -230,7 +232,6 @@ eklenmeli.
 - `src/components/MessagingInbox.tsx`
 - `src/components/ActivityFeed.tsx`
 - `src/components/LiveAnalyticsDashboard.tsx`
-- `src/components/SubscriptionAdminDashboard.tsx`
 
 ### Beklenen Karar Çıkışı
 
@@ -248,7 +249,15 @@ ayrı yazılmalı.
 
 `docs/reports/astro-high-risk-feasibility.md` şu sırayı öneriyor:
 
-`docs/reports/astro-high-risk-feasibility.md` artık `later` bucket bırakmıyor.
+`docs/reports/astro-high-risk-feasibility.md` artık `later` bucket bırakmıyor; kalan sıralama:
+
+- `AdminVerificationQueue`
+- `OLAPExplorer`
+- `AdminPerformanceDashboard`
+- `MessagingInbox`
+- `WebhookManager`
+- `ActivityFeed`
+- `ModerationDashboard`
 
 Bu şu anlama gelir:
 
