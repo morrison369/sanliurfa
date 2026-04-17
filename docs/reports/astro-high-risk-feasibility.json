@@ -1,27 +1,10 @@
 {
-  "generatedAt": "2026-04-17T00:10:26.580Z",
-  "totalHighRiskComponents": 9,
+  "generatedAt": "2026-04-17T00:13:46.674Z",
+  "totalHighRiskComponents": 8,
   "firstCount": 0,
   "laterCount": 0,
-  "lastCount": 9,
+  "lastCount": 8,
   "entries": [
-    {
-      "componentName": "ModerationQueueManager",
-      "componentPath": "src/components/ModerationQueueManager.tsx",
-      "pagePaths": [
-        "src/pages/admin/dashboard.astro"
-      ],
-      "usageCount": 1,
-      "lines": 182,
-      "useStateCount": 6,
-      "useEffectCount": 2,
-      "fetchCount": 0,
-      "typedClientCount": 2,
-      "adminSurface": true,
-      "complexityScore": 59,
-      "migrationPriority": "last",
-      "recommendation": "ModerationQueueManager yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
-    },
     {
       "componentName": "SubscriptionAdminDashboard",
       "componentPath": "src/components/SubscriptionAdminDashboard.tsx",

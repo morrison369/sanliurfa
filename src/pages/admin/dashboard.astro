@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import AdminDashboardOverview from '../../components/AdminDashboardOverview.astro';
-import ModerationQueueManager from '../../components/ModerationQueueManager';
+import ModerationQueueManager from '../../components/ModerationQueueManager.astro';
 import UserManagementTable from '../../components/UserManagementTable.astro';
 import { requireAdminRedirectPath } from '../../lib/admin-guard';
 
@@ -57,7 +57,7 @@ if (redirectPath) {
       <div id="moderation-section" class="hidden">
         <div class="bg-white border border-gray-200 rounded-lg p-6">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">Moderasyon Kuyruğu</h2>
-          <ModerationQueueManager client:load />
+          <ModerationQueueManager />
         </div>
       </div>
 
