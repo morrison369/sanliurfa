@@ -62,7 +62,7 @@ export function renderAdminDashboardOverview(options: {
   if (error) {
     return `
       <div class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-        <h3 class="font-medium text-red-900 dark:text-red-100">Hata</h3>
+        <h3 class="font-medium text-red-900 dark:text-red-100">İşlem hatası</h3>
         <p class="mt-1 text-sm text-red-700 dark:text-red-200">${error}</p>
       </div>
     `;

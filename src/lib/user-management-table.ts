@@ -39,7 +39,7 @@ function renderDetailModal(details: AdminUserDetailsPayload | null): string {
       <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
         <div class="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Kullanıcı detayı</h3>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Kullanıcı ayrıntısı</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400">${details.user.full_name || 'Adı yok'} · ${details.user.email}</p>
           </div>
           <button
@@ -131,7 +131,7 @@ function renderRows(users: AdminUserListEntry[]): string {
     return `
       <tr>
         <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          Kullanıcı bulunamadı
+          Kullanıcı kaydı bulunamadı.
         </td>
       </tr>
     `;
