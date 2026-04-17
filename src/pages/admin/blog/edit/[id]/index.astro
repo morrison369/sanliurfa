@@ -87,8 +87,8 @@ const seo = {
             </label>
             <label for="status" class="label dark:text-gray-300">Durum</label>
             <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
-              <option value="draft" selected={post.is_published === false}>Taslak</option>
-              <option value="published" selected={post.is_published === true}>Yayında</option>
+              <option value="draft" selected={post.is_published === false}>Taslak olarak kaydet</option>
+              <option value="published" selected={post.is_published === true}>Hemen yayımla</option>
             </select>
             <button type="submit" class="btn-primary w-full mt-4 flex items-center justify-center gap-2">
               <Save className="w-4 h-4" />
@@ -98,7 +98,7 @@ const seo = {
           
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <label for="category" class="label dark:text-gray-300 flex items-center gap-2">
-              <Tag className="w-4 h-4" /> Kategori
+              <Tag className="w-4 h-4" /> Yazı kategorisi
             </label>
             <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-2">
               {categories.map(cat => (
@@ -109,7 +109,7 @@ const seo = {
           
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <label for="author_id" class="label dark:text-gray-300 flex items-center gap-2">
-              <User className="w-4 h-4" /> Yazar
+              <User className="w-4 h-4" /> Yazar bilgisi
             </label>
             <select id="author_id" name="author_id" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-2">
               {authors?.map(author => (
