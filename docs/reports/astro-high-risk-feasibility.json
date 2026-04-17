@@ -1,27 +1,10 @@
 {
-  "generatedAt": "2026-04-17T00:13:46.674Z",
-  "totalHighRiskComponents": 8,
+  "generatedAt": "2026-04-17T00:17:20.167Z",
+  "totalHighRiskComponents": 7,
   "firstCount": 0,
   "laterCount": 0,
-  "lastCount": 8,
+  "lastCount": 7,
   "entries": [
-    {
-      "componentName": "SubscriptionAdminDashboard",
-      "componentPath": "src/components/SubscriptionAdminDashboard.tsx",
-      "pagePaths": [
-        "src/pages/admin/subscriptions.astro"
-      ],
-      "usageCount": 1,
-      "lines": 227,
-      "useStateCount": 5,
-      "useEffectCount": 2,
-      "fetchCount": 0,
-      "typedClientCount": 2,
-      "adminSurface": true,
-      "complexityScore": 61,
-      "migrationPriority": "last",
-      "recommendation": "SubscriptionAdminDashboard yoğun state/orchestration taşıyor; son dalgaya bırakılmalı."
-    },
     {
       "componentName": "AdminVerificationQueue",
       "componentPath": "src/components/AdminVerificationQueue.tsx",
