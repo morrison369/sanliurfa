@@ -77,7 +77,7 @@ function formatNotificationDate(value: string): string {
 function renderError(message: string): string {
   return `
     <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-      <h3 class="font-medium text-red-900">Hata</h3>
+      <h3 class="font-medium text-red-900">İşlem hatası</h3>
       <p class="text-sm text-red-700">${message}</p>
     </div>
   `;
@@ -93,7 +93,7 @@ function renderToggle(showArchived: boolean): string {
 
   return `
     <div class="flex gap-2">
-      <button type="button" data-notifications-filter="current" class="rounded-lg px-4 py-2 text-sm font-medium transition-colors ${currentClass}">Geçerli</button>
+      <button type="button" data-notifications-filter="current" class="rounded-lg px-4 py-2 text-sm font-medium transition-colors ${currentClass}">Güncel</button>
       <button type="button" data-notifications-filter="archived" class="rounded-lg px-4 py-2 text-sm font-medium transition-colors ${archivedClass}">Arşiv</button>
     </div>
   `;
@@ -115,12 +115,12 @@ function renderNotificationItem(state: NotificationCenterState, item: Notificati
       </div>
       <div class="flex flex-shrink-0 items-center gap-2">
         ${!item.is_read && !state.showArchived ? `
-          <button type="button" data-notification-action="read:${item.id}" ${busy ? 'disabled' : ''} class="rounded-lg p-2 transition-colors hover:bg-gray-200 disabled:opacity-50" title="Okundu işaretle">
-            ${busy ? '...' : 'Okundu'}
+          <button type="button" data-notification-action="read:${item.id}" ${busy ? 'disabled' : ''} class="rounded-lg p-2 transition-colors hover:bg-gray-200 disabled:opacity-50" title="Okundu olarak işaretle">
+            ${busy ? 'İşleniyor...' : 'Okundu olarak işaretle'}
           </button>
         ` : ''}
-        <button type="button" data-notification-action="archive:${item.id}" ${busy ? 'disabled' : ''} class="rounded-lg p-2 transition-colors hover:bg-gray-200 disabled:opacity-50" title="${state.showArchived ? 'Sil' : 'Arşivle'}">
-          ${busy ? '...' : state.showArchived ? 'Sil' : 'Arşivle'}
+        <button type="button" data-notification-action="archive:${item.id}" ${busy ? 'disabled' : ''} class="rounded-lg p-2 transition-colors hover:bg-gray-200 disabled:opacity-50" title="${state.showArchived ? 'Kaldır' : 'Arşive taşı'}">
+          ${busy ? 'İşleniyor...' : state.showArchived ? 'Kaldır' : 'Arşive taşı'}
         </button>
       </div>
     </div>
@@ -135,7 +135,7 @@ export function renderNotificationCenter(state: NotificationCenterState): string
   const list = state.notifications.length === 0
     ? `
       <div class="py-12 text-center text-gray-500">
-        <p>${state.showArchived ? 'Arşivlenmiş bildirim yok' : 'Yeni bildiriminiz yok'}</p>
+        <p>${state.showArchived ? 'Arşivlenmiş bildirim bulunmuyor.' : 'Yeni bildiriminiz bulunmuyor.'}</p>
       </div>
     `
     : `<div class="space-y-2">${state.notifications.map((item) => renderNotificationItem(state, item)).join('')}</div>`;
