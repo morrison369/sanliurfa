@@ -26,8 +26,8 @@ const authors = authorsResult.rows;
 
 const errorMessage = Astro.url.searchParams.get('error');
 const errorMessages: Record<string, string> = {
-  'missing_fields': 'Başlık, özet ve içerik alanları zorunludur.',
-  'server_error': 'Bir hata oluştu. Lütfen tekrar deneyin.',
+  'missing_fields': 'Başlık, özet ve içerik alanlarını doldurun.',
+  'server_error': 'İşlem tamamlanamadı. Lütfen tekrar deneyin.',
 };
 
 const seo = {
@@ -98,7 +98,7 @@ const seo = {
           
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <label for="category" class="label dark:text-gray-300 flex items-center gap-2">
-              <Tag className="w-4 h-4" /> Kategori seçimi
+              <Tag className="w-4 h-4" /> Kategori
             </label>
             <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-2">
               {categories.map(cat => (
@@ -109,7 +109,7 @@ const seo = {
           
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <label for="author_id" class="label dark:text-gray-300 flex items-center gap-2">
-              <User className="w-4 h-4" /> Yazar seçimi
+              <User className="w-4 h-4" /> Yazar
             </label>
             <select id="author_id" name="author_id" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-2">
               {authors?.map(author => (
