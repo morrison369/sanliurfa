@@ -1,12 +1,16 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
 ---
 
-<div data-user-profile>
-  <div data-user-profile-loading class="container-custom py-12 text-center text-gray-600">
-    Profil yükleniyor...
-  </div>
-  <div data-user-profile-content class="hidden"></div>
-</div>
+<LoadingWrapper
+  containerClass="container-custom"
+  contentClass="hidden"
+  contentDataAttr="data-user-profile-content"
+  loadingClass="py-12 text-center text-gray-600"
+  loadingDataAttr="data-user-profile-loading"
+  message={UI_COPY_TR.profile.loading}
+/>
 
 <script>
   import { initUserProfile } from '../scripts/user-profile';

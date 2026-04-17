@@ -1,12 +1,15 @@
 ---
+import LoadingWrapper from './ui/LoadingWrapper.astro';
+import { UI_COPY_TR } from '../lib/ui-copy';
 ---
 
-<div data-user-settings>
-  <div data-user-settings-loading class="py-8 text-center text-gray-600 dark:text-gray-400">
-    Kullanıcı ayarları yükleniyor...
-  </div>
-  <div data-user-settings-content class="hidden"></div>
-</div>
+<LoadingWrapper
+  contentClass="hidden"
+  contentDataAttr="data-user-settings-content"
+  loadingClass="py-8 text-center text-gray-600 dark:text-gray-400"
+  loadingDataAttr="data-user-settings-loading"
+  message={UI_COPY_TR.profile.settingsLoading}
+/>
 
 <script>
   import { initUserSettings } from '../scripts/user-settings';

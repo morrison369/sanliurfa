@@ -1,0 +1,37 @@
+---
+interface Props {
+  containerClass?: string;
+  contentClass?: string;
+  contentDataAttr?: string;
+  loadingClass?: string;
+  loadingDataAttr: string;
+  message: string;
+  spinner?: boolean;
+}
+
+const {
+  containerClass = '',
+  contentClass = 'hidden',
+  contentDataAttr,
+  loadingClass = '',
+  loadingDataAttr,
+  message,
+  spinner = false,
+} = Astro.props;
+---
+
+<div class={containerClass}>
+  <div data-loading-wrapper-loading {...{ [loadingDataAttr]: '' }} class={loadingClass}>
+    {
+      spinner ? (
+        <>
+          <div class="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
+          <span class="sr-only">{message}</span>
+        </>
+      ) : (
+        message
+      )
+    }
+  </div>
+  <div data-loading-wrapper-content {...(contentDataAttr ? { [contentDataAttr]: '' } : {})} class={contentClass}></div>
+</div>

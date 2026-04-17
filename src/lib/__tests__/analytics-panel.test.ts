@@ -76,9 +76,9 @@ describe('analytics panel helpers', () => {
       },
     });
 
-    expect(html).toContain('Aktif Kullanıcı');
+    expect(html).toContain('Aktif kullanıcı');
     expect(html).toContain('Göbeklitepe');
-    expect(html).toContain('Popüler Aramalar');
+    expect(html).toContain('Popüler aramalar');
     expect(html).toContain('30 gün');
   });
 });
