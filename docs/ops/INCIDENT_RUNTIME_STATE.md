@@ -1,36 +1,36 @@
-# Incident Runtime Durumu
+# Olay Runtime Durumu
 
-Bu belge, incident anında ilk ayrımı tek bakışta vermek için kısa özet yüzeyidir.
+Bu belge, olay aninda ilk ayrimi tek bakista vermek icin kisa ozet yuzeyidir.
 
 ## Olay Türleri
 
-- root health `blocked`
-- artifact health `blocked`
-- release gate `failed`
+- kok saglik `blocked`
+- artefact sagligi `blocked`
+- surum kapisi `failed`
 - nightly `degraded`
 - admin entegrasyon sorunu
 
 ## İlk Bakılacak Yüzeyler
 
-### Root health
+### Kok saglik
 
 1. `GET /api/health`
 2. `GET /api/health/detailed`
 3. DB / Redis / artifact ayrımı
 
-### Artifact health
+### Artefact sagligi
 
 1. `GET /api/admin/system/artifact-health`
 2. `GET /api/admin/deployment/status`
 3. `ARTIFACT_FRESHNESS_POLICY.md`
 
-### Release gate
+### Surum kapisi
 
 1. `docs/reports/release-gate-summary.json`
 2. `npm run test:critical:blocking`
 3. `npm run test:critical:advisory`
 
-### Admin integrations
+### Admin entegrasyonlari
 
 1. `/admin/integrations`
 2. `GET /api/admin/system/integration-settings?includeVerification=1`
@@ -38,8 +38,8 @@ Bu belge, incident anında ilk ayrımı tek bakışta vermek için kısa özet y
 ## Aktif Karar
 
 - önce sinyal tipini ayır
-- sonra source-of-truth policy dosyasına dön
-- aynı blok içinde hem incident fix hem unrelated cleanup yapılmaz
+- sonra kaynak gercek policy dosyasina don
+- ayni blok icinde hem olay duzeltmesi hem ilgisiz temizlik yapilmaz
 
 ## Kaynaklar
 

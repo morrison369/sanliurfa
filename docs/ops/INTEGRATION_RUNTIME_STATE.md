@@ -1,14 +1,14 @@
 # Entegrasyon Runtime Durumu
 
-Bu belge, entegrasyon readiness tarafının aktif karar özetidir.
+Bu belge, entegrasyon hazirlik tarafinin aktif karar ozetidir.
 
 ## Güncel Model
 
 - zorunlu üretim değerleri:
   - `PUBLIC_SITE_URL`
   - `RESEND_API_KEY`
-  - analytics kimliği (`PUBLIC_GOOGLE_ANALYTICS_ID` / `GOOGLE_ANALYTICS_ID` / `GA_TRACKING_ID`)
-- placeholder değerler readiness sayılmaz
+- analytics kimligi (`PUBLIC_GOOGLE_ANALYTICS_ID` / `GOOGLE_ANALYTICS_ID` / `GA_TRACKING_ID`)
+- yer tutucu degerler hazirlik sayilmaz
 - runtime kaynak önceliği:
   1. env
   2. admin panel global ayarı
@@ -20,7 +20,7 @@ Bu belge, entegrasyon readiness tarafının aktif karar özetidir.
 - API:
   - `GET /api/admin/system/integration-settings`
   - `PUT /api/admin/system/integration-settings`
-- health görünürlüğü:
+- saglik gorunurlugu:
   - `GET /api/health`
   - `GET /api/health/detailed`
 
@@ -30,9 +30,9 @@ Bu belge, entegrasyon readiness tarafının aktif karar özetidir.
 
 ## Aktif Karar
 
-- env boş olsa bile admin panelde kayıtlı global değerler runtime fallback olarak kullanılabilir
+- env bos olsa bile admin panelde kayitli global degerler runtime yedegi olarak kullanilabilir
 - admin panelde kaydedilen entegrasyon değerleri cache temizliği ile birlikte ele alınır
-- readiness drift varsa önce `INTEGRATION_READINESS.md`, sonra health/admin görünürlüğü hizalanır
+- hazirlik kaymasi varsa once `INTEGRATION_READINESS.md`, sonra saglik/admin gorunurlugu hizalanir
 
 ## Kaynaklar
 
