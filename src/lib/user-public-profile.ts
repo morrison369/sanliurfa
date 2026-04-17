@@ -118,7 +118,7 @@ function renderActivity(activity: UserPublicProfileActivity[]): string {
 
 export function renderUserPublicProfile(state: UserPublicProfileState): string {
   if (state.isLoading) {
-    return '<div class="py-12 text-center text-gray-500">Yükleniyor...</div>';
+    return '<div class="py-12 text-center text-gray-500">Profil yükleniyor...</div>';
   }
 
   if (state.error) {
@@ -126,7 +126,7 @@ export function renderUserPublicProfile(state: UserPublicProfileState): string {
   }
 
   if (!state.profile) {
-    return '<div class="py-12 text-center text-gray-500">Profil bulunamadı</div>';
+    return '<div class="py-12 text-center text-gray-500">Profil bulunamadı.</div>';
   }
 
   const profile = state.profile;
