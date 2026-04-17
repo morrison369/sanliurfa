@@ -142,19 +142,19 @@ export function renderUserPublicProfile(state: UserPublicProfileState): string {
             <h1 class="mb-2 text-3xl font-bold">${profile.full_name}</h1>
             ${profile.bio ? `<p class="mb-4 text-gray-600">${profile.bio}</p>` : ''}
             <div class="mb-4 flex gap-4">
-              <div><p class="text-2xl font-bold">${profile.stats.followers}</p><p class="text-sm">Followers</p></div>
-              <div><p class="text-2xl font-bold">${profile.stats.following}</p><p class="text-sm">Following</p></div>
+              <div><p class="text-2xl font-bold">${profile.stats.followers}</p><p class="text-sm">Takipçi</p></div>
+              <div><p class="text-2xl font-bold">${profile.stats.following}</p><p class="text-sm">Takip edilen</p></div>
             </div>
             ${canInteract ? `
               <div class="flex gap-2">
                 ${profile.allow_messages !== false ? `
-                  <a href="/mesajlar" class="inline-block rounded bg-blue-500 px-4 py-2 text-white">Mesaj Gönder</a>
+                  <a href="/mesajlar" class="inline-block rounded bg-blue-500 px-4 py-2 text-white">Mesaj gönder</a>
                 ` : ''}
                 <button type="button" data-user-public-profile-follow class="rounded px-4 py-2 text-white ${state.isFollowing ? 'bg-gray-600 hover:bg-gray-700' : 'bg-green-600 hover:bg-green-700'}" ${state.isFollowingLoading ? 'disabled' : ''}>
-                  ${state.isFollowingLoading ? 'İşleniyor...' : state.isFollowing ? 'Takipten Çık' : 'Takip Et'}
+                  ${state.isFollowingLoading ? 'İşleniyor...' : state.isFollowing ? 'Takipten çık' : 'Takip et'}
                 </button>
                 <button type="button" data-user-public-profile-block class="rounded px-4 py-2 text-white ${state.isBlocked ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-red-600 hover:bg-red-700'}" ${state.isBlocking ? 'disabled' : ''}>
-                  ${state.isBlocking ? 'İşleniyor...' : state.isBlocked ? 'Engellemeyi Kaldır' : 'Engelle'}
+                  ${state.isBlocking ? 'İşleniyor...' : state.isBlocked ? 'Engellemeyi kaldır' : 'Engelle'}
                 </button>
               </div>
             ` : ''}
@@ -162,7 +162,7 @@ export function renderUserPublicProfile(state: UserPublicProfileState): string {
         </div>
       </div>
       <div class="space-y-3">
-        <h2 class="text-xl font-bold">Son Aktiviteler</h2>
+        <h2 class="text-xl font-bold">Son etkinlikler</h2>
         ${renderActivity(profile.recent_activity ?? [])}
       </div>
     </div>
