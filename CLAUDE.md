@@ -58,8 +58,8 @@ Framework yönü:
 - `npm run types:admin:drift:check` — Üretilmiş tipler bayatsa fail ver
 - `npm run test:critical:advisory` — Admin kontratı ve OpenAPI kontrat kontrollerini içerir
 
-### Release, Governance ve Ops
-- `npm run release:gate` — Release gate özeti ve kararı
+### Surum, Governance ve Ops
+- `npm run release:gate` — Surum kapisi ozeti ve karari
 - `npm run branch:protection:drift:check` — Zorunlu kontroller / doküman eşliği doğrulaması
 - `npm run ops:retention:apply` — Yerel artefact ve audit retention cleanup'ı
 - `npm run astro:migration:inventory` — Güncel Astro hydration envanteri ve risk dağılımı
@@ -127,7 +127,7 @@ src/
 
 ### Teknoloji Yığını
 
-- **Framework**: Astro 6.1.7 (SSR, dosya tabanlı yönlendirme)
+- **Cati sistemi**: Astro 6.1.7 (SSR, dosya tabanli yonlendirme)
 - **Arayüz**: Astro bileşenleri + düz TypeScript tarayıcı yardımcıları
 - **Styling**: Tailwind CSS 3.4 + Tailwind Forms
 - **Veritabanı**: PostgreSQL (doğrudan `pg` kütüphanesi bağlantısı)
@@ -255,7 +255,7 @@ Tüm sorgular parametrik ifadeler (`$1`, `$2` vb.) kullanır. Doğrudan erişim 
 **Ops ve Admin Kontrat Yüzeyleri**:
 - `GET /api/admin/dashboard/overview` — Admin panel özet yüzeyi
 - `GET /api/admin/system/metrics` — Admin metrikleri ve normalize durum özeti
-- `GET /api/admin/system/artifact-health` — Artefact snapshot ve özet
+- `GET /api/admin/system/artifact-health` — Artefact anlik ozeti ve genel durum
 - `GET /api/admin/deployment/status` — Dağıtım hazırlığı ve artefact durumu
 - `GET /api/admin/audit-logs` — Admin audit kaydı, filtreler ve CSV dışa aktarım
 - `GET /api/admin/system/integration-settings` — Entegrasyon hazırlık anlık görünümü
@@ -751,26 +751,26 @@ npm run test
 |------|------|
 | `docs/ops/README.md` | Ops doküman giriş noktası |
 | `docs/ops/SOURCE_OF_TRUTH_MAP.md` | Hangi kararın hangi dosyaya ait olduğunu gösterir |
-| `docs/RELEASE_GATES.md` | Release gate davranışı ve karar modeli |
+| `docs/RELEASE_GATES.md` | Surum kapisi davranisi ve karar modeli |
 | `docs/ops/BRANCH_PROTECTION.md` | Zorunlu kontroller ve parity kuralları |
 | `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` | Artefact freshness durum semantiği |
 | `docs/ops/ARTIFACT_RETENTION_POLICY.md` | Artefact ve audit retention kuralları |
-| `docs/ops/INCIDENT_RUNBOOK.md` | Incident müdahale sırası |
-| `docs/ops/INTEGRATION_READINESS.md` | Admin entegrasyon readiness politikası |
+| `docs/ops/INCIDENT_RUNBOOK.md` | Olay mudahale sirasi |
+| `docs/ops/INTEGRATION_READINESS.md` | Admin entegrasyon hazirlik politikasi |
 | `docs/ops/LEGACY_PHASE_SURFACE.md` | Eski faz uyumluluk sınırları |
 | `docs/SCRIPT_SURFACE_POLICY.md` | Script yüzeyi ve runner-first politikası |
 | `src/types/generated-admin-api.ts` | Üretilmiş admin API kontrat tipleri |
 | `src/types/admin-api.ts` | Arayüz odaklı admin tip katmanı |
-| `src/lib/admin-format.ts` | Admin ops ortak tarih/fallback format kaynağı |
+| `src/lib/admin-format.ts` | Admin ops ortak tarih/yedek format kaynagi |
 | `src/lib/admin-index-data.ts` | Admin ana sayfa SSR veri yükleyici kaynağı |
 | `src/lib/admin-index.ts` | Admin ana sayfa risk/araç görünüm modeli kaynağı |
 | `src/lib/admin-index-page.ts` | Admin ana sayfa badge/kart sınıf kaynağı |
-| `src/lib/admin-index-view.ts` | Admin ana sayfa render görünüm modeli kaynağı |
-| `src/lib/admin-ops-pages.ts` | Runtime monitor + access coverage trend/delta/geçmiş kaynağı |
+| `src/lib/admin-index-view.ts` | Admin ana sayfa gorunum modeli kaynagi |
+| `src/lib/admin-ops-pages.ts` | Runtime izleme + erisim kapsama trend/delta/gecmis kaynagi |
 | `src/lib/runtime-monitor.ts` | Çalışma zamanı izleme endpoint ve kapsama özet kaynağı |
 | `src/lib/admin-access-coverage-page.ts` | Erişim kapsama uyarı/özet/drift HTML kaynağı |
 | `src/lib/admin-dom.ts` | Admin ops sayfaları için ortak DOM güncelleme yardımcısı kaynağı |
-| `src/lib/admin-page-bootstrap.ts` | Admin ops sayfaları için ortak refresh/interval bootstrap kaynağı |
+| `src/lib/admin-page-bootstrap.ts` | Admin ops sayfalari icin ortak yenileme/aralik baslatma kaynagi |
 | `src/lib/astro-migration-report.ts` | Astro hydration risk envanteri kaynağı |
 | `scripts/astro-hydration-inventory.ts` | Astro hydration envanter raporu üreticisi |
 
