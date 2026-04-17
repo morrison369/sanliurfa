@@ -78,7 +78,7 @@ function formatDate(value: string): string {
 function renderForm(form: FeaturedListingFormData): string {
   return `
     <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-      <h3 class="mb-4 text-lg font-semibold">Yeni Yeminli Liste Oluştur</h3>
+      <h3 class="mb-4 text-lg font-semibold">Yeni yeminli liste oluştur</h3>
       <form data-featured-listing-form class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <input
@@ -131,7 +131,7 @@ function renderForm(form: FeaturedListingFormData): string {
         </div>
         <div class="flex gap-2">
           <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700">Oluştur</button>
-          <button type="button" data-featured-listings-cancel class="rounded-lg bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400">İptal Et</button>
+          <button type="button" data-featured-listings-cancel class="rounded-lg bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400">İptal et</button>
         </div>
       </form>
     </div>
@@ -217,13 +217,13 @@ export function renderFeaturedListingsManager(options: {
   return `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Yeminli Listeler</h2>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Yeminli listeler</h2>
         <button
           type="button"
           data-featured-listings-toggle
           class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
         >
-          ${options.showForm ? 'Formu Kapat' : 'Yeni Liste'}
+          ${options.showForm ? 'Formu kapat' : 'Yeni liste'}
         </button>
       </div>
       ${options.showForm ? renderForm(options.form) : ''}
