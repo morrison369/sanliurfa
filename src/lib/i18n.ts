@@ -27,10 +27,10 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
     common: {
       loading: 'İçerik yükleniyor...',
       error: 'Bir hata oluştu.',
-      success: 'İşlem başarılı',
+      success: 'İşlem başarılı.',
       save: 'Kaydet',
-      cancel: 'İptal',
-      delete: 'Sil',
+      cancel: 'İptal et',
+      delete: 'Kaldır',
       edit: 'Düzenle',
       view: 'Görüntüle',
       more: 'Daha fazla',
@@ -74,8 +74,8 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
       openingHours: 'Açılış Saatleri',
       addToFavorites: 'Favorilere Ekle',
       removeFromFavorites: 'Favorilerden Çıkar',
-      viewDetails: 'Detayları Gör',
-      noResults: 'Sonuç bulunamadı'
+      viewDetails: 'Ayrıntıları gör',
+      noResults: 'Sonuç bulunamadı.'
     },
 
     // Reviews
@@ -121,9 +121,9 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
       features: 'Özellikler',
       upgrade: 'Yükselt',
       downgrade: 'İndir',
-      subscriptionActive: 'Aktif Abonelik',
+      subscriptionActive: 'Aktif abonelik',
       nextBillingDate: 'Sonraki Fatura Tarihi',
-      cancel: 'Aboneliği İptal Et',
+      cancel: 'Aboneliği iptal et',
       manageSubscription: 'Aboneliği Yönet'
     },
 
@@ -134,10 +134,10 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
       reviewResponse: 'Yorum Yanıtı',
       newFollower: 'Yeni Takipçi',
       message: 'Mesaj',
-      markAsRead: 'Okundu Olarak İşaretle',
-      markAllAsRead: 'Hepsini Okundu Olarak İşaretle',
-      delete: 'Sil',
-      noNotifications: 'Bildiriminiz yok'
+      markAsRead: 'Okundu olarak işaretle',
+      markAllAsRead: 'Tümünü okundu olarak işaretle',
+      delete: 'Kaldır',
+      noNotifications: 'Bildiriminiz bulunmuyor.'
     },
 
     // Dashboard
