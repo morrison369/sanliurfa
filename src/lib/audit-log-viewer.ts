@@ -21,7 +21,7 @@ function renderFilters(): string {
     <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700 dark:bg-gray-800">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
         <div>
-          <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Endpoint</label>
+          <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Uç nokta</label>
           <input
             data-audit-log-filter="endpoint"
             type="text"
@@ -45,8 +45,8 @@ function renderFilters(): string {
             class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           >
             <option value="">Tümü</option>
-            <option value="read">Read</option>
-            <option value="write">Write</option>
+            <option value="read">Okuma</option>
+            <option value="write">Yazma</option>
           </select>
         </div>
         <div>
@@ -56,9 +56,9 @@ function renderFilters(): string {
             class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           >
             <option value="">Tümü</option>
-            <option value="success">Success</option>
-            <option value="denied">Denied</option>
-            <option value="rate_limited">Rate limited</option>
+            <option value="success">Başarılı</option>
+            <option value="denied">Reddedildi</option>
+            <option value="rate_limited">Hız sınırına takıldı</option>
           </select>
         </div>
       </div>
@@ -135,12 +135,12 @@ function renderTable(entries: AuditLogEntry[], summary: string): string {
           <thead class="border-b border-gray-200 bg-gray-50 text-left text-sm font-semibold text-gray-600 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
             <tr>
               <th class="px-6 py-3">Tarih/Saat</th>
-              <th class="px-6 py-3">Endpoint</th>
+              <th class="px-6 py-3">Uç nokta</th>
               <th class="px-6 py-3">İşlem</th>
               <th class="px-6 py-3">Mod</th>
               <th class="px-6 py-3">Sonuç</th>
               <th class="px-6 py-3">Aktör</th>
-              <th class="px-6 py-3">Status</th>
+              <th class="px-6 py-3">Durum</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -160,8 +160,8 @@ export function renderAuditLogViewer(options: {
   return `
     <div class="container-custom py-8">
       <div class="mb-8">
-        <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">Audit Logları</h1>
-        <p class="text-gray-600 dark:text-gray-400">Sistem aktivitesi ve değişiklikleri izle</p>
+        <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">Denetim kayıtları</h1>
+        <p class="text-gray-600 dark:text-gray-400">Sistem etkinliğini ve değişiklikleri izleyin</p>
       </div>
       ${renderFilters()}
       ${options.error ? `<div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-900 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">${options.error}</div>` : ''}

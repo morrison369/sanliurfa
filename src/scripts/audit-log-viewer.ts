@@ -48,9 +48,13 @@ function applyLocalFilters(root: AuditLogViewerRoot, content: HTMLElement): Audi
 }
 
 function buildSummary(entries: AuditLogEntry[], total: number): string {
-  const denied = entries.filter((entry) => String((entry as Record<string, unknown>).outcome ?? '') === 'denied').length;
-  const writes = entries.filter((entry) => String((entry as Record<string, unknown>).mode ?? '') === 'write').length;
-  return `Görünen kayıt: ${entries.length}. Toplam yüklenen: ${total}. Denied: ${denied}. Write: ${writes}.`;
+  const denied = entries.filter(
+    (entry) => String((entry as Record<string, unknown>).outcome ?? '') === 'denied',
+  ).length;
+  const writes = entries.filter(
+    (entry) => String((entry as Record<string, unknown>).mode ?? '') === 'write',
+  ).length;
+  return `Görünen kayıt: ${entries.length}. Toplam yüklenen: ${total}. Reddedilen: ${denied}. Yazma işlemi: ${writes}.`;
 }
 
 async function fetchLogs(root: AuditLogViewerRoot) {
