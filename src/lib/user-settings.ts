@@ -344,13 +344,13 @@ function renderSettingsTab(state: UserSettingsState): string {
     <form data-user-settings-settings-form class="rounded-lg bg-white p-6 space-y-4 dark:bg-gray-800">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Genel ayarlar</h2>
       <div>
-        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Dil</label>
+        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Uygulama dili</label>
         <select data-user-settings-field="language_preference" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
           <option value="tr" selected>Türkçe</option>
         </select>
       </div>
       <div>
-        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Tema</label>
+        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Görünüm teması</label>
         <select data-user-settings-field="theme_preference" class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
           <option value="light" ${state.settingsForm.theme_preference === 'light' ? 'selected' : ''}>Açık</option>
           <option value="dark" ${state.settingsForm.theme_preference === 'dark' ? 'selected' : ''}>Koyu</option>
@@ -440,7 +440,7 @@ function renderSecurityTab(state: UserSettingsState): string {
       <div class="space-y-4 rounded-lg bg-white p-6 dark:bg-gray-800">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">2FA kurulumu</h2>
         <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
-          <strong>Adım 1:</strong> Kimlik doğrulayıcı uygulamanızla QR bağlantısını açın veya gizli anahtarı girin.
+          <strong>Adım 1:</strong> Kimlik doğrulayıcı uygulamanızla QR bağlantısını açın veya gizli anahtarı manuel olarak ekleyin.
         </div>
         ${state.twoFactor.setup.qrCodeUrl ? `<a href="${escapeHtml(state.twoFactor.setup.qrCodeUrl)}" target="_blank" rel="noreferrer" class="inline-flex rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700">QR Bağlantısını Aç</a>` : ''}
         ${state.twoFactor.setup.secret ? `<div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-700"><p class="mb-2 text-sm text-gray-600 dark:text-gray-400">Gizli Anahtar</p><div class="break-all rounded bg-white p-3 font-mono text-sm text-gray-900 dark:bg-gray-800 dark:text-white">${escapeHtml(state.twoFactor.setup.secret)}</div></div>` : ''}
