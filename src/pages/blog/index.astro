@@ -38,7 +38,7 @@ try {
   total = result.total;
 } catch (err) {
   error = 'Blog yazıları yüklenirken hata oluştu';
-  console.error('Blog listing error:', err);
+  console.error('Blog liste sayfası yüklenemedi:', err);
 }
 
 const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
@@ -50,8 +50,8 @@ const regularPosts = posts.filter(p => p.id !== featuredPost?.id);
 
 const seo = {
   title: selectedCategory
-    ? `${selectedCategory.name} - Blog | Şanlıurfa.com`
-    : 'Blog | Şanlıurfa.com',
+    ? `${selectedCategory.name} - Yazılar | Şanlıurfa.com`
+    : 'Yazılar | Şanlıurfa.com',
   description: selectedCategory?.description || 'Şanlıurfa hakkında makaleler, rehberler ve haberler',
 };
 
@@ -63,7 +63,7 @@ if (categorySlug) searchParams.set('category', categorySlug);
   <div class="page-header">
     <div class="page-header-content">
       <h1 class="page-header-title">
-        {selectedCategory ? selectedCategory.name : 'Blog'}
+        {selectedCategory ? selectedCategory.name : 'Yazılar'}
       </h1>
       <p class="page-header-description">
         {selectedCategory?.description || 'Şanlıurfa hakkında makaleler, rehberler ve haberler'}
@@ -126,7 +126,7 @@ if (categorySlug) searchParams.set('category', categorySlug);
                   class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:border-white/40"
                 />
                 <button type="submit" class="w-full py-2 bg-white text-urfa-600 rounded-lg font-medium hover:bg-gray-100 transition-colors">
-                  Abone Ol
+                  Abone ol
                 </button>
               </form>
             </div>
