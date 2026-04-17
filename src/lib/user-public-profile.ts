@@ -143,7 +143,7 @@ export function renderUserPublicProfile(state: UserPublicProfileState): string {
             ${profile.bio ? `<p class="mb-4 text-gray-600">${profile.bio}</p>` : ''}
             <div class="mb-4 flex gap-4">
               <div><p class="text-2xl font-bold">${profile.stats.followers}</p><p class="text-sm">Takipçi sayısı</p></div>
-              <div><p class="text-2xl font-bold">${profile.stats.following}</p><p class="text-sm">Takip edilen kişi sayısı</p></div>
+              <div><p class="text-2xl font-bold">${profile.stats.following}</p><p class="text-sm">Takip edilen hesap sayısı</p></div>
             </div>
             ${canInteract ? `
               <div class="flex gap-2">
@@ -151,7 +151,7 @@ export function renderUserPublicProfile(state: UserPublicProfileState): string {
                   <a href="/mesajlar" class="inline-block rounded bg-blue-500 px-4 py-2 text-white">Mesaj gönder</a>
                 ` : ''}
                 <button type="button" data-user-public-profile-follow class="rounded px-4 py-2 text-white ${state.isFollowing ? 'bg-gray-600 hover:bg-gray-700' : 'bg-green-600 hover:bg-green-700'}" ${state.isFollowingLoading ? 'disabled' : ''}>
-                  ${state.isFollowingLoading ? 'İşleniyor...' : state.isFollowing ? 'Takipten çık' : 'Takip et'}
+                  ${state.isFollowingLoading ? 'İşleniyor...' : state.isFollowing ? 'Takibi bırak' : 'Takip et'}
                 </button>
                 <button type="button" data-user-public-profile-block class="rounded px-4 py-2 text-white ${state.isBlocked ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-red-600 hover:bg-red-700'}" ${state.isBlocking ? 'disabled' : ''}>
                   ${state.isBlocking ? 'İşleniyor...' : state.isBlocked ? 'Engellemeyi kaldır' : 'Engelle'}
