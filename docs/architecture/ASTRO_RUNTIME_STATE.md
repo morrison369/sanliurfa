@@ -9,7 +9,7 @@ Bu belge, migration kapandıktan sonraki aktif runtime durumunu tek yerde özetl
 - aktif `.tsx` yüzeyi: `0`
 - aktif `client:*` hydration: `0`
 - React hook/lib blokörü: `0`
-- config dışı runtime React owner: `0`
+- config dışı runtime React sahibi: `0`
 - kalan tek uyumluluk sahibi:
   - `astro.config.mjs`
 
@@ -23,7 +23,7 @@ Bu belge, migration kapandıktan sonraki aktif runtime durumunu tek yerde özetl
 ## Aktif Karar
 
 - Yeni UI yüzeyi varsayılan olarak `.astro`
-- Etkileşim gerekiyorsa plain TypeScript browser helper
+- Etkileşim gerekiyorsa düz TypeScript tarayıcı yardımcısı
 - React ancak açık ve bilinçli bir mimari kararla geri dönebilir
 
 ## Guard ve Görünürlük

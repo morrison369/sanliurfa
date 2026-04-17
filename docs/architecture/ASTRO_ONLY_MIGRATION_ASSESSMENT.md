@@ -36,7 +36,7 @@ Mevcut yapı:
 Bu repo için `Astro-only` ifadesi aşağıdaki anlama gelir:
 
 1. Yeni sayfalarda varsayılan seçim `.astro` olmalı.
-2. Sadece küçük ve net gerekçeli client script'ler kullanılmalı.
+2. Sadece küçük ve net gerekçeli istemci betikleri kullanılmalı.
 3. React island bağımlılığı kademeli azaltılmalı.
 4. React gerekiyorsa Astro içinde resmi entegrasyon olarak kullanılabilmeli.
 
@@ -110,7 +110,7 @@ Hydration yüzeyi kapanmış olsa da paket kararı nettir:
 - `@astrojs/react` kalacak.
 - `react` ve `react-dom` kalacak.
 - Kalan audit raporları uninstall planı değil, sadece bakım görünürlüğü içindir.
-- Canlı config owner:
+- Canlı config sahibi:
   - `astro.config.mjs` içindeki `react()` integration satırı
 
 Source-of-truth:
@@ -157,7 +157,7 @@ Yeni kural:
 
 - yeni view'lar varsayılan olarak `.astro`
 - React sadece açık gerekçe varsa
-- yeni küçük etkileşimler plain TS helper ile çözülmeli
+- yeni küçük etkileşimler düz TS yardımcısı ile çözülmeli
 
 Bu fazda:
 
@@ -215,7 +215,7 @@ Astro-only migration sırasında şu kurallar uygulanmalı:
 React'ten Astro-only yapıya geçerken korunması gereken test katmanları:
 
 - yardımcı unit testleri
-- tarayıcı düzeyi smoke testler
+- tarayıcı düzeyi smoke testleri
 - contract/OpenAPI testleri
 - kritik admin gate'ler
 
@@ -224,20 +224,20 @@ React'ten Astro-only yapıya geçerken korunması gereken test katmanları:
 - veri yardımcısı testli
 - görünüm yardımcısı testli
 - sayfa başlatma yardımcısı testli
-- browser smoke testli
+- tarayıcı smoke testli
 
 ## Somut Backlog Önerisi
 
 ### Dalga 1
 
 - küçük widget inventory çıkar
-- düşük riskli 10-15 React component seç
+- düşük riskli 10-15 React bileşeni seç
 - Astro + plain TS karşılıklarını üret
 
 ### Dalga 2
 
 - search/settings/billing gibi orta riskli yüzeyleri böl
-- data/view/bootstrap yardımcılarını standardize et
+- veri/görünüm/başlatma yardımcılarını standartlaştır
 
 ### Dalga 3
 

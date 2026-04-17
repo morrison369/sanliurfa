@@ -46,4 +46,4 @@ Hızlı kural:
 Kural:
 
 - Uzun biçimli açıklamaları burada tut.
-- `CLAUDE.md` dosyasını komutlar, kurallar, source-of-truth yönlendirmeleri ve günlük yürütme rehberiyle sınırlı tut.
+- `CLAUDE.md` dosyasını komutlar, kurallar, kaynak-gerçek yönlendirmeleri ve günlük yürütme rehberiyle sınırlı tut.
