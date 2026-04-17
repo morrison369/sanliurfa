@@ -4,7 +4,7 @@ import { Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 
 const seo = {
   title: 'Şifremi unuttum - Şanlıurfa.com',
-  description: 'Şifrenizi sıfırlayın',
+  description: 'Şifrenizi sıfırlamak için bağlantı isteyin.',
   noindex: true
 };
 
@@ -34,7 +34,7 @@ const error = Astro.url.searchParams.get('error');
               <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p class="text-green-800 dark:text-green-300 font-medium">
-                  Bağlantı gönderildi
+                  Bağlantı gönderildi.
                 </p>
                 <p class="text-green-700 dark:text-green-400 text-sm mt-1">
                   E-posta adresinize şifre sıfırlama bağlantısı gönderdik. Lütfen gelen kutunuzu kontrol edin.
@@ -50,7 +50,7 @@ const error = Astro.url.searchParams.get('error');
                   <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <p class="text-red-800 dark:text-red-300 font-medium">
-                      {error === 'email_not_found' ? 'E-posta adresi bulunamadı' : 'Bir hata oluştu'}
+                      {error === 'email_not_found' ? 'E-posta adresi bulunamadı' : 'Bir hata oluştu.'}
                     </p>
                     <p class="text-red-700 dark:text-red-400 text-sm mt-1">
                       {error === 'email_not_found' 
@@ -74,7 +74,7 @@ const error = Astro.url.searchParams.get('error');
                   type="email"
                   required
                   class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="ornek@email.com"
+                  placeholder="ornek@eposta.com"
                 />
               </div>
             </div>
