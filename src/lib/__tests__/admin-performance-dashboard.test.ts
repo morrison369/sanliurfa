@@ -86,9 +86,9 @@ describe('admin performance dashboard helpers', () => {
       error: null,
     });
 
-    expect(summaryHtml).toContain('Yavas sorgu');
-    expect(summaryHtml).toContain('Index Onerileri');
-    expect(artifactsHtml).toContain('Genel Durum');
+    expect(summaryHtml).toContain('Yavaş sorgu');
+    expect(summaryHtml).toContain('İndeks önerileri');
+    expect(artifactsHtml).toContain('Genel durum');
     expect(artifactsHtml).toContain('releaseGate');
   });
 });

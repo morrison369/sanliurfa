@@ -59,7 +59,7 @@ describe('admin verification queue helpers', () => {
     });
 
     expect(html).toContain('Göbeklitepe Cafe');
-    expect(html).toContain('Reddetme Nedeni');
+    expect(html).toContain('Reddetme nedeni');
     expect(html).toContain('Onayla');
   });
 });

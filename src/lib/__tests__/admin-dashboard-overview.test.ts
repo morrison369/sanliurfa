@@ -100,7 +100,7 @@ describe('admin-dashboard-overview', () => {
       error: 'Veri alınamadı',
     });
 
-    expect(html).toContain('Hata');
+    expect(html).toContain('İşlem hatası');
     expect(html).toContain('Veri alınamadı');
   });
 });
