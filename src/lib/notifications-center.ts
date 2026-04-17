@@ -112,7 +112,7 @@ function renderNotificationItem(state: NotificationsCenterState, item: Notificat
         <div class="flex flex-shrink-0 items-center gap-2">
           ${isUnread ? `
             <button type="button" data-notifications-center-action="read:${item.id}" ${busy ? 'disabled' : ''} class="text-xs text-blue-600 hover:text-blue-700 disabled:opacity-50">
-              ${busy ? '...' : 'Oku'}
+              ${busy ? '...' : 'Okundu işaretle'}
             </button>
           ` : ''}
           <button type="button" data-notifications-center-action="delete:${item.id}" ${busy ? 'disabled' : ''} class="text-xs text-red-600 hover:text-red-700 disabled:opacity-50">
@@ -146,7 +146,7 @@ export function renderNotificationsCenter(state: NotificationsCenterState): stri
         </div>
         ${canMarkAll ? `
           <button type="button" data-notifications-center-mark-all ${state.bulkActionInProgress ? 'disabled' : ''} class="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50">
-            ${state.bulkActionInProgress ? 'İşleniyor...' : 'Tümünü Oku'}
+            ${state.bulkActionInProgress ? 'İşleniyor...' : 'Tümünü okundu işaretle'}
           </button>
         ` : ''}
       </div>
