@@ -72,13 +72,13 @@ function formatDate(value: string): string {
 function renderForm(form: CampaignFormData): string {
   return `
     <div class="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-      <h3 class="mb-4 text-lg font-semibold">Yeni Kampanya Oluştur</h3>
+      <h3 class="mb-4 text-lg font-semibold">Yeni kampanya oluştur</h3>
       <form data-marketing-campaign-form class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <input
             name="name"
             type="text"
-            placeholder="Kampanya Adı"
+            placeholder="Kampanya adı"
             value="${form.name}"
             class="rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             required
@@ -96,7 +96,7 @@ function renderForm(form: CampaignFormData): string {
         <textarea
           name="description"
           rows="3"
-          placeholder="Kampanya Açıklaması"
+          placeholder="Kampanya açıklaması"
           class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
         >${form.description}</textarea>
         <input
@@ -111,7 +111,7 @@ function renderForm(form: CampaignFormData): string {
         />
         <div class="flex gap-2">
           <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700">Oluştur</button>
-          <button type="button" data-marketing-campaign-cancel class="rounded-lg bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400">İptal Et</button>
+          <button type="button" data-marketing-campaign-cancel class="rounded-lg bg-gray-300 px-4 py-2 text-gray-800 hover:bg-gray-400">İptal et</button>
         </div>
       </form>
     </div>
@@ -194,13 +194,13 @@ export function renderMarketingCampaignBuilder(options: {
   return `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Pazarlama Kampanyaları</h2>
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Pazarlama kampanyaları</h2>
         <button
           type="button"
           data-marketing-campaign-toggle
           class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
         >
-          ${options.showForm ? 'Formu Kapat' : 'Yeni Kampanya'}
+          ${options.showForm ? 'Formu kapat' : 'Yeni kampanya'}
         </button>
       </div>
       ${options.showForm ? renderForm(options.form) : ''}
