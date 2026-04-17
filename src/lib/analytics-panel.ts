@@ -79,7 +79,7 @@ function renderMetricCard(label: string, value: string, tone = 'default'): strin
 
 function renderTrendingPlaces(places: AnalyticsPanelTrendingPlace[]): string {
   if (places.length === 0) {
-    return '<p class="text-sm text-gray-600 dark:text-gray-400">Trend mekan verisi bulunamadı.</p>';
+    return '<p class="text-sm text-gray-600 dark:text-gray-400">Trend mekan verisi bulunmuyor.</p>';
   }
 
   return `
@@ -111,7 +111,7 @@ function renderTrendingPlaces(places: AnalyticsPanelTrendingPlace[]): string {
 
 function renderSearchTrends(trends: AnalyticsPanelSearchTrend[]): string {
   if (trends.length === 0) {
-    return '<p class="text-sm text-gray-600 dark:text-gray-400">Popüler arama verisi bulunamadı.</p>';
+    return '<p class="text-sm text-gray-600 dark:text-gray-400">Popüler arama verisi bulunmuyor.</p>';
   }
 
   return `
@@ -193,17 +193,17 @@ export function renderAnalyticsPanel(options: {
             </div>
 
             <div>
-              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Trend Olan Mekanlar</h3>
+              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Trend olan mekanlar</h3>
               ${renderTrendingPlaces(data.trendingPlaces)}
             </div>
 
             <div>
-              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Popüler Aramalar</h3>
+              <h3 class="mb-4 text-xl font-bold text-gray-900 dark:text-white">Popüler aramalar</h3>
               ${renderSearchTrends(data.searchTrends)}
             </div>
           `
           : !options.error
-            ? '<div class="rounded border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">Analitik verisi bulunamadı.</div>'
+            ? '<div class="rounded border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">Analitik verisi bulunmuyor.</div>'
             : ''
       }
     </div>

@@ -109,10 +109,10 @@ function renderCreateForm(state: ContentManagerState): string {
       </div>
       <div class="flex gap-2">
         <button type="submit" ${state.saving ? 'disabled' : ''} class="rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-          ${state.saving ? 'İşleniyor...' : 'Oluştur'}
+          ${state.saving ? 'İşleniyor...' : 'İçeriği oluştur'}
         </button>
         <button type="button" data-content-manager-cancel class="rounded-lg bg-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-400">
-          İptal
+          İptal et
         </button>
       </div>
     </form>
@@ -157,7 +157,7 @@ export function renderContentManager(state: ContentManagerState): string {
   const list = state.items.length === 0
     ? `
       <div class="py-12 text-center text-gray-500">
-        <p class="text-lg">Henüz içerik oluşturulmadı.</p>
+        <p class="text-lg">Henüz içerik bulunmuyor.</p>
       </div>
     `
     : `<div class="space-y-3">${state.items.map(renderContentItem).join('')}</div>`;
@@ -167,7 +167,7 @@ export function renderContentManager(state: ContentManagerState): string {
       ${state.error ? renderError(state.error) : ''}
       ${!state.showForm ? `
         <button type="button" data-content-manager-open-form class="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700">
-          + Yeni İçerik Oluştur
+          + Yeni içerik oluştur
         </button>
       ` : renderCreateForm(state)}
       ${list}
