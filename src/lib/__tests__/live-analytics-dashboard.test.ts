@@ -55,7 +55,7 @@ describe('live analytics dashboard helpers', () => {
       },
     });
 
-    expect(html).toContain('Canlı Analitik Gösterge Paneli');
+    expect(html).toContain('Canlı analitik gösterge paneli');
     expect(html).toContain('Aktif Kullanıcı');
     expect(html).toContain('/api/places');
   });
@@ -65,3 +65,4 @@ describe('live analytics dashboard helpers', () => {
     expect(time).toContain(':');
   });
 });
+
