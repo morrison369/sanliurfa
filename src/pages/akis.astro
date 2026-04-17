@@ -5,7 +5,7 @@
  */
 
 import Layout from '../layouts/Layout.astro';
-import ActivityFeed from '../components/ActivityFeed';
+import ActivityFeed from '../components/ActivityFeed.astro';
 
 // Require authentication
 if (!Astro.locals.user) {
@@ -20,6 +20,7 @@ if (!Astro.locals.user) {
       <p class="text-gray-600 dark:text-gray-400 mt-2">Takip ettiğin kullanıcıların aktivitelerini gör</p>
     </div>
 
-    <ActivityFeed client:load userId={Astro.locals.user.id} />
+    <ActivityFeed />
   </div>
 </Layout>
+

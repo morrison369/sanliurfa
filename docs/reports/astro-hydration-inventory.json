@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-04-17T00:55:54.397Z",
-  "astroFiles": 191,
-  "tsxFiles": 61,
-  "totalHydrationPoints": 3,
+  "generatedAt": "2026-04-17T01:00:39.500Z",
+  "astroFiles": 192,
+  "tsxFiles": 60,
+  "totalHydrationPoints": 1,
   "lowRiskCount": 0,
   "mediumRiskCount": 0,
-  "highRiskCount": 3,
+  "highRiskCount": 1,
   "entries": [
     {
       "pagePath": "src/pages/admin/moderation.astro",
@@ -13,20 +13,6 @@
       "directive": "load",
       "risk": "high",
       "rationale": "ModerationDashboard yoğun state veya dashboard tipi davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/akis.astro",
-      "componentName": "ActivityFeed",
-      "directive": "load",
-      "risk": "high",
-      "rationale": "ActivityFeed yoğun state veya dashboard tipi davranış taşıyor."
-    },
-    {
-      "pagePath": "src/pages/sosyal/index.astro",
-      "componentName": "ActivityFeed",
-      "directive": "load",
-      "risk": "high",
-      "rationale": "ActivityFeed yoğun state veya dashboard tipi davranış taşıyor."
     }
   ]
 }

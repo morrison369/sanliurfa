@@ -237,7 +237,6 @@ eklenmeli.
 - `src/components/ModerationDashboard.tsx`
 - `src/components/WebhookAnalyticsDashboard.tsx`
 - `src/components/MessagingInbox.tsx`
-- `src/components/ActivityFeed.tsx`
 - `src/components/LiveAnalyticsDashboard.tsx`
 
 ### Beklenen Karar Çıkışı
@@ -258,7 +257,6 @@ ayrı yazılmalı.
 
 `docs/reports/astro-high-risk-feasibility.md` artık `later` bucket bırakmıyor; kalan sıralama:
 
-- `ActivityFeed`
 - `ModerationDashboard`
 
 Bu şu anlama gelir:
