@@ -1,4 +1,4 @@
-# Integration Readiness Checklist
+# Entegrasyon Hazirlik Kontrol Listesi
 
 Bu dokuman, kod tarafinda otomatiklestirilemeyen ama release kalitesini dogrudan etkileyen entegrasyon adimlarini tek yerde toplar.
 
@@ -18,7 +18,7 @@ Notlar:
 - Env'de bu alanlar bos olsa bile admin panelden girilen global degerler runtime'da otomatik kullanilir.
 - Admin panelde gorunen artifact freshness sinyali icin `docs/ops/ARTIFACT_FRESHNESS_POLICY.md` dosyasina bak.
 
-## 1.1) Admin Panelden Giris (Runtime Fallback)
+## 1.1) Admin Panelden Giris (Runtime Yedegi)
 
 - Panel: `/admin/integrations`
 - API: `GET/PUT /api/admin/system/integration-settings`
