@@ -68,7 +68,7 @@ const getCategoryLabel = (category: string) => {
 };
 
 const seo = {
-  title: queryParam ? `"${queryParam}" - Mekanlar` : 'Mekanlar - Restoran, Otel, Kafe ve Daha Fazlası',
+  title: queryParam ? `"${queryParam}" - Mekanlar` : 'Mekanlar - Restoran, otel, kafe ve daha fazlası',
   description: 'Şanlıurfa\'nın en iyi restoranları, otelleri, kafeleri ve müzelerini keşfedin. Kullanıcı yorumları ve puanlarıyla karşılaştırın.',
 };
 
@@ -157,9 +157,9 @@ if (queryParam) searchParams.set('q', queryParam);
           <div class="flex items-center gap-4">
             <select class="input py-2 text-sm dark:bg-gray-800 dark:border-gray-700 dark:text-white">
               <option value="recommended">Önerilen</option>
-              <option value="rating">Puana Göre</option>
-              <option value="reviews">Yorum Sayısına Göre</option>
-              <option value="newest">En Yeni</option>
+              <option value="rating">Puana göre</option>
+              <option value="reviews">Yorum sayısına göre</option>
+              <option value="newest">En yeni</option>
             </select>
             
             <div class="flex items-center bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1">
@@ -228,7 +228,7 @@ if (queryParam) searchParams.set('q', queryParam);
                       {place.review_count || 0} değerlendirme
                     </span>
                     <span class="text-sm font-medium text-urfa-600 dark:text-urfa-400">
-                      Detaylar →
+                      Ayrıntıları gör →
                     </span>
                   </div>
                 </div>

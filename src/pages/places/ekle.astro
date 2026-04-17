@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import { MapPin, Upload, Clock, Phone, Globe, Mail, Info, CheckCircle } from 'lucide-react';
 
 const seo = {
-  title: 'Mekan Ekle - Şanlıurfa.com',
+  title: 'Mekan ekle - Şanlıurfa.com',
   description: 'Şanlıurfa.com\'a mekan ekleyin. Restoran, kafe, otel veya tarihi yer ekleyerek binlerce kullanıcıya ulaşın.',
 };
 
@@ -27,7 +27,7 @@ const error = Astro.url.searchParams.get('error');
     <!-- Page Header -->
     <div class="page-header">
       <div class="page-header-content">
-        <h1 class="page-header-title">Mekan Ekle</h1>
+        <h1 class="page-header-title">Mekan ekle</h1>
         <p class="page-header-description">
           Şanlıurfa'nın zenginliklerini keşfetmemize yardımcı olun. Mekanınızı ekleyerek binlerce kullanıcıya ulaşın.
         </p>
@@ -48,8 +48,8 @@ const error = Astro.url.searchParams.get('error');
               Mekanınız incelendikten sonra onaylanacaktır. Bilgilendirme e-postası alacaksınız.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/" class="btn-primary">Ana Sayfaya Dön</a>
-              <a href="/places" class="btn-secondary">Mekanları Keşfet</a>
+              <a href="/" class="btn-primary">Ana sayfaya dön</a>
+              <a href="/places" class="btn-secondary">Mekanları keşfet</a>
             </div>
           </div>
         </div>
@@ -68,7 +68,7 @@ const error = Astro.url.searchParams.get('error');
             )}
             
             <form action="/api/places/submit" method="POST" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8" enctype="multipart/form-data">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Mekan Bilgileri</h2>
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Mekan bilgileri</h2>
               
               <div class="space-y-6">
                 <!-- Basic Info -->
