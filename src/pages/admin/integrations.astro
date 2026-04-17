@@ -133,6 +133,8 @@ const seo = {
       if (!value) return 'durum bilinmiyor';
       if (value === 'healthy') return 'sağlıklı';
       if (value === 'degraded') return 'bozulmuş';
+      if (value === 'pending') return 'beklemede';
+      if (value === 'failed') return 'başarısız';
       return value;
     }
 
