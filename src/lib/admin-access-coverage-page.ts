@@ -25,7 +25,7 @@ export function buildCoverageAlertClass(status: RuntimeStatus, driftCount: numbe
 }
 
 export function buildCoverageSummaryText(status: RuntimeStatus, coveragePercent: number, driftCount: number) {
-  return `Durum: ${status}. Coverage %${coveragePercent}. Drift: ${driftCount}.`;
+  return `Durum: ${status}. Kapsama %${coveragePercent}. Drift: ${driftCount}.`;
 }
 
 export function buildCoverageDriftFilesHtml(files: string[]) {
