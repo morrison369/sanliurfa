@@ -106,7 +106,7 @@ function renderHashtagButtons(hashtags: HashtagItem[], selectedHashtag: string |
 
   return `
     <div class="mb-6">
-      <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Trend Konular</h3>
+      <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Trend konular</h3>
       <div class="flex flex-wrap gap-2">
         ${hashtags
           .map(
@@ -133,7 +133,7 @@ function renderHashtagButtons(hashtags: HashtagItem[], selectedHashtag: string |
 
 function renderTaggedContent(content: TaggedContent) {
   if (content.places_count === 0 && content.reviews_count === 0) {
-    return '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz içerik yok</div>';
+    return '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz içerik bulunmuyor.</div>';
   }
 
   return `
@@ -143,7 +143,7 @@ function renderTaggedContent(content: TaggedContent) {
           ? `
             <div class="space-y-3">
               <h4 class="mb-3 font-semibold text-gray-900 dark:text-white">
-                İşaretlenen Mekanlar (${content.places_count})
+                İşaretlenen mekanlar (${content.places_count})
               </h4>
               <div class="space-y-2">
                 ${content.places
@@ -172,7 +172,7 @@ function renderTaggedContent(content: TaggedContent) {
           ? `
             <div class="space-y-3">
               <h4 class="mb-3 font-semibold text-gray-900 dark:text-white">
-                İşaretlenen İncelemeler (${content.reviews_count})
+                İşaretlenen incelemeler (${content.reviews_count})
               </h4>
               <div class="space-y-2">
                 ${content.reviews
@@ -242,12 +242,12 @@ export function renderHashtagExplorer(state: HashtagExplorerState) {
                   `
                   : state.taggedContent
                     ? renderTaggedContent(state.taggedContent)
-                    : '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz içerik yok</div>'
+                    : '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz içerik bulunmuyor.</div>'
               }
             </div>
           `
           : state.hashtags.length === 0
-            ? '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz trend konu yok</div>'
+            ? '<div class="py-8 text-center text-gray-600 dark:text-gray-400">Henüz trend konu bulunmuyor.</div>'
             : ''
       }
     </div>

@@ -44,7 +44,7 @@ function writeState(root: UserSearchRoot, state: Partial<UserSearchState>) {
 async function searchUsers(root: UserSearchRoot) {
   const state = readState(root);
   if (!state.query.trim() || state.query.trim().length < 2) {
-    writeState(root, { error: 'Arama terimi en az 2 karakter olmalıdır', users: [], hasSearched: false });
+    writeState(root, { error: 'Arama terimi en az 2 karakter olmalıdır.', users: [], hasSearched: false });
     renderRoot(root);
     return;
   }
@@ -68,7 +68,7 @@ async function searchUsers(root: UserSearchRoot) {
         'message' in payload.error &&
         typeof payload.error.message === 'string'
           ? payload.error.message
-          : 'Arama başarısız';
+          : 'Arama tamamlanamadı';
       throw new Error(message);
     }
 
