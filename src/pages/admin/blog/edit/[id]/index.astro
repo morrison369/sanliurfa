@@ -31,7 +31,7 @@ const errorMessages: Record<string, string> = {
 };
 
 const seo = {
-  title: `${post.title} - Blog yazısını düzenle - Yönetim Paneli`,
+  title: `${post.title} | Blog yazısını düzenle | Yönetim Paneli`,
   noindex: true
 };
 ---
@@ -98,7 +98,7 @@ const seo = {
           
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <label for="category" class="label dark:text-gray-300 flex items-center gap-2">
-              <Tag className="w-4 h-4" /> Kategori
+              <Tag className="w-4 h-4" /> Kategori seçimi
             </label>
             <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-2">
               {categories.map(cat => (
@@ -109,7 +109,7 @@ const seo = {
           
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <label for="author_id" class="label dark:text-gray-300 flex items-center gap-2">
-              <User className="w-4 h-4" /> Yazar
+              <User className="w-4 h-4" /> Yazar seçimi
             </label>
             <select id="author_id" name="author_id" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-2">
               {authors?.map(author => (
