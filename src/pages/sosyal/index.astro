@@ -14,17 +14,17 @@ if (!userId) {
 const initialTag = Astro.url.searchParams.get('tag');
 ---
 
-<Layout title="Sosyal - Şanlıurfa">
+<Layout title="Sosyal | Şanlıurfa">
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-4xl font-bold text-gray-900 mb-2">Sosyal</h1>
-    <p class="text-gray-600 mb-8">Şanlıurfa sosyal akışı, trend konular ve kullanıcı önerileri</p>
+    <p class="text-gray-600 mb-8">Şanlıurfa sosyal akışını, trend konuları ve kullanıcı önerilerini keşfedin.</p>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Sidebar */}
       <div className="space-y-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Sizi Tanıyabileceğiniz Kişiler
+            Tanıyabileceğiniz kişiler
           </h2>
           <UserSuggestionsPanel />
         </div>
@@ -44,7 +44,7 @@ const initialTag = Astro.url.searchParams.get('tag');
             data-tab-btn="hashtag"
             class="px-4 py-2 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-900 dark:hover:text-white"
           >
-            Hashtag Keşfet
+            Hashtag keşfet
           </button>
         </div>
 
