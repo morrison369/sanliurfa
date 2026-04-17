@@ -54,8 +54,8 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
    Uygulama sırası için `docs/architecture/ASTRO_ONLY_MIGRATION_BACKLOG.md`
    Somut hydration risk listesi için `docs/reports/astro-hydration-inventory.md`
    High bucket sıralaması için `docs/reports/astro-high-risk-feasibility.md`
-   Paket seviyesinde React kaldırma blokörleri için `docs/reports/react-surface-audit.md`
-   Dosya bazlı sil / tut / migrate sınıflaması için `docs/reports/react-surface-classification.md`
+   Paket seviyesinde React görünürlüğü için `docs/reports/react-surface-audit.md`
+   Dosya bazlı React bakım sınıflaması için `docs/reports/react-surface-classification.md`
 6. Admin anahtarları ve readiness için `INTEGRATION_READINESS.md`
 7. Legacy yüzey şüphesi varsa `LEGACY_PHASE_SURFACE.md`
 8. Admin UI davranışı veya ops sayfa metni değişecekse önce helper katmanına bak, sonra `.astro` / page script dosyasını değiştir

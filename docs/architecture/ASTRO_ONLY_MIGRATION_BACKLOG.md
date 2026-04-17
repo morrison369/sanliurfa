@@ -9,7 +9,7 @@ Amaç:
 - Astro-first geliştirme kuralını fiilen uygulamak
 - düşük maliyetli React island yüzeylerini azaltmak
 - yüksek riskli panelleri yanlış sırayla rewrite etmemek
-- `@astrojs/react` kaldırma adaylığını ölçülebilir hale getirmek
+- React yüzeyini görünür tutmak, ama `@astrojs/react` entegrasyonunu korumak
 
 ## Başarı Ölçütleri
 
@@ -29,8 +29,8 @@ Güncel ölçüm:
 2. `client:*` yüzeyini ilk dalgada `55` altına indirmek
 3. yeni açılan UI yüzeylerinde varsayılan olarak React kullanmamak
 4. migration yapılan her sayfa için helper + smoke/test zemini kurmak
-5. hydration `0` olduktan sonra `npm run astro:react:audit` ile paket kaldırma blokörlerini sıfırlamak
-6. kalan `.tsx` yüzeyi için `npm run astro:react:classify` ile sil/tut/migrate listesini üretmek
+5. hydration `0` olduktan sonra `npm run astro:react:audit` ile kalan React yüzeyini görünür tutmak
+6. kalan `.tsx` yüzeyi için `npm run astro:react:classify` ile bakım sınıflaması üretmek
 
 ## Öncelik Kuralları
 
