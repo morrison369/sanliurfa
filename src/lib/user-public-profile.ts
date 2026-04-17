@@ -154,7 +154,7 @@ export function renderUserPublicProfile(state: UserPublicProfileState): string {
                   ${state.isFollowingLoading ? 'İşleniyor...' : state.isFollowing ? 'Takibi bırak' : 'Takip et'}
                 </button>
                 <button type="button" data-user-public-profile-block class="rounded px-4 py-2 text-white ${state.isBlocked ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-red-600 hover:bg-red-700'}" ${state.isBlocking ? 'disabled' : ''}>
-                  ${state.isBlocking ? 'İşleniyor...' : state.isBlocked ? 'Engellemeyi kaldır' : 'Engelle'}
+                  ${state.isBlocking ? 'İşleniyor...' : state.isBlocked ? 'Engeli kaldır' : 'Engelle'}
                 </button>
               </div>
             ` : ''}

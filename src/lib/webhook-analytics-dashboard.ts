@@ -134,7 +134,7 @@ function renderEvents(metrics: WebhookAnalyticsMetrics): string {
                 <div>Toplam: ${stats.total}</div>
                 <div>Başarılı: ${stats.delivered}</div>
                 <div>Başarısız: ${stats.failed}</div>
-                <div>Bekleme: ${stats.pending}</div>
+                <div>Bekleyen: ${stats.pending}</div>
               </div>
             </div>
           `,
@@ -201,7 +201,7 @@ export function renderWebhookAnalyticsDashboard(options: {
 
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <div class="rounded-lg bg-white p-4 shadow-md">
-          <p class="text-sm text-gray-600">Toplam webhook</p>
+          <p class="text-sm text-gray-600">Toplam webhook sayısı</p>
           <p class="text-3xl font-bold text-gray-900">${metrics.totalWebhooks}</p>
         </div>
         <div class="rounded-lg bg-white p-4 shadow-md">
