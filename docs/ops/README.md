@@ -6,15 +6,15 @@ Bu klasör operasyon kararları için açılacak ilk yerdir.
 
 Önce kısa aktif özet yüzeyleri aç:
 
-- Surum/runtime:
+- Sürüm/çalışma zamanı:
   - [RELEASE_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\RELEASE_RUNTIME_STATE.md)
-- Admin/ops runtime:
+- Admin/ops çalışma zamanı:
   - [ADMIN_OPS_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\ADMIN_OPS_RUNTIME_STATE.md)
 - Entegrasyon hazirligi:
   - [INTEGRATION_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\INTEGRATION_RUNTIME_STATE.md)
 - Olay mudahalesi:
   - [INCIDENT_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\ops\INCIDENT_RUNTIME_STATE.md)
-- Cati sistemi/runtime:
+- Çatı sistemi/çalışma zamanı:
   - [ASTRO_RUNTIME_STATE.md](D:\sanliurfa.com\sanliurfa-ops-batch-all\docs\architecture\ASTRO_RUNTIME_STATE.md)
 
 Detay politika ve kaynak-gercek yuzeyleri:
