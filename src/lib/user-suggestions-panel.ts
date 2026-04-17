@@ -48,7 +48,7 @@ export function renderUserSuggestionsPanel(users: SuggestedUser[], error: string
   if (users.length === 0) {
     return `
       <div class="py-8 text-center text-gray-500 dark:text-gray-400">
-        Şu anda öneri bulunmuyor.
+        Şu anda gösterilecek öneri bulunmuyor.
       </div>
     `;
   }
@@ -97,7 +97,7 @@ export function renderUserSuggestionsPanel(users: SuggestedUser[], error: string
                 data-user-suggestion-following="${String(user.isFollowing)}"
                 class="w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors ${user.isFollowing ? 'bg-gray-200 text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600' : 'bg-blue-600 text-white hover:bg-blue-700'}"
               >
-                ${user.isFollowing ? 'Takip ediliyor' : 'Takip et'}
+                ${user.isFollowing ? 'Takiptesiniz' : 'Takip et'}
               </button>
 
               <a

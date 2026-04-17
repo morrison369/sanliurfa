@@ -98,7 +98,7 @@ function renderResultsTable(options: {
 
   return `
     <div class="space-y-3">
-      <h3 class="font-semibold">Sonuçlar (${options.rows.length} satır)</h3>
+      <h3 class="font-semibold">Sorgu sonuçları (${options.rows.length} satır)</h3>
       <div class="overflow-x-auto">
         <table class="w-full border-collapse text-sm">
           <thead>
@@ -171,11 +171,11 @@ export function renderOlapExplorer(options: {
 
       <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div class="space-y-3">
-          <h3 class="text-lg font-semibold">Boyutlar</h3>
+          <h3 class="text-lg font-semibold">Boyut seçimi</h3>
           <div class="space-y-2 rounded border bg-gray-50 p-4">
             ${
               options.dimensions.length === 0
-                ? '<p class="text-sm text-gray-500">Boyut bulunamadı.</p>'
+                ? '<p class="text-sm text-gray-500">Kullanılabilir boyut bulunmuyor.</p>'
                 : options.dimensions
                     .map((dimension) =>
                       renderCheckbox({
@@ -191,11 +191,11 @@ export function renderOlapExplorer(options: {
         </div>
 
         <div class="space-y-3">
-          <h3 class="text-lg font-semibold">Ölçüler</h3>
+          <h3 class="text-lg font-semibold">Ölçü seçimi</h3>
           <div class="space-y-2 rounded border bg-gray-50 p-4">
             ${
               options.measures.length === 0
-                ? '<p class="text-sm text-gray-500">Ölçü bulunamadı.</p>'
+                ? '<p class="text-sm text-gray-500">Kullanılabilir ölçü bulunmuyor.</p>'
                 : options.measures
                     .map((measure) =>
                       renderCheckbox({
@@ -218,9 +218,9 @@ export function renderOlapExplorer(options: {
           ${options.loading ? 'disabled' : ''}
           class="rounded bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          ${options.loading ? 'Sorgulanıyor...' : 'Sorguyu Çalıştır'}
+          ${options.loading ? 'Sorgu çalıştırılıyor...' : 'Sorguyu çalıştır'}
         </button>
-        ${options.cached ? '<div class="text-xs text-gray-600">✓ Sonuç cache üzerinden geldi</div>' : ''}
+        ${options.cached ? '<div class="text-xs text-gray-600">✓ Sonuç önbellekten getirildi</div>' : ''}
       </div>
 
       ${renderResultsTable({

@@ -101,14 +101,14 @@ function renderCollectionHeader(collection: CollectionData, options: { canFollow
                   ${options.isFollowingLoading ? 'disabled' : ''}
                   class="whitespace-nowrap rounded px-4 py-2 font-medium text-white ${options.isFollowing ? 'bg-gray-600 hover:bg-gray-700' : 'bg-blue-500 hover:bg-blue-600'} disabled:opacity-50"
                 >
-                  ${options.isFollowingLoading ? 'İşleniyor...' : options.isFollowing ? 'Takipten çık' : 'Takip et'}
+                  ${options.isFollowingLoading ? 'İşleniyor...' : options.isFollowing ? 'Takibi bırak' : 'Takip et'}
                 </button>`
               : ''
           }
 
           ${
             options.isOwner
-              ? `<a href="/koleksiyonlar" class="rounded bg-gray-500 px-4 py-2 text-center font-medium text-white hover:bg-gray-600">Düzenle</a>`
+              ? `<a href="/koleksiyonlar" class="rounded bg-gray-500 px-4 py-2 text-center font-medium text-white hover:bg-gray-600">Koleksiyonları yönet</a>`
               : ''
           }
         </div>
@@ -184,7 +184,7 @@ export function renderCollectionDetail(options: {
   }
 
   if (!options.collection) {
-    return '<div class="py-12 text-center text-gray-500">Koleksiyon bulunamadı.</div>';
+    return '<div class="py-12 text-center text-gray-500">Koleksiyon kaydı bulunamadı.</div>';
   }
 
   const isOwner = Boolean(options.currentUserId && options.currentUserId === options.collection.user_id);
@@ -200,7 +200,7 @@ export function renderCollectionDetail(options: {
       })}
 
       <div>
-        <h2 class="mb-4 text-2xl font-bold">Mekanlar</h2>
+        <h2 class="mb-4 text-2xl font-bold">Koleksiyondaki mekanlar</h2>
         ${renderItemsGrid(options.items, isOwner)}
       </div>
     </div>
