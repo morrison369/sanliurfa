@@ -47,3 +47,20 @@ export function subscribeToNotificationUnread(
     window.removeEventListener(NOTIFICATION_UNREAD_EVENT, listener);
   };
 }
+
+export function subscribeToMessageUnread(
+  handler: (count: number) => void,
+): () => void {
+  const listener = (event: Event) => {
+    const nextCount =
+      event instanceof CustomEvent && typeof event.detail?.count === 'number'
+        ? event.detail.count
+        : 0;
+    handler(nextCount);
+  };
+
+  window.addEventListener(MESSAGE_UNREAD_EVENT, listener);
+  return () => {
+    window.removeEventListener(MESSAGE_UNREAD_EVENT, listener);
+  };
+}

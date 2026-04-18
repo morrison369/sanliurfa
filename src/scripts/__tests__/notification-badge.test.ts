@@ -59,6 +59,17 @@ describe('notification badge script', () => {
       json: async () => ({ count: 12 }),
     });
 
+    const sseListeners: Array<(data: { count: number; notifications: unknown[] }) => void> = [];
+    vi.doMock('../../lib/realtime-sse', () => ({
+      realtimeManager: {
+        connectToNotifications: vi.fn(),
+        subscribeToNotifications: vi.fn((handler: (data: { count: number; notifications: unknown[] }) => void) => {
+          sseListeners.push(handler);
+          return () => {};
+        }),
+      },
+    }));
+
     const { initNotificationBadges } = await import('../notification-badge');
     initNotificationBadges();
     await Promise.resolve();
@@ -76,5 +87,9 @@ describe('notification badge script', () => {
     );
 
     expect(badge.textContent).toBe('3');
+
+    sseListeners[0]?.({ count: 8, notifications: [] });
+
+    expect(badge.textContent).toBe('8');
   });
 });
