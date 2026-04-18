@@ -7,6 +7,7 @@ import {
 } from '../lib/notification-center';
 import { readJsonSafely, retryOnce } from './shared/async-ui';
 import { bindAll } from './shared/bind-events';
+import { emitNotificationUnreadCount } from './shared/unread-sync';
 
 type NotificationCenterRoot = HTMLElement & { dataset: DOMStringMap };
 const NOTIFICATION_CENTER_RETRY_DELAY_MS = 200;
@@ -71,6 +72,7 @@ function writeNotifications(root: NotificationCenterRoot, notifications: Notific
 
 function writeUnreadCount(root: NotificationCenterRoot, unreadCount: number) {
   root.dataset.unreadCount = String(unreadCount);
+  emitNotificationUnreadCount(unreadCount);
 }
 
 function applyOptimisticNotificationAction(

@@ -34,6 +34,7 @@ describe('notification badge script', () => {
   it('loads unread count and updates badge text', async () => {
     const { root, badge } = createBadgeRoot();
     const setIntervalMock = vi.fn();
+    const eventListeners = new Map<string, Array<(event: any) => void>>();
 
     (globalThis as any).document = {
       querySelectorAll: () => [root],
@@ -41,6 +42,16 @@ describe('notification badge script', () => {
 
     (globalThis as any).window = {
       setInterval: setIntervalMock,
+      addEventListener: vi.fn((name: string, handler: (event: any) => void) => {
+        eventListeners.set(name, [...(eventListeners.get(name) ?? []), handler]);
+      }),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn((event: CustomEvent) => {
+        for (const handler of eventListeners.get(event.type) ?? []) {
+          handler(event);
+        }
+        return true;
+      }),
     };
 
     (globalThis as any).fetch = vi.fn().mockResolvedValue({
@@ -57,5 +68,13 @@ describe('notification badge script', () => {
     expect(badge.className).toContain('flex');
     expect(setIntervalMock).toHaveBeenCalledOnce();
     expect(root.dataset.initialized).toBe('true');
+
+    (globalThis as any).window.dispatchEvent(
+      new CustomEvent('sanliurfa:notifications-unread-change', {
+        detail: { count: 3 },
+      }),
+    );
+
+    expect(badge.textContent).toBe('3');
   });
 });

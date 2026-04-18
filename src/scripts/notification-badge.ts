@@ -3,6 +3,7 @@ import {
   formatNotificationBadgeCount,
   shouldShowNotificationBadge,
 } from '../lib/notification-badge';
+import { emitNotificationUnreadCount, subscribeToNotificationUnread } from './shared/unread-sync';
 
 type NotificationBadgeRoot = HTMLElement & {
   dataset: DOMStringMap;
@@ -28,7 +29,9 @@ async function loadUnreadCount(root: NotificationBadgeRoot) {
     if (!response.ok) return;
 
     const data = (await response.json()) as { count?: number };
-    updateNotificationBadge(root, data.count ?? 0);
+    const count = data.count ?? 0;
+    updateNotificationBadge(root, count);
+    emitNotificationUnreadCount(count);
   } catch (error) {
     console.error('Okunmamış bildirim sayısı alınamadı:', error);
   }
@@ -44,6 +47,9 @@ export function initNotificationBadges() {
 
     root.dataset.initialized = 'true';
     updateNotificationBadge(root, 0);
+    subscribeToNotificationUnread((count) => {
+      updateNotificationBadge(root, count);
+    });
     void loadUnreadCount(root);
     window.setInterval(() => {
       void loadUnreadCount(root);
