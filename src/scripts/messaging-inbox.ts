@@ -7,6 +7,7 @@ import {
   type MessagingInboxState,
 } from '../lib/messaging-inbox';
 import { setElementClassName, setElementHtml } from '../lib/admin-dom';
+import { readJsonSafely, retryOnce } from './shared/async-ui';
 
 type MessagingInboxRoot = HTMLElement & { dataset: DOMStringMap };
 
@@ -83,25 +84,19 @@ function applyConversationReadState(state: MessagingInboxState, conversationId: 
   };
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function readCurrentUserId(root: MessagingInboxRoot): string {
   return root.dataset.currentUserId || '';
 }
 
 async function fetchConversations(root: MessagingInboxRoot, attempt = 0) {
-  const response = await fetch('/api/messages?limit=50', { credentials: 'same-origin' });
-  if (!response.ok) {
-    if (attempt === 0) {
-      await delay(MESSAGING_RETRY_DELAY_MS);
-      return fetchConversations(root, attempt + 1);
+  const payload = await retryOnce(async () => {
+    const response = await fetch('/api/messages?limit=50', { credentials: 'same-origin' });
+    if (!response.ok) {
+      throw new Error('Konuşma listesi yüklenemedi');
     }
-    throw new Error('Konuşma listesi yüklenemedi');
-  }
 
-  const payload = await response.json();
+    return response.json();
+  }, MESSAGING_RETRY_DELAY_MS, attempt);
   const nextState = applyMessagingInboxSelection({
     ...readState(root),
     conversations: extractMessagingInboxConversations(payload),
@@ -119,16 +114,14 @@ async function fetchMessages(root: MessagingInboxRoot, attempt = 0) {
     return;
   }
 
-  const response = await fetch(`/api/messages/${state.selectedConversationId}?limit=100`, { credentials: 'same-origin' });
-  if (!response.ok) {
-    if (attempt === 0) {
-      await delay(MESSAGING_RETRY_DELAY_MS);
-      return fetchMessages(root, attempt + 1);
+  const payload = await retryOnce(async () => {
+    const response = await fetch(`/api/messages/${state.selectedConversationId}?limit=100`, { credentials: 'same-origin' });
+    if (!response.ok) {
+      throw new Error('Mesajlar yüklenemedi');
     }
-    throw new Error('Mesajlar yüklenemedi');
-  }
 
-  const payload = await response.json();
+    return response.json();
+  }, MESSAGING_RETRY_DELAY_MS, attempt);
   const nextState = applyConversationReadState(
     {
       ...readState(root),
@@ -277,7 +270,7 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
           body: JSON.stringify({ content: draft }),
         });
 
-        const payload = await response.json().catch(() => null);
+        const payload = await readJsonSafely(response);
         if (!response.ok) {
           const message = payload?.error?.message || payload?.error || 'Mesaj gönderilemedi';
           writeState(root, { ...state, error: message, notice: null, loading: false, actionInProgress: null });
@@ -315,7 +308,7 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
           credentials: 'same-origin',
         });
 
-        const payload = await response.json().catch(() => null);
+        const payload = await readJsonSafely(response);
         if (!response.ok) {
           const message = payload?.error?.message || payload?.error || 'Konuşma gizlenemedi';
           writeState(root, { ...state, error: message, notice: null, loading: false, actionInProgress: null });

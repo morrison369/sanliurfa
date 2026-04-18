@@ -5,6 +5,7 @@ import {
   renderNotificationCenter,
   type NotificationCenterState,
 } from '../lib/notification-center';
+import { readJsonSafely, retryOnce } from './shared/async-ui';
 
 type NotificationCenterRoot = HTMLElement & { dataset: DOMStringMap };
 const NOTIFICATION_CENTER_RETRY_DELAY_MS = 200;
@@ -71,10 +72,6 @@ function writeUnreadCount(root: NotificationCenterRoot, unreadCount: number) {
   root.dataset.unreadCount = String(unreadCount);
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function applyOptimisticNotificationAction(
   notifications: NotificationCenterState['notifications'],
   action: 'read' | 'archive',
@@ -98,18 +95,16 @@ function applyOptimisticMarkAllAsRead(notifications: NotificationCenterState['no
 }
 
 async function loadNotifications(root: NotificationCenterRoot, attempt = 0) {
-  const response = await fetch(`/api/notifications/center?archived=${root.dataset.showArchived === 'true'}`);
-  const payload = await response.json();
+  return retryOnce(async () => {
+    const response = await fetch(`/api/notifications/center?archived=${root.dataset.showArchived === 'true'}`);
+    const payload = await readJsonSafely(response);
 
-  if (!response.ok) {
-    if (attempt === 0) {
-      await delay(NOTIFICATION_CENTER_RETRY_DELAY_MS);
-      return loadNotifications(root, attempt + 1);
+    if (!response.ok) {
+      throw new Error(extractNotificationCenterMessage(payload, 'Bildirimler alınırken hata oluştu'));
     }
-    throw new Error(extractNotificationCenterMessage(payload, 'Bildirimler alınırken hata oluştu'));
-  }
 
-  return extractNotificationCenterData(payload);
+    return extractNotificationCenterData(payload);
+  }, NOTIFICATION_CENTER_RETRY_DELAY_MS, attempt);
 }
 
 function renderCurrentState(root: NotificationCenterRoot) {
@@ -215,7 +210,7 @@ async function commitArchiveVisible(root: NotificationCenterRoot, notificationId
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'archive', notificationId }),
         }).then(async (response) => {
-          const payload = await response.json();
+          const payload = await readJsonSafely(response);
           if (!response.ok) {
             throw new Error(extractNotificationCenterMessage(payload, 'İşlem başarısız'));
           }
