@@ -36,6 +36,21 @@ function setError(root: SubscriptionRoot, message: string | null) {
   }
 }
 
+function setNotice(
+  root: SubscriptionRoot,
+  message: string | null,
+  tone: 'success' | 'error' | null,
+) {
+  if (message && tone) {
+    root.dataset.notice = message;
+    root.dataset.noticeTone = tone;
+    return;
+  }
+
+  delete root.dataset.notice;
+  delete root.dataset.noticeTone;
+}
+
 async function fetchSubscription(root: SubscriptionRoot) {
   const response = await fetch('/api/user/subscription');
   const payload = await response.json();
@@ -67,10 +82,14 @@ async function cancelSubscription(root: SubscriptionRoot) {
       throw new Error(extractSubscriptionMessage(payload, 'Abonelik iptal edilemedi'));
     }
 
-    window.alert(extractSubscriptionMessage(payload, 'Aboneliğiniz başarıyla iptal edildi.'));
+    setNotice(
+      root,
+      extractSubscriptionMessage(payload, 'Aboneliğiniz başarıyla iptal edildi.'),
+      'success',
+    );
     await fetchSubscription(root);
   } catch (error) {
-    window.alert(error instanceof Error ? error.message : 'İptal işlemi başarısız');
+    setNotice(root, error instanceof Error ? error.message : 'İptal işlemi başarısız', 'error');
   } finally {
     delete root.dataset.cancelling;
     await renderSubscriptionRoot(root);
@@ -103,6 +122,11 @@ async function renderSubscriptionRoot(root: SubscriptionRoot) {
         subscription: readSubscription(root),
         error: root.dataset.error || null,
         cancelling: root.dataset.cancelling === 'true',
+        notice: root.dataset.notice || null,
+        noticeTone:
+          root.dataset.noticeTone === 'success' || root.dataset.noticeTone === 'error'
+            ? root.dataset.noticeTone
+            : null,
       }),
     );
     bindActions(root, content);
@@ -114,6 +138,11 @@ async function renderSubscriptionRoot(root: SubscriptionRoot) {
         subscription: null,
         error: root.dataset.error || null,
         cancelling: false,
+        notice: root.dataset.notice || null,
+        noticeTone:
+          root.dataset.noticeTone === 'success' || root.dataset.noticeTone === 'error'
+            ? root.dataset.noticeTone
+            : null,
       }),
     );
   } finally {

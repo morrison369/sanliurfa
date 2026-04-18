@@ -89,10 +89,8 @@ describe('subscription manager script', () => {
     };
 
     const confirmMock = vi.fn(() => true);
-    const alertMock = vi.fn();
     (globalThis as any).window = {
       confirm: confirmMock,
-      alert: alertMock,
     };
 
     const fetchMock = vi.fn(async (input: string, init?: { method?: string }) => {
@@ -137,7 +135,8 @@ describe('subscription manager script', () => {
     await flushPromises();
 
     expect(content.innerHTML).toContain('Premium');
-    expect(content.innerHTML).toContain('Aktif Plan');
+    expect(content.innerHTML).toContain('Aktif plan');
+    expect(content.innerHTML).toContain('Plan durumu');
     expect(loading.className).toBe('hidden');
     expect(content.className).toBe('');
     expect(root.dataset.initialized).toBe('true');
@@ -151,7 +150,8 @@ describe('subscription manager script', () => {
       '/api/subscriptions/cancel',
       expect.objectContaining({ method: 'POST' }),
     );
-    expect(alertMock).toHaveBeenCalled();
+    expect(content.innerHTML).toContain('Abonelik güncellemesi');
+    expect(content.innerHTML).toContain('Abonelik başarıyla iptal edildi');
   });
 });
 

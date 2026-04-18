@@ -18,6 +18,8 @@ export interface ActiveSubscription {
   autoRenew: boolean;
 }
 
+type SubscriptionNoticeTone = 'success' | 'error';
+
 export function extractSubscription(
   payload: unknown,
 ): ActiveSubscription | null {
@@ -43,8 +45,40 @@ function renderUpgradeCta(): string {
   return `
     <div class="rounded-lg border-2 border-blue-300 bg-blue-50 p-6">
       <h3 class="mb-2 text-lg font-semibold text-gray-900">${UI_COPY_TR.subscription.upgrade}</h3>
-      <p class="mb-4 text-gray-600">Premium özellikleri keşfedin ve daha fazla avantaj alın.</p>
-      <a href="/fiyatlandirma" class="inline-flex rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700">${UI_COPY_TR.subscription.managePlans}</a>
+      <p class="mb-4 text-gray-600">Premium özellikleri karşılaştırın ve size uygun planı seçin.</p>
+      <div class="flex flex-wrap gap-3">
+        <a href="/fiyatlandirma" class="inline-flex rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700">${UI_COPY_TR.subscription.managePlans}</a>
+        <a href="/fiyatlandirma#paketler" class="inline-flex rounded-lg border border-blue-200 bg-white px-6 py-2 font-medium text-blue-700 transition-colors hover:bg-blue-100">Planları karşılaştır</a>
+      </div>
+    </div>
+  `;
+}
+
+function renderSubscriptionNotice(
+  message: string,
+  tone: SubscriptionNoticeTone,
+): string {
+  const variant =
+    tone === 'success'
+      ? {
+          wrapper:
+            'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20',
+          title: 'text-green-800 dark:text-green-200',
+          body: 'text-green-700 dark:text-green-300',
+          heading: 'Abonelik güncellemesi',
+        }
+      : {
+          wrapper:
+            'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20',
+          title: 'text-red-800 dark:text-red-200',
+          body: 'text-red-700 dark:text-red-300',
+          heading: 'Abonelik işlemi tamamlanamadı',
+        };
+
+  return `
+    <div class="mb-4 rounded-lg border p-4 ${variant.wrapper}">
+      <p class="mb-1 font-medium ${variant.title}">${variant.heading}</p>
+      <p class="${variant.body}">${message}</p>
     </div>
   `;
 }
@@ -74,6 +108,18 @@ function renderSubscriptionCard(
       </div>
 
       <div class="mb-6 space-y-3 border-b border-gray-200 pb-6">
+        <div class="rounded-lg bg-gray-50 p-4">
+          <p class="text-sm font-medium text-gray-900">Plan durumu</p>
+          <p class="mt-1 text-sm text-gray-600">
+            ${
+              subscription.nextBillingDate && subscription.autoRenew
+                ? `Planınız ${new Date(subscription.nextBillingDate).toLocaleDateString('tr-TR')} tarihinde otomatik olarak yenilenecek.`
+                : subscription.nextBillingDate
+                  ? `Planınız ${new Date(subscription.nextBillingDate).toLocaleDateString('tr-TR')} tarihinde mevcut dönem sonunda kapanacak.`
+                  : 'Plan ayrıntılarınız güncel olarak görüntüleniyor.'
+            }
+          </p>
+        </div>
         <div class="flex items-center justify-between">
           <span class="text-sm text-gray-600">Başlangıç tarihi</span>
           <span class="text-sm font-medium text-gray-900">${new Date(subscription.startDate).toLocaleDateString('tr-TR')}</span>
@@ -93,11 +139,15 @@ function renderSubscriptionCard(
         </div>
       </div>
 
-      <div class="flex gap-3">
-        <a href="/fiyatlandirma" class="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-center font-medium text-white transition-colors hover:bg-blue-700">Yükselt</a>
+      <div class="mb-3 flex gap-3">
+        <a href="/fiyatlandirma" class="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-center font-medium text-white transition-colors hover:bg-blue-700">Planları yönet</a>
         <button type="button" data-subscription-cancel ${cancelling ? 'disabled' : ''} class="flex-1 rounded-lg bg-red-100 px-4 py-2 font-medium text-red-700 transition-colors hover:bg-red-200 disabled:bg-gray-200">
           ${cancelling ? 'İptal ediliyor...' : 'Aboneliği iptal et'}
         </button>
+      </div>
+      <div class="flex flex-wrap gap-3 text-sm">
+        <a href="/ayarlar/kotalar" class="text-blue-700 transition-colors hover:text-blue-800">Kota ayrıntılarını gör</a>
+        <a href="/profil?sekme=faturalama" class="text-blue-700 transition-colors hover:text-blue-800">Ödeme geçmişini aç</a>
       </div>
     </div>
   `;
@@ -107,14 +157,21 @@ export function renderSubscriptionManager(options: {
   subscription: ActiveSubscription | null;
   error: string | null;
   cancelling: boolean;
+  notice: string | null;
+  noticeTone: SubscriptionNoticeTone | null;
 }): string {
   if (options.error) {
     return renderSubscriptionError(options.error);
   }
 
+  const noticeHtml =
+    options.notice && options.noticeTone
+      ? renderSubscriptionNotice(options.notice, options.noticeTone)
+      : '';
+
   if (!options.subscription) {
-    return renderUpgradeCta();
+    return `${noticeHtml}${renderUpgradeCta()}`;
   }
 
-  return renderSubscriptionCard(options.subscription, options.cancelling);
+  return `${noticeHtml}${renderSubscriptionCard(options.subscription, options.cancelling)}`;
 }
