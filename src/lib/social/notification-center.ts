@@ -94,6 +94,20 @@ function renderToggle(showArchived: boolean): string {
   `;
 }
 
+function renderBulkActions(state: NotificationCenterState): string {
+  if (state.showArchived || state.unreadCount <= 0) return '';
+
+  const busy = state.actionInProgress === 'bulk:read-all';
+
+  return `
+    <div class="flex flex-wrap gap-3">
+      <button type="button" data-notification-center-mark-all ${busy ? 'disabled' : ''} class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">
+        ${busy ? UI_COPY_TR.common.processing : UI_COPY_TR.notifications.markAllRead}
+      </button>
+    </div>
+  `;
+}
+
 function renderNotificationItem(state: NotificationCenterState, item: NotificationCenterItem): string {
   const containerClass = item.is_read
     ? 'bg-white border-gray-200'
@@ -170,6 +184,7 @@ export function renderNotificationCenter(state: NotificationCenterState): string
         <button type="button" data-notification-center-refresh class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">Listeyi yenile</button>
       </div>
       ${renderToggle(state.showArchived)}
+      ${renderBulkActions(state)}
       ${list}
     </div>
   `;
