@@ -186,6 +186,7 @@ describe('notification center script', () => {
 
     expect(content.innerHTML).toContain('Yeni mesaj');
     expect(content.innerHTML).toContain('Bildirim merkezi');
+    expect(content.innerHTML).toContain('Güncel bildirimler: 1 kayıt • Okunmamış: 2');
     expect(loading.className).toBe('hidden');
     expect(content.className).toBe('');
     expect(root.dataset.initialized).toBe('true');
@@ -221,6 +222,7 @@ describe('notification center script', () => {
       expect.objectContaining({ method: 'PUT' }),
     );
     expect(content.innerHTML).toContain('Tüm bildirimler okundu olarak işaretlendi.');
+    expect(content.innerHTML).toContain('Güncel bildirimler: 1 kayıt • Okunmamış: 0');
     const archiveAfterReadButton = content.querySelectorAll('[data-notification-center-archive-visible]')[0];
     await archiveAfterReadButton.listeners?.click?.[0]?.();
     await flushPromises();
@@ -228,6 +230,7 @@ describe('notification center script', () => {
     await flushPromises();
 
     expect(content.innerHTML).toContain('Görünen bildirimler arşive taşındı.');
+    expect(content.innerHTML).toContain('Güncel bildirimler: 0 kayıt • Okunmamış: 0');
     expect(content.querySelectorAll('[data-notification-center-refresh]').length).toBeGreaterThan(0);
 
     failingCenterFetches = 2;

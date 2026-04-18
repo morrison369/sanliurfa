@@ -163,6 +163,16 @@ function renderNotificationNotice(message: string, action: NotificationCenterSta
   `;
 }
 
+function renderNotificationSummary(state: NotificationCenterState): string {
+  const visibleCount = state.notifications.length;
+
+  if (state.showArchived) {
+    return `<p class="text-sm text-gray-500">Arşivlenen bildirimler: ${visibleCount} kayıt</p>`;
+  }
+
+  return `<p class="text-sm text-gray-500">Güncel bildirimler: ${visibleCount} kayıt • Okunmamış: ${state.unreadCount}</p>`;
+}
+
 export function renderNotificationCenter(state: NotificationCenterState): string {
   const badge = !state.showArchived && state.unreadCount > 0
     ? `<span class="rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white">${state.unreadCount}</span>`
@@ -182,10 +192,13 @@ export function renderNotificationCenter(state: NotificationCenterState): string
     <div class="space-y-4">
       ${state.error ? renderNotificationError(state.error) : ''}
       ${state.notice ? renderNotificationNotice(state.notice, state.noticeAction) : ''}
-      <div class="mb-6 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <h1 class="text-2xl font-bold text-gray-900">${UI_COPY_TR.notifications.centerTitle}</h1>
-          ${badge}
+      <div class="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-bold text-gray-900">${UI_COPY_TR.notifications.centerTitle}</h1>
+            ${badge}
+          </div>
+          <div class="mt-2">${renderNotificationSummary(state)}</div>
         </div>
         <button type="button" data-notification-center-refresh class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">Listeyi yenile</button>
       </div>
