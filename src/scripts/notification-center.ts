@@ -7,10 +7,11 @@ import {
 } from '../lib/notification-center';
 
 type NotificationCenterRoot = HTMLElement & { dataset: DOMStringMap };
+const NOTIFICATION_CENTER_RETRY_DELAY_MS = 200;
 
 function readState(root: NotificationCenterRoot): NotificationCenterState {
   return {
-    notifications: [],
+    notifications: readNotifications(root),
     unreadCount: Number(root.dataset.unreadCount || '0'),
     showArchived: root.dataset.showArchived === 'true',
     actionInProgress: root.dataset.actionInProgress || null,
@@ -35,11 +36,57 @@ function setNotice(root: NotificationCenterRoot, message: string | null) {
   }
 }
 
-async function loadNotifications(root: NotificationCenterRoot) {
+function readNotifications(root: NotificationCenterRoot) {
+  const raw = root.dataset.notificationsJson;
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeNotifications(root: NotificationCenterRoot, notifications: NotificationCenterState['notifications']) {
+  root.dataset.notificationsJson = JSON.stringify(notifications);
+}
+
+function writeUnreadCount(root: NotificationCenterRoot, unreadCount: number) {
+  root.dataset.unreadCount = String(unreadCount);
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function applyOptimisticNotificationAction(
+  notifications: NotificationCenterState['notifications'],
+  action: 'read' | 'archive',
+  notificationId: string,
+) {
+  return notifications
+    .map((item) => {
+      if (item.id !== notificationId) return item;
+
+      if (action === 'read') {
+        return { ...item, is_read: true };
+      }
+
+      return { ...item, is_archived: true };
+    })
+    .filter((item) => (action === 'archive' ? item.id !== notificationId : true));
+}
+
+async function loadNotifications(root: NotificationCenterRoot, attempt = 0) {
   const response = await fetch(`/api/notifications/center?archived=${root.dataset.showArchived === 'true'}`);
   const payload = await response.json();
 
   if (!response.ok) {
+    if (attempt === 0) {
+      await delay(NOTIFICATION_CENTER_RETRY_DELAY_MS);
+      return loadNotifications(root, attempt + 1);
+    }
     throw new Error(extractNotificationCenterMessage(payload, 'Bildirimler alınırken hata oluştu'));
   }
 
@@ -47,8 +94,16 @@ async function loadNotifications(root: NotificationCenterRoot) {
 }
 
 async function runNotificationAction(root: NotificationCenterRoot, action: 'read' | 'archive', notificationId: string) {
+  const previousNotifications = readNotifications(root);
+  const previousUnreadCount = Number(root.dataset.unreadCount || '0');
+  const nextNotifications = applyOptimisticNotificationAction(previousNotifications, action, notificationId);
+
   root.dataset.actionInProgress = notificationId;
   setNotice(root, null);
+  writeNotifications(root, nextNotifications);
+  if (action === 'read' && previousNotifications.some((item) => item.id === notificationId && !item.is_read)) {
+    writeUnreadCount(root, Math.max(0, previousUnreadCount - 1));
+  }
   await renderNotificationCenterRoot(root);
 
   try {
@@ -69,6 +124,8 @@ async function runNotificationAction(root: NotificationCenterRoot, action: 'read
       action === 'read' ? 'Bildirim okundu olarak işaretlendi.' : 'Bildirim listeden kaldırıldı.',
     );
   } catch (error) {
+    writeNotifications(root, previousNotifications);
+    writeUnreadCount(root, previousUnreadCount);
     setError(root, error instanceof Error ? error.message : 'İşlem başarısız');
     setNotice(root, null);
   } finally {
@@ -123,16 +180,14 @@ async function renderNotificationCenterRoot(root: NotificationCenterRoot) {
 
   try {
     const { notifications, unreadCount } = await loadNotifications(root);
-    root.dataset.unreadCount = String(unreadCount);
+    writeNotifications(root, notifications);
+    writeUnreadCount(root, unreadCount);
     const state = readState(root);
-    state.notifications = notifications;
-    state.unreadCount = unreadCount;
     setElementHtml(content, renderNotificationCenter(state));
     bindActions(root, content);
   } catch (error) {
     setError(root, error instanceof Error ? error.message : 'Bildirimler alınırken hata oluştu');
     const state = readState(root);
-    state.notifications = [];
     setElementHtml(content, renderNotificationCenter(state));
   } finally {
     setElementClassName(loading, 'hidden');

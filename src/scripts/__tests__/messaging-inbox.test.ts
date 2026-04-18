@@ -153,7 +153,7 @@ describe('messaging inbox script', () => {
 
     const { initMessagingInbox } = await import('../messaging-inbox');
     initMessagingInbox();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 300));
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(content.innerHTML).toContain('Mesajlaşma alanı güncellenemedi.');
