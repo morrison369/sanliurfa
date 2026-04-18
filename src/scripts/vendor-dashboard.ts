@@ -1,6 +1,6 @@
-import { setElementHtml } from '../lib/admin-dom';
 import { renderVendorDashboard, type VendorDashboardTab } from '../lib/vendor-dashboard';
 import { readDatasetOrStoredTab, writeStoredString } from './shared/persisted-ui-state';
+import { getRootContent, renderRootContent } from './shared/root-render';
 
 type VendorDashboardRoot = HTMLElement & { dataset: DOMStringMap };
 const VENDOR_DASHBOARD_TAB_STORAGE_KEY = 'sanliurfa:vendor-dashboard:active-tab';
@@ -21,16 +21,19 @@ function writeStoredTab(tab: VendorDashboardTab) {
 }
 
 function renderRoot(root: VendorDashboardRoot) {
-  const content = root.querySelector<HTMLElement>('[data-vendor-dashboard-content]');
+  const content = getRootContent(root, '[data-vendor-dashboard-content]');
   if (!content) return;
 
-  setElementHtml(
-    content,
-    renderVendorDashboard({
+  renderRootContent({
+    root,
+    contentSelector: '[data-vendor-dashboard-content]',
+    html: renderVendorDashboard({
       activeTab: readTab(root),
     }),
-  );
-  bindActions(root, content);
+    bind: (nextContent) => {
+      bindActions(root, nextContent);
+    },
+  });
 }
 
 function bindActions(root: VendorDashboardRoot, content: HTMLElement) {
