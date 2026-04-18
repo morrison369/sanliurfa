@@ -42,5 +42,7 @@ describe('transaction history helpers', () => {
     expect(html).toContain('Mekan ziyareti');
     expect(html).toContain('data-transaction-page="next"');
     expect(html).toContain('data-transaction-type=""');
+    expect(html).toContain('Puan kazanımı');
+    expect(html).toContain('Sayfa görünümü: 1 / 2');
   });
 });
