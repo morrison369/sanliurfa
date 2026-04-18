@@ -37,6 +37,8 @@ describe('transaction history helpers', () => {
       ],
       pagination: { limit: 20, offset: 0, total: 40 },
       selectedType: '',
+      dateFrom: '2026-04-01',
+      dateTo: '2026-04-30',
     });
 
     expect(html).toContain('Mekan ziyareti');
@@ -44,5 +46,9 @@ describe('transaction history helpers', () => {
     expect(html).toContain('data-transaction-type=""');
     expect(html).toContain('Puan kazanımı');
     expect(html).toContain('Sayfa görünümü: 1 / 2');
+    expect(html).toContain('data-transaction-date-from');
+    expect(html).toContain('data-transaction-date-to');
+    expect(html).toContain('Görünümü dışa aktar');
+    expect(html).toContain('Seçili tarih aralığı uygulanıyor');
   });
 });
