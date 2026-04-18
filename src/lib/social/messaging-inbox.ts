@@ -22,6 +22,7 @@ export interface MessagingInboxState {
   draft: string;
   searchQuery: string;
   error: string | null;
+  notice: string | null;
   loading: boolean;
 }
 
@@ -90,6 +91,7 @@ export function createMessagingInboxState(): MessagingInboxState {
     draft: '',
     searchQuery: '',
     error: null,
+    notice: null,
     loading: true,
   };
 }
@@ -111,7 +113,13 @@ export function renderMessagingInbox(state: MessagingInboxState, currentUserId: 
   }
 
   if (state.error) {
-    return `<div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">${escapeHtml(state.error)}</div>`;
+    return `
+      <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <p class="font-medium">Mesajlaşma alanı güncellenemedi.</p>
+        <p class="mt-1">${escapeHtml(state.error)}</p>
+        <button type="button" data-message-retry class="mt-3 text-sm font-medium underline decoration-red-300 underline-offset-2">Tekrar dene</button>
+      </div>
+    `;
   }
 
   const query = state.searchQuery.trim().toLocaleLowerCase('tr-TR');
@@ -138,7 +146,12 @@ export function renderMessagingInbox(state: MessagingInboxState, currentUserId: 
           </button>
         `;
       }).join('')
-    : '<div class="p-4 text-sm text-slate-500">Aramanıza uygun konuşma bulunamadı.</div>';
+    : `
+      <div class="p-4 text-sm text-slate-500">
+        <p>Aramanıza uygun konuşma bulunamadı.</p>
+        ${query ? '<button type="button" data-message-clear-search class="mt-3 text-sm font-medium text-blue-700 hover:underline">Aramayı temizle</button>' : ''}
+      </div>
+    `;
 
   const messagesHtml = selectedConversation
     ? (state.messages.length
@@ -168,6 +181,7 @@ export function renderMessagingInbox(state: MessagingInboxState, currentUserId: 
         <div class="min-h-0 flex-1 overflow-y-auto">${listHtml}</div>
       </aside>
       <section class="flex min-w-0 flex-1 flex-col">
+        ${state.notice ? `<div class="border-b border-green-200 bg-green-50 px-5 py-3 text-sm text-green-800">${escapeHtml(state.notice)}</div>` : ''}
         <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
             <h3 class="font-semibold text-slate-900">${escapeHtml(selectedConversation?.participantName || 'Konuşma seçilmedi')}</h3>

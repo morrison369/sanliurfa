@@ -67,5 +67,6 @@ describe('messaging inbox helpers', () => {
     expect(html).toContain('Mesajlar');
     expect(html).toContain('Ali Veli');
     expect(html).toContain('Konuşmayı gizle');
+    expect(html).toContain('data-message-send-form');
   });
 });

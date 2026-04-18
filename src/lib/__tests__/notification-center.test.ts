@@ -29,10 +29,13 @@ describe('notification center helpers', () => {
       showArchived: false,
       actionInProgress: null,
       error: extractNotificationCenterMessage({ data: { success: true, message: 'Tamam' } }, 'Hata'),
+      notice: 'İşlem tamamlandı.',
     });
 
     expect(html).toContain('Bildirim merkezi');
     expect(html).toContain('Başlık');
     expect(html).toContain('Tamam');
+    expect(html).toContain('Listeyi yenile');
+    expect(html).toContain('İşlem tamamlandı.');
   });
 });

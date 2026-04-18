@@ -18,6 +18,7 @@ export interface NotificationCenterState {
   showArchived: boolean;
   actionInProgress: string | null;
   error: string | null;
+  notice: string | null;
 }
 
 function resolveEnvelopeData(payload: unknown): Record<string, unknown> {
@@ -121,23 +122,52 @@ function renderNotificationItem(state: NotificationCenterState, item: Notificati
   `;
 }
 
+function renderNotificationError(message: string): string {
+  return `
+    <div class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+      <p class="mb-1 font-medium text-red-800 dark:text-red-200">Bildirim merkezi güncellenemedi.</p>
+      <p class="text-red-700 dark:text-red-300">${message}</p>
+      <div class="mt-3 flex flex-wrap gap-3 text-sm">
+        <button type="button" data-notification-center-retry class="text-red-800 underline decoration-red-300 underline-offset-2 dark:text-red-200">Tekrar dene</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderNotificationNotice(message: string): string {
+  return `
+    <div class="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+      <p class="font-medium text-green-800 dark:text-green-200">Bildirim merkezi güncellendi.</p>
+      <p class="mt-1 text-green-700 dark:text-green-300">${message}</p>
+    </div>
+  `;
+}
+
 export function renderNotificationCenter(state: NotificationCenterState): string {
   const badge = !state.showArchived && state.unreadCount > 0
     ? `<span class="rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white">${state.unreadCount}</span>`
     : '';
 
   const list = state.notifications.length === 0
-    ? renderEmptyState(state.showArchived ? 'Arşivlenmiş bildirim bulunmuyor.' : 'Gösterilecek yeni bildirim bulunmuyor.')
+    ? `
+      ${renderEmptyState(state.showArchived ? 'Arşivlenmiş bildirim bulunmuyor.' : 'Gösterilecek yeni bildirim bulunmuyor.')}
+      <div class="mt-4 flex flex-wrap gap-3">
+        <button type="button" data-notification-center-refresh class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">Listeyi yenile</button>
+        ${state.showArchived ? '<button type="button" data-notification-center-reset-filter class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">Güncel bildirimlere dön</button>' : ''}
+      </div>
+    `
     : `<div class="space-y-2">${state.notifications.map((item) => renderNotificationItem(state, item)).join('')}</div>`;
 
   return `
     <div class="space-y-4">
-      ${state.error ? renderErrorState(state.error) : ''}
+      ${state.error ? renderNotificationError(state.error) : ''}
+      ${state.notice ? renderNotificationNotice(state.notice) : ''}
       <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <h1 class="text-2xl font-bold text-gray-900">${UI_COPY_TR.notifications.centerTitle}</h1>
           ${badge}
         </div>
+        <button type="button" data-notification-center-refresh class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">Listeyi yenile</button>
       </div>
       ${renderToggle(state.showArchived)}
       ${list}
