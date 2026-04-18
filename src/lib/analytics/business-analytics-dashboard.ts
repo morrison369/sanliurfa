@@ -140,6 +140,54 @@ function renderPeriodMetrics(metrics: Metric[]): string {
   `;
 }
 
+function renderActionSummary(data: BusinessAnalyticsData): string {
+  const totalViews = data.metrics.reduce((sum, item) => sum + (item.view_count || 0), 0);
+  const totalReviews = data.metrics.reduce((sum, item) => sum + (item.review_count || 0), 0);
+  const totalFollowers = data.metrics.reduce((sum, item) => sum + (item.new_followers || 0), 0);
+
+  let recommendation = 'Ziyaretçi trafiğiniz düzenli gidiyor. Yorum yanıt oranınızı yüksek tutmaya devam edin.';
+  if (totalViews > 0 && totalReviews === 0) {
+    recommendation = 'Görüntülenme alıyorsunuz ancak yeni yorum oluşmuyor. Ziyaret sonrası yorum isteme akışını güçlendirin.';
+  } else if (totalFollowers === 0) {
+    recommendation = 'Yeni takipçi kazanımı düşük. Profilinizi ve kampanya görünürlüğünü artıracak bir CTA ekleyin.';
+  } else if (data.analytics.avgRating < 4.5) {
+    recommendation = 'Ortalama puan hassas bölgede. Son yorumlara hızlı yanıt verip memnuniyet sinyallerini güçlendirin.';
+  }
+
+  return `
+    <div class="rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800/60">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Bugün neye odaklanmalısınız?</h3>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">${recommendation}</p>
+      <div class="mt-4 flex flex-wrap gap-3 text-sm">
+        <a href="/profil/yorumlar" class="text-blue-700 transition-colors hover:text-blue-800">Yorumları aç</a>
+        <a href="/fiyatlandirma" class="text-blue-700 transition-colors hover:text-blue-800">Reklam paketlerini incele</a>
+      </div>
+    </div>
+  `;
+}
+
+function renderPeriodComparison(metrics: Metric[]): string {
+  if (metrics.length < 2) return '';
+
+  const midpoint = Math.ceil(metrics.length / 2);
+  const current = metrics.slice(-midpoint);
+  const previous = metrics.slice(0, Math.max(1, metrics.length - midpoint));
+
+  const currentViews = current.reduce((sum, item) => sum + (item.view_count || 0), 0);
+  const previousViews = previous.reduce((sum, item) => sum + (item.view_count || 0), 0);
+  const delta = currentViews - previousViews;
+  const tone = delta >= 0 ? 'text-green-700' : 'text-red-700';
+  const label = delta >= 0 ? 'artış' : 'düşüş';
+
+  return `
+    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Dönem karşılaştırması</h3>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Son seçili dönem, önceki eşit pencereyle kıyaslandı.</p>
+      <p class="mt-3 text-base font-semibold ${tone}">${Math.abs(delta).toLocaleString('tr-TR')} görüntülenme ${label}</p>
+    </div>
+  `;
+}
+
 function renderInsights(insights: Insight[]): string {
   if (insights.length === 0) return '';
 
@@ -217,6 +265,8 @@ export function renderBusinessAnalyticsDashboard(options: {
       ${renderDayButtons(options.days)}
       ${renderAnalyticsCards(options.data.analytics)}
       ${renderPeriodMetrics(options.data.metrics)}
+      ${renderActionSummary(options.data)}
+      ${renderPeriodComparison(options.data.metrics)}
       ${renderInsights(options.insights)}
       ${renderTrends(options.data.metrics)}
     </div>

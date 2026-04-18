@@ -62,6 +62,7 @@ describe('business analytics dashboard script', () => {
 
   it('renders analytics data and refreshes on day change', async () => {
     const { root, content, loading } = createBusinessRoot();
+    const localStorageStore = new Map<string, string>();
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
@@ -77,7 +78,10 @@ describe('business analytics dashboard script', () => {
                 reviewCount: 12,
                 followerCount: 8,
               },
-              metrics: [{ date: '2026-04-01', view_count: 25, review_count: 2, average_rating: 4.2, new_followers: 1 }],
+              metrics: [
+                { date: '2026-04-01', view_count: 25, review_count: 2, average_rating: 4.2, new_followers: 1 },
+                { date: '2026-04-02', view_count: 30, review_count: 1, average_rating: 4.3, new_followers: 0 },
+              ],
             },
           },
         }),
@@ -105,7 +109,10 @@ describe('business analytics dashboard script', () => {
                 reviewCount: 20,
                 followerCount: 11,
               },
-              metrics: [{ date: '2026-04-01', view_count: 40, review_count: 3, average_rating: 4.4, new_followers: 2 }],
+              metrics: [
+                { date: '2026-04-01', view_count: 40, review_count: 3, average_rating: 4.4, new_followers: 2 },
+                { date: '2026-04-02', view_count: 55, review_count: 4, average_rating: 4.5, new_followers: 3 },
+              ],
             },
           },
         }),
@@ -122,7 +129,13 @@ describe('business analytics dashboard script', () => {
       });
 
     (globalThis as any).fetch = fetchMock;
-    (globalThis as any).window = { location: { search: '' } };
+    (globalThis as any).window = {
+      location: { search: '' },
+      localStorage: {
+        getItem: (key: string) => localStorageStore.get(key) ?? null,
+        setItem: (key: string, value: string) => localStorageStore.set(key, value),
+      },
+    };
     (globalThis as any).document = {
       querySelectorAll: () => [root],
     };
@@ -132,8 +145,9 @@ describe('business analytics dashboard script', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(content.innerHTML).toContain('Toplam Ziyaretçi');
-    expect(content.innerHTML).toContain('AI Önerileri');
+    expect(content.innerHTML).toContain('Toplam ziyaretçi');
+    expect(content.innerHTML).toContain('AI önerileri');
+    expect(content.innerHTML).toContain('Bugün neye odaklanmalısınız?');
     expect(loading.className).toBe('hidden');
 
     const dayButton = content.querySelectorAll('[data-business-analytics-days]')[0];
@@ -143,5 +157,6 @@ describe('business analytics dashboard script', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/business/analytics?placeId=place-1&days=7');
     expect(content.innerHTML).toContain('700');
+    expect(localStorageStore.get('sanliurfa:business-analytics:days:place-1')).toBe('7');
   });
 });

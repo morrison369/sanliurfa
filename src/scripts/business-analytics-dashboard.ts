@@ -9,6 +9,7 @@ import {
 } from '../lib/business-analytics-dashboard';
 
 type BusinessAnalyticsRoot = HTMLElement & { dataset: DOMStringMap };
+const BUSINESS_ANALYTICS_DAYS_KEY = 'sanliurfa:business-analytics:days';
 
 function readData(root: BusinessAnalyticsRoot): BusinessAnalyticsData | null {
   const raw = root.dataset.analyticsData;
@@ -48,6 +49,26 @@ function writeInsights(root: BusinessAnalyticsRoot, insights: Insight[]) {
 function readDays(root: BusinessAnalyticsRoot): number {
   const raw = Number(root.dataset.days || '30');
   return raw === 7 || raw === 90 ? raw : 30;
+}
+
+function readStoredDays(root: BusinessAnalyticsRoot): number {
+  try {
+    const placeId = readPlaceId(root);
+    const raw = window.localStorage.getItem(`${BUSINESS_ANALYTICS_DAYS_KEY}:${placeId || 'global'}`);
+    const days = Number(raw || '30');
+    return days === 7 || days === 90 ? days : 30;
+  } catch {
+    return 30;
+  }
+}
+
+function writeStoredDays(root: BusinessAnalyticsRoot, days: number) {
+  try {
+    const placeId = readPlaceId(root);
+    window.localStorage.setItem(`${BUSINESS_ANALYTICS_DAYS_KEY}:${placeId || 'global'}`, String(days));
+  } catch {
+    // no-op
+  }
 }
 
 function readPlaceId(root: BusinessAnalyticsRoot): string {
@@ -132,6 +153,7 @@ function bindInteractions(root: BusinessAnalyticsRoot, content: HTMLElement) {
       if (days !== 7 && days !== 30 && days !== 90) return;
 
       root.dataset.days = String(days);
+      writeStoredDays(root, days);
       delete root.dataset.analyticsData;
       delete root.dataset.error;
       await renderRoot(root);
@@ -208,7 +230,7 @@ export function initBusinessAnalyticsDashboard() {
   for (const root of roots) {
     if (root.dataset.initialized === 'true') continue;
     root.dataset.initialized = 'true';
-    if (!root.dataset.days) root.dataset.days = '30';
+    if (!root.dataset.days) root.dataset.days = String(readStoredDays(root));
     void renderRoot(root);
   }
 }

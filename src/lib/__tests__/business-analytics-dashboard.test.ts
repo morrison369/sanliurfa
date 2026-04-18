@@ -52,7 +52,10 @@ describe('business analytics dashboard helpers', () => {
           reviewCount: 40,
           followerCount: 85,
         },
-        metrics: [{ date: '2026-04-01', view_count: 50, review_count: 2, average_rating: 4.5, new_followers: 1 }],
+        metrics: [
+          { date: '2026-04-01', view_count: 50, review_count: 2, average_rating: 4.5, new_followers: 1 },
+          { date: '2026-04-02', view_count: 80, review_count: 3, average_rating: 4.6, new_followers: 2 },
+        ],
       },
       insights: [{ id: 'i1', title: 'Yoğun Saat', description: 'Açıklama', priority: 'high', action_recommendation: 'Öneri', estimated_impact: 'Yüksek' }],
       error: null,
@@ -61,5 +64,7 @@ describe('business analytics dashboard helpers', () => {
     expect(html).toContain('Toplam ziyaretçi');
     expect(html).toContain('30 gün');
     expect(html).toContain('AI önerileri');
+    expect(html).toContain('Bugün neye odaklanmalısınız?');
+    expect(html).toContain('Dönem karşılaştırması');
   });
 });
