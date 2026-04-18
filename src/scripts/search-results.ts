@@ -13,6 +13,7 @@ type SearchResultsRoot = HTMLElement & { dataset: DOMStringMap };
 
 const states = new WeakMap<SearchResultsRoot, SearchResultsState>();
 const SEARCH_RESULTS_STORAGE_KEY = 'sanliurfa:search-results:query';
+const SEARCH_RESULTS_RECENT_KEY = 'sanliurfa:search-results:recent-queries';
 const SEARCH_RESULTS_DEBOUNCE_MS = 250;
 
 function readStoredQuery(): string {
@@ -35,6 +36,37 @@ function writeStoredQuery(query: string) {
   }
 }
 
+function readRecentQueries(): string[] {
+  try {
+    const raw = window.localStorage?.getItem(SEARCH_RESULTS_RECENT_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeRecentQueries(queries: string[]) {
+  try {
+    if (queries.length > 0) {
+      window.localStorage?.setItem(SEARCH_RESULTS_RECENT_KEY, JSON.stringify(queries.slice(0, 5)));
+    } else {
+      window.localStorage?.removeItem(SEARCH_RESULTS_RECENT_KEY);
+    }
+  } catch {
+    // no-op
+  }
+}
+
+function rememberRecentQuery(query: string) {
+  const normalized = query.trim();
+  if (normalized.length < 2) return readRecentQueries();
+  const deduped = [normalized, ...readRecentQueries().filter((item) => item !== normalized)];
+  writeRecentQueries(deduped);
+  return deduped.slice(0, 5);
+}
+
 function readInitialQuery(root: SearchResultsRoot): string {
   const datasetQuery = (root.dataset.query || '').trim();
   if (datasetQuery) return datasetQuery;
@@ -54,6 +86,7 @@ function getState(root: SearchResultsRoot): SearchResultsState {
   const existing = states.get(root);
   if (existing) return existing;
   const next = createSearchResultsState(readInitialQuery(root));
+  next.recentQueries = readRecentQueries();
   states.set(root, next);
   return next;
 }
@@ -81,6 +114,7 @@ function updateUrl(query: string) {
 async function performSearch(root: SearchResultsRoot) {
   const state = getState(root);
   const query = state.query.trim();
+  state.activeResultIndex = -1;
 
   if (query.length < 2) {
     state.hasSearched = false;
@@ -88,6 +122,7 @@ async function performSearch(root: SearchResultsRoot) {
     state.places = [];
     state.users = [];
     state.collections = [];
+    state.recentQueries = readRecentQueries();
     writeStoredQuery(state.query);
     updateUrl(state.query);
     await renderRoot(root);
@@ -121,6 +156,7 @@ async function performSearch(root: SearchResultsRoot) {
     state.places = extractPlaceResults(placesResult.payload);
     state.users = extractUserResults(usersResult.payload);
     state.collections = extractCollectionResults(collectionsResult.payload, query);
+    state.recentQueries = rememberRecentQuery(query);
     writeStoredQuery(query);
     updateUrl(query);
   } catch (error) {
@@ -134,22 +170,73 @@ async function performSearch(root: SearchResultsRoot) {
   }
 }
 
+function getResultLinks(content: HTMLElement) {
+  return Array.from(content.querySelectorAll<HTMLAnchorElement>('[data-search-results-item]'));
+}
+
+function navigateToResult(link: HTMLAnchorElement) {
+  const href = link.getAttribute?.('href') || link.href;
+  if (!href) return;
+
+  try {
+    if (typeof window.location.assign === 'function') {
+      window.location.assign(href);
+      return;
+    }
+  } catch {
+    // no-op
+  }
+
+  try {
+    window.location.href = href;
+  } catch {
+    // no-op
+  }
+}
+
 function bindActions(root: SearchResultsRoot, content: HTMLElement) {
   const state = getState(root);
   const input = content.querySelector<HTMLInputElement>('[data-search-results-input]');
   const clearButton = content.querySelector<HTMLElement>('[data-search-results-clear]');
   const retryButton = content.querySelector<HTMLElement>('[data-search-results-retry]');
+  const recentButtons = Array.from(content.querySelectorAll<HTMLElement>('[data-search-results-recent-query]'));
 
   let debounce: ReturnType<typeof setTimeout> | undefined;
   if (input) {
     input.addEventListener('input', () => {
       state.query = input.value;
       state.error = null;
+      state.activeResultIndex = -1;
       writeStoredQuery(state.query);
       if (debounce) clearTimeout(debounce);
       debounce = setTimeout(() => {
         void performSearch(root);
       }, SEARCH_RESULTS_DEBOUNCE_MS);
+    });
+
+    input.addEventListener('keydown', (event: KeyboardEvent) => {
+      const links = getResultLinks(content);
+      if (links.length === 0) return;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        state.activeResultIndex = Math.min(links.length - 1, state.activeResultIndex + 1);
+        void renderRoot(root);
+        return;
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        state.activeResultIndex = Math.max(-1, state.activeResultIndex - 1);
+        void renderRoot(root);
+        return;
+      }
+
+      if (event.key === 'Enter' && state.activeResultIndex >= 0) {
+        event.preventDefault();
+        const target = links[state.activeResultIndex];
+        if (target) navigateToResult(target);
+      }
     });
   }
 
@@ -161,6 +248,8 @@ function bindActions(root: SearchResultsRoot, content: HTMLElement) {
       state.places = [];
       state.users = [];
       state.collections = [];
+      state.activeResultIndex = -1;
+      state.recentQueries = readRecentQueries();
       writeStoredQuery('');
       updateUrl('');
       void renderRoot(root);
@@ -170,6 +259,18 @@ function bindActions(root: SearchResultsRoot, content: HTMLElement) {
   if (retryButton) {
     retryButton.addEventListener('click', () => {
       state.error = null;
+      void performSearch(root);
+    });
+  }
+
+  for (const button of recentButtons) {
+    button.addEventListener('click', () => {
+      const query = (button.dataset.searchResultsRecentQuery || '').trim();
+      if (query.length < 2) return;
+      state.query = query;
+      state.error = null;
+      state.activeResultIndex = -1;
+      writeStoredQuery(query);
       void performSearch(root);
     });
   }
