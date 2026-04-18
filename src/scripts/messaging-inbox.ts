@@ -72,6 +72,17 @@ function clearFeedback(root: MessagingInboxRoot) {
   writeState(root, { ...readState(root), error: null, notice: null });
 }
 
+function applyConversationReadState(state: MessagingInboxState, conversationId: string | null): MessagingInboxState {
+  if (!conversationId) return state;
+
+  return {
+    ...state,
+    conversations: state.conversations.map((conversation) =>
+      conversation.id === conversationId ? { ...conversation, unreadCount: 0 } : conversation,
+    ),
+  };
+}
+
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -118,12 +129,16 @@ async function fetchMessages(root: MessagingInboxRoot, attempt = 0) {
   }
 
   const payload = await response.json();
-  writeState(root, {
-    ...readState(root),
-    messages: extractMessagingInboxMessages(payload),
-    error: null,
-    notice: readState(root).notice,
-  });
+  const nextState = applyConversationReadState(
+    {
+      ...readState(root),
+      messages: extractMessagingInboxMessages(payload),
+      error: null,
+      notice: readState(root).notice,
+    },
+    state.selectedConversationId,
+  );
+  writeState(root, nextState);
 }
 
 async function refreshRoot(root: MessagingInboxRoot) {
@@ -188,9 +203,10 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
       const nextId = button.dataset.messageConversationId || null;
       const state = readState(root);
       if (!nextId || nextId === state.selectedConversationId) return;
-      writeState(root, { ...state, selectedConversationId: nextId, messages: [], draft: '' });
+      writeState(root, applyConversationReadState({ ...state, selectedConversationId: nextId, messages: [], draft: '' }, nextId));
       await fetchMessages(root);
       await fetchConversations(root);
+      writeState(root, applyConversationReadState(readState(root), nextId));
       await refreshRoot(root);
     });
   }
