@@ -8,6 +8,12 @@ import {
 
 type NotificationCenterRoot = HTMLElement & { dataset: DOMStringMap };
 const NOTIFICATION_CENTER_RETRY_DELAY_MS = 200;
+const NOTIFICATION_CENTER_UNDO_MS = 3000;
+const pendingArchiveTimers = new WeakMap<NotificationCenterRoot, ReturnType<typeof setTimeout>>();
+const pendingArchiveSnapshots = new WeakMap<
+  NotificationCenterRoot,
+  { notifications: NotificationCenterState['notifications']; unreadCount: number }
+>();
 
 function readState(root: NotificationCenterRoot): NotificationCenterState {
   return {
@@ -17,6 +23,7 @@ function readState(root: NotificationCenterRoot): NotificationCenterState {
     actionInProgress: root.dataset.actionInProgress || null,
     error: root.dataset.error || null,
     notice: root.dataset.notice || null,
+    noticeAction: root.dataset.noticeAction === 'undo-bulk-archive' ? 'undo-bulk-archive' : null,
   };
 }
 
@@ -33,6 +40,14 @@ function setNotice(root: NotificationCenterRoot, message: string | null) {
     root.dataset.notice = message;
   } else {
     delete root.dataset.notice;
+  }
+}
+
+function setNoticeAction(root: NotificationCenterRoot, value: NotificationCenterState['noticeAction']) {
+  if (value) {
+    root.dataset.noticeAction = value;
+  } else {
+    delete root.dataset.noticeAction;
   }
 }
 
@@ -97,6 +112,17 @@ async function loadNotifications(root: NotificationCenterRoot, attempt = 0) {
   return extractNotificationCenterData(payload);
 }
 
+function renderCurrentState(root: NotificationCenterRoot) {
+  const loading = root.querySelector<HTMLElement>('[data-notification-center-loading]');
+  const content = root.querySelector<HTMLElement>('[data-notification-center-content]');
+  if (!loading || !content) return;
+
+  setElementHtml(content, renderNotificationCenter(readState(root)));
+  bindActions(root, content);
+  setElementClassName(loading, 'hidden');
+  setElementClassName(content, '');
+}
+
 async function runNotificationAction(root: NotificationCenterRoot, action: 'read' | 'archive', notificationId: string) {
   const previousNotifications = readNotifications(root);
   const previousUnreadCount = Number(root.dataset.unreadCount || '0');
@@ -104,11 +130,12 @@ async function runNotificationAction(root: NotificationCenterRoot, action: 'read
 
   root.dataset.actionInProgress = notificationId;
   setNotice(root, null);
+  setNoticeAction(root, null);
   writeNotifications(root, nextNotifications);
   if (action === 'read' && previousNotifications.some((item) => item.id === notificationId && !item.is_read)) {
     writeUnreadCount(root, Math.max(0, previousUnreadCount - 1));
   }
-  await renderNotificationCenterRoot(root);
+  renderCurrentState(root);
 
   try {
     const response = await fetch('/api/notifications/center', {
@@ -127,14 +154,16 @@ async function runNotificationAction(root: NotificationCenterRoot, action: 'read
       root,
       action === 'read' ? 'Bildirim okundu olarak işaretlendi.' : 'Bildirim listeden kaldırıldı.',
     );
+    setNoticeAction(root, null);
   } catch (error) {
     writeNotifications(root, previousNotifications);
     writeUnreadCount(root, previousUnreadCount);
     setError(root, error instanceof Error ? error.message : 'İşlem başarısız');
     setNotice(root, null);
+    setNoticeAction(root, null);
   } finally {
     delete root.dataset.actionInProgress;
-    await renderNotificationCenterRoot(root);
+    renderCurrentState(root);
   }
 }
 
@@ -146,9 +175,10 @@ async function runMarkAllAsRead(root: NotificationCenterRoot) {
   root.dataset.actionInProgress = 'bulk:read-all';
   setError(root, null);
   setNotice(root, null);
+  setNoticeAction(root, null);
   writeNotifications(root, nextNotifications);
   writeUnreadCount(root, 0);
-  await renderNotificationCenterRoot(root);
+  renderCurrentState(root);
 
   try {
     const response = await fetch('/api/notifications/read-all', {
@@ -163,15 +193,102 @@ async function runMarkAllAsRead(root: NotificationCenterRoot) {
 
     setError(root, null);
     setNotice(root, 'Tüm bildirimler okundu olarak işaretlendi.');
+    setNoticeAction(root, null);
   } catch (error) {
     writeNotifications(root, previousNotifications);
     writeUnreadCount(root, previousUnreadCount);
     setError(root, error instanceof Error ? error.message : 'İşlem başarısız');
     setNotice(root, null);
+    setNoticeAction(root, null);
   } finally {
     delete root.dataset.actionInProgress;
-    await renderNotificationCenterRoot(root);
+    renderCurrentState(root);
   }
+}
+
+async function commitArchiveVisible(root: NotificationCenterRoot, notificationIds: string[]) {
+  try {
+    await Promise.all(
+      notificationIds.map((notificationId) =>
+        fetch('/api/notifications/center', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'archive', notificationId }),
+        }).then(async (response) => {
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(extractNotificationCenterMessage(payload, 'İşlem başarısız'));
+          }
+        }),
+      ),
+    );
+
+    setError(root, null);
+    setNotice(root, 'Görünen bildirimler arşive taşındı.');
+    setNoticeAction(root, null);
+    pendingArchiveSnapshots.delete(root);
+  } catch (error) {
+    const snapshot = pendingArchiveSnapshots.get(root);
+    if (snapshot) {
+      writeNotifications(root, snapshot.notifications);
+      writeUnreadCount(root, snapshot.unreadCount);
+    }
+    setError(root, error instanceof Error ? error.message : 'İşlem başarısız');
+    setNotice(root, null);
+    setNoticeAction(root, null);
+    pendingArchiveSnapshots.delete(root);
+  } finally {
+    pendingArchiveTimers.delete(root);
+    delete root.dataset.actionInProgress;
+    renderCurrentState(root);
+  }
+}
+
+function runArchiveVisible(root: NotificationCenterRoot) {
+  const previousNotifications = readNotifications(root);
+  if (previousNotifications.length === 0) return;
+  const previousUnreadCount = Number(root.dataset.unreadCount || '0');
+  const archivedIds = previousNotifications.map((item) => item.id);
+  const unreadVisibleCount = previousNotifications.filter((item) => !item.is_read).length;
+
+  pendingArchiveSnapshots.set(root, {
+    notifications: previousNotifications,
+    unreadCount: previousUnreadCount,
+  });
+
+  root.dataset.actionInProgress = 'bulk:archive-visible';
+  setError(root, null);
+  setNotice(root, 'Görünen bildirimler arşive taşınmak üzere.');
+  setNoticeAction(root, 'undo-bulk-archive');
+  writeNotifications(root, []);
+  writeUnreadCount(root, Math.max(0, previousUnreadCount - unreadVisibleCount));
+  renderCurrentState(root);
+
+  const timer = setTimeout(() => {
+    void commitArchiveVisible(root, archivedIds);
+  }, NOTIFICATION_CENTER_UNDO_MS);
+
+  pendingArchiveTimers.set(root, timer);
+}
+
+function undoArchiveVisible(root: NotificationCenterRoot) {
+  const timer = pendingArchiveTimers.get(root);
+  if (timer) {
+    clearTimeout(timer);
+    pendingArchiveTimers.delete(root);
+  }
+
+  const snapshot = pendingArchiveSnapshots.get(root);
+  if (!snapshot) return;
+
+  writeNotifications(root, snapshot.notifications);
+  writeUnreadCount(root, snapshot.unreadCount);
+  pendingArchiveSnapshots.delete(root);
+  delete root.dataset.actionInProgress;
+  setError(root, null);
+  setNotice(root, 'Arşivleme işlemi geri alındı.');
+  setNoticeAction(root, null);
+  renderCurrentState(root);
 }
 
 function bindActions(root: NotificationCenterRoot, content: HTMLElement) {
@@ -217,6 +334,19 @@ function bindActions(root: NotificationCenterRoot, content: HTMLElement) {
     });
   });
 
+  content.querySelectorAll<HTMLElement>('[data-notification-center-archive-visible]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (root.dataset.actionInProgress) return;
+      runArchiveVisible(root);
+    });
+  });
+
+  content.querySelectorAll<HTMLElement>('[data-notification-center-undo]').forEach((button) => {
+    button.addEventListener('click', () => {
+      undoArchiveVisible(root);
+    });
+  });
+
   content.querySelectorAll<HTMLElement>('[data-notification-action]').forEach((button) => {
     button.addEventListener('click', () => {
       const token = button.dataset.notificationAction;
@@ -237,13 +367,10 @@ async function renderNotificationCenterRoot(root: NotificationCenterRoot) {
     const { notifications, unreadCount } = await loadNotifications(root);
     writeNotifications(root, notifications);
     writeUnreadCount(root, unreadCount);
-    const state = readState(root);
-    setElementHtml(content, renderNotificationCenter(state));
-    bindActions(root, content);
+    renderCurrentState(root);
   } catch (error) {
     setError(root, error instanceof Error ? error.message : 'Bildirimler alınırken hata oluştu');
-    const state = readState(root);
-    setElementHtml(content, renderNotificationCenter(state));
+    renderCurrentState(root);
   } finally {
     setElementClassName(loading, 'hidden');
     setElementClassName(content, '');

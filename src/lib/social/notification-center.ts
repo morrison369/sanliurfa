@@ -19,6 +19,7 @@ export interface NotificationCenterState {
   actionInProgress: string | null;
   error: string | null;
   notice: string | null;
+  noticeAction: 'undo-bulk-archive' | null;
 }
 
 function resolveEnvelopeData(payload: unknown): Record<string, unknown> {
@@ -95,14 +96,18 @@ function renderToggle(showArchived: boolean): string {
 }
 
 function renderBulkActions(state: NotificationCenterState): string {
-  if (state.showArchived || state.unreadCount <= 0) return '';
+  if (state.showArchived || state.notifications.length === 0) return '';
 
   const busy = state.actionInProgress === 'bulk:read-all';
+  const archiveBusy = state.actionInProgress === 'bulk:archive-visible';
 
   return `
     <div class="flex flex-wrap gap-3">
-      <button type="button" data-notification-center-mark-all ${busy ? 'disabled' : ''} class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">
+      ${state.unreadCount > 0 ? `<button type="button" data-notification-center-mark-all ${busy || archiveBusy ? 'disabled' : ''} class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">
         ${busy ? UI_COPY_TR.common.processing : UI_COPY_TR.notifications.markAllRead}
+      </button>` : ''}
+      <button type="button" data-notification-center-archive-visible ${busy || archiveBusy ? 'disabled' : ''} class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60">
+        ${archiveBusy ? UI_COPY_TR.common.processing : 'Görünenleri arşivle'}
       </button>
     </div>
   `;
@@ -148,11 +153,12 @@ function renderNotificationError(message: string): string {
   `;
 }
 
-function renderNotificationNotice(message: string): string {
+function renderNotificationNotice(message: string, action: NotificationCenterState['noticeAction']): string {
   return `
     <div class="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
       <p class="font-medium text-green-800 dark:text-green-200">Bildirim merkezi güncellendi.</p>
       <p class="mt-1 text-green-700 dark:text-green-300">${message}</p>
+      ${action === 'undo-bulk-archive' ? '<div class="mt-3 flex flex-wrap gap-3 text-sm"><button type="button" data-notification-center-undo class="text-green-800 underline decoration-green-300 underline-offset-2 dark:text-green-200">Geri al</button></div>' : ''}
     </div>
   `;
 }
@@ -175,7 +181,7 @@ export function renderNotificationCenter(state: NotificationCenterState): string
   return `
     <div class="space-y-4">
       ${state.error ? renderNotificationError(state.error) : ''}
-      ${state.notice ? renderNotificationNotice(state.notice) : ''}
+      ${state.notice ? renderNotificationNotice(state.notice, state.noticeAction) : ''}
       <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <h1 class="text-2xl font-bold text-gray-900">${UI_COPY_TR.notifications.centerTitle}</h1>
