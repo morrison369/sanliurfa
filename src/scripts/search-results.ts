@@ -13,6 +13,7 @@ import {
   writeStoredJsonArray,
   writeStoredString,
 } from './shared/persisted-ui-state';
+import { bindAll, bindFirst } from './shared/bind-events';
 import { getRootPanels, renderRootContent } from './shared/root-render';
 
 type SearchResultsRoot = HTMLElement & { dataset: DOMStringMap };
@@ -175,13 +176,9 @@ function navigateToResult(link: HTMLAnchorElement) {
 
 function bindActions(root: SearchResultsRoot, content: HTMLElement) {
   const state = getState(root);
-  const input = content.querySelector<HTMLInputElement>('[data-search-results-input]');
-  const clearButton = content.querySelector<HTMLElement>('[data-search-results-clear]');
-  const retryButton = content.querySelector<HTMLElement>('[data-search-results-retry]');
-  const recentButtons = Array.from(content.querySelectorAll<HTMLElement>('[data-search-results-recent-query]'));
 
   let debounce: ReturnType<typeof setTimeout> | undefined;
-  if (input) {
+  bindFirst<HTMLInputElement>(content, '[data-search-results-input]', (input) => {
     input.addEventListener('input', () => {
       state.query = input.value;
       state.error = null;
@@ -217,9 +214,9 @@ function bindActions(root: SearchResultsRoot, content: HTMLElement) {
         if (target) navigateToResult(target);
       }
     });
-  }
+  });
 
-  if (clearButton) {
+  bindFirst<HTMLElement>(content, '[data-search-results-clear]', (clearButton) => {
     clearButton.addEventListener('click', () => {
       state.query = '';
       state.error = null;
@@ -233,16 +230,16 @@ function bindActions(root: SearchResultsRoot, content: HTMLElement) {
       updateUrl('');
       void renderRoot(root);
     });
-  }
+  });
 
-  if (retryButton) {
+  bindFirst<HTMLElement>(content, '[data-search-results-retry]', (retryButton) => {
     retryButton.addEventListener('click', () => {
       state.error = null;
       void performSearch(root);
     });
-  }
+  });
 
-  for (const button of recentButtons) {
+  bindAll<HTMLElement>(content, '[data-search-results-recent-query]', (button) => {
     button.addEventListener('click', () => {
       const query = (button.dataset.searchResultsRecentQuery || '').trim();
       if (query.length < 2) return;
@@ -252,7 +249,7 @@ function bindActions(root: SearchResultsRoot, content: HTMLElement) {
       writeStoredQuery(query);
       void performSearch(root);
     });
-  }
+  });
 }
 
 async function renderRoot(root: SearchResultsRoot) {

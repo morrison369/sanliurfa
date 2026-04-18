@@ -8,6 +8,7 @@ import {
 } from '../lib/messaging-inbox';
 import { setElementClassName, setElementHtml } from '../lib/admin-dom';
 import { readJsonSafely, retryOnce } from './shared/async-ui';
+import { bindAll, bindFirst } from './shared/bind-events';
 
 type MessagingInboxRoot = HTMLElement & { dataset: DOMStringMap };
 
@@ -191,7 +192,7 @@ function applyOptimisticConversationHide(state: MessagingInboxState) {
 }
 
 function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
-  for (const button of Array.from(content.querySelectorAll<HTMLElement>('[data-message-conversation-id]'))) {
+  bindAll<HTMLElement>(content, '[data-message-conversation-id]', (button) => {
     button.addEventListener('click', async () => {
       const nextId = button.dataset.messageConversationId || null;
       const state = readState(root);
@@ -202,33 +203,29 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
       writeState(root, applyConversationReadState(readState(root), nextId));
       await refreshRoot(root);
     });
-  }
+  });
 
-  const searchInput = content.querySelector<HTMLInputElement>('[data-message-search-input]');
-  if (searchInput) {
+  bindFirst<HTMLInputElement>(content, '[data-message-search-input]', (searchInput) => {
     searchInput.addEventListener('input', async () => {
       writeState(root, { ...readState(root), searchQuery: searchInput.value, error: null, notice: null });
       await refreshRoot(root);
     });
-  }
+  });
 
-  const clearSearchButton = content.querySelector<HTMLElement>('[data-message-clear-search]');
-  if (clearSearchButton) {
+  bindFirst<HTMLElement>(content, '[data-message-clear-search]', (clearSearchButton) => {
     clearSearchButton.addEventListener('click', async () => {
       writeState(root, { ...readState(root), searchQuery: '', error: null, notice: null });
       await refreshRoot(root);
     });
-  }
+  });
 
-  const draftInput = content.querySelector<HTMLInputElement>('[data-message-draft-input]');
-  if (draftInput) {
+  bindFirst<HTMLInputElement>(content, '[data-message-draft-input]', (draftInput) => {
     draftInput.addEventListener('input', () => {
       writeState(root, { ...readState(root), draft: draftInput.value });
     });
-  }
+  });
 
-  const sendForm = content.querySelector<HTMLFormElement>('[data-message-send-form]');
-  if (sendForm) {
+  bindFirst<HTMLFormElement>(content, '[data-message-send-form]', (sendForm) => {
     sendForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const state = readState(root);
@@ -285,10 +282,9 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
         await refreshRoot(root);
       }
     });
-  }
+  });
 
-  const deleteButton = content.querySelector<HTMLElement>('[data-message-delete]');
-  if (deleteButton) {
+  bindFirst<HTMLElement>(content, '[data-message-delete]', (deleteButton) => {
     deleteButton.addEventListener('click', async () => {
       const state = readState(root);
       if (!state.selectedConversationId || state.actionInProgress) return;
@@ -327,15 +323,14 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
         await refreshRoot(root);
       }
     });
-  }
+  });
 
-  const retryButton = content.querySelector<HTMLElement>('[data-message-retry]');
-  if (retryButton) {
+  bindFirst<HTMLElement>(content, '[data-message-retry]', (retryButton) => {
     retryButton.addEventListener('click', async () => {
       clearFeedback(root);
       await reloadInbox(root);
     });
-  }
+  });
 }
 
 function startPolling(root: MessagingInboxRoot) {

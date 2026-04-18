@@ -1,4 +1,5 @@
 import { renderVendorDashboard, type VendorDashboardTab } from '../lib/vendor-dashboard';
+import { bindAll } from './shared/bind-events';
 import { readDatasetOrStoredTab, writeStoredString } from './shared/persisted-ui-state';
 import { getRootContent, renderRootContent } from './shared/root-render';
 
@@ -37,7 +38,7 @@ function renderRoot(root: VendorDashboardRoot) {
 }
 
 function bindActions(root: VendorDashboardRoot, content: HTMLElement) {
-  content.querySelectorAll<HTMLElement>('[data-vendor-dashboard-tab]').forEach((button) => {
+  bindAll<HTMLElement>(content, '[data-vendor-dashboard-tab]', (button) => {
     button.addEventListener('click', () => {
       const nextTab = button.dataset.vendorDashboardTab;
       root.dataset.activeTab =
@@ -47,7 +48,7 @@ function bindActions(root: VendorDashboardRoot, content: HTMLElement) {
     });
   });
 
-  content.querySelectorAll<HTMLElement>('[data-vendor-dashboard-shortcut]').forEach((button) => {
+  bindAll<HTMLElement>(content, '[data-vendor-dashboard-shortcut]', (button) => {
     button.addEventListener('click', (event: Event) => {
       event.preventDefault();
       const nextTab = button.dataset.vendorDashboardShortcut;
