@@ -42,6 +42,8 @@ function createRoot(query = 'urfa') {
 
   let cachedHtml = '';
   let input: FakeElement | null = null;
+  let clearButton: FakeElement | null = null;
+  let retryButton: FakeElement | null = null;
 
   const content = createInteractiveElement({});
   content.className = 'hidden';
@@ -51,8 +53,16 @@ function createRoot(query = 'urfa') {
       input = content.innerHTML.includes('data-search-results-input')
         ? createInteractiveElement({}, query)
         : null;
+      clearButton = content.innerHTML.includes('data-search-results-clear')
+        ? createInteractiveElement({})
+        : null;
+      retryButton = content.innerHTML.includes('data-search-results-retry')
+        ? createInteractiveElement({})
+        : null;
     }
     if (selector === '[data-search-results-input]') return input;
+    if (selector === '[data-search-results-clear]') return clearButton;
+    if (selector === '[data-search-results-retry]') return retryButton;
     return null;
   };
   content.querySelectorAll = () => [];
@@ -124,8 +134,68 @@ describe('search-results script', () => {
     expect(content.innerHTML).toContain('Göbeklitepe');
     expect(content.innerHTML).toContain('Ali Kaya');
     expect(content.innerHTML).toContain('Urfa Koleksiyonu');
+    expect(content.innerHTML).toContain('Arama özeti');
     expect(loading.className).toBe('hidden');
     expect(content.className).toBe('');
     expect(localStorageStore.get('sanliurfa:search-results:query')).toBe('urfa');
+  });
+
+  it('clears query and url when clear action is used', async () => {
+    const { root, content } = createRoot();
+    const localStorageStore = new Map<string, string>();
+    const replaceState = vi.fn();
+
+    (globalThis as any).document = {
+      querySelectorAll: () => [root],
+    };
+    (globalThis as any).window = {
+      location: { href: 'https://sanliurfa.com/arama?q=urfa' },
+      history: { replaceState },
+      localStorage: {
+        getItem: (key: string) => localStorageStore.get(key) ?? null,
+        setItem: (key: string, value: string) => localStorageStore.set(key, value),
+        removeItem: (key: string) => localStorageStore.delete(key),
+      },
+    };
+
+    (globalThis as any).fetch = vi.fn(async (input: string) => {
+      if (input.startsWith('/api/search?')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: { success: true, data: { results: [] } },
+          }),
+        };
+      }
+      if (input.startsWith('/api/users/search?')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: { success: true, data: [] },
+          }),
+        };
+      }
+      if (input === '/api/collections?public=true&limit=50') {
+        return {
+          ok: true,
+          json: async () => ({
+            data: { success: true, data: [] },
+          }),
+        };
+      }
+      throw new Error(`Unexpected fetch: ${input}`);
+    });
+
+    const { initSearchResults } = await import('../search-results');
+    initSearchResults();
+    await flushPromises();
+
+    const clearButton = content.querySelector('[data-search-results-clear]');
+    clearButton?.listeners?.click?.[0]?.();
+    await flushPromises();
+
+    expect(content.innerHTML).toContain('Aramaya başlamak için 2 karakter daha girin');
+    expect(localStorageStore.get('sanliurfa:search-results:query')).toBeUndefined();
+    expect(replaceState).toHaveBeenLastCalledWith({}, '', '/arama');
   });
 });

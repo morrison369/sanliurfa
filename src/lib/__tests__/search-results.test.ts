@@ -54,9 +54,11 @@ describe('search-results helpers', () => {
       collections: [{ id: 'c1', name: 'Urfa Gezi', description: 'En iyi rotalar' }],
     });
 
-    expect(empty).toContain('En az 2 karakter girin');
+    expect(empty).toContain('Aramaya başlamak için 1 karakter daha girin');
     expect(filled).toContain('Balıklıgöl');
     expect(filled).toContain('Ayşe Demir');
     expect(filled).toContain('Urfa Gezi');
+    expect(filled).toContain('Arama özeti');
+    expect(filled).toContain('"urfa" için 3 sonuç bulundu');
   });
 });
