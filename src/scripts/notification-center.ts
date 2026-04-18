@@ -6,6 +6,7 @@ import {
   type NotificationCenterState,
 } from '../lib/notification-center';
 import { readJsonSafely, retryOnce } from './shared/async-ui';
+import { bindAll } from './shared/bind-events';
 
 type NotificationCenterRoot = HTMLElement & { dataset: DOMStringMap };
 const NOTIFICATION_CENTER_RETRY_DELAY_MS = 200;
@@ -287,7 +288,7 @@ function undoArchiveVisible(root: NotificationCenterRoot) {
 }
 
 function bindActions(root: NotificationCenterRoot, content: HTMLElement) {
-  content.querySelectorAll<HTMLElement>('[data-notifications-filter]').forEach((button) => {
+  bindAll<HTMLElement>(content, '[data-notifications-filter]', (button) => {
     button.addEventListener('click', () => {
       const mode = button.dataset.notificationsFilter === 'archived';
       if ((root.dataset.showArchived === 'true') === mode) return;
@@ -297,7 +298,7 @@ function bindActions(root: NotificationCenterRoot, content: HTMLElement) {
     });
   });
 
-  content.querySelectorAll<HTMLElement>('[data-notification-center-refresh]').forEach((button) => {
+  bindAll<HTMLElement>(content, '[data-notification-center-refresh]', (button) => {
     button.addEventListener('click', () => {
       setError(root, null);
       setNotice(root, null);
@@ -305,7 +306,7 @@ function bindActions(root: NotificationCenterRoot, content: HTMLElement) {
     });
   });
 
-  content.querySelectorAll<HTMLElement>('[data-notification-center-reset-filter]').forEach((button) => {
+  bindAll<HTMLElement>(content, '[data-notification-center-reset-filter]', (button) => {
     button.addEventListener('click', () => {
       root.dataset.showArchived = 'false';
       setError(root, null);
@@ -314,7 +315,7 @@ function bindActions(root: NotificationCenterRoot, content: HTMLElement) {
     });
   });
 
-  content.querySelectorAll<HTMLElement>('[data-notification-center-retry]').forEach((button) => {
+  bindAll<HTMLElement>(content, '[data-notification-center-retry]', (button) => {
     button.addEventListener('click', () => {
       setError(root, null);
       setNotice(root, null);
@@ -322,27 +323,27 @@ function bindActions(root: NotificationCenterRoot, content: HTMLElement) {
     });
   });
 
-  content.querySelectorAll<HTMLElement>('[data-notification-center-mark-all]').forEach((button) => {
+  bindAll<HTMLElement>(content, '[data-notification-center-mark-all]', (button) => {
     button.addEventListener('click', () => {
       if (root.dataset.actionInProgress) return;
       void runMarkAllAsRead(root);
     });
   });
 
-  content.querySelectorAll<HTMLElement>('[data-notification-center-archive-visible]').forEach((button) => {
+  bindAll<HTMLElement>(content, '[data-notification-center-archive-visible]', (button) => {
     button.addEventListener('click', () => {
       if (root.dataset.actionInProgress) return;
       runArchiveVisible(root);
     });
   });
 
-  content.querySelectorAll<HTMLElement>('[data-notification-center-undo]').forEach((button) => {
+  bindAll<HTMLElement>(content, '[data-notification-center-undo]', (button) => {
     button.addEventListener('click', () => {
       undoArchiveVisible(root);
     });
   });
 
-  content.querySelectorAll<HTMLElement>('[data-notification-action]').forEach((button) => {
+  bindAll<HTMLElement>(content, '[data-notification-action]', (button) => {
     button.addEventListener('click', () => {
       const token = button.dataset.notificationAction;
       if (!token || root.dataset.actionInProgress) return;
