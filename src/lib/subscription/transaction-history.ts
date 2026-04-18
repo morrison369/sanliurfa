@@ -107,7 +107,7 @@ function renderTransactionTypeFilters(
   };
 
   return `
-    <div class="flex flex-wrap gap-2">
+    <div class="mb-4 flex flex-wrap gap-2">
       ${renderButton('', 'Tüm işlemler')}
       ${types
         .map((type) => renderButton(type, getTransactionTypeLabel(type)))
@@ -241,20 +241,46 @@ export function renderTransactionHistory(
   payload: TransactionHistoryPayload,
 ): string {
   const types = getTransactionTypes(payload.transactions);
+  const positiveTransactions = payload.transactions.filter((transaction) => transaction.points_amount > 0);
+  const negativeTransactions = payload.transactions.filter((transaction) => transaction.points_amount < 0);
+  const currentPage = Math.floor(payload.pagination.offset / payload.pagination.limit) + 1;
+  const pageCount = Math.max(1, Math.ceil(payload.pagination.total / payload.pagination.limit));
 
   if (payload.transactions.length === 0) {
     return `
       ${renderTransactionTypeFilters(types, payload.selectedType)}
-      <div class="py-12 text-center text-gray-500">
-        <p class="text-lg">Henüz görüntülenecek işlem geçmişi bulunmuyor.</p>
+      <div class="rounded-lg border border-gray-200 bg-gray-50 py-12 text-center text-gray-500 dark:border-gray-700 dark:bg-gray-800">
+        <p class="text-lg font-medium text-gray-900 dark:text-white">Henüz görüntülenecek işlem geçmişi bulunmuyor.</p>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Puan kazandığınız veya harcadığınız işlemler burada listelenecek.</p>
+        <div class="mt-4 flex flex-wrap justify-center gap-3 text-sm">
+          <a href="/profil/favoriler" class="text-blue-700 transition-colors hover:text-blue-800">Favori mekanlara göz at</a>
+          <a href="/oneriler" class="text-blue-700 transition-colors hover:text-blue-800">Yeni öneriler keşfet</a>
+        </div>
       </div>
     `;
   }
 
   return `
     ${renderTransactionTypeFilters(types, payload.selectedType)}
+    <div class="mb-4 grid gap-3 md:grid-cols-3">
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
+        <p class="text-sm text-gray-600 dark:text-gray-400">Bu görünümde kayıt</p>
+        <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">${payload.transactions.length}</p>
+      </div>
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
+        <p class="text-sm text-gray-600 dark:text-gray-400">Puan kazanımı</p>
+        <p class="mt-1 text-lg font-semibold text-green-700 dark:text-green-400">${positiveTransactions.length}</p>
+      </div>
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
+        <p class="text-sm text-gray-600 dark:text-gray-400">Puan kullanımı</p>
+        <p class="mt-1 text-lg font-semibold text-orange-700 dark:text-orange-400">${negativeTransactions.length}</p>
+      </div>
+    </div>
     <div class="space-y-3">
       ${payload.transactions.map(renderTransactionCard).join('')}
+    </div>
+    <div class="mt-4 text-sm text-gray-500">
+      Sayfa görünümü: ${currentPage} / ${pageCount}
     </div>
     ${renderPagination(payload.pagination)}
   `;
@@ -263,7 +289,12 @@ export function renderTransactionHistory(
 export function renderTransactionHistoryError(message: string): string {
   return `
     <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-      <p class="text-red-800">${message}</p>
+      <p class="font-medium text-red-800">İşlem geçmişi görüntülenemedi.</p>
+      <p class="mt-1 text-red-800">${message}</p>
+      <div class="mt-3 flex flex-wrap gap-3 text-sm">
+        <a href="/profil" class="text-red-800 underline decoration-red-300 underline-offset-2">Profil özetine dön</a>
+        <a href="/iletisim" class="text-red-800 underline decoration-red-300 underline-offset-2">Destek alın</a>
+      </div>
     </div>
   `;
 }

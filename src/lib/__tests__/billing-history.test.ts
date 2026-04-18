@@ -38,5 +38,7 @@ describe('billing history helpers', () => {
     expect(html).toContain('Ödendi');
     expect(html).toContain('Aylık');
     expect(html).toContain('Tüm kayıtlar');
+    expect(html).toContain('Toplam başarılı ödeme');
+    expect(html).toContain('Son ödeme kaydı');
   });
 });

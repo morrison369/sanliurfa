@@ -112,6 +112,15 @@ function renderBillingStatusFilters(
   `;
 }
 
+function renderBillingSupportLinks(): string {
+  return `
+    <div class="mt-4 flex flex-wrap justify-center gap-3 text-sm">
+      <a href="/fiyatlandirma" class="text-blue-700 transition-colors hover:text-blue-800">Planları incele</a>
+      <a href="/iletisim" class="text-blue-700 transition-colors hover:text-blue-800">Destek alın</a>
+    </div>
+  `;
+}
+
 function renderBillingRow(record: BillingRecord): string {
   return `
     <tr class="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
@@ -130,11 +139,21 @@ export function renderBillingHistory(payload: BillingHistoryPayload): string {
   const filteredRecords = payload.selectedStatus
     ? payload.records.filter((record) => record.status === payload.selectedStatus)
     : payload.records;
+  const paidRecords = payload.records.filter((record) => {
+    const normalized = record.status.toLowerCase();
+    return normalized === 'paid' || normalized === 'succeeded' || normalized === 'completed';
+  });
+  const totalPaid = paidRecords.reduce((sum, record) => sum + record.amount, 0);
+  const latestRecord = [...payload.records].sort((left, right) =>
+    new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+  )[0];
 
   if (payload.records.length === 0) {
     return `
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800">
-        <p class="text-gray-600 dark:text-gray-400">Henüz ödeme geçmişi kaydı bulunmuyor.</p>
+        <p class="text-lg font-medium text-gray-900 dark:text-white">Henüz ödeme geçmişi kaydı bulunmuyor.</p>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">İlk ödemeniz tamamlandığında fatura ve dönem kayıtlarınız burada listelenecek.</p>
+        ${renderBillingSupportLinks()}
       </div>
     `;
   }
@@ -143,13 +162,26 @@ export function renderBillingHistory(payload: BillingHistoryPayload): string {
     return `
       ${renderBillingStatusFilters(statuses, payload.selectedStatus)}
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800">
-        <p class="text-gray-600 dark:text-gray-400">Bu durum için ödeme kaydı bulunmuyor.</p>
+        <p class="text-lg font-medium text-gray-900 dark:text-white">Bu durum için ödeme kaydı bulunmuyor.</p>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">Başka bir durum filtresi seçebilir veya tüm ödeme kayıtlarını görüntüleyebilirsiniz.</p>
       </div>
     `;
   }
 
   return `
     ${renderBillingStatusFilters(statuses, payload.selectedStatus)}
+    <div class="mb-4 grid gap-3 md:grid-cols-2">
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
+        <p class="text-sm text-gray-600 dark:text-gray-400">Toplam başarılı ödeme</p>
+        <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">₺${totalPaid.toFixed(2)}</p>
+      </div>
+      <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
+        <p class="text-sm text-gray-600 dark:text-gray-400">Son ödeme kaydı</p>
+        <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">${
+          latestRecord ? formatBillingDate(latestRecord.createdAt) : '-'
+        }</p>
+      </div>
+    </div>
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead>
@@ -173,6 +205,10 @@ export function renderBillingHistoryError(message: string): string {
     <div class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
       <p class="mb-1 font-medium text-red-800 dark:text-red-200">Ödeme geçmişi görüntülenemedi.</p>
       <p class="text-red-700 dark:text-red-300">${message}</p>
+      <div class="mt-3 flex flex-wrap gap-3 text-sm">
+        <a href="/iletisim" class="text-red-800 underline decoration-red-300 underline-offset-2 dark:text-red-200">Destek ekibiyle iletişime geçin</a>
+        <a href="/fiyatlandirma" class="text-red-800 underline decoration-red-300 underline-offset-2 dark:text-red-200">Plan ayrıntılarını kontrol edin</a>
+      </div>
     </div>
   `;
 }
