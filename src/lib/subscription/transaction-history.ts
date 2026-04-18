@@ -20,6 +20,8 @@ export interface TransactionHistoryPayload {
   transactions: LoyaltyTransaction[];
   pagination: LoyaltyTransactionPagination;
   selectedType: string;
+  dateFrom: string;
+  dateTo: string;
 }
 
 const DEFAULT_PAGINATION: LoyaltyTransactionPagination = {
@@ -86,9 +88,9 @@ function getTransactionTypeLabel(type: string): string {
 function renderTransactionTypeFilters(
   types: string[],
   selectedType: string,
+  dateFrom: string,
+  dateTo: string,
 ): string {
-  if (types.length === 0) return '';
-
   const renderButton = (type: string, label: string) => {
     const active = selectedType === type;
     return `
@@ -107,13 +109,44 @@ function renderTransactionTypeFilters(
   };
 
   return `
-    <div class="mb-4 flex flex-wrap gap-2">
-      ${renderButton('', 'Tüm işlemler')}
-      ${types
-        .map((type) => renderButton(type, getTransactionTypeLabel(type)))
-        .join('')}
+    <div class="mb-4 flex flex-col gap-3">
+      <div class="flex flex-wrap gap-2">
+        ${renderButton('', 'Tüm işlemler')}
+        ${types
+          .map((type) => renderButton(type, getTransactionTypeLabel(type)))
+          .join('')}
+      </div>
+      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div class="flex flex-wrap gap-3">
+          <label class="flex flex-col gap-1 text-sm text-gray-600 dark:text-gray-400">
+            <span>Başlangıç tarihi</span>
+            <input type="date" value="${dateFrom}" data-transaction-date-from class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900" />
+          </label>
+          <label class="flex flex-col gap-1 text-sm text-gray-600 dark:text-gray-400">
+            <span>Bitiş tarihi</span>
+            <input type="date" value="${dateTo}" data-transaction-date-to class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900" />
+          </label>
+        </div>
+        <button type="button" data-transaction-export class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
+          Görünümü dışa aktar
+        </button>
+      </div>
     </div>
   `;
+}
+
+function filterTransactionsByDateRange(
+  transactions: LoyaltyTransaction[],
+  dateFrom: string,
+  dateTo: string,
+) {
+  const fromTime = dateFrom ? new Date(`${dateFrom}T00:00:00`).getTime() : Number.NEGATIVE_INFINITY;
+  const toTime = dateTo ? new Date(`${dateTo}T23:59:59`).getTime() : Number.POSITIVE_INFINITY;
+
+  return transactions.filter((transaction) => {
+    const createdAt = new Date(transaction.created_at).getTime();
+    return createdAt >= fromTime && createdAt <= toTime;
+  });
 }
 
 function renderTransactionCard(transaction: LoyaltyTransaction): string {
@@ -241,14 +274,15 @@ export function renderTransactionHistory(
   payload: TransactionHistoryPayload,
 ): string {
   const types = getTransactionTypes(payload.transactions);
-  const positiveTransactions = payload.transactions.filter((transaction) => transaction.points_amount > 0);
-  const negativeTransactions = payload.transactions.filter((transaction) => transaction.points_amount < 0);
+  const visibleTransactions = filterTransactionsByDateRange(payload.transactions, payload.dateFrom, payload.dateTo);
+  const positiveTransactions = visibleTransactions.filter((transaction) => transaction.points_amount > 0);
+  const negativeTransactions = visibleTransactions.filter((transaction) => transaction.points_amount < 0);
   const currentPage = Math.floor(payload.pagination.offset / payload.pagination.limit) + 1;
   const pageCount = Math.max(1, Math.ceil(payload.pagination.total / payload.pagination.limit));
 
   if (payload.transactions.length === 0) {
     return `
-      ${renderTransactionTypeFilters(types, payload.selectedType)}
+      ${renderTransactionTypeFilters(types, payload.selectedType, payload.dateFrom, payload.dateTo)}
       <div class="rounded-lg border border-gray-200 bg-gray-50 py-12 text-center text-gray-500 dark:border-gray-700 dark:bg-gray-800">
         <p class="text-lg font-medium text-gray-900 dark:text-white">Henüz görüntülenecek işlem geçmişi bulunmuyor.</p>
         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Puan kazandığınız veya harcadığınız işlemler burada listelenecek.</p>
@@ -260,12 +294,22 @@ export function renderTransactionHistory(
     `;
   }
 
+  if (visibleTransactions.length === 0) {
+    return `
+      ${renderTransactionTypeFilters(types, payload.selectedType, payload.dateFrom, payload.dateTo)}
+      <div class="rounded-lg border border-gray-200 bg-gray-50 py-12 text-center text-gray-500 dark:border-gray-700 dark:bg-gray-800">
+        <p class="text-lg font-medium text-gray-900 dark:text-white">Bu tarih aralığında işlem bulunmuyor.</p>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Farklı bir tarih aralığı seçebilir veya filtreleri temizleyebilirsiniz.</p>
+      </div>
+    `;
+  }
+
   return `
-    ${renderTransactionTypeFilters(types, payload.selectedType)}
+    ${renderTransactionTypeFilters(types, payload.selectedType, payload.dateFrom, payload.dateTo)}
     <div class="mb-4 grid gap-3 md:grid-cols-3">
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
         <p class="text-sm text-gray-600 dark:text-gray-400">Bu görünümde kayıt</p>
-        <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">${payload.transactions.length}</p>
+        <p class="mt-1 text-lg font-semibold text-gray-900 dark:text-white">${visibleTransactions.length}</p>
       </div>
       <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
         <p class="text-sm text-gray-600 dark:text-gray-400">Puan kazanımı</p>
@@ -276,8 +320,17 @@ export function renderTransactionHistory(
         <p class="mt-1 text-lg font-semibold text-orange-700 dark:text-orange-400">${negativeTransactions.length}</p>
       </div>
     </div>
+    <div class="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
+      <p class="text-sm text-gray-600 dark:text-gray-400">Filtre özeti</p>
+      <p class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
+        ${payload.dateFrom || payload.dateTo ? 'Seçili tarih aralığı uygulanıyor' : 'Tüm tarihler gösteriliyor'}
+      </p>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        ${payload.dateFrom || payload.dateTo ? `${payload.dateFrom || 'başlangıç'} - ${payload.dateTo || 'bugün'}` : 'Bu görünümde tarih filtresi yok.'}
+      </p>
+    </div>
     <div class="space-y-3">
-      ${payload.transactions.map(renderTransactionCard).join('')}
+      ${visibleTransactions.map(renderTransactionCard).join('')}
     </div>
     <div class="mt-4 text-sm text-gray-500">
       Sayfa görünümü: ${currentPage} / ${pageCount}
