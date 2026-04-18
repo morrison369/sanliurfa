@@ -8,6 +8,12 @@ import {
   renderSearchResults,
   type SearchResultsState,
 } from '../lib/search-results';
+import {
+  readStoredJsonArray,
+  readStoredString,
+  writeStoredJsonArray,
+  writeStoredString,
+} from './shared/persisted-ui-state';
 
 type SearchResultsRoot = HTMLElement & { dataset: DOMStringMap };
 
@@ -17,46 +23,19 @@ const SEARCH_RESULTS_RECENT_KEY = 'sanliurfa:search-results:recent-queries';
 const SEARCH_RESULTS_DEBOUNCE_MS = 250;
 
 function readStoredQuery(): string {
-  try {
-    return window.localStorage?.getItem(SEARCH_RESULTS_STORAGE_KEY) ?? '';
-  } catch {
-    return '';
-  }
+  return readStoredString(SEARCH_RESULTS_STORAGE_KEY);
 }
 
 function writeStoredQuery(query: string) {
-  try {
-    if (query.trim()) {
-      window.localStorage?.setItem(SEARCH_RESULTS_STORAGE_KEY, query.trim());
-    } else {
-      window.localStorage?.removeItem(SEARCH_RESULTS_STORAGE_KEY);
-    }
-  } catch {
-    // no-op
-  }
+  writeStoredString(SEARCH_RESULTS_STORAGE_KEY, query.trim());
 }
 
 function readRecentQueries(): string[] {
-  try {
-    const raw = window.localStorage?.getItem(SEARCH_RESULTS_RECENT_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
-  } catch {
-    return [];
-  }
+  return readStoredJsonArray(SEARCH_RESULTS_RECENT_KEY);
 }
 
 function writeRecentQueries(queries: string[]) {
-  try {
-    if (queries.length > 0) {
-      window.localStorage?.setItem(SEARCH_RESULTS_RECENT_KEY, JSON.stringify(queries.slice(0, 5)));
-    } else {
-      window.localStorage?.removeItem(SEARCH_RESULTS_RECENT_KEY);
-    }
-  } catch {
-    // no-op
-  }
+  writeStoredJsonArray(SEARCH_RESULTS_RECENT_KEY, queries, 5);
 }
 
 function rememberRecentQuery(query: string) {

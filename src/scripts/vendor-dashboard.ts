@@ -1,29 +1,23 @@
 import { setElementHtml } from '../lib/admin-dom';
 import { renderVendorDashboard, type VendorDashboardTab } from '../lib/vendor-dashboard';
+import { readDatasetOrStoredTab, writeStoredString } from './shared/persisted-ui-state';
 
 type VendorDashboardRoot = HTMLElement & { dataset: DOMStringMap };
 const VENDOR_DASHBOARD_TAB_STORAGE_KEY = 'sanliurfa:vendor-dashboard:active-tab';
+const VENDOR_DASHBOARD_TABS = ['overview', 'listings', 'reviews', 'ads'] as const;
 
 function readTab(root: VendorDashboardRoot): VendorDashboardTab {
-  const tab = root.dataset.activeTab;
-  return tab === 'listings' || tab === 'reviews' || tab === 'ads' ? tab : 'overview';
-}
-
-function readStoredTab(): VendorDashboardTab {
-  try {
-    const tab = window.localStorage.getItem(VENDOR_DASHBOARD_TAB_STORAGE_KEY);
-    return tab === 'listings' || tab === 'reviews' || tab === 'ads' ? tab : 'overview';
-  } catch {
-    return 'overview';
-  }
+  return readDatasetOrStoredTab(
+    root,
+    'activeTab',
+    VENDOR_DASHBOARD_TAB_STORAGE_KEY,
+    VENDOR_DASHBOARD_TABS,
+    'overview',
+  );
 }
 
 function writeStoredTab(tab: VendorDashboardTab) {
-  try {
-    window.localStorage.setItem(VENDOR_DASHBOARD_TAB_STORAGE_KEY, tab);
-  } catch {
-    // no-op
-  }
+  writeStoredString(VENDOR_DASHBOARD_TAB_STORAGE_KEY, tab);
 }
 
 function renderRoot(root: VendorDashboardRoot) {
@@ -67,7 +61,7 @@ export function initVendorDashboard() {
   for (const root of roots) {
     if (root.dataset.initialized === 'true') continue;
     root.dataset.initialized = 'true';
-    root.dataset.activeTab = readStoredTab();
+    root.dataset.activeTab = readTab(root);
     renderRoot(root);
   }
 }
