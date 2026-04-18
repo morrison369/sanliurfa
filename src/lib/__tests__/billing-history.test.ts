@@ -27,6 +27,8 @@ describe('billing history helpers', () => {
           amount: 99,
           currency: 'TRY',
           billingCycle: 'monthly',
+          invoiceNumber: 'INV-001',
+          paymentMethod: 'Visa •••• 4242',
           status: 'paid',
           createdAt: '2026-04-16T00:00:00.000Z',
         },
@@ -40,5 +42,9 @@ describe('billing history helpers', () => {
     expect(html).toContain('Tüm kayıtlar');
     expect(html).toContain('Toplam başarılı ödeme');
     expect(html).toContain('Son ödeme kaydı');
+    expect(html).toContain('INV-001');
+    expect(html).toContain('Visa •••• 4242');
+    expect(html).toContain('Ödeme yöntemi');
+    expect(html).toContain('Görünümü dışa aktar');
   });
 });

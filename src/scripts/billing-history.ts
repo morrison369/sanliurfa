@@ -8,6 +8,14 @@ import {
 type BillingHistoryRoot = HTMLElement & { dataset: DOMStringMap };
 const BILLING_STATUS_STORAGE_KEY = 'sanliurfa:billing-history:selected-status';
 
+function getFilteredRecords(root: BillingHistoryRoot) {
+  const selectedStatus = readSelectedStatus(root);
+  const records = readRecords(root);
+  return selectedStatus
+    ? records.filter((record: any) => record.status === selectedStatus)
+    : records;
+}
+
 function readSelectedStatus(root: BillingHistoryRoot): string {
   if (root.dataset.selectedStatus) return root.dataset.selectedStatus;
 
@@ -48,6 +56,36 @@ function writeRecords(root: BillingHistoryRoot, records: unknown[]) {
   root.dataset.billingJson = JSON.stringify(records);
 }
 
+function exportBillingView(root: BillingHistoryRoot) {
+  const selectedStatus = readSelectedStatus(root);
+  const records = getFilteredRecords(root);
+  if (records.length === 0) return;
+
+  const header = ['Tarih', 'Tutar', 'Para Birimi', 'Dönem', 'Fatura', 'Ödeme Yöntemi', 'Durum'];
+  const rows = records.map((record: any) => [
+    record.createdAt || '',
+    String(record.amount ?? ''),
+    record.currency || '',
+    record.billingCycle || '',
+    record.invoiceNumber || '',
+    record.paymentMethod || '',
+    record.status || '',
+  ]);
+  const csv = [header, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = selectedStatus
+    ? `odeme-gecmisi-${selectedStatus}.csv`
+    : 'odeme-gecmisi.csv';
+  link.click();
+  window.URL.revokeObjectURL(url);
+}
+
 async function renderBillingHistoryRoot(root: BillingHistoryRoot) {
   const loading = root.querySelector<HTMLElement>('[data-billing-loading]');
   const content = root.querySelector<HTMLElement>('[data-billing-content]');
@@ -79,6 +117,12 @@ async function renderBillingHistoryRoot(root: BillingHistoryRoot) {
       button.addEventListener('click', () => {
         writeSelectedStatus(root, button.dataset.billingStatus || '');
         void renderBillingHistoryRoot(root);
+      });
+    });
+
+    content.querySelectorAll<HTMLElement>('[data-billing-export]').forEach((button) => {
+      button.addEventListener('click', () => {
+        exportBillingView(root);
       });
     });
   } catch (error) {

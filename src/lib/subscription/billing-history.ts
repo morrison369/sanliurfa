@@ -82,8 +82,6 @@ function renderBillingStatusFilters(
   statuses: string[],
   selectedStatus: string,
 ): string {
-  if (statuses.length === 0) return '';
-
   const renderButton = (status: string, label: string) => {
     const active = selectedStatus === status;
 
@@ -103,11 +101,16 @@ function renderBillingStatusFilters(
   };
 
   return `
-    <div class="mb-4 flex flex-wrap gap-2">
-      ${renderButton('', 'Tüm kayıtlar')}
-      ${statuses
-        .map((status) => renderButton(status, getBillingStatusLabel(status)))
-        .join('')}
+    <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div class="flex flex-wrap gap-2">
+        ${renderButton('', 'Tüm kayıtlar')}
+        ${statuses
+          .map((status) => renderButton(status, getBillingStatusLabel(status)))
+          .join('')}
+      </div>
+      <button type="button" data-billing-export class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
+        Görünümü dışa aktar
+      </button>
     </div>
   `;
 }
@@ -122,6 +125,9 @@ function renderBillingSupportLinks(): string {
 }
 
 function renderBillingRow(record: BillingRecord): string {
+  const invoice = record.invoiceNumber?.trim() || 'Fatura bekleniyor';
+  const paymentMethod = record.paymentMethod?.trim() || 'Yöntem bilgisi yok';
+
   return `
     <tr class="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
       <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">${formatBillingDate(record.createdAt)}</td>
@@ -129,6 +135,8 @@ function renderBillingRow(record: BillingRecord): string {
       <td class="px-4 py-3 text-sm capitalize text-gray-600 dark:text-gray-400">${
         record.billingCycle === 'monthly' ? 'Aylık' : 'Yıllık'
       }</td>
+      <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">${invoice}</td>
+      <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">${paymentMethod}</td>
       <td class="px-4 py-3">${renderBillingStatus(record.status)}</td>
     </tr>
   `;
@@ -182,6 +190,15 @@ export function renderBillingHistory(payload: BillingHistoryPayload): string {
         }</p>
       </div>
     </div>
+    <div class="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
+      <p class="text-sm text-gray-600 dark:text-gray-400">Görünüm özeti</p>
+      <p class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
+        ${payload.selectedStatus ? `${getBillingStatusLabel(payload.selectedStatus)} kayıtları` : 'Tüm ödeme kayıtları'}
+      </p>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        Fatura numarası ve ödeme yöntemi ayrıntıları bu görünümde listelenir.
+      </p>
+    </div>
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead>
@@ -189,6 +206,8 @@ export function renderBillingHistory(payload: BillingHistoryPayload): string {
             <th class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Tarih</th>
             <th class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Tutar</th>
             <th class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Dönem</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Fatura</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Ödeme yöntemi</th>
             <th class="px-4 py-3 text-left font-semibold text-gray-900 dark:text-white">Durum</th>
           </tr>
         </thead>
