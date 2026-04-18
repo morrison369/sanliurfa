@@ -134,6 +134,52 @@ describe('messaging inbox script', () => {
     expect(localStorageStore.get('sanliurfa:messaging-inbox:selected-conversation')).toBe('conv-2');
   });
 
+  it('clears unread count when stored conversation is opened on load', async () => {
+    const { root, content } = createMessagingRoot();
+    const localStorageStore = new Map<string, string>();
+    localStorageStore.set('sanliurfa:messaging-inbox:selected-conversation', 'conv-1');
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [
+            { id: 'conv-1', full_name: 'Ali', content: 'Selam', msg_time: '2026-04-17T08:10:00.000Z', unread: '3' },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [
+            { id: 'msg-1', content: 'Selam', created_at: '2026-04-17T08:11:00.000Z', sender_id: 'user-2' },
+          ],
+        }),
+      });
+
+    (globalThis as any).fetch = fetchMock;
+    (globalThis as any).document = {
+      querySelectorAll: () => [root],
+    };
+    (globalThis as any).window = {
+      localStorage: {
+        getItem: (key: string) => localStorageStore.get(key) ?? null,
+        setItem: (key: string, value: string) => localStorageStore.set(key, value),
+        removeItem: (key: string) => localStorageStore.delete(key),
+      },
+    };
+    (globalThis as any).setInterval = vi.fn(() => 1);
+
+    const { initMessagingInbox } = await import('../messaging-inbox');
+    initMessagingInbox();
+    await flush();
+
+    expect(content.innerHTML).toContain('Ali');
+    expect(content.innerHTML).not.toContain('>3</span>');
+  });
+
   it('shows retry action when initial load fails', async () => {
     const { root, content } = createMessagingRoot();
     const localStorageStore = new Map<string, string>();
