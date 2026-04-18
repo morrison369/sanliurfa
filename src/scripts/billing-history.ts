@@ -1,4 +1,3 @@
-import { setElementClassName, setElementHtml } from '../lib/admin-dom';
 import {
   extractBillingHistory,
   renderBillingHistory,
@@ -11,6 +10,7 @@ import {
   writeJsonArray,
   writeStoredDatasetValue,
 } from './shared/history-view';
+import { getRootPanels, renderRootContent } from './shared/root-render';
 
 type BillingHistoryRoot = HTMLElement & { dataset: DOMStringMap };
 const BILLING_STATUS_STORAGE_KEY = 'sanliurfa:billing-history:selected-status';
@@ -62,8 +62,7 @@ function exportBillingView(root: BillingHistoryRoot) {
 }
 
 async function renderBillingHistoryRoot(root: BillingHistoryRoot) {
-  const loading = root.querySelector<HTMLElement>('[data-billing-loading]');
-  const content = root.querySelector<HTMLElement>('[data-billing-content]');
+  const { loading, content } = getRootPanels(root, '[data-billing-loading]', '[data-billing-content]');
   if (!loading || !content) return;
 
   try {
@@ -80,36 +79,38 @@ async function renderBillingHistoryRoot(root: BillingHistoryRoot) {
       writeRecords(root, records);
     }
 
-    setElementHtml(
-      content,
-      renderBillingHistory({
+    renderRootContent({
+      root,
+      contentSelector: '[data-billing-content]',
+      loadingSelector: '[data-billing-loading]',
+      html: renderBillingHistory({
         records,
         selectedStatus,
       }),
-    );
+      bind: (nextContent) => {
+        nextContent.querySelectorAll<HTMLElement>('[data-billing-status]').forEach((button) => {
+          button.addEventListener('click', () => {
+            writeSelectedStatus(root, button.dataset.billingStatus || '');
+            void renderBillingHistoryRoot(root);
+          });
+        });
 
-    content.querySelectorAll<HTMLElement>('[data-billing-status]').forEach((button) => {
-      button.addEventListener('click', () => {
-        writeSelectedStatus(root, button.dataset.billingStatus || '');
-        void renderBillingHistoryRoot(root);
-      });
-    });
-
-    content.querySelectorAll<HTMLElement>('[data-billing-export]').forEach((button) => {
-      button.addEventListener('click', () => {
-        exportBillingView(root);
-      });
+        nextContent.querySelectorAll<HTMLElement>('[data-billing-export]').forEach((button) => {
+          button.addEventListener('click', () => {
+            exportBillingView(root);
+          });
+        });
+      },
     });
   } catch (error) {
-    setElementHtml(
-      content,
-      renderBillingHistoryError(
+    renderRootContent({
+      root,
+      contentSelector: '[data-billing-content]',
+      loadingSelector: '[data-billing-loading]',
+      html: renderBillingHistoryError(
         error instanceof Error ? error.message : 'Ödeme geçmişi yüklenemedi',
       ),
-    );
-  } finally {
-    setElementClassName(loading, 'hidden');
-    setElementClassName(content, '');
+    });
   }
 }
 

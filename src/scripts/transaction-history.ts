@@ -1,4 +1,3 @@
-import { setElementClassName, setElementHtml } from '../lib/admin-dom';
 import {
   extractTransactionHistoryData,
   renderTransactionHistory,
@@ -12,6 +11,7 @@ import {
   writeJsonArray,
   writeStoredDatasetValue,
 } from './shared/history-view';
+import { getRootPanels, renderRootContent } from './shared/root-render';
 
 type TransactionHistoryRoot = HTMLElement & {
   dataset: DOMStringMap;
@@ -107,80 +107,85 @@ async function fetchTransactions(root: TransactionHistoryRoot) {
 }
 
 async function renderTransactionHistoryRoot(root: TransactionHistoryRoot) {
-  const loading = root.querySelector<HTMLElement>('[data-transaction-loading]');
-  const content = root.querySelector<HTMLElement>('[data-transaction-content]');
+  const { loading, content } = getRootPanels(
+    root,
+    '[data-transaction-loading]',
+    '[data-transaction-content]',
+  );
   if (!loading || !content) return;
 
-  setElementClassName(loading, 'space-y-3');
-  setElementClassName(content, 'hidden');
+  loading.className = 'space-y-3';
+  content.className = 'hidden';
 
   try {
     const { transactions, pagination } = await fetchTransactions(root);
     setPaginationState(root, pagination);
     writeTransactions(root, transactions);
 
-    setElementHtml(
-      content,
-      renderTransactionHistory({
+    renderRootContent({
+      root,
+      contentSelector: '[data-transaction-content]',
+      loadingSelector: '[data-transaction-loading]',
+      html: renderTransactionHistory({
         transactions,
         pagination,
         selectedType: root.dataset.selectedType || '',
         dateFrom: root.dataset.dateFrom || '',
         dateTo: root.dataset.dateTo || '',
       }),
-    );
+      bind: (nextContent) => {
+        nextContent.querySelectorAll<HTMLElement>('[data-transaction-type]').forEach((button) => {
+          button.addEventListener('click', () => {
+            writeSelectedType(root, button.dataset.transactionType || '');
+            root.dataset.offset = '0';
+            void renderTransactionHistoryRoot(root);
+          });
+        });
 
-    content.querySelectorAll<HTMLElement>('[data-transaction-type]').forEach((button) => {
-      button.addEventListener('click', () => {
-        writeSelectedType(root, button.dataset.transactionType || '');
-        root.dataset.offset = '0';
-        void renderTransactionHistoryRoot(root);
-      });
-    });
+        nextContent.querySelectorAll<HTMLInputElement>('[data-transaction-date-from]').forEach((input) => {
+          input.addEventListener('change', () => {
+            writeStoredValue(root, 'dateFrom', TRANSACTION_DATE_FROM_STORAGE_KEY, input.value || '');
+            void renderTransactionHistoryRoot(root);
+          });
+        });
 
-    content.querySelectorAll<HTMLInputElement>('[data-transaction-date-from]').forEach((input) => {
-      input.addEventListener('change', () => {
-        writeStoredValue(root, 'dateFrom', TRANSACTION_DATE_FROM_STORAGE_KEY, input.value || '');
-        void renderTransactionHistoryRoot(root);
-      });
-    });
+        nextContent.querySelectorAll<HTMLInputElement>('[data-transaction-date-to]').forEach((input) => {
+          input.addEventListener('change', () => {
+            writeStoredValue(root, 'dateTo', TRANSACTION_DATE_TO_STORAGE_KEY, input.value || '');
+            void renderTransactionHistoryRoot(root);
+          });
+        });
 
-    content.querySelectorAll<HTMLInputElement>('[data-transaction-date-to]').forEach((input) => {
-      input.addEventListener('change', () => {
-        writeStoredValue(root, 'dateTo', TRANSACTION_DATE_TO_STORAGE_KEY, input.value || '');
-        void renderTransactionHistoryRoot(root);
-      });
-    });
+        nextContent.querySelectorAll<HTMLElement>('[data-transaction-export]').forEach((button) => {
+          button.addEventListener('click', () => {
+            exportTransactionView(root);
+          });
+        });
 
-    content.querySelectorAll<HTMLElement>('[data-transaction-export]').forEach((button) => {
-      button.addEventListener('click', () => {
-        exportTransactionView(root);
-      });
-    });
+        nextContent.querySelectorAll<HTMLElement>('[data-transaction-page]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const state = getPaginationState(root);
+            if (button.dataset.transactionPage === 'prev') {
+              root.dataset.offset = String(Math.max(0, state.offset - state.limit));
+            } else {
+              const maxOffset = Math.max(0, (Math.ceil(state.total / state.limit) - 1) * state.limit);
+              root.dataset.offset = String(Math.min(maxOffset, state.offset + state.limit));
+            }
 
-    content.querySelectorAll<HTMLElement>('[data-transaction-page]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const state = getPaginationState(root);
-        if (button.dataset.transactionPage === 'prev') {
-          root.dataset.offset = String(Math.max(0, state.offset - state.limit));
-        } else {
-          const maxOffset = Math.max(0, (Math.ceil(state.total / state.limit) - 1) * state.limit);
-          root.dataset.offset = String(Math.min(maxOffset, state.offset + state.limit));
-        }
-
-        void renderTransactionHistoryRoot(root);
-      });
+            void renderTransactionHistoryRoot(root);
+          });
+        });
+      },
     });
   } catch (error) {
-    setElementHtml(
-      content,
-      renderTransactionHistoryError(
+    renderRootContent({
+      root,
+      contentSelector: '[data-transaction-content]',
+      loadingSelector: '[data-transaction-loading]',
+      html: renderTransactionHistoryError(
         error instanceof Error ? error.message : 'İşlem geçmişi yüklenemedi',
       ),
-    );
-  } finally {
-    setElementClassName(loading, 'hidden');
-    setElementClassName(content, '');
+    });
   }
 }
 

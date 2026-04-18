@@ -1,4 +1,3 @@
-import { setElementClassName, setElementHtml } from '../lib/admin-dom';
 import {
   createSearchResultsState,
   extractCollectionResults,
@@ -14,6 +13,7 @@ import {
   writeStoredJsonArray,
   writeStoredString,
 } from './shared/persisted-ui-state';
+import { getRootPanels, renderRootContent } from './shared/root-render';
 
 type SearchResultsRoot = HTMLElement & { dataset: DOMStringMap };
 
@@ -256,15 +256,23 @@ function bindActions(root: SearchResultsRoot, content: HTMLElement) {
 }
 
 async function renderRoot(root: SearchResultsRoot) {
-  const loading = root.querySelector<HTMLElement>('[data-search-results-loading]');
-  const content = root.querySelector<HTMLElement>('[data-search-results-content]');
+  const { loading, content } = getRootPanels(
+    root,
+    '[data-search-results-loading]',
+    '[data-search-results-content]',
+  );
   if (!loading || !content) return;
 
   const state = getState(root);
-  setElementHtml(content, renderSearchResults(state));
-  bindActions(root, content);
-  setElementClassName(loading, 'hidden');
-  setElementClassName(content, '');
+  renderRootContent({
+    root,
+    contentSelector: '[data-search-results-content]',
+    loadingSelector: '[data-search-results-loading]',
+    html: renderSearchResults(state),
+    bind: (nextContent) => {
+      bindActions(root, nextContent);
+    },
+  });
 }
 
 export function initSearchResults() {
