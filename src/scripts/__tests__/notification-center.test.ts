@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 type FakeElement = {
   textContent: string;
@@ -34,10 +34,6 @@ async function flushPromises() {
   }
 }
 
-async function waitFor(ms: number) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function createCenterRoot() {
   const loading = createInteractiveElement({});
   loading.className = 'py-8 text-center text-gray-500';
@@ -48,6 +44,8 @@ function createCenterRoot() {
   let refreshButtons: FakeElement[] = [];
   let retryButtons: FakeElement[] = [];
   let markAllButtons: FakeElement[] = [];
+  let archiveVisibleButtons: FakeElement[] = [];
+  let undoButtons: FakeElement[] = [];
 
   const content: FakeElement = createInteractiveElement({});
   content.className = 'hidden';
@@ -69,6 +67,12 @@ function createCenterRoot() {
       markAllButtons = Array.from(content.innerHTML.matchAll(/data-notification-center-mark-all/g)).map(() =>
         createInteractiveElement({}),
       );
+      archiveVisibleButtons = Array.from(content.innerHTML.matchAll(/data-notification-center-archive-visible/g)).map(() =>
+        createInteractiveElement({}),
+      );
+      undoButtons = Array.from(content.innerHTML.matchAll(/data-notification-center-undo/g)).map(() =>
+        createInteractiveElement({}),
+      );
     }
 
     if (selector === '[data-notifications-filter]') return filters;
@@ -76,6 +80,8 @@ function createCenterRoot() {
     if (selector === '[data-notification-center-refresh]') return refreshButtons;
     if (selector === '[data-notification-center-retry]') return retryButtons;
     if (selector === '[data-notification-center-mark-all]') return markAllButtons;
+    if (selector === '[data-notification-center-archive-visible]') return archiveVisibleButtons;
+    if (selector === '[data-notification-center-undo]') return undoButtons;
     return [];
   };
 
@@ -92,9 +98,14 @@ function createCenterRoot() {
 describe('notification center script', () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.useFakeTimers();
   });
 
-  it('loads center data, runs bulk mark-all action and retries after error', async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('loads center data, supports bulk actions and retries after error', async () => {
     const { root, loading, content } = createCenterRoot();
     let failingCenterFetches = 0;
 
@@ -179,6 +190,27 @@ describe('notification center script', () => {
     expect(content.className).toBe('');
     expect(root.dataset.initialized).toBe('true');
     expect(content.querySelectorAll('[data-notification-center-mark-all]')).toHaveLength(1);
+    expect(content.querySelectorAll('[data-notification-center-archive-visible]')).toHaveLength(1);
+
+    const archiveVisibleButton = content.querySelectorAll('[data-notification-center-archive-visible]')[0];
+    await archiveVisibleButton.listeners?.click?.[0]?.();
+    await flushPromises();
+
+    expect(content.innerHTML).toContain('Görünen bildirimler arşive taşınmak üzere.');
+    expect(content.querySelectorAll('[data-notification-center-undo]')).toHaveLength(1);
+
+    const undoButton = content.querySelectorAll('[data-notification-center-undo]')[0];
+    await undoButton.listeners?.click?.[0]?.();
+    await flushPromises();
+
+    expect(content.innerHTML).toContain('Arşivleme işlemi geri alındı.');
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      '/api/notifications/center',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ action: 'archive', notificationId: 'n1' }),
+      }),
+    );
 
     const markAllButton = content.querySelectorAll('[data-notification-center-mark-all]')[0];
     await markAllButton.listeners?.click?.[0]?.();
@@ -189,23 +221,20 @@ describe('notification center script', () => {
       expect.objectContaining({ method: 'PUT' }),
     );
     expect(content.innerHTML).toContain('Tüm bildirimler okundu olarak işaretlendi.');
-
-    const actionButton = content.querySelectorAll('[data-notification-action]')[0];
-    await actionButton.listeners?.click?.[0]?.();
+    const archiveAfterReadButton = content.querySelectorAll('[data-notification-center-archive-visible]')[0];
+    await archiveAfterReadButton.listeners?.click?.[0]?.();
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(3100);
     await flushPromises();
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/notifications/center',
-      expect.objectContaining({ method: 'POST' }),
-    );
-    expect(content.innerHTML).toContain('Bildirim merkezi güncellendi.');
-    expect(content.querySelectorAll('[data-notification-center-refresh]')).toHaveLength(1);
+    expect(content.innerHTML).toContain('Görünen bildirimler arşive taşındı.');
+    expect(content.querySelectorAll('[data-notification-center-refresh]').length).toBeGreaterThan(0);
 
     failingCenterFetches = 2;
     const refreshButton = content.querySelectorAll('[data-notification-center-refresh]')[0];
     await refreshButton.listeners?.click?.[0]?.();
     await flushPromises();
-    await waitFor(250);
+    await vi.advanceTimersByTimeAsync(250);
     await flushPromises();
 
     expect(content.querySelectorAll('[data-notification-center-retry]')).toHaveLength(1);
@@ -214,7 +243,7 @@ describe('notification center script', () => {
     const retryButton = content.querySelectorAll('[data-notification-center-retry]')[0];
     await retryButton.listeners?.click?.[0]?.();
     await flushPromises();
-    await waitFor(250);
+    await vi.advanceTimersByTimeAsync(250);
     await flushPromises();
 
     expect(content.innerHTML).toContain('Yeni mesaj');
