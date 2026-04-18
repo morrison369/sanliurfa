@@ -78,6 +78,10 @@ function applyOptimisticNotificationAction(
     .filter((item) => (action === 'archive' ? item.id !== notificationId : true));
 }
 
+function applyOptimisticMarkAllAsRead(notifications: NotificationCenterState['notifications']) {
+  return notifications.map((item) => ({ ...item, is_read: true }));
+}
+
 async function loadNotifications(root: NotificationCenterRoot, attempt = 0) {
   const response = await fetch(`/api/notifications/center?archived=${root.dataset.showArchived === 'true'}`);
   const payload = await response.json();
@@ -134,6 +138,42 @@ async function runNotificationAction(root: NotificationCenterRoot, action: 'read
   }
 }
 
+async function runMarkAllAsRead(root: NotificationCenterRoot) {
+  const previousNotifications = readNotifications(root);
+  const previousUnreadCount = Number(root.dataset.unreadCount || '0');
+  const nextNotifications = applyOptimisticMarkAllAsRead(previousNotifications);
+
+  root.dataset.actionInProgress = 'bulk:read-all';
+  setError(root, null);
+  setNotice(root, null);
+  writeNotifications(root, nextNotifications);
+  writeUnreadCount(root, 0);
+  await renderNotificationCenterRoot(root);
+
+  try {
+    const response = await fetch('/api/notifications/read-all', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(extractNotificationCenterMessage(payload, 'İşlem başarısız'));
+    }
+
+    setError(root, null);
+    setNotice(root, 'Tüm bildirimler okundu olarak işaretlendi.');
+  } catch (error) {
+    writeNotifications(root, previousNotifications);
+    writeUnreadCount(root, previousUnreadCount);
+    setError(root, error instanceof Error ? error.message : 'İşlem başarısız');
+    setNotice(root, null);
+  } finally {
+    delete root.dataset.actionInProgress;
+    await renderNotificationCenterRoot(root);
+  }
+}
+
 function bindActions(root: NotificationCenterRoot, content: HTMLElement) {
   content.querySelectorAll<HTMLElement>('[data-notifications-filter]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -159,6 +199,21 @@ function bindActions(root: NotificationCenterRoot, content: HTMLElement) {
       setError(root, null);
       setNotice(root, null);
       void renderNotificationCenterRoot(root);
+    });
+  });
+
+  content.querySelectorAll<HTMLElement>('[data-notification-center-retry]').forEach((button) => {
+    button.addEventListener('click', () => {
+      setError(root, null);
+      setNotice(root, null);
+      void renderNotificationCenterRoot(root);
+    });
+  });
+
+  content.querySelectorAll<HTMLElement>('[data-notification-center-mark-all]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (root.dataset.actionInProgress) return;
+      void runMarkAllAsRead(root);
     });
   });
 
