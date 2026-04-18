@@ -24,6 +24,7 @@ export interface MessagingInboxState {
   error: string | null;
   notice: string | null;
   loading: boolean;
+  actionInProgress: 'send' | 'delete' | null;
 }
 
 function escapeHtml(value: string): string {
@@ -93,6 +94,7 @@ export function createMessagingInboxState(): MessagingInboxState {
     error: null,
     notice: null,
     loading: true,
+    actionInProgress: null,
   };
 }
 
@@ -129,6 +131,8 @@ export function renderMessagingInbox(state: MessagingInboxState, currentUserId: 
   const selectedConversation = state.conversations.find(
     (conversation) => conversation.id === state.selectedConversationId,
   ) ?? null;
+  const sendBusy = state.actionInProgress === 'send';
+  const deleteBusy = state.actionInProgress === 'delete';
 
   const listHtml = filtered.length
     ? filtered.map((conversation) => {
@@ -187,14 +191,14 @@ export function renderMessagingInbox(state: MessagingInboxState, currentUserId: 
             <h3 class="font-semibold text-slate-900">${escapeHtml(selectedConversation?.participantName || 'Konuşma seçilmedi')}</h3>
             <p class="text-xs text-slate-500">${selectedConversation ? 'Direkt mesaj kutusu' : 'Liste sol panelde'}</p>
           </div>
-          ${selectedConversation ? '<button type="button" data-message-delete class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Konuşmayı gizle</button>' : ''}
+          ${selectedConversation ? `<button type="button" data-message-delete ${deleteBusy ? 'disabled' : ''} class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">${deleteBusy ? 'Konuşma gizleniyor...' : 'Konuşmayı gizle'}</button>` : ''}
         </div>
         <div class="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-5"><div class="space-y-4">${messagesHtml}</div></div>
         ${selectedConversation ? `
           <form data-message-send-form class="border-t border-slate-200 bg-white p-4">
             <div class="flex gap-3">
-              <input data-message-draft-input type="text" value="${escapeHtml(state.draft)}" placeholder="Mesajınızı yazın" class="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500" />
-              <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Gönder</button>
+              <input data-message-draft-input type="text" value="${escapeHtml(state.draft)}" ${sendBusy ? 'disabled' : ''} placeholder="Mesajınızı yazın" class="flex-1 rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100" />
+              <button type="submit" ${sendBusy ? 'disabled' : ''} class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400">${sendBusy ? 'Gönderiliyor...' : 'Gönder'}</button>
             </div>
           </form>
         ` : ''}

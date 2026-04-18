@@ -81,6 +81,12 @@ function createMessagingRoot() {
   return { root, content, loading };
 }
 
+async function flush() {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 describe('messaging inbox script', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -111,9 +117,7 @@ describe('messaging inbox script', () => {
 
     const { initMessagingInbox } = await import('../messaging-inbox');
     initMessagingInbox();
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await flush();
 
     expect(content.innerHTML).toContain('Ali');
     expect(content.innerHTML).toContain('Selam');
@@ -121,8 +125,7 @@ describe('messaging inbox script', () => {
 
     const secondConversation = content.querySelectorAll('[data-message-conversation-id]')[1];
     await secondConversation.listeners?.click?.[0]?.();
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await flush();
 
     expect(fetchMock).toHaveBeenCalledWith('/api/messages?limit=50', { credentials: 'same-origin' });
     expect(fetchMock).toHaveBeenCalledWith('/api/messages/conv-2?limit=100', { credentials: 'same-origin' });
@@ -158,5 +161,125 @@ describe('messaging inbox script', () => {
 
     expect(content.innerHTML).toContain('Mesajlaşma alanı güncellenemedi.');
     expect(content.innerHTML).toContain('Tekrar dene');
+  });
+
+  it('optimistically hides conversation and locks submit while sending', async () => {
+    const { root, content } = createMessagingRoot();
+    const localStorageStore = new Map<string, string>();
+    let resolveSendRequest: ((value: unknown) => void) | null = null;
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [
+            { id: 'conv-1', full_name: 'Ali', content: 'Selam', msg_time: '2026-04-17T08:10:00.000Z', unread: '1' },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [
+            { id: 'msg-1', content: 'Selam', created_at: '2026-04-17T08:11:00.000Z', sender_id: 'user-2' },
+          ],
+        }),
+      })
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSendRequest = resolve;
+          }),
+      )
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [
+            { id: 'conv-1', full_name: 'Ali', content: 'Yeni mesaj', msg_time: '2026-04-17T08:15:00.000Z', unread: '1' },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [
+            { id: 'msg-1', content: 'Selam', created_at: '2026-04-17T08:11:00.000Z', sender_id: 'user-2' },
+            { id: 'msg-2', content: 'Yeni mesaj', created_at: '2026-04-17T08:15:00.000Z', sender_id: 'user-1' },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          data: [
+            { id: 'conv-1', full_name: 'Ali', content: 'Yeni mesaj', msg_time: '2026-04-17T08:15:00.000Z', unread: '1' },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
+
+    (globalThis as any).fetch = fetchMock;
+    (globalThis as any).document = {
+      querySelectorAll: () => [root],
+    };
+    (globalThis as any).window = {
+      localStorage: {
+        getItem: (key: string) => localStorageStore.get(key) ?? null,
+        setItem: (key: string, value: string) => localStorageStore.set(key, value),
+        removeItem: (key: string) => localStorageStore.delete(key),
+      },
+    };
+    (globalThis as any).setInterval = vi.fn(() => 1);
+
+    const { initMessagingInbox } = await import('../messaging-inbox');
+    initMessagingInbox();
+    await flush();
+
+    const draftInput = content.querySelector('[data-message-draft-input]');
+    if (!draftInput) throw new Error('draft input missing');
+    draftInput.value = 'Yeni mesaj';
+    await draftInput.listeners?.input?.[0]?.();
+
+    const sendForm = content.querySelector('[data-message-send-form]');
+    if (!sendForm) throw new Error('send form missing');
+    const submitEvent = { preventDefault: vi.fn() };
+    void sendForm.listeners?.submit?.[0]?.(submitEvent);
+    await flush();
+
+    expect(content.innerHTML).toContain('Gönderiliyor...');
+    expect(content.innerHTML).toContain('Mesaj gönderiliyor...');
+
+    resolveSendRequest?.({
+      ok: true,
+      json: async () => ({ success: true }),
+    });
+
+    await flush();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/messages/conv-1',
+      expect.objectContaining({ method: 'POST' }),
+    );
+    expect(content.innerHTML).toContain('Mesaj gönderildi.');
+
+    const deleteButton = content.querySelector('[data-message-delete]');
+    if (!deleteButton) throw new Error('delete button missing');
+    await deleteButton.listeners?.click?.[0]?.();
+    await flush();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/messages/conv-1',
+      expect.objectContaining({ method: 'DELETE', credentials: 'same-origin' }),
+    );
+    expect(content.innerHTML).toContain('Konuşma gizlendi.');
+    expect(content.innerHTML).not.toContain('Ali');
   });
 });

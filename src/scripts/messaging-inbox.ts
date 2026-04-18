@@ -169,6 +169,19 @@ async function reloadInbox(root: MessagingInboxRoot) {
   await refreshRoot(root);
 }
 
+function applyOptimisticConversationHide(state: MessagingInboxState) {
+  const selectedConversationId = state.selectedConversationId;
+  if (!selectedConversationId) return state;
+
+  const nextConversations = state.conversations.filter((conversation) => conversation.id !== selectedConversationId);
+  return applyMessagingInboxSelection({
+    ...state,
+    conversations: nextConversations,
+    selectedConversationId: null,
+    messages: [],
+  });
+}
+
 function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
   for (const button of Array.from(content.querySelectorAll<HTMLElement>('[data-message-conversation-id]'))) {
     button.addEventListener('click', async () => {
@@ -210,18 +223,13 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
     sendForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const state = readState(root);
-      if (!state.selectedConversationId || !state.draft.trim()) return;
+      if (!state.selectedConversationId || !state.draft.trim() || state.actionInProgress) return;
 
-      const response = await fetch(`/api/messages/${state.selectedConversationId}`, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ content: state.draft.trim() }),
-      });
+      const draft = state.draft.trim();
 
       const optimisticMessage = {
         id: `temp-${Date.now()}`,
-        content: state.draft.trim(),
+        content: draft,
         createdAt: new Date().toISOString(),
         senderId: readCurrentUserId(root),
       };
@@ -229,13 +237,14 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
         conversation.id === state.selectedConversationId
           ? {
               ...conversation,
-              lastMessage: state.draft.trim(),
+              lastMessage: draft,
               lastMessageTime: optimisticMessage.createdAt,
             }
           : conversation,
       );
       writeState(root, {
         ...state,
+        actionInProgress: 'send',
         conversations: optimisticConversations,
         messages: [...state.messages, optimisticMessage],
         draft: '',
@@ -244,16 +253,28 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
       });
       await refreshRoot(root);
 
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        const message = payload?.error?.message || payload?.error || 'Mesaj gönderilemedi';
-        writeState(root, { ...state, error: message, notice: null, loading: false });
-        await refreshRoot(root);
-        return;
-      }
+      try {
+        const response = await fetch(`/api/messages/${state.selectedConversationId}`, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ content: draft }),
+        });
 
-      writeState(root, { ...state, draft: '', error: null, notice: 'Mesaj gönderildi.' });
-      await reloadInbox(root);
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) {
+          const message = payload?.error?.message || payload?.error || 'Mesaj gönderilemedi';
+          writeState(root, { ...state, error: message, notice: null, loading: false, actionInProgress: null });
+          await refreshRoot(root);
+          return;
+        }
+
+        writeState(root, { ...state, draft: '', error: null, notice: 'Mesaj gönderildi.', actionInProgress: null });
+        await reloadInbox(root);
+      } catch {
+        writeState(root, { ...state, error: 'Mesaj gönderilemedi', notice: null, loading: false, actionInProgress: null });
+        await refreshRoot(root);
+      }
     });
   }
 
@@ -261,31 +282,41 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
   if (deleteButton) {
     deleteButton.addEventListener('click', async () => {
       const state = readState(root);
-      if (!state.selectedConversationId) return;
+      if (!state.selectedConversationId || state.actionInProgress) return;
 
-      const response = await fetch(`/api/messages/${state.selectedConversationId}`, {
-        method: 'DELETE',
-        credentials: 'same-origin',
-      });
-
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) {
-        const message = payload?.error?.message || payload?.error || 'Konuşma gizlenemedi';
-        writeState(root, { ...state, error: message, notice: null, loading: false });
-        await refreshRoot(root);
-        return;
-      }
-
-      const nextConversations = state.conversations.filter((conversation) => conversation.id !== state.selectedConversationId);
-      writeState(root, applyMessagingInboxSelection({
-        ...state,
-        conversations: nextConversations,
-        selectedConversationId: null,
-        messages: [],
+      const optimisticState = applyMessagingInboxSelection({
+        ...applyOptimisticConversationHide(state),
+        actionInProgress: 'delete',
         error: null,
-        notice: 'Konuşma gizlendi.',
-      }));
+        notice: 'Konuşma gizleniyor...',
+      });
+      writeState(root, optimisticState);
       await refreshRoot(root);
+
+      try {
+        const response = await fetch(`/api/messages/${state.selectedConversationId}`, {
+          method: 'DELETE',
+          credentials: 'same-origin',
+        });
+
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) {
+          const message = payload?.error?.message || payload?.error || 'Konuşma gizlenemedi';
+          writeState(root, { ...state, error: message, notice: null, loading: false, actionInProgress: null });
+          await refreshRoot(root);
+          return;
+        }
+
+        writeState(root, {
+          ...optimisticState,
+          actionInProgress: null,
+          notice: 'Konuşma gizlendi.',
+        });
+        await refreshRoot(root);
+      } catch {
+        writeState(root, { ...state, error: 'Konuşma gizlenemedi', notice: null, loading: false, actionInProgress: null });
+        await refreshRoot(root);
+      }
     });
   }
 
