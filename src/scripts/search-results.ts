@@ -13,6 +13,7 @@ type SearchResultsRoot = HTMLElement & { dataset: DOMStringMap };
 
 const states = new WeakMap<SearchResultsRoot, SearchResultsState>();
 const SEARCH_RESULTS_STORAGE_KEY = 'sanliurfa:search-results:query';
+const SEARCH_RESULTS_DEBOUNCE_MS = 250;
 
 function readStoredQuery(): string {
   try {
@@ -136,17 +137,42 @@ async function performSearch(root: SearchResultsRoot) {
 function bindActions(root: SearchResultsRoot, content: HTMLElement) {
   const state = getState(root);
   const input = content.querySelector<HTMLInputElement>('[data-search-results-input]');
-  if (!input) return;
+  const clearButton = content.querySelector<HTMLElement>('[data-search-results-clear]');
+  const retryButton = content.querySelector<HTMLElement>('[data-search-results-retry]');
 
   let debounce: ReturnType<typeof setTimeout> | undefined;
-  input.addEventListener('input', () => {
-    state.query = input.value;
-    writeStoredQuery(state.query);
-    if (debounce) clearTimeout(debounce);
-    debounce = setTimeout(() => {
+  if (input) {
+    input.addEventListener('input', () => {
+      state.query = input.value;
+      state.error = null;
+      writeStoredQuery(state.query);
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => {
+        void performSearch(root);
+      }, SEARCH_RESULTS_DEBOUNCE_MS);
+    });
+  }
+
+  if (clearButton) {
+    clearButton.addEventListener('click', () => {
+      state.query = '';
+      state.error = null;
+      state.hasSearched = false;
+      state.places = [];
+      state.users = [];
+      state.collections = [];
+      writeStoredQuery('');
+      updateUrl('');
+      void renderRoot(root);
+    });
+  }
+
+  if (retryButton) {
+    retryButton.addEventListener('click', () => {
+      state.error = null;
       void performSearch(root);
-    }, 150);
-  });
+    });
+  }
 }
 
 async function renderRoot(root: SearchResultsRoot) {

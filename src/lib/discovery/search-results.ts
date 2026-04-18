@@ -107,6 +107,30 @@ function renderSearchInput(query: string): string {
   `;
 }
 
+function renderSearchSummary(state: SearchResultsState): string {
+  const total = state.places.length + state.users.length + state.collections.length;
+  if (!state.hasSearched || state.isLoading || state.error || state.query.trim().length < 2) return '';
+
+  return `
+    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/60">
+      <p class="text-sm text-gray-600 dark:text-gray-400">Arama özeti</p>
+      <p class="mt-1 text-base font-semibold text-gray-900 dark:text-white">"${escapeHtml(state.query.trim())}" için ${total} sonuç bulundu</p>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        ${state.places.length} mekan, ${state.users.length} kullanıcı, ${state.collections.length} koleksiyon
+      </p>
+    </div>
+  `;
+}
+
+function renderSearchActions(showClear = true, includeRetry = false): string {
+  return `
+    <div class="mt-4 flex flex-wrap justify-center gap-3">
+      ${includeRetry ? '<button type="button" data-search-results-retry class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">Tekrar dene</button>' : ''}
+      ${showClear ? '<button type="button" data-search-results-clear class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">Aramayı temizle</button>' : ''}
+    </div>
+  `;
+}
+
 function renderPlaces(places: SearchPlace[]): string {
   if (places.length === 0) return '';
 
@@ -197,17 +221,31 @@ export function renderSearchResults(state: SearchResultsState): string {
 
   let body = '';
   if (state.query.trim().length < 2) {
-    body = renderEmptyState('En az 2 karakter girin.', 'text-center text-gray-600 dark:text-gray-400');
+    const remaining = Math.max(0, 2 - state.query.trim().length);
+    body = `
+      ${renderEmptyState(
+        remaining > 0 ? `Aramaya başlamak için ${remaining} karakter daha girin.` : 'En az 2 karakter girin.',
+        'text-center text-gray-600 dark:text-gray-400',
+      )}
+      ${state.query.trim().length > 0 ? renderSearchActions() : ''}
+    `;
   } else if (state.isLoading) {
     body = renderLoadingState('Arama yapılıyor...', 'text-center text-gray-600 dark:text-gray-400');
   } else if (state.error) {
-    body = renderErrorState(state.error);
+    body = `
+      ${renderErrorState(state.error)}
+      ${renderSearchActions(true, true)}
+    `;
   } else if (!state.hasSearched) {
     body = renderEmptyState('Aramaya başlamak için yazın.', 'text-center text-gray-600 dark:text-gray-400');
   } else if (!sections) {
-    body = renderEmptyState('Sonuç bulunamadı.', 'text-center text-gray-600 dark:text-gray-400');
+    body = `
+      ${renderEmptyState('Sonuç bulunamadı.', 'text-center text-gray-600 dark:text-gray-400')}
+      <p class="text-center text-sm text-gray-500 dark:text-gray-400">Farklı bir anahtar kelime deneyebilir veya aramayı temizleyebilirsiniz.</p>
+      ${renderSearchActions()}
+    `;
   } else {
-    body = `<div class="space-y-8">${sections}</div>`;
+    body = `<div class="space-y-8">${renderSearchSummary(state)}${sections}</div>`;
   }
 
   return `<div class="space-y-6">${renderSearchInput(state.query)}${body}</div>`;
