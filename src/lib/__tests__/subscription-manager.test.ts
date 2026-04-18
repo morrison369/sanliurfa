@@ -37,10 +37,14 @@ describe('subscription manager helpers', () => {
       },
       error: null,
       cancelling: false,
+      notice: null,
+      noticeTone: null,
     });
 
     expect(html).toContain('Premium');
     expect(html).toContain('₺199');
+    expect(html).toContain('Plan durumu');
+    expect(html).toContain('Ödeme geçmişini aç');
     expect(extractSubscriptionMessage({ data: { success: true, message: 'Tamam' } }, 'Hata')).toBe('Tamam');
   });
 });
