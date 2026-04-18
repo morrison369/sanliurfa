@@ -3,6 +3,7 @@ import {
   formatNotificationBadgeCount,
   shouldShowNotificationBadge,
 } from '../lib/notification-badge';
+import { realtimeManager } from '../lib/realtime-sse';
 import { emitNotificationUnreadCount, subscribeToNotificationUnread } from './shared/unread-sync';
 
 type NotificationBadgeRoot = HTMLElement & {
@@ -41,6 +42,13 @@ export function initNotificationBadges() {
   const roots = Array.from(
     document.querySelectorAll<NotificationBadgeRoot>('[data-notification-badge]'),
   );
+
+  if (roots.length > 0) {
+    realtimeManager.connectToNotifications();
+    realtimeManager.subscribeToNotifications(({ count }) => {
+      emitNotificationUnreadCount(count);
+    });
+  }
 
   for (const root of roots) {
     if (root.dataset.initialized === 'true') continue;
