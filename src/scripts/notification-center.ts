@@ -15,6 +15,7 @@ function readState(root: NotificationCenterRoot): NotificationCenterState {
     showArchived: root.dataset.showArchived === 'true',
     actionInProgress: root.dataset.actionInProgress || null,
     error: root.dataset.error || null,
+    notice: root.dataset.notice || null,
   };
 }
 
@@ -23,6 +24,14 @@ function setError(root: NotificationCenterRoot, message: string | null) {
     root.dataset.error = message;
   } else {
     delete root.dataset.error;
+  }
+}
+
+function setNotice(root: NotificationCenterRoot, message: string | null) {
+  if (message) {
+    root.dataset.notice = message;
+  } else {
+    delete root.dataset.notice;
   }
 }
 
@@ -39,6 +48,7 @@ async function loadNotifications(root: NotificationCenterRoot) {
 
 async function runNotificationAction(root: NotificationCenterRoot, action: 'read' | 'archive', notificationId: string) {
   root.dataset.actionInProgress = notificationId;
+  setNotice(root, null);
   await renderNotificationCenterRoot(root);
 
   try {
@@ -54,8 +64,13 @@ async function runNotificationAction(root: NotificationCenterRoot, action: 'read
     }
 
     setError(root, null);
+    setNotice(
+      root,
+      action === 'read' ? 'Bildirim okundu olarak işaretlendi.' : 'Bildirim listeden kaldırıldı.',
+    );
   } catch (error) {
     setError(root, error instanceof Error ? error.message : 'İşlem başarısız');
+    setNotice(root, null);
   } finally {
     delete root.dataset.actionInProgress;
     await renderNotificationCenterRoot(root);
@@ -68,6 +83,24 @@ function bindActions(root: NotificationCenterRoot, content: HTMLElement) {
       const mode = button.dataset.notificationsFilter === 'archived';
       if ((root.dataset.showArchived === 'true') === mode) return;
       root.dataset.showArchived = String(mode);
+      setNotice(root, null);
+      void renderNotificationCenterRoot(root);
+    });
+  });
+
+  content.querySelectorAll<HTMLElement>('[data-notification-center-refresh]').forEach((button) => {
+    button.addEventListener('click', () => {
+      setError(root, null);
+      setNotice(root, null);
+      void renderNotificationCenterRoot(root);
+    });
+  });
+
+  content.querySelectorAll<HTMLElement>('[data-notification-center-reset-filter]').forEach((button) => {
+    button.addEventListener('click', () => {
+      root.dataset.showArchived = 'false';
+      setError(root, null);
+      setNotice(root, null);
       void renderNotificationCenterRoot(root);
     });
   });
@@ -114,6 +147,7 @@ export function initNotificationCenter() {
     if (root.dataset.initialized === 'true') continue;
     root.dataset.initialized = 'true';
     root.dataset.showArchived = 'false';
+    setNotice(root, null);
     void renderNotificationCenterRoot(root);
   }
 }

@@ -67,6 +67,10 @@ function writeState(root: MessagingInboxRoot, state: MessagingInboxState) {
   writeStorage(MESSAGING_SEARCH_KEY, state.searchQuery);
 }
 
+function clearFeedback(root: MessagingInboxRoot) {
+  writeState(root, { ...readState(root), error: null, notice: null });
+}
+
 function readCurrentUserId(root: MessagingInboxRoot): string {
   return root.dataset.currentUserId || '';
 }
@@ -81,6 +85,7 @@ async function fetchConversations(root: MessagingInboxRoot) {
     conversations: extractMessagingInboxConversations(payload),
     loading: false,
     error: null,
+    notice: readState(root).notice,
   });
   writeState(root, nextState);
 }
@@ -100,6 +105,7 @@ async function fetchMessages(root: MessagingInboxRoot) {
     ...readState(root),
     messages: extractMessagingInboxMessages(payload),
     error: null,
+    notice: readState(root).notice,
   });
 }
 
@@ -122,6 +128,7 @@ async function refreshRoot(root: MessagingInboxRoot) {
     bindInteractions(root, content);
   } catch (error) {
     const nextState = { ...readState(root), loading: false, error: error instanceof Error ? error.message : 'Mesajlar yuklenemedi' };
+    nextState.notice = null;
     writeState(root, nextState);
     setElementHtml(content, renderMessagingInbox(nextState, readCurrentUserId(root)));
   } finally {
@@ -161,7 +168,15 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
   const searchInput = content.querySelector<HTMLInputElement>('[data-message-search-input]');
   if (searchInput) {
     searchInput.addEventListener('input', async () => {
-      writeState(root, { ...readState(root), searchQuery: searchInput.value });
+      writeState(root, { ...readState(root), searchQuery: searchInput.value, error: null, notice: null });
+      await refreshRoot(root);
+    });
+  }
+
+  const clearSearchButton = content.querySelector<HTMLElement>('[data-message-clear-search]');
+  if (clearSearchButton) {
+    clearSearchButton.addEventListener('click', async () => {
+      writeState(root, { ...readState(root), searchQuery: '', error: null, notice: null });
       await refreshRoot(root);
     });
   }
@@ -190,12 +205,12 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
         const message = payload?.error?.message || payload?.error || 'Mesaj gönderilemedi';
-        writeState(root, { ...state, error: message, loading: false });
+        writeState(root, { ...state, error: message, notice: null, loading: false });
         await refreshRoot(root);
         return;
       }
 
-      writeState(root, { ...state, draft: '', error: null });
+      writeState(root, { ...state, draft: '', error: null, notice: 'Mesaj gönderildi.' });
       await reloadInbox(root);
     });
   }
@@ -214,7 +229,7 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
         const message = payload?.error?.message || payload?.error || 'Konuşma gizlenemedi';
-        writeState(root, { ...state, error: message, loading: false });
+        writeState(root, { ...state, error: message, notice: null, loading: false });
         await refreshRoot(root);
         return;
       }
@@ -226,8 +241,17 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
         selectedConversationId: null,
         messages: [],
         error: null,
+        notice: 'Konuşma gizlendi.',
       }));
       await refreshRoot(root);
+    });
+  }
+
+  const retryButton = content.querySelector<HTMLElement>('[data-message-retry]');
+  if (retryButton) {
+    retryButton.addEventListener('click', async () => {
+      clearFeedback(root);
+      await reloadInbox(root);
     });
   }
 }

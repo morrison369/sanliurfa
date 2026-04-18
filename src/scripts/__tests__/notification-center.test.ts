@@ -41,6 +41,7 @@ function createCenterRoot() {
   let cachedHtml = '';
   let filters: FakeElement[] = [];
   let actions: FakeElement[] = [];
+  let refreshButtons: FakeElement[] = [];
 
   const content: FakeElement = createInteractiveElement({});
   content.className = 'hidden';
@@ -53,10 +54,14 @@ function createCenterRoot() {
       actions = Array.from(content.innerHTML.matchAll(/data-notification-action="([^"]+)"/g)).map((match) =>
         createInteractiveElement({ notificationAction: match[1] }),
       );
+      refreshButtons = Array.from(content.innerHTML.matchAll(/data-notification-center-refresh/g)).map(() =>
+        createInteractiveElement({}),
+      );
     }
 
     if (selector === '[data-notifications-filter]') return filters;
     if (selector === '[data-notification-action]') return actions;
+    if (selector === '[data-notification-center-refresh]') return refreshButtons;
     return [];
   };
 
@@ -130,7 +135,7 @@ describe('notification center script', () => {
     await flushPromises();
 
     expect(content.innerHTML).toContain('Yeni mesaj');
-    expect(content.innerHTML).toContain('Bildirimler');
+    expect(content.innerHTML).toContain('Bildirim merkezi');
     expect(loading.className).toBe('hidden');
     expect(content.className).toBe('');
     expect(root.dataset.initialized).toBe('true');
@@ -143,5 +148,7 @@ describe('notification center script', () => {
       '/api/notifications/center',
       expect.objectContaining({ method: 'POST' }),
     );
+    expect(content.innerHTML).toContain('Bildirim merkezi güncellendi.');
+    expect(content.querySelectorAll('[data-notification-center-refresh]')).toHaveLength(1);
   });
 });
