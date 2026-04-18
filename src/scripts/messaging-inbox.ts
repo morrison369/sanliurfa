@@ -18,6 +18,7 @@ type MessagingInboxTimers = {
 const timers = new WeakMap<MessagingInboxRoot, MessagingInboxTimers>();
 const MESSAGING_SELECTED_KEY = 'sanliurfa:messaging-inbox:selected-conversation';
 const MESSAGING_SEARCH_KEY = 'sanliurfa:messaging-inbox:search-query';
+const MESSAGING_RETRY_DELAY_MS = 250;
 
 function readStorage(key: string): string {
   try {
@@ -71,13 +72,23 @@ function clearFeedback(root: MessagingInboxRoot) {
   writeState(root, { ...readState(root), error: null, notice: null });
 }
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function readCurrentUserId(root: MessagingInboxRoot): string {
   return root.dataset.currentUserId || '';
 }
 
-async function fetchConversations(root: MessagingInboxRoot) {
+async function fetchConversations(root: MessagingInboxRoot, attempt = 0) {
   const response = await fetch('/api/messages?limit=50', { credentials: 'same-origin' });
-  if (!response.ok) throw new Error('Konuşma listesi yüklenemedi');
+  if (!response.ok) {
+    if (attempt === 0) {
+      await delay(MESSAGING_RETRY_DELAY_MS);
+      return fetchConversations(root, attempt + 1);
+    }
+    throw new Error('Konuşma listesi yüklenemedi');
+  }
 
   const payload = await response.json();
   const nextState = applyMessagingInboxSelection({
@@ -90,7 +101,7 @@ async function fetchConversations(root: MessagingInboxRoot) {
   writeState(root, nextState);
 }
 
-async function fetchMessages(root: MessagingInboxRoot) {
+async function fetchMessages(root: MessagingInboxRoot, attempt = 0) {
   const state = readState(root);
   if (!state.selectedConversationId) {
     writeState(root, { ...state, messages: [] });
@@ -98,7 +109,13 @@ async function fetchMessages(root: MessagingInboxRoot) {
   }
 
   const response = await fetch(`/api/messages/${state.selectedConversationId}?limit=100`, { credentials: 'same-origin' });
-  if (!response.ok) throw new Error('Mesajlar yüklenemedi');
+  if (!response.ok) {
+    if (attempt === 0) {
+      await delay(MESSAGING_RETRY_DELAY_MS);
+      return fetchMessages(root, attempt + 1);
+    }
+    throw new Error('Mesajlar yüklenemedi');
+  }
 
   const payload = await response.json();
   writeState(root, {
@@ -201,6 +218,31 @@ function bindInteractions(root: MessagingInboxRoot, content: HTMLElement) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ content: state.draft.trim() }),
       });
+
+      const optimisticMessage = {
+        id: `temp-${Date.now()}`,
+        content: state.draft.trim(),
+        createdAt: new Date().toISOString(),
+        senderId: readCurrentUserId(root),
+      };
+      const optimisticConversations = state.conversations.map((conversation) =>
+        conversation.id === state.selectedConversationId
+          ? {
+              ...conversation,
+              lastMessage: state.draft.trim(),
+              lastMessageTime: optimisticMessage.createdAt,
+            }
+          : conversation,
+      );
+      writeState(root, {
+        ...state,
+        conversations: optimisticConversations,
+        messages: [...state.messages, optimisticMessage],
+        draft: '',
+        error: null,
+        notice: 'Mesaj gönderiliyor...',
+      });
+      await refreshRoot(root);
 
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
