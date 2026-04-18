@@ -9,6 +9,7 @@ import {
 import { setElementClassName, setElementHtml } from '../lib/admin-dom';
 import { readJsonSafely, retryOnce } from './shared/async-ui';
 import { bindAll, bindFirst } from './shared/bind-events';
+import { emitMessageUnreadCount, getConversationUnreadCount } from './shared/unread-sync';
 
 type MessagingInboxRoot = HTMLElement & { dataset: DOMStringMap };
 
@@ -68,6 +69,7 @@ function writeState(root: MessagingInboxRoot, state: MessagingInboxState) {
   root.dataset.state = JSON.stringify(state);
   writeStorage(MESSAGING_SELECTED_KEY, state.selectedConversationId ?? '');
   writeStorage(MESSAGING_SEARCH_KEY, state.searchQuery);
+  emitMessageUnreadCount(getConversationUnreadCount(state.conversations));
 }
 
 function clearFeedback(root: MessagingInboxRoot) {
