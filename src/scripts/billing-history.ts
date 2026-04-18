@@ -4,6 +4,13 @@ import {
   renderBillingHistory,
   renderBillingHistoryError,
 } from '../lib/billing-history';
+import {
+  exportCsvView,
+  readJsonArray,
+  readStoredDatasetValue,
+  writeJsonArray,
+  writeStoredDatasetValue,
+} from './shared/history-view';
 
 type BillingHistoryRoot = HTMLElement & { dataset: DOMStringMap };
 const BILLING_STATUS_STORAGE_KEY = 'sanliurfa:billing-history:selected-status';
@@ -17,43 +24,19 @@ function getFilteredRecords(root: BillingHistoryRoot) {
 }
 
 function readSelectedStatus(root: BillingHistoryRoot): string {
-  if (root.dataset.selectedStatus) return root.dataset.selectedStatus;
-
-  try {
-    return window.localStorage.getItem(BILLING_STATUS_STORAGE_KEY) || '';
-  } catch {
-    return '';
-  }
+  return readStoredDatasetValue(root, 'selectedStatus', BILLING_STATUS_STORAGE_KEY);
 }
 
 function writeSelectedStatus(root: BillingHistoryRoot, value: string) {
-  root.dataset.selectedStatus = value;
-
-  try {
-    if (value) {
-      window.localStorage.setItem(BILLING_STATUS_STORAGE_KEY, value);
-    } else {
-      window.localStorage.removeItem(BILLING_STATUS_STORAGE_KEY);
-    }
-  } catch {
-    // no-op
-  }
+  writeStoredDatasetValue(root, 'selectedStatus', BILLING_STATUS_STORAGE_KEY, value);
 }
 
 function readRecords(root: BillingHistoryRoot) {
-  const raw = root.dataset.billingJson;
-  if (!raw) return [];
-
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return readJsonArray(root, 'billingJson');
 }
 
 function writeRecords(root: BillingHistoryRoot, records: unknown[]) {
-  root.dataset.billingJson = JSON.stringify(records);
+  writeJsonArray(root, 'billingJson', records);
 }
 
 function exportBillingView(root: BillingHistoryRoot) {
@@ -71,19 +54,11 @@ function exportBillingView(root: BillingHistoryRoot) {
     record.paymentMethod || '',
     record.status || '',
   ]);
-  const csv = [header, ...rows]
-    .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(','))
-    .join('\n');
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = selectedStatus
-    ? `odeme-gecmisi-${selectedStatus}.csv`
-    : 'odeme-gecmisi.csv';
-  link.click();
-  window.URL.revokeObjectURL(url);
+  exportCsvView(
+    selectedStatus ? `odeme-gecmisi-${selectedStatus}.csv` : 'odeme-gecmisi.csv',
+    header,
+    rows,
+  );
 }
 
 async function renderBillingHistoryRoot(root: BillingHistoryRoot) {

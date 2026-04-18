@@ -5,6 +5,13 @@ import {
   renderTransactionHistoryError,
   type LoyaltyTransactionPagination,
 } from '../lib/transaction-history';
+import {
+  exportCsvView,
+  readJsonArray,
+  readStoredDatasetValue,
+  writeJsonArray,
+  writeStoredDatasetValue,
+} from './shared/history-view';
 
 type TransactionHistoryRoot = HTMLElement & {
   dataset: DOMStringMap;
@@ -14,51 +21,19 @@ const TRANSACTION_DATE_FROM_STORAGE_KEY = 'sanliurfa:transaction-history:date-fr
 const TRANSACTION_DATE_TO_STORAGE_KEY = 'sanliurfa:transaction-history:date-to';
 
 function readSelectedType(root: TransactionHistoryRoot): string {
-  if (root.dataset.selectedType) return root.dataset.selectedType;
-
-  try {
-    return window.localStorage.getItem(TRANSACTION_TYPE_STORAGE_KEY) || '';
-  } catch {
-    return '';
-  }
+  return readStoredDatasetValue(root, 'selectedType', TRANSACTION_TYPE_STORAGE_KEY);
 }
 
 function writeSelectedType(root: TransactionHistoryRoot, value: string) {
-  root.dataset.selectedType = value;
-
-  try {
-    if (value) {
-      window.localStorage.setItem(TRANSACTION_TYPE_STORAGE_KEY, value);
-    } else {
-      window.localStorage.removeItem(TRANSACTION_TYPE_STORAGE_KEY);
-    }
-  } catch {
-    // no-op
-  }
+  writeStoredDatasetValue(root, 'selectedType', TRANSACTION_TYPE_STORAGE_KEY, value);
 }
 
 function readStoredValue(root: TransactionHistoryRoot, datasetKey: 'dateFrom' | 'dateTo', storageKey: string): string {
-  if (root.dataset[datasetKey]) return root.dataset[datasetKey] || '';
-
-  try {
-    return window.localStorage.getItem(storageKey) || '';
-  } catch {
-    return '';
-  }
+  return readStoredDatasetValue(root, datasetKey, storageKey);
 }
 
 function writeStoredValue(root: TransactionHistoryRoot, datasetKey: 'dateFrom' | 'dateTo', storageKey: string, value: string) {
-  root.dataset[datasetKey] = value;
-
-  try {
-    if (value) {
-      window.localStorage.setItem(storageKey, value);
-    } else {
-      window.localStorage.removeItem(storageKey);
-    }
-  } catch {
-    // no-op
-  }
+  writeStoredDatasetValue(root, datasetKey, storageKey, value);
 }
 
 function getPaginationState(root: TransactionHistoryRoot): LoyaltyTransactionPagination {
@@ -76,19 +51,11 @@ function setPaginationState(root: TransactionHistoryRoot, pagination: LoyaltyTra
 }
 
 function readTransactions(root: TransactionHistoryRoot) {
-  const raw = root.dataset.transactionsJson;
-  if (!raw) return [];
-
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return readJsonArray(root, 'transactionsJson');
 }
 
 function writeTransactions(root: TransactionHistoryRoot, transactions: unknown[]) {
-  root.dataset.transactionsJson = JSON.stringify(transactions);
+  writeJsonArray(root, 'transactionsJson', transactions);
 }
 
 function getVisibleTransactions(root: TransactionHistoryRoot) {
@@ -117,17 +84,7 @@ function exportTransactionView(root: TransactionHistoryRoot) {
     String(transaction.balance_before ?? ''),
     String(transaction.balance_after ?? ''),
   ]);
-  const csv = [header, ...rows]
-    .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(','))
-    .join('\n');
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'islem-gecmisi.csv';
-  link.click();
-  window.URL.revokeObjectURL(url);
+  exportCsvView('islem-gecmisi.csv', header, rows);
 }
 
 async function fetchTransactions(root: TransactionHistoryRoot) {
