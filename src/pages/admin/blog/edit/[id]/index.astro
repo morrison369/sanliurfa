@@ -11,16 +11,8 @@ if (!post) {
   return Astro.redirect('/admin/blog');
 }
 
-const categories = [
-  { id: 'genel', label: 'Genel' },
-  { id: 'kultur-sanat', label: 'Kültür & Sanat' },
-  { id: 'gastronomi', label: 'Gastronomi' },
-  { id: 'tarih', label: 'Tarih' },
-  { id: 'gezi-rehberi', label: 'Gezi Rehberi' },
-  { id: 'etkinlik', label: 'Etkinlik' },
-  { id: 'haber', label: 'Haber' },
-];
-
+const categoriesResult = await query('SELECT id, name FROM blog_categories ORDER BY order_index ASC, name ASC');
+const categories = categoriesResult.rows;
 const authorsResult = await query("SELECT id, full_name FROM users WHERE role = 'admin'");
 const authors = authorsResult.rows;
 
@@ -87,8 +79,8 @@ const seo = {
             </label>
             <label for="status" class="label dark:text-gray-300">Durum</label>
             <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
-              <option value="draft" selected={post.is_published === false}>Taslak</option>
-              <option value="published" selected={post.is_published === true}>Yayında</option>
+              <option value="draft" selected={post.status !== 'published'}>Taslak</option>
+              <option value="published" selected={post.status === 'published'}>Yayında</option>
             </select>
             <button type="submit" class="btn-primary w-full mt-4 flex items-center justify-center gap-2">
               <Save className="w-4 h-4" />
@@ -102,7 +94,7 @@ const seo = {
             </label>
             <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-2">
               {categories.map(cat => (
-                <option value={cat.id} selected={cat.id === post.category}>{cat.label}</option>
+                <option value={cat.id} selected={cat.id === post.category_id}>{cat.name}</option>
               ))}
             </select>
           </div>
