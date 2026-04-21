@@ -196,10 +196,10 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
             Kullanıcıların abonelik durumunu ve planlarını yönetin. Aşağıdaki linke tıklayarak detaylı yönetim sayfasına gidin.
           </p>
           <a
-            href="/admin/subscriptions/users"
+            href="/admin/users"
             className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
           >
-            Kullanıcı Yönetim Paneli →
+            Kullanıcı Yönetim Paneli
           </a>
         </div>
       )}
@@ -238,7 +238,7 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
 
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-800 dark:text-blue-300">
-              💡 Webhook delivery status'ını izleyin. Başarısız webhook'lar işleniyor ve otomatik olarak yeniden deniyor.
+              Webhook teslim durumunu izleyin. Başarısız webhook'lar işlenir ve otomatik olarak yeniden denenir.
             </p>
           </div>
         </div>

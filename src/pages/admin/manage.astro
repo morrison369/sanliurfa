@@ -2,6 +2,10 @@
 import Layout from '../../layouts/Layout.astro';
 import AdminManager from '../../components/admin/AdminManager';
 
+if (!Astro.locals.user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/manage');
+}
+
 const seo = {
   title: 'Yönetim Paneli - Şanlıurfa.com',
   description: 'Yerler, yorumlar, kullanıcıları yönet',
