@@ -78,4 +78,6 @@
 - If the active shell is below policy, use the `:preferred` wrappers instead of forcing a partial local run.
 - Archive dated cleanup and verification files under `docs/archive/cleanup/` instead of leaving them in repo root.
 - The public site is Turkish-only and focuses on the `Şanlıurfa` keyword for `https://sanliurfa.com`.
+- All source files, API responses, XML feeds, CSV exports, and database client connections must stay UTF-8. Do not add ISO-8859-9, Windows-1254, ASCII transliteration, or mojibake workarounds.
+- Do not add language selectors, non-TR translation dictionaries, `/api/i18n` language switching, `/tr`, `/en`, hreflang, or Accept-Language based redirects.
 - `docs/ASTRO_FIRST_LOCK.md` is the project rule for Astro-first implementation decisions.

@@ -89,7 +89,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       bio: userProfile.bio,
       points: userProfile.points,
       level: userProfile.level,
-      language_preference: userProfile.language_preference,
+      language_preference: 'tr',
       email_verified: userProfile.email_verified,
       created_at: userProfile.created_at,
       last_login_at: userProfile.last_login_at,

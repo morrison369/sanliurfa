@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { t, formatDate, formatCurrency, getAvailableLanguages, detectLanguage } from '../i18n';
 
-describe('Internationalization', () => {
+describe('Turkish-only copy helpers', () => {
   it('should translate Turkish text', () => {
     const result = t('nav.home', 'tr');
     expect(result).toBe('Anasayfa');
   });
 
-  it('should translate English text', () => {
+  it('should ignore non-Turkish language requests', () => {
     const result = t('nav.home', 'en');
-    expect(result).toBe('Home');
+    expect(result).toBe('Anasayfa');
   });
 
   it('should return key if translation not found', () => {
@@ -23,10 +23,10 @@ describe('Internationalization', () => {
     expect(result).toContain('Ocak');
   });
 
-  it('should format date in English', () => {
+  it('should format date in Turkish even when another language is requested', () => {
     const date = new Date('2024-01-15');
     const result = formatDate(date, 'en');
-    expect(result).toContain('January');
+    expect(result).toContain('Ocak');
   });
 
   it('should format currency in Turkish', () => {
@@ -34,21 +34,19 @@ describe('Internationalization', () => {
     expect(result).toContain('₺');
   });
 
-  it('should format currency in English', () => {
+  it('should format currency in Turkish even when another language is requested', () => {
     const result = formatCurrency(100, 'en');
-    expect(result).toContain('$');
+    expect(result).toContain('₺');
   });
 
   it('should get available languages', () => {
     const languages = getAvailableLanguages();
-    expect(languages.length).toBe(2);
-    expect(languages.some(l => l.code === 'tr')).toBe(true);
-    expect(languages.some(l => l.code === 'en')).toBe(true);
+    expect(languages).toEqual([{ code: 'tr', name: 'Türkçe' }]);
   });
 
   it('should detect Turkish language', () => {
     // Mock navigator for testing
     const result = detectLanguage();
-    expect(['tr', 'en']).toContain(result);
+    expect(result).toBe('tr');
   });
 });

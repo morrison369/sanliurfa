@@ -138,6 +138,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   Object.entries(securityHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
+  response.headers.set('Content-Language', 'tr');
+  response.headers.set('X-Default-Charset', 'utf-8');
+
+  const contentType = response.headers.get('Content-Type');
+  if (contentType?.startsWith('application/json') && !/charset=/i.test(contentType)) {
+    response.headers.set('Content-Type', 'application/json; charset=utf-8');
+  }
 
   // Content Security Policy
   const csp = [

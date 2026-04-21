@@ -77,7 +77,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
       role: result.role,
       email_verified: result.email_verified,
       email_verified_at: result.email_verified_at,
-      language_preference: result.language_preference,
+      language_preference: 'tr',
       theme_preference: result.theme_preference,
       notification_preferences: result.notification_preferences || {
         email: true,
@@ -181,7 +181,7 @@ export async function updateUserProfile(
       role: result.role,
       email_verified: result.email_verified,
       email_verified_at: result.email_verified_at,
-      language_preference: result.language_preference,
+      language_preference: 'tr',
       theme_preference: result.theme_preference,
       notification_preferences: result.notification_preferences,
       privacy_settings: result.privacy_settings,
@@ -246,7 +246,7 @@ export async function updateUserSettings(
 
     if (updates.language_preference !== undefined) {
       fields.push(`language_preference = $${paramIndex++}`);
-      values.push(updates.language_preference);
+      values.push('tr');
     }
 
     if (updates.theme_preference !== undefined) {
@@ -291,7 +291,7 @@ export async function updateUserSettings(
       role: result.role,
       email_verified: result.email_verified,
       email_verified_at: result.email_verified_at,
-      language_preference: result.language_preference,
+      language_preference: 'tr',
       theme_preference: result.theme_preference,
       notification_preferences: result.notification_preferences,
       privacy_settings: result.privacy_settings,
