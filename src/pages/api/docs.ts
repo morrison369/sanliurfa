@@ -4,7 +4,7 @@ const html = `
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Şanlıurfa.com API Documentation</title>
+  <title>Şanlıurfa.com API Dokümantasyonu</title>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.css">

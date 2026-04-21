@@ -43,10 +43,10 @@ export const GET: APIRoute = async ({ locals }) => {
       if (unusedIndexes.rows && unusedIndexes.rows.length > 0) {
         recommendations.push({
           priority: 'medium',
-          category: 'Database Indexes',
-          title: `${unusedIndexes.rows.length} Unused Indexes Found`,
-          description: `Found ${unusedIndexes.rows.length} indexes that are never used. Removing them will free up disk space and speed up writes.`,
-          estimatedImpact: 'Medium - Improves write performance',
+          category: 'Veritabanı İndeksleri',
+          title: `${unusedIndexes.rows.length} Kullanılmayan İndeks Bulundu`,
+          description: `Hiç kullanılmayan ${unusedIndexes.rows.length} indeks bulundu. Kaldırılması disk alanı açar ve yazma işlemlerini hızlandırır.`,
+          estimatedImpact: 'Orta - Yazma performansını iyileştirir',
           action: `DROP INDEX IF EXISTS ${unusedIndexes.rows.map((r: any) => r.indexname).join(', ')};`
         });
       }
@@ -70,11 +70,11 @@ export const GET: APIRoute = async ({ locals }) => {
       if (largeUnindexedTables.rows && largeUnindexedTables.rows.length > 0) {
         recommendations.push({
           priority: 'high',
-          category: 'Database Indexes',
-          title: 'Large Tables Without Indexes',
-          description: `Found large tables without any indexes. Add indexes on frequently queried columns to improve query performance.`,
-          estimatedImpact: 'High - Major query performance improvement',
-          action: 'Review frequently queried columns and create appropriate indexes'
+          category: 'Veritabanı İndeksleri',
+          title: 'İndeksi Olmayan Büyük Tablolar',
+          description: `İndeksi olmayan büyük tablolar bulundu. Sorgu performansını artırmak için sık sorgulanan kolonlara indeks ekleyin.`,
+          estimatedImpact: 'Yüksek - Sorgu performansında belirgin iyileşme',
+          action: 'Sık sorgulanan kolonları incele ve uygun indeksleri oluştur'
         });
       }
     } catch (e) {
@@ -95,11 +95,11 @@ export const GET: APIRoute = async ({ locals }) => {
       if (deadRowStats && deadRowStats.total_dead_rows > 10000) {
         recommendations.push({
           priority: 'medium',
-          category: 'Database Maintenance',
-          title: `${Math.round(deadRowStats.total_dead_rows / 1000)}K Dead Rows`,
-          description: 'High number of dead rows detected. Run VACUUM to reclaim storage and improve performance.',
-          estimatedImpact: 'Medium - Better storage utilization',
-          action: 'VACUUM ANALYZE; -- Run during low-traffic period'
+          category: 'Veritabanı Bakımı',
+          title: `${Math.round(deadRowStats.total_dead_rows / 1000)}K Ölü Satır`,
+          description: 'Yüksek sayıda ölü satır tespit edildi. Depolama alanını geri kazanmak ve performansı artırmak için VACUUM çalıştırın.',
+          estimatedImpact: 'Orta - Daha iyi depolama kullanımı',
+          action: 'VACUUM ANALYZE; -- Düşük trafik döneminde çalıştır'
         });
       }
     } catch (e) {
@@ -120,11 +120,11 @@ export const GET: APIRoute = async ({ locals }) => {
         const avgTime = slowQueries.rows.reduce((sum: number, q: any) => sum + q.mean_time, 0) / slowQueries.rows.length;
         recommendations.push({
           priority: avgTime > 500 ? 'high' : 'medium',
-          category: 'Query Performance',
-          title: `${slowQueries.rows.length} Slow Queries Detected`,
-          description: `Found ${slowQueries.rows.length} queries with avg execution time > 100ms. Optimize these queries with appropriate indexes and query refactoring.`,
-          estimatedImpact: 'High - Significant response time improvement',
-          action: 'Use EXPLAIN ANALYZE to identify bottlenecks and add missing indexes'
+          category: 'Sorgu Performansı',
+          title: `${slowQueries.rows.length} Yavaş Sorgu Tespit Edildi`,
+          description: `Ortalama çalışma süresi 100ms üzerinde olan ${slowQueries.rows.length} sorgu bulundu. Uygun indeksler ve sorgu düzenlemeleriyle optimize edin.`,
+          estimatedImpact: 'Yüksek - Yanıt süresinde belirgin iyileşme',
+          action: 'Darboğazları bulmak ve eksik indeksleri eklemek için EXPLAIN ANALYZE kullan'
         });
       }
     } catch (e) {
@@ -140,11 +140,11 @@ export const GET: APIRoute = async ({ locals }) => {
       if (connections && connections.connection_count > 15) {
         recommendations.push({
           priority: 'medium',
-          category: 'Connection Management',
-          title: 'High Connection Count',
-          description: 'Currently using many database connections. Consider increasing Redis cache TTLs or implementing query result caching.',
-          estimatedImpact: 'Medium - Reduced database load',
-          action: 'Review Redis TTLs in code and increase for stable data'
+          category: 'Bağlantı Yönetimi',
+          title: 'Yüksek Bağlantı Sayısı',
+          description: 'Şu anda çok sayıda veritabanı bağlantısı kullanılıyor. Redis önbellek TTL sürelerini artırmayı veya sorgu sonucu önbelleklemesini değerlendirin.',
+          estimatedImpact: 'Orta - Veritabanı yükünü azaltır',
+          action: 'Koddaki Redis TTL değerlerini incele ve sabit veriler için artır'
         });
       }
     } catch (e) {
@@ -155,11 +155,11 @@ export const GET: APIRoute = async ({ locals }) => {
     if (recommendations.length === 0) {
       recommendations.push({
         priority: 'low',
-        category: 'General',
-        title: 'Database Performance Looks Good',
-        description: 'No immediate optimization opportunities detected. Continue monitoring performance metrics.',
-        estimatedImpact: 'Low',
-        action: 'Monitor Core Web Vitals dashboard for client-side improvements'
+        category: 'Genel',
+        title: 'Veritabanı Performansı İyi Görünüyor',
+        description: 'Acil optimizasyon fırsatı tespit edilmedi. Performans metriklerini izlemeye devam edin.',
+        estimatedImpact: 'Düşük',
+        action: 'İstemci tarafı iyileştirmeler için Core Web Vitals panelini izleyin'
       });
     }
 
@@ -180,7 +180,7 @@ export const GET: APIRoute = async ({ locals }) => {
     logger.error('Performance recommendations failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to generate recommendations',
+      'Öneriler oluşturulamadı',
       HttpStatus.INTERNAL_SERVER_ERROR
     );
   }
