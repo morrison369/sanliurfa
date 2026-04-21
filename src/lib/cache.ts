@@ -1,11 +1,16 @@
 // Redis Caching Layer with Namespacing
 import { createClient } from 'redis';
 
-const redisUrl = process.env.REDIS_URL || import.meta.env.REDIS_URL || 'redis://localhost:6379';
+const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 const KEY_PREFIX = process.env.REDIS_KEY_PREFIX || 'sanliurfa:';
+const REDIS_ENABLED = process.env.REDIS_ENABLED !== 'false';
+const REDIS_RETRY_INTERVAL_MS = parsePositiveInt('REDIS_RETRY_INTERVAL_MS', 30000);
+const REDIS_CONNECT_TIMEOUT_MS = parsePositiveInt('REDIS_CONNECT_TIMEOUT_MS', 1500);
 
 let client: ReturnType<typeof createClient> | null = null;
 let connectionError: Error | null = null;
+let lastConnectionAttempt = 0;
+let unavailableWarningLogged = false;
 
 /**
  * Get or create Redis client with proper error handling
@@ -15,11 +20,26 @@ export async function getRedisClient() {
     return client;
   }
 
+  if (!REDIS_ENABLED) {
+    throw new Error('Redis is disabled by REDIS_ENABLED=false');
+  }
+
+  const now = Date.now();
+  if (connectionError && now - lastConnectionAttempt < REDIS_RETRY_INTERVAL_MS) {
+    throw connectionError;
+  }
+
+  lastConnectionAttempt = now;
+
   try {
     client = createClient({
       url: redisUrl,
       socket: {
+        connectTimeout: REDIS_CONNECT_TIMEOUT_MS,
         reconnectStrategy: (retries: number) => {
+          if (retries > 3) {
+            return false;
+          }
           const delay = Math.min(retries * 100, 3000);
           return delay;
         }
@@ -28,7 +48,7 @@ export async function getRedisClient() {
 
     client.on('error', (err) => {
       connectionError = err;
-      console.error('Redis Client Error:', err);
+      logRedisUnavailableOnce(err);
     });
 
     client.on('reconnecting', () => {
@@ -41,7 +61,7 @@ export async function getRedisClient() {
     return client;
   } catch (error) {
     connectionError = error instanceof Error ? error : new Error(String(error));
-    console.error('Redis connection failed:', connectionError);
+    logRedisUnavailableOnce(connectionError);
     throw connectionError;
   }
 }
@@ -51,6 +71,14 @@ export async function getRedisClient() {
  */
 export function isRedisAvailable(): boolean {
   return !connectionError && client?.isOpen === true;
+}
+
+async function getOptionalRedisClient() {
+  try {
+    return await getRedisClient();
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -69,10 +97,10 @@ export function prefixKey(key: unknown): string {
  */
 export async function getCache<T = any>(key: unknown): Promise<T | null> {
   try {
-    if (!isRedisAvailable()) {
+    const redis = await getOptionalRedisClient();
+    if (!redis) {
       return null;
     }
-    const redis = await getRedisClient();
     const prefixedKey = prefixKey(key);
     const value = await redis.get(prefixedKey);
     return value ? JSON.parse(value) : null;
@@ -87,10 +115,10 @@ export async function getCache<T = any>(key: unknown): Promise<T | null> {
  */
 export async function setCache(key: unknown, value: any, ttlSeconds = 3600): Promise<void> {
   try {
-    if (!isRedisAvailable()) {
+    const redis = await getOptionalRedisClient();
+    if (!redis) {
       return;
     }
-    const redis = await getRedisClient();
     const prefixedKey = prefixKey(key);
     await redis.setEx(prefixedKey, ttlSeconds, JSON.stringify(value));
   } catch (error) {
@@ -103,10 +131,10 @@ export async function setCache(key: unknown, value: any, ttlSeconds = 3600): Pro
  */
 export async function deleteCache(key: unknown): Promise<void> {
   try {
-    if (!isRedisAvailable()) {
+    const redis = await getOptionalRedisClient();
+    if (!redis) {
       return;
     }
-    const redis = await getRedisClient();
     const prefixedKey = prefixKey(key);
     await redis.del(prefixedKey);
   } catch (error) {
@@ -120,10 +148,10 @@ export async function deleteCache(key: unknown): Promise<void> {
  */
 export async function deleteCachePattern(pattern: unknown): Promise<void> {
   try {
-    if (!isRedisAvailable()) {
+    const redis = await getOptionalRedisClient();
+    if (!redis) {
       return;
     }
-    const redis = await getRedisClient();
     const prefixedPattern = prefixKey(pattern);
     const keys = await redis.keys(prefixedPattern);
     if (keys.length > 0) {
@@ -140,11 +168,11 @@ export async function deleteCachePattern(pattern: unknown): Promise<void> {
  */
 export async function checkRateLimit(key: unknown, limit: number, windowSeconds: number): Promise<boolean> {
   try {
-    if (!isRedisAvailable()) {
-      console.warn('Redis unavailable for rate limiting, allowing request');
+    const redis = await getOptionalRedisClient();
+    if (!redis) {
+      logRedisUnavailableOnce(new Error('Redis unavailable for rate limiting, allowing request'));
       return true; // Fail-open with warning
     }
-    const redis = await getRedisClient();
     const prefixedKey = prefixKey(`ratelimit:${key}`);
     const current = await redis.incr(prefixedKey);
 
@@ -157,6 +185,25 @@ export async function checkRateLimit(key: unknown, limit: number, windowSeconds:
     console.error('Rate limit check error:', { key, error });
     return true; // Allow on error (fail-open)
   }
+}
+
+function parsePositiveInt(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function logRedisUnavailableOnce(error: Error): void {
+  if (unavailableWarningLogged) {
+    return;
+  }
+
+  unavailableWarningLogged = true;
+  console.warn('Redis unavailable, continuing with graceful degradation:', error.message);
 }
 
 export const redis = {

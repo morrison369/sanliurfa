@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../lib/api';
 import { pool } from '../../lib/postgres';
-import { getRedisClient, isRedisAvailable } from '../../lib/cache';
+import { getRedisClient } from '../../lib/cache';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -47,13 +47,11 @@ export const GET: APIRoute = async ({ request }) => {
 
     // Check Redis
     try {
-      if (isRedisAvailable()) {
-        const redisStart = Date.now();
-        const redis = await getRedisClient();
-        await redis.ping();
-        redisResponseTime = Date.now() - redisStart;
-        redisStatus = 'up';
-      }
+      const redisStart = Date.now();
+      const redis = await getRedisClient();
+      await redis.ping();
+      redisResponseTime = Date.now() - redisStart;
+      redisStatus = 'up';
     } catch (error) {
       console.error('Redis health check failed:', error);
       redisStatus = 'down';
