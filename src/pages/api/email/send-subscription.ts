@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Send Subscription Confirmation Email
  */

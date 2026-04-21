@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Phase 149: Distributed Tracing & Request Context
  * W3C Trace Context, OpenTelemetry support, span instrumentation

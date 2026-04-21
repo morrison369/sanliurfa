@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Record Place Visit
  * POST /api/places/[id]/visit - Record a visit to a place

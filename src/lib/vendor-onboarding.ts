@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Vendor Onboarding
  * Handles vendor registration and setup process

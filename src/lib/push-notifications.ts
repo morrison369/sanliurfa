@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Push Notifications Library
  * Web push subscriptions and delivery

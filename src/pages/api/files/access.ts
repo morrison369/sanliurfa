@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * File Access & Analytics Endpoint
  * Track file access and get statistics

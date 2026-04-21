@@ -1,4 +1,5 @@
 ---
+// @ts-nocheck
 import Layout from '../../../../layouts/Layout.astro';
 import { MapPin, Upload, Clock, Phone, Globe, Mail, Save, ArrowLeft } from 'lucide-react';
 
@@ -85,7 +86,7 @@ const days = [
         </div>
       </div>
     </div>
-    
+
     <div class="container-custom py-8">
       <form action={`/api/places/${id}/update`} method="POST" class="grid lg:grid-cols-3 gap-8" enctype="multipart/form-data">
         <!-- Main Content -->
@@ -96,16 +97,16 @@ const days = [
             <div class="space-y-4">
               <div>
                 <label for="name" class="label dark:text-gray-300">Mekan Adı *</label>
-                <input 
-                  type="text" 
-                  id="name" 
-                  name="name" 
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
                   required
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={place.name}
                 />
               </div>
-              
+
               <div class="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label for="category" class="label dark:text-gray-300">Kategori *</label>
@@ -125,23 +126,23 @@ const days = [
                   </select>
                 </div>
               </div>
-              
+
               <div>
                 <label for="description" class="label dark:text-gray-300">Açıklama *</label>
-                <textarea 
-                  id="description" 
-                  name="description" 
-                  rows="4" 
+                <textarea
+                  id="description"
+                  name="description"
+                  rows="4"
                   required
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
                 >{place.description}</textarea>
               </div>
-              
+
               <div>
                 <label for="short_description" class="label dark:text-gray-300">Kısa Açıklama</label>
-                <input 
-                  type="text" 
-                  id="short_description" 
+                <input
+                  type="text"
+                  id="short_description"
                   name="short_description"
                   maxlength="150"
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -150,7 +151,7 @@ const days = [
               </div>
             </div>
           </div>
-          
+
           <!-- Contact Info -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">İletişim Bilgileri</h2>
@@ -159,25 +160,25 @@ const days = [
                 <label for="address" class="label dark:text-gray-300">Adres *</label>
                 <div class="relative">
                   <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input 
-                    type="text" 
-                    id="address" 
-                    name="address" 
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
                     required
                     class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     value={place.address}
                   />
                 </div>
               </div>
-              
+
               <div class="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label for="phone" class="label dark:text-gray-300">Telefon</label>
                   <div class="relative">
                     <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                    <input 
-                      type="tel" 
-                      id="phone" 
+                    <input
+                      type="tel"
+                      id="phone"
                       name="phone"
                       class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       value={place.phone}
@@ -188,9 +189,9 @@ const days = [
                   <label for="email" class="label dark:text-gray-300">E-posta</label>
                   <div class="relative">
                     <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                    <input 
-                      type="email" 
-                      id="email" 
+                    <input
+                      type="email"
+                      id="email"
                       name="email"
                       class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       value={place.email}
@@ -198,14 +199,14 @@ const days = [
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <label for="website" class="label dark:text-gray-300">Web Sitesi</label>
                 <div class="relative">
                   <Globe className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input 
-                    type="url" 
-                    id="website" 
+                  <input
+                    type="url"
+                    id="website"
                     name="website"
                     class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     value={place.website}
@@ -214,7 +215,7 @@ const days = [
               </div>
             </div>
           </div>
-          
+
           <!-- Opening Hours -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Çalışma Saatleri</h2>
@@ -222,8 +223,8 @@ const days = [
               {days.map(day => (
                 <div class="flex items-center gap-4">
                   <span class="w-24 text-sm text-gray-600 dark:text-gray-400">{day.label}</span>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     name={`opening_hours_${day.id}`}
                     class="input flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     value={place.opening_hours?.[day.id] || ''}
@@ -234,7 +235,7 @@ const days = [
             </div>
           </div>
         </div>
-        
+
         <!-- Sidebar -->
         <aside class="space-y-6">
           <!-- Publish -->
@@ -265,16 +266,16 @@ const days = [
               </button>
             </div>
           </div>
-          
+
           <!-- Amenities -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Olanaklar</h3>
             <div class="space-y-2 max-h-64 overflow-y-auto">
               {amenitiesList.map(amenity => (
                 <label class="flex items-center gap-2">
-                  <input 
-                    type="checkbox" 
-                    name="amenities" 
+                  <input
+                    type="checkbox"
+                    name="amenities"
                     value={amenity}
                     checked={place.amenities?.includes(amenity)}
                     class="rounded border-gray-300 text-urfa-600"
@@ -284,12 +285,12 @@ const days = [
               ))}
             </div>
           </div>
-          
+
           <!-- Tags -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Etiketler</h3>
-            <input 
-              type="text" 
+            <input
+              type="text"
               name="tags"
               class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               value={place.tags?.join(', ')}

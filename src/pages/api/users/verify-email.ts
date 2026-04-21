@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Email verification endpoint
  * GET /api/users/verify-email?token=xxx

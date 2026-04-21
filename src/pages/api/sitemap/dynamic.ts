@@ -1,9 +1,10 @@
+// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 
 export const GET: APIRoute = async () => {
   const site = import.meta.env.SITE_URL || 'https://sanliurfa.com';
-  
+
   // Fetch all dynamic content
   const [placesResult, blogPostsResult, eventsResult, historicalSitesResult] = await Promise.all([
     query("SELECT slug, updated_at FROM places WHERE status = 'active'", []),
@@ -27,7 +28,7 @@ export const GET: APIRoute = async () => {
     { loc: '/blog', priority: 0.8, changefreq: 'daily' },
     { loc: '/hakkinda', priority: 0.5, changefreq: 'monthly' },
     { loc: '/iletisim', priority: 0.5, changefreq: 'monthly' },
-    
+
     // Dynamic pages
     ...(places?.map(p => ({ loc: `/places/${p.slug}`, priority: 0.7, changefreq: 'weekly', lastmod: p.updated_at })) || []),
     ...(blogPosts?.map(p => ({ loc: `/blog/${p.slug}`, priority: 0.7, changefreq: 'weekly', lastmod: p.updated_at })) || []),

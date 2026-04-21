@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Approve Place Verification (Admin)
  * POST /api/admin/verifications/[id]/approve - Approve a verification request

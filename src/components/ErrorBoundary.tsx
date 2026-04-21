@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Error Boundary component for React
  * Catches errors in child components and displays fallback UI

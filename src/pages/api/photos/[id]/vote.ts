@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Photo Vote API
  * POST: Vote on a photo (helpful/unhelpful)

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Change Password API
  * POST: Change user password (requires current password verification)

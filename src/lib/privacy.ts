@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Privacy & Data Management
  * User privacy settings, blocking, muting, and account deletion

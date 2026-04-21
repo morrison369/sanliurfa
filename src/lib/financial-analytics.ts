@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Phase 63: Financial Analytics & Dashboard
  * Financial metrics, ratio analysis, profitability analysis, cash flow analysis

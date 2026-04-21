@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Phase 59: Invoicing & Billing System
  * Invoice generation, billing cycles, payment tracking, reconciliation

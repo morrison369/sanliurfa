@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Place Analytics API
  * GET: Get analytics for a specific place

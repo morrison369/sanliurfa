@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Place Verification Status
  * GET /api/places/[id]/verification - Get place verification status

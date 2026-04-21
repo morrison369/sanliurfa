@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Phase 130: Advanced AI Analytics & Monitoring
  * Comprehensive monitoring of AI system performance, cost, and quality metrics

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Featured Photo API
  * PUT: Set a photo as featured

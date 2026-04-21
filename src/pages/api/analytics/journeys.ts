@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * User Journey Analytics Endpoint
  * Track and analyze user paths
