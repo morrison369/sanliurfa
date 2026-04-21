@@ -48,7 +48,8 @@ export function successResponse<T>(
   };
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Language': 'tr'
   };
 
   if (requestId) {
@@ -84,7 +85,8 @@ export function paginatedResponse<T>(
   };
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Language': 'tr'
   };
 
   if (requestId) {
@@ -117,7 +119,8 @@ export function errorResponse(
   };
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Language': 'tr'
   };
 
   if (requestId) {

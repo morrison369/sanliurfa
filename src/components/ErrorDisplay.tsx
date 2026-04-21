@@ -68,7 +68,7 @@ export function ErrorAlert({
 }: {
   error: AppError;
   onDismiss?: () => void;
-  lang?: 'tr' | 'en';
+  lang?: 'tr';
 }) {
   const { title, message, action } = formatErrorForDisplay(error, lang);
 
@@ -122,7 +122,7 @@ export function LoadingState({
   error?: AppError | null;
   onRetry?: () => void;
   children: React.ReactNode;
-  lang?: 'tr' | 'en';
+  lang?: 'tr';
 }) {
   if (isLoading) {
     return (
@@ -133,7 +133,7 @@ export function LoadingState({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           </div>
-          <p className="text-gray-600 text-sm">{lang === 'tr' ? 'Yükleniyor...' : 'Loading...'}</p>
+          <p className="text-gray-600 text-sm">Yükleniyor...</p>
         </div>
       </div>
     );
@@ -148,7 +148,7 @@ export function LoadingState({
             onClick={onRetry}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
-            {lang === 'tr' ? 'Tekrar Dene' : 'Retry'}
+            Tekrar Dene
           </button>
         )}
       </div>

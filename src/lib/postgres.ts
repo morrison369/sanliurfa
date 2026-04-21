@@ -46,6 +46,7 @@ const getPoolConfig = (isDev: boolean) => ({
   connectionTimeoutMillis: 5000,
   statement_timeout: QUERY_TIMEOUT_MS,
   query_timeout: QUERY_TIMEOUT_MS,
+  options: '-c client_encoding=UTF8',
   // Phase 5: Connection reuse optimization
   application_name: 'sanliurfa-api',
   reapIntervalMillis: 5000, // Reap idle connections every 5s for efficiency

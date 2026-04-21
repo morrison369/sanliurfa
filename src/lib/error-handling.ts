@@ -1,5 +1,5 @@
 /**
- * Comprehensive error handling and user feedback system
+ * Comprehensive Turkish-only error handling and user feedback system.
  */
 
 export enum ErrorType {
@@ -26,95 +26,49 @@ export interface AppError {
   timestamp: Date;
 }
 
-/**
- * User-friendly error messages in Turkish and English
- */
-const errorMessages: Record<ErrorType, { tr: string; en: string; userMessage?: { tr: string; en: string } }> = {
+const errorMessages: Record<ErrorType, { title: string; userMessage: string }> = {
   [ErrorType.VALIDATION]: {
-    tr: 'Girdi doğrulaması başarısız',
-    en: 'Input validation failed',
-    userMessage: {
-      tr: 'Lütfen bilgilerinizi kontrol edin ve tekrar deneyin',
-      en: 'Please check your information and try again'
-    }
+    title: 'Girdi doğrulaması başarısız',
+    userMessage: 'Lütfen bilgilerinizi kontrol edin ve tekrar deneyin',
   },
   [ErrorType.AUTHENTICATION]: {
-    tr: 'Kimlik doğrulama başarısız',
-    en: 'Authentication failed',
-    userMessage: {
-      tr: 'Lütfen giriş yapın',
-      en: 'Please sign in'
-    }
+    title: 'Kimlik doğrulama başarısız',
+    userMessage: 'Lütfen giriş yapın',
   },
   [ErrorType.AUTHORIZATION]: {
-    tr: 'Yetkilendirme başarısız',
-    en: 'Authorization failed',
-    userMessage: {
-      tr: 'Bu işlemi yapmaya izniniz yok',
-      en: 'You do not have permission to do this'
-    }
+    title: 'Yetkilendirme başarısız',
+    userMessage: 'Bu işlemi yapmaya izniniz yok',
   },
   [ErrorType.NOT_FOUND]: {
-    tr: 'Bulunamadı',
-    en: 'Not found',
-    userMessage: {
-      tr: 'Aradığınız öğe bulunamadı',
-      en: 'The item you are looking for was not found'
-    }
+    title: 'Bulunamadı',
+    userMessage: 'Aradığınız öğe bulunamadı',
   },
   [ErrorType.CONFLICT]: {
-    tr: 'Çakışma',
-    en: 'Conflict',
-    userMessage: {
-      tr: 'Bu işlem tamamlanamadı. Lütfen sayfayı yenileyin ve tekrar deneyin',
-      en: 'This operation could not be completed. Please refresh and try again'
-    }
+    title: 'Çakışma',
+    userMessage: 'Bu işlem tamamlanamadı. Lütfen sayfayı yenileyin ve tekrar deneyin',
   },
   [ErrorType.RATE_LIMIT]: {
-    tr: 'Çok fazla istek',
-    en: 'Too many requests',
-    userMessage: {
-      tr: 'Çok hızlı işlem yaptınız. Lütfen biraz bekleyin',
-      en: 'You are sending requests too quickly. Please wait a moment'
-    }
+    title: 'Çok fazla istek',
+    userMessage: 'Çok hızlı işlem yaptınız. Lütfen biraz bekleyin',
   },
   [ErrorType.SERVER_ERROR]: {
-    tr: 'Sunucu hatası',
-    en: 'Server error',
-    userMessage: {
-      tr: 'Sunucuda bir hata oluştu. Lütfen daha sonra tekrar deneyin',
-      en: 'A server error occurred. Please try again later'
-    }
+    title: 'Sunucu hatası',
+    userMessage: 'Sunucuda bir hata oluştu. Lütfen daha sonra tekrar deneyin',
   },
   [ErrorType.NETWORK_ERROR]: {
-    tr: 'Ağ hatası',
-    en: 'Network error',
-    userMessage: {
-      tr: 'İnternet bağlantınızı kontrol edin',
-      en: 'Please check your internet connection'
-    }
+    title: 'Ağ hatası',
+    userMessage: 'İnternet bağlantınızı kontrol edin',
   },
   [ErrorType.TIMEOUT]: {
-    tr: 'Zaman aşımı',
-    en: 'Timeout',
-    userMessage: {
-      tr: 'İstek çok uzun sürdü. Lütfen tekrar deneyin',
-      en: 'The request took too long. Please try again'
-    }
+    title: 'Zaman aşımı',
+    userMessage: 'İstek çok uzun sürdü. Lütfen tekrar deneyin',
   },
   [ErrorType.UNKNOWN]: {
-    tr: 'Bilinmeyen hata',
-    en: 'Unknown error',
-    userMessage: {
-      tr: 'Bir hata oluştu. Lütfen tekrar deneyin',
-      en: 'An error occurred. Please try again'
-    }
-  }
+    title: 'Bilinmeyen hata',
+    userMessage: 'Bir hata oluştu. Lütfen tekrar deneyin',
+  },
 };
 
-/**
- * Classify error by HTTP status code
- */
 export function classifyErrorByStatus(statusCode: number): ErrorType {
   if (statusCode === 400) return ErrorType.VALIDATION;
   if (statusCode === 401) return ErrorType.AUTHENTICATION;
@@ -126,9 +80,6 @@ export function classifyErrorByStatus(statusCode: number): ErrorType {
   return ErrorType.UNKNOWN;
 }
 
-/**
- * Create standardized AppError
- */
 export function createAppError(
   type: ErrorType,
   message: string,
@@ -141,43 +92,27 @@ export function createAppError(
     statusCode,
     details,
     retryable: isRetryable(type),
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 }
 
-/**
- * Check if error is retryable
- */
 export function isRetryable(type: ErrorType): boolean {
   return [
     ErrorType.NETWORK_ERROR,
     ErrorType.TIMEOUT,
     ErrorType.RATE_LIMIT,
-    ErrorType.SERVER_ERROR
+    ErrorType.SERVER_ERROR,
   ].includes(type);
 }
 
-/**
- * Get user-friendly message based on language
- */
-export function getUserMessage(type: ErrorType, lang: 'tr' | 'en' = 'tr'): string {
-  const msg = errorMessages[type];
-  if (msg?.userMessage) {
-    return msg.userMessage[lang];
-  }
-  return msg?.[lang] || errorMessages[ErrorType.UNKNOWN][lang];
+export function getUserMessage(type: ErrorType, _lang: string = 'tr'): string {
+  return errorMessages[type]?.userMessage || errorMessages[ErrorType.UNKNOWN].userMessage;
 }
 
-/**
- * Get debug message (technical, for logging)
- */
-export function getDebugMessage(type: ErrorType, lang: 'tr' | 'en' = 'en'): string {
-  return errorMessages[type]?.[lang] || errorMessages[ErrorType.UNKNOWN][lang];
+export function getDebugMessage(type: ErrorType, _lang: string = 'tr'): string {
+  return errorMessages[type]?.title || errorMessages[ErrorType.UNKNOWN].title;
 }
 
-/**
- * Normalize API error response
- */
 export function normalizeApiError(response: any): AppError {
   const statusCode = response.status || 500;
   const type = classifyErrorByStatus(statusCode);
@@ -202,9 +137,6 @@ export function normalizeApiError(response: any): AppError {
   return createAppError(type, message, statusCode, details);
 }
 
-/**
- * Handle fetch errors with retry logic
- */
 export async function fetchWithErrorHandling(
   url: string,
   options: RequestInit = {},
@@ -217,15 +149,14 @@ export async function fetchWithErrorHandling(
       const response = await Promise.race([
         fetch(url, options),
         new Promise<Response>((_, reject) =>
-          setTimeout(() => reject(new Error('Request timeout')), 30000)
-        )
+          setTimeout(() => reject(new Error('İstek zaman aşımına uğradı')), 30000)
+        ),
       ]);
 
       return response;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
 
-      // Don't retry on validation errors
       if (
         lastError.message.includes('400') ||
         lastError.message.includes('401') ||
@@ -235,47 +166,37 @@ export async function fetchWithErrorHandling(
         throw error;
       }
 
-      // Wait before retrying
       if (attempt < retries - 1) {
-        const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+        const delay = Math.pow(2, attempt) * 1000;
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
 
-  throw lastError || new Error('Max retries exceeded');
+  throw lastError || new Error('Maksimum deneme sayısına ulaşıldı');
 }
 
-/**
- * Safe JSON parse with error handling
- */
 export function safeJsonParse<T = unknown>(json: string, defaultValue?: T): T | undefined {
   try {
     return JSON.parse(json) as T;
   } catch (error) {
-    console.warn('JSON parse error:', error);
+    console.warn('JSON parse hatası:', error);
     return defaultValue;
   }
 }
 
-/**
- * Format error for display
- */
-export function formatErrorForDisplay(error: AppError, lang: 'tr' | 'en' = 'tr'): {
+export function formatErrorForDisplay(error: AppError, _lang: string = 'tr'): {
   title: string;
   message: string;
   action?: string;
 } {
   return {
-    title: getDebugMessage(error.type, lang === 'tr' ? 'tr' : 'en'),
-    message: error.userMessage || getUserMessage(error.type, lang),
-    action: error.retryable ? (lang === 'tr' ? 'Tekrar Dene' : 'Retry') : undefined
+    title: getDebugMessage(error.type),
+    message: error.userMessage || getUserMessage(error.type),
+    action: error.retryable ? 'Tekrar Dene' : undefined,
   };
 }
 
-/**
- * Error context for React components
- */
 export interface ErrorContextValue {
   error: AppError | null;
   setError: (error: AppError | null) => void;
@@ -283,15 +204,13 @@ export interface ErrorContextValue {
   handleError: (error: unknown, context?: string) => void;
 }
 
-/**
- * Convert unknown error to AppError
- */
 export function unknownToAppError(error: unknown, context?: string): AppError {
   if (error instanceof Error) {
-    if (error.message.includes('timeout')) {
+    const lowerMessage = error.message.toLowerCase();
+    if (lowerMessage.includes('timeout') || lowerMessage.includes('zaman aşımı')) {
       return createAppError(ErrorType.TIMEOUT, error.message);
     }
-    if (error.message.includes('network') || error.message.includes('fetch')) {
+    if (lowerMessage.includes('network') || lowerMessage.includes('fetch') || lowerMessage.includes('ağ')) {
       return createAppError(ErrorType.NETWORK_ERROR, error.message);
     }
   }

@@ -1,29 +1,30 @@
 /**
- * Internationalization (i18n)
- * Multi-language support for Turkish and English
+ * Turkish-only copy helpers.
+ *
+ * The public product is locked to Turkish for Şanlıurfa.com. This module keeps
+ * the legacy helper API stable without exposing a language switcher surface.
  */
 
-export type Language = 'tr' | 'en';
+export type Language = 'tr';
 
 export interface TranslationKey {
   [key: string]: string | TranslationKey;
 }
 
+export const DEFAULT_LANGUAGE: Language = 'tr';
+
 export const TRANSLATIONS: Record<Language, TranslationKey> = {
   tr: {
-    // Navigation
     nav: {
       home: 'Anasayfa',
       search: 'Arama',
-      places: 'Yerler',
+      places: 'Mekanlar',
       profile: 'Profil',
       favorites: 'Favorilerim',
       dashboard: 'Panelim',
       admin: 'Yönetim',
-      logout: 'Çıkış'
+      logout: 'Çıkış',
     },
-
-    // Common
     common: {
       loading: 'Yükleniyor...',
       error: 'Hata oluştu',
@@ -38,12 +39,10 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
       submit: 'Gönder',
       search: 'Ara',
       filter: 'Filtrele',
-      sort: 'Sırala'
+      sort: 'Sırala',
     },
-
-    // Auth
     auth: {
-      welcome: 'Hoşgeldiniz',
+      welcome: 'Hoş geldiniz',
       login: 'Giriş Yap',
       register: 'Kaydol',
       forgotPassword: 'Şifremi Unuttum',
@@ -54,16 +53,14 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
       fullName: 'Adı Soyadı',
       invalidEmail: 'Geçerli bir e-posta adresi giriniz',
       passwordTooShort: 'Şifre en az 8 karakter olmalıdır',
-      termsAccept: 'Şartları ve Koşulları kabul ediyorum',
+      termsAccept: 'Şartları ve koşulları kabul ediyorum',
       signUpSuccess: 'Kaydınız başarılı oldu',
       loginSuccess: 'Başarıyla giriş yaptınız',
-      logoutSuccess: 'Başarıyla çıkış yaptınız'
+      logoutSuccess: 'Başarıyla çıkış yaptınız',
     },
-
-    // Places
     places: {
-      title: 'Yerler',
-      name: 'Yer Adı',
+      title: 'Mekanlar',
+      name: 'Mekan Adı',
       description: 'Açıklama',
       category: 'Kategori',
       address: 'Adres',
@@ -75,10 +72,8 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
       addToFavorites: 'Favorilere Ekle',
       removeFromFavorites: 'Favorilerden Çıkar',
       viewDetails: 'Detayları Gör',
-      noResults: 'Sonuç bulunamadı'
+      noResults: 'Sonuç bulunamadı',
     },
-
-    // Reviews
     reviews: {
       title: 'Yorumlar',
       writeReview: 'Yorum Yaz',
@@ -90,10 +85,8 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
       notHelpful: 'Faydasız',
       deleteConfirm: 'Bu yorumu silmek istediğinize emin misiniz?',
       reviewAdded: 'Yorumunuz başarıyla eklendi',
-      reviewDeleted: 'Yorum başarıyla silindi'
+      reviewDeleted: 'Yorum başarıyla silindi',
     },
-
-    // User Profile
     profile: {
       title: 'Profil',
       myProfile: 'Profilim',
@@ -109,10 +102,8 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
       followers: 'Takipçiler',
       following: 'Takip Ediliyor',
       reviews: 'Yorumlar',
-      badges: 'Rozetler'
+      badges: 'Rozetler',
     },
-
-    // Premium
     premium: {
       title: 'Premium Üyelik',
       premium: 'Premium',
@@ -124,10 +115,8 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
       subscriptionActive: 'Aktif Abonelik',
       nextBillingDate: 'Sonraki Fatura Tarihi',
       cancel: 'Aboneliği İptal Et',
-      manageSubscription: 'Aboneliği Yönet'
+      manageSubscription: 'Aboneliği Yönet',
     },
-
-    // Notifications
     notifications: {
       title: 'Bildirimler',
       newReview: 'Yeni Yorum',
@@ -137,10 +126,8 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
       markAsRead: 'Okundu Olarak İşaretle',
       markAllAsRead: 'Hepsini Okundu Olarak İşaretle',
       delete: 'Sil',
-      noNotifications: 'Bildiriminiz yok'
+      noNotifications: 'Bildiriminiz yok',
     },
-
-    // Dashboard
     dashboard: {
       title: 'Panelim',
       overview: 'Genel Bakış',
@@ -149,249 +136,59 @@ export const TRANSLATIONS: Record<Language, TranslationKey> = {
       reviews: 'Yorumlar',
       favorites: 'Favoriler',
       followers: 'Takipçiler',
-      recentActivity: 'Son Aktivite'
+      recentActivity: 'Son Aktivite',
     },
-
-    // Errors
     errors: {
       notFound: 'Sayfa bulunamadı',
       unauthorized: 'Bu sayfaya erişim yetkiniz yok',
       serverError: 'Sunucu hatası',
       networkError: 'Ağ hatası',
       tryAgain: 'Tekrar Deneyin',
-      goHome: 'Anasayfaya Dön'
-    }
+      goHome: 'Anasayfaya Dön',
+    },
   },
-
-  en: {
-    // Navigation
-    nav: {
-      home: 'Home',
-      search: 'Search',
-      places: 'Places',
-      profile: 'Profile',
-      favorites: 'Favorites',
-      dashboard: 'Dashboard',
-      admin: 'Admin',
-      logout: 'Logout'
-    },
-
-    // Common
-    common: {
-      loading: 'Loading...',
-      error: 'An error occurred',
-      success: 'Success',
-      save: 'Save',
-      cancel: 'Cancel',
-      delete: 'Delete',
-      edit: 'Edit',
-      view: 'View',
-      more: 'More',
-      close: 'Close',
-      submit: 'Submit',
-      search: 'Search',
-      filter: 'Filter',
-      sort: 'Sort'
-    },
-
-    // Auth
-    auth: {
-      welcome: 'Welcome',
-      login: 'Sign In',
-      register: 'Sign Up',
-      forgotPassword: 'Forgot Password',
-      resetPassword: 'Reset Password',
-      email: 'Email Address',
-      password: 'Password',
-      passwordConfirm: 'Confirm Password',
-      fullName: 'Full Name',
-      invalidEmail: 'Please enter a valid email address',
-      passwordTooShort: 'Password must be at least 8 characters',
-      termsAccept: 'I accept the Terms and Conditions',
-      signUpSuccess: 'Sign up successful',
-      loginSuccess: 'You have successfully logged in',
-      logoutSuccess: 'You have been logged out'
-    },
-
-    // Places
-    places: {
-      title: 'Places',
-      name: 'Place Name',
-      description: 'Description',
-      category: 'Category',
-      address: 'Address',
-      phone: 'Phone',
-      website: 'Website',
-      rating: 'Rating',
-      reviews: 'Reviews',
-      openingHours: 'Opening Hours',
-      addToFavorites: 'Add to Favorites',
-      removeFromFavorites: 'Remove from Favorites',
-      viewDetails: 'View Details',
-      noResults: 'No results found'
-    },
-
-    // Reviews
-    reviews: {
-      title: 'Reviews',
-      writeReview: 'Write a Review',
-      rating: 'Rating',
-      comment: 'Comment',
-      author: 'Author',
-      date: 'Date',
-      helpful: 'Helpful',
-      notHelpful: 'Not Helpful',
-      deleteConfirm: 'Are you sure you want to delete this review?',
-      reviewAdded: 'Review added successfully',
-      reviewDeleted: 'Review deleted successfully'
-    },
-
-    // User Profile
-    profile: {
-      title: 'Profile',
-      myProfile: 'My Profile',
-      editProfile: 'Edit Profile',
-      settings: 'Settings',
-      preferences: 'Preferences',
-      security: 'Security',
-      changePassword: 'Change Password',
-      currentPassword: 'Current Password',
-      newPassword: 'New Password',
-      confirmNewPassword: 'Confirm New Password',
-      joined: 'Joined',
-      followers: 'Followers',
-      following: 'Following',
-      reviews: 'Reviews',
-      badges: 'Badges'
-    },
-
-    // Premium
-    premium: {
-      title: 'Premium Membership',
-      premium: 'Premium',
-      pro: 'Pro',
-      monthlyPrice: '$/Month',
-      features: 'Features',
-      upgrade: 'Upgrade',
-      downgrade: 'Downgrade',
-      subscriptionActive: 'Active Subscription',
-      nextBillingDate: 'Next Billing Date',
-      cancel: 'Cancel Subscription',
-      manageSubscription: 'Manage Subscription'
-    },
-
-    // Notifications
-    notifications: {
-      title: 'Notifications',
-      newReview: 'New Review',
-      reviewResponse: 'Review Response',
-      newFollower: 'New Follower',
-      message: 'Message',
-      markAsRead: 'Mark as Read',
-      markAllAsRead: 'Mark All as Read',
-      delete: 'Delete',
-      noNotifications: 'You have no notifications'
-    },
-
-    // Dashboard
-    dashboard: {
-      title: 'Dashboard',
-      overview: 'Overview',
-      statistics: 'Statistics',
-      views: 'Views',
-      reviews: 'Reviews',
-      favorites: 'Favorites',
-      followers: 'Followers',
-      recentActivity: 'Recent Activity'
-    },
-
-    // Errors
-    errors: {
-      notFound: 'Page not found',
-      unauthorized: 'You do not have access to this page',
-      serverError: 'Server error',
-      networkError: 'Network error',
-      tryAgain: 'Try Again',
-      goHome: 'Go to Home'
-    }
-  }
 };
 
-/**
- * Get translation by key
- */
-export function t(key: string, language: Language = 'tr'): string {
+export function normalizeLanguage(_language?: string | null): Language {
+  return DEFAULT_LANGUAGE;
+}
+
+export function t(key: string, language: Language | string = DEFAULT_LANGUAGE): string {
   const keys = key.split('.');
-  let value: any = TRANSLATIONS[language];
+  let value: string | TranslationKey | undefined = TRANSLATIONS[normalizeLanguage(language)];
 
   for (const k of keys) {
     if (value && typeof value === 'object' && k in value) {
       value = value[k];
     } else {
-      return key; // Return key if not found
+      return key;
     }
   }
 
   return typeof value === 'string' ? value : key;
 }
 
-/**
- * Detect language from browser
- */
 export function detectLanguage(): Language {
-  if (typeof navigator === 'undefined') {
-    return 'tr';
-  }
-
-  const lang = navigator.language?.toLowerCase() || '';
-
-  if (lang.startsWith('en')) {
-    return 'en';
-  }
-
-  if (lang.startsWith('tr')) {
-    return 'tr';
-  }
-
-  return 'tr'; // Default to Turkish
+  return DEFAULT_LANGUAGE;
 }
 
-/**
- * Format date based on language
- */
-export function formatDate(date: Date | string, language: Language = 'tr'): string {
+export function formatDate(date: Date | string, _language: Language | string = DEFAULT_LANGUAGE): string {
   const d = typeof date === 'string' ? new Date(date) : date;
 
-  const options: Intl.DateTimeFormatOptions = {
+  return d.toLocaleDateString('tr-TR', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
-  };
-
-  return d.toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', options);
-}
-
-/**
- * Format currency based on language
- */
-export function formatCurrency(amount: number, language: Language = 'tr'): string {
-  const currency = language === 'tr' ? 'TRY' : 'USD';
-  const symbol = language === 'tr' ? '₺' : '$';
-
-  const formatted = amount.toLocaleString(language === 'tr' ? 'tr-TR' : 'en-US', {
-    style: 'currency',
-    currency
+    day: 'numeric',
   });
-
-  return formatted.replace(/TRY|USD|\s/g, symbol).trim();
 }
 
-/**
- * Get available languages
- */
+export function formatCurrency(amount: number, _language: Language | string = DEFAULT_LANGUAGE): string {
+  return amount.toLocaleString('tr-TR', {
+    style: 'currency',
+    currency: 'TRY',
+  });
+}
+
 export function getAvailableLanguages(): { code: Language; name: string }[] {
-  return [
-    { code: 'tr', name: 'Türkçe' },
-    { code: 'en', name: 'English' }
-  ];
+  return [{ code: DEFAULT_LANGUAGE, name: 'Türkçe' }];
 }

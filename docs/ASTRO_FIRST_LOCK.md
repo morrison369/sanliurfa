@@ -12,6 +12,8 @@ Bu proje Astro SSR-first çalışır. Yeni özelliklerde öncelik sırası kilit
 - Astro'da veya kurulu Astro uyumlu pakette olan özellik yeniden yazılmaz.
 - Dev server tek porttur: `127.0.0.1:4321`.
 - Çoklu dil, `/tr`, `/en`, hreflang veya İngilizce varsayılan eklenmez.
+- Türkçe karakterler UTF-8 ile korunur. Kaynak dosyalarda, API cevaplarında, XML/CSV çıktılarında ve PostgreSQL istemci bağlantılarında UTF-8 dışı encoding kullanılmaz.
+- Dil seçici, `Accept-Language` yönlendirmesi veya kullanıcıdan değiştirilebilir dil tercihi eklenmez. Eski i18n endpointleri sadece `tr` döndürür.
 - JSON-LD rich snippet çıktısı Astro head/layout akışında server-render edilir.
 - Structured data script çıktısı için `astro-seo-schema` kullanılır.
 - Rich snippet verisi sayfa içeriğiyle aynı olmalıdır; sahte puan, sahte fiyat, sahte sosyal hesap yazılmaz.

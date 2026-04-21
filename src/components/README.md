@@ -432,23 +432,11 @@ Mobile-first responsive design:
 
 ## Localization
 
-### Turkish & English
-Components support both languages:
+### Turkish Only
+Components are locked to Turkish. Do not add language selectors or English copy paths.
 
 ```tsx
-<ErrorAlert
-  error={error}
-  lang="tr" // or "en"
-/>
-```
-
-### i18n Integration
-Use the i18n library:
-
-```tsx
-import { t } from '../lib/i18n';
-
-<button>{t('buttons.submit', 'tr')}</button>
+<ErrorAlert error={error} lang="tr" />
 ```
 
 ---
@@ -534,7 +522,7 @@ export const MemoizedComponent = memo(function MyComponent(props) {
 2. **Handle loading and error states** explicitly
 3. **Use TypeScript interfaces** for prop types
 4. **Test keyboard navigation** for form components
-5. **Support both Turkish and English** languages
+5. **Use Turkish-only copy** and do not add language switching
 6. **Use Tailwind CSS** for styling consistency
 7. **Wrap risky components** with ErrorBoundary
 8. **Log errors** with context for debugging
@@ -545,7 +533,7 @@ export const MemoizedComponent = memo(function MyComponent(props) {
 
 ## Component Inventory
 
-| Component | Type | Accessibility | i18n | Status |
+| Component | Type | Accessibility | Turkish-only | Status |
 |-----------|------|---------------|------|--------|
 | ErrorBoundary | Error | ✓ | - | ✓ |
 | ErrorDisplay | Error | ✓ | ✓ | ✓ |
@@ -570,7 +558,7 @@ When adding new components:
 
 1. Add TypeScript interfaces for props
 2. Include accessibility attributes (ARIA)
-3. Support Turkish & English
+3. Keep Turkish-only copy
 4. Add loading and error states
 5. Test keyboard navigation
 6. Document usage with examples
