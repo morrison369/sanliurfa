@@ -29,7 +29,7 @@ export function collectPerformanceMetrics(): PerformanceMetrics {
   const paintEntries = performance.getEntriesByType('paint');
 
   const metrics: PerformanceMetrics = {
-    navigationStart: navTiming?.navigationStart || 0,
+    navigationStart: navTiming?.startTime || 0,
     responseEnd: navTiming?.responseEnd || 0,
     domInteractive: navTiming?.domInteractive || 0,
     domComplete: navTiming?.domComplete || 0,
@@ -44,8 +44,8 @@ export function collectPerformanceMetrics(): PerformanceMetrics {
   });
 
   if (navTiming) {
-    metrics.ttfb = navTiming.responseStart - navTiming.navigationStart;
-    metrics.dcl = navTiming.domContentLoadedEventEnd - navTiming.navigationStart;
+    metrics.ttfb = navTiming.responseStart - navTiming.startTime;
+    metrics.dcl = navTiming.domContentLoadedEventEnd - navTiming.startTime;
   }
 
   return metrics;

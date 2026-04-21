@@ -130,11 +130,27 @@ export function errorResponse(
 /**
  * Create a standardized API route response
  */
+export function apiResponse(data: any, statusCode?: number, requestId?: string): Response;
+export function apiResponse(context: APIContext, statusCode: number, data: any): Response;
 export function apiResponse(
-  data: any,
+  dataOrContext: any | APIContext,
   statusCode: number = 200,
-  requestId?: string
+  requestIdOrData?: string | any
 ): Response {
+  if (
+    dataOrContext &&
+    typeof dataOrContext === 'object' &&
+    'request' in dataOrContext &&
+    requestIdOrData !== undefined &&
+    typeof requestIdOrData !== 'string'
+  ) {
+    const requestId = getRequestId(dataOrContext as APIContext);
+    const [body, status, headers] = successResponse(requestIdOrData, statusCode, requestId);
+    return new Response(JSON.stringify(body), { status, headers });
+  }
+
+  const data = dataOrContext;
+  const requestId = typeof requestIdOrData === 'string' ? requestIdOrData : undefined;
   const [body, status, headers] = successResponse(data, statusCode, requestId);
   return new Response(JSON.stringify(body), { status, headers });
 }
@@ -145,10 +161,36 @@ export function apiResponse(
 export function apiError(
   code: string,
   message: string,
-  statusCode: number = 400,
+  statusCode?: number,
+  details?: Record<string, any>,
+  requestId?: string
+): Response;
+export function apiError(
+  context: APIContext,
+  statusCode: number,
+  message: string,
+  details?: Record<string, any>
+): Response;
+export function apiError(
+  codeOrContext: string | APIContext,
+  messageOrStatus: string | number,
+  statusCodeOrMessage: number | string = 400,
   details?: Record<string, any>,
   requestId?: string
 ): Response {
+  if (typeof codeOrContext !== 'string') {
+    const context = codeOrContext;
+    const statusCode = typeof messageOrStatus === 'number' ? messageOrStatus : 400;
+    const message = typeof statusCodeOrMessage === 'string' ? statusCodeOrMessage : 'API error';
+    const code = statusCode >= 500 ? ErrorCode.INTERNAL_ERROR : ErrorCode.BAD_REQUEST;
+    const resolvedRequestId = getRequestId(context);
+    const [body, status, headers] = errorResponse(code, message, statusCode, details, resolvedRequestId);
+    return new Response(JSON.stringify(body), { status, headers });
+  }
+
+  const code = codeOrContext;
+  const message = String(messageOrStatus);
+  const statusCode = typeof statusCodeOrMessage === 'number' ? statusCodeOrMessage : 400;
   const [body, status, headers] = errorResponse(code, message, statusCode, details, requestId);
   return new Response(JSON.stringify(body), { status, headers });
 }
@@ -270,6 +312,9 @@ export const HttpStatus = {
 export const ErrorCode = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   UNAUTHORIZED: 'UNAUTHORIZED',
+  AUTH_REQUIRED: 'AUTH_REQUIRED',
+  AUTH_ERROR: 'AUTH_ERROR',
+  BAD_REQUEST: 'BAD_REQUEST',
   FORBIDDEN: 'FORBIDDEN',
   NOT_FOUND: 'NOT_FOUND',
   CONFLICT: 'CONFLICT',

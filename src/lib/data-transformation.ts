@@ -40,7 +40,7 @@ export interface EnrichmentConfig {
 // ==================== TRANSFORMATION ENGINE ====================
 
 export class TransformationEngine {
-  private transformations = new Map<string, Record<string, any>>();
+  private transformations = new Map<string, TransformationTemplate>();
   private transformationCount = 0;
 
   /**
@@ -105,10 +105,10 @@ export class TransformationEngine {
     const template = this.transformations.get(templateId);
     if (!template) return data;
 
-    const rules = template.rules.reduce((acc, rule) => {
+    const rules = template.rules.reduce<Record<string, TransformationRule>>((acc, rule) => {
       acc[rule.target || ''] = rule;
       return acc;
-    }, {} as Record<string, any>);
+    }, {});
 
     return this.transform(data, rules);
   }
@@ -159,7 +159,7 @@ export class FieldMapper {
 
     const mapped: Record<string, any> = {};
 
-    for (const [targetField, sourceField] of Object.entries(mappingConfig.mapping)) {
+    for (const [targetField, sourceField] of Object.entries(mappingConfig.mapping as Record<string, string>)) {
       mapped[targetField] = data[sourceField];
     }
 

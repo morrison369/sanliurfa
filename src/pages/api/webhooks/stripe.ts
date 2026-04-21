@@ -12,6 +12,12 @@ import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { emailOnSubscriptionCreated, emailOnPaymentSuccess, emailOnSubscriptionCancelled } from '../../../lib/subscription-email-integration';
 
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const legacyInvoice = invoice as Stripe.Invoice & { subscription?: unknown };
+  const subscription = legacyInvoice.subscription;
+  return typeof subscription === 'string' ? subscription : null;
+}
+
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   try {
     const userId = session.metadata?.userId;
@@ -99,7 +105,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   try {
-    const subscriptionId = invoice.subscription;
+    const subscriptionId = getInvoiceSubscriptionId(invoice);
 
     if (!subscriptionId || typeof subscriptionId !== 'string') {
       logger.warn('No subscription ID in invoice', { invoiceId: invoice.id });
@@ -112,12 +118,12 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       [invoice.id]
     );
 
-    if (!existingBilling) {
-      const subscription = await queryOne(
-        `SELECT id, user_id FROM subscriptions WHERE stripe_subscription_id = $1`,
-        [subscriptionId]
-      );
+    const subscription = await queryOne(
+      `SELECT id, user_id, tier_id, billing_cycle FROM subscriptions WHERE stripe_subscription_id = $1`,
+      [subscriptionId]
+    );
 
+    if (!existingBilling) {
       if (subscription) {
         await insert('billing_history', {
           subscription_id: subscription.id,
@@ -192,6 +198,9 @@ export const POST: APIRoute = async ({ request }) => {
     // Get raw body for signature verification
     const rawBody = await request.text();
     const signature = request.headers.get('stripe-signature');
+    if (!signature) {
+      throw new Error('Missing Stripe signature');
+    }
 
     // Verify webhook signature
     const event = await verifyWebhookSignature(rawBody, signature);
@@ -216,7 +225,7 @@ export const POST: APIRoute = async ({ request }) => {
       case 'invoice.payment_failed':
         logger.warn('Invoice payment failed', {
           invoiceId: (event.data.object as Stripe.Invoice).id,
-          subscriptionId: (event.data.object as Stripe.Invoice).subscription,
+          subscriptionId: getInvoiceSubscriptionId(event.data.object as Stripe.Invoice),
         });
         break;
 

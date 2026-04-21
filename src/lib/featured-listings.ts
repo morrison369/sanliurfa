@@ -331,8 +331,9 @@ export async function activateScheduledListings(): Promise<number> {
     );
 
     await deleteCachePattern(`sanliurfa:featured:*`);
-    logger.info('Featured listings activated', { count: result.rowCount });
-    return result.rowCount;
+    const affectedRows = result.rowCount ?? 0;
+    logger.info('Featured listings activated', { count: affectedRows });
+    return affectedRows;
   } catch (error) {
     logger.error('Failed to activate scheduled listings', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -354,8 +355,9 @@ export async function deactivateExpiredListings(): Promise<number> {
     );
 
     await deleteCachePattern(`sanliurfa:featured:*`);
-    logger.info('Featured listings deactivated', { count: result.rowCount });
-    return result.rowCount;
+    const affectedRows = result.rowCount ?? 0;
+    logger.info('Featured listings deactivated', { count: affectedRows });
+    return affectedRows;
   } catch (error) {
     logger.error('Failed to deactivate expired listings', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -381,7 +383,7 @@ export async function deleteFeaturedListing(id: string, userId: string): Promise
     await deleteCachePattern(`sanliurfa:featured:active:*`);
 
     logger.info('Featured listing deleted', { id, userId });
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   } catch (error) {
     logger.error('Failed to delete featured listing', error instanceof Error ? error : new Error(String(error)));
     throw error;

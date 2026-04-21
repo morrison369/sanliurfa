@@ -56,14 +56,18 @@ export function isRedisAvailable(): boolean {
 /**
  * Add prefix to key
  */
-export function prefixKey(key: string): string {
-  return KEY_PREFIX + key;
+function normalizeCacheKey(key: unknown): string {
+  return typeof key === 'string' ? key : JSON.stringify(key);
+}
+
+export function prefixKey(key: unknown): string {
+  return KEY_PREFIX + normalizeCacheKey(key);
 }
 
 /**
  * Get cached value with namespaced key
  */
-export async function getCache<T>(key: string): Promise<T | null> {
+export async function getCache<T = any>(key: unknown): Promise<T | null> {
   try {
     if (!isRedisAvailable()) {
       return null;
@@ -81,7 +85,7 @@ export async function getCache<T>(key: string): Promise<T | null> {
 /**
  * Set cached value with namespaced key
  */
-export async function setCache(key: string, value: any, ttlSeconds = 3600): Promise<void> {
+export async function setCache(key: unknown, value: any, ttlSeconds = 3600): Promise<void> {
   try {
     if (!isRedisAvailable()) {
       return;
@@ -97,7 +101,7 @@ export async function setCache(key: string, value: any, ttlSeconds = 3600): Prom
 /**
  * Delete cached value with namespaced key
  */
-export async function deleteCache(key: string): Promise<void> {
+export async function deleteCache(key: unknown): Promise<void> {
   try {
     if (!isRedisAvailable()) {
       return;
@@ -114,7 +118,7 @@ export async function deleteCache(key: string): Promise<void> {
  * Delete multiple cached values by pattern with namespace
  * WARNING: Uses KEYS command which blocks Redis. Safe for low-volume cache purges only.
  */
-export async function deleteCachePattern(pattern: string): Promise<void> {
+export async function deleteCachePattern(pattern: unknown): Promise<void> {
   try {
     if (!isRedisAvailable()) {
       return;
@@ -134,7 +138,7 @@ export async function deleteCachePattern(pattern: string): Promise<void> {
  * Check rate limit with namespaced key
  * Returns true if allowed, false if limit exceeded
  */
-export async function checkRateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+export async function checkRateLimit(key: unknown, limit: number, windowSeconds: number): Promise<boolean> {
   try {
     if (!isRedisAvailable()) {
       console.warn('Redis unavailable for rate limiting, allowing request');
