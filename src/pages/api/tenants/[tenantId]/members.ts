@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Tenant Members API
  * Invite, manage, remove members

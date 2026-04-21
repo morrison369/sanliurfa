@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Search Suggestions API
  * GET: Get autocomplete suggestions

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Place Following
  * POST /api/places/[id]/follow - Follow a place

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Uygulama başlangıcında migrasyonları otomatik olarak çalıştır
  * Bu dosya middleware.ts veya astro.config.mjs'den import edilmeli

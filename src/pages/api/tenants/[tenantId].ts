@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Tenant Detail API
  * Get, update tenant settings

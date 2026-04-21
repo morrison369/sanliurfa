@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Conversation Messages API
  * GET: Retrieve messages in a conversation

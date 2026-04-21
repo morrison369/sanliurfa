@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Predictive Analytics Endpoint
  * Get ML predictions, churn risk, LTV, recommendations

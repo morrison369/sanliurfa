@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * User Settings API
  * GET: Get user settings

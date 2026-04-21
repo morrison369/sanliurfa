@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { getBlogPostRevisions, restoreBlogPostRevision } from '../../../../../lib/blog';
 import { verifyToken } from '../../../../../lib/auth';

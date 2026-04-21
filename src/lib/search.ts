@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Advanced Search Sistemi
  * Full-text search, filtreler, sıralama

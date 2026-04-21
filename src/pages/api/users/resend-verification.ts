@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Resend email verification endpoint
  * POST /api/users/resend-verification

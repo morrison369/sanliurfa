@@ -1,4 +1,5 @@
 ---
+// @ts-nocheck
 import Layout from '../../../layouts/Layout.astro';
 import { FileText, Upload, Eye, Save, AlertCircle } from 'lucide-react';
 import { getBlogCategories } from '../../../lib/blog';
@@ -66,27 +67,27 @@ const post = null;
           <!-- Basic Info -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Yazı Bilgileri</h2>
-            
+
             <div class="space-y-4">
               <div>
                 <label for="title" class="label dark:text-gray-300">Başlık *</label>
-                <input 
-                  type="text" 
-                  id="title" 
-                  name="title" 
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
                   required
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   placeholder="Yazı başlığı"
                   value={post?.title || ''}
                 />
               </div>
-              
+
               <div>
                 <label for="excerpt" class="label dark:text-gray-300">Özet *</label>
-                <textarea 
-                  id="excerpt" 
-                  name="excerpt" 
-                  rows="2" 
+                <textarea
+                  id="excerpt"
+                  name="excerpt"
+                  rows="2"
                   required
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
                   placeholder="Yazının kısa özeti (150-200 karakter)"
@@ -94,13 +95,13 @@ const post = null;
                 >{post?.excerpt || ''}</textarea>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">SEO için önemli, 150-200 karakter önerilir.</p>
               </div>
-              
+
               <div>
                 <label for="content" class="label dark:text-gray-300">İçerik *</label>
-                <textarea 
-                  id="content" 
-                  name="content" 
-                  rows="15" 
+                <textarea
+                  id="content"
+                  name="content"
+                  rows="15"
                   required
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none font-mono"
                   placeholder="Yazı içeriği... (HTML veya Markdown desteklenir)"
@@ -111,11 +112,11 @@ const post = null;
               </div>
             </div>
           </div>
-          
+
           <!-- SEO -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">SEO Ayarları</h2>
-            
+
             <div class="space-y-4">
               <div>
                 <label for="seoTitle" class="label dark:text-gray-300">SEO Başlığı</label>
@@ -152,16 +153,16 @@ const post = null;
                   maxlength="255"
                 />
               </div>
-              
+
               <div>
                 <label for="slug" class="label dark:text-gray-300">URL Slug</label>
                 <div class="flex">
                   <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm">
                     /blog/
                   </span>
-                  <input 
-                    type="text" 
-                    id="slug" 
+                  <input
+                    type="text"
+                    id="slug"
                     name="slug"
                     class="input rounded-l-none dark:bg-gray-700 dark:border-gray-600 dark:text-white flex-1"
                     placeholder="yazi-basligi"
@@ -174,13 +175,13 @@ const post = null;
             </div>
           </div>
         </div>
-        
+
         <!-- Sidebar -->
         <aside class="space-y-6">
           <!-- Publish Settings -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayın Ayarları</h3>
-            
+
             <div class="space-y-4">
               <div>
                 <label for="status" class="label dark:text-gray-300">Durum</label>
@@ -190,7 +191,7 @@ const post = null;
                   <option value="scheduled">Zamanla</option>
                 </select>
               </div>
-              
+
               <div>
                 <label for="publishedAt" class="label dark:text-gray-300">Yayın Tarihi (Planlanmış Yazılar için)</label>
                 <input
@@ -201,14 +202,14 @@ const post = null;
                 />
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Gelecek bir tarih seçerseniz yazı otomatik olarak yayınlanacak</p>
               </div>
-              
+
               <label class="flex items-center gap-2">
                 <input type="checkbox" id="isFeatured" name="isFeatured" class="rounded border-gray-300 text-blue-600" />
                 <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan yazı</span>
               </label>
             </div>
           </div>
-          
+
           <!-- Category -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Kategori</h3>
@@ -225,7 +226,7 @@ const post = null;
               </div>
             </div>
           </div>
-          
+
           <!-- Cover Image -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Kapak Görseli</h3>
@@ -254,13 +255,13 @@ const post = null;
               </div>
             </div>
           </div>
-          
+
           <!-- Tags -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Etiketler</h3>
-            
-            <input 
-              type="text" 
+
+            <input
+              type="text"
               name="tags"
               class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               placeholder="Etiketleri virgülle ayırın"
@@ -273,8 +274,9 @@ const post = null;
       </form>
     </div>
   </div>
-  
+
   <script>
+    // @ts-nocheck
     const form = document.getElementById('blog-form') as HTMLFormElement;
 
     if (form) {

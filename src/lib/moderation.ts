@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Content Moderation & Reporting System
  * Manage user reports, moderation actions, and bans

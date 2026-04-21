@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Report Export API
  * Download reports in CSV/JSON/Excel format

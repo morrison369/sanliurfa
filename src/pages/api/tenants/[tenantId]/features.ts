@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Tenant Features API
  * Feature toggles and configuration

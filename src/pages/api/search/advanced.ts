@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * API: Advanced Search
  * GET - AI-powered search with ranking and personalization

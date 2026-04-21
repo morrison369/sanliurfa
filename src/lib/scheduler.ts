@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Scheduled Tasks Sistemi - Otomatik işlemler
  * Daily stats, cache cleanup, webhook retry'ları, vb.

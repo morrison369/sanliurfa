@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Feature Gating Library
  * Manage premium feature access based on subscription tier

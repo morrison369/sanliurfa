@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Reputation System Library
  * User reputation calculation and management

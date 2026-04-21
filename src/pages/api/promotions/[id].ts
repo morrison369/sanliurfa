@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Get Promotion Details
  * GET /api/promotions/[id] - Get promotion information

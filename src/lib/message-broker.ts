@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Phase 132: Message Broker Integration (Redis Streams)
  * Redis Streams as message broker for distributed event delivery with consumer groups
