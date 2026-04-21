@@ -38,35 +38,35 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (slowQueries.length > 5) {
       recommendations.push({
         priority: 'high',
-        title: 'Optimize Slow Queries',
-        description: `${slowQueries.length} queries are running slowly (>100ms)`,
-        action: 'Review and add database indexes'
+        title: 'Yavaş Sorguları Optimize Et',
+        description: `${slowQueries.length} sorgu yavaş çalışıyor (>100ms)`,
+        action: 'Veritabanı indekslerini incele ve gerekli olanları ekle'
       });
     }
 
     if (requestMetrics.slowRequestRate > 10) {
       recommendations.push({
         priority: 'high',
-        title: 'Improve Request Performance',
-        description: `${requestMetrics.slowRequestRate.toFixed(2)}% of requests are slow (>500ms)`,
-        action: 'Check slow endpoints in /api/performance'
+        title: 'İstek Performansını İyileştir',
+        description: `İsteklerin %${requestMetrics.slowRequestRate.toFixed(2)} oranı yavaş (>500ms)`,
+        action: '/api/performance üzerinden yavaş endpointleri kontrol et'
       });
     }
 
     if (requestMetrics.cacheHitRate < 50) {
       recommendations.push({
         priority: 'medium',
-        title: 'Improve Cache Hit Rate',
-        description: `Current cache hit rate is ${requestMetrics.cacheHitRate.toFixed(2)}% (target: >60%)`,
-        action: 'Extend TTL for frequently accessed resources'
+        title: 'Önbellek İsabet Oranını İyileştir',
+        description: `Mevcut önbellek isabet oranı %${requestMetrics.cacheHitRate.toFixed(2)} (hedef: >%60)`,
+        action: 'Sık erişilen kaynaklar için TTL sürelerini uzat'
       });
     }
 
     recommendations.push({
       priority: 'medium',
-      title: 'Add Database Indexes',
-      description: `${indexSuggestions.length} index optimization opportunities identified`,
-      action: 'Execute suggested indexes'
+      title: 'Veritabanı İndeksleri Ekle',
+      description: `${indexSuggestions.length} indeks optimizasyon fırsatı tespit edildi`,
+      action: 'Önerilen indeksleri uygula'
     });
 
     const duration = Date.now() - startTime;

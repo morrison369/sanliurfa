@@ -35,7 +35,7 @@ export default function AdminDashboard() {
   const loadMetrics = async () => {
     try {
       const res = await fetch('/api/metrics');
-      if (!res.ok) throw new Error('Failed to load metrics');
+      if (!res.ok) throw new Error('Metrikler yüklenemedi');
       const data = await res.json();
       setMetrics(data.data || null);
       setError(null);
@@ -85,8 +85,8 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600 dark:text-gray-400">Sistem metrikleri ve performans monitoring</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Yönetim Paneli</h1>
+          <p className="text-gray-600 dark:text-gray-400">Sistem metrikleri ve performans izleme</p>
         </div>
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -132,9 +132,9 @@ export default function AdminDashboard() {
           <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">P95: {Math.round(metrics.p95Duration)}ms</div>
         </div>
 
-        {/* Cache Hit Rate */}
+        {/* Önbellek verimliliği */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Cache Hit Rate</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Önbellek İsabet Oranı</div>
           <div className="text-3xl font-bold text-blue-600">{(metrics.cacheHitRate * 100).toFixed(1)}%</div>
           <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">{metrics.slowRequestRate || 0} slow</div>
         </div>
@@ -187,7 +187,7 @@ export default function AdminDashboard() {
         {metrics.poolStatus && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Database Connection Pool</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Veritabanı Bağlantı Havuzu</h2>
             </div>
             <div className="px-6 py-6">
               <div className="space-y-6">

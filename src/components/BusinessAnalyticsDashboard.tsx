@@ -58,7 +58,7 @@ export function BusinessAnalyticsDashboard() {
       ]);
 
       if (!analyticsRes.ok || !insightsRes.ok) {
-        throw new Error('Failed to fetch data');
+        throw new Error('Analitik verileri alınamadı');
       }
 
       const analyticsData = await analyticsRes.json();
@@ -76,7 +76,7 @@ export function BusinessAnalyticsDashboard() {
       setMetrics(analyticsData.data?.metrics || []);
       setInsights(insightsData.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load analytics');
+      setError(err instanceof Error ? err.message : 'Analitik verileri yüklenemedi');
     } finally {
       setLoading(false);
     }
@@ -186,7 +186,7 @@ export function BusinessAnalyticsDashboard() {
       {/* Insights */}
       {insights.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-lg font-semibold">🔍 AI Önerileri</h3>
+          <h3 className="text-lg font-semibold">Akıllı Öneriler</h3>
           {insights.map((insight) => (
             <div
               key={insight.id}
@@ -217,13 +217,33 @@ export function BusinessAnalyticsDashboard() {
         </div>
       )}
 
-      {/* Daily Metrics Chart Placeholder */}
+      {/* Daily Metrics */}
       {metrics.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Günlük Trendler</h3>
-          <div className="space-y-2 text-sm">
-            <p>📊 {metrics.length} günlük veri bulunmaktadır</p>
-            <p className="text-gray-500">Grafik görüntülemesi yakında eklenecek</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-gray-600">
+                <tr>
+                  <th className="py-2">Tarih</th>
+                  <th className="py-2 text-right">Görüntülenme</th>
+                  <th className="py-2 text-right">Yorum</th>
+                  <th className="py-2 text-right">Ortalama Puan</th>
+                  <th className="py-2 text-right">Yeni Takipçi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {metrics.slice(0, 10).map((metric) => (
+                  <tr key={metric.date}>
+                    <td className="py-2">{new Date(metric.date).toLocaleDateString('tr-TR')}</td>
+                    <td className="py-2 text-right">{metric.view_count || 0}</td>
+                    <td className="py-2 text-right">{metric.review_count || 0}</td>
+                    <td className="py-2 text-right">{Number(metric.average_rating || 0).toFixed(1)}</td>
+                    <td className="py-2 text-right">{metric.new_followers || 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
