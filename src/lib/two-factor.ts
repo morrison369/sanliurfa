@@ -6,6 +6,7 @@
 
 import { queryOne, update as updateDb, insert } from './postgres';
 import { logger } from './logging';
+import { verifyTOTP } from './two-factor-auth';
 
 const BACKUP_CODE_COUNT = 10;
 const TOTP_WINDOW = 30; // seconds
@@ -54,18 +55,12 @@ export function generateBackupCodes(count: number = BACKUP_CODE_COUNT): string[]
 }
 
 /**
- * Verify TOTP code (simple implementation)
- * For production, use speakeasy or google-authenticator library
+ * Verify TOTP code with the same RFC 6238 implementation used by the newer 2FA method flow.
  */
 export function verifyTOTPCode(secret: string, token: string): boolean {
   try {
-    // This is a simplified verification
-    // In production, use: speakeasy.totp.verify({ secret, encoding: 'base32', token, window: 2 })
-    if (!token || token.length !== 6) return false;
-
-    // For now, accept any 6-digit code for testing
-    // Real implementation would decode base32 and compute HMAC-SHA1
-    return /^\d{6}$/.test(token);
+    if (!secret || !/^\d{6}$/.test(token || '')) return false;
+    return verifyTOTP(secret, token, 1);
   } catch (error) {
     logger.error('TOTP verification failed', error instanceof Error ? error : new Error(String(error)));
     return false;
