@@ -259,4 +259,4 @@ export const errorBudgetTracker = new ErrorBudgetTracker();
 export const deploymentGate = new DeploymentGate();
 export const qualityMetricsValidator = new QualityMetricsValidator();
 
-export { ServiceLevelObjective, ErrorBudget, DeploymentApproval, QualityMetrics };
+export type { ServiceLevelObjective, ErrorBudget, DeploymentApproval, QualityMetrics };

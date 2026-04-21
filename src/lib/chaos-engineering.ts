@@ -247,4 +247,4 @@ export const resilienceValidator = new ResilienceValidator();
 export const recoveryAnalyzer = new RecoveryAnalyzer();
 export const chaosScenario = new ChaosScenario();
 
-export { FailureScenario, ResilienceResult, RecoveryMetric };
+export type { FailureScenario, ResilienceResult, RecoveryMetric };

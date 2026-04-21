@@ -253,4 +253,4 @@ export const decisionTraceability = new DecisionTraceability();
 export const changeImpactAnalyzer = new ChangeImpactAnalyzer();
 export const decisionReplayEngine = new DecisionReplayEngine();
 
-export { DecisionRecord, DecisionTrace, ChangeImpact };
+export type { DecisionRecord, DecisionTrace, ChangeImpact };

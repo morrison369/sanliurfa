@@ -269,4 +269,4 @@ export const auditAutomation = new AuditAutomation();
 export const remediationOrchestrator = new RemediationOrchestrator();
 export const complianceReportAutomation = new ComplianceReportAutomation();
 
-export { ComplianceCheck, AuditLog, RemediationTask };
+export type { ComplianceCheck, AuditLog, RemediationTask };

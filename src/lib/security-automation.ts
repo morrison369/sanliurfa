@@ -228,4 +228,4 @@ export const policyEnforcer = new PolicyEnforcer();
 export const incidentAutoResponder = new IncidentAutoResponder();
 export const securityCheckRunner = new SecurityCheckRunner();
 
-export { SecurityScan, SecurityPolicy, RemediationAction, SecurityCheckResult };
+export type { SecurityScan, SecurityPolicy, RemediationAction, SecurityCheckResult };

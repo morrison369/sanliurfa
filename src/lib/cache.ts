@@ -158,3 +158,33 @@ export async function checkRateLimit(key: unknown, limit: number, windowSeconds:
     return true; // Allow on error (fail-open)
   }
 }
+
+export const redis = {
+  get(_key: string): string | null {
+    return null;
+  },
+  setex(key: string, seconds: number, value: string): void {
+    void setCache(key, value, seconds);
+  },
+  del(key: string): void {
+    void deleteCache(key);
+  },
+  lpush(key: string, value: string): void {
+    void getCache<string[]>(key).then((list) => {
+      const nextList = list || [];
+      nextList.unshift(value);
+      return setCache(key, nextList);
+    });
+  },
+  ltrim(key: string, start: number, stop: number): void {
+    void getCache<string[]>(key).then((list) => setCache(key, (list || []).slice(start, stop + 1)));
+  },
+  expire(key: string, seconds: number): void {
+    void getCache(key).then((value) => {
+      if (value !== null) {
+        return setCache(key, value, seconds);
+      }
+      return undefined;
+    });
+  }
+};

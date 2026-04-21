@@ -215,4 +215,4 @@ export const mttrEstimator = new MTTREstimator();
 export const riskScorer = new RiskScorer();
 export const recommendationEngine = new RecommendationEngine();
 
-export { IncidentForecast, MTTRPrediction, RiskScore, Recommendation };
+export type { IncidentForecast, MTTRPrediction, RiskScore, Recommendation };

@@ -258,4 +258,4 @@ export const policyVersionManager = new PolicyVersionManager();
 export const policyTemplateLibrary = new PolicyTemplateLibrary();
 export const policyCompiler = new PolicyCompiler();
 
-export { PolicyDefinition, PolicyTemplate, CompiledPolicy };
+export type { PolicyDefinition, PolicyTemplate, CompiledPolicy };

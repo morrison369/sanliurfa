@@ -261,4 +261,4 @@ export const auditTrailManager = new AuditTrailManager();
 export const policyManager = new PolicyManager();
 export const complianceReporter = new ComplianceReporter();
 
-export { ComplianceRequirement, AuditTrailEntry, Policy, ComplianceReport };
+export type { ComplianceRequirement, AuditTrailEntry, Policy, ComplianceReport };

@@ -269,4 +269,4 @@ export const incidentOrchestrator = new IncidentOrchestrator();
 export const forensicAnalyzer = new ForensicAnalyzer();
 export const postIncidentReviewer = new PostIncidentReviewer();
 
-export { SecurityIncident, ForensicEvidence, IncidentTimeline, PostIncidentReview };
+export type { SecurityIncident, ForensicEvidence, IncidentTimeline, PostIncidentReview };

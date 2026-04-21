@@ -339,4 +339,4 @@ export const semanticRetriever = new SemanticRetriever();
 export const contextAssembler = new ContextAssembler();
 export const ragPipeline = new RAGPipeline();
 
-export { DocumentChunk, RetrievalResult, RetrievalMetrics, AssembledContext, RAGResponse };
+export type { DocumentChunk, RetrievalResult, RetrievalMetrics, AssembledContext, RAGResponse };

@@ -237,4 +237,4 @@ export const queryHandler = new QueryHandler();
 export const eventHandler = new EventHandler();
 export const sagaOrchestrator = new SagaOrchestrator();
 
-export { Command, CommandResult, Query, QueryResult, SagaDefinition, SagaExecution };
+export type { Command, CommandResult, Query, QueryResult, SagaDefinition, SagaExecution };

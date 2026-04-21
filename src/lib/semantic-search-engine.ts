@@ -360,4 +360,4 @@ export const queryExpander = new QueryExpander();
 export const rankingStrategy = new RankingStrategy();
 export const searchOptimizer = new SearchOptimizer();
 
-export { IndexedDocument, SearchResult, SearchOptions, QueryExpansion, RankingResult };
+export type { IndexedDocument, SearchResult, SearchOptions, QueryExpansion, RankingResult };

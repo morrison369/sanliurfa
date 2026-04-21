@@ -248,4 +248,4 @@ export const spanManager = new SpanManager();
 export const traceCollector = new TraceCollector();
 export const traceExporter = new TraceExporter();
 
-export { TraceContext, Span, InstrumentationHook, ExportTarget };
+export type { TraceContext, Span, InstrumentationHook, ExportTarget };

@@ -248,4 +248,4 @@ export const timeSeriesAnalyzer = new TimeSeriesAnalyzer();
 export const rootCauseAnalyzer = new RootCauseAnalyzer();
 export const correlationEngine = new CorrelationEngine();
 
-export { MetricTimeSeries, CorrelationPair, RootCauseHypothesis, CorrelationMatrix };
+export type { MetricTimeSeries, CorrelationPair, RootCauseHypothesis, CorrelationMatrix };
