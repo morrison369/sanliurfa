@@ -1,0 +1,32 @@
+# Default repository owner
+* @titanai777
+
+# Security-sensitive areas
+/.github/ @titanai777
+/scripts/security/ @titanai777
+/scripts/github/ @titanai777
+/.env.example @titanai777
+/.env.production.template @titanai777
+
+# Runtime and deployment
+/astro.config.mjs @titanai777
+/package.json @titanai777
+/package-lock.json @titanai777
+/scripts/runtime/ @titanai777
+/scripts/prod-cwp-ops.sh @titanai777
+
+# Core application
+/src/middleware.ts @titanai777
+/src/lib/auth* @titanai777
+/src/lib/cache* @titanai777
+/src/lib/postgres.ts @titanai777
+/src/pages/api/ @titanai777
+/src/pages/admin/ @titanai777
+
+# Public SEO/content surface
+/src/pages/index.astro @titanai777
+/src/pages/sitemap*.ts @titanai777
+/src/pages/robots.txt.ts @titanai777
+/src/pages/llms.txt.ts @titanai777
+/src/content/ @titanai777
+/public/robots.txt @titanai777
