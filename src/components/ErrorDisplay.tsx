@@ -3,7 +3,8 @@
  */
 
 import React from 'react';
-import { AppError, formatErrorForDisplay } from '../lib/error-handling';
+import { formatErrorForDisplay } from '../lib/error-handling';
+import type { AppError } from '../lib/error-handling';
 
 /**
  * Inline error message (for form fields)

@@ -109,11 +109,13 @@ class Logger {
     this.log({ level: LogLevel.WARN, message, context, timestamp: new Date().toISOString() });
   }
 
-  error(message: string, error?: Error | string, context?: Record<string, any>) {
+  error(message: string, error?: unknown, context?: Record<string, any>) {
     const errorData = typeof error === 'string'
       ? { message: error }
-      : error
+      : error instanceof Error
       ? { message: error.message, stack: error.stack }
+      : error
+      ? { message: JSON.stringify(error) }
       : undefined;
 
     this.log({
@@ -154,11 +156,12 @@ class Logger {
   /**
    * Log data mutation (create, update, delete)
    */
-  logMutation(operation: 'create' | 'update' | 'delete', table: string, recordId: string, userId?: string, context?: Record<string, any>) {
-    this.info(`${operation.toUpperCase()} ${table} ${recordId}`, {
+  logMutation(operation: 'create' | 'update' | 'delete', table: string, recordId: unknown, userId?: string, context?: Record<string, any>) {
+    const recordIdText = typeof recordId === 'string' ? recordId : JSON.stringify(recordId);
+    this.info(`${operation.toUpperCase()} ${table} ${recordIdText}`, {
       operation,
       table,
-      recordId,
+      recordId: recordIdText,
       userId,
       ...context
     });

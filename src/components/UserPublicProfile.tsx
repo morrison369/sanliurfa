@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
-export default function UserPublicProfile({ userId, currentUserId }) {
-  const [profile, setProfile] = useState(null);
+export default function UserPublicProfile({ userId, currentUserId }: { userId: string; currentUserId?: string }) {
+  const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBlocking, setIsBlocking] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);

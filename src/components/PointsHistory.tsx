@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 export default function PointsHistory() {
-  const [history, setHistory] = useState(null);
+  const [history, setHistory] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -24,13 +24,13 @@ export default function PointsHistory() {
   if (isLoading) return <div className="text-center py-8">Yukleniyor...</div>;
   if (!history) return <div>Veri yuklenemedi</div>;
 
-  const getActivityIcon = (type) => {
-    const icons = { 'review_created': '⭐', 'comment_posted': '💬', 'favorite_added': '❤️' };
+  const getActivityIcon = (type: string) => {
+    const icons: Record<string, string> = { 'review_created': '⭐', 'comment_posted': '💬', 'favorite_added': '❤️' };
     return icons[type] || '📌';
   };
 
-  const getActivityLabel = (type) => {
-    const labels = { 'review_created': 'Inceleme', 'comment_posted': 'Yorum', 'favorite_added': 'Favori' };
+  const getActivityLabel = (type: string) => {
+    const labels: Record<string, string> = { 'review_created': 'Inceleme', 'comment_posted': 'Yorum', 'favorite_added': 'Favori' };
     return labels[type] || 'Aktivite';
   };
 
@@ -39,7 +39,7 @@ export default function PointsHistory() {
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Puan Gecmisi</h2>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        {history.summary.map((item) => (
+        {history.summary.map((item: any) => (
           <div key={item.action_type} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200">
             <p className="text-sm text-gray-600">{getActivityLabel(item.action_type)}</p>
             <p className="text-2xl font-bold text-blue-600">{item.total_points}</p>
@@ -49,7 +49,7 @@ export default function PointsHistory() {
       </div>
 
       <div className="space-y-2">
-        {history.history.map((entry) => (
+        {history.history.map((entry: any) => (
           <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="flex items-center gap-3">
               <span className="text-lg">{getActivityIcon(entry.action_type)}</span>

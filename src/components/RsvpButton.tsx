@@ -26,7 +26,7 @@ export function RsvpButton({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isFull = capacity && attendeeCount >= capacity;
+  const isFull = typeof capacity === 'number' && attendeeCount >= capacity;
 
   const handleRsvp = async () => {
     if (!isLoggedIn) {

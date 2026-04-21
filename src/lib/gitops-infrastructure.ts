@@ -314,4 +314,4 @@ export const terraformManager = new TerraformManager();
 export const helmManager = new HelmManager();
 export const driftDetector = new DriftDetector();
 
-export { GitRepository, TerraformPlan, HelmRelease, DriftEvent };
+export type { GitRepository, TerraformPlan, HelmRelease, DriftEvent };

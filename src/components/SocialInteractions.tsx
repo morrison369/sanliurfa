@@ -12,9 +12,9 @@ export default function SocialInteractions({ placeId, userId }: SocialInteractio
   const [shareCount, setShareCount] = useState(0);
 
   useEffect(() => {
-    const fetch = async () => {
-      const likeRes = await fetch(`/api/places/${placeId}/like`);
-      const shareRes = await fetch(`/api/places/${placeId}/share`);
+    const loadInteractions = async () => {
+      const likeRes = await window.fetch(`/api/places/${placeId}/like`);
+      const shareRes = await window.fetch(`/api/places/${placeId}/share`);
       if (likeRes.ok && shareRes.ok) {
         const likeData = await likeRes.json();
         const shareData = await shareRes.json();
@@ -23,12 +23,12 @@ export default function SocialInteractions({ placeId, userId }: SocialInteractio
         setShareCount(shareData.data.count);
       }
     };
-    fetch();
+    loadInteractions();
   }, [placeId]);
 
   const handleLike = async () => {
     if (!userId) return;
-    const res = await fetch(`/api/places/${placeId}/like`, {
+    const res = await window.fetch(`/api/places/${placeId}/like`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: hasLiked ? 'unlike' : 'like' }),
@@ -43,7 +43,7 @@ export default function SocialInteractions({ placeId, userId }: SocialInteractio
   const handleShare = async () => {
     if (!userId) return;
     const shareUrl = window.location.href;
-    await fetch(`/api/places/${placeId}/share`, {
+    await window.fetch(`/api/places/${placeId}/share`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ platform: 'web', share_url: shareUrl }),

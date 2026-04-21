@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 export default function LeaderboardsDisplay() {
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState("points");
   const [isLoading, setIsLoading] = useState(true);
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 export default function AnalyticsPanel() {
-  const [analytics, setAnalytics] = useState(null);
+  const [analytics, setAnalytics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function AnalyticsPanel() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">En Popüler Mekanlar</h3>
           <div className="space-y-3">
-            {topPlaces.map((place, idx) => (
+            {topPlaces.map((place: any, idx: number) => (
               <div key={place.id} className="flex justify-between items-start">
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">#{idx + 1} {place.name}</p>
@@ -72,7 +72,7 @@ export default function AnalyticsPanel() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">En Aktif Kullanıcılar</h3>
           <div className="space-y-3">
-            {topUsers.map((user, idx) => (
+            {topUsers.map((user: any, idx: number) => (
               <div key={user.id} className="flex justify-between items-start">
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">#{idx + 1} {user.full_name}</p>
