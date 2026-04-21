@@ -125,6 +125,7 @@ import { migration_123_notification_channels } from '../migrations/123_notificat
 import { migration_124_trending_recommendations } from '../migrations/124_trending_recommendations';
 import { migration_125_advanced_analytics } from '../migrations/125_advanced_analytics';
 import { migration_126_data_warehouse } from '../migrations/126_data_warehouse';
+import { migration_127_places_media_submission_fields } from '../migrations/127_places_media_submission_fields';
 
 // Tüm migrasyonlar
 const ALL_MIGRATIONS = [
@@ -245,7 +246,8 @@ const ALL_MIGRATIONS = [
   migration_123_notification_channels,
   migration_124_trending_recommendations,
   migration_125_advanced_analytics,
-  migration_126_data_warehouse
+  migration_126_data_warehouse,
+  migration_127_places_media_submission_fields
 ];
 
 let migrationsInitialized = false;

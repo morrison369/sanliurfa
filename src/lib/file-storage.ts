@@ -3,12 +3,14 @@
  * Handles file uploads to local filesystem or cloud storage
  */
 
+import path from 'path';
 import { logger } from './logging';
 
 // Storage configuration
 const STORAGE_TYPE = process.env.STORAGE_TYPE || 'local'; // 'local' | 's3' | 'supabase'
-const UPLOAD_DIR = process.env.UPLOAD_DIR || 'public/uploads/photos';
-const PUBLIC_URL_PREFIX = process.env.PUBLIC_URL || 'http://localhost:3000';
+const UPLOAD_DIR = process.env.PHOTO_UPLOAD_DIR || process.env.UPLOAD_DIR || 'public/uploads/photos';
+const PUBLIC_URL_PREFIX = process.env.SITE_URL || process.env.PUBLIC_URL || 'https://sanliurfa.com';
+const UPLOAD_PUBLIC_PATH = process.env.UPLOAD_PUBLIC_PATH || derivePublicPath(UPLOAD_DIR);
 
 /**
  * Save file and return public URL
@@ -40,14 +42,14 @@ async function saveFileLocal(
   try {
     // Dynamic import for Node.js fs module (only in server context)
     const fs = await import('fs');
-    const path = await import('path');
 
     // Generate unique filename if not provided
-    const finalFileName =
-      fileName || `${Date.now()}-${Math.random().toString(36).substring(7)}-${file.name}`;
+    const finalFileName = buildSafeFileName(file, fileName);
+    const safeFolder = sanitizePathSegment(folder);
 
     // Create full directory path
-    const dirPath = path.join(process.cwd(), UPLOAD_DIR, folder);
+    const storageRoot = path.isAbsolute(UPLOAD_DIR) ? UPLOAD_DIR : path.join(process.cwd(), UPLOAD_DIR);
+    const dirPath = path.join(storageRoot, safeFolder);
     const filePath = path.join(dirPath, finalFileName);
 
     // Create directory if it doesn't exist
@@ -62,10 +64,10 @@ async function saveFileLocal(
     fs.writeFileSync(filePath, buffer);
 
     // Return public URL
-    const publicPath = `/uploads/photos/${folder}/${finalFileName}`;
-    const publicUrl = `${PUBLIC_URL_PREFIX}${publicPath}`;
+    const publicPath = joinUrlPath(UPLOAD_PUBLIC_PATH, safeFolder, finalFileName);
+    const publicUrl = `${PUBLIC_URL_PREFIX.replace(/\/$/, '')}${publicPath}`;
 
-    logger.info('File saved locally', { folder, fileName: finalFileName });
+    logger.info('File saved locally', { folder: safeFolder, fileName: finalFileName });
 
     return {
       filePath: publicPath,
@@ -75,6 +77,70 @@ async function saveFileLocal(
     logger.error('Local file save failed', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
+}
+
+function buildSafeFileName(file: File, requestedName?: string): string {
+  const originalStem = requestedName || `${Date.now()}-${file.name}`;
+  const parsed = path.parse(originalStem);
+  const requestedExtension = parsed.ext.toLowerCase();
+  const fallbackExtension = extensionFromMime(file.type) || path.extname(file.name).toLowerCase() || '.bin';
+  const extension = requestedExtension || fallbackExtension;
+  const stem = sanitizePathSegment(requestedExtension ? parsed.name : originalStem);
+
+  return `${stem || Date.now().toString()}${extension}`;
+}
+
+function sanitizePathSegment(value: string): string {
+  return value
+    .toLocaleLowerCase('tr-TR')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ı/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 160);
+}
+
+function extensionFromMime(mimeType: string): string | null {
+  const extensions: Record<string, string> = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp',
+    'image/gif': '.gif',
+    'image/avif': '.avif',
+  };
+
+  return extensions[mimeType] || null;
+}
+
+function derivePublicPath(uploadDir: string): string {
+  const normalized = uploadDir.replace(/\\/g, '/').replace(/\/$/, '');
+  const publicIndex = normalized.lastIndexOf('/public/');
+
+  if (normalized === 'public') {
+    return '/';
+  }
+
+  if (normalized.startsWith('public/')) {
+    return `/${normalized.slice('public/'.length)}`;
+  }
+
+  if (publicIndex >= 0) {
+    return `/${normalized.slice(publicIndex + '/public/'.length)}`;
+  }
+
+  return '/uploads/photos';
+}
+
+function joinUrlPath(...parts: string[]): string {
+  return `/${parts
+    .map((part) => part.replace(/^\/+|\/+$/g, ''))
+    .filter(Boolean)
+    .join('/')}`;
 }
 
 /**

@@ -62,6 +62,8 @@ const error = Astro.url.searchParams.get('error');
                 <p class="text-red-600 dark:text-red-400 text-sm">
                   {error === 'missing_fields' && 'Lütfen tüm zorunlu alanları doldurun.'}
                   {error === 'invalid_email' && 'Geçerli bir e-posta adresi girin.'}
+                  {error === 'image_too_large' && 'Fotoğraf en fazla 5 MB olabilir.'}
+                  {error === 'invalid_image_type' && 'Sadece JPG, PNG veya WebP fotoğraf yükleyebilirsiniz.'}
                   {error === 'server_error' && 'Bir hata oluştu. Lütfen tekrar deneyin.'}
                 </p>
               </div>
@@ -183,7 +185,7 @@ const error = Astro.url.searchParams.get('error');
                         </label>
                         <p class="pl-1">veya sürükleyin</p>
                       </div>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG up to 5MB</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">JPG, PNG veya WebP, en fazla 5 MB</p>
                     </div>
                   </div>
                 </div>

@@ -1,10 +1,13 @@
 // API: Public place submission (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { insert } from '../../../lib/postgres';
+import { insert, update } from '../../../lib/postgres';
 import { sendEmail } from '../../../lib/email';
+import { saveFile } from '../../../lib/file-storage';
 
 const SITE_URL = process.env.SITE_URL || 'https://sanliurfa.com';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@sanliurfa.com';
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 export const POST: APIRoute = async ({ request, redirect }) => {
   try {
@@ -20,6 +23,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     const website = formData.get('website')?.toString();
     const submitterName = formData.get('submitter_name')?.toString();
     const submitterEmail = formData.get('submitter_email')?.toString();
+    const image = formData.get('image');
 
     // Validation
     if (!name || !category || !address || !phone || !description || !submitterName || !submitterEmail) {
@@ -33,6 +37,15 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     }
 
     const slug = slugifyTurkish(name);
+    const imageFile = image instanceof File && image.size > 0 ? image : null;
+
+    if (imageFile && imageFile.size > MAX_IMAGE_SIZE) {
+      return redirect('/places/ekle?error=image_too_large');
+    }
+
+    if (imageFile && !ALLOWED_IMAGE_TYPES.has(imageFile.type)) {
+      return redirect('/places/ekle?error=invalid_image_type');
+    }
 
     // Insert place with pending status
     const place = await insert('places', {
@@ -51,6 +64,17 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       updated_at: new Date().toISOString(),
     });
 
+    let imagePath: string | null = null;
+    if (place?.id && imageFile) {
+      const savedImage = await saveFile(imageFile, place.id, slug);
+      imagePath = savedImage.filePath;
+      await update('places', place.id, {
+        image_url: imagePath,
+        images: [imagePath],
+        updated_at: new Date().toISOString(),
+      });
+    }
+
     await sendPlaceSubmissionNotification({
       placeId: place?.id,
       name,
@@ -59,9 +83,8 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       phone,
       submitterName,
       submitterEmail,
+      imagePath,
     });
-
-    // TODO: Handle image upload
 
     return redirect('/places/ekle?success=true');
   } catch (err) {
@@ -94,6 +117,7 @@ async function sendPlaceSubmissionNotification(input: {
   phone: string;
   submitterName: string;
   submitterEmail: string;
+  imagePath?: string | null;
 }): Promise<void> {
   const adminUrl = `${SITE_URL}/admin/places${input.placeId ? `?q=${encodeURIComponent(input.name)}` : ''}`;
   const html = `
@@ -103,6 +127,7 @@ async function sendPlaceSubmissionNotification(input: {
     <p><strong>Adres:</strong> ${escapeHtml(input.address)}</p>
     <p><strong>Telefon:</strong> ${escapeHtml(input.phone)}</p>
     <p><strong>Başvuran:</strong> ${escapeHtml(input.submitterName)} (${escapeHtml(input.submitterEmail)})</p>
+    ${input.imagePath ? `<p><strong>Fotoğraf:</strong> <a href="${SITE_URL}${escapeHtml(input.imagePath)}">${escapeHtml(input.imagePath)}</a></p>` : ''}
     <p><a href="${adminUrl}">Admin panelinde incele</a></p>
   `;
 

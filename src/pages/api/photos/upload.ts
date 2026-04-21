@@ -11,10 +11,8 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { saveFile } from '../../../lib/file-storage';
 
-// TODO: Configure storage settings
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const UPLOAD_DIR = process.env.PHOTO_UPLOAD_DIR || 'public/uploads/photos';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -80,7 +78,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Verify place exists
-    const place = await queryOne('SELECT id FROM places WHERE id = $1', [placeId]);
+    const place = await queryOne<{ id: string; slug: string; name: string }>(
+      'SELECT id, slug, name FROM places WHERE id = $1',
+      [placeId]
+    );
     if (!place) {
       recordRequest('POST', '/api/photos/upload', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
@@ -108,7 +109,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Save file to storage
     let fileResult;
     try {
-      fileResult = await saveFile(file, placeId);
+      fileResult = await saveFile(file, placeId, buildPhotoFileName(place.slug || place.name));
     } catch (storageError) {
       recordRequest('POST', '/api/photos/upload', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       logger.error('File storage failed', storageError instanceof Error ? storageError : new Error(String(storageError)));
@@ -157,3 +158,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 };
+
+function buildPhotoFileName(placeSlug: string): string {
+  return `${placeSlug}-${Date.now()}`;
+}
