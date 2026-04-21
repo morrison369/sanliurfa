@@ -9,14 +9,13 @@ import { toast } from './toast';
 
 interface UseApiErrorOptions {
   showToast?: boolean;
-  lang?: 'tr' | 'en';
+  lang?: 'tr';
   onError?: (error: AppError) => void;
 }
 
 export function useApiError(options: UseApiErrorOptions = {}) {
   const {
     showToast = true,
-    lang = 'tr',
     onError
   } = options;
 
@@ -29,15 +28,13 @@ export function useApiError(options: UseApiErrorOptions = {}) {
       setError(appError);
 
       if (showToast) {
-        const message = lang === 'tr'
-          ? appError.userMessage || `${appError.type}: ${appError.message}`
-          : `${appError.type}: ${appError.message}`;
+        const message = appError.userMessage || `${appError.type}: ${appError.message}`;
         toast.error(message);
       }
 
       onError?.(appError);
     },
-    [showToast, lang, onError]
+    [showToast, onError]
   );
 
   const clearError = useCallback(() => {

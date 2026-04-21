@@ -2,7 +2,7 @@
 /**
  * User Settings API
  * GET: Get user settings
- * PUT: Update user settings (language, theme, notification/privacy preferences)
+ * PUT: Update user settings (theme, notification/privacy preferences)
  */
 
 import type { APIRoute } from 'astro';
@@ -16,7 +16,7 @@ const updateSettingsSchema = {
   language_preference: {
     type: 'string' as const,
     required: false,
-    pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+    pattern: '^tr$'
   },
   theme_preference: {
     type: 'string' as const,
@@ -72,7 +72,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: {
-          language_preference: profile.language_preference,
+          language_preference: 'tr',
           theme_preference: profile.theme_preference,
           notification_preferences: profile.notification_preferences,
           privacy_settings: profile.privacy_settings,
@@ -116,6 +116,18 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
+    if (body.language_preference && body.language_preference !== 'tr') {
+      recordRequest('PUT', '/api/users/settings', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Site sadece Türkçe kullanılabilir',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        { allowed: ['tr'] },
+        requestId
+      );
+    }
+
+    body.language_preference = 'tr';
     const validation = validateWithSchema(body, updateSettingsSchema);
 
     if (!validation.valid) {
@@ -160,7 +172,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: {
-          language_preference: updatedProfile.language_preference,
+          language_preference: 'tr',
           theme_preference: updatedProfile.theme_preference,
           notification_preferences: updatedProfile.notification_preferences,
           privacy_settings: updatedProfile.privacy_settings,

@@ -1,9 +1,12 @@
 /**
- * Get Translations for Language
+ * Get Turkish translations.
+ *
+ * The public product is Turkish-only. `lang` is accepted for legacy callers,
+ * but every response is locked to `tr`.
  */
 
 import type { APIRoute } from 'astro';
-import { TRANSLATIONS, t, getAvailableLanguages } from '../../../lib/i18n';
+import { TRANSLATIONS, getAvailableLanguages } from '../../../lib/i18n';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -14,19 +17,8 @@ export const GET: APIRoute = async ({ request, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    const lang = (url.searchParams.get('lang') || 'tr') as 'tr' | 'en';
+    const lang = 'tr';
     const namespace = url.searchParams.get('namespace');
-
-    if (!['tr', 'en'].includes(lang)) {
-      recordRequest('GET', '/api/i18n/translations', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(
-        ErrorCode.INVALID_INPUT,
-        'Invalid language',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
 
     let data;
 
@@ -46,6 +38,7 @@ export const GET: APIRoute = async ({ request, url }) => {
         success: true,
         data: {
           language: lang,
+          availableLanguages: getAvailableLanguages(),
           translations: data,
           namespace: namespace || 'all'
         }
