@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import Breadcrumb from '../../components/Breadcrumb.astro';
 import { getBlogPostBySlug, getBlogPosts } from '../../lib/blog';
+import type { BlogPost } from '../../lib/blog';
 
 const { slug } = Astro.params;
 
@@ -9,8 +10,8 @@ if (!slug) {
   return Astro.redirect('/blog');
 }
 
-let post = null;
-let relatedPosts = [];
+let post: BlogPost | null = null;
+let relatedPosts: BlogPost[] = [];
 let error = '';
 
 try {
@@ -27,7 +28,7 @@ try {
       categoryId: post.categoryId,
       limit: 3
     });
-    relatedPosts = result.posts.filter(p => p.id !== post.id);
+    relatedPosts = result.posts.filter((p) => p.id !== post?.id);
   }
 } catch (err) {
   error = 'Blog yazısı yüklenirken hata oluştu';
@@ -35,17 +36,19 @@ try {
   return Astro.redirect('/blog');
 }
 
+const currentPost = post as BlogPost;
+
 const breadcrumbItems = [
   { label: 'Ana Sayfa', href: '/' },
   { label: 'Blog', href: '/blog' },
-  post.categoryName ? { label: post.categoryName, href: `/blog?category=${post.categoryName?.toLowerCase().replace(/\s+/g, '-')}` } : null,
-  { label: post.title, href: `/blog/${post.slug}` },
-].filter(Boolean);
+  currentPost.categoryName ? { label: currentPost.categoryName, href: `/blog?category=${currentPost.categoryName.toLowerCase().replace(/\s+/g, '-')}` } : null,
+  { label: currentPost.title, href: `/blog/${currentPost.slug}` },
+].filter((item): item is { label: string; href: string } => item !== null);
 
 const seo = {
-  title: post.seoTitle || post.title,
-  description: post.seoDescription || post.excerpt,
-  image: post.featuredImage,
+  title: currentPost.seoTitle || currentPost.title,
+  description: currentPost.seoDescription || currentPost.excerpt,
+  image: currentPost.featuredImage,
 };
 ---
 
@@ -57,24 +60,24 @@ const seo = {
       </div>
     </div>
     
-    {post.featuredImage && (
+    {currentPost.featuredImage && (
       <div class="relative h-[400px] lg:h-[500px]">
         <img
-          src={post.featuredImage}
-          alt={post.title}
+          src={currentPost.featuredImage}
+          alt={currentPost.title}
           class="w-full h-full object-cover"
         />
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
         <div class="absolute bottom-0 left-0 right-0">
           <div class="container-custom py-8">
-            {post.categoryName && (
+            {currentPost.categoryName && (
               <span class="inline-block px-3 py-1 bg-blue-600 text-white text-sm rounded-full mb-4">
-                {post.categoryName}
+                {currentPost.categoryName}
               </span>
             )}
             <h1 class="text-3xl lg:text-5xl font-display font-bold text-white max-w-3xl">
-              {post.title}
+              {currentPost.title}
             </h1>
           </div>
         </div>
@@ -86,37 +89,37 @@ const seo = {
         <article class="lg:col-span-2">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
             <div class="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-              {post.authorName && (
+              {currentPost.authorName && (
                 <div class="flex items-center gap-2">
                   <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
-                    {post.authorName?.charAt(0) || 'E'}
+                    {currentPost.authorName?.charAt(0) || 'E'}
                   </div>
                   <div>
-                    <p class="font-medium text-gray-900 dark:text-white text-sm">{post.authorName}</p>
+                    <p class="font-medium text-gray-900 dark:text-white text-sm">{currentPost.authorName}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">Yazar</p>
                   </div>
                 </div>
               )}
               <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 ml-auto">
                 <span class="flex items-center gap-1">
-                  📅 {new Date(post.publishedAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  📅 {new Date(currentPost.publishedAt || currentPost.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
                 <span class="flex items-center gap-1">
-                  ⏱️ {post.readTimeMinutes} dk okuma
+                  ⏱️ {currentPost.readTimeMinutes || 1} dk okuma
                 </span>
                 <span class="flex items-center gap-1">
-                  👁️ {post.viewCount} görüntüleme
+                  👁️ {currentPost.viewCount} görüntüleme
                 </span>
               </div>
             </div>
             
             <div class="prose dark:prose-invert max-w-none">
-              {post.content}
+              {currentPost.content}
             </div>
             
-            {post.tags && post.tags.length > 0 && (
+            {currentPost.tags && currentPost.tags.length > 0 && (
               <div class="flex flex-wrap gap-2 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                {post.tags.map((tag: string) => (
+                {currentPost.tags.map((tag) => (
                   <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
                     #{tag}
                   </span>
@@ -139,14 +142,14 @@ const seo = {
             </div>
           </div>
           
-          {post.authorName && (
+          {currentPost.authorName && (
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mt-6">
               <div class="flex items-start gap-4">
                 <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl font-bold">
-                  {post.authorName?.charAt(0) || 'E'}
+                  {currentPost.authorName?.charAt(0) || 'E'}
                 </div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 dark:text-white">{post.authorName}</h3>
+                  <h3 class="font-semibold text-gray-900 dark:text-white">{currentPost.authorName}</h3>
                   <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Şanlıurfa.com yazarı</p>
                 </div>
               </div>
@@ -159,7 +162,7 @@ const seo = {
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Benzer Yazılar</h3>
               <div class="space-y-4">
-                {relatedPosts.map((related: any) => (
+                {relatedPosts.map((related) => (
                   <a href={`/blog/${related.slug}`} class="flex gap-3 group">
                     {related.featuredImage && (
                       <img

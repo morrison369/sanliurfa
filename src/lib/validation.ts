@@ -27,7 +27,7 @@ export interface ValidationSchema {
     maxLength?: number;
     min?: number;
     max?: number;
-    pattern?: RegExp;
+    pattern?: RegExp | string;
     custom?: FieldValidator;
     sanitize?: boolean;
   };
@@ -85,11 +85,12 @@ export function validateString(
   value: any,
   minLength: number = 1,
   maxLength: number = 255,
-  pattern?: RegExp
+  pattern?: RegExp | string
 ): boolean {
   if (typeof value !== 'string') return false;
   if (value.length < minLength || value.length > maxLength) return false;
-  if (pattern && !pattern.test(value)) return false;
+  const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
+  if (regex && !regex.test(value)) return false;
   return true;
 }
 

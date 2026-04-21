@@ -144,7 +144,7 @@ class Logger {
   /**
    * Log authentication event
    */
-  logAuth(action: 'login' | 'logout' | 'register' | 'password_change', userId: string, success: boolean, context?: Record<string, any>) {
+  logAuth(action: string, userId: string, success: boolean, context?: Record<string, any>) {
     this.info(`Auth ${action}`, {
       action,
       userId,
@@ -156,7 +156,7 @@ class Logger {
   /**
    * Log data mutation (create, update, delete)
    */
-  logMutation(operation: 'create' | 'update' | 'delete', table: string, recordId: unknown, userId?: string, context?: Record<string, any>) {
+  logMutation(operation: string, table: string, recordId: unknown, userId?: string | null, context?: Record<string, any>) {
     const recordIdText = typeof recordId === 'string' ? recordId : JSON.stringify(recordId);
     this.info(`${operation.toUpperCase()} ${table} ${recordIdText}`, {
       operation,

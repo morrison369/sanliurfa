@@ -99,7 +99,7 @@ const { images, alt = '', initialIndex = 0 } = Astro.props;
   </div>
 </div>
 
-<script define:vars={{ images }}>
+<script lang="ts" define:vars={{ images }}>
   // Lightbox functionality
   let currentIndex = 0;
   let zoomLevel = 1;
