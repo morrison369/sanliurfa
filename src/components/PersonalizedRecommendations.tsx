@@ -15,9 +15,9 @@ export default function PersonalizedRecommendations() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const loadRecommendations = async () => {
       try {
-        const res = await fetch('/api/discovery/recommendations?limit=8');
+        const res = await window.fetch('/api/discovery/recommendations?limit=8');
         if (res.ok) {
           const { data } = await res.json();
           setRecs(data);
@@ -28,11 +28,11 @@ export default function PersonalizedRecommendations() {
         setLoading(false);
       }
     };
-    fetch();
+    loadRecommendations();
   }, []);
 
   const handleClick = async (recId: string) => {
-    await fetch('/api/discovery/recommendations', {
+    await window.fetch('/api/discovery/recommendations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'click', recommendation_id: recId }),

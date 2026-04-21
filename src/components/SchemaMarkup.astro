@@ -12,7 +12,7 @@ const baseSchema = {
   '@type': type,
 };
 
-const schema = { ...baseSchema, ...data };
+const schema: Record<string, any> = { ...baseSchema, ...data };
 
 // Type-specific required fields
 switch (type) {

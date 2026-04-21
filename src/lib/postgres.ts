@@ -266,24 +266,40 @@ export async function queryStream(text: string, params?: any[], onRow?: (row: an
 /**
  * Execute a query and return the first row or null
  */
-export async function queryOne(text: string, params?: any[]) {
+export async function queryOne<T = any>(text: string, params?: any[]): Promise<T | null> {
   const result = await query(text, params);
-  return result.rows[0] || null;
+  return (result.rows[0] as T | undefined) || null;
 }
 
 /**
  * Execute a query and return all rows
  * Phase 5: Optional streaming for large result sets
  */
-export async function queryMany(text: string, params?: any[], options?: { stream?: boolean; onRow?: (row: any) => Promise<void> }) {
+export async function queryMany<T = any>(
+  text: string,
+  params?: any[],
+  options?: { stream?: false; onRow?: never }
+): Promise<T[] & { rows: T[] }>;
+export async function queryMany<T = any>(
+  text: string,
+  params: any[] | undefined,
+  options: { stream: true; onRow: (row: T) => Promise<void> }
+): Promise<{ rowCount: number; streamed: true }>;
+export async function queryMany<T = any>(
+  text: string,
+  params?: any[],
+  options?: { stream?: boolean; onRow?: (row: T) => Promise<void> }
+): Promise<(T[] & { rows: T[] }) | { rowCount: number; streamed: true }> {
   if (options?.stream && options?.onRow) {
     // Use streaming for large datasets
-    const rowCount = await queryStream(text, params, options.onRow);
+    const rowCount = await queryStream(text, params, options.onRow as (row: any) => Promise<void>);
     return { rowCount, streamed: true };
   }
 
   const result = await query(text, params);
-  return result.rows;
+  const rows = result.rows as T[] & { rows: T[] };
+  rows.rows = rows;
+  return rows;
 }
 
 /**
@@ -375,9 +391,25 @@ export async function getAll(table: string, options?: { limit?: number; offset?:
 /**
  * Get a single row by ID
  */
-export async function getById(table: string, id: string) {
+function buildWhereClause(criteria: unknown, startIndex = 1): { clause: string; values: any[] } {
+  if (criteria && typeof criteria === 'object' && !Array.isArray(criteria)) {
+    const entries = Object.entries(criteria as Record<string, any>);
+    if (entries.length === 0) {
+      throw new Error('No criteria provided');
+    }
+    return {
+      clause: entries.map(([key], index) => `${key} = $${startIndex + index}`).join(' AND '),
+      values: entries.map(([, value]) => value),
+    };
+  }
+
+  return { clause: `id = $${startIndex}`, values: [criteria] };
+}
+
+export async function getById(table: string, id: unknown) {
   assertTable(table);
-  return await queryOne(`SELECT * FROM ${table} WHERE id = $1`, [id]);
+  const where = buildWhereClause(id);
+  return await queryOne(`SELECT * FROM ${table} WHERE ${where.clause}`, where.values);
 }
 
 /**
@@ -410,26 +442,28 @@ export async function insert(table: string, data: Record<string, any>) {
  * Update a row by ID
  * WARNING: Column names are interpolated. Only use with trusted/validated column names.
  */
-export async function update(table: string, id: string, data: Record<string, any>) {
+export async function update(table: string, id: unknown, data: Record<string, any>) {
   assertTable(table);
   const keys = Object.keys(data);
   const values = Object.values(data);
+  const where = buildWhereClause(id, values.length + 1);
 
   if (keys.length === 0) {
     throw new Error('No data to update');
   }
 
-  const setClause = keys.map((k, i) => `${k} = $${i + 2}`).join(', ');
-  const result = await queryOne(`UPDATE ${table} SET ${setClause} WHERE id = $1 RETURNING *`, [id, ...values]);
+  const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
+  const result = await queryOne(`UPDATE ${table} SET ${setClause} WHERE ${where.clause} RETURNING *`, [...values, ...where.values]);
   return result;
 }
 
 /**
  * Delete a row by ID
  */
-export async function remove(table: string, id: string) {
+export async function remove(table: string, id: unknown) {
   assertTable(table);
-  await query(`DELETE FROM ${table} WHERE id = $1`, [id]);
+  const where = buildWhereClause(id);
+  await query(`DELETE FROM ${table} WHERE ${where.clause}`, where.values);
   return { success: true };
 }
 

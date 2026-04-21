@@ -7,6 +7,7 @@ interface Metrics {
   avgDuration: number;
   p95Duration: number;
   cacheHitRate: number;
+  slowRequestRate?: number;
   slowestEndpoints: Array<{ path: string; avgDuration: number; count: number }>;
   slowQueries: Array<{ sql: string; duration: number; count: number; timestamp: string }>;
   poolStatus?: {

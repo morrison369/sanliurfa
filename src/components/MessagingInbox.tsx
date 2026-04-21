@@ -23,43 +23,43 @@ export default function MessagingInbox() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const fetch = async () => {
-      const res = await fetch('/api/messages');
+    const loadConversations = async () => {
+      const res = await window.fetch('/api/messages');
       if (res.ok) setConversations((await res.json()).data);
     };
-    fetch();
-    const interval = setInterval(fetch, 30000);
+    loadConversations();
+    const interval = setInterval(loadConversations, 30000);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     if (!selectedConvoId) return;
-    const fetch = async () => {
-      const res = await fetch(`/api/messages/${selectedConvoId}`);
+    const loadMessages = async () => {
+      const res = await window.fetch(`/api/messages/${selectedConvoId}`);
       if (res.ok) setMessages((await res.json()).data);
     };
-    fetch();
-    const interval = setInterval(fetch, 10000);
+    loadMessages();
+    const interval = setInterval(loadMessages, 10000);
     return () => clearInterval(interval);
   }, [selectedConvoId]);
 
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedConvoId) return;
-    const res = await fetch(`/api/messages/${selectedConvoId}`, {
+    const res = await window.fetch(`/api/messages/${selectedConvoId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: newMessage }),
     });
     if (res.ok) {
       setNewMessage('');
-      const updated = await fetch(`/api/messages/${selectedConvoId}`);
+      const updated = await window.fetch(`/api/messages/${selectedConvoId}`);
       setMessages((await updated.json()).data);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete?')) return;
-    const res = await fetch(`/api/messages/${id}`, { method: 'DELETE' });
+    const res = await window.fetch(`/api/messages/${id}`, { method: 'DELETE' });
     if (res.ok) {
       setConversations(conversations.filter(c => c.id !== id));
       if (selectedConvoId === id) setSelectedConvoId(null);
