@@ -294,4 +294,4 @@ export const eventVersionManager = new EventVersionManager();
 export const eventSnapshot = new EventSnapshot();
 export const eventRecovery = new EventRecovery();
 
-export { Event, EventVersion, EventSnapshot as EventSnapshotType, RecoveryPoint };
+export type { Event, EventVersion, EventSnapshot as EventSnapshotType, RecoveryPoint };

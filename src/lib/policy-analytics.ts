@@ -260,4 +260,4 @@ export const accessPatternAnalyzer = new AccessPatternAnalyzer();
 export const policyConflictDetector = new PolicyConflictDetector();
 export const policyRecommendationEngine = new PolicyRecommendationEngine();
 
-export { PolicyUsageMetric, AccessPattern, PolicyConflict, PolicyRecommendation };
+export type { PolicyUsageMetric, AccessPattern, PolicyConflict, PolicyRecommendation };

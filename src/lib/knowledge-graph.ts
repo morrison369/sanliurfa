@@ -403,4 +403,4 @@ export const entityLinker = new EntityLinker();
 export const relationshipExtractor = new RelationshipExtractor();
 export const graphReasoner = new GraphReasoner();
 
-export { Entity, Relationship, Triple, EntityLink, GraphTraversal };
+export type { Entity, Relationship, Triple, EntityLink, GraphTraversal };

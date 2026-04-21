@@ -233,4 +233,4 @@ export const stressTestRunner = new StressTestRunner();
 export const performanceProfiler = new PerformanceProfiler();
 export const memoryAnalyzer = new MemoryAnalyzer();
 
-export { LoadProfile, LoadTestResult, MemoryAnalysis, StressResult };
+export type { LoadProfile, LoadTestResult, MemoryAnalysis, StressResult };

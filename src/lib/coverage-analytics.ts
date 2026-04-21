@@ -261,4 +261,4 @@ export const coverageGates = new CoverageGates();
 export const coverageTrendAnalyzer = new CoverageTrendAnalyzer();
 export const criticalPathAnalyzer = new CriticalPathAnalyzer();
 
-export { CoverageMetrics, CoverageFile, CoverageTrend, CriticalPath };
+export type { CoverageMetrics, CoverageFile, CoverageTrend, CriticalPath };

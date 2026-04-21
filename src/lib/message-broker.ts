@@ -268,4 +268,4 @@ export const streamConsumer = StreamConsumer;
 export const consumerGroup = new ConsumerGroup();
 export const streamMetrics = new StreamMetrics();
 
-export { Message, ConsumerGroupConfig, ConsumerState, StreamMetrics as StreamMetricsType };
+export type { Message, ConsumerGroupConfig, ConsumerState, StreamMetrics as StreamMetricsType };

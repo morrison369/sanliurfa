@@ -293,4 +293,4 @@ export const windowOperator = new WindowOperator();
 export const streamJoiner = new StreamJoiner();
 export const backpressureController = new BackpressureController();
 
-export { StreamEvent, WindowedData, JoinResult, BackpressureStatus };
+export type { StreamEvent, WindowedData, JoinResult, BackpressureStatus };

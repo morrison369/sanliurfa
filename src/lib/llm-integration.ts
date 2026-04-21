@@ -415,4 +415,4 @@ export const promptOptimizer = new PromptOptimizer();
 export const responseProcessor = new ResponseProcessor();
 export const costTracker = new CostTracker();
 
-export { LLMRequest, LLMResponse, ModelConfig, CostBreakdown };
+export type { LLMRequest, LLMResponse, ModelConfig, CostBreakdown };

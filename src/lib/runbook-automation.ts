@@ -274,4 +274,4 @@ export const incidentResponder = new IncidentResponder();
 export const automationExecutor = new AutomationExecutor();
 export const postIncidentAnalyzer = new PostIncidentAnalyzer();
 
-export { RunbookStep, Runbook, ExecutionResult, PostIncidentAnalysis };
+export type { RunbookStep, Runbook, ExecutionResult, PostIncidentAnalysis };

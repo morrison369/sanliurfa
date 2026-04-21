@@ -105,8 +105,18 @@ class Logger {
     this.log({ level: LogLevel.INFO, message, context, timestamp: new Date().toISOString() });
   }
 
-  warn(message: string, context?: Record<string, any>) {
-    this.log({ level: LogLevel.WARN, message, context, timestamp: new Date().toISOString() });
+  warn(message: string, contextOrError?: Record<string, any> | Error, context?: Record<string, any>) {
+    const errorContext =
+      contextOrError instanceof Error
+        ? { error: { message: contextOrError.message, stack: contextOrError.stack }, context }
+        : { context: contextOrError };
+
+    this.log({
+      level: LogLevel.WARN,
+      message,
+      ...errorContext,
+      timestamp: new Date().toISOString()
+    });
   }
 
   error(message: string, error?: unknown, context?: Record<string, any>) {

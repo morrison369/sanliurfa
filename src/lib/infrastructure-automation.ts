@@ -284,4 +284,4 @@ export const selfHealingController = new SelfHealingController();
 export const infrastructureAutomator = new InfrastructureAutomator();
 export const capacityPlanner = new CapacityPlanner();
 
-export { AutoScalingConfig, ScalingEvent, RemediationAction, CapacityPrediction };
+export type { AutoScalingConfig, ScalingEvent, RemediationAction, CapacityPrediction };

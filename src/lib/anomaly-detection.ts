@@ -242,4 +242,4 @@ export const baselineEstimator = new BaselineEstimator();
 export const anomalyClassifier = new AnomalyClassifier();
 export const driftDetector = new DriftDetector();
 
-export { Baseline, Anomaly, AnomalyClassification, DriftDetection };
+export type { Baseline, Anomaly, AnomalyClassification, DriftDetection };

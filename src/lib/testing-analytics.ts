@@ -254,4 +254,4 @@ export const flakinessDetector = new FlakinessDetector();
 export const testPrioritizer = new TestPrioritizer();
 export const testHealthMonitor = new TestHealthMonitor();
 
-export { TestExecution, FlakinessReport, TestPriority, TestHealth };
+export type { TestExecution, FlakinessReport, TestPriority, TestHealth };
