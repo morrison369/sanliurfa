@@ -3,6 +3,12 @@ import Layout from '../../layouts/Layout.astro';
 import { MapPin, Star, Filter, Search, Grid3X3, List } from 'lucide-react';
 import Pagination from '../../components/Pagination.astro';
 import { query } from '../../lib/postgres';
+import {
+  buildBreadcrumbSchema,
+  buildOrganizationSchema,
+  buildPlaceItemListSchema,
+  buildWebSiteSchema,
+} from '../../lib/rich-snippets';
 
 const ITEMS_PER_PAGE = 12;
 const currentPage = parseInt(Astro.url.searchParams.get('page') || '1');
@@ -70,6 +76,17 @@ const getCategoryLabel = (category: string) => {
 const seo = {
   title: queryParam ? `"${queryParam}" - Mekanlar` : 'Mekanlar - Restoran, Otel, Kafe ve Daha Fazlası',
   description: 'Şanlıurfa\'nın en iyi restoranları, otelleri, kafeleri ve müzelerini keşfedin. Kullanıcı yorumları ve puanlarıyla karşılaştırın.',
+  canonicalUrl: 'https://sanliurfa.com/places',
+  schemaMode: 'replace' as const,
+  schema: [
+    buildOrganizationSchema(),
+    buildWebSiteSchema(),
+    buildBreadcrumbSchema([
+      { name: 'Ana Sayfa', url: '/' },
+      { name: 'Mekanlar', url: '/places' },
+    ]),
+    buildPlaceItemListSchema(places, '/places'),
+  ],
 };
 
 const searchParams = new URLSearchParams();

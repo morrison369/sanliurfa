@@ -290,6 +290,7 @@
     "@types/pg": "^8.20.0",
     "astro": "^6.1.8",
     "astro-compress": "^2.4.1",
+    "astro-seo-schema": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.1.0",
     "exceljs": "^4.4.0",
@@ -300,6 +301,7 @@
     "react-dom": "^19.2.5",
     "redis": "^4.7.0",
     "resend": "^6.10.0",
+    "schema-dts": "^2.0.0",
     "stripe": "^22.0.2",
     "swagger-ui-dist": "^5.32.1",
     "web-push": "^3.6.7"

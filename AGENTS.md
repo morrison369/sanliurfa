@@ -50,6 +50,9 @@
 - Never run parallel Astro build or gate chains in the same worktree.
 - Do not start multiple dev servers or allow fallback ports. The only local app port is `4321`; stop the server after manual checks.
 - Do not add `1111`, `1112`, `1113`, or any other alternate local app port scripts back into `package.json`.
+- Astro-first is locked: before writing custom infrastructure, check Astro core, official `@astrojs/*` integrations, and Astro-compatible packages already installed in this repo.
+- Do not hand-roll features that an Astro integration/package in the repo already provides. For structured data, render JSON-LD through `astro-seo-schema` inside Astro head/layout flow.
+- If Astro has no built-in equivalent, keep custom code minimal, server-rendered, documented, and connected to Astro components instead of adding client-side runtime scripts.
 
 ## Architecture Reference
 - Use `ARCHITECTURE.md` for runtime invariants and the separation between Astro application rules and phase delivery rules.
@@ -75,3 +78,4 @@
 - If the active shell is below policy, use the `:preferred` wrappers instead of forcing a partial local run.
 - Archive dated cleanup and verification files under `docs/archive/cleanup/` instead of leaving them in repo root.
 - The public site is Turkish-only and focuses on the `Şanlıurfa` keyword for `https://sanliurfa.com`.
+- `docs/ASTRO_FIRST_LOCK.md` is the project rule for Astro-first implementation decisions.
