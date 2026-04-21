@@ -10,7 +10,7 @@ Modern, hızlı ve kullanıcı dostu Şanlıurfa rehberi web uygulaması.
 - ❤️ Favoriler ve kaydetme
 - 🗺️ Harita entegrasyonu
 - 🌙 Karanlık mod
-- 🌐 Çoklu dil desteği (TR/EN/AR)
+- 🇹🇷 Sadece Türkçe yerel şehir rehberi
 
 ### Kullanıcı Sistemi
 - 🔐 Email ve sosyal medya girişi (Google, Facebook)
@@ -66,6 +66,9 @@ cp .env.example .env
 ```bash
 npm run dev
 ```
+
+Yerel geliştirme portu sabittir: `http://127.0.0.1:4321`.
+Başka porta otomatik fallback yapılmaz; port doluysa mevcut Node/Astro sürecini kapatın ve aynı portu tekrar kullanın.
 
 ## 📁 Proje Yapısı
 
@@ -133,6 +136,9 @@ npm run test:e2e:smoke
 
 ## Astro Operasyon Notları
 - Repo SSR-first çalışır: `output: "server"` ve `@astrojs/node` adapter.
+- Local dev/preview tek port kullanır: `127.0.0.1:4321`.
+- 1111/1112/1113 gibi alternatif port scriptleri kullanılmaz ve repo script yüzeyinden kaldırılmıştır.
+- Manual kontrol bitince dev server kapatılmalı; paralel Astro dev server açılmamalı.
 - Route collision üretmeyin: `src/pages/x.ts` ile `src/pages/x/index.ts` aynı anda yaşamamalı.
 - Content collection değişikliklerinde `src/content.config.ts` ve `src/content/` birlikte ele alınmalı.
 - PWA build çıktısında service worker dosyası `sw.js` olarak üretilir; build araçlarını buna göre konfigüre edin.
