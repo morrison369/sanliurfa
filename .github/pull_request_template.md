@@ -1,19 +1,45 @@
-## Scope
-- Phase range or domain (`api-legacy`, `runtime-security`, `governance`, `e2e-ci`)
+## Açıklama
 
-## Risk
-- User-facing impact:
-- Data risk:
-- Security impact:
+Bu PR hangi problemi kapatıyor?
 
-## Rollback Plan
-- Exact command or revert strategy:
-- Recovery ETA:
+## Değişiklik Tipi
 
-## Validation Evidence
-- Commands run:
-- Key outputs:
+- [ ] Hata düzeltme
+- [ ] Yeni özellik
+- [ ] Kırıcı değişiklik
+- [ ] Dokümantasyon
+- [ ] Refactor
+- [ ] Performans
+- [ ] Güvenlik / operasyon
 
-## Observability Impact
-- New logs/metrics/alerts:
-- Dashboard or panel updates:
+## İlgili Kayıtlar
+
+Fixes #
+Related to #
+
+## Yapılanlar
+
+-
+
+## Testing
+
+- [ ] `npm run security:scan-secrets`
+- [ ] `npm run public:city:gate`
+- [ ] `npm run build`
+- [ ] Kritik akış manuel kontrol edildi
+- [ ] Dev server/port orphan bırakılmadı
+
+## Public / Security Gate
+
+- [ ] `.env`, `.env.production`, `deploy_key` veya gerçek secret eklenmedi
+- [ ] Public yapılacaksa `npm run security:public-readiness` temiz
+- [ ] GitHub Actions environment secret gerektiren job sadece izinli branch üzerinde çalışıyor
+- [ ] Şanlıurfa odağı, Türkçe-only kuralı ve canonical `https://sanliurfa.com` korundu
+
+## Ekran Görüntüsü
+
+UI değişikliği varsa ekleyin.
+
+## Notlar
+
+Risk, rollback veya deploy notu varsa yazın.
