@@ -86,7 +86,7 @@ if (token) {
                   <div class="flex items-center gap-2 mb-4">
                     <div class="flex items-center">
                       {[...Array(5)].map((_, i) => (
-                        <span key={i} class={i < Math.floor(place.rating) ? 'text-yellow-400' : 'text-gray-300'}>
+                        <span class={i < Math.floor(place.rating) ? 'text-yellow-400' : 'text-gray-300'}>
                           ★
                         </span>
                       ))}
