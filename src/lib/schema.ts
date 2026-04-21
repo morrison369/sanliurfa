@@ -5,93 +5,41 @@
 
 import { queryOne } from './postgres';
 import { logger } from './logging';
+import {
+  buildBreadcrumbSchema,
+  buildOrganizationSchema,
+  buildPlaceRichSnippet,
+} from './rich-snippets';
 
 const BASE_URL = process.env.PUBLIC_SITE_URL || 'https://sanliurfa.com';
 
 export interface SchemaData {
   '@context': string;
-  '@type': string;
+  '@type': string | string[];
   [key: string]: any;
 }
 
 // Organization schema
 export function getOrganizationSchema(): SchemaData {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: 'Şanlıurfa Rehberi',
-    url: BASE_URL,
-    logo: `${BASE_URL}/logo.png`,
-    description: 'Şanlıurfa şehrinin en kapsamlı rehberi. Mekanlar, etkinlikler, harita ve yorumlar.',
-    sameAs: [
-      'https://facebook.com/sanliurfaguide',
-      'https://twitter.com/sanliurfaguide',
-      'https://instagram.com/sanliurfaguide'
-    ],
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: 'Şanlıurfa',
-      addressCountry: 'TR',
-      addressLocality: 'Şanlıurfa'
-    },
-    contactPoint: {
-      '@type': 'ContactPoint',
-      contactType: 'Customer Support',
-      email: 'info@sanliurfa.com',
-      availableLanguage: ['tr', 'en']
-    }
-  };
+  return { '@context': 'https://schema.org', ...buildOrganizationSchema() } as SchemaData;
 }
 
 // Place schema
 export async function getPlaceSchema(placeId: string): Promise<SchemaData | null> {
   try {
     const place = await queryOne(
-      `SELECT id, name, description, latitude, longitude, address, category,
-              image_url, average_rating, review_count, phone, website, opening_hours
+      `SELECT id, slug, name, description, short_description, latitude, longitude, address, category,
+              images, image_url, rating, rating_count, review_count, price_range, phone, website, opening_hours
        FROM places WHERE id = $1`,
       [placeId]
     );
 
     if (!place) return null;
 
-    const schema: SchemaData = {
+    return {
       '@context': 'https://schema.org',
-      '@type': 'Place',
-      name: place.name,
-      description: place.description,
-      url: `${BASE_URL}/mekanlar/${place.id}`,
-      image: place.image_url || `${BASE_URL}/og-image.png`,
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: place.address,
-        addressCountry: 'TR',
-        addressLocality: 'Şanlıurfa'
-      },
-      geo: {
-        '@type': 'GeoCoordinates',
-        latitude: place.latitude,
-        longitude: place.longitude
-      }
-    };
-
-    if (place.phone) {
-      schema.telephone = place.phone;
-    }
-
-    if (place.website) {
-      schema.sameAs = place.website;
-    }
-
-    if (place.average_rating) {
-      schema.aggregateRating = {
-        '@type': 'AggregateRating',
-        ratingValue: place.average_rating.toFixed(1),
-        ratingCount: place.review_count || 0
-      };
-    }
-
-    return schema;
+      ...buildPlaceRichSnippet(place, { path: `/places/${place.slug || place.id}` }),
+    } as SchemaData;
   } catch (error) {
     logger.error(
       'Failed to generate place schema',
@@ -187,18 +135,10 @@ export async function getArticleSchema(postId: string): Promise<SchemaData | nul
 
 // Breadcrumb schema
 export function getBreadcrumbSchema(items: Array<{ name: string; url: string }>): SchemaData {
-  const itemListElement = items.map((item, index) => ({
-    '@type': 'ListItem',
-    position: index + 1,
-    name: item.name,
-    item: `${BASE_URL}${item.url}`
-  }));
-
   return {
     '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement
-  };
+    ...buildBreadcrumbSchema(items)
+  } as SchemaData;
 }
 
 // FAQPage schema

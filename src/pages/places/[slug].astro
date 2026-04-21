@@ -7,6 +7,12 @@ import Lightbox from '../../components/Lightbox.astro';
 import Map from '../../components/Map.astro';
 import RelatedContent from '../../components/RelatedContent.astro';
 import { query, queryOne } from '../../lib/postgres';
+import {
+  absoluteUrl,
+  buildOrganizationSchema,
+  buildPlaceRichSnippet,
+  buildWebSiteSchema,
+} from '../../lib/rich-snippets';
 
 const { slug } = Astro.params;
 const user = Astro.locals.user;
@@ -70,10 +76,22 @@ const breadcrumbItems = [
   { label: place.name, href: `/places/${place.slug}` },
 ];
 
+const placePath = `/places/${place.slug}`;
+const placeImage = absoluteUrl(place.images?.[0] || '/images/placeholder-place.jpg');
+const richSnippetGraph = [
+  buildOrganizationSchema(),
+  buildWebSiteSchema(),
+  buildPlaceRichSnippet(place, { path: placePath, reviews }),
+];
+
 const seo = {
   title: `${place.name} - ${getCategoryLabel(place.category)}`,
   description: place.short_description || place.description,
-  image: place.images?.[0],
+  image: placeImage,
+  type: 'place' as const,
+  canonicalUrl: `https://sanliurfa.com${placePath}`,
+  schemaMode: 'replace' as const,
+  schema: richSnippetGraph,
 };
 ---
 

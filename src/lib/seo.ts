@@ -14,7 +14,7 @@ export interface SEOConfig {
   publishedTime?: Date;
   modifiedTime?: Date;
   tags?: string[];
-  lang?: 'tr' | 'en';
+  lang?: 'tr';
 }
 
 export interface StructuredData {
@@ -41,7 +41,7 @@ export function generateMetaTags(config: SEOConfig): Record<string, string> {
     'keywords': config.tags?.join(', ') || '',
     'author': config.author || 'Şanlıurfa.com',
     'robots': config.robots || 'index, follow',
-    'language': config.lang === 'tr' ? 'Turkish' : 'English',
+    'language': 'Turkish',
     'revisit-after': '7 days',
     'viewport': 'width=device-width, initial-scale=1.0'
   };
@@ -64,12 +64,6 @@ export function generateOrganizationSchema(baseUrl: string): StructuredData {
       'telephone': '+90-414-XXXXXXX',
       'email': 'info@sanliurfa.com'
     },
-    'sameAs': [
-      'https://www.facebook.com/sanliurfa',
-      'https://www.twitter.com/sanliurfa',
-      'https://www.instagram.com/sanliurfa',
-      'https://www.youtube.com/sanliurfa'
-    ],
     'address': {
       '@type': 'PostalAddress',
       'addressCountry': 'TR',

@@ -1,4 +1,6 @@
 ---
+import { Schema } from 'astro-seo-schema';
+
 // Schema.org structured data component
 interface Props {
   type: 'Organization' | 'LocalBusiness' | 'Place' | 'Article' | 'Event' | 'BreadcrumbList' | 'WebSite' | 'FAQPage';
@@ -73,4 +75,4 @@ switch (type) {
 }
 ---
 
-<script type="application/ld+json" set:html={JSON.stringify(schema)} />
+<Schema item={schema as any} />
