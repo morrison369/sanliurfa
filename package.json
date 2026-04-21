@@ -312,7 +312,7 @@
     "react-dom": "^19.2.5",
     "redis": "^4.7.0",
     "resend": "^6.10.0",
-    "stripe": "^22.0.0",
+    "stripe": "^22.0.2",
     "swagger-ui-dist": "^5.32.1",
     "web-push": "^3.6.7"
   },
