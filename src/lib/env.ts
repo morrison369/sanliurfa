@@ -10,6 +10,8 @@ interface EnvConfig {
   JWT_SECRET: string;
   REDIS_URL: string;
   REDIS_KEY_PREFIX: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
 }
 
 // Critical server-side env vars (must exist)
@@ -51,7 +53,13 @@ export function validateEnv(): { valid: boolean; missing: string[] } {
   };
 }
 
-export function getEnv(): EnvConfig {
+export function getEnv(): EnvConfig;
+export function getEnv(key: string, defaultValue?: string): string;
+export function getEnv(key?: string, defaultValue?: string): EnvConfig | string {
+  if (key) {
+    return process.env[key] || import.meta.env[key] || defaultValue || '';
+  }
+
   const dbUrl = process.env.DATABASE_URL || import.meta.env.DATABASE_URL;
   const jwtSecret = process.env.JWT_SECRET || import.meta.env.JWT_SECRET;
   const redisUrl = process.env.REDIS_URL || import.meta.env.REDIS_URL || 'redis://localhost:6379';
@@ -69,7 +77,9 @@ export function getEnv(): EnvConfig {
     DATABASE_URL: dbUrl,
     JWT_SECRET: jwtSecret,
     REDIS_URL: redisUrl,
-    REDIS_KEY_PREFIX: process.env.REDIS_KEY_PREFIX || 'sanliurfa:'
+    REDIS_KEY_PREFIX: process.env.REDIS_KEY_PREFIX || 'sanliurfa:',
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || import.meta.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || import.meta.env.STRIPE_WEBHOOK_SECRET
   };
 }
 

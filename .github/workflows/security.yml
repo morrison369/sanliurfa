@@ -55,6 +55,10 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
+        # Some private/shared-hosting repos do not have GitHub code scanning enabled.
+        # Keep the required secret/readiness/audit gates running without blocking PRs
+        # on a repository-level CodeQL upload configuration error.
+        continue-on-error: true
 
   dependency-review:
     runs-on: ubuntu-latest

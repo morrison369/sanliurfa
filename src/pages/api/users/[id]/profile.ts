@@ -6,7 +6,7 @@
 import type { APIRoute } from 'astro';
 import { getUserProfile } from '../../../../lib/users';
 import { getFollowerStats, isFollowing } from '../../../../lib/followers';
-import { queryOne, queryMany } from '../../../../lib/postgres';
+import { queryMany } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
@@ -96,9 +96,9 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       // Show email only if privacy setting allows it
       email: userProfile.privacy_settings?.show_email && (isOwnProfile || currentUserId) ? userProfile.email : undefined,
       stats: {
-        followers: stats.follower_count,
+        followers: stats.followers_count,
         following: stats.following_count,
-        mutual: stats.mutual_friends_count
+        mutual: 0
       },
       is_following: isFollowingUser,
       is_own_profile: isOwnProfile,

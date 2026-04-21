@@ -99,16 +99,16 @@ const { images, alt = '', initialIndex = 0 } = Astro.props;
   </div>
 </div>
 
-<script lang="ts" define:vars={{ images }}>
+<script define:vars={{ images }}>
   // Lightbox functionality
   let currentIndex = 0;
   let zoomLevel = 1;
-  let lightbox: HTMLElement | null = null;
-  let lightboxImage: HTMLImageElement | null = null;
+  let lightbox = null;
+  let lightboxImage = null;
   
   function initLightbox() {
     lightbox = document.getElementById('lightbox');
-    lightboxImage = document.getElementById('lightbox-image') as HTMLImageElement;
+    lightboxImage = document.getElementById('lightbox-image');
     
     if (!lightbox || !lightboxImage) return;
     
@@ -116,7 +116,7 @@ const { images, alt = '', initialIndex = 0 } = Astro.props;
     document.querySelectorAll('[data-lightbox-trigger]').forEach(trigger => {
       trigger.addEventListener('click', (e) => {
         e.preventDefault();
-        const index = parseInt((e.currentTarget as HTMLElement).dataset.lightboxIndex || '0');
+        const index = parseInt(e.currentTarget?.dataset?.lightboxIndex || '0');
         openLightbox(index);
       });
     });
@@ -134,7 +134,7 @@ const { images, alt = '', initialIndex = 0 } = Astro.props;
     // Thumbnails
     document.querySelectorAll('.lightbox-thumb').forEach(thumb => {
       thumb.addEventListener('click', () => {
-        const index = parseInt((thumb as HTMLElement).dataset.index || '0');
+        const index = parseInt(thumb.dataset.index || '0');
         goToImage(index);
       });
     });
@@ -180,7 +180,7 @@ const { images, alt = '', initialIndex = 0 } = Astro.props;
     document.body.style.overflow = '';
   }
   
-  function navigate(direction: number) {
+  function navigate(direction) {
     currentIndex = (currentIndex + direction + images.length) % images.length;
     zoomLevel = 1;
     updateZoom();
@@ -188,7 +188,7 @@ const { images, alt = '', initialIndex = 0 } = Astro.props;
     updateThumbnails();
   }
   
-  function goToImage(index: number) {
+  function goToImage(index) {
     currentIndex = index;
     zoomLevel = 1;
     updateZoom();
@@ -216,7 +216,7 @@ const { images, alt = '', initialIndex = 0 } = Astro.props;
     });
   }
   
-  function setZoom(level: number) {
+  function setZoom(level) {
     zoomLevel = Math.max(0.5, Math.min(3, level));
     updateZoom();
   }
@@ -227,7 +227,7 @@ const { images, alt = '', initialIndex = 0 } = Astro.props;
     }
   }
   
-  function handleKeydown(e: KeyboardEvent) {
+  function handleKeydown(e) {
     if (lightbox?.classList.contains('hidden')) return;
     
     switch (e.key) {

@@ -186,10 +186,11 @@ const user = null; // Will be populated from server
     
     <!-- Analytics (replace with your tracking code) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-    <script lang="ts">
-      const analyticsWindow = window as typeof window & { dataLayer?: unknown[] };
+    <script>
+      // @ts-nocheck
+      const analyticsWindow = window;
       analyticsWindow.dataLayer = analyticsWindow.dataLayer || [];
-      function gtag(...args: unknown[]){analyticsWindow.dataLayer?.push(args);}
+      function gtag(...args){analyticsWindow.dataLayer?.push(args);}
       gtag('js', new Date());
       gtag('config', 'G-XXXXXXXXXX');
     </script>

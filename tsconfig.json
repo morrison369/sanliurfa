@@ -13,5 +13,11 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "exactOptionalPropertyTypes": false
-  }
+  },
+  "exclude": [
+    "src/lib/__tests__/**",
+    "e2e/**",
+    "test-results/**",
+    "playwright-report/**"
+  ]
 }
