@@ -1,0 +1,47 @@
+name: Public City Gate
+
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main, develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  public-city-gate:
+    name: Public City Acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      NODE_ENV: test
+      SITE_URL: https://sanliurfa.com
+      CORS_ORIGINS: https://sanliurfa.com
+      JWT_SECRET: public-city-gate-local-only-secret-key-32
+      SESSION_SECRET: public-city-gate-local-only-session-key-32
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Secret scan
+        run: npm run security:scan-secrets
+
+      - name: Package manifest check
+        run: node -e "JSON.parse(require('fs').readFileSync('package.json','utf8'))"
