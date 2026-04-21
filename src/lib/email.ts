@@ -3,7 +3,7 @@
  * Queue-based email sending with templates
  */
 
-import { insert, queryMany, query } from './postgres';
+import { insert, queryMany, query, queryOne } from './postgres';
 import { logger } from './logging';
 
 export interface EmailTemplate {
@@ -161,7 +161,17 @@ export async function sendEmailViaService(email: any): Promise<boolean> {
 /**
  * Send email directly (used for password reset, verification, etc.)
  */
-export async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+export async function sendEmail(to: string, subject: string, html: string): Promise<boolean>;
+export async function sendEmail(message: { to: string; subject: string; html: string }): Promise<boolean>;
+export async function sendEmail(
+  toOrMessage: string | { to: string; subject: string; html: string },
+  subjectArg?: string,
+  htmlArg?: string
+): Promise<boolean> {
+  const to = typeof toOrMessage === 'string' ? toOrMessage : toOrMessage.to;
+  const subject = typeof toOrMessage === 'string' ? subjectArg || '' : toOrMessage.subject;
+  const html = typeof toOrMessage === 'string' ? htmlArg || '' : toOrMessage.html;
+
   try {
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
     const FROM_EMAIL = process.env.MAIL_FROM || 'noreply@sanliurfa.com';

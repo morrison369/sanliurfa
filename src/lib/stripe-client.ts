@@ -23,7 +23,7 @@ export function getStripeClient(): Stripe {
   }
 
   stripeClient = new Stripe(secretKey, {
-    apiVersion: '2024-06-20',
+    apiVersion: '2026-03-25.dahlia',
   });
 
   return stripeClient;
@@ -208,7 +208,7 @@ export async function getInvoicePdfUrl(invoiceId: string): Promise<string | null
   try {
     const stripe = getStripeClient();
     const invoice = await stripe.invoices.retrieve(invoiceId);
-    return invoice.invoice_pdf;
+    return invoice.invoice_pdf || null;
   } catch (error) {
     logger.error('Failed to get invoice PDF', error instanceof Error ? error : new Error(String(error)));
     return null;

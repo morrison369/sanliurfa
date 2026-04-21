@@ -130,12 +130,13 @@ export function errorResponse(
 /**
  * Create a standardized API route response
  */
-export function apiResponse(data: any, statusCode?: number, requestId?: string): Response;
+export function apiResponse(data: any, statusCode?: number, requestId?: string, headers?: Record<string, string>): Response;
 export function apiResponse(context: APIContext, statusCode: number, data: any): Response;
 export function apiResponse(
   dataOrContext: any | APIContext,
   statusCode: number = 200,
-  requestIdOrData?: string | any
+  requestIdOrData?: string | any,
+  extraHeaders?: Record<string, string>
 ): Response {
   if (
     dataOrContext &&
@@ -146,13 +147,13 @@ export function apiResponse(
   ) {
     const requestId = getRequestId(dataOrContext as APIContext);
     const [body, status, headers] = successResponse(requestIdOrData, statusCode, requestId);
-    return new Response(JSON.stringify(body), { status, headers });
+    return new Response(JSON.stringify(body), { status, headers: { ...headers, ...extraHeaders } });
   }
 
   const data = dataOrContext;
   const requestId = typeof requestIdOrData === 'string' ? requestIdOrData : undefined;
   const [body, status, headers] = successResponse(data, statusCode, requestId);
-  return new Response(JSON.stringify(body), { status, headers });
+  return new Response(JSON.stringify(body), { status, headers: { ...headers, ...extraHeaders } });
 }
 
 /**
