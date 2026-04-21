@@ -1,6 +1,9 @@
 // API: Newsletter subscription (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { queryOne, insert, update as updateDb } from '../../../lib/postgres';
+import { queryOne, insert } from '../../../lib/postgres';
+import { sendEmail } from '../../../lib/email';
+
+const SITE_URL = process.env.SITE_URL || 'https://sanliurfa.com';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -50,7 +53,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // TODO: Send welcome email
+    await sendNewsletterWelcomeEmail(email);
 
     return new Response(
       JSON.stringify({ 
@@ -67,6 +70,22 @@ export const POST: APIRoute = async ({ request }) => {
     );
   }
 };
+
+async function sendNewsletterWelcomeEmail(email: string): Promise<void> {
+  const html = `
+    <h1>Şanlıurfa bültenine hoş geldiniz</h1>
+    <p>Şanlıurfa.com bültenine aboneliğiniz başarıyla oluşturuldu.</p>
+    <p>Şanlıurfa odaklı mekan, etkinlik, gezi ve yerel rehber içeriklerini düzenli olarak paylaşacağız.</p>
+    <p><a href="${SITE_URL}/places">Şanlıurfa mekanlarını keşfedin</a></p>
+    <p>Abonelikten çıkmak isterseniz site üzerindeki bülten formunu kullanabilirsiniz.</p>
+  `;
+
+  try {
+    await sendEmail(email, 'Şanlıurfa.com bültenine hoş geldiniz', html);
+  } catch (error) {
+    console.error('Newsletter welcome email error:', error);
+  }
+}
 
 // Unsubscribe
 export const DELETE: APIRoute = async ({ request }) => {
