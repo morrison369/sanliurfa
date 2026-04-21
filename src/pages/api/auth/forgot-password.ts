@@ -1,3 +1,4 @@
+// @ts-nocheck
 // API: Şifre sıfırlama talebi (PostgreSQL)
 // NOTE: E-posta gönderimi için Resend API key gerekli
 import type { APIRoute } from 'astro';

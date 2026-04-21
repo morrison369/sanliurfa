@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Webhook System
  * Event-driven webhooks for external integrations

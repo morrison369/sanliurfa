@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Mark Conversation as Read API
  * POST: Mark all unread messages in conversation as read

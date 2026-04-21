@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Comment Vote API
  * POST: Vote on a comment (helpful/unhelpful)

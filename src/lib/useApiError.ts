@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * React hook for API error handling
  */

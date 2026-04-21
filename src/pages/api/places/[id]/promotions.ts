@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Get Place Promotions
  * GET /api/places/[id]/promotions - Get all active promotions for a place

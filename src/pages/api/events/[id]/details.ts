@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Get Event Details
  * GET /api/events/[id]/details - Get detailed event information

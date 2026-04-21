@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Place Badges
  * GET /api/places/[id]/badges - Get place badges

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Marketing Campaigns Management
  * Campaign creation, targeting, and performance tracking

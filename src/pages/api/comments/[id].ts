@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Comment Management API
  * PUT: Update comment

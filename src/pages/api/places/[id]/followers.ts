@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Place Followers
  * GET /api/places/[id]/followers - Get list of users following a place

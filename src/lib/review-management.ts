@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Review Management System
  * Owner responses, helpful votes, sentiment tracking

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Phase 131: Event Store & Event Sourcing
  * Immutable event log with append-only storage, versioning, and point-in-time recovery

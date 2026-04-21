@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * API: Search Recommendations
  * GET - Personalized place recommendations

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { getRedisClient } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';

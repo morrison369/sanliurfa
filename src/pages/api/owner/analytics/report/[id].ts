@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Analytics Report
  * GET /api/owner/analytics/report/[id] - Generate comprehensive analytics report

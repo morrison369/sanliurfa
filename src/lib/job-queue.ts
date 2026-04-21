@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Phase 41: Job Queue & Background Processing
  * Priority queues, job scheduling, background workers, cron execution

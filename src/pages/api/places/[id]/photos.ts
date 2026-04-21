@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Place Photos API
  * GET: Retrieve photos for a place

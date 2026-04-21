@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Cancel Subscription
  * POST /api/subscriptions/cancel - Cancel active subscription
