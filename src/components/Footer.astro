@@ -1,5 +1,5 @@
 ---
-import { MapPin, Phone, Mail, Instagram, Facebook, Twitter, Youtube, Send } from 'lucide-react';
+import { MapPin, Phone, Mail, Send } from 'lucide-react';
 
 const footerLinks = {
   kesfet: [
@@ -33,13 +33,6 @@ const footerLinks = {
     { label: 'KVKK Aydınlatma Metni', href: '/kvkk' },
   ],
 };
-
-const socialLinks = [
-  { icon: Instagram, href: 'https://instagram.com/sanliurfa_com', label: 'Instagram' },
-  { icon: Facebook, href: 'https://facebook.com/sanliurfa.com', label: 'Facebook' },
-  { icon: Twitter, href: 'https://twitter.com/sanliurfa_com', label: 'Twitter' },
-  { icon: Youtube, href: 'https://youtube.com/sanliurfa_com', label: 'Youtube' },
-];
 
 const currentYear = new Date().getFullYear();
 ---
@@ -106,20 +99,9 @@ const currentYear = new Date().getFullYear();
           </div>
         </div>
         
-        <!-- Social Links -->
-        <div class="flex items-center gap-3 mt-6">
-          {socialLinks.map((social) => (
-            <a 
-              href={social.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="w-10 h-10 bg-urfa-800 dark:bg-gray-700 hover:bg-urfa-700 dark:hover:bg-gray-600 rounded-lg flex items-center justify-center transition-colors"
-              aria-label={social.label}
-            >
-              <social.icon className="w-5 h-5" />
-            </a>
-          ))}
-        </div>
+        <p class="mt-6 text-xs text-urfa-300 dark:text-gray-400">
+          Resmi sosyal medya hesapları aktif edildiğinde bu alana eklenecektir.
+        </p>
       </div>
       
       <!-- Links Columns -->

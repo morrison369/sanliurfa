@@ -54,6 +54,7 @@
 - Do not hand-roll features that an Astro integration/package in the repo already provides. For structured data, render JSON-LD through `astro-seo-schema` inside Astro head/layout flow.
 - If Astro has no built-in equivalent, keep custom code minimal, server-rendered, documented, and connected to Astro components instead of adding client-side runtime scripts.
 - Do not ship fake public integrations. Analytics scripts require `PUBLIC_GOOGLE_ANALYTICS_ID`; if it is missing or invalid, no analytics tag is rendered.
+- Do not display social media account links or social login buttons unless the real account/provider is configured and working.
 
 ## Architecture Reference
 - Use `ARCHITECTURE.md` for runtime invariants and the separation between Astro application rules and phase delivery rules.
