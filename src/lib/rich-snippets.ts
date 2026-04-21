@@ -40,12 +40,31 @@ type PlaceLike = {
 
 const categorySchemaTypes: Record<string, string> = {
   restaurant: 'Restaurant',
+  restoran: 'Restaurant',
+  restoranlar: 'Restaurant',
+  gastronomy: 'Restaurant',
+  gastronomi: 'Restaurant',
   cafe: 'CafeOrCoffeeShop',
+  kafe: 'CafeOrCoffeeShop',
+  kafeler: 'CafeOrCoffeeShop',
   hotel: 'Hotel',
+  otel: 'Hotel',
+  oteller: 'Hotel',
   museum: 'Museum',
+  muze: 'Museum',
+  müze: 'Museum',
+  tarihi: 'TouristAttraction',
+  'tarihi-yerler': 'TouristAttraction',
+  tarihi_yerler: 'TouristAttraction',
+  dini: 'TouristAttraction',
+  turizm: 'TouristAttraction',
   park: 'Park',
   shopping: 'Store',
+  alisveris: 'Store',
+  alışveriş: 'Store',
   entertainment: 'EntertainmentBusiness',
+  eglence: 'EntertainmentBusiness',
+  eğlence: 'EntertainmentBusiness',
 };
 
 const dayMap: Record<string, string> = {
@@ -177,6 +196,7 @@ export function buildPlaceRichSnippet(
     description: normalizeDescription(place.short_description || place.description),
     image: images,
     priceRange: getPriceRange(place.price_range),
+    currenciesAccepted: 'TRY',
     telephone: place.phone || undefined,
     sameAs: place.website && /^https?:\/\//i.test(place.website) ? [place.website] : undefined,
     address: {
