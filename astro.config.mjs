@@ -6,13 +6,14 @@ import sitemap from '@astrojs/sitemap';
 import compress from 'astro-compress';
 
 const site = process.env.SITE_URL || 'https://sanliurfa.com';
+const appPort = Number(process.env.PORT || 4321);
 
 export default defineConfig({
   site,
   output: 'server',
   adapter: node({
     mode: 'standalone',
-    port: 6000,
+    port: appPort,
   }),
   integrations: [
     tailwind(),
@@ -41,6 +42,16 @@ export default defineConfig({
     inlineStylesheets: 'auto',
   },
   vite: {
+    server: {
+      host: '127.0.0.1',
+      port: 4321,
+      strictPort: true,
+    },
+    preview: {
+      host: '127.0.0.1',
+      port: 4321,
+      strictPort: true,
+    },
     build: {
       cssCodeSplit: true,
       rollupOptions: {
