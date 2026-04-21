@@ -277,4 +277,4 @@ export const trafficPolicy = new TrafficPolicy();
 export const circuitBreaker = new CircuitBreaker();
 export const serviceDiscovery = new ServiceDiscovery();
 
-export { TrafficMetrics, CanaryConfig, CircuitBreakerConfig, ServiceMeshPolicy };
+export type { TrafficMetrics, CanaryConfig, CircuitBreakerConfig, ServiceMeshPolicy };

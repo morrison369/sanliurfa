@@ -307,4 +307,4 @@ export const autoRemediationExecutor = new AutoRemediationExecutor();
 export const policyExceptionManager = new PolicyExceptionManager();
 export const policyEvaluationCache = new PolicyEvaluationCache();
 
-export { PolicyEvaluationResult, RemediationAction, PolicyException };
+export type { PolicyEvaluationResult, RemediationAction, PolicyException };

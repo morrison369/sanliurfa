@@ -249,4 +249,4 @@ export const secretRotationManager = new SecretRotationManager();
 export const secretInjector = new SecretInjector();
 export const secretAuditor = new SecretAuditor();
 
-export { Secret, SecretRotationConfig, SecretAccessLog, SecretInjectionConfig };
+export type { Secret, SecretRotationConfig, SecretAccessLog, SecretInjectionConfig };

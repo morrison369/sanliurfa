@@ -263,4 +263,4 @@ export const contentFilter = new ContentFilter();
 export const eventTransformer = new EventTransformer();
 export const routingRule = new RoutingRule();
 
-export { RoutingRule as RoutingRuleType, RoutingResult, FilterMetrics };
+export type { RoutingRule as RoutingRuleType, RoutingResult, FilterMetrics };
