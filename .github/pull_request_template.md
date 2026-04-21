@@ -1,40 +1,45 @@
-## Description
-Brief description of the changes in this PR.
+## Açıklama
 
-## Type of Change
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
-- [ ] Refactoring
-- [ ] Performance improvement
+Bu PR hangi problemi kapatıyor?
 
-## Related Issues
-Fixes #(issue number)
-Related to #(issue number)
+## Değişiklik Tipi
 
-## Changes Made
-- Change 1
-- Change 2
-- Change 3
+- [ ] Hata düzeltme
+- [ ] Yeni özellik
+- [ ] Kırıcı değişiklik
+- [ ] Dokümantasyon
+- [ ] Refactor
+- [ ] Performans
+- [ ] Güvenlik / operasyon
+
+## İlgili Kayıtlar
+
+Fixes #
+Related to #
+
+## Yapılanlar
+
+-
 
 ## Testing
-- [ ] All tests pass (`npm test`)
-- [ ] Build successful (`npm run build`)
-- [ ] Manual testing completed
-- [ ] E2E tests added/updated (if applicable)
 
-## Screenshots (if applicable)
-Add screenshots to help explain your changes.
+- [ ] `npm run security:scan-secrets`
+- [ ] `npm run public:city:gate`
+- [ ] `npm run build`
+- [ ] Kritik akış manuel kontrol edildi
+- [ ] Dev server/port orphan bırakılmadı
 
-## Checklist
-- [ ] Code follows the style guidelines
-- [ ] Self-review completed
-- [ ] Comments added for complex code
-- [ ] Documentation updated
-- [ ] No new security vulnerabilities introduced
-- [ ] Tests added for new functionality
-- [ ] All tests pass
+## Public / Security Gate
 
-## Additional Notes
-Any additional information or context about the PR.
+- [ ] `.env`, `.env.production`, `deploy_key` veya gerçek secret eklenmedi
+- [ ] Public yapılacaksa `npm run security:public-readiness` temiz
+- [ ] GitHub Actions environment secret gerektiren job sadece izinli branch üzerinde çalışıyor
+- [ ] Şanlıurfa odağı, Türkçe-only kuralı ve canonical `https://sanliurfa.com` korundu
+
+## Ekran Görüntüsü
+
+UI değişikliği varsa ekleyin.
+
+## Notlar
+
+Risk, rollback veya deploy notu varsa yazın.

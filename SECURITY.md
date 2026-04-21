@@ -49,6 +49,41 @@ RECAPTCHA_SITE_KEY=<key>
 RECAPTCHA_SECRET_KEY=<key>
 ```
 
+## GitHub Team / Governance
+
+Bu repo için hedef GitHub güvenlik modeli:
+
+- Pull request review zorunlu.
+- CODEOWNERS ile kritik alanlarda owner review zorunlu.
+- `master` dalına force-push ve deletion yasak.
+- Required checks: `Public City Acceptance`, `Security Audit / security`.
+- Merge stratejisi: squash-only.
+- Production environment secret'ları sadece protected branch üzerinde çalışan job'lara açılır.
+- `.env`, `.env.production`, `deploy_key` ve gerçek secret dosyaları git'e eklenmez.
+
+Uygulanmış ayarlar:
+
+- Merge commit kapalı, rebase merge kapalı, squash merge açık.
+- Merge sonrası branch silme açık.
+- GitHub vulnerability alerts açık.
+- Dependabot automated security fixes açık.
+- `production` environment protected branch policy ile bağlı.
+
+Plan/ürün sınırı:
+
+- 2026-04-21 tarihinde GitHub API branch protection/ruleset için hala `Upgrade to GitHub Pro or make this repository public` yanıtı döndürdü.
+- Advanced Security / secret scanning push protection için API `Advanced security has not been purchased` yanıtı döndürdü.
+- Team planı organizasyona alındıysa bu repo ilgili organizasyon altına taşınmalı veya plan bu repo owner'ına uygulanmalıdır.
+- Repo public yapılmayacak; önce `npm run security:public-readiness` temiz olmalı ve geçmişteki credential izleri rotate/temizlenmelidir.
+
+Hazır komutlar:
+
+```powershell
+.\scripts\github\setup-repository-governance.ps1 -Owner morrison369 -Repo sanliurfa -Branch master
+.\scripts\github\set-branch-protection.ps1 -Owner morrison369 -Repo sanliurfa -Branch master
+.\scripts\github\set-repository-ruleset.ps1 -Owner morrison369 -Repo sanliurfa
+```
+
 ## 🚨 Güvenlik İpuçları
 
 1. **Düzenli güncellemeler**: `npm audit fix` her hafta
