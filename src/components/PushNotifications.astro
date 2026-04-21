@@ -70,7 +70,7 @@ const { user } = Astro.props;
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(
             import.meta.env.PUBLIC_VAPID_PUBLIC_KEY || ''
-          ),
+          ) as BufferSource,
         });
 
         // Send subscription to server

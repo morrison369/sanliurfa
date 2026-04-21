@@ -3,7 +3,8 @@
  * Catches errors in child components and displays fallback UI
  */
 
-import React, { ReactNode, ReactElement } from 'react';
+import React from 'react';
+import type { ReactNode, ReactElement } from 'react';
 import { logger } from '../lib/logging';
 import { unknownToAppError } from '../lib/error-handling';
 

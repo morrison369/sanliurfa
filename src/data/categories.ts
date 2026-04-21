@@ -4,6 +4,7 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
+  type?: 'place' | 'blog' | 'event';
   description?: string;
   icon?: string;
   color?: string;

@@ -42,7 +42,7 @@ const progress = Math.min(100, ((points - (level.next / 2)) / (level.next - (lev
   document.addEventListener('DOMContentLoaded', () => {
     const badge = document.querySelector('[data-points-badge]');
     if (badge) {
-      const points = parseInt(badge.dataset.points || '0');
+      const points = parseInt((badge as HTMLElement).dataset.points || '0');
       animatePoints(badge, points);
     }
   });

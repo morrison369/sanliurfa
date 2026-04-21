@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-export default function PlaceAnalyticsPanel({ placeId }) {
-  const [analytics, setAnalytics] = useState(null);
+export default function PlaceAnalyticsPanel({ placeId }: { placeId: string }) {
+  const [analytics, setAnalytics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function PlaceAnalyticsPanel({ placeId }) {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200">
           <h3 className="font-bold text-gray-900 dark:text-white mb-4">Puan Dagilimi</h3>
           <div className="space-y-3">
-            {ratingDistribution.map((dist) => (
+            {ratingDistribution.map((dist: any) => (
               <div key={dist.rating} className="flex items-center gap-3">
                 <span className="w-12 text-sm font-medium">{dist.rating}⭐</span>
                 <div className="flex-1 bg-gray-200 dark:bg-gray-700 h-6 rounded-full overflow-hidden">

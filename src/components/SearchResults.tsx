@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-export default function SearchResults({ query }) {
-  const [results, setResults] = useState(null);
+export default function SearchResults({ query }: { query?: string }) {
+  const [results, setResults] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(query || '');
 
@@ -49,7 +49,7 @@ export default function SearchResults({ query }) {
             <div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Mekanlar ({results.places.length})</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {results.places.map((place) => (
+                {results.places.map((place: any) => (
                   <a key={place.id} href={'/yerler/' + place.id} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     {place.image_url && <img src={place.image_url} alt={place.name} className="w-full h-32 object-cover rounded mb-2" />}
                     <p className="font-medium text-gray-900 dark:text-white">{place.name}</p>
@@ -65,7 +65,7 @@ export default function SearchResults({ query }) {
             <div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Kullanıcılar ({results.users.length})</h3>
               <div className="space-y-2">
-                {results.users.map((user) => (
+                {results.users.map((user: any) => (
                   <a key={user.id} href={'/kullanici/' + user.id} className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     {user.avatar_url ? (
                       <img src={user.avatar_url} alt={user.full_name} className="w-10 h-10 rounded-full object-cover" />
@@ -88,7 +88,7 @@ export default function SearchResults({ query }) {
             <div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Koleksiyonlar ({results.collections.length})</h3>
               <div className="space-y-2">
-                {results.collections.map((col) => (
+                {results.collections.map((col: any) => (
                   <a key={col.id} href={'/koleksiyonlar/' + col.id} className="p-3 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     <p className="font-medium text-gray-900 dark:text-white">{col.name}</p>
                     <p className="text-sm text-gray-600">{col.description}</p>

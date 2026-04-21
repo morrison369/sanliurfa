@@ -51,12 +51,12 @@ const { itemType, actions } = Astro.props;
 <script>
   let selectedItems = new Set();
   
-  const selectAllCheckbox = document.getElementById('select-all');
-  const itemCheckboxes = document.querySelectorAll('.bulk-select-item');
+  const selectAllCheckbox = document.getElementById('select-all') as HTMLInputElement | null;
+  const itemCheckboxes = document.querySelectorAll<HTMLInputElement>('.bulk-select-item');
   const selectedCountSpan = document.getElementById('selected-count');
-  const bulkActionForm = document.getElementById('bulk-action-form');
-  const bulkActionSelect = document.getElementById('bulk-action-select');
-  const bulkActionBtn = document.getElementById('bulk-action-btn');
+  const bulkActionForm = document.getElementById('bulk-action-form') as HTMLFormElement | null;
+  const bulkActionSelect = document.getElementById('bulk-action-select') as HTMLSelectElement | null;
+  const bulkActionBtn = document.getElementById('bulk-action-btn') as HTMLButtonElement | null;
   
   function updateUI() {
     const count = selectedItems.size;

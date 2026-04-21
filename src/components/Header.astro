@@ -337,7 +337,7 @@ const isCurrentPage = (href: string) => {
   const sunIconMobile = document.getElementById('sun-icon-mobile');
   const moonIconMobile = document.getElementById('moon-icon-mobile');
   
-  function setMobileTheme(dark) {
+  function setMobileTheme(dark: boolean) {
     if (dark) {
       document.documentElement.classList.add('dark');
       sunIconMobile?.classList.remove('hidden');

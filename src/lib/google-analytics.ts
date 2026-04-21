@@ -41,7 +41,7 @@ export class GoogleAnalytics {
     // Initialize gtag
     window.dataLayer = window.dataLayer || [];
     function gtag(...args: any[]) {
-      window.dataLayer.push(arguments);
+      window.dataLayer?.push(args);
     }
     window.gtag = gtag;
 

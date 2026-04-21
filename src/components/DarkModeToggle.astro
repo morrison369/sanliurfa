@@ -57,7 +57,7 @@ import { Sun, Moon } from 'lucide-react';
   });
   
   // Listen for theme changes from other toggles
-  window.addEventListener('themechange', (e: CustomEvent) => {
-    setTheme(e.detail.dark);
+  window.addEventListener('themechange', (e: Event) => {
+    setTheme(Boolean((e as CustomEvent<{ dark: boolean }>).detail.dark));
   });
 </script>
