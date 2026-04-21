@@ -18,7 +18,8 @@
 - Use [ROOT_INVENTORY_ONLY_POLICY.md](ROOT_INVENTORY_ONLY_POLICY.md) for the dirty-root boundary.
 
 ## Build, Test, and Development Commands
-- `npm run dev`: local Astro server.
+- `npm run dev`: local Astro server on `127.0.0.1:4321` only.
+- `npm run preview`: local Astro preview on `127.0.0.1:4321` only.
 - `npm run build`: SSR production build to `dist/`.
 - `npm run lint`: `astro check` plus `tsc --noEmit`.
 - `npm run test:unit`: full Vitest run.
@@ -47,6 +48,8 @@
 - `sw.js` is the emitted PWA worker; keep build exclusions aligned to that filename.
 - Do not inline bundled scripts that rely on `import.meta.env`.
 - Never run parallel Astro build or gate chains in the same worktree.
+- Do not start multiple dev servers or allow fallback ports. The only local app port is `4321`; stop the server after manual checks.
+- Do not add `1111`, `1112`, `1113`, or any other alternate local app port scripts back into `package.json`.
 
 ## Architecture Reference
 - Use `ARCHITECTURE.md` for runtime invariants and the separation between Astro application rules and phase delivery rules.
@@ -71,3 +74,4 @@
 - Do phase delivery work in clean `git worktree` branches, not in the dirty root worktree.
 - If the active shell is below policy, use the `:preferred` wrappers instead of forcing a partial local run.
 - Archive dated cleanup and verification files under `docs/archive/cleanup/` instead of leaving them in repo root.
+- The public site is Turkish-only and focuses on the `Şanlıurfa` keyword for `https://sanliurfa.com`.

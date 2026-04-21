@@ -1,13 +1,13 @@
 import { spawn } from 'node:child_process';
 
-const BASE_URL = process.env.SMOKE_BASE_URL ?? 'http://127.0.0.1:1111';
+const BASE_URL = process.env.SMOKE_BASE_URL ?? 'http://127.0.0.1:4321';
 const STARTUP_TIMEOUT_MS = 90_000;
 
 function startServer() {
   const command =
     process.platform === 'win32'
-      ? 'npx.cmd astro dev --port 1111 --host 127.0.0.1'
-      : 'npx astro dev --port 1111 --host 127.0.0.1';
+      ? 'npx.cmd astro dev --port 4321 --host 127.0.0.1'
+      : 'npx astro dev --port 4321 --host 127.0.0.1';
   const env = {
     ...process.env,
     DATABASE_URL:
