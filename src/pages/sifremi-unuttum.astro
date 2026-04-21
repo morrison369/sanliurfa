@@ -27,7 +27,7 @@ const error = Astro.url.searchParams.get('error');
             E-posta adresinizi girin, şifre sıfırlama bağlantısını gönderelim.
           </p>
         </div>
-        
+
         {success ? (
           <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-6">
             <div class="flex items-start gap-3">
@@ -53,15 +53,15 @@ const error = Astro.url.searchParams.get('error');
                       {error === 'email_not_found' ? 'E-posta adresi bulunamadı' : 'Bir hata oluştu'}
                     </p>
                     <p class="text-red-700 dark:text-red-400 text-sm mt-1">
-                      {error === 'email_not_found' 
-                        ? 'Bu e-posta adresiyle kayıtlı bir hesap bulunmuyor.' 
+                      {error === 'email_not_found'
+                        ? 'Bu e-posta adresiyle kayıtlı bir hesap bulunmuyor.'
                         : 'Lütfen tekrar deneyin.'}
                     </p>
                   </div>
                 </div>
               </div>
             )}
-            
+
             <div>
               <label for="email" class="label dark:text-gray-300">E-posta Adresi</label>
               <div class="relative mt-1">
@@ -74,17 +74,17 @@ const error = Astro.url.searchParams.get('error');
                   type="email"
                   required
                   class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="ornek@email.com"
+                  placeholder="kullanici@sanliurfa.com"
                 />
               </div>
             </div>
-            
+
             <button type="submit" class="btn-primary w-full flex justify-center">
               Sıfırlama Bağlantısı Gönder
             </button>
           </form>
         )}
-        
+
         <div class="mt-6 text-center">
           <a href="/giris" class="inline-flex items-center gap-2 text-sm text-urfa-600 dark:text-urfa-400 hover:text-urfa-500">
             <ArrowLeft className="w-4 h-4" />
