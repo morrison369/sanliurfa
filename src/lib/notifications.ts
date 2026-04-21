@@ -105,6 +105,19 @@ export class NotificationSystem {
     return delivery;
   }
 
+  async notifyAlert(alert: { title?: string; message?: string; userId?: string; variables?: Record<string, any> }): Promise<NotificationDelivery | null> {
+    const templateId = `alert-${Date.now()}`;
+    this.registerTemplate({
+      id: templateId,
+      name: alert.title || 'Sistem Uyarısı',
+      type: 'push',
+      body: alert.message || 'Yeni sistem uyarısı',
+      variables: Object.keys(alert.variables || {}),
+    });
+    const scheduled = this.schedule(alert.userId || 'admin', templateId, alert.variables || {});
+    return this.send(scheduled.id);
+  }
+
   /**
    * Track open
    */
@@ -206,3 +219,4 @@ export class NotificationSystem {
 }
 
 export const notificationSystem = new NotificationSystem();
+export const notificationService = notificationSystem;

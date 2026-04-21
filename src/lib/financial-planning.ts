@@ -40,7 +40,7 @@ export interface Scenario {
   projectedResult: Record<string, number>;
 }
 
-export interface CostOptimization {
+export interface CostOptimizationResult {
   category: string;
   currentCost: number;
   potential: number;
@@ -355,8 +355,8 @@ export class CostOptimization {
   /**
    * Analyze costs
    */
-  analyzeCosts(period: string): CostOptimization[] {
-    const optimizations: CostOptimization[] = [];
+  analyzeCosts(period: string): CostOptimizationResult[] {
+    const optimizations: CostOptimizationResult[] = [];
 
     const categories = ['Personnel', 'Operations', 'Marketing', 'Technology'];
 
@@ -381,8 +381,8 @@ export class CostOptimization {
   /**
    * Identify reduction opportunities
    */
-  identifyReductionOpportunities(): CostOptimization[] {
-    const opportunities: CostOptimization[] = [];
+  identifyReductionOpportunities(): CostOptimizationResult[] {
+    const opportunities: CostOptimizationResult[] = [];
 
     if (Math.random() > 0.4) {
       opportunities.push({
@@ -422,14 +422,14 @@ export class CostOptimization {
   /**
    * Estimate savings
    */
-  estimateSavings(optimizations: CostOptimization[]): number {
+  estimateSavings(optimizations: CostOptimizationResult[]): number {
     return optimizations.reduce((sum, opt) => sum + opt.potential, 0);
   }
 
   /**
    * Prioritize reductions
    */
-  prioritizeReductions(): CostOptimization[] {
+  prioritizeReductions(): CostOptimizationResult[] {
     const optimizations = this.identifyReductionOpportunities();
 
     return optimizations.sort((a, b) => {

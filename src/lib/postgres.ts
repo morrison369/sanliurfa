@@ -105,7 +105,7 @@ export function updatePoolStatus(): void {
   // Phase 5: Log replica pool status if available
   if (replicaStats) {
     metricsCollector.recordSlowOperation(
-      'pool',
+      'cache',
       `Replica pool utilization: ${replicaStats.utilization}%`,
       0,
       replicaStats
@@ -237,7 +237,7 @@ export async function queryStream(text: string, params?: any[], onRow?: (row: an
     }));
 
     return new Promise<number>((resolve, reject) => {
-      query.on('row', async (row) => {
+      query.on('row', async (row: any) => {
         rowCount++;
         if (onRow) {
           try {
@@ -248,7 +248,7 @@ export async function queryStream(text: string, params?: any[], onRow?: (row: an
         }
       });
 
-      query.on('error', (err) => {
+      query.on('error', (err: unknown) => {
         logger.error('Stream query error', err);
         reject(err);
       });

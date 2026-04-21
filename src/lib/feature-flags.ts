@@ -187,7 +187,7 @@ export class GradualRollout {
   createRollout(flagId: string, targetPct: number, stepPct: number, intervalMs: number): string {
     const id = 'rollout-' + this.rolloutId++;
 
-    const rollout = {
+    const rollout: { flagId: string; current: number; target: number; step: number; interval: NodeJS.Timeout | null; paused: boolean } = {
       flagId,
       current: 0,
       target: Math.min(100, Math.max(0, targetPct)),

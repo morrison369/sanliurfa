@@ -96,7 +96,7 @@ export async function getOrCache<T>(
   cacheKey: string,
   ttl: number,
   computeFn: () => Promise<T>
-): Promise<T | null> {
+): Promise<T> {
   try {
     // Try to get from cache
     const cached = await getCache(cacheKey);
@@ -118,7 +118,7 @@ export async function getOrCache<T>(
     return value;
   } catch (error) {
     logger.error('Cache operation failed', error instanceof Error ? error : new Error(String(error)), { cacheKey });
-    return null;
+    return null as T;
   }
 }
 

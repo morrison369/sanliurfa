@@ -13,7 +13,7 @@ if (!STRIPE_SECRET_KEY) {
   logger.warn('STRIPE_SECRET_KEY not configured');
 }
 
-const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' }) : null;
+const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2026-03-25.dahlia' }) : null;
 
 export const PRICING = {
   premium: {
@@ -83,7 +83,7 @@ export async function createSubscription(
       customer: customerId,
       items: [{ price: priceId }],
       payment_behavior: 'default_incomplete',
-      expansion: ['latest_invoice.payment_intent']
+      expand: ['latest_invoice.payment_intent']
     });
 
     const paymentIntent = (subscription.latest_invoice as any)?.payment_intent;

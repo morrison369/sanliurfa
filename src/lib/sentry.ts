@@ -32,12 +32,6 @@ export async function initializeSentry(config: SentryConfig = {}): Promise<void>
       dsn,
       environment,
       tracesSampleRate,
-      integrations: [
-        new Sentry.Replay({
-          maskAllText: true,
-          blockAllMedia: true
-        })
-      ],
       replaysSessionSampleRate: 0.1,
       replaysOnErrorSampleRate: 1.0,
       beforeSend: (event, hint) => {
@@ -52,7 +46,7 @@ export async function initializeSentry(config: SentryConfig = {}): Promise<void>
 
           // Ignore 4xx errors (likely user errors)
           if (event.tags?.['http.status_code']) {
-            const status = parseInt(event.tags['http.status_code']);
+            const status = parseInt(String(event.tags['http.status_code']));
             if (status >= 400 && status < 500) {
               return null;
             }

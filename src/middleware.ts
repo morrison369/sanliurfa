@@ -179,6 +179,7 @@ declare global {
         role: 'user' | 'admin' | 'moderator';
         avatar: string | null;
         points: number;
+        isAdmin?: boolean;
       } | null;
       isAdmin: boolean;
       isAuthenticated: boolean;

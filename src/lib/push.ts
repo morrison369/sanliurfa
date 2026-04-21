@@ -25,6 +25,16 @@ export interface PushSubscriptionData {
   auth: string;
 }
 
+function toWebPushSubscription(subscription: PushSubscriptionData): webpush.PushSubscription {
+  return {
+    endpoint: subscription.endpoint,
+    keys: {
+      p256dh: subscription.p256dh,
+      auth: subscription.auth
+    }
+  };
+}
+
 /**
  * Subscribe user to push notifications
  */
@@ -167,7 +177,7 @@ export async function sendPushToUser(
     // Send to all subscriptions
     for (const sub of subscriptions) {
       try {
-        await webpush.sendNotification(sub, JSON.stringify({
+        await webpush.sendNotification(toWebPushSubscription(sub), JSON.stringify({
           title: notification.title,
           body: notification.body,
           icon: notification.icon,
