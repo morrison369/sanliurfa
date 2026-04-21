@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
-type ResourceType = 'places' | 'reviews' | 'users';
+type ResourceType = "places" | "reviews" | "users";
 
 const RESOURCE_TABS = [
-  { id: 'places' as const, label: 'Yerler', icon: '📍' },
-  { id: 'reviews' as const, label: 'Yorumlar', icon: '⭐' },
-  { id: 'users' as const, label: 'Kullanıcılar', icon: '👥' }
+  { id: "places" as const, label: "Yerler", icon: "📍" },
+  { id: "reviews" as const, label: "Yorumlar", icon: "⭐" },
+  { id: "users" as const, label: "Kullanıcılar", icon: "👥" },
 ];
 
 export default function AdminManager() {
-  const [activeTab, setActiveTab] = useState<ResourceType>('places');
+  const [activeTab, setActiveTab] = useState<ResourceType>("places");
   const [isLoading, setIsLoading] = useState(false);
   const [items, setItems] = useState<any[]>([]);
 
@@ -17,8 +17,12 @@ export default function AdminManager() {
     <div className="container-custom py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Yönetim Paneli</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">Yerler, yorumlar ve kullanıcıları yönet</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Yönetim Paneli
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          Yerler, yorumlar ve kullanıcıları yönet
+        </p>
       </div>
 
       {/* Tabs */}
@@ -30,8 +34,8 @@ export default function AdminManager() {
               onClick={() => setActiveTab(tab.id)}
               className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 dark:text-gray-400'
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-gray-600 dark:text-gray-400"
               }`}
             >
               {tab.icon} {tab.label}
@@ -42,16 +46,16 @@ export default function AdminManager() {
 
       {/* Content */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-        {activeTab === 'places' && <PlacesManager />}
-        {activeTab === 'reviews' && <ReviewsManager />}
-        {activeTab === 'users' && <UsersManager />}
+        {activeTab === "places" && <PlacesManager />}
+        {activeTab === "reviews" && <ReviewsManager />}
+        {activeTab === "users" && <UsersManager />}
       </div>
     </div>
   );
 }
 
 function PlacesManager() {
-  const [filter, setFilter] = useState('');
+  const [filter, setFilter] = useState("");
 
   return (
     <div className="p-6">
@@ -72,22 +76,46 @@ function PlacesManager() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Adı</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Kategori</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Puan</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Durum</th>
-              <th className="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">İşlemler</th>
+              <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+                Adı
+              </th>
+              <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+                Kategori
+              </th>
+              <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+                Puan
+              </th>
+              <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+                Durum
+              </th>
+              <th className="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">
+                İşlemler
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
-              <td className="px-6 py-3 text-gray-900 dark:text-white font-medium">Göbeklitepe</td>
-              <td className="px-6 py-3 text-gray-600 dark:text-gray-400">Tarihi</td>
-              <td className="px-6 py-3 text-gray-600 dark:text-gray-400">4.8 ⭐</td>
-              <td className="px-6 py-3"><span className="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded text-xs font-semibold">Yayında</span></td>
+              <td className="px-6 py-3 text-gray-900 dark:text-white font-medium">
+                Göbeklitepe
+              </td>
+              <td className="px-6 py-3 text-gray-600 dark:text-gray-400">
+                Tarihi
+              </td>
+              <td className="px-6 py-3 text-gray-600 dark:text-gray-400">
+                4.8 ⭐
+              </td>
+              <td className="px-6 py-3">
+                <span className="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded text-xs font-semibold">
+                  Yayında
+                </span>
+              </td>
               <td className="px-6 py-3 text-right">
-                <button className="text-blue-600 hover:underline text-sm mr-3">Düzenle</button>
-                <button className="text-red-600 hover:underline text-sm">Sil</button>
+                <button className="text-blue-600 hover:underline text-sm mr-3">
+                  Düzenle
+                </button>
+                <button className="text-red-600 hover:underline text-sm">
+                  Sil
+                </button>
               </td>
             </tr>
           </tbody>
@@ -115,21 +143,41 @@ function ReviewsManager() {
       <table className="w-full text-sm">
         <thead className="bg-gray-50 dark:bg-gray-700">
           <tr>
-            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Kullanıcı</th>
-            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Yer</th>
-            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Puan</th>
-            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Durum</th>
-            <th className="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">İşlemler</th>
+            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+              Kullanıcı
+            </th>
+            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+              Yer
+            </th>
+            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+              Puan
+            </th>
+            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+              Durum
+            </th>
+            <th className="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">
+              İşlemler
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
           <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
-            <td className="px-6 py-3 text-gray-900 dark:text-white font-medium">User123</td>
-            <td className="px-6 py-3 text-gray-600 dark:text-gray-400">Balıklıgöl</td>
+            <td className="px-6 py-3 text-gray-900 dark:text-white font-medium">
+              Kullanıcı123
+            </td>
+            <td className="px-6 py-3 text-gray-600 dark:text-gray-400">
+              Balıklıgöl
+            </td>
             <td className="px-6 py-3 text-gray-600 dark:text-gray-400">5 ⭐</td>
-            <td className="px-6 py-3"><span className="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded text-xs font-semibold">Onaylandı</span></td>
+            <td className="px-6 py-3">
+              <span className="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded text-xs font-semibold">
+                Onaylandı
+              </span>
+            </td>
             <td className="px-6 py-3 text-right">
-              <button className="text-red-600 hover:underline text-sm">Reddet</button>
+              <button className="text-red-600 hover:underline text-sm">
+                Reddet
+              </button>
             </td>
           </tr>
         </tbody>
@@ -152,20 +200,38 @@ function UsersManager() {
       <table className="w-full text-sm">
         <thead className="bg-gray-50 dark:bg-gray-700">
           <tr>
-            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">E-posta</th>
-            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Rol</th>
-            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Katılım</th>
-            <th className="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">İşlemler</th>
+            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+              E-posta
+            </th>
+            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+              Rol
+            </th>
+            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+              Katılım
+            </th>
+            <th className="px-6 py-3 text-right font-semibold text-gray-700 dark:text-gray-300">
+              İşlemler
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
           <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
-            <td className="px-6 py-3 text-gray-900 dark:text-white font-medium">user@example.com</td>
-            <td className="px-6 py-3 text-gray-600 dark:text-gray-400">Kullanıcı</td>
-            <td className="px-6 py-3 text-gray-600 dark:text-gray-400">2 gün önce</td>
+            <td className="px-6 py-3 text-gray-900 dark:text-white font-medium">
+              kullanici@sanliurfa.com
+            </td>
+            <td className="px-6 py-3 text-gray-600 dark:text-gray-400">
+              Kullanıcı
+            </td>
+            <td className="px-6 py-3 text-gray-600 dark:text-gray-400">
+              2 gün önce
+            </td>
             <td className="px-6 py-3 text-right">
-              <button className="text-blue-600 hover:underline text-sm mr-3">Düzenle</button>
-              <button className="text-red-600 hover:underline text-sm">Sil</button>
+              <button className="text-blue-600 hover:underline text-sm mr-3">
+                Düzenle
+              </button>
+              <button className="text-red-600 hover:underline text-sm">
+                Sil
+              </button>
             </td>
           </tr>
         </tbody>

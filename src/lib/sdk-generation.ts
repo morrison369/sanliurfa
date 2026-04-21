@@ -3,12 +3,12 @@
  * Automatic SDK generation for multiple languages with type safety
  */
 
-import { logger } from './logging';
+import { logger } from "./logging";
 
 // ==================== TYPES & INTERFACES ====================
 
-export type SDKLanguage = 'typescript' | 'python' | 'go' | 'javascript';
-export type AuthType = 'api-key' | 'oauth' | 'bearer';
+export type SDKLanguage = "typescript" | "python" | "go" | "javascript";
+export type AuthType = "api-key" | "oauth" | "bearer";
 
 export interface SDKGenerationConfig {
   language: SDKLanguage;
@@ -21,7 +21,7 @@ export interface SDKGenerationConfig {
 export interface SDKMethod {
   name: string;
   description?: string;
-  httpMethod: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  httpMethod: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   path: string;
   parameters?: Record<string, any>;
   returnType?: string;
@@ -46,23 +46,23 @@ export class SDKGenerator {
    * Generate SDK
    */
   generate(config: SDKGenerationConfig): SDKPackage {
-    const id = 'sdk-' + Date.now() + '-' + this.packageCount++;
+    const id = "sdk-" + Date.now() + "-" + this.packageCount++;
 
     const pkg: SDKPackage = {
       id,
       language: config.language,
       version: config.apiVersion,
       methods: [],
-      createdAt: Date.now()
+      createdAt: Date.now(),
     };
 
     this.packages.set(id, pkg);
 
-    logger.info('SDK generated', {
+    logger.info("SDK generated", {
       sdkId: id,
       language: config.language,
       apiVersion: config.apiVersion,
-      auth: config.auth
+      auth: config.auth,
     });
 
     return pkg;
@@ -83,33 +83,40 @@ export class SDKGenerator {
 
     if (pkg) {
       pkg.methods.push(method);
-      logger.debug('Method added to SDK', { packageId, methodName: method.name });
+      logger.debug("Method added to SDK", {
+        packageId,
+        methodName: method.name,
+      });
     }
   }
 
   /**
    * Generate code snippet
    */
-  generateCodeSnippet(packageId: string, language: SDKLanguage, methodName: string): string {
+  generateCodeSnippet(
+    packageId: string,
+    language: SDKLanguage,
+    methodName: string,
+  ): string {
     const pkg = this.packages.get(packageId);
 
-    if (!pkg) return '';
+    if (!pkg) return "";
 
-    const method = pkg.methods.find(m => m.name === methodName);
+    const method = pkg.methods.find((m) => m.name === methodName);
 
-    if (!method) return '';
+    if (!method) return "";
 
     switch (language) {
-      case 'typescript':
+      case "typescript":
         return this.generateTypeScriptSnippet(method);
-      case 'python':
+      case "python":
         return this.generatePythonSnippet(method);
-      case 'go':
+      case "go":
         return this.generateGoSnippet(method);
-      case 'javascript':
+      case "javascript":
         return this.generateJavaScriptSnippet(method);
       default:
-        return '';
+        return "";
     }
   }
 
@@ -158,9 +165,9 @@ client.${method.name}().then(result => {
   exportSDK(packageId: string): { code: string; dependencies: string[] } {
     const pkg = this.packages.get(packageId);
 
-    if (!pkg) return { code: '', dependencies: [] };
+    if (!pkg) return { code: "", dependencies: [] };
 
-    const code = `Generated SDK for ${pkg.language} v${pkg.version}`;
+    const code = `${pkg.language} v${pkg.version} için üretilmiş SDK`;
     const dependencies = this.getDependencies(pkg.language);
 
     return { code, dependencies };
@@ -171,10 +178,10 @@ client.${method.name}().then(result => {
    */
   private getDependencies(language: SDKLanguage): string[] {
     const deps: Record<SDKLanguage, string[]> = {
-      typescript: ['axios', 'ts-runtime'],
-      python: ['requests', 'pydantic'],
-      go: ['github.com/go-resty/resty/v2'],
-      javascript: ['axios', 'node-fetch']
+      typescript: ["axios", "ts-runtime"],
+      python: ["requests", "pydantic"],
+      go: ["github.com/go-resty/resty/v2"],
+      javascript: ["axios", "node-fetch"],
     };
 
     return deps[language] || [];
@@ -195,7 +202,9 @@ export class TypeScriptSDK {
    * Generate types
    */
   generateTypes(methods: SDKMethod[]): string {
-    const types = methods.map(m => `export interface ${m.name}Result {}`).join('\n');
+    const types = methods
+      .map((m) => `export interface ${m.name}Result {}`)
+      .join("\n");
 
     return types;
   }
@@ -227,7 +236,9 @@ export class PythonSDK {
    * Generate models
    */
   generateModels(methods: SDKMethod[]): string {
-    const models = methods.map(m => `class ${m.name}Result(BaseModel):\n    pass\n`).join('');
+    const models = methods
+      .map((m) => `class ${m.name}Result(BaseModel):\n    pass\n`)
+      .join("");
 
     return models;
   }
@@ -248,8 +259,8 @@ export class GoSDK {
    */
   generateInterfaces(methods: SDKMethod[]): string {
     const interfaces = methods
-      .map(m => `type ${m.name}Result struct {}`)
-      .join('\n');
+      .map((m) => `type ${m.name}Result struct {}`)
+      .join("\n");
 
     return interfaces;
   }
@@ -266,10 +277,10 @@ export class LanguageTemplate {
       typescript: this.getTypeScriptTemplate(),
       python: this.getPythonTemplate(),
       go: this.getGoTemplate(),
-      javascript: this.getJavaScriptTemplate()
+      javascript: this.getJavaScriptTemplate(),
     };
 
-    return templates[language] || '';
+    return templates[language] || "";
   }
 
   /**
@@ -343,7 +354,7 @@ const axios = require('axios');
 class ApiClient {
   constructor(config) {
     this.apiKey = config.apiKey;
-    this.baseUrl = config.baseUrl || 'https://api.example.com';
+    this.baseUrl = config.baseUrl || 'https://sanliurfa.com/api';
     this.client = axios.create({
       baseURL: this.baseUrl,
       headers: { 'Authorization': \`Bearer \${this.apiKey}\` }

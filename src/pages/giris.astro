@@ -29,7 +29,7 @@ const error = Astro.url.searchParams.get('error');
           </a>
         </p>
       </div>
-      
+
       <!-- Error Message -->
       {error && (
         <div class="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -40,7 +40,7 @@ const error = Astro.url.searchParams.get('error');
           </p>
         </div>
       )}
-      
+
       <!-- Login Form -->
       <form class="mt-8 space-y-6" action="/api/auth/login" method="POST">
         <div class="space-y-4">
@@ -57,11 +57,11 @@ const error = Astro.url.searchParams.get('error');
                 type="email"
                 required
                 class="input pl-10"
-                placeholder="ornek@email.com"
+                placeholder="kullanici@sanliurfa.com"
               />
             </div>
           </div>
-          
+
           <!-- Password -->
           <div>
             <label for="password" class="label">Şifre</label>
@@ -88,7 +88,7 @@ const error = Astro.url.searchParams.get('error');
             </div>
           </div>
         </div>
-        
+
         <!-- Remember & Forgot -->
         <div class="flex items-center justify-between">
           <div class="flex items-center">
@@ -102,20 +102,20 @@ const error = Astro.url.searchParams.get('error');
               Beni hatırla
             </label>
           </div>
-          
+
           <div class="text-sm">
             <a href="/sifremi-unuttum" class="font-medium text-urfa-600 hover:text-urfa-500">
               Şifremi unuttum
             </a>
           </div>
         </div>
-        
+
         <!-- Submit Button -->
         <button type="submit" class="btn-primary w-full flex justify-center">
           Giriş Yap
         </button>
       </form>
-      
+
       <!-- Divider -->
       <div class="relative">
         <div class="absolute inset-0 flex items-center">
@@ -125,7 +125,7 @@ const error = Astro.url.searchParams.get('error');
           <span class="px-2 bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400">veya</span>
         </div>
       </div>
-      
+
       <!-- Social Login -->
       <div class="space-y-3">
         <a
@@ -175,7 +175,7 @@ const error = Astro.url.searchParams.get('error');
           Facebook
         </button>
       </div>
-      
+
       <!-- Terms -->
       <p class="text-xs text-center text-gray-500">
         Giriş yaparak{' '}
@@ -194,7 +194,7 @@ const error = Astro.url.searchParams.get('error');
   const passwordInput = document.getElementById('password');
   const eyeIcon = document.getElementById('eye-icon');
   const eyeOffIcon = document.getElementById('eye-off-icon');
-  
+
   togglePassword?.addEventListener('click', () => {
     const type = passwordInput?.getAttribute('type') === 'password' ? 'text' : 'password';
     passwordInput?.setAttribute('type', type);

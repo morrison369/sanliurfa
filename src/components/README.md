@@ -1,6 +1,6 @@
-# UI Components Library
+# UI Bileşen Kitaplığı
 
-Complete component library for Şanlıurfa.com with accessibility, responsive design, and Turkish language support.
+Şanlıurfa.com için erişilebilirlik, responsive tasarım ve Türkçe-only kullanım kurallarına bağlı bileşen kitaplığı.
 
 ## Core Components
 
@@ -430,10 +430,10 @@ Mobile-first responsive design:
 
 ---
 
-## Localization
+## Yerelleştirme
 
 ### Turkish Only
-Components are locked to Turkish. Do not add language selectors or English copy paths.
+Bileşenler Türkçe kilitlidir. Dil seçici veya İngilizce metin yolu eklenmez.
 
 ```tsx
 <ErrorAlert error={error} lang="tr" />
@@ -552,9 +552,9 @@ export const MemoizedComponent = memo(function MyComponent(props) {
 
 ---
 
-## Contributing
+## Katkı
 
-When adding new components:
+Yeni bileşen eklerken:
 
 1. Add TypeScript interfaces for props
 2. Include accessibility attributes (ARIA)

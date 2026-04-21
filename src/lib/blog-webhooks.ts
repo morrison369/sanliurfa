@@ -4,20 +4,20 @@
  * Abone sistemi, analytics, sosyal medya entegrasyonu için
  */
 
-import { queryMany } from './postgres';
-import { logger } from './logging';
+import { queryMany } from "./postgres";
+import { logger } from "./logging";
 
 export interface WebhookEvent {
-  type: 'post.published' | 'post.updated' | 'post.deleted' | 'comment.approved';
+  type: "post.published" | "post.updated" | "post.deleted" | "comment.approved";
   timestamp: string;
   data: Record<string, any>;
 }
 
 /**
  * Webhook dinleyicileri kaydet (admin tarafından yapılacak)
- * Örnek: https://example.com/webhooks/blog
+ * Örnek: https://sanliurfa.com/webhooks/blog
  */
-const REGISTERED_WEBHOOKS = process.env.BLOG_WEBHOOKS?.split(',') || [];
+const REGISTERED_WEBHOOKS = process.env.BLOG_WEBHOOKS?.split(",") || [];
 
 /**
  * Yeni yazı webhook'unu gönder
@@ -28,10 +28,10 @@ export async function triggerPostPublished(
   slug: string,
   categoryId: number,
   excerpt: string,
-  featuredImage?: string
+  featuredImage?: string,
 ): Promise<void> {
   const event: WebhookEvent = {
-    type: 'post.published',
+    type: "post.published",
     timestamp: new Date().toISOString(),
     data: {
       postId,
@@ -40,8 +40,8 @@ export async function triggerPostPublished(
       categoryId,
       excerpt,
       featuredImage,
-      url: `https://sanliurfa.com/blog/${slug}`
-    }
+      url: `https://sanliurfa.com/blog/${slug}`,
+    },
   };
 
   await sendWebhooks(event);
@@ -55,10 +55,10 @@ export async function triggerCommentApproved(
   postId: number,
   postSlug: string,
   authorName: string,
-  content: string
+  content: string,
 ): Promise<void> {
   const event: WebhookEvent = {
-    type: 'comment.approved',
+    type: "comment.approved",
     timestamp: new Date().toISOString(),
     data: {
       commentId,
@@ -66,8 +66,8 @@ export async function triggerCommentApproved(
       postSlug,
       authorName,
       content,
-      url: `https://sanliurfa.com/blog/${postSlug}#comment-${commentId}`
-    }
+      url: `https://sanliurfa.com/blog/${postSlug}#comment-${commentId}`,
+    },
   };
 
   await sendWebhooks(event);
@@ -78,7 +78,7 @@ export async function triggerCommentApproved(
  */
 async function sendWebhooks(event: WebhookEvent): Promise<void> {
   if (REGISTERED_WEBHOOKS.length === 0) {
-    logger.debug('Webhook dinleyicisi kayıtlı değil');
+    logger.debug("Webhook dinleyicisi kayıtlı değil");
     return;
   }
 
@@ -88,38 +88,48 @@ async function sendWebhooks(event: WebhookEvent): Promise<void> {
     const results = await Promise.allSettled(promises);
 
     results.forEach((result, idx) => {
-      if (result.status === 'rejected') {
+      if (result.status === "rejected") {
         logger.error(
-          'Webhook gönderilemedi',
-          result.reason instanceof Error ? result.reason : new Error(String(result.reason)),
-          { url: REGISTERED_WEBHOOKS[idx], event }
+          "Webhook gönderilemedi",
+          result.reason instanceof Error
+            ? result.reason
+            : new Error(String(result.reason)),
+          { url: REGISTERED_WEBHOOKS[idx], event },
         );
       }
     });
   } catch (err) {
-    logger.error('Webhook gönderimi başarısız', err instanceof Error ? err : new Error(String(err)), { event });
+    logger.error(
+      "Webhook gönderimi başarısız",
+      err instanceof Error ? err : new Error(String(err)),
+      { event },
+    );
   }
 }
 
 /**
  * Tek bir webhook'u gönder (retry logic ile)
  */
-async function sendWebhook(url: string, event: WebhookEvent, retries = 3): Promise<void> {
+async function sendWebhook(
+  url: string,
+  event: WebhookEvent,
+  retries = 3,
+): Promise<void> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'X-Webhook-Signature': generateSignature(event),
-          'X-Webhook-ID': generateId(),
-          'User-Agent': 'Sanliurfa-Blog-Webhook/1.0'
+          "Content-Type": "application/json",
+          "X-Webhook-Signature": generateSignature(event),
+          "X-Webhook-ID": generateId(),
+          "User-Agent": "Sanliurfa-Blog-Webhook/1.0",
         },
         body: JSON.stringify(event),
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeout);
@@ -128,12 +138,16 @@ async function sendWebhook(url: string, event: WebhookEvent, retries = 3): Promi
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      logger.info('Webhook gönderildi', { url, event: event.type });
+      logger.info("Webhook gönderildi", { url, event: event.type });
       return;
     } catch (err) {
       logger.warn(
         `Webhook gönderimi başarısız (Deneme ${attempt}/${retries})`,
-        { url, event: event.type, error: err instanceof Error ? err.message : String(err) }
+        {
+          url,
+          event: event.type,
+          error: err instanceof Error ? err.message : String(err),
+        },
       );
 
       // Son denemeden sonra hata at
@@ -152,12 +166,12 @@ async function sendWebhook(url: string, event: WebhookEvent, retries = 3): Promi
  * Webhook imzası oluştur (doğrulama için)
  */
 function generateSignature(event: WebhookEvent): string {
-  const secret = process.env.BLOG_WEBHOOK_SECRET || 'default-secret';
+  const secret = process.env.BLOG_WEBHOOK_SECRET || "default-secret";
   const payload = JSON.stringify(event);
 
   // SHA256 hash oluştur
-  const crypto = require('crypto');
-  return crypto.createHmac('sha256', secret).update(payload).digest('hex');
+  const crypto = require("crypto");
+  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
 }
 
 /**
@@ -171,21 +185,25 @@ function generateId(): string {
  * Webhook kayıt ekle (admin API'ye entegre edilecek)
  */
 export async function registerWebhook(url: string): Promise<boolean> {
-  if (!url.startsWith('https://')) {
-    logger.warn('Webhook URL HTTPS olmak zorundadır', { url });
+  if (!url.startsWith("https://")) {
+    logger.warn("Webhook URL HTTPS olmak zorundadır", { url });
     return false;
   }
 
   REGISTERED_WEBHOOKS.push(url);
-  logger.info('Webhook kayıt edildi', { url });
+  logger.info("Webhook kayıt edildi", { url });
 
   // Test webhook gönder
   await sendWebhook(url, {
-    type: 'post.published',
+    type: "post.published",
     timestamp: new Date().toISOString(),
-    data: { test: true }
+    data: { test: true },
   }).catch((err) => {
-    logger.error('Test webhook başarısız', err instanceof Error ? err : new Error(String(err)), { url });
+    logger.error(
+      "Test webhook başarısız",
+      err instanceof Error ? err : new Error(String(err)),
+      { url },
+    );
   });
 
   return true;
@@ -198,7 +216,7 @@ export function unregisterWebhook(url: string): boolean {
   const index = REGISTERED_WEBHOOKS.indexOf(url);
   if (index > -1) {
     REGISTERED_WEBHOOKS.splice(index, 1);
-    logger.info('Webhook kaydı kaldırıldı', { url });
+    logger.info("Webhook kaydı kaldırıldı", { url });
     return true;
   }
   return false;

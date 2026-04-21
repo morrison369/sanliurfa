@@ -3,12 +3,12 @@
  * API key management, SDK generation, API documentation, developer portals, usage tracking
  */
 
-import { logger } from './logging';
+import { logger } from "./logging";
 
 // ==================== TYPES & INTERFACES ====================
 
-export type APIKeyStatus = 'active' | 'revoked' | 'expired';
-export type SDKLanguage = 'javascript' | 'python' | 'go' | 'java' | 'rust';
+export type APIKeyStatus = "active" | "revoked" | "expired";
+export type SDKLanguage = "javascript" | "python" | "go" | "java" | "rust";
 
 export interface APIKey {
   id: string;
@@ -52,20 +52,28 @@ export class DeveloperManager {
   /**
    * Register developer
    */
-  registerDeveloper(developer: { email: string; name: string; company?: string }): string {
-    const id = 'dev-' + Date.now() + '-' + this.developerCount++;
+  registerDeveloper(developer: {
+    email: string;
+    name: string;
+    company?: string;
+  }): string {
+    const id = "dev-" + Date.now() + "-" + this.developerCount++;
 
     const newDeveloper = {
       id,
       ...developer,
       createdAt: Date.now(),
-      status: 'active',
+      status: "active",
       requestQuota: 10000,
-      requestUsed: 0
+      requestUsed: 0,
     };
 
     this.developers.set(id, newDeveloper);
-    logger.info('Developer registered', { developerId: id, email: developer.email, name: developer.name });
+    logger.info("Developer registered", {
+      developerId: id,
+      email: developer.email,
+      name: developer.name,
+    });
 
     return id;
   }
@@ -87,11 +95,14 @@ export class DeveloperManager {
   /**
    * Update developer profile
    */
-  updateDeveloperProfile(developerId: string, updates: Record<string, any>): void {
+  updateDeveloperProfile(
+    developerId: string,
+    updates: Record<string, any>,
+  ): void {
     const developer = this.developers.get(developerId);
     if (developer) {
       Object.assign(developer, updates);
-      logger.debug('Developer profile updated', { developerId });
+      logger.debug("Developer profile updated", { developerId });
     }
   }
 
@@ -106,7 +117,7 @@ export class DeveloperManager {
       apiKeysCount: 3,
       requestsThisMonth: developer.requestUsed,
       quotaRemaining: developer.requestQuota - developer.requestUsed,
-      activeIntegrations: 2
+      activeIntegrations: 2,
     };
   }
 }
@@ -121,7 +132,7 @@ export class APIKeyManager {
    * Generate API key
    */
   generateAPIKey(developerId: string, name: string, expiresIn: number): APIKey {
-    const id = 'key-' + Date.now() + '-' + this.keyCount++;
+    const id = "key-" + Date.now() + "-" + this.keyCount++;
     const keyHash = this.generateKeyHash();
 
     const newKey: APIKey = {
@@ -129,13 +140,13 @@ export class APIKeyManager {
       developerId,
       name,
       keyHash,
-      status: 'active',
+      status: "active",
       createdAt: Date.now(),
-      expiresAt: Date.now() + expiresIn * 86400000
+      expiresAt: Date.now() + expiresIn * 86400000,
     };
 
     this.keys.set(id, newKey);
-    logger.info('API key generated', { keyId: id, developerId, name });
+    logger.info("API key generated", { keyId: id, developerId, name });
 
     return newKey;
   }
@@ -151,7 +162,9 @@ export class APIKeyManager {
    * List developer keys
    */
   listDeveloperKeys(developerId: string): APIKey[] {
-    return Array.from(this.keys.values()).filter(k => k.developerId === developerId);
+    return Array.from(this.keys.values()).filter(
+      (k) => k.developerId === developerId,
+    );
   }
 
   /**
@@ -160,8 +173,8 @@ export class APIKeyManager {
   revokeAPIKey(keyId: string): void {
     const key = this.keys.get(keyId);
     if (key) {
-      key.status = 'revoked';
-      logger.info('API key revoked', { keyId });
+      key.status = "revoked";
+      logger.info("API key revoked", { keyId });
     }
   }
 
@@ -170,12 +183,12 @@ export class APIKeyManager {
    */
   validateAPIKey(keyHash: string): boolean {
     const keys = Array.from(this.keys.values());
-    const key = keys.find(k => k.keyHash === keyHash);
+    const key = keys.find((k) => k.keyHash === keyHash);
 
     if (!key) return false;
-    if (key.status !== 'active') return false;
+    if (key.status !== "active") return false;
     if (key.expiresAt < Date.now()) {
-      key.status = 'expired';
+      key.status = "expired";
       return false;
     }
 
@@ -187,7 +200,7 @@ export class APIKeyManager {
    */
   recordKeyUsage(keyHash: string): void {
     const keys = Array.from(this.keys.values());
-    const key = keys.find(k => k.keyHash === keyHash);
+    const key = keys.find((k) => k.keyHash === keyHash);
     if (key) {
       key.lastUsedDate = Date.now();
     }
@@ -197,7 +210,11 @@ export class APIKeyManager {
    * Generate key hash
    */
   private generateKeyHash(): string {
-    return 'sk_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    return (
+      "sk_" +
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15)
+    );
   }
 }
 
@@ -211,20 +228,20 @@ export class SDKManager {
    * Generate SDK
    */
   generateSDK(language: SDKLanguage, apiVersion: string): SDKVersion {
-    const id = 'sdk-' + Date.now() + '-' + this.sdkCount++;
+    const id = "sdk-" + Date.now() + "-" + this.sdkCount++;
 
     const newSDK: SDKVersion = {
       id,
       language,
       version: apiVersion,
-      downloadUrl: `https://downloads.example.com/${language}-sdk-${apiVersion}.tar.gz`,
-      documentation: `SDK documentation for ${language}`,
+      downloadUrl: `https://sanliurfa.com/api/developer/downloads/${language}-sdk-${apiVersion}.tar.gz`,
+      documentation: `${language} SDK dokümantasyonu`,
       published: false,
-      createdAt: Date.now()
+      createdAt: Date.now(),
     };
 
     this.sdks.set(id, newSDK);
-    logger.info('SDK generated', { sdkId: id, language, version: apiVersion });
+    logger.info("SDK generated", { sdkId: id, language, version: apiVersion });
 
     return newSDK;
   }
@@ -234,17 +251,19 @@ export class SDKManager {
    */
   getSDKVersion(language: SDKLanguage, version: string): SDKVersion | null {
     const sdks = Array.from(this.sdks.values());
-    return sdks.find(s => s.language === language && s.version === version) || null;
+    return (
+      sdks.find((s) => s.language === language && s.version === version) || null
+    );
   }
 
   /**
    * List SDK versions
    */
   listSDKVersions(language?: SDKLanguage): SDKVersion[] {
-    let sdks = Array.from(this.sdks.values()).filter(s => s.published);
+    let sdks = Array.from(this.sdks.values()).filter((s) => s.published);
 
     if (language) {
-      sdks = sdks.filter(s => s.language === language);
+      sdks = sdks.filter((s) => s.language === language);
     }
 
     return sdks;
@@ -258,7 +277,7 @@ export class SDKManager {
     if (sdk) {
       sdk.published = true;
       sdk.publishedDate = Date.now();
-      logger.info('SDK published', { sdkId, language: sdk.language });
+      logger.info("SDK published", { sdkId, language: sdk.language });
     }
   }
 
@@ -267,21 +286,21 @@ export class SDKManager {
    */
   generateDocumentation(language: SDKLanguage): string {
     return `
-# ${language.toUpperCase()} SDK Documentation
+# ${language.toUpperCase()} SDK Dokümantasyonu
 
-## Installation
+## Kurulum
 \`\`\`
-npm install @platform/sdk-${language}
+npm install @sanliurfa/sdk-${language}
 \`\`\`
 
-## Getting Started
-Initialize the SDK with your API key.
+## Başlangıç
+SDK'yı API anahtarınızla başlatın.
 
-## API Reference
-Complete API reference for ${language} SDK.
+## API Referansı
+${language} SDK için tam API referansı.
 
-## Examples
-Code examples for common use cases.
+## Örnekler
+Sık kullanılan senaryolar için kod örnekleri.
     `.trim();
   }
 }
@@ -294,24 +313,24 @@ export class APIDocumentation {
    */
   generateOpenAPI(version: string): Record<string, any> {
     return {
-      openapi: '3.1.0',
+      openapi: "3.1.0",
       info: {
-        title: 'Platform API',
+        title: "Şanlıurfa.com API",
         version,
-        description: 'Comprehensive API specification'
+        description: "Şanlıurfa şehir rehberi API sözleşmesi",
       },
-      servers: [{ url: 'https://api.example.com/v1' }],
+      servers: [{ url: "https://sanliurfa.com/api/v1" }],
       paths: {
-        '/users': {
-          get: { summary: 'List users', tags: ['users'] },
-          post: { summary: 'Create user', tags: ['users'] }
+        "/users": {
+          get: { summary: "Kullanıcıları listele", tags: ["users"] },
+          post: { summary: "Kullanıcı oluştur", tags: ["users"] },
         },
-        '/users/{id}': {
-          get: { summary: 'Get user', tags: ['users'] },
-          put: { summary: 'Update user', tags: ['users'] },
-          delete: { summary: 'Delete user', tags: ['users'] }
-        }
-      }
+        "/users/{id}": {
+          get: { summary: "Kullanıcı getir", tags: ["users"] },
+          put: { summary: "Kullanıcı güncelle", tags: ["users"] },
+          delete: { summary: "Kullanıcı sil", tags: ["users"] },
+        },
+      },
     };
   }
 
@@ -319,7 +338,7 @@ export class APIDocumentation {
    * Generate SDK documentation
    */
   generateSDKDocs(language: SDKLanguage): string {
-    return `SDK Documentation for ${language}`;
+    return `${language} SDK dokümantasyonu`;
   }
 
   /**
@@ -327,13 +346,13 @@ export class APIDocumentation {
    */
   generateGettingStartedGuide(): string {
     return `
-# Getting Started with Platform API
+# Şanlıurfa.com API Başlangıç
 
-1. Register for API Access
-2. Generate API Keys
-3. Install SDK or Use REST API
-4. Make Your First Request
-5. Explore Documentation
+1. API erişimi için kayıt olun.
+2. API anahtarınızı oluşturun.
+3. SDK kurun veya REST API kullanın.
+4. İlk isteğinizi gönderin.
+5. Dokümantasyonu inceleyin.
     `.trim();
   }
 
@@ -343,18 +362,18 @@ export class APIDocumentation {
   generateCodeExamples(): Record<string, string> {
     return {
       javascript: `
-const { PlatformAPI } = require('@platform/sdk');
-const api = new PlatformAPI({ apiKey: 'your-key' });
+const { SanliurfaAPI } = require('@sanliurfa/sdk');
+const api = new SanliurfaAPI({ apiKey: 'api-anahtariniz' });
       `.trim(),
       python: `
 from platform import PlatformAPI
-api = PlatformAPI(api_key='your-key')
+api = PlatformAPI(api_key='api-anahtariniz')
       `.trim(),
       go: `
 package main
 import "github.com/platform/sdk-go"
-client := sdk.NewClient("your-key")
-      `.trim()
+client := sdk.NewClient("api-anahtariniz")
+      `.trim(),
     };
   }
 }
