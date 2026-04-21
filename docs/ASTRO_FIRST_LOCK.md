@@ -17,6 +17,7 @@ Bu proje Astro SSR-first çalışır. Yeni özelliklerde öncelik sırası kilit
 - JSON-LD rich snippet çıktısı Astro head/layout akışında server-render edilir.
 - Structured data script çıktısı için `astro-seo-schema` kullanılır.
 - Rich snippet verisi sayfa içeriğiyle aynı olmalıdır; sahte puan, sahte fiyat, sahte sosyal hesap yazılmaz.
+- Sahte public entegrasyon render edilmez. Analytics sadece geçerli `PUBLIC_GOOGLE_ANALYTICS_ID` varsa Astro layout içinde çıkar.
 
 ## Rich Snippet Kapsamı
 

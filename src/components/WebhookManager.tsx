@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 interface Webhook {
   id: string;
@@ -20,12 +20,12 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    event: '',
-    url: '',
-    secret: ''
+    event: "",
+    url: "",
+    secret: "",
   });
 
-  const API_URL = '/api/webhooks';
+  const API_URL = "/api/webhooks";
 
   useEffect(() => {
     loadWebhooks();
@@ -36,16 +36,16 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
     try {
       const res = await fetch(API_URL, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      if (!res.ok) throw new Error('Failed to load webhooks');
+      if (!res.ok) throw new Error("Failed to load webhooks");
       const data = await res.json();
       setWebhooks(data.data || []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -57,53 +57,53 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
 
     try {
       const res = await fetch(API_URL, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error('Failed to create webhook');
+      if (!res.ok) throw new Error("Failed to create webhook");
 
-      setFormData({ event: '', url: '', secret: '' });
+      setFormData({ event: "", url: "", secret: "" });
       setShowForm(false);
       await loadWebhooks();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (webhookId: string) => {
-    if (!confirm('Bu webhook\'u silmek istediğinize emin misiniz?')) return;
+    if (!confirm("Bu webhook'u silmek istediğinize emin misiniz?")) return;
 
     try {
       const res = await fetch(`${API_URL}/${webhookId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      if (!res.ok) throw new Error('Failed to delete webhook');
+      if (!res.ok) throw new Error("Failed to delete webhook");
       await loadWebhooks();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
     }
   };
 
   const eventOptions = [
-    'place.created',
-    'place.updated',
-    'place.deleted',
-    'review.created',
-    'review.deleted',
-    'user.registered',
-    'user.blocked',
-    'message.sent'
+    "place.created",
+    "place.updated",
+    "place.deleted",
+    "review.created",
+    "review.deleted",
+    "user.registered",
+    "user.blocked",
+    "message.sent",
   ];
 
   return (
@@ -120,25 +120,32 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
           onClick={() => setShowForm(!showForm)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
         >
-          {showForm ? 'İptal' : 'Yeni Webhook'}
+          {showForm ? "İptal" : "Yeni Webhook"}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-lg shadow-md p-6 space-y-4"
+        >
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Olay Türü
             </label>
             <select
               value={formData.event}
-              onChange={(e) => setFormData({ ...formData, event: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, event: e.target.value })
+              }
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Seçiniz...</option>
-              {eventOptions.map(event => (
-                <option key={event} value={event}>{event}</option>
+              {eventOptions.map((event) => (
+                <option key={event} value={event}>
+                  {event}
+                </option>
               ))}
             </select>
           </div>
@@ -150,8 +157,10 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
             <input
               type="url"
               value={formData.url}
-              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-              placeholder="https://example.com/webhook"
+              onChange={(e) =>
+                setFormData({ ...formData, url: e.target.value })
+              }
+              placeholder="https://sanliurfa.com/webhooks/ornek"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -164,7 +173,9 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
             <input
               type="password"
               value={formData.secret}
-              onChange={(e) => setFormData({ ...formData, secret: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, secret: e.target.value })
+              }
               placeholder="Webhook imzalaması için secret"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -175,7 +186,7 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
             disabled={loading}
             className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition"
           >
-            {loading ? 'Kaydediliyor...' : 'Webhook Oluştur'}
+            {loading ? "Kaydediliyor..." : "Webhook Oluştur"}
           </button>
         </form>
       )}
@@ -188,21 +199,25 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
             Henüz webhook oluşturulmadı.
           </div>
         ) : (
-          webhooks.map(webhook => (
+          webhooks.map((webhook) => (
             <div key={webhook.id} className="bg-white rounded-lg shadow-md p-6">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">{webhook.event}</h3>
-                  <p className="text-sm text-gray-600 mt-1 break-all">{webhook.url}</p>
+                  <h3 className="font-semibold text-gray-900">
+                    {webhook.event}
+                  </h3>
+                  <p className="text-sm text-gray-600 mt-1 break-all">
+                    {webhook.url}
+                  </p>
                 </div>
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
                     webhook.active
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  {webhook.active ? 'Aktif' : 'İnaktif'}
+                  {webhook.active ? "Aktif" : "İnaktif"}
                 </span>
               </div>
 
@@ -210,14 +225,16 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
                 <div>
                   <p className="text-gray-600">Oluşturulma</p>
                   <p className="font-medium text-gray-900">
-                    {new Date(webhook.createdAt).toLocaleDateString('tr-TR')}
+                    {new Date(webhook.createdAt).toLocaleDateString("tr-TR")}
                   </p>
                 </div>
                 {webhook.lastTriggeredAt && (
                   <div>
                     <p className="text-gray-600">Son Tetikleme</p>
                     <p className="font-medium text-gray-900">
-                      {new Date(webhook.lastTriggeredAt).toLocaleDateString('tr-TR')}
+                      {new Date(webhook.lastTriggeredAt).toLocaleDateString(
+                        "tr-TR",
+                      )}
                     </p>
                   </div>
                 )}
@@ -233,7 +250,7 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(webhook.id);
-                    alert('Webhook ID kopyalandı');
+                    alert("Webhook ID kopyalandı");
                   }}
                   className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm"
                 >

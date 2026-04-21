@@ -48,7 +48,7 @@ const seo = {
         </div>
       </div>
     )}
-    
+
     <div class="container-custom py-8">
       <form action="/api/events/create" method="POST" class="grid lg:grid-cols-3 gap-8">
         <!-- Main Content -->
@@ -59,28 +59,28 @@ const seo = {
             <div class="space-y-4">
               <div>
                 <label for="title" class="label dark:text-gray-300">Etkinlik Adı *</label>
-                <input 
-                  type="text" 
-                  id="title" 
-                  name="title" 
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
                   required
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   placeholder="Örn: Urfa Gastronomi Festivali"
                 />
               </div>
-              
+
               <div>
                 <label for="description" class="label dark:text-gray-300">Açıklama *</label>
-                <textarea 
-                  id="description" 
-                  name="description" 
-                  rows="5" 
+                <textarea
+                  id="description"
+                  name="description"
+                  rows="5"
                   required
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
                   placeholder="Etkinlik hakkında detaylı bilgi..."
                 ></textarea>
               </div>
-              
+
               <div>
                 <label for="category" class="label dark:text-gray-300">Kategori *</label>
                 <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -92,7 +92,7 @@ const seo = {
               </div>
             </div>
           </div>
-          
+
           <!-- Date & Location -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Tarih ve Konum</h2>
@@ -100,33 +100,33 @@ const seo = {
               <div class="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label for="start_date" class="label dark:text-gray-300">Başlangıç Tarihi *</label>
-                  <input 
-                    type="datetime-local" 
-                    id="start_date" 
-                    name="start_date" 
+                  <input
+                    type="datetime-local"
+                    id="start_date"
+                    name="start_date"
                     required
                     class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                 </div>
                 <div>
                   <label for="end_date" class="label dark:text-gray-300">Bitiş Tarihi</label>
-                  <input 
-                    type="datetime-local" 
-                    id="end_date" 
+                  <input
+                    type="datetime-local"
+                    id="end_date"
                     name="end_date"
                     class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label for="location" class="label dark:text-gray-300">Konum *</label>
                 <div class="relative">
                   <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input 
-                    type="text" 
-                    id="location" 
-                    name="location" 
+                  <input
+                    type="text"
+                    id="location"
+                    name="location"
                     required
                     class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="Örn: Balıklıgöl, Şanlıurfa"
@@ -136,7 +136,7 @@ const seo = {
             </div>
           </div>
         </div>
-        
+
         <!-- Sidebar -->
         <aside class="space-y-6">
           <!-- Publish -->
@@ -157,15 +157,15 @@ const seo = {
               Kaydet
             </button>
           </div>
-          
+
           <!-- Image -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görsel</h3>
-            <input 
-              type="url" 
+            <input
+              type="url"
               name="image"
               class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              placeholder="https://example.com/image.jpg"
+              placeholder="https://sanliurfa.com/images/ornek-etkinlik.jpg"
             />
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Etkinlik görsel URL'si</p>
           </div>

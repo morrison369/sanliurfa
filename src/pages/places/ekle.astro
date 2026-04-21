@@ -33,7 +33,7 @@ const error = Astro.url.searchParams.get('error');
         </p>
       </div>
     </div>
-    
+
     <div class="container-custom py-12">
       {success ? (
         <div class="max-w-2xl mx-auto text-center">
@@ -66,25 +66,25 @@ const error = Astro.url.searchParams.get('error');
                 </p>
               </div>
             )}
-            
+
             <form action="/api/places/submit" method="POST" class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8" enctype="multipart/form-data">
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Mekan Bilgileri</h2>
-              
+
               <div class="space-y-6">
                 <!-- Basic Info -->
                 <div class="grid sm:grid-cols-2 gap-4">
                   <div class="sm:col-span-2">
                     <label for="name" class="label dark:text-gray-300">Mekan Adı *</label>
-                    <input 
-                      type="text" 
-                      id="name" 
-                      name="name" 
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
                       required
                       class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="Mekan adı"
                     />
                   </div>
-                  
+
                   <div>
                     <label for="category" class="label dark:text-gray-300">Kategori *</label>
                     <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
@@ -94,14 +94,14 @@ const error = Astro.url.searchParams.get('error');
                       ))}
                     </select>
                   </div>
-                  
+
                   <div>
                     <label for="phone" class="label dark:text-gray-300">Telefon *</label>
                     <div class="relative">
                       <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                      <input 
-                        type="tel" 
-                        id="phone" 
+                      <input
+                        type="tel"
+                        id="phone"
                         name="phone"
                         required
                         class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -110,66 +110,66 @@ const error = Astro.url.searchParams.get('error');
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- Address -->
                 <div>
                   <label for="address" class="label dark:text-gray-300">Adres *</label>
                   <div class="relative">
                     <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                    <input 
-                      type="text" 
-                      id="address" 
-                      name="address" 
+                    <input
+                      type="text"
+                      id="address"
+                      name="address"
                       required
                       class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="Tam adres"
                     />
                   </div>
                 </div>
-                
+
                 <!-- Description -->
                 <div>
                   <label for="description" class="label dark:text-gray-300">Açıklama *</label>
-                  <textarea 
-                    id="description" 
-                    name="description" 
-                    rows="4" 
+                  <textarea
+                    id="description"
+                    name="description"
+                    rows="4"
                     required
                     class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
                     placeholder="Mekanınız hakkında kısa bir açıklama..."
                   ></textarea>
                 </div>
-                
+
                 <!-- Opening Hours -->
                 <div>
                   <label for="opening_hours" class="label dark:text-gray-300">Çalışma Saatleri</label>
                   <div class="relative">
                     <Clock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                    <input 
-                      type="text" 
-                      id="opening_hours" 
+                    <input
+                      type="text"
+                      id="opening_hours"
                       name="opening_hours"
                       class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder="Örn: Pzt-Paz: 08:00 - 22:00"
                     />
                   </div>
                 </div>
-                
+
                 <!-- Website -->
                 <div>
                   <label for="website" class="label dark:text-gray-300">Web Sitesi (varsa)</label>
                   <div class="relative">
                     <Globe className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                    <input 
-                      type="url" 
-                      id="website" 
+                    <input
+                      type="url"
+                      id="website"
                       name="website"
                       class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      placeholder="https://www.ornek.com"
+                      placeholder="https://sanliurfa.com"
                     />
                   </div>
                 </div>
-                
+
                 <!-- Image -->
                 <div>
                   <label for="image" class="label dark:text-gray-300">Fotoğraf</label>
@@ -187,16 +187,16 @@ const error = Astro.url.searchParams.get('error');
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- Submitter Info -->
                 <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
                   <h3 class="font-medium text-gray-900 dark:text-white mb-4">İletişim Bilgileriniz</h3>
                   <div class="grid sm:grid-cols-2 gap-4">
                     <div>
                       <label for="submitter_name" class="label dark:text-gray-300">Adınız *</label>
-                      <input 
-                        type="text" 
-                        id="submitter_name" 
+                      <input
+                        type="text"
+                        id="submitter_name"
                         name="submitter_name"
                         required
                         class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -207,19 +207,19 @@ const error = Astro.url.searchParams.get('error');
                       <label for="submitter_email" class="label dark:text-gray-300">E-posta *</label>
                       <div class="relative">
                         <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                        <input 
-                          type="email" 
-                          id="submitter_email" 
+                        <input
+                          type="email"
+                          id="submitter_email"
                           name="submitter_email"
                           required
                           class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                          placeholder="ornek@email.com"
+                          placeholder="kullanici@sanliurfa.com"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- Submit -->
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                   <p class="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
@@ -236,7 +236,7 @@ const error = Astro.url.searchParams.get('error');
               </div>
             </form>
           </div>
-          
+
           <!-- Sidebar Info -->
           <aside class="space-y-6">
             <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -260,7 +260,7 @@ const error = Astro.url.searchParams.get('error');
                 </li>
               </ul>
             </div>
-            
+
             <div class="bg-urfa-600 rounded-2xl p-6 text-white">
               <h3 class="font-semibold mb-2">Yardım mı lazım?</h3>
               <p class="text-sm text-urfa-100 mb-4">

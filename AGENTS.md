@@ -53,6 +53,7 @@
 - Astro-first is locked: before writing custom infrastructure, check Astro core, official `@astrojs/*` integrations, and Astro-compatible packages already installed in this repo.
 - Do not hand-roll features that an Astro integration/package in the repo already provides. For structured data, render JSON-LD through `astro-seo-schema` inside Astro head/layout flow.
 - If Astro has no built-in equivalent, keep custom code minimal, server-rendered, documented, and connected to Astro components instead of adding client-side runtime scripts.
+- Do not ship fake public integrations. Analytics scripts require `PUBLIC_GOOGLE_ANALYTICS_ID`; if it is missing or invalid, no analytics tag is rendered.
 
 ## Architecture Reference
 - Use `ARCHITECTURE.md` for runtime invariants and the separation between Astro application rules and phase delivery rules.
