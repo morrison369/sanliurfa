@@ -43,15 +43,65 @@ if ((historyDeployKey.stdout || '').includes('deploy_key')) {
   blockers.push('git history contains deploy_key; rotate keys and clean history before public visibility');
 }
 
-const historySecretProbe = runAllowFail('git', [
-  'log',
-  '--all',
-  '--oneline',
-  '-G',
-  'CHANGE_ME_DB_PASSWORD|CHANGE_ME_DB_PASSWORD|REDACTED_PUBLIC_READINESS_SECRET|CHANGE_ME_CWP_SSH_PASSWORD|CHANGE_ME_CWP_SSH_PASSWORD|STRIPE_SECRET_KEY_PLACEHOLDER[A-Za-z0-9]{10,}|STRIPE_WEBHOOK_SECRET_PLACEHOLDER[A-Za-z0-9]{10,}',
-]);
-if ((historySecretProbe.stdout || '').trim()) {
-  blockers.push('git history contains old credential literals; rotate credentials and clean history before public visibility');
+const historySecretPatterns = [
+  String.raw`postgres(?:ql)?:\/\/[^:\s'"<>]+:[^@\s'"<>]+@`,
+  String.raw`\b(?:PASS|PASSWORD|DB_PASS|DB_PASSWORD)\s*=\s*['"][^'"]{8,}['"]`,
+  String.raw`\bPGPASSWORD\s*=\s*['"]?[^'"\s]{8,}`,
+  String.raw`\bsk_live_[0-9A-Za-z]{10,}\b`,
+  String.raw`\bwhsec_[0-9A-Za-z]{10,}\b`,
+];
+
+const isSafeHistoryLine = (line) =>
+  [
+    'CHANGE_ME',
+    'PLACEHOLDER',
+    'YOUR_',
+    'STRONG_PASSWORD',
+    'SIFRENIZ',
+    '{DB_PASS}',
+    '{DB_PASSWORD}',
+    'PASSWORD_HERE',
+    'postgres:postgres',
+    'user:pass',
+    'test-',
+    'change-this-',
+  ].some((token) => line.includes(token));
+
+const historyFindings = [];
+for (const pattern of historySecretPatterns) {
+  const candidateLog = runAllowFail('git', ['log', '--all', '--format=%H', '-G', pattern, '--']);
+  const commits = [...new Set(candidateLog.stdout.split(/\r?\n/).map((line) => line.trim()).filter(Boolean))];
+  for (const commit of commits) {
+    const grep = runAllowFail('git', [
+      'grep',
+      '-n',
+      '-I',
+      '-E',
+      pattern,
+      commit,
+      '--',
+      '.',
+      ':(exclude)package-lock.json',
+      ':(exclude)node_modules',
+    ]);
+    if (!grep.stdout) continue;
+    for (const line of grep.stdout.split(/\r?\n/)) {
+      if (!line || isSafeHistoryLine(line)) continue;
+      historyFindings.push(line);
+      if (historyFindings.length >= 10) break;
+    }
+    if (historyFindings.length >= 10) break;
+  }
+  if (historyFindings.length >= 10) break;
+}
+
+if (historyFindings.length > 0) {
+  blockers.push(
+    `git history contains credential-shaped literals; rotate credentials and clean history before public visibility:\n${historyFindings
+      .slice(0, 10)
+      .map((line) => `   ${line}`)
+      .join('\n')}`,
+  );
 }
 
 const visibility = runAllowFail('gh', ['repo', 'view', repo, '--json', 'visibility', '-q', '.visibility']);
