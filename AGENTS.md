@@ -83,3 +83,4 @@
 - All source files, API responses, XML feeds, CSV exports, and database client connections must stay UTF-8. Do not add ISO-8859-9, Windows-1254, ASCII transliteration, or mojibake workarounds.
 - Do not add language selectors, non-TR translation dictionaries, `/api/i18n` language switching, `/tr`, `/en`, hreflang, or Accept-Language based redirects.
 - `docs/ASTRO_FIRST_LOCK.md` is the project rule for Astro-first implementation decisions.
+- Public media uploads default to local CWP/shared-hosting storage: `STORAGE_TYPE=local`, `PHOTO_UPLOAD_DIR=public/uploads/photos`, `UPLOAD_PUBLIC_PATH=/uploads/photos`. Keep uploaded image filenames slug-based and never commit provider API keys.
