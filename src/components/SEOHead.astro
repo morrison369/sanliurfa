@@ -6,6 +6,7 @@
 
 import type { SEOConfig, StructuredData } from '../lib/seo';
 import { generateMetaTags } from '../lib/seo';
+import { Schema } from 'astro-seo-schema';
 
 interface Props extends SEOConfig {
   structuredData?: StructuredData | StructuredData[];
@@ -53,7 +54,7 @@ const canonicalUrl = canonical || `https://sanliurfa.com${Astro.url.pathname}`;
 <meta name="description" content={description} />
 {robots && <meta name="robots" content={robots} />}
 {author && <meta name="author" content={author} />}
-<meta name="language" content={lang === 'tr' ? 'Turkish' : 'English'} />
+<meta name="language" content="Turkish" />
 <meta name="revisit-after" content="7 days" />
 
 <!-- Canonical URL -->
@@ -68,7 +69,7 @@ const canonicalUrl = canonical || `https://sanliurfa.com${Astro.url.pathname}`;
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:site_name" content="Şanlıurfa.com" />
-<meta property="og:locale" content={lang === 'tr' ? 'tr_TR' : 'en_US'} />
+<meta property="og:locale" content="tr_TR" />
 
 <!-- Twitter Card Meta Tags -->
 <meta name="twitter:card" content={twitterCard} />
@@ -103,12 +104,11 @@ const canonicalUrl = canonical || `https://sanliurfa.com${Astro.url.pathname}`;
 
 <!-- Structured Data (JSON-LD) -->
 {structuredData && (
-  <script
-    type="application/ld+json"
-    set:html={
-      JSON.stringify(
-        Array.isArray(structuredData) ? { '@context': 'https://schema.org', '@graph': structuredData } : structuredData
-      )
+  <Schema
+    item={
+      (Array.isArray(structuredData)
+        ? { '@context': 'https://schema.org', '@graph': structuredData }
+        : structuredData) as any
     }
   />
 )}

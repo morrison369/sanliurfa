@@ -1,5 +1,7 @@
 ---
 import type { ImageMetadata } from 'astro';
+import { Schema } from 'astro-seo-schema';
+import { toJsonLdGraph } from '../lib/rich-snippets';
 
 export interface Props {
   title: string;
@@ -13,6 +15,7 @@ export interface Props {
   canonicalUrl?: string;
   noindex?: boolean;
   schema?: object | object[];
+  schemaMode?: 'append' | 'replace';
 }
 
 const {
@@ -27,6 +30,7 @@ const {
   canonicalUrl,
   noindex = false,
   schema,
+  schemaMode = 'append',
 } = Astro.props;
 
 const siteUrl = 'https://sanliurfa.com';
@@ -73,7 +77,14 @@ const defaultSchema = {
   }),
 };
 
-const finalSchema = schema ? (Array.isArray(schema) ? [defaultSchema, ...schema] : [defaultSchema, schema]) : defaultSchema;
+const schemaNodes = schema
+  ? schemaMode === 'replace'
+    ? schema
+    : Array.isArray(schema)
+      ? [defaultSchema, ...schema]
+      : [defaultSchema, schema]
+  : defaultSchema;
+const finalSchema = Array.isArray(schemaNodes) ? toJsonLdGraph(schemaNodes) : schemaNodes;
 ---
 
 <!-- Primary Meta Tags -->
@@ -129,7 +140,7 @@ const finalSchema = schema ? (Array.isArray(schema) ? [defaultSchema, ...schema]
 <meta name="keywords" content={[...tags, 'Şanlıurfa', 'Göbeklitepe', 'Balıklıgöl', 'Harran', 'Urfa', 'gezi rehberi', 'tarihi yerler'].join(', ')} />
 
 <!-- Schema.org JSON-LD -->
-<script type="application/ld+json" set:html={JSON.stringify(finalSchema)} />
+<Schema item={finalSchema as any} />
 
 <!-- Additional SEO Meta Tags -->
 <meta name="theme-color" content="#a18072" />

@@ -139,6 +139,8 @@ npm run test:e2e:smoke
 - Local dev/preview tek port kullanır: `127.0.0.1:4321`.
 - 1111/1112/1113 gibi alternatif port scriptleri kullanılmaz ve repo script yüzeyinden kaldırılmıştır.
 - Manual kontrol bitince dev server kapatılmalı; paralel Astro dev server açılmamalı.
+- Astro-first kuralı kilitlidir: önce Astro core, sonra resmi `@astrojs/*`, sonra repoda kurulu Astro uyumlu paket kullanılır. Detay: `docs/ASTRO_FIRST_LOCK.md`.
+- Rich snippet JSON-LD çıktısı Astro head/layout akışında `astro-seo-schema` ile server-render edilir.
 - Route collision üretmeyin: `src/pages/x.ts` ile `src/pages/x/index.ts` aynı anda yaşamamalı.
 - Content collection değişikliklerinde `src/content.config.ts` ve `src/content/` birlikte ele alınmalı.
 - PWA build çıktısında service worker dosyası `sw.js` olarak üretilir; build araçlarını buna göre konfigüre edin.
