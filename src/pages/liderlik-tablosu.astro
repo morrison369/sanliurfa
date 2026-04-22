@@ -24,6 +24,6 @@ import LeaderboardsDisplay from "../components/LeaderboardsDisplay";
       </p>
     </div>
 
-    <LeaderboardsDisplay client:load currentUserId={Astro.locals.user?.id} />
+    <LeaderboardsDisplay client:visible currentUserId={Astro.locals.user?.id} />
   </div>
 </Layout>

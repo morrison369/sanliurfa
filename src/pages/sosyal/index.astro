@@ -44,7 +44,7 @@ const initialTag = Astro.url.searchParams.get("tag");
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Tanıyabileceğiniz kişiler
               </h2>
-              <UserSuggestionsPanel client:load />
+              <UserSuggestionsPanel client:idle />
             </div>
           </div>
 
@@ -65,12 +65,12 @@ const initialTag = Astro.url.searchParams.get("tag");
             </div>
 
             <div id="tab-feed" class="tab-content space-y-4">
-              <ActivityFeed client:load userId={userId} />
+              <ActivityFeed client:visible userId={userId} />
             </div>
 
             <div id="tab-hashtag" class="tab-content hidden">
               <HashtagExplorer
-                client:load
+                client:idle
                 initialSlug={initialTag || undefined}
               />
             </div>

@@ -22,7 +22,7 @@ Bu dosya sanliurfa.com için Astro framework kararlarını kilitler. Yeni paket 
 | SSR / on-demand rendering | Kullanılıyor | Admin, API, auth, DB ve dinamik şehir içerikleri için `output: "server"` doğru modeldir. |
 | `@astrojs/node` | Kullanılıyor | CentOS Web Panel / Node standalone runtime için doğru resmi adapter budur. |
 | `@astrojs/react` | Kullanılıyor | Mevcut interaktif paneller ve sosyal bileşenler React 19 ile çalışır. |
-| `@astrojs/tailwind` | Kullanılıyor | Mevcut tasarım sistemi Tailwind 3.4 üzerinde; Tailwind 4 majör geçişi ayrı iş olmalıdır. |
+| `@astrojs/tailwind` | Kullanılıyor | Mevcut tasarım sistemi Tailwind 3.4 üzerinde; Astro dokümanı Tailwind 4 için Vite plugin'i önerse de bu projede Tailwind 4 geçişi ayrı PR olmalıdır. |
 | `@astrojs/mdx` | Kullanılıyor | Blog, rehber ve doküman içerikleri ileride MDX gerektirirse framework tarafı hazırdır. |
 | `@astrojs/rss` | Kullanılıyor | Public Türkçe feed üretimi için resmi paket kullanılır. |
 | `@astrojs/partytown` | Kullanılıyor | Geçerli analytics/üçüncü parti script olursa ana thread yükünü azaltmak için aktiftir. |
@@ -58,3 +58,4 @@ Bu dosya sanliurfa.com için Astro framework kararlarını kilitler. Yeni paket 
 - Yeni dev server açılmadı, 4321 dışı port kullanılmadı.
 - Proje SSR Node standalone hedefi korunur.
 - CWP production hedefinde aktif PM2 dosyası `ecosystem.config.cjs`, aktif port `4321`, canonical deploy dokümanı `docs/ACTIVE_DEPLOYMENT_CWP_4321.md` olarak kilitlendi.
+- Tailwind CDN kalıntısı kaldırıldı; React ada bileşenlerinde kritik olmayan hydration kullanımları `client:idle` / `client:visible` olarak sadeleştirildi.
