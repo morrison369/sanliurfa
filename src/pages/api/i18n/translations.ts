@@ -50,6 +50,6 @@ export const GET: APIRoute = async ({ request, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/i18n/translations', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get translations failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

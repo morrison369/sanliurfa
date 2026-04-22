@@ -15,18 +15,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // Auth check
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
     const { method_type, method_identifier } = body;
 
     if (!method_type || !['totp', 'email', 'sms'].includes(method_type)) {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid method type', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz doğrulama yöntemi', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     if (method_type !== 'totp' && !method_identifier) {
-      return apiError(ErrorCode.VALIDATION_ERROR, `${method_type} identifier required`, HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Doğrulama yöntemi için alıcı bilgisi gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     // Create 2FA method
@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
 
     if (!method) {
-      return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to create 2FA method', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+      return apiError(ErrorCode.INTERNAL_ERROR, 'İki faktörlü doğrulama yöntemi oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
     }
 
     logger.info('2FA method setup initiated', { userId: locals.user.id, methodType: method_type });
@@ -60,6 +60,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return apiResponse(response, HttpStatus.CREATED, requestId);
   } catch (error) {
     logger.error('2FA setup failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Setup failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Kurulum başarısız oldu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

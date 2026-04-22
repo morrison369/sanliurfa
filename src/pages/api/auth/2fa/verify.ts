@@ -15,26 +15,26 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // Auth check
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
     const { method_id, code } = body;
 
     if (!method_id || !code) {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Method ID and code required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Yöntem ID ve doğrulama kodu gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     // Verify code
     const isValid = await verify2FAMethod(method_id, code);
     if (!isValid) {
-      return apiError(ErrorCode.AUTH_ERROR, 'Invalid verification code', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_ERROR, 'Doğrulama kodu geçersiz', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     // Activate method
     const activated = await activate2FAMethod(method_id);
     if (!activated) {
-      return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to activate method', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+      return apiError(ErrorCode.INTERNAL_ERROR, 'Doğrulama yöntemi etkinleştirilemedi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
     }
 
     // Generate recovery codes
@@ -45,12 +45,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return apiResponse({
       success: true,
       data: {
-        message: '2FA successfully enabled',
+        message: 'İki faktörlü doğrulama etkinleştirildi',
         recovery_codes: codes
       }
     }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('2FA verification failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Verification failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Doğrulama başarısız oldu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
