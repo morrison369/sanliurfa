@@ -23,7 +23,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/places/[id]/follow', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -39,7 +39,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/places/[id]/follow', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Place not found',
+        'Mekan bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -52,7 +52,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/places/[id]/follow', HttpStatus.CONFLICT, Date.now() - startTime);
       return apiError(
         ErrorCode.CONFLICT,
-        'Already following this place',
+        'Bu mekanı zaten takip ediyorsunuz',
         HttpStatus.CONFLICT,
         undefined,
         requestId
@@ -63,7 +63,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const success = await followPlace(userId, placeId);
 
     if (!success) {
-      throw new Error('Failed to follow place');
+      throw new Error('Mekan takip edilemedi');
     }
 
     recordRequest('POST', '/api/places/[id]/follow', HttpStatus.CREATED, Date.now() - startTime);
@@ -78,7 +78,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     logger.error('Failed to follow place', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to follow place',
+      'Mekan takip edilemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -97,7 +97,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       recordRequest('DELETE', '/api/places/[id]/follow', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -113,7 +113,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       recordRequest('DELETE', '/api/places/[id]/follow', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Not following this place',
+        'Bu mekanı takip etmiyorsunuz',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -124,7 +124,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     const success = await unfollowPlace(userId, placeId);
 
     if (!success) {
-      throw new Error('Failed to unfollow place');
+      throw new Error('Mekan takibi bırakılamadı');
     }
 
     recordRequest('DELETE', '/api/places/[id]/follow', HttpStatus.OK, Date.now() - startTime);
@@ -139,7 +139,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     logger.error('Failed to unfollow place', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to unfollow place',
+      'Mekan takibi bırakılamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

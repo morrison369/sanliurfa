@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface SearchHistoryItem {
   id: string;
@@ -35,7 +36,7 @@ export default function SearchHistoryViewer({ limit = 20 }: SearchHistoryViewerP
         throw new Error('Arama geçmişi yüklenemedi');
       }
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ data?: SearchHistoryItem[] }>(await response.json());
       setHistory(data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -63,10 +64,10 @@ export default function SearchHistoryViewer({ limit = 20 }: SearchHistoryViewerP
       const response = await fetch(`/api/search/history/${itemId}`, {
         method: 'DELETE'
       });
+      const data = await response.json();
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Silme işlemi başarısız');
+        throw new Error(getApiErrorMessage(data, 'Silme işlemi başarısız'));
       }
 
       setHistory(history.filter((h) => h.id !== itemId));
@@ -88,10 +89,10 @@ export default function SearchHistoryViewer({ limit = 20 }: SearchHistoryViewerP
       const response = await fetch('/api/search/history', {
         method: 'DELETE'
       });
+      const data = await response.json();
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Temizleme işlemi başarısız');
+        throw new Error(getApiErrorMessage(data, 'Temizleme işlemi başarısız'));
       }
 
       setHistory([]);

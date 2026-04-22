@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage } from '@/lib/client-api';
 
 interface FollowPlaceButtonProps {
   placeId: string;
@@ -19,10 +20,10 @@ export default function FollowPlaceButton({ placeId, onFollowChange }: FollowPla
     try {
       const method = isFollowing ? 'DELETE' : 'POST';
       const response = await fetch(`/api/places/${placeId}/follow`, { method });
+      const data = await response.json();
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'İşlem başarısız');
+        throw new Error(getApiErrorMessage(data, 'İşlem başarısız'));
       }
 
       const newState = !isFollowing;
