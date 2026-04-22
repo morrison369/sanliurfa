@@ -22,3 +22,12 @@ UNSPLASH_SECRET_KEY=your_unsplash_secret_key
 ## Kullanım Notu
 
 Astro SSR ve API route kodları bu değerleri server tarafında `process.env` üzerinden okumalıdır. Client bundle içine secret değerleri aktarılmayacak.
+
+## Runtime Entegrasyon
+
+- Merkezi servis: `src/lib/image-providers.ts`
+- Admin API: `POST /api/admin/images/fetch`
+- Eksik mekan görselleri için script: `npm run images:places:fill -- --limit=20` dry-run yapar.
+- DB ve dosya güncellemesi için açık onaylı mod: `npm run images:places:fill -- --limit=20 --write`
+- Kaydedilen dosyalar slug bazlıdır: `/uploads/photos/provider/{pexels|unsplash}/{folder}/{slug}.webp`
+- İndirilen sağlayıcı görselleri `sharp` ile 1600x1000 sınırında, büyütmeden, WebP kalite 82 olarak optimize edilir.
