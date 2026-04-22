@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface PlaceFollowersCountProps {
   placeId: string;
@@ -29,7 +30,7 @@ export default function PlaceFollowersCount({
       const response = await fetch(`/api/places/${placeId}/followers?limit=${previewLimit}`);
 
       if (response.ok) {
-        const data = await response.json();
+        const data = unwrapApiPayload<{ followers?: any[]; count?: number }>(await response.json());
         setFollowers(data.followers || []);
         setCount(data.count || 0);
       }

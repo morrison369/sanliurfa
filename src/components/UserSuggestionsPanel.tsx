@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface SuggestedUser {
   id: string;
@@ -31,7 +32,7 @@ export default function UserSuggestionsPanel() {
         throw new Error('Öneriler yüklenemedi');
       }
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ suggestions?: SuggestedUser[] }>(await response.json());
       setSuggestions(data.suggestions || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -47,10 +48,13 @@ export default function UserSuggestionsPanel() {
     setIsFollowing(true);
 
     try {
-      const endpoint = currentlyFollowing ? `/api/following/unfollow` : `/api/following/${userId}`;
-      const method = currentlyFollowing ? 'DELETE' : 'POST';
+      const endpoint = currentlyFollowing ? '/api/following/unfollow' : '/api/following';
 
-      const response = await fetch(endpoint, { method });
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ followed_id: userId }),
+      });
 
       if (!response.ok) {
         throw new Error('İşlem başarısız');
