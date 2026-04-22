@@ -14,6 +14,7 @@ export interface PlaceCollection {
   description?: string;
   icon?: string;
   is_public: boolean;
+  is_following?: boolean;
   place_count: number;
   follower_count?: number;
   created_at: string;
@@ -209,6 +210,14 @@ export async function getCollectionWithItems(
     // Check access (public or owner)
     if (!collection.is_public && (!currentUserId || collection.user_id !== currentUserId)) {
       return null;
+    }
+
+    if (currentUserId) {
+      const following = await queryOne(
+        'SELECT id FROM collection_followers WHERE collection_id = $1 AND user_id = $2',
+        [collectionId, currentUserId]
+      );
+      collection.is_following = !!following;
     }
 
     // Get items
