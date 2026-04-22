@@ -13,7 +13,7 @@ const result = await query(
 );
 const messages = result.rows;
 
-const seo = { title: 'İletişim Mesajları - Admin' };
+const seo = { title: 'İletişim Mesajları - Admin', noindex: true };
 ---
 
 <Layout seo={seo}>

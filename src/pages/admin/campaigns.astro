@@ -18,7 +18,7 @@ if (!Astro.locals.user?.isAdmin) {
 const campaigns = await getAllCampaigns(100);
 ---
 
-<Layout title="Kampanyalar - Admin">
+<Layout title="Kampanyalar - Admin" noindex>
   <div class="container mx-auto px-4 py-8">
     <div class="mb-8">
       <h1 class="text-3xl font-bold mb-2">Email Kampanyaları</h1>
