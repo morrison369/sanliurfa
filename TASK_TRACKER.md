@@ -78,8 +78,13 @@ Last updated: 2026-04-22
   - tests: `src/lib/__tests__/governance-assurance-stability-suite-v191.test.ts`
   - docs: `PHASE_1487_1492_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V191.md`
 
+- `T-169` Phase 1493-1498 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v192.test.ts`
+  - docs: `PHASE_1493_1498_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V192.md`
+
 ## Open
-- `T-169` Phase 1493-1498 planning
+- `T-170` Phase 1499-1504 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready
