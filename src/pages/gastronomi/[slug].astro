@@ -1,7 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { Clock, Users, ChefHat, Flame, MapPin, Star, ArrowRight } from 'lucide-react';
+import { Clock, Users, ChefHat, Flame, Star, ArrowRight } from 'lucide-react';
 import Breadcrumb from '../../components/Breadcrumb.astro';
+import {
+  buildBreadcrumbSchema,
+  buildOrganizationSchema,
+  buildRecipeRichSnippet,
+  buildWebSiteSchema,
+} from '../../lib/rich-snippets';
 
 // Slug tabanlı gastronomi içeriği kalıcı içerik yönetimine taşınana kadar yerel veri kullanır.
 const food = {
@@ -64,21 +70,18 @@ const seo = {
   title: `${food.name} - Şanlıurfa'nın Efsane Lezzeti`,
   description: food.description,
   image: food.image,
-  schema: {
-    '@type': 'Recipe',
-    name: food.name,
-    description: food.description,
-    image: food.image,
-    recipeIngredient: food.ingredients,
-    recipeInstructions: food.preparation,
-    totalTime: 'PT45M',
-    recipeYield: food.servingSize,
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: food.rating,
-      reviewCount: food.reviewCount,
-    },
-  },
+  canonicalUrl: `https://sanliurfa.com/gastronomi/${food.slug}`,
+  schemaMode: 'replace' as const,
+  schema: [
+    buildOrganizationSchema(),
+    buildWebSiteSchema(),
+    buildBreadcrumbSchema([
+      { name: 'Ana Sayfa', url: '/' },
+      { name: 'Gastronomi', url: '/gastronomi' },
+      { name: food.name, url: `/gastronomi/${food.slug}` },
+    ]),
+    buildRecipeRichSnippet(food, `/gastronomi/${food.slug}`),
+  ],
 };
 ---
 
