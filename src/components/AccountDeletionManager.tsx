@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface DeletionStatus {
   hasPendingDeletion: boolean;
@@ -30,7 +31,7 @@ export default function AccountDeletionManager() {
         throw new Error('Status kontrol edilemedi');
       }
 
-      const data = await response.json();
+      const data = unwrapApiPayload<DeletionStatus>(await response.json());
       setStatus(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -59,11 +60,11 @@ export default function AccountDeletionManager() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Silme isteği gönderilemedi');
+        throw new Error(getApiErrorMessage(data, 'Silme isteği gönderilemedi'));
       }
 
-      const data = await response.json();
-      setSuccessMessage(data.message);
+      const data = unwrapApiPayload<{ message?: string }>(await response.json());
+      setSuccessMessage(data.message || 'Hesap silme isteği alındı');
       setShowDeleteModal(false);
       setPassword('');
       setReason('');
@@ -93,10 +94,11 @@ export default function AccountDeletionManager() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'İptal edilemedi');
+        throw new Error(getApiErrorMessage(data, 'İptal edilemedi'));
       }
 
-      setSuccessMessage('Silme işlemi iptal edildi');
+      const data = unwrapApiPayload<{ message?: string }>(await response.json());
+      setSuccessMessage(data.message || 'Silme işlemi iptal edildi');
       await checkDeletionStatus();
 
       setTimeout(() => setSuccessMessage(null), 5000);
