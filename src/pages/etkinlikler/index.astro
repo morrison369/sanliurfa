@@ -1,7 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { Calendar, MapPin, Clock, Search } from 'lucide-react';
+import { Calendar, MapPin, Search } from 'lucide-react';
 import { query } from '../../lib/postgres';
+import {
+  buildBreadcrumbSchema,
+  buildEventItemListSchema,
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+} from '../../lib/rich-snippets';
 
 const queryParam = Astro.url.searchParams.get('q') || '';
 
@@ -27,6 +33,17 @@ const formatDate = (dateStr: string) => {
 const seo = {
   title: 'Etkinlikler - Şanlıurfa\'da Bugün ve Yakında',
   description: 'Şanlıurfa\'daki konserler, festivaller, sergiler ve diğer etkinlikler. Kültürel etkinlikleri takip edin.',
+  canonicalUrl: 'https://sanliurfa.com/etkinlikler',
+  schemaMode: 'replace' as const,
+  schema: [
+    buildOrganizationSchema(),
+    buildWebSiteSchema(),
+    buildBreadcrumbSchema([
+      { name: 'Ana Sayfa', url: '/' },
+      { name: 'Etkinlikler', url: '/etkinlikler' },
+    ]),
+    buildEventItemListSchema(events, '/etkinlikler'),
+  ],
 };
 ---
 

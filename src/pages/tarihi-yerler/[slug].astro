@@ -2,6 +2,12 @@
 import Layout from '../../layouts/Layout.astro';
 import { MapPin, Clock, Ticket, Camera, Navigation, Share2, Heart, Star } from 'lucide-react';
 import { query, queryOne } from '../../lib/postgres';
+import {
+  buildBreadcrumbSchema,
+  buildHistoricalSiteRichSnippet,
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+} from '../../lib/rich-snippets';
 
 const { slug } = Astro.params;
 
@@ -24,6 +30,18 @@ const seo = {
   title: `${site.name} - ${site.short_description || 'Tarihi Yer'}`,
   description: site.description,
   image: site.images?.[0],
+  canonicalUrl: `https://sanliurfa.com/tarihi-yerler/${site.slug}`,
+  schemaMode: 'replace' as const,
+  schema: [
+    buildOrganizationSchema(),
+    buildWebSiteSchema(),
+    buildBreadcrumbSchema([
+      { name: 'Ana Sayfa', url: '/' },
+      { name: 'Tarihi Yerler', url: '/tarihi-yerler' },
+      { name: site.name, url: `/tarihi-yerler/${site.slug}` },
+    ]),
+    buildHistoricalSiteRichSnippet(site, `/tarihi-yerler/${site.slug}`),
+  ],
 };
 ---
 

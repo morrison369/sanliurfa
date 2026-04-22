@@ -2,6 +2,12 @@
 import Layout from '../../layouts/Layout.astro';
 import { getBlogPosts, getBlogCategories } from '../../lib/blog';
 import Pagination from '../../components/Pagination.astro';
+import {
+  buildArticleItemListSchema,
+  buildBreadcrumbSchema,
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+} from '../../lib/rich-snippets';
 
 const ITEMS_PER_PAGE = 12;
 const currentPage = Math.max(1, parseInt(Astro.url.searchParams.get('page') || '1'));
@@ -53,6 +59,17 @@ const seo = {
     ? `${selectedCategory.name} - Blog | Şanlıurfa.com`
     : 'Blog | Şanlıurfa.com',
   description: selectedCategory?.description || 'Şanlıurfa hakkında makaleler, rehberler ve haberler',
+  canonicalUrl: 'https://sanliurfa.com/blog',
+  schemaMode: 'replace' as const,
+  schema: [
+    buildOrganizationSchema(),
+    buildWebSiteSchema(),
+    buildBreadcrumbSchema([
+      { name: 'Ana Sayfa', url: '/' },
+      { name: 'Blog', url: '/blog' },
+    ]),
+    buildArticleItemListSchema(posts, '/blog'),
+  ],
 };
 
 const searchParams = new URLSearchParams();
