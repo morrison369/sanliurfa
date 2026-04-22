@@ -24,6 +24,9 @@ Bu proje Astro SSR-first çalışır. Yeni özelliklerde öncelik sırası kilit
 - Rich snippet verisi sayfa içeriğiyle aynı olmalıdır; sahte puan, sahte fiyat, sahte sosyal hesap yazılmaz.
 - Sahte public entegrasyon render edilmez. Analytics sadece geçerli `PUBLIC_GOOGLE_ANALYTICS_ID` varsa Astro layout içinde çıkar.
 - Gerçek sosyal hesap veya çalışan OAuth sağlayıcı yoksa sosyal medya linki ve sosyal giriş butonu gösterilmez.
+- Tailwind CSS CDN kullanılmaz. Tüm Tailwind sınıfları `src/styles/global.css`, `tailwind.config.js` ve Astro build pipeline üzerinden gelir.
+- React sadece gerçek etkileşim gereken ada bileşenlerinde kullanılır; statik SEO içerikleri Astro server-rendered HTML olarak kalır.
+- `client:load` yalnızca ilk ekranda hemen etkileşim isteyen formlar, mesajlaşma ve kritik paneller içindir. İkincil liste, öneri, rozet, akış ve analitik bileşenlerinde önce `client:idle` veya `client:visible` tercih edilir.
 
 ## Rich Snippet Kapsamı
 
