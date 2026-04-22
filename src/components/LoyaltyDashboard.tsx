@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Trophy, Gift, Zap, Star, Lock } from 'lucide-react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface LoyaltyData {
   balance: {
@@ -38,9 +39,9 @@ export default function LoyaltyDashboard({ onNavigateToRewards }: LoyaltyDashboa
     try {
       setLoading(true);
       const response = await fetch('/api/user/loyalty?section=all');
-      const json = await response.json();
+      const json = unwrapApiPayload<{ success?: boolean; data?: LoyaltyData }>(await response.json());
       if (json.success) {
-        setData(json.data);
+        setData(json.data || null);
       }
     } catch (error) {
       console.error('Failed to fetch loyalty data:', error);
