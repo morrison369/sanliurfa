@@ -15,7 +15,7 @@ export const GET: APIRoute = async (context) => {
     const { limit } = Object.fromEntries(context.url.searchParams);
 
     if (!userId) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'User ID is required');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Kullanıcı ID gereklidir');
     }
 
     const activities = await getUserActivities(userId, limit ? parseInt(limit) : 20);
@@ -35,7 +35,7 @@ export const GET: APIRoute = async (context) => {
     });
   } catch (error) {
     logger.error('Failed to get user activities', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to get user activities');
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Kullanıcı aktiviteleri alınamadı');
   }
 };
 

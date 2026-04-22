@@ -12,6 +12,9 @@ interface FeedItem {
   timeAgo: string;
   isOwn?: boolean;
   metadata?: Record<string, any>;
+  placeId?: string;
+  placeName?: string;
+  placeSlug?: string;
 }
 
 interface ActivityFeedProps {
@@ -58,7 +61,7 @@ export default function ActivityFeedDisplay({ type = 'feed', userId }: ActivityF
       }
 
       const data = unwrapApiPayload<{ data?: FeedItem[] }>(await response.json());
-      const items = data.data || [];
+      const items = normalizeFeedItems(data.data || []);
       setActivities(items);
       setHasMore(items.length >= limit);
     } catch (err) {
@@ -91,7 +94,7 @@ export default function ActivityFeedDisplay({ type = 'feed', userId }: ActivityF
       }
 
       const data = unwrapApiPayload<{ data?: FeedItem[] }>(await response.json());
-      const newActivities = data.data || [];
+      const newActivities = normalizeFeedItems(data.data || []);
 
       setActivities([...activities, ...newActivities]);
       setOffset(newOffset);
@@ -100,6 +103,19 @@ export default function ActivityFeedDisplay({ type = 'feed', userId }: ActivityF
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     }
   };
+
+  const normalizeFeedItems = (items: any[]): FeedItem[] =>
+    items.map((item) => ({
+      ...item,
+      userId: item.userId || item.user_id,
+      userName: item.userName || item.user_name,
+      userAvatar: item.userAvatar || item.user_avatar,
+      actionType: item.actionType || item.action_type || item.type,
+      placeId: item.placeId || item.place_id || item.metadata?.placeId,
+      placeName: item.placeName || item.place_name || item.metadata?.placeName,
+      placeSlug: item.placeSlug || item.place_slug || item.metadata?.placeSlug,
+      metadata: item.metadata
+    }));
 
   if (isLoading) {
     return (
@@ -173,12 +189,12 @@ export default function ActivityFeedDisplay({ type = 'feed', userId }: ActivityF
                     </p>
 
                     {/* Reference */}
-                    {activity.metadata?.placeName && (
+                    {(activity.placeName || activity.metadata?.placeName) && activity.placeSlug && (
                       <a
-                        href={`/yerler/${activity.metadata.placeId}`}
+                        href={`/places/${activity.placeSlug}`}
                         className="inline-block mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
                       >
-                        → {activity.metadata.placeName}
+                        → {activity.placeName || activity.metadata?.placeName}
                       </a>
                     )}
                   </div>

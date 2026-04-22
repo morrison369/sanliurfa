@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface BlockedUser {
   block_id: string;
@@ -34,8 +35,8 @@ export default function BlockingManager() {
         throw new Error('Engellenen kullanıcılar yüklenemedi');
       }
 
-      const data = await response.json();
-      setBlockedUsers(data.data);
+      const data = unwrapApiPayload<{ data?: BlockedUser[] }>(await response.json());
+      setBlockedUsers(data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     } finally {
@@ -52,9 +53,10 @@ export default function BlockingManager() {
       const response = await fetch(`/api/blocking?blocked_id=${blockedId}`, {
         method: 'DELETE'
       });
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error('Engelleme kaldırılamadı');
+        throw new Error(getApiErrorMessage(data, 'Engelleme kaldırılamadı'));
       }
 
       setBlockedUsers(blockedUsers.filter((b) => b.blocked_user.id !== blockedId));

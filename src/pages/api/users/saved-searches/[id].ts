@@ -12,21 +12,21 @@ export const DELETE: APIRoute = async (context) => {
   try {
     // Auth required
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
     }
 
     const userId = context.locals.user.id;
     const { id } = context.params;
 
     if (!id) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Search ID is required');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Arama ID gereklidir');
     }
 
     // Delete saved search
     const deleted = await deleteSavedSearch(id, userId);
 
     if (!deleted) {
-      return apiError(context, HttpStatus.NOT_FOUND, 'Saved search not found');
+      return apiError(context, HttpStatus.NOT_FOUND, 'Kayıtlı arama bulunamadı');
     }
 
     logger.info('Saved search deleted', { userId, searchId: id });
@@ -37,6 +37,6 @@ export const DELETE: APIRoute = async (context) => {
     });
   } catch (error) {
     logger.error('Failed to delete saved search', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to delete saved search');
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Kayıtlı arama silinemedi');
   }
 };

@@ -15,6 +15,7 @@ export interface FeedItem {
   user_avatar?: string;
   place_id: string;
   place_name: string;
+  place_slug: string;
   content: string;
   rating?: number;
   helpful_count: number;
@@ -63,6 +64,7 @@ export async function getFollowingFeed(userId: string, limit: number = 50): Prom
         u.avatar as user_avatar,
         p.id as place_id,
         p.name as place_name,
+        p.slug as place_slug,
         r.content,
         r.rating,
         COALESCE(r.helpful_count, 0) as helpful_count,
@@ -84,6 +86,7 @@ export async function getFollowingFeed(userId: string, limit: number = 50): Prom
       user_avatar: row.user_avatar,
       place_id: row.place_id,
       place_name: row.place_name,
+      place_slug: row.place_slug,
       content: row.content,
       rating: row.rating,
       helpful_count: row.helpful_count,
@@ -111,6 +114,7 @@ export async function getTrendingFeed(limit: number = 50): Promise<FeedItem[]> {
         u.avatar as user_avatar,
         p.id as place_id,
         p.name as place_name,
+        p.slug as place_slug,
         r.content,
         r.rating,
         COALESCE(r.helpful_count, 0) as helpful_count,
@@ -132,6 +136,7 @@ export async function getTrendingFeed(limit: number = 50): Promise<FeedItem[]> {
       user_avatar: row.user_avatar,
       place_id: row.place_id,
       place_name: row.place_name,
+      place_slug: row.place_slug,
       content: row.content,
       rating: row.rating,
       helpful_count: row.helpful_count,
@@ -162,6 +167,7 @@ export async function getPopularFeed(limit: number = 50): Promise<FeedItem[]> {
         u.avatar as user_avatar,
         p.id as place_id,
         p.name as place_name,
+        p.slug as place_slug,
         r.content,
         r.rating,
         COALESCE(r.helpful_count, 0) as helpful_count,
@@ -182,6 +188,7 @@ export async function getPopularFeed(limit: number = 50): Promise<FeedItem[]> {
       user_avatar: row.user_avatar,
       place_id: row.place_id,
       place_name: row.place_name,
+      place_slug: row.place_slug,
       content: row.content,
       rating: row.rating,
       helpful_count: row.helpful_count,
@@ -212,6 +219,7 @@ export async function getRecentFeed(limit: number = 50): Promise<FeedItem[]> {
         u.avatar as user_avatar,
         p.id as place_id,
         p.name as place_name,
+        p.slug as place_slug,
         r.content,
         r.rating,
         COALESCE(r.helpful_count, 0) as helpful_count,
@@ -232,6 +240,7 @@ export async function getRecentFeed(limit: number = 50): Promise<FeedItem[]> {
       user_avatar: row.user_avatar,
       place_id: row.place_id,
       place_name: row.place_name,
+      place_slug: row.place_slug,
       content: row.content,
       rating: row.rating,
       helpful_count: row.helpful_count,
