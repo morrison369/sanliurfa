@@ -43,27 +43,27 @@ export const GET: APIRoute = async (context) => {
       });
     }
 
-    return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+    return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
   } catch (error) {
     logger.error('Failed to get collections', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to get collections');
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Koleksiyonlar alınamadı');
   }
 };
 
 export const POST: APIRoute = async (context) => {
   try {
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
     }
 
     const body = await context.request.json();
 
     if (!body.name || typeof body.name !== 'string') {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Collection name is required');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Koleksiyon adı gereklidir');
     }
 
     if (body.name.length > 100) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Name is too long (max 100 characters)');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Koleksiyon adı en fazla 100 karakter olabilir');
     }
 
     const collection = await createCollection(
@@ -83,6 +83,6 @@ export const POST: APIRoute = async (context) => {
     });
   } catch (error) {
     logger.error('Failed to create collection', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to create collection');
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Koleksiyon oluşturulamadı');
   }
 };

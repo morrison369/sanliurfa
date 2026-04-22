@@ -5,6 +5,7 @@ interface CollectionItem {
   id: string;
   place_id: string;
   place_name: string;
+  place_slug?: string;
   place_image?: string;
   place_category?: string;
   place_rating?: number;
@@ -54,10 +55,11 @@ export default function CollectionDetail({
     try {
       setIsLoading(true);
       const response = await fetch(`/api/collections/${collectionId}`);
+      const json = await response.json();
       const data = unwrapApiPayload<{
         success?: boolean;
         data?: { collection: Collection; items: CollectionItem[] };
-      }>(await response.json());
+      }>(json);
 
       if (data.success) {
         setCollection(data.data?.collection || null);
@@ -66,11 +68,10 @@ export default function CollectionDetail({
       } else if (response.status === 404) {
         setError('Koleksiyon bulunamadı');
       } else {
-        setError(getApiErrorMessage(data, 'Koleksiyon yüklenemedi'));
+        setError(getApiErrorMessage(json, 'Koleksiyon yüklenemedi'));
       }
     } catch (err) {
-      console.error('Failed to load collection:', err);
-      setError('Koleksiyon yüklenirken bir hata oluştu');
+      setError(err instanceof Error ? err.message : 'Koleksiyon yüklenirken bir hata oluştu');
     } finally {
       setIsLoading(false);
     }
@@ -88,14 +89,17 @@ export default function CollectionDetail({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
+      const json = await response.json();
 
-      const data = unwrapApiPayload<{ success?: boolean; following?: boolean }>(await response.json());
+      const data = unwrapApiPayload<{ success?: boolean; following?: boolean }>(json);
 
-      if (data.success) {
-        setIsFollowing(Boolean(data.following));
+      if (!response.ok || !data.success) {
+        throw new Error(getApiErrorMessage(json, 'Takip işlemi başarısız'));
       }
+
+      setIsFollowing(Boolean(data.following));
     } catch (err) {
-      console.error('Follow error:', err);
+      setError(err instanceof Error ? err.message : 'Takip işlemi başarısız');
     } finally {
       setIsFollowingLoading(false);
     }
@@ -115,14 +119,17 @@ export default function CollectionDetail({
         method: 'DELETE'
         }
       );
+      const json = await response.json();
 
-      const data = unwrapApiPayload<{ success?: boolean }>(await response.json());
+      const data = unwrapApiPayload<{ success?: boolean }>(json);
 
-      if (data.success) {
-        setItems(items.filter(existingItem => existingItem.id !== item.id));
+      if (!response.ok || !data.success) {
+        throw new Error(getApiErrorMessage(json, 'Mekan koleksiyondan kaldırılamadı'));
       }
+
+      setItems(items.filter(existingItem => existingItem.id !== item.id));
     } catch (err) {
-      console.error('Remove item error:', err);
+      setError(err instanceof Error ? err.message : 'Mekan koleksiyondan kaldırılamadı');
     }
   };
 
@@ -228,7 +235,7 @@ export default function CollectionDetail({
                 {/* Content */}
                 <div className="p-4">
                   <a
-                    href={`/mekan/${item.place_id}`}
+                    href={`/places/${item.place_slug || item.place_id}`}
                     className="text-lg font-bold text-blue-600 hover:text-blue-700 block mb-2"
                   >
                     {item.place_name}
@@ -250,7 +257,7 @@ export default function CollectionDetail({
                   {/* Actions */}
                   <div className="flex gap-2">
                     <a
-                      href={`/mekan/${item.place_id}`}
+                      href={`/places/${item.place_slug || item.place_id}`}
                       className="flex-1 text-center bg-blue-100 text-blue-700 px-3 py-2 rounded text-sm font-medium hover:bg-blue-200 transition"
                     >
                       Mekanı Gör
