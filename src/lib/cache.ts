@@ -6,11 +6,14 @@ const KEY_PREFIX = process.env.REDIS_KEY_PREFIX || 'sanliurfa:';
 const REDIS_ENABLED = process.env.REDIS_ENABLED !== 'false';
 const REDIS_RETRY_INTERVAL_MS = parsePositiveInt('REDIS_RETRY_INTERVAL_MS', 30000);
 const REDIS_CONNECT_TIMEOUT_MS = parsePositiveInt('REDIS_CONNECT_TIMEOUT_MS', 1500);
+const CACHE_ERROR_LOG_TTL_MS = parsePositiveInt('CACHE_ERROR_LOG_TTL_MS', 60000);
 
 let client: ReturnType<typeof createClient> | null = null;
 let connectionError: Error | null = null;
 let lastConnectionAttempt = 0;
 let unavailableWarningLogged = false;
+const lastErrorLogBySignature = new Map<string, number>();
+const inMemoryRateLimits = new Map<string, { count: number; resetAt: number }>();
 
 /**
  * Get or create Redis client with proper error handling
@@ -104,8 +107,8 @@ export async function getCache<T = any>(key: unknown): Promise<T | null> {
     const prefixedKey = prefixKey(key);
     const value = await redis.get(prefixedKey);
     return value ? JSON.parse(value) : null;
-  } catch (error) {
-    console.error('Cache get error:', { key, error });
+  } catch (error: unknown) {
+    logCacheError('cache:get', key, error);
     return null;
   }
 }
@@ -121,8 +124,8 @@ export async function setCache(key: unknown, value: any, ttlSeconds = 3600): Pro
     }
     const prefixedKey = prefixKey(key);
     await redis.setEx(prefixedKey, ttlSeconds, JSON.stringify(value));
-  } catch (error) {
-    console.error('Cache set error:', { key, error });
+  } catch (error: unknown) {
+    logCacheError('cache:set', key, error);
   }
 }
 
@@ -137,8 +140,8 @@ export async function deleteCache(key: unknown): Promise<void> {
     }
     const prefixedKey = prefixKey(key);
     await redis.del(prefixedKey);
-  } catch (error) {
-    console.error('Cache delete error:', { key, error });
+  } catch (error: unknown) {
+    logCacheError('cache:delete', key, error);
   }
 }
 
@@ -157,8 +160,8 @@ export async function deleteCachePattern(pattern: unknown): Promise<void> {
     if (keys.length > 0) {
       await redis.del(keys);
     }
-  } catch (error) {
-    console.error('Cache pattern delete error:', { pattern, error });
+  } catch (error: unknown) {
+    logCacheError('cache:delete-pattern', pattern, error);
   }
 }
 
@@ -167,23 +170,27 @@ export async function deleteCachePattern(pattern: unknown): Promise<void> {
  * Returns true if allowed, false if limit exceeded
  */
 export async function checkRateLimit(key: unknown, limit: number, windowSeconds: number): Promise<boolean> {
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 100;
+  const safeWindowSeconds = Number.isFinite(windowSeconds) && windowSeconds > 0 ? Math.floor(windowSeconds) : 900;
+  const normalizedKey = normalizeCacheKey(key || 'unknown');
+
   try {
     const redis = await getOptionalRedisClient();
     if (!redis) {
-      logRedisUnavailableOnce(new Error('Redis unavailable for rate limiting, allowing request'));
-      return true; // Fail-open with warning
+      logRedisUnavailableOnce(new Error('Redis unavailable for rate limiting, using in-memory fallback'));
+      return checkInMemoryRateLimit(normalizedKey, safeLimit, safeWindowSeconds);
     }
-    const prefixedKey = prefixKey(`ratelimit:${key}`);
+    const prefixedKey = prefixKey(`ratelimit:${normalizedKey}`);
     const current = await redis.incr(prefixedKey);
 
     if (current === 1) {
-      await redis.expire(prefixedKey, windowSeconds);
+      await redis.expire(prefixedKey, safeWindowSeconds);
     }
 
-    return current <= limit;
-  } catch (error) {
-    console.error('Rate limit check error:', { key, error });
-    return true; // Allow on error (fail-open)
+    return current <= safeLimit;
+  } catch (error: unknown) {
+    logCacheError('rate-limit-check', normalizedKey, error);
+    return checkInMemoryRateLimit(normalizedKey, safeLimit, safeWindowSeconds);
   }
 }
 
@@ -204,6 +211,75 @@ function logRedisUnavailableOnce(error: Error): void {
 
   unavailableWarningLogged = true;
   console.warn('Redis unavailable, continuing with graceful degradation:', error.message);
+}
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
+function shouldLogNow(signature: string): boolean {
+  const now = Date.now();
+  const lastLoggedAt = lastErrorLogBySignature.get(signature) || 0;
+  if (now - lastLoggedAt < CACHE_ERROR_LOG_TTL_MS) {
+    return false;
+  }
+  lastErrorLogBySignature.set(signature, now);
+  return true;
+}
+
+function logCacheError(operation: string, key: unknown, error: unknown): void {
+  const message = toErrorMessage(error);
+  const signature = `${operation}:${message}`;
+
+  if (!shouldLogNow(signature)) {
+    return;
+  }
+
+  console.warn(`${operation} failed`, {
+    key: normalizeCacheKey(key),
+    error: message
+  });
+}
+
+function cleanupInMemoryRateLimitMap(nowSeconds: number): void {
+  if (inMemoryRateLimits.size < 2000) {
+    return;
+  }
+
+  for (const [mapKey, entry] of inMemoryRateLimits.entries()) {
+    if (entry.resetAt <= nowSeconds) {
+      inMemoryRateLimits.delete(mapKey);
+    }
+  }
+}
+
+function checkInMemoryRateLimit(key: string, limit: number, windowSeconds: number): boolean {
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  const mapKey = `fallback:${key}`;
+  cleanupInMemoryRateLimitMap(nowSeconds);
+
+  const current = inMemoryRateLimits.get(mapKey);
+  if (!current || current.resetAt <= nowSeconds) {
+    inMemoryRateLimits.set(mapKey, {
+      count: 1,
+      resetAt: nowSeconds + windowSeconds
+    });
+    return true;
+  }
+
+  current.count += 1;
+  inMemoryRateLimits.set(mapKey, current);
+  return current.count <= limit;
 }
 
 export const redis = {
