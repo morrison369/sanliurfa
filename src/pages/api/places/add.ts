@@ -1,6 +1,10 @@
 import type { APIRoute } from 'astro';
 import { insert, queryOne } from '../../../lib/postgres';
 import { deleteCachePattern } from '../../../lib/cache';
+import { saveFile } from '../../../lib/file-storage';
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 function slugifyTurkish(value: string): string {
   const map: Record<string, string> = {
@@ -61,6 +65,8 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
     const status = ['active', 'pending', 'inactive'].includes(statusValue) ? statusValue : 'pending';
     const latitude = formData.get('latitude')?.toString();
     const longitude = formData.get('longitude')?.toString();
+    const providerImageUrl = formData.get('provider_image_url')?.toString().trim();
+    const coverImage = formData.get('cover_image');
     const amenities = formData.getAll('amenities').map(String).filter(Boolean);
     const tags = (formData.get('tags')?.toString() || '')
       .split(',')
@@ -76,6 +82,22 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
     }
 
     const slug = await createUniqueSlug(name);
+    const imageFile = coverImage instanceof File && coverImage.size > 0 ? coverImage : null;
+
+    if (imageFile && imageFile.size > MAX_IMAGE_SIZE) {
+      return redirect('/admin/places/add?error=image_too_large');
+    }
+
+    if (imageFile && !ALLOWED_IMAGE_TYPES.has(imageFile.type)) {
+      return redirect('/admin/places/add?error=invalid_image_type');
+    }
+
+    let imagePath = providerImageUrl || null;
+    if (imageFile) {
+      const savedImage = await saveFile(imageFile, 'places', slug);
+      imagePath = savedImage.filePath;
+    }
+
     await insert('places', {
       slug,
       name,
@@ -94,6 +116,8 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
       is_verified: formData.get('is_verified') === 'on',
       amenities,
       tags,
+      image_url: imagePath,
+      images: imagePath ? [imagePath] : [],
       opening_hours: openingHours,
       created_by: locals.user?.id || null,
       created_at: new Date().toISOString(),
