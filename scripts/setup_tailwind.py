@@ -1,1 +1,24 @@
-#!/usr/bin/env python3\n"""Astro 6 + Tailwind kurulumu"""\n\nimport paramiko\n\nssh = paramiko.SSHClient()\nssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\nssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', allow_agent=False, look_for_keys=False)\n\nprint("🎨 Tailwind için Astro 6 Kurulumu")\nprint("=" * 50)\n\n# package.json güncelle\nprint("\n📦 @astrojs/tailwind ekleniyor...")\ncmd = '''cd /home/sanliur/public_html && export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && npm install @astrojs/tailwind tailwindcss autoprefixer postcss --legacy-peer-deps'''\n\nstdin, stdout, stderr = ssh.exec_command(cmd, timeout=180)\n\nimport time\nstart = time.time()\nwhile not stdout.channel.exit_status_ready():\n    if time.time() - start > 15:\n        print("  ⏳ Kurulum devam ediyor...")\n        start = time.time()\n    time.sleep(1)\n\noutput = stdout.read().decode()\nerror = stderr.read().decode()\n\nif "added" in output:\n    lines = [l for l in output.split('\n') if 'added' in l or 'packages' in l]\n    for line in lines[-3:]:\n        print(f"  {line}")\n    print("✅ Tailwind paketleri kuruldu!")\nelse:\n    print("⚠️ Durum:", output[-500:])\n    if error:\n        print("Hata:", error[:300])\n\n# astro.config.mjs kontrol\nprint("\n📄 astro.config.mjs kontrol...")\nstdin, stdout, stderr = ssh.exec_command("cat /home/sanliur/public_html/astro.config.mjs")\nconfig = stdout.read().decode()\n\nif "@astrojs/tailwind" in config:\n    print("✅ Tailwind import edilmiş")\nelse:\n    print("⚠️ Tailwind import edilmemiş - manuel kontrol gerekli")\n\nssh.close()\nprint("\nTamamlandı!")\n
+#!/usr/bin/env python3
+"""Tailwind runtime guard.
+
+Tailwind 4 is managed locally through package.json, astro.config.mjs,
+and src/styles/global.css. This script intentionally does not SSH to
+production or install deprecated Tailwind integration packages.
+"""
+
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+REQUIRED = [
+    ROOT / "package.json",
+    ROOT / "astro.config.mjs",
+    ROOT / "src" / "styles" / "global.css",
+]
+
+missing = [str(path.relative_to(ROOT)) for path in REQUIRED if not path.exists()]
+if missing:
+    print("Eksik Tailwind 4 dosyalari: " + ", ".join(missing))
+    sys.exit(1)
+
+print("Tailwind 4 aktif: @tailwindcss/vite + src/styles/global.css")

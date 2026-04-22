@@ -1,10 +1,10 @@
 import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
-import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import partytown from '@astrojs/partytown';
 import compress from 'astro-compress';
+import tailwindcss from '@tailwindcss/vite';
 
 const site = process.env.SITE_URL || 'https://sanliurfa.com';
 const appPort = Number(process.env.PORT || 4321);
@@ -18,7 +18,6 @@ export default defineConfig({
   }),
   integrations: [
     mdx(),
-    tailwind(),
     react(),
     partytown({
       config: {
@@ -43,6 +42,7 @@ export default defineConfig({
     inlineStylesheets: 'auto',
   },
   vite: {
+    plugins: [tailwindcss()],
     server: {
       host: '127.0.0.1',
       port: 4321,

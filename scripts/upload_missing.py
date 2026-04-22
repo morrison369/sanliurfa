@@ -1,1 +1,17 @@
-#!/usr/bin/env python3\nimport paramiko\nimport time\n\nssh = paramiko.SSHClient()\nssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\nssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', allow_agent=False, look_for_keys=False)\n\nprint("📤 Eksik Dosyaları Yükleme")\nprint("=" * 50)\n\nsftp = ssh.open_sftp()\n\n# Eksik dosyalar\nfiles = ['tailwind.config.js', 'postcss.config.js', 'tsconfig.json']\n\nfor f in files:\n    try:\n        sftp.put(f"./{f}", f"/home/sanliur/public_html/{f}")\n        print(f"✅ {f} yüklendi")\n    except Exception as e:\n        print(f"⚠️ {f}: {e}")\n\n# node_modules temizle\nprint("\n📦 node_modules temizleniyor...")\nssh.exec_command("rm -rf /home/sanliur/public_html/node_modules")\n\n# npm install\nprint("📦 npm install yeniden (5-7 dakika)...")\ncmd = 'cd /home/sanliur/public_html && export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && npm install --legacy-peer-deps'\nstdin, stdout, stderr = ssh.exec_command(cmd, timeout=300)\n\nstart = time.time()\nwhile not stdout.channel.exit_status_ready():\n    elapsed = time.time() - start\n    if elapsed > 30 and elapsed % 30 < 1:\n        print(f"  ⏳ {int(elapsed)} saniye...")\n    time.sleep(1)\n\nresult = stdout.read().decode()\nif "added" in result:\n    lines = result.split('\n')\n    for line in lines[-5:]:\n        if line.strip():\n            print(f"  {line}")\n    print("✅ npm install tamamlandı!")\nelse:\n    print("⚠️ Durum:", result[-500:])\n\nsftp.close()\nssh.close()\nprint("\nTamamlandı!")\n
+#!/usr/bin/env python3
+"""Legacy remote deploy script disabled.
+
+Active deployment source of truth:
+docs/ACTIVE_DEPLOYMENT_CWP_4321.md
+"""
+
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+DOC = ROOT / "docs" / "ACTIVE_DEPLOYMENT_CWP_4321.md"
+
+print("Bu legacy remote deploy scripti devre disi.")
+print("Aktif CWP/Astro runtime: PORT=4321, pm2 start ecosystem.config.cjs --env production")
+print(f"Dokuman: {DOC}")
+sys.exit(1)
