@@ -14,6 +14,10 @@ const PUBLIC_PATHS = [
 // Admin only paths
 const ADMIN_PATHS = ['/admin'];
 
+const CANONICAL_ORIGIN = 'https://sanliurfa.com';
+const CANONICAL_HOST = 'sanliurfa.com';
+const REDIRECTABLE_HOSTS = new Set([CANONICAL_HOST, `www.${CANONICAL_HOST}`]);
+
 // CORS configuration
 const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'https://sanliurfa.com').split(',').map(o => o.trim());
 const RATE_LIMIT = 100;
@@ -43,9 +47,33 @@ function getClientIP(request: Request): string {
   return xRealIp || 'unknown';
 }
 
+function canonicalRedirectUrl(url: URL, request: Request): string | null {
+  const host = url.hostname.toLowerCase();
+
+  if (!REDIRECTABLE_HOSTS.has(host)) {
+    return null;
+  }
+
+  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
+  const effectiveProtocol = forwardedProto || url.protocol.replace(':', '');
+  const needsHostRedirect = host !== CANONICAL_HOST;
+  const needsProtocolRedirect = effectiveProtocol !== 'https';
+
+  if (!needsHostRedirect && !needsProtocolRedirect) {
+    return null;
+  }
+
+  return `${CANONICAL_ORIGIN}${url.pathname}${url.search}`;
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, cookies, request } = context;
   const pathname = url.pathname;
+  const redirectUrl = canonicalRedirectUrl(url, request);
+
+  if (redirectUrl) {
+    return Response.redirect(redirectUrl, 301);
+  }
 
   // Check if path is public
   const isPublicPath = PUBLIC_PATHS.some(path => pathname === path || pathname.startsWith(path + '/'));
