@@ -82,7 +82,7 @@ export default function AdminAnalyticsDashboard() {
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Görüntülenen Mekan</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Görüntülenen Mekân</p>
           <p className="text-3xl font-bold">{stats.uniquePlacesViewed || 0}</p>
         </div>
 
@@ -120,7 +120,7 @@ export default function AdminAnalyticsDashboard() {
 
       {/* Trending Places */}
       <div>
-        <h3 className="text-xl font-bold mb-4">Trend Olan Mekanlar</h3>
+        <h3 className="text-xl font-bold mb-4">Trend Olan Mekânlar</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {analytics.trendingPlaces.map(place => (
             <a

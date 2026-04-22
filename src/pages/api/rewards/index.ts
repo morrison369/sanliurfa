@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (myRedemptions) {
       if (!locals.user?.id) {
         recordRequest('GET', '/api/rewards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-        return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+        return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
       }
       const status = url.searchParams.get('status');
       data = await getUserRedemptions(locals.user.id, status, limit, offset);
@@ -80,7 +80,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/rewards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();

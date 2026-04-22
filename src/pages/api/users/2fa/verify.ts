@@ -13,9 +13,9 @@ import { getCache, deleteCache } from '../../../../lib/cache';
 
 export const POST: APIRoute = async (context) => {
   try {
-    // Auth required
+    // Oturum zorunlu
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
     }
 
     const userId = context.locals.user.id;
@@ -23,21 +23,21 @@ export const POST: APIRoute = async (context) => {
 
     // Validate code format
     if (!body.code || typeof body.code !== 'string' || !/^\d{6}$/.test(body.code)) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Invalid code format. Code must be 6 digits.');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Kod formatı geçersiz. Kod 6 haneli olmalıdır.');
     }
 
     // Get the secret that was generated during setup (stored in cache)
     const secret = await getCache<string>(`sanliurfa:2fa:setup:${userId}`);
 
     if (!secret) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Please complete the setup step first. Call POST /api/users/2fa/setup to get started.');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Önce 2FA kurulum adımını tamamlayın.');
     }
 
     // Verify the TOTP code against the secret
     const verified = verifyTOTPCode(secret, body.code);
 
     if (!verified) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Invalid verification code. Please try again.');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Doğrulama kodu geçersiz. Lütfen tekrar deneyin.');
     }
 
     // Generate backup codes
@@ -47,7 +47,7 @@ export const POST: APIRoute = async (context) => {
     const enableResult = await enableTwoFactor(userId, secret, backupCodes);
 
     if (!enableResult) {
-      return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to enable 2FA. Please try again.');
+      return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, '2FA etkinleştirilemedi. Lütfen tekrar deneyin.');
     }
 
     // Clean up the temporary setup secret from cache
@@ -57,12 +57,12 @@ export const POST: APIRoute = async (context) => {
 
     return apiResponse(context, HttpStatus.OK, {
       success: true,
-      message: '2FA successfully enabled!',
+      message: '2FA başarıyla etkinleştirildi.',
       backupCodes,
-      notice: 'Save these backup codes in a secure location. You can use them to recover your account if you lose access to your authenticator app.'
+      notice: 'Bu yedek kodları güvenli bir yerde saklayın. Doğrulama uygulamasına erişiminizi kaybederseniz hesabınızı kurtarmak için kullanabilirsiniz.'
     });
   } catch (error) {
-    logger.error('Failed to verify 2FA', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to verify 2FA');
+    logger.error('2FA doğrulanamadı', error instanceof Error ? error : new Error(String(error)));
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, '2FA doğrulanamadı');
   }
 };

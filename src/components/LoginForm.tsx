@@ -74,7 +74,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(getApiErrorMessage(data, "2FA doğrulama başarısız"));
+        throw new Error(getApiErrorMessage(data, "İki faktörlü doğrulama başarısız oldu"));
       }
 
       if (data.success) {
@@ -117,7 +117,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
             htmlFor="code"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Doğrulama Kodu
+            Doğrulama kodu
           </label>
           <input
             id="code"
@@ -152,7 +152,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           }}
           className="w-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm py-2"
         >
-          Geri Dön
+          Geri dön
         </button>
       </form>
     );
@@ -177,14 +177,14 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           htmlFor="email"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          E-Posta
+          E-posta
         </label>
         <input
           id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="kullanici@sanliurfa.com"
+          placeholder="adiniz@sanliurfa.com"
           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
           disabled={isLoading}

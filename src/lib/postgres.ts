@@ -5,12 +5,12 @@ import { metricsCollector, performanceThresholds } from './metrics';
 import { logger } from './logging';
 
 // Get DATABASE_URL and READ_REPLICA_URL from environment
-const DATABASE_URL = process.env.DATABASE_URL;
-const READ_REPLICA_URL = process.env.READ_REPLICA_URL;
-const NODE_ENV = process.env.NODE_ENV || 'development';
+const DATABASE_URL = readNodeEnv('DATABASE_URL');
+const READ_REPLICA_URL = readNodeEnv('READ_REPLICA_URL');
+const NODE_ENV = readNodeEnv('NODE_ENV') || 'development';
 
 function parsePositiveInt(name: string, fallback: number): number {
-  const raw = process.env[name];
+  const raw = readNodeEnv(name);
   if (!raw) {
     return fallback;
   }
@@ -19,6 +19,11 @@ function parsePositiveInt(name: string, fallback: number): number {
     throw new Error(`${name} must be a positive integer`);
   }
   return parsed;
+}
+
+function readNodeEnv(key: string): string | undefined {
+  const globalProcess = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
+  return globalProcess?.env?.[key];
 }
 
 if (!DATABASE_URL) {
@@ -371,10 +376,15 @@ const ALLOWED_TABLES = new Set([
   'content_shares',
   'share_analytics',
   'trending_places',
+  'place_followers',
   // Messaging
   'conversations',
   'direct_messages',
   'conversation_deletions',
+  // Admin dashboard
+  'admin_dashboard_widgets',
+  'admin_dashboard_settings',
+  'dashboard_refresh_events',
   // Phase 28D: Real-time Analytics
   'request_metrics',
   'query_metrics',

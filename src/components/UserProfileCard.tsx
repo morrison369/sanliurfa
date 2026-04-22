@@ -57,7 +57,7 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
         }
       }
     } catch (err) {
-      console.error('Failed to load follower stats:', err);
+      console.error('Takipçi istatistikleri yüklenemedi:', err);
     }
   };
 
@@ -86,7 +86,7 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
         await loadFollowerStats();
       }
     } catch (err) {
-      console.error('Failed to toggle follow:', err);
+      console.error('Takip işlemi tamamlanamadı:', err);
     } finally {
       setIsLoadingFollow(false);
     }
@@ -190,7 +190,7 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
                   )}
                 </div>
                 <div className={`px-4 py-2 rounded-lg font-medium text-sm ${getLevelColor(user.level)}`}>
-                  Level {user.level}
+                  Seviye {user.level}
                 </div>
               </div>
 
@@ -247,7 +247,7 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
                 onClick={() => setIsMessageModalOpen(true)}
                 className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
-                💬 Mesaj Gönder
+                💬 Mesaj gönder
               </button>
               <button
                 onClick={handleToggleFollow}
@@ -258,7 +258,7 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
                     : 'bg-purple-600 text-white hover:bg-purple-700'
                 } disabled:opacity-50`}
               >
-                {isLoadingFollow ? '...' : isFollowing ? '✓ Takip Ediliyorsunuz' : '+ Takip Et'}
+                {isLoadingFollow ? '...' : isFollowing ? '✓ Takip ediyorsunuz' : '+ Takip et'}
               </button>
             </div>
           )}
@@ -288,7 +288,7 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {user.full_name}'e Mesaj Gönder
+                {user.full_name}'e mesaj gönder
               </h2>
               <button
                 onClick={() => setIsMessageModalOpen(false)}

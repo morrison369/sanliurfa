@@ -22,7 +22,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/subscriptions/cancel', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/subscriptions/cancel', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'No active subscription found',
+        'Aktif abonelik bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -52,7 +52,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       try {
         await cancelSubscription(subscription.stripe_subscription_id, false);
       } catch (err) {
-        logger.warn('Failed to cancel Stripe subscription', err);
+        logger.warn('Stripe aboneliği iptal edilemedi', err);
         // Continue anyway - mark as cancelled in our DB
       }
     }
@@ -77,10 +77,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/subscriptions/cancel', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to cancel subscription', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Abonelik iptal edilemedi', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to cancel subscription',
+      'Abonelik iptal edilemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

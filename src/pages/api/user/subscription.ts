@@ -37,7 +37,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/user/subscription', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -58,10 +58,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/user/subscription', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get subscription', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Abonelik alınamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get subscription',
+      'Abonelik alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -80,7 +80,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       recordRequest('POST', '/api/user/subscription', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -96,7 +96,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
         recordRequest('POST', '/api/user/subscription', HttpStatus.NOT_FOUND, Date.now() - startTime);
         return apiError(
           ErrorCode.NOT_FOUND,
-          'No active subscription found',
+          'Aktif abonelik bulunamadı',
           HttpStatus.NOT_FOUND,
           undefined,
           requestId
@@ -106,7 +106,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       const success = await cancelSubscription(subscription.id);
 
       if (!success) {
-        throw new Error('Failed to cancel subscription');
+        throw new Error('Abonelik iptal edilemedi');
       }
 
       recordRequest('POST', '/api/user/subscription', HttpStatus.OK, Date.now() - startTime);
@@ -126,7 +126,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       recordRequest('POST', '/api/user/subscription', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid input',
+        'Geçersiz veri',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
@@ -142,7 +142,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
     );
 
     if (!newSubscription) {
-      throw new Error('Failed to upgrade subscription');
+      throw new Error('Abonelik yükseltilemedi');
     }
 
     recordRequest('POST', '/api/user/subscription', HttpStatus.CREATED, Date.now() - startTime);
@@ -156,10 +156,10 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/user/subscription', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to manage subscription', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Abonelik işlemi tamamlanamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to manage subscription',
+      'Abonelik işlemi tamamlanamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

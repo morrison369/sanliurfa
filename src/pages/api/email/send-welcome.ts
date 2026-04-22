@@ -54,7 +54,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/email/send-welcome', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'Failed to send email',
+        'E-posta gönderilemedi',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -70,6 +70,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/email/send-welcome', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Welcome email error', error instanceof Error ? error : new Error(String(error)), { duration });
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

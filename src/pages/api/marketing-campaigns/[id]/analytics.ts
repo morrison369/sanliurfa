@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/marketing-campaigns/[id]/analytics', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id } = params;
@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     logger.error('Get campaign analytics failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get analytics',
+      'Analitikler alınamadı',
       statusCode,
       undefined,
       requestId

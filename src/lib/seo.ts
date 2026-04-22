@@ -31,12 +31,12 @@ export function generateMetaTags(config: SEOConfig): Record<string, string> {
     "og:title": config.title,
     "og:description": config.description,
     "og:type": config.ogType || "website",
-    "og:image": config.ogImage || "/og-image.png",
+    "og:image": config.ogImage || "/images/og-default.jpg",
     "og:url": config.canonical || "",
     "twitter:card": config.twitterCard || "summary_large_image",
     "twitter:title": config.title,
     "twitter:description": config.description,
-    "twitter:image": config.ogImage || "/og-image.png",
+    "twitter:image": config.ogImage || "/images/og-default.jpg",
     description: config.description,
     keywords: config.tags?.join(", ") || "",
     author: config.author || "sanliurfa.com",
@@ -60,8 +60,7 @@ export function generateOrganizationSchema(baseUrl: string): StructuredData {
     logo: `${baseUrl}/logo.png`,
     contactPoint: {
       "@type": "ContactPoint",
-      contactType: "Customer Service",
-      telephone: "+90-414-XXXXXXX",
+      contactType: "Müşteri Hizmetleri",
       email: "info@sanliurfa.com",
     },
     address: {
@@ -139,7 +138,7 @@ export function generateArticleSchema(article: {
     "@type": "BlogPosting",
     headline: article.headline,
     description: article.description,
-    image: article.image || "/og-image.png",
+    image: article.image || "/images/og-default.jpg",
     author: {
       "@type": "Person",
       name: article.author,
@@ -266,7 +265,6 @@ Disallow: /bildirim-tercihleri
 Disallow: /canli-analitik
 Disallow: /icerik
 Disallow: /isletme
-Disallow: /işletme
 Disallow: /koleksiyonlar
 Disallow: /kullanici
 Disallow: /loyalty
@@ -276,15 +274,38 @@ Disallow: /profil
 Disallow: /profile
 Disallow: /raporlar
 Disallow: /sosyal
-Disallow: /veri-ambarı
+Disallow: /veri-ambari
 Disallow: /webhooks
+Disallow: /_astro/
+Disallow: /*.css$
+Disallow: /*.js$
 Disallow: /*.json$
-Disallow: /search?
 
 User-agent: Googlebot
 Allow: /
 
-Sitemap: https://sanliurfa.com/sitemap.xml
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://sanliurfa.com/sitemap-index.xml
 
 # Crawl-delay to be respectful to server
 Crawl-delay: 1`;
@@ -332,9 +353,9 @@ export const keywordSuggestions = {
   places: [
     "Şanlıurfa gezilecek yerler",
     "Göbekli Tepe",
-    "Şanlı Urfa rehberi",
-    "Urfada yapılacak şeyler",
-    "Diyarbakır Kalesi",
+    "Şanlıurfa rehberi",
+    "Urfa'da yapılacak şeyler",
+    "Harran evleri",
     "Balıklı Göl",
   ],
   tourism: [
@@ -346,8 +367,8 @@ export const keywordSuggestions = {
     "dinî turlar Urfa",
   ],
   dining: [
-    "Şanlıurfa kebab",
-    "Urfa yemek",
+    "Şanlıurfa kebabı",
+    "Urfa yemekleri",
     "Şanlıurfa restoranları",
     "Urfa lezzetleri",
     "Urfa çöp şişi",

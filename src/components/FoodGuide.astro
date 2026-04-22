@@ -1,44 +1,8 @@
 ---
 import { Utensils, Flame, Clock, ChevronRight } from 'lucide-react';
+import { getCuratedFoods } from '../data/curated-foods';
 
-const foods = [
-  {
-    id: 'urfa-kebabi',
-    name: 'Urfa Kebabı',
-    description: 'Baharatlı kıymanın odun ateşinde pişirilmesiyle hazırlanan efsane lezzet.',
-    image: '/images/foods/urfa-kebabi.jpg',
-    isSpicy: false,
-    difficulty: 'Zor',
-    prepTime: '45 dk',
-  },
-  {
-    id: 'cig-kofte',
-    name: 'Çiğ Köfte',
-    description: 'İsot ve bulgurun karataşta yoğrulmasıyla yapılan geleneksel lezzet.',
-    image: '/images/foods/cig-kofte.jpg',
-    isSpicy: true,
-    difficulty: 'Çok Zor',
-    prepTime: '2 saat',
-  },
-  {
-    id: 'isot',
-    name: 'Urfa İsotu',
-    description: 'Güneşte kurutulmuş, yağda kavrulmuş eşsiz bir baharat.',
-    image: '/images/foods/isot.jpg',
-    isSpicy: true,
-    difficulty: 'Orta',
-    prepTime: '1 hafta',
-  },
-  {
-    id: 'sillik-tatlisi',
-    name: 'Şıllık Tatlısı',
-    description: 'Cevizli, kremalı geleneksel Urfa tatlısı.',
-    image: '/images/foods/sillik-tatlisi.jpg',
-    isSpicy: false,
-    difficulty: 'Orta',
-    prepTime: '1 saat',
-  },
-];
+const foods = getCuratedFoods(4);
 ---
 
 <section class="section bg-white dark:bg-gray-900">

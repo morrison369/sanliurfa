@@ -128,7 +128,7 @@ export function CouponValidator({
             value={couponCode}
             onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
             onKeyPress={(e) => e.key === 'Enter' && handleValidate()}
-            placeholder="PROMOKOD giriniz"
+            placeholder="Promosyon kodu girin"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
             disabled={isLoading}
           />
@@ -138,7 +138,7 @@ export function CouponValidator({
             disabled={isLoading || !couponCode.trim()}
             className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors"
           >
-            {isLoading ? 'Kontrol Ediliyor...' : 'Kupon Kodunu Kontrol Et'}
+            {isLoading ? 'Kontrol ediliyor...' : 'Kupon kodunu kontrol et'}
           </button>
 
           {result && (

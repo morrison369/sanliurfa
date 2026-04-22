@@ -8,6 +8,7 @@ import {
   buildOrganizationSchema,
   buildWebSiteSchema,
 } from '../../lib/rich-snippets';
+import { getCuratedHistoricalSites } from '../../data/curated-historical-sites';
 
 const queryParam = Astro.url.searchParams.get('q') || '';
 
@@ -21,8 +22,27 @@ if (queryParam) {
 
 sql += " ORDER BY is_featured DESC, created_at DESC";
 
-const result = await query(sql, values);
-const sites = result.rows;
+let sites: any[] = [];
+
+try {
+  const result = await query(sql, values);
+  sites = result.rows;
+} catch {
+  sites = [];
+}
+
+if (sites.length === 0) {
+  const normalizedQuery = queryParam.trim().toLocaleLowerCase('tr-TR');
+  const curatedSites = getCuratedHistoricalSites();
+  sites = normalizedQuery
+    ? curatedSites.filter((site) =>
+        [site.name, site.description, site.short_description, site.location, site.period]
+          .join(' ')
+          .toLocaleLowerCase('tr-TR')
+          .includes(normalizedQuery)
+      )
+    : curatedSites;
+}
 
 const seo = {
   title: 'Tarihi Yerler - Şanlıurfa\'nın Zengin Tarihi',

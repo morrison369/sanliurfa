@@ -45,19 +45,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    // Check authentication
+    // Oturum kontrolü
     if (!locals.user) {
       recordRequest('POST', '/api/reviews/post', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
       );
     }
 
-    // Validate request body
+    // İstek gövdesini doğrula
     const body = await request.json();
     const validation = validateWithSchema(body, createReviewSchema);
 
@@ -65,7 +65,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/reviews/post', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid input',
+        'Geçersiz giriş',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
@@ -98,7 +98,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/reviews/post', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Place not found',
+        'Mekan bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -110,7 +110,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       place_id: placeId,
       user_id: locals.user.id,
       rating,
-      title: title || `Rating: ${rating}`,
+      title: title || `Puan: ${rating}`,
       content,
       is_approved: true,
       created_at: new Date().toISOString(),
@@ -166,7 +166,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error('Failed to create review', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to create review',
+      'Yorum oluşturulamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

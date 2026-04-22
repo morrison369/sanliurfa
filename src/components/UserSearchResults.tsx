@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
+import React, { useState } from "react";
+import { getApiErrorMessage, unwrapApiPayload } from "@/lib/client-api";
+import { searchCuratedUsers } from "@/data/curated-users";
 
 interface User {
   id: string;
   full_name: string;
   username?: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   bio?: string;
   points: number;
   level: number;
@@ -16,19 +17,24 @@ interface UserSearchResultsProps {
   currentUserId?: string;
 }
 
-export default function UserSearchResults({ currentUserId }: UserSearchResultsProps) {
-  const [query, setQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'relevance' | 'points' | 'level' | 'recent'>('relevance');
+export default function UserSearchResults({
+  currentUserId,
+}: UserSearchResultsProps) {
+  const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState<
+    "relevance" | "points" | "level" | "recent"
+  >("relevance");
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const suggestedUsers = searchCuratedUsers("", "points", 6);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!query.trim() || query.length < 2) {
-      setError('Arama terimi en az 2 karakter olmalıdır');
+      setError("Arama terimi en az 2 karakter olmalıdır");
       return;
     }
 
@@ -37,20 +43,26 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
 
     try {
       const response = await fetch(
-        `/api/users/search?q=${encodeURIComponent(query.trim())}&sortBy=${sortBy}&limit=50`
+        `/api/users/search?q=${encodeURIComponent(query.trim())}&sortBy=${sortBy}&limit=50`,
       );
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'Arama başarısız'));
+        throw new Error(getApiErrorMessage(data, "Arama başarısız"));
       }
 
       const data = unwrapApiPayload<{ data?: User[] }>(await response.json());
-      setUsers(data.data || []);
+      const results = data.data || [];
+      setUsers(
+        results.length > 0
+          ? results
+          : searchCuratedUsers(query.trim(), sortBy, 6),
+      );
       setHasSearched(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
-      setUsers([]);
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+      setUsers(searchCuratedUsers(query.trim(), sortBy, 6));
+      setHasSearched(true);
     } finally {
       setIsLoading(false);
     }
@@ -62,15 +74,23 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
       setIsLoading(true);
       try {
         const response = await fetch(
-          `/api/users/search?q=${encodeURIComponent(query.trim())}&sortBy=${newSort}&limit=50`
+          `/api/users/search?q=${encodeURIComponent(query.trim())}&sortBy=${newSort}&limit=50`,
         );
 
         if (response.ok) {
-          const data = unwrapApiPayload<{ data?: User[] }>(await response.json());
-          setUsers(data.data || []);
+          const data = unwrapApiPayload<{ data?: User[] }>(
+            await response.json(),
+          );
+          const results = data.data || [];
+          setUsers(
+            results.length > 0
+              ? results
+              : searchCuratedUsers(query.trim(), newSort, 6),
+          );
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+        setError(err instanceof Error ? err.message : "Bir hata oluştu");
+        setUsers(searchCuratedUsers(query.trim(), newSort, 6));
       } finally {
         setIsLoading(false);
       }
@@ -78,29 +98,32 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
   };
 
   const getLevelBadgeColor = (level: number) => {
-    if (level <= 1) return 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white';
-    if (level <= 5) return 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100';
-    if (level <= 10) return 'bg-purple-100 dark:bg-purple-900 text-purple-900 dark:text-purple-100';
-    return 'bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-100';
+    if (level <= 1)
+      return "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white";
+    if (level <= 5)
+      return "bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100";
+    if (level <= 10)
+      return "bg-purple-100 dark:bg-purple-900 text-purple-900 dark:text-purple-100";
+    return "bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-100";
   };
 
   const handleStartConversation = async (userId: string) => {
     try {
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipient_id: userId })
+      const response = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipient_id: userId }),
       });
       const json = await response.json();
       const payload = unwrapApiPayload<{ data?: { id?: string } }>(json);
 
       if (!response.ok || !payload.data?.id) {
-        throw new Error(getApiErrorMessage(json, 'Konuşma başlatılamadı'));
+        throw new Error(getApiErrorMessage(json, "Konuşma başlatılamadı"));
       }
 
       window.location.href = `/mesajlar?conversation=${encodeURIComponent(payload.data.id)}`;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Konuşma başlatılamadı');
+      setError(err instanceof Error ? err.message : "Konuşma başlatılamadı");
     }
   };
 
@@ -123,7 +146,7 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
             disabled={isLoading}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isLoading ? '⟳' : '🔍'} Ara
+            {isLoading ? "Aranıyor..." : "Ara"}
           </button>
         </div>
       </form>
@@ -132,18 +155,18 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
       {hasSearched && (
         <div className="mb-6 flex flex-wrap gap-2">
           {[
-            { value: 'relevance' as const, label: 'İlgililik' },
-            { value: 'points' as const, label: 'Puan' },
-            { value: 'level' as const, label: 'Seviye' },
-            { value: 'recent' as const, label: 'Yeni' }
+            { value: "relevance" as const, label: "İlgililik" },
+            { value: "points" as const, label: "Puan" },
+            { value: "level" as const, label: "Seviye" },
+            { value: "recent" as const, label: "Yeni" },
           ].map((option) => (
             <button
               key={option.value}
               onClick={() => handleSortChange(option.value)}
               className={`px-4 py-2 rounded-lg transition-colors font-medium text-sm ${
                 sortBy === option.value
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
               }`}
             >
               {option.label}
@@ -169,7 +192,6 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
       {/* Results */}
       {!isLoading && hasSearched && users.length === 0 && !error && (
         <div className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400 mb-2">😕</p>
           <p className="text-gray-600 dark:text-gray-400">Sonuç bulunamadı</p>
         </div>
       )}
@@ -179,7 +201,7 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
           {users.map((user) => (
             <a
               key={user.id}
-              href={`/kullanıcı/${user.id}`}
+              href={`/kullanici/${user.id}`}
               className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow"
             >
               {/* Cover */}
@@ -196,12 +218,14 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
                       className="w-16 h-16 rounded-lg object-cover -mt-12 border-4 border-white dark:border-gray-800"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-lg bg-gray-300 dark:bg-gray-600 flex items-center justify-center -mt-12 border-4 border-white dark:border-gray-800 text-2xl">
-                      👤
+                    <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-urfa-100 to-isot-100 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center -mt-12 border-4 border-white dark:border-gray-800 text-xl font-bold text-urfa-700 dark:text-urfa-100">
+                      {user.full_name.charAt(0)}
                     </div>
                   )}
-                  <div className={`px-3 py-1 rounded-lg text-sm font-bold h-fit ${getLevelBadgeColor(user.level)}`}>
-                    Lv {user.level}
+                  <div
+                    className={`px-3 py-1 rounded-lg text-sm font-bold h-fit ${getLevelBadgeColor(user.level)}`}
+                  >
+                    Seviye {user.level}
                   </div>
                 </div>
 
@@ -224,8 +248,12 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
                 {/* Stats */}
                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                   <div className="text-center flex-1">
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">{user.points}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Puan</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">
+                      {user.points}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      Puan
+                    </p>
                   </div>
                   <div className="w-px bg-gray-200 dark:bg-gray-700"></div>
                   {currentUserId && currentUserId !== user.id && (
@@ -236,7 +264,7 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
                       }}
                       className="flex-1 text-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium py-1"
                     >
-                      💬 Mesaj
+                      Mesaj
                     </button>
                   )}
                 </div>
@@ -249,13 +277,43 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
       {/* No Search State */}
       {!hasSearched && !isLoading && (
         <div className="text-center py-16">
-          <p className="text-4xl mb-4">🔍</p>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Kullanıcı aramak için arama kutusunu kullanın
+          <p className="text-gray-900 dark:text-white text-xl font-semibold">
+            Şanlıurfa topluluğunu keşfedin
           </p>
-          <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">
-            En az 2 karakter girin
+          <p className="text-gray-500 dark:text-gray-500 text-sm mt-2 mb-8">
+            Kullanıcı adı, ilgi alanı veya Şanlıurfa rotasıyla arama
+            yapabilirsiniz.
           </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+            {suggestedUsers.map((user) => (
+              <a
+                key={user.id}
+                href={`/kullanici/${user.id}`}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg transition-shadow"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-urfa-100 to-isot-100 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center font-bold text-urfa-700 dark:text-urfa-100">
+                    {user.full_name.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 dark:text-white">
+                      {user.full_name}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      @{user.username}
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                  {user.bio}
+                </p>
+                <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                  <span>{user.points} puan</span>
+                  <span>Seviye {user.level}</span>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -216,7 +216,7 @@ async function checkAuditLogging(): Promise<SecurityCheckResult> {
  */
 function checkEnvironmentVariables(): SecurityCheckResult {
   const requiredVars = ['DATABASE_URL', 'JWT_SECRET', 'REDIS_URL', 'NODE_ENV'];
-  const missing = requiredVars.filter(v => !process.env[v]);
+  const missing = requiredVars.filter((v) => !readNodeEnv(v));
 
   return {
     check: 'Environment Variables',
@@ -226,6 +226,11 @@ function checkEnvironmentVariables(): SecurityCheckResult {
     message: missing.length === 0 ? 'All required environment variables are set' : `Missing: ${missing.join(', ')}`,
     remediation: missing.length === 0 ? undefined : `Set these environment variables: ${missing.join(', ')}`
   };
+}
+
+function readNodeEnv(key: string): string | undefined {
+  const globalProcess = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
+  return globalProcess?.env?.[key];
 }
 
 /**

@@ -1,7 +1,7 @@
 const ADMIN_SECTIONS = [
   {
-    title: 'Mekanlar',
-    description: 'Mekan kayıtlarını listele, ekle ve düzenle.',
+    title: 'Mekânlar',
+    description: 'Mekân kayıtlarını listele, ekle ve düzenle.',
     href: '/admin/places',
   },
   {

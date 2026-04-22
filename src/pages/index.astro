@@ -1,35 +1,57 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Hero from "../components/Hero.astro";
+import CityUtilities from "../components/CityUtilities.astro";
 import FeaturedPlaces from "../components/FeaturedPlaces.astro";
 import HistoricalSites from "../components/HistoricalSites.astro";
 import FoodGuide from "../components/FoodGuide.astro";
+import UpcomingEvents from "../components/UpcomingEvents.astro";
 import WeatherWidget from "../components/weather/WeatherWidget.astro";
 import Stats from "../components/Stats.astro";
 import CTASection from "../components/CTASection.astro";
 import LatestBlog from "../components/LatestBlog.astro";
+import {
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+} from "../lib/rich-snippets";
+import { getPublicSiteSettings } from "../lib/site-settings";
+
+const publicSiteSettings = await getPublicSiteSettings();
 
 const seo = {
   title: "Şanlıurfa Şehir Rehberi - Tarihin Sıfır Noktası",
   description:
-    "Şanlıurfa'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, Harran, gastronomi ve daha fazlası. Mekanlar, yorumlar ve puanlama sistemi ile keşfedin.",
+    "Şanlıurfa'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, Harran, gastronomi ve daha fazlası. Mekânlar, yorumlar ve puanlama sistemi ile keşfedin.",
   image: "/images/og-home.jpg",
-  schema: {
-    "@type": "WebSite",
-    name: "sanliurfa.com",
-    url: "https://sanliurfa.com",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: "https://sanliurfa.com/arama?q={search_term_string}",
-      "query-input": "required name=search_term_string",
+  schemaMode: "replace" as const,
+  schema: [
+    buildOrganizationSchema(),
+    buildWebSiteSchema(),
+    {
+      "@type": "WebPage",
+      "@id": "https://sanliurfa.com/#webpage",
+      url: "https://sanliurfa.com",
+      name: "Şanlıurfa Şehir Rehberi - Tarihin Sıfır Noktası",
+      description:
+        "Şanlıurfa'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, Harran, gastronomi ve daha fazlası.",
+      inLanguage: "tr-TR",
+      isPartOf: { "@id": "https://sanliurfa.com/#website" },
+      about: { "@id": "https://sanliurfa.com/#organization" },
+      primaryImageOfPage: {
+        "@type": "ImageObject",
+        url: "https://sanliurfa.com/images/og-home.jpg",
+      },
     },
-  },
+  ],
 };
 ---
 
 <Layout seo={seo}>
   <!-- Hero Section -->
-  <Hero />
+  <Hero settings={publicSiteSettings.hero} />
+
+  <!-- City Utility Section -->
+  <CityUtilities services={publicSiteSettings.cityServices} />
 
   <!-- Weather Widget -->
   <section
@@ -51,6 +73,9 @@ const seo = {
 
   <!-- Food Guide -->
   <FoodGuide />
+
+  <!-- Upcoming Events -->
+  <UpcomingEvents />
 
   <!-- Latest Blog Posts -->
   <LatestBlog />

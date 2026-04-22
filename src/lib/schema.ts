@@ -66,7 +66,7 @@ export async function getEventSchema(eventId: string): Promise<SchemaData | null
       name: event.name,
       description: event.description,
       startDate: new Date(event.date).toISOString(),
-      image: event.image_url || `${BASE_URL}/og-image.png`,
+      image: event.image_url || `${BASE_URL}/images/og-default.jpg`,
       url: `${BASE_URL}/etkinlikler/${event.id}`,
       location: {
         '@type': 'Place',
@@ -113,7 +113,7 @@ export async function getArticleSchema(postId: string): Promise<SchemaData | nul
       '@type': 'BlogPosting',
       headline: post.title,
       description: post.content?.substring(0, 160),
-      image: post.image_url || `${BASE_URL}/og-image.png`,
+      image: post.image_url || `${BASE_URL}/images/og-default.jpg`,
       datePublished: new Date(post.created_at).toISOString(),
       dateModified: new Date(post.updated_at).toISOString(),
       url: `${BASE_URL}/blog/${post.id}`,

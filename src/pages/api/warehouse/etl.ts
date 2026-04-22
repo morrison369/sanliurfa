@@ -58,7 +58,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           duration_ms: result.duration_ms,
           executed_by: locals.user.id
         },
-        message: 'ETL completed'
+        message: 'ETL tamamlandı'
       },
       HttpStatus.OK,
       requestId

@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/export-templates', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -74,7 +74,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/export-templates', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -117,7 +117,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/export-templates', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'Failed to create template',
+        'Şablon oluşturulamadı',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -132,7 +132,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: template,
-        message: 'Template created'
+        message: 'Şablon oluşturuldu'
       },
       HttpStatus.CREATED,
       requestId
@@ -146,7 +146,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to create template',
+      'Şablon oluşturulamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

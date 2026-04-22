@@ -1,9 +1,11 @@
 // Redis Caching Layer with Namespacing
 import { createClient } from 'redis';
 
-const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-const KEY_PREFIX = process.env.REDIS_KEY_PREFIX || 'sanliurfa:';
-const REDIS_ENABLED = process.env.REDIS_ENABLED !== 'false';
+const configuredRedisUrl = (process.env.REDIS_URL || '').trim();
+const redisUrl = configuredRedisUrl || 'redis://127.0.0.1:6379';
+const LEGACY_KEY_PREFIX = 'sanliurfa:';
+const KEY_PREFIX = normalizeKeyPrefix(process.env.REDIS_KEY_PREFIX || LEGACY_KEY_PREFIX);
+const REDIS_ENABLED = resolveRedisEnabled(process.env.REDIS_ENABLED, configuredRedisUrl);
 const REDIS_RETRY_INTERVAL_MS = parsePositiveInt('REDIS_RETRY_INTERVAL_MS', 30000);
 const REDIS_CONNECT_TIMEOUT_MS = parsePositiveInt('REDIS_CONNECT_TIMEOUT_MS', 1500);
 const CACHE_ERROR_LOG_TTL_MS = parsePositiveInt('CACHE_ERROR_LOG_TTL_MS', 60000);
@@ -15,16 +17,20 @@ let unavailableWarningLogged = false;
 const lastErrorLogBySignature = new Map<string, number>();
 const inMemoryRateLimits = new Map<string, { count: number; resetAt: number }>();
 
+interface RedisClientRequestOptions {
+  silent?: boolean;
+}
+
 /**
  * Get or create Redis client with proper error handling
  */
-export async function getRedisClient() {
+export async function getRedisClient(options: RedisClientRequestOptions = {}) {
   if (client && client.isOpen) {
     return client;
   }
 
   if (!REDIS_ENABLED) {
-    throw new Error('Redis is disabled by REDIS_ENABLED=false');
+    throw new Error('Redis is disabled (set REDIS_URL or REDIS_ENABLED=true to enable)');
   }
 
   const now = Date.now();
@@ -64,7 +70,9 @@ export async function getRedisClient() {
     return client;
   } catch (error) {
     connectionError = error instanceof Error ? error : new Error(String(error));
-    logRedisUnavailableOnce(connectionError);
+    if (!options.silent) {
+      logRedisUnavailableOnce(connectionError);
+    }
     throw connectionError;
   }
 }
@@ -76,9 +84,9 @@ export function isRedisAvailable(): boolean {
   return !connectionError && client?.isOpen === true;
 }
 
-async function getOptionalRedisClient() {
+export async function getOptionalRedisClient(options: RedisClientRequestOptions = {}) {
   try {
-    return await getRedisClient();
+    return await getRedisClient(options);
   } catch {
     return null;
   }
@@ -92,7 +100,17 @@ function normalizeCacheKey(key: unknown): string {
 }
 
 export function prefixKey(key: unknown): string {
-  return KEY_PREFIX + normalizeCacheKey(key);
+  const normalizedKey = normalizeCacheKey(key);
+
+  if (normalizedKey.startsWith(KEY_PREFIX)) {
+    return normalizedKey;
+  }
+
+  if (normalizedKey.startsWith(LEGACY_KEY_PREFIX)) {
+    return KEY_PREFIX + normalizedKey.slice(LEGACY_KEY_PREFIX.length);
+  }
+
+  return KEY_PREFIX + normalizedKey;
 }
 
 /**
@@ -100,7 +118,7 @@ export function prefixKey(key: unknown): string {
  */
 export async function getCache<T = any>(key: unknown): Promise<T | null> {
   try {
-    const redis = await getOptionalRedisClient();
+    const redis = await getOptionalRedisClient({ silent: true });
     if (!redis) {
       return null;
     }
@@ -108,7 +126,10 @@ export async function getCache<T = any>(key: unknown): Promise<T | null> {
     const value = await redis.get(prefixedKey);
     return value ? JSON.parse(value) : null;
   } catch (error: unknown) {
-    logCacheError('cache:get', key, error);
+    handleRedisCommandFailure(error);
+    if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
+      logCacheError('cache:get', key, error);
+    }
     return null;
   }
 }
@@ -118,14 +139,17 @@ export async function getCache<T = any>(key: unknown): Promise<T | null> {
  */
 export async function setCache(key: unknown, value: any, ttlSeconds = 3600): Promise<void> {
   try {
-    const redis = await getOptionalRedisClient();
+    const redis = await getOptionalRedisClient({ silent: true });
     if (!redis) {
       return;
     }
     const prefixedKey = prefixKey(key);
     await redis.setEx(prefixedKey, ttlSeconds, JSON.stringify(value));
   } catch (error: unknown) {
-    logCacheError('cache:set', key, error);
+    handleRedisCommandFailure(error);
+    if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
+      logCacheError('cache:set', key, error);
+    }
   }
 }
 
@@ -134,14 +158,17 @@ export async function setCache(key: unknown, value: any, ttlSeconds = 3600): Pro
  */
 export async function deleteCache(key: unknown): Promise<void> {
   try {
-    const redis = await getOptionalRedisClient();
+    const redis = await getOptionalRedisClient({ silent: true });
     if (!redis) {
       return;
     }
     const prefixedKey = prefixKey(key);
     await redis.del(prefixedKey);
   } catch (error: unknown) {
-    logCacheError('cache:delete', key, error);
+    handleRedisCommandFailure(error);
+    if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
+      logCacheError('cache:delete', key, error);
+    }
   }
 }
 
@@ -151,7 +178,7 @@ export async function deleteCache(key: unknown): Promise<void> {
  */
 export async function deleteCachePattern(pattern: unknown): Promise<void> {
   try {
-    const redis = await getOptionalRedisClient();
+    const redis = await getOptionalRedisClient({ silent: true });
     if (!redis) {
       return;
     }
@@ -161,7 +188,10 @@ export async function deleteCachePattern(pattern: unknown): Promise<void> {
       await redis.del(keys);
     }
   } catch (error: unknown) {
-    logCacheError('cache:delete-pattern', pattern, error);
+    handleRedisCommandFailure(error);
+    if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
+      logCacheError('cache:delete-pattern', pattern, error);
+    }
   }
 }
 
@@ -175,9 +205,11 @@ export async function checkRateLimit(key: unknown, limit: number, windowSeconds:
   const normalizedKey = normalizeCacheKey(key || 'unknown');
 
   try {
-    const redis = await getOptionalRedisClient();
+    const redis = await getOptionalRedisClient({ silent: true });
     if (!redis) {
-      logRedisUnavailableOnce(new Error('Redis unavailable for rate limiting, using in-memory fallback'));
+      if (REDIS_ENABLED) {
+        logRedisUnavailableOnce(new Error('Redis unavailable for rate limiting, using in-memory fallback'));
+      }
       return checkInMemoryRateLimit(normalizedKey, safeLimit, safeWindowSeconds);
     }
     const prefixedKey = prefixKey(`ratelimit:${normalizedKey}`);
@@ -189,19 +221,48 @@ export async function checkRateLimit(key: unknown, limit: number, windowSeconds:
 
     return current <= safeLimit;
   } catch (error: unknown) {
-    logCacheError('rate-limit-check', normalizedKey, error);
+    handleRedisCommandFailure(error);
+    if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
+      logCacheError('rate-limit-check', normalizedKey, error);
+    }
     return checkInMemoryRateLimit(normalizedKey, safeLimit, safeWindowSeconds);
   }
 }
 
 function parsePositiveInt(name: string, fallback: number): number {
-  const raw = process.env[name];
+  const raw = readNodeEnv(name);
   if (!raw) {
     return fallback;
   }
 
   const parsed = Number.parseInt(raw, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function resolveRedisEnabled(rawValue: string | undefined, redisUrlValue: string): boolean {
+  const normalized = (rawValue || '').trim().toLowerCase();
+  if (normalized === 'true') {
+    return true;
+  }
+  if (normalized === 'false') {
+    return false;
+  }
+
+  return redisUrlValue.length > 0;
+}
+
+function normalizeKeyPrefix(prefix: string): string {
+  const trimmed = prefix.trim();
+  if (!trimmed) {
+    return LEGACY_KEY_PREFIX;
+  }
+
+  return trimmed.endsWith(':') ? trimmed : `${trimmed}:`;
+}
+
+function readNodeEnv(key: string): string | undefined {
+  const globalProcess = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
+  return globalProcess?.env?.[key];
 }
 
 function logRedisUnavailableOnce(error: Error): void {
@@ -225,6 +286,41 @@ function toErrorMessage(error: unknown): string {
   } catch {
     return String(error);
   }
+}
+
+function isRedisAuthError(error: unknown): boolean {
+  const message = toErrorMessage(error).toUpperCase();
+  return message.includes('NOAUTH') || message.includes('WRONGPASS');
+}
+
+function isRedisConnectivityError(error: unknown): boolean {
+  const message = toErrorMessage(error).toUpperCase();
+  return (
+    message.includes('ECONNREFUSED') ||
+    message.includes('ETIMEDOUT') ||
+    message.includes('ENOTFOUND') ||
+    message.includes('CONNECTION CLOSED') ||
+    message.includes('SOCKET CLOSED')
+  );
+}
+
+function handleRedisCommandFailure(error: unknown): void {
+  if (!isRedisAuthError(error)) {
+    return;
+  }
+
+  const authError = error instanceof Error ? error : new Error(toErrorMessage(error));
+  connectionError = authError;
+  lastConnectionAttempt = Date.now();
+
+  if (client) {
+    void client.quit().catch(() => undefined);
+    client = null;
+  }
+
+  logRedisUnavailableOnce(
+    new Error(`Redis authentication failed, falling back to graceful degradation: ${authError.message}`)
+  );
 }
 
 function shouldLogNow(signature: string): boolean {

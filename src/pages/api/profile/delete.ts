@@ -6,7 +6,7 @@ import { signOut } from '../../../lib/auth';
 export const POST: APIRoute = async ({ locals, redirect, cookies }) => {
   try {
     const user = locals.user;
-    
+
     if (!user) {
       return redirect('/giris');
     }
@@ -17,7 +17,7 @@ export const POST: APIRoute = async ({ locals, redirect, cookies }) => {
     // Clear session
     const token = cookies.get('auth-token')?.value;
     if (token) signOut(token);
-    
+
     cookies.delete('auth-token', { path: '/' });
 
     return redirect('/?account_deleted=true');

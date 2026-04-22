@@ -16,11 +16,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = request.headers.get('x-request-id') || crypto.randomUUID();
 
   try {
-    // Auth required
+    // Oturum zorunlu
     if (!locals.user) {
       const duration = Date.now() - startTime;
       recordRequest('GET', '/api/loyalty/achievements', 401, duration);
-      return apiError('UNAUTHORIZED', 'Authentication required', 401, undefined, requestId);
+      return apiError('UNAUTHORIZED', 'Oturum açmanız gerekiyor', 401, undefined, requestId);
     }
 
     const url = new URL(request.url);
@@ -64,8 +64,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/loyalty/achievements', 500, duration);
-    logger.error('Failed to get achievements', error instanceof Error ? error : new Error(String(error)));
-    return apiError('INTERNAL_ERROR', 'Failed to retrieve achievements', 500, undefined, requestId);
+    logger.error('Başarımlar alınamadı', error instanceof Error ? error : new Error(String(error)));
+    return apiError('INTERNAL_ERROR', 'Başarımlar alınamadı', 500, undefined, requestId);
   }
 };
 
@@ -74,11 +74,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = request.headers.get('x-request-id') || crypto.randomUUID();
 
   try {
-    // Auth required
+    // Oturum zorunlu
     if (!locals.user) {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/loyalty/achievements', 401, duration);
-      return apiError('UNAUTHORIZED', 'Authentication required', 401, undefined, requestId);
+      return apiError('UNAUTHORIZED', 'Oturum açmanız gerekiyor', 401, undefined, requestId);
     }
 
     const body = await request.json();
@@ -88,7 +88,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!userAchievementId || typeof userAchievementId !== 'string') {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/loyalty/achievements', 422, duration);
-      return apiError('VALIDATION_ERROR', 'userAchievementId is required', 422, undefined, requestId);
+      return apiError('VALIDATION_ERROR', 'Başarım ID gereklidir', 422, undefined, requestId);
     }
 
     // Mark as viewed
@@ -101,7 +101,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/loyalty/achievements', 500, duration);
-    logger.error('Failed to mark achievement viewed', error instanceof Error ? error : new Error(String(error)));
-    return apiError('INTERNAL_ERROR', 'Failed to update achievement', 500, undefined, requestId);
+    logger.error('Başarım görüntülendi olarak işaretlenemedi', error instanceof Error ? error : new Error(String(error)));
+    return apiError('INTERNAL_ERROR', 'Başarım güncellenemedi', 500, undefined, requestId);
   }
 };

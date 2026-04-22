@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/analytics/dashboard', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const days = parseInt(url.searchParams.get('days') || '30', 10);
@@ -34,6 +34,6 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/analytics/dashboard', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Dashboard analytics failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'İşlem tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

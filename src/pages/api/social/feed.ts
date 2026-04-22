@@ -9,7 +9,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const limit = parseInt(url.searchParams.get('limit') || '50');
@@ -17,8 +17,8 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     return apiResponse({ success: true, data: feed }, HttpStatus.OK, requestId);
   } catch (error) {
-    logger.error('Failed to get feed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Akış alınamadı', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -28,20 +28,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
     const { activity_type, object_type, object_id, title, visibility } = body;
 
     if (!activity_type || !object_type || !object_id || !title) {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Missing required fields', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Zorunlu alanlar eksik', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     const activity = await createActivity(locals.user.id, activity_type, object_type, object_id, title, visibility || 'public');
     return apiResponse({ success: true, data: activity }, HttpStatus.CREATED, requestId);
   } catch (error) {
-    logger.error('Failed to create activity', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Aktivite oluşturulamadı', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -46,14 +46,14 @@ export default function TenantManager() {
     try {
       setLoading(true);
       const response = await fetch('/api/tenants');
-      if (!response.ok) throw new Error('Failed to load tenants');
+      if (!response.ok) throw new Error('Kiracılar yüklenemedi');
       const result = await response.json();
       setTenants(result.data || []);
       if (result.data?.length > 0) {
         loadTenantDetails(result.data[0].id);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading tenants');
+      setError(err instanceof Error ? err.message : 'Kiracılar yüklenemedi');
     } finally {
       setLoading(false);
     }
@@ -62,12 +62,12 @@ export default function TenantManager() {
   const loadTenantDetails = async (tenantId: string) => {
     try {
       const response = await fetch(`/api/tenants/${tenantId}`);
-      if (!response.ok) throw new Error('Failed to load tenant details');
+      if (!response.ok) throw new Error('Kiracı detayları yüklenemedi');
       const result = await response.json();
       setSelectedTenant(result.data.tenant);
       setBranding(result.data.branding);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading tenant details');
+      setError(err instanceof Error ? err.message : 'Kiracı detayları yüklenemedi');
     }
   };
 
@@ -80,13 +80,13 @@ export default function TenantManager() {
         body: JSON.stringify(newTenant)
       });
 
-      if (!response.ok) throw new Error('Failed to create tenant');
+      if (!response.ok) throw new Error('Kiracı oluşturulamadı');
       const result = await response.json();
       setTenants([...tenants, result.data]);
       setNewTenant({ name: '', slug: '', description: '' });
       setShowCreateForm(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error creating tenant');
+      setError(err instanceof Error ? err.message : 'Kiracı oluşturulamadı');
     }
   };
 
@@ -100,11 +100,10 @@ export default function TenantManager() {
         body: JSON.stringify({ branding })
       });
 
-      if (!response.ok) throw new Error('Failed to update branding');
-      // Show success message
-      alert('Branding updated successfully');
+      if (!response.ok) throw new Error('Markalama güncellenemedi');
+      alert('Markalama başarıyla güncellendi');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error updating branding');
+      setError(err instanceof Error ? err.message : 'Markalama güncellenemedi');
     }
   };
 
@@ -297,7 +296,7 @@ export default function TenantManager() {
                     onChange={(e) => setBranding({ ...branding, hide_branding: e.target.checked })}
                     className="w-4 h-4 border border-gray-300 rounded"
                   />
-                  <span className="text-sm font-medium text-gray-700">Orijinal Branding'i Gizle</span>
+                  <span className="text-sm font-medium text-gray-700">Orijinal markalamayı gizle</span>
                 </label>
 
                 <button

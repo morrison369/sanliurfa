@@ -1,20 +1,51 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import UserSettings from '../components/UserSettings';
+import Layout from "../layouts/Layout.astro";
+import UserSettings from "../components/UserSettings";
+import AuthFeatureLanding from "../components/AuthFeatureLanding.astro";
 
-// Require authentication
-if (!Astro.locals.user) {
-  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
-}
+const user = Astro.locals.user;
 ---
 
 <Layout title="Ayarlar - Şanlıurfa" noindex>
-  <div class="max-w-4xl mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Hesap Ayarları</h1>
-      <p class="text-gray-600 dark:text-gray-400">Profil bilgilerinizi ve tercihlerinizi yönetin</p>
-    </div>
+  {
+    !user ? (
+      <AuthFeatureLanding
+        eyebrow="Hesap ayarları"
+        title="Şanlıurfa hesabınızı güvenli ve düzenli yönetin"
+        description="Profil, bildirim, gizlilik, tema, şifre ve isteğe bağlı iki faktörlü doğrulama ayarları hesap panelinde toplanır. Ücretsiz hesapla tüm temel ayarları yönetebilirsiniz."
+        loginRedirect="/ayarlar"
+        features={[
+          {
+            title: "Profil ve gizlilik",
+            description:
+              "Ad, kullanıcı adı, biyografi, profil görünürlüğü ve mesajlaşma izinlerini yönetin.",
+          },
+          {
+            title: "Güvenlik seçenekleri",
+            description:
+              "Şifre değişikliği ve isteğe bağlı iki faktörlü doğrulama ayarlarını kontrol edin.",
+          },
+          {
+            title: "Türkçe kullanım kilidi",
+            description:
+              "sanliurfa.com yalnızca Türkçe yayın yapar; dil seçici ve çok dilli rota kullanılmaz.",
+          },
+        ]}
+      />
+    ) : (
+      <div class="max-w-4xl mx-auto px-4 py-8">
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Hesap ayarları
+          </h1>
+          <p class="text-gray-600 dark:text-gray-400">
+            Profil bilgilerinizi, gizlilik tercihlerinizi ve güvenlik
+            ayarlarınızı yönetin.
+          </p>
+        </div>
 
-    <UserSettings client:load />
-  </div>
+        <UserSettings client:load />
+      </div>
+    )
+  }
 </Layout>

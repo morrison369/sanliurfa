@@ -7,7 +7,7 @@
 
 import { pool } from './postgres';
 import { logger } from './logging';
-import { prefixKey, getCache, setCache, deleteCache } from './cache';
+import { getCache, setCache, deleteCache } from './cache';
 import { fireAndForget } from './performance-optimizations';
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'action';
@@ -57,7 +57,7 @@ export async function createNotification(
 
     if (notificationId) {
       // Clear user notifications cache
-      await deleteCache(prefixKey(`notifications:unread:${userId}`));
+      await deleteCache(`notifications:unread:${userId}`);
       // Broadcast via WebSocket (optimized: fire-and-forget to avoid blocking)
       fireAndForget(
         broadcastNotification(userId, {
@@ -88,7 +88,7 @@ export async function createNotification(
  */
 export async function getUnreadNotifications(userId: string, limit: number = 20): Promise<Notification[]> {
   try {
-    const cacheKey = prefixKey(`notifications:unread:${userId}`);
+    const cacheKey = `notifications:unread:${userId}`;
     const cached = await getCache(cacheKey);
 
     if (cached) {
@@ -168,7 +168,7 @@ export async function markAsRead(notificationId: string, userId: string): Promis
     );
 
     if ((result.rowCount || 0) > 0) {
-      await deleteCache(prefixKey(`notifications:unread:${userId}`));
+      await deleteCache(`notifications:unread:${userId}`);
     }
 
     return (result.rowCount || 0) > 0;
@@ -189,7 +189,7 @@ export async function markAllAsRead(userId: string): Promise<number> {
     );
 
     if ((result.rowCount || 0) > 0) {
-      await deleteCache(prefixKey(`notifications:unread:${userId}`));
+      await deleteCache(`notifications:unread:${userId}`);
     }
 
     return result.rowCount || 0;
@@ -210,7 +210,7 @@ export async function deleteNotification(notificationId: string, userId: string)
     );
 
     if ((result.rowCount || 0) > 0) {
-      await deleteCache(prefixKey(`notifications:unread:${userId}`));
+      await deleteCache(`notifications:unread:${userId}`);
     }
 
     return (result.rowCount || 0) > 0;

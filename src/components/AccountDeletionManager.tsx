@@ -135,7 +135,7 @@ export default function AccountDeletionManager() {
       {status?.hasPendingDeletion ? (
         <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <div className="mb-4">
-            <h3 className="font-semibold text-red-900 dark:text-red-200 mb-2">Hesap Silme Beklemede</h3>
+            <h3 className="font-semibold text-red-900 dark:text-red-200 mb-2">Hesap silme beklemede</h3>
             <p className="text-sm text-red-800 dark:text-red-300 mb-4">
               Hesabınız{' '}
               <strong>
@@ -153,12 +153,12 @@ export default function AccountDeletionManager() {
             disabled={isCancelling}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isCancelling ? 'İptal Ediliyor...' : 'Silmeyi İptal Et'}
+            {isCancelling ? 'İptal ediliyor...' : 'Silmeyi iptal et'}
           </button>
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Hesabı Sil</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Hesabı sil</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
             Hesabınızı silmek istiyorsanız, aşağıdaki butona tıklayın. Silme işlemi 7 gün sonra gerçekleşecektir ve bu süre içinde iptal edebilirsiniz.
           </p>
@@ -167,7 +167,7 @@ export default function AccountDeletionManager() {
             onClick={() => setShowDeleteModal(true)}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
           >
-            Hesabı Silmeyi İste
+            Hesabı silmeyi iste
           </button>
         </div>
       )}
@@ -175,7 +175,7 @@ export default function AccountDeletionManager() {
       {showDeleteModal && !status?.hasPendingDeletion && (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Hesabı Sil</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Hesabı sil</h2>
 
             <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
               <p className="text-sm text-red-800 dark:text-red-300">
@@ -186,7 +186,7 @@ export default function AccountDeletionManager() {
             <form onSubmit={handleRequestDeletion} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Şifrenizi Girin
+                  Şifrenizi girin
                 </label>
                 <input
                   type="password"
@@ -201,7 +201,7 @@ export default function AccountDeletionManager() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Silme Sebebi (Opsiyonel)
+                  Silme sebebi (opsiyonel)
                 </label>
                 <textarea
                   value={reason}
@@ -223,7 +223,7 @@ export default function AccountDeletionManager() {
                   disabled={isDeletingAccount || !password}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
-                  {isDeletingAccount ? 'Gönderiliyor...' : 'Silmeyi Onayla'}
+                  {isDeletingAccount ? 'Gönderiliyor...' : 'Silmeyi onayla'}
                 </button>
                 <button
                   type="button"

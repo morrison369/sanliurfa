@@ -113,13 +113,13 @@ export default function SeoAnalyzer() {
       });
 
       if (!response.ok) {
-        throw new Error('Analysis failed');
+        throw new Error('Analiz başarısız oldu');
       }
 
       const result = await response.json();
       setAnalysis(result.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed');
+      setError(err instanceof Error ? err.message : 'Analiz başarısız oldu');
     } finally {
       setLoading(false);
     }
@@ -210,10 +210,10 @@ export default function SeoAnalyzer() {
             </div>
             <p className="text-gray-600 text-sm mt-2">
               {analysis.score >= 80
-                ? '훌륭한 SEO 최적화'
+                ? 'Güçlü SEO optimizasyonu'
                 : analysis.score >= 60
-                  ? 'SEO 개선 필요'
-                  : '긴급 SEO 개선 필요'}
+                  ? 'SEO iyileştirmesi gerekli'
+                  : 'Acil SEO iyileştirmesi gerekli'}
             </p>
           </div>
         </div>
@@ -222,7 +222,7 @@ export default function SeoAnalyzer() {
       {/* Strengths */}
       {analysis.strengths.length > 0 && (
         <div className="bg-green-50 p-6 rounded-lg border border-green-200">
-          <h3 className="text-lg font-semibold text-green-900 mb-3">✓ 강점</h3>
+          <h3 className="text-lg font-semibold text-green-900 mb-3">✓ Güçlü Yönler</h3>
           <ul className="space-y-2">
             {analysis.strengths.map((strength, idx) => (
               <li key={idx} className="text-green-800 flex items-start">
@@ -237,7 +237,7 @@ export default function SeoAnalyzer() {
       {/* Issues */}
       {analysis.issues.length > 0 && (
         <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">문제점 및 권장사항</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sorunlar ve Öneriler</h3>
           <div className="space-y-3">
             {analysis.issues.map((issue, idx) => (
               <div
@@ -268,11 +268,11 @@ export default function SeoAnalyzer() {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Sayfa Verisi</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-gray-600">Title</p>
+            <p className="text-gray-600">Başlık</p>
             <p className="font-mono text-gray-900 truncate">{pageData.title}</p>
           </div>
           <div>
-            <p className="text-gray-600">Description ({pageData.description.length} chars)</p>
+            <p className="text-gray-600">Açıklama ({pageData.description.length} karakter)</p>
             <p className="font-mono text-gray-900 truncate">{pageData.description}</p>
           </div>
           <div>
@@ -282,15 +282,15 @@ export default function SeoAnalyzer() {
             </p>
           </div>
           <div>
-            <p className="text-gray-600">Word Count</p>
-            <p className="font-mono text-gray-900">{pageData.wordCount} words</p>
+            <p className="text-gray-600">Kelime Sayısı</p>
+            <p className="font-mono text-gray-900">{pageData.wordCount} kelime</p>
           </div>
           <div>
-            <p className="text-gray-600">Images</p>
+            <p className="text-gray-600">Görseller</p>
             <p className="font-mono text-gray-900">{pageData.imageCount}</p>
           </div>
           <div>
-            <p className="text-gray-600">Internal Links</p>
+            <p className="text-gray-600">İç Bağlantılar</p>
             <p className="font-mono text-gray-900">{pageData.internalLinks}</p>
           </div>
         </div>

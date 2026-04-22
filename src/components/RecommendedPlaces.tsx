@@ -11,6 +11,7 @@ interface Recommendation {
   score?: number;
   recommended_place_id?: string;
   recommendation_score?: number;
+  slug?: string;
 }
 
 interface RecommendedPlacesProps {
@@ -29,7 +30,7 @@ export default function RecommendedPlaces({
   type = 'hybrid',
   limit = 10,
   showReason = true,
-  title = 'Size Önerilen Mekanlar'
+  title = 'Size Önerilen Mekânlar'
 }: RecommendedPlacesProps) {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +61,7 @@ export default function RecommendedPlaces({
         setError(data.error || 'Öneriler yüklenemedi');
       }
     } catch (err) {
-      console.error('Failed to load recommendations:', err);
+      console.error('Öneriler yüklenemedi:', err);
       setError('Öneriler yüklenirken bir hata oluştu');
     } finally {
       setIsLoading(false);
@@ -76,7 +77,7 @@ export default function RecommendedPlaces({
   }
 
   if (recommendations.length === 0) {
-    return <div className="text-center py-8 text-gray-500">Henüz öneri yok</div>;
+    return <div className="text-center py-8 text-gray-500">Şanlıurfa için öneriler hazırlanıyor.</div>;
   }
 
   return (
@@ -112,7 +113,7 @@ export default function RecommendedPlaces({
         {recommendations.map(rec => (
           <a
             key={rec.id}
-            href={`/mekan/${rec.recommended_place_id || rec.id}`}
+            href={`/places/${rec.slug || rec.recommended_place_id || rec.id}`}
             className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-lg transition"
           >
             {/* Image */}

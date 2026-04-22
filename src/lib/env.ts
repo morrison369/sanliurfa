@@ -111,7 +111,8 @@ export const env = {
 };
 
 function readProcessEnv(key: string): string | undefined {
-  return typeof process !== 'undefined' ? process.env?.[key] : undefined;
+  const globalProcess = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
+  return globalProcess?.env?.[key];
 }
 
 function getPublicClientVar(key: (typeof requiredClientVars)[number]): string {

@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/admin/verifications/[id]/approve', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
-        'Admin access required',
+        'Admin yetkisi gerekiyor',
         HttpStatus.FORBIDDEN,
         undefined,
         requestId
@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/admin/verifications/[id]/approve', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid input',
+        'Geçersiz veri',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
@@ -65,7 +65,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/admin/verifications/[id]/approve', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Verification request not found',
+        'Doğrulama talebi bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -83,10 +83,10 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/verifications/[id]/approve', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to approve verification', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Doğrulama onaylanamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to approve verification',
+      'Doğrulama onaylanamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

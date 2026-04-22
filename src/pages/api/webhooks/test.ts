@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -59,7 +59,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       test: true,
       timestamp: new Date().toISOString(),
       event: webhook.event,
-      message: 'This is a test webhook event'
+      message: 'Bu bir test webhook olayıdır'
     };
 
     await triggerWebhook(webhook.event, testPayload, locals.user.id);
@@ -69,7 +69,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return apiResponse(
       {
         success: true,
-        message: 'Test webhook sent successfully',
+        message: 'Test webhook başarıyla gönderildi',
         data: {
           webhookId,
           event: webhook.event,
@@ -81,10 +81,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to test webhook', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Webhook testi başarısız oldu', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to test webhook',
+      'Webhook testi başarısız oldu',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

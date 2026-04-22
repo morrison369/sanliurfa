@@ -41,7 +41,7 @@ export default function WebhookDeliveryLogs({ webhookId, token }: LogsProps) {
         setSummary(data.data);
       }
     } catch (err) {
-      console.error('Failed to load summary:', err);
+      console.error('Özet yükleme hatası:', err);
     }
   };
 
@@ -53,12 +53,12 @@ export default function WebhookDeliveryLogs({ webhookId, token }: LogsProps) {
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
 
-      if (!res.ok) throw new Error('Failed to load logs');
+      if (!res.ok) throw new Error('Kayıtlar yüklenemedi');
       const data = await res.json();
       setLogs(data.data);
       setTotal(data.pagination.total);
     } catch (err) {
-      console.error('Failed to load logs:', err);
+      console.error('Kayıt yükleme hatası:', err);
     } finally {
       setLoading(false);
     }

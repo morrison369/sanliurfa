@@ -510,7 +510,7 @@ export async function getEmailLogs(
     );
     return logs;
   } catch (error) {
-    logger.error('Email logs yükleme hatası', error instanceof Error ? error : new Error(String(error)), {
+    logger.error('E-posta kayıtları yükleme hatası', error instanceof Error ? error : new Error(String(error)), {
       userId
     });
     return [];
@@ -518,7 +518,7 @@ export async function getEmailLogs(
 }
 
 /**
- * Default email template'lerini oluştur
+ * Varsayılan e-posta şablonlarını oluştur
  */
 export async function initializeDefaultEmailTemplates(): Promise<void> {
   try {
@@ -528,12 +528,12 @@ export async function initializeDefaultEmailTemplates(): Promise<void> {
         subject: '✨ {{userName}}, {{tierName}} planınıza hoş geldiniz',
         html_body: `
           <h2>Hoş geldiniz, {{userName}}!</h2>
-          <p>{{tierName}} paketine başarıyla abone oldum.</p>
+          <p>{{tierName}} paketine başarıyla abone oldunuz.</p>
           <p><strong>Ödeme Dönemi:</strong> {{billingPeriod}}</p>
           <p><strong>Fiyat:</strong> ₺{{price}}</p>
           <p><strong>Yenileme Tarihi:</strong> {{renewalDate}}</p>
-          <p>Tüm premium özelliklere erişim sağlayabilirsiniz.</p>
-          <p><a href="https://sanliurfa.com/abonelik" style="background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none;">Abonelikmi Yönet</a></p>
+          <p>Tüm Premium özelliklere erişim sağlayabilirsiniz.</p>
+          <p><a href="https://sanliurfa.com/abonelik" style="background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none;">Aboneliğimi Yönet</a></p>
         `,
         category: 'subscription'
       },
@@ -545,7 +545,7 @@ export async function initializeDefaultEmailTemplates(): Promise<void> {
           <p>Abonelik ödemeniz başarıyla işlendi.</p>
           <p><strong>Tutar:</strong> ₺{{amount}}</p>
           <p><strong>Plan:</strong> {{tierName}}</p>
-          <p><strong>Işlem Tarihi:</strong> {{transactionDate}}</p>
+          <p><strong>İşlem Tarihi:</strong> {{transactionDate}}</p>
           <p><strong>Sonraki Ödeme:</strong> {{nextBillingDate}}</p>
           <p>Hizmetlerimizi kullanmaya devam edebilirsiniz.</p>
         `,
@@ -593,13 +593,13 @@ export async function initializeDefaultEmailTemplates(): Promise<void> {
       },
       {
         name: 'plan_downgrade',
-        subject: '📉 {{userName}}, {{newTierName}} paketine indirgendi',
+        subject: '📉 {{userName}}, {{newTierName}} paketine geçiş yapıldı',
         html_body: `
-          <h2>Plan İndirgeme</h2>
+          <h2>Plan Değişikliği</h2>
           <p>Merhaba {{userName}},</p>
-          <p>{{oldTierName}} paketinden {{newTierName}} paketine indirgeme yapılmıştır.</p>
+          <p>{{oldTierName}} paketinden {{newTierName}} paketine geçiş yapılmıştır.</p>
           <p><strong>Kredi Tutarı:</strong> ₺{{creditAmount}}</p>
-          <p><strong>İndirge Tarihi:</strong> {{downgradeDate}}</p>
+          <p><strong>Plan Değişikliği Tarihi:</strong> {{downgradeDate}}</p>
           <p>Kalan özelliklere erişim sağlayabilirsiniz.</p>
         `,
         category: 'subscription'
@@ -608,12 +608,12 @@ export async function initializeDefaultEmailTemplates(): Promise<void> {
         name: 'subscription_cancelled',
         subject: '❌ {{tierName}} aboneliğiniz iptal edildi',
         html_body: `
-          <h2>Abonelik İptal</h2>
+          <h2>Abonelik İptali</h2>
           <p>Merhaba {{userName}},</p>
           <p>{{tierName}} aboneliğiniz başarıyla iptal edilmiştir.</p>
           <p><strong>İptal Tarihi:</strong> {{cancelDate}}</p>
           <p><strong>Erişim Sonu:</strong> {{accessUntilDate}}</p>
-          <p>{{accessUntilDate}} tarihine kadar hizmetleri kullanabilecesiniz.</p>
+          <p>{{accessUntilDate}} tarihine kadar hizmetleri kullanabileceksiniz.</p>
           <p><a href="{{reactivateUrl}}" style="background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none;">Aboneliği Yeniden Etkinleştir</a></p>
         `,
         category: 'subscription'
@@ -659,7 +659,7 @@ export async function initializeDefaultEmailTemplates(): Promise<void> {
           <p>
             <a href="{{supportUrl}}" style="background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none;">Destek Sayfası</a>
             <br/>
-            <strong>Email:</strong> <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>
+            <strong>E-posta:</strong> <a href="mailto:{{contactEmail}}">{{contactEmail}}</a>
           </p>
         `,
         category: 'billing'

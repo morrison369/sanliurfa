@@ -29,14 +29,14 @@ const {
   <div>
     <h4 class="font-semibold text-gray-900 dark:text-white">Pexels / Unsplash Görseli</h4>
     <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">
-      Mekan adına göre Şanlıurfa odaklı görsel çeker, slug bazlı WebP olarak kaydeder.
+      Mekân adına göre Şanlıurfa odaklı görsel çeker, slug bazlı WebP olarak kaydeder.
     </p>
   </div>
 
   <div class="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
     <img
       src={currentImage || ''}
-      alt="Seçilen mekan görseli"
+      alt="Seçilen mekân görseli"
       class:list={[
         'h-36 w-full object-cover',
         !currentImage && 'hidden',
@@ -108,7 +108,7 @@ const {
       const slug = root.dataset.currentSlug || slugifyTurkish(query);
 
       if (!query || !slug) {
-        if (status) status.textContent = 'Önce mekan adını girin.';
+        if (status) status.textContent = 'Önce mekân adını girin.';
         return;
       }
 

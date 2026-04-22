@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const sessions = await getUserSessions(locals.user.id);
@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to get sessions', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Oturumlar alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -35,27 +35,27 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const sessionId = url.searchParams.get('session_id');
     if (!sessionId) {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Session ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Oturum ID gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     const success = await invalidateSession(sessionId);
     if (!success) {
-      return apiError(ErrorCode.NOT_FOUND, 'Session not found', HttpStatus.NOT_FOUND, undefined, requestId);
+      return apiError(ErrorCode.NOT_FOUND, 'Oturum bulunamadı', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
     logger.info('Session invalidated', { userId: locals.user.id, sessionId });
 
     return apiResponse({
       success: true,
-      data: { message: 'Session terminated' }
+      data: { message: 'Oturum sonlandırıldı' }
     }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to invalidate session', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Oturum sonlandırılamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

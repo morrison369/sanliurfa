@@ -30,6 +30,85 @@ function readCachedArray<T = any>(cached: unknown): T[] | null {
   return null;
 }
 
+interface UserFollowColumns {
+  follower: 'follower_user_id' | 'follower_id';
+  following: 'following_user_id' | 'following_id';
+  followedAt?: 'followed_at';
+  isApproved?: 'is_approved';
+}
+
+let cachedUserFollowColumns: UserFollowColumns | null = null;
+
+async function getUserFollowColumns(): Promise<UserFollowColumns> {
+  if (cachedUserFollowColumns) {
+    return cachedUserFollowColumns;
+  }
+
+  const rows = await queryMany<{ column_name?: string; is_nullable?: 'YES' | 'NO' }>(
+    `SELECT column_name, is_nullable
+     FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'user_follows'`
+  );
+
+  const columnMeta = new Map<
+    string,
+    {
+      isNullable: boolean;
+    }
+  >();
+
+  for (const row of rows || []) {
+    if (typeof row.column_name !== 'string') {
+      continue;
+    }
+    columnMeta.set(row.column_name, {
+      isNullable: row.is_nullable !== 'NO'
+    });
+  }
+
+  const hasStrictLegacyPair =
+    columnMeta.has('follower_id') &&
+    columnMeta.has('following_id') &&
+    columnMeta.get('follower_id')?.isNullable === false &&
+    columnMeta.get('following_id')?.isNullable === false;
+
+  const hasStrictModernPair =
+    columnMeta.has('follower_user_id') &&
+    columnMeta.has('following_user_id') &&
+    columnMeta.get('follower_user_id')?.isNullable === false &&
+    columnMeta.get('following_user_id')?.isNullable === false;
+
+  let follower: UserFollowColumns['follower'] | null = null;
+  let following: UserFollowColumns['following'] | null = null;
+
+  if (hasStrictLegacyPair) {
+    follower = 'follower_id';
+    following = 'following_id';
+  } else if (hasStrictModernPair) {
+    follower = 'follower_user_id';
+    following = 'following_user_id';
+  } else if (columnMeta.has('follower_id') && columnMeta.has('following_id')) {
+    follower = 'follower_id';
+    following = 'following_id';
+  } else if (columnMeta.has('follower_user_id') && columnMeta.has('following_user_id')) {
+    follower = 'follower_user_id';
+    following = 'following_user_id';
+  }
+
+  if (!follower || !following) {
+    throw new Error('user_follows schema is missing follower/following columns');
+  }
+
+  cachedUserFollowColumns = {
+    follower,
+    following,
+    followedAt: columnMeta.has('followed_at') ? 'followed_at' : undefined,
+    isApproved: columnMeta.has('is_approved') ? 'is_approved' : undefined
+  };
+
+  return cachedUserFollowColumns;
+}
+
 // ===== HASHTAG FUNCTIONS =====
 
 export async function getOrCreateHashtag(tagName: string): Promise<any | null> {
@@ -113,12 +192,20 @@ export async function recordHashtagUsage(hashtagId: string, userId: string, cont
 
 export async function followUser(followerUserId: string, followingUserId: string): Promise<any | null> {
   try {
-    const result = await insert('user_follows', {
-      follower_user_id: followerUserId,
-      following_user_id: followingUserId,
-      is_approved: true,
-      followed_at: new Date()
-    });
+    const columns = await getUserFollowColumns();
+    const payload: Record<string, unknown> = {
+      [columns.follower]: followerUserId,
+      [columns.following]: followingUserId
+    };
+
+    if (columns.isApproved) {
+      payload[columns.isApproved] = true;
+    }
+    if (columns.followedAt) {
+      payload[columns.followedAt] = new Date();
+    }
+
+    const result = await insert('user_follows', payload);
 
     // Update social stats (optimized: fire-and-forget to avoid blocking)
     Promise.all([
@@ -139,8 +226,9 @@ export async function followUser(followerUserId: string, followingUserId: string
 
 export async function unfollowUser(followerUserId: string, followingUserId: string): Promise<boolean> {
   try {
+    const columns = await getUserFollowColumns();
     await queryOne(
-      'DELETE FROM user_follows WHERE follower_user_id = $1 AND following_user_id = $2',
+      `DELETE FROM user_follows WHERE ${columns.follower} = $1 AND ${columns.following} = $2`,
       [followerUserId, followingUserId]
     );
 
@@ -157,11 +245,13 @@ export async function unfollowUser(followerUserId: string, followingUserId: stri
 
 export async function getFollowers(userId: string, limit: number = 50): Promise<any[]> {
   try {
+    const columns = await getUserFollowColumns();
+    const orderColumn = columns.followedAt ? `uf.${columns.followedAt}` : 'u.created_at';
     return await queryMany(
       `SELECT u.* FROM users u
-       INNER JOIN user_follows uf ON u.id = uf.follower_user_id
-       WHERE uf.following_user_id = $1
-       ORDER BY uf.followed_at DESC
+       INNER JOIN user_follows uf ON u.id = uf.${columns.follower}
+       WHERE uf.${columns.following} = $1
+       ORDER BY ${orderColumn} DESC
        LIMIT $2`,
       [userId, limit]
     );
@@ -173,11 +263,13 @@ export async function getFollowers(userId: string, limit: number = 50): Promise<
 
 export async function getFollowing(userId: string, limit: number = 50): Promise<any[]> {
   try {
+    const columns = await getUserFollowColumns();
+    const orderColumn = columns.followedAt ? `uf.${columns.followedAt}` : 'u.created_at';
     return await queryMany(
       `SELECT u.* FROM users u
-       INNER JOIN user_follows uf ON u.id = uf.following_user_id
-       WHERE uf.follower_user_id = $1
-       ORDER BY uf.followed_at DESC
+       INNER JOIN user_follows uf ON u.id = uf.${columns.following}
+       WHERE uf.${columns.follower} = $1
+       ORDER BY ${orderColumn} DESC
        LIMIT $2`,
       [userId, limit]
     );
@@ -189,8 +281,9 @@ export async function getFollowing(userId: string, limit: number = 50): Promise<
 
 export async function isFollowing(followerUserId: string, followingUserId: string): Promise<boolean> {
   try {
+    const columns = await getUserFollowColumns();
     const follow = await queryOne(
-      'SELECT * FROM user_follows WHERE follower_user_id = $1 AND following_user_id = $2',
+      `SELECT * FROM user_follows WHERE ${columns.follower} = $1 AND ${columns.following} = $2`,
       [followerUserId, followingUserId]
     );
 
@@ -203,13 +296,14 @@ export async function isFollowing(followerUserId: string, followingUserId: strin
 
 async function updateFollowStats(userId: string): Promise<void> {
   try {
+    const columns = await getUserFollowColumns();
     // Optimized: UPSERT query (INSERT...ON CONFLICT UPDATE) replaces SELECT+UPDATE/INSERT pattern
     // Single query instead of 4 queries (2 COUNTs + 1 SELECT + 1 UPDATE/INSERT)
     await queryOne(
       `INSERT INTO user_social_stats (user_id, follower_count, following_count)
        SELECT $1,
-              (SELECT COUNT(*) FROM user_follows WHERE following_user_id = $1),
-              (SELECT COUNT(*) FROM user_follows WHERE follower_user_id = $1)
+              (SELECT COUNT(*) FROM user_follows WHERE ${columns.following} = $1),
+              (SELECT COUNT(*) FROM user_follows WHERE ${columns.follower} = $1)
        ON CONFLICT (user_id) DO UPDATE SET
          follower_count = EXCLUDED.follower_count,
          following_count = EXCLUDED.following_count`,

@@ -27,7 +27,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const { id: reviewId } = params;
     if (!reviewId) {
       recordRequest('GET', '/api/reviews/[id]/responses', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Review ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const responses = await getReviewResponses(reviewId);
@@ -44,7 +44,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get responses failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get responses', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Yanıtlar alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -56,13 +56,13 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/reviews/[id]/responses', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: reviewId } = params;
     if (!reviewId) {
       recordRequest('POST', '/api/reviews/[id]/responses', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Review ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const body = await request.json();
@@ -70,7 +70,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 
     if (!place_id || !response_text) {
       recordRequest('POST', '/api/reviews/[id]/responses', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'place_id and response_text required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID ve yanıt metni gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const response = await addReviewResponse(reviewId, place_id, locals.user.id, response_text);
@@ -87,7 +87,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Add response failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to add response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Yanıt eklenemedi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -99,7 +99,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/reviews/[id]/responses', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -107,7 +107,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
 
     if (!response_id || !response_text) {
       recordRequest('PUT', '/api/reviews/[id]/responses', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'response_id and response_text required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Yanıt ID ve yanıt metni gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const updated = await updateReviewResponse(response_id, locals.user.id, response_text);
@@ -124,7 +124,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Update response failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to update response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Yanıt güncellenemedi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -136,7 +136,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/reviews/[id]/responses', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -144,21 +144,21 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
 
     if (!response_id) {
       recordRequest('DELETE', '/api/reviews/[id]/responses', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'response_id required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Yanıt ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const deleted = await deleteReviewResponse(response_id, locals.user.id);
 
     if (!deleted) {
       recordRequest('DELETE', '/api/reviews/[id]/responses', HttpStatus.NOT_FOUND, Date.now() - startTime);
-      return apiError(ErrorCode.NOT_FOUND, 'Response not found', HttpStatus.NOT_FOUND, undefined, requestId);
+      return apiError(ErrorCode.NOT_FOUND, 'Yanıt bulunamadı', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/reviews/[id]/responses', HttpStatus.OK, duration);
 
     return apiResponse(
-      { success: true, message: 'Response deleted' },
+      { success: true, message: 'Yanıt silindi' },
       HttpStatus.OK,
       requestId
     );
@@ -166,6 +166,6 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Delete response failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to delete response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Yanıt silinemedi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

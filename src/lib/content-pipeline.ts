@@ -132,14 +132,23 @@ export class MediaProcessor {
    * Generate variant
    */
   async generateVariant(assetId: string, variant: 'thumbnail' | 'preview' | 'compressed'): Promise<MediaAsset> {
-    // Simplified: return mock asset
+    const variantSizes: Record<typeof variant, number> = {
+      thumbnail: 320,
+      preview: 960,
+      compressed: 720,
+    };
+
     return {
       id: assetId + '-' + variant,
       type: 'image',
-      url: '/variants/' + variant,
-      size: 1000,
+      url: '/images/placeholder.jpg',
+      size: variantSizes[variant],
       mimeType: 'image/jpeg',
-      metadata: { variant },
+      metadata: {
+        variant,
+        fallback: true,
+        note: 'Kalici medya varyanti uretimi admin panelinden yuklenen gercek gorsel uzerinden yapilmalidir.',
+      },
       uploadedAt: Date.now()
     };
   }

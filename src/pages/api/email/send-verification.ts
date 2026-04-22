@@ -116,7 +116,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        "Failed to send email",
+        "E-posta gönderilemedi",
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId,

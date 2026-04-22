@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   // Admin-only access
   if (!user?.id || user?.role !== 'admin') {
-    return new Response('Unauthorized', { status: 401 });
+    return new Response('Yetkisiz işlem', { status: 401 });
   }
 
   logger.info('Real-time analytics connection established', { userId: user.id });

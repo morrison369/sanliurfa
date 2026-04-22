@@ -4,14 +4,14 @@ import { query, insert } from '../../../lib/postgres';
 export const GET: APIRoute = async ({ locals }) => {
   const user = locals.user;
   if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    return new Response(JSON.stringify({ error: 'Yetkisiz işlem' }), { status: 401 });
   }
 
   const result = await query(
-    `SELECT r.*, p.name as place_name, p.images as place_images 
-     FROM reservations r 
-     JOIN places p ON r.place_id = p.id 
-     WHERE r.user_id = $1 
+    `SELECT r.*, p.name as place_name, p.images as place_images
+     FROM reservations r
+     JOIN places p ON r.place_id = p.id
+     WHERE r.user_id = $1
      ORDER BY r.created_at DESC`,
     [user.id]
   );
@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ locals }) => {
 export const POST: APIRoute = async ({ request, locals }) => {
   const user = locals.user;
   if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    return new Response(JSON.stringify({ error: 'Yetkisiz işlem' }), { status: 401 });
   }
 
   const body = await request.json();

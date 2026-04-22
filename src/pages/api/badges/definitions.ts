@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ request }) => {
     logger.error('Failed to get badge definitions', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get badge definitions',
+      'Rozet tanımları alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

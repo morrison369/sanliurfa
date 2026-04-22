@@ -72,7 +72,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/featured-listings/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id } = params;
@@ -116,7 +116,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/featured-listings/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id } = params;
@@ -136,7 +136,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     recordRequest('DELETE', '/api/featured-listings/[id]', HttpStatus.OK, duration);
 
     return apiResponse(
-      { success: true, message: 'Featured listing deleted' },
+      { success: true, message: 'Öne çıkan listeleme silindi' },
       HttpStatus.OK,
       requestId
     );

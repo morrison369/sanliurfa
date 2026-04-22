@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -39,8 +39,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to get templates', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get templates', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Şablonlar alınamadı', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Şablonlar alınamadı', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -54,7 +54,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const body = await request.json();
@@ -86,20 +86,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    logger.info('Template created', { templateId: template.id, userId: locals.user.id });
+    logger.info('Şablon oluşturuldu', { templateId: template.id, userId: locals.user.id });
 
     return apiResponse(
       {
         success: true,
         data: { template, webhookId },
-        message: 'Template created successfully'
+        message: 'Şablon başarıyla oluşturuldu'
       },
       HttpStatus.CREATED,
       requestId
     );
   } catch (error) {
-    logger.error('Failed to create template', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to create template', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Şablon oluşturulamadı', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Şablon oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -113,7 +113,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const { id } = params;
@@ -128,15 +128,15 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       return apiError(ErrorCode.NOT_FOUND, 'Template not found', HttpStatus.NOT_FOUND);
     }
 
-    logger.info('Template deleted', { templateId: id, userId: locals.user.id });
+    logger.info('Şablon silindi', { templateId: id, userId: locals.user.id });
 
     return apiResponse(
-      { success: true, message: 'Template deleted' },
+      { success: true, message: 'Şablon silindi' },
       HttpStatus.OK,
       requestId
     );
   } catch (error) {
-    logger.error('Failed to delete template', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to delete template', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Şablon silinemedi', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Şablon silinemedi', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

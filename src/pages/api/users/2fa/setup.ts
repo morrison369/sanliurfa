@@ -12,9 +12,9 @@ import { setCache } from '../../../../lib/cache';
 
 export const POST: APIRoute = async (context) => {
   try {
-    // Auth required
+    // Oturum zorunlu
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
     }
 
     const userId = context.locals.user.id;
@@ -23,7 +23,7 @@ export const POST: APIRoute = async (context) => {
     // Generate 2FA secret
     const setupResult = await setupTwoFactor(userId);
     if (!setupResult) {
-      return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to generate 2FA secret');
+      return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, '2FA gizli anahtarı oluşturulamadı');
     }
     const { secret, qrCodeUrl, backupCodes } = setupResult;
 
@@ -34,13 +34,13 @@ export const POST: APIRoute = async (context) => {
 
     return apiResponse(context, HttpStatus.OK, {
       success: true,
-      message: '2FA setup initiated. Scan QR code with authenticator app.',
+      message: '2FA kurulumu başlatıldı. QR kodunu doğrulama uygulamasıyla tarayın.',
       secret,
       qrCodeUrl,
       backupCodes
     });
   } catch (error) {
-    logger.error('Failed to setup 2FA', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to setup 2FA');
+    logger.error('2FA kurulumu başlatılamadı', error instanceof Error ? error : new Error(String(error)));
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, '2FA kurulumu başlatılamadı');
   }
 };

@@ -4,7 +4,7 @@ import { queryOne, queryMany } from '../../lib/postgres';
 export const GET: APIRoute = async ({ locals }) => {
   try {
     if (!locals.user?.isAdmin) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 403 });
+      return new Response(JSON.stringify({ error: 'Yetkisiz işlem' }), { status: 403 });
     }
 
     const totalUsers = await queryOne('SELECT COUNT(*) as count FROM users');
@@ -42,6 +42,6 @@ export const GET: APIRoute = async ({ locals }) => {
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
     console.error('Analytics error', error);
-    return new Response(JSON.stringify({ error: 'Failed' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'İşlem tamamlanamadı' }), { status: 500 });
   }
 };

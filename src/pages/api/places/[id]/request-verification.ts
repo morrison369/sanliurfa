@@ -17,12 +17,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   logger.setRequestId(requestId);
 
   try {
-    // Auth required
+    // Oturum zorunlu
     if (!locals.user) {
       recordRequest('POST', '/api/places/[id]/request-verification', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/places/[id]/request-verification', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Place not found',
+        'Mekan bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -55,7 +55,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/places/[id]/request-verification', HttpStatus.CONFLICT, Date.now() - startTime);
       return apiError(
         ErrorCode.CONFLICT,
-        'This place already has a pending or verified verification request',
+        'Bu mekanın bekleyen veya onaylanmış doğrulama talebi zaten var',
         HttpStatus.CONFLICT,
         undefined,
         requestId
@@ -74,7 +74,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     logger.error('Failed to request verification', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to request verification',
+      'Doğrulama talebi gönderilemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

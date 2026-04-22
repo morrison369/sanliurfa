@@ -1,0 +1,97 @@
+---
+import { ArrowLeft, Bell, Clock, MapPin, Search } from 'lucide-react';
+
+interface Props {
+  title: string;
+  description: string;
+  sourceLabel: string;
+  statusText: string;
+  type: 'pharmacy' | 'bus' | 'flight';
+}
+
+const { title, description, sourceLabel, statusText, type } = Astro.props;
+
+const modules = {
+  pharmacy: [
+    { label: 'İlçe seçimi', text: 'Haliliye, Eyyübiye, Karaköprü ve diğer ilçeler için ayrı liste alanı.' },
+    { label: 'Eczane kartı', text: 'Eczane adı, adres, telefon, yol tarifi ve güncel nöbet durumu.' },
+    { label: 'Hızlı arama', text: 'Mahalle, cadde veya eczane adına göre filtreleme.' },
+  ],
+  bus: [
+    { label: 'Hat arama', text: 'Hat numarası, güzergah ve durak adına göre Şanlıurfa içi ulaşım araması.' },
+    { label: 'Saat listesi', text: 'Kalkış saati, yön bilgisi ve yoğun kullanılan duraklar.' },
+    { label: 'Güzergah detayı', text: 'Hat üzerindeki ana duraklar ve ilçe bağlantıları.' },
+  ],
+  flight: [
+    { label: 'Kalkışlar', text: 'Şanlıurfa GAP Havalimanı kalkış saatleri, havayolu ve uçuş kodu.' },
+    { label: 'Varışlar', text: 'Şanlıurfa varış uçuşları, planlanan saat ve güncel durum.' },
+    { label: 'Uçuş durumu', text: 'Gecikme, kapı, iptal ve güncelleme alanları için hazır yapı.' },
+  ],
+}[type];
+---
+
+<section class="bg-gradient-to-br from-urfa-950 via-urfa-900 to-isot-900 text-white">
+  <div class="container-custom py-14">
+    <a href="/sehir-servisleri" class="inline-flex items-center gap-2 text-urfa-100 hover:text-white">
+      <ArrowLeft className="w-4 h-4" />
+      Şehir servislerine dön
+    </a>
+    <div class="max-w-4xl mt-8">
+      <p class="text-sm uppercase tracking-wide text-urfa-200">Şanlıurfa şehir servisi</p>
+      <h1 class="text-4xl md:text-5xl font-display font-bold mt-3">{title}</h1>
+      <p class="text-lg text-urfa-100 mt-5 leading-relaxed">{description}</p>
+    </div>
+  </div>
+</section>
+
+<section class="container-custom py-12">
+  <div class="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <div class="space-y-6">
+      <div class="grid gap-4 md:grid-cols-3">
+        {modules.map((item) => (
+          <article class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+            <div class="w-11 h-11 rounded-xl bg-urfa-100 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300 flex items-center justify-center mb-4">
+              <Search className="w-5 h-5" />
+            </div>
+            <h2 class="font-semibold text-gray-900 dark:text-white">{item.label}</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">{item.text}</p>
+          </article>
+        ))}
+      </div>
+
+      <div class="rounded-2xl border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/30 p-6">
+        <div class="flex items-start gap-4">
+          <Bell className="w-6 h-6 text-amber-700 dark:text-amber-300 flex-shrink-0 mt-1" />
+          <div>
+            <h2 class="font-semibold text-amber-950 dark:text-amber-100">Canlı veri entegrasyonuna hazır</h2>
+            <p class="text-sm text-amber-900 dark:text-amber-100/80 mt-2">
+              Bu sayfa kullanıcıya açık yayınlanır; resmi veya güvenilir veri kaynağı bağlandığında kartlar otomatik listeye dönüşecek şekilde tasarlanmıştır.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="space-y-4">
+      <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+        <div class="flex items-start gap-3">
+          <MapPin className="w-5 h-5 text-urfa-600 mt-1" />
+          <div>
+            <p class="text-xs uppercase tracking-wide text-gray-500">Kaynak</p>
+            <p class="font-medium text-gray-900 dark:text-white mt-1">{sourceLabel}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+        <div class="flex items-start gap-3">
+          <Clock className="w-5 h-5 text-urfa-600 mt-1" />
+          <div>
+            <p class="text-xs uppercase tracking-wide text-gray-500">Durum</p>
+            <p class="font-medium text-gray-900 dark:text-white mt-1">{statusText}</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>

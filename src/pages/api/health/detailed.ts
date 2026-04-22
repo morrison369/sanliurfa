@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { pool } from '../../../lib/postgres';
-import { getRedisClient } from '../../../lib/cache';
+import { getOptionalRedisClient } from '../../../lib/cache';
 import { query } from '../../../lib/postgres';
 
 interface DetailedHealth {
@@ -47,7 +47,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   // Only admin can access detailed health
   if (!locals.isAdmin) {
-    return apiError(ErrorCode.FORBIDDEN, 'Unauthorized', HttpStatus.FORBIDDEN, undefined, requestId);
+    return apiError(ErrorCode.FORBIDDEN, 'Yetkisiz işlem', HttpStatus.FORBIDDEN, undefined, requestId);
   }
 
   try {
@@ -75,10 +75,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // Check Redis
     try {
       const redisStart = Date.now();
-      const redis = await getRedisClient();
-      await redis.ping();
-      redisResponseTime = Date.now() - redisStart;
-      redisStatus = 'up';
+      const redis = await getOptionalRedisClient({ silent: true });
+      if (redis) {
+        await redis.ping();
+        redisResponseTime = Date.now() - redisStart;
+        redisStatus = 'up';
+      } else {
+        redisError = 'Redis unavailable';
+      }
     } catch (error) {
       redisStatus = 'down';
       redisError = error instanceof Error ? error.message : String(error);

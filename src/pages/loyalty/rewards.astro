@@ -1,39 +1,83 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import { RewardsCatalog } from '../../components/RewardsCatalog';
+import Layout from "../../layouts/Layout.astro";
+import { RewardsCatalog } from "../../components/RewardsCatalog";
+import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
 
-// Redirect if not authenticated
-if (!Astro.locals.user) {
-  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
-}
+const user = Astro.locals.user;
 ---
 
 <Layout title="Ödüller - Sadakat Programı" noindex>
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <a href="/loyalty" class="text-blue-600 hover:underline mb-4 inline-block">← Geri Dön</a>
-      <h1 class="text-4xl font-bold mb-2">Ödüller</h1>
-      <p class="text-gray-600">Puanlarınızı harika ödüllere dönüştürün</p>
-    </div>
-
-    <RewardsCatalog client:load />
-
-    <div class="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
-      <h2 class="font-semibold text-lg mb-4">❓ Sıkça Sorulan Sorular</h2>
-      <div class="space-y-4 text-sm">
-        <div>
-          <p class="font-medium mb-1">Ödül nasıl kullanılır?</p>
-          <p class="text-gray-700">Bir ödülü seçin, "Puan Kullan" düğmesine tıklayın. Puanlarınız hemen çıkarılacak ve bir kullanım kodu alacaksınız.</p>
+  {
+    !user ? (
+      <AuthFeatureLanding
+        eyebrow="Sadakat ödülleri"
+        title="Şanlıurfa katkılarınızı ödüle dönüştürün"
+        description="Yorum, fotoğraf, favori ve sosyal katkılarla kazanılan puanlar ödül kataloğuna bağlanır. Ücretsiz hesap oluşturduğunuzda ödülleri ve kullanım geçmişini takip edebilirsiniz."
+        loginRedirect="/loyalty/rewards"
+        features={[
+          {
+            title: "Yerel ödül kataloğu",
+            description:
+              "Etkinlik erişimi, yerel kampanyalar ve topluluk avantajları için hazır ödül altyapısı.",
+          },
+          {
+            title: "Puanla kullanım",
+            description:
+              "Yeterli puana ulaştığınızda ödül kullanım kodu üretme ve geçmişi takip etme akışı.",
+          },
+          {
+            title: "Şeffaf kurallar",
+            description:
+              "Stok, puan maliyeti ve kullanım limitleri yönetim panelinden takip edilebilir.",
+          },
+        ]}
+      />
+    ) : (
+      <div class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+          <a
+            href="/loyalty"
+            class="text-urfa-700 hover:underline mb-4 inline-block"
+          >
+            Geri dön
+          </a>
+          <h1 class="text-4xl font-bold mb-2">Ödüller</h1>
+          <p class="text-gray-600">
+            Puanlarınızı Şanlıurfa odaklı ödüllere dönüştürün.
+          </p>
         </div>
-        <div>
-          <p class="font-medium mb-1">Puanlarım ne kadar süre geçerlidir?</p>
-          <p class="text-gray-700">Puanlarınız 2 yıl boyunca geçerlidir. Son işleminizden sonra 2 yıl hesap inaktif kalırsa puanlarınız otomatik olarak iptal edilebilir.</p>
-        </div>
-        <div>
-          <p class="font-medium mb-1">Ödülü değiştirebilir miyim?</p>
-          <p class="text-gray-700">Ödül kullanıldıktan sonra değiştirilemez. Lütfen seçiminizden emin olunduktan sonra onaylayın.</p>
+
+        <RewardsCatalog client:load />
+
+        <div class="mt-12 bg-urfa-50 border border-urfa-200 rounded-lg p-6">
+          <h2 class="font-semibold text-lg mb-4">Sık sorulan sorular</h2>
+          <div class="space-y-4 text-sm">
+            <div>
+              <p class="font-medium mb-1">Ödül nasıl kullanılır?</p>
+              <p class="text-gray-700">
+                Bir ödülü seçin ve “Puan kullan” düğmesine tıklayın. Puanlarınız
+                düşülür ve kullanım kodunuz oluşturulur.
+              </p>
+            </div>
+            <div>
+              <p class="font-medium mb-1">
+                Puanlarım ne kadar süre geçerlidir?
+              </p>
+              <p class="text-gray-700">
+                Puan geçerlilik süresi yönetim ayarlarına bağlıdır. Süreli
+                puanlarda son kullanım tarihi işlem geçmişinde gösterilir.
+              </p>
+            </div>
+            <div>
+              <p class="font-medium mb-1">Ödülü değiştirebilir miyim?</p>
+              <p class="text-gray-700">
+                Kullanılmış ödüller geri alınamaz. Onaylamadan önce ödül
+                koşullarını kontrol edin.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
+    )
+  }
 </Layout>

@@ -50,7 +50,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     logger.error('Get activity failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Internal server error',
+      'Sunucu hatası oluştu',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

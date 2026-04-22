@@ -27,6 +27,20 @@ interface Recommendation {
 type TabType = 'trending' | 'recommendations';
 type PeriodType = 'hourly' | 'daily' | 'weekly';
 
+const getEntityTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    place: 'Mekân',
+    places: 'Mekân',
+    event: 'Etkinlik',
+    events: 'Etkinlik',
+    blog: 'Blog yazısı',
+    post: 'Blog yazısı',
+    user: 'Kullanıcı',
+  };
+
+  return labels[type] || 'İçerik';
+};
+
 export default function TrendingRecommendations() {
   const [tab, setTab] = useState<TabType>('trending');
   const [period, setPeriod] = useState<PeriodType>('daily');
@@ -49,14 +63,14 @@ export default function TrendingRecommendations() {
       setError(null);
 
       const response = await fetch(`/api/trending?type=places&period=${period}&limit=20&keywords=true`);
-      if (!response.ok) throw new Error('Failed to load trending');
+      if (!response.ok) throw new Error('Trend içerikler yüklenemedi');
 
       const result = unwrapApiPayload<{ data?: { trending?: TrendingItem[] } }>(
         await response.json()
       );
       setTrending(result.data?.trending || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading trending');
+      setError(err instanceof Error ? err.message : 'Trend içerikler yüklenemedi');
     } finally {
       setLoading(false);
     }
@@ -68,12 +82,12 @@ export default function TrendingRecommendations() {
       setError(null);
 
       const response = await fetch('/api/recommendations?limit=20');
-      if (!response.ok) throw new Error('Failed to load recommendations');
+      if (!response.ok) throw new Error('Öneriler yüklenemedi');
 
       const result = unwrapApiPayload<{ data?: Recommendation[] }>(await response.json());
       setRecommendations(result.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading recommendations');
+      setError(err instanceof Error ? err.message : 'Öneriler yüklenemedi');
     } finally {
       setLoading(false);
     }
@@ -83,11 +97,11 @@ export default function TrendingRecommendations() {
     try {
       setLoading(true);
       const response = await fetch('/api/recommendations?refresh=true');
-      if (!response.ok) throw new Error('Failed to refresh');
+      if (!response.ok) throw new Error('Öneriler yenilenemedi');
       const result = unwrapApiPayload<{ data?: Recommendation[] }>(await response.json());
       setRecommendations(result.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error refreshing');
+      setError(err instanceof Error ? err.message : 'Öneriler yenilenemedi');
     } finally {
       setLoading(false);
     }
@@ -117,7 +131,7 @@ export default function TrendingRecommendations() {
               : 'border-transparent text-gray-600 hover:text-gray-900'
           }`}
         >
-          🔥 Trending
+          🔥 Trendler
         </button>
         <button
           onClick={() => setTab('recommendations')}
@@ -127,7 +141,7 @@ export default function TrendingRecommendations() {
               : 'border-transparent text-gray-600 hover:text-gray-900'
           }`}
         >
-          ⭐ Tavsiyeler
+          ⭐ Öneriler
         </button>
       </div>
 
@@ -174,8 +188,8 @@ export default function TrendingRecommendations() {
                       <div className="flex items-center space-x-3 mb-2">
                         <span className="text-2xl font-bold text-blue-600 w-8">#{idx + 1}</span>
                         <div>
-                          <p className="font-semibold text-gray-900">Mekan #{item.entity_id.substring(0, 8)}</p>
-                          <p className="text-sm text-gray-500">{item.entity_type}</p>
+                          <p className="font-semibold text-gray-900">Trend {getEntityTypeLabel(item.entity_type).toLocaleLowerCase('tr-TR')}</p>
+                          <p className="text-sm text-gray-500">Kayıt kodu: {item.entity_id.substring(0, 8)}</p>
                         </div>
                       </div>
                     </div>
@@ -200,7 +214,7 @@ export default function TrendingRecommendations() {
       {tab === 'recommendations' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Sizin İçin Önerilen</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Size Özel Öneriler</h2>
             <button
               onClick={refreshRecommendations}
               disabled={loading}
@@ -230,7 +244,7 @@ export default function TrendingRecommendations() {
                         <span className="text-2xl font-bold text-green-600 w-8">#{idx + 1}</span>
                         <div>
                           <p className="font-semibold text-gray-900">
-                            {rec.recommended_entity_type}
+                            {getEntityTypeLabel(rec.recommended_entity_type)}
                           </p>
                           {rec.reason && <p className="text-sm text-gray-600">{rec.reason}</p>}
                         </div>
@@ -248,7 +262,7 @@ export default function TrendingRecommendations() {
             </div>
           ) : (
             <div className="p-8 text-center bg-gray-50 rounded-lg">
-              <p className="text-gray-600">Henüz tavsiye yok. İlk mekanları ziyaret ederek başlayın!</p>
+              <p className="text-gray-600">Henüz öneri yok. İlk mekânları ziyaret ederek başlayın.</p>
             </div>
           )}
         </div>
@@ -258,7 +272,7 @@ export default function TrendingRecommendations() {
       <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
         <h4 className="font-semibold text-blue-900 mb-2">💡 Bilgi</h4>
         <p className="text-sm text-blue-800">
-          Trend yapanlar sayfa popülaritesine göre sıralanır. Tavsiyeler ise sizin ilgi alanlarınıza göre kişiselleştirilir.
+          Trend içerikler sayfa popülerliğine göre sıralanır. Öneriler ise ilgi alanlarınıza göre kişiselleştirilir.
         </p>
       </div>
     </div>

@@ -35,7 +35,7 @@ export default function AdminPerformanceDashboard() {
           setRecommendations(recsData.data.recommendations);
         }
       } catch (error) {
-        console.error('Failed to fetch performance data:', error);
+        console.error('Performans verileri alınamadı:', error);
       } finally {
         setLoading(false);
       }
@@ -47,11 +47,11 @@ export default function AdminPerformanceDashboard() {
   }, []);
 
   if (loading) {
-    return <div className="text-center py-8">Loading performance data...</div>;
+    return <div className="text-center py-8">Performans verileri yükleniyor...</div>;
   }
 
   if (!data) {
-    return <div className="text-center py-8 text-red-600">Failed to load performance data</div>;
+    return <div className="text-center py-8 text-red-600">Performans verileri yüklenemedi</div>;
   }
 
   const stats = data.performance.stats || {};
@@ -60,15 +60,15 @@ export default function AdminPerformanceDashboard() {
   const avgFcp = stats.avg_fcp ? Math.round(stats.avg_fcp) : 0;
 
   const getLcpStatus = (lcp: number) => {
-    if (lcp <= 2500) return { color: 'text-green-600', bg: 'bg-green-50', label: 'Good' };
-    if (lcp <= 4000) return { color: 'text-yellow-600', bg: 'bg-yellow-50', label: 'Needs Work' };
-    return { color: 'text-red-600', bg: 'bg-red-50', label: 'Poor' };
+    if (lcp <= 2500) return { color: 'text-green-600', bg: 'bg-green-50', label: 'İyi' };
+    if (lcp <= 4000) return { color: 'text-yellow-600', bg: 'bg-yellow-50', label: 'İyileştirilmeli' };
+    return { color: 'text-red-600', bg: 'bg-red-50', label: 'Zayıf' };
   };
 
   const getTtfbStatus = (ttfb: number) => {
-    if (ttfb <= 600) return { color: 'text-green-600', bg: 'bg-green-50', label: 'Good' };
-    if (ttfb <= 1200) return { color: 'text-yellow-600', bg: 'bg-yellow-50', label: 'Fair' };
-    return { color: 'text-red-600', bg: 'bg-red-50', label: 'Poor' };
+    if (ttfb <= 600) return { color: 'text-green-600', bg: 'bg-green-50', label: 'İyi' };
+    if (ttfb <= 1200) return { color: 'text-yellow-600', bg: 'bg-yellow-50', label: 'Orta' };
+    return { color: 'text-red-600', bg: 'bg-red-50', label: 'Zayıf' };
   };
 
   const lcpStatus = getLcpStatus(avgLcp);
@@ -78,17 +78,22 @@ export default function AdminPerformanceDashboard() {
     <div className="space-y-6">
       {/* Tabs */}
       <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700">
-        {['summary', 'pages', 'connections', 'recommendations'].map((tab) => (
+        {[
+          { id: 'summary', label: 'Özet' },
+          { id: 'pages', label: 'Sayfalar' },
+          { id: 'connections', label: 'Bağlantılar' },
+          { id: 'recommendations', label: 'Öneriler' },
+        ].map((tab) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2 border-b-2 transition-colors ${
-              activeTab === tab
+              activeTab === tab.id
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900'
             }`}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab.label}
           </button>
         ))}
       </div>
@@ -101,44 +106,44 @@ export default function AdminPerformanceDashboard() {
               <h3 className="text-sm font-semibold mb-2">LCP (Largest Contentful Paint)</h3>
               <p className={`text-3xl font-bold ${lcpStatus.color}`}>{avgLcp}ms</p>
               <p className={`text-sm mt-2 ${lcpStatus.color}`}>{lcpStatus.label}</p>
-              <p className="text-xs text-gray-600 mt-2">Target: &lt;2500ms</p>
+              <p className="text-xs text-gray-600 mt-2">Hedef: &lt;2500ms</p>
             </div>
 
             <div className={`p-6 rounded-lg ${ttfbStatus.bg}`}>
               <h3 className="text-sm font-semibold mb-2">TTFB (Time to First Byte)</h3>
               <p className={`text-3xl font-bold ${ttfbStatus.color}`}>{avgTtfb}ms</p>
               <p className={`text-sm mt-2 ${ttfbStatus.color}`}>{ttfbStatus.label}</p>
-              <p className="text-xs text-gray-600 mt-2">Target: &lt;600ms</p>
+              <p className="text-xs text-gray-600 mt-2">Hedef: &lt;600ms</p>
             </div>
 
             <div className="p-6 rounded-lg bg-blue-50">
               <h3 className="text-sm font-semibold mb-2">FCP (First Contentful Paint)</h3>
               <p className="text-3xl font-bold text-blue-600">{avgFcp}ms</p>
-              <p className="text-sm mt-2 text-blue-600">Good</p>
-              <p className="text-xs text-gray-600 mt-2">Target: &lt;1800ms</p>
+              <p className="text-sm mt-2 text-blue-600">İyi</p>
+              <p className="text-xs text-gray-600 mt-2">Hedef: &lt;1800ms</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-6 bg-gray-50 rounded-lg">
-              <h3 className="font-semibold mb-4">Database Status</h3>
+              <h3 className="font-semibold mb-4">Veritabanı Durumu</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Active Connections</span>
+                  <span className="text-gray-600">Aktif Bağlantı</span>
                   <span className="font-semibold">{data.performance.database?.activeConnections || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Cache Hit Ratio</span>
+                  <span className="text-gray-600">Cache İsabet Oranı</span>
                   <span className="font-semibold">{data.performance.database?.cacheHitRatio || 'N/A'}</span>
                 </div>
               </div>
             </div>
 
             <div className="p-6 bg-gray-50 rounded-lg">
-              <h3 className="font-semibold mb-4">Violations (24h)</h3>
+              <h3 className="font-semibold mb-4">İhlaller (24 saat)</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">LCP Violations</span>
+                  <span className="text-gray-600">LCP İhlalleri</span>
                   <span className={`font-semibold ${stats.lcp_fails > 0 ? 'text-red-600' : 'text-green-600'}`}>
                     {stats.lcp_fails || 0}
                   </span>
@@ -155,10 +160,10 @@ export default function AdminPerformanceDashboard() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold">Page</th>
-                <th className="px-4 py-3 text-left font-semibold">Samples</th>
+                <th className="px-4 py-3 text-left font-semibold">Sayfa</th>
+                <th className="px-4 py-3 text-left font-semibold">Örnek</th>
                 <th className="px-4 py-3 text-left font-semibold">Avg LCP</th>
-                <th className="px-4 py-3 text-left font-semibold">Violations</th>
+                <th className="px-4 py-3 text-left font-semibold">İhlal</th>
               </tr>
             </thead>
             <tbody>
@@ -189,8 +194,8 @@ export default function AdminPerformanceDashboard() {
                   <h4 className="font-semibold">{rec.title}</h4>
                   <p className="text-sm text-gray-700 mt-1">{rec.description}</p>
                   <div className="mt-3 space-y-2 text-xs">
-                    <p className="font-semibold">Category: {rec.category}</p>
-                    <p className="text-gray-600">Impact: {rec.estimatedImpact}</p>
+                    <p className="font-semibold">Kategori: {rec.category}</p>
+                    <p className="text-gray-600">Etki: {rec.estimatedImpact}</p>
                   </div>
                 </div>
               </div>
@@ -200,7 +205,7 @@ export default function AdminPerformanceDashboard() {
       )}
 
       <div className="text-xs text-gray-500">
-        Last updated: {new Date(data.lastUpdated).toLocaleString()}
+        Son güncelleme: {new Date(data.lastUpdated).toLocaleString('tr-TR')}
       </div>
     </div>
   );

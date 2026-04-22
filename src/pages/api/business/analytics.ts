@@ -56,7 +56,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/business/analytics', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get analytics', err instanceof Error ? err : new Error(String(err)));
+    logger.error('Analitikler alınamadı', err instanceof Error ? err : new Error(String(err)));
     return apiError(ErrorCode.INTERNAL_ERROR, 'Analitik verileri alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

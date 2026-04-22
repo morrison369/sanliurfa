@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { unwrapApiPayload } from '@/lib/client-api';
+import { getCuratedPlaces } from '@/data/curated-places';
 
 interface SearchPayload {
   results?: any[];
@@ -29,13 +30,15 @@ export default function SearchResults({ query }: { query?: string }) {
       const data = unwrapApiPayload<{ data?: SearchPayload }>(await response.json());
       setResults(data.data || null);
     } catch (err) {
-      console.error('Search error', err);
+      console.error('Arama hatası', err);
+      setResults(buildFallbackResults(searchQuery));
     } finally {
       setIsLoading(false);
     }
   };
 
   const placeResults = results?.results || [];
+  const suggestedPlaces = buildFallbackResults(searchQuery || 'Şanlıurfa').results || [];
 
   return (
     <div className="space-y-6">
@@ -44,7 +47,7 @@ export default function SearchResults({ query }: { query?: string }) {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Mekan, kullanıcı veya koleksiyon ara..."
+          placeholder="Mekân, kullanıcı veya koleksiyon ara..."
           className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -54,12 +57,12 @@ export default function SearchResults({ query }: { query?: string }) {
       ) : isLoading ? (
         <p className="text-center text-gray-600">Aranıyor...</p>
       ) : !results ? (
-        <p className="text-center text-gray-600">Sonuç yok</p>
+        <CuratedSearchGrid places={suggestedPlaces} title="Şanlıurfa'da öne çıkanlar" />
       ) : (
         <div className="space-y-8">
           {placeResults.length > 0 && (
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Mekanlar ({placeResults.length})</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Mekânlar ({placeResults.length})</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {placeResults.map((place: any) => (
                   <a key={place.id} href={'/places/' + (place.slug || place.id)} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
@@ -111,10 +114,50 @@ export default function SearchResults({ query }: { query?: string }) {
           )}
 
           {!placeResults.length && !results.users?.length && !results.collections?.length && (
-            <p className="text-center text-gray-600">Sonuç bulunamadı</p>
+            <CuratedSearchGrid places={suggestedPlaces} title="Aramanıza yakın Şanlıurfa önerileri" />
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function buildFallbackResults(query: string): SearchPayload {
+  const normalizedQuery = query.trim().toLocaleLowerCase('tr-TR');
+  const curated = getCuratedPlaces();
+  const results = normalizedQuery.length >= 2
+    ? curated.filter((place) =>
+        [place.name, place.description, place.address, place.category, place.tags.join(' ')]
+          .join(' ')
+          .toLocaleLowerCase('tr-TR')
+          .includes(normalizedQuery)
+      )
+    : curated.slice(0, 4);
+
+  return {
+    results: (results.length > 0 ? results : curated.slice(0, 4)).map((place) => ({
+      ...place,
+      image_url: place.images[0],
+    })),
+    query,
+    searchType: 'places',
+    resultCount: results.length,
+  };
+}
+
+function CuratedSearchGrid({ places, title }: { places: any[]; title: string }) {
+  return (
+    <div>
+      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{title}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {places.map((place: any) => (
+          <a key={place.id} href={'/places/' + place.slug} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+            <img src={place.image_url || place.images?.[0] || '/images/placeholder-place.jpg'} alt={place.name} className="w-full h-32 object-cover rounded mb-2" />
+            <p className="font-medium text-gray-900 dark:text-white">{place.name}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">{place.description}</p>
+          </a>
+        ))}
+      </div>
     </div>
   );
 }

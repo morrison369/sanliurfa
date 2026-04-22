@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, locals, params, url }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/email/campaigns/[id]/subscribers', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;
@@ -64,7 +64,7 @@ export const GET: APIRoute = async ({ request, locals, params, url }) => {
     logger.error('Get campaign subscribers failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get subscribers',
+      'Aboneler alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -80,7 +80,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/email/campaigns/[id]/subscribers', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;
@@ -136,7 +136,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     logger.error('Add subscribers failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to add subscribers',
+      'Aboneler eklenemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

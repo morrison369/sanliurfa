@@ -20,10 +20,10 @@ if (!Astro.locals.user?.isAdmin) {
 const campaigns = await getAllCampaigns(100);
 ---
 
-<Layout title="Kampanyalar - Admin" noindex>
+<Layout title="Kampanyalar - Yönetim Paneli" noindex>
   <div class="container mx-auto px-4 py-8">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-2">Email Kampanyaları</h1>
+      <h1 class="text-3xl font-bold mb-2">E-posta Kampanyaları</h1>
       <p class="text-gray-600">
         Pazarlama kampanyalarını ve otomasyon akışlarını yönet
       </p>
@@ -140,13 +140,13 @@ const campaigns = await getAllCampaigns(100);
                     class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
                     onclick={`sendCampaign(${campaign.id})`}
                   >
-                    Hemen Gönder
+                    Hemen gönder
                   </button>
                   <button
                     class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm"
                     onclick={`testCampaign(${campaign.id})`}
                   >
-                    Test Gönder
+                    Deneme e-postası gönder
                   </button>
                 </div>
               </div>
@@ -158,7 +158,7 @@ const campaigns = await getAllCampaigns(100);
                 onclick="switchTab('create')"
                 class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
-                İlk Kampanyanızı Oluşturun
+                İlk kampanyanızı oluşturun
               </button>
             </div>
           )
@@ -171,7 +171,7 @@ const campaigns = await getAllCampaigns(100);
       <form id="campaign-form" class="bg-white p-6 rounded-lg shadow max-w-2xl">
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1">Kampanya Adı</label>
+            <label class="block text-sm font-medium mb-1">Kampanya adı</label>
             <input
               type="text"
               name="name"
@@ -188,13 +188,13 @@ const campaigns = await getAllCampaigns(100);
               name="subject"
               required
               class="w-full px-4 py-2 border border-gray-300 rounded"
-              placeholder="Email konusu"
+              placeholder="E-posta konusu"
             />
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium mb-1">Gönderici Adı</label
+              <label class="block text-sm font-medium mb-1">Gönderici adı</label
               >
               <input
                 type="text"
@@ -206,7 +206,7 @@ const campaigns = await getAllCampaigns(100);
             </div>
             <div>
               <label class="block text-sm font-medium mb-1"
-                >Gönderici Email</label
+                >Gönderici e-posta</label
               >
               <input
                 type="email"
@@ -226,21 +226,21 @@ const campaigns = await getAllCampaigns(100);
               class="w-full px-4 py-2 border border-gray-300 rounded"
             >
               <option value="">Seç...</option>
-              <option value="all_users">Tüm Kullanıcılar</option>
-              <option value="subscribers">Abone Olanlar</option>
-              <option value="premium">Premium Üyeler</option>
-              <option value="inactive">30+ Gün Inaktif</option>
+              <option value="all_users">Tüm kullanıcılar</option>
+              <option value="subscribers">Abone olanlar</option>
+              <option value="premium">Premium üyeler</option>
+              <option value="inactive">30+ gün pasif</option>
             </select>
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1">HTML İçerik</label>
+            <label class="block text-sm font-medium mb-1">HTML içerik</label>
             <textarea
               name="htmlContent"
               required
               rows="10"
               class="w-full px-4 py-2 border border-gray-300 rounded font-mono text-sm"
-              placeholder="HTML email içeriği"></textarea>
+              placeholder="HTML e-posta içeriği"></textarea>
           </div>
 
           <div>
@@ -249,7 +249,7 @@ const campaigns = await getAllCampaigns(100);
               name="timing"
               class="w-full px-4 py-2 border border-gray-300 rounded"
             >
-              <option value="now">Hemen Gönder</option>
+              <option value="now">Hemen gönder</option>
               <option value="schedule">Zamanla...</option>
             </select>
           </div>
@@ -259,7 +259,7 @@ const campaigns = await getAllCampaigns(100);
               type="submit"
               class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              Kampanya Oluştur
+              Kampanya oluştur
             </button>
             <button
               type="reset"
@@ -326,7 +326,7 @@ const campaigns = await getAllCampaigns(100);
         <h3 class="font-bold mb-4">Otomasyon Akışları</h3>
         <p class="text-gray-600">
           Otomasyon akışları kullanıcıların belirli olaylara yanıt olarak
-          tetiklenen email serileridir.
+          tetiklenen e-posta serileridir.
         </p>
         <ul class="mt-4 space-y-2 text-sm">
           <li class="flex items-center gap-2">
@@ -339,7 +339,7 @@ const campaigns = await getAllCampaigns(100);
           <li class="flex items-center gap-2">
             <span class="w-2 h-2 bg-green-500 rounded-full"></span>
             <span
-              ><strong>Premium Onboarding:</strong> Premium abonelik başladığında
+              ><strong>Premium Karşılama:</strong> Premium abonelik başladığında
               başlayan selamlaşma</span
             >
           </li>
@@ -400,7 +400,7 @@ const campaigns = await getAllCampaigns(100);
         .then((r) => r.json())
         .then((data) => {
           if (data.success) {
-            alert("Kampanya gönderilmeye başladı!");
+            alert("Kampanya gönderimi başladı.");
             location.reload();
           } else {
             alert("Hata: " + data.error);
@@ -418,7 +418,7 @@ const campaigns = await getAllCampaigns(100);
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
-          alert("Test emaili admin hesabına gönderildi!");
+          alert("Deneme e-postası yönetici hesabına gönderildi.");
         } else {
           alert("Hata: " + data.error);
         }
@@ -452,7 +452,7 @@ const campaigns = await getAllCampaigns(100);
 
       const result = await response.json();
       if (result.success) {
-        alert("Kampanya oluşturuldu!");
+        alert("Kampanya oluşturuldu.");
         form.reset();
         location.reload();
       } else {

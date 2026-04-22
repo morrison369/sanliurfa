@@ -287,10 +287,43 @@ export default function UserSettings() {
     }
   };
 
+  const tabClass = (tab: typeof activeTab) =>
+    `px-4 py-2 font-medium border-b-2 transition-colors ${
+      activeTab === tab
+        ? "border-urfa-700 text-urfa-700 dark:text-urfa-300"
+        : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+    }`;
+
   if (isLoading) {
     return (
       <div className="text-center py-8">
         <p className="text-gray-600 dark:text-gray-400">Yükleniyor...</p>
+      </div>
+    );
+  }
+
+  if (error && !profile) {
+    return (
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+        <h2 className="text-xl font-semibold">
+          Hesap ayarları şu anda alınamadı
+        </h2>
+        <p className="mt-2 text-sm">{error}</p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={loadProfile}
+            className="rounded-lg bg-urfa-700 px-5 py-2.5 font-medium text-white transition-colors hover:bg-urfa-800"
+          >
+            Tekrar dene
+          </button>
+          <a
+            href="/profil"
+            className="rounded-lg border border-amber-300 bg-white px-5 py-2.5 font-medium text-amber-900 transition-colors hover:bg-amber-100"
+          >
+            Profile dön
+          </a>
+        </div>
       </div>
     );
   }
@@ -301,51 +334,31 @@ export default function UserSettings() {
       <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
         <button
           onClick={() => setActiveTab("profile")}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === "profile"
-              ? "border-blue-600 text-blue-600 dark:text-blue-400"
-              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-          }`}
+          className={tabClass("profile")}
         >
           Profil
         </button>
         <button
           onClick={() => setActiveTab("settings")}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === "settings"
-              ? "border-blue-600 text-blue-600 dark:text-blue-400"
-              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-          }`}
+          className={tabClass("settings")}
         >
-          Genel Ayarlar
+          Genel ayarlar
         </button>
         <button
           onClick={() => setActiveTab("privacy")}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === "privacy"
-              ? "border-blue-600 text-blue-600 dark:text-blue-400"
-              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-          }`}
+          className={tabClass("privacy")}
         >
           Gizlilik
         </button>
         <button
           onClick={() => setActiveTab("password")}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === "password"
-              ? "border-blue-600 text-blue-600 dark:text-blue-400"
-              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-          }`}
+          className={tabClass("password")}
         >
           Şifre
         </button>
         <button
           onClick={() => setActiveTab("security")}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === "security"
-              ? "border-blue-600 text-blue-600 dark:text-blue-400"
-              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-          }`}
+          className={tabClass("security")}
         >
           Güvenlik
         </button>
@@ -353,7 +366,7 @@ export default function UserSettings() {
 
       {/* Messages */}
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-100">
           {error}
         </div>
       )}
@@ -370,7 +383,7 @@ export default function UserSettings() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-1">
-                E-posta Doğrulanmadı
+                E-posta doğrulanmadı
               </h3>
               <p className="text-sm text-yellow-800 dark:text-yellow-300">
                 Hesabınızın güvenliği için e-posta adresinizi doğrulayın:{" "}
@@ -395,14 +408,14 @@ export default function UserSettings() {
           className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4"
         >
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Profil Bilgileriniz
+            Profil bilgileriniz
           </h2>
 
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
             <div className="flex items-center justify-between gap-2">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  E-posta Adresi
+                  E-posta adresi
                 </p>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {profile?.email}
@@ -411,9 +424,6 @@ export default function UserSettings() {
               <div className="flex items-center gap-2">
                 {profile?.email_verified ? (
                   <>
-                    <span className="text-green-600 dark:text-green-400">
-                      ✓
-                    </span>
                     <span className="text-sm text-green-600 dark:text-green-400">
                       Doğrulanmış
                     </span>
@@ -434,7 +444,7 @@ export default function UserSettings() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Ad Soyad
+              Ad soyad
             </label>
             <input
               type="text"
@@ -442,13 +452,13 @@ export default function UserSettings() {
               onChange={(e) =>
                 setProfileForm({ ...profileForm, full_name: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-urfa-500"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Kullanıcı Adı
+              Kullanıcı adı
             </label>
             <input
               type="text"
@@ -457,13 +467,13 @@ export default function UserSettings() {
                 setProfileForm({ ...profileForm, username: e.target.value })
               }
               placeholder="Boş bırakabilirsiniz"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-urfa-500"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Avatar URL
+              Avatar adresi
             </label>
             <input
               type="url"
@@ -471,8 +481,8 @@ export default function UserSettings() {
               onChange={(e) =>
                 setProfileForm({ ...profileForm, avatar_url: e.target.value })
               }
-              placeholder="https://..."
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://sanliurfa.com/images/profil/avatar.jpg"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-urfa-500"
             />
           </div>
 
@@ -485,10 +495,10 @@ export default function UserSettings() {
               onChange={(e) =>
                 setProfileForm({ ...profileForm, bio: e.target.value })
               }
-              placeholder="Kendiniz hakkında biraz yazın..."
+              placeholder="Şanlıurfa ilgi alanlarınızı ve kendinizi kısaca anlatın..."
               rows={4}
               maxLength={500}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-urfa-500 resize-none"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {profileForm.bio.length}/500
@@ -498,9 +508,9 @@ export default function UserSettings() {
           <button
             type="submit"
             disabled={isSaving}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full px-4 py-2 bg-urfa-700 text-white rounded-lg hover:bg-urfa-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isSaving ? "Kaydediliyor..." : "Profili Kaydet"}
+            {isSaving ? "Kaydediliyor..." : "Profili kaydet"}
           </button>
         </form>
       )}
@@ -512,7 +522,7 @@ export default function UserSettings() {
           className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4"
         >
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Genel Ayarlar
+            Genel ayarlar
           </h2>
 
           <div>
@@ -540,7 +550,7 @@ export default function UserSettings() {
                   theme_preference: e.target.value,
                 })
               }
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-urfa-500"
             >
               <option value="light">Açık</option>
               <option value="dark">Koyu</option>
@@ -551,9 +561,9 @@ export default function UserSettings() {
           <button
             type="submit"
             disabled={isSaving}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full px-4 py-2 bg-urfa-700 text-white rounded-lg hover:bg-urfa-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isSaving ? "Kaydediliyor..." : "Ayarları Kaydet"}
+            {isSaving ? "Kaydediliyor..." : "Ayarları kaydet"}
           </button>
         </form>
       )}
@@ -565,7 +575,7 @@ export default function UserSettings() {
           className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4"
         >
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Gizlilik Ayarları
+            Gizlilik ayarları
           </h2>
 
           <div className="space-y-3">
@@ -579,7 +589,7 @@ export default function UserSettings() {
                     profile_public: e.target.checked,
                   })
                 }
-                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                className="w-4 h-4 text-urfa-700 rounded focus:ring-2 focus:ring-urfa-500"
               />
               <span className="ml-3 text-gray-700 dark:text-gray-300">
                 Profilimi herkese görünür yap
@@ -596,7 +606,7 @@ export default function UserSettings() {
                     show_email: e.target.checked,
                   })
                 }
-                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                className="w-4 h-4 text-urfa-700 rounded focus:ring-2 focus:ring-urfa-500"
               />
               <span className="ml-3 text-gray-700 dark:text-gray-300">
                 E-posta adresimi göster
@@ -613,7 +623,7 @@ export default function UserSettings() {
                     allow_messages: e.target.checked,
                   })
                 }
-                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                className="w-4 h-4 text-urfa-700 rounded focus:ring-2 focus:ring-urfa-500"
               />
               <span className="ml-3 text-gray-700 dark:text-gray-300">
                 Bana direkt mesaj gönderilebilsin
@@ -624,9 +634,9 @@ export default function UserSettings() {
           <button
             type="submit"
             disabled={isSaving}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full px-4 py-2 bg-urfa-700 text-white rounded-lg hover:bg-urfa-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isSaving ? "Kaydediliyor..." : "Gizlilik Ayarlarını Kaydet"}
+            {isSaving ? "Kaydediliyor..." : "Gizlilik ayarlarını kaydet"}
           </button>
         </form>
       )}
@@ -638,12 +648,12 @@ export default function UserSettings() {
           className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4"
         >
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Şifre Değiştir
+            Şifre değiştir
           </h2>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Mevcut Şifre
+              Mevcut şifre
             </label>
             <input
               type="password"
@@ -654,13 +664,13 @@ export default function UserSettings() {
                   current_password: e.target.value,
                 })
               }
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-urfa-500"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Yeni Şifre
+              Yeni şifre
             </label>
             <input
               type="password"
@@ -671,7 +681,7 @@ export default function UserSettings() {
                   new_password: e.target.value,
                 })
               }
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-urfa-500"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               En az 8 karakter, bir büyük harf, sayı ve özel karakter
@@ -681,7 +691,7 @@ export default function UserSettings() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Şifreyi Onayla
+              Şifreyi onayla
             </label>
             <input
               type="password"
@@ -692,16 +702,16 @@ export default function UserSettings() {
                   confirm_password: e.target.value,
                 })
               }
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-urfa-500"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSaving}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full px-4 py-2 bg-urfa-700 text-white rounded-lg hover:bg-urfa-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isSaving ? "Kaydediliyor..." : "Şifreyi Değiştir"}
+            {isSaving ? "Kaydediliyor..." : "Şifreyi değiştir"}
           </button>
         </form>
       )}

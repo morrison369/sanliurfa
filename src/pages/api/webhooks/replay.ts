@@ -14,7 +14,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const body = await request.json();
@@ -36,14 +36,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: replayRequest,
-        message: 'Event replay queued'
+        message: 'Olay yeniden oynatma kuyruğa alındı'
       },
       HttpStatus.CREATED,
       requestId
     );
   } catch (error) {
     logger.error('Failed to request event replay', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to request replay', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Yeniden oynatma talebi oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -57,7 +57,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -80,7 +80,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Failed to get replay history', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get history', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Geçmiş alınamadı', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -94,7 +94,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const { id } = params;
@@ -106,18 +106,18 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     const cancelled = await cancelReplay(pool, id, locals.user.id);
 
     if (!cancelled) {
-      return apiError(ErrorCode.NOT_FOUND, 'Replay not found or already processed', HttpStatus.NOT_FOUND);
+      return apiError(ErrorCode.NOT_FOUND, 'Yeniden oynatma bulunamadı veya zaten işlendi', HttpStatus.NOT_FOUND);
     }
 
     logger.info('Event replay cancelled', { replayId: id, userId: locals.user.id });
 
     return apiResponse(
-      { success: true, message: 'Replay cancelled' },
+      { success: true, message: 'Yeniden oynatma iptal edildi' },
       HttpStatus.OK,
       requestId
     );
   } catch (error) {
-    logger.error('Failed to cancel replay', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to cancel replay', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Yeniden oynatma iptal edilemedi', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Yeniden oynatma iptal edilemedi', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

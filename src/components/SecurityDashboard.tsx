@@ -51,7 +51,7 @@ export function SecurityDashboard() {
       if (sessionsData.success) setSessions(sessionsData.data);
       if (eventsData.success) setEvents(eventsData.data.events);
     } catch (error) {
-      console.error('Failed to load security data', error);
+      console.error('Güvenlik verisi yüklenemedi', error);
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export function SecurityDashboard() {
         setSessions(sessions.filter(s => s.id !== sessionId));
       }
     } catch (error) {
-      console.error('Failed to terminate session', error);
+      console.error('Oturum sonlandirilamadi', error);
     }
   };
 

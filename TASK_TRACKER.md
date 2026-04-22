@@ -1,6 +1,6 @@
 # Task Tracker
 
-Last updated: 2026-04-09
+Last updated: 2026-04-22
 
 ## Closed
 - `T-154` Phase 1307-1312 planning — closed
@@ -43,8 +43,48 @@ Last updated: 2026-04-09
   - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v182.test.ts`
   - docs: `PHASE_1433_1438_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V182.md`
 
+- `T-162` Phase 1451-1456 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v185.test.ts`
+  - docs: `PHASE_1451_1456_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V185.md`
+
+- `T-163` Phase 1457-1462 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v186.test.ts`
+  - docs: `PHASE_1457_1462_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V186.md`
+
+- `T-164` Phase 1463-1468 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v187.test.ts`
+  - docs: `PHASE_1463_1468_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V187.md`
+
+- `T-165` Phase 1469-1474 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v188.test.ts`
+  - docs: `PHASE_1469_1474_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V188.md`
+
+- `T-166` Phase 1475-1480 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v189.test.ts`
+  - docs: `PHASE_1475_1480_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V189.md`
+
+- `T-167` Phase 1481-1486 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v190.test.ts`
+  - docs: `PHASE_1481_1486_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V190.md`
+
+- `T-168` Phase 1487-1492 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v191.test.ts`
+  - docs: `PHASE_1487_1492_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V191.md`
+
+- `T-169` Phase 1493-1498 planning — closed
+  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
+  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v192.test.ts`
+  - docs: `PHASE_1493_1498_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V192.md`
+
 ## Open
-- `T-162` Phase 1451-1456 planning
+- `T-170` Phase 1499-1504 planning
   - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
   - Owner: engineering
   - Status: ready

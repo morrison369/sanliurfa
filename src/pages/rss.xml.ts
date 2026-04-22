@@ -1,14 +1,29 @@
 import type { APIRoute } from "astro";
+import { getCuratedBlogPosts } from "../data/curated-blog-posts";
 import { query } from "../lib/postgres";
 
 export const GET: APIRoute = async () => {
   const site = process.env.SITE_URL || "https://sanliurfa.com";
 
-  const result = await query(
-    "SELECT title, slug, excerpt, published_at FROM blog_posts WHERE is_published = true ORDER BY published_at DESC LIMIT 20",
-    [],
-  );
-  const posts = result.rows;
+  let posts = getCuratedBlogPosts().map((post) => ({
+    title: post.title,
+    slug: post.slug,
+    excerpt: post.excerpt,
+    published_at: post.publishedAt,
+  }));
+
+  try {
+    const result = await query(
+      "SELECT title, slug, excerpt, published_at FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC NULLS LAST, updated_at DESC LIMIT 20",
+      [],
+    );
+    posts = result.rows.length > 0 ? result.rows : posts;
+  } catch (error) {
+    console.warn(
+      "RSS blog sorgusu başarısız, curated Şanlıurfa blog yazıları kullanılıyor.",
+      error,
+    );
+  }
 
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -25,7 +40,7 @@ export const GET: APIRoute = async () => {
       <title>${escapeXml(post.title)}</title>
       <link>${site}/blog/${post.slug}</link>
       <guid isPermaLink="true">${site}/blog/${post.slug}</guid>
-      <pubDate>${new Date(post.published_at).toUTCString()}</pubDate>
+      <pubDate>${toRssDate(post.published_at)}</pubDate>
       <description>${escapeXml(post.excerpt || "")}</description>
     </item>
     `,
@@ -49,4 +64,11 @@ function escapeXml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
+}
+
+function toRssDate(value: string | Date | null | undefined): string {
+  const date = value ? new Date(value) : new Date();
+  return Number.isNaN(date.getTime())
+    ? new Date().toUTCString()
+    : date.toUTCString();
 }

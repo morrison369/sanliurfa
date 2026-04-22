@@ -45,7 +45,7 @@ export default function UserProfile() {
       setIsLoading(true);
       const response = await fetch('/api/auth/me');
       if (!response.ok) {
-        throw new Error('Failed to fetch user data');
+        throw new Error('Kullanıcı bilgileri alınamadı');
       }
       const userData = await response.json();
       setUser({
@@ -56,7 +56,7 @@ export default function UserProfile() {
         createdAt: userData.created_at
       });
     } catch (error) {
-      console.error('Failed to load user data', error);
+      console.error('Kullanıcı bilgileri yüklenemedi', error);
     } finally {
       setIsLoading(false);
     }
@@ -67,12 +67,12 @@ export default function UserProfile() {
     try {
       const response = await fetch('/api/activity');
       if (!response.ok) {
-        throw new Error('Failed to fetch activity');
+        throw new Error('Aktiviteler alınamadı');
       }
       const data = await response.json();
       setActivity(data.data || []);
     } catch (error) {
-      console.error('Failed to load activity', error);
+      console.error('Aktiviteler yüklenemedi', error);
     }
   };
 
@@ -104,7 +104,7 @@ export default function UserProfile() {
       case 'badge_earned':
         return `"${item.metadata?.badgeName || 'Rozet'}" rozeti kazandı`;
       case 'level_up':
-        return `Level ${item.metadata?.newLevel || '?'} oldu`;
+        return `Seviye ${item.metadata?.newLevel || '?'} oldu`;
       case 'comment_posted':
         return 'Blog yazısına yorum yaptı';
       case 'points_earned':

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
+import React, { useState, useEffect } from "react";
+import { getApiErrorMessage, unwrapApiPayload } from "@/lib/client-api";
 
 interface Comment {
   id: string;
@@ -10,7 +10,7 @@ interface Comment {
   content: string;
   helpful_count: number;
   unhelpful_count: number;
-  user_vote?: 'helpful' | 'unhelpful' | null;
+  user_vote?: "helpful" | "unhelpful" | null;
   reply_count: number;
   created_at: string;
   target_type: string;
@@ -24,13 +24,19 @@ interface CommentThreadProps {
   currentUserId?: string;
 }
 
-export default function CommentThread({ targetType, targetId, currentUserId }: CommentThreadProps) {
+export default function CommentThread({
+  targetType,
+  targetId,
+  currentUserId,
+}: CommentThreadProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newComment, setNewComment] = useState('');
+  const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(
+    new Set(),
+  );
 
   useEffect(() => {
     loadComments();
@@ -41,24 +47,27 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
       setIsLoading(true);
       setError(null);
       const response = await fetch(
-        `/api/comments?targetType=${targetType}&targetId=${targetId}&limit=50`
+        `/api/comments?targetType=${targetType}&targetId=${targetId}&limit=50`,
       );
       const json = await response.json();
 
       if (!response.ok) {
-        throw new Error(getApiErrorMessage(json, 'Yorumlar yüklenemedi'));
+        throw new Error(getApiErrorMessage(json, "Yorumlar yüklenemedi"));
       }
 
       const data = unwrapApiPayload<{ data?: Comment[] }>(json);
       setComments(data.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmitComment = async (e: React.FormEvent, parentCommentId?: string) => {
+  const handleSubmitComment = async (
+    e: React.FormEvent,
+    parentCommentId?: string,
+  ) => {
     e.preventDefault();
 
     if (!newComment.trim() || !currentUserId) {
@@ -69,68 +78,71 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
     setError(null);
 
     try {
-      const response = await fetch('/api/comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           targetType,
           targetId,
           content: newComment.trim(),
-          parentCommentId
-        })
+          parentCommentId,
+        }),
       });
       const json = await response.json();
 
       if (!response.ok) {
-        throw new Error(getApiErrorMessage(json, 'Yorum yazılamadı'));
+        throw new Error(getApiErrorMessage(json, "Yorum yazılamadı"));
       }
 
-      setNewComment('');
+      setNewComment("");
       await loadComments();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleVote = async (commentId: string, voteType: 'helpful' | 'unhelpful') => {
+  const handleVote = async (
+    commentId: string,
+    voteType: "helpful" | "unhelpful",
+  ) => {
     if (!currentUserId) return;
 
     try {
       const response = await fetch(`/api/comments/${commentId}/vote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ voteType })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voteType }),
       });
       const json = await response.json();
 
       if (!response.ok) {
-        throw new Error(getApiErrorMessage(json, 'Oy verilemedi'));
+        throw new Error(getApiErrorMessage(json, "Oy verilemedi"));
       }
 
       await loadComments();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Oy verilemedi');
+      setError(err instanceof Error ? err.message : "Oy verilemedi");
     }
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!confirm('Bu yorumu silmek istediğinizden emin misiniz?')) return;
+    if (!confirm("Bu yorumu silmek istediğinizden emin misiniz?")) return;
 
     try {
       const response = await fetch(`/api/comments/${commentId}`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
       const json = await response.json();
 
       if (!response.ok) {
-        throw new Error(getApiErrorMessage(json, 'Yorum silinemedi'));
+        throw new Error(getApiErrorMessage(json, "Yorum silinemedi"));
       }
 
       await loadComments();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Yorum silinemedi');
+      setError(err instanceof Error ? err.message : "Yorum silinemedi");
     }
   };
 
@@ -141,18 +153,24 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
 
-    if (diffMins < 1) return 'Az önce';
+    if (diffMins < 1) return "Az önce";
     if (diffMins < 60) return `${diffMins}dk`;
     if (diffHours < 24) return `${diffHours}s`;
-    return date.toLocaleDateString('tr-TR');
+    return date.toLocaleDateString("tr-TR");
   };
 
   const renderCommentItem = (comment: Comment, isReply: boolean = false) => (
-    <div key={comment.id} className={`${isReply ? 'ml-8 mt-4 pt-4 border-l-2 border-gray-200 dark:border-gray-700 pl-4' : 'p-4 bg-gray-50 dark:bg-gray-800 rounded-lg'}`}>
+    <div
+      key={comment.id}
+      className={`${isReply ? "ml-8 mt-4 pt-4 border-l-2 border-gray-200 dark:border-gray-700 pl-4" : "p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"}`}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-3">
-          <a href={`/kullanıcı/${comment.user_id}`} className="flex items-center gap-2 hover:opacity-75">
+          <a
+            href={`/kullanici/${comment.user_id}`}
+            className="flex items-center gap-2 hover:opacity-75"
+          >
             {comment.user_avatar ? (
               <img
                 src={comment.user_avatar}
@@ -169,8 +187,8 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
                 {comment.user_name}
               </p>
               {comment.user_level > 1 && (
-                <p className="text-xs text-purple-600 dark:text-purple-400">
-                  Lv{comment.user_level}
+                <p className="text-xs text-urfa-700 dark:text-urfa-300">
+                  Seviye {comment.user_level}
                 </p>
               )}
             </div>
@@ -189,27 +207,27 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
       {/* Actions */}
       <div className="flex items-center gap-4 text-xs">
         <button
-          onClick={() => handleVote(comment.id, 'helpful')}
+          onClick={() => handleVote(comment.id, "helpful")}
           disabled={!currentUserId}
           className={`flex items-center gap-1 px-2 py-1 rounded ${
-            comment.user_vote === 'helpful'
-              ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+            comment.user_vote === "helpful"
+              ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
           } transition-colors`}
         >
-          👍 {comment.helpful_count}
+          Faydalı {comment.helpful_count}
         </button>
 
         <button
-          onClick={() => handleVote(comment.id, 'unhelpful')}
+          onClick={() => handleVote(comment.id, "unhelpful")}
           disabled={!currentUserId}
           className={`flex items-center gap-1 px-2 py-1 rounded ${
-            comment.user_vote === 'unhelpful'
-              ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+            comment.user_vote === "unhelpful"
+              ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300"
+              : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
           } transition-colors`}
         >
-          👎 {comment.unhelpful_count}
+          Faydalı değil {comment.unhelpful_count}
         </button>
 
         {comment.reply_count > 0 && (
@@ -223,9 +241,12 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
               }
               setExpandedReplies(newExpanded);
             }}
-            className="text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-urfa-700 dark:text-urfa-300 hover:underline"
           >
-            {expandedReplies.has(comment.id) ? '▼' : '▶'} {comment.reply_count} yanıt
+            {expandedReplies.has(comment.id)
+              ? "Yanıtları gizle"
+              : "Yanıtları göster"}{" "}
+            ({comment.reply_count})
           </button>
         )}
 
@@ -245,7 +266,10 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
     <div className="space-y-6">
       {/* New Comment Form */}
       {currentUserId && (
-        <form onSubmit={(e) => handleSubmitComment(e)} className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <form
+          onSubmit={(e) => handleSubmitComment(e)}
+          className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+        >
           <p className="text-sm font-medium text-gray-900 dark:text-white mb-3">
             Bir yorum yazın
           </p>
@@ -253,7 +277,7 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Düşüncelerinizi paylaşın..."
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none mb-3"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-urfa-500 text-sm resize-none mb-3"
             rows={3}
             maxLength={5000}
             disabled={isSubmitting}
@@ -265,9 +289,9 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
             <button
               type="submit"
               disabled={!newComment.trim() || isSubmitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-urfa-700 text-white rounded-lg hover:bg-urfa-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
             >
-              {isSubmitting ? 'Gönderiliyor...' : 'Gönder'}
+              {isSubmitting ? "Gönderiliyor..." : "Gönder"}
             </button>
           </div>
         </form>
@@ -275,7 +299,7 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
 
       {/* Error Message */}
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
           {error}
         </div>
       )}
@@ -283,7 +307,9 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
       {/* Loading State */}
       {isLoading && (
         <div className="text-center py-8">
-          <p className="text-gray-600 dark:text-gray-400">Yorumlar yükleniyor...</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            Yorumlar yükleniyor...
+          </p>
         </div>
       )}
 
@@ -291,16 +317,14 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
       {!isLoading && comments.length === 0 && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <p>Henüz yorum yok</p>
-          <p className="text-sm mt-1">İlk yorumu siz yazın!</p>
+          <p className="text-sm mt-1">İlk Şanlıurfa deneyimini siz paylaşın.</p>
         </div>
       )}
 
       {!isLoading && comments.length > 0 && (
         <div className="space-y-4">
           {comments.map((comment) => (
-            <div key={comment.id}>
-              {renderCommentItem(comment)}
-            </div>
+            <div key={comment.id}>{renderCommentItem(comment)}</div>
           ))}
         </div>
       )}

@@ -20,6 +20,6 @@ export const GET: APIRoute = async ({ request, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/discovery/trending', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get trending failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'İşlem tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

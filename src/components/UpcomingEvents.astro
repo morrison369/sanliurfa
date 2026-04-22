@@ -1,0 +1,117 @@
+---
+import { Calendar, MapPin } from "lucide-react";
+import { getCuratedEvents } from "../data/curated-events";
+import { query } from "../lib/postgres";
+
+let events: any[] = [];
+
+try {
+  const result = await query(
+    `SELECT id, title, slug, description, category, location, image_url, start_date, end_date
+     FROM events
+     WHERE status IN ('published', 'active')
+       AND (end_date IS NULL OR end_date >= CURRENT_DATE)
+     ORDER BY start_date ASC
+     LIMIT 3`,
+  );
+  events = result.rows;
+} catch (error) {
+  console.warn(
+    "Ana sayfa etkinlik sorgusu başarısız, yerel Şanlıurfa etkinlikleri kullanılıyor.",
+    error,
+  );
+}
+
+if (events.length === 0) {
+  events = getCuratedEvents(3);
+}
+
+const formatDate = (date: string | Date) =>
+  new Date(date).toLocaleDateString("tr-TR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+const categoryLabels: Record<string, string> = {
+  "kultur-sanat": "Kültür ve sanat",
+  gastronomi: "Gastronomi",
+  muzik: "Müzik",
+  spor: "Spor",
+  egitim: "Eğitim",
+  diger: "Diğer",
+};
+---
+
+<section class="section bg-white dark:bg-gray-900">
+  <div class="container-custom">
+    <div
+      class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-10"
+    >
+      <div>
+        <p
+          class="text-sm font-semibold uppercase tracking-[0.2em] text-urfa-600"
+        >
+          Şanlıurfa etkinlik takvimi
+        </p>
+        <h2
+          class="mt-3 text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white"
+        >
+          Yakındaki kültür, tarih ve lezzet buluşmaları
+        </h2>
+        <p class="mt-3 max-w-2xl text-gray-600 dark:text-gray-400">
+          Göbeklitepe rotaları, Balıklıgöl yürüyüşleri ve Şanlıurfa gastronomi
+          etkinliklerini tek yerden takip edin.
+        </p>
+      </div>
+      <a href="/etkinlikler" class="btn-primary self-start md:self-auto"
+        >Tüm etkinlikler</a
+      >
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-3">
+      {
+        events.map((event) => (
+          <article class="group overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-gray-800 dark:bg-gray-800">
+            <a href={`/etkinlikler/${event.slug}`} class="block">
+              <div class="relative aspect-[4/3] overflow-hidden">
+                <img
+                  src={event.image_url || "/images/placeholder-event.jpg"}
+                  alt={event.title}
+                  class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div class="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-urfa-700 shadow-sm">
+                  {categoryLabels[event.category] ||
+                    event.category ||
+                    "Etkinlik"}
+                </div>
+              </div>
+              <div class="p-6">
+                <h3 class="text-xl font-display font-bold text-gray-900 transition group-hover:text-urfa-600 dark:text-white dark:group-hover:text-urfa-400">
+                  {event.title}
+                </h3>
+                <p class="mt-3 line-clamp-3 text-sm leading-6 text-gray-600 dark:text-gray-400">
+                  {event.description}
+                </p>
+                <div class="mt-5 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                  <div class="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-urfa-600" />
+                    <span>
+                      {formatDate(event.start_date)}
+                      {event.start_time ? `, ${event.start_time}` : ""}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-urfa-600" />
+                    <span>{event.location}</span>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>

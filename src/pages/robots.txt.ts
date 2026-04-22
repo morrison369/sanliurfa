@@ -8,15 +8,14 @@ import type { APIRoute } from "astro";
 export const GET: APIRoute = async () => {
   const baseUrl = process.env.PUBLIC_SITE_URL || "https://sanliurfa.com";
 
-  const robotsTxt = `# Robots.txt - sanliurfa.com
-# Generated dynamically for search engine crawlers
+  const robotsTxt = `# robots.txt for sanliurfa.com
+# Generated dynamically for search engine and AI crawlers
 
-# Default crawler rules
 User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /admin/
-Disallow: /auth/
+Disallow: /profil/
 Disallow: /giris
 Disallow: /kayit
 Disallow: /abonelik
@@ -28,7 +27,6 @@ Disallow: /bildirim-tercihleri
 Disallow: /canli-analitik
 Disallow: /icerik
 Disallow: /isletme
-Disallow: /işletme
 Disallow: /koleksiyonlar
 Disallow: /kullanici
 Disallow: /loyalty
@@ -38,26 +36,43 @@ Disallow: /profil
 Disallow: /profile
 Disallow: /raporlar
 Disallow: /sosyal
-Disallow: /veri-ambarı
+Disallow: /veri-ambari
 Disallow: /webhooks
-Disallow: /_astro/
-Disallow: /search
 Disallow: /*?*sort=
 Disallow: /*?*page=
 Disallow: /*?*filter=
-Disallow: /*.json
-Disallow: /*.css
-Disallow: /*.js
 Crawl-delay: 1
 
 # Sitemap
-Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: ${baseUrl}/sitemap-index.xml
 
-# Crawl delay (in seconds) to be respectful
-Crawl-delay: 1
+# AI search crawlers
+User-agent: GPTBot
+Allow: /
 
-# Request rate (pages per second) - optional
-Request-rate: 1/1
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
 `;
 
   return new Response(robotsTxt, {

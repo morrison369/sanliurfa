@@ -81,7 +81,7 @@ export function TwoFactorSetup({ userId, onSetupComplete }: TwoFactorSetupProps)
   if (recoveryCodes.length > 0) {
     return (
       <div className="space-y-4 bg-green-50 border border-green-200 rounded-lg p-6">
-        <h3 className="font-bold text-green-900">✓ 2FA Başarıyla Etkinleştirildi</h3>
+        <h3 className="font-bold text-green-900">✓ İki faktörlü doğrulama etkinleştirildi</h3>
         <div>
           <p className="text-sm text-gray-600 mb-3">Acil durum kodlarınız (güvenli bir yerde saklayın):</p>
           <div className="bg-white border border-gray-200 rounded p-4 font-mono text-sm space-y-2">
@@ -97,12 +97,12 @@ export function TwoFactorSetup({ userId, onSetupComplete }: TwoFactorSetupProps)
   if (step === 'verify') {
     return (
       <div className="space-y-4 border rounded-lg p-6">
-        <h3 className="font-bold">Doğrulama Kodu Girin</h3>
+        <h3 className="font-bold">Doğrulama kodunu girin</h3>
         {error && <p className="text-sm text-red-600">{error}</p>}
         
         {totpUri && (
           <div className="text-sm text-gray-600">
-            <p className="mb-2">Authenticator uygulamanızda 6 haneli kodu girin:</p>
+            <p className="mb-2">Kimlik doğrulayıcı uygulamanızdaki 6 haneli kodu girin:</p>
             <input
               type="text"
               placeholder="000000"
@@ -135,7 +135,7 @@ export function TwoFactorSetup({ userId, onSetupComplete }: TwoFactorSetupProps)
           <div className="space-y-3">
             <label className="flex items-center">
               <input type="radio" checked={methodType === 'totp'} onChange={() => setMethodType('totp')} />
-              <span className="ml-2">Authenticator Uygulaması</span>
+              <span className="ml-2">Kimlik Doğrulayıcı Uygulama</span>
             </label>
             <label className="flex items-center">
               <input type="radio" checked={methodType === 'email'} onChange={() => setMethodType('email')} />

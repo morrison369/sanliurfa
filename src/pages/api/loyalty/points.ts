@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/loyalty/points', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const points = await getUserPoints(locals.user.id);
@@ -29,8 +29,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/loyalty/points', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get loyalty points', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Sadakat puanları alınamadı', err instanceof Error ? err : new Error(String(err)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Admin only
     if (!locals.isAdmin) {
       recordRequest('POST', '/api/loyalty/points', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
+      return apiError(ErrorCode.FORBIDDEN, 'Admin yetkisi gerekiyor', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const body = await request.json();
@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (!userId || typeof points !== 'number' || points <= 0) {
       recordRequest('POST', '/api/loyalty/points', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid input', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz veri', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     const userPoints = await queryOne(
@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (!userPoints) {
       recordRequest('POST', '/api/loyalty/points', HttpStatus.NOT_FOUND, Date.now() - startTime);
-      return apiError(ErrorCode.NOT_FOUND, 'User not found', HttpStatus.NOT_FOUND, undefined, requestId);
+      return apiError(ErrorCode.NOT_FOUND, 'Kullanıcı bulunamadı', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
     const newBalance = userPoints.current_balance + points;
@@ -95,7 +95,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/loyalty/points', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to award points', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Puan verilemedi', err instanceof Error ? err : new Error(String(err)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -72,7 +72,7 @@ export default function HashtagExplorer({ initialSlug }: Props) {
           setHashtags(data.data || []);
         }
       } catch (err) {
-        console.error('Failed to fetch hashtags:', err);
+        console.error('Trend konular alınamadı:', err);
         setError('Trend konuları yüklenemedi');
       } finally {
         setIsLoadingHashtags(false);
@@ -99,7 +99,7 @@ export default function HashtagExplorer({ initialSlug }: Props) {
           setError('Hashtag bulunamadı');
         }
       } catch (err) {
-        console.error('Failed to fetch hashtag content:', err);
+        console.error('Hashtag içeriği alınamadı:', err);
         setError('İçerik yüklenemedi');
       } finally {
         setIsLoadingContent(false);
@@ -173,13 +173,13 @@ export default function HashtagExplorer({ initialSlug }: Props) {
               {taggedContent.places_count > 0 && (
                 <div className="space-y-3">
                   <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
-                    İşaretlenen Mekanlar ({taggedContent.places_count})
+                    İşaretlenen Mekânlar ({taggedContent.places_count})
                   </h4>
                   <div className="space-y-2">
                     {taggedContent.places.map((place) => (
                       <a
                         key={place.id}
-                        href={`/mekan/${place.slug}`}
+                        href={`/places/${place.slug}`}
                         className="block p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 transition-colors"
                       >
                         <div className="font-semibold text-gray-900 dark:text-white text-sm">
@@ -216,7 +216,7 @@ export default function HashtagExplorer({ initialSlug }: Props) {
                           {review.content}
                         </p>
                         <a
-                          href={`/mekan/${review.place_slug}`}
+                          href={`/places/${review.place_slug}`}
                           className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                         >
                           {review.place_name}

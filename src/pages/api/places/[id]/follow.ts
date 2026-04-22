@@ -18,7 +18,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   logger.setRequestId(requestId);
 
   try {
-    // Auth required
+    // Oturum zorunlu
     if (!locals.user) {
       recordRequest('POST', '/api/places/[id]/follow', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
@@ -92,7 +92,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
   logger.setRequestId(requestId);
 
   try {
-    // Auth required
+    // Oturum zorunlu
     if (!locals.user) {
       recordRequest('DELETE', '/api/places/[id]/follow', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(

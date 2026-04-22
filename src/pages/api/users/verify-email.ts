@@ -27,7 +27,7 @@ export const GET: APIRoute = async (context) => {
 
     return apiResponse(context, HttpStatus.OK, {
       success: true,
-      message: 'Email verified successfully',
+      message: 'E-posta başarıyla doğrulandı',
       userId: result.userId,
       email: result.email
     });

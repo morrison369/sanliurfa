@@ -31,14 +31,14 @@ export function ReviewStats({ placeId }: ReviewStatsProps) {
         const response = await fetch(`/api/owner/analytics/reviews/${placeId}`);
 
         if (!response.ok) {
-          throw new Error('Failed to fetch review analysis');
+          throw new Error('Yorum analizi alınamadı');
         }
 
         const data = await response.json();
         setAnalysis(data.reviewAnalysis);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
         setAnalysis(null);
       } finally {
         setLoading(false);
@@ -55,7 +55,7 @@ export function ReviewStats({ placeId }: ReviewStatsProps) {
   if (error || !analysis) {
     return (
       <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
-        <p className="text-gray-600">{error || 'Review data not available'}</p>
+        <p className="text-gray-600">{error || 'Yorum verisi bulunamadı'}</p>
       </div>
     );
   }
@@ -118,7 +118,7 @@ export function ReviewStats({ placeId }: ReviewStatsProps) {
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-600">Ortalama Puan</p>
+            <p className="text-sm text-gray-600">Ortalama puan</p>
             <p className="text-4xl font-bold text-gray-900 mt-2">
               {analysis.averageRating.toFixed(1)}
             </p>

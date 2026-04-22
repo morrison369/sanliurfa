@@ -138,7 +138,7 @@ export default function NotificationsPage() {
           <div className="text-center py-12 text-gray-600 dark:text-gray-400">
             <p className="text-lg mb-2">📭</p>
             <p className="text-lg font-medium mb-1">Bildirim yok</p>
-            <p className="text-sm">Yeni bildirimler burada görünecek</p>
+            <p className="text-sm">Yeni bildirimler bu alanda listelenir.</p>
           </div>
         )}
       </div>

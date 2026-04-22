@@ -47,7 +47,7 @@ export default function AnalyticsPanel() {
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{summary.totalReviews}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">Toplam Mekan</p>
+          <p className="text-sm text-gray-600">Toplam Mekân</p>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{summary.totalPlaces}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200">
@@ -62,7 +62,7 @@ export default function AnalyticsPanel() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">En Popüler Mekanlar</h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">En Popüler Mekânlar</h3>
           <div className="space-y-3">
             {topPlaces.map((place: any, idx: number) => (
               <div key={place.id} className="flex justify-between items-start">

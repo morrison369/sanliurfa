@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Check authentication
     if (!locals.user?.id) {
       recordRequest('POST', '/api/billing/checkout', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     // Parse and validate input
@@ -65,7 +65,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/billing/checkout', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'Failed to create subscription',
+        'Abonelik oluşturulamadı',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -83,6 +83,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       error: error instanceof Error ? error.message : String(error)
     });
     logger.error('Checkout failed', error instanceof Error ? error : new Error(String(error)), { duration });
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

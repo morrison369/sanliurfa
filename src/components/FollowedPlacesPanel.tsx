@@ -3,6 +3,7 @@ import { unwrapApiPayload } from '@/lib/client-api';
 
 interface FollowedPlace {
   id: string;
+  slug?: string;
   name: string;
   category: string;
   rating: number;
@@ -26,7 +27,7 @@ export default function FollowedPlacesPanel() {
       const response = await fetch('/api/user/following/places?limit=50');
 
       if (!response.ok) {
-        throw new Error('Takip edilen mekanlar yüklenemedi');
+        throw new Error('Takip edilen mekânlar yüklenemedi');
       }
 
       const data = unwrapApiPayload<{ places?: FollowedPlace[] }>(await response.json());
@@ -57,9 +58,9 @@ export default function FollowedPlacesPanel() {
   if (places.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        <p className="mb-4">Henüz hiç mekan takip etmiyorsunuz</p>
+        <p className="mb-4">Henüz hiç mekân takip etmiyorsunuz</p>
         <a href="/arama" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
-          Mekan bul ve takip et →
+          Mekân bul ve takip et →
         </a>
       </div>
     );
@@ -69,10 +70,10 @@ export default function FollowedPlacesPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-          Takip Ettiğim Mekanlar
+          Takip ettiğim mekânlar
         </h3>
         <span className="text-sm text-gray-600 dark:text-gray-400">
-          {places.length} mekan
+          {places.length} mekân
         </span>
       </div>
 
@@ -80,7 +81,7 @@ export default function FollowedPlacesPanel() {
         {places.map((place) => (
           <a
             key={place.id}
-            href={`/mekan/${place.id}`}
+            href={`/places/${place.slug || place.id}`}
             className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-md dark:hover:shadow-lg transition-shadow"
           >
             {place.image && (

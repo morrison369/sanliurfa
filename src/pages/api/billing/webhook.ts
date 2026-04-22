@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     logger.info('Webhook event processed successfully', { eventId: event.id });
-    return new Response('Webhook processed', { status: 200 });
+    return new Response('Webhook işlendi', { status: 200 });
   } catch (error) {
     logger.error('Webhook error', error instanceof Error ? error : new Error(String(error)));
     return new Response('Webhook error', { status: 500 });

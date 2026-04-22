@@ -141,7 +141,7 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
         recordRequest('POST', '/api/admin/subscriptions/users', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
         return apiError(
           ErrorCode.VALIDATION_ERROR,
-          'Invalid input',
+          'Geçersiz giriş',
           HttpStatus.UNPROCESSABLE_ENTITY,
           validation.errors,
           requestId
@@ -182,7 +182,7 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
       return apiResponse(
         {
           success: true,
-          message: 'User tier changed successfully',
+          message: 'Kullanıcı paketi başarıyla değiştirildi',
         },
         HttpStatus.OK,
         requestId
@@ -219,7 +219,7 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
     recordRequest('POST', '/api/admin/subscriptions/users', HttpStatus.BAD_REQUEST, Date.now() - startTime);
     return apiError(
       ErrorCode.BAD_REQUEST,
-      'Invalid action',
+      'Geçersiz işlem',
       HttpStatus.BAD_REQUEST,
       undefined,
       requestId

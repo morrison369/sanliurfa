@@ -5,10 +5,10 @@ import { remove } from '../../../../lib/postgres';
 export const POST: APIRoute = async ({ params, locals }) => {
   try {
     const { id } = params;
-    
+
     if (!locals.isAdmin) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Yetkisiz işlem' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
     }

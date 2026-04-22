@@ -24,7 +24,7 @@ const errorMessages: Record<string, string> = {
 };
 
 const seo = {
-  title: `${post.title} - Blog Düzenle - Admin Panel`,
+  title: `${post.title} - Blog Düzenle - Yönetim Paneli`,
   noindex: true
 };
 ---
@@ -51,7 +51,7 @@ const seo = {
         </div>
       </div>
     )}
-    
+
     <div class="container-custom py-8">
       <form action={`/api/blog/${id}/update`} method="POST" class="grid lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 space-y-6">
@@ -59,18 +59,18 @@ const seo = {
             <label for="title" class="label dark:text-gray-300">Başlık *</label>
             <input type="text" id="title" name="title" required class="input text-xl font-semibold dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={post.title} />
           </div>
-          
+
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <label for="excerpt" class="label dark:text-gray-300">Özet *</label>
             <textarea id="excerpt" name="excerpt" rows="3" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none">{post.excerpt}</textarea>
           </div>
-          
+
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <label for="content" class="label dark:text-gray-300">İçerik *</label>
             <textarea id="content" name="content" rows="15" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white font-mono">{post.content}</textarea>
           </div>
         </div>
-        
+
         <aside class="space-y-6">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
@@ -88,7 +88,7 @@ const seo = {
               Kaydet
             </button>
           </div>
-          
+
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <label for="category" class="label dark:text-gray-300 flex items-center gap-2">
               <Tag className="w-4 h-4" /> Kategori
@@ -99,7 +99,7 @@ const seo = {
               ))}
             </select>
           </div>
-          
+
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <label for="author_id" class="label dark:text-gray-300 flex items-center gap-2">
               <User className="w-4 h-4" /> Yazar
@@ -130,7 +130,7 @@ const seo = {
                   name="featuredImage"
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={post.featured_image || ''}
-                  placeholder="https://sanliurfa.com/images/blog/ornek-yazi.jpg"
+                  placeholder="https://sanliurfa.com/images/blog/gobeklitepe-rehberi.jpg"
                 />
               </div>
 
@@ -142,7 +142,7 @@ const seo = {
                   name="thumbnail"
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   value={post.thumbnail || ''}
-                  placeholder="https://sanliurfa.com/images/blog/ornek-yazi-thumb.jpg"
+                  placeholder="https://sanliurfa.com/images/blog/gobeklitepe-rehberi-thumb.jpg"
                 />
               </div>
             </div>

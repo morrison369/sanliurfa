@@ -5,6 +5,10 @@ import Breadcrumb from "../../components/Breadcrumb.astro";
 import { getBlogPostBySlug, getBlogPosts } from "../../lib/blog";
 import type { BlogPost } from "../../lib/blog";
 import {
+  getCuratedBlogPostBySlug,
+  getCuratedBlogPosts,
+} from "../../data/curated-blog-posts";
+import {
   buildArticleRichSnippet,
   buildBreadcrumbSchema,
   buildOrganizationSchema,
@@ -25,7 +29,7 @@ try {
   post = await getBlogPostBySlug(slug);
 
   if (!post) {
-    return Astro.redirect("/blog");
+    post = getCuratedBlogPostBySlug(slug) as any;
   }
 
   // İlişkili yazıları getir (aynı kategorideki diğer yazılar)
@@ -40,7 +44,17 @@ try {
 } catch (err) {
   error = "Blog yazısı yüklenirken hata oluştu";
   console.error("Blog detail error:", err);
+  post = getCuratedBlogPostBySlug(slug) as any;
+}
+
+if (!post) {
   return Astro.redirect("/blog");
+}
+
+if (relatedPosts.length === 0) {
+  relatedPosts = getCuratedBlogPosts()
+    .filter((item) => item.slug !== post?.slug)
+    .slice(0, 3) as any;
 }
 
 const currentPost = post as BlogPost;

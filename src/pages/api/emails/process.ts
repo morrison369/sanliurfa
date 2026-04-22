@@ -13,7 +13,7 @@ export const POST: APIRoute = async ({ request }) => {
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.includes('Bearer ')) {
       recordRequest('POST', '/api/emails/process', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Unauthorized', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Yetkisiz işlem', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const pendingEmails = await getPendingEmails(50);
@@ -29,7 +29,7 @@ export const POST: APIRoute = async ({ request }) => {
           failed++;
         }
       } catch (err) {
-        logger.error('Failed to send email', err instanceof Error ? err : new Error(String(err)), { emailId: email.id });
+        logger.error('E-posta gönderilemedi', err instanceof Error ? err : new Error(String(err)), { emailId: email.id });
         failed++;
       }
     }
@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ request }) => {
     return apiResponse(
       {
         success: true,
-        message: 'Emails processed',
+        message: 'E-postalar işlendi',
         processed,
         failed
       },

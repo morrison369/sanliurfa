@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/search/recommendations', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
@@ -43,6 +43,6 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/search/recommendations', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Failed to get recommendations', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
