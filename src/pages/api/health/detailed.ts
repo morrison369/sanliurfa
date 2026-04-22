@@ -80,7 +80,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
       redisResponseTime = Date.now() - redisStart;
       redisStatus = 'up';
     } catch (error) {
-      console.error('Redis health check failed:', error);
       redisStatus = 'down';
       redisError = error instanceof Error ? error.message : String(error);
     }

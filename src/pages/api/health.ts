@@ -52,8 +52,7 @@ export const GET: APIRoute = async ({ request }) => {
       await redis.ping();
       redisResponseTime = Date.now() - redisStart;
       redisStatus = 'up';
-    } catch (error) {
-      console.error('Redis health check failed:', error);
+    } catch (_error) {
       redisStatus = 'down';
     }
 

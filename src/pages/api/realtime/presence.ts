@@ -25,10 +25,18 @@ export const GET: APIRoute = async ({ request }) => {
     new ReadableStream({
       async start(controller) {
         try {
-          const redis = await getRedisClient();
+          let redis: any = null;
+          try {
+            redis = await getRedisClient();
+          } catch {
+            redis = null;
+          }
 
           // Send initial connection message
           controller.enqueue(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
+          if (!redis) {
+            controller.enqueue(`data: ${JSON.stringify({ type: 'degraded', message: 'Redis offline, fallback mode active' })}\n\n`);
+          }
 
           // Send updates every 30 seconds
           const interval = setInterval(async () => {
@@ -39,6 +47,27 @@ export const GET: APIRoute = async ({ request }) => {
             }
 
             try {
+              if (!redis) {
+                try {
+                  redis = await getRedisClient();
+                } catch {
+                  redis = null;
+                }
+              }
+
+              if (!redis) {
+                const degradedData = {
+                  type: 'update',
+                  timestamp: new Date().toISOString(),
+                  onlineUsers: 0,
+                  trendingSearches: [],
+                  activePlaces: [],
+                  degraded: true
+                };
+                controller.enqueue(`data: ${JSON.stringify(degradedData)}\n\n`);
+                return;
+              }
+
               // Get online user count from Redis
               // You can implement this by maintaining a set of active sessions
               // For now, we'll calculate from active sessions
@@ -71,6 +100,7 @@ export const GET: APIRoute = async ({ request }) => {
 
               controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
             } catch (error) {
+              redis = null;
               logger.error('SSE heartbeat failed', error instanceof Error ? error : new Error(String(error)));
               const errorData = {
                 type: 'error',
