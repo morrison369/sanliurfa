@@ -35,6 +35,46 @@ class Logger {
   private isDevelopment = Boolean((import.meta as { env?: { DEV?: boolean } }).env?.DEV);
   private requestId: string | undefined;
 
+  private normalizeLogValue(value: unknown, depth = 0): unknown {
+    if (depth > 3) {
+      return '[MaxDepth]';
+    }
+
+    if (value instanceof Error) {
+      return {
+        name: value.name,
+        message: value.message,
+        stack: value.stack
+      };
+    }
+
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+
+    if (Array.isArray(value)) {
+      return value.map(item => this.normalizeLogValue(item, depth + 1));
+    }
+
+    if (value && typeof value === 'object') {
+      const normalized: Record<string, unknown> = {};
+      for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+        normalized[key] = this.normalizeLogValue(nested, depth + 1);
+      }
+      return normalized;
+    }
+
+    return value;
+  }
+
+  private normalizeContext(context?: Record<string, any>): Record<string, any> | undefined {
+    if (!context) {
+      return undefined;
+    }
+
+    return this.normalizeLogValue(context) as Record<string, any>;
+  }
+
   setRequestId(id: string): void {
     this.requestId = id;
   }
@@ -63,10 +103,12 @@ class Logger {
   }
 
   private log(entry: LogEntry) {
+    const normalizedContext = this.normalizeContext(entry.context);
     const logEntry: LogEntry = {
       ...entry,
       timestamp: new Date().toISOString(),
-      requestId: this.requestId || entry.requestId
+      requestId: this.requestId || entry.requestId,
+      context: normalizedContext
     };
 
     // In development, log to console
