@@ -3,6 +3,7 @@
 import Layout from '../../../../layouts/Layout.astro';
 import { MapPin, Phone, Globe, Mail, Save, ArrowLeft } from 'lucide-react';
 import { queryOne } from '../../../../lib/postgres';
+import ProviderImagePicker from '../../../../components/admin/ProviderImagePicker.astro';
 
 const { id } = Astro.params;
 
@@ -88,6 +89,7 @@ const place = {
   status: rawPlace.status || 'active',
   is_featured: Boolean(rawPlace.is_featured),
   is_verified: Boolean(rawPlace.is_verified || rawPlace.verification_status === 'verified'),
+  image_url: rawPlace.image_url || rawPlace.images?.[0] || '',
   amenities: normalizeStringArray(rawPlace.amenities),
   tags: normalizeStringArray(rawPlace.tags),
   opening_hours: openingHours,
@@ -359,6 +361,17 @@ const days = [
                 Kaydet
               </button>
             </div>
+          </div>
+
+          <!-- Images -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görseller</h3>
+            <ProviderImagePicker
+              currentImage={place.image_url}
+              currentSlug={place.slug}
+              currentName={place.name}
+              currentCategory={place.category}
+            />
           </div>
 
           <!-- Amenities -->
