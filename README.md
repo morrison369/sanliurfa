@@ -107,7 +107,10 @@ npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts
 npm run repo:stabilize:check
 npm run release:gate
 npm run test:e2e:smoke
+npm run test:social:smoke
 ```
+
+`test:social:smoke` komutu yeni port açmaz; yalnızca çalışan `http://127.0.0.1:4321` üzerinde sosyal takip + mesajlaşma temel akışını doğrular.
 
 ## Release ve Stabilizasyon
 - API geçiş politikası: `docs/API_LEGACY_POLICY.md`
