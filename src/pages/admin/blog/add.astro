@@ -3,6 +3,7 @@
 import Layout from '../../../layouts/Layout.astro';
 import { FileText, Upload, Eye, Save, AlertCircle } from 'lucide-react';
 import { getBlogCategories } from '../../../lib/blog';
+import ProviderImagePicker from '../../../components/admin/ProviderImagePicker.astro';
 
 const user = Astro.locals.user;
 if (!user || !Astro.locals.isAdmin) {
@@ -232,6 +233,8 @@ const post = null;
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Kapak Görseli</h3>
 
             <div class="space-y-4">
+              <ProviderImagePicker currentCategory="blog" folder="blog" />
+
               <div>
                 <label for="featuredImage" class="label dark:text-gray-300">Kapak Görseli URL</label>
                 <input
@@ -290,14 +293,14 @@ const post = null;
           content: formData.get('content'),
           excerpt: formData.get('excerpt'),
           categoryId: formData.get('categoryId') ? parseInt(formData.get('categoryId') as string) : undefined,
-          featuredImage: formData.get('featuredImage'),
-          thumbnail: formData.get('thumbnail'),
+          featuredImage: formData.get('provider_image_url') || formData.get('featuredImage'),
+          thumbnail: formData.get('provider_image_url') || formData.get('thumbnail'),
           status: formData.get('status') || 'draft',
           isFeatured: formData.get('isFeatured') ? true : false,
           seoTitle: formData.get('seoTitle'),
           seoDescription: formData.get('seoDescription'),
           seoKeywords: formData.get('seoKeywords'),
-          tags: formData.get('tags') ? (formData.get('tags') as string).split(',').map(t => t.trim()) : []
+          tags: formData.get('tags') || ''
         };
 
         try {

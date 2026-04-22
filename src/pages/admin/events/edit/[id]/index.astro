@@ -1,7 +1,8 @@
 ---
 import Layout from '../../../../../layouts/Layout.astro';
-import { Calendar, MapPin, Save, ArrowLeft } from 'lucide-react';
+import { MapPin, Save, ArrowLeft } from 'lucide-react';
 import { queryOne } from '../../../../../lib/postgres';
+import ProviderImagePicker from '../../../../../components/admin/ProviderImagePicker.astro';
 
 const { id } = Astro.params;
 
@@ -117,6 +118,15 @@ const seo = {
 
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görsel</h3>
+            <div class="mb-4">
+              <ProviderImagePicker
+                currentImage={event.image_url}
+                currentSlug={event.slug}
+                currentName={event.title}
+                currentCategory={event.category || 'etkinlik'}
+                folder="events"
+              />
+            </div>
             <input type="url" name="image" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={event.image_url || ''} placeholder="https://sanliurfa.com/images/ornek-etkinlik.jpg" />
             {event.image_url && <img src={event.image_url} alt="" class="mt-3 w-full h-32 object-cover rounded-lg" />}
           </div>

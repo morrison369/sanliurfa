@@ -1,7 +1,8 @@
 ---
 import Layout from '../../../../../layouts/Layout.astro';
-import { Landmark, MapPin, Save, ArrowLeft, Clock, DollarSign } from 'lucide-react';
+import { MapPin, Save, ArrowLeft } from 'lucide-react';
 import { queryOne } from '../../../../../lib/postgres';
+import ProviderImagePicker from '../../../../../components/admin/ProviderImagePicker.astro';
 
 const { id } = Astro.params;
 
@@ -126,6 +127,15 @@ const seo = {
 
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görseller</h3>
+            <div class="mb-4">
+              <ProviderImagePicker
+                currentImage={site.images?.[0] || ''}
+                currentSlug={site.slug}
+                currentName={site.name}
+                currentCategory={site.period || 'tarihi yer'}
+                folder="historical-sites"
+              />
+            </div>
             <textarea name="images" rows="3" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" placeholder="https://sanliurfa.com/images/ornek-1.jpg">{site.images?.join(', ') || ''}</textarea>
             {site.images && site.images.length > 0 && (
               <div class="mt-4 grid grid-cols-3 gap-2">
