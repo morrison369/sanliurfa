@@ -104,7 +104,7 @@ const reportReasons = [
   </div>
 </div>
 
-<script define:vars={{ type, id }}>
+<script is:inline define:vars={{ type, id }}>
   const btn = document.getElementById(`report-btn-${type}-${id}`);
   const modal = document.getElementById(`report-modal-${type}-${id}`);
   const closeBtn = document.getElementById(`report-close-${type}-${id}`);

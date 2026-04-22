@@ -263,7 +263,7 @@ const seoProps = baseSeoProps
             async
             src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
           />
-          <script type="text/partytown" define:vars={{ googleAnalyticsId }}>
+          <script type="text/partytown" is:inline define:vars={{ googleAnalyticsId }}>
             {`
               const analyticsWindow = window;
               analyticsWindow.dataLayer = analyticsWindow.dataLayer || [];

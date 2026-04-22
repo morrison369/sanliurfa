@@ -49,7 +49,7 @@ const mapId = Math.random().toString(36).substring(7);
   ></div>
 </div>
 
-<script define:vars={{ mapId, centerLat, centerLng, zoom, places, showSearch }}>
+<script is:inline define:vars={{ mapId, centerLat, centerLng, zoom, places, showSearch }}>
   // Load Leaflet from CDN
   const loadLeaflet = async () => {
     // Check if Leaflet is already loaded
