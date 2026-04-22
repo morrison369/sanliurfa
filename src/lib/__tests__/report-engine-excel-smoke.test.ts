@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import ExcelJS from 'exceljs';
+import { strFromU8, unzipSync } from 'fflate';
 import { generateExcelBuffer } from '../report-export';
 
 describe('report-engine excel smoke', () => {
@@ -17,13 +17,16 @@ describe('report-engine excel smoke', () => {
     expect(buffer[0]).toBe(0x50);
     expect(buffer[1]).toBe(0x4b);
 
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer);
+    const files = unzipSync(new Uint8Array(buffer));
+    const workbookXml = strFromU8(files['xl/workbook.xml']);
+    const sheetXml = strFromU8(files['xl/worksheets/sheet1.xml']);
+    const sharedStringsXml = strFromU8(files['xl/sharedStrings.xml']);
 
-    const sheet = workbook.getWorksheet('BusinessMetrics');
-    expect(sheet).toBeDefined();
-    expect(sheet?.getCell('A1').value).toBe('Date');
-    expect(sheet?.getCell('B2').value).toBe(1234.56);
-    expect(sheet?.getCell('C3').value).toBe(140);
+    expect(workbookXml).toContain('BusinessMetrics');
+    expect(sharedStringsXml).toContain('Date');
+    expect(sharedStringsXml).toContain('Revenue');
+    expect(sharedStringsXml).toContain('Users');
+    expect(sheetXml).toContain('<v>1234.56</v>');
+    expect(sheetXml).toContain('<v>140</v>');
   });
 });

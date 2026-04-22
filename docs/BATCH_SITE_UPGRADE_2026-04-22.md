@@ -472,3 +472,11 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 2. DB boş veya erişilemez olduğunda `/api/events`, `/api/events/list` ve `/api/events/search` Şanlıurfa curated etkinlikleriyle dolu JSON döndürür.
 3. Etkinlik API cevapları Türkçe içerik dili header'ı ve sayfalama meta bilgisiyle döner.
 4. `/api/events`, `/api/events?category=kultur-sanat`, `/api/events?q=urfa`, `/api/events/list` ve `/api/events/search?q=urfa` smoke kontrolünde 200 döndü ve yeni hata logu oluşmadı.
+
+## Bitirme Modu: Dependency Security ve Excel Export Temizliği
+
+1. Dependabot PR ile `fast-xml-parser` 5.7.1 seviyesine alındı.
+2. Kodda kullanılmayan `resend` npm paketi kaldırıldı; e-posta gönderimi mevcut server-side Resend REST entegrasyonlarıyla devam eder.
+3. Rapor Excel exportu `exceljs` yerine daha küçük write-only `write-excel-file` paketine taşındı; `uuid` audit zinciri kaldırıldı.
+4. Excel smoke testi yeni XLSX üreticisinin zip içeriğini doğrulayacak şekilde güncellendi.
+5. `npm audit` sonucu 0 vulnerability, Excel smoke, typecheck, build ve secret scan temizdir.
