@@ -113,6 +113,16 @@ function firstNumber(record: Record<string, unknown>, paths: string[][]): number
   return null;
 }
 
+function firstArray(record: Record<string, unknown>, paths: string[][]): unknown[] | null {
+  for (const path of paths) {
+    const value = getNestedValue(record, path);
+    if (Array.isArray(value)) {
+      return value;
+    }
+  }
+  return null;
+}
+
 async function registerUser(label: string): Promise<Session> {
   const timestamp = Date.now();
   const email = `smoke-${label}-${timestamp}-${Math.floor(Math.random() * 10000)}@example.com`;
@@ -259,6 +269,59 @@ async function main(): Promise<void> {
   }
 
   console.log(`smoke-unread-after ${unreadAfterCount}`);
+
+  const placesResponse = await fetch(`${BASE_URL}/api/places?limit=1&offset=0`);
+  const placesJson = await parseJson(placesResponse);
+  if (placesResponse.status !== 200) {
+    throw new Error(`Mekan listesi alınamadı (${placesResponse.status})`);
+  }
+
+  const places = firstArray(placesJson, [['data'], ['data', 'data']]);
+  if (!places || places.length === 0) {
+    throw new Error('Mekan listesi boş, place takip/yorum smoke atlandı');
+  }
+
+  const firstPlace = toRecord(places[0]);
+  const placeId = typeof firstPlace.id === 'string' ? firstPlace.id : null;
+  if (!placeId) {
+    throw new Error('İlk mekan kaydında geçerli id yok');
+  }
+  console.log(`smoke-place ${placeId}`);
+
+  await postWithAuth(`/api/places/${placeId}/follow`, userA.authToken, {}, [200, 201, 409]);
+  console.log('smoke-place-follow ok');
+
+  const reviewContent = `Şanlıurfa smoke yorumu ${Date.now()}: mekan deneyimi başarılı.`;
+  await postWithAuth(
+    '/api/reviews',
+    userA.authToken,
+    {
+      placeId,
+      rating: 5,
+      title: 'Smoke Test Yorumu',
+      content: reviewContent,
+    },
+    [200, 201]
+  );
+  console.log('smoke-review-create ok');
+
+  const placeReviews = await fetch(
+    `${BASE_URL}/api/reviews?placeId=${encodeURIComponent(placeId)}&limit=5&offset=0`,
+    {
+      headers: { Cookie: `auth-token=${userA.authToken}` },
+    }
+  );
+  const reviewsJson = await parseJson(placeReviews);
+  if (placeReviews.status !== 200) {
+    throw new Error(`Mekan yorumları alınamadı (${placeReviews.status})`);
+  }
+
+  const reviewList = firstArray(reviewsJson, [['data'], ['data', 'data']]);
+  if (!reviewList || reviewList.length < 1) {
+    throw new Error('Yorum listesi boş döndü');
+  }
+  console.log(`smoke-review-read ok (${reviewList.length})`);
+
   console.log('social-messaging-smoke OK');
 }
 
