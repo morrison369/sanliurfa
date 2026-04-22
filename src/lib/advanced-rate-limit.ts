@@ -3,7 +3,7 @@
  * Supports global limits, per-user limits, per-endpoint limits, and burst handling
  */
 
-import { getRedisClient } from './redis-client';
+import { getRedisClient as getPrimaryRedisClient } from './cache';
 import { logger } from './logging';
 
 export interface RateLimitConfig {
@@ -17,6 +17,14 @@ export interface RateLimitResult {
   remaining: number;
   resetAt: Date;
   retryAfter?: number;
+}
+
+async function getRateLimitRedisClient(): Promise<any | null> {
+  try {
+    return (await getPrimaryRedisClient()) as any;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -36,7 +44,7 @@ export class SlidingWindowLimiter {
    * Check if request is allowed
    */
   async isAllowed(identifier: string): Promise<RateLimitResult> {
-    const redis = getRedisClient();
+    const redis = await getRateLimitRedisClient();
     if (!redis) {
       return { allowed: true, remaining: -1, resetAt: new Date() };
     }
@@ -106,7 +114,7 @@ export class TokenBucketLimiter {
    * Check if request is allowed (and consume tokens)
    */
   async isAllowed(identifier: string): Promise<RateLimitResult> {
-    const redis = getRedisClient();
+    const redis = await getRateLimitRedisClient();
     if (!redis) {
       return { allowed: true, remaining: -1, resetAt: new Date() };
     }
