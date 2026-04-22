@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface SavedSearch {
   id: string;
@@ -29,7 +30,7 @@ export default function SavedSearchesManager() {
         throw new Error('Kayıtlı aramalar yüklenemedi');
       }
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ data?: SavedSearch[] }>(await response.json());
       setSearches(data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -58,10 +59,10 @@ export default function SavedSearchesManager() {
       const response = await fetch(`/api/users/saved-searches/${searchId}`, {
         method: 'DELETE'
       });
+      const data = await response.json();
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Silme işlemi başarısız');
+        throw new Error(getApiErrorMessage(data, 'Silme işlemi başarısız'));
       }
 
       setSearches(searches.filter((s) => s.id !== searchId));
