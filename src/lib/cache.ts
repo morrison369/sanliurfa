@@ -16,10 +16,14 @@ let unavailableWarningLogged = false;
 const lastErrorLogBySignature = new Map<string, number>();
 const inMemoryRateLimits = new Map<string, { count: number; resetAt: number }>();
 
+interface RedisClientRequestOptions {
+  silent?: boolean;
+}
+
 /**
  * Get or create Redis client with proper error handling
  */
-export async function getRedisClient() {
+export async function getRedisClient(options: RedisClientRequestOptions = {}) {
   if (client && client.isOpen) {
     return client;
   }
@@ -65,7 +69,9 @@ export async function getRedisClient() {
     return client;
   } catch (error) {
     connectionError = error instanceof Error ? error : new Error(String(error));
-    logRedisUnavailableOnce(connectionError);
+    if (!options.silent) {
+      logRedisUnavailableOnce(connectionError);
+    }
     throw connectionError;
   }
 }
@@ -77,9 +83,9 @@ export function isRedisAvailable(): boolean {
   return !connectionError && client?.isOpen === true;
 }
 
-async function getOptionalRedisClient() {
+export async function getOptionalRedisClient(options: RedisClientRequestOptions = {}) {
   try {
-    return await getRedisClient();
+    return await getRedisClient(options);
   } catch {
     return null;
   }
@@ -111,7 +117,7 @@ export function prefixKey(key: unknown): string {
  */
 export async function getCache<T = any>(key: unknown): Promise<T | null> {
   try {
-    const redis = await getOptionalRedisClient();
+    const redis = await getOptionalRedisClient({ silent: true });
     if (!redis) {
       return null;
     }
@@ -129,7 +135,7 @@ export async function getCache<T = any>(key: unknown): Promise<T | null> {
  */
 export async function setCache(key: unknown, value: any, ttlSeconds = 3600): Promise<void> {
   try {
-    const redis = await getOptionalRedisClient();
+    const redis = await getOptionalRedisClient({ silent: true });
     if (!redis) {
       return;
     }
@@ -145,7 +151,7 @@ export async function setCache(key: unknown, value: any, ttlSeconds = 3600): Pro
  */
 export async function deleteCache(key: unknown): Promise<void> {
   try {
-    const redis = await getOptionalRedisClient();
+    const redis = await getOptionalRedisClient({ silent: true });
     if (!redis) {
       return;
     }
@@ -162,7 +168,7 @@ export async function deleteCache(key: unknown): Promise<void> {
  */
 export async function deleteCachePattern(pattern: unknown): Promise<void> {
   try {
-    const redis = await getOptionalRedisClient();
+    const redis = await getOptionalRedisClient({ silent: true });
     if (!redis) {
       return;
     }
@@ -186,7 +192,7 @@ export async function checkRateLimit(key: unknown, limit: number, windowSeconds:
   const normalizedKey = normalizeCacheKey(key || 'unknown');
 
   try {
-    const redis = await getOptionalRedisClient();
+    const redis = await getOptionalRedisClient({ silent: true });
     if (!redis) {
       logRedisUnavailableOnce(new Error('Redis unavailable for rate limiting, using in-memory fallback'));
       return checkInMemoryRateLimit(normalizedKey, safeLimit, safeWindowSeconds);
