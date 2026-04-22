@@ -4,7 +4,7 @@ import ModerationDashboard from '../../components/ModerationDashboard';
 
 // Require admin authentication
 if (!Astro.locals.user?.isAdmin) {
-  return Astro.redirect('/giris');
+  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
 }
 ---
 

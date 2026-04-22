@@ -5,7 +5,7 @@ import ReportManager from '../../components/ReportManager';
 // Auth check
 const userId = Astro.locals.user?.id;
 if (!userId) {
-  return Astro.redirect('/giris');
+  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
 }
 ---
 

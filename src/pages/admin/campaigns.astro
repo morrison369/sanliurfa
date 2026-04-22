@@ -11,7 +11,7 @@ import { getSequence, getSequenceSteps } from '../../lib/email-automation';
 
 // Check auth
 if (!Astro.locals.user?.isAdmin) {
-  return Astro.redirect('/giris');
+  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
 }
 
 // Fetch campaigns and sequences
