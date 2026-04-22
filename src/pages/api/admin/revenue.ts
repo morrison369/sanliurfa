@@ -54,11 +54,13 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const tiers: Record<string, any> = {};
 
     for (const row of mrrQuery) {
+      const subscriberCount = Number(row.subscriber_count || 0);
+      const tierMrr = Number(row.tier_mrr || 0);
       tiers[row.tier] = {
-        count: row.subscriber_count,
-        monthlyRevenue: row.tier_mrr
+        count: subscriberCount,
+        monthlyRevenue: tierMrr
       };
-      totalMRR += row.tier_mrr;
+      totalMRR += tierMrr;
     }
 
     // Get daily revenue for last 30 days
@@ -88,10 +90,10 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     );
 
     const totalActiveSubscriptions = (subscriptionsByTier as any[])
-      .reduce((sum, item) => sum + (item.count || 0), 0);
+      .reduce((sum, item) => sum + Number(item.count || 0), 0);
 
     const churnRate = totalActiveSubscriptions > 0
-      ? ((churnQuery?.churned_30d || 0) / totalActiveSubscriptions * 100).toFixed(2)
+      ? (Number(churnQuery?.churned_30d || 0) / totalActiveSubscriptions * 100).toFixed(2)
       : 0;
 
     // Get total revenue all time
@@ -119,7 +121,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
             totalMRR: parseFloat(totalMRR.toFixed(2)),
             totalActiveSubscriptions,
             churnRatePercent: parseFloat(churnRate as string),
-            totalRevenueAllTime: totalRevenueQuery?.total || 0
+            totalRevenueAllTime: Number(totalRevenueQuery?.total || 0)
           },
           byTier: tiers,
           dailyRevenue: dailyRevenue.map((row: any) => ({
