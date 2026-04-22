@@ -17,6 +17,7 @@ export async function searchPlaces(
       SELECT
         p.id,
         p.name,
+        p.slug,
         p.description,
         p.category,
         p.city,
@@ -24,7 +25,7 @@ export async function searchPlaces(
         p.latitude,
         p.longitude,
         p.rating,
-        p.review_count,
+        p.rating_count as review_count,
         p.created_at,
         ts_rank(
           to_tsvector('turkish', p.name || ' ' || COALESCE(p.description, '')),
@@ -59,11 +60,11 @@ export async function searchPlaces(
 
     // Sorting
     if (sortBy === 'rating') {
-      sql += ' ORDER BY p.rating DESC, p.review_count DESC';
+      sql += ' ORDER BY p.rating DESC, p.rating_count DESC';
     } else if (sortBy === 'newest') {
       sql += ' ORDER BY p.created_at DESC';
     } else if (sortBy === 'reviews') {
-      sql += ' ORDER BY p.review_count DESC';
+      sql += ' ORDER BY p.rating_count DESC';
     } else {
       sql += ' ORDER BY relevance_score DESC, p.rating DESC';
     }

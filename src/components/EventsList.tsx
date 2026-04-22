@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { EventCard } from './EventCard';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface Event {
   id: string;
@@ -48,17 +49,18 @@ export function EventsList({ category, limit = 20 }: EventsListProps) {
         }
 
         const response = await fetch(`/api/events/list?${params}`);
+        const json = await response.json();
 
         if (!response.ok) {
-          throw new Error('Failed to fetch events');
+          throw new Error(getApiErrorMessage(json, 'Etkinlikler yüklenemedi'));
         }
 
-        const data = await response.json();
+        const data = unwrapApiPayload<{ events?: Event[]; total?: number }>(json);
         setEvents(data.events || []);
         setTotal(data.total || 0);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
         setEvents([]);
       } finally {
         setLoading(false);

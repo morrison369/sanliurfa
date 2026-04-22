@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getApiErrorMessage } from '@/lib/client-api';
 
 interface SearchFilters {
   category?: string;
@@ -27,7 +28,7 @@ export default function AdvancedSearchForm({ onSearch, onSave }: AdvancedSearchF
     { value: 'restaurant', label: 'Restoran' },
     { value: 'cafe', label: 'Kafe' },
     { value: 'hotel', label: 'Otel' },
-    { value: 'attraction', label: 'Sehenswürdigkeit' },
+    { value: 'attraction', label: 'Gezilecek Yer' },
     { value: 'museum', label: 'Müze' },
     { value: 'park', label: 'Park' },
     { value: 'shop', label: 'Alışveriş' },
@@ -70,7 +71,7 @@ export default function AdvancedSearchForm({ onSearch, onSave }: AdvancedSearchF
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Arama kaydedilemedi');
+        throw new Error(getApiErrorMessage(data, 'Arama kaydedilemedi'));
       }
 
       onSave?.(saveName, query, filters);

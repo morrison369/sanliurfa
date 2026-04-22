@@ -3,6 +3,7 @@
  * AI-powered search with filters and personalized recommendations
  */
 import { useEffect, useState } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface SearchResult {
   id: string;
@@ -12,6 +13,7 @@ interface SearchResult {
   average_rating: number;
   review_count: number;
   image_url?: string;
+  slug?: string;
   ranking_score?: number;
 }
 
@@ -36,10 +38,10 @@ export function AdvancedSearchPanel() {
 
   const fetchSuggestions = async () => {
     try {
-      const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}&limit=8`);
+      const res = await fetch(`/api/search/suggestions?prefix=${encodeURIComponent(query)}&limit=8`);
       if (res.ok) {
-        const data = await res.json();
-        setSuggestions(data.data || []);
+        const data = unwrapApiPayload<{ data?: { suggestions?: string[] } }>(await res.json());
+        setSuggestions(data.data?.suggestions || []);
       }
     } catch (err) {
       console.error('Failed to fetch suggestions', err);
@@ -63,7 +65,7 @@ export function AdvancedSearchPanel() {
 
       const res = await fetch(`/api/search/advanced?${params}`);
       if (res.ok) {
-        const data = await res.json();
+        const data = unwrapApiPayload<{ data?: SearchResult[] }>(await res.json());
         setResults(data.data || []);
       }
     } catch (err) {
@@ -178,8 +180,9 @@ export function AdvancedSearchPanel() {
           <p className="text-sm text-gray-600">{results.length} sonuç bulundu</p>
 
           {results.map((result) => (
-            <div
+            <a
               key={result.id}
+              href={`/places/${result.slug || result.id}`}
               className="bg-white rounded-lg shadow hover:shadow-lg transition p-4 flex gap-4 cursor-pointer"
             >
               {result.image_url && (
@@ -207,7 +210,7 @@ export function AdvancedSearchPanel() {
                   )}
                 </div>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       )}

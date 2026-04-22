@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface RsvpButtonProps {
   eventId: string;
@@ -49,15 +50,16 @@ export function RsvpButton({
           'Content-Type': 'application/json'
         }
       });
+      const json = await response.json();
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'RSVP işlemi başarısız');
+        throw new Error(getApiErrorMessage(json, 'Katılım işlemi başarısız'));
       }
 
-      const data = await response.json();
-      setIsRsvpd(data.rsvpd);
-      onRsvpChange?.(data.rsvpd);
+      const data = unwrapApiPayload<{ rsvpd?: boolean }>(json);
+      const nextRsvpd = Boolean(data.rsvpd);
+      setIsRsvpd(nextRsvpd);
+      onRsvpChange?.(nextRsvpd);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     } finally {
