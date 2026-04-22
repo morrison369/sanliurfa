@@ -15,15 +15,16 @@ import {
 } from "../../lib/rich-snippets";
 
 const { slug } = Astro.params;
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isUuid = (value: unknown) => typeof value === "string" && uuidPattern.test(value);
 
 let event: any = null;
 
 try {
   event = await queryOne(
-    `SELECT e.*, u.full_name as creator_name
-     FROM events e
-     LEFT JOIN users u ON e.created_by = u.id
-     WHERE e.slug = $1 AND e.status = 'published'`,
+    `SELECT *
+     FROM events
+     WHERE slug = $1 AND status = 'published'`,
     [slug],
   );
 } catch (error) {
@@ -39,23 +40,24 @@ if (!event) {
   return Astro.redirect("/etkinlikler");
 }
 
+event.creator_name = event.creator_name || "sanliurfa.com editörleri";
+
 let relatedEvents: any[] = [];
 
-try {
-  const relatedResult = await query(
-    `SELECT id, title, slug, image_url, start_date, location
-     FROM events
-     WHERE status = 'published' AND category = $1 AND id != $2
-     AND start_date >= CURRENT_DATE
-     LIMIT 3`,
-    [event.category, event.id],
-  );
-  relatedEvents = relatedResult.rows;
-} catch (error) {
-  console.warn(
-    "Benzer etkinlik sorgusu başarısız, yerel Şanlıurfa etkinlikleri kullanılıyor.",
-    error,
-  );
+if (isUuid(event.id)) {
+  try {
+    const relatedResult = await query(
+      `SELECT *
+       FROM events
+       WHERE status = 'published' AND category = $1 AND id != $2
+       AND start_date >= CURRENT_DATE
+       LIMIT 3`,
+      [event.category, event.id],
+    );
+    relatedEvents = relatedResult.rows;
+  } catch {
+    relatedEvents = [];
+  }
 }
 
 if (relatedEvents.length === 0) {

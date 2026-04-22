@@ -53,21 +53,23 @@ export async function getPlaceSchema(placeId: string): Promise<SchemaData | null
 export async function getEventSchema(eventId: string): Promise<SchemaData | null> {
   try {
     const event = await queryOne(
-      `SELECT id, name, description, date, location, image_url, price, url
-       FROM events WHERE id = $1`,
+      `SELECT * FROM events WHERE id = $1`,
       [eventId]
     );
 
     if (!event) return null;
+    const title = event.title || event.name || 'Şanlıurfa etkinliği';
+    const startDateValue = event.start_date || event.date || event.created_at || new Date();
+    const eventPath = event.slug ? `/etkinlikler/${event.slug}` : `/etkinlikler/${event.id}`;
 
     const schema: SchemaData = {
       '@context': 'https://schema.org',
       '@type': 'Event',
-      name: event.name,
+      name: title,
       description: event.description,
-      startDate: new Date(event.date).toISOString(),
+      startDate: new Date(startDateValue).toISOString(),
       image: event.image_url || `${BASE_URL}/images/og-default.jpg`,
-      url: `${BASE_URL}/etkinlikler/${event.id}`,
+      url: `${BASE_URL}${eventPath}`,
       location: {
         '@type': 'Place',
         name: event.location || 'Şanlıurfa'
@@ -96,8 +98,7 @@ export async function getEventSchema(eventId: string): Promise<SchemaData | null
 export async function getArticleSchema(postId: string): Promise<SchemaData | null> {
   try {
     const post = await queryOne(
-      `SELECT id, title, content, image_url, created_at, updated_at, author_id
-       FROM blog_posts WHERE id = $1 AND status = 'published'`,
+      `SELECT * FROM blog_posts WHERE id = $1 AND status = 'published'`,
       [postId]
     );
 
@@ -112,11 +113,11 @@ export async function getArticleSchema(postId: string): Promise<SchemaData | nul
       '@context': 'https://schema.org',
       '@type': 'BlogPosting',
       headline: post.title,
-      description: post.content?.substring(0, 160),
-      image: post.image_url || `${BASE_URL}/images/og-default.jpg`,
+      description: (post.excerpt || post.content || '').substring(0, 160),
+      image: post.image_url || post.cover_image || post.featured_image || `${BASE_URL}/images/og-default.jpg`,
       datePublished: new Date(post.created_at).toISOString(),
       dateModified: new Date(post.updated_at).toISOString(),
-      url: `${BASE_URL}/blog/${post.id}`,
+      url: `${BASE_URL}/blog/${post.slug || post.id}`,
       author: {
         '@type': 'Person',
         name: author?.full_name || 'Şanlıurfa Rehberi'
