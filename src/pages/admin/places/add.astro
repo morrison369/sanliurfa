@@ -1,6 +1,7 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
 import { MapPin, Upload, Clock, Phone, Globe, Mail } from 'lucide-react';
+import ProviderImagePicker from '../../../components/admin/ProviderImagePicker.astro';
 
 const seo = {
   title: 'Mekan Ekle - Admin Panel',
@@ -267,6 +268,8 @@ const days = [
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görseller</h3>
             <div class="space-y-4">
+              <ProviderImagePicker />
+
               <div>
                 <label for="cover_image" class="label dark:text-gray-300">Kapak Fotoğrafı</label>
                 <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-urfa-500 transition-colors">

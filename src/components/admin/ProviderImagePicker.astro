@@ -1,0 +1,146 @@
+---
+interface Props {
+  currentImage?: string | null;
+  currentSlug?: string | null;
+  currentName?: string | null;
+  currentCategory?: string | null;
+}
+
+const {
+  currentImage = '',
+  currentSlug = '',
+  currentName = '',
+  currentCategory = '',
+} = Astro.props;
+---
+
+<div
+  class="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-900 dark:bg-emerald-950/20"
+  data-provider-image-picker
+  data-current-slug={currentSlug || ''}
+  data-current-name={currentName || ''}
+  data-current-category={currentCategory || ''}
+>
+  <input type="hidden" name="provider_image_url" data-provider-image-input value="" />
+
+  <div>
+    <h4 class="font-semibold text-gray-900 dark:text-white">Pexels / Unsplash Görseli</h4>
+    <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">
+      Mekan adına göre Şanlıurfa odaklı görsel çeker, slug bazlı WebP olarak kaydeder.
+    </p>
+  </div>
+
+  <div class="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+    <img
+      src={currentImage || ''}
+      alt="Seçilen mekan görseli"
+      class:list={[
+        'h-36 w-full object-cover',
+        !currentImage && 'hidden',
+      ]}
+      data-provider-image-preview
+    />
+    <div
+      class:list={[
+        'flex h-36 items-center justify-center px-4 text-center text-sm text-gray-500 dark:text-gray-400',
+        currentImage && 'hidden',
+      ]}
+      data-provider-image-empty
+    >
+      Henüz sağlayıcı görseli seçilmedi.
+    </div>
+  </div>
+
+  <button
+    type="button"
+    class="w-full rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+    data-provider-image-button
+  >
+    Pexels/Unsplash'tan Görsel Çek
+  </button>
+
+  <p class="min-h-5 text-xs text-gray-600 dark:text-gray-400" data-provider-image-status></p>
+</div>
+
+<script>
+  function slugifyTurkish(value: string) {
+    return String(value || '')
+      .trim()
+      .toLocaleLowerCase('tr-TR')
+      .replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u')
+      .replace(/ş/g, 's')
+      .replace(/ı/g, 'i')
+      .replace(/ö/g, 'o')
+      .replace(/ç/g, 'c')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  function apiErrorMessage(body: any, fallback: string) {
+    return body?.error?.message || body?.message || fallback;
+  }
+
+  for (const item of document.querySelectorAll('[data-provider-image-picker]')) {
+    const root = item as HTMLElement;
+    const button = root.querySelector<HTMLButtonElement>('[data-provider-image-button]');
+    const status = root.querySelector<HTMLElement>('[data-provider-image-status]');
+    const input = root.querySelector<HTMLInputElement>('[data-provider-image-input]');
+    const preview = root.querySelector<HTMLImageElement>('[data-provider-image-preview]');
+    const empty = root.querySelector<HTMLElement>('[data-provider-image-empty]');
+
+    if (!button || !input || !preview || !empty) {
+      continue;
+    }
+
+    button.addEventListener('click', async () => {
+      const nameInput = document.querySelector<HTMLInputElement>('#name');
+      const categoryInput = document.querySelector<HTMLSelectElement>('#category');
+      const query = nameInput?.value?.trim() || root.dataset.currentName || '';
+      const category = categoryInput?.value?.trim() || root.dataset.currentCategory || '';
+      const slug = root.dataset.currentSlug || slugifyTurkish(query);
+
+      if (!query || !slug) {
+        if (status) status.textContent = 'Önce mekan adını girin.';
+        return;
+      }
+
+      button.disabled = true;
+      if (status) status.textContent = 'Görsel aranıyor ve optimize ediliyor...';
+
+      try {
+        const response = await fetch('/api/admin/images/fetch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query,
+            slug,
+            category,
+            folder: 'places',
+          }),
+        });
+        const body = await response.json();
+
+        if (!response.ok || !body?.data?.filePath) {
+          throw new Error(apiErrorMessage(body, 'Görsel çekilemedi'));
+        }
+
+        input.value = body.data.filePath;
+        preview.src = body.data.filePath;
+        preview.classList.remove('hidden');
+        empty.classList.add('hidden');
+        if (status) {
+          status.textContent = `${body.data.provider} görseli kaydedildi: ${body.data.filePath}`;
+        }
+      } catch (error) {
+        if (status) {
+          status.textContent = error instanceof Error ? error.message : 'Görsel çekilemedi';
+        }
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+</script>

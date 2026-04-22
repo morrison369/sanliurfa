@@ -29,6 +29,7 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
     const status = ['active', 'pending', 'inactive'].includes(statusValue) ? statusValue : 'pending';
     const latitude = formData.get('latitude')?.toString();
     const longitude = formData.get('longitude')?.toString();
+    const providerImageUrl = formData.get('provider_image_url')?.toString().trim();
     const isFeatured = formData.get('is_featured') === 'on';
     const isVerified = formData.get('is_verified') === 'on';
     const amenities = formData.getAll('amenities') as string[];
@@ -60,6 +61,7 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
       status,
       is_featured: isFeatured,
       is_verified: isVerified,
+      ...(providerImageUrl ? { image_url: providerImageUrl, images: [providerImageUrl] } : {}),
       amenities,
       tags,
       opening_hours: openingHours,
