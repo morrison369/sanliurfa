@@ -10,6 +10,8 @@ Bu proje Astro SSR-first çalışır. Yeni özelliklerde öncelik sırası kilit
 ## Kesin Kurallar
 
 - Astro'da veya kurulu Astro uyumlu pakette olan özellik yeniden yazılmaz.
+- Astro 2026 resmi özellik ve entegrasyon karar matrisi `docs/ASTRO_2026_FRAMEWORK_AUDIT.md` dosyasıdır; yeni paket/adapter eklemeden önce bu dosya kontrol edilir.
+- Vercel kullanılmaz; `@astrojs/vercel`, Vercel deploy, Vercel analytics ve Vercel runtime hedefi eklenmez.
 - Markdown tabanlı zengin içerik gerekiyorsa resmi `@astrojs/mdx` entegrasyonu kullanılır; MDX desteği `astro.config.mjs` içinde aktif kalır.
 - Dev, preview ve production Node runtime tek porttur: `127.0.0.1:4321` / `PORT=4321`.
 - Port 4321 doluysa yeni port açılmaz; sadece bu repoya ait 4321 listener'ı durdurulur.
