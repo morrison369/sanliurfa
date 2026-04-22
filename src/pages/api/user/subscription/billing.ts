@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       recordRequest('GET', '/api/user/subscription/billing', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     logger.error('Failed to get billing history', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get billing history',
+      'Ödeme geçmişi alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

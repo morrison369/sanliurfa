@@ -12,7 +12,7 @@ export const GET: APIRoute = async (context) => {
   try {
     // Auth required
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
     }
 
     const userId = context.locals.user.id;
@@ -28,6 +28,6 @@ export const GET: APIRoute = async (context) => {
     });
   } catch (error) {
     logger.error('Failed to get deletion status', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to get deletion status');
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Hesap silme durumu alınamadı');
   }
 };

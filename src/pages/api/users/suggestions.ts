@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       recordRequest('GET', '/api/users/suggestions', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -122,7 +122,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     logger.error('Failed to get user suggestions', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get user suggestions',
+      'Kullanıcı önerileri alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
