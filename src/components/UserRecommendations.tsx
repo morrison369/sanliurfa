@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 export default function UserRecommendations() {
   const [users, setUsers] = useState<any[]>([]);
@@ -13,7 +14,7 @@ export default function UserRecommendations() {
     try {
       const response = await fetch('/api/recommendations/users?limit=6');
       if (!response.ok) throw new Error('Failed');
-      const data = await response.json();
+      const data = unwrapApiPayload<{ data?: any[] }>(await response.json());
       setUsers(data.data || []);
     } catch (err) {
       console.error('Error', err);
@@ -24,12 +25,16 @@ export default function UserRecommendations() {
 
   const toggleFollow = async (userId: string) => {
     try {
-      const method = followingIds.has(userId) ? 'DELETE' : 'POST';
-      const response = await fetch('/api/followers/' + userId, { method });
+      const isFollowing = followingIds.has(userId);
+      const response = await fetch(isFollowing ? '/api/following/unfollow' : '/api/following', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ followed_id: userId }),
+      });
       if (!response.ok) throw new Error('Failed');
       
       const newSet = new Set(followingIds);
-      if (newSet.has(userId)) {
+      if (isFollowing) {
         newSet.delete(userId);
       } else {
         newSet.add(userId);

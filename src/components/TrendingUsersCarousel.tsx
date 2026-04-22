@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface TrendingUser {
   id: string;
@@ -39,7 +40,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
         throw new Error('Trending kullanıcılar yüklenemedi');
       }
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ users?: TrendingUser[] }>(await response.json());
       setUsers(data.users || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
