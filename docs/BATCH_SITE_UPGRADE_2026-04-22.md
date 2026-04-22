@@ -480,3 +480,10 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 3. Rapor Excel exportu `exceljs` yerine daha küçük write-only `write-excel-file` paketine taşındı; `uuid` audit zinciri kaldırıldı.
 4. Excel smoke testi yeni XLSX üreticisinin zip içeriğini doğrulayacak şekilde güncellendi.
 5. `npm audit` sonucu 0 vulnerability, Excel smoke, typecheck, build ve secret scan temizdir.
+
+## Bitirme Modu: Astro Framework Entegrasyon Denetimi
+
+1. Astro çekirdek paketleri ve resmi entegrasyonları kırıcı olmayan patch seviyesine güncellendi: `astro`, `@astrojs/node`, `@astrojs/react`, `@astrojs/mdx`.
+2. Kurulu olan resmi `@astrojs/mdx` entegrasyonu `astro.config.mjs` içinde aktif hale getirildi; ileride blog/doküman/rehber içerikleri MDX ile yazılırsa Astro tarafında eksik entegrasyon hatası oluşmaz.
+3. Statik `@astrojs/sitemap` tekrar kurulmadı veya etkinleştirilmedi; proje SSR dinamik sitemap route'larını kullandığı için resmi sitemap entegrasyonu bu yapıda eksik dinamik route üretebilir.
+4. Bu işlemde dev server açılmadı, 4321 dışı port kullanılmadı ve Redis/DB çalışma düzenine dokunulmadı.
