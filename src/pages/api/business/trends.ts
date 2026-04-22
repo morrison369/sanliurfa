@@ -16,20 +16,20 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/business/trends', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const placeId = url.searchParams.get('placeId');
     if (!placeId) {
       recordRequest('GET', '/api/business/trends', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'placeId required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Verify ownership
     const place = await queryOne('SELECT owner_id FROM places WHERE id = $1', [placeId]);
     if (!place || place.owner_id !== locals.user.id) {
       recordRequest('GET', '/api/business/trends', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Access denied', HttpStatus.FORBIDDEN, undefined, requestId);
+      return apiError(ErrorCode.FORBIDDEN, 'Erişim reddedildi', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const trends = await queryMany(`
@@ -82,6 +82,6 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/business/trends', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Failed to get trends', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Trend verileri alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
