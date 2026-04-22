@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/i18n/language-preference', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const duration = Date.now() - startTime;
@@ -33,7 +33,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/i18n/language-preference', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get language preference failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -45,7 +45,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/i18n/language-preference', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json().catch(() => ({}));
@@ -74,6 +74,6 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/i18n/language-preference', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Update language preference failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
