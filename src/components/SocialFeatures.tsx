@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 export function SocialFeatures() {
   const [activeTab, setActiveTab] = useState<'feed' | 'trending' | 'follows'>('feed');
@@ -21,14 +22,16 @@ export function SocialFeatures() {
           url = '/api/social/trending?type=hashtags';
           break;
         case 'follows':
-          url = '/api/social/follows?type=followers';
+          url = '/api/following?type=followers&limit=50';
           break;
       }
 
       const response = await fetch(url);
-      const result = await response.json();
+      const result = unwrapApiPayload<{ success?: boolean; data?: any[] | { users?: any[] } }>(
+        await response.json()
+      );
       if (result.success) {
-        setData(Array.isArray(result.data) ? result.data : result.data.users || []);
+        setData(Array.isArray(result.data) ? result.data : result.data?.users || []);
       }
     } catch (error) {
       console.error('Failed to load data', error);
