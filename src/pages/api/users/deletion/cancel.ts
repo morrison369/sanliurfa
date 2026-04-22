@@ -12,7 +12,7 @@ export const POST: APIRoute = async (context) => {
   try {
     // Auth required
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
     }
 
     const userId = context.locals.user.id;
@@ -21,7 +21,7 @@ export const POST: APIRoute = async (context) => {
     const cancelled = await cancelAccountDeletion(userId);
 
     if (!cancelled) {
-      return apiError(context, HttpStatus.NOT_FOUND, 'No pending deletion request found');
+      return apiError(context, HttpStatus.NOT_FOUND, 'Bekleyen hesap silme isteği bulunamadı');
     }
 
     logger.info('Account deletion cancelled', { userId });
@@ -32,6 +32,6 @@ export const POST: APIRoute = async (context) => {
     });
   } catch (error) {
     logger.error('Failed to cancel account deletion', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to cancel account deletion');
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Hesap silme isteği iptal edilemedi');
   }
 };
