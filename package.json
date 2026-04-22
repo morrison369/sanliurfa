@@ -4,7 +4,9 @@
   "description": "Şanlıurfa Şehir Rehberi - Tarihin Sıfır Noktası",
   "type": "module",
   "scripts": {
-    "dev": "astro dev --host 127.0.0.1 --port 4321",
+    "dev": "powershell -ExecutionPolicy Bypass -File ./scripts/dev-start-4321.ps1",
+    "dev:raw": "astro dev --host 127.0.0.1 --port 4321",
+    "dev:stop": "powershell -ExecutionPolicy Bypass -File ./scripts/dev-stop-4321.ps1 -Port 4321",
     "dev:wsl": "astro dev --host 127.0.0.1 --port 4321",
     "build": "astro build",
     "preview": "astro preview --host 127.0.0.1 --port 4321",

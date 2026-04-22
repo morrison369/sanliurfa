@@ -19,6 +19,8 @@
 
 ## Build, Test, and Development Commands
 - `npm run dev`: local Astro server on `127.0.0.1:4321` only.
+- `npm run dev:raw`: run Astro dev directly on `127.0.0.1:4321` without pre-stop helper.
+- `npm run dev:stop`: stop only repo-scoped listeners on local port `4321`.
 - `npm run preview`: local Astro preview on `127.0.0.1:4321` only.
 - `npm run build`: SSR production build to `dist/`.
 - `npm run lint`: `astro check` plus `tsc --noEmit`.
