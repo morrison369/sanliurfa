@@ -125,7 +125,10 @@ export async function getCache<T = any>(key: unknown): Promise<T | null> {
     const value = await redis.get(prefixedKey);
     return value ? JSON.parse(value) : null;
   } catch (error: unknown) {
-    logCacheError('cache:get', key, error);
+    handleRedisCommandFailure(error);
+    if (!isRedisAuthError(error)) {
+      logCacheError('cache:get', key, error);
+    }
     return null;
   }
 }
@@ -142,7 +145,10 @@ export async function setCache(key: unknown, value: any, ttlSeconds = 3600): Pro
     const prefixedKey = prefixKey(key);
     await redis.setEx(prefixedKey, ttlSeconds, JSON.stringify(value));
   } catch (error: unknown) {
-    logCacheError('cache:set', key, error);
+    handleRedisCommandFailure(error);
+    if (!isRedisAuthError(error)) {
+      logCacheError('cache:set', key, error);
+    }
   }
 }
 
@@ -158,7 +164,10 @@ export async function deleteCache(key: unknown): Promise<void> {
     const prefixedKey = prefixKey(key);
     await redis.del(prefixedKey);
   } catch (error: unknown) {
-    logCacheError('cache:delete', key, error);
+    handleRedisCommandFailure(error);
+    if (!isRedisAuthError(error)) {
+      logCacheError('cache:delete', key, error);
+    }
   }
 }
 
@@ -178,7 +187,10 @@ export async function deleteCachePattern(pattern: unknown): Promise<void> {
       await redis.del(keys);
     }
   } catch (error: unknown) {
-    logCacheError('cache:delete-pattern', pattern, error);
+    handleRedisCommandFailure(error);
+    if (!isRedisAuthError(error)) {
+      logCacheError('cache:delete-pattern', pattern, error);
+    }
   }
 }
 
@@ -206,7 +218,10 @@ export async function checkRateLimit(key: unknown, limit: number, windowSeconds:
 
     return current <= safeLimit;
   } catch (error: unknown) {
-    logCacheError('rate-limit-check', normalizedKey, error);
+    handleRedisCommandFailure(error);
+    if (!isRedisAuthError(error)) {
+      logCacheError('rate-limit-check', normalizedKey, error);
+    }
     return checkInMemoryRateLimit(normalizedKey, safeLimit, safeWindowSeconds);
   }
 }
@@ -256,6 +271,30 @@ function toErrorMessage(error: unknown): string {
   } catch {
     return String(error);
   }
+}
+
+function isRedisAuthError(error: unknown): boolean {
+  const message = toErrorMessage(error).toUpperCase();
+  return message.includes('NOAUTH') || message.includes('WRONGPASS');
+}
+
+function handleRedisCommandFailure(error: unknown): void {
+  if (!isRedisAuthError(error)) {
+    return;
+  }
+
+  const authError = error instanceof Error ? error : new Error(toErrorMessage(error));
+  connectionError = authError;
+  lastConnectionAttempt = Date.now();
+
+  if (client) {
+    void client.quit().catch(() => undefined);
+    client = null;
+  }
+
+  logRedisUnavailableOnce(
+    new Error(`Redis authentication failed, falling back to graceful degradation: ${authError.message}`)
+  );
 }
 
 function shouldLogNow(signature: string): boolean {

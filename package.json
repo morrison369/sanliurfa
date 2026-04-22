@@ -129,6 +129,7 @@
     "test:e2e": "playwright test",
     "test:e2e:smoke": "npm exec -- tsx scripts/e2e-smoke.ts",
     "test:social:smoke": "npm exec -- tsx scripts/social-messaging-smoke.ts",
+    "test:social:smoke:auto": "powershell -ExecutionPolicy Bypass -File ./scripts/run-social-smoke-4321.ps1",
     "test:e2e:ui": "playwright test --ui",
     "test": "npm run test:unit && npm run test:e2e",
     "lighthouse": "lhci autorun",

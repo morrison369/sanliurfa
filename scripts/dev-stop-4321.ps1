@@ -14,8 +14,8 @@ if (-not $listeners) {
   exit 0
 }
 
-foreach ($pid in $listeners) {
-  $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $pid" -ErrorAction SilentlyContinue
+foreach ($listenerPid in $listeners) {
+  $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $listenerPid" -ErrorAction SilentlyContinue
   if (-not $proc) {
     continue
   }
@@ -30,9 +30,9 @@ foreach ($pid in $listeners) {
   $isNodeEntryProcess = $commandLine.Contains('dist/server/entry.mjs')
 
   if ($isWorkspaceProcess -or $isAstroPortProcess -or $isNodeEntryProcess) {
-    Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
-    Write-Host "Stopped process $pid on port $Port."
+    taskkill /PID $listenerPid /F /T | Out-Null
+    Write-Host "Stopped process $listenerPid on port $Port."
   } else {
-    Write-Warning "Port $Port is used by external process $pid. Not stopped."
+    Write-Warning "Port $Port is used by external process $listenerPid. Not stopped."
   }
 }
