@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface ActivityStats {
   views: number;
@@ -28,9 +29,9 @@ export default function UserActivityStats({ userId }: UserActivityStatsProps) {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/users/${userId}/activity-stats`);
-      const data = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean; data?: ActivityStats }>(await response.json());
 
-      if (data.success) {
+      if (data.success && data.data) {
         setStats(data.data);
       }
     } catch (error) {

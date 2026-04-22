@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Star } from 'lucide-react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface TrendingPlace {
   id: string;
+  place_id?: string;
   name: string;
+  slug?: string;
   category: string;
   rating: number;
   review_count: number;
@@ -19,8 +22,8 @@ export default function TrendingPlaces() {
       try {
         const res = await window.fetch('/api/discovery/trending?limit=10');
         if (res.ok) {
-          const { data } = await res.json();
-          setTrending(data);
+          const payload = unwrapApiPayload<{ data?: TrendingPlace[] }>(await res.json());
+          setTrending(payload.data || []);
         }
       } catch (error) {
         console.error('Failed to fetch trending', error);
@@ -41,7 +44,7 @@ export default function TrendingPlaces() {
       </div>
       <div className="divide-y max-h-96 overflow-y-auto">
         {trending.map((place, idx) => (
-          <a key={place.id} href={`/mekanlari-bul/${place.id}`} className="p-4 hover:bg-gray-50 transition flex gap-3 items-start">
+          <a key={place.id} href={`/places/${place.slug || place.place_id || place.id}`} className="p-4 hover:bg-gray-50 transition flex gap-3 items-start">
             <div className="bg-orange-100 text-orange-600 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm flex-shrink-0">
               {idx + 1}
             </div>

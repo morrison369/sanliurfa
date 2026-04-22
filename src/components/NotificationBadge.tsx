@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 export default function NotificationBadge() {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -13,7 +14,7 @@ export default function NotificationBadge() {
     try {
       const response = await fetch('/api/notifications?filter=unread&limit=1');
       if (!response.ok) return;
-      const data = await response.json();
+      const data = unwrapApiPayload<{ count?: number }>(await response.json());
       setUnreadCount(data.count || 0);
     } catch (err) {
       console.error('Failed to load unread count', err);

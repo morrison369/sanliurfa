@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 export default function MyActivityLog() {
   const [activities, setActivities] = useState<any[]>([]);
@@ -10,9 +11,9 @@ export default function MyActivityLog() {
 
   const loadActivities = async () => {
     try {
-      const response = await fetch('/api/feed?type=personal&limit=50');
+      const response = await fetch('/api/activity?limit=50');
       if (!response.ok) throw new Error('Failed');
-      const data = await response.json();
+      const data = unwrapApiPayload<{ data?: any[] }>(await response.json());
       setActivities(data.data || []);
     } catch (err) {
       console.error('Error', err);
@@ -21,7 +22,7 @@ export default function MyActivityLog() {
     }
   };
 
-  if (isLoading) return <div className="text-center py-8">Yukleniyor...</div>;
+  if (isLoading) return <div className="text-center py-8">Yükleniyor...</div>;
 
   const getActivityIcon = (type: string) => {
     const icons: Record<string, string> = {
@@ -36,21 +37,21 @@ export default function MyActivityLog() {
 
   const getActivityText = (type: string) => {
     const texts: Record<string, string> = {
-      'review_created': 'Inceleme yazdin',
-      'favorite_added': 'Favorilere ekledi',
-      'comment_posted': 'Yorum yaptin',
-      'collection_created': 'Koleksiyon olusturdu',
-      'user_followed': 'Kullanici takip ettin'
+      'review_created': 'İnceleme yazdın',
+      'favorite_added': 'Favorilere ekledin',
+      'comment_posted': 'Yorum yaptın',
+      'collection_created': 'Koleksiyon oluşturdun',
+      'user_followed': 'Kullanıcı takip ettin'
     };
     return texts[type] || 'Aktivite';
   };
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Benim Aktiviteleri</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Benim Aktivitelerim</h2>
 
       {activities.length === 0 ? (
-        <p className="text-center text-gray-600 py-8">Henuz aktivite yok</p>
+        <p className="text-center text-gray-600 py-8">Henüz aktivite yok</p>
       ) : (
         <div className="space-y-2">
           {activities.map((activity) => (
