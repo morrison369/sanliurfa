@@ -5,9 +5,9 @@ module.exports = {
       startServerReadyPattern: 'ready in',
       startServerReadyTimeout: 10000,
       url: [
-        'http://localhost:1112/',
-        'http://localhost:1112/places',
-        'http://localhost:1112/blog',
+        'http://127.0.0.1:4321/',
+        'http://127.0.0.1:4321/places',
+        'http://127.0.0.1:4321/blog',
       ],
       numberOfRuns: 3,
     },
