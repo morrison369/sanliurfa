@@ -2,7 +2,8 @@
 import { createClient } from 'redis';
 
 const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-const KEY_PREFIX = process.env.REDIS_KEY_PREFIX || 'sanliurfa:';
+const LEGACY_KEY_PREFIX = 'sanliurfa:';
+const KEY_PREFIX = normalizeKeyPrefix(process.env.REDIS_KEY_PREFIX || LEGACY_KEY_PREFIX);
 const REDIS_ENABLED = process.env.REDIS_ENABLED !== 'false';
 const REDIS_RETRY_INTERVAL_MS = parsePositiveInt('REDIS_RETRY_INTERVAL_MS', 30000);
 const REDIS_CONNECT_TIMEOUT_MS = parsePositiveInt('REDIS_CONNECT_TIMEOUT_MS', 1500);
@@ -92,7 +93,17 @@ function normalizeCacheKey(key: unknown): string {
 }
 
 export function prefixKey(key: unknown): string {
-  return KEY_PREFIX + normalizeCacheKey(key);
+  const normalizedKey = normalizeCacheKey(key);
+
+  if (normalizedKey.startsWith(KEY_PREFIX)) {
+    return normalizedKey;
+  }
+
+  if (normalizedKey.startsWith(LEGACY_KEY_PREFIX)) {
+    return KEY_PREFIX + normalizedKey.slice(LEGACY_KEY_PREFIX.length);
+  }
+
+  return KEY_PREFIX + normalizedKey;
 }
 
 /**
@@ -195,13 +206,27 @@ export async function checkRateLimit(key: unknown, limit: number, windowSeconds:
 }
 
 function parsePositiveInt(name: string, fallback: number): number {
-  const raw = process.env[name];
+  const raw = readNodeEnv(name);
   if (!raw) {
     return fallback;
   }
 
   const parsed = Number.parseInt(raw, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function normalizeKeyPrefix(prefix: string): string {
+  const trimmed = prefix.trim();
+  if (!trimmed) {
+    return LEGACY_KEY_PREFIX;
+  }
+
+  return trimmed.endsWith(':') ? trimmed : `${trimmed}:`;
+}
+
+function readNodeEnv(key: string): string | undefined {
+  const globalProcess = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
+  return globalProcess?.env?.[key];
 }
 
 function logRedisUnavailableOnce(error: Error): void {
