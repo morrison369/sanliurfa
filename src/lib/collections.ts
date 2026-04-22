@@ -25,6 +25,7 @@ export interface CollectionItem {
   id: string;
   place_id: string;
   place_name: string;
+  place_slug?: string;
   place_image?: string;
   place_category?: string;
   place_rating?: number;
@@ -222,7 +223,7 @@ export async function getCollectionWithItems(
 
     // Get items
     const items = await queryMany(
-      `SELECT ci.*, p.name as place_name, p.image as place_image, p.category as place_category, p.average_rating as place_rating
+      `SELECT ci.*, p.name as place_name, p.slug as place_slug, p.image_url as place_image, p.category as place_category, p.rating as place_rating
        FROM collection_items ci
        JOIN places p ON ci.place_id = p.id
        WHERE ci.collection_id = $1

@@ -39,14 +39,16 @@ export default function CollectionsManager({ userId }: CollectionsManagerProps) 
     try {
       setIsLoading(true);
       const response = await fetch(`/api/collections?userId=${userId}`);
-      const data = unwrapApiPayload<{ success?: boolean; data?: Collection[] }>(await response.json());
+      const json = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean; data?: Collection[] }>(json);
 
-      if (data.success) {
-        setCollections(data.data || []);
+      if (!response.ok || !data.success) {
+        throw new Error(getApiErrorMessage(json, 'Koleksiyonlar yüklenemedi'));
       }
+
+      setCollections(data.data || []);
     } catch (err) {
-      console.error('Failed to load collections:', err);
-      setError('Koleksiyonlar yüklenemedi');
+      setError(err instanceof Error ? err.message : 'Koleksiyonlar yüklenemedi');
     } finally {
       setIsLoading(false);
     }
@@ -73,25 +75,25 @@ export default function CollectionsManager({ userId }: CollectionsManagerProps) 
         })
       });
 
-      const data = unwrapApiPayload<{ success?: boolean; data?: Collection }>(await response.json());
+      const json = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean; data?: Collection }>(json);
 
-      if (data.success) {
-        if (data.data) {
-          setCollections([data.data, ...collections]);
-        }
-        setNewCollectionForm({
-          name: '',
-          description: '',
-          icon: '📍',
-          is_public: false
-        });
-        setError('');
-      } else {
-        setError(getApiErrorMessage(data, 'Koleksiyon oluşturulamadı'));
+      if (!response.ok || !data.success) {
+        throw new Error(getApiErrorMessage(json, 'Koleksiyon oluşturulamadı'));
       }
+
+      if (data.data) {
+        setCollections([data.data, ...collections]);
+      }
+      setNewCollectionForm({
+        name: '',
+        description: '',
+        icon: '📍',
+        is_public: false
+      });
+      setError('');
     } catch (err) {
-      setError('Koleksiyon oluşturulurken bir hata oluştu');
-      console.error('Create error:', err);
+      setError(err instanceof Error ? err.message : 'Koleksiyon oluşturulurken bir hata oluştu');
     } finally {
       setIsCreating(false);
     }
@@ -105,16 +107,16 @@ export default function CollectionsManager({ userId }: CollectionsManagerProps) 
         method: 'DELETE'
       });
 
-      const data = unwrapApiPayload<{ success?: boolean }>(await response.json());
+      const json = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean }>(json);
 
-      if (data.success) {
-        setCollections(collections.filter(c => c.id !== collectionId));
-      } else {
-        setError(getApiErrorMessage(data, 'Koleksiyon silinemedi'));
+      if (!response.ok || !data.success) {
+        throw new Error(getApiErrorMessage(json, 'Koleksiyon silinemedi'));
       }
+
+      setCollections(collections.filter(c => c.id !== collectionId));
     } catch (err) {
-      setError('Koleksiyon silinirken bir hata oluştu');
-      console.error('Delete error:', err);
+      setError(err instanceof Error ? err.message : 'Koleksiyon silinirken bir hata oluştu');
     }
   };
 

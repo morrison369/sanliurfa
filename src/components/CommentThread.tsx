@@ -43,12 +43,13 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
       const response = await fetch(
         `/api/comments?targetType=${targetType}&targetId=${targetId}&limit=50`
       );
+      const json = await response.json();
 
       if (!response.ok) {
-        throw new Error('Yorumlar yüklenemedi');
+        throw new Error(getApiErrorMessage(json, 'Yorumlar yüklenemedi'));
       }
 
-      const data = unwrapApiPayload<{ data?: Comment[] }>(await response.json());
+      const data = unwrapApiPayload<{ data?: Comment[] }>(json);
       setComments(data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -78,10 +79,10 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
           parentCommentId
         })
       });
+      const json = await response.json();
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'Yorum yazılamadı'));
+        throw new Error(getApiErrorMessage(json, 'Yorum yazılamadı'));
       }
 
       setNewComment('');
@@ -102,12 +103,15 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ voteType })
       });
+      const json = await response.json();
 
-      if (response.ok) {
-        await loadComments();
+      if (!response.ok) {
+        throw new Error(getApiErrorMessage(json, 'Oy verilemedi'));
       }
+
+      await loadComments();
     } catch (err) {
-      console.error('Failed to vote:', err);
+      setError(err instanceof Error ? err.message : 'Oy verilemedi');
     }
   };
 
@@ -118,12 +122,15 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
       const response = await fetch(`/api/comments/${commentId}`, {
         method: 'DELETE'
       });
+      const json = await response.json();
 
-      if (response.ok) {
-        await loadComments();
+      if (!response.ok) {
+        throw new Error(getApiErrorMessage(json, 'Yorum silinemedi'));
       }
+
+      await loadComments();
     } catch (err) {
-      console.error('Failed to delete comment:', err);
+      setError(err instanceof Error ? err.message : 'Yorum silinemedi');
     }
   };
 
