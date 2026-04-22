@@ -15,7 +15,7 @@ let analytics = null;
 let error = '';
 
 try {
-  const response = await fetch('http://localhost:3000/api/blog/analytics', {
+  const response = await fetch(new URL('/api/blog/analytics', Astro.url), {
     headers: {
       'Cookie': `auth-token=${Astro.cookies.get('auth-token')?.value || ''}`
     }
