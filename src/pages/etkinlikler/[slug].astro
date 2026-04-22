@@ -3,6 +3,12 @@ import Layout from '../../layouts/Layout.astro';
 import { Calendar, MapPin, Clock, ArrowLeft, Share2 } from 'lucide-react';
 import Breadcrumb from '../../components/Breadcrumb.astro';
 import { query, queryOne } from '../../lib/postgres';
+import {
+  buildBreadcrumbSchema,
+  buildEventRichSnippet,
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+} from '../../lib/rich-snippets';
 
 const { slug } = Astro.params;
 
@@ -49,6 +55,18 @@ const seo = {
   title: `${event.title} - Şanlıurfa Etkinlikleri`,
   description: event.description,
   image: event.image_url,
+  canonicalUrl: `https://sanliurfa.com/etkinlikler/${event.slug}`,
+  schemaMode: 'replace' as const,
+  schema: [
+    buildOrganizationSchema(),
+    buildWebSiteSchema(),
+    buildBreadcrumbSchema([
+      { name: 'Ana Sayfa', url: '/' },
+      { name: 'Etkinlikler', url: '/etkinlikler' },
+      { name: event.title, url: `/etkinlikler/${event.slug}` },
+    ]),
+    buildEventRichSnippet(event, `/etkinlikler/${event.slug}`),
+  ],
 };
 ---
 

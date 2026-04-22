@@ -38,6 +38,52 @@ type PlaceLike = {
   price_range?: number | string | null;
 };
 
+type ArticleLike = {
+  slug?: string;
+  title?: string;
+  excerpt?: string | null;
+  content?: string | null;
+  featuredImage?: string | null;
+  thumbnail?: string | null;
+  authorName?: string | null;
+  categoryName?: string | null;
+  tags?: string[] | null;
+  publishedAt?: string | Date | null;
+  createdAt?: string | Date | null;
+  updatedAt?: string | Date | null;
+};
+
+type EventLike = {
+  slug?: string;
+  title?: string;
+  description?: string | null;
+  image_url?: string | null;
+  start_date?: string | Date | null;
+  end_date?: string | Date | null;
+  start_time?: string | null;
+  location?: string | null;
+  category?: string | null;
+  creator_name?: string | null;
+};
+
+type HistoricalSiteLike = {
+  slug?: string;
+  name?: string;
+  description?: string | null;
+  short_description?: string | null;
+  location?: string | null;
+  period?: string | null;
+  entry_fee?: string | null;
+  entrance_fee?: string | null;
+  opening_hours?: string | null;
+  visiting_hours?: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  images?: string[] | string | null;
+  cover_image?: string | null;
+  is_unesco?: boolean | null;
+};
+
 const categorySchemaTypes: Record<string, string> = {
   restaurant: 'Restaurant',
   restoran: 'Restaurant',
@@ -252,6 +298,211 @@ export function buildPlaceItemListSchema(places: PlaceLike[], pageUrl: string): 
   });
 }
 
+export function buildArticleRichSnippet(article: ArticleLike, path?: string): JsonLdNode {
+  const articlePath = path || `/blog/${article.slug || ''}`;
+  const url = absoluteUrl(articlePath, '/blog');
+  const image = absoluteUrl(article.featuredImage || article.thumbnail, DEFAULT_IMAGE);
+  const publishedDate = normalizeDate(article.publishedAt || article.createdAt);
+  const modifiedDate = normalizeDate(article.updatedAt || article.publishedAt || article.createdAt);
+
+  return compactJsonLd({
+    '@type': 'BlogPosting',
+    '@id': `${url}#article`,
+    headline: article.title,
+    name: article.title,
+    description: normalizeDescription(article.excerpt || article.content),
+    image: [image],
+    url,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+    inLanguage: 'tr-TR',
+    datePublished: publishedDate,
+    dateModified: modifiedDate,
+    articleSection: article.categoryName || 'Şanlıurfa',
+    keywords: article.tags?.length ? article.tags.join(', ') : undefined,
+    author: {
+      '@type': 'Person',
+      name: article.authorName || 'Şanlıurfa.com',
+    },
+    publisher: {
+      '@id': `${SITE_URL}/#organization`,
+    },
+  });
+}
+
+export function buildArticleItemListSchema(articles: ArticleLike[], pageUrl: string): JsonLdNode {
+  return compactJsonLd({
+    '@type': 'ItemList',
+    '@id': `${absoluteUrl(pageUrl, '/blog')}#itemlist`,
+    name: 'Şanlıurfa blog yazıları',
+    numberOfItems: articles.length,
+    itemListElement: articles.map((article, index) => {
+      const path = `/blog/${article.slug || ''}`;
+      const item = buildArticleRichSnippet(article, path);
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        url: item.url,
+        item: {
+          '@type': item['@type'],
+          '@id': item['@id'],
+          headline: item.headline,
+          image: item.image,
+          datePublished: item.datePublished,
+        },
+      };
+    }),
+  });
+}
+
+export function buildEventRichSnippet(event: EventLike, path?: string): JsonLdNode {
+  const eventPath = path || `/etkinlikler/${event.slug || ''}`;
+  const url = absoluteUrl(eventPath, '/etkinlikler');
+  const startDate = normalizeEventDate(event.start_date, event.start_time);
+  const endDate = normalizeEventDate(event.end_date || event.start_date, undefined);
+
+  return compactJsonLd({
+    '@type': 'Event',
+    '@id': `${url}#event`,
+    name: event.title,
+    description: normalizeDescription(event.description),
+    image: [absoluteUrl(event.image_url, '/images/placeholder-event.jpg')],
+    url,
+    mainEntityOfPage: url,
+    inLanguage: 'tr-TR',
+    startDate,
+    endDate: endDate !== startDate ? endDate : undefined,
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    eventStatus: 'https://schema.org/EventScheduled',
+    organizer: {
+      '@type': 'Organization',
+      name: event.creator_name || 'Şanlıurfa.com',
+      url: SITE_URL,
+    },
+    location: {
+      '@type': 'Place',
+      name: event.location || 'Şanlıurfa',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: event.location || 'Şanlıurfa',
+        addressLocality: 'Şanlıurfa',
+        addressRegion: 'Şanlıurfa',
+        addressCountry: 'TR',
+      },
+    },
+    offers: {
+      '@type': 'Offer',
+      url,
+      price: 0,
+      priceCurrency: 'TRY',
+      availability: 'https://schema.org/InStock',
+      validFrom: normalizeDate(new Date()),
+    },
+  });
+}
+
+export function buildEventItemListSchema(events: EventLike[], pageUrl: string): JsonLdNode {
+  return compactJsonLd({
+    '@type': 'ItemList',
+    '@id': `${absoluteUrl(pageUrl, '/etkinlikler')}#itemlist`,
+    name: 'Şanlıurfa etkinlikleri',
+    numberOfItems: events.length,
+    itemListElement: events.map((event, index) => {
+      const path = `/etkinlikler/${event.slug || ''}`;
+      const item = buildEventRichSnippet(event, path);
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        url: item.url,
+        item: {
+          '@type': item['@type'],
+          '@id': item['@id'],
+          name: item.name,
+          image: item.image,
+          startDate: item.startDate,
+          location: item.location,
+          offers: item.offers,
+        },
+      };
+    }),
+  });
+}
+
+export function buildHistoricalSiteRichSnippet(site: HistoricalSiteLike, path?: string): JsonLdNode {
+  const sitePath = path || `/tarihi-yerler/${site.slug || ''}`;
+  const url = absoluteUrl(sitePath, '/tarihi-yerler');
+  const images = normalizeImages(site.images, site.cover_image || '/images/placeholder-historical.jpg');
+  const feeText = site.entry_fee || site.entrance_fee || 'Ücretsiz';
+  const isFree = /ücretsiz|free|0/i.test(feeText);
+
+  return compactJsonLd({
+    '@type': 'TouristAttraction',
+    '@id': `${url}#touristAttraction`,
+    name: site.name,
+    url,
+    mainEntityOfPage: url,
+    description: normalizeDescription(site.short_description || site.description),
+    image: images,
+    inLanguage: 'tr-TR',
+    touristType: ['Kültür turizmi', 'Tarih turizmi'],
+    isAccessibleForFree: isFree,
+    award: site.is_unesco ? 'UNESCO Dünya Mirası' : undefined,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: site.location || 'Şanlıurfa',
+      addressLocality: 'Şanlıurfa',
+      addressRegion: 'Şanlıurfa',
+      addressCountry: 'TR',
+    },
+    geo: buildGeo(site.latitude, site.longitude),
+    openingHours: normalizeTextOpeningHours(site.opening_hours || site.visiting_hours),
+    offers: {
+      '@type': 'Offer',
+      url,
+      price: isFree ? 0 : undefined,
+      priceCurrency: 'TRY',
+      availability: 'https://schema.org/InStock',
+      description: feeText,
+    },
+    additionalProperty: site.period
+      ? [
+          {
+            '@type': 'PropertyValue',
+            name: 'Tarihsel dönem',
+            value: site.period,
+          },
+        ]
+      : undefined,
+  });
+}
+
+export function buildHistoricalSiteItemListSchema(sites: HistoricalSiteLike[], pageUrl: string): JsonLdNode {
+  return compactJsonLd({
+    '@type': 'ItemList',
+    '@id': `${absoluteUrl(pageUrl, '/tarihi-yerler')}#itemlist`,
+    name: 'Şanlıurfa tarihi yerleri',
+    numberOfItems: sites.length,
+    itemListElement: sites.map((site, index) => {
+      const path = `/tarihi-yerler/${site.slug || ''}`;
+      const item = buildHistoricalSiteRichSnippet(site, path);
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        url: item.url,
+        item: {
+          '@type': item['@type'],
+          '@id': item['@id'],
+          name: item.name,
+          image: item.image,
+          offers: item.offers,
+        },
+      };
+    }),
+  });
+}
+
 function getPlaceSchemaType(category?: string | null): string {
   return categorySchemaTypes[String(category || '').toLowerCase()] || 'LocalBusiness';
 }
@@ -321,6 +572,26 @@ function normalizeOpeningHours(value?: Record<string, string> | string | null): 
     .filter(Boolean) as string[];
 
   return hours.length ? hours : undefined;
+}
+
+function normalizeTextOpeningHours(value?: string | null): string[] | undefined {
+  if (!value) return undefined;
+  const text = value.replace(/\s/g, '');
+  const match = text.match(/(\d{2}:\d{2})-(\d{2}:\d{2})/);
+  return match ? [`Mo-Su ${match[1]}-${match[2]}`] : undefined;
+}
+
+function normalizeDate(value?: string | Date | null): string | undefined {
+  if (!value) return undefined;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+function normalizeEventDate(dateValue?: string | Date | null, timeValue?: string | null): string | undefined {
+  if (!dateValue) return undefined;
+  const dateText = dateValue instanceof Date ? dateValue.toISOString().slice(0, 10) : String(dateValue).slice(0, 10);
+  const timeText = timeValue && /^\d{2}:\d{2}/.test(timeValue) ? timeValue.slice(0, 5) : '10:00';
+  return normalizeDate(`${dateText}T${timeText}:00+03:00`);
 }
 
 function normalizeReviews(reviews?: ReviewLike[]): JsonLdNode[] | undefined {
