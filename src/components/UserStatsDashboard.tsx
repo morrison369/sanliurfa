@@ -12,6 +12,8 @@ interface UserStats {
   totalLikes?: number;
   collectionsCreated: number;
   badgesEarned: number;
+  contributionScore?: number;
+  rankingPercentile?: number;
   joinDate: string;
   lastActiveAt?: string;
   trends?: ActivityStats;
@@ -59,29 +61,20 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
         throw new Error('İstatistikleri yüklenemedi');
       }
       const statsData = await statsResponse.json();
-      setStats(statsData.data);
+      const statsPayload = statsData.data?.data || statsData.data;
+      setStats(statsPayload);
 
-      // Calculate contribution score (same formula as backend)
-      if (statsData.data) {
-        let score = 0;
-        score += statsData.data.reviewsWritten * 10;
-        score += statsData.data.followersCount * 5;
-        score += statsData.data.collectionsCreated * 20;
-        score += statsData.data.favoriteCount * 2;
-        score += Math.floor(statsData.data.points / 10);
-        score += statsData.data.level * 50;
-        setContributionScore(score);
+      if (statsPayload) {
+        setContributionScore(statsPayload.contributionScore || 0);
+        setRankingPercentile(statsPayload.rankingPercentile || 0);
       }
 
       // Fetch badges
       const badgesResponse = await fetch(`/api/users/stats/badges?userId=${userId}`);
       if (badgesResponse.ok) {
         const badgesData = await badgesResponse.json();
-        setBadges(badgesData.data || []);
+        setBadges(badgesData.data?.data || badgesData.data || []);
       }
-
-      // Calculate ranking percentile (mock for now, would come from API)
-      setRankingPercentile(Math.floor(Math.random() * 100) + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     } finally {

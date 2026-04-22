@@ -15,6 +15,7 @@
     "exactOptionalPropertyTypes": false
   },
   "exclude": [
+    "dist/**",
     "src/lib/__tests__/**",
     "e2e/**",
     "test-results/**",
