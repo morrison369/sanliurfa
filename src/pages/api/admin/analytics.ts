@@ -62,7 +62,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     logger.error('Get analytics failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Analitiğer alınırken bir hata oluştu',
+      'Analitikler alınırken bir hata oluştu',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

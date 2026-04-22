@@ -239,6 +239,8 @@ export async function getTrendingPlacesByViews(days: number, limit: number): Pro
       SELECT
         p.id,
         p.name,
+        p.slug,
+        p.image_url,
         p.category,
         SUM(pdm.view_count) as total_views,
         SUM(pdm.click_count) as total_clicks,
@@ -249,7 +251,7 @@ export async function getTrendingPlacesByViews(days: number, limit: number): Pro
       FROM places p
       LEFT JOIN place_daily_metrics pdm ON p.id = pdm.place_id AND pdm.metric_date >= $1
       LEFT JOIN reviews r ON p.id = r.place_id
-      GROUP BY p.id, p.name, p.category
+      GROUP BY p.id, p.name, p.slug, p.image_url, p.category
       ORDER BY total_views DESC NULLS LAST
       LIMIT $2
     `, [startDate.toISOString().split('T')[0], limit]);
@@ -257,8 +259,12 @@ export async function getTrendingPlacesByViews(days: number, limit: number): Pro
     return places.map((p: any) => ({
       id: p.id,
       name: p.name,
+      slug: p.slug,
+      image_url: p.image_url,
       category: p.category,
       totalViews: parseInt(p.total_views || '0'),
+      view_count: parseInt(p.total_views || '0'),
+      unique_viewers: parseInt(p.total_views || '0'),
       totalClicks: parseInt(p.total_clicks || '0'),
       totalLikes: parseInt(p.total_likes || '0'),
       totalShares: parseInt(p.total_shares || '0'),

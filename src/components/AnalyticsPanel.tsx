@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 export default function AnalyticsPanel() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadAnalytics();
@@ -11,17 +13,22 @@ export default function AnalyticsPanel() {
   const loadAnalytics = async () => {
     try {
       const response = await fetch('/api/analytics');
-      if (!response.ok) throw new Error('Failed');
-      const data = await response.json();
-      setAnalytics(data.data);
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(getApiErrorMessage(json, 'Analitik verileri yüklenemedi'));
+      }
+      const data = unwrapApiPayload<{ data?: any }>(json);
+      setAnalytics(data.data ?? data);
+      setError('');
     } catch (err) {
-      console.error('Analytics error', err);
+      setError(err instanceof Error ? err.message : 'Analitik verileri yüklenemedi');
     } finally {
       setIsLoading(false);
     }
   };
 
   if (isLoading) return <div>Yükleniyor...</div>;
+  if (error) return <div>{error}</div>;
   if (!analytics) return <div>Veri yüklenemedi</div>;
 
   const { summary, topPlaces, topUsers } = analytics;

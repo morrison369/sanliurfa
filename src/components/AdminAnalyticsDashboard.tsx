@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface AnalyticsData {
   platformStats: any;
@@ -24,17 +25,17 @@ export default function AdminAnalyticsDashboard() {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/admin/analytics?days=${days}&limit=10`);
-      const data = await response.json();
+      const json = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean; data?: AnalyticsData }>(json);
 
-      if (data.success) {
-        setAnalytics(data.data);
-        setError('');
-      } else {
-        setError(data.error || 'Analitikler yüklenemedi');
+      if (!response.ok || !data.success) {
+        throw new Error(getApiErrorMessage(json, 'Analitikler yüklenemedi'));
       }
+
+      setAnalytics(data.data || null);
+      setError('');
     } catch (err) {
-      console.error('Failed to load analytics:', err);
-      setError('Analitikler yüklenirken bir hata oluştu');
+      setError(err instanceof Error ? err.message : 'Analitikler yüklenirken bir hata oluştu');
     } finally {
       setIsLoading(false);
     }
@@ -124,7 +125,7 @@ export default function AdminAnalyticsDashboard() {
           {analytics.trendingPlaces.map(place => (
             <a
               key={place.id}
-              href={`/mekan/${place.id}`}
+              href={`/places/${place.slug || place.id}`}
               className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-lg transition"
             >
               {place.image_url && (

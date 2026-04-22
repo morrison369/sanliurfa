@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 export default function PlaceAnalyticsPanel({ placeId }: { placeId: string }) {
   const [analytics, setAnalytics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadAnalytics();
@@ -11,18 +13,23 @@ export default function PlaceAnalyticsPanel({ placeId }: { placeId: string }) {
   const loadAnalytics = async () => {
     try {
       const response = await fetch('/api/places/' + placeId + '/analytics');
-      if (!response.ok) throw new Error('Failed');
-      const data = await response.json();
-      setAnalytics(data.data);
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(getApiErrorMessage(json, 'Mekan analitikleri yüklenemedi'));
+      }
+      const data = unwrapApiPayload<{ data?: any }>(json);
+      setAnalytics(data.data ?? data);
+      setError('');
     } catch (err) {
-      console.error('Error', err);
+      setError(err instanceof Error ? err.message : 'Mekan analitikleri yüklenemedi');
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isLoading) return <div className="text-center py-8">Yukleniyor...</div>;
-  if (!analytics) return <div>Veri yuklenemedi</div>;
+  if (isLoading) return <div className="text-center py-8">Yükleniyor...</div>;
+  if (error) return <div className="text-red-500 p-4 rounded bg-red-50">{error}</div>;
+  if (!analytics) return <div>Veri yüklenemedi</div>;
 
   const { reviews, ratingDistribution, favorites, views } = analytics;
 
@@ -32,7 +39,7 @@ export default function PlaceAnalyticsPanel({ placeId }: { placeId: string }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">Incelemeler</p>
+          <p className="text-sm text-gray-600">İncelemeler</p>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{reviews.total}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200">
@@ -44,14 +51,14 @@ export default function PlaceAnalyticsPanel({ placeId }: { placeId: string }) {
           <p className="text-3xl font-bold text-red-600">{favorites}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">Goruntulemeler</p>
+          <p className="text-sm text-gray-600">Görüntülemeler</p>
           <p className="text-3xl font-bold text-blue-600">{views}</p>
         </div>
       </div>
 
       {ratingDistribution.length > 0 && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200">
-          <h3 className="font-bold text-gray-900 dark:text-white mb-4">Puan Dagilimi</h3>
+          <h3 className="font-bold text-gray-900 dark:text-white mb-4">Puan Dağılımı</h3>
           <div className="space-y-3">
             {ratingDistribution.map((dist: any) => (
               <div key={dist.rating} className="flex items-center gap-3">

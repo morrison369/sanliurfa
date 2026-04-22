@@ -3,6 +3,7 @@
  * Comprehensive business analytics and insights for place owners
  */
 import { useEffect, useState } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface Analytics {
   totalVisitors: number;
@@ -57,24 +58,33 @@ export function BusinessAnalyticsDashboard() {
         fetch(`/api/business/insights?placeId=${id}&limit=10`)
       ]);
 
-      if (!analyticsRes.ok || !insightsRes.ok) {
-        throw new Error('Analitik verileri alınamadı');
-      }
-
       const analyticsData = await analyticsRes.json();
       const insightsData = await insightsRes.json();
+      const analyticsPayload = unwrapApiPayload<{
+        analytics?: Analytics;
+        metrics?: Metric[];
+      }>(analyticsData);
+      const insightsPayload = unwrapApiPayload<Insight[]>(insightsData);
 
-      if (analyticsData.data?.analytics) {
+      if (!analyticsRes.ok) {
+        throw new Error(getApiErrorMessage(analyticsData, 'Analitik verileri alınamadı'));
+      }
+
+      if (!insightsRes.ok) {
+        throw new Error(getApiErrorMessage(insightsData, 'İşletme önerileri alınamadı'));
+      }
+
+      if (analyticsPayload.analytics) {
         setAnalytics({
-          totalVisitors: analyticsData.data.analytics.totalVisitors || 0,
-          avgRating: analyticsData.data.analytics.avgRating || 0,
-          reviewCount: analyticsData.data.analytics.reviewCount || 0,
-          followerCount: analyticsData.data.analytics.followerCount || 0
+          totalVisitors: analyticsPayload.analytics.totalVisitors || 0,
+          avgRating: analyticsPayload.analytics.avgRating || 0,
+          reviewCount: analyticsPayload.analytics.reviewCount || 0,
+          followerCount: analyticsPayload.analytics.followerCount || 0
         });
       }
 
-      setMetrics(analyticsData.data?.metrics || []);
-      setInsights(insightsData.data || []);
+      setMetrics(analyticsPayload.metrics || []);
+      setInsights(Array.isArray(insightsPayload) ? insightsPayload : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analitik verileri yüklenemedi');
     } finally {
@@ -93,12 +103,15 @@ export function BusinessAnalyticsDashboard() {
           action: 'acknowledge'
         })
       });
+      const json = await res.json();
 
-      if (res.ok) {
-        setInsights(insights.filter((i) => i.id !== insightId));
+      if (!res.ok) {
+        throw new Error(getApiErrorMessage(json, 'Öneri işlemi tamamlanamadı'));
       }
+
+      setInsights(insights.filter((i) => i.id !== insightId));
     } catch (err) {
-      console.error('Failed to acknowledge insight', err);
+      setError(err instanceof Error ? err.message : 'Öneri işlemi tamamlanamadı');
     }
   };
 
