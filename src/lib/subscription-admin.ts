@@ -6,6 +6,11 @@
 import { query, queryOne, queryMany, insert, update as updateDb } from './postgres';
 import { logger } from './logging';
 
+function toNumber(value: unknown): number {
+  const numberValue = Number(value || 0);
+  return Number.isFinite(numberValue) ? numberValue : 0;
+}
+
 /**
  * Get subscription analytics
  */
@@ -44,22 +49,28 @@ export async function getSubscriptionAnalytics(): Promise<{
 
     const byTier: Record<string, number> = {};
     byTierResults.forEach((r: any) => {
-      byTier[r.display_name] = r.count;
+      byTier[r.display_name] = toNumber(r.count);
     });
 
-    // MRR (Monthly Recurring Revenue)
-    const mrrResult = await queryOne(
-      `SELECT COALESCE(SUM(st.monthly_price), 0) as mrr
+    // MRR includes monthly subscriptions and annual subscriptions normalized to monthly value.
+    const recurringRevenueResult = await queryOne(
+      `SELECT
+        COALESCE(SUM(
+          CASE
+            WHEN s.billing_cycle = 'annual' THEN COALESCE(st.annual_price, 0) / 12
+            ELSE COALESCE(st.monthly_price, 0)
+          END
+        ), 0) as mrr
        FROM subscriptions s
        JOIN subscription_tiers st ON s.tier_id = st.id
-       WHERE s.status = 'active' AND s.billing_cycle = 'monthly'`
+       WHERE s.status = 'active'`
     );
 
-    const arrResult = await queryOne(
-      `SELECT COALESCE(SUM(st.annual_price), 0) as arr
-       FROM subscriptions s
-       JOIN subscription_tiers st ON s.tier_id = st.id
-       WHERE s.status = 'active' AND s.billing_cycle = 'annual'`
+    const lifetimeValueResult = await queryOne(
+      `SELECT
+        COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN amount ELSE 0 END), 0) as paid_total,
+        COUNT(DISTINCT CASE WHEN payment_status = 'paid' THEN user_id END) as paying_users
+       FROM billing_history`
     );
 
     // Churn rate (last 30 days)
@@ -71,14 +82,16 @@ export async function getSubscriptionAnalytics(): Promise<{
     );
 
     return {
-      totalSubscriptions: totalResult?.count || 0,
-      activeSubscriptions: activeResult?.count || 0,
-      cancelledSubscriptions: cancelledResult?.count || 0,
+      totalSubscriptions: toNumber(totalResult?.count),
+      activeSubscriptions: toNumber(activeResult?.count),
+      cancelledSubscriptions: toNumber(cancelledResult?.count),
       byTier,
-      mrr: parseFloat(mrrResult?.mrr || 0),
-      arr: parseFloat(arrResult?.arr || 0),
-      averageLifetimeValue: 0, // TODO: Calculate from billing history
-      churnRate: parseFloat(churnResult?.churn_rate || 0),
+      mrr: toNumber(recurringRevenueResult?.mrr),
+      arr: toNumber(recurringRevenueResult?.mrr) * 12,
+      averageLifetimeValue: toNumber(lifetimeValueResult?.paying_users) > 0
+        ? toNumber(lifetimeValueResult?.paid_total) / toNumber(lifetimeValueResult?.paying_users)
+        : 0,
+      churnRate: toNumber(churnResult?.churn_rate),
     };
   } catch (error) {
     logger.error('Failed to get subscription analytics', error instanceof Error ? error : new Error(String(error)));
