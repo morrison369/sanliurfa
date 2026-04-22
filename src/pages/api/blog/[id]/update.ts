@@ -32,6 +32,9 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
     const statusValue = formData.get('status')?.toString() || 'draft';
     const status = statusValue === 'published' ? 'published' : 'draft';
     const categoryId = categoryIdRaw ? Number.parseInt(categoryIdRaw, 10) : undefined;
+    const providerImageUrl = formData.get('provider_image_url')?.toString().trim();
+    const featuredImage = providerImageUrl || formData.get('featuredImage')?.toString().trim();
+    const thumbnail = providerImageUrl || formData.get('thumbnail')?.toString().trim();
 
     const updatedPost = await updateBlogPost(postId, {
       title,
@@ -40,6 +43,8 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
       categoryId: Number.isFinite(categoryId) ? categoryId : undefined,
       status,
       isFeatured: formData.get('is_featured') === 'on',
+      featuredImage,
+      thumbnail,
     });
 
     if (!updatedPost) {

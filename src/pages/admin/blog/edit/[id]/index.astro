@@ -1,7 +1,8 @@
 ---
 import Layout from '../../../../../layouts/Layout.astro';
-import { ArrowLeft, Save, Tag, User, Calendar } from 'lucide-react';
+import { ArrowLeft, Save, Tag, User } from 'lucide-react';
 import { query, queryOne } from '../../../../../lib/postgres';
+import ProviderImagePicker from '../../../../../components/admin/ProviderImagePicker.astro';
 
 const { id } = Astro.params;
 
@@ -108,6 +109,43 @@ const seo = {
                 <option value={author.id} selected={author.id === post.author_id}>{author.full_name || author.id}</option>
               ))}
             </select>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Kapak Görseli</h3>
+            <div class="space-y-4">
+              <ProviderImagePicker
+                currentImage={post.featured_image || post.thumbnail || ''}
+                currentSlug={post.slug}
+                currentName={post.title}
+                currentCategory="blog"
+                folder="blog"
+              />
+
+              <div>
+                <label for="featuredImage" class="label dark:text-gray-300">Kapak Görseli URL</label>
+                <input
+                  type="url"
+                  id="featuredImage"
+                  name="featuredImage"
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  value={post.featured_image || ''}
+                  placeholder="https://sanliurfa.com/images/blog/ornek-yazi.jpg"
+                />
+              </div>
+
+              <div>
+                <label for="thumbnail" class="label dark:text-gray-300">Küçük Resim URL</label>
+                <input
+                  type="url"
+                  id="thumbnail"
+                  name="thumbnail"
+                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  value={post.thumbnail || ''}
+                  placeholder="https://sanliurfa.com/images/blog/ornek-yazi-thumb.jpg"
+                />
+              </div>
+            </div>
           </div>
         </aside>
       </form>
