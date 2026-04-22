@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface TwoFactorManagerProps {
   onStatusChange?: (enabled: boolean) => void;
@@ -32,9 +33,10 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
         throw new Error('Failed to check 2FA status');
       }
 
-      const data = await response.json();
-      setIsEnabled(data.twoFactorEnabled);
-      onStatusChange?.(data.twoFactorEnabled);
+      const data = unwrapApiPayload<{ twoFactorEnabled?: boolean }>(await response.json());
+      const twoFactorEnabled = Boolean(data.twoFactorEnabled);
+      setIsEnabled(twoFactorEnabled);
+      onStatusChange?.(twoFactorEnabled);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     } finally {
@@ -55,12 +57,12 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || '2FA ayarı başlatılamadı');
+        throw new Error(getApiErrorMessage(data, '2FA ayarı başlatılamadı'));
       }
 
-      const data = await response.json();
-      setQrCodeUrl(data.qrCodeUrl);
-      setSecret(data.secret);
+      const data = unwrapApiPayload<{ qrCodeUrl?: string; secret?: string }>(await response.json());
+      setQrCodeUrl(data.qrCodeUrl || null);
+      setSecret(data.secret || null);
       setIsSetupMode(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -87,11 +89,11 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || '2FA doğrulanamadı');
+        throw new Error(getApiErrorMessage(data, '2FA doğrulanamadı'));
       }
 
-      const data = await response.json();
-      setBackupCodes(data.backupCodes);
+      const data = unwrapApiPayload<{ backupCodes?: string[] }>(await response.json());
+      setBackupCodes(data.backupCodes || []);
       setShowBackupCodes(true);
       setIsEnabled(true);
       setSuccessMessage('2FA başarıyla etkinleştirildi!');
@@ -128,7 +130,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || '2FA devre dışı bırakılamadı');
+        throw new Error(getApiErrorMessage(data, '2FA devre dışı bırakılamadı'));
       }
 
       setIsEnabled(false);

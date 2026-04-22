@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TwoFactorManager from './TwoFactorManager';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface UserProfile {
   id: string;
@@ -86,20 +87,26 @@ export default function UserSettings() {
         throw new Error('Profil yüklenemedi');
       }
 
-      const data = await response.json();
-      setProfile(data.data);
+      const data = unwrapApiPayload<{ data?: UserProfile }>(await response.json());
+      const loadedProfile = data.data;
+
+      if (!loadedProfile) {
+        throw new Error('Profil yüklenemedi');
+      }
+
+      setProfile(loadedProfile);
       setProfileForm({
-        full_name: data.data.full_name,
-        username: data.data.username || '',
-        avatar_url: data.data.avatar_url || '',
-        bio: data.data.bio || ''
+        full_name: loadedProfile.full_name,
+        username: loadedProfile.username || '',
+        avatar_url: loadedProfile.avatar_url || '',
+        bio: loadedProfile.bio || ''
       });
       setSettingsForm({
         language_preference: 'tr',
-        theme_preference: data.data.theme_preference
+        theme_preference: loadedProfile.theme_preference
       });
-      setPreferencesForm(data.data.notification_preferences);
-      setPrivacyForm(data.data.privacy_settings);
+      setPreferencesForm(loadedProfile.notification_preferences);
+      setPrivacyForm(loadedProfile.privacy_settings);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     } finally {
@@ -121,7 +128,7 @@ export default function UserSettings() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Profil güncellenemedi');
+        throw new Error(getApiErrorMessage(data, 'Profil güncellenemedi'));
       }
 
       setSuccessMessage('Profil başarıyla güncellendi');
@@ -148,7 +155,7 @@ export default function UserSettings() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Ayarlar güncellenemedi');
+        throw new Error(getApiErrorMessage(data, 'Ayarlar güncellenemedi'));
       }
 
       setSuccessMessage('Ayarlar başarıyla güncellendi');
@@ -175,7 +182,7 @@ export default function UserSettings() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Şifre değiştirilirken hata oluştu');
+        throw new Error(getApiErrorMessage(data, 'Şifre değiştirilirken hata oluştu'));
       }
 
       setSuccessMessage('Şifre başarıyla değiştirildi');
@@ -206,7 +213,7 @@ export default function UserSettings() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Tercihler güncellenemedi');
+        throw new Error(getApiErrorMessage(data, 'Tercihler güncellenemedi'));
       }
 
       setSuccessMessage('Tercihler başarıyla güncellendi');
@@ -233,7 +240,7 @@ export default function UserSettings() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Gizlilik ayarları güncellenemedi');
+        throw new Error(getApiErrorMessage(data, 'Gizlilik ayarları güncellenemedi'));
       }
 
       setSuccessMessage('Gizlilik ayarları başarıyla güncellendi');
@@ -258,7 +265,7 @@ export default function UserSettings() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Doğrulama e-postası gönderilemedi');
+        throw new Error(getApiErrorMessage(data, 'Doğrulama e-postası gönderilemedi'));
       }
 
       setSuccessMessage('Doğrulama e-postası başarıyla gönderildi');
