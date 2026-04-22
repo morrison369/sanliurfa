@@ -13,6 +13,7 @@ interface Analytics {
     byTier: Record<string, number>;
     mrr: number;
     arr: number;
+    averageLifetimeValue: number;
     churnRate: number;
   };
   webhooks: {
@@ -42,10 +43,14 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
         }
 
         const data = await response.json() as any;
-        setAnalytics(data.subscriptions || null);
+        const payload = data.data?.data || data.data || data;
+        setAnalytics({
+          subscriptions: payload.subscriptions,
+          webhooks: payload.webhooks,
+        });
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load analytics');
+        setError(err instanceof Error ? err.message : 'Analitik veriler yüklenemedi');
       } finally {
         setLoading(false);
       }
@@ -80,9 +85,13 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
     );
   }
 
-  const mrrDisplay = analytics.subscriptions.mrr.toFixed(2);
-  const arrDisplay = analytics.subscriptions.arr.toFixed(2);
-  const churnPercentage = analytics.subscriptions.churnRate.toFixed(1);
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value || 0);
+  const mrrDisplay = formatCurrency(analytics.subscriptions.mrr);
+  const arrDisplay = formatCurrency(analytics.subscriptions.arr);
+  const ltvDisplay = formatCurrency(analytics.subscriptions.averageLifetimeValue || 0);
+  const churnPercentage = (analytics.subscriptions.churnRate || 0).toFixed(1);
+  const activeSubscriptionCount = analytics.subscriptions.activeSubscriptions || 0;
 
   return (
     <div className="space-y-6">
@@ -140,12 +149,12 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
 
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Aylık Gelir (MRR)</h3>
-              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">₺{mrrDisplay}</p>
+              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{mrrDisplay}</p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Churn Oranı</h3>
-              <p className="text-3xl font-bold text-red-600 dark:text-red-400">{churnPercentage}%</p>
+              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Kayıp Abonelik Oranı</h3>
+              <p className="text-3xl font-bold text-red-600 dark:text-red-400">%{churnPercentage}</p>
             </div>
           </div>
 
@@ -161,7 +170,7 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
                       <div
                         className="h-full bg-blue-600"
                         style={{
-                          width: `${(count / analytics.subscriptions.activeSubscriptions) * 100}%`,
+                          width: `${activeSubscriptionCount > 0 ? (count / activeSubscriptionCount) * 100 : 0}%`,
                         }}
                       />
                     </div>
@@ -178,11 +187,15 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Aylık Gelir (MRR)</p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">₺{mrrDisplay}</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{mrrDisplay}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Yıllık Değerleme (ARR)</p>
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">₺{arrDisplay}</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{arrDisplay}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Ortalama Müşteri Yaşam Boyu Değeri</p>
+                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{ltvDisplay}</p>
               </div>
             </div>
           </div>
