@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 
+const siteUrl = process.env.SITE_URL || import.meta.env.PUBLIC_SITE_URL || 'https://sanliurfa.com';
+
 const openApiSpec = {
   "openapi": "3.1.0",
   "info": {
@@ -8,8 +10,7 @@ const openApiSpec = {
     "version": "1.0.0"
   },
   "servers": [
-    { "url": "https://sanliurfa.com" },
-    { "url": "http://localhost:4321" }
+    { "url": siteUrl.replace(/\/$/, "") }
   ],
   "tags": [
     { "name": "Webhooks", "description": "Webhook management and testing" },
