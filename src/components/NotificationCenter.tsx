@@ -4,6 +4,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Bell, Archive, Trash2, AlertCircle, Loader } from 'lucide-react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface Notification {
   id: string;
@@ -33,14 +34,15 @@ export default function NotificationCenter() {
       setLoading(true);
       const res = await fetch(`/api/notifications/center?archived=${showArchived}`);
       const json = await res.json();
+      const payload = unwrapApiPayload<{ success?: boolean; data?: { notifications?: Notification[]; unreadCount?: number } }>(json);
 
-      if (!json.success) {
-        setError(json.error || 'Bildirimler alınırken hata oluştu');
+      if (!res.ok || !payload.success) {
+        setError(getApiErrorMessage(json, 'Bildirimler alınırken hata oluştu'));
         return;
       }
 
-      setNotifications(json.data.notifications || []);
-      setUnreadCount(json.data.unreadCount || 0);
+      setNotifications(payload.data?.notifications || []);
+      setUnreadCount(payload.data?.unreadCount || 0);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu');
@@ -59,10 +61,11 @@ export default function NotificationCenter() {
       });
 
       const json = await res.json();
-      if (json.success) {
+      const payload = unwrapApiPayload<{ success?: boolean }>(json);
+      if (res.ok && payload.success) {
         await fetchNotifications();
       } else {
-        setError(json.error || 'İşlem başarısız');
+        setError(getApiErrorMessage(json, 'İşlem başarısız'));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu');
@@ -81,10 +84,11 @@ export default function NotificationCenter() {
       });
 
       const json = await res.json();
-      if (json.success) {
+      const payload = unwrapApiPayload<{ success?: boolean }>(json);
+      if (res.ok && payload.success) {
         await fetchNotifications();
       } else {
-        setError(json.error || 'İşlem başarısız');
+        setError(getApiErrorMessage(json, 'İşlem başarısız'));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu');

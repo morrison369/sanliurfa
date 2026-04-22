@@ -9,7 +9,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.isAdmin) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Admin islemi', HttpStatus.FORBIDDEN, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Admin işlemi', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const body = await request.json();
@@ -26,6 +26,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return apiResponse({ success }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Email send failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Ichsel sunucu hatasi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'İçsel sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

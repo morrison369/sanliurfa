@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { Send, Trash2, Search } from "lucide-react";
+import { unwrapApiPayload } from "@/lib/client-api";
 
 interface Conversation {
   id: string;
-  participantName: string;
-  lastMessage: string;
-  lastMessageTime: string;
-  unreadCount: number;
+  participantName?: string;
+  full_name?: string;
+  lastMessage?: string;
+  content?: string;
+  lastMessageTime?: string;
+  msg_time?: string;
+  unreadCount?: number;
+  unread?: number | string;
 }
 
 interface Message {
   id: string;
   content: string;
-  createdAt: string;
+  createdAt?: string;
+  created_at?: string;
 }
 
 export default function MessagingInbox() {
@@ -25,7 +31,20 @@ export default function MessagingInbox() {
   useEffect(() => {
     const loadConversations = async () => {
       const res = await window.fetch("/api/messages");
-      if (res.ok) setConversations((await res.json()).data);
+      if (res.ok) {
+        const payload = unwrapApiPayload<{ data?: Conversation[] }>(await res.json());
+        const nextConversations = payload.data || [];
+        setConversations(nextConversations);
+
+        const targetConversationId = new URLSearchParams(window.location.search).get("conversation");
+        if (
+          targetConversationId &&
+          !selectedConvoId &&
+          nextConversations.some((conversation) => conversation.id === targetConversationId)
+        ) {
+          setSelectedConvoId(targetConversationId);
+        }
+      }
     };
     loadConversations();
     const interval = setInterval(loadConversations, 30000);
@@ -36,7 +55,10 @@ export default function MessagingInbox() {
     if (!selectedConvoId) return;
     const loadMessages = async () => {
       const res = await window.fetch(`/api/messages/${selectedConvoId}`);
-      if (res.ok) setMessages((await res.json()).data);
+      if (res.ok) {
+        const payload = unwrapApiPayload<{ data?: Message[] }>(await res.json());
+        setMessages(payload.data || []);
+      }
     };
     loadMessages();
     const interval = setInterval(loadMessages, 10000);
@@ -53,7 +75,10 @@ export default function MessagingInbox() {
     if (res.ok) {
       setNewMessage("");
       const updated = await window.fetch(`/api/messages/${selectedConvoId}`);
-      setMessages((await updated.json()).data);
+      if (updated.ok) {
+        const payload = unwrapApiPayload<{ data?: Message[] }>(await updated.json());
+        setMessages(payload.data || []);
+      }
     }
   };
 
@@ -67,7 +92,7 @@ export default function MessagingInbox() {
   };
 
   const filtered = conversations.filter((c) =>
-    c.participantName.toLowerCase().includes(searchQuery.toLowerCase()),
+    (c.participantName || c.full_name || "").toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -95,14 +120,14 @@ export default function MessagingInbox() {
             >
               <div className="flex justify-between items-center">
                 <div className="flex-1">
-                  <h3 className="font-semibold">{c.participantName}</h3>
+                  <h3 className="font-semibold">{c.participantName || c.full_name || "Kullanıcı"}</h3>
                   <p className="text-sm text-gray-600 truncate">
-                    {c.lastMessage}
+                    {c.lastMessage || c.content || "Henüz mesaj yok"}
                   </p>
                 </div>
-                {c.unreadCount > 0 && (
+                {Number(c.unreadCount ?? c.unread ?? 0) > 0 && (
                   <span className="bg-blue-500 text-white text-xs rounded-full px-2">
-                    {c.unreadCount}
+                    {Number(c.unreadCount ?? c.unread ?? 0)}
                   </span>
                 )}
               </div>
@@ -116,7 +141,9 @@ export default function MessagingInbox() {
             <h2 className="font-semibold">
               {
                 conversations.find((c) => c.id === selectedConvoId)
-                  ?.participantName
+                  ?.participantName ||
+                conversations.find((c) => c.id === selectedConvoId)
+                  ?.full_name
               }
             </h2>
             <button
