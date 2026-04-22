@@ -22,6 +22,7 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
     const endDate = formData.get('end_date')?.toString();
     const category = formData.get('category')?.toString();
     const image = formData.get('image')?.toString();
+    const providerImageUrl = formData.get('provider_image_url')?.toString().trim();
     const isFeatured = formData.get('is_featured') === 'on';
     const status = formData.get('status')?.toString() || 'draft';
 
@@ -36,7 +37,7 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
       start_date: startDate,
       end_date: endDate || null,
       category,
-      image_url: image,
+      image_url: providerImageUrl || image,
       is_featured: isFeatured,
       status,
       updated_at: new Date().toISOString(),

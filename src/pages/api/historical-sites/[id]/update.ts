@@ -25,6 +25,7 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
     const latitude = parseFloat(formData.get('latitude')?.toString() || '0');
     const longitude = parseFloat(formData.get('longitude')?.toString() || '0');
     const images = formData.get('images')?.toString().split(',').map(s => s.trim()).filter(Boolean) || [];
+    const providerImageUrl = formData.get('provider_image_url')?.toString().trim();
     const isUnesco = formData.get('is_unesco') === 'on';
     const isFeatured = formData.get('is_featured') === 'on';
     const status = formData.get('status')?.toString() || 'draft';
@@ -43,7 +44,7 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
       opening_hours: openingHours,
       latitude,
       longitude,
-      images,
+      images: providerImageUrl ? [providerImageUrl, ...images.filter((image) => image !== providerImageUrl)] : images,
       is_unesco: isUnesco,
       is_featured: isFeatured,
       status,
