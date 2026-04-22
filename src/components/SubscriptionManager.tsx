@@ -21,6 +21,14 @@ interface SubscriptionManagerProps {
   onUpgrade?: () => void;
 }
 
+function unwrapApiPayload(responseBody: any) {
+  return responseBody?.data?.data || responseBody?.data || responseBody;
+}
+
+function getApiErrorMessage(responseBody: any, fallback: string) {
+  return responseBody?.error?.message || responseBody?.error || responseBody?.message || fallback;
+}
+
 export function SubscriptionManager({ onUpgrade }: SubscriptionManagerProps) {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,11 +45,11 @@ export function SubscriptionManager({ onUpgrade }: SubscriptionManagerProps) {
           throw new Error('Failed to fetch subscription');
         }
 
-        const data = await response.json();
-        setSubscription(data.subscription);
+        const data = unwrapApiPayload(await response.json());
+        setSubscription(data.subscription || null);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Abonelik bilgisi yüklenemedi');
         setSubscription(null);
       } finally {
         setLoading(false);
@@ -68,13 +76,13 @@ export function SubscriptionManager({ onUpgrade }: SubscriptionManagerProps) {
 
       if (!response.ok) {
         const errorData = await response.json() as any;
-        throw new Error(errorData.error || 'Abonelik iptal edilemedi');
+        throw new Error(getApiErrorMessage(errorData, 'Abonelik iptal edilemedi'));
       }
 
-      const data = await response.json() as any;
+      const data = unwrapApiPayload(await response.json() as any);
 
       if (data.success) {
-        alert('Aboneliğiniz başarıyla iptal edildi. Plan aylık sonunda sona erecektir.');
+        alert(data.message || 'Aboneliğiniz başarıyla iptal edildi. Plan aylık sonunda sona erecektir.');
         // Reload to update subscription status
         window.location.reload();
       }
@@ -120,6 +128,7 @@ export function SubscriptionManager({ onUpgrade }: SubscriptionManagerProps) {
           (1000 * 60 * 60 * 24)
       )
     : null;
+  const monthlyPrice = Number(subscription.tier.monthlyPrice || 0);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -130,7 +139,7 @@ export function SubscriptionManager({ onUpgrade }: SubscriptionManagerProps) {
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold text-gray-900">
-            ₺{subscription.tier.monthlyPrice.toFixed(0)}
+            {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(monthlyPrice)}
           </p>
           <p className="text-sm text-gray-600">aylık</p>
         </div>
