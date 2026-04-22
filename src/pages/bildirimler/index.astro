@@ -1,15 +1,41 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
 import NotificationsCenter from "../../components/NotificationsCenter";
 
-const { locals, redirect } = Astro;
-if (!locals.user) {
-  return redirect("/giris?redirect=/bildirimler");
-}
+const user = Astro.locals.user;
 ---
 
 <Layout title="Bildirimler - sanliurfa.com" noindex>
-  <div class="max-w-2xl mx-auto px-4 py-8">
-    <NotificationsCenter client:load />
-  </div>
+  {
+    user ? (
+      <div class="max-w-2xl mx-auto px-4 py-8">
+        <NotificationsCenter client:load />
+      </div>
+    ) : (
+      <AuthFeatureLanding
+        eyebrow="Şanlıurfa bildirim merkezi"
+        title="Yorum, takip ve mesaj bildirimlerinizi kaçırmayın"
+        description="Şanlıurfa topluluğunda size gelen mesajları, takipleri, yorum yanıtlarını ve mekân etkileşimlerini tek merkezden takip edin."
+        loginRedirect="/bildirimler"
+        features={[
+          {
+            title: "Topluluk bildirimleri",
+            description:
+              "Takip, yorum, mesaj ve koleksiyon etkileşimlerini tek ekranda görün.",
+          },
+          {
+            title: "Mekân güncellemeleri",
+            description:
+              "Favori Şanlıurfa mekânlarınız ve etkinliklerinizle ilgili gelişmeleri takip edin.",
+          },
+          {
+            title: "Okundu yönetimi",
+            description:
+              "Bildirimleri tek tek veya toplu şekilde okundu olarak işaretleyin.",
+          },
+        ]}
+      />
+    )
+  }
 </Layout>

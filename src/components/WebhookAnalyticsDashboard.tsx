@@ -37,12 +37,12 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
         }
       });
 
-      if (!res.ok) throw new Error('Failed to load metrics');
+      if (!res.ok) throw new Error('Metrikler yüklenemedi');
       const data = await res.json();
       setMetrics(data.data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
   if (error || !metrics) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-700">{error || 'Failed to load metrics'}</p>
+        <p className="text-red-700">{error || 'Metrikler yüklenemedi'}</p>
       </div>
     );
   }
@@ -78,15 +78,15 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
         </button>
       </div>
 
-      {/* Overview Stats */}
+      {/* Genel istatistikler */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg shadow-md p-4">
-          <p className="text-gray-600 text-sm">Toplam Webhooks</p>
+          <p className="text-gray-600 text-sm">Toplam Webhook</p>
           <p className="text-3xl font-bold text-gray-900">{metrics.totalWebhooks}</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-4">
-          <p className="text-gray-600 text-sm">Toplam Olaylar</p>
+          <p className="text-gray-600 text-sm">Toplam Olay</p>
           <p className="text-3xl font-bold text-gray-900">{metrics.totalEvents}</p>
         </div>
 
@@ -123,7 +123,7 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
             >
               {tab === 'overview' && 'Genel Bakış'}
               {tab === 'events' && 'Olaylar'}
-              {tab === 'failed' && 'Başarısız'}
+              {tab === 'failed' && 'Başarısız Olanlar'}
             </button>
           ))}
         </div>
@@ -132,7 +132,7 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
           {activeTab === 'overview' && (
             <div className="space-y-6">
               <div>
-                <h3 className="font-semibold text-gray-900 mb-4">Son Saat Aktivitesi</h3>
+                <h3 className="font-semibold text-gray-900 mb-4">Son Saatteki Aktivite</h3>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {metrics.lastHourActivity.slice(0, 20).map((activity, idx) => (
                     <div key={idx} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
@@ -141,8 +141,8 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
                       </span>
                       <div className="flex gap-4">
                         <span className="text-blue-600">Gönderilen: {activity.sent}</span>
-                        <span className="text-green-600">Teslim: {activity.delivered}</span>
-                        <span className="text-red-600">Hata: {activity.failed}</span>
+                        <span className="text-green-600">Teslim edilen: {activity.delivered}</span>
+                        <span className="text-red-600">Hatalı: {activity.failed}</span>
                       </div>
                     </div>
                   ))}
@@ -153,7 +153,7 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
 
           {activeTab === 'events' && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900 mb-4">Olay Türleri Başarı Oranları</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Olay Türlerine Göre Başarı Oranları</h3>
               {Object.entries(metrics.byEvent).map(([event, stats]: [string, any]) => (
                 <div key={event} className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex justify-between items-start mb-2">
@@ -172,7 +172,7 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
                     <div>Toplam: {stats.total}</div>
                     <div>Başarılı: {stats.delivered}</div>
                     <div>Başarısız: {stats.failed}</div>
-                    <div>Bekleme: {stats.pending}</div>
+                    <div>Bekleyen: {stats.pending}</div>
                   </div>
                 </div>
               ))}
@@ -181,7 +181,7 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
 
           {activeTab === 'failed' && (
             <div className="space-y-4">
-              <h3 className="font-semibold text-gray-900 mb-4">En Çok Başarısız Olaylar</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">En Çok Hata Alan Olaylar</h3>
               {metrics.topFailedEvents.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">Başarısız olay yok 🎉</p>
               ) : (

@@ -148,10 +148,10 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
           )}
         </div>
 
-        {/* Level */}
+        {/* Seviye */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Level</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Seviye</p>
             <span className="text-lg">🎖️</span>
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.level}</p>

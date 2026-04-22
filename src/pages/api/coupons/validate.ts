@@ -22,9 +22,9 @@ export const POST: APIRoute = async ({ request }) => {
     discount = coupon.discount_value;
   }
 
-  return new Response(JSON.stringify({ 
-    valid: true, 
+  return new Response(JSON.stringify({
+    valid: true,
     discount,
-    final_amount: amount - discount 
+    final_amount: amount - discount
   }), { status: 200 });
 };

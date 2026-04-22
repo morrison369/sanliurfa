@@ -10,7 +10,7 @@ const seo = {
 
 const popularLinks = [
   { name: 'Ana Sayfa', href: '/', icon: Home },
-  { name: 'Mekanlar', href: '/places', icon: MapPin },
+  { name: 'Mekânlar', href: '/places', icon: MapPin },
   { name: 'Tarihi Yerler', href: '/tarihi-yerler', icon: MapPin },
   { name: 'Gastronomi', href: '/gastronomi', icon: MapPin },
 ];
@@ -29,7 +29,7 @@ const popularLinks = [
             </div>
           </div>
         </div>
-        
+
         <h1 class="text-3xl md:text-4xl font-display font-bold text-gray-900 mb-4">
           Sayfa Bulunamadı
         </h1>
@@ -37,18 +37,18 @@ const popularLinks = [
           Aradığınız sayfa taşınmış, silinmiş veya hiç var olmamış olabilir.
           <br />Şanlıurfa'nın diğer güzelliklerini keşfetmeye ne dersiniz?
         </p>
-        
+
         <!-- Search Box -->
         <form action="/arama" class="max-w-md mx-auto mb-12">
           <div class="relative">
-            <input 
+            <input
               type="search"
               name="q"
-              placeholder="Mekan veya yer ara..."
+              placeholder="Mekân veya yer ara..."
               class="w-full pl-12 pr-4 py-4 bg-white rounded-xl shadow-sm border border-gray-200 focus:border-urfa-500 focus:ring-2 focus:ring-urfa-200 outline-none transition-all"
             />
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <button 
+            <button
               type="submit"
               class="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-urfa-600 text-white rounded-lg hover:bg-urfa-700 transition-colors"
             >
@@ -56,11 +56,11 @@ const popularLinks = [
             </button>
           </div>
         </form>
-        
+
         <!-- Quick Links -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           {popularLinks.map(link => (
-            <a 
+            <a
               href={link.href}
               class="flex flex-col items-center gap-2 p-4 bg-white rounded-xl shadow-sm border border-gray-200 hover:border-urfa-300 hover:shadow-md transition-all"
             >
@@ -71,14 +71,14 @@ const popularLinks = [
             </a>
           ))}
         </div>
-        
+
         <!-- Back Button -->
-        <button 
+        <button
           onclick="history.back()"
           class="inline-flex items-center gap-2 text-urfa-600 hover:text-urfa-700 font-medium"
         >
           <ArrowLeft className="w-5 h-5" />
-          Geri Dön
+          Geri dön
         </button>
       </div>
     </div>

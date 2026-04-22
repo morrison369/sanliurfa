@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { unwrapApiPayload } from "@/lib/client-api";
+import { getCuratedLeaderboard } from "@/data/curated-users";
 
 export default function LeaderboardsDisplay() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -13,12 +14,18 @@ export default function LeaderboardsDisplay() {
   const fetchLeaderboard = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/leaderboards/users?sortBy=" + sortBy + "&limit=50");
-      if (!response.ok) throw new Error("Failed to load");
+      const response = await fetch(
+        "/api/leaderboards/users?sortBy=" + sortBy + "&limit=50",
+      );
+      if (!response.ok) throw new Error("Liderlik tablosu yüklenemedi");
       const data = unwrapApiPayload<{ data?: any[] }>(await response.json());
-      setLeaderboard(data.data || []);
+      const results = data.data || [];
+      setLeaderboard(
+        results.length > 0 ? results : getCuratedLeaderboard(sortBy, 10),
+      );
     } catch (err) {
-      console.error("Error loading leaderboard", err);
+      console.error("Liderlik tablosu yüklenemedi", err);
+      setLeaderboard(getCuratedLeaderboard(sortBy, 10));
     } finally {
       setIsLoading(false);
     }
@@ -26,17 +33,45 @@ export default function LeaderboardsDisplay() {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2 mb-6">
-        <button onClick={() => setSortBy("points")} className={sortBy === "points" ? "px-4 py-2 bg-blue-500 text-white rounded" : "px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"}>
+      <div className="flex flex-wrap gap-2 mb-6">
+        <button
+          onClick={() => setSortBy("points")}
+          className={
+            sortBy === "points"
+              ? "px-4 py-2 bg-urfa-600 text-white rounded"
+              : "px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800"
+          }
+        >
           Puanla
         </button>
-        <button onClick={() => setSortBy("level")} className={sortBy === "level" ? "px-4 py-2 bg-blue-500 text-white rounded" : "px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"}>
+        <button
+          onClick={() => setSortBy("level")}
+          className={
+            sortBy === "level"
+              ? "px-4 py-2 bg-urfa-600 text-white rounded"
+              : "px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800"
+          }
+        >
           Seviyeye
         </button>
-        <button onClick={() => setSortBy("activity")} className={sortBy === "activity" ? "px-4 py-2 bg-blue-500 text-white rounded" : "px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"}>
+        <button
+          onClick={() => setSortBy("activity")}
+          className={
+            sortBy === "activity"
+              ? "px-4 py-2 bg-urfa-600 text-white rounded"
+              : "px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800"
+          }
+        >
           Aktiviteye
         </button>
-        <button onClick={() => setSortBy("recent")} className={sortBy === "recent" ? "px-4 py-2 bg-blue-500 text-white rounded" : "px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"}>
+        <button
+          onClick={() => setSortBy("recent")}
+          className={
+            sortBy === "recent"
+              ? "px-4 py-2 bg-urfa-600 text-white rounded"
+              : "px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800"
+          }
+        >
           Yeniye
         </button>
       </div>
@@ -45,21 +80,41 @@ export default function LeaderboardsDisplay() {
         <div className="text-center py-12">Yükleniyor...</div>
       ) : (
         <div className="space-y-2">
-          {leaderboard.map((user) => (
-            <a key={user.id} href={"/kullanıcı/" + user.id} className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-              <div className="text-2xl font-bold text-blue-600 w-12 text-center">{"#" + user.rank}</div>
+          {leaderboard.map((user, index) => (
+            <a
+              key={user.id}
+              href={"/kullanici/" + user.id}
+              className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow"
+            >
+              <div className="text-2xl font-bold text-urfa-600 w-12 text-center">
+                {"#" + (user.rank || index + 1)}
+              </div>
               {user.avatar_url ? (
-                <img src={user.avatar_url} alt={user.full_name} className="w-12 h-12 rounded-full object-cover" />
+                <img
+                  src={user.avatar_url}
+                  alt={user.full_name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-sm font-bold">{user.full_name.charAt(0)}</div>
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-urfa-100 to-isot-100 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center text-sm font-bold text-urfa-700 dark:text-urfa-100">
+                  {user.full_name.charAt(0)}
+                </div>
               )}
               <div className="flex-1">
-                <p className="font-medium text-gray-900 dark:text-white">{user.full_name}</p>
-                <p className="text-sm text-gray-600">@{user.username || "kullanici"}</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {user.full_name}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  @{user.username || "kullanici"}
+                </p>
               </div>
               <div className="text-right">
-                <p className="text-lg font-bold text-gray-900">{user.points}</p>
-                <p className="text-xs text-gray-600">Level {user.level}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {user.points}
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Seviye {user.level}
+                </p>
               </div>
             </a>
           ))}

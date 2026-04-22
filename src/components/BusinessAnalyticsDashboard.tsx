@@ -2,8 +2,8 @@
  * Business Analytics Dashboard Component
  * Comprehensive business analytics and insights for place owners
  */
-import { useEffect, useState } from 'react';
-import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
+import { useEffect, useState } from "react";
+import { getApiErrorMessage, unwrapApiPayload } from "@/lib/client-api";
 
 interface Analytics {
   totalVisitors: number;
@@ -30,7 +30,7 @@ interface Insight {
 }
 
 export function BusinessAnalyticsDashboard() {
-  const [placeId, setPlaceId] = useState<string>('');
+  const [placeId, setPlaceId] = useState<string>("");
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [insights, setInsights] = useState<Insight[]>([]);
@@ -40,7 +40,7 @@ export function BusinessAnalyticsDashboard() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const id = params.get('placeId') || '';
+    const id = params.get("placeId") || "";
     setPlaceId(id);
 
     if (id) {
@@ -55,7 +55,7 @@ export function BusinessAnalyticsDashboard() {
 
       const [analyticsRes, insightsRes] = await Promise.all([
         fetch(`/api/business/analytics?placeId=${id}&days=${days}`),
-        fetch(`/api/business/insights?placeId=${id}&limit=10`)
+        fetch(`/api/business/insights?placeId=${id}&limit=10`),
       ]);
 
       const analyticsData = await analyticsRes.json();
@@ -67,11 +67,15 @@ export function BusinessAnalyticsDashboard() {
       const insightsPayload = unwrapApiPayload<Insight[]>(insightsData);
 
       if (!analyticsRes.ok) {
-        throw new Error(getApiErrorMessage(analyticsData, 'Analitik verileri alınamadı'));
+        throw new Error(
+          getApiErrorMessage(analyticsData, "Analitik verileri alınamadı"),
+        );
       }
 
       if (!insightsRes.ok) {
-        throw new Error(getApiErrorMessage(insightsData, 'İşletme önerileri alınamadı'));
+        throw new Error(
+          getApiErrorMessage(insightsData, "İşletme önerileri alınamadı"),
+        );
       }
 
       if (analyticsPayload.analytics) {
@@ -79,14 +83,16 @@ export function BusinessAnalyticsDashboard() {
           totalVisitors: analyticsPayload.analytics.totalVisitors || 0,
           avgRating: analyticsPayload.analytics.avgRating || 0,
           reviewCount: analyticsPayload.analytics.reviewCount || 0,
-          followerCount: analyticsPayload.analytics.followerCount || 0
+          followerCount: analyticsPayload.analytics.followerCount || 0,
         });
       }
 
       setMetrics(analyticsPayload.metrics || []);
       setInsights(Array.isArray(insightsPayload) ? insightsPayload : []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analitik verileri yüklenemedi');
+      setError(
+        err instanceof Error ? err.message : "Analitik verileri yüklenemedi",
+      );
     } finally {
       setLoading(false);
     }
@@ -94,50 +100,94 @@ export function BusinessAnalyticsDashboard() {
 
   const handleAcknowledgeInsight = async (insightId: string) => {
     try {
-      const res = await fetch('/api/business/insights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/business/insights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           placeId,
           insightId,
-          action: 'acknowledge'
-        })
+          action: "acknowledge",
+        }),
       });
       const json = await res.json();
 
       if (!res.ok) {
-        throw new Error(getApiErrorMessage(json, 'Öneri işlemi tamamlanamadı'));
+        throw new Error(getApiErrorMessage(json, "Öneri işlemi tamamlanamadı"));
       }
 
       setInsights(insights.filter((i) => i.id !== insightId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Öneri işlemi tamamlanamadı');
+      setError(
+        err instanceof Error ? err.message : "Öneri işlemi tamamlanamadı",
+      );
     }
   };
 
   if (!placeId) {
-    return <div className="p-4 text-center text-gray-500">Mekan seçilmedi</div>;
+    return (
+      <div className="rounded-2xl border border-urfa-100 bg-urfa-50 p-8 text-center">
+        <h2 className="text-2xl font-semibold text-gray-900">
+          Analitik için mekân seçin
+        </h2>
+        <p className="mx-auto mt-3 max-w-2xl text-gray-700">
+          İşletme analitikleri mekân bazlı çalışır. Önce işletmenizi ekleyin
+          veya panelden yönetmek istediğiniz mekânı seçin.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <a
+            href="/places/ekle"
+            className="rounded-lg bg-urfa-700 px-5 py-2.5 font-medium text-white hover:bg-urfa-800"
+          >
+            Mekân ekle
+          </a>
+          <a
+            href="/vendor/dashboard"
+            className="rounded-lg border border-urfa-200 bg-white px-5 py-2.5 font-medium text-urfa-800 hover:bg-urfa-50"
+          >
+            İşletme paneline dön
+          </a>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {
     return (
       <div className="space-y-4">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-gray-200 rounded-lg h-20 animate-pulse"></div>
+          <div
+            key={i}
+            className="bg-gray-200 rounded-lg h-20 animate-pulse"
+          ></div>
         ))}
       </div>
     );
   }
 
   if (error) {
-    return <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">{error}</div>;
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-amber-900">
+        <p className="font-semibold">Analitik verileri şu anda alınamadı.</p>
+        <p className="mt-1 text-sm">{error}</p>
+        <button
+          type="button"
+          onClick={() => fetchData(placeId)}
+          className="mt-4 rounded-lg bg-amber-700 px-4 py-2 text-sm font-medium text-white hover:bg-amber-800"
+        >
+          Tekrar dene
+        </button>
+      </div>
+    );
   }
 
-  const totalMetrics = metrics.reduce((acc, m) => ({
-    views: (acc.views || 0) + (m.view_count || 0),
-    reviews: (acc.reviews || 0) + (m.review_count || 0),
-    followers: (acc.followers || 0) + (m.new_followers || 0)
-  }), { views: 0, reviews: 0, followers: 0 });
+  const totalMetrics = metrics.reduce(
+    (acc, m) => ({
+      views: (acc.views || 0) + (m.view_count || 0),
+      reviews: (acc.reviews || 0) + (m.review_count || 0),
+      followers: (acc.followers || 0) + (m.new_followers || 0),
+    }),
+    { views: 0, reviews: 0, followers: 0 },
+  );
 
   return (
     <div className="space-y-6">
@@ -149,8 +199,8 @@ export function BusinessAnalyticsDashboard() {
             onClick={() => setDays(d)}
             className={`px-4 py-2 rounded-lg font-medium transition ${
               days === d
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
             {d} Gün
@@ -162,20 +212,28 @@ export function BusinessAnalyticsDashboard() {
       {analytics && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
-            <p className="text-gray-600 text-sm">Toplam Ziyaretçi</p>
-            <p className="text-3xl font-bold text-blue-600 mt-2">{analytics.totalVisitors.toLocaleString()}</p>
+            <p className="text-gray-600 text-sm">Toplam ziyaretçi</p>
+            <p className="text-3xl font-bold text-blue-600 mt-2">
+              {analytics.totalVisitors.toLocaleString()}
+            </p>
           </div>
           <div className="bg-green-50 rounded-lg p-6 border border-green-200">
-            <p className="text-gray-600 text-sm">Ortalama Puan</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">{analytics.avgRating.toFixed(1)}</p>
+            <p className="text-gray-600 text-sm">Ortalama puan</p>
+            <p className="text-3xl font-bold text-green-600 mt-2">
+              {analytics.avgRating.toFixed(1)}
+            </p>
           </div>
           <div className="bg-purple-50 rounded-lg p-6 border border-purple-200">
-            <p className="text-gray-600 text-sm">İnceleme Sayısı</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">{analytics.reviewCount}</p>
+            <p className="text-gray-600 text-sm">İnceleme sayısı</p>
+            <p className="text-3xl font-bold text-purple-600 mt-2">
+              {analytics.reviewCount}
+            </p>
           </div>
           <div className="bg-orange-50 rounded-lg p-6 border border-orange-200">
             <p className="text-gray-600 text-sm">Takipçi</p>
-            <p className="text-3xl font-bold text-orange-600 mt-2">{analytics.followerCount}</p>
+            <p className="text-3xl font-bold text-orange-600 mt-2">
+              {analytics.followerCount}
+            </p>
           </div>
         </div>
       )}
@@ -204,19 +262,25 @@ export function BusinessAnalyticsDashboard() {
             <div
               key={insight.id}
               className={`border-l-4 p-4 rounded ${
-                insight.priority === 'high'
-                  ? 'border-red-500 bg-red-50'
-                  : insight.priority === 'medium'
-                    ? 'border-yellow-500 bg-yellow-50'
-                    : 'border-blue-500 bg-blue-50'
+                insight.priority === "high"
+                  ? "border-red-500 bg-red-50"
+                  : insight.priority === "medium"
+                    ? "border-yellow-500 bg-yellow-50"
+                    : "border-blue-500 bg-blue-50"
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h4 className="font-semibold">{insight.title}</h4>
-                  <p className="text-sm text-gray-700 mt-1">{insight.description}</p>
-                  <p className="text-xs text-gray-600 mt-2">💡 {insight.action_recommendation}</p>
-                  <p className="text-xs text-gray-600 mt-1">📈 Beklenen Etki: {insight.estimated_impact}</p>
+                  <p className="text-sm text-gray-700 mt-1">
+                    {insight.description}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-2">
+                    Öneri: {insight.action_recommendation}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Beklenen etki: {insight.estimated_impact}
+                  </p>
                 </div>
                 <button
                   onClick={() => handleAcknowledgeInsight(insight.id)}
@@ -241,18 +305,28 @@ export function BusinessAnalyticsDashboard() {
                   <th className="py-2">Tarih</th>
                   <th className="py-2 text-right">Görüntülenme</th>
                   <th className="py-2 text-right">Yorum</th>
-                  <th className="py-2 text-right">Ortalama Puan</th>
+                  <th className="py-2 text-right">Ortalama puan</th>
                   <th className="py-2 text-right">Yeni Takipçi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {metrics.slice(0, 10).map((metric) => (
                   <tr key={metric.date}>
-                    <td className="py-2">{new Date(metric.date).toLocaleDateString('tr-TR')}</td>
-                    <td className="py-2 text-right">{metric.view_count || 0}</td>
-                    <td className="py-2 text-right">{metric.review_count || 0}</td>
-                    <td className="py-2 text-right">{Number(metric.average_rating || 0).toFixed(1)}</td>
-                    <td className="py-2 text-right">{metric.new_followers || 0}</td>
+                    <td className="py-2">
+                      {new Date(metric.date).toLocaleDateString("tr-TR")}
+                    </td>
+                    <td className="py-2 text-right">
+                      {metric.view_count || 0}
+                    </td>
+                    <td className="py-2 text-right">
+                      {metric.review_count || 0}
+                    </td>
+                    <td className="py-2 text-right">
+                      {Number(metric.average_rating || 0).toFixed(1)}
+                    </td>
+                    <td className="py-2 text-right">
+                      {metric.new_followers || 0}
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -15,13 +15,13 @@ export default function PlaceAnalyticsPanel({ placeId }: { placeId: string }) {
       const response = await fetch('/api/places/' + placeId + '/analytics');
       const json = await response.json();
       if (!response.ok) {
-        throw new Error(getApiErrorMessage(json, 'Mekan analitikleri yüklenemedi'));
+        throw new Error(getApiErrorMessage(json, 'Mekân analitikleri yüklenemedi'));
       }
       const data = unwrapApiPayload<{ data?: any }>(json);
       setAnalytics(data.data ?? data);
       setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Mekan analitikleri yüklenemedi');
+      setError(err instanceof Error ? err.message : 'Mekân analitikleri yüklenemedi');
     } finally {
       setIsLoading(false);
     }
@@ -35,7 +35,7 @@ export default function PlaceAnalyticsPanel({ placeId }: { placeId: string }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mekan Analitikleri</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mekân Analitikleri</h2>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200">

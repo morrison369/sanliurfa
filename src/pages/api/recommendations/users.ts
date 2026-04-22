@@ -4,7 +4,7 @@ import { queryMany } from '../../../lib/postgres';
 export const GET: APIRoute = async ({ locals, url }) => {
   try {
     if (!locals.user?.id) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return new Response(JSON.stringify({ error: 'Yetkisiz işlem' }), { status: 401 });
     }
 
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
@@ -27,6 +27,6 @@ export const GET: APIRoute = async ({ locals, url }) => {
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
     console.error('Recommendations error', error);
-    return new Response(JSON.stringify({ error: 'Failed' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'İşlem tamamlanamadı' }), { status: 500 });
   }
 };

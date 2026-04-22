@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -33,7 +33,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Failed to get webhook settings', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get settings', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Ayarlar alınamadı', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -47,7 +47,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const body = await request.json();
@@ -74,13 +74,13 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: updated,
-        message: 'Settings updated successfully'
+        message: 'Ayarlar başarıyla güncellendi'
       },
       HttpStatus.OK,
       requestId
     );
   } catch (error) {
     logger.error('Failed to update webhook settings', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to update settings', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Ayarlar güncellenemedi', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

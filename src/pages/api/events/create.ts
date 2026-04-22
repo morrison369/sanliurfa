@@ -6,13 +6,13 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
   try {
     if (!locals.isAdmin) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Yetkisiz işlem' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     const formData = await request.formData();
-    
+
     const title = formData.get('title')?.toString();
     const description = formData.get('description')?.toString();
     const location = formData.get('location')?.toString();

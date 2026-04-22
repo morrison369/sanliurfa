@@ -5,7 +5,7 @@ import { update } from '../../../lib/postgres';
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
   try {
     const user = locals.user;
-    
+
     if (!user) {
       return redirect('/giris?redirect=/profil/ayarlar');
     }

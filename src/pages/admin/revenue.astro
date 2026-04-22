@@ -15,7 +15,7 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
 
 ---
 
-<Layout title="Gelir Yönetimi - Admin Panel" noindex>
+<Layout title="Gelir Yönetimi - Yönetim Paneli" noindex>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
     <div class="container max-w-7xl mx-auto">
       <!-- Header -->
@@ -148,7 +148,7 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
     async function loadRevenueData() {
       try {
         const response = await fetch('/api/admin/revenue');
-        if (!response.ok) throw new Error('Failed to fetch revenue data');
+        if (!response.ok) throw new Error('Gelir verisi alınamadı');
 
         const result = await response.json();
         const payload = result.data?.data || result.data;
@@ -178,7 +178,7 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
         renderDailyRevenue(dailyRevenue || [], formatCurrency);
         setText('revenueStatus', 'Güncel');
       } catch (error) {
-        console.error('Error loading revenue data:', error);
+        console.error('Gelir verisi yükleme hatası:', error);
         setText('revenueStatus', 'Veri alınamadı');
       }
     }

@@ -37,14 +37,14 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
       const response = await fetch('/api/admin/verifications?limit=50');
 
       if (!response.ok) {
-        throw new Error('Failed to fetch verifications');
+        throw new Error('Doğrulama talepleri alınamadı');
       }
 
       const data = await response.json();
       setVerifications(data.verifications || []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
       setVerifications([]);
     } finally {
       setLoading(false);
@@ -64,14 +64,14 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
       });
 
       if (!response.ok) {
-        throw new Error('Failed to approve verification');
+        throw new Error('Doğrulama onaylanamadı');
       }
 
       // Remove from list
       setVerifications(verifications.filter(v => v.id !== verificationId));
       onRefresh?.();
     } catch (err) {
-      alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      alert(`Hata: ${err instanceof Error ? err.message : 'Bilinmeyen hata'}`);
     } finally {
       setProcessingId(null);
     }
@@ -96,7 +96,7 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
       });
 
       if (!response.ok) {
-        throw new Error('Failed to reject verification');
+        throw new Error('Doğrulama reddedilemedi');
       }
 
       // Remove from list
@@ -104,7 +104,7 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
       setShowRejectForm(null);
       onRefresh?.();
     } catch (err) {
-      alert(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      alert(`Hata: ${err instanceof Error ? err.message : 'Bilinmeyen hata'}`);
     } finally {
       setProcessingId(null);
     }
@@ -131,7 +131,7 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
   if (verifications.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Bekleme listesinde doğrulama talebesi yok.</p>
+        <p className="text-gray-500">Bekleme listesinde doğrulama talebi yok.</p>
       </div>
     );
   }
@@ -147,7 +147,7 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
             <div>
               <h4 className="font-semibold text-gray-900">{verification.placeName}</h4>
               <p className="text-sm text-gray-600 mt-1">
-                Kategori: {verification.category} • Rating: {verification.rating.toFixed(1)}⭐
+                Kategori: {verification.category} • Puan: {verification.rating.toFixed(1)}⭐
               </p>
               <p className="text-xs text-gray-500 mt-2">
                 Talep Tarihi: {new Date(verification.requestedAt).toLocaleDateString('tr-TR')}

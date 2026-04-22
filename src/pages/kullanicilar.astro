@@ -1,0 +1,45 @@
+---
+/**
+ * User Discovery & Search Page
+ * Browse and search for users
+ */
+
+import Layout from "../layouts/Layout.astro";
+import UserSearchResults from "../components/UserSearchResults";
+---
+
+<Layout
+  seo={{
+    title: "Şanlıurfa Topluluğu - Kullanıcıları Keşfet",
+    description:
+      "Şanlıurfa gezi, gastronomi, tarih ve şehir rehberi topluluğundaki kullanıcıları keşfedin.",
+    canonicalUrl: "https://sanliurfa.com/kullanicilar",
+  }}
+>
+  <section
+    class="bg-gradient-to-br from-urfa-950 via-urfa-900 to-isot-900 text-white"
+  >
+    <div class="container-custom py-14">
+      <p class="text-sm uppercase tracking-wide text-urfa-200">
+        Şanlıurfa topluluğu
+      </p>
+      <h1 class="mt-3 text-4xl md:text-5xl font-display font-bold">
+        Şehri bilen kullanıcıları keşfedin
+      </h1>
+      <p class="mt-4 max-w-3xl text-lg text-urfa-100">
+        Tarihi yerler, yöresel lezzetler, aile rotaları ve şehir servisleri
+        hakkında katkı sunan Şanlıurfa kullanıcılarını bulun.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="/siralamalar" class="btn-accent">Sıralamaları gör</a>
+        <a href="/kayit" class="btn bg-white/10 text-white hover:bg-white/20"
+          >Topluluğa katıl</a
+        >
+      </div>
+    </div>
+  </section>
+
+  <div class="container-custom py-10">
+    <UserSearchResults client:load currentUserId={Astro.locals.user?.id} />
+  </div>
+</Layout>

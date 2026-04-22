@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', `/api/content/${params.contentId}/publish`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { contentId } = params;
@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
       {
         success: true,
         data: content,
-        message: 'Content published successfully'
+        message: 'İçerik başarıyla yayına alındı'
       },
       HttpStatus.OK,
       requestId
@@ -44,6 +44,6 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', `/api/content/${params.contentId}/publish`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Failed to publish content', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

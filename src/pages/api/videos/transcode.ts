@@ -14,7 +14,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -33,6 +33,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return apiResponse({ success: true, data: job }, HttpStatus.CREATED, requestId);
   } catch (error) {
     logger.error('Failed to create transcoding job', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

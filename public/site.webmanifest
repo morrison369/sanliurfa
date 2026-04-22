@@ -4,7 +4,7 @@
   "description": "Şanlıurfa'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, gastronomi ve daha fazlası.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#a18072",
+  "background_color": "#2a130b",
   "theme_color": "#a18072",
   "orientation": "portrait-primary",
   "icons": [
@@ -51,5 +51,6 @@
   ],
   "categories": ["travel", "food", "lifestyle"],
   "lang": "tr",
-  "dir": "ltr"
+  "dir": "ltr",
+  "scope": "/"
 }

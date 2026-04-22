@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -34,10 +34,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to get webhook analytics', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Webhook analitikleri alınamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get webhook analytics',
+      'Webhook analitikleri alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

@@ -1,0 +1,14 @@
+---
+const target = new URL('/places', Astro.url);
+
+for (const [key, value] of Astro.url.searchParams) {
+  target.searchParams.append(key, value);
+}
+
+return new Response(null, {
+  status: 301,
+  headers: {
+    Location: `${target.pathname}${target.search}`,
+  },
+});
+---

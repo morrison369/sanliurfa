@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to get cohorts', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -71,7 +71,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const cohort = await createCohort(locals.user.id, cohort_name, cohort_key, cohort_type, criteria || {});
 
     if (!cohort) {
-      return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to create cohort', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+      return apiError(ErrorCode.INTERNAL_ERROR, 'Kohort oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
     }
 
     return apiResponse({
@@ -79,7 +79,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       data: cohort
     }, HttpStatus.CREATED, requestId);
   } catch (error) {
-    logger.error('Failed to create cohort', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Kohort oluşturulamadı', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

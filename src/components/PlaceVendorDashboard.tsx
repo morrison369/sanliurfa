@@ -37,7 +37,7 @@ export default function PlaceVendorDashboard({ placeId }: PlaceVendorDashboardPr
         setError(data.error || 'Analitikler yüklenemedi');
       }
     } catch (err) {
-      console.error('Failed to load analytics:', err);
+      console.error('Analitik veriler yüklenemedi:', err);
       setError('Analitikler yüklenirken bir hata oluştu');
     } finally {
       setIsLoading(false);
@@ -78,12 +78,12 @@ export default function PlaceVendorDashboard({ placeId }: PlaceVendorDashboardPr
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Toplam Görüntüleme</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Toplam görüntüleme</p>
           <p className="text-3xl font-bold">{analytics.views}</p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Benzersiz Ziyaretçi</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Benzersiz ziyaretçi</p>
           <p className="text-3xl font-bold">{analytics.uniqueViewers}</p>
         </div>
 

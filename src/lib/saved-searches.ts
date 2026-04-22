@@ -1,6 +1,6 @@
 import { pool } from './postgres';
 import { logger } from './logging';
-import { prefixKey, deleteCache } from './cache';
+import { deleteCache } from './cache';
 
 export async function saveSearch(userId: string, name: string, query: string, filters?: any): Promise<string | null> {
   try {
@@ -10,7 +10,7 @@ export async function saveSearch(userId: string, name: string, query: string, fi
        RETURNING id`,
       [userId, name, query, filters || null]
     );
-    await deleteCache(prefixKey(`saved_searches:${userId}`));
+    await deleteCache(`saved_searches:${userId}`);
     return result.rows[0]?.id || null;
   } catch (error) {
     logger.error('Save search failed', error instanceof Error ? error : new Error(String(error)));
@@ -38,7 +38,7 @@ export async function deleteSavedSearch(id: string, userId: string): Promise<boo
       [id, userId]
     );
     if ((result.rowCount || 0) > 0) {
-      await deleteCache(prefixKey(`saved_searches:${userId}`));
+      await deleteCache(`saved_searches:${userId}`);
     }
     return (result.rowCount || 0) > 0;
   } catch (error) {

@@ -12,13 +12,13 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/places/[id]/share', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: placeId } = params;
     if (!placeId) {
       recordRequest('POST', '/api/places/[id]/share', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Place ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const body = await request.json();
@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/places/[id]/share', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Share failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Paylaşım kaydedilemedi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -50,7 +50,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const { id: placeId } = params;
     if (!placeId) {
       recordRequest('GET', '/api/places/[id]/share', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Place ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const count = await getShareCount(placeId);
@@ -62,6 +62,6 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/places/[id]/share', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get shares failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Paylaşım bilgileri alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -157,12 +157,12 @@ export default function UserSuggestionsPanel() {
                 ? 'İşleniyor...'
                 : user.isFollowing
                 ? 'Takip Ediliyor'
-                : 'Takip Et'}
+                : 'Takip et'}
             </button>
 
             {/* View Profile Link */}
             <a
-              href={`/kullanıcı/${user.id}`}
+              href={`/kullanici/${user.id}`}
               className="block text-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mt-2 py-1"
             >
               Profili Görüntüle

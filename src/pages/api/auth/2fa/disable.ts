@@ -17,7 +17,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user) {
       recordRequest('DELETE', '/api/auth/2fa', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const success = await disableTwoFactor(locals.user.id);

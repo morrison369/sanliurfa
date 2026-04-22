@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/loyalty/transactions', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
@@ -83,7 +83,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/loyalty/transactions', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get transactions', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('İşlemler alınamadı', err instanceof Error ? err : new Error(String(err)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

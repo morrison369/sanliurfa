@@ -44,7 +44,7 @@ export function AdvancedSearchPanel() {
         setSuggestions(data.data?.suggestions || []);
       }
     } catch (err) {
-      console.error('Failed to fetch suggestions', err);
+      console.error('Arama önerileri yüklenemedi', err);
     }
   };
 
@@ -69,7 +69,7 @@ export function AdvancedSearchPanel() {
         setResults(data.data || []);
       }
     } catch (err) {
-      console.error('Search failed', err);
+      console.error('Arama başarısız oldu', err);
     } finally {
       setLoading(false);
     }
@@ -95,7 +95,7 @@ export function AdvancedSearchPanel() {
                 setShowSuggestions(true);
               }}
               onFocus={() => query.length > 0 && setShowSuggestions(true)}
-              placeholder="Mekan, kategori veya etkinlik arayın..."
+              placeholder="Mekân, kategori veya etkinlik arayın..."
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
 

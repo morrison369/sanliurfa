@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ request, params, locals, url }) => {
       recordRequest('GET', '/api/owner/analytics/visitors/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId

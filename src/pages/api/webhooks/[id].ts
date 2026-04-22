@@ -11,7 +11,7 @@ import { logger } from '../../../lib/logging';
 export const DELETE: APIRoute = async ({ locals, params }) => {
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const { id } = params;
@@ -25,12 +25,12 @@ export const DELETE: APIRoute = async ({ locals, params }) => {
     return apiResponse(
       {
         success: true,
-        message: 'Webhook deleted successfully'
+        message: 'Webhook başarıyla silindi'
       },
       HttpStatus.OK
     );
   } catch (error) {
     logger.error('Delete webhook failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to delete webhook', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Webhook silinemedi', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

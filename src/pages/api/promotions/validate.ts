@@ -38,7 +38,7 @@ export const POST: APIRoute = async ({ request }) => {
       recordRequest('POST', '/api/promotions/validate', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid input',
+        'Geçersiz giriş',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId

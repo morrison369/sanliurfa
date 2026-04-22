@@ -51,7 +51,7 @@ export default function FollowPlaceButton({ placeId, onFollowChange }: FollowPla
           ? 'İşleniyor...'
           : isFollowing
           ? '✓ Takip Ediliyor'
-          : '+ Takip Et'}
+          : '+ Takip et'}
       </button>
 
       {error && (

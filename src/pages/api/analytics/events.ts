@@ -37,6 +37,6 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/analytics/events', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'İşlem tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

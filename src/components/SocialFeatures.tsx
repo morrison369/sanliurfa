@@ -34,7 +34,7 @@ export function SocialFeatures() {
         setData(Array.isArray(result.data) ? result.data : result.data?.users || []);
       }
     } catch (error) {
-      console.error('Failed to load data', error);
+      console.error('Veriler yüklenemedi', error);
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ export function SocialFeatures() {
           onClick={() => setActiveTab('trending')}
           className={`px-4 py-2 ${activeTab === 'trending' ? 'border-b-2 border-blue-600 font-bold' : 'text-gray-600'}`}
         >
-          Trendiyor
+          Trendler
         </button>
         <button
           onClick={() => setActiveTab('follows')}
@@ -81,7 +81,7 @@ export function SocialFeatures() {
                 {activeTab === 'trending' && (
                   <div>
                     <p className="font-medium">#{item.tag_name}</p>
-                    <p className="text-sm text-gray-600">{item.usage_count} kullannım</p>
+                    <p className="text-sm text-gray-600">{item.usage_count} kullanım</p>
                   </div>
                 )}
                 {activeTab === 'follows' && (

@@ -47,8 +47,98 @@ interface SessionData {
 }
 
 const SESSION_TTL = 86400; // 24 hours in seconds
-const inMemorySessions = new Map<string, { data: SessionData; expiresAt: number }>();
+const globalSessionStore = globalThis as typeof globalThis & {
+  __sanliurfaInMemorySessions?: Map<string, { data: SessionData; expiresAt: number }>;
+};
+const inMemorySessions =
+  globalSessionStore.__sanliurfaInMemorySessions ??
+  (globalSessionStore.__sanliurfaInMemorySessions = new Map<string, { data: SessionData; expiresAt: number }>());
 const IN_MEMORY_SESSION_CLEANUP_THRESHOLD = 2000;
+const STATELESS_TOKEN_PREFIX = 'st';
+
+interface StatelessTokenPayload {
+  userId: string;
+  email: string;
+  role: string;
+  createdAt: number;
+  exp: number;
+}
+
+function toBase64Url(value: string): string {
+  return Buffer.from(value, 'utf8').toString('base64url');
+}
+
+function fromBase64Url(value: string): string {
+  return Buffer.from(value, 'base64url').toString('utf8');
+}
+
+function createStatelessSessionToken(sessionData: SessionData): string {
+  const payload: StatelessTokenPayload = {
+    ...sessionData,
+    exp: sessionData.createdAt + SESSION_TTL * 1000
+  };
+  const payloadB64 = toBase64Url(JSON.stringify(payload));
+  const signature = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(payloadB64)
+    .digest('base64url');
+  return `${STATELESS_TOKEN_PREFIX}.${payloadB64}.${signature}`;
+}
+
+function verifyStatelessSessionToken(token: string): SessionData | null {
+  if (!token.startsWith(`${STATELESS_TOKEN_PREFIX}.`)) {
+    return null;
+  }
+
+  const [, payloadB64, signature] = token.split('.');
+  if (!payloadB64 || !signature) {
+    return null;
+  }
+
+  const expectedSignature = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(payloadB64)
+    .digest('base64url');
+
+  if (signature.length !== expectedSignature.length) {
+    return null;
+  }
+
+  const signatureValid = crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
+  if (!signatureValid) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(fromBase64Url(payloadB64)) as Partial<StatelessTokenPayload>;
+    if (
+      !parsed ||
+      typeof parsed.userId !== 'string' ||
+      typeof parsed.email !== 'string' ||
+      typeof parsed.role !== 'string' ||
+      typeof parsed.createdAt !== 'number' ||
+      typeof parsed.exp !== 'number'
+    ) {
+      return null;
+    }
+
+    if (parsed.exp <= Date.now()) {
+      return null;
+    }
+
+    return {
+      userId: parsed.userId,
+      email: parsed.email,
+      role: parsed.role,
+      createdAt: parsed.createdAt
+    };
+  } catch {
+    return null;
+  }
+}
 
 function cleanupInMemorySessions(nowMs: number): void {
   if (inMemorySessions.size < IN_MEMORY_SESSION_CLEANUP_THRESHOLD) {
@@ -98,20 +188,19 @@ export async function createToken(
     createdAt: Date.now()
   };
 
-  // Try to store in Redis first
+  // Try to store in Redis first.
+  // If Redis is unavailable, fall back to stateless signed token.
   try {
     await setCache(`session:${token}`, sessionData, SESSION_TTL);
+    const persisted = await getCache<SessionData>(`session:${token}`);
+    if (persisted?.userId === userId) {
+      return token;
+    }
   } catch (error) {
     console.error('Failed to create session in Redis:', error);
   }
 
-  // Always keep an in-memory fallback for graceful degradation.
-  // If Redis is down, this keeps auth usable until process restart.
-  if (!isRedisAvailable()) {
-    setInMemorySession(token, sessionData);
-  }
-
-  return token;
+  return createStatelessSessionToken(sessionData);
 }
 
 /**
@@ -119,6 +208,11 @@ export async function createToken(
  * Also performs sliding window: refreshes TTL if token is valid
  */
 export async function verifyToken(token: string): Promise<SessionData | null> {
+  const statelessSession = verifyStatelessSessionToken(token);
+  if (statelessSession) {
+    return statelessSession;
+  }
+
   try {
     const sessionData = await getCache<SessionData>(`session:${token}`);
 
@@ -177,6 +271,10 @@ export async function getCurrentUser(token: string): Promise<any> {
  * Sign out by deleting the session token
  */
 export async function signOut(token: string): Promise<void> {
+  if (token.startsWith(`${STATELESS_TOKEN_PREFIX}.`)) {
+    return;
+  }
+
   try {
     await deleteCache(`session:${token}`);
   } catch (error) {

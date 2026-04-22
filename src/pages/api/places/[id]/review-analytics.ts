@@ -21,20 +21,20 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/places/[id]/review-analytics', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: placeId } = params;
     if (!placeId) {
       recordRequest('GET', '/api/places/[id]/review-analytics', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Place ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Verify ownership
     const place = await queryOne('SELECT user_id FROM places WHERE id = $1', [placeId]);
     if (!place || place.user_id !== locals.user.id) {
       recordRequest('GET', '/api/places/[id]/review-analytics', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Access denied', HttpStatus.FORBIDDEN, undefined, requestId);
+      return apiError(ErrorCode.FORBIDDEN, 'Erişim reddedildi', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const summary = await getPlaceReviewSummary(placeId);
@@ -60,7 +60,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     logger.error('Get review analytics failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get analytics',
+      'Analitikler alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

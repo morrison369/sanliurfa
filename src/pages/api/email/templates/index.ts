@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/email/templates', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const templates = await queryMany(`
@@ -47,7 +47,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     logger.error('Get templates failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get templates',
+      'Şablonlar alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -63,7 +63,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/email/templates', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -115,7 +115,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error('Create template failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to create template',
+      'Şablon oluşturulamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

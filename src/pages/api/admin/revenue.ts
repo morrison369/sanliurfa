@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const token = cookies.get('auth-token')?.value;
     if (!token) {
       recordRequest('GET', '/api/admin/revenue', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const sessionData = await verifyToken(token);

@@ -65,7 +65,7 @@ export async function followUser(followerId: string, followingId: string): Promi
       'action',
       {
         icon: '👤',
-        actionUrl: `/kullanıcı/${followerId}`,
+        actionUrl: `/kullanici/${followerId}`,
         actionLabel: 'Profili Gör'
       }
     );

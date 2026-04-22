@@ -44,7 +44,7 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/content/${params.contentId}`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Failed to get content', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -56,7 +56,7 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', `/api/content/${params.contentId}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { contentId } = params;
@@ -82,7 +82,7 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('PUT', `/api/content/${params.contentId}`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Failed to update content', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -94,7 +94,7 @@ export const DELETE: APIRoute = async ({ request, params, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', `/api/content/${params.contentId}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { contentId } = params;
@@ -115,7 +115,7 @@ export const DELETE: APIRoute = async ({ request, params, locals }) => {
     recordRequest('DELETE', `/api/content/${contentId}`, HttpStatus.OK, duration);
 
     return apiResponse(
-      { success: true, message: 'Content deleted' },
+      { success: true, message: 'İçerik silindi' },
       HttpStatus.OK,
       requestId
     );
@@ -123,6 +123,6 @@ export const DELETE: APIRoute = async ({ request, params, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', `/api/content/${params.contentId}`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Failed to delete content', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -183,7 +183,7 @@ export default function ModerationDashboard() {
           </div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <div className="text-3xl font-bold text-orange-600">{stats.active_bans}</div>
-            <div className="text-gray-600 dark:text-gray-400 text-sm">Aktif Banlar</div>
+            <div className="text-gray-600 dark:text-gray-400 text-sm">Aktif Engeller</div>
           </div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <div className="text-3xl font-bold text-blue-600">{stats.total_warnings}</div>

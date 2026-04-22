@@ -154,7 +154,7 @@ export default function ActivityFeedDisplay({ type = 'feed', userId }: ActivityF
                 <div className="flex items-start gap-3">
                   {/* Avatar */}
                   <a
-                    href={`/kullanıcı/${activity.userId}`}
+                    href={`/kullanici/${activity.userId}`}
                     className="flex-shrink-0"
                   >
                     {activity.userAvatar ? (
@@ -175,7 +175,7 @@ export default function ActivityFeedDisplay({ type = 'feed', userId }: ActivityF
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-lg">{activity.icon}</span>
                       <a
-                        href={`/kullanıcı/${activity.userId}`}
+                        href={`/kullanici/${activity.userId}`}
                         className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
                       >
                         {activity.userName}

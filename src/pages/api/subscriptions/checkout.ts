@@ -45,7 +45,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -60,7 +60,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid input',
+        'Geçersiz veri',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
@@ -83,7 +83,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Tier not found',
+        'Paket bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -100,7 +100,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Already subscribed to this tier',
+        'Bu pakete zaten abonesiniz',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -140,10 +140,10 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to create checkout session', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Ödeme oturumu oluşturulamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to create checkout session',
+      'Ödeme oturumu oluşturulamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

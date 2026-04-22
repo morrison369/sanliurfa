@@ -122,7 +122,7 @@ export default function SearchHistoryViewer({ limit = 20 }: SearchHistoryViewerP
 
       {history.length === 0 ? (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          <p className="mb-2">Arama geçmişi boş</p>
+          <p className="mb-2">Henüz arama geçmişiniz yok.</p>
           <a href="/arama" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm">
             Arama yap
           </a>

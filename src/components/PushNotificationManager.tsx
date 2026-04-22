@@ -22,7 +22,7 @@ export default function PushNotificationManager() {
       const subscription = await registration.pushManager.getSubscription();
       setIsSubscribed(!!subscription);
     } catch (error) {
-      console.error('Failed to check subscription:', error);
+      console.error('Bildirim aboneligi kontrol edilemedi:', error);
     }
   };
 

@@ -8,6 +8,7 @@ import PerformanceMonitor from "../components/PerformanceMonitor";
 import ThemeScript from "../components/ThemeScript.astro";
 import DarkModeToggle from "../components/DarkModeToggle.astro";
 import PageLoader from "../components/PageLoader.astro";
+import { getPublicSiteSettings } from "../lib/site-settings";
 import "../styles/global.css";
 
 export interface Props {
@@ -23,19 +24,29 @@ export interface Props {
 const {
   seo,
   title,
-  description = "Şanlıurfa şehir rehberi, mekanlar, etkinlikler, haberler ve yerel topluluk platformu.",
+  description = "Şanlıurfa şehir rehberi, mekânlar, etkinlikler, haberler ve yerel topluluk platformu.",
   noindex = false,
   hideHeader = false,
   hideFooter = false,
   class: className = "",
 } = Astro.props;
 
-const seoProps = seo || (title ? { title, description, noindex } : undefined);
 const googleAnalyticsId = import.meta.env.PUBLIC_GOOGLE_ANALYTICS_ID || "";
 const hasGoogleAnalytics = /^G-[A-Z0-9]+$/i.test(googleAnalyticsId);
 
 // Get current user if authenticated
-const user = null; // Will be populated from server
+const user = Astro.locals.user || null;
+const publicSiteSettings = await getPublicSiteSettings();
+const baseSeoProps = seo || (title ? { title, description, noindex } : undefined);
+const seoProps = baseSeoProps
+  ? {
+      image: publicSiteSettings.seo.defaultImage,
+      titleSuffix: publicSiteSettings.seo.titleSuffix,
+      keywords: publicSiteSettings.seo.keywords,
+      ...baseSeoProps,
+      description: baseSeoProps.description || publicSiteSettings.seo.defaultDescription,
+    }
+  : undefined;
 ---
 
 <!doctype html>
@@ -78,7 +89,7 @@ const user = null; // Will be populated from server
     <link
       rel="alternate"
       type="application/rss+xml"
-      title="sanliurfa.com Blog"
+      title="sanliurfa.com blog yazıları"
       href="/rss.xml"
     />
 
@@ -119,7 +130,7 @@ const user = null; // Will be populated from server
       Ana içeriğe geç
     </a>
 
-    {!hideHeader && <Header user={user} />}
+    {!hideHeader && <Header user={user} menuItems={publicSiteSettings.headerMenu} />}
 
     <!-- Theme Toggle (floating) -->
     <div class="fixed top-24 right-4 z-40 hidden lg:block">
@@ -130,7 +141,7 @@ const user = null; // Will be populated from server
       <slot />
     </main>
 
-    {!hideFooter && <Footer />}
+    {!hideFooter && <Footer settings={publicSiteSettings.footer} />}
 
     <!-- Toast Notifications -->
     <Toast />
@@ -161,9 +172,9 @@ const user = null; // Will be populated from server
           Deneyiminizi geliştirmek için çerezler kullanıyoruz. Daha fazla bilgi
           için
           <a
-            href="/gizlilik-politikasi"
+            href="/cerez-politikasi"
             class="text-urfa-600 dark:text-urfa-400 hover:underline"
-            >Gizlilik Politikası</a
+            >Çerez Politikası</a
           >'nı inceleyebilirsiniz.
         </p>
         <div class="flex gap-2">

@@ -99,7 +99,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
           {users.map((user) => (
             <a
               key={user.id}
-              href={`/kullanıcı/${user.id}`}
+              href={`/kullanici/${user.id}`}
               className="flex-shrink-0 w-48 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md dark:hover:shadow-lg transition-shadow"
             >
               <div className="flex flex-col items-center text-center">
@@ -155,7 +155,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
                   }}
                   className="w-full mt-3 py-2 px-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-xs"
                 >
-                  Takip Et
+                  Takip et
                 </button>
               </div>
             </a>

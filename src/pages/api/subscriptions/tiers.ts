@@ -27,10 +27,10 @@ export const GET: APIRoute = async ({ request }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/subscriptions/tiers', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get subscription tiers', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Abonelik paketleri alınamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get subscription tiers',
+      'Abonelik paketleri alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

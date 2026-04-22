@@ -5,7 +5,7 @@ import { query } from '../../../../lib/postgres';
 export const POST: APIRoute = async ({ params, locals }) => {
   const user = locals.user;
   if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    return new Response(JSON.stringify({ error: 'Yetkisiz işlem' }), { status: 401 });
   }
 
   const { id } = params;

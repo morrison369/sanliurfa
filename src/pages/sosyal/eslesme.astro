@@ -1,0 +1,128 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
+import { curatedUsers } from "../../data/curated-users";
+
+const user = Astro.locals.user;
+
+const seo = {
+  title: "Şanlıurfa Sosyal Eşleşme - Fotoğraflı Kullanıcı Keşfi",
+  description:
+    "Şanlıurfa topluluğunda fotoğraflı kullanıcı kartlarıyla yeni kişiler keşfedin ve eşleşme akışını başlatın.",
+  canonicalUrl: "https://sanliurfa.com/sosyal/eslesme",
+  noindex: true,
+};
+
+const profileCards = curatedUsers.slice(0, 4).map((profile, index) => ({
+  ...profile,
+  interests: [
+    "Şanlıurfa",
+    "Mekân keşfi",
+    index % 2 === 0 ? "Gastronomi" : "Tarihi rotalar",
+  ],
+  photos: [
+    "/images/historical/gobeklitepe.jpg",
+    "/images/historical/balikligol.jpg",
+    "/images/foods/urfa-kebabi.jpg",
+    "/images/foods/cig-kofte.jpg",
+  ],
+}));
+---
+
+<Layout seo={seo}>
+  {
+    user ? (
+      <div class="min-h-screen bg-gradient-to-br from-urfa-950 via-urfa-900 to-isot-900 py-10 text-white">
+        <div class="container-custom">
+          <div class="mx-auto max-w-4xl text-center">
+            <p class="text-sm uppercase tracking-wide text-urfa-200">
+              Fotoğraflı eşleşme
+            </p>
+            <h1 class="mt-3 text-4xl md:text-5xl font-display font-bold">
+              Şanlıurfa topluluğunda yeni kişiler keşfedin
+            </h1>
+            <p class="mx-auto mt-4 max-w-3xl text-urfa-100">
+              İlk sürümde eşleşme akışı ücretsiz ve açık olacak. Profil kartları
+              dört fotoğraf, ilgi alanları, sağa/sola karar ve mesaj başlatma
+              akışına hazırlanmıştır.
+            </p>
+          </div>
+
+          <div class="mt-10 grid gap-6 lg:grid-cols-4">
+            {profileCards.map((profile) => (
+              <article class="overflow-hidden rounded-3xl bg-white text-gray-900 shadow-2xl">
+                <div class="relative aspect-[4/5]">
+                  <img
+                    src={profile.photos[0]}
+                    alt={`${profile.full_name} Şanlıurfa profil fotoğrafı`}
+                    class="h-full w-full object-cover"
+                  />
+                  <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-5 text-white">
+                    <h2 class="text-2xl font-display font-bold">
+                      {profile.full_name}
+                    </h2>
+                    <p class="text-sm text-white/80">@{profile.username}</p>
+                  </div>
+                </div>
+                <div class="p-5">
+                  <p class="line-clamp-3 text-sm text-gray-600">
+                    {profile.bio}
+                  </p>
+                  <div class="mt-4 flex flex-wrap gap-2">
+                    {profile.interests.map((interest) => (
+                      <span class="rounded-full bg-urfa-50 px-3 py-1 text-xs font-medium text-urfa-700">
+                        {interest}
+                      </span>
+                    ))}
+                  </div>
+                  <div class="mt-5 grid grid-cols-2 gap-2">
+                    <button class="rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600">
+                      Sola kaydır
+                    </button>
+                    <button class="rounded-full bg-urfa-600 px-4 py-2 text-sm font-semibold text-white">
+                      Sağa kaydır
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div class="mx-auto mt-10 max-w-3xl rounded-3xl bg-white/10 p-6 text-center backdrop-blur">
+            <h2 class="text-2xl font-display font-bold">Kalıcı özellik notu</h2>
+            <p class="mt-3 text-sm leading-6 text-urfa-100">
+              Bu ekran, eşleşme özelliğinin ürün yüzeyidir. Veritabanı tarafında
+              profil fotoğraf galerisi, sağa/sola karar kayıtları, karşılıklı
+              eşleşme ve mesaj başlatma alanlarıyla genişletilecek şekilde
+              tasarlanmıştır.
+            </p>
+          </div>
+        </div>
+      </div>
+    ) : (
+      <AuthFeatureLanding
+        eyebrow="Fotoğraflı sosyal eşleşme"
+        title="Şanlıurfa kullanıcılarını kartlarla keşfedin"
+        description="Dört fotoğrafa kadar profil ekleyip sağa/sola kaydırma mantığıyla kullanıcıları keşfedebilir, karşılıklı ilgi olduğunda mesajlaşmaya geçebilirsiniz."
+        loginRedirect="/sosyal/eslesme"
+        features={[
+          {
+            title: "Dört fotoğraflı profil",
+            description:
+              "Kullanıcı profilleri Şanlıurfa deneyimini anlatan fotoğraflarla zenginleşir.",
+          },
+          {
+            title: "Sağa veya sola karar",
+            description:
+              "Kart akışı hızlı keşif için sağa/sola kaydırma mantığıyla kurgulanır.",
+          },
+          {
+            title: "Eşleşmeden mesaja",
+            description:
+              "Karşılıklı ilgi oluştuğunda mesajlaşma akışına geçilecek yapı korunur.",
+          },
+        ]}
+      />
+    )
+  }
+</Layout>

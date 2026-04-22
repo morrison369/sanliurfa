@@ -1,6 +1,6 @@
 // @ts-nocheck
 import type { APIRoute } from 'astro';
-import { getRedisClient } from '../../../lib/cache';
+import { getOptionalRedisClient, prefixKey } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
 
 /**
@@ -26,11 +26,7 @@ export const GET: APIRoute = async ({ request }) => {
       async start(controller) {
         try {
           let redis: any = null;
-          try {
-            redis = await getRedisClient();
-          } catch {
-            redis = null;
-          }
+          redis = await getOptionalRedisClient({ silent: true });
 
           // Send initial connection message
           controller.enqueue(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
@@ -48,11 +44,7 @@ export const GET: APIRoute = async ({ request }) => {
 
             try {
               if (!redis) {
-                try {
-                  redis = await getRedisClient();
-                } catch {
-                  redis = null;
-                }
+                redis = await getOptionalRedisClient({ silent: true });
               }
 
               if (!redis) {
@@ -71,12 +63,12 @@ export const GET: APIRoute = async ({ request }) => {
               // Get online user count from Redis
               // You can implement this by maintaining a set of active sessions
               // For now, we'll calculate from active sessions
-              const keys = await redis.keys('sanliurfa:session:*');
+              const keys = await redis.keys(prefixKey('session:*'));
               const onlineCount = keys.length;
 
               // Get trending searches in last hour
               const trendingSearches = await redis.zRevRangeByScore(
-                'sanliurfa:trending:searches:1h',
+                prefixKey('trending:searches:1h'),
                 '+inf',
                 '-inf',
                 { LIMIT: { offset: 0, count: 5 } }
@@ -84,7 +76,7 @@ export const GET: APIRoute = async ({ request }) => {
 
               // Get active places (places with recent views)
               const activePlaces = await redis.zRevRangeByScore(
-                'sanliurfa:active:places:1h',
+                prefixKey('active:places:1h'),
                 '+inf',
                 '-inf',
                 { LIMIT: { offset: 0, count: 5 } }

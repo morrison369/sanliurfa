@@ -1,3 +1,8 @@
 ---
-return Astro.redirect('/profil');
+return new Response(null, {
+  status: 301,
+  headers: {
+    Location: '/profil',
+  },
+});
 ---

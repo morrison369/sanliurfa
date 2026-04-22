@@ -12,7 +12,7 @@ import { logger } from '../../../lib/logging';
 export const GET: APIRoute = async ({ locals }) => {
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const webhooks = await getUserWebhooks(locals.user.id);
@@ -27,14 +27,14 @@ export const GET: APIRoute = async ({ locals }) => {
     );
   } catch (error) {
     logger.error('Get webhooks failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get webhooks', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Webhooklar alınamadı', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const body = await request.json();
@@ -50,12 +50,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: webhook,
-        message: 'Webhook registered successfully'
+        message: 'Webhook başarıyla kaydedildi'
       },
       HttpStatus.CREATED
     );
   } catch (error) {
     logger.error('Register webhook failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to register webhook', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Webhook kaydedilemedi', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

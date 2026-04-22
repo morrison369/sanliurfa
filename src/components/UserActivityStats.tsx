@@ -35,7 +35,7 @@ export default function UserActivityStats({ userId }: UserActivityStatsProps) {
         setStats(data.data);
       }
     } catch (error) {
-      console.error('Failed to load activity stats:', error);
+      console.error('Aktivite istatistikleri yüklenemedi:', error);
     } finally {
       setIsLoading(false);
     }

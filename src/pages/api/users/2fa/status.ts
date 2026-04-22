@@ -10,9 +10,9 @@ import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async (context) => {
   try {
-    // Auth required
+    // Oturum zorunlu
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
     }
 
     const userId = context.locals.user.id;
@@ -24,7 +24,7 @@ export const GET: APIRoute = async (context) => {
     );
 
     if (!user) {
-      return apiError(context, HttpStatus.NOT_FOUND, 'User not found');
+      return apiError(context, HttpStatus.NOT_FOUND, 'Kullanıcı bulunamadı');
     }
 
     const backupCodesRemaining = user.two_factor_backup_codes?.length || 0;
@@ -35,7 +35,7 @@ export const GET: APIRoute = async (context) => {
       backupCodesRemaining
     });
   } catch (error) {
-    logger.error('Failed to check 2FA status', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to check 2FA status');
+    logger.error('2FA durumu kontrol edilemedi', error instanceof Error ? error : new Error(String(error)));
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, '2FA durumu kontrol edilemedi');
   }
 };

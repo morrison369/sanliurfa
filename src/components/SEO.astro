@@ -15,11 +15,13 @@ export interface Props {
   noindex?: boolean;
   schema?: object | object[];
   schemaMode?: "append" | "replace";
+  titleSuffix?: string;
+  keywords?: string[];
 }
 
 const {
   title,
-  description = "Şanlıurfa şehir rehberi, mekanlar, etkinlikler, haberler ve yerel topluluk platformu.",
+  description = "Şanlıurfa şehir rehberi, mekânlar, etkinlikler, haberler ve yerel topluluk platformu.",
   image = "/images/og-default.jpg",
   type = "website",
   publishDate,
@@ -30,12 +32,22 @@ const {
   noindex = false,
   schema,
   schemaMode = "append",
+  titleSuffix = "sanliurfa.com",
+  keywords,
 } = Astro.props;
 
 const siteUrl = "https://sanliurfa.com";
-const fullTitle = title.includes("Şanlıurfa")
-  ? title
-  : `${title} | sanliurfa.com`;
+const normalizedTitle = title.trim();
+const normalizedSuffix = titleSuffix.trim();
+const normalizedTitleLower = normalizedTitle.toLocaleLowerCase("tr-TR");
+const normalizedSuffixLower = normalizedSuffix.toLocaleLowerCase("tr-TR");
+const hasTitleSuffix =
+  normalizedTitleLower.endsWith(`| ${normalizedSuffixLower}`) ||
+  normalizedTitleLower.endsWith(`- ${normalizedSuffixLower}`);
+const fullTitle =
+  normalizedTitle.includes("Şanlıurfa") || hasTitleSuffix
+    ? normalizedTitle
+    : `${normalizedTitle} | ${normalizedSuffix}`;
 const fullImageUrl = image.startsWith("http") ? image : `${siteUrl}${image}`;
 const fullCanonicalUrl = canonicalUrl || `${siteUrl}${Astro.url.pathname}`;
 const openGraphType = type === "place" ? "website" : type;
@@ -161,13 +173,15 @@ const finalSchema = Array.isArray(schemaNodes)
   name="keywords"
   content={[
     ...tags,
-    "Şanlıurfa",
-    "Göbeklitepe",
-    "Balıklıgöl",
-    "Harran",
-    "Urfa",
-    "gezi rehberi",
-    "tarihi yerler",
+    ...(keywords || [
+      "Şanlıurfa",
+      "Göbeklitepe",
+      "Balıklıgöl",
+      "Harran",
+      "Urfa",
+      "gezi rehberi",
+      "tarihi yerler",
+    ]),
   ].join(", ")}
 />
 

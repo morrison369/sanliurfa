@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     logger.error('Get template failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get template',
+      'Şablon alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -68,7 +68,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/email/templates/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: templateId } = params;
@@ -116,7 +116,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     logger.error('Update template failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to update template',
+      'Şablon güncellenemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -132,7 +132,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/email/templates/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: templateId } = params;
@@ -158,7 +158,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     return apiResponse(
       {
         success: true,
-        message: 'Template deleted',
+        message: 'Şablon silindi',
       },
       HttpStatus.OK,
       requestId
@@ -169,7 +169,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     logger.error('Delete template failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to delete template',
+      'Şablon silinemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

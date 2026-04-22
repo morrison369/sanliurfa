@@ -166,7 +166,7 @@ export default function RewardsPanel() {
         </p>
         {userPoints?.pendingPoints && userPoints.pendingPoints > 0 && (
           <p className="text-gray-700 dark:text-gray-300">
-            <span className="font-medium">Bekleme:</span> {userPoints.pendingPoints.toLocaleString('tr-TR')} puan
+            <span className="font-medium">Bekleyen:</span> {userPoints.pendingPoints.toLocaleString('tr-TR')} puan
           </p>
         )}
       </div>

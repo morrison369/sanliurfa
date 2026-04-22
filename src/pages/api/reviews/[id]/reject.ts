@@ -5,10 +5,10 @@ import { query } from '../../../../lib/postgres';
 export const POST: APIRoute = async ({ params, request, locals }) => {
   try {
     const { id } = params;
-    
+
     if (!locals.isAdmin) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Yetkisiz işlem' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -17,12 +17,12 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     const rejectionReason = formData.get('rejection_reason')?.toString() || 'Uygun görülmedi';
 
     await query(
-      `UPDATE reviews SET 
-        is_approved = false, 
-        is_moderated = true, 
-        moderated_at = $1, 
-        moderated_by = $2, 
-        rejection_reason = $3 
+      `UPDATE reviews SET
+        is_approved = false,
+        is_moderated = true,
+        moderated_at = $1,
+        moderated_by = $2,
+        rejection_reason = $3
        WHERE id = $4`,
       [new Date().toISOString(), locals.user?.id, rejectionReason, id]
     );

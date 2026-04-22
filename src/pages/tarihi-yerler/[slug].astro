@@ -8,23 +8,44 @@ import {
   buildOrganizationSchema,
   buildWebSiteSchema,
 } from '../../lib/rich-snippets';
+import { curatedHistoricalSites, getCuratedHistoricalSites } from '../../data/curated-historical-sites';
 
 const { slug } = Astro.params;
 
-const site = await queryOne(
-  "SELECT * FROM historical_sites WHERE slug = $1 AND status = 'active'",
-  [slug]
-);
+let site = null;
+
+try {
+  site = await queryOne(
+    "SELECT * FROM historical_sites WHERE slug = $1 AND status = 'active'",
+    [slug]
+  );
+} catch {
+  site = null;
+}
+
+if (!site) {
+  site = curatedHistoricalSites.find((item) => item.slug === slug) || null;
+}
 
 if (!site) {
   return Astro.redirect('/tarihi-yerler');
 }
 
-const nearbyResult = await query(
-  "SELECT id, name, slug, location FROM historical_sites WHERE status = 'active' AND id != $1 LIMIT 5",
-  [site.id]
-);
-const nearbySites = nearbyResult.rows;
+let nearbySites: any[] = [];
+
+try {
+  const nearbyResult = await query(
+    "SELECT id, name, slug, location FROM historical_sites WHERE status = 'active' AND id != $1 LIMIT 5",
+    [site.id]
+  );
+  nearbySites = nearbyResult.rows;
+} catch {
+  nearbySites = [];
+}
+
+if (nearbySites.length === 0) {
+  nearbySites = getCuratedHistoricalSites().filter((item) => item.slug !== site.slug).slice(0, 5);
+}
 
 const seo = {
   title: `${site.name} - ${site.short_description || 'Tarihi Yer'}`,

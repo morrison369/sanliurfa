@@ -170,9 +170,9 @@ Visit `/api/metrics` dashboard and check `cacheHitRate`
 ### Monitor Real-time Metrics
 ```bash
 # Watch in browser
-curl http://localhost:3000/api/metrics
-curl http://localhost:3000/api/performance
-curl http://localhost:3000/api/health
+curl http://localhost:4321/api/metrics
+curl http://localhost:4321/api/performance
+curl http://localhost:4321/api/health
 ```
 
 ### Run Specific Test
@@ -192,9 +192,10 @@ npm run test:unit -- src/lib/auth.test.ts
 **Required**:
 - `DATABASE_URL` - PostgreSQL connection
 - `JWT_SECRET` - JWT signing key (min 32 chars)
-- `REDIS_URL` - Redis connection
 
 **Optional**:
+- `REDIS_URL` - Redis connection (if missing, app uses in-memory cache/rate-limit fallback)
+- `REDIS_ENABLED` - force Redis usage (`true`) or disable (`false`)
 - `NODE_ENV` - `production` or `development`
 - `CORS_ORIGINS` - Allowed CORS origins
 - `GOOGLE_CLIENT_ID`, `FACEBOOK_APP_ID`, `GITHUB_CLIENT_ID` - OAuth credentials
@@ -231,7 +232,7 @@ npm run test:e2e -- --debug
 npm run db:psql
 
 # Check pool status
-curl http://localhost:3000/api/health
+curl http://localhost:4321/api/health
 ```
 
 ## Deployment

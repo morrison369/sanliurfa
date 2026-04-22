@@ -55,7 +55,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     logger.error('Get campaign failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get campaign',
+      'Kampanya alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -71,7 +71,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/marketing-campaigns/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id } = params;
@@ -109,7 +109,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     logger.error('Update campaign failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to update campaign',
+      'Kampanya güncellenemedi',
       statusCode,
       undefined,
       requestId
@@ -125,7 +125,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/marketing-campaigns/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id } = params;
@@ -145,7 +145,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     recordRequest('DELETE', '/api/marketing-campaigns/[id]', HttpStatus.OK, duration);
 
     return apiResponse(
-      { success: true, message: 'Campaign deleted' },
+      { success: true, message: 'Kampanya silindi' },
       HttpStatus.OK,
       requestId
     );
@@ -156,7 +156,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     logger.error('Delete campaign failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to delete campaign',
+      'Kampanya silinemedi',
       statusCode,
       undefined,
       requestId

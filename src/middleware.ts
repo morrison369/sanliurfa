@@ -7,7 +7,13 @@ import { checkRateLimit } from './lib/cache';
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
   '/', '/giris', '/kayit', '/places', '/tarihi-yerler', '/blog',
-  '/gastronomi', '/arama', '/hakkinda', '/iletisim',
+  '/gastronomi', '/arama', '/hakkinda', '/iletisim', '/etkinlikler',
+  '/sehir-servisleri', '/kullanici', '/kullanicilar', '/kesfet',
+  '/siralamalar', '/liderlik-tablosu', '/trend', '/oneriler',
+  '/fiyatlandirma', '/gizlilik-politikasi', '/kullanim-kosullari', '/kvkk',
+  '/cerez-politikasi', '/sss', '/sifremi-unuttum', '/sifre-sifirla', '/verify-email', '/loading',
+  '/search', '/favorites', '/mekanlar', '/hakkimizda', '/profile', '/notifications',
+  '/rss.xml', '/robots.txt', '/sitemap.xml', '/sitemap-index.xml', '/llms.txt',
   '/api/auth/login', '/api/auth/register', '/api/places', '/api/health',
 ];
 
@@ -16,10 +22,23 @@ const ADMIN_PATHS = ['/admin'];
 
 const CANONICAL_ORIGIN = 'https://sanliurfa.com';
 const CANONICAL_HOST = 'sanliurfa.com';
-const REDIRECTABLE_HOSTS = new Set([CANONICAL_HOST, `www.${CANONICAL_HOST}`]);
+const NODE_ENV = (process.env.NODE_ENV || 'development').toLowerCase();
+const IS_PRODUCTION = NODE_ENV === 'production';
 
 // CORS configuration
-const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'https://sanliurfa.com').split(',').map(o => o.trim());
+const CORS_ORIGINS = (() => {
+  const configuredOrigins = (process.env.CORS_ORIGINS || CANONICAL_ORIGIN)
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  const origins = new Set(configuredOrigins.length > 0 ? configuredOrigins : [CANONICAL_ORIGIN]);
+  if (!IS_PRODUCTION) {
+    origins.add('http://localhost:4321');
+    origins.add('http://127.0.0.1:4321');
+  }
+  return origins;
+})();
 const RATE_LIMIT = 100;
 const RATE_LIMIT_WINDOW = 15 * 60; // 15 minutes in seconds
 
@@ -49,8 +68,11 @@ function getClientIP(request: Request): string {
 
 function canonicalRedirectUrl(url: URL, request: Request): string | null {
   const host = url.hostname.toLowerCase();
+  if (isLocalOrPrivateHost(host)) {
+    return null;
+  }
 
-  if (!REDIRECTABLE_HOSTS.has(host)) {
+  if (!IS_PRODUCTION && host !== CANONICAL_HOST && host !== `www.${CANONICAL_HOST}`) {
     return null;
   }
 
@@ -66,6 +88,54 @@ function canonicalRedirectUrl(url: URL, request: Request): string | null {
   return `${CANONICAL_ORIGIN}${url.pathname}${url.search}`;
 }
 
+function legacyPathRedirectUrl(url: URL): string | null {
+  let decodedPathname = url.pathname;
+  try {
+    decodedPathname = decodeURIComponent(url.pathname);
+  } catch {
+    return null;
+  }
+  const legacyRules: Array<[RegExp, string]> = [
+    [/^\/search\/?$/u, '/arama'],
+    [/^\/favorites\/?$/u, '/profil/favoriler'],
+    [/^\/mekanlar\/?$/u, '/places'],
+    [/^\/hakkimizda\/?$/u, '/hakkinda'],
+    [/^\/profile\/?$/u, '/profil'],
+    [/^\/notifications\/?$/u, '/bildirimler'],
+    [/^\/kullanıcılar\/?$/u, '/kullanicilar'],
+    [/^\/kullanıcı(\/.*)?$/u, '/kullanici$1'],
+    [/^\/işletme(\/.*)?$/u, '/isletme$1'],
+    [/^\/veri-ambarı(\/.*)?$/u, '/veri-ambari$1'],
+  ];
+
+  for (const [pattern, replacement] of legacyRules) {
+    if (pattern.test(decodedPathname)) {
+      return decodedPathname.replace(pattern, replacement) + url.search;
+    }
+  }
+
+  return null;
+}
+
+function isLocalOrPrivateHost(host: string): boolean {
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.local')) {
+    return true;
+  }
+
+  // IPv4 private network ranges
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) {
+    return true;
+  }
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)) {
+    return true;
+  }
+  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)) {
+    return true;
+  }
+
+  return false;
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, cookies, request } = context;
   const pathname = url.pathname;
@@ -73,6 +143,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (redirectUrl) {
     return Response.redirect(redirectUrl, 301);
+  }
+
+  const legacyRedirectUrl = legacyPathRedirectUrl(url);
+  if (legacyRedirectUrl) {
+    return Response.redirect(new URL(legacyRedirectUrl, url), 301);
   }
 
   // Check if path is public
@@ -86,7 +161,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const origin = request.headers.get('Origin');
     const corsHeaders: Record<string, string> = {};
 
-    if (origin && CORS_ORIGINS.includes(origin)) {
+    if (origin && CORS_ORIGINS.has(origin)) {
       corsHeaders['Access-Control-Allow-Origin'] = origin;
       corsHeaders['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
       corsHeaders['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
@@ -192,7 +267,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Add CORS headers for API routes if origin is allowed
   if (pathname.startsWith('/api/')) {
     const origin = request.headers.get('Origin');
-    if (origin && CORS_ORIGINS.includes(origin)) {
+    if (origin && CORS_ORIGINS.has(origin)) {
       response.headers.set('Access-Control-Allow-Origin', origin);
       response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
       response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');

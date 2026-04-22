@@ -15,12 +15,12 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    // Auth required
+    // Oturum zorunlu
     if (!locals.user) {
       recordRequest('GET', '/api/user/visits', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -59,10 +59,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/user/visits', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get visits', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Ziyaretler alınamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get visits',
+      'Ziyaretler alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

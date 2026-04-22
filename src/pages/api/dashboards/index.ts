@@ -27,7 +27,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/dashboards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -75,7 +75,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/dashboards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -119,13 +119,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/dashboards', HttpStatus.CREATED, duration);
-    logger.info('Dashboard created', { dashboard_id: dashboard.id, user_id: locals.user.id });
+    logger.info('Pano oluşturuldu', { dashboard_id: dashboard.id, user_id: locals.user.id });
 
     return apiResponse(
       {
         success: true,
         data: dashboard,
-        message: 'Dashboard created'
+        message: 'Pano oluşturuldu'
       },
       HttpStatus.CREATED,
       requestId

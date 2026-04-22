@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -41,7 +41,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Failed to get webhook filters', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get filters', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Filtreler alınamadı', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -55,7 +55,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const body = await request.json();
@@ -79,14 +79,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: filter,
-        message: 'Filter created successfully'
+        message: 'Filtre başarıyla oluşturuldu'
       },
       HttpStatus.CREATED,
       requestId
     );
   } catch (error) {
     logger.error('Failed to create webhook filter', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to create filter', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Filtre oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -99,7 +99,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const { id } = params;
@@ -115,12 +115,12 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     }
 
     return apiResponse(
-      { success: true, message: 'Filter deleted' },
+      { success: true, message: 'Filtre silindi' },
       HttpStatus.OK,
       requestId
     );
   } catch (error) {
     logger.error('Failed to delete webhook filter', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to delete filter', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Filtre silinemedi', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

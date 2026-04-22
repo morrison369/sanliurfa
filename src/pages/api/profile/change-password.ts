@@ -6,7 +6,7 @@ import { hashPassword } from '../../../lib/auth';
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
   try {
     const user = locals.user;
-    
+
     if (!user) {
       return redirect('/giris?redirect=/profil/ayarlar');
     }

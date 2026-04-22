@@ -171,7 +171,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     recordRequest('POST', '/api/admin/quotas/[userId]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
     return apiError(
       ErrorCode.VALIDATION_ERROR,
-      'Invalid action',
+      'Geçersiz işlem',
       HttpStatus.BAD_REQUEST,
       undefined,
       requestId

@@ -68,7 +68,11 @@ npm run dev
 ```
 
 Yerel geliştirme portu sabittir: `http://127.0.0.1:4321`.
-Başka porta otomatik fallback yapılmaz; port doluysa mevcut Node/Astro sürecini kapatın ve aynı portu tekrar kullanın.
+Başka porta otomatik fallback yapılmaz; `npm run dev` önce bu repoya ait `4321` dinleyicisini güvenli şekilde kapatır, sonra Astro'yu aynı portta başlatır.
+Manuel kapatma için:
+```bash
+npm run dev:stop
+```
 
 ## 📁 Proje Yapısı
 
@@ -103,6 +107,16 @@ npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts
 npm run repo:stabilize:check
 npm run release:gate
 npm run test:e2e:smoke
+npm run test:social:smoke
+npm run test:social:smoke:auto
+```
+
+`test:social:smoke` komutu yeni port açmaz; yalnızca çalışan `http://127.0.0.1:4321` üzerinde sosyal takip + mesajlaşma + mekan takip + yorum temel akışını doğrular.
+`test:social:smoke:auto` komutu ise `4321` boşsa sunucuyu açar, smoke testi bitince sunucuyu kapatır.
+`test:social:smoke:auto` lokal `DATABASE_URL` yoksa geçici varsayılanı kullanır; mekan datası boşsa geçici smoke mekanı ekleyip tam zinciri (takip + mesaj + mekan takip + yorum) çalıştırır.
+`test:social:smoke:auto` varsayılan olarak izole çalışır ve Redis'i bu koşuda devre dışı bırakıp in-memory fallback kullanır (diğer projelerin Redis ayarlarından etkilenmez). Redis ile test etmek için:
+```bash
+powershell -ExecutionPolicy Bypass -File ./scripts/run-social-smoke-4321.ps1 -UseRedis
 ```
 
 ## Release ve Stabilizasyon
@@ -137,6 +151,8 @@ npm run test:e2e:smoke
 ## Astro Operasyon Notları
 - Repo SSR-first çalışır: `output: "server"` ve `@astrojs/node` adapter.
 - Local dev/preview tek port kullanır: `127.0.0.1:4321`.
+- `npm run dev` scripti yalnızca `4321` portunu kullanır ve başlatmadan önce repo kapsamındaki eski `4321` sürecini temizler.
+- Ham Astro çalıştırma gerekiyorsa `npm run dev:raw` kullanılabilir.
 - 1111/1112/1113 gibi alternatif port scriptleri kullanılmaz ve repo script yüzeyinden kaldırılmıştır.
 - Manual kontrol bitince dev server kapatılmalı; paralel Astro dev server açılmamalı.
 - Astro-first kuralı kilitlidir: önce Astro core, sonra resmi `@astrojs/*`, sonra repoda kurulu Astro uyumlu paket kullanılır. Detay: `docs/ASTRO_FIRST_LOCK.md`.

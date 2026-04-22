@@ -12,7 +12,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   const user = locals.user;
 
   if (!user) {
-    return new Response('Unauthorized', { status: 401 });
+    return new Response('Yetkisiz işlem', { status: 401 });
   }
 
   logger.info('Real-time messaging connection established', { userId: user.id });

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Star } from 'lucide-react';
 import { unwrapApiPayload } from '@/lib/client-api';
+import { getCuratedPlaces } from '@/data/curated-places';
 
 interface TrendingPlace {
   id: string;
@@ -23,10 +24,11 @@ export default function TrendingPlaces() {
         const res = await window.fetch('/api/discovery/trending?limit=10');
         if (res.ok) {
           const payload = unwrapApiPayload<{ data?: TrendingPlace[] }>(await res.json());
-          setTrending(payload.data || []);
+          setTrending((payload.data || []).length > 0 ? payload.data || [] : buildCuratedTrending());
         }
       } catch (error) {
-        console.error('Failed to fetch trending', error);
+        console.error('Trend Mekânlar yüklenemedi', error);
+        setTrending(buildCuratedTrending());
       } finally {
         setLoading(false);
       }
@@ -40,7 +42,7 @@ export default function TrendingPlaces() {
     <div className="bg-white rounded-lg shadow">
       <div className="p-4 border-b flex items-center gap-2">
         <TrendingUp className="w-5 h-5 text-orange-500" />
-        <h2 className="text-lg font-bold">Trending Mekanlar</h2>
+        <h2 className="text-lg font-bold">Trend Mekânlar</h2>
       </div>
       <div className="divide-y max-h-96 overflow-y-auto">
         {trending.map((place, idx) => (
@@ -62,7 +64,25 @@ export default function TrendingPlaces() {
             </div>
           </a>
         ))}
+        {trending.length === 0 && (
+          <div className="p-4 text-sm text-gray-600">
+            Şanlıurfa için trend içerikler hazırlanıyor.
+          </div>
+        )}
       </div>
     </div>
   );
+}
+
+function buildCuratedTrending(): TrendingPlace[] {
+  return getCuratedPlaces(6).map((place) => ({
+    id: place.id,
+    place_id: place.id,
+    name: place.name,
+    slug: place.slug,
+    category: place.category,
+    rating: place.rating,
+    review_count: place.review_count,
+    engagement_score: place.rating * 20 + place.review_count,
+  }));
 }

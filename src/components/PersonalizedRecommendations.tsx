@@ -25,7 +25,7 @@ export default function PersonalizedRecommendations() {
           setRecs(payload.data || []);
         }
       } catch (error) {
-        console.error('Failed to fetch recommendations', error);
+        console.error('Kişisel öneriler yüklenemedi', error);
       } finally {
         setLoading(false);
       }
@@ -42,13 +42,13 @@ export default function PersonalizedRecommendations() {
   };
 
   if (loading) return <div className="p-4">Yükleniyor...</div>;
-  if (recs.length === 0) return <div className="p-4 text-gray-500">Henüz tavsiye yok</div>;
+  if (recs.length === 0) return <div className="p-4 text-gray-500">Henüz öneri yok.</div>;
 
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="p-4 border-b flex items-center gap-2">
         <Lightbulb className="w-5 h-5 text-blue-500" />
-        <h2 className="text-lg font-bold">Sizin İçin Önerilir</h2>
+        <h2 className="text-lg font-bold">Size Özel Öneriler</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
         {recs.map(rec => (

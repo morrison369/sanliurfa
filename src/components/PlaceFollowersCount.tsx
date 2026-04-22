@@ -35,7 +35,7 @@ export default function PlaceFollowersCount({
         setCount(data.count || 0);
       }
     } catch (error) {
-      console.error('Failed to load followers', error);
+      console.error('Takipçiler yüklenemedi', error);
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +64,7 @@ export default function PlaceFollowersCount({
             {followers.slice(0, previewLimit).map((follower) => (
               <a
                 key={follower.id}
-                href={`/kullanıcı/${follower.id}`}
+                href={`/kullanici/${follower.id}`}
                 className="flex items-center gap-2 hover:opacity-75 transition-opacity group"
               >
                 {follower.avatar ? (
@@ -91,12 +91,9 @@ export default function PlaceFollowersCount({
           </div>
 
           {count > previewLimit && (
-            <a
-              href={`/mekan/${placeId}/followers`}
-              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium mt-2 block"
-            >
+            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-2 block">
               +{count - previewLimit} daha →
-            </a>
+            </span>
           )}
         </div>
       )}

@@ -40,7 +40,7 @@ export function CampaignBuilder() {
         setCampaigns(data.data || []);
       }
     } catch (err) {
-      console.error('Failed to fetch campaigns', err);
+      console.error('Kampanyalar yüklenemedi', err);
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export function CampaignBuilder() {
         await fetchCampaigns();
       }
     } catch (err) {
-      console.error('Failed to create campaign', err);
+      console.error('Kampanya oluşturulamadı', err);
     }
   };
 
@@ -95,7 +95,7 @@ export function CampaignBuilder() {
           onClick={() => setShowForm(true)}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
         >
-          + Yeni Kampanya Oluştur
+          + Yeni kampanya oluştur
         </button>
       )}
 
@@ -104,7 +104,7 @@ export function CampaignBuilder() {
         <form onSubmit={handleCreateCampaign} className="bg-white rounded-lg shadow p-6 space-y-4">
           <input
             type="text"
-            placeholder="Kampanya Adı"
+            placeholder="Kampanya adı"
             required
             value={formData.campaign_name}
             onChange={(e) => setFormData({ ...formData, campaign_name: e.target.value })}
@@ -113,7 +113,7 @@ export function CampaignBuilder() {
 
           <input
             type="text"
-            placeholder="Konu Başlığı"
+            placeholder="Konu başlığı"
             required
             value={formData.subject_line}
             onChange={(e) => setFormData({ ...formData, subject_line: e.target.value })}
@@ -123,7 +123,7 @@ export function CampaignBuilder() {
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
-              placeholder="Gönderenin Adı"
+              placeholder="Gönderen adı"
               value={formData.from_name}
               onChange={(e) => setFormData({ ...formData, from_name: e.target.value })}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -131,7 +131,7 @@ export function CampaignBuilder() {
 
             <input
               type="email"
-              placeholder="Gönderici E-posta"
+              placeholder="Gönderici e-posta"
               value={formData.from_email}
               onChange={(e) => setFormData({ ...formData, from_email: e.target.value })}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -139,7 +139,7 @@ export function CampaignBuilder() {
           </div>
 
           <textarea
-            placeholder="HTML İçerik"
+            placeholder="HTML içerik"
             required
             value={formData.html_content}
             onChange={(e) => setFormData({ ...formData, html_content: e.target.value })}
@@ -154,7 +154,7 @@ export function CampaignBuilder() {
             <option value="promotional">Promosyon</option>
             <option value="newsletter">Haber Bülteni</option>
             <option value="transactional">İşlemsel</option>
-            <option value="welcome">Hoşgeldin</option>
+            <option value="welcome">Hoş geldin</option>
           </select>
 
           <div className="flex gap-2">
@@ -208,7 +208,7 @@ export function CampaignBuilder() {
                   <p className="text-xl font-bold text-blue-600">{campaign.sent_count}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Açılı</p>
+                  <p className="text-gray-600">Açıldı</p>
                   <p className="text-xl font-bold text-green-600">{campaign.open_count}</p>
                   <p className="text-xs text-gray-500">{getOpenRate(campaign)}%</p>
                 </div>

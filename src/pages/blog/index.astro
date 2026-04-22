@@ -8,6 +8,10 @@ import {
   buildOrganizationSchema,
   buildWebSiteSchema,
 } from "../../lib/rich-snippets";
+import {
+  curatedBlogCategories,
+  getCuratedBlogPosts,
+} from "../../data/curated-blog-posts";
 
 const ITEMS_PER_PAGE = 12;
 const currentPage = Math.max(
@@ -48,6 +52,14 @@ try {
 } catch (err) {
   error = "Blog yazıları yüklenirken hata oluştu";
   console.error("Blog listing error:", err);
+}
+
+if (posts.length === 0) {
+  categories = categories.length > 0 ? categories : curatedBlogCategories;
+  selectedCategory = categorySlug ? categories.find((c) => c.slug === categorySlug) : selectedCategory;
+  posts = getCuratedBlogPosts(categorySlug).slice(0, ITEMS_PER_PAGE);
+  total = posts.length;
+  error = "";
 }
 
 const totalPages = Math.ceil(total / ITEMS_PER_PAGE);

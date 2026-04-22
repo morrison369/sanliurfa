@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/content', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
@@ -39,7 +39,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/content', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Failed to get content', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/content', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -65,7 +65,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (!content) {
       recordRequest('POST', '/api/content', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
-      return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to create content', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+      return apiError(ErrorCode.INTERNAL_ERROR, 'İçerik oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
     }
 
     const duration = Date.now() - startTime;
@@ -82,7 +82,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/content', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to create content', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('İçerik oluşturulamadı', err instanceof Error ? err : new Error(String(err)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

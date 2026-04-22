@@ -1,6 +1,6 @@
 ---
 /**
- * Blog Analitikleri Dashboardi
+ * Blog analitikleri yönetim ekranı
  * İstatistikler, en çok okunan yazılar, kategori performansı
  */
 
@@ -25,7 +25,7 @@ try {
     const data = await response.json();
     analytics = data.data;
   } else {
-    error = 'Analitikal veriler yüklenirken hata oluştu';
+    error = 'Analitik veriler yüklenirken hata oluştu';
   }
 } catch (err) {
   error = 'Sunucu hatası: ' + String(err);
@@ -71,7 +71,7 @@ const seo = {
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Toplam Görüntüleme</p>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Toplam görüntüleme</p>
               <p class="text-3xl font-bold text-blue-600">{analytics.posts.totalViews.toLocaleString('tr-TR')}</p>
               <p class="text-xs text-gray-500 mt-2">⌀ {analytics.posts.avgViews} ort./yazı</p>
             </div>

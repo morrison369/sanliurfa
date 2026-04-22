@@ -1,0 +1,109 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+const seo = {
+  title: "Çerez Politikası - sanliurfa.com",
+  description:
+    "sanliurfa.com çerez politikası: zorunlu çerezler, tercih çerezleri, analitik kullanımı ve çerez yönetimi hakkında bilgiler.",
+  canonicalUrl: "https://sanliurfa.com/cerez-politikasi",
+  schema: {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Çerez Politikası",
+    description:
+      "sanliurfa.com çerez politikası ve kullanıcı tercihleri hakkında bilgilendirme.",
+    url: "https://sanliurfa.com/cerez-politikasi",
+    inLanguage: "tr-TR",
+    isPartOf: {
+      "@type": "WebSite",
+      name: "sanliurfa.com",
+      url: "https://sanliurfa.com",
+    },
+  },
+};
+
+const cookieGroups = [
+  {
+    title: "Zorunlu Çerezler",
+    description:
+      "Oturum güvenliği, giriş işlemleri, form koruması ve temel site fonksiyonları için kullanılır. Bu çerezler olmadan platform düzgün çalışmayabilir.",
+  },
+  {
+    title: "Tercih Çerezleri",
+    description:
+      "Tema tercihi, çerez onayı ve kullanıcı arayüzü seçimleri gibi deneyimi kişiselleştiren ayarları hatırlamak için kullanılır.",
+  },
+  {
+    title: "Analitik Çerezler",
+    description:
+      "Sayfa performansı, ziyaret edilen bölümler ve genel kullanım eğilimlerini anlamak için kullanılır. Bu veriler siteyi iyileştirmek amacıyla değerlendirilir.",
+  },
+  {
+    title: "Güvenlik ve Kötüye Kullanım Önleme",
+    description:
+      "Şüpheli istekleri, yoğun trafik davranışlarını ve hesap güvenliği risklerini tespit etmek için teknik kayıtlar ve sınırlı çerez verileri kullanılabilir.",
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <section class="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+      <div class="container-custom py-12">
+        <p class="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-urfa-600 dark:text-urfa-300">
+          Gizlilik ve Tercihler
+        </p>
+        <h1 class="text-3xl font-display font-bold text-gray-900 dark:text-white md:text-4xl">
+          Çerez Politikası
+        </h1>
+        <p class="mt-4 max-w-3xl text-gray-600 dark:text-gray-300">
+          sanliurfa.com, Şanlıurfa şehir rehberi deneyimini güvenli, hızlı ve kullanışlı hale getirmek için çerezlerden yararlanır.
+        </p>
+      </div>
+    </section>
+
+    <section class="container-custom py-12">
+      <div class="mx-auto max-w-4xl rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800 md:p-12">
+        <div class="prose max-w-none dark:prose-invert">
+          <h2>Çerez Nedir?</h2>
+          <p>
+            Çerezler, ziyaret ettiğiniz web siteleri tarafından tarayıcınıza kaydedilen küçük metin dosyalarıdır.
+            Bu dosyalar site tercihlerinizi hatırlamak, güvenli oturum sağlamak ve hizmet kalitesini artırmak için kullanılabilir.
+          </p>
+
+          <h2>Kullandığımız Çerez Türleri</h2>
+        </div>
+
+        <div class="mt-6 grid gap-4 md:grid-cols-2">
+          {
+            cookieGroups.map((group) => (
+              <article class="rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-900/60">
+                <h3 class="font-bold text-gray-900 dark:text-white">{group.title}</h3>
+                <p class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">{group.description}</p>
+              </article>
+            ))
+          }
+        </div>
+
+        <div class="prose mt-8 max-w-none dark:prose-invert">
+          <h2>Çerez Tercihlerinizi Nasıl Yönetebilirsiniz?</h2>
+          <p>
+            Tarayıcı ayarlarınızdan çerezleri silebilir, engelleyebilir veya belirli siteler için izinleri değiştirebilirsiniz.
+            Zorunlu çerezleri devre dışı bırakmanız halinde giriş, güvenlik ve tercih yönetimi gibi bazı özellikler sınırlı çalışabilir.
+          </p>
+
+          <h2>Üçüncü Taraf Servisler</h2>
+          <p>
+            Analitik, hata izleme veya performans ölçümü gibi servisler yalnızca site kalitesini artırmak amacıyla kullanılabilir.
+            Bu servisler aktif edildiğinde ilgili sağlayıcıların gizlilik koşulları da geçerli olabilir.
+          </p>
+
+          <h2>İletişim</h2>
+          <p>
+            Çerez politikası hakkında sorularınız için <a href="/iletisim">iletişim sayfası</a> üzerinden bize ulaşabilirsiniz.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>

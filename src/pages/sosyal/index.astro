@@ -1,99 +1,163 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import ActivityFeed from '../../components/ActivityFeed';
-import UserSuggestionsPanel from '../../components/UserSuggestionsPanel';
-import HashtagExplorer from '../../components/HashtagExplorer';
+import Layout from "../../layouts/Layout.astro";
+import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
+import ActivityFeed from "../../components/ActivityFeed";
+import UserSuggestionsPanel from "../../components/UserSuggestionsPanel";
+import HashtagExplorer from "../../components/HashtagExplorer";
 
-// Auth check
 const userId = Astro.locals.user?.id;
-if (!userId) {
-  return Astro.redirect('/giris?redirect=/sosyal');
-}
 
 // Get initial hashtag from URL params
-const initialTag = Astro.url.searchParams.get('tag');
+const initialTag = Astro.url.searchParams.get("tag");
 ---
 
 <Layout title="Sosyal - Şanlıurfa" noindex>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold text-gray-900 mb-2">Sosyal</h1>
-    <p class="text-gray-600 mb-8">Şanlıurfa sosyal akışı, trend konular ve kullanıcı önerileri</p>
+  {
+    userId ? (
+      <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+          Sosyal
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 mb-8">
+          Şanlıurfa sosyal akışı, trend konular ve kullanıcı önerileri
+        </p>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left Sidebar */}
-      <div class="space-y-6">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Sizi Tanıyabileceğiniz Kişiler
+        <div class="mb-6 rounded-2xl border border-urfa-100 bg-urfa-50 p-5 dark:border-urfa-900 dark:bg-urfa-950/30">
+          <h2 class="font-display text-xl font-bold text-gray-900 dark:text-white">
+            Eşleşme ve keşif
           </h2>
-          <UserSuggestionsPanel client:load />
+          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Şanlıurfa kullanıcılarını fotoğraflı kartlarla keşfetmek için
+            eşleşme ekranını kullanabilirsiniz.
+          </p>
+          <a
+            href="/sosyal/eslesme"
+            class="mt-4 inline-block text-sm font-medium text-urfa-600 hover:text-urfa-700"
+          >
+            Eşleşme ekranını aç
+          </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="space-y-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Tanıyabileceğiniz kişiler
+              </h2>
+              <UserSuggestionsPanel client:load />
+            </div>
+          </div>
+
+          <div class="lg:col-span-2">
+            <div class="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-6">
+              <button
+                data-tab-btn="feed"
+                class="px-4 py-2 font-semibold text-gray-900 dark:text-white border-b-2 border-blue-600"
+              >
+                Aktivite akışı
+              </button>
+              <button
+                data-tab-btn="hashtag"
+                class="px-4 py-2 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-900 dark:hover:text-white"
+              >
+                Hashtag keşfet
+              </button>
+            </div>
+
+            <div id="tab-feed" class="tab-content space-y-4">
+              <ActivityFeed client:load userId={userId} />
+            </div>
+
+            <div id="tab-hashtag" class="tab-content hidden">
+              <HashtagExplorer
+                client:load
+                initialSlug={initialTag || undefined}
+              />
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Main Content */}
-      <div class="lg:col-span-2">
-        {/* Tab Bar */}
-        <div class="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-6">
-          <button
-            data-tab-btn="feed"
-            class="px-4 py-2 font-semibold text-gray-900 dark:text-white border-b-2 border-blue-600"
-          >
-            Aktivite Akışı
-          </button>
-          <button
-            data-tab-btn="hashtag"
-            class="px-4 py-2 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-900 dark:hover:text-white"
-          >
-            Hashtag Keşfet
-          </button>
-        </div>
-
-        {/* Tab Content */}
-        <div id="tab-feed" class="tab-content space-y-4">
-          <ActivityFeed client:load userId={userId} />
-        </div>
-
-        <div id="tab-hashtag" class="tab-content hidden">
-          <HashtagExplorer client:load initialSlug={initialTag || undefined} />
-        </div>
-      </div>
-    </div>
-  </div>
+    ) : (
+      <AuthFeatureLanding
+        eyebrow="Şanlıurfa sosyal platformu"
+        title="Şehrin topluluk akışına katılın"
+        description="Şanlıurfa kullanıcılarını takip edin, trend konuları keşfedin, fotoğraflı eşleşme kartlarıyla yeni kişiler bulun ve şehir deneyimlerinizi paylaşın."
+        loginRedirect="/sosyal"
+        features={[
+          {
+            title: "Aktivite akışı",
+            description:
+              "Mekân yorumları, favoriler, koleksiyonlar ve Şanlıurfa keşifleri tek akışta görünür.",
+          },
+          {
+            title: "Fotoğraflı eşleşme",
+            description:
+              "Kullanıcılar dört fotoğrafa kadar profil ekleyip sağa/sola kaydırma mantığıyla keşfedilebilir.",
+          },
+          {
+            title: "Hashtag keşfi",
+            description:
+              "Göbeklitepe, Balıklıgöl, isot ve Şanlıurfa rotaları gibi etiketlerle topluluğu takip edin.",
+          },
+        ]}
+      />
+    )
+  }
 
   <script is:inline>
     {
       // Tab switching logic
-      const tabButtons = document.querySelectorAll('[data-tab-btn]');
+      const tabButtons = document.querySelectorAll("[data-tab-btn]");
 
-      tabButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          const tabName = btn.getAttribute('data-tab-btn');
+      tabButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tabName = btn.getAttribute("data-tab-btn");
 
           // Hide all tabs
-          document.querySelectorAll('.tab-content').forEach(el => {
-            el.classList.add('hidden');
+          document.querySelectorAll(".tab-content").forEach((el) => {
+            el.classList.add("hidden");
           });
 
           // Remove active styles from all buttons
-          tabButtons.forEach(b => {
-            b.classList.remove('border-b-2', 'border-blue-600', 'text-gray-900', 'dark:text-white');
-            b.classList.add('border-b-2', 'border-transparent', 'text-gray-600', 'dark:text-gray-400');
+          tabButtons.forEach((b) => {
+            b.classList.remove(
+              "border-b-2",
+              "border-blue-600",
+              "text-gray-900",
+              "dark:text-white",
+            );
+            b.classList.add(
+              "border-b-2",
+              "border-transparent",
+              "text-gray-600",
+              "dark:text-gray-400",
+            );
           });
 
           // Show selected tab
           const selectedTab = document.getElementById(`tab-${tabName}`);
           if (selectedTab) {
-            selectedTab.classList.remove('hidden');
+            selectedTab.classList.remove("hidden");
           }
 
           // Style selected button
-          btn.classList.remove('border-b-2', 'border-transparent', 'text-gray-600', 'dark:text-gray-400');
-          btn.classList.add('border-b-2', 'border-blue-600', 'text-gray-900', 'dark:text-white');
+          btn.classList.remove(
+            "border-b-2",
+            "border-transparent",
+            "text-gray-600",
+            "dark:text-gray-400",
+          );
+          btn.classList.add(
+            "border-b-2",
+            "border-blue-600",
+            "text-gray-900",
+            "dark:text-white",
+          );
         });
       });
 
       // If hashtag tab is selected via initialTag, switch to it
-      if (document.location.search.includes('tag=')) {
+      if (document.location.search.includes("tag=")) {
         const hashtagBtn = document.querySelector('[data-tab-btn="hashtag"]');
         if (hashtagBtn) {
           hashtagBtn.click();

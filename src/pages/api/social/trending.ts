@@ -18,12 +18,12 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     } else if (type === 'places') {
       data = await getTrendingPlaces(limit, period);
     } else {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid type', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz tür', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     return apiResponse({ success: true, data }, HttpStatus.OK, requestId);
   } catch (error) {
-    logger.error('Failed to get trending', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Trend verileri alınamadı', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

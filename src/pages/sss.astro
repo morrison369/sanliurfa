@@ -1,0 +1,87 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+const faqs = [
+  {
+    question: "sanliurfa.com nedir?",
+    answer:
+      "sanliurfa.com, Şanlıurfa için mekânlar, tarihi yerler, gastronomi, etkinlikler ve şehir servislerini bir araya getiren Türkçe şehir rehberi ve topluluk platformudur.",
+  },
+  {
+    question: "Mekân eklemek ücretli mi?",
+    answer:
+      "İlk aşamada mekân ekleme, yorum yapma, puan verme ve temel topluluk özellikleri ücretsiz olarak kullanılabilir.",
+  },
+  {
+    question: "Şanlıurfa nöbetçi eczane ve ulaşım bilgileri nerede yer alır?",
+    answer:
+      "Nöbetçi eczaneler, otobüs saatleri ve uçak saatleri Şehir Servisleri bölümünde yayınlanır. Veri kaynakları bağlandıkça bilgiler güncellenir.",
+  },
+  {
+    question: "Yorumlar ve puanlar nasıl çalışır?",
+    answer:
+      "Kullanıcılar mekânlara puan verebilir, yorum yazabilir ve deneyimlerini paylaşabilir. Şikayet edilen içerikler moderasyon sürecinden geçirilir.",
+  },
+  {
+    question: "sanliurfa.com sadece Türkçe mi yayın yapar?",
+    answer:
+      "Evet. Platform Şanlıurfa odaklı yerel bir proje olduğu için içerik dili Türkçedir ve public URL yapısı Türkçe karakter sorunu yaşatmayan kanonik rotalarla yönetilir.",
+  },
+];
+
+const seo = {
+  title: "Sıkça Sorulan Sorular - sanliurfa.com",
+  description:
+    "sanliurfa.com hakkında sıkça sorulan sorular: Şanlıurfa mekân rehberi, şehir servisleri, yorumlar, üyelik ve içerik yönetimi.",
+  canonicalUrl: "https://sanliurfa.com/sss",
+  schema: {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  },
+};
+---
+
+<Layout seo={seo}>
+  <section class="relative overflow-hidden bg-urfa-900 py-20">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_35%)]"></div>
+    <div class="container-custom relative">
+      <p class="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-urfa-200">
+        Yardım Merkezi
+      </p>
+      <h1 class="max-w-3xl text-4xl font-display font-bold text-white md:text-5xl">
+        Sıkça Sorulan Sorular
+      </h1>
+      <p class="mt-5 max-w-2xl text-lg leading-8 text-urfa-100">
+        Şanlıurfa şehir rehberi, mekân ekleme, yorumlar ve şehir servisleri hakkında temel bilgiler.
+      </p>
+    </div>
+  </section>
+
+  <section class="bg-gray-50 py-14 dark:bg-gray-900">
+    <div class="container-custom">
+      <div class="mx-auto max-w-4xl space-y-5">
+        {
+          faqs.map((faq, index) => (
+            <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div class="mb-3 flex items-start gap-4">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-urfa-100 text-sm font-bold text-urfa-700 dark:bg-urfa-900/40 dark:text-urfa-200">
+                  {index + 1}
+                </span>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">{faq.question}</h2>
+              </div>
+              <p class="text-gray-600 dark:text-gray-300 md:pl-[52px]">{faq.answer}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Layout>

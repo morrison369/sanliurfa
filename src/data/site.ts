@@ -4,7 +4,7 @@ export const SITE = {
   name: "sanliurfa.com",
   tagline: "Tarihin Sıfır Noktası",
   description:
-    "Şanlıurfa şehir rehberi - Tarihi yerler, mekanlar, etkinlikler ve daha fazlası",
+    "Şanlıurfa şehir rehberi - Tarihi yerler, mekânlar, etkinlikler ve daha fazlası",
   url: "https://sanliurfa.com",
   ogImage: "/images/og-image.jpg",
   locale: "tr-TR",
@@ -22,7 +22,7 @@ export const SITE = {
 export const NAVIGATION = {
   main: [
     { name: "Ana Sayfa", href: "/", icon: "home" },
-    { name: "Mekanlar", href: "/places", icon: "map-pin" },
+    { name: "Mekânlar", href: "/places", icon: "map-pin" },
     { name: "Tarihi Yerler", href: "/tarihi-yerler", icon: "landmark" },
     { name: "Etkinlikler", href: "/etkinlikler", icon: "calendar" },
     { name: "Gastronomi", href: "/gastronomi", icon: "utensils" },
@@ -36,8 +36,8 @@ export const NAVIGATION = {
     { name: "KVKK", href: "/kvkk" },
   ],
   admin: [
-    { name: "Dashboard", href: "/admin", icon: "layout-dashboard" },
-    { name: "Mekanlar", href: "/admin/places", icon: "map-pin" },
+    { name: "Yönetim Paneli", href: "/admin", icon: "layout-dashboard" },
+    { name: "Mekânlar", href: "/admin/places", icon: "map-pin" },
     { name: "Blog", href: "/admin/blog", icon: "file-text" },
     { name: "Etkinlikler", href: "/admin/events", icon: "calendar" },
     {
@@ -55,14 +55,14 @@ export const SEO = {
   titleTemplate: "%s | sanliurfa.com",
   defaultTitle: "sanliurfa.com - Tarihin Sıfır Noktası",
   defaultDescription:
-    "Şanlıurfa şehir rehberi. Tarihi yerler, mekanlar, etkinlikler, gastronomi ve daha fazlası. Göbeklitepe, Balıklıgöl ve Şanlıurfa'nın tüm güzellikleri.",
+    "Şanlıurfa şehir rehberi. Tarihi yerler, mekânlar, etkinlikler, gastronomi ve daha fazlası. Göbeklitepe, Balıklıgöl ve Şanlıurfa'nın tüm güzellikleri.",
   keywords: [
     "Şanlıurfa",
     "Göbeklitepe",
     "Balıklıgöl",
     "Harran",
     "Halfeti",
-    "Şanlıurfa mekanlar",
+    "Şanlıurfa mekânları",
     "Şanlıurfa tarihi yerler",
     "Şanlıurfa etkinlikler",
     "Şanlıurfa gastronomi",

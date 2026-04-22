@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Report ID required',
+        'Rapor ID gereklidir',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid format. Must be csv, json, or excel',
+        'Geçersiz format. csv, json veya excel olmalıdır',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -78,12 +78,12 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Failed to export report',
+      'Rapor dışa aktarılamadı',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to export report',
+      'Rapor dışa aktarılamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

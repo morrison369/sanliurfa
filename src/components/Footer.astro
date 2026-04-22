@@ -1,52 +1,28 @@
 ---
 import { MapPin, Phone, Mail, Send } from "lucide-react";
+import { DEFAULT_PUBLIC_SITE_SETTINGS, type FooterSettings } from "../lib/site-settings";
 
-const footerLinks = {
-  kesfet: [
-    { label: "Tarihi Yerler", href: "/tarihi-yerler" },
-    { label: "Restoranlar", href: "/places?category=restaurant" },
-    { label: "Oteller", href: "/places?category=hotel" },
-    { label: "Kafeler", href: "/places?category=cafe" },
-    { label: "Müzeler", href: "/places?category=museum" },
-    { label: "Etkinlikler", href: "/etkinlikler" },
-  ],
-  gastronomi: [
-    { label: "Urfa Kebabı", href: "/gastronomi/urfa-kebabi" },
-    { label: "Çiğ Köfte", href: "/gastronomi/cig-kofte" },
-    { label: "İsot", href: "/gastronomi/isot" },
-    { label: "Lahmacun", href: "/gastronomi/lahmacun" },
-    { label: "Şıllık Tatlısı", href: "/gastronomi/sillik-tatlisi" },
-    { label: "Tüm Lezzetler", href: "/gastronomi" },
-  ],
-  bilgi: [
-    { label: "Hakkımızda", href: "/hakkinda" },
-    { label: "Blog", href: "/blog" },
-    { label: "SSS", href: "/sss" },
-    { label: "İletişim", href: "/iletisim" },
-    { label: "Reklam Ver", href: "/reklam" },
-    { label: "İş Ortaklığı", href: "/is-ortakligi" },
-  ],
-  yasal: [
-    { label: "Kullanım Koşulları", href: "/kullanim-kosullari" },
-    { label: "Gizlilik Politikası", href: "/gizlilik-politikasi" },
-    { label: "Çerez Politikası", href: "/cerez-politikasi" },
-    { label: "KVKK Aydınlatma Metni", href: "/kvkk" },
-  ],
-};
+interface Props {
+  settings?: FooterSettings;
+}
 
+const { settings = DEFAULT_PUBLIC_SITE_SETTINGS.footer } = Astro.props;
 const currentYear = new Date().getFullYear();
+const brandParts = settings.brandName.split(".");
+const brandPrimary = brandParts[0] || "Şanlıurfa";
+const brandSuffix = brandParts.length > 1 ? `.${brandParts.slice(1).join(".")}` : ".com";
+const hasPhone = settings.phoneLabel.trim().length > 0 && settings.phoneHref.trim().length > 0;
 ---
 
 <footer class="bg-urfa-900 dark:bg-gray-950 text-white">
-  <!-- Newsletter Section -->
+  <!-- Bülten Alanı -->
   <div class="border-b border-urfa-800 dark:border-gray-800">
     <div class="container-custom py-12">
       <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
         <div class="text-center lg:text-left">
-          <h3 class="text-2xl font-display font-bold">Şanlıurfa'yı Keşfet</h3>
+          <h3 class="text-2xl font-display font-bold">{settings.newsletterTitle}</h3>
           <p class="mt-2 text-urfa-200">
-            En yeni mekanlar, etkinlikler ve lezzetler için bültenimize abone
-            ol.
+            {settings.newsletterDescription}
           </p>
         </div>
         <form
@@ -85,113 +61,64 @@ const currentYear = new Date().getFullYear();
             Ş
           </div>
           <span class="font-display font-bold text-xl">
-            Şanlıurfa<span class="text-urfa-300">.com</span>
+            {brandPrimary}<span class="text-urfa-300">{brandSuffix}</span>
           </span>
         </a>
         <p class="text-urfa-200 dark:text-gray-300 text-sm mb-6 max-w-xs">
-          Şanlıurfa'nın en kapsamlı şehir rehberi. Tarihi yerler, mekanlar,
-          gastronomi ve etkinlikler tek bir platformda.
+          {settings.brandDescription}
         </p>
 
         <!-- Contact Info -->
         <div class="space-y-3 text-sm">
           <a
-            href="mailto:info@sanliurfa.com"
+            href={`mailto:${settings.email}`}
             class="flex items-center gap-2 text-urfa-200 dark:text-gray-300 hover:text-white dark:hover:text-white transition-colors"
           >
             <Mail className="w-4 h-4" />
-            info@sanliurfa.com
+            {settings.email}
           </a>
-          <a
-            href="tel:+904141234567"
-            class="flex items-center gap-2 text-urfa-200 dark:text-gray-300 hover:text-white dark:hover:text-white transition-colors"
-          >
-            <Phone className="w-4 h-4" />
-            +90 414 123 45 67
-          </a>
+          {
+            hasPhone && (
+              <a
+                href={`tel:${settings.phoneHref}`}
+                class="flex items-center gap-2 text-urfa-200 dark:text-gray-300 hover:text-white dark:hover:text-white transition-colors"
+              >
+                <Phone className="w-4 h-4" />
+                {settings.phoneLabel}
+              </a>
+            )
+          }
           <div class="flex items-start gap-2 text-urfa-200 dark:text-gray-300">
             <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <span>Haliliye, Şanlıurfa, Türkiye</span>
+            <span>{settings.address}</span>
           </div>
         </div>
 
         <p class="mt-6 text-xs text-urfa-300 dark:text-gray-400">
-          Resmi sosyal medya hesapları aktif edildiğinde bu alana eklenecektir.
+          {settings.socialNote}
         </p>
       </div>
 
       <!-- Links Columns -->
-      <div>
-        <h4 class="font-semibold text-white mb-4">Keşfet</h4>
-        <ul class="space-y-2">
-          {
-            footerLinks.kesfet.map((link) => (
-              <li>
-                <a
-                  href={link.href}
-                  class="text-sm text-urfa-200 dark:text-gray-300 hover:text-white dark:hover:text-white transition-colors"
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-
-      <div>
-        <h4 class="font-semibold text-white mb-4">Gastronomi</h4>
-        <ul class="space-y-2">
-          {
-            footerLinks.gastronomi.map((link) => (
-              <li>
-                <a
-                  href={link.href}
-                  class="text-sm text-urfa-200 hover:text-white transition-colors"
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-
-      <div>
-        <h4 class="font-semibold text-white mb-4">Bilgi</h4>
-        <ul class="space-y-2">
-          {
-            footerLinks.bilgi.map((link) => (
-              <li>
-                <a
-                  href={link.href}
-                  class="text-sm text-urfa-200 hover:text-white transition-colors"
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
-
-      <div>
-        <h4 class="font-semibold text-white mb-4">Yasal</h4>
-        <ul class="space-y-2">
-          {
-            footerLinks.yasal.map((link) => (
-              <li>
-                <a
-                  href={link.href}
-                  class="text-sm text-urfa-200 hover:text-white transition-colors"
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))
-          }
-        </ul>
-      </div>
+      {
+        settings.columns.map((column) => (
+          <div>
+            <h4 class="font-semibold text-white mb-4">{column.title}</h4>
+            <ul class="space-y-2">
+              {column.links.map((link) => (
+                <li>
+                  <a
+                    href={link.href}
+                    class="text-sm text-urfa-200 dark:text-gray-300 hover:text-white dark:hover:text-white transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
     </div>
   </div>
 
@@ -203,22 +130,13 @@ const currentYear = new Date().getFullYear();
           &copy; {currentYear} sanliurfa.com. Tüm hakları saklıdır.
         </p>
 
-        <!-- Trust Badges -->
-        <div class="flex items-center gap-4">
-          <span class="text-xs text-urfa-400 dark:text-gray-500">Güvenilir</span
-          >
-          <div class="flex items-center gap-2">
-            <img
-              src="/icons/ssl-secure.svg"
-              alt="SSL Secure"
-              class="h-6 w-auto opacity-60"
-            />
-            <img
-              src="/icons/pci-compliant.svg"
-              alt="PCI Compliant"
-              class="h-6 w-auto opacity-60"
-            />
-          </div>
+        <div class="flex flex-wrap items-center justify-center gap-2">
+          <span class="rounded-full border border-urfa-700 px-3 py-1 text-xs text-urfa-300 dark:border-gray-700 dark:text-gray-400">
+            HTTPS korumalı
+          </span>
+          <span class="rounded-full border border-urfa-700 px-3 py-1 text-xs text-urfa-300 dark:border-gray-700 dark:text-gray-400">
+            Türkçe şehir rehberi
+          </span>
         </div>
       </div>
     </div>

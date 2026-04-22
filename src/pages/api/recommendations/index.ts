@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/recommendations', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -82,7 +82,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/recommendations', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId

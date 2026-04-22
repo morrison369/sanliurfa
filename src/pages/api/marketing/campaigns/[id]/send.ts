@@ -82,7 +82,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
           failed: result.failed,
           testMode,
           message: testMode
-            ? `Test emaili admin hesabına gönderildi (${result.sent} adress)`
+            ? `Test emaili admin hesabına gönderildi (${result.sent} adres)`
             : `Kampanya gönderimi başladı (${result.sent}/${result.sent + result.failed} alıcı)`
         }
       },
@@ -93,6 +93,6 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', `/api/marketing/campaigns/${params.id}/send`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Send campaign failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

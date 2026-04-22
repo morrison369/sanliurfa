@@ -64,7 +64,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/promotions/create', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -93,7 +93,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/promotions/create', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid input',
+        'Geçersiz giriş',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId

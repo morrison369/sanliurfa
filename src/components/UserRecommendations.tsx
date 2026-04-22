@@ -13,11 +13,11 @@ export default function UserRecommendations() {
   const loadRecommendations = async () => {
     try {
       const response = await fetch('/api/recommendations/users?limit=6');
-      if (!response.ok) throw new Error('Failed');
+      if (!response.ok) throw new Error('Kullanıcı önerileri yüklenemedi');
       const data = unwrapApiPayload<{ data?: any[] }>(await response.json());
       setUsers(data.data || []);
     } catch (err) {
-      console.error('Error', err);
+      console.error('Kullanıcı önerileri yükleme hatası', err);
     } finally {
       setIsLoading(false);
     }
@@ -31,7 +31,7 @@ export default function UserRecommendations() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ followed_id: userId }),
       });
-      if (!response.ok) throw new Error('Failed');
+      if (!response.ok) throw new Error('Takip işlemi tamamlanamadı');
       
       const newSet = new Set(followingIds);
       if (isFollowing) {
@@ -41,7 +41,7 @@ export default function UserRecommendations() {
       }
       setFollowingIds(newSet);
     } catch (err) {
-      console.error('Error', err);
+      console.error('Takip işlemi hatası', err);
     }
   };
 
@@ -50,7 +50,7 @@ export default function UserRecommendations() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-bold text-gray-900 dark:text-white">Kime Takip Etmelisin?</h3>
+      <h3 className="text-lg font-bold text-gray-900 dark:text-white">Takip edebileceğiniz kişiler</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {users.map((user) => (
           <div key={user.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 flex items-center justify-between">
@@ -64,14 +64,14 @@ export default function UserRecommendations() {
               )}
               <div className="flex-1">
                 <p className="font-medium text-gray-900 dark:text-white">{user.full_name}</p>
-                <p className="text-xs text-gray-600">Level {user.level} • {user.review_count} inceleme</p>
+                <p className="text-xs text-gray-600">Seviye {user.level} • {user.review_count} inceleme</p>
               </div>
             </a>
             <button
               onClick={() => toggleFollow(user.id)}
               className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm font-medium"
             >
-              Takip Et
+              Takip et
             </button>
           </div>
         ))}

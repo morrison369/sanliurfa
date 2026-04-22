@@ -9,6 +9,7 @@ import { recordSuggestionImpression, updateAutocompleteIndex, recordZeroResultSe
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
+import { getCuratedPlaces } from '../../../data/curated-places';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -65,6 +66,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
       logger.error('Failed to update autocomplete', err);
     });
 
+    if (resultCount === 0 && searchType === 'places') {
+      results = searchCuratedPlaces(query, limit, offset);
+      resultCount = results.length;
+    }
+
     // Record zero results
     if (resultCount === 0) {
       recordZeroResultSearch(query, searchType, filters).catch(err => {
@@ -100,12 +106,48 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/search', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Search failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(
-      ErrorCode.INTERNAL_ERROR,
-      'Arama başarısız oldu',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      undefined,
-      requestId
-    );
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q') || '';
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const results = query.trim().length >= 2 ? searchCuratedPlaces(query, limit, offset) : [];
+
+    if (results.length > 0) {
+      return apiResponse(
+        {
+          success: true,
+          data: {
+            results,
+            query,
+            searchType: 'places',
+            resultCount: results.length,
+            limit,
+            offset,
+            hasMore: false
+          }
+        },
+        HttpStatus.OK,
+        requestId
+      );
+    }
+
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Arama başarısız oldu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
+
+function searchCuratedPlaces(query: string, limit: number, offset: number): any[] {
+  const normalizedQuery = query.trim().toLocaleLowerCase('tr-TR');
+  return getCuratedPlaces()
+    .filter((place) =>
+      [place.name, place.description, place.address, place.category, place.tags.join(' ')]
+        .join(' ')
+        .toLocaleLowerCase('tr-TR')
+        .includes(normalizedQuery)
+    )
+    .slice(offset, offset + limit)
+    .map((place) => ({
+      ...place,
+      image_url: place.images[0],
+      engagement_score: place.rating * 20 + place.review_count,
+    }));
+}
