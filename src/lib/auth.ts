@@ -47,6 +47,40 @@ interface SessionData {
 }
 
 const SESSION_TTL = 86400; // 24 hours in seconds
+const inMemorySessions = new Map<string, { data: SessionData; expiresAt: number }>();
+const IN_MEMORY_SESSION_CLEANUP_THRESHOLD = 2000;
+
+function cleanupInMemorySessions(nowMs: number): void {
+  if (inMemorySessions.size < IN_MEMORY_SESSION_CLEANUP_THRESHOLD) {
+    return;
+  }
+
+  for (const [token, session] of inMemorySessions.entries()) {
+    if (session.expiresAt <= nowMs) {
+      inMemorySessions.delete(token);
+    }
+  }
+}
+
+function setInMemorySession(token: string, data: SessionData): void {
+  const nowMs = Date.now();
+  cleanupInMemorySessions(nowMs);
+  inMemorySessions.set(token, { data, expiresAt: nowMs + SESSION_TTL * 1000 });
+}
+
+function getInMemorySession(token: string): SessionData | null {
+  const existing = inMemorySessions.get(token);
+  if (!existing) {
+    return null;
+  }
+
+  if (existing.expiresAt <= Date.now()) {
+    inMemorySessions.delete(token);
+    return null;
+  }
+
+  return existing.data;
+}
 
 /**
  * Create a new session token
@@ -64,16 +98,17 @@ export async function createToken(
     createdAt: Date.now()
   };
 
-  // Try to store in Redis, fallback to console warning
+  // Try to store in Redis first
   try {
     await setCache(`session:${token}`, sessionData, SESSION_TTL);
   } catch (error) {
     console.error('Failed to create session in Redis:', error);
-    if (isRedisAvailable()) {
-      throw new Error('Session creation failed');
-    }
-    // If Redis isn't available, log warning but continue (graceful degradation)
-    console.warn('Redis unavailable - session may not persist across restarts');
+  }
+
+  // Always keep an in-memory fallback for graceful degradation.
+  // If Redis is down, this keeps auth usable until process restart.
+  if (!isRedisAvailable()) {
+    setInMemorySession(token, sessionData);
   }
 
   return token;
@@ -88,15 +123,28 @@ export async function verifyToken(token: string): Promise<SessionData | null> {
     const sessionData = await getCache<SessionData>(`session:${token}`);
 
     if (!sessionData) {
-      return null;
+      const fallbackSession = getInMemorySession(token);
+      if (!fallbackSession) {
+        return null;
+      }
+
+      // Sliding window for in-memory fallback session.
+      setInMemorySession(token, fallbackSession);
+      return fallbackSession;
     }
 
     // Sliding window: refresh TTL on each verification
     await setCache(`session:${token}`, sessionData, SESSION_TTL);
+    setInMemorySession(token, sessionData);
 
     return sessionData;
   } catch (error) {
     console.error('Token verification error:', error);
+    const fallbackSession = getInMemorySession(token);
+    if (fallbackSession) {
+      setInMemorySession(token, fallbackSession);
+      return fallbackSession;
+    }
     return null;
   }
 }
@@ -133,6 +181,8 @@ export async function signOut(token: string): Promise<void> {
     await deleteCache(`session:${token}`);
   } catch (error) {
     console.error('Sign out error:', error);
+  } finally {
+    inMemorySessions.delete(token);
   }
 }
 
