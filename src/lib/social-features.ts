@@ -9,6 +9,27 @@ import { getCache, setCache, deleteCache } from './cache';
 import { batchInsert, fireAndForget } from './performance-optimizations';
 import crypto from 'crypto';
 
+function readCachedArray<T = any>(cached: unknown): T[] | null {
+  if (!cached) {
+    return null;
+  }
+
+  if (Array.isArray(cached)) {
+    return cached as T[];
+  }
+
+  if (typeof cached === 'string') {
+    try {
+      const parsed = JSON.parse(cached);
+      return Array.isArray(parsed) ? (parsed as T[]) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
 // ===== HASHTAG FUNCTIONS =====
 
 export async function getOrCreateHashtag(tagName: string): Promise<any | null> {
@@ -38,10 +59,11 @@ export async function getOrCreateHashtag(tagName: string): Promise<any | null> {
 export async function getTrendingHashtags(limit: number = 20, period: string = 'day'): Promise<any[]> {
   try {
     const cacheKey = `sanliurfa:trending:hashtags:${period}`;
-    let cached = await getCache(cacheKey);
+    const cached = await getCache<any[] | string>(cacheKey);
+    const cachedList = readCachedArray(cached);
 
-    if (cached) {
-      return JSON.parse(cached);
+    if (cachedList) {
+      return cachedList;
     }
 
     const hashtags = await queryMany(
@@ -49,8 +71,9 @@ export async function getTrendingHashtags(limit: number = 20, period: string = '
       [limit]
     );
 
-    await setCache(cacheKey, JSON.stringify(hashtags), 1800);
-    return hashtags;
+    const hashtagList = Array.isArray(hashtags) ? [...hashtags] : [];
+    await setCache(cacheKey, hashtagList, 1800);
+    return hashtagList;
   } catch (error) {
     logger.error('Failed to get trending hashtags', error instanceof Error ? error : new Error(String(error)));
     return [];
@@ -237,10 +260,11 @@ export async function createActivity(userId: string, activityType: string, objec
 export async function getUserFeed(userId: string, limit: number = 50): Promise<any[]> {
   try {
     const cacheKey = `sanliurfa:feed:${userId}`;
-    let cached = await getCache(cacheKey);
+    const cached = await getCache<any[] | string>(cacheKey);
+    const cachedList = readCachedArray(cached);
 
-    if (cached) {
-      return JSON.parse(cached);
+    if (cachedList) {
+      return cachedList;
     }
 
     const feed = await queryMany(
@@ -254,8 +278,9 @@ export async function getUserFeed(userId: string, limit: number = 50): Promise<a
       [userId, limit]
     );
 
-    await setCache(cacheKey, JSON.stringify(feed), 600);
-    return feed;
+    const feedList = Array.isArray(feed) ? [...feed] : [];
+    await setCache(cacheKey, feedList, 600);
+    return feedList;
   } catch (error) {
     logger.error('Failed to get user feed', error instanceof Error ? error : new Error(String(error)));
     return [];
@@ -265,10 +290,11 @@ export async function getUserFeed(userId: string, limit: number = 50): Promise<a
 export async function getTrendingPlaces(limit: number = 20, period: string = 'day'): Promise<any[]> {
   try {
     const cacheKey = `sanliurfa:trending:places:${period}`;
-    let cached = await getCache(cacheKey);
+    const cached = await getCache<any[] | string>(cacheKey);
+    const cachedList = readCachedArray(cached);
 
-    if (cached) {
-      return JSON.parse(cached);
+    if (cachedList) {
+      return cachedList;
     }
 
     const places = await queryMany(
@@ -281,8 +307,9 @@ export async function getTrendingPlaces(limit: number = 20, period: string = 'da
       [period, limit]
     );
 
-    await setCache(cacheKey, JSON.stringify(places), 1800);
-    return places;
+    const placeList = Array.isArray(places) ? [...places] : [];
+    await setCache(cacheKey, placeList, 1800);
+    return placeList;
   } catch (error) {
     logger.error('Failed to get trending places', error instanceof Error ? error : new Error(String(error)));
     return [];
