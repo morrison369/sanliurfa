@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface Comment {
   id: string;
@@ -47,7 +48,7 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
         throw new Error('Yorumlar yüklenemedi');
       }
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ data?: Comment[] }>(await response.json());
       setComments(data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -80,7 +81,7 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Yorum yazılamadı');
+        throw new Error(getApiErrorMessage(data, 'Yorum yazılamadı'));
       }
 
       setNewComment('');

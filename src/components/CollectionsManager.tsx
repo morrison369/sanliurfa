@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface Collection {
   id: string;
@@ -38,10 +39,10 @@ export default function CollectionsManager({ userId }: CollectionsManagerProps) 
     try {
       setIsLoading(true);
       const response = await fetch(`/api/collections?userId=${userId}`);
-      const data = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean; data?: Collection[] }>(await response.json());
 
       if (data.success) {
-        setCollections(data.data);
+        setCollections(data.data || []);
       }
     } catch (err) {
       console.error('Failed to load collections:', err);
@@ -68,14 +69,16 @@ export default function CollectionsManager({ userId }: CollectionsManagerProps) 
           name: newCollectionForm.name,
           description: newCollectionForm.description || undefined,
           icon: newCollectionForm.icon,
-          isPublic: newCollectionForm.is_public
+          is_public: newCollectionForm.is_public
         })
       });
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean; data?: Collection }>(await response.json());
 
       if (data.success) {
-        setCollections([data.data, ...collections]);
+        if (data.data) {
+          setCollections([data.data, ...collections]);
+        }
         setNewCollectionForm({
           name: '',
           description: '',
@@ -84,7 +87,7 @@ export default function CollectionsManager({ userId }: CollectionsManagerProps) 
         });
         setError('');
       } else {
-        setError(data.error || 'Koleksiyon oluşturulamadı');
+        setError(getApiErrorMessage(data, 'Koleksiyon oluşturulamadı'));
       }
     } catch (err) {
       setError('Koleksiyon oluşturulurken bir hata oluştu');
@@ -102,12 +105,12 @@ export default function CollectionsManager({ userId }: CollectionsManagerProps) 
         method: 'DELETE'
       });
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean }>(await response.json());
 
       if (data.success) {
         setCollections(collections.filter(c => c.id !== collectionId));
       } else {
-        setError(data.error || 'Koleksiyon silinemedi');
+        setError(getApiErrorMessage(data, 'Koleksiyon silinemedi'));
       }
     } catch (err) {
       setError('Koleksiyon silinirken bir hata oluştu');

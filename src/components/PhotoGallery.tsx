@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface Photo {
   id: string;
@@ -38,10 +39,10 @@ export default function PhotoGallery({ placeId, currentUserId, isAdmin }: PhotoG
     try {
       setIsLoading(true);
       const response = await fetch(`/api/places/${placeId}/photos?limit=50`);
-      const data = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean; data?: Photo[] }>(await response.json());
 
       if (data.success) {
-        setPhotos(data.data);
+        setPhotos(data.data || []);
       }
     } catch (error) {
       console.error('Failed to load photos:', error);
@@ -77,16 +78,18 @@ export default function PhotoGallery({ placeId, currentUserId, isAdmin }: PhotoG
         body: formData
       });
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean; data?: Photo }>(await response.json());
 
       if (data.success) {
-        setPhotos([data.data, ...photos]);
+        if (data.data) {
+          setPhotos([data.data, ...photos]);
+        }
         setSelectedFile(null);
         setAltText('');
         setCaption('');
         setUploadError('');
       } else {
-        setUploadError(data.error || 'Yükleme başarısız');
+        setUploadError(getApiErrorMessage(data, 'Yükleme başarısız'));
       }
     } catch (error) {
       setUploadError('Yükleme sırasında bir hata oluştu');
@@ -109,10 +112,11 @@ export default function PhotoGallery({ placeId, currentUserId, isAdmin }: PhotoG
         body: JSON.stringify({ voteType })
       });
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean; data?: Photo }>(await response.json());
 
-      if (data.success) {
-        setPhotos(photos.map(p => (p.id === photoId ? data.data : p)));
+      const updatedPhoto = data.data;
+      if (data.success && updatedPhoto) {
+        setPhotos(photos.map(p => (p.id === photoId ? updatedPhoto : p)));
         setVotedPhotos(prev => ({ ...prev, [photoId]: voteType }));
       }
     } catch (error) {
@@ -128,7 +132,7 @@ export default function PhotoGallery({ placeId, currentUserId, isAdmin }: PhotoG
         method: 'DELETE'
       });
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean }>(await response.json());
 
       if (data.success) {
         setPhotos(photos.filter(p => p.id !== photoId));
@@ -146,10 +150,11 @@ export default function PhotoGallery({ placeId, currentUserId, isAdmin }: PhotoG
         body: JSON.stringify({ isFeatured: !isFeatured })
       });
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean; data?: Photo }>(await response.json());
 
-      if (data.success) {
-        setPhotos(photos.map(p => (p.id === photoId ? data.data : p)));
+      const updatedPhoto = data.data;
+      if (data.success && updatedPhoto) {
+        setPhotos(photos.map(p => (p.id === photoId ? updatedPhoto : p)));
       }
     } catch (error) {
       console.error('Featured update error:', error);

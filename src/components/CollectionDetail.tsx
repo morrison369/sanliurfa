@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface CollectionItem {
   id: string;
@@ -19,6 +20,7 @@ interface Collection {
   description?: string;
   icon?: string;
   is_public: boolean;
+  is_following?: boolean;
   place_count: number;
   follower_count?: number;
   created_at: string;
@@ -52,38 +54,25 @@ export default function CollectionDetail({
     try {
       setIsLoading(true);
       const response = await fetch(`/api/collections/${collectionId}`);
-      const data = await response.json();
+      const data = unwrapApiPayload<{
+        success?: boolean;
+        data?: { collection: Collection; items: CollectionItem[] };
+      }>(await response.json());
 
       if (data.success) {
-        setCollection(data.data.collection);
-        setItems(data.data.items);
+        setCollection(data.data?.collection || null);
+        setItems(data.data?.items || []);
+        setIsFollowing(Boolean(data.data?.collection?.is_following));
       } else if (response.status === 404) {
         setError('Koleksiyon bulunamadı');
       } else {
-        setError(data.error || 'Koleksiyon yüklenemedi');
+        setError(getApiErrorMessage(data, 'Koleksiyon yüklenemedi'));
       }
     } catch (err) {
       console.error('Failed to load collection:', err);
       setError('Koleksiyon yüklenirken bir hata oluştu');
     } finally {
       setIsLoading(false);
-    }
-
-    // Check follow status if authenticated
-    if (currentUserId && collection?.id) {
-      checkFollowStatus();
-    }
-  };
-
-  const checkFollowStatus = async () => {
-    try {
-      const response = await fetch(`/api/collections/${collectionId}/followers/check`);
-      const data = await response.json();
-      if (data.success) {
-        setIsFollowing(data.data.is_following);
-      }
-    } catch (err) {
-      console.error('Failed to check follow status:', err);
     }
   };
 
@@ -95,16 +84,15 @@ export default function CollectionDetail({
 
     try {
       setIsFollowingLoading(true);
-      const method = isFollowing ? 'DELETE' : 'POST';
-      const response = await fetch(`/api/collections/${collectionId}/followers`, {
-        method,
+      const response = await fetch(`/api/collections/${collectionId}/follow`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean; following?: boolean }>(await response.json());
 
       if (data.success) {
-        setIsFollowing(!isFollowing);
+        setIsFollowing(Boolean(data.following));
       }
     } catch (err) {
       console.error('Follow error:', err);
@@ -113,7 +101,7 @@ export default function CollectionDetail({
     }
   };
 
-  const handleRemoveItem = async (itemId: string) => {
+  const handleRemoveItem = async (item: CollectionItem) => {
     if (!collection || currentUserId !== collection.user_id) {
       return;
     }
@@ -121,14 +109,17 @@ export default function CollectionDetail({
     if (!confirm('Mekanı koleksiyondan kaldırmak istediğinize emin misiniz?')) return;
 
     try {
-      const response = await fetch(`/api/collections/${collectionId}/items/${itemId}`, {
+      const response = await fetch(
+        `/api/collections/${collectionId}/items?placeId=${encodeURIComponent(item.place_id)}`,
+        {
         method: 'DELETE'
-      });
+        }
+      );
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ success?: boolean }>(await response.json());
 
       if (data.success) {
-        setItems(items.filter(item => item.id !== itemId));
+        setItems(items.filter(existingItem => existingItem.id !== item.id));
       }
     } catch (err) {
       console.error('Remove item error:', err);
@@ -266,7 +257,7 @@ export default function CollectionDetail({
                     </a>
                     {isOwner && (
                       <button
-                        onClick={() => handleRemoveItem(item.id)}
+                        onClick={() => handleRemoveItem(item)}
                         className="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded text-sm font-medium hover:bg-red-200 transition"
                       >
                         Kaldır
