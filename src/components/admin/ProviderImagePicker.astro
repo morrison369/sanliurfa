@@ -4,6 +4,7 @@ interface Props {
   currentSlug?: string | null;
   currentName?: string | null;
   currentCategory?: string | null;
+  folder?: string | null;
 }
 
 const {
@@ -11,6 +12,7 @@ const {
   currentSlug = '',
   currentName = '',
   currentCategory = '',
+  folder = 'places',
 } = Astro.props;
 ---
 
@@ -20,6 +22,7 @@ const {
   data-current-slug={currentSlug || ''}
   data-current-name={currentName || ''}
   data-current-category={currentCategory || ''}
+  data-folder={folder || 'places'}
 >
   <input type="hidden" name="provider_image_url" data-provider-image-input value="" />
 
@@ -96,7 +99,9 @@ const {
     }
 
     button.addEventListener('click', async () => {
-      const nameInput = document.querySelector<HTMLInputElement>('#name');
+      const nameInput =
+        document.querySelector<HTMLInputElement>('#name') ||
+        document.querySelector<HTMLInputElement>('#title');
       const categoryInput = document.querySelector<HTMLSelectElement>('#category');
       const query = nameInput?.value?.trim() || root.dataset.currentName || '';
       const category = categoryInput?.value?.trim() || root.dataset.currentCategory || '';
@@ -118,7 +123,7 @@ const {
             query,
             slug,
             category,
-            folder: 'places',
+            folder: root.dataset.folder || 'places',
           }),
         });
         const body = await response.json();

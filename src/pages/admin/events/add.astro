@@ -1,6 +1,7 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { Calendar, MapPin, Save, ArrowLeft } from 'lucide-react';
+import { MapPin, Save, ArrowLeft } from 'lucide-react';
+import ProviderImagePicker from '../../../components/admin/ProviderImagePicker.astro';
 
 const categories = [
   { id: 'kultur-sanat', label: 'Kültür & Sanat' },
@@ -161,6 +162,9 @@ const seo = {
           <!-- Image -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görsel</h3>
+            <div class="mb-4">
+              <ProviderImagePicker currentCategory="etkinlik" folder="events" />
+            </div>
             <input
               type="url"
               name="image"

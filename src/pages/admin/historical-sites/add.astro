@@ -1,6 +1,7 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { Landmark, MapPin, Save, ArrowLeft, Clock, DollarSign } from 'lucide-react';
+import { MapPin, Save, ArrowLeft, Clock, DollarSign } from 'lucide-react';
+import ProviderImagePicker from '../../../components/admin/ProviderImagePicker.astro';
 
 const periods = [
   { id: 'tunç-çağı', label: 'Tunç Çağı' },
@@ -218,6 +219,9 @@ const seo = {
           <!-- Images -->
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görseller</h3>
+            <div class="mb-4">
+              <ProviderImagePicker currentCategory="tarihi yer" folder="historical-sites" />
+            </div>
             <textarea
               name="images"
               rows="3"
