@@ -5,7 +5,7 @@ import { verifyToken } from '../../lib/auth';
 // Check authentication
 const token = Astro.cookies.get('auth-token')?.value;
 if (!token) {
-  return Astro.redirect('/giris');
+  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
 }
 
 const sessionData = await verifyToken(token);

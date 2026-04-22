@@ -7,7 +7,7 @@ const user = Astro.locals.user;
 
 // Redirect to login if not authenticated
 if (!user) {
-  return Astro.redirect('/giris');
+  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
 }
 ---
 

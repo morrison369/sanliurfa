@@ -4,7 +4,7 @@ import { BusinessAnalyticsDashboard } from '../../components/BusinessAnalyticsDa
 
 // Redirect if not authenticated
 if (!Astro.locals.user) {
-  return Astro.redirect('/giris');
+  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
 }
 ---
 

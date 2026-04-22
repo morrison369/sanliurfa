@@ -7,7 +7,7 @@ const userId = Astro.locals.user?.id;
 const isAdmin = Astro.locals.user?.role === 'admin';
 
 if (!userId || !isAdmin) {
-  return Astro.redirect('/giris');
+  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
 }
 ---
 
