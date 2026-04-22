@@ -2,6 +2,7 @@ import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
+import mdx from '@astrojs/mdx';
 import partytown from '@astrojs/partytown';
 import compress from 'astro-compress';
 
@@ -16,6 +17,7 @@ export default defineConfig({
     port: appPort,
   }),
   integrations: [
+    mdx(),
     tailwind(),
     react(),
     partytown({
