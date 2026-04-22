@@ -9,7 +9,7 @@ import { queryMany, queryOne, update } from '../../../lib/postgres';
 
 const user = Astro.locals.user;
 if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/login');
+  return Astro.redirect('/giris?redirect=/admin/blog/comments');
 }
 
 // Moderasyon status'unu al

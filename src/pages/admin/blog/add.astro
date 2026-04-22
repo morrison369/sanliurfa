@@ -7,7 +7,7 @@ import ProviderImagePicker from '../../../components/admin/ProviderImagePicker.a
 
 const user = Astro.locals.user;
 if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/login');
+  return Astro.redirect('/giris?redirect=/admin/blog/add');
 }
 
 let categories = [];
