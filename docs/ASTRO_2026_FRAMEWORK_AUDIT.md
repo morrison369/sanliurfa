@@ -28,6 +28,7 @@ Bu dosya sanliurfa.com için Astro framework kararlarını kilitler. Yeni paket 
 | `@astrojs/partytown` | Kullanılıyor | Geçerli analytics/üçüncü parti script olursa ana thread yükünü azaltmak için aktiftir. |
 | Astro image service / Sharp | Kullanılıyor | Yerel ve provider kaynaklı görsellerin optimize edilmesi için built-in Sharp servisi doğrudur. |
 | Content collections | Kullanılıyor | `src/content.config.ts` ile Türkçe içerik koleksiyonları tanımlıdır. |
+| Astro Zod schema import | Kullanılıyor | Astro 6 uyumu için `z` yalnızca `astro/zod` üzerinden alınır; `astro:content` içinden `z` import edilmez. |
 | Middleware ve API routes | Kullanılıyor | Auth, canonical redirect, rate limit ve public API yüzeyi Astro SSR içinde çalışır. |
 | Astro sessions | Adapter tarafından desteklenir | Mevcut auth Redis/JWT modeli korunur; framework session desteği gerektiğinde aynı Node adapter ile kullanılabilir. |
 | Astro Actions | Şimdilik bekletiliyor | Mevcut 340+ API endpointi ve auth/rate-limit sözleşmesi var; actions'a geçiş ayrı mimari refactor olmalıdır. |
@@ -53,5 +54,6 @@ Bu dosya sanliurfa.com için Astro framework kararlarını kilitler. Yeni paket 
 
 - Resmi Astro paketlerinin npm üzerindeki güncel sürümleri doğrulandı.
 - `package.json` Astro paket aralıkları mevcut kurulu sürümlerle aynı seviyeye çekildi.
+- Astro 6 deprecated `z from astro:content` kullanımı kaldırıldı; content collection şemaları `astro/zod` kullanır.
 - Yeni dev server açılmadı, 4321 dışı port kullanılmadı.
 - Proje SSR Node standalone hedefi korunur.
