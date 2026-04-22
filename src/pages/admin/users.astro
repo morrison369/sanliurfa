@@ -11,7 +11,7 @@ if (!user || !Astro.locals.isAdmin) {
 const result = await query('SELECT id, email, full_name, role, points, created_at, is_banned FROM users ORDER BY created_at DESC');
 const users = result.rows;
 
-const seo = { title: 'Kullanıcı Yönetimi - Admin' };
+const seo = { title: 'Kullanıcı Yönetimi - Admin', noindex: true };
 ---
 
 <Layout seo={seo}>
