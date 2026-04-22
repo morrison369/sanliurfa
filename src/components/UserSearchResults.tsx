@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface User {
   id: string;
@@ -41,10 +42,10 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Arama başarısız');
+        throw new Error(getApiErrorMessage(data, 'Arama başarısız'));
       }
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ data?: User[] }>(await response.json());
       setUsers(data.data || []);
       setHasSearched(true);
     } catch (err) {
@@ -65,7 +66,7 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
         );
 
         if (response.ok) {
-          const data = await response.json();
+          const data = unwrapApiPayload<{ data?: User[] }>(await response.json());
           setUsers(data.data || []);
         }
       } catch (err) {
@@ -81,6 +82,26 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
     if (level <= 5) return 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100';
     if (level <= 10) return 'bg-purple-100 dark:bg-purple-900 text-purple-900 dark:text-purple-100';
     return 'bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-100';
+  };
+
+  const handleStartConversation = async (userId: string) => {
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipient_id: userId })
+      });
+      const json = await response.json();
+      const payload = unwrapApiPayload<{ data?: { id?: string } }>(json);
+
+      if (!response.ok || !payload.data?.id) {
+        throw new Error(getApiErrorMessage(json, 'Konuşma başlatılamadı'));
+      }
+
+      window.location.href = `/mesajlar?conversation=${encodeURIComponent(payload.data.id)}`;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Konuşma başlatılamadı');
+    }
   };
 
   return (
@@ -211,7 +232,7 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
                     <button
                       onClick={(e) => {
                         e.preventDefault();
-                        window.location.href = `/api/messages?recipientId=${user.id}`;
+                        handleStartConversation(user.id);
                       }}
                       className="flex-1 text-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium py-1"
                     >

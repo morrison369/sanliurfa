@@ -11,7 +11,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.isAdmin) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Admin islemi', HttpStatus.FORBIDDEN, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Admin işlemi', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const url = new URL(request.url);
@@ -52,6 +52,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
     });
   } catch (error) {
     logger.error('Export failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Ichsel sunucu hatasi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'İçsel sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

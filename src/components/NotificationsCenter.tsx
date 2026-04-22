@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 export default function NotificationsCenter() {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -15,7 +16,7 @@ export default function NotificationsCenter() {
     try {
       const response = await fetch('/api/notifications?filter=' + filter + '&limit=50');
       if (!response.ok) throw new Error('Failed');
-      const data = await response.json();
+      const data = unwrapApiPayload<{ data?: any[] }>(await response.json());
       setNotifications(data.data || []);
     } catch (err) {
       console.error('Error loading notifications', err);
@@ -26,7 +27,7 @@ export default function NotificationsCenter() {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      await fetch('/api/notifications/' + notificationId, { method: 'PATCH' });
+      await fetch('/api/notifications/' + notificationId, { method: 'PUT' });
       await loadNotifications();
     } catch (err) {
       console.error('Error marking as read', err);
@@ -44,7 +45,7 @@ export default function NotificationsCenter() {
 
   const markAllAsRead = async () => {
     try {
-      await fetch('/api/notifications/read-all', { method: 'POST' });
+      await fetch('/api/notifications/read-all', { method: 'PUT' });
       await loadNotifications();
     } catch (err) {
       console.error('Error marking all as read', err);
