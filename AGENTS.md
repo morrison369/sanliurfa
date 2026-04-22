@@ -84,3 +84,4 @@
 - Do not add language selectors, non-TR translation dictionaries, `/api/i18n` language switching, `/tr`, `/en`, hreflang, or Accept-Language based redirects.
 - `docs/ASTRO_FIRST_LOCK.md` is the project rule for Astro-first implementation decisions.
 - Public media uploads default to local CWP/shared-hosting storage: `STORAGE_TYPE=local`, `PHOTO_UPLOAD_DIR=public/uploads/photos`, `UPLOAD_PUBLIC_PATH=/uploads/photos`. Keep uploaded image filenames slug-based and never commit provider API keys.
+- Redis is project-scoped through `REDIS_URL` and `REDIS_KEY_PREFIX=sanliurfa:`. Server runtime code must read server secrets from `process.env`, not dynamic `import.meta.env[key]`, to avoid Astro module-runner failures.
