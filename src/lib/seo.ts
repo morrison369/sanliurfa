@@ -7,19 +7,19 @@ export interface SEOConfig {
   description: string;
   canonical?: string;
   ogImage?: string;
-  ogType?: 'website' | 'article' | 'product';
-  twitterCard?: 'summary' | 'summary_large_image' | 'app' | 'player';
+  ogType?: "website" | "article" | "product";
+  twitterCard?: "summary" | "summary_large_image" | "app" | "player";
   robots?: string;
   author?: string;
   publishedTime?: Date;
   modifiedTime?: Date;
   tags?: string[];
-  lang?: 'tr';
+  lang?: "tr";
 }
 
 export interface StructuredData {
-  '@context': string;
-  '@type': string;
+  "@context": string;
+  "@type": string;
   [key: string]: any;
 }
 
@@ -28,22 +28,22 @@ export interface StructuredData {
  */
 export function generateMetaTags(config: SEOConfig): Record<string, string> {
   return {
-    'og:title': config.title,
-    'og:description': config.description,
-    'og:type': config.ogType || 'website',
-    'og:image': config.ogImage || '/og-image.png',
-    'og:url': config.canonical || '',
-    'twitter:card': config.twitterCard || 'summary_large_image',
-    'twitter:title': config.title,
-    'twitter:description': config.description,
-    'twitter:image': config.ogImage || '/og-image.png',
-    'description': config.description,
-    'keywords': config.tags?.join(', ') || '',
-    'author': config.author || 'Şanlıurfa.com',
-    'robots': config.robots || 'index, follow',
-    'language': 'Turkish',
-    'revisit-after': '7 days',
-    'viewport': 'width=device-width, initial-scale=1.0'
+    "og:title": config.title,
+    "og:description": config.description,
+    "og:type": config.ogType || "website",
+    "og:image": config.ogImage || "/og-image.png",
+    "og:url": config.canonical || "",
+    "twitter:card": config.twitterCard || "summary_large_image",
+    "twitter:title": config.title,
+    "twitter:description": config.description,
+    "twitter:image": config.ogImage || "/og-image.png",
+    description: config.description,
+    keywords: config.tags?.join(", ") || "",
+    author: config.author || "sanliurfa.com",
+    robots: config.robots || "index, follow",
+    language: "Turkish",
+    "revisit-after": "7 days",
+    viewport: "width=device-width, initial-scale=1.0",
   };
 }
 
@@ -52,24 +52,24 @@ export function generateMetaTags(config: SEOConfig): Record<string, string> {
  */
 export function generateOrganizationSchema(baseUrl: string): StructuredData {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    'name': 'Şanlıurfa.com',
-    'description': 'Şanlıurfa\'nın En Kapsamlı Rehberi',
-    'url': baseUrl,
-    'logo': `${baseUrl}/logo.png`,
-    'contactPoint': {
-      '@type': 'ContactPoint',
-      'contactType': 'Customer Service',
-      'telephone': '+90-414-XXXXXXX',
-      'email': 'info@sanliurfa.com'
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "sanliurfa.com",
+    description: "Şanlıurfa'nın En Kapsamlı Rehberi",
+    url: baseUrl,
+    logo: `${baseUrl}/logo.png`,
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "Customer Service",
+      telephone: "+90-414-XXXXXXX",
+      email: "info@sanliurfa.com",
     },
-    'address': {
-      '@type': 'PostalAddress',
-      'addressCountry': 'TR',
-      'addressRegion': 'Şanlıurfa',
-      'postalCode': '63xxx'
-    }
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "TR",
+      addressRegion: "Şanlıurfa",
+      postalCode: "63xxx",
+    },
   };
 }
 
@@ -90,33 +90,35 @@ export function generateLocalBusinessSchema(place: {
   category?: string;
 }): StructuredData {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    'name': place.name,
-    'description': place.description,
-    'address': {
-      '@type': 'PostalAddress',
-      'streetAddress': place.address,
-      'addressCountry': 'TR',
-      'addressRegion': 'Şanlıurfa'
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: place.name,
+    description: place.description,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: place.address,
+      addressCountry: "TR",
+      addressRegion: "Şanlıurfa",
     },
-    ...(place.phone && { 'telephone': place.phone }),
-    ...(place.website && { 'url': place.website }),
-    ...(place.image && { 'image': place.image }),
-    ...(place.latitude && place.longitude && {
-      'geo': {
-        '@type': 'GeoCoordinates',
-        'latitude': place.latitude,
-        'longitude': place.longitude
-      }
-    }),
-    ...(place.rating && place.reviewCount && {
-      'aggregateRating': {
-        '@type': 'AggregateRating',
-        'ratingValue': place.rating,
-        'reviewCount': place.reviewCount
-      }
-    })
+    ...(place.phone && { telephone: place.phone }),
+    ...(place.website && { url: place.website }),
+    ...(place.image && { image: place.image }),
+    ...(place.latitude &&
+      place.longitude && {
+        geo: {
+          "@type": "GeoCoordinates",
+          latitude: place.latitude,
+          longitude: place.longitude,
+        },
+      }),
+    ...(place.rating &&
+      place.reviewCount && {
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: place.rating,
+          reviewCount: place.reviewCount,
+        },
+      }),
   };
 }
 
@@ -133,22 +135,24 @@ export function generateArticleSchema(article: {
   url: string;
 }): StructuredData {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    'headline': article.headline,
-    'description': article.description,
-    'image': article.image || '/og-image.png',
-    'author': {
-      '@type': 'Person',
-      'name': article.author
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: article.headline,
+    description: article.description,
+    image: article.image || "/og-image.png",
+    author: {
+      "@type": "Person",
+      name: article.author,
     },
-    'datePublished': article.publishedTime.toISOString(),
-    'dateModified': article.modifiedTime?.toISOString() || article.publishedTime.toISOString(),
-    'url': article.url,
-    'mainEntityOfPage': {
-      '@type': 'WebPage',
-      '@id': article.url
-    }
+    datePublished: article.publishedTime.toISOString(),
+    dateModified:
+      article.modifiedTime?.toISOString() ||
+      article.publishedTime.toISOString(),
+    url: article.url,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": article.url,
+    },
   };
 }
 
@@ -156,17 +160,17 @@ export function generateArticleSchema(article: {
  * Generate JSON-LD for BreadcrumbList (navigation)
  */
 export function generateBreadcrumbSchema(
-  items: Array<{ name: string; url: string }>
+  items: Array<{ name: string; url: string }>,
 ): StructuredData {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    'itemListElement': items.map((item, idx) => ({
-      '@type': 'ListItem',
-      'position': idx + 1,
-      'name': item.name,
-      'item': item.url
-    }))
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      name: item.name,
+      item: item.url,
+    })),
   };
 }
 
@@ -174,19 +178,19 @@ export function generateBreadcrumbSchema(
  * Generate JSON-LD for FAQPage
  */
 export function generateFAQSchema(
-  faqs: Array<{ question: string; answer: string }>
+  faqs: Array<{ question: string; answer: string }>,
 ): StructuredData {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    'mainEntity': faqs.map(faq => ({
-      '@type': 'Question',
-      'name': faq.question,
-      'acceptedAnswer': {
-        '@type': 'Answer',
-        'text': faq.answer
-      }
-    }))
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
   };
 }
 
@@ -196,20 +200,29 @@ export function generateFAQSchema(
 export function generateSitemapUrl(
   loc: string,
   lastmod?: Date,
-  changefreq?: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never',
-  priority?: number
+  changefreq?:
+    | "always"
+    | "hourly"
+    | "daily"
+    | "weekly"
+    | "monthly"
+    | "yearly"
+    | "never",
+  priority?: number,
 ): string {
   const url = new URL(loc);
   const parts = [
     `  <url>`,
     `    <loc>${escapeXml(url.href)}</loc>`,
-    ...(lastmod ? [`    <lastmod>${lastmod.toISOString().split('T')[0]}</lastmod>`] : []),
+    ...(lastmod
+      ? [`    <lastmod>${lastmod.toISOString().split("T")[0]}</lastmod>`]
+      : []),
     ...(changefreq ? [`    <changefreq>${changefreq}</changefreq>`] : []),
     ...(priority !== undefined ? [`    <priority>${priority}</priority>`] : []),
-    `  </url>`
+    `  </url>`,
   ];
 
-  return parts.join('\n');
+  return parts.join("\n");
 }
 
 /**
@@ -217,11 +230,11 @@ export function generateSitemapUrl(
  */
 function escapeXml(str: string): string {
   return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 /**
@@ -230,7 +243,7 @@ function escapeXml(str: string): string {
 export function generateSitemap(urls: string[]): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.join('\n')}
+${urls.join("\n")}
 </urlset>`;
 }
 
@@ -281,25 +294,35 @@ Crawl-delay: 1`;
  * Social media meta tags
  */
 export const socialMediaMeta = {
-  facebook: (url: string, title: string, description: string, image: string) => ({
-    'og:url': url,
-    'og:type': 'website',
-    'og:title': title,
-    'og:description': description,
-    'og:image': image
+  facebook: (
+    url: string,
+    title: string,
+    description: string,
+    image: string,
+  ) => ({
+    "og:url": url,
+    "og:type": "website",
+    "og:title": title,
+    "og:description": description,
+    "og:image": image,
   }),
 
-  twitter: (handle: string, title: string, description: string, image: string) => ({
-    'twitter:card': 'summary_large_image',
-    'twitter:site': handle,
-    'twitter:title': title,
-    'twitter:description': description,
-    'twitter:image': image
+  twitter: (
+    handle: string,
+    title: string,
+    description: string,
+    image: string,
+  ) => ({
+    "twitter:card": "summary_large_image",
+    "twitter:site": handle,
+    "twitter:title": title,
+    "twitter:description": description,
+    "twitter:image": image,
   }),
 
   linkedin: (url: string) => ({
-    'linkedin:url': url
-  })
+    "linkedin:url": url,
+  }),
 };
 
 /**
@@ -307,37 +330,37 @@ export const socialMediaMeta = {
  */
 export const keywordSuggestions = {
   places: [
-    'Şanlıurfa gezilecek yerler',
-    'Göbekli Tepe',
-    'Şanlı Urfa rehberi',
-    'Urfada yapılacak şeyler',
-    'Diyarbakır Kalesi',
-    'Balıklı Göl'
+    "Şanlıurfa gezilecek yerler",
+    "Göbekli Tepe",
+    "Şanlı Urfa rehberi",
+    "Urfada yapılacak şeyler",
+    "Diyarbakır Kalesi",
+    "Balıklı Göl",
   ],
   tourism: [
-    'Şanlıurfa turizm',
-    'Urfa otelleri',
-    'Urfa rehberi',
-    'Urfa turları',
-    'antik şehirler Urfa',
-    'dinî turlar Urfa'
+    "Şanlıurfa turizm",
+    "Urfa otelleri",
+    "Urfa rehberi",
+    "Urfa turları",
+    "antik şehirler Urfa",
+    "dinî turlar Urfa",
   ],
   dining: [
-    'Şanlıurfa kebab',
-    'Urfa yemek',
-    'Şanlıurfa restoranları',
-    'Urfa lezzetleri',
-    'Urfa çöp şişi',
-    'Urfa humus'
+    "Şanlıurfa kebab",
+    "Urfa yemek",
+    "Şanlıurfa restoranları",
+    "Urfa lezzetleri",
+    "Urfa çöp şişi",
+    "Urfa humus",
   ],
   local: [
-    'Şanlıurfa haber',
-    'Urfa etkinlik',
-    'Urfa harita',
-    'Urfa kültür',
-    'Urfa sanat',
-    'Urfa müzeler'
-  ]
+    "Şanlıurfa haber",
+    "Urfa etkinlik",
+    "Urfa harita",
+    "Urfa kültür",
+    "Urfa sanat",
+    "Urfa müzeler",
+  ],
 };
 
 /**

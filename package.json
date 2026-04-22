@@ -272,7 +272,7 @@
     "turizm",
     "astro"
   ],
-  "author": "Sanliurfa.com",
+  "author": "sanliurfa.com",
   "license": "MIT",
   "engines": {
     "node": ">=22.13.0 <23"

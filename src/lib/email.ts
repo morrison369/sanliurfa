@@ -3,8 +3,8 @@
  * Queue-based email sending with templates
  */
 
-import { insert, queryMany, query, queryOne } from './postgres';
-import { logger } from './logging';
+import { insert, queryMany, query, queryOne } from "./postgres";
+import { logger } from "./logging";
 
 export interface EmailTemplate {
   subject: string;
@@ -13,29 +13,29 @@ export interface EmailTemplate {
 
 const TEMPLATES: { [key: string]: (data: any) => EmailTemplate } = {
   welcome: (data) => ({
-    subject: 'Şanlıurfa.com\'a Hoş Geldiniz',
-    html: `<h1>Hoş Geldiniz, ${data.fullName}!</h1><p>Hesabınız başarıyla oluşturuldu.</p>`
+    subject: "sanliurfa.com'a Hoş Geldiniz",
+    html: `<h1>Hoş Geldiniz, ${data.fullName}!</h1><p>Hesabınız başarıyla oluşturuldu.</p>`,
   }),
 
   new_message: (data) => ({
     subject: `${data.senderName} size mesaj gönderdi`,
-    html: `<h1>Yeni Mesaj</h1><p>${data.senderName} size: "${data.preview}"</p><p><a href="${data.messageUrl}">Mesajı Oku</a></p>`
+    html: `<h1>Yeni Mesaj</h1><p>${data.senderName} size: "${data.preview}"</p><p><a href="${data.messageUrl}">Mesajı Oku</a></p>`,
   }),
 
   new_follower: (data) => ({
     subject: `${data.followerName} sizi takip etmeye başladı`,
-    html: `<h1>Yeni Takipçi</h1><p>${data.followerName} sizi takip etmeye başladı.</p><p><a href="${data.profileUrl}">Profili Ziyaret Et</a></p>`
+    html: `<h1>Yeni Takipçi</h1><p>${data.followerName} sizi takip etmeye başladı.</p><p><a href="${data.profileUrl}">Profili Ziyaret Et</a></p>`,
   }),
 
   place_review: (data) => ({
     subject: `${data.placeName} için yeni inceleme`,
-    html: `<h1>Mekanınız İncelendi</h1><p>${data.reviewerName}, ${data.placeName} için şu incelemeyi yaptı: "${data.reviewPreview}"</p><p><a href="${data.reviewUrl}">İncelemeyi Oku</a></p>`
+    html: `<h1>Mekanınız İncelendi</h1><p>${data.reviewerName}, ${data.placeName} için şu incelemeyi yaptı: "${data.reviewPreview}"</p><p><a href="${data.reviewUrl}">İncelemeyi Oku</a></p>`,
   }),
 
   weekly_digest: (data) => ({
-    subject: 'Haftalık Özet - Şanlıurfa.com',
-    html: `<h1>Bu Hafta Neler Oldu?</h1><p>En beğenilen incelemeler ve takip ettiklerinizin aktiviteleri...</p>`
-  })
+    subject: "Haftalık Özet - sanliurfa.com",
+    html: `<h1>Bu Hafta Neler Oldu?</h1><p>En beğenilen incelemeler ve takip ettiklerinizin aktiviteleri...</p>`,
+  }),
 };
 
 /**
@@ -45,7 +45,7 @@ export async function queueEmail(
   recipientEmail: string,
   templateType: string,
   data: any,
-  recipientUserId?: string
+  recipientUserId?: string,
 ): Promise<void> {
   try {
     const template = TEMPLATES[templateType];
@@ -55,24 +55,28 @@ export async function queueEmail(
 
     const { subject, html } = template(data);
 
-    await insert('email_queue', {
+    await insert("email_queue", {
       recipient_email: recipientEmail,
       recipient_user_id: recipientUserId || null,
       template_type: templateType,
       subject: subject,
       data: JSON.stringify(data),
-      status: 'pending',
+      status: "pending",
       retry_count: 0,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     });
 
-    logger.info('Email queued', { recipientEmail, templateType });
+    logger.info("Email queued", { recipientEmail, templateType });
   } catch (error) {
-    logger.error('Failed to queue email', error instanceof Error ? error : new Error(String(error)), {
-      recipientEmail,
-      templateType
-    });
+    logger.error(
+      "Failed to queue email",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        recipientEmail,
+        templateType,
+      },
+    );
     throw error;
   }
 }
@@ -87,12 +91,15 @@ export async function getPendingEmails(limit: number = 50): Promise<any[]> {
        WHERE status = 'pending' AND retry_count < max_retries
        ORDER BY created_at ASC
        LIMIT $1`,
-      [limit]
+      [limit],
     );
 
     return results.rows || [];
   } catch (error) {
-    logger.error('Failed to get pending emails', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Failed to get pending emails",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return [];
   }
 }
@@ -103,13 +110,17 @@ export async function getPendingEmails(limit: number = 50): Promise<any[]> {
 export async function markEmailSent(emailId: string): Promise<void> {
   try {
     await query(
-      'UPDATE email_queue SET status = $1, sent_at = NOW(), updated_at = NOW() WHERE id = $2',
-      ['sent', emailId]
+      "UPDATE email_queue SET status = $1, sent_at = NOW(), updated_at = NOW() WHERE id = $2",
+      ["sent", emailId],
     );
   } catch (error) {
-    logger.error('Failed to mark email sent', error instanceof Error ? error : new Error(String(error)), {
-      emailId
-    });
+    logger.error(
+      "Failed to mark email sent",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        emailId,
+      },
+    );
     throw error;
   }
 }
@@ -117,22 +128,32 @@ export async function markEmailSent(emailId: string): Promise<void> {
 /**
  * Mark email as failed with error
  */
-export async function markEmailFailed(emailId: string, errorMessage: string): Promise<void> {
+export async function markEmailFailed(
+  emailId: string,
+  errorMessage: string,
+): Promise<void> {
   try {
-    const email = await query('SELECT retry_count, max_retries FROM email_queue WHERE id = $1', [emailId]);
+    const email = await query(
+      "SELECT retry_count, max_retries FROM email_queue WHERE id = $1",
+      [emailId],
+    );
     const retryCount = (email.rows?.[0]?.retry_count || 0) + 1;
     const maxRetries = email.rows?.[0]?.max_retries || 3;
 
-    const newStatus = retryCount >= maxRetries ? 'failed' : 'pending';
+    const newStatus = retryCount >= maxRetries ? "failed" : "pending";
 
     await query(
-      'UPDATE email_queue SET status = $1, retry_count = $2, error_message = $3, updated_at = NOW() WHERE id = $4',
-      [newStatus, retryCount, errorMessage, emailId]
+      "UPDATE email_queue SET status = $1, retry_count = $2, error_message = $3, updated_at = NOW() WHERE id = $4",
+      [newStatus, retryCount, errorMessage, emailId],
     );
   } catch (error) {
-    logger.error('Failed to mark email failed', error instanceof Error ? error : new Error(String(error)), {
-      emailId
-    });
+    logger.error(
+      "Failed to mark email failed",
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        emailId,
+      },
+    );
     throw error;
   }
 }
@@ -142,10 +163,10 @@ export async function markEmailFailed(emailId: string, errorMessage: string): Pr
  */
 export async function sendEmailViaService(email: any): Promise<boolean> {
   try {
-    logger.info('Email would be sent', {
+    logger.info("Email would be sent", {
       to: email.recipient_email,
       subject: email.subject,
-      template: email.template_type
+      template: email.template_type,
     });
 
     // In production, integrate with Resend, SendGrid, or SMTP
@@ -153,7 +174,10 @@ export async function sendEmailViaService(email: any): Promise<boolean> {
     await markEmailSent(email.id);
     return true;
   } catch (error) {
-    logger.error('Failed to send email', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Failed to send email",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return false;
   }
 }
@@ -161,50 +185,70 @@ export async function sendEmailViaService(email: any): Promise<boolean> {
 /**
  * Send email directly (used for password reset, verification, etc.)
  */
-export async function sendEmail(to: string, subject: string, html: string): Promise<boolean>;
-export async function sendEmail(message: { to: string; subject: string; html: string }): Promise<boolean>;
+export async function sendEmail(
+  to: string,
+  subject: string,
+  html: string,
+): Promise<boolean>;
+export async function sendEmail(message: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<boolean>;
 export async function sendEmail(
   toOrMessage: string | { to: string; subject: string; html: string },
   subjectArg?: string,
-  htmlArg?: string
+  htmlArg?: string,
 ): Promise<boolean> {
-  const to = typeof toOrMessage === 'string' ? toOrMessage : toOrMessage.to;
-  const subject = typeof toOrMessage === 'string' ? subjectArg || '' : toOrMessage.subject;
-  const html = typeof toOrMessage === 'string' ? htmlArg || '' : toOrMessage.html;
+  const to = typeof toOrMessage === "string" ? toOrMessage : toOrMessage.to;
+  const subject =
+    typeof toOrMessage === "string" ? subjectArg || "" : toOrMessage.subject;
+  const html =
+    typeof toOrMessage === "string" ? htmlArg || "" : toOrMessage.html;
 
   try {
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const FROM_EMAIL = process.env.MAIL_FROM || 'noreply@sanliurfa.com';
+    const FROM_EMAIL = process.env.MAIL_FROM || "noreply@sanliurfa.com";
 
     if (!RESEND_API_KEY) {
-      logger.warn('RESEND_API_KEY not configured, email not sent', { to, subject });
+      logger.warn("RESEND_API_KEY not configured, email not sent", {
+        to,
+        subject,
+      });
       return true; // Don't fail in development
     }
 
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         from: FROM_EMAIL,
         to,
         subject,
-        html
-      })
+        html,
+      }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      logger.error('Email send failed', new Error(JSON.stringify(error)), { to, subject });
+      logger.error("Email send failed", new Error(JSON.stringify(error)), {
+        to,
+        subject,
+      });
       return false;
     }
 
-    logger.info('Email sent successfully', { to, subject });
+    logger.info("Email sent successfully", { to, subject });
     return true;
   } catch (error) {
-    logger.error('Failed to send email', error instanceof Error ? error : new Error(String(error)), { to, subject });
+    logger.error(
+      "Failed to send email",
+      error instanceof Error ? error : new Error(String(error)),
+      { to, subject },
+    );
     return false;
   }
 }
@@ -212,7 +256,10 @@ export async function sendEmail(
 /**
  * Generate password reset email HTML
  */
-export function getPasswordResetEmailHTML(resetLink: string, expiryHours: number = 24): string {
+export function getPasswordResetEmailHTML(
+  resetLink: string,
+  expiryHours: number = 24,
+): string {
   return `
     <h1>Şifre Sıfırla</h1>
     <p>Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:</p>
@@ -239,7 +286,7 @@ export function getEmailVerificationHTML(verificationLink: string): string {
 export function getWelcomeEmailHTML(fullName: string): string {
   return `
     <h1>Hoş Geldiniz, ${fullName}!</h1>
-    <p>Şanlıurfa.com'a katılmak için teşekkürler.</p>
+    <p>sanliurfa.com'a katılmak için teşekkürler.</p>
     <p>Profilinizi tamamlayabilir ve şehir hakkında bilgi paylaşmaya başlayabilirsiniz.</p>
   `;
 }
@@ -247,7 +294,11 @@ export function getWelcomeEmailHTML(fullName: string): string {
 /**
  * Generate review response email HTML
  */
-export function getReviewResponseEmailHTML(reviewerName: string, placeName: string, responseText: string): string {
+export function getReviewResponseEmailHTML(
+  reviewerName: string,
+  placeName: string,
+  responseText: string,
+): string {
   return `
     <h1>${placeName} adlı mekanınıza bir yanıt geldi</h1>
     <p>${reviewerName} tarafından yapılan yorumunuza sahibi yanıt verdi:</p>
@@ -268,16 +319,22 @@ export function getSubscriptionEmailHTML(placeName: string): string {
 /**
  * Request email verification
  */
-export async function requestEmailVerification(userId: string, email: string): Promise<boolean> {
+export async function requestEmailVerification(
+  userId: string,
+  email: string,
+): Promise<boolean> {
   try {
     // Generate verification token and send email
     const verificationToken = Math.random().toString(36).substring(2, 15);
     const verificationLink = `https://sanliurfa.com/verify-email?token=${verificationToken}`;
     const html = getEmailVerificationHTML(verificationLink);
-    
-    return await sendEmail(email, 'E-posta Doğrulama', html);
+
+    return await sendEmail(email, "E-posta Doğrulama", html);
   } catch (error) {
-    logger.error('Failed to request email verification', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Failed to request email verification",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return false;
   }
 }
@@ -289,12 +346,15 @@ export async function isEmailVerified(userId: string): Promise<boolean> {
   try {
     // Check in users table email_verified column
     const result = await queryOne(
-      'SELECT email_verified FROM users WHERE id = $1',
-      [userId]
+      "SELECT email_verified FROM users WHERE id = $1",
+      [userId],
     );
     return result?.email_verified || false;
   } catch (error) {
-    logger.error('Failed to check email verification', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Failed to check email verification",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return false;
   }
 }
@@ -306,10 +366,13 @@ export async function verifyEmailWithToken(token: string): Promise<boolean> {
   try {
     // In production, validate token and mark email as verified
     // For now, just return true
-    logger.info('Email verified with token', { token });
+    logger.info("Email verified with token", { token });
     return true;
   } catch (error) {
-    logger.error('Failed to verify email', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Failed to verify email",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return false;
   }
 }

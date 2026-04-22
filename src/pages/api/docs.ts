@@ -1,10 +1,10 @@
-import type { APIRoute } from 'astro';
+import type { APIRoute } from "astro";
 
 const html = `
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Şanlıurfa.com API Dokümantasyonu</title>
+  <title>sanliurfa.com API Dokümantasyonu</title>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.css">
@@ -43,7 +43,7 @@ export const GET: APIRoute = () => {
   return new Response(html, {
     status: 200,
     headers: {
-      'Content-Type': 'text/html; charset=utf-8'
-    }
+      "Content-Type": "text/html; charset=utf-8",
+    },
   });
 };

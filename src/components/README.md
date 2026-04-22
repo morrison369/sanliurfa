@@ -1,23 +1,25 @@
 # UI Bileşen Kitaplığı
 
-Şanlıurfa.com için erişilebilirlik, responsive tasarım ve Türkçe-only kullanım kurallarına bağlı bileşen kitaplığı.
+sanliurfa.com için erişilebilirlik, responsive tasarım ve Türkçe-only kullanım kurallarına bağlı bileşen kitaplığı.
 
 ## Core Components
 
 ### Error Handling
 
 #### ErrorBoundary
+
 React error boundary component for catching and displaying errors in child components.
 
 ```tsx
-import ErrorBoundary from './ErrorBoundary';
+import ErrorBoundary from "./ErrorBoundary";
 
 <ErrorBoundary fallback={<CustomErrorUI />}>
   <YourComponent />
-</ErrorBoundary>
+</ErrorBoundary>;
 ```
 
 **Features:**
+
 - Catches React component errors
 - Logs errors with context
 - Fallback UI for error states
@@ -61,6 +63,7 @@ import {
 ```
 
 **Features:**
+
 - Field validation errors
 - Validation summary
 - API error alerts
@@ -72,21 +75,19 @@ import {
 ### Accessibility
 
 #### AccessibleButton
+
 Keyboard-accessible button component with ARIA support.
 
 ```tsx
-import { AccessibleButton } from './AccessibleButton';
+import { AccessibleButton } from "./AccessibleButton";
 
-<AccessibleButton
-  variant="primary"
-  loading={isLoading}
-  ariaLabel="Kayıt Ol"
->
+<AccessibleButton variant="primary" loading={isLoading} ariaLabel="Kayıt Ol">
   Sign Up
-</AccessibleButton>
+</AccessibleButton>;
 ```
 
 **Features:**
+
 - Keyboard support (Enter, Space)
 - ARIA labels and descriptions
 - Loading states
@@ -98,19 +99,20 @@ import { AccessibleButton } from './AccessibleButton';
 ### SEO
 
 #### SEOHead
+
 Astro component for injecting meta tags and structured data.
 
 ```astro
 ---
-import { SEOHead } from '../components/SEOHead.astro';
-import { generateOrganizationSchema, generateArticleSchema } from '../lib/seo';
+import { SEOHead } from "../components/SEOHead.astro";
+import { generateOrganizationSchema, generateArticleSchema } from "../lib/seo";
 
 const structuredData = generateArticleSchema({
-  headline: 'Göbekli Tepe Rehberi',
-  description: 'Dünyada en eski insan yapısı...',
-  author: 'Author Name',
+  headline: "Göbekli Tepe Rehberi",
+  description: "Dünyada en eski insan yapısı...",
+  author: "Author Name",
   publishedTime: new Date(),
-  url: 'https://sanliurfa.com/gobeklitepe'
+  url: "https://sanliurfa.com/gobeklitepe",
 });
 ---
 
@@ -119,13 +121,14 @@ const structuredData = generateArticleSchema({
   description="Dünyada en eski insan yapısı hakkında her şey"
   canonical="https://sanliurfa.com/gobeklitepe"
   ogImage="https://sanliurfa.com/images/gobeklitepe.jpg"
-  tags={['arkeoloji', 'tarih', 'turizm']}
+  tags={["arkeoloji", "tarih", "turizm"]}
   structuredData={structuredData}
   lang="tr"
 />
 ```
 
 **Features:**
+
 - Open Graph meta tags
 - Twitter Card meta tags
 - Structured data (JSON-LD)
@@ -140,15 +143,17 @@ const structuredData = generateArticleSchema({
 ### Notifications
 
 #### NotificationCenter
+
 Manages in-app notifications and alerts.
 
 ```tsx
-import NotificationCenter from './NotificationCenter';
+import NotificationCenter from "./NotificationCenter";
 
-<NotificationCenter />
+<NotificationCenter />;
 ```
 
 **Features:**
+
 - Toast notifications
 - System alerts
 - Push notification opt-in
@@ -156,15 +161,17 @@ import NotificationCenter from './NotificationCenter';
 - Auto-dismiss with custom duration
 
 #### NotificationsPage
+
 Full notifications management page.
 
 ```tsx
-import NotificationsPage from './NotificationsPage';
+import NotificationsPage from "./NotificationsPage";
 
-<NotificationsPage />
+<NotificationsPage />;
 ```
 
 **Features:**
+
 - Notification list with filtering
 - Mark as read/unread
 - Delete notifications
@@ -176,15 +183,17 @@ import NotificationsPage from './NotificationsPage';
 ### User & Profile
 
 #### UserProfile
+
 User profile display and edit component.
 
 ```tsx
-import UserProfile from './UserProfile';
+import UserProfile from "./UserProfile";
 
-<UserProfile userId={userId} editable={true} />
+<UserProfile userId={userId} editable={true} />;
 ```
 
 **Features:**
+
 - User info display
 - Profile picture upload
 - Editable fields
@@ -192,15 +201,17 @@ import UserProfile from './UserProfile';
 - Save and cancel actions
 
 #### UserPublicProfile
+
 Public profile view (read-only).
 
 ```tsx
-import UserPublicProfile from './UserPublicProfile';
+import UserPublicProfile from "./UserPublicProfile";
 
-<UserPublicProfile userId={userId} />
+<UserPublicProfile userId={userId} />;
 ```
 
 **Features:**
+
 - User reviews
 - Places added
 - Following/followers
@@ -212,20 +223,22 @@ import UserPublicProfile from './UserPublicProfile';
 ### Search & Discovery
 
 #### SearchResults
+
 Display search results with filtering and pagination.
 
 ```tsx
-import SearchResults from './SearchResults';
+import SearchResults from "./SearchResults";
 
 <SearchResults
   query="kebab"
   results={results}
   onResultClick={handleClick}
   isLoading={loading}
-/>
+/>;
 ```
 
 **Features:**
+
 - Result list display
 - Category filtering
 - Pagination
@@ -237,15 +250,17 @@ import SearchResults from './SearchResults';
 ### Admin Panel
 
 #### AdminDashboard
+
 Dashboard overview with key metrics.
 
 ```tsx
-import AdminDashboard from './admin/AdminDashboard';
+import AdminDashboard from "./admin/AdminDashboard";
 
-<AdminDashboard />
+<AdminDashboard />;
 ```
 
 **Features:**
+
 - Key performance indicators
 - Charts and graphs
 - Recent activities
@@ -253,18 +268,17 @@ import AdminDashboard from './admin/AdminDashboard';
 - Quick actions
 
 #### AdminManager
+
 Resource management interface.
 
 ```tsx
-import AdminManager from './admin/AdminManager';
+import AdminManager from "./admin/AdminManager";
 
-<AdminManager
-  resource="users"
-  columns={['name', 'email', 'role']}
-/>
+<AdminManager resource="users" columns={["name", "email", "role"]} />;
 ```
 
 **Features:**
+
 - Data table with sorting/filtering
 - Bulk actions
 - Add/edit/delete operations
@@ -272,18 +286,17 @@ import AdminManager from './admin/AdminManager';
 - Export functionality
 
 #### AuditLogViewer
+
 View and filter audit logs.
 
 ```tsx
-import AuditLogViewer from './admin/AuditLogViewer';
+import AuditLogViewer from "./admin/AuditLogViewer";
 
-<AuditLogViewer
-  userId={userId}
-  timeRange="7d"
-/>
+<AuditLogViewer userId={userId} timeRange="7d" />;
 ```
 
 **Features:**
+
 - Filterable audit log display
 - User activity history
 - Change tracking
@@ -295,15 +308,17 @@ import AuditLogViewer from './admin/AuditLogViewer';
 ### Vendor & Business
 
 #### VendorDashboard
+
 Vendor-specific dashboard.
 
 ```tsx
-import VendorDashboard from './VendorDashboard';
+import VendorDashboard from "./VendorDashboard";
 
-<VendorDashboard />
+<VendorDashboard />;
 ```
 
 **Features:**
+
 - Business overview
 - Review management
 - Visitor analytics
@@ -315,15 +330,17 @@ import VendorDashboard from './VendorDashboard';
 ### Engagement
 
 #### PWAPrompt
+
 Prompts users to install the PWA.
 
 ```tsx
-import PWAPrompt from './PWAPrompt';
+import PWAPrompt from "./PWAPrompt";
 
-<PWAPrompt />
+<PWAPrompt />;
 ```
 
 **Features:**
+
 - Smart install prompts
 - Dismissible alerts
 - Platform detection (iOS/Android)
@@ -334,24 +351,21 @@ import PWAPrompt from './PWAPrompt';
 ## Component Patterns
 
 ### Controlled Components
+
 Use React hooks for state management:
 
 ```tsx
-import { useState } from 'react';
+import { useState } from "react";
 
 export function MyComponent() {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState("");
 
-  return (
-    <input
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-    />
-  );
+  return <input value={value} onChange={(e) => setValue(e.target.value)} />;
 }
 ```
 
 ### Props Interface
+
 Define component props clearly:
 
 ```tsx
@@ -367,6 +381,7 @@ export function MyComponent({ title, loading, onSubmit }: MyComponentProps) {
 ```
 
 ### Error Boundaries
+
 Wrap risky components:
 
 ```tsx
@@ -376,6 +391,7 @@ Wrap risky components:
 ```
 
 ### Accessibility
+
 Always include ARIA labels:
 
 ```tsx
@@ -385,14 +401,11 @@ Always include ARIA labels:
 ```
 
 ### Loading States
+
 Provide feedback during async operations:
 
 ```tsx
-<LoadingState
-  isLoading={loading}
-  error={error}
-  onRetry={retry}
->
+<LoadingState isLoading={loading} error={error} onRetry={retry}>
   <Content />
 </LoadingState>
 ```
@@ -402,6 +415,7 @@ Provide feedback during async operations:
 ## Styling
 
 ### Tailwind CSS
+
 All components use Tailwind CSS for styling:
 
 ```tsx
@@ -411,6 +425,7 @@ All components use Tailwind CSS for styling:
 ```
 
 ### Dark Mode
+
 Components support dark mode:
 
 ```tsx
@@ -420,6 +435,7 @@ Components support dark mode:
 ```
 
 ### Responsive Design
+
 Mobile-first responsive design:
 
 ```tsx
@@ -433,6 +449,7 @@ Mobile-first responsive design:
 ## Yerelleştirme
 
 ### Turkish Only
+
 Bileşenler Türkçe kilitlidir. Dil seçici veya İngilizce metin yolu eklenmez.
 
 ```tsx
@@ -444,11 +461,12 @@ Bileşenler Türkçe kilitlidir. Dil seçici veya İngilizce metin yolu eklenmez
 ## Form Components
 
 ### Validation
+
 Use form validation utilities:
 
 ```tsx
-import { useFormError } from '../lib/useApiError';
-import { validateForm, validators } from '../lib/form-errors';
+import { useFormError } from "../lib/useApiError";
+import { validateForm, validators } from "../lib/form-errors";
 
 export function MyForm() {
   const { handleSubmit, error } = useFormError();
@@ -460,7 +478,7 @@ export function MyForm() {
 
     const validationErrors = validateForm(data, {
       email: validators.email,
-      password: validators.password
+      password: validators.password,
     });
 
     if (Object.keys(validationErrors).length > 0) {
@@ -475,8 +493,8 @@ export function MyForm() {
     <form onSubmit={handleFormSubmit}>
       <input
         type="email"
-        value={data.email || ''}
-        onChange={(e) => setData({...data, email: e.target.value})}
+        value={data.email || ""}
+        onChange={(e) => setData({ ...data, email: e.target.value })}
       />
       <FieldError message={errors.email?.[0]} />
 
@@ -491,23 +509,25 @@ export function MyForm() {
 ## Performance
 
 ### Code Splitting
+
 Components are automatically code-split by Astro:
 
 ```tsx
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense } from "react";
 
-const HeavyComponent = lazy(() => import('./HeavyComponent'));
+const HeavyComponent = lazy(() => import("./HeavyComponent"));
 
 <Suspense fallback={<LoadingSpinner />}>
   <HeavyComponent />
-</Suspense>
+</Suspense>;
 ```
 
 ### Memoization
+
 Prevent unnecessary re-renders:
 
 ```tsx
-import { memo } from 'react';
+import { memo } from "react";
 
 export const MemoizedComponent = memo(function MyComponent(props) {
   return <div>{props.children}</div>;
@@ -533,22 +553,22 @@ export const MemoizedComponent = memo(function MyComponent(props) {
 
 ## Component Inventory
 
-| Component | Type | Accessibility | Turkish-only | Status |
-|-----------|------|---------------|------|--------|
-| ErrorBoundary | Error | ✓ | - | ✓ |
-| ErrorDisplay | Error | ✓ | ✓ | ✓ |
-| AccessibleButton | Input | ✓ | - | ✓ |
-| SEOHead | Meta | - | ✓ | ✓ |
-| NotificationCenter | Feature | ✓ | ✓ | ✓ |
-| NotificationsPage | Feature | ✓ | ✓ | ✓ |
-| UserProfile | User | ✓ | ✓ | ✓ |
-| UserPublicProfile | User | ✓ | ✓ | ✓ |
-| SearchResults | Discovery | ✓ | ✓ | ✓ |
-| AdminDashboard | Admin | ✓ | ✓ | ✓ |
-| AdminManager | Admin | ✓ | ✓ | ✓ |
-| AuditLogViewer | Admin | ✓ | ✓ | ✓ |
-| VendorDashboard | Business | ✓ | ✓ | ✓ |
-| PWAPrompt | Engagement | ✓ | ✓ | ✓ |
+| Component          | Type       | Accessibility | Turkish-only | Status |
+| ------------------ | ---------- | ------------- | ------------ | ------ |
+| ErrorBoundary      | Error      | ✓             | -            | ✓      |
+| ErrorDisplay       | Error      | ✓             | ✓            | ✓      |
+| AccessibleButton   | Input      | ✓             | -            | ✓      |
+| SEOHead            | Meta       | -             | ✓            | ✓      |
+| NotificationCenter | Feature    | ✓             | ✓            | ✓      |
+| NotificationsPage  | Feature    | ✓             | ✓            | ✓      |
+| UserProfile        | User       | ✓             | ✓            | ✓      |
+| UserPublicProfile  | User       | ✓             | ✓            | ✓      |
+| SearchResults      | Discovery  | ✓             | ✓            | ✓      |
+| AdminDashboard     | Admin      | ✓             | ✓            | ✓      |
+| AdminManager       | Admin      | ✓             | ✓            | ✓      |
+| AuditLogViewer     | Admin      | ✓             | ✓            | ✓      |
+| VendorDashboard    | Business   | ✓             | ✓            | ✓      |
+| PWAPrompt          | Engagement | ✓             | ✓            | ✓      |
 
 ---
 
