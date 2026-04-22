@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { unwrapApiPayload } from "@/lib/client-api";
 
 export default function UserPublicProfile({ userId, currentUserId }: { userId: string; currentUserId?: string }) {
   const [profile, setProfile] = useState<any>(null);
@@ -11,20 +12,30 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
   useEffect(() => {
     fetch("/api/users/" + userId + "/profile")
       .then(r => r.json())
-      .then(d => { setProfile(d.data); setIsLoading(false); })
+      .then(d => {
+        const payload = unwrapApiPayload<{ data?: any }>(d);
+        setProfile(payload.data);
+        setIsLoading(false);
+      })
       .catch(() => setIsLoading(false));
 
     // Check blocking status if current user exists
     if (currentUserId) {
       fetch("/api/blocking/check?user_id=" + userId)
         .then(r => r.json())
-        .then(d => setIsBlocked(d.data?.blocked_user || false))
+        .then(d => {
+          const payload = unwrapApiPayload<{ data?: { blocked_user?: boolean } }>(d);
+          setIsBlocked(payload.data?.blocked_user || false);
+        })
         .catch(() => {});
 
       // Check following status
       fetch("/api/following/check?user_id=" + userId)
         .then(r => r.json())
-        .then(d => setIsFollowing(d.data?.is_following || false))
+        .then(d => {
+          const payload = unwrapApiPayload<{ data?: { is_following?: boolean } }>(d);
+          setIsFollowing(payload.data?.is_following || false);
+        })
         .catch(() => {});
     }
   }, [userId, currentUserId]);
@@ -74,8 +85,8 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
     }
   };
 
-  if (isLoading) return <div className="text-center py-12">Loading...</div>;
-  if (!profile) return <div>Profile not found</div>;
+  if (isLoading) return <div className="text-center py-12">Yükleniyor...</div>;
+  if (!profile) return <div>Profil bulunamadı</div>;
 
   return (
     <div className="space-y-6">
@@ -86,8 +97,8 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
             <h1 className="text-3xl font-bold mb-2">{profile.full_name}</h1>
             {profile.bio && <p className="text-gray-600 mb-4">{profile.bio}</p>}
             <div className="flex gap-4 mb-4">
-              <div><p className="text-2xl font-bold">{profile.stats.followers}</p><p className="text-sm">Followers</p></div>
-              <div><p className="text-2xl font-bold">{profile.stats.following}</p><p className="text-sm">Following</p></div>
+              <div><p className="text-2xl font-bold">{profile.stats.followers}</p><p className="text-sm">Takipçi</p></div>
+              <div><p className="text-2xl font-bold">{profile.stats.following}</p><p className="text-sm">Takip edilen</p></div>
             </div>
             {!profile.is_own_profile && currentUserId && (
               <div className="flex gap-2">

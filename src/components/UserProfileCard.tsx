@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface User {
   id: string;
@@ -49,9 +50,11 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
     try {
       const response = await fetch(`/api/followers/stats?userId=${user.id}`);
       if (response.ok) {
-        const data = await response.json();
-        setFollowerStats(data.data);
-        setIsFollowing(data.data.is_following);
+        const payload = unwrapApiPayload<{ success?: boolean; data?: FollowerStats }>(await response.json());
+        if (payload.data) {
+          setFollowerStats(payload.data);
+          setIsFollowing(payload.data.is_following);
+        }
       }
     } catch (err) {
       console.error('Failed to load follower stats:', err);
@@ -96,18 +99,34 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
     setError(null);
 
     try {
-      const response = await fetch('/api/messages', {
+      const conversationResponse = await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          recipientId: user.id,
+          recipient_id: user.id
+        })
+      });
+
+      const conversationJson = await conversationResponse.json();
+      const conversationPayload = unwrapApiPayload<{ success?: boolean; data?: { id?: string } }>(
+        conversationJson
+      );
+
+      if (!conversationResponse.ok || !conversationPayload.data?.id) {
+        throw new Error(getApiErrorMessage(conversationJson, 'Konuşma başlatılamadı'));
+      }
+
+      const messageResponse = await fetch(`/api/messages/${conversationPayload.data.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           content: messageContent.trim()
         })
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Mesaj gönderilemedi');
+      if (!messageResponse.ok) {
+        const data = await messageResponse.json();
+        throw new Error(getApiErrorMessage(data, 'Mesaj gönderilemedi'));
       }
 
       setSuccess(true);
