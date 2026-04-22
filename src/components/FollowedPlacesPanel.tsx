@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface FollowedPlace {
   id: string;
@@ -28,7 +29,7 @@ export default function FollowedPlacesPanel() {
         throw new Error('Takip edilen mekanlar yüklenemedi');
       }
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ places?: FollowedPlace[] }>(await response.json());
       setPlaces(data.places || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');

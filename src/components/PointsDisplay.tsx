@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface UserPoints {
   userId: string;
@@ -25,7 +26,7 @@ export default function PointsDisplay() {
         throw new Error('Puanlar yüklenemedi');
       }
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ points?: UserPoints }>(await response.json());
       setPoints(data.points || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');

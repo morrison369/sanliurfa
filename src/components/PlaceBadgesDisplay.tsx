@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface Badge {
   id: string;
@@ -35,7 +36,7 @@ export function PlaceBadgesDisplay({ placeId, className = '' }: PlaceBadgesDispl
           throw new Error('Failed to fetch badges');
         }
 
-        const data = await response.json();
+        const data = unwrapApiPayload<{ badges?: Badge[] }>(await response.json());
         setBadges(data.badges || []);
         setError(null);
       } catch (err) {
