@@ -25,7 +25,8 @@
 - `npm run dev:raw`: run Astro dev directly on `127.0.0.1:4321` without pre-stop helper.
 - `npm run dev:stop`: stop only repo-scoped listeners on local port `4321`.
 - `npm run preview`: local Astro preview on `127.0.0.1:4321` only.
-- `ecosystem.config.js`: production PM2 runtime also uses `PORT=4321`; do not reintroduce `6000`, `3000`, `1111`, `1112`, `1113`, or fallback ports.
+- `ecosystem.config.cjs`: canonical production PM2 runtime uses `PORT=4321`; do not reintroduce `6000`, `3000`, `1111`, `1112`, `1113`, or fallback ports.
+- `docs/ACTIVE_DEPLOYMENT_CWP_4321.md`: source of truth for CWP + Astro Node standalone deployment. Older `DEPLOYMENT*`, `CWP-*`, and `FINAL_*` files are archival if they conflict with this file.
 - `npm run redis:check`: verify the project Redis connection from ignored `.env.local` without printing secrets or touching other Redis services.
 - `npm run build`: SSR production build to `dist/`.
 - `npm run lint`: `astro check` plus `tsc --noEmit`.
