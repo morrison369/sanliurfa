@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface Activity {
   id: string;
@@ -44,14 +45,15 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
         throw new Error('Aktivite akışı yüklenemedi');
       }
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ data?: Activity[] }>(await response.json());
+      const items = data.data || [];
       if (newOffset === 0) {
-        setActivities(data.data || []);
+        setActivities(items);
       } else {
-        setActivities([...activities, ...(data.data || [])]);
+        setActivities([...activities, ...items]);
       }
 
-      setHasMore(data.data.length >= 20);
+      setHasMore(items.length >= 20);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     } finally {

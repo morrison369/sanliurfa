@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface TrendingItem {
   id: string;
@@ -50,8 +51,10 @@ export default function TrendingRecommendations() {
       const response = await fetch(`/api/trending?type=places&period=${period}&limit=20&keywords=true`);
       if (!response.ok) throw new Error('Failed to load trending');
 
-      const result = await response.json();
-      setTrending(result.data.trending || []);
+      const result = unwrapApiPayload<{ data?: { trending?: TrendingItem[] } }>(
+        await response.json()
+      );
+      setTrending(result.data?.trending || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error loading trending');
     } finally {
@@ -67,7 +70,7 @@ export default function TrendingRecommendations() {
       const response = await fetch('/api/recommendations?limit=20');
       if (!response.ok) throw new Error('Failed to load recommendations');
 
-      const result = await response.json();
+      const result = unwrapApiPayload<{ data?: Recommendation[] }>(await response.json());
       setRecommendations(result.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error loading recommendations');
@@ -81,7 +84,7 @@ export default function TrendingRecommendations() {
       setLoading(true);
       const response = await fetch('/api/recommendations?refresh=true');
       if (!response.ok) throw new Error('Failed to refresh');
-      const result = await response.json();
+      const result = unwrapApiPayload<{ data?: Recommendation[] }>(await response.json());
       setRecommendations(result.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error refreshing');

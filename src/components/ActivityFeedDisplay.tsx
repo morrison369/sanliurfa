@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface FeedItem {
   id: number;
@@ -56,9 +57,10 @@ export default function ActivityFeedDisplay({ type = 'feed', userId }: ActivityF
         throw new Error('Aktiviteleri yüklenemedi');
       }
 
-      const data = await response.json();
-      setActivities(data.data || []);
-      setHasMore((data.data?.length || 0) >= limit);
+      const data = unwrapApiPayload<{ data?: FeedItem[] }>(await response.json());
+      const items = data.data || [];
+      setActivities(items);
+      setHasMore(items.length >= limit);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     } finally {
@@ -88,7 +90,7 @@ export default function ActivityFeedDisplay({ type = 'feed', userId }: ActivityF
         throw new Error('Daha fazla yüklenemedi');
       }
 
-      const data = await response.json();
+      const data = unwrapApiPayload<{ data?: FeedItem[] }>(await response.json());
       const newActivities = data.data || [];
 
       setActivities([...activities, ...newActivities]);

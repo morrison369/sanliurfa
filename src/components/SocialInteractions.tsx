@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Share2, MessageCircle } from 'lucide-react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface SocialInteractionsProps {
   placeId: string;
@@ -16,11 +17,13 @@ export default function SocialInteractions({ placeId, userId }: SocialInteractio
       const likeRes = await window.fetch(`/api/places/${placeId}/like`);
       const shareRes = await window.fetch(`/api/places/${placeId}/share`);
       if (likeRes.ok && shareRes.ok) {
-        const likeData = await likeRes.json();
-        const shareData = await shareRes.json();
-        setLikeCount(likeData.data.count);
-        setHasLiked(likeData.data.hasLiked);
-        setShareCount(shareData.data.count);
+        const likeData = unwrapApiPayload<{ data?: { count?: number; hasLiked?: boolean } }>(
+          await likeRes.json()
+        );
+        const shareData = unwrapApiPayload<{ data?: { count?: number } }>(await shareRes.json());
+        setLikeCount(likeData.data?.count || 0);
+        setHasLiked(Boolean(likeData.data?.hasLiked));
+        setShareCount(shareData.data?.count || 0);
       }
     };
     loadInteractions();
@@ -34,8 +37,8 @@ export default function SocialInteractions({ placeId, userId }: SocialInteractio
       body: JSON.stringify({ action: hasLiked ? 'unlike' : 'like' }),
     });
     if (res.ok) {
-      const data = await res.json();
-      setLikeCount(data.data.count);
+      const data = unwrapApiPayload<{ data?: { count?: number } }>(await res.json());
+      setLikeCount(data.data?.count || 0);
       setHasLiked(!hasLiked);
     }
   };
