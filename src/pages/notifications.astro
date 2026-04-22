@@ -1,16 +1,18 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import NotificationCenter from '../components/NotificationCenter';
+import Layout from "../layouts/Layout.astro";
+import NotificationCenter from "../components/NotificationCenter";
 
 const { locals } = Astro;
 
 // Redirect if not authenticated
 if (!locals.user) {
-  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+  return Astro.redirect(
+    `/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`,
+  );
 }
 ---
 
-<Layout title="Bildirimler | Şanlıurfa.com" noindex>
+<Layout title="Bildirimler | sanliurfa.com" noindex>
   <div class="min-h-screen bg-gray-50">
     <div class="max-w-2xl mx-auto px-4 py-8">
       <NotificationCenter client:load />

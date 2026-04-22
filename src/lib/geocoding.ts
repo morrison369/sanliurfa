@@ -39,7 +39,7 @@ export async function getAddressFromCoordinates(lat: number, lng: number): Promi
       `${NOMINATIM_API}?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=tr`,
       {
         headers: {
-          'User-Agent': 'Sanliurfa.com (+https://sanliurfa.com)' // Required by Nominatim
+          'User-Agent': 'sanliurfa.com (+https://sanliurfa.com)' // Required by Nominatim
         }
       }
     );
@@ -97,7 +97,7 @@ export async function getCoordinatesFromAddress(address: string): Promise<any | 
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}, Şanlıurfa, Turkey&limit=1`,
       {
         headers: {
-          'User-Agent': 'Sanliurfa.com (+https://sanliurfa.com)'
+          'User-Agent': 'sanliurfa.com (+https://sanliurfa.com)'
         }
       }
     );
@@ -145,7 +145,7 @@ export async function searchPlaces(query: string, limit: number = 10): Promise<a
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, Şanlıurfa&limit=${limit}`,
       {
         headers: {
-          'User-Agent': 'Sanliurfa.com (+https://sanliurfa.com)'
+          'User-Agent': 'sanliurfa.com (+https://sanliurfa.com)'
         }
       }
     );

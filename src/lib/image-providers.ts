@@ -177,7 +177,7 @@ async function storeProviderImage(input: {
   const response = await fetch(input.image.url, {
     headers: {
       Accept: 'image/avif,image/webp,image/jpeg,image/png,image/*;q=0.8',
-      'User-Agent': 'Sanliurfa.com image fetcher',
+      'User-Agent': 'sanliurfa.com image fetcher',
     },
   });
 

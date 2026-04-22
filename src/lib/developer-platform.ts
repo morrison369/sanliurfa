@@ -315,7 +315,7 @@ export class APIDocumentation {
     return {
       openapi: "3.1.0",
       info: {
-        title: "Şanlıurfa.com API",
+        title: "sanliurfa.com API",
         version,
         description: "Şanlıurfa şehir rehberi API sözleşmesi",
       },
@@ -346,7 +346,7 @@ export class APIDocumentation {
    */
   generateGettingStartedGuide(): string {
     return `
-# Şanlıurfa.com API Başlangıç
+# sanliurfa.com API Başlangıç
 
 1. API erişimi için kayıt olun.
 2. API anahtarınızı oluşturun.

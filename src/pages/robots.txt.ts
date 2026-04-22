@@ -3,12 +3,12 @@
  * Guides search engine crawlers on what to index
  */
 
-import type { APIRoute } from 'astro';
+import type { APIRoute } from "astro";
 
 export const GET: APIRoute = async () => {
-  const baseUrl = process.env.PUBLIC_SITE_URL || 'https://sanliurfa.com';
+  const baseUrl = process.env.PUBLIC_SITE_URL || "https://sanliurfa.com";
 
-  const robotsTxt = `# Robots.txt - Şanlıurfa.com
+  const robotsTxt = `# Robots.txt - sanliurfa.com
 # Generated dynamically for search engine crawlers
 
 # Default crawler rules
@@ -62,8 +62,8 @@ Request-rate: 1/1
 
   return new Response(robotsTxt, {
     headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'public, max-age=86400', // 24 hours
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=86400", // 24 hours
     },
   });
 };
