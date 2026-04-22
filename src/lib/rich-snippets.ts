@@ -84,6 +84,23 @@ type HistoricalSiteLike = {
   is_unesco?: boolean | null;
 };
 
+type RecipeLike = {
+  id?: string;
+  slug?: string;
+  name?: string;
+  description?: string | null;
+  image?: string | null;
+  gallery?: string[] | null;
+  ingredients?: string[] | null;
+  preparation?: string | null;
+  prepTime?: string | null;
+  servingSize?: string | null;
+  calories?: string | null;
+  rating?: number | string | null;
+  reviewCount?: number | string | null;
+  difficulty?: string | null;
+};
+
 const categorySchemaTypes: Record<string, string> = {
   restaurant: 'Restaurant',
   restoran: 'Restaurant',
@@ -503,6 +520,79 @@ export function buildHistoricalSiteItemListSchema(sites: HistoricalSiteLike[], p
   });
 }
 
+export function buildRecipeRichSnippet(recipe: RecipeLike, path?: string): JsonLdNode {
+  const recipePath = path || `/gastronomi/${recipe.slug || recipe.id || ''}`;
+  const url = absoluteUrl(recipePath, '/gastronomi');
+  const images = normalizeImages(recipe.gallery || [], recipe.image || '/images/foods/urfa-kebabi.jpg');
+  const rating = normalizeRating(recipe.rating);
+  const reviewCount = normalizeCount(recipe.reviewCount);
+
+  return compactJsonLd({
+    '@type': 'Recipe',
+    '@id': `${url}#recipe`,
+    name: recipe.name,
+    url,
+    mainEntityOfPage: url,
+    description: normalizeDescription(recipe.description),
+    image: images,
+    inLanguage: 'tr-TR',
+    author: {
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#organization`,
+      name: 'Şanlıurfa.com',
+    },
+    recipeCuisine: 'Şanlıurfa mutfağı',
+    recipeCategory: 'Yöresel yemek',
+    recipeIngredient: recipe.ingredients,
+    recipeInstructions: normalizeRecipeInstructions(recipe.preparation),
+    prepTime: parseDurationToIso(recipe.prepTime),
+    totalTime: parseDurationToIso(recipe.prepTime),
+    recipeYield: recipe.servingSize,
+    keywords: ['Şanlıurfa', 'Urfa yemekleri', recipe.name, recipe.difficulty].filter(Boolean).join(', '),
+    nutrition: recipe.calories
+      ? {
+          '@type': 'NutritionInformation',
+          calories: recipe.calories,
+        }
+      : undefined,
+    aggregateRating:
+      rating && reviewCount > 0
+        ? {
+            '@type': 'AggregateRating',
+            ratingValue: rating,
+            bestRating: 5,
+            worstRating: 1,
+            reviewCount,
+          }
+        : undefined,
+  });
+}
+
+export function buildRecipeItemListSchema(recipes: RecipeLike[], pageUrl: string): JsonLdNode {
+  return compactJsonLd({
+    '@type': 'ItemList',
+    '@id': `${absoluteUrl(pageUrl, '/gastronomi')}#recipes`,
+    name: 'Şanlıurfa yöresel yemekleri',
+    numberOfItems: recipes.length,
+    itemListElement: recipes.map((recipe, index) => {
+      const path = `/gastronomi/${recipe.slug || recipe.id || ''}`;
+      const item = buildRecipeRichSnippet(recipe, path);
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        url: item.url,
+        item: {
+          '@type': item['@type'],
+          '@id': item['@id'],
+          name: item.name,
+          image: item.image,
+          aggregateRating: item.aggregateRating,
+        },
+      };
+    }),
+  });
+}
+
 function getPlaceSchemaType(category?: string | null): string {
   return categorySchemaTypes[String(category || '').toLowerCase()] || 'LocalBusiness';
 }
@@ -592,6 +682,32 @@ function normalizeEventDate(dateValue?: string | Date | null, timeValue?: string
   const dateText = dateValue instanceof Date ? dateValue.toISOString().slice(0, 10) : String(dateValue).slice(0, 10);
   const timeText = timeValue && /^\d{2}:\d{2}/.test(timeValue) ? timeValue.slice(0, 5) : '10:00';
   return normalizeDate(`${dateText}T${timeText}:00+03:00`);
+}
+
+function normalizeRecipeInstructions(value?: string | null): JsonLdNode[] | undefined {
+  if (!value) return undefined;
+
+  const steps = value
+    .split(/\n+/)
+    .map((step) => step.replace(/^\s*\d+[\).\s-]*/, '').trim())
+    .filter(Boolean);
+
+  return steps.length
+    ? steps.map((step) => ({
+        '@type': 'HowToStep',
+        text: step,
+      }))
+    : undefined;
+}
+
+function parseDurationToIso(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  const hourMatch = value.match(/(\d+)\s*saat/i);
+  const minuteMatch = value.match(/(\d+)\s*dk/i);
+  const hours = hourMatch ? Number(hourMatch[1]) : 0;
+  const minutes = minuteMatch ? Number(minuteMatch[1]) : 0;
+  if (!hours && !minutes) return undefined;
+  return `PT${hours ? `${hours}H` : ''}${minutes ? `${minutes}M` : ''}`;
 }
 
 function normalizeReviews(reviews?: ReviewLike[]): JsonLdNode[] | undefined {

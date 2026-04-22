@@ -2,6 +2,13 @@
 import Layout from '../../layouts/Layout.astro';
 import { Utensils, Flame, ChefHat, ArrowRight, Star, MapPin } from 'lucide-react';
 import { query } from '../../lib/postgres';
+import {
+  buildBreadcrumbSchema,
+  buildOrganizationSchema,
+  buildPlaceItemListSchema,
+  buildRecipeItemListSchema,
+  buildWebSiteSchema,
+} from '../../lib/rich-snippets';
 
 const result = await query(
   "SELECT * FROM places WHERE category = 'restaurant' AND status = 'active' ORDER BY rating DESC LIMIT 6"
@@ -12,11 +19,6 @@ const countResult = await query(
   "SELECT COUNT(*) FROM places WHERE category = 'restaurant' AND status = 'active'"
 );
 const restaurantCount = parseInt(countResult.rows[0]?.count || '0');
-
-const seo = {
-  title: 'Gastronomi Rehberi - Urfa Lezzetleri',
-  description: 'Şanlıurfa mutfağının eşsiz lezzetlerini keşfedin. Ciğer kebabı, çiğ köfte, isot ve daha fazlası.',
-};
 
 const featuredFoods = [
   {
@@ -56,6 +58,23 @@ const featuredFoods = [
     rating: 4.7,
   },
 ];
+
+const seo = {
+  title: 'Gastronomi Rehberi - Urfa Lezzetleri',
+  description: 'Şanlıurfa mutfağının eşsiz lezzetlerini keşfedin. Ciğer kebabı, çiğ köfte, isot ve daha fazlası.',
+  canonicalUrl: 'https://sanliurfa.com/gastronomi',
+  schemaMode: 'replace' as const,
+  schema: [
+    buildOrganizationSchema(),
+    buildWebSiteSchema(),
+    buildBreadcrumbSchema([
+      { name: 'Ana Sayfa', url: '/' },
+      { name: 'Gastronomi', url: '/gastronomi' },
+    ]),
+    buildRecipeItemListSchema(featuredFoods, '/gastronomi'),
+    buildPlaceItemListSchema(restaurants, '/gastronomi#restoranlar'),
+  ],
+};
 ---
 
 <Layout seo={seo}>
