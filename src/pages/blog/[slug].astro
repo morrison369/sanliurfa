@@ -1,54 +1,59 @@
 ---
 // @ts-nocheck
-import Layout from '../../layouts/Layout.astro';
-import Breadcrumb from '../../components/Breadcrumb.astro';
-import { getBlogPostBySlug, getBlogPosts } from '../../lib/blog';
-import type { BlogPost } from '../../lib/blog';
+import Layout from "../../layouts/Layout.astro";
+import Breadcrumb from "../../components/Breadcrumb.astro";
+import { getBlogPostBySlug, getBlogPosts } from "../../lib/blog";
+import type { BlogPost } from "../../lib/blog";
 import {
   buildArticleRichSnippet,
   buildBreadcrumbSchema,
   buildOrganizationSchema,
   buildWebSiteSchema,
-} from '../../lib/rich-snippets';
+} from "../../lib/rich-snippets";
 
 const { slug } = Astro.params;
 
 if (!slug) {
-  return Astro.redirect('/blog');
+  return Astro.redirect("/blog");
 }
 
 let post: BlogPost | null = null;
 let relatedPosts: BlogPost[] = [];
-let error = '';
+let error = "";
 
 try {
   post = await getBlogPostBySlug(slug);
 
   if (!post) {
-    return Astro.redirect('/blog');
+    return Astro.redirect("/blog");
   }
 
   // İlişkili yazıları getir (aynı kategorideki diğer yazılar)
   if (post.categoryId) {
     const result = await getBlogPosts({
-      status: 'published',
+      status: "published",
       categoryId: post.categoryId,
-      limit: 3
+      limit: 3,
     });
     relatedPosts = result.posts.filter((p) => p.id !== post?.id);
   }
 } catch (err) {
-  error = 'Blog yazısı yüklenirken hata oluştu';
-  console.error('Blog detail error:', err);
-  return Astro.redirect('/blog');
+  error = "Blog yazısı yüklenirken hata oluştu";
+  console.error("Blog detail error:", err);
+  return Astro.redirect("/blog");
 }
 
 const currentPost = post as BlogPost;
 
 const breadcrumbItems = [
-  { label: 'Ana Sayfa', href: '/' },
-  { label: 'Blog', href: '/blog' },
-  currentPost.categoryName ? { label: currentPost.categoryName, href: `/blog?category=${currentPost.categoryName.toLowerCase().replace(/\s+/g, '-')}` } : null,
+  { label: "Ana Sayfa", href: "/" },
+  { label: "Blog", href: "/blog" },
+  currentPost.categoryName
+    ? {
+        label: currentPost.categoryName,
+        href: `/blog?category=${currentPost.categoryName.toLowerCase().replace(/\s+/g, "-")}`,
+      }
+    : null,
   { label: currentPost.title, href: `/blog/${currentPost.slug}` },
 ].filter((item): item is { label: string; href: string } => item !== null);
 
@@ -56,19 +61,19 @@ const seo = {
   title: currentPost.seoTitle || currentPost.title,
   description: currentPost.seoDescription || currentPost.excerpt,
   image: currentPost.featuredImage,
-  type: 'article' as const,
+  type: "article" as const,
   publishDate: currentPost.publishedAt?.toISOString?.(),
   modifiedDate: currentPost.updatedAt?.toISOString?.(),
-  author: currentPost.authorName || 'Şanlıurfa.com',
+  author: currentPost.authorName || "sanliurfa.com",
   tags: currentPost.tags || [],
   canonicalUrl: `https://sanliurfa.com/blog/${currentPost.slug}`,
-  schemaMode: 'replace' as const,
+  schemaMode: "replace" as const,
   schema: [
     buildOrganizationSchema(),
     buildWebSiteSchema(),
     buildBreadcrumbSchema([
-      { name: 'Ana Sayfa', url: '/' },
-      { name: 'Blog', url: '/blog' },
+      { name: "Ana Sayfa", url: "/" },
+      { name: "Blog", url: "/blog" },
       { name: currentPost.title, url: `/blog/${currentPost.slug}` },
     ]),
     buildArticleRichSnippet(currentPost, `/blog/${currentPost.slug}`),
@@ -78,55 +83,79 @@ const seo = {
 
 <Layout seo={seo}>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div
+      class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+    >
       <div class="container-custom py-4">
         <Breadcrumb items={breadcrumbItems} />
       </div>
     </div>
 
-    {currentPost.featuredImage && (
-      <div class="relative h-[400px] lg:h-[500px]">
-        <img
-          src={currentPost.featuredImage}
-          alt={currentPost.title}
-          class="w-full h-full object-cover"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+    {
+      currentPost.featuredImage && (
+        <div class="relative h-[400px] lg:h-[500px]">
+          <img
+            src={currentPost.featuredImage}
+            alt={currentPost.title}
+            class="w-full h-full object-cover"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-        <div class="absolute bottom-0 left-0 right-0">
-          <div class="container-custom py-8">
-            {currentPost.categoryName && (
-              <span class="inline-block px-3 py-1 bg-blue-600 text-white text-sm rounded-full mb-4">
-                {currentPost.categoryName}
-              </span>
-            )}
-            <h1 class="text-3xl lg:text-5xl font-display font-bold text-white max-w-3xl">
-              {currentPost.title}
-            </h1>
+          <div class="absolute bottom-0 left-0 right-0">
+            <div class="container-custom py-8">
+              {currentPost.categoryName && (
+                <span class="inline-block px-3 py-1 bg-blue-600 text-white text-sm rounded-full mb-4">
+                  {currentPost.categoryName}
+                </span>
+              )}
+              <h1 class="text-3xl lg:text-5xl font-display font-bold text-white max-w-3xl">
+                {currentPost.title}
+              </h1>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )
+    }
 
     <div class="container-custom py-8">
       <div class="grid lg:grid-cols-3 gap-8">
         <article class="lg:col-span-2">
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
-            <div class="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-              {currentPost.authorName && (
-                <div class="flex items-center gap-2">
-                  <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
-                    {currentPost.authorName?.charAt(0) || 'E'}
+          <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8"
+          >
+            <div
+              class="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700"
+            >
+              {
+                currentPost.authorName && (
+                  <div class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
+                      {currentPost.authorName?.charAt(0) || "E"}
+                    </div>
+                    <div>
+                      <p class="font-medium text-gray-900 dark:text-white text-sm">
+                        {currentPost.authorName}
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Yazar
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p class="font-medium text-gray-900 dark:text-white text-sm">{currentPost.authorName}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Yazar</p>
-                  </div>
-                </div>
-              )}
-              <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 ml-auto">
+                )
+              }
+              <div
+                class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 ml-auto"
+              >
                 <span class="flex items-center gap-1">
-                  📅 {new Date(currentPost.publishedAt || currentPost.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  📅 {
+                    new Date(
+                      currentPost.publishedAt || currentPost.createdAt,
+                    ).toLocaleDateString("tr-TR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  }
                 </span>
                 <span class="flex items-center gap-1">
                   ⏱️ {currentPost.readTimeMinutes || 1} dk okuma
@@ -141,78 +170,109 @@ const seo = {
               {currentPost.content}
             </div>
 
-            {currentPost.tags && currentPost.tags.length > 0 && (
-              <div class="flex flex-wrap gap-2 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                {currentPost.tags.map((tag) => (
-                  <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
+            {
+              currentPost.tags && currentPost.tags.length > 0 && (
+                <div class="flex flex-wrap gap-2 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  {currentPost.tags.map((tag) => (
+                    <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )
+            }
 
-            <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <a href="/blog" class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <div
+              class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700"
+            >
+              <a
+                href="/blog"
+                class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
                 ← Tüm Yazılar
               </a>
               <div class="flex items-center gap-4">
-                <button class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-red-500 hover:text-red-500 transition-colors" onclick="toggleLike(event)">
+                <button
+                  class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-red-500 hover:text-red-500 transition-colors"
+                  onclick="toggleLike(event)"
+                >
                   ❤️ Beğen
                 </button>
-                <button class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:text-blue-500 transition-colors" onclick="sharePost()">
+                <button
+                  class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:text-blue-500 transition-colors"
+                  onclick="sharePost()"
+                >
                   📤 Paylaş
                 </button>
               </div>
             </div>
           </div>
 
-          {currentPost.authorName && (
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mt-6">
-              <div class="flex items-start gap-4">
-                <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl font-bold">
-                  {currentPost.authorName?.charAt(0) || 'E'}
-                </div>
-                <div>
-                  <h3 class="font-semibold text-gray-900 dark:text-white">{currentPost.authorName}</h3>
-                  <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Şanlıurfa.com yazarı</p>
+          {
+            currentPost.authorName && (
+              <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mt-6">
+                <div class="flex items-start gap-4">
+                  <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl font-bold">
+                    {currentPost.authorName?.charAt(0) || "E"}
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-gray-900 dark:text-white">
+                      {currentPost.authorName}
+                    </h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
+                      sanliurfa.com yazarı
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )
+          }
         </article>
 
         <aside class="space-y-6">
-          {relatedPosts && relatedPosts.length > 0 && (
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Benzer Yazılar</h3>
-              <div class="space-y-4">
-                {relatedPosts.map((related) => (
-                  <a href={`/blog/${related.slug}`} class="flex gap-3 group">
-                    {related.featuredImage && (
-                      <img
-                        src={related.featuredImage}
-                        alt={related.title}
-                        class="w-20 h-16 rounded-lg object-cover flex-shrink-0"
-                      />
-                    )}
-                    <div>
-                      {related.categoryName && (
-                        <span class="text-xs text-blue-600 dark:text-blue-400">{related.categoryName}</span>
+          {
+            relatedPosts && relatedPosts.length > 0 && (
+              <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
+                  Benzer Yazılar
+                </h3>
+                <div class="space-y-4">
+                  {relatedPosts.map((related) => (
+                    <a href={`/blog/${related.slug}`} class="flex gap-3 group">
+                      {related.featuredImage && (
+                        <img
+                          src={related.featuredImage}
+                          alt={related.title}
+                          class="w-20 h-16 rounded-lg object-cover flex-shrink-0"
+                        />
                       )}
-                      <h4 class="font-medium text-gray-900 dark:text-white text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
-                        {related.title}
-                      </h4>
-                    </div>
-                  </a>
-                ))}
+                      <div>
+                        {related.categoryName && (
+                          <span class="text-xs text-blue-600 dark:text-blue-400">
+                            {related.categoryName}
+                          </span>
+                        )}
+                        <h4 class="font-medium text-gray-900 dark:text-white text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                          {related.title}
+                        </h4>
+                      </div>
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          }
 
           <div class="bg-urfa-600 rounded-xl p-6 text-white">
             <h3 class="font-semibold mb-2">Bültenimize Abone Olun</h3>
-            <p class="text-sm text-urfa-100 mb-4">En yeni yazılardan haberdar olun.</p>
-            <form action="/api/newsletter/subscribe" method="POST" class="space-y-2">
+            <p class="text-sm text-urfa-100 mb-4">
+              En yeni yazılardan haberdar olun.
+            </p>
+            <form
+              action="/api/newsletter/subscribe"
+              method="POST"
+              class="space-y-2"
+            >
               <input
                 type="email"
                 name="email"
@@ -220,7 +280,10 @@ const seo = {
                 required
                 class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:border-white/40"
               />
-              <button type="submit" class="w-full py-2 bg-white text-urfa-600 rounded-lg font-medium hover:bg-urfa-50 transition-colors">
+              <button
+                type="submit"
+                class="w-full py-2 bg-white text-urfa-600 rounded-lg font-medium hover:bg-urfa-50 transition-colors"
+              >
                 Abone Ol
               </button>
             </form>
@@ -235,8 +298,8 @@ const seo = {
   function toggleLike(event) {
     const button = event?.currentTarget || event?.target;
     if (!(button instanceof HTMLElement)) return;
-    button.classList.toggle('text-red-500');
-    button.classList.toggle('border-red-500');
+    button.classList.toggle("text-red-500");
+    button.classList.toggle("border-red-500");
   }
 
   function sharePost() {
@@ -248,7 +311,7 @@ const seo = {
     } else {
       // Fallback: copy to clipboard
       navigator.clipboard.writeText(window.location.href);
-      alert('Yazı linki panoya kopyalandı');
+      alert("Yazı linki panoya kopyalandı");
     }
   }
 </script>

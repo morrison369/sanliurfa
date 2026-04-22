@@ -1,34 +1,35 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import Layout from "../layouts/Layout.astro";
+import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
 
 const seo = {
-  title: 'İletişim - Bizimle İletişime Geçin',
-  description: 'Şanlıurfa.com ile iletişime geçin. Öneri, şikayet ve işbirliği talepleriniz için bize ulaşın.',
+  title: "İletişim - Bizimle İletişime Geçin",
+  description:
+    "sanliurfa.com ile iletişime geçin. Öneri, şikayet ve işbirliği talepleriniz için bize ulaşın.",
 };
 
 const contactInfo = [
   {
     icon: MapPin,
-    title: 'Adres',
-    content: 'Haliliye, Şanlıurfa, Türkiye',
+    title: "Adres",
+    content: "Haliliye, Şanlıurfa, Türkiye",
   },
   {
     icon: Phone,
-    title: 'Telefon',
-    content: '+90 414 123 45 67',
-    href: 'tel:+904141234567',
+    title: "Telefon",
+    content: "+90 414 123 45 67",
+    href: "tel:+904141234567",
   },
   {
     icon: Mail,
-    title: 'E-posta',
-    content: 'info@sanliurfa.com',
-    href: 'mailto:info@sanliurfa.com',
+    title: "E-posta",
+    content: "info@sanliurfa.com",
+    href: "mailto:info@sanliurfa.com",
   },
   {
     icon: Clock,
-    title: 'Çalışma Saatleri',
-    content: 'Pzt-Cum: 09:00 - 18:00',
+    title: "Çalışma Saatleri",
+    content: "Pzt-Cum: 09:00 - 18:00",
   },
 ];
 ---
@@ -48,8 +49,12 @@ const contactInfo = [
     <div class="container-custom">
       <div class="grid lg:grid-cols-2 gap-12">
         <!-- Contact Form -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
-          <h2 class="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2">
+        <div
+          class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8"
+        >
+          <h2
+            class="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2"
+          >
             Bize Mesaj Gönderin
           </h2>
           <p class="text-gray-600 dark:text-gray-400 mb-6">
@@ -103,11 +108,13 @@ const contactInfo = [
                 rows={5}
                 required
                 class="input mt-1 resize-none"
-                placeholder="Mesajınızı yazın..."
-              ></textarea>
+                placeholder="Mesajınızı yazın..."></textarea>
             </div>
 
-            <button type="submit" class="btn-primary w-full flex items-center justify-center gap-2">
+            <button
+              type="submit"
+              class="btn-primary w-full flex items-center justify-center gap-2"
+            >
               <Send className="w-4 h-4" />
               Gönder
             </button>
@@ -117,35 +124,45 @@ const contactInfo = [
         <!-- Contact Info -->
         <div class="space-y-8">
           <div>
-            <h2 class="text-2xl font-display font-bold text-gray-900 dark:text-white mb-6">
+            <h2
+              class="text-2xl font-display font-bold text-gray-900 dark:text-white mb-6"
+            >
               İletişim Bilgileri
             </h2>
             <div class="space-y-6">
-              {contactInfo.map((item) => (
-                <div class="flex items-start gap-4">
-                  <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <item.icon className="w-6 h-6 text-urfa-600 dark:text-urfa-400" />
+              {
+                contactInfo.map((item) => (
+                  <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <item.icon className="w-6 h-6 text-urfa-600 dark:text-urfa-400" />
+                    </div>
+                    <div>
+                      <h3 class="font-medium text-gray-900 dark:text-white">
+                        {item.title}
+                      </h3>
+                      {item.href ? (
+                        <a
+                          href={item.href}
+                          class="text-gray-600 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors"
+                        >
+                          {item.content}
+                        </a>
+                      ) : (
+                        <p class="text-gray-600 dark:text-gray-400">
+                          {item.content}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h3 class="font-medium text-gray-900 dark:text-white">{item.title}</h3>
-                    {item.href ? (
-                      <a
-                        href={item.href}
-                        class="text-gray-600 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors"
-                      >
-                        {item.content}
-                      </a>
-                    ) : (
-                      <p class="text-gray-600 dark:text-gray-400">{item.content}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))
+              }
             </div>
           </div>
 
           <!-- Map -->
-          <div class="rounded-2xl overflow-hidden h-80 bg-gray-200 dark:bg-gray-700">
+          <div
+            class="rounded-2xl overflow-hidden h-80 bg-gray-200 dark:bg-gray-700"
+          >
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12515.5!2d38.7969!3d37.1591!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzfCsDA5JzMyLjciTiAzOMKwNDcnNDguOCJF!5e0!3m2!1str!2str!4v1609459200000!5m2!1str!2str"
               width="100%"
@@ -154,8 +171,7 @@ const contactInfo = [
               allowfullscreen=""
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
-              title="Şanlıurfa Harita"
-            ></iframe>
+              title="Şanlıurfa Harita"></iframe>
           </div>
         </div>
       </div>

@@ -9,11 +9,15 @@ if (!locals.user) {
 }
 ---
 
-<Layout title="Keşfet - Şanlıurfa.com" noindex>
+<Layout title="Keşfet - sanliurfa.com" noindex>
   <div class="max-w-6xl mx-auto px-4 py-8">
     <div class="mb-12">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Keşfet</h1>
-      <p class="text-gray-600 dark:text-gray-400">Yeni mekanlar ve kullanıcılar bul</p>
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+        Keşfet
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        Yeni mekanlar ve kullanıcılar bul
+      </p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -24,23 +28,41 @@ if (!locals.user) {
       </div>
 
       <div class="space-y-6">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div
+          class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700"
+        >
           <UserRecommendations client:load />
         </div>
 
-        <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
-          <h3 class="font-bold text-gray-900 dark:text-white mb-4">Hızlı Bağlantılar</h3>
+        <div
+          class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800"
+        >
+          <h3 class="font-bold text-gray-900 dark:text-white mb-4">
+            Hızlı Bağlantılar
+          </h3>
           <div class="space-y-2">
-            <a href="/siralamalar" class="block text-sm text-blue-600 hover:text-blue-700">
+            <a
+              href="/siralamalar"
+              class="block text-sm text-blue-600 hover:text-blue-700"
+            >
               - Sıralamalar
             </a>
-            <a href="/arama" class="block text-sm text-blue-600 hover:text-blue-700">
+            <a
+              href="/arama"
+              class="block text-sm text-blue-600 hover:text-blue-700"
+            >
               - Gelişmiş Arama
             </a>
-            <a href="/bildirimler" class="block text-sm text-blue-600 hover:text-blue-700">
+            <a
+              href="/bildirimler"
+              class="block text-sm text-blue-600 hover:text-blue-700"
+            >
               - Bildirimler
             </a>
-            <a href="/mesajlar" class="block text-sm text-blue-600 hover:text-blue-700">
+            <a
+              href="/mesajlar"
+              class="block text-sm text-blue-600 hover:text-blue-700"
+            >
               - Mesajlar
             </a>
           </div>

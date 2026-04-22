@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import TwoFactorManager from './TwoFactorManager';
-import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
+import React, { useState, useEffect } from "react";
+import TwoFactorManager from "./TwoFactorManager";
+import { getApiErrorMessage, unwrapApiPayload } from "@/lib/client-api";
 
 interface UserProfile {
   id: string;
@@ -32,30 +32,32 @@ export default function UserSettings() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'settings' | 'password' | 'privacy' | 'security'>('profile');
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "settings" | "password" | "privacy" | "security"
+  >("profile");
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isResendingVerification, setIsResendingVerification] = useState(false);
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({
-    full_name: '',
-    username: '',
-    avatar_url: '',
-    bio: ''
+    full_name: "",
+    username: "",
+    avatar_url: "",
+    bio: "",
   });
 
   // Settings form state
   const [settingsForm, setSettingsForm] = useState({
-    language_preference: 'tr',
-    theme_preference: 'light'
+    language_preference: "tr",
+    theme_preference: "light",
   });
 
   // Password form state
   const [passwordForm, setPasswordForm] = useState({
-    current_password: '',
-    new_password: '',
-    confirm_password: ''
+    current_password: "",
+    new_password: "",
+    confirm_password: "",
   });
 
   // Preferences form state
@@ -63,14 +65,14 @@ export default function UserSettings() {
     email: true,
     push: true,
     in_app: true,
-    digest: 'weekly'
+    digest: "weekly",
   });
 
   // Privacy form state
   const [privacyForm, setPrivacyForm] = useState({
     profile_public: true,
     show_email: false,
-    allow_messages: true
+    allow_messages: true,
   });
 
   useEffect(() => {
@@ -81,34 +83,36 @@ export default function UserSettings() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch('/api/users/profile');
+      const response = await fetch("/api/users/profile");
 
       if (!response.ok) {
-        throw new Error('Profil yüklenemedi');
+        throw new Error("Profil yüklenemedi");
       }
 
-      const data = unwrapApiPayload<{ data?: UserProfile }>(await response.json());
+      const data = unwrapApiPayload<{ data?: UserProfile }>(
+        await response.json(),
+      );
       const loadedProfile = data.data;
 
       if (!loadedProfile) {
-        throw new Error('Profil yüklenemedi');
+        throw new Error("Profil yüklenemedi");
       }
 
       setProfile(loadedProfile);
       setProfileForm({
         full_name: loadedProfile.full_name,
-        username: loadedProfile.username || '',
-        avatar_url: loadedProfile.avatar_url || '',
-        bio: loadedProfile.bio || ''
+        username: loadedProfile.username || "",
+        avatar_url: loadedProfile.avatar_url || "",
+        bio: loadedProfile.bio || "",
       });
       setSettingsForm({
-        language_preference: 'tr',
-        theme_preference: loadedProfile.theme_preference
+        language_preference: "tr",
+        theme_preference: loadedProfile.theme_preference,
       });
       setPreferencesForm(loadedProfile.notification_preferences);
       setPrivacyForm(loadedProfile.privacy_settings);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setIsLoading(false);
     }
@@ -120,22 +124,22 @@ export default function UserSettings() {
     setError(null);
 
     try {
-      const response = await fetch('/api/users/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profileForm)
+      const response = await fetch("/api/users/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileForm),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'Profil güncellenemedi'));
+        throw new Error(getApiErrorMessage(data, "Profil güncellenemedi"));
       }
 
-      setSuccessMessage('Profil başarıyla güncellendi');
+      setSuccessMessage("Profil başarıyla güncellendi");
       setTimeout(() => setSuccessMessage(null), 3000);
       await loadProfile();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setIsSaving(false);
     }
@@ -147,22 +151,22 @@ export default function UserSettings() {
     setError(null);
 
     try {
-      const response = await fetch('/api/users/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settingsForm)
+      const response = await fetch("/api/users/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settingsForm),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'Ayarlar güncellenemedi'));
+        throw new Error(getApiErrorMessage(data, "Ayarlar güncellenemedi"));
       }
 
-      setSuccessMessage('Ayarlar başarıyla güncellendi');
+      setSuccessMessage("Ayarlar başarıyla güncellendi");
       setTimeout(() => setSuccessMessage(null), 3000);
       await loadProfile();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setIsSaving(false);
     }
@@ -174,26 +178,28 @@ export default function UserSettings() {
     setError(null);
 
     try {
-      const response = await fetch('/api/users/password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(passwordForm)
+      const response = await fetch("/api/users/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(passwordForm),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'Şifre değiştirilirken hata oluştu'));
+        throw new Error(
+          getApiErrorMessage(data, "Şifre değiştirilirken hata oluştu"),
+        );
       }
 
-      setSuccessMessage('Şifre başarıyla değiştirildi');
+      setSuccessMessage("Şifre başarıyla değiştirildi");
       setPasswordForm({
-        current_password: '',
-        new_password: '',
-        confirm_password: ''
+        current_password: "",
+        new_password: "",
+        confirm_password: "",
       });
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setIsSaving(false);
     }
@@ -205,22 +211,22 @@ export default function UserSettings() {
     setError(null);
 
     try {
-      const response = await fetch('/api/users/preferences', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(preferencesForm)
+      const response = await fetch("/api/users/preferences", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(preferencesForm),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'Tercihler güncellenemedi'));
+        throw new Error(getApiErrorMessage(data, "Tercihler güncellenemedi"));
       }
 
-      setSuccessMessage('Tercihler başarıyla güncellendi');
+      setSuccessMessage("Tercihler başarıyla güncellendi");
       setTimeout(() => setSuccessMessage(null), 3000);
       await loadProfile();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setIsSaving(false);
     }
@@ -232,22 +238,24 @@ export default function UserSettings() {
     setError(null);
 
     try {
-      const response = await fetch('/api/users/privacy', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(privacyForm)
+      const response = await fetch("/api/users/privacy", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(privacyForm),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'Gizlilik ayarları güncellenemedi'));
+        throw new Error(
+          getApiErrorMessage(data, "Gizlilik ayarları güncellenemedi"),
+        );
       }
 
-      setSuccessMessage('Gizlilik ayarları başarıyla güncellendi');
+      setSuccessMessage("Gizlilik ayarları başarıyla güncellendi");
       setTimeout(() => setSuccessMessage(null), 3000);
       await loadProfile();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setIsSaving(false);
     }
@@ -258,20 +266,22 @@ export default function UserSettings() {
     setError(null);
 
     try {
-      const response = await fetch('/api/users/resend-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+      const response = await fetch("/api/users/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'Doğrulama e-postası gönderilemedi'));
+        throw new Error(
+          getApiErrorMessage(data, "Doğrulama e-postası gönderilemedi"),
+        );
       }
 
-      setSuccessMessage('Doğrulama e-postası başarıyla gönderildi');
+      setSuccessMessage("Doğrulama e-postası başarıyla gönderildi");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+      setError(err instanceof Error ? err.message : "Bir hata oluştu");
     } finally {
       setIsResendingVerification(false);
     }
@@ -290,51 +300,51 @@ export default function UserSettings() {
       {/* Tab Navigation */}
       <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
         <button
-          onClick={() => setActiveTab('profile')}
+          onClick={() => setActiveTab("profile")}
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === 'profile'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            activeTab === "profile"
+              ? "border-blue-600 text-blue-600 dark:text-blue-400"
+              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
           }`}
         >
           Profil
         </button>
         <button
-          onClick={() => setActiveTab('settings')}
+          onClick={() => setActiveTab("settings")}
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === 'settings'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            activeTab === "settings"
+              ? "border-blue-600 text-blue-600 dark:text-blue-400"
+              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
           }`}
         >
           Genel Ayarlar
         </button>
         <button
-          onClick={() => setActiveTab('privacy')}
+          onClick={() => setActiveTab("privacy")}
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === 'privacy'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            activeTab === "privacy"
+              ? "border-blue-600 text-blue-600 dark:text-blue-400"
+              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
           }`}
         >
           Gizlilik
         </button>
         <button
-          onClick={() => setActiveTab('password')}
+          onClick={() => setActiveTab("password")}
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === 'password'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            activeTab === "password"
+              ? "border-blue-600 text-blue-600 dark:text-blue-400"
+              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
           }`}
         >
           Şifre
         </button>
         <button
-          onClick={() => setActiveTab('security')}
+          onClick={() => setActiveTab("security")}
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-            activeTab === 'security'
-              ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-              : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            activeTab === "security"
+              ? "border-blue-600 text-blue-600 dark:text-blue-400"
+              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
           }`}
         >
           Güvenlik
@@ -359,9 +369,12 @@ export default function UserSettings() {
         <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-1">E-posta Doğrulanmadı</h3>
+              <h3 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-1">
+                E-posta Doğrulanmadı
+              </h3>
               <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                Hesabınızın güvenliği için e-posta adresinizi doğrulayın: {profile.email}
+                Hesabınızın güvenliği için e-posta adresinizi doğrulayın:{" "}
+                {profile.email}
               </p>
             </div>
             <button
@@ -369,33 +382,50 @@ export default function UserSettings() {
               disabled={isResendingVerification}
               className="flex-shrink-0 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium whitespace-nowrap"
             >
-              {isResendingVerification ? 'Gönderiliyor...' : 'Doğrula'}
+              {isResendingVerification ? "Gönderiliyor..." : "Doğrula"}
             </button>
           </div>
         </div>
       )}
 
       {/* Profile Tab */}
-      {activeTab === 'profile' && (
-        <form onSubmit={handleSaveProfile} className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Profil Bilgileriniz</h2>
+      {activeTab === "profile" && (
+        <form
+          onSubmit={handleSaveProfile}
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4"
+        >
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Profil Bilgileriniz
+          </h2>
 
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">E-posta Adresi</p>
-                <p className="font-medium text-gray-900 dark:text-white">{profile?.email}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  E-posta Adresi
+                </p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {profile?.email}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 {profile?.email_verified ? (
                   <>
-                    <span className="text-green-600 dark:text-green-400">✓</span>
-                    <span className="text-sm text-green-600 dark:text-green-400">Doğrulanmış</span>
+                    <span className="text-green-600 dark:text-green-400">
+                      ✓
+                    </span>
+                    <span className="text-sm text-green-600 dark:text-green-400">
+                      Doğrulanmış
+                    </span>
                   </>
                 ) : (
                   <>
-                    <span className="text-yellow-600 dark:text-yellow-400">!</span>
-                    <span className="text-sm text-yellow-600 dark:text-yellow-400">Doğrulanmadı</span>
+                    <span className="text-yellow-600 dark:text-yellow-400">
+                      !
+                    </span>
+                    <span className="text-sm text-yellow-600 dark:text-yellow-400">
+                      Doğrulanmadı
+                    </span>
                   </>
                 )}
               </div>
@@ -409,7 +439,9 @@ export default function UserSettings() {
             <input
               type="text"
               value={profileForm.full_name}
-              onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
+              onChange={(e) =>
+                setProfileForm({ ...profileForm, full_name: e.target.value })
+              }
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -421,7 +453,9 @@ export default function UserSettings() {
             <input
               type="text"
               value={profileForm.username}
-              onChange={(e) => setProfileForm({ ...profileForm, username: e.target.value })}
+              onChange={(e) =>
+                setProfileForm({ ...profileForm, username: e.target.value })
+              }
               placeholder="Boş bırakabilirsiniz"
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -434,7 +468,9 @@ export default function UserSettings() {
             <input
               type="url"
               value={profileForm.avatar_url}
-              onChange={(e) => setProfileForm({ ...profileForm, avatar_url: e.target.value })}
+              onChange={(e) =>
+                setProfileForm({ ...profileForm, avatar_url: e.target.value })
+              }
               placeholder="https://..."
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -446,7 +482,9 @@ export default function UserSettings() {
             </label>
             <textarea
               value={profileForm.bio}
-              onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
+              onChange={(e) =>
+                setProfileForm({ ...profileForm, bio: e.target.value })
+              }
               placeholder="Kendiniz hakkında biraz yazın..."
               rows={4}
               maxLength={500}
@@ -462,15 +500,20 @@ export default function UserSettings() {
             disabled={isSaving}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isSaving ? 'Kaydediliyor...' : 'Profili Kaydet'}
+            {isSaving ? "Kaydediliyor..." : "Profili Kaydet"}
           </button>
         </form>
       )}
 
       {/* Settings Tab */}
-      {activeTab === 'settings' && (
-        <form onSubmit={handleSaveSettings} className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Genel Ayarlar</h2>
+      {activeTab === "settings" && (
+        <form
+          onSubmit={handleSaveSettings}
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4"
+        >
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Genel Ayarlar
+          </h2>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -480,7 +523,8 @@ export default function UserSettings() {
               Türkçe
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Şanlıurfa.com kalıcı olarak Türkçe yayın yapar; dil seçici kullanılmaz.
+              sanliurfa.com kalıcı olarak Türkçe yayın yapar; dil seçici
+              kullanılmaz.
             </p>
           </div>
 
@@ -490,7 +534,12 @@ export default function UserSettings() {
             </label>
             <select
               value={settingsForm.theme_preference}
-              onChange={(e) => setSettingsForm({ ...settingsForm, theme_preference: e.target.value })}
+              onChange={(e) =>
+                setSettingsForm({
+                  ...settingsForm,
+                  theme_preference: e.target.value,
+                })
+              }
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="light">Açık</option>
@@ -504,45 +553,71 @@ export default function UserSettings() {
             disabled={isSaving}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isSaving ? 'Kaydediliyor...' : 'Ayarları Kaydet'}
+            {isSaving ? "Kaydediliyor..." : "Ayarları Kaydet"}
           </button>
         </form>
       )}
 
       {/* Privacy Tab */}
-      {activeTab === 'privacy' && (
-        <form onSubmit={handleSavePrivacy} className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Gizlilik Ayarları</h2>
+      {activeTab === "privacy" && (
+        <form
+          onSubmit={handleSavePrivacy}
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4"
+        >
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Gizlilik Ayarları
+          </h2>
 
           <div className="space-y-3">
             <label className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 checked={privacyForm.profile_public}
-                onChange={(e) => setPrivacyForm({ ...privacyForm, profile_public: e.target.checked })}
+                onChange={(e) =>
+                  setPrivacyForm({
+                    ...privacyForm,
+                    profile_public: e.target.checked,
+                  })
+                }
                 className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span className="ml-3 text-gray-700 dark:text-gray-300">Profilimi herkese görünür yap</span>
+              <span className="ml-3 text-gray-700 dark:text-gray-300">
+                Profilimi herkese görünür yap
+              </span>
             </label>
 
             <label className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 checked={privacyForm.show_email}
-                onChange={(e) => setPrivacyForm({ ...privacyForm, show_email: e.target.checked })}
+                onChange={(e) =>
+                  setPrivacyForm({
+                    ...privacyForm,
+                    show_email: e.target.checked,
+                  })
+                }
                 className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span className="ml-3 text-gray-700 dark:text-gray-300">E-posta adresimi göster</span>
+              <span className="ml-3 text-gray-700 dark:text-gray-300">
+                E-posta adresimi göster
+              </span>
             </label>
 
             <label className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 checked={privacyForm.allow_messages}
-                onChange={(e) => setPrivacyForm({ ...privacyForm, allow_messages: e.target.checked })}
+                onChange={(e) =>
+                  setPrivacyForm({
+                    ...privacyForm,
+                    allow_messages: e.target.checked,
+                  })
+                }
                 className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
-              <span className="ml-3 text-gray-700 dark:text-gray-300">Bana direkt mesaj gönderilebilsin</span>
+              <span className="ml-3 text-gray-700 dark:text-gray-300">
+                Bana direkt mesaj gönderilebilsin
+              </span>
             </label>
           </div>
 
@@ -551,15 +626,20 @@ export default function UserSettings() {
             disabled={isSaving}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isSaving ? 'Kaydediliyor...' : 'Gizlilik Ayarlarını Kaydet'}
+            {isSaving ? "Kaydediliyor..." : "Gizlilik Ayarlarını Kaydet"}
           </button>
         </form>
       )}
 
       {/* Password Tab */}
-      {activeTab === 'password' && (
-        <form onSubmit={handleChangePassword} className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Şifre Değiştir</h2>
+      {activeTab === "password" && (
+        <form
+          onSubmit={handleChangePassword}
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4"
+        >
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Şifre Değiştir
+          </h2>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -568,7 +648,12 @@ export default function UserSettings() {
             <input
               type="password"
               value={passwordForm.current_password}
-              onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+              onChange={(e) =>
+                setPasswordForm({
+                  ...passwordForm,
+                  current_password: e.target.value,
+                })
+              }
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -580,11 +665,17 @@ export default function UserSettings() {
             <input
               type="password"
               value={passwordForm.new_password}
-              onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+              onChange={(e) =>
+                setPasswordForm({
+                  ...passwordForm,
+                  new_password: e.target.value,
+                })
+              }
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              En az 8 karakter, bir büyük harf, sayı ve özel karakter içermelidir
+              En az 8 karakter, bir büyük harf, sayı ve özel karakter
+              içermelidir
             </p>
           </div>
 
@@ -595,7 +686,12 @@ export default function UserSettings() {
             <input
               type="password"
               value={passwordForm.confirm_password}
-              onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+              onChange={(e) =>
+                setPasswordForm({
+                  ...passwordForm,
+                  confirm_password: e.target.value,
+                })
+              }
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -605,13 +701,13 @@ export default function UserSettings() {
             disabled={isSaving}
             className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isSaving ? 'Kaydediliyor...' : 'Şifreyi Değiştir'}
+            {isSaving ? "Kaydediliyor..." : "Şifreyi Değiştir"}
           </button>
         </form>
       )}
 
       {/* Security Tab */}
-      {activeTab === 'security' && (
+      {activeTab === "security" && (
         <div className="space-y-6">
           <TwoFactorManager onStatusChange={() => loadProfile()} />
         </div>
