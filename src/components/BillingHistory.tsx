@@ -10,16 +10,22 @@ interface BillingRecord {
   subscriptionId: string;
   amount: number;
   currency: string;
-  billingCycle: string;
+  billingCycle?: string;
   invoiceNumber?: string;
   paymentMethod?: string;
-  status: string;
+  status?: string;
+  paymentStatus?: string;
   paidAt?: string;
+  paymentDate?: string;
   nextBillingDate?: string;
   createdAt: string;
 }
 
 interface BillingHistoryProps {}
+
+function unwrapApiPayload(responseBody: any) {
+  return responseBody?.data?.data || responseBody?.data || responseBody;
+}
 
 export default function BillingHistory({}: BillingHistoryProps) {
   const [billing, setBilling] = useState<BillingRecord[]>([]);
@@ -36,7 +42,7 @@ export default function BillingHistory({}: BillingHistoryProps) {
           throw new Error('Failed to fetch billing history');
         }
 
-        const data = await response.json();
+        const data = unwrapApiPayload(await response.json());
         setBilling(data.billing || []);
         setError(null);
       } catch (err) {
@@ -102,37 +108,42 @@ export default function BillingHistory({}: BillingHistoryProps) {
           </tr>
         </thead>
         <tbody>
-          {billing.map((record) => (
-            <tr
-              key={record.id}
-              className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-            >
-              <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                {new Date(record.createdAt).toLocaleDateString('tr-TR')}
-              </td>
-              <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
-                ₺{record.amount.toFixed(2)}
-              </td>
-              <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 capitalize">
-                {record.billingCycle === 'monthly' ? 'Aylık' : 'Yıllık'}
-              </td>
-              <td className="py-3 px-4">
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    record.status === 'paid'
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                      : record.status === 'pending'
-                      ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
-                      : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
-                  }`}
-                >
-                  {record.status === 'paid'
-                    ? 'Ödendi'
-                    : record.status === 'pending'
-                    ? 'Beklemede'
-                    : 'Başarısız'}
-                </span>
-              </td>
+          {billing.map((record) => {
+            const status = record.paymentStatus || record.status || 'pending';
+            const amount = Number(record.amount || 0);
+            const date = record.paymentDate || record.paidAt || record.createdAt;
+
+            return (
+              <tr
+                key={record.id}
+                className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+              >
+                <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
+                  {new Date(date).toLocaleDateString('tr-TR')}
+                </td>
+                <td className="py-3 px-4 text-sm font-medium text-gray-900 dark:text-white">
+                  {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(amount)}
+                </td>
+                <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 capitalize">
+                  {record.billingCycle === 'annual' ? 'Yıllık' : 'Aylık'}
+                </td>
+                <td className="py-3 px-4">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      ['paid', 'completed'].includes(status)
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                        : status === 'pending'
+                        ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
+                        : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                    }`}
+                  >
+                    {['paid', 'completed'].includes(status)
+                      ? 'Ödendi'
+                      : status === 'pending'
+                      ? 'Beklemede'
+                      : 'Başarısız'}
+                  </span>
+                </td>
               {/* <td className="py-3 px-4 text-sm">
                 {record.invoiceNumber ? (
                   <a
@@ -145,8 +156,9 @@ export default function BillingHistory({}: BillingHistoryProps) {
                   <span className="text-gray-400">—</span>
                 )}
               </td> */}
-            </tr>
-          ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
