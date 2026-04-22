@@ -458,3 +458,10 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 2. Mekan detayındaki yorum sorgusu `reviews.is_approved` kolonunu önce şemadan kontrol eder; kolon yoksa sayfa hata logu üretmeden yorumları filtre dışı bırakır.
 3. Mekan ve tarihi yer detay sayfalarında yakın içerik sorguları curated id ile DB hatası üretmez.
 4. `places/gobeklitepe` ve `tarihi-yerler/gobeklitepe` smoke kontrolünde 200 döndü ve yeni DB hata logu oluşmadı.
+
+## Bitirme Modu: Etkinlik Şema Uyumu ve Log Temizliği
+
+1. Etkinlik detay sayfası `events.created_by` kolonuna zorunlu bağlı değildir; mevcut şemada `SELECT *` ile çalışır ve editör fallback kullanır.
+2. Benzer etkinlik sorgusu curated event id değerlerini UUID kolonlarına göndermez; curated etkinliklerde doğrudan yerel Şanlıurfa verisine düşer.
+3. Ana sayfa etkinlik bileşeni, sitemap event sorgusu ve legacy schema helper event/blog sorguları opsiyonel görsel/tarih kolonlarında DB hatası üretmeyecek şekilde dayanıklı hale getirildi.
+4. `etkinlikler`, `etkinlikler/gobeklitepe-kultur-rotasi` ve `sitemap.xml` smoke kontrolünde 200 döndü ve yeni DB hata logu oluşmadı.

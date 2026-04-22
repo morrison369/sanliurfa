@@ -137,7 +137,7 @@ export async function generateSitemap(): Promise<string> {
 
     // Events
     const events = await safeQueryMany(
-      `SELECT id, slug, title, image_url, start_date FROM events WHERE status IN ('published', 'active') ORDER BY start_date DESC LIMIT 1000`,
+      `SELECT * FROM events WHERE status IN ('published', 'active') ORDER BY start_date DESC LIMIT 1000`,
       "events sitemap",
     );
 
