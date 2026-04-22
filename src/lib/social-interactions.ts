@@ -144,7 +144,7 @@ export async function getTrendingPlaces(limit: number = 10, category?: string): 
       params = [category];
     }
     const trending = await queryMany(`
-      SELECT t.*, p.name, p.category, p.rating, p.review_count
+      SELECT t.*, p.name, p.slug, p.category, p.rating, p.review_count
       FROM trending_places t
       JOIN places p ON t.place_id = p.id
       ${whereClause}

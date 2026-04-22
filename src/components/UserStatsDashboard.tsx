@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface UserStats {
   userId: string;
@@ -60,20 +61,21 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
       if (!statsResponse.ok) {
         throw new Error('İstatistikleri yüklenemedi');
       }
-      const statsData = await statsResponse.json();
-      const statsPayload = statsData.data?.data || statsData.data;
-      setStats(statsPayload);
+      const statsData = unwrapApiPayload<{ success?: boolean; data?: UserStats }>(
+        await statsResponse.json()
+      );
+      const statsPayload = statsData.data;
 
       if (statsPayload) {
+        setStats(statsPayload);
         setContributionScore(statsPayload.contributionScore || 0);
         setRankingPercentile(statsPayload.rankingPercentile || 0);
       }
-
-      // Fetch badges
       const badgesResponse = await fetch(`/api/users/stats/badges?userId=${userId}`);
       if (badgesResponse.ok) {
         const badgesData = await badgesResponse.json();
-        setBadges(badgesData.data?.data || badgesData.data || []);
+        const badgesPayload = unwrapApiPayload<{ success?: boolean; data?: Badge[] }>(badgesData);
+        setBadges(badgesPayload.data || []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');

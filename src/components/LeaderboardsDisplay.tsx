@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { unwrapApiPayload } from "@/lib/client-api";
 
 export default function LeaderboardsDisplay() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
@@ -14,7 +15,7 @@ export default function LeaderboardsDisplay() {
     try {
       const response = await fetch("/api/leaderboards/users?sortBy=" + sortBy + "&limit=50");
       if (!response.ok) throw new Error("Failed to load");
-      const data = await response.json();
+      const data = unwrapApiPayload<{ data?: any[] }>(await response.json());
       setLeaderboard(data.data || []);
     } catch (err) {
       console.error("Error loading leaderboard", err);
@@ -41,11 +42,11 @@ export default function LeaderboardsDisplay() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12">Yukluniyor...</div>
+        <div className="text-center py-12">Yükleniyor...</div>
       ) : (
         <div className="space-y-2">
           {leaderboard.map((user) => (
-            <a key={user.id} href={"/kullanici/" + user.id} className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+            <a key={user.id} href={"/kullanıcı/" + user.id} className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
               <div className="text-2xl font-bold text-blue-600 w-12 text-center">{"#" + user.rank}</div>
               {user.avatar_url ? (
                 <img src={user.avatar_url} alt={user.full_name} className="w-12 h-12 rounded-full object-cover" />

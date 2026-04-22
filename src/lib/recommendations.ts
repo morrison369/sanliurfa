@@ -12,7 +12,7 @@ export const getPersonalizedRecommendations = getRecommendationsForUser;
 export async function getRecommendationsForUser(userId: string, limit: number = 10): Promise<any[]> {
   try {
     const recs = await queryMany(`
-      SELECT ur.*, p.name, p.category, p.rating, p.review_count
+      SELECT ur.*, p.name, p.slug, p.category, p.rating, p.review_count
       FROM user_recommendations ur
       JOIN places p ON ur.recommended_place_id = p.id
       WHERE ur.user_id = $1 AND ur.clicked = false
