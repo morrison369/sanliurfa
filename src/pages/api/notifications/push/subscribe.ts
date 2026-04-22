@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/notifications/push/subscribe', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -74,12 +74,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/notifications/push/subscribe', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Failed to subscribe to push',
+      'Push bildirim aboneliği oluşturulamadı',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to subscribe',
+      'Abonelik oluşturulamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -97,7 +97,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       recordRequest('DELETE', '/api/notifications/push/subscribe', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -138,7 +138,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     return apiResponse(
       {
         success: true,
-        message: 'Unsubscribed from push notifications'
+        message: 'Push bildirim aboneliği iptal edildi'
       },
       HttpStatus.OK,
       requestId
@@ -147,12 +147,12 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/notifications/push/subscribe', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Failed to unsubscribe from push',
+      'Push bildirim aboneliği iptal edilemedi',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to unsubscribe',
+      'Abonelik iptal edilemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

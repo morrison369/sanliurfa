@@ -2,24 +2,42 @@
 import Layout from "../../layouts/Layout.astro";
 import TrendingPlaces from "../../components/TrendingPlaces";
 import UserRecommendations from "../../components/UserRecommendations";
-
-const { locals, redirect } = Astro;
-if (!locals.user) {
-  return redirect("/giris?redirect=/kesfet");
-}
 ---
 
-<Layout title="Keşfet - sanliurfa.com" noindex>
-  <div class="max-w-6xl mx-auto px-4 py-8">
-    <div class="mb-12">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-        Keşfet
-      </h1>
-      <p class="text-gray-600 dark:text-gray-400">
-        Yeni mekanlar ve kullanıcılar bul
+<Layout
+  seo={{
+    title: "Şanlıurfa Keşfet - Mekânlar, Lezzetler ve Şehir Rotaları",
+    description:
+      "Şanlıurfa'da trend mekânları, tarihi durakları, gastronomi önerilerini ve şehir servislerini keşfedin.",
+    canonicalUrl: "https://sanliurfa.com/kesfet",
+  }}
+>
+  <section
+    class="bg-gradient-to-br from-urfa-950 via-urfa-900 to-isot-900 text-white"
+  >
+    <div class="container-custom py-14">
+      <p class="text-sm uppercase tracking-wide text-urfa-200">
+        Şanlıurfa keşif merkezi
       </p>
+      <h1 class="text-4xl md:text-5xl font-display font-bold mt-3">
+        Şanlıurfa'da bugün ne keşfedilir?
+      </h1>
+      <p class="max-w-3xl text-urfa-100 mt-4 text-lg">
+        Tarihi yerler, yöresel lezzetler, popüler mekânlar ve günlük şehir
+        servisleri tek ekranda.
+      </p>
+      <div class="flex flex-wrap gap-3 mt-8">
+        <a href="/places" class="btn-accent">Mekânları keşfet</a>
+        <a
+          href="/sehir-servisleri"
+          class="btn bg-white/10 text-white hover:bg-white/20"
+          >Şehir servisleri</a
+        >
+      </div>
     </div>
+  </section>
 
+  <div class="container-custom py-10">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div class="lg:col-span-2">
         <div class="mb-12">
@@ -42,28 +60,40 @@ if (!locals.user) {
           </h3>
           <div class="space-y-2">
             <a
-              href="/siralamalar"
+              href="/places"
               class="block text-sm text-blue-600 hover:text-blue-700"
             >
-              - Sıralamalar
+              - Mekânlar
             </a>
             <a
-              href="/arama"
+              href="/arama/gelismis"
               class="block text-sm text-blue-600 hover:text-blue-700"
             >
               - Gelişmiş Arama
             </a>
             <a
-              href="/bildirimler"
+              href="/gastronomi"
               class="block text-sm text-blue-600 hover:text-blue-700"
             >
-              - Bildirimler
+              - Gastronomi
             </a>
             <a
-              href="/mesajlar"
+              href="/tarihi-yerler"
               class="block text-sm text-blue-600 hover:text-blue-700"
             >
-              - Mesajlar
+              - Tarihi yerler
+            </a>
+            <a
+              href="/etkinlikler"
+              class="block text-sm text-blue-600 hover:text-blue-700"
+            >
+              - Etkinlikler
+            </a>
+            <a
+              href="/sehir-servisleri"
+              class="block text-sm text-blue-600 hover:text-blue-700"
+            >
+              - Şehir Servisleri
             </a>
           </div>
         </div>

@@ -5,7 +5,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const user = locals.user;
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: 'Yetkisiz işlem' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });

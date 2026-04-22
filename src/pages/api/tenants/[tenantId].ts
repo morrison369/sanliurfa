@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       recordRequest('GET', `/api/tenants/${tenantId}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -124,7 +124,7 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
       recordRequest('PATCH', `/api/tenants/${tenantId}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -195,7 +195,7 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
     return apiResponse(
       {
         success: true,
-        message: 'Tenant updated'
+        message: 'Tenant güncellendi'
       },
       HttpStatus.OK,
       requestId

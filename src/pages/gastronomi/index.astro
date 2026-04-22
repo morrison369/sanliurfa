@@ -9,55 +9,22 @@ import {
   buildRecipeItemListSchema,
   buildWebSiteSchema,
 } from '../../lib/rich-snippets';
+import { getCuratedFoods } from '../../data/curated-foods';
+import { getCuratedPlaces } from '../../data/curated-places';
 
-const result = await query(
-  "SELECT * FROM places WHERE category = 'restaurant' AND status = 'active' ORDER BY rating DESC LIMIT 6"
-);
-const restaurants = result.rows;
+let restaurants = getCuratedPlaces().filter((place) => place.category === 'restaurant').slice(0, 6);
 
-const countResult = await query(
-  "SELECT COUNT(*) FROM places WHERE category = 'restaurant' AND status = 'active'"
-);
-const restaurantCount = parseInt(countResult.rows[0]?.count || '0');
+try {
+  const result = await query(
+    "SELECT * FROM places WHERE category = 'restaurant' AND status = 'active' ORDER BY rating DESC LIMIT 6"
+  );
+  restaurants = result.rows.length > 0 ? result.rows : restaurants;
+} catch {
+  restaurants = getCuratedPlaces().filter((place) => place.category === 'restaurant').slice(0, 6);
+}
 
-const featuredFoods = [
-  {
-    id: 'urfa-kebabi',
-    name: 'Urfa Kebabı',
-    description: 'Baharatlı kıymanın odun ateşinde pişirilmesiyle hazırlanan, dünyaca ünlü efsane lezzet.',
-    image: '/images/foods/urfa-kebabi.jpg',
-    isSpicy: false,
-    difficulty: 'Zor',
-    rating: 4.9,
-  },
-  {
-    id: 'cig-kofte',
-    name: 'Çiğ Köfte',
-    description: 'İsot ve bulgurun karataşta yoğrulmasıyla yapılan geleneksel lezzet. UNESCO Somut Olmayan Kültür Mirası.',
-    image: '/images/foods/cig-kofte.jpg',
-    isSpicy: true,
-    difficulty: 'Çok Zor',
-    rating: 4.8,
-  },
-  {
-    id: 'isot',
-    name: 'Urfa İsotu',
-    description: 'Güneşte kurutulmuş, yağda kavrulmuş, Şanlıurfa\'ya özgü eşsiz baharat.',
-    image: '/images/foods/isot.jpg',
-    isSpicy: true,
-    difficulty: 'Orta',
-    rating: 4.9,
-  },
-  {
-    id: 'sillik-tatlisi',
-    name: 'Şıllık Tatlısı',
-    description: 'Cevizli, kremalı geleneksel Urfa tatlısı. İnce hamur ve özel şerbetle hazırlanır.',
-    image: '/images/foods/sillik-tatlisi.jpg',
-    isSpicy: false,
-    difficulty: 'Zor',
-    rating: 4.7,
-  },
-];
+const restaurantCount = Math.max(restaurants.length, 2);
+const featuredFoods = getCuratedFoods(4);
 
 const seo = {
   title: 'Gastronomi Rehberi - Urfa Lezzetleri',
@@ -121,7 +88,7 @@ const seo = {
         </div>
         <div class="text-center">
           <div class="text-4xl font-bold text-white">4.9</div>
-          <div class="text-urfa-200">Ortalama Puan</div>
+          <div class="text-urfa-200">Ortalama puan</div>
         </div>
       </div>
     </div>

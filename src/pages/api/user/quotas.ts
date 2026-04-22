@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/user/quotas', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -84,10 +84,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/user/quotas', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get user quotas', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Kotalar alınamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get quotas',
+      'Kotalar alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

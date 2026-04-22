@@ -12,7 +12,7 @@ const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 export const POST: APIRoute = async ({ request, redirect }) => {
   try {
     const formData = await request.formData();
-    
+
     // Extract form data
     const name = formData.get('name')?.toString();
     const category = formData.get('category')?.toString();

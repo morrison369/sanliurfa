@@ -3,8 +3,8 @@
  * Display a prompt to upgrade when accessing premium features without permission
  */
 
-import React from 'react';
-import type { ReactNode } from 'react';
+import React from "react";
+import type { ReactNode } from "react";
 
 interface PremiumFeatureGuardProps {
   featureName: string;
@@ -27,9 +27,8 @@ export function PremiumFeatureGuard({
 
   return (
     fallback || (
-      <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-lg p-6 text-center">
+      <div className="rounded-lg border-2 border-urfa-200 bg-urfa-50 p-6 text-center dark:border-urfa-800 dark:bg-urfa-900/20">
         <div className="mb-4">
-          <div className="text-4xl mb-2">🔒</div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             {featureName} Özelliği
           </h3>
@@ -38,21 +37,23 @@ export function PremiumFeatureGuard({
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 text-left border border-blue-100 dark:border-blue-900">
+        <div className="mb-4 rounded-lg border border-urfa-100 bg-white p-4 text-left dark:border-urfa-900 dark:bg-gray-800">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             <span className="font-semibold text-gray-900 dark:text-white">
               Bu özelliği kullanmak için:
             </span>
             <br />
-            Premium plana yükseltin ve daha fazla avantajı açılış
+            Üyelik planlarını inceleyin; ilk aşamada temel özellikler ücretsiz
+            açık kalır, gelişmiş işletme araçları hazır olduğunda burada
+            yönetilir.
           </p>
         </div>
 
         <a
           href="/fiyatlandirma"
-          className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+          className="inline-block rounded-lg bg-urfa-700 px-6 py-2 font-medium text-white transition-colors hover:bg-urfa-800"
         >
-          Planları Gör →
+          Planları gör
         </a>
       </div>
     )
@@ -66,30 +67,34 @@ export function PremiumFeatureGuard({
 interface PremiumBadgeProps {
   children: ReactNode;
   disabled?: boolean;
-  tier: 'basic' | 'pro' | 'enterprise';
+  tier: "basic" | "pro" | "enterprise";
 }
 
-export function PremiumBadge({ children, disabled = false, tier }: PremiumBadgeProps) {
+export function PremiumBadge({
+  children,
+  disabled = false,
+  tier,
+}: PremiumBadgeProps) {
   const tierColors = {
-    basic: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-    pro: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
-    enterprise: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+    basic: "bg-urfa-100 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300",
+    pro: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300",
+    enterprise:
+      "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300",
   };
 
-  const tierIcons = {
-    basic: '⭐',
-    pro: '✨',
-    enterprise: '👑',
+  const tierLabels = {
+    basic: "Temel",
+    pro: "Pro",
+    enterprise: "Kurumsal",
   };
 
   return (
-    <div className={`relative ${disabled ? 'opacity-60' : ''}`}>
+    <div className={`relative ${disabled ? "opacity-60" : ""}`}>
       {children}
       <div
         className={`absolute -top-2 -right-2 inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold ${tierColors[tier]}`}
       >
-        <span>{tierIcons[tier]}</span>
-        <span className="capitalize">{tier}</span>
+        <span>{tierLabels[tier]}</span>
       </div>
     </div>
   );

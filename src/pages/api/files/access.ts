@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const fileId = url.searchParams.get('file_id');
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to get file access stats', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -63,6 +63,6 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
     }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to record file access', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

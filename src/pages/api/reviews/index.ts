@@ -187,7 +187,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 async function updatePlaceRating(placeId: string) {
   const result = await query('SELECT rating FROM reviews WHERE place_id = $1', [placeId]);
   const reviews = result.rows;
-  
+
   if (reviews.length > 0) {
     const avgRating = reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length;
     await query(

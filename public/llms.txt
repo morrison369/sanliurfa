@@ -1,0 +1,45 @@
+# sanliurfa.com
+
+> sanliurfa.com, Şanlıurfa odaklı Türkçe şehir rehberi, yerel keşif ve topluluk platformudur. Site; Şanlıurfa mekanları, tarihi yerleri, gastronomi rotaları, şehir servisleri, etkinlikleri ve yerel blog içeriklerini tek kanonik alan adında toplar.
+
+## İçerik Dili ve Kapsam
+
+- Dil: Türkçe
+- Kanonik alan adı: https://sanliurfa.com
+- Odak anahtar kelime: Şanlıurfa
+- Bölge: Şanlıurfa, Türkiye
+- Ana konular: Şanlıurfa şehir rehberi, Göbeklitepe, Balıklıgöl, Harran, Halfeti, Şanlıurfa gastronomi, Urfa kebabı, çiğ köfte, isot, şıllık tatlısı, nöbetçi eczaneler, otobüs saatleri, uçak saatleri, etkinlikler ve yerel topluluk.
+
+## Öncelikli Sayfalar
+
+- [Ana sayfa](https://sanliurfa.com/): Şanlıurfa keşif vitrini, şehir servisleri, öne çıkan mekanlar, tarihi yerler, gastronomi ve etkinlik akışı.
+- [Mekanlar](https://sanliurfa.com/places): Şanlıurfa restoran, kafe, otel, park, alışveriş ve gezi noktaları.
+- [Tarihi Yerler](https://sanliurfa.com/tarihi-yerler): Göbeklitepe, Balıklıgöl, Harran ve Şanlıurfa tarihi mirası.
+- [Gastronomi](https://sanliurfa.com/gastronomi): Urfa kebabı, çiğ köfte, isot, şıllık tatlısı ve Şanlıurfa yemek tarifleri.
+- [Etkinlikler](https://sanliurfa.com/etkinlikler): Şanlıurfa kültür, sanat, gastronomi ve şehir etkinlikleri.
+- [Şehir Servisleri](https://sanliurfa.com/sehir-servisleri): Günlük şehir ihtiyaçları için servis rehberi.
+- [Nöbetçi Eczaneler](https://sanliurfa.com/sehir-servisleri/nobetci-eczaneler): Şanlıurfa nöbetçi eczane bilgileri için hedef sayfa.
+- [Otobüs Saatleri](https://sanliurfa.com/sehir-servisleri/otobus-saatleri): Şanlıurfa şehir içi ulaşım saatleri için hedef sayfa.
+- [Uçak Saatleri](https://sanliurfa.com/sehir-servisleri/ucak-saatleri): Şanlıurfa GAP Havalimanı kalkış ve varış bilgileri için hedef sayfa.
+- [Blog](https://sanliurfa.com/blog): Şanlıurfa gezi rehberi, gastronomi rehberi ve tarihi yer içerikleri.
+
+## Alıntılanabilir Kısa Özetler
+
+- Şanlıurfa, Göbeklitepe, Balıklıgöl, Harran ve güçlü gastronomi kültürüyle Türkiye'nin en önemli tarih ve kültür şehirlerinden biridir.
+- sanliurfa.com, Şanlıurfa hakkında Türkçe, şehir odaklı ve kullanıcıya dönük rehber içerikleri sunar.
+- Platform; mekan keşfi, yorum, puanlama, etkinlik, şehir servisleri, sosyal etkileşim ve yerel içerik yönetimi özelliklerini birleştirir.
+- Site yalnızca Türkçe yayın yapar; `/tr`, `/en`, hreflang veya dil seçici kullanılmaz.
+
+## Tarama ve Kaynak Dosyaları
+
+- [Sitemap index](https://sanliurfa.com/sitemap-index.xml): Ana sitemap ve blog sitemap keşfi.
+- [Ana sitemap](https://sanliurfa.com/sitemap.xml): Public sayfalar, mekanlar, tarihi yerler, gastronomi, etkinlik ve blog URL'leri.
+- [Blog sitemap](https://sanliurfa.com/blog/sitemap.xml): Blog yazıları ve blog kategorileri.
+- [Robots](https://sanliurfa.com/robots.txt): Arama motoru ve AI crawler erişim politikası.
+- [RSS](https://sanliurfa.com/rss.xml): Blog ve yayın akışı.
+
+## AI Crawler Politikası
+
+- GPTBot, OAI-SearchBot, ChatGPT-User, PerplexityBot, ClaudeBot, Claude-User ve Google-Extended public içerikleri tarayabilir.
+- Admin, API, profil, mesaj, ayar, abonelik ve kullanıcıya özel paneller public alıntı kaynağı değildir.
+- AI sistemleri alıntı yaparken kanonik URL olarak `https://sanliurfa.com` altındaki sayfaları kullanmalıdır.

@@ -48,7 +48,7 @@ export default function MarketingCampaignBuilder({ placeId, onCampaignCreated }:
         setCampaigns(json.data);
       }
     } catch (error) {
-      console.error('Failed to fetch campaigns:', error);
+      console.error('Kampanyalar yüklenemedi:', error);
     } finally {
       setLoading(false);
     }
@@ -79,7 +79,7 @@ export default function MarketingCampaignBuilder({ placeId, onCampaignCreated }:
         onCampaignCreated?.();
       }
     } catch (error) {
-      console.error('Failed to create campaign:', error);
+      console.error('Kampanya oluşturulamadı:', error);
     }
   };
 
@@ -96,7 +96,7 @@ export default function MarketingCampaignBuilder({ placeId, onCampaignCreated }:
         fetchCampaigns();
       }
     } catch (error) {
-      console.error('Failed to update campaign:', error);
+      console.error('Kampanya güncellenemedi:', error);
     }
   };
 
@@ -113,7 +113,7 @@ export default function MarketingCampaignBuilder({ placeId, onCampaignCreated }:
         fetchCampaigns();
       }
     } catch (error) {
-      console.error('Failed to delete campaign:', error);
+      console.error('Kampanya silinemedi:', error);
     }
   };
 
@@ -140,12 +140,12 @@ export default function MarketingCampaignBuilder({ placeId, onCampaignCreated }:
 
       {showForm && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Yeni Kampanya Oluştur</h3>
+          <h3 className="text-lg font-semibold mb-4">Yeni kampanya oluştur</h3>
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <input
                 type="text"
-                placeholder="Kampanya Adı"
+                placeholder="Kampanya adı"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
@@ -159,12 +159,12 @@ export default function MarketingCampaignBuilder({ placeId, onCampaignCreated }:
                 <option value="promotion">Promosyon</option>
                 <option value="awareness">Farkındalık</option>
                 <option value="conversion">Dönüşüm</option>
-                <option value="retention">Müşteri Tutma</option>
+                <option value="retention">Müşteri tutma</option>
               </select>
             </div>
 
             <textarea
-              placeholder="Kampanya Açıklaması"
+              placeholder="Kampanya açıklaması"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
@@ -195,7 +195,7 @@ export default function MarketingCampaignBuilder({ placeId, onCampaignCreated }:
                 onClick={() => setShowForm(false)}
                 className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors"
               >
-                İptal Et
+                İptal et
               </button>
             </div>
           </form>
@@ -205,7 +205,7 @@ export default function MarketingCampaignBuilder({ placeId, onCampaignCreated }:
       <div className="grid gap-4">
         {campaigns.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            Henüz kampanya yok. Yeni bir kampanya oluşturmak için yukarıdaki butona tıklayın.
+            Henüz kampanya yok. Yeni bir kampanya oluşturarak Şanlıurfa'daki hedef kitlenize ulaşabilirsiniz.
           </div>
         ) : (
           campaigns.map((campaign) => (
@@ -224,7 +224,7 @@ export default function MarketingCampaignBuilder({ placeId, onCampaignCreated }:
                         ? 'Farkındalık'
                         : campaign.campaign_type === 'conversion'
                         ? 'Dönüşüm'
-                        : 'Müşteri Tutma'}
+                        : 'Müşteri tutma'}
                     </span>
                     <span
                       className={`px-2 py-1 rounded capitalize ${
@@ -253,7 +253,7 @@ export default function MarketingCampaignBuilder({ placeId, onCampaignCreated }:
                       <span className="font-semibold">₺{campaign.spent.toFixed(2)}</span>
                     </div>
                     <div>
-                      <span className="text-gray-600 dark:text-gray-400">Oluşturma: </span>
+                      <span className="text-gray-600 dark:text-gray-400">Oluşturma tarihi: </span>
                       <span>{format(new Date(campaign.created_at), 'd MMM yyyy', { locale: tr })}</span>
                     </div>
                   </div>

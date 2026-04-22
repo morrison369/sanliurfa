@@ -5,10 +5,10 @@ import { query } from '../../../../lib/postgres';
 export const POST: APIRoute = async ({ params, request, locals }) => {
   try {
     const { id } = params;
-    
+
     if (!locals.isAdmin) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Yetkisiz işlem' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -26,17 +26,17 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     const banReason = formData.get('ban_reason')?.toString();
 
     await query(
-      `UPDATE users SET 
-        is_banned = $1, 
-        ban_reason = $2, 
-        banned_at = $3, 
-        banned_by = $4 
+      `UPDATE users SET
+        is_banned = $1,
+        ban_reason = $2,
+        banned_at = $3,
+        banned_by = $4
        WHERE id = $5`,
       [
-        isBanned, 
-        isBanned ? banReason : null, 
-        isBanned ? new Date().toISOString() : null, 
-        isBanned ? locals.user?.id : null, 
+        isBanned,
+        isBanned ? banReason : null,
+        isBanned ? new Date().toISOString() : null,
+        isBanned ? locals.user?.id : null,
         id
       ]
     );

@@ -19,11 +19,11 @@ export default function AdminLoyaltyPanel() {
   const loadRewards = async () => {
     try {
       const response = await fetch("/api/admin/loyalty/rewards");
-      if (!response.ok) throw new Error("Failed");
+      if (!response.ok) throw new Error("Ödüller yüklenemedi");
       const data = await response.json();
       setRewards(data.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : "Bilinmeyen hata");
     }
   };
 
@@ -34,7 +34,7 @@ export default function AdminLoyaltyPanel() {
           onClick={() => setActiveTab("rewards")}
           className="px-4 py-2 font-medium border-b-2"
         >
-          Rewards
+          Ödüller
         </button>
       </div>
 
@@ -46,9 +46,9 @@ export default function AdminLoyaltyPanel() {
             <table className="w-full text-sm">
               <thead>
                 <tr>
-                  <th className="text-left px-4 py-2">Name</th>
-                  <th className="text-left px-4 py-2">Category</th>
-                  <th className="text-right px-4 py-2">Points</th>
+                  <th className="text-left px-4 py-2">Ad</th>
+                  <th className="text-left px-4 py-2">Kategori</th>
+                  <th className="text-right px-4 py-2">Puan</th>
                 </tr>
               </thead>
               <tbody>
@@ -62,7 +62,7 @@ export default function AdminLoyaltyPanel() {
               </tbody>
             </table>
           ) : (
-            <p className="text-gray-600 text-sm">No rewards found</p>
+            <p className="text-gray-600 text-sm">Ödül bulunamadı</p>
           )}
         </div>
       )}

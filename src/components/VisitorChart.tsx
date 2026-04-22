@@ -35,14 +35,14 @@ export function VisitorChart({ placeId, startDate, endDate }: VisitorChartProps)
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch visitor stats');
+          throw new Error('Ziyaretçi istatistikleri alınamadı');
         }
 
         const data = await response.json();
         setStats(data.visitorStats || []);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
         setStats([]);
       } finally {
         setLoading(false);
@@ -59,7 +59,7 @@ export function VisitorChart({ placeId, startDate, endDate }: VisitorChartProps)
   if (error || stats.length === 0) {
     return (
       <div className="bg-gray-50 rounded-lg border border-gray-200 p-8 text-center">
-        <p className="text-gray-600">{error || 'No visitor data available'}</p>
+        <p className="text-gray-600">{error || 'Ziyaretçi verisi bulunamadı'}</p>
       </div>
     );
   }

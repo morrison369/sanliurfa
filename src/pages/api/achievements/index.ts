@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     if (!locals.user?.id && !all) {
       recordRequest('GET', '/api/achievements', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     if (all) {
@@ -63,7 +63,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     logger.error('Get achievements failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get achievements',
+      'Başarımlar alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -79,7 +79,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/achievements', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -92,7 +92,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/achievements', HttpStatus.OK, duration);
 
       return apiResponse(
-        { success: true, message: 'Achievement marked as viewed' },
+        { success: true, message: 'Başarım görüntülendi olarak işaretlendi' },
         HttpStatus.OK,
         requestId
       );
@@ -101,7 +101,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     recordRequest('POST', '/api/achievements', HttpStatus.BAD_REQUEST, Date.now() - startTime);
     return apiError(
       ErrorCode.VALIDATION_ERROR,
-      'Invalid action',
+      'Geçersiz işlem',
       HttpStatus.BAD_REQUEST,
       undefined,
       requestId
@@ -112,7 +112,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error('Achievement action failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to process achievement action',
+      'Başarım işlemi tamamlanamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

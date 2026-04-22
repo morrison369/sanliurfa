@@ -40,12 +40,12 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
         },
       });
 
-      if (!res.ok) throw new Error("Failed to load webhooks");
+      if (!res.ok) throw new Error("Webhook listesi yüklenemedi");
       const data = await res.json();
       setWebhooks(data.data || []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : "Bilinmeyen hata");
     } finally {
       setLoading(false);
     }
@@ -65,13 +65,13 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error("Failed to create webhook");
+      if (!res.ok) throw new Error("Webhook oluşturulamadı");
 
       setFormData({ event: "", url: "", secret: "" });
       setShowForm(false);
       await loadWebhooks();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : "Bilinmeyen hata");
     } finally {
       setLoading(false);
     }
@@ -88,10 +88,10 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
         },
       });
 
-      if (!res.ok) throw new Error("Failed to delete webhook");
+      if (!res.ok) throw new Error("Webhook silinemedi");
       await loadWebhooks();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : "Bilinmeyen hata");
     }
   };
 
@@ -115,7 +115,7 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
       )}
 
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Webhooks</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Webhook Yönetimi</h2>
         <button
           onClick={() => setShowForm(!showForm)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -160,7 +160,7 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
               onChange={(e) =>
                 setFormData({ ...formData, url: e.target.value })
               }
-              placeholder="https://sanliurfa.com/webhooks/ornek"
+              placeholder="https://api.isletmeniz.com/webhooks/sanliurfa"
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -168,7 +168,7 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Secret (İsteğe Bağlı)
+              Gizli Anahtar (İsteğe Bağlı)
             </label>
             <input
               type="password"
@@ -176,7 +176,7 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
               onChange={(e) =>
                 setFormData({ ...formData, secret: e.target.value })
               }
-              placeholder="Webhook imzalaması için secret"
+              placeholder="Webhook imzalaması için gizli anahtar"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -186,7 +186,7 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
             disabled={loading}
             className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition"
           >
-            {loading ? "Kaydediliyor..." : "Webhook Oluştur"}
+            {loading ? "Kaydediliyor..." : "Webhook oluştur"}
           </button>
         </form>
       )}
@@ -217,20 +217,20 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
-                  {webhook.active ? "Aktif" : "İnaktif"}
+                  {webhook.active ? "Aktif" : "Pasif"}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                 <div>
-                  <p className="text-gray-600">Oluşturulma</p>
+                  <p className="text-gray-600">Oluşturulma tarihi</p>
                   <p className="font-medium text-gray-900">
                     {new Date(webhook.createdAt).toLocaleDateString("tr-TR")}
                   </p>
                 </div>
                 {webhook.lastTriggeredAt && (
                   <div>
-                    <p className="text-gray-600">Son Tetikleme</p>
+                    <p className="text-gray-600">Son tetikleme</p>
                     <p className="font-medium text-gray-900">
                       {new Date(webhook.lastTriggeredAt).toLocaleDateString(
                         "tr-TR",

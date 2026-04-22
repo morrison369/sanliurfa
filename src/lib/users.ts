@@ -199,7 +199,7 @@ export async function updateUserProfile(
 }
 
 /**
- * Update user settings (language, theme, preferences)
+ * Update user settings (theme, preferences). Language is permanently locked to Turkish.
  */
 export async function updateUserSettings(
   userId: string,
@@ -244,10 +244,8 @@ export async function updateUserSettings(
     const values: any[] = [];
     let paramIndex = 1;
 
-    if (updates.language_preference !== undefined) {
-      fields.push(`language_preference = $${paramIndex++}`);
-      values.push('tr');
-    }
+    fields.push(`language_preference = $${paramIndex++}`);
+    values.push('tr');
 
     if (updates.theme_preference !== undefined) {
       fields.push(`theme_preference = $${paramIndex++}`);

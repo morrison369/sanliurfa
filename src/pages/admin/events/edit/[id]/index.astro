@@ -28,7 +28,7 @@ const formatDateTimeLocal = (dateString: string) => {
 };
 
 const seo = {
-  title: `${event.title} - Düzenle - Admin Panel`,
+  title: `${event.title} - Düzenle - Yönetim Paneli`,
   noindex: true
 };
 ---
@@ -52,7 +52,7 @@ const seo = {
       <form action={`/api/events/${id}/update`} method="POST" class="grid lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 space-y-6">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel Bilgiler</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel bilgiler</h2>
             <div class="space-y-4">
               <div>
                 <label for="title" class="label dark:text-gray-300">Etkinlik Adı *</label>
@@ -127,7 +127,7 @@ const seo = {
                 folder="events"
               />
             </div>
-            <input type="url" name="image" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={event.image_url || ''} placeholder="https://sanliurfa.com/images/ornek-etkinlik.jpg" />
+            <input type="url" name="image" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={event.image_url || ''} placeholder="https://sanliurfa.com/images/urfa-gastronomi-festivali.jpg" />
             {event.image_url && <img src={event.image_url} alt="" class="mt-3 w-full h-32 object-cover rounded-lg" />}
           </div>
         </aside>

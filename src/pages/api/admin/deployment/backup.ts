@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/deployment/backup', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get backup configs failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -95,7 +95,7 @@ export const PUT: APIRoute = async ({ request, locals, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/admin/deployment/backup', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Update backup config failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -134,6 +134,6 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/deployment/backup', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Backup trigger failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

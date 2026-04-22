@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request, params }) => {
 
     if (!token) {
       recordRequest('POST', `/api/blog/posts/${params.id}/revisions`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const sessionData = await verifyToken(token);
@@ -95,7 +95,7 @@ export const POST: APIRoute = async ({ request, params }) => {
       {
         success: true,
         data: {
-          message: 'Revision restored successfully'
+          message: 'Revizyon başarıyla geri yüklendi'
         }
       },
       HttpStatus.OK,

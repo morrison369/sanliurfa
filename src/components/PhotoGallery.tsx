@@ -45,7 +45,7 @@ export default function PhotoGallery({ placeId, currentUserId, isAdmin }: PhotoG
         setPhotos(data.data || []);
       }
     } catch (error) {
-      console.error('Failed to load photos:', error);
+      console.error('Fotoğraflar yüklenemedi:', error);
     } finally {
       setIsLoading(false);
     }
@@ -236,7 +236,7 @@ export default function PhotoGallery({ placeId, currentUserId, isAdmin }: PhotoG
                 <div className="aspect-square bg-gray-200 flex items-center justify-center overflow-hidden">
                   <img
                     src={photo.file_path}
-                    alt={photo.alt_text || 'Mekan fotoğrafı'}
+                    alt={photo.alt_text || 'Mekân fotoğrafı'}
                     className="w-full h-full object-cover"
                     onError={e => {
                       (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22400%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22400%22 height=%22400%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-family=%22sans-serif%22 font-size=%2216%22 fill=%22%239ca3af%22%3EFotoğraf Yüklenemedi%3C/text%3E%3C/svg%3E';

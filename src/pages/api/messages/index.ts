@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/messages', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const limit = parseInt(url.searchParams.get('limit') || '50', 10);
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/messages', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get messages failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'İşlem tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/messages', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -67,6 +67,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/messages', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Create conversation failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'İşlem tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -56,7 +56,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Failed to get webhook logs', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get logs', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Kayıtlar alınamadı', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -70,7 +70,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -101,6 +101,6 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Failed to clear webhook logs', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to clear logs', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Kayıtlar temizlenemedi', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

@@ -113,7 +113,7 @@ export default function BlockingManager() {
 
                   <div className="flex-1 min-w-0">
                     <a
-                      href={`/kullanıcı/${block.blocked_user.id}`}
+                      href={`/kullanici/${block.blocked_user.id}`}
                       className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 block truncate"
                     >
                       {block.blocked_user.full_name}

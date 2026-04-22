@@ -12,16 +12,16 @@ export interface Category {
   isActive: boolean;
 }
 
-// Mekan Kategorileri
+// Mekân Kategorileri
 export const placeCategories: Category[] = [
   { id: 'restaurant', name: 'Restoran', slug: 'restoran', description: 'Yerel ve uluslararası mutfaklar', icon: 'utensils', color: '#EF4444', sortOrder: 1, isActive: true },
-  { id: 'cafe', name: 'Kafe', slug: 'kafe', description: 'Kahve ve tatlı mekanları', icon: 'coffee', color: '#F59E0B', sortOrder: 2, isActive: true },
+  { id: 'cafe', name: 'Kafe', slug: 'kafe', description: 'Kahve ve tatlı mekânları', icon: 'coffee', color: '#F59E0B', sortOrder: 2, isActive: true },
   { id: 'hotel', name: 'Otel', slug: 'otel', description: 'Konaklama ve oteller', icon: 'bed', color: '#3B82F6', sortOrder: 3, isActive: true },
   { id: 'museum', name: 'Müze', slug: 'muze', description: 'Tarihi ve kültürel müzeler', icon: 'landmark', color: '#8B5CF6', sortOrder: 4, isActive: true },
   { id: 'park', name: 'Park', slug: 'park', description: 'Park ve mesire alanları', icon: 'tree-pine', color: '#10B981', sortOrder: 5, isActive: true },
   { id: 'shopping', name: 'Alışveriş', slug: 'alisveris', description: 'Alışveriş merkezleri ve çarşılar', icon: 'shopping-bag', color: '#EC4899', sortOrder: 6, isActive: true },
-  { id: 'entertainment', name: 'Eğlence', slug: 'eglence', description: 'Eğlence ve aktivite mekanları', icon: 'party-popper', color: '#F97316', sortOrder: 7, isActive: true },
-  { id: 'other', name: 'Diğer', slug: 'diger', description: 'Diğer mekanlar', icon: 'more-horizontal', color: '#6B7280', sortOrder: 8, isActive: true },
+  { id: 'entertainment', name: 'Eğlence', slug: 'eglence', description: 'Eğlence ve aktivite mekânları', icon: 'party-popper', color: '#F97316', sortOrder: 7, isActive: true },
+  { id: 'other', name: 'Diğer', slug: 'diger', description: 'Diğer mekânlar', icon: 'more-horizontal', color: '#6B7280', sortOrder: 8, isActive: true },
 ];
 
 // Blog Kategorileri

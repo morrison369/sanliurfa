@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   // Only admin can access performance metrics
   if (!locals.isAdmin) {
     logger.warn('Unauthorized performance metrics access attempt', { userId: locals.user?.id });
-    return apiError(ErrorCode.FORBIDDEN, 'Unauthorized', HttpStatus.FORBIDDEN, undefined, requestId);
+    return apiError(ErrorCode.FORBIDDEN, 'Yetkisiz işlem', HttpStatus.FORBIDDEN, undefined, requestId);
   }
 
   try {

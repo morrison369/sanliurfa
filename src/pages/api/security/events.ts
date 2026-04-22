@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const suspicious = url.searchParams.get('suspicious') === 'true';
@@ -37,6 +37,6 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to get security events', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Güvenlik olayları alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

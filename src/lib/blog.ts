@@ -3,9 +3,9 @@
  * Blog yazıları, kategoriler, yorumlar ve arama
  */
 
-import { queryMany, queryOne, insert, update } from './postgres';
-import { logger } from './logging';
-import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
+import { queryMany, queryOne, insert, update } from "./postgres";
+import { logger } from "./logging";
+import { getCache, setCache, deleteCache, deleteCachePattern } from "./cache";
 
 export interface BlogCategory {
   id: number;
@@ -29,7 +29,7 @@ export interface BlogPost {
   categoryName?: string;
   featuredImage?: string;
   thumbnail?: string;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   isFeatured: boolean;
   viewCount: number;
   likeCount: number;
@@ -50,7 +50,7 @@ export interface BlogComment {
   authorName: string;
   authorEmail?: string;
   content: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   replies?: BlogComment[];
   createdAt: Date;
 }
@@ -60,17 +60,17 @@ export interface BlogComment {
  */
 export async function getBlogCategories(): Promise<BlogCategory[]> {
   try {
-    const cacheKey = 'sanliurfa:blog:categories';
-    const cached = await getCache<BlogCategory[]>(cacheKey);
+    const cacheKey = "sanliurfa:blog:categories";
+    const cached = await getCache<BlogCategory[] | string>(cacheKey);
 
     if (cached) {
-      return cached;
+      return Array.isArray(cached) ? cached : JSON.parse(cached);
     }
 
     const result = await queryMany(
       `SELECT id, name, slug, description, icon, order_index as "orderIndex",
               (SELECT COUNT(*) FROM blog_posts WHERE category_id = blog_categories.id AND status = 'published') as "postCount"
-       FROM blog_categories ORDER BY order_index ASC`
+       FROM blog_categories ORDER BY order_index ASC`,
     );
 
     const categories = result.map((row: any) => ({
@@ -80,13 +80,16 @@ export async function getBlogCategories(): Promise<BlogCategory[]> {
       description: row.description,
       icon: row.icon,
       orderIndex: row.orderIndex,
-      postCount: parseInt(row.postCount || '0')
+      postCount: parseInt(row.postCount || "0"),
     }));
 
-    await setCache(cacheKey, JSON.stringify(categories), 3600);
+    await setCache(cacheKey, categories, 3600);
     return categories;
   } catch (error) {
-    logger.error('Blog kategorileri alınamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Blog kategorileri alınamadı",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return [];
   }
 }
@@ -94,15 +97,23 @@ export async function getBlogCategories(): Promise<BlogCategory[]> {
 /**
  * Blog Yazıları - Listele
  */
-export async function getBlogPosts(options: {
-  status?: string;
-  categoryId?: number;
-  limit?: number;
-  offset?: number;
-  sort?: 'recent' | 'featured' | 'popular';
-} = {}): Promise<{ posts: BlogPost[]; total: number }> {
+export async function getBlogPosts(
+  options: {
+    status?: string;
+    categoryId?: number;
+    limit?: number;
+    offset?: number;
+    sort?: "recent" | "featured" | "popular";
+  } = {},
+): Promise<{ posts: BlogPost[]; total: number }> {
   try {
-    const { status = 'published', categoryId, limit = 20, offset = 0, sort = 'recent' } = options;
+    const {
+      status = "published",
+      categoryId,
+      limit = 20,
+      offset = 0,
+      sort = "recent",
+    } = options;
 
     let query = `
       SELECT bp.*, bc.name as category_name, u.full_name as author_name,
@@ -122,10 +133,14 @@ export async function getBlogPosts(options: {
       params.push(categoryId);
     }
 
+    query += `
+      GROUP BY bp.id, bc.name, u.full_name
+    `;
+
     // Sıralama
-    if (sort === 'featured') {
+    if (sort === "featured") {
       query += ` ORDER BY bp.is_featured DESC, bp.published_at DESC`;
-    } else if (sort === 'popular') {
+    } else if (sort === "popular") {
       query += ` ORDER BY bp.view_count DESC`;
     } else {
       query += ` ORDER BY bp.published_at DESC`;
@@ -137,7 +152,8 @@ export async function getBlogPosts(options: {
     const posts = await queryMany(query, params);
 
     // Toplam sayı
-    let countQuery = 'SELECT COUNT(*) as total FROM blog_posts WHERE status = $1';
+    let countQuery =
+      "SELECT COUNT(*) as total FROM blog_posts WHERE status = $1";
     const countParams: any[] = [status];
 
     if (categoryId) {
@@ -146,14 +162,17 @@ export async function getBlogPosts(options: {
     }
 
     const countResult = await queryOne(countQuery, countParams);
-    const total = parseInt(countResult?.total || '0');
+    const total = parseInt(countResult?.total || "0");
 
     return {
       posts: posts.map(formatBlogPost),
-      total
+      total,
     };
   } catch (error) {
-    logger.error('Blog yazıları alınamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Blog yazıları alınamadı",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return { posts: [], total: 0 };
   }
 }
@@ -161,7 +180,9 @@ export async function getBlogPosts(options: {
 /**
  * Blog Yazısı - Detay
  */
-export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+export async function getBlogPostBySlug(
+  slug: string,
+): Promise<BlogPost | null> {
   try {
     const cacheKey = `sanliurfa:blog:post:${slug}`;
     const cached = await getCache<BlogPost>(cacheKey);
@@ -180,7 +201,7 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
        LEFT JOIN blog_tags bt ON bpt.tag_id = bt.id
        WHERE bp.slug = $1 AND bp.status = 'published'
        GROUP BY bp.id, bc.id, u.id`,
-      [slug]
+      [slug],
     );
 
     if (!result) {
@@ -190,12 +211,17 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
     const post = formatBlogPost(result);
 
     // Görüntüleme sayısını artır
-    await update('blog_posts', String(result.id), { view_count: result.view_count + 1 });
+    await update("blog_posts", String(result.id), {
+      view_count: result.view_count + 1,
+    });
 
     await setCache(cacheKey, JSON.stringify(post), 1800); // 30 dakika cache
     return post;
   } catch (error) {
-    logger.error('Blog yazısı alınamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Blog yazısı alınamadı",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return null;
   }
 }
@@ -203,12 +229,17 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
 /**
  * Blog Yazısı Oluştur
  */
-export async function createBlogPost(data: Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt' | 'viewCount' | 'likeCount'>): Promise<BlogPost | null> {
+export async function createBlogPost(
+  data: Omit<
+    BlogPost,
+    "id" | "createdAt" | "updatedAt" | "viewCount" | "likeCount"
+  >,
+): Promise<BlogPost | null> {
   try {
     const slug = generateSlug(data.title);
     const readTime = calculateReadTime(data.content);
 
-    const result = await insert('blog_posts', {
+    const result = await insert("blog_posts", {
       title: data.title,
       slug,
       content: data.content,
@@ -217,13 +248,13 @@ export async function createBlogPost(data: Omit<BlogPost, 'id' | 'createdAt' | '
       category_id: data.categoryId,
       featured_image: data.featuredImage,
       thumbnail: data.thumbnail,
-      status: data.status || 'draft',
+      status: data.status || "draft",
       is_featured: data.isFeatured || false,
       read_time_minutes: readTime,
       seo_title: data.seoTitle || data.title,
       seo_description: data.seoDescription || data.excerpt,
       seo_keywords: data.seoKeywords,
-      published_at: data.publishedAt
+      published_at: data.publishedAt,
     });
 
     // Etiketleri ekle
@@ -232,12 +263,18 @@ export async function createBlogPost(data: Omit<BlogPost, 'id' | 'createdAt' | '
     }
 
     // Cache temizle
-    await deleteCachePattern('sanliurfa:blog:*');
+    await deleteCachePattern("sanliurfa:blog:*");
 
-    logger.info('Blog yazısı oluşturuldu', { postId: result.id, title: data.title });
+    logger.info("Blog yazısı oluşturuldu", {
+      postId: result.id,
+      title: data.title,
+    });
     return getBlogPostBySlug(slug);
   } catch (error) {
-    logger.error('Blog yazısı oluşturulamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Blog yazısı oluşturulamadı",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return null;
   }
 }
@@ -245,10 +282,13 @@ export async function createBlogPost(data: Omit<BlogPost, 'id' | 'createdAt' | '
 /**
  * Blog Yazısını Güncelle
  */
-export async function updateBlogPost(id: number, data: Partial<BlogPost>): Promise<BlogPost | null> {
+export async function updateBlogPost(
+  id: number,
+  data: Partial<BlogPost>,
+): Promise<BlogPost | null> {
   try {
     const updates: Record<string, any> = {
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     if (data.title) {
@@ -267,7 +307,7 @@ export async function updateBlogPost(id: number, data: Partial<BlogPost>): Promi
     if (data.seoTitle) updates.seo_title = data.seoTitle;
     if (data.seoDescription) updates.seo_description = data.seoDescription;
 
-    await update('blog_posts', String(id), updates);
+    await update("blog_posts", String(id), updates);
 
     // Etiketleri güncelle
     if (data.tags) {
@@ -277,12 +317,17 @@ export async function updateBlogPost(id: number, data: Partial<BlogPost>): Promi
     }
 
     // Cache temizle
-    await deleteCachePattern('sanliurfa:blog:*');
+    await deleteCachePattern("sanliurfa:blog:*");
 
-    const post = await queryOne('SELECT slug FROM blog_posts WHERE id = $1', [id]);
+    const post = await queryOne("SELECT slug FROM blog_posts WHERE id = $1", [
+      id,
+    ]);
     return getBlogPostBySlug(post.slug);
   } catch (error) {
-    logger.error('Blog yazısı güncellenemedi', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Blog yazısı güncellenemedi",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return null;
   }
 }
@@ -292,13 +337,16 @@ export async function updateBlogPost(id: number, data: Partial<BlogPost>): Promi
  */
 export async function deleteBlogPost(id: number): Promise<boolean> {
   try {
-    await queryMany('DELETE FROM blog_posts WHERE id = $1', [id]);
-    await deleteCachePattern('sanliurfa:blog:*');
+    await queryMany("DELETE FROM blog_posts WHERE id = $1", [id]);
+    await deleteCachePattern("sanliurfa:blog:*");
 
-    logger.info('Blog yazısı silindi', { postId: id });
+    logger.info("Blog yazısı silindi", { postId: id });
     return true;
   } catch (error) {
-    logger.error('Blog yazısı silinemedi', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Blog yazısı silinemedi",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return false;
   }
 }
@@ -306,7 +354,10 @@ export async function deleteBlogPost(id: number): Promise<boolean> {
 /**
  * Blog Yazılarında Ara
  */
-export async function searchBlogPosts(query: string, limit: number = 20): Promise<BlogPost[]> {
+export async function searchBlogPosts(
+  query: string,
+  limit: number = 20,
+): Promise<BlogPost[]> {
   try {
     const results = await queryMany(
       `SELECT bp.*, bc.name as category_name, u.full_name as author_name,
@@ -323,12 +374,15 @@ export async function searchBlogPosts(query: string, limit: number = 20): Promis
        ORDER BY ts_rank(to_tsvector('turkish', bp.title || ' ' || COALESCE(bp.excerpt, '') || ' ' || bp.content),
                         plainto_tsquery('turkish', $1)) DESC
        LIMIT $2`,
-      [query, limit]
+      [query, limit],
     );
 
     return results.map(formatBlogPost);
   } catch (error) {
-    logger.error('Blog arama başarısız', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Blog arama başarısız",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return [];
   }
 }
@@ -336,15 +390,18 @@ export async function searchBlogPosts(query: string, limit: number = 20): Promis
 /**
  * Blog Yorumları
  */
-export async function getBlogComments(postId: number, approved: boolean = true): Promise<BlogComment[]> {
+export async function getBlogComments(
+  postId: number,
+  approved: boolean = true,
+): Promise<BlogComment[]> {
   try {
-    const status = approved ? 'approved' : 'pending';
+    const status = approved ? "approved" : "pending";
 
     const results = await queryMany(
       `SELECT * FROM blog_comments
        WHERE post_id = $1 AND status = $2 AND parent_comment_id IS NULL
        ORDER BY created_at DESC`,
-      [postId, status]
+      [postId, status],
     );
 
     return results.map((row: any) => ({
@@ -355,10 +412,13 @@ export async function getBlogComments(postId: number, approved: boolean = true):
       authorEmail: row.author_email,
       content: row.content,
       status: row.status,
-      createdAt: row.created_at
+      createdAt: row.created_at,
     }));
   } catch (error) {
-    logger.error('Blog yorumları alınamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Blog yorumları alınamadı",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return [];
   }
 }
@@ -366,23 +426,26 @@ export async function getBlogComments(postId: number, approved: boolean = true):
 /**
  * Blog Yorumu Ekle
  */
-export async function addBlogComment(postId: number, data: {
-  authorName: string;
-  authorEmail?: string;
-  userId?: string;
-  content: string;
-}): Promise<BlogComment | null> {
+export async function addBlogComment(
+  postId: number,
+  data: {
+    authorName: string;
+    authorEmail?: string;
+    userId?: string;
+    content: string;
+  },
+): Promise<BlogComment | null> {
   try {
-    const result = await insert('blog_comments', {
+    const result = await insert("blog_comments", {
       post_id: postId,
       user_id: data.userId,
       author_name: data.authorName,
       author_email: data.authorEmail,
       content: data.content,
-      status: 'pending' // Yöneticinin onayı gerekli
+      status: "pending", // Yöneticinin onayı gerekli
     });
 
-    logger.info('Blog yorumu eklendi', { commentId: result.id, postId });
+    logger.info("Blog yorumu eklendi", { commentId: result.id, postId });
 
     return {
       id: result.id,
@@ -390,11 +453,14 @@ export async function addBlogComment(postId: number, data: {
       authorName: data.authorName,
       authorEmail: data.authorEmail,
       content: data.content,
-      status: 'pending',
-      createdAt: new Date()
+      status: "pending",
+      createdAt: new Date(),
     };
   } catch (error) {
-    logger.error('Blog yorumu eklenemedi', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Blog yorumu eklenemedi",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return null;
   }
 }
@@ -424,25 +490,27 @@ function formatBlogPost(row: any): BlogPost {
     seoTitle: row.seo_title,
     seoDescription: row.seo_description,
     seoKeywords: row.seo_keywords,
-    tags: Array.isArray(row.tags) ? row.tags.filter((t: any) => t !== null) : [],
+    tags: Array.isArray(row.tags)
+      ? row.tags.filter((t: any) => t !== null)
+      : [],
     publishedAt: row.published_at,
     createdAt: row.created_at,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
   };
 }
 
 function generateSlug(title: string): string {
   return title
     .toLowerCase()
-    .replace(/ş/g, 's')
-    .replace(/ç/g, 'c')
-    .replace(/ğ/g, 'g')
-    .replace(/ı/g, 'i')
-    .replace(/ö/g, 'o')
-    .replace(/ü/g, 'u')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
+    .replace(/ş/g, "s")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
     .trim();
 }
 
@@ -465,10 +533,13 @@ export async function getBlogPostRevisions(postId: number): Promise<any[]> {
        WHERE post_id = $1
        ORDER BY created_at DESC
        LIMIT 50`,
-      [postId]
+      [postId],
     );
   } catch (error) {
-    logger.error('Blog yazı geçmişi alınamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Blog yazı geçmişi alınamadı",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return [];
   }
 }
@@ -479,81 +550,101 @@ export async function getBlogPostRevisions(postId: number): Promise<any[]> {
 export async function savePostRevision(
   postId: number,
   editorId: string,
-  changeSummary?: string
+  changeSummary?: string,
 ): Promise<void> {
   try {
-    const post = await queryOne('SELECT title, content FROM blog_posts WHERE id = $1', [postId]);
+    const post = await queryOne(
+      "SELECT title, content FROM blog_posts WHERE id = $1",
+      [postId],
+    );
     if (!post) return;
 
     await queryMany(
       `INSERT INTO blog_post_revisions (post_id, title, content, editor_id, change_summary)
        VALUES ($1, $2, $3, $4, $5)`,
-      [postId, post.title, post.content, editorId, changeSummary || 'Manual edit']
+      [
+        postId,
+        post.title,
+        post.content,
+        editorId,
+        changeSummary || "Manual edit",
+      ],
     );
 
-    logger.info('Blog yazı revizyon kaydedildi', { postId, editorId });
+    logger.info("Blog yazı revizyon kaydedildi", { postId, editorId });
   } catch (error) {
-    logger.error('Revizyon kaydedilemedi', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Revizyon kaydedilemedi",
+      error instanceof Error ? error : new Error(String(error)),
+    );
   }
 }
 
 /**
  * Restore post to a previous revision
  */
-export async function restoreBlogPostRevision(postId: number, revisionId: number): Promise<boolean> {
+export async function restoreBlogPostRevision(
+  postId: number,
+  revisionId: number,
+): Promise<boolean> {
   try {
     const revision = await queryOne(
-      'SELECT title, content FROM blog_post_revisions WHERE id = $1 AND post_id = $2',
-      [revisionId, postId]
+      "SELECT title, content FROM blog_post_revisions WHERE id = $1 AND post_id = $2",
+      [revisionId, postId],
     );
 
     if (!revision) {
-      logger.warn('Revizyon bulunamadı', { postId, revisionId });
+      logger.warn("Revizyon bulunamadı", { postId, revisionId });
       return false;
     }
 
     // Update post with revision data
-    await update('blog_posts', String(postId), {
+    await update("blog_posts", String(postId), {
       title: revision.title,
       content: revision.content,
       slug: generateSlug(revision.title),
       read_time_minutes: calculateReadTime(revision.content),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     });
 
     // Clear cache
-    await deleteCachePattern('sanliurfa:blog:*');
+    await deleteCachePattern("sanliurfa:blog:*");
 
-    logger.info('Blog yazı revizyon geri yüklendi', { postId, revisionId });
+    logger.info("Blog yazı revizyon geri yüklendi", { postId, revisionId });
     return true;
   } catch (error) {
-    logger.error('Revizyon geri yüklenemedi', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      "Revizyon geri yüklenemedi",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     return false;
   }
 }
 
-async function addTagsToPost(postId: number, tagNames: string[]): Promise<void> {
+async function addTagsToPost(
+  postId: number,
+  tagNames: string[],
+): Promise<void> {
   for (const tagName of tagNames) {
-    const tag = await queryOne(
-      'SELECT id FROM blog_tags WHERE name = $1',
-      [tagName]
-    );
+    const tag = await queryOne("SELECT id FROM blog_tags WHERE name = $1", [
+      tagName,
+    ]);
 
     let tagId: number;
 
     if (!tag) {
-      const newTag = await insert('blog_tags', {
+      const newTag = await insert("blog_tags", {
         name: tagName,
-        slug: generateSlug(tagName)
+        slug: generateSlug(tagName),
       });
       tagId = newTag.id;
     } else {
       tagId = tag.id;
     }
 
-    await insert('blog_post_tags', {
+    await insert("blog_post_tags", {
       post_id: postId,
-      tag_id: tagId
+      tag_id: tagId,
     });
   }
 }

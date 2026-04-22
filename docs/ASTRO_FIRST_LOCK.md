@@ -10,7 +10,9 @@ Bu proje Astro SSR-first çalışır. Yeni özelliklerde öncelik sırası kilit
 ## Kesin Kurallar
 
 - Astro'da veya kurulu Astro uyumlu pakette olan özellik yeniden yazılmaz.
-- Dev server tek porttur: `127.0.0.1:4321`.
+- Dev, preview ve production Node runtime tek porttur: `127.0.0.1:4321` / `PORT=4321`.
+- Port 4321 doluysa yeni port açılmaz; sadece bu repoya ait 4321 listener'ı durdurulur.
+- Local Redis bağlantısı mevcut Windows `Redis` servisi üzerinden `127.0.0.1:6379` ve `REDIS_KEY_PREFIX=sanliurfa:` ile yapılır; başka projelere ait Redis servisleri durdurulmaz, flush edilmez ve yeniden yapılandırılmaz.
 - Çoklu dil, `/tr`, `/en`, hreflang veya İngilizce varsayılan eklenmez.
 - Türkçe karakterler UTF-8 ile korunur. Kaynak dosyalarda, API cevaplarında, XML/CSV çıktılarında ve PostgreSQL istemci bağlantılarında UTF-8 dışı encoding kullanılmaz.
 - Dil seçici, `Accept-Language` yönlendirmesi veya kullanıcıdan değiştirilebilir dil tercihi eklenmez. Eski i18n endpointleri sadece `tr` döndürür.

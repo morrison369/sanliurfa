@@ -135,7 +135,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Check authentication
     if (!locals.isAdmin) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Yetkisiz işlem' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
       );
     }

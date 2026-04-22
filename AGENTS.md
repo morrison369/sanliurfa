@@ -1,6 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
+
 - `src/pages/`: Astro SSR routes and `src/pages/api/` handlers.
 - `src/components/`, `src/layouts/`, `src/styles/`: UI and layout code.
 - `src/lib/`: shared logic plus phase libraries; tests live in `src/lib/__tests__/`.
@@ -10,6 +11,7 @@
 - Archived phase and cleanup notes live under `docs/archive/`.
 
 ## Source Of Truth
+
 - Treat `origin/master` plus a clean `git worktree` as the only safe delivery base.
 - Do not trust a dirty local root worktree for phase status, docs, or tracker state.
 - If local root and `origin/master` disagree, use the clean worktree created from `origin/master`.
@@ -18,10 +20,13 @@
 - Use [ROOT_INVENTORY_ONLY_POLICY.md](ROOT_INVENTORY_ONLY_POLICY.md) for the dirty-root boundary.
 
 ## Build, Test, and Development Commands
+
 - `npm run dev`: local Astro server on `127.0.0.1:4321` only.
 - `npm run dev:raw`: run Astro dev directly on `127.0.0.1:4321` without pre-stop helper.
 - `npm run dev:stop`: stop only repo-scoped listeners on local port `4321`.
 - `npm run preview`: local Astro preview on `127.0.0.1:4321` only.
+- `ecosystem.config.js`: production PM2 runtime also uses `PORT=4321`; do not reintroduce `6000`, `3000`, `1111`, `1112`, `1113`, or fallback ports.
+- `npm run redis:check`: verify the project Redis connection from ignored `.env.local` without printing secrets or touching other Redis services.
 - `npm run build`: SSR production build to `dist/`.
 - `npm run lint`: `astro check` plus `tsc --noEmit`.
 - `npm run test:unit`: full Vitest run.
@@ -39,12 +44,14 @@
 - `npm run test:phase:gate:ci`: locked smoke/build gate for CI parity.
 
 ## Coding Style & Naming Conventions
+
 - TypeScript + Astro, 2-space indentation, Prettier-compatible output.
 - Use `kebab-case` filenames in `src/lib/`; exports stay `PascalCase`.
 - Keep phase modules pure unless the contract explicitly needs infra imports.
 - Tests use `*.test.ts` and live beside other governance suites in `src/lib/__tests__/`.
 
 ## Astro Rules
+
 - This repo is SSR-first: `output: "server"` with `@astrojs/node`.
 - Do not create route collisions such as `src/pages/x.ts` and `src/pages/x/index.ts`.
 - `sw.js` is the emitted PWA worker; keep build exclusions aligned to that filename.
@@ -52,6 +59,7 @@
 - Never run parallel Astro build or gate chains in the same worktree.
 - Do not start multiple dev servers or allow fallback ports. The only local app port is `4321`; stop the server after manual checks.
 - Do not add `1111`, `1112`, `1113`, or any other alternate local app port scripts back into `package.json`.
+- Dev, preview, and production Node runtime are pinned to `127.0.0.1:4321` / `PORT=4321`; if 4321 is busy, stop the repo-scoped listener instead of opening a new port.
 - Astro-first is locked: before writing custom infrastructure, check Astro core, official `@astrojs/*` integrations, and Astro-compatible packages already installed in this repo.
 - Do not hand-roll features that an Astro integration/package in the repo already provides. For structured data, render JSON-LD through `astro-seo-schema` inside Astro head/layout flow.
 - If Astro has no built-in equivalent, keep custom code minimal, server-rendered, documented, and connected to Astro components instead of adding client-side runtime scripts.
@@ -59,14 +67,17 @@
 - Do not display social media account links or social login buttons unless the real account/provider is configured and working.
 
 ## Architecture Reference
+
 - Use `ARCHITECTURE.md` for runtime invariants and the separation between Astro application rules and phase delivery rules.
 
 ## Testing Guidelines
+
 - Each phase block ships with 6 libs and 24 Vitest assertions.
 - Run the block suite first, then the locked phase wrapper, then PR checks.
 - When changing phase automation, extend `src/lib/__tests__/phase-automation-scripts.test.ts`.
 
 ## Commit & Pull Request Guidelines
+
 - Use milestone commits: `Phase 785-790: ...`.
 - Phase deliveries keep two commits by design:
 - `Phase <range>: ...`
@@ -76,6 +87,7 @@
 - Open PRs through the API-safe wrappers (`phase:pr:open:file`, `phase:pr:view`) and verify merge from remote state, not local fast-forward output.
 
 ## Environment & Ops Notes
+
 - Use Node `22.13.0` or newer 22.x; `.nvmrc` is the repo source of truth.
 - Keep `npm` cache repo-local through `.npmrc`.
 - Do phase delivery work in clean `git worktree` branches, not in the dirty root worktree.
@@ -87,4 +99,5 @@
 - `docs/ASTRO_FIRST_LOCK.md` is the project rule for Astro-first implementation decisions.
 - Public media uploads default to local CWP/shared-hosting storage: `STORAGE_TYPE=local`, `PHOTO_UPLOAD_DIR=public/uploads/photos`, `UPLOAD_PUBLIC_PATH=/uploads/photos`. Keep uploaded image filenames slug-based and never commit provider API keys.
 - Image provider credentials are fixed for this project and must not be asked from the user again. Runtime code reads `PEXELS_API_KEY`, `UNSPLASH_APPLICATION_ID`, `UNSPLASH_ACCESS_KEY`, and `UNSPLASH_SECRET_KEY` from environment variables. Real values stay in ignored `.env.local` for local work and hosting secret/env settings for production; tracked docs/source must contain placeholders only.
-- Redis is project-scoped through `REDIS_URL` and `REDIS_KEY_PREFIX=sanliurfa:`. Server runtime code must read server secrets from `process.env`, not dynamic `import.meta.env[key]`, to avoid Astro module-runner failures.
+- Redis is project-scoped through `REDIS_URL` and `REDIS_KEY_PREFIX=sanliurfa:`. Local Windows uses the existing `Redis` service on `127.0.0.1:6379`; do not stop, flush, reconfigure, or reuse other services such as `RedisMacedonia6380`. Real Redis credentials stay only in ignored `.env.local` or hosting secrets.
+- Server runtime code must read server secrets from `process.env`, not dynamic `import.meta.env[key]`, to avoid Astro module-runner failures.

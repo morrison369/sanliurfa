@@ -2,7 +2,7 @@
  * Transaction History Component
  * Display user's loyalty transaction history
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface Transaction {
   id: string;
@@ -27,9 +27,9 @@ export function TransactionHistory() {
   const [pagination, setPagination] = useState<Pagination>({
     limit: 20,
     offset: 0,
-    total: 0
+    total: 0,
   });
-  const [selectedType, setSelectedType] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,54 +43,60 @@ export function TransactionHistory() {
       setError(null);
       const params = new URLSearchParams({
         limit: pagination.limit.toString(),
-        offset: pagination.offset.toString()
+        offset: pagination.offset.toString(),
       });
       if (selectedType) {
-        params.append('type', selectedType);
+        params.append("type", selectedType);
       }
 
       const res = await fetch(`/api/loyalty/transactions?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch transactions');
+      if (!res.ok) throw new Error("İşlemler alınamadı");
 
       const data = await res.json();
       setTransactions(data.data?.transactions || []);
-      setPagination(data.data?.pagination || { limit: 20, offset: 0, total: 0 });
+      setPagination(
+        data.data?.pagination || { limit: 20, offset: 0, total: 0 },
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load transactions');
+      setError(err instanceof Error ? err.message : "İşlemler yüklenemedi");
     } finally {
       setLoading(false);
     }
   };
 
-  const getTransactionIcon = (type: string) => {
+  const getTransactionLabel = (type: string) => {
     switch (type) {
-      case 'earn':
-        return '✅';
-      case 'spend':
-        return '💰';
-      case 'expire':
-        return '⏰';
-      case 'birthday_bonus':
-        return '🎂';
-      case 'annual_reset':
-        return '🔄';
+      case "earn":
+        return "Kazanım";
+      case "spend":
+        return "Harcama";
+      case "expire":
+        return "Süre dolumu";
+      case "birthday_bonus":
+        return "Özel bonus";
+      case "annual_reset":
+        return "Dönem yenileme";
       default:
-        return '•';
+        return type.replace(/_/g, " ");
     }
   };
 
   const getTransactionColor = (type: string) => {
-    if (type.includes('earn') || type.includes('bonus') || type.includes('reset')) {
-      return 'text-green-600';
-    } else if (type.includes('spend')) {
-      return 'text-orange-600';
+    if (
+      type.includes("earn") ||
+      type.includes("bonus") ||
+      type.includes("reset")
+    ) {
+      return "text-green-600";
+    } else if (type.includes("spend")) {
+      return "text-orange-600";
     } else {
-      return 'text-gray-600';
+      return "text-gray-600";
     }
   };
 
   const types = Array.from(
-    new Set(transactions.map((t) => t.transaction_type))
+    new Set(transactions.map((t) => t.transaction_type)),
   ).sort();
 
   const pageCount = Math.ceil(pagination.total / pagination.limit);
@@ -98,8 +104,11 @@ export function TransactionHistory() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">{error}</p>
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <p className="font-medium text-amber-900">
+          İşlem geçmişi şu anda alınamadı.
+        </p>
+        <p className="mt-1 text-sm text-amber-800">{error}</p>
       </div>
     );
   }
@@ -111,13 +120,13 @@ export function TransactionHistory() {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => {
-              setSelectedType('');
+              setSelectedType("");
               setPagination({ ...pagination, offset: 0 });
             }}
             className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
-              selectedType === ''
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              selectedType === ""
+                ? "bg-urfa-700 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           >
             Tümü
@@ -131,11 +140,11 @@ export function TransactionHistory() {
               }}
               className={`px-3 py-1 rounded-lg text-sm font-medium transition capitalize ${
                 selectedType === type
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? "bg-urfa-700 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
-              {type.replace(/_/g, ' ')}
+              {type.replace(/_/g, " ")}
             </button>
           ))}
         </div>
@@ -145,33 +154,48 @@ export function TransactionHistory() {
       {loading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-gray-200 rounded-lg h-16 animate-pulse"></div>
+            <div
+              key={i}
+              className="bg-gray-200 rounded-lg h-16 animate-pulse"
+            ></div>
           ))}
         </div>
       ) : transactions.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          <p className="text-lg">İşlem geçmişi yok.</p>
+          <p className="text-lg">Henüz puan işlemi yok.</p>
+          <p className="mt-2 text-sm">
+            Yorum yazdığınızda, favori eklediğinizde veya etkinliğe
+            katıldığınızda puan hareketleri burada görünür.
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
           {transactions.map((tx) => (
             <div
               key={tx.id}
-              className={`bg-white border rounded-lg p-4 ${tx.is_expired ? 'opacity-60' : ''}`}
+              className={`bg-white border rounded-lg p-4 ${tx.is_expired ? "opacity-60" : ""}`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">{getTransactionIcon(tx.transaction_type)}</span>
+                  <span className="rounded-full bg-urfa-50 px-3 py-1 text-xs font-semibold text-urfa-800">
+                    {getTransactionLabel(tx.transaction_type)}
+                  </span>
                   <div>
-                    <p className="font-semibold capitalize">{tx.transaction_reason}</p>
+                    <p className="font-semibold capitalize">
+                      {tx.transaction_reason}
+                    </p>
                     <p className="text-xs text-gray-500">
-                      {new Date(tx.created_at).toLocaleDateString('tr-TR')} {new Date(tx.created_at).toLocaleTimeString('tr-TR')}
+                      {new Date(tx.created_at).toLocaleDateString("tr-TR")}{" "}
+                      {new Date(tx.created_at).toLocaleTimeString("tr-TR")}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className={`text-lg font-bold ${getTransactionColor(tx.transaction_type)}`}>
-                    {tx.points_amount > 0 ? '+' : '-'}{Math.abs(tx.points_amount)}
+                  <p
+                    className={`text-lg font-bold ${getTransactionColor(tx.transaction_type)}`}
+                  >
+                    {tx.points_amount > 0 ? "+" : "-"}
+                    {Math.abs(tx.points_amount)}
                   </p>
                   <p className="text-xs text-gray-500">
                     {tx.balance_before} → {tx.balance_after}
@@ -180,11 +204,14 @@ export function TransactionHistory() {
               </div>
 
               {tx.is_expired && (
-                <p className="text-xs text-red-600 font-medium">Süresi dolmuş</p>
+                <p className="text-xs text-red-600 font-medium">
+                  Süresi dolmuş
+                </p>
               )}
               {tx.expires_at && !tx.is_expired && (
                 <p className="text-xs text-orange-600">
-                  Sonu: {new Date(tx.expires_at).toLocaleDateString('tr-TR')}
+                  Son kullanım:{" "}
+                  {new Date(tx.expires_at).toLocaleDateString("tr-TR")}
                 </p>
               )}
             </div>
@@ -199,7 +226,7 @@ export function TransactionHistory() {
             onClick={() =>
               setPagination({
                 ...pagination,
-                offset: Math.max(0, pagination.offset - pagination.limit)
+                offset: Math.max(0, pagination.offset - pagination.limit),
               })
             }
             disabled={pagination.offset === 0}
@@ -218,8 +245,8 @@ export function TransactionHistory() {
                 ...pagination,
                 offset: Math.min(
                   (pageCount - 1) * pagination.limit,
-                  pagination.offset + pagination.limit
-                )
+                  pagination.offset + pagination.limit,
+                ),
               })
             }
             disabled={currentPage === pageCount}

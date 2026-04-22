@@ -31,14 +31,14 @@ export default function AnalyticsDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex space-x-2 border-b border-gray-200">
-        <button onClick={() => setTab("overview")} className="px-4 py-2 font-medium border-b-2">Overview</button>
+        <button onClick={() => setTab("overview")} className="px-4 py-2 font-medium border-b-2">Genel Bakış</button>
         <button onClick={() => setTab("kpis")} className="px-4 py-2 font-medium border-b-2">KPIs</button>
-        <button onClick={() => setTab("dashboards")} className="px-4 py-2 font-medium border-b-2">Dashboards</button>
+        <button onClick={() => setTab("dashboards")} className="px-4 py-2 font-medium border-b-2">Panolar</button>
       </div>
       {error && <div className="p-4 bg-red-50 rounded">{error}</div>}
-      {tab === "overview" && <div><h3>Business Metrics</h3></div>}
-      {tab === "kpis" && <div><h3>KPI Management</h3></div>}
-      {tab === "dashboards" && <div><h3>Dashboards</h3></div>}
+      {tab === "overview" && <div><h3>İşletme Metrikleri</h3></div>}
+      {tab === "kpis" && <div><h3>KPI Yönetimi</h3></div>}
+      {tab === "dashboards" && <div><h3>Panolar</h3></div>}
     </div>
   );
 }

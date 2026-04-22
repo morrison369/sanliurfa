@@ -1,0 +1,198 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getPublicSiteSettings } from '../../lib/site-settings';
+
+const user = Astro.locals.user;
+
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/site-settings');
+}
+
+const settings = await getPublicSiteSettings();
+const seo = { title: 'Site Ayarları - Yönetim Paneli', noindex: true };
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-100 dark:bg-gray-900 py-8">
+    <div class="container-custom max-w-5xl space-y-6">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Site Ayarları</h1>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Giriş alanı, üst menü, şehir servisleri, alt alan ve SEO varsayılanlarını tek ekrandan yönetin.
+          </p>
+        </div>
+        <a href="/admin" class="btn-secondary text-sm py-2">Yönetim Paneli</a>
+      </div>
+
+      <form id="site-settings-form" class="space-y-6">
+        <section class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm space-y-4">
+          <h2 class="font-semibold text-gray-900 dark:text-white">Giriş alanı içeriği</h2>
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="space-y-1">
+              <span class="text-sm text-gray-700 dark:text-gray-300">Rozet metni</span>
+              <input class="input dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroBadgeText" value={settings.hero.badgeText} />
+            </label>
+            <label class="space-y-1">
+              <span class="text-sm text-gray-700 dark:text-gray-300">Arama yer tutucu metni</span>
+              <input class="input dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroSearchPlaceholder" value={settings.hero.searchPlaceholder} />
+            </label>
+          </div>
+          <label class="space-y-1 block">
+            <span class="text-sm text-gray-700 dark:text-gray-300">Başlık satırları (JSON dizisi)</span>
+            <textarea class="input min-h-[90px] font-mono text-xs dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroTitleLines">{JSON.stringify(settings.hero.titleLines, null, 2)}</textarea>
+          </label>
+          <label class="space-y-1 block">
+            <span class="text-sm text-gray-700 dark:text-gray-300">Alt metin</span>
+            <textarea class="input min-h-[90px] dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroSubtitle">{settings.hero.subtitle}</textarea>
+          </label>
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="space-y-1">
+              <span class="text-sm text-gray-700 dark:text-gray-300">Birincil çağrı metni</span>
+              <input class="input dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroPrimaryLabel" value={settings.hero.ctaPrimary.label} />
+            </label>
+            <label class="space-y-1">
+              <span class="text-sm text-gray-700 dark:text-gray-300">Birincil çağrı bağlantısı</span>
+              <input class="input dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroPrimaryHref" value={settings.hero.ctaPrimary.href} />
+            </label>
+            <label class="space-y-1">
+              <span class="text-sm text-gray-700 dark:text-gray-300">İkincil çağrı metni</span>
+              <input class="input dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroSecondaryLabel" value={settings.hero.ctaSecondary.label} />
+            </label>
+            <label class="space-y-1">
+              <span class="text-sm text-gray-700 dark:text-gray-300">İkincil çağrı bağlantısı</span>
+              <input class="input dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroSecondaryHref" value={settings.hero.ctaSecondary.href} />
+            </label>
+          </div>
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="space-y-1">
+              <span class="text-sm text-gray-700 dark:text-gray-300">Arka plan görseli</span>
+              <input class="input dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroBackgroundImage" value={settings.hero.backgroundImage} />
+            </label>
+            <label class="space-y-1">
+              <span class="text-sm text-gray-700 dark:text-gray-300">Arka plan alt metni</span>
+              <input class="input dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroBackgroundAlt" value={settings.hero.backgroundAlt} />
+            </label>
+          </div>
+          <label class="space-y-1 block">
+            <span class="text-sm text-gray-700 dark:text-gray-300">Popüler aramalar (JSON dizisi)</span>
+            <textarea class="input min-h-[90px] font-mono text-xs dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroPopularSearches">{JSON.stringify(settings.hero.popularSearches, null, 2)}</textarea>
+          </label>
+          <label class="space-y-1 block">
+            <span class="text-sm text-gray-700 dark:text-gray-300">Giriş alanı özellikleri (JSON dizisi)</span>
+            <textarea class="input min-h-[120px] font-mono text-xs dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="heroFeatures">{JSON.stringify(settings.hero.features, null, 2)}</textarea>
+          </label>
+        </section>
+
+        <section class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm space-y-4">
+          <h2 class="font-semibold text-gray-900 dark:text-white">Üst menü</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Menü yapısı JSON formatında düzenlenir. Örnek alanlar: label, href, dropdown.
+          </p>
+          <textarea class="input min-h-[220px] font-mono text-xs dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="headerMenu">{JSON.stringify(settings.headerMenu, null, 2)}</textarea>
+        </section>
+
+        <section class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm space-y-4">
+          <h2 class="font-semibold text-gray-900 dark:text-white">Şehir Servis Kartları</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Nöbetçi eczane, otobüs, uçak gibi kartları JSON ile yönetin.
+          </p>
+          <textarea class="input min-h-[220px] font-mono text-xs dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="cityServices">{JSON.stringify(settings.cityServices, null, 2)}</textarea>
+        </section>
+
+        <section class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm space-y-4">
+          <h2 class="font-semibold text-gray-900 dark:text-white">Alt alan ayarları</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Alt alan iletişim, bülten metni ve bağlantı kolonları JSON formatında yönetilir.
+          </p>
+          <textarea class="input min-h-[260px] font-mono text-xs dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="footer">{JSON.stringify(settings.footer, null, 2)}</textarea>
+        </section>
+
+        <section class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm space-y-4">
+          <h2 class="font-semibold text-gray-900 dark:text-white">SEO Varsayılanları</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Varsayılan açıklama, OG görseli, title suffix ve anahtar kelimeler JSON ile yönetilir.
+          </p>
+          <textarea class="input min-h-[160px] font-mono text-xs dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="seo">{JSON.stringify(settings.seo, null, 2)}</textarea>
+        </section>
+
+        <div class="flex items-center gap-3">
+          <button id="save-button" type="submit" class="btn-primary">Ayarları Kaydet</button>
+          <span id="save-status" class="text-sm text-gray-600 dark:text-gray-300"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const form = document.getElementById('site-settings-form') as HTMLFormElement | null;
+  const status = document.getElementById('save-status') as HTMLSpanElement | null;
+  const saveButton = document.getElementById('save-button') as HTMLButtonElement | null;
+
+  function parseJsonField(raw: string, fieldName: string): unknown {
+    try {
+      return JSON.parse(raw || 'null');
+    } catch {
+      throw new Error(`${fieldName} alanı geçerli JSON değil`);
+    }
+  }
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!form || !status || !saveButton) {
+      return;
+    }
+
+    saveButton.setAttribute('disabled', 'disabled');
+    status.textContent = 'Kaydediliyor...';
+    status.className = 'text-sm text-gray-600 dark:text-gray-300';
+
+    try {
+      const formData = new FormData(form);
+
+      const payload = {
+        hero: {
+          badgeText: String(formData.get('heroBadgeText') || ''),
+          titleLines: parseJsonField(String(formData.get('heroTitleLines') || '[]'), 'Hero başlık satırları'),
+          subtitle: String(formData.get('heroSubtitle') || ''),
+          searchPlaceholder: String(formData.get('heroSearchPlaceholder') || ''),
+          backgroundImage: String(formData.get('heroBackgroundImage') || ''),
+          backgroundAlt: String(formData.get('heroBackgroundAlt') || ''),
+          popularSearches: parseJsonField(String(formData.get('heroPopularSearches') || '[]'), 'Popüler aramalar'),
+          features: parseJsonField(String(formData.get('heroFeatures') || '[]'), 'Hero özellikleri'),
+          ctaPrimary: {
+            label: String(formData.get('heroPrimaryLabel') || ''),
+            href: String(formData.get('heroPrimaryHref') || '')
+          },
+          ctaSecondary: {
+            label: String(formData.get('heroSecondaryLabel') || ''),
+            href: String(formData.get('heroSecondaryHref') || '')
+          }
+        },
+        headerMenu: parseJsonField(String(formData.get('headerMenu') || '[]'), 'Header menü'),
+        cityServices: parseJsonField(String(formData.get('cityServices') || '[]'), 'Şehir servisleri'),
+        footer: parseJsonField(String(formData.get('footer') || '{}'), 'Footer ayarları'),
+        seo: parseJsonField(String(formData.get('seo') || '{}'), 'SEO varsayılanları')
+      };
+
+      const response = await fetch('/api/admin/site-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('Ayarlar kaydedilemedi');
+      }
+
+      status.textContent = 'Ayarlar kaydedildi. Ana sayfayı yenileyerek kontrol edebilirsiniz.';
+      status.className = 'text-sm text-green-600';
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : 'Kaydetme sırasında hata oluştu';
+      status.className = 'text-sm text-red-600';
+    } finally {
+      saveButton.removeAttribute('disabled');
+    }
+  });
+</script>

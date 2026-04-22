@@ -60,7 +60,7 @@ export const POST: APIRoute = async ({ request, url }) => {
 
     // Always return success for privacy/compliance (even if user not found)
     return apiResponse(
-      { success: true, data: { email, unsubscribed: true, message: 'You have been unsubscribed from all email notifications' } },
+      { success: true, data: { email, unsubscribed: true, message: 'Tüm e-posta bildirim abonelikleriniz iptal edildi' } },
       HttpStatus.OK,
       requestId
     );
@@ -68,6 +68,6 @@ export const POST: APIRoute = async ({ request, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/email/unsubscribe', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Unsubscribe error', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

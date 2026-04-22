@@ -43,8 +43,6 @@ export function VerificationRequestForm({
     setState({ isLoading: true, error: null, success: false });
 
     try {
-      // In a real app, you'd upload documents to a file service first
-      // For now, just send the verification request
       const response = await fetch(`/api/places/${placeId}/request-verification`, {
         method: 'POST',
         headers: {
@@ -57,7 +55,7 @@ export function VerificationRequestForm({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Verification request failed');
+        throw new Error(errorData.error || 'Doğrulama talebi gönderilemedi');
       }
 
       setState({ isLoading: false, error: null, success: true });
@@ -71,7 +69,7 @@ export function VerificationRequestForm({
         setState({ isLoading: false, error: null, success: false });
       }, 3000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage = err instanceof Error ? err.message : 'Bilinmeyen hata';
       setState({ isLoading: false, error: errorMessage, success: false });
       onError?.(errorMessage);
     }
@@ -81,10 +79,10 @@ export function VerificationRequestForm({
     <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          {placeName} için Doğrulama Talebinde Bulunun
+          {placeName} için doğrulama talebinde bulunun
         </h3>
         <p className="text-sm text-gray-600">
-          Mekanınızı doğrulatarak güvenilirliğini artırın ve özel rozetler kazanın.
+          Mekânınızı doğrulatarak güvenilirliğini artırın ve özel rozetler kazanın.
         </p>
       </div>
 
@@ -97,7 +95,7 @@ export function VerificationRequestForm({
       {state.success && (
         <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-sm text-green-700">
-            ✓ Doğrulama talebiniz başarıyla gönderildi. Admin tarafından incelenecektir.
+            ✓ Doğrulama talebiniz başarıyla gönderildi. Yönetim ekibi tarafından incelenecektir.
           </p>
         </div>
       )}
@@ -139,7 +137,7 @@ export function VerificationRequestForm({
         disabled={state.isLoading}
         className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
       >
-        {state.isLoading ? 'Gönderiliyor...' : 'Doğrulama Talebinde Bulun'}
+        {state.isLoading ? 'Gönderiliyor...' : 'Doğrulama Talebi Gönder'}
       </button>
     </form>
   );

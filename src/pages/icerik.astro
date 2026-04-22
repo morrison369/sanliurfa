@@ -1,37 +1,74 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import { ContentManager } from '../components/ContentManager';
+import Layout from "../layouts/Layout.astro";
+import { ContentManager } from "../components/ContentManager";
+import AuthFeatureLanding from "../components/AuthFeatureLanding.astro";
 
-// Redirect if not logged in
-if (!Astro.locals.user) {
-  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
-}
+const user = Astro.locals.user;
 ---
 
 <Layout title="İçerik Yönetimi - Şanlıurfa" noindex>
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold mb-2">İçerik Yönetimi</h1>
-      <p class="text-gray-600">Şanlıurfa hakkında makale ve içerik oluşturun ve yayınlayın</p>
-    </div>
+  {
+    !user ? (
+      <AuthFeatureLanding
+        eyebrow="İçerik katkısı"
+        title="Şanlıurfa içeriklerini tek panelden üretin"
+        description="Mekân, gezi, gastronomi ve tarih içerikleri üyelikle birlikte yönetim akışına bağlanır. Hesap oluşturduğunuzda içerik taslakları, yayınlama ve performans takibi açılır."
+        loginRedirect="/icerik"
+        features={[
+          {
+            title: "Şanlıurfa odaklı içerik",
+            description:
+              "Tarihi yerler, yemek tarifleri, etkinlikler ve şehir rehberi içerikleri tek panelden hazırlanır.",
+          },
+          {
+            title: "Taslak ve yayın akışı",
+            description:
+              "İçerikleri taslak olarak hazırlayıp yayınlanmaya hazır hale getirme altyapısı.",
+          },
+          {
+            title: "Performans takibi",
+            description:
+              "İçerik görüntülenmesi, etkileşim ve arama görünürlüğü ilerleyen panellerde takip edilir.",
+          },
+        ]}
+      />
+    ) : (
+      <div class="container mx-auto px-4 py-8">
+        <div class="mb-8">
+          <h1 class="text-4xl font-bold mb-2">İçerik yönetimi</h1>
+          <p class="text-gray-600">
+            Şanlıurfa hakkında makale, rehber ve topluluk içeriği oluşturup
+            yayınlayın.
+          </p>
+        </div>
 
-    <ContentManager client:load />
+        <ContentManager client:load />
 
-    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
-        <h3 class="font-semibold mb-2 text-blue-900">📝 Kolay Oluşturma</h3>
-        <p class="text-sm text-gray-700">Basit editör ile profesyonel içerik oluşturun.</p>
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-urfa-50 rounded-lg p-6 border border-urfa-200">
+            <h3 class="font-semibold mb-2 text-urfa-900">Kolay oluşturma</h3>
+            <p class="text-sm text-gray-700">
+              Şanlıurfa rehberi için başlık, açıklama, kategori ve içerik
+              alanlarını sade editörle hazırlayın.
+            </p>
+          </div>
+
+          <div class="bg-isot-50 rounded-lg p-6 border border-isot-200">
+            <h3 class="font-semibold mb-2 text-isot-900">Yayın akışı</h3>
+            <p class="text-sm text-gray-700">
+              Taslakları yayınlanmaya hazır hale getirip yönetim onayıyla
+              canlıya alın.
+            </p>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <h3 class="font-semibold mb-2 text-gray-900">Analitikler</h3>
+            <p class="text-sm text-gray-700">
+              İçeriğinizin görüntülenme ve etkileşim performansını takip edin.
+            </p>
+          </div>
+        </div>
       </div>
-
-      <div class="bg-green-50 rounded-lg p-6 border border-green-200">
-        <h3 class="font-semibold mb-2 text-green-900">🚀 Hızlı Yayınlama</h3>
-        <p class="text-sm text-gray-700">Bir tıkla içeriğinizi yayınlayın ve paylaşın.</p>
-      </div>
-
-      <div class="bg-purple-50 rounded-lg p-6 border border-purple-200">
-        <h3 class="font-semibold mb-2 text-purple-900">📊 Analitikler</h3>
-        <p class="text-sm text-gray-700">İçeriğinizin performansını izleyin.</p>
-      </div>
-    </div>
-  </div>
+    )
+  }
 </Layout>

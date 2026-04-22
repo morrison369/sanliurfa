@@ -13,7 +13,7 @@ const result = await query(
 );
 const messages = result.rows;
 
-const seo = { title: 'İletişim Mesajları - Admin', noindex: true };
+const seo = { title: 'İletişim Mesajları - Yönetim Paneli', noindex: true };
 ---
 
 <Layout seo={seo}>
@@ -21,9 +21,9 @@ const seo = { title: 'İletişim Mesajları - Admin', noindex: true };
     <div class="container-custom">
       <div class="flex items-center justify-between mb-8">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">İletişim Mesajları</h1>
-        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">← Admin Panel</a>
+        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">← Yönetim Paneli</a>
       </div>
-      
+
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
         <table class="w-full">
           <thead class="bg-gray-50 dark:bg-gray-700">
@@ -68,7 +68,7 @@ const seo = { title: 'İletişim Mesajları - Admin', noindex: true };
           </tbody>
         </table>
       </div>
-      
+
       {messages.length === 0 && (
         <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl mt-4">
           <p class="text-gray-600 dark:text-gray-400">Henüz mesaj bulunmuyor.</p>

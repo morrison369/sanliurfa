@@ -5,16 +5,16 @@ import { update } from '../../../../lib/postgres';
 export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
   try {
     const { id } = params;
-    
+
     if (!locals.isAdmin) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Yetkisiz işlem' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     const formData = await request.formData();
-    
+
     const name = formData.get('name')?.toString();
     const description = formData.get('description')?.toString();
     const shortDescription = formData.get('short_description')?.toString();

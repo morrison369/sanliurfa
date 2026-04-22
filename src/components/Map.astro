@@ -8,10 +8,10 @@ interface Props {
   zoom?: number;
 }
 
-const { 
-  latitude, 
-  longitude, 
-  name = '', 
+const {
+  latitude,
+  longitude,
+  name = '',
   address = '',
   height = '300px',
   zoom = 15
@@ -22,19 +22,19 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
 
 <div class="relative rounded-xl overflow-hidden" style={`height: ${height}`}>
   <!-- Static Map Image (fallback/no-JS) -->
-  <a 
+  <a
     href={`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`}
     target="_blank"
     rel="noopener noreferrer"
     class="block w-full h-full"
   >
-    <img 
+    <img
       src={`https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=${zoom}&size=600x400&markers=color:red%7C${latitude},${longitude}&key=YOUR_API_KEY`}
       alt={`${name} konumu`}
       class="w-full h-full object-cover"
       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
     />
-    
+
     <!-- Fallback when no API key -->
     <div class="hidden w-full h-full bg-gray-100 dark:bg-gray-800 items-center justify-center">
       <div class="text-center p-6">
@@ -52,10 +52,10 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
       </div>
     </div>
   </a>
-  
+
   <!-- Map Controls -->
   <div class="absolute bottom-4 right-4 flex flex-col gap-2">
-    <a 
+    <a
       href={`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`}
       target="_blank"
       rel="noopener noreferrer"
@@ -66,7 +66,7 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
       </svg>
     </a>
-    <button 
+    <button
       id={`copy-coords-${mapId}`}
       class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg text-gray-700 dark:text-gray-300 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors"
       title="Koordinatları Kopyala"
@@ -85,16 +85,16 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
     const coords = `${latitude}, ${longitude}`;
     try {
       await navigator.clipboard.writeText(coords);
-      
+
       // Visual feedback
       const originalHTML = this.innerHTML;
       this.innerHTML = `<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
-      
+
       setTimeout(() => {
         this.innerHTML = originalHTML;
       }, 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error('Kopyalama başarısız oldu:', err);
     }
   });
 </script>

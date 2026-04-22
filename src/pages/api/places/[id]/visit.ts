@@ -17,12 +17,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   logger.setRequestId(requestId);
 
   try {
-    // Auth required
+    // Oturum zorunlu
     if (!locals.user) {
       recordRequest('POST', '/api/places/[id]/visit', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -39,7 +39,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/places/[id]/visit', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Place not found',
+        'Mekan bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/places/[id]/visit', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Rating must be between 0 and 5',
+        'Puan 0 ile 5 arasında olmalıdır',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -69,7 +69,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     );
 
     if (!visit) {
-      throw new Error('Failed to record visit');
+      throw new Error('Ziyaret kaydedilemedi');
     }
 
     recordRequest('POST', '/api/places/[id]/visit', HttpStatus.CREATED, Date.now() - startTime);
@@ -85,7 +85,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     logger.error('Failed to record visit', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to record visit',
+      'Ziyaret kaydedilemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

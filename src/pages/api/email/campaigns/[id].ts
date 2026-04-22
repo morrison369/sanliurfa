@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/email/campaigns/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;
@@ -65,7 +65,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     logger.error('Get campaign failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get campaign',
+      'Kampanya alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -81,7 +81,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/email/campaigns/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;
@@ -129,7 +129,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     logger.error('Update campaign failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to update campaign',
+      'Kampanya güncellenemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -145,7 +145,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/email/campaigns/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;
@@ -164,12 +164,12 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/email/campaigns/[id]', HttpStatus.OK, duration);
 
-    logger.info('Campaign deleted', { campaignId, userId: locals.user.id });
+    logger.info('Kampanya silindi', { campaignId, userId: locals.user.id });
 
     return apiResponse(
       {
         success: true,
-        message: 'Campaign deleted',
+        message: 'Kampanya silindi',
       },
       HttpStatus.OK,
       requestId
@@ -180,7 +180,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     logger.error('Delete campaign failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to delete campaign',
+      'Kampanya silinemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

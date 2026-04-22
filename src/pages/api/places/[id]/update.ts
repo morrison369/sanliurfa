@@ -6,16 +6,16 @@ import { deleteCachePattern } from '../../../../lib/cache';
 export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
   try {
     const { id } = params;
-    
+
     if (!locals.isAdmin) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Yetkisiz işlem' }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     const formData = await request.formData();
-    
+
     const name = formData.get('name')?.toString();
     const category = formData.get('category')?.toString();
     const description = formData.get('description')?.toString();
@@ -34,7 +34,7 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
     const isVerified = formData.get('is_verified') === 'on';
     const amenities = formData.getAll('amenities') as string[];
     const tags = formData.get('tags')?.toString().split(',').map(t => t.trim()).filter(Boolean) || [];
-    
+
     const openingHours: Record<string, string> = {};
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     for (const day of days) {

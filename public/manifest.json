@@ -1,13 +1,15 @@
 {
-  "name": "sanliurfa.com",
+  "name": "sanliurfa.com - Şanlıurfa Şehir Rehberi",
   "short_name": "Şanlıurfa",
-  "description": "Şanlıurfa'nın rehberi - yerler, etkinlikler, rehberler",
+  "description": "Şanlıurfa mekanları, tarihi yerleri, gastronomisi, etkinlikleri ve şehir servisleri için Türkçe şehir rehberi.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#dc2626",
+  "background_color": "#2a130b",
+  "theme_color": "#a18072",
   "orientation": "portrait-primary",
   "scope": "/",
+  "lang": "tr",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -36,10 +38,10 @@
   ],
   "shortcuts": [
     {
-      "name": "Yerleri Ara",
+      "name": "Şanlıurfa Mekanlarını Ara",
       "short_name": "Ara",
       "description": "Şanlıurfa'da yerler ara",
-      "url": "/search",
+      "url": "/arama",
       "icons": [
         {
           "src": "/icon-search-192.png",
@@ -52,7 +54,7 @@
       "name": "Favorilerim",
       "short_name": "Favoriler",
       "description": "Kaydedilmiş yerlerim",
-      "url": "/favorites",
+      "url": "/profil/favoriler",
       "icons": [
         {
           "src": "/icon-heart-192.png",
@@ -62,7 +64,7 @@
       ]
     }
   ],
-  "categories": ["travel", "lifestyle", "education"],
+  "categories": ["travel", "food", "lifestyle", "education"],
   "screenshots": [
     {
       "src": "/screenshot-mobile-1.png",

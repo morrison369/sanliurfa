@@ -9,15 +9,15 @@ if (!user || !Astro.locals.isAdmin) {
 }
 
 const eventsResult = await query(
-  `SELECT e.*, u.full_name as creator_name 
-   FROM events e 
-   LEFT JOIN users u ON e.created_by = u.id 
+  `SELECT e.*, u.full_name as creator_name
+   FROM events e
+   LEFT JOIN users u ON e.created_by = u.id
    ORDER BY e.start_date ASC`
 );
 const events = eventsResult.rows;
 
 const statsResult = await query(
-  `SELECT 
+  `SELECT
     COUNT(*) as total,
     COUNT(*) FILTER (WHERE start_date > CURRENT_DATE AND status = 'published') as upcoming,
     COUNT(*) FILTER (WHERE status = 'draft') as draft
@@ -26,7 +26,7 @@ const statsResult = await query(
 const stats = statsResult.rows[0];
 
 const seo = {
-  title: 'Etkinlik Yönetimi - Admin Panel',
+  title: 'Etkinlik Yönetimi - Yönetim Paneli',
   noindex: true
 };
 ---
@@ -47,7 +47,7 @@ const seo = {
         </div>
       </div>
     </div>
-    
+
     <div class="container-custom py-8">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
@@ -63,7 +63,7 @@ const seo = {
           <p class="text-2xl font-bold text-yellow-800 dark:text-yellow-300">{stats.draft}</p>
         </div>
       </div>
-      
+
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
@@ -113,8 +113,8 @@ const seo = {
                   </td>
                   <td class="py-4 px-4">
                     <span class={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                      event.status === 'published' 
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' 
+                      event.status === 'published'
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                         : event.status === 'draft'
                         ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
                         : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
@@ -139,7 +139,7 @@ const seo = {
                   </td>
                 </tr>
               ))}
-              
+
               {(!events || events.length === 0) && (
                 <tr>
                   <td colspan="5" class="py-8 text-center text-gray-500 dark:text-gray-400">

@@ -127,7 +127,7 @@ export async function getCache<T = any>(key: unknown): Promise<T | null> {
     return value ? JSON.parse(value) : null;
   } catch (error: unknown) {
     handleRedisCommandFailure(error);
-    if (!isRedisAuthError(error)) {
+    if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
       logCacheError('cache:get', key, error);
     }
     return null;
@@ -147,7 +147,7 @@ export async function setCache(key: unknown, value: any, ttlSeconds = 3600): Pro
     await redis.setEx(prefixedKey, ttlSeconds, JSON.stringify(value));
   } catch (error: unknown) {
     handleRedisCommandFailure(error);
-    if (!isRedisAuthError(error)) {
+    if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
       logCacheError('cache:set', key, error);
     }
   }
@@ -166,7 +166,7 @@ export async function deleteCache(key: unknown): Promise<void> {
     await redis.del(prefixedKey);
   } catch (error: unknown) {
     handleRedisCommandFailure(error);
-    if (!isRedisAuthError(error)) {
+    if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
       logCacheError('cache:delete', key, error);
     }
   }
@@ -189,7 +189,7 @@ export async function deleteCachePattern(pattern: unknown): Promise<void> {
     }
   } catch (error: unknown) {
     handleRedisCommandFailure(error);
-    if (!isRedisAuthError(error)) {
+    if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
       logCacheError('cache:delete-pattern', pattern, error);
     }
   }
@@ -222,7 +222,7 @@ export async function checkRateLimit(key: unknown, limit: number, windowSeconds:
     return current <= safeLimit;
   } catch (error: unknown) {
     handleRedisCommandFailure(error);
-    if (!isRedisAuthError(error)) {
+    if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
       logCacheError('rate-limit-check', normalizedKey, error);
     }
     return checkInMemoryRateLimit(normalizedKey, safeLimit, safeWindowSeconds);
@@ -291,6 +291,17 @@ function toErrorMessage(error: unknown): string {
 function isRedisAuthError(error: unknown): boolean {
   const message = toErrorMessage(error).toUpperCase();
   return message.includes('NOAUTH') || message.includes('WRONGPASS');
+}
+
+function isRedisConnectivityError(error: unknown): boolean {
+  const message = toErrorMessage(error).toUpperCase();
+  return (
+    message.includes('ECONNREFUSED') ||
+    message.includes('ETIMEDOUT') ||
+    message.includes('ENOTFOUND') ||
+    message.includes('CONNECTION CLOSED') ||
+    message.includes('SOCKET CLOSED')
+  );
 }
 
 function handleRedisCommandFailure(error: unknown): void {

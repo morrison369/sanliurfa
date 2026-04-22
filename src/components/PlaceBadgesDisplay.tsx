@@ -33,14 +33,14 @@ export function PlaceBadgesDisplay({ placeId, className = '' }: PlaceBadgesDispl
         const response = await fetch(`/api/places/${placeId}/badges`);
 
         if (!response.ok) {
-          throw new Error('Failed to fetch badges');
+          throw new Error('Rozetler alınamadı');
         }
 
         const data = unwrapApiPayload<{ badges?: Badge[] }>(await response.json());
         setBadges(data.badges || []);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
         setBadges([]);
       } finally {
         setLoading(false);

@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -55,7 +55,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to get audit logs', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get audit logs', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Denetim kayıtları alınamadı', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Denetim kayıtları alınamadı', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

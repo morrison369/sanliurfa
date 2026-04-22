@@ -2,7 +2,6 @@ import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
-import sitemap from '@astrojs/sitemap';
 import partytown from '@astrojs/partytown';
 import compress from 'astro-compress';
 
@@ -23,12 +22,6 @@ export default defineConfig({
       config: {
         forward: ['dataLayer.push'],
       },
-    }),
-    sitemap({
-      filter: (page) => !page.includes('/admin') && !page.includes('/profil') && !page.includes('/api'),
-      changefreq: 'weekly',
-      priority: 0.7,
-      lastmod: new Date(),
     }),
     compress({
       CSS: true,

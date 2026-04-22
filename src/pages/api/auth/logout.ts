@@ -5,7 +5,7 @@ import { signOut } from '../../../lib/auth';
 export const POST: APIRoute = async ({ cookies }) => {
   try {
     const token = cookies.get('auth-token')?.value;
-    
+
     if (token) {
       signOut(token);
     }
@@ -14,9 +14,9 @@ export const POST: APIRoute = async ({ cookies }) => {
     cookies.delete('auth-token', { path: '/' });
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Çıkış başarılı' 
+      JSON.stringify({
+        success: true,
+        message: 'Çıkış başarılı'
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );

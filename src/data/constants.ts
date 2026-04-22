@@ -106,10 +106,10 @@ export const SUCCESS_MESSAGES = {
     PASSWORD_CHANGED: "Şifreniz başarıyla değiştirildi",
   },
   PLACE: {
-    CREATED: "Mekan başarıyla eklendi",
-    UPDATED: "Mekan başarıyla güncellendi",
-    DELETED: "Mekan başarıyla silindi",
-    SUBMITTED: "Mekan öneriniz alındı. Onaylandıktan sonra yayınlanacaktır",
+    CREATED: "Mekân başarıyla eklendi",
+    UPDATED: "Mekân başarıyla güncellendi",
+    DELETED: "Mekân başarıyla silindi",
+    SUBMITTED: "Mekân öneriniz alındı. Onaylandıktan sonra yayınlanacaktır",
   },
   REVIEW: {
     CREATED: "Yorumunuz başarıyla eklendi",

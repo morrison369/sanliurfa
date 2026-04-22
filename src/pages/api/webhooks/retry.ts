@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -97,10 +97,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to retry webhooks', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Webhook tekrar denemesi yapılamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to retry webhooks',
+      'Webhook tekrar denemesi yapılamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

@@ -47,7 +47,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   // Only admin can access detailed health
   if (!locals.isAdmin) {
-    return apiError(ErrorCode.FORBIDDEN, 'Unauthorized', HttpStatus.FORBIDDEN, undefined, requestId);
+    return apiError(ErrorCode.FORBIDDEN, 'Yetkisiz işlem', HttpStatus.FORBIDDEN, undefined, requestId);
   }
 
   try {

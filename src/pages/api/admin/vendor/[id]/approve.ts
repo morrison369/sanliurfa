@@ -48,6 +48,6 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/vendor/[id]/approve', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Approve vendor failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

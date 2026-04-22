@@ -32,15 +32,21 @@ export default function MessagingInbox() {
     const loadConversations = async () => {
       const res = await window.fetch("/api/messages");
       if (res.ok) {
-        const payload = unwrapApiPayload<{ data?: Conversation[] }>(await res.json());
+        const payload = unwrapApiPayload<{ data?: Conversation[] }>(
+          await res.json(),
+        );
         const nextConversations = payload.data || [];
         setConversations(nextConversations);
 
-        const targetConversationId = new URLSearchParams(window.location.search).get("conversation");
+        const targetConversationId = new URLSearchParams(
+          window.location.search,
+        ).get("conversation");
         if (
           targetConversationId &&
           !selectedConvoId &&
-          nextConversations.some((conversation) => conversation.id === targetConversationId)
+          nextConversations.some(
+            (conversation) => conversation.id === targetConversationId,
+          )
         ) {
           setSelectedConvoId(targetConversationId);
         }
@@ -56,7 +62,9 @@ export default function MessagingInbox() {
     const loadMessages = async () => {
       const res = await window.fetch(`/api/messages/${selectedConvoId}`);
       if (res.ok) {
-        const payload = unwrapApiPayload<{ data?: Message[] }>(await res.json());
+        const payload = unwrapApiPayload<{ data?: Message[] }>(
+          await res.json(),
+        );
         setMessages(payload.data || []);
       }
     };
@@ -76,7 +84,9 @@ export default function MessagingInbox() {
       setNewMessage("");
       const updated = await window.fetch(`/api/messages/${selectedConvoId}`);
       if (updated.ok) {
-        const payload = unwrapApiPayload<{ data?: Message[] }>(await updated.json());
+        const payload = unwrapApiPayload<{ data?: Message[] }>(
+          await updated.json(),
+        );
         setMessages(payload.data || []);
       }
     }
@@ -92,7 +102,9 @@ export default function MessagingInbox() {
   };
 
   const filtered = conversations.filter((c) =>
-    (c.participantName || c.full_name || "").toLowerCase().includes(searchQuery.toLowerCase()),
+    (c.participantName || c.full_name || "")
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -112,39 +124,54 @@ export default function MessagingInbox() {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {filtered.map((c) => (
-            <div
-              key={c.id}
-              onClick={() => setSelectedConvoId(c.id)}
-              className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${selectedConvoId === c.id ? "bg-blue-50" : ""}`}
-            >
-              <div className="flex justify-between items-center">
-                <div className="flex-1">
-                  <h3 className="font-semibold">{c.participantName || c.full_name || "Kullanıcı"}</h3>
-                  <p className="text-sm text-gray-600 truncate">
-                    {c.lastMessage || c.content || "Henüz mesaj yok"}
-                  </p>
-                </div>
-                {Number(c.unreadCount ?? c.unread ?? 0) > 0 && (
-                  <span className="bg-blue-500 text-white text-xs rounded-full px-2">
-                    {Number(c.unreadCount ?? c.unread ?? 0)}
-                  </span>
-                )}
-              </div>
+          {filtered.length === 0 ? (
+            <div className="p-6 text-sm text-gray-600">
+              <p className="font-medium text-gray-900">Henüz konuşma yok</p>
+              <p className="mt-2">
+                Kullanıcıları keşfederek Şanlıurfa rotaları, mekân önerileri ve
+                gezi planları için mesaj başlatabilirsiniz.
+              </p>
+              <a
+                href="/kullanicilar"
+                className="mt-4 inline-block text-urfa-600 hover:text-urfa-700"
+              >
+                Kullanıcıları keşfet
+              </a>
             </div>
-          ))}
+          ) : (
+            filtered.map((c) => (
+              <div
+                key={c.id}
+                onClick={() => setSelectedConvoId(c.id)}
+                className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${selectedConvoId === c.id ? "bg-blue-50" : ""}`}
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex-1">
+                    <h3 className="font-semibold">
+                      {c.participantName || c.full_name || "Kullanıcı"}
+                    </h3>
+                    <p className="text-sm text-gray-600 truncate">
+                      {c.lastMessage || c.content || "Henüz mesaj yok"}
+                    </p>
+                  </div>
+                  {Number(c.unreadCount ?? c.unread ?? 0) > 0 && (
+                    <span className="bg-blue-500 text-white text-xs rounded-full px-2">
+                      {Number(c.unreadCount ?? c.unread ?? 0)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
       {selectedConvoId ? (
         <div className="flex-1 flex flex-col">
           <div className="p-4 border-b flex justify-between">
             <h2 className="font-semibold">
-              {
-                conversations.find((c) => c.id === selectedConvoId)
-                  ?.participantName ||
-                conversations.find((c) => c.id === selectedConvoId)
-                  ?.full_name
-              }
+              {conversations.find((c) => c.id === selectedConvoId)
+                ?.participantName ||
+                conversations.find((c) => c.id === selectedConvoId)?.full_name}
             </h2>
             <button
               onClick={() => handleDelete(selectedConvoId)}
@@ -181,8 +208,16 @@ export default function MessagingInbox() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-gray-500">
-          Bir konuşma seçin
+        <div className="flex-1 flex items-center justify-center text-gray-500 p-8 text-center">
+          <div>
+            <p className="text-lg font-semibold text-gray-900">
+              Konuşma seçin veya yeni kişi keşfedin
+            </p>
+            <p className="mt-2 max-w-md text-sm">
+              Şanlıurfa topluluğunda gezi, gastronomi ve mekân önerileri için
+              kullanıcılarla iletişim kurabilirsiniz.
+            </p>
+          </div>
         </div>
       )}
     </div>

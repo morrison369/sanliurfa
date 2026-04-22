@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/user/features', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -56,10 +56,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/user/features', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get user features', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Özellik erişimleri alınamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get features',
+      'Özellik erişimleri alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -78,7 +78,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/user/features', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -92,7 +92,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/user/features', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Features array required',
+        'Özellik listesi gereklidir',
         HttpStatus.UNPROCESSABLE_ENTITY,
         undefined,
         requestId
@@ -119,10 +119,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/user/features', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to check features', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Özellik erişimi kontrol edilemedi', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to check features',
+      'Özellik erişimi kontrol edilemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

@@ -6,8 +6,10 @@
 import path from 'path';
 import { logger } from './logging';
 
+type StorageType = 'local' | 's3' | 'supabase';
+
 // Storage configuration
-const STORAGE_TYPE = process.env.STORAGE_TYPE || 'local'; // 'local' | 's3' | 'supabase'
+const STORAGE_TYPE = normalizeStorageType(process.env.STORAGE_TYPE);
 const UPLOAD_DIR = process.env.PHOTO_UPLOAD_DIR || process.env.UPLOAD_DIR || 'public/uploads/photos';
 const PUBLIC_URL_PREFIX = process.env.SITE_URL || process.env.PUBLIC_URL || 'https://sanliurfa.com';
 const UPLOAD_PUBLIC_PATH = process.env.UPLOAD_PUBLIC_PATH || derivePublicPath(UPLOAD_DIR);
@@ -27,7 +29,7 @@ export async function saveFile(
   } else if (STORAGE_TYPE === 'supabase') {
     return saveFileSupabase(file, folder, fileName);
   } else {
-    throw new Error(`Unknown storage type: ${STORAGE_TYPE}`);
+    throw new Error(`Bilinmeyen depolama tipi: ${STORAGE_TYPE}`);
   }
 }
 
@@ -151,19 +153,7 @@ async function saveFileS3(
   folder: string,
   fileName?: string
 ): Promise<{ filePath: string; publicUrl: string }> {
-  // TODO: Implement S3 upload using AWS SDK
-  // const s3 = new AWS.S3();
-  // const params = {
-  //   Bucket: process.env.S3_BUCKET,
-  //   Key: `${folder}/${finalFileName}`,
-  //   Body: buffer,
-  //   ContentType: file.type,
-  //   ACL: 'public-read'
-  // };
-  // const result = await s3.upload(params).promise();
-  // return { filePath: result.Key, publicUrl: result.Location };
-
-  throw new Error('S3 storage not yet implemented');
+  return saveUnsupportedCloudFile('s3', file, folder, fileName);
 }
 
 /**
@@ -174,20 +164,7 @@ async function saveFileSupabase(
   folder: string,
   fileName?: string
 ): Promise<{ filePath: string; publicUrl: string }> {
-  // TODO: Implement Supabase storage upload
-  // const { supabase } = await import('./supabase');
-  // const finalFileName = fileName || `${Date.now()}-${file.name}`;
-  // const path = `${folder}/${finalFileName}`;
-  // const { data, error } = await supabase.storage
-  //   .from('place-photos')
-  //   .upload(path, file, { cacheControl: '3600' });
-  // if (error) throw error;
-  // const { data: publicUrlData } = supabase.storage
-  //   .from('place-photos')
-  //   .getPublicUrl(path);
-  // return { filePath: path, publicUrl: publicUrlData.publicUrl };
-
-  throw new Error('Supabase storage not yet implemented');
+  return saveUnsupportedCloudFile('supabase', file, folder, fileName);
 }
 
 /**
@@ -210,9 +187,7 @@ export async function deleteFile(filePath: string): Promise<boolean> {
 async function deleteFileLocal(filePath: string): Promise<boolean> {
   try {
     const fs = await import('fs');
-    const path = await import('path');
-
-    const fullPath = path.join(process.cwd(), filePath);
+    const fullPath = resolveLocalUploadPath(filePath);
 
     if (fs.existsSync(fullPath)) {
       fs.unlinkSync(fullPath);
@@ -231,14 +206,68 @@ async function deleteFileLocal(filePath: string): Promise<boolean> {
  * Delete file from S3 (stub)
  */
 async function deleteFileS3(filePath: string): Promise<boolean> {
-  // TODO: Implement S3 delete
-  throw new Error('S3 delete not yet implemented');
+  return deleteUnsupportedCloudFile('s3', filePath);
 }
 
 /**
  * Delete file from Supabase (stub)
  */
 async function deleteFileSupabase(filePath: string): Promise<boolean> {
-  // TODO: Implement Supabase delete
-  throw new Error('Supabase delete not yet implemented');
+  return deleteUnsupportedCloudFile('supabase', filePath);
+}
+
+function normalizeStorageType(value: string | undefined): StorageType {
+  const normalized = (value || 'local').trim().toLowerCase();
+  if (normalized === 's3' || normalized === 'supabase') {
+    logger.warn('Cloud storage is disabled for this CWP deployment; local storage will be used', {
+      requestedStorageType: normalized,
+    });
+    return 'local';
+  }
+  if (normalized && normalized !== 'local') {
+    logger.warn('Unknown storage type configured; local storage will be used', {
+      requestedStorageType: normalized,
+    });
+  }
+  return 'local';
+}
+
+async function saveUnsupportedCloudFile(
+  provider: 's3' | 'supabase',
+  file: File,
+  folder: string,
+  fileName?: string
+): Promise<{ filePath: string; publicUrl: string }> {
+  logger.warn('Cloud storage provider is not enabled; saving file locally', { provider });
+  return saveFileLocal(file, folder, fileName);
+}
+
+async function deleteUnsupportedCloudFile(provider: 's3' | 'supabase', filePath: string): Promise<boolean> {
+  logger.warn('Cloud storage provider is not enabled; deleting local file path instead', { provider });
+  return deleteFileLocal(filePath);
+}
+
+function resolveLocalUploadPath(filePath: string): string {
+  const storageRoot = path.resolve(path.isAbsolute(UPLOAD_DIR) ? UPLOAD_DIR : path.join(process.cwd(), UPLOAD_DIR));
+  const publicPath = extractPublicPath(filePath);
+  const publicRoot = UPLOAD_PUBLIC_PATH.replace(/^\/+|\/+$/g, '');
+  const normalizedPublicPath = publicPath.replace(/^\/+|\/+$/g, '');
+  const relativePath = normalizedPublicPath.startsWith(`${publicRoot}/`)
+    ? normalizedPublicPath.slice(publicRoot.length + 1)
+    : normalizedPublicPath;
+  const resolvedPath = path.resolve(storageRoot, relativePath);
+
+  if (resolvedPath !== storageRoot && !resolvedPath.startsWith(`${storageRoot}${path.sep}`)) {
+    throw new Error('Gecersiz dosya yolu: yukleme dizini disina cikilamaz.');
+  }
+
+  return resolvedPath;
+}
+
+function extractPublicPath(value: string): string {
+  try {
+    return new URL(value).pathname;
+  } catch {
+    return value;
+  }
 }

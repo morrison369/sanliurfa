@@ -126,6 +126,9 @@ import { migration_124_trending_recommendations } from '../migrations/124_trendi
 import { migration_125_advanced_analytics } from '../migrations/125_advanced_analytics';
 import { migration_126_data_warehouse } from '../migrations/126_data_warehouse';
 import { migration_127_places_media_submission_fields } from '../migrations/127_places_media_submission_fields';
+import { migration_128_public_site_settings_hardening } from '../migrations/128_public_site_settings_hardening';
+import { migration_129_content_status_hardening } from '../migrations/129_content_status_hardening';
+import { migration_130_turkish_only_language_lock } from '../migrations/130_turkish_only_language_lock';
 
 // Tüm migrasyonlar
 const ALL_MIGRATIONS = [
@@ -247,7 +250,10 @@ const ALL_MIGRATIONS = [
   migration_124_trending_recommendations,
   migration_125_advanced_analytics,
   migration_126_data_warehouse,
-  migration_127_places_media_submission_fields
+  migration_127_places_media_submission_fields,
+  migration_128_public_site_settings_hardening,
+  migration_129_content_status_hardening,
+  migration_130_turkish_only_language_lock
 ];
 
 let migrationsInitialized = false;

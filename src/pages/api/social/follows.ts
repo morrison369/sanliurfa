@@ -9,20 +9,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
     const { user_id_to_follow, action } = body;
 
     if (!user_id_to_follow) {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'User ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Kullanıcı ID gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     if (action === 'follow') {
       const result = await followUser(locals.user.id, user_id_to_follow);
       if (!result) {
-        return apiError(ErrorCode.INTERNAL_ERROR, 'Follow operation failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+        return apiError(ErrorCode.INTERNAL_ERROR, 'Takip işlemi tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
       }
       return apiResponse({ success: true, data: result }, HttpStatus.CREATED, requestId);
     } else if (action === 'unfollow') {
@@ -30,10 +30,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiResponse({ success: true }, HttpStatus.OK, requestId);
     }
 
-    return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid action', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz işlem', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
   } catch (error) {
-    logger.error('Failed to manage follow', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Takip işlemi yönetilemedi', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const userId = url.searchParams.get('user_id');
@@ -51,7 +51,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const limit = parseInt(url.searchParams.get('limit') || '50');
 
     if (!userId) {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'User ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Kullanıcı ID gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     let data;
@@ -60,12 +60,12 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     } else if (type === 'following') {
       data = await getFollowing(userId, limit);
     } else {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid type', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz tür', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     return apiResponse({ success: true, data }, HttpStatus.OK, requestId);
   } catch (error) {
-    logger.error('Failed to get follow data', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Takip verileri alınamadı', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -37,7 +37,7 @@ export const GET: APIRoute = async ({ request, params }) => {
       recordRequest('GET', '/api/places/[id]/badges', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Place not found',
+        'Mekan bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -59,7 +59,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     logger.error('Failed to get badges', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get badges',
+      'Rozetler alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

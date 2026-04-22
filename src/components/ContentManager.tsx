@@ -41,7 +41,7 @@ export function ContentManager() {
         setContent(data.data || []);
       }
     } catch (err) {
-      console.error('Failed to fetch content', err);
+      console.error('İçerikler yüklenemedi', err);
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export function ContentManager() {
         await fetchContent();
       }
     } catch (err) {
-      console.error('Failed to create content', err);
+      console.error('İçerik oluşturulamadı', err);
     }
   };
 
@@ -80,7 +80,7 @@ export function ContentManager() {
         await fetchContent();
       }
     } catch (err) {
-      console.error('Failed to publish content', err);
+      console.error('İçerik yayınlanamadı', err);
     }
   };
 
@@ -96,7 +96,7 @@ export function ContentManager() {
           onClick={() => setShowForm(true)}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
         >
-          + Yeni İçerik Oluştur
+          + Yeni içerik oluştur
         </button>
       )}
 
@@ -105,7 +105,7 @@ export function ContentManager() {
         <form onSubmit={handleCreateContent} className="bg-white rounded-lg shadow p-6 space-y-4">
           <input
             type="text"
-            placeholder="Başlık"
+            placeholder="İçerik başlığı"
             required
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -113,14 +113,14 @@ export function ContentManager() {
           />
 
           <textarea
-            placeholder="Açıklama"
+            placeholder="Kısa açıklama"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-24"
           />
 
           <textarea
-            placeholder="İçerik"
+            placeholder="İçeriği yazın"
             required
             value={formData.content}
             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
@@ -130,7 +130,7 @@ export function ContentManager() {
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
-              placeholder="Kategori"
+              placeholder="Kategori adı"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

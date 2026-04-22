@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/business-metrics', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -50,7 +50,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/business-metrics', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'startDate and endDate required',
+        'Başlangıç ve bitiş tarihi gereklidir',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -76,12 +76,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/business-metrics', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Failed to get business metrics',
+      'İşletme metrikleri alınamadı',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get business metrics',
+      'İşletme metrikleri alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -99,7 +99,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/business-metrics', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -113,7 +113,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/business-metrics', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid metrics data',
+        'Geçersiz metrik verisi',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
@@ -126,7 +126,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/business-metrics', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'Failed to record metrics',
+        'Metrikler kaydedilemedi',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -141,7 +141,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: metrics,
-        message: 'Metrics recorded'
+        message: 'Metrikler kaydedildi'
       },
       HttpStatus.CREATED,
       requestId
@@ -150,12 +150,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/business-metrics', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Failed to record metrics',
+      'Metrikler kaydedilemedi',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to record metrics',
+      'Metrikler kaydedilemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

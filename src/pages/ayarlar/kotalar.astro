@@ -1,91 +1,116 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import QuotaUsageDisplay from '../../components/QuotaUsageDisplay';
+import Layout from "../../layouts/Layout.astro";
+import QuotaUsageDisplay from "../../components/QuotaUsageDisplay";
+import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
 
-// Require authentication
-if (!Astro.locals.user) {
-  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
-}
+const user = Astro.locals.user;
 ---
 
 <Layout title="Kullanım Kotaları - Şanlıurfa" noindex>
-  <div class="max-w-4xl mx-auto px-4 py-8">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-        Kullanım Kotaları
-      </h1>
-      <p class="text-gray-600 dark:text-gray-400">
-        Abonelik planınıza göre özellik kullanım limitlerini görüntüleyin
-      </p>
-    </div>
-
-    <!-- Quota Display -->
-    <QuotaUsageDisplay client:load />
-
-    <!-- Info Section -->
-    <div class="mt-12 grid md:grid-cols-2 gap-6">
-      <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-3">
-          Kotalar Nasıl Çalışır?
-        </h3>
-        <ul class="space-y-2 text-sm text-blue-800 dark:text-blue-400">
-          <li>✓ Her özelliğin abonelik seviyesine göre limiti vardır</li>
-          <li>✓ Kotanız aylık olarak otomatik olarak sıfırlanır</li>
-          <li>✓ Premium planlara yükseltin sınırsız erişim için</li>
-          <li>✓ Kota uyarıları aldığınızda hemen yükseltin</li>
-        </ul>
-      </div>
-
-      <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
-        <h3 class="text-lg font-semibold text-green-900 dark:text-green-300 mb-3">
-          Plan Seçenekleri
-        </h3>
-        <p class="text-sm text-green-800 dark:text-green-400 mb-4">
-          Kotalarınızı artırmak için plan yükseltin:
-        </p>
-        <a
-          href="/fiyatlandirma"
-          class="inline-block px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors"
-        >
-          Tüm Planları Gör →
-        </a>
-      </div>
-    </div>
-
-    <!-- FAQ -->
-    <div class="mt-12">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Sık Sorulan Sorular
-      </h2>
-      <div class="space-y-4">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-          <h4 class="font-semibold text-gray-900 dark:text-white mb-2">
-            Kotam tükendiyse ne olur?
-          </h4>
+  {
+    !user ? (
+      <AuthFeatureLanding
+        eyebrow="Kullanım kotaları"
+        title="Şanlıurfa hesabınızın kullanım durumunu takip edin"
+        description="Ücretsiz üyelikle temel özellikler açık tutulur. Hesap oluşturduğunuzda kota, plan ve kullanım bilgilerinizi tek ekrandan görebilirsiniz."
+        loginRedirect="/ayarlar/kotalar"
+        features={[
+          {
+            title: "Özellik kullanımı",
+            description:
+              "Mekân, yorum, mesaj, koleksiyon ve sosyal özelliklerin kullanım özeti.",
+          },
+          {
+            title: "Plan görünürlüğü",
+            description:
+              "Ücretsiz, premium ve işletme planına göre limit ve erişim bilgisi.",
+          },
+          {
+            title: "Şeffaf yönetim",
+            description:
+              "Kota reset tarihi, kalan kullanım ve sınırsız özellikleri açık şekilde görün.",
+          },
+        ]}
+      />
+    ) : (
+      <div class="max-w-4xl mx-auto px-4 py-8">
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Kullanım kotaları
+          </h1>
           <p class="text-gray-600 dark:text-gray-400">
-            Kotanız tükenirse o özelliği kullanamazsınız. Aylık sıfırlanmasını bekleyebilir veya premium plana yükseltin.
+            Abonelik planınıza göre özellik kullanım limitlerini görüntüleyin.
           </p>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-          <h4 class="font-semibold text-gray-900 dark:text-white mb-2">
-            Kotalar ne zaman sıfırlanır?
-          </h4>
-          <p class="text-gray-600 dark:text-gray-400">
-            Kotalar aylık olarak otomatik olarak sıfırlanır. Tam tarih yukarıdaki listeде gösterilmektedir.
-          </p>
+        <QuotaUsageDisplay client:load />
+
+        <div class="mt-12 grid md:grid-cols-2 gap-6">
+          <div class="bg-urfa-50 dark:bg-urfa-900/20 border border-urfa-200 dark:border-urfa-800 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-urfa-900 dark:text-urfa-300 mb-3">
+              Kotalar nasıl çalışır?
+            </h3>
+            <ul class="space-y-2 text-sm text-urfa-800 dark:text-urfa-400">
+              <li>• Her özelliğin plan seviyesine göre limiti olabilir</li>
+              <li>• Aylık kotalar dönem sonunda otomatik sıfırlanır</li>
+              <li>• İlk aşamada temel özellikler ücretsiz açık tutulur</li>
+              <li>• Uyarılar, limitinize yaklaşınca görünür</li>
+            </ul>
+          </div>
+
+          <div class="bg-isot-50 dark:bg-isot-900/20 border border-isot-200 dark:border-isot-800 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-isot-900 dark:text-isot-300 mb-3">
+              Plan seçenekleri
+            </h3>
+            <p class="text-sm text-isot-800 dark:text-isot-400 mb-4">
+              Ücretsiz, premium ve işletme planlarını karşılaştırın.
+            </p>
+            <a
+              href="/fiyatlandirma"
+              class="inline-block px-4 py-2 bg-isot-700 hover:bg-isot-800 text-white font-medium rounded-lg transition-colors"
+            >
+              Tüm planları gör
+            </a>
+          </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-          <h4 class="font-semibold text-gray-900 dark:text-white mb-2">
-            Sınırsız özellikler nelerdir?
-          </h4>
-          <p class="text-gray-600 dark:text-gray-400">
-            Premium plana yükseltiğinizde çoğu özellik sınırsız hale gelir. Detaylar fiyatlandırma sayfasında bulunmaktadır.
-          </p>
+        <div class="mt-12">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Sık sorulan sorular
+          </h2>
+          <div class="space-y-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <h4 class="font-semibold text-gray-900 dark:text-white mb-2">
+                Kotam tükendiyse ne olur?
+              </h4>
+              <p class="text-gray-600 dark:text-gray-400">
+                Limitli bir özellikte kotanız tükenirse dönem yenilenmesini
+                bekleyebilir veya plan seçeneklerini inceleyebilirsiniz.
+              </p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <h4 class="font-semibold text-gray-900 dark:text-white mb-2">
+                Kotalar ne zaman sıfırlanır?
+              </h4>
+              <p class="text-gray-600 dark:text-gray-400">
+                Kotalar aylık olarak otomatik sıfırlanır. Tam tarih kota
+                listesinde gösterilir.
+              </p>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+              <h4 class="font-semibold text-gray-900 dark:text-white mb-2">
+                Sınırsız özellikler nelerdir?
+              </h4>
+              <p class="text-gray-600 dark:text-gray-400">
+                Sınırsız özellikler plan seviyesine göre belirlenir. Detaylar
+                fiyatlandırma sayfasında gösterilir.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
+    )
+  }
 </Layout>

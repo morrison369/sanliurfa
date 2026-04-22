@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/reports/:reportId/execute', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -32,7 +32,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/reports/:reportId/execute', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Report ID required',
+        'Rapor ID gereklidir',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
           row_count: result.rowCount,
           content_type: result.contentType
         },
-        message: 'Report executed'
+        message: 'Rapor çalıştırıldı'
       },
       HttpStatus.OK,
       requestId
@@ -66,12 +66,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/reports/:reportId/execute', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Failed to execute report',
+      'Rapor çalıştırılamadı',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to execute report',
+      'Rapor çalıştırılamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

@@ -57,7 +57,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/marketing/campaigns', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get campaigns failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -104,7 +104,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/marketing/campaigns', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'Failed to create campaign',
+        'Kampanya oluşturulamadı',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -120,7 +120,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/marketing/campaigns', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Create campaign failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -161,6 +161,6 @@ export const PUT: APIRoute = async ({ request, locals, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/marketing/campaigns', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Update campaign failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

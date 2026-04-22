@@ -381,6 +381,10 @@ const ALLOWED_TABLES = new Set([
   'conversations',
   'direct_messages',
   'conversation_deletions',
+  // Admin dashboard
+  'admin_dashboard_widgets',
+  'admin_dashboard_settings',
+  'dashboard_refresh_events',
   // Phase 28D: Real-time Analytics
   'request_metrics',
   'query_metrics',

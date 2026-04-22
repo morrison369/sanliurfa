@@ -103,14 +103,14 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
             {!profile.is_own_profile && currentUserId && (
               <div className="flex gap-2">
                 <a href="/mesajlar" className="px-4 py-2 bg-blue-500 text-white rounded inline-block">
-                  Mesaj Gönder
+                  Mesaj gönder
                 </a>
                 <button
                   onClick={handleFollow}
                   disabled={isFollowingLoading}
                   className={`px-4 py-2 rounded text-white ${isFollowing ? 'bg-gray-600 hover:bg-gray-700' : 'bg-green-600 hover:bg-green-700'}`}
                 >
-                  {isFollowingLoading ? 'İşleniyor...' : isFollowing ? 'Takipten Çık' : 'Takip Et'}
+                  {isFollowingLoading ? 'İşleniyor...' : isFollowing ? 'Takipten çık' : 'Takip et'}
                 </button>
                 <button
                   onClick={handleBlock}

@@ -17,13 +17,13 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/reviews/[id]/flag', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: reviewId } = params;
     if (!reviewId) {
       recordRequest('POST', '/api/reviews/[id]/flag', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Review ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const body = await request.json();
@@ -33,7 +33,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/reviews/[id]/flag', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Reason required',
+        'Neden gereklidir',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -56,7 +56,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/reviews/[id]/flag', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid reason',
+        'Geçersiz neden',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -85,7 +85,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     logger.error('Flag review failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to flag review',
+      'Yorum bildirilemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

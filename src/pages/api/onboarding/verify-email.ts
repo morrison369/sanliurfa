@@ -74,6 +74,6 @@ export const POST: APIRoute = async ({ request }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/onboarding/verify-email', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Email verification failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

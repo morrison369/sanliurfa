@@ -94,7 +94,7 @@ export async function getUserFollowedPlaces(userId: string, limit: number = 50):
     }
 
     const results = await queryMany(
-      `SELECT p.id, p.name, p.category, p.rating, p.image_url, pf.followed_at
+      `SELECT p.id, p.slug, p.name, p.category, p.rating, p.image_url, pf.followed_at
        FROM place_followers pf
        JOIN places p ON pf.place_id = p.id
        WHERE pf.user_id = $1
@@ -105,6 +105,7 @@ export async function getUserFollowedPlaces(userId: string, limit: number = 50):
 
     const places = results.map((r: any) => ({
       id: r.id,
+      slug: r.slug,
       name: r.name,
       category: r.category,
       rating: r.rating,

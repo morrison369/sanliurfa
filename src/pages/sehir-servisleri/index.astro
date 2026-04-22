@@ -1,0 +1,31 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CityUtilities from '../../components/CityUtilities.astro';
+import { cityServiceItemListSchema } from '../../lib/city-service-schema';
+import { getPublicSiteSettings } from '../../lib/site-settings';
+
+const settings = await getPublicSiteSettings();
+
+const seo = {
+  title: 'Şehir Servisleri | Şanlıurfa',
+  description:
+    'Şanlıurfa nöbetçi eczane, otobüs saatleri ve uçak saatleri hizmetlerine tek ekrandan erişin.',
+  canonicalUrl: 'https://sanliurfa.com/sehir-servisleri',
+  schema: cityServiceItemListSchema(settings.cityServices),
+};
+---
+
+<Layout seo={seo}>
+  <section class="bg-urfa-900 text-white">
+    <div class="container-custom py-14">
+      <p class="text-sm uppercase tracking-wide text-urfa-200">Şanlıurfa</p>
+      <h1 class="text-4xl font-display font-bold mt-2">Şehir Servisleri Merkezi</h1>
+      <p class="max-w-3xl text-urfa-100 mt-4">
+        Günlük yaşamda en çok kullanılan servisleri tek noktadan yönetiyoruz. Tüm modüller Türkçe ve
+        Şanlıurfa odaklı içerik standardına göre yayınlanır.
+      </p>
+    </div>
+  </section>
+
+  <CityUtilities services={settings.cityServices} />
+</Layout>

@@ -1,16 +1,48 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import VendorDashboard from '../../components/VendorDashboard';
+import Layout from "../../layouts/Layout.astro";
+import VendorDashboard from "../../components/VendorDashboard";
+import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
+
+const user = Astro.locals.user;
 
 const seo = {
-  title: 'İşletme Paneli',
-  description: 'İşletme bilgilerinizi yönetin',
-  noindex: true
+  title: "İşletme paneli",
+  description:
+    "Şanlıurfa işletme bilgilerinizi, yorumları, reklamları ve analitikleri yönetin.",
+  noindex: true,
 };
 ---
 
 <Layout seo={seo}>
-  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20 pb-12">
-    <VendorDashboard client:load />
-  </div>
+  {
+    !user ? (
+      <AuthFeatureLanding
+        eyebrow="İşletme paneli"
+        title="Şanlıurfa işletmenizi tek panelden yönetin"
+        description="Mekân ekleme, yorum takibi, öne çıkan listeleme, kampanya ve analitik akışları işletme hesabında birleşir. Ücretsiz hesapla başlayıp işletmenizi rehbere ekleyebilirsiniz."
+        loginRedirect="/vendor/dashboard"
+        features={[
+          {
+            title: "Mekân yönetimi",
+            description:
+              "İşletme bilgilerinizi, kategori seçimini, iletişim alanlarını ve görselleri düzenleyin.",
+          },
+          {
+            title: "Yorum ve topluluk",
+            description:
+              "Kullanıcı yorumlarını takip edin, yanıt akışını yönetin ve topluluk görünürlüğünüzü artırın.",
+          },
+          {
+            title: "Pazarlama ve analitik",
+            description:
+              "Kampanya, öne çıkan listeleme ve işletme performansını aynı yönetim yüzeyinde izleyin.",
+          },
+        ]}
+      />
+    ) : (
+      <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20 pb-12">
+        <VendorDashboard client:load />
+      </div>
+    )
+  }
 </Layout>

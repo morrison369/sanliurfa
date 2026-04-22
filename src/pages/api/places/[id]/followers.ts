@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
       recordRequest('GET', '/api/places/[id]/followers', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Place not found',
+        'Mekan bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -49,7 +49,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     logger.error('Failed to get place followers', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get place followers',
+      'Mekan takipçileri alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

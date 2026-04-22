@@ -133,27 +133,27 @@ export function getBundleHealthStatus(size: number): {
   if (size <= BUNDLE_THRESHOLDS.ideal) {
     return {
       status: 'ideal',
-      recommendation: 'Bundle size is excellent. Maintain current optimization.'
+      recommendation: 'Paket boyutu cok iyi. Mevcut optimizasyon seviyesini koruyun.'
     };
   } else if (size <= BUNDLE_THRESHOLDS.good) {
     return {
       status: 'good',
-      recommendation: 'Bundle size is good. Consider code splitting for further improvement.'
+      recommendation: 'Paket boyutu iyi. Daha fazla iyilestirme icin kod bolmeyi degerlendirin.'
     };
   } else if (size <= BUNDLE_THRESHOLDS.acceptable) {
     return {
       status: 'acceptable',
-      recommendation: 'Bundle size is acceptable but could be optimized. Implement code splitting and tree-shaking.'
+      recommendation: 'Paket boyutu kabul edilebilir, ancak iyilestirilebilir. Kod bolme ve tree-shaking uygulayin.'
     };
   } else if (size <= BUNDLE_THRESHOLDS.warning) {
     return {
       status: 'warning',
-      recommendation: 'Bundle size is larger than recommended. Implement aggressive code splitting and remove unused dependencies.'
+      recommendation: 'Paket boyutu onerilenden buyuk. Agresif kod bolme uygulayin ve kullanilmayan bagimliliklari kaldirin.'
     };
   } else {
     return {
       status: 'critical',
-      recommendation: 'Bundle size is critical. Immediately implement code splitting, lazy loading, and dependency audit.'
+      recommendation: 'Paket boyutu kritik seviyede. Kod bolme, lazy loading ve bagimlilik denetimini hemen uygulayin.'
     };
   }
 }
@@ -187,13 +187,13 @@ export function generatePwaManifest(config: PWAConfig): Record<string, any> {
     categories: ['travel', 'lifestyle'],
     screenshots: [
       {
-        src: '/screenshots/screenshot1.png',
+        src: '/screenshot-mobile-1.png',
         sizes: '540x720',
         type: 'image/png',
         form_factor: 'narrow'
       },
       {
-        src: '/screenshots/screenshot2.png',
+        src: '/screenshot-desktop-1.png',
         sizes: '1280x720',
         type: 'image/png',
         form_factor: 'wide'
@@ -201,13 +201,13 @@ export function generatePwaManifest(config: PWAConfig): Record<string, any> {
     ],
     icons: [
       {
-        src: '/icons/icon-192.png',
+        src: '/icons/icon-192x192.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any'
       },
       {
-        src: '/icons/icon-512.png',
+        src: '/icons/icon-512x512.png',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable'
@@ -255,9 +255,7 @@ export const PERFORMANCE_META_TAGS = {
   dnsPrefetch: [
     { rel: 'dns-prefetch', href: 'https://cdn.sanliurfa.com' }
   ],
-  preload: [
-    { rel: 'preload', href: '/fonts/roboto-regular.woff2', as: 'font', crossOrigin: 'anonymous' }
-  ]
+  preload: []
 };
 
 /**

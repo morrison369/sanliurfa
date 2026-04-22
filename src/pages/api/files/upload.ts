@@ -14,7 +14,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();

@@ -36,7 +36,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
         recordRequest('GET', '/api/points', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
         return apiError(
           ErrorCode.UNAUTHORIZED,
-          'Authentication required',
+          'Oturum açmanız gerekiyor',
           HttpStatus.UNAUTHORIZED,
           undefined,
           requestId
@@ -57,10 +57,10 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/points', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get points', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Puanlar alınamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get points',
+      'Puanlar alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

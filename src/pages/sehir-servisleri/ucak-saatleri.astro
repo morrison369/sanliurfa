@@ -1,0 +1,33 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CityServiceDetail from '../../components/CityServiceDetail.astro';
+import { cityServiceDetailSchema } from '../../lib/city-service-schema';
+import { getCityServiceSetting } from '../../lib/site-settings';
+
+const service = await getCityServiceSetting('ucak-saatleri');
+const title = service?.detailTitle || 'Şanlıurfa Uçak Saatleri';
+const description = service?.detailDescription || 'Şanlıurfa GAP Havalimanı uçak kalkış ve varış saatleri rehberi.';
+
+const seo = {
+  title,
+  description,
+  canonicalUrl: 'https://sanliurfa.com/sehir-servisleri/ucak-saatleri',
+  schema: cityServiceDetailSchema({
+    service,
+    slug: 'ucak-saatleri',
+    title,
+    description,
+    canonicalPath: '/sehir-servisleri/ucak-saatleri',
+  }),
+};
+---
+
+<Layout seo={seo}>
+  <CityServiceDetail
+    title={title}
+    description={description}
+    sourceLabel={service?.sourceLabel || 'Havalimanı ve uçuş veri kaynakları'}
+    statusText={service?.statusText || 'Uçuş verisi bağlantısı bekleniyor'}
+    type="flight"
+  />
+</Layout>

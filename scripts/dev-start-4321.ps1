@@ -6,6 +6,37 @@ $ErrorActionPreference = 'Stop'
 $workspace = Resolve-Path (Join-Path $PSScriptRoot '..')
 $stopScript = Join-Path $PSScriptRoot 'dev-stop-4321.ps1'
 
+function Import-EnvFile {
+  param([string]$Path)
+
+  if (-not (Test-Path $Path)) {
+    return
+  }
+
+  Get-Content $Path | ForEach-Object {
+    $line = $_.Trim()
+    if (-not $line -or $line.StartsWith('#') -or -not $line.Contains('=')) {
+      return
+    }
+
+    $parts = $line.Split('=', 2)
+    $key = $parts[0].Trim()
+    $value = $parts[1].Trim()
+
+    if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+      $value = $value.Substring(1, $value.Length - 2)
+    }
+
+    if ($key) {
+      Set-Item -Path "Env:$key" -Value $value
+    }
+  }
+}
+
+Import-EnvFile (Join-Path $workspace '.env')
+Import-EnvFile (Join-Path $workspace '.env.local')
+$env:PORT = '4321'
+
 if (-not $NoStop) {
   & $stopScript -Port 4321
 }

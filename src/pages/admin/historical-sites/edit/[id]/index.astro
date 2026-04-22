@@ -26,7 +26,7 @@ const periods = [
 ];
 
 const seo = {
-  title: `${site.name} - Düzenle - Admin Panel`,
+  title: `${site.name} - Düzenle - Yönetim Paneli`,
   noindex: true
 };
 ---
@@ -50,7 +50,7 @@ const seo = {
       <form action={`/api/historical-sites/${id}/update`} method="POST" class="grid lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 space-y-6">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel Bilgiler</h2>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel bilgiler</h2>
             <div class="space-y-4">
               <div>
                 <label for="name" class="label dark:text-gray-300">Yer Adı *</label>
@@ -136,7 +136,7 @@ const seo = {
                 folder="historical-sites"
               />
             </div>
-            <textarea name="images" rows="3" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" placeholder="https://sanliurfa.com/images/ornek-1.jpg">{site.images?.join(', ') || ''}</textarea>
+            <textarea name="images" rows="3" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" placeholder="https://sanliurfa.com/images/gobeklitepe-1.jpg">{site.images?.join(', ') || ''}</textarea>
             {site.images && site.images.length > 0 && (
               <div class="mt-4 grid grid-cols-3 gap-2">
                 {site.images.map((img: string) => <img src={img} alt="" class="w-full h-16 object-cover rounded" />)}

@@ -1,21 +1,8 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import NotificationCenter from "../components/NotificationCenter";
-
-const { locals } = Astro;
-
-// Redirect if not authenticated
-if (!locals.user) {
-  return Astro.redirect(
-    `/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`,
-  );
-}
+return new Response(null, {
+  status: 301,
+  headers: {
+    Location: '/bildirimler',
+  },
+});
 ---
-
-<Layout title="Bildirimler | sanliurfa.com" noindex>
-  <div class="min-h-screen bg-gray-50">
-    <div class="max-w-2xl mx-auto px-4 py-8">
-      <NotificationCenter client:load />
-    </div>
-  </div>
-</Layout>

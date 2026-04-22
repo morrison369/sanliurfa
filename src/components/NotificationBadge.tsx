@@ -17,7 +17,7 @@ export default function NotificationBadge() {
       const data = unwrapApiPayload<{ count?: number }>(await response.json());
       setUnreadCount(data.count || 0);
     } catch (err) {
-      console.error('Failed to load unread count', err);
+      console.error('Okunmamış bildirim sayısı yüklenemedi', err);
     }
   };
 

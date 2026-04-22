@@ -44,8 +44,8 @@ export const GET: APIRoute = async ({ request, url }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/loyalty/rewards', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get rewards', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Ödüller alınamadı', err instanceof Error ? err : new Error(String(err)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/loyalty/rewards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -65,14 +65,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (!rewardId) {
       recordRequest('POST', '/api/loyalty/rewards', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Reward ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Ödül ID gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     const result = await redeemReward(locals.user.id, rewardId);
 
     if (!result.success) {
       recordRequest('POST', '/api/loyalty/rewards', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.BAD_REQUEST, result.error || 'Redemption failed', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.BAD_REQUEST, result.error || 'Ödül kullanılamadı', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const duration = Date.now() - startTime;
@@ -84,7 +84,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         success: true,
         data: {
           redemptionCode: result.redemptionCode,
-          message: 'Reward redeemed successfully'
+          message: 'Ödül başarıyla kullanıldı'
         }
       },
       HttpStatus.OK,
@@ -93,7 +93,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/loyalty/rewards', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to redeem reward', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Ödül kullanılamadı', err instanceof Error ? err : new Error(String(err)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

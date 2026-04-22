@@ -11,7 +11,7 @@ interface Props {
   username?: string;
 }
 
-const { level = 1, points = 0, badges = [], username = 'User' } = Astro.props;
+const { level = 1, points = 0, badges = [], username = 'Kullanıcı' } = Astro.props;
 
 // Calculate level progress
 const LEVEL_THRESHOLDS = [0, 100, 300, 700, 1500, 3000, 6000, 12000, 25000, 50000];
@@ -44,7 +44,7 @@ const colorGradient = levelColors[level] || levelColors[1];
     <div class={`w-24 h-24 rounded-full bg-gradient-to-br ${colorGradient} flex items-center justify-center shadow-lg`}>
       <div class="text-center">
         <div class="text-4xl font-bold text-white">{level}</div>
-        <div class="text-xs text-white opacity-90">Level</div>
+        <div class="text-xs text-white opacity-90">Seviye</div>
       </div>
     </div>
   </div>
@@ -55,7 +55,7 @@ const colorGradient = levelColors[level] || levelColors[1];
   <!-- Points Display -->
   <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
     <div class="flex justify-between items-center mb-2">
-      <span class="text-sm text-gray-600 dark:text-gray-300">Total Points</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Toplam Puan</span>
       <span class="text-lg font-bold text-gray-900 dark:text-white">{points.toLocaleString()}</span>
     </div>
     <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
@@ -73,14 +73,14 @@ const colorGradient = levelColors[level] || levelColors[1];
 
     <!-- Next Level Info -->
     <div class="mt-3 text-center text-xs text-gray-600 dark:text-gray-300">
-      Next level: {(nextThreshold - points).toLocaleString()} points needed
+      Sonraki seviye için {(nextThreshold - points).toLocaleString()} puan gerekiyor
     </div>
   </div>
 
   <!-- Badges Section -->
   {badges && badges.length > 0 && (
     <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-      <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Badges ({badges.length})</h4>
+      <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Rozetler ({badges.length})</h4>
 
       <!-- Recent 3 Badges -->
       <div class="flex flex-wrap gap-2 mb-3">
@@ -98,7 +98,7 @@ const colorGradient = levelColors[level] || levelColors[1];
 
       {badges.length > 3 && (
         <div class="text-xs text-gray-600 dark:text-gray-300 text-center">
-          +{badges.length - 3} more badge{badges.length - 3 !== 1 ? 's' : ''}
+          +{badges.length - 3} rozet daha
         </div>
       )}
     </div>

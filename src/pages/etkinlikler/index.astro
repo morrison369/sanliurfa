@@ -1,48 +1,104 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import { Calendar, MapPin, Search } from 'lucide-react';
-import { query } from '../../lib/postgres';
+import Layout from "../../layouts/Layout.astro";
+import { Calendar, MapPin, Search } from "lucide-react";
+import { searchCuratedEvents } from "../../data/curated-events";
+import { query } from "../../lib/postgres";
 import {
   buildBreadcrumbSchema,
   buildEventItemListSchema,
   buildOrganizationSchema,
   buildWebSiteSchema,
-} from '../../lib/rich-snippets';
+} from "../../lib/rich-snippets";
 
-const queryParam = Astro.url.searchParams.get('q') || '';
+const queryParam = Astro.url.searchParams.get("q") || "";
+const categoryParam = Astro.url.searchParams.get("category") || "";
 
-let sql = "SELECT * FROM events WHERE status = 'published' AND (end_date IS NULL OR end_date >= CURRENT_DATE)";
+let sql =
+  "SELECT * FROM events WHERE status = 'published' AND (end_date IS NULL OR end_date >= CURRENT_DATE)";
 const values: any[] = [];
 
 if (queryParam) {
-  sql += " AND (title ILIKE $1 OR description ILIKE $1 OR location ILIKE $1)";
   values.push(`%${queryParam}%`);
+  sql += ` AND (title ILIKE $${values.length} OR description ILIKE $${values.length} OR location ILIKE $${values.length})`;
 }
+
+if (categoryParam) {
+  values.push(categoryParam);
+  sql += ` AND category = $${values.length}`;
+}
+
+const categories = [
+  { value: "", label: "Tümü" },
+  { value: "kultur-sanat", label: "Kültür ve sanat" },
+  { value: "gastronomi", label: "Gastronomi" },
+  { value: "muzik", label: "Müzik" },
+  { value: "spor", label: "Spor" },
+  { value: "egitim", label: "Eğitim" },
+];
+
+const buildCategoryUrl = (category: string) => {
+  const params = new URLSearchParams();
+
+  if (queryParam) {
+    params.set("q", queryParam);
+  }
+
+  if (category) {
+    params.set("category", category);
+  }
+
+  const queryString = params.toString();
+  return queryString ? `/etkinlikler?${queryString}` : "/etkinlikler";
+};
+
+const categoryLabels = Object.fromEntries(
+  categories.map((category) => [category.value, category.label]),
+);
 
 sql += " ORDER BY is_featured DESC, start_date ASC";
 
-const result = await query(sql, values);
-const events = result.rows;
+let events: any[] = [];
+
+try {
+  const result = await query(sql, values);
+  events = result.rows;
+} catch (error) {
+  console.warn(
+    "Etkinlik veritabanı sorgusu başarısız, yerel Şanlıurfa etkinlikleri kullanılıyor.",
+    error,
+  );
+}
+
+if (events.length === 0) {
+  events = searchCuratedEvents(queryParam);
+}
+
+if (categoryParam) {
+  events = events.filter((event) => event.category === categoryParam);
+}
 
 const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('tr-TR', { 
-    day: 'numeric', month: 'long', year: 'numeric' 
+  return new Date(dateStr).toLocaleDateString("tr-TR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 };
 
 const seo = {
-  title: 'Etkinlikler - Şanlıurfa\'da Bugün ve Yakında',
-  description: 'Şanlıurfa\'daki konserler, festivaller, sergiler ve diğer etkinlikler. Kültürel etkinlikleri takip edin.',
-  canonicalUrl: 'https://sanliurfa.com/etkinlikler',
-  schemaMode: 'replace' as const,
+  title: "Etkinlikler - Şanlıurfa'da Bugün ve Yakında",
+  description:
+    "Şanlıurfa'daki konserler, festivaller, sergiler ve diğer etkinlikler. Kültürel etkinlikleri takip edin.",
+  canonicalUrl: "https://sanliurfa.com/etkinlikler",
+  schemaMode: "replace" as const,
   schema: [
     buildOrganizationSchema(),
     buildWebSiteSchema(),
     buildBreadcrumbSchema([
-      { name: 'Ana Sayfa', url: '/' },
-      { name: 'Etkinlikler', url: '/etkinlikler' },
+      { name: "Ana Sayfa", url: "/" },
+      { name: "Etkinlikler", url: "/etkinlikler" },
     ]),
-    buildEventItemListSchema(events, '/etkinlikler'),
+    buildEventItemListSchema(events, "/etkinlikler"),
   ],
 };
 ---
@@ -54,77 +110,111 @@ const seo = {
       <p class="page-header-description">
         Şanlıurfa'daki kültürel etkinlikleri keşfedin.
       </p>
-      
+
       <div class="mt-8 max-w-2xl mx-auto">
         <form action="/etkinlikler" class="relative">
-          <input 
+          <input
             type="search"
             name="q"
             value={queryParam}
             placeholder="Etkinlik ara..."
             class="w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border border-white/20 focus:outline-none focus:border-white/40"
           />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60"
+          />
         </form>
+      </div>
+
+      <div class="mt-6 flex flex-wrap justify-center gap-2">
+        {
+          categories.map((category) => (
+            <a
+              href={buildCategoryUrl(category.value)}
+              class={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                categoryParam === category.value
+                  ? "border-white bg-white text-urfa-700"
+                  : "border-white/30 bg-white/10 text-white hover:bg-white/20"
+              }`}
+            >
+              {category.label}
+            </a>
+          ))
+        }
       </div>
     </div>
   </div>
-  
+
   <div class="section bg-gray-50 dark:bg-gray-900">
     <div class="container-custom">
       <div class="space-y-6">
-        {events.map((event) => (
-          <article class="card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden">
-            <a href={`/etkinlikler/${event.slug}`} class="flex flex-col md:flex-row">
-              <div class="md:w-1/3 aspect-video md:aspect-auto overflow-hidden">
-                <img 
-                  src={event.image_url || '/images/placeholder-event.jpg'}
-                  alt={event.title}
-                  class="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-              
-              <div class="flex-1 p-6">
-                <div class="flex flex-wrap items-center gap-2 mb-2">
-                  <span class="badge-primary">{event.category}</span>
-                  {event.is_featured && (
-                    <span class="badge bg-urfa-600 text-white">Öne Çıkan</span>
-                  )}
+        {
+          events.map((event) => (
+            <article class="card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden">
+              <a
+                href={`/etkinlikler/${event.slug}`}
+                class="flex flex-col md:flex-row"
+              >
+                <div class="md:w-1/3 aspect-video md:aspect-auto overflow-hidden">
+                  <img
+                    src={event.image_url || "/images/placeholder-event.jpg"}
+                    alt={event.title}
+                    class="w-full h-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
-                
-                <h3 class="font-display font-bold text-xl text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
-                  {event.title}
-                </h3>
-                
-                <p class="text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
-                  {event.description}
-                </p>
-                
-                <div class="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-500 dark:text-gray-400">
-                  <span class="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    {formatDate(event.start_date)}
-                    {event.end_date && ` - ${formatDate(event.end_date)}`}
-                  </span>
-                  <span class="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    {event.location}
-                  </span>
+
+                <div class="flex-1 p-6">
+                  <div class="flex flex-wrap items-center gap-2 mb-2">
+                    <span class="badge-primary">
+                      {categoryLabels[event.category] || event.category}
+                    </span>
+                    {event.is_featured && (
+                      <span class="badge bg-urfa-600 text-white">
+                        Öne Çıkan
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 class="font-display font-bold text-xl text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
+                    {event.title}
+                  </h3>
+
+                  <p class="text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
+                    {event.description}
+                  </p>
+
+                  <div class="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    <span class="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      {formatDate(event.start_date)}
+                      {event.end_date && ` - ${formatDate(event.end_date)}`}
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      {event.location}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </a>
-          </article>
-        ))}
+              </a>
+            </article>
+          ))
+        }
       </div>
-      
-      {events.length === 0 && (
-        <div class="text-center py-16">
-          <Calendar className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Etkinlik bulunmuyor</h3>
-          <p class="text-gray-600 dark:text-gray-400">Yakında yeni etkinlikler eklenecek.</p>
-        </div>
-      )}
+
+      {
+        events.length === 0 && (
+          <div class="text-center py-16">
+            <Calendar className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Etkinlik bulunmuyor
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400">
+              Yakında yeni etkinlikler eklenecek.
+            </p>
+          </div>
+        )
+      }
     </div>
   </div>
 </Layout>

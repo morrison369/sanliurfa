@@ -111,7 +111,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid input',
+        'Geçersiz giriş',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
@@ -274,7 +274,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'Failed to send email',
+        'E-posta gönderilemedi',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -299,7 +299,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error('Failed to send subscription notification', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Internal server error',
+      'Sunucu hatası oluştu',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

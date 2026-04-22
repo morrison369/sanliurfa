@@ -5,7 +5,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const user = locals.user;
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return new Response(JSON.stringify({ error: 'Yetkisiz işlem' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -43,8 +43,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Profili güncelle
     const profile = await queryOne('SELECT points FROM users WHERE id = $1', [user.id]);
-    await updateDb('users', user.id, { 
-      points: (profile?.points || 0) + 50 
+    await updateDb('users', user.id, {
+      points: (profile?.points || 0) + 50
     });
 
     return new Response(JSON.stringify({

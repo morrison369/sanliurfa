@@ -3,16 +3,34 @@ import Layout from "../../layouts/Layout.astro";
 import LeaderboardsDisplay from "../../components/LeaderboardsDisplay";
 ---
 
-<Layout title="Sıralamalar - sanliurfa.com">
-  <div class="max-w-4xl mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-        Sıralamalar
+<Layout
+  seo={{
+    title: "Şanlıurfa Topluluk Sıralamaları - sanliurfa.com",
+    description:
+      "Şanlıurfa rehberine katkı sunan kullanıcıların puan, seviye ve aktivite sıralamalarını keşfedin.",
+    canonicalUrl: "https://sanliurfa.com/siralamalar",
+  }}
+>
+  <section
+    class="bg-gradient-to-br from-amber-50 via-white to-urfa-50 dark:from-gray-900 dark:via-gray-900 dark:to-urfa-950"
+  >
+    <div class="container-custom py-12">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-urfa-600">
+        Topluluk katkıları
+      </p>
+      <h1
+        class="mt-3 text-4xl md:text-5xl font-display font-bold text-gray-900 dark:text-white"
+      >
+        Şanlıurfa rehberinin aktif kullanıcıları
       </h1>
-      <p class="text-gray-600 dark:text-gray-400">
-        En aktif ve başarılı kullanıcılar
+      <p class="mt-4 max-w-3xl text-gray-600 dark:text-gray-400">
+        Mekân yorumu, keşif, favori ve topluluk aktivitelerine göre öne çıkan
+        kullanıcılar.
       </p>
     </div>
+  </section>
+
+  <div class="container-custom max-w-5xl py-10">
     <LeaderboardsDisplay client:load />
   </div>
 </Layout>

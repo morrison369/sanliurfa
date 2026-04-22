@@ -30,7 +30,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
       const response = await fetch('/api/users/2fa/status');
 
       if (!response.ok) {
-        throw new Error('Failed to check 2FA status');
+        throw new Error('İki faktörlü doğrulama durumu kontrol edilemedi');
       }
 
       const data = unwrapApiPayload<{ twoFactorEnabled?: boolean }>(await response.json());
@@ -57,7 +57,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, '2FA ayarı başlatılamadı'));
+        throw new Error(getApiErrorMessage(data, 'İki faktörlü doğrulama ayarı başlatılamadı'));
       }
 
       const data = unwrapApiPayload<{ qrCodeUrl?: string; secret?: string }>(await response.json());
@@ -89,14 +89,14 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, '2FA doğrulanamadı'));
+        throw new Error(getApiErrorMessage(data, 'İki faktörlü doğrulama doğrulanamadı'));
       }
 
       const data = unwrapApiPayload<{ backupCodes?: string[] }>(await response.json());
       setBackupCodes(data.backupCodes || []);
       setShowBackupCodes(true);
       setIsEnabled(true);
-      setSuccessMessage('2FA başarıyla etkinleştirildi!');
+      setSuccessMessage('İki faktörlü doğrulama başarıyla etkinleştirildi.');
       setVerificationCode('');
       setIsSetupMode(false);
       setQrCodeUrl(null);
@@ -130,11 +130,11 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, '2FA devre dışı bırakılamadı'));
+        throw new Error(getApiErrorMessage(data, 'İki faktörlü doğrulama devre dışı bırakılamadı'));
       }
 
       setIsEnabled(false);
-      setSuccessMessage('2FA devre dışı bırakıldı');
+      setSuccessMessage('İki faktörlü doğrulama devre dışı bırakıldı');
       setDisablePassword('');
       setShowBackupCodes(false);
       onStatusChange?.(false);
@@ -198,7 +198,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
           {isEnabled && (
             <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                2FA etkinleştirilmiş olarak giriş yaparken kimlik doğrulama kodu sağlamanız gerekecektir.
+                İki faktörlü doğrulama etkinleştirildiğinde giriş yaparken doğrulama kodu girmeniz gerekir.
               </p>
             </div>
           )}
@@ -246,7 +246,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
           {isEnabled && (
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                2FA'yı Devre Dışı Bırakmak İçin Şifrenizi Girin
+                İki faktörlü doğrulamayı kapatmak için şifrenizi girin
               </label>
               <div className="flex gap-2">
                 <input
@@ -269,7 +269,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">2FA Kurulumu</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">İki Faktörlü Doğrulama Kurulumu</h3>
 
           <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -308,7 +308,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Doğrulama Kodu
+              Doğrulama kodu
             </label>
             <div className="flex gap-2">
               <input
@@ -339,7 +339,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
             }}
             className="w-full px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
-            İptal Et
+            İptal et
           </button>
         </div>
       )}

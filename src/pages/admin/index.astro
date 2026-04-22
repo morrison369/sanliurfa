@@ -26,20 +26,20 @@ const stats = {
   pending: parseInt(pendingPlaces.rows[0]?.count || "0"),
 };
 
-const seo = { title: "Admin Panel - sanliurfa.com", noindex: true };
+const seo = { title: "Yönetim Paneli - sanliurfa.com", noindex: true };
 ---
 
 <Layout seo={seo}>
   <div class="min-h-screen bg-gray-100 dark:bg-gray-900 py-8">
     <div class="container-custom">
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">
-        Admin Panel
+        Yönetim Paneli
       </h1>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
           <div class="text-3xl font-bold text-urfa-600">{stats.places}</div>
-          <div class="text-gray-600 dark:text-gray-400">Mekan</div>
+          <div class="text-gray-600 dark:text-gray-400">Mekân</div>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
           <div class="text-3xl font-bold text-blue-600">{stats.users}</div>
@@ -60,7 +60,7 @@ const seo = { title: "Admin Panel - sanliurfa.com", noindex: true };
           href="/admin/places"
           class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
         >
-          <h3 class="font-semibold text-gray-900 dark:text-white">Mekanlar</h3>
+          <h3 class="font-semibold text-gray-900 dark:text-white">Mekânlar</h3>
           <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
             {stats.pending} onay bekleyen
           </p>
@@ -112,6 +112,15 @@ const seo = { title: "Admin Panel - sanliurfa.com", noindex: true };
           <h3 class="font-semibold text-gray-900 dark:text-white">Mesajlar</h3>
           <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
             {stats.messages} yeni mesaj
+          </p>
+        </a>
+        <a
+          href="/admin/site-settings"
+          class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+        >
+          <h3 class="font-semibold text-gray-900 dark:text-white">Site Ayarları</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
+            Hero, menü ve şehir servis kartları
           </p>
         </a>
       </div>

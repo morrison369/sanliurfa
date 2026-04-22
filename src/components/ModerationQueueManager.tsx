@@ -130,7 +130,7 @@ export default function ModerationQueueManager() {
       {/* Queue Items */}
       <div className="space-y-2">
         {items.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">Kuyruk boş</div>
+          <div className="text-center py-8 text-gray-500">İncelenecek içerik bulunmuyor.</div>
         ) : (
           items.map((item) => (
             <div

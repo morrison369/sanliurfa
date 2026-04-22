@@ -38,7 +38,7 @@ export default function AuditLogViewer() {
       if (resourceFilter) params.set('resource', resourceFilter);
 
       const res = await fetch(`/api/admin/audit-logs?${params.toString()}`);
-      if (!res.ok) throw new Error('Failed to load audit logs');
+      if (!res.ok) throw new Error('Denetim kayıtları yüklenemedi');
 
       const data = await res.json();
       setLogs(data.logs || []);
@@ -62,7 +62,7 @@ export default function AuditLogViewer() {
     <div className="container-custom py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Audit Logları</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Denetim Kayıtları</h1>
         <p className="text-gray-600 dark:text-gray-400">Sistem aktivitesi ve değişiklikleri izle</p>
       </div>
 
@@ -119,7 +119,7 @@ export default function AuditLogViewer() {
               <option value="users">Kullanıcılar</option>
               <option value="places">Yerler</option>
               <option value="reviews">Yorumlar</option>
-              <option value="admin">Admin İşlemleri</option>
+              <option value="admin">Yönetim işlemleri</option>
             </select>
           </div>
         </div>

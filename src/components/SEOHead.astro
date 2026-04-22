@@ -43,8 +43,14 @@ const metaTags = generateMetaTags({
   lang,
 });
 
-const siteTitle = `${title} | sanliurfa.com`;
-const imageUrl = ogImage || "https://sanliurfa.com/og-image.png";
+const normalizedTitle = title.trim();
+const normalizedTitleLower = normalizedTitle.toLocaleLowerCase("tr-TR");
+const siteTitle =
+  normalizedTitle.toLocaleLowerCase("tr-TR").endsWith("| sanliurfa.com") ||
+  normalizedTitleLower.endsWith("- sanliurfa.com")
+    ? normalizedTitle
+    : `${normalizedTitle} | sanliurfa.com`;
+const imageUrl = ogImage || "https://sanliurfa.com/images/og-default.jpg";
 const canonicalUrl = canonical || `https://sanliurfa.com${Astro.url.pathname}`;
 ---
 

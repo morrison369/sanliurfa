@@ -39,7 +39,7 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
         const response = await fetch('/api/admin/subscriptions/analytics');
 
         if (!response.ok) {
-          throw new Error('Failed to fetch analytics');
+          throw new Error('Analitik veriler yüklenemedi');
         }
 
         const data = await response.json() as any;

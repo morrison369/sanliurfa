@@ -14,7 +14,7 @@ export const POST: APIRoute = async (context) => {
   try {
     // Auth required
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
     }
 
     const userId = context.locals.user.id;
@@ -49,7 +49,7 @@ export const POST: APIRoute = async (context) => {
 
     return apiResponse(context, HttpStatus.OK, {
       success: true,
-      message: 'Verification email sent successfully'
+      message: 'Doğrulama e-postası başarıyla gönderildi'
     });
   } catch (error) {
     logger.error('Resend verification error', error instanceof Error ? error : new Error(String(error)));

@@ -27,14 +27,14 @@ export default function ReportManager() {
       setLoading(true);
       setError(null);
       const response = await fetch('/api/reports');
-      if (!response.ok) throw new Error('Failed to load reports');
+      if (!response.ok) throw new Error('Raporlar yüklenemedi');
       const result = await response.json();
       setReports(result.data || []);
       if (result.data?.length > 0) {
         setSelectedReportId(result.data[0].id);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading reports');
+      setError(err instanceof Error ? err.message : 'Raporlar yüklenemedi');
     } finally {
       setLoading(false);
     }
@@ -49,11 +49,11 @@ export default function ReportManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ format: exportFormat })
       });
-      if (!response.ok) throw new Error('Failed to execute report');
+      if (!response.ok) throw new Error('Rapor çalıştırılamadı');
       const result = await response.json();
-      alert(`Report executed: ${result.data.row_count} rows`);
+      alert(`Rapor çalıştırıldı: ${result.data.row_count} satır`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error');
+      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
     } finally {
       setLoading(false);
     }
@@ -63,7 +63,7 @@ export default function ReportManager() {
     try {
       const endpoint = `/api/reports/${reportId}/export?format=${fmt}`;
       const response = await fetch(endpoint);
-      if (!response.ok) throw new Error('Failed to export');
+      if (!response.ok) throw new Error('Rapor dışa aktarılamadı');
       const blob = await response.blob();
       const objUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -72,7 +72,7 @@ export default function ReportManager() {
       a.click();
       URL.revokeObjectURL(objUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error');
+      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
     }
   };
 
@@ -85,7 +85,7 @@ export default function ReportManager() {
             tab === 'reports' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600'
           }`}
         >
-          📊 Reports
+          📊 Raporlar
         </button>
         <button
           onClick={() => setTab('templates')}
@@ -93,7 +93,7 @@ export default function ReportManager() {
             tab === 'templates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600'
           }`}
         >
-          📋 Templates
+          📋 Şablonlar
         </button>
       </div>
 
@@ -101,7 +101,7 @@ export default function ReportManager() {
 
       {tab === 'reports' && (
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Reports</h2>
+          <h2 className="text-2xl font-bold">Raporlar</h2>
           {loading ? (
             <div className="space-y-2">{[...Array(3)].map((_, i) => <div key={i} className="h-16 bg-gray-200 animate-pulse rounded"></div>)}</div>
           ) : reports.length > 0 ? (
@@ -120,19 +120,19 @@ export default function ReportManager() {
                       <p className="text-sm text-gray-600">{r.report_type} • {r.format}</p>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded ${r.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                      {r.is_active ? 'Active' : 'Inactive'}
+                      {r.is_active ? 'Aktif' : 'Pasif'}
                     </span>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-600">No reports yet</p>
+            <p className="text-gray-600">Henüz oluşturulmuş rapor yok.</p>
           )}
 
           {selectedReportId && (
             <div className="p-4 bg-gray-50 rounded border">
-              <h3 className="font-semibold mb-3">Export Options</h3>
+              <h3 className="font-semibold mb-3">Dışa Aktarma Seçenekleri</h3>
               <div className="flex space-x-2">
                 <select
                   value={exportFormat}
@@ -148,13 +148,13 @@ export default function ReportManager() {
                   disabled={loading}
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Run
+                  Çalıştır
                 </button>
                 <button
                   onClick={() => exportReport(selectedReportId, exportFormat)}
                   className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                 >
-                  Download
+                  İndir
                 </button>
               </div>
             </div>
@@ -164,8 +164,8 @@ export default function ReportManager() {
 
       {tab === 'templates' && (
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Export Templates</h2>
-          <p className="text-gray-600">Manage your custom export templates</p>
+          <h2 className="text-2xl font-bold">Dışa Aktarma Şablonları</h2>
+          <p className="text-gray-600">Özel dışa aktarma şablonlarını yönetin</p>
         </div>
       )}
     </div>
