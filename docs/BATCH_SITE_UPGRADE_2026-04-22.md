@@ -465,3 +465,10 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 2. Benzer etkinlik sorgusu curated event id değerlerini UUID kolonlarına göndermez; curated etkinliklerde doğrudan yerel Şanlıurfa verisine düşer.
 3. Ana sayfa etkinlik bileşeni, sitemap event sorgusu ve legacy schema helper event/blog sorguları opsiyonel görsel/tarih kolonlarında DB hatası üretmeyecek şekilde dayanıklı hale getirildi.
 4. `etkinlikler`, `etkinlikler/gobeklitepe-kultur-rotasi` ve `sitemap.xml` smoke kontrolünde 200 döndü ve yeni DB hata logu oluşmadı.
+
+## Bitirme Modu: Public Etkinlik API Yüzeyi
+
+1. `/api/events` public endpoint'i eklendi; arama, kategori, limit ve offset parametreleriyle çalışır.
+2. DB boş veya erişilemez olduğunda `/api/events`, `/api/events/list` ve `/api/events/search` Şanlıurfa curated etkinlikleriyle dolu JSON döndürür.
+3. Etkinlik API cevapları Türkçe içerik dili header'ı ve sayfalama meta bilgisiyle döner.
+4. `/api/events`, `/api/events?category=kultur-sanat`, `/api/events?q=urfa`, `/api/events/list` ve `/api/events/search?q=urfa` smoke kontrolünde 200 döndü ve yeni hata logu oluşmadı.

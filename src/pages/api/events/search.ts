@@ -4,6 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
+import { searchCuratedEvents } from '../../../data/curated-events';
 import { searchEvents } from '../../../lib/events-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
@@ -29,7 +30,11 @@ export const GET: APIRoute = async ({ request, url }) => {
       );
     }
 
-    const events = await searchEvents(q, limit);
+    let events = await searchEvents(q, limit);
+
+    if (events.length === 0) {
+      events = searchCuratedEvents(q).slice(0, limit) as any[];
+    }
 
     recordRequest('GET', '/api/events/search', HttpStatus.OK, Date.now() - startTime);
 
