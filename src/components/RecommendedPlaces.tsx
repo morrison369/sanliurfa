@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
 
 interface Recommendation {
   id: string;
@@ -8,6 +9,8 @@ interface Recommendation {
   image_url?: string;
   reason?: string;
   score?: number;
+  recommended_place_id?: string;
+  recommendation_score?: number;
 }
 
 interface RecommendedPlacesProps {
@@ -45,11 +48,13 @@ export default function RecommendedPlaces({
         limit: limit.toString()
       });
 
-      const response = await fetch(`/api/recommendations/hybrid?${params}`);
-      const data = await response.json();
+      const response = await fetch(`/api/discovery/recommendations?${params}`);
+      const data = unwrapApiPayload<{ success?: boolean; data?: Recommendation[]; error?: string }>(
+        await response.json()
+      );
 
       if (data.success) {
-        setRecommendations(data.data);
+        setRecommendations(data.data || []);
         setError('');
       } else {
         setError(data.error || 'Öneriler yüklenemedi');
@@ -107,7 +112,7 @@ export default function RecommendedPlaces({
         {recommendations.map(rec => (
           <a
             key={rec.id}
-            href={`/mekan/${rec.id}`}
+            href={`/mekan/${rec.recommended_place_id || rec.id}`}
             className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-lg transition"
           >
             {/* Image */}
@@ -135,7 +140,7 @@ export default function RecommendedPlaces({
 
               {/* Rating */}
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-bold">⭐ {rec.rating.toFixed(1)}</span>
+                <span className="text-sm font-bold">⭐ {(rec.rating || 0).toFixed(1)}</span>
               </div>
 
               {/* Reason */}
