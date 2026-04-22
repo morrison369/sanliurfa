@@ -15,6 +15,14 @@ interface CheckoutButtonProps {
   onError?: (error: string) => void;
 }
 
+function unwrapApiPayload(responseBody: any) {
+  return responseBody?.data?.data || responseBody?.data || responseBody;
+}
+
+function getApiErrorMessage(responseBody: any, fallback: string) {
+  return responseBody?.error?.message || responseBody?.error || responseBody?.message || fallback;
+}
+
 export function CheckoutButton({
   tierId,
   tierName,
@@ -46,20 +54,20 @@ export function CheckoutButton({
 
       if (!response.ok) {
         const data = await response.json() as any;
-        throw new Error(data.error || 'Failed to create checkout session');
+        throw new Error(getApiErrorMessage(data, 'Checkout oturumu oluşturulamadı'));
       }
 
-      const data = await response.json() as any;
+      const data = unwrapApiPayload(await response.json() as any);
 
       if (data.success && data.checkoutUrl) {
         // Redirect to Stripe checkout
         window.location.href = data.checkoutUrl;
         onSuccess?.();
       } else {
-        throw new Error('No checkout URL returned');
+        throw new Error('Checkout URL alınamadı');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Checkout failed';
+      const errorMessage = err instanceof Error ? err.message : 'Checkout başarısız';
       setError(errorMessage);
       onError?.(errorMessage);
     } finally {

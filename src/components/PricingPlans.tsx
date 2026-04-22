@@ -19,6 +19,14 @@ interface SubscriptionTier {
 
 interface PricingPlansProps {}
 
+function unwrapApiPayload(responseBody: any) {
+  return responseBody?.data?.data || responseBody?.data || responseBody;
+}
+
+function getApiErrorMessage(responseBody: any, fallback: string) {
+  return responseBody?.error?.message || responseBody?.error || responseBody?.message || fallback;
+}
+
 export default function PricingPlans({}: PricingPlansProps) {
   const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
   const [currentTier, setCurrentTier] = useState<string | null>(null);
@@ -38,13 +46,13 @@ export default function PricingPlans({}: PricingPlansProps) {
         if (!tiersResponse.ok) {
           throw new Error('Failed to fetch tiers');
         }
-        const tiersData = await tiersResponse.json();
+        const tiersData = unwrapApiPayload(await tiersResponse.json());
         setTiers(tiersData.tiers || []);
 
         // Fetch current subscription
         const subResponse = await fetch('/api/user/subscription');
         if (subResponse.ok) {
-          const subData = await subResponse.json();
+          const subData = unwrapApiPayload(await subResponse.json());
           if (subData.subscription) {
             setCurrentTier(subData.subscription.tier.id);
           }
@@ -52,7 +60,7 @@ export default function PricingPlans({}: PricingPlansProps) {
 
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load pricing plans');
+        setError(err instanceof Error ? err.message : 'Planlar yüklenemedi');
       } finally {
         setLoading(false);
       }
@@ -84,10 +92,10 @@ export default function PricingPlans({}: PricingPlansProps) {
 
       if (!response.ok) {
         const errorData = await response.json() as any;
-        throw new Error(errorData.error || 'Checkout oturumu oluşturulamadı');
+        throw new Error(getApiErrorMessage(errorData, 'Checkout oturumu oluşturulamadı'));
       }
 
-      const data = await response.json() as any;
+      const data = unwrapApiPayload(await response.json() as any);
 
       if (data.success && data.checkoutUrl) {
         // Redirect to Stripe checkout
