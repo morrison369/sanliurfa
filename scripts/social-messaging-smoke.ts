@@ -197,7 +197,7 @@ async function ensureSmokePlace(): Promise<string | null> {
   try {
     const pgModule = await import('pg');
     const ClientCtor =
-      (pgModule.default as { Client?: new (...args: any[]) => PgClient } | undefined)?.Client ??
+      (pgModule.default as unknown as { Client?: new (...args: any[]) => PgClient } | undefined)?.Client ??
       ((pgModule as unknown as { Client?: new (...args: any[]) => PgClient }).Client ?? null);
 
     if (!ClientCtor) {

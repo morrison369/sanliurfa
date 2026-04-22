@@ -32,7 +32,7 @@ export function generateRequestId(): string {
 }
 
 class Logger {
-  private isDevelopment = Boolean((import.meta as { env?: { DEV?: boolean } }).env?.DEV);
+  private isDevelopment = import.meta.env.DEV;
   private requestId: string | undefined;
 
   private normalizeLogValue(value: unknown, depth = 0): unknown {
@@ -57,6 +57,22 @@ class Logger {
     }
 
     if (value && typeof value === 'object') {
+      const objectWithErrorShape = value as { name?: unknown; message?: unknown; stack?: unknown };
+      const hasErrorShape =
+        typeof objectWithErrorShape.name === 'string' ||
+        typeof objectWithErrorShape.message === 'string' ||
+        typeof objectWithErrorShape.stack === 'string';
+      if (hasErrorShape) {
+        return {
+          name: typeof objectWithErrorShape.name === 'string' ? objectWithErrorShape.name : 'Error',
+          message:
+            typeof objectWithErrorShape.message === 'string'
+              ? objectWithErrorShape.message
+              : String(value),
+          stack: typeof objectWithErrorShape.stack === 'string' ? objectWithErrorShape.stack : undefined
+        };
+      }
+
       const normalized: Record<string, unknown> = {};
       for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
         normalized[key] = this.normalizeLogValue(nested, depth + 1);
@@ -162,13 +178,7 @@ class Logger {
   }
 
   error(message: string, error?: unknown, context?: Record<string, any>) {
-    const errorData = typeof error === 'string'
-      ? { message: error }
-      : error instanceof Error
-      ? { message: error.message, stack: error.stack }
-      : error
-      ? { message: JSON.stringify(error) }
-      : undefined;
+    const errorData = this.normalizeError(error);
 
     this.log({
       level: LogLevel.ERROR,
@@ -177,6 +187,48 @@ class Logger {
       context,
       timestamp: new Date().toISOString()
     });
+  }
+
+  private normalizeError(error?: unknown): { message: string; stack?: string; name?: string } | undefined {
+    if (error === undefined || error === null) {
+      return undefined;
+    }
+
+    if (typeof error === 'string') {
+      return { message: error };
+    }
+
+    if (error instanceof Error) {
+      return {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      };
+    }
+
+    if (typeof error === 'object') {
+      const maybeError = error as { name?: unknown; message?: unknown; stack?: unknown };
+      const name = typeof maybeError.name === 'string' ? maybeError.name : undefined;
+      const message =
+        typeof maybeError.message === 'string'
+          ? maybeError.message
+          : (() => {
+              try {
+                return JSON.stringify(error);
+              } catch {
+                return String(error);
+              }
+            })();
+      const stack = typeof maybeError.stack === 'string' ? maybeError.stack : undefined;
+
+      return {
+        ...(name ? { name } : {}),
+        message,
+        ...(stack ? { stack } : {})
+      };
+    }
+
+    return { message: String(error) };
   }
 
   /**

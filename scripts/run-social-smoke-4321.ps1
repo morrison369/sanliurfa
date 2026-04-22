@@ -1,7 +1,8 @@
 param(
   [int]$Port = 4321,
   [string]$BaseUrl = 'http://127.0.0.1:4321',
-  [switch]$KeepServer
+  [switch]$KeepServer,
+  [switch]$UseRedis
 )
 
 $ErrorActionPreference = 'Stop'
@@ -15,6 +16,14 @@ $healthUrl = "$BaseUrl/api/health"
 
 $startedByScript = $false
 $devProcess = $null
+$redisEnvOverridden = $false
+
+$hadRedisEnabled = Test-Path Env:REDIS_ENABLED
+$hadRedisUrl = Test-Path Env:REDIS_URL
+$hadRedisKeyPrefix = Test-Path Env:REDIS_KEY_PREFIX
+$originalRedisEnabled = $env:REDIS_ENABLED
+$originalRedisUrl = $env:REDIS_URL
+$originalRedisKeyPrefix = $env:REDIS_KEY_PREFIX
 
 function Test-PortListener {
   param([int]$LocalPort)
@@ -57,6 +66,32 @@ function Show-LogTail {
     Get-Content -Path $Path -Tail 80
     Write-Host "---- end ----"
   }
+}
+
+function Restore-EnvVar {
+  param(
+    [string]$Name,
+    [bool]$HadValue,
+    [string]$OriginalValue
+  )
+
+  if ($HadValue) {
+    Set-Item -Path "Env:$Name" -Value $OriginalValue
+  } else {
+    Remove-Item -Path "Env:$Name" -ErrorAction SilentlyContinue
+  }
+}
+
+if (-not $UseRedis) {
+  $env:REDIS_ENABLED = 'false'
+  Remove-Item -Path Env:REDIS_URL -ErrorAction SilentlyContinue
+
+  if (-not $env:REDIS_KEY_PREFIX) {
+    $env:REDIS_KEY_PREFIX = 'sanliurfa:'
+  }
+
+  $redisEnvOverridden = $true
+  Write-Host 'Redis disabled for isolated smoke run (in-memory fallback).'
 }
 
 if (-not (Test-PortListener -LocalPort $Port)) {
@@ -107,6 +142,12 @@ try {
 } catch {
   $failureMessage = $_.Exception.Message
 } finally {
+  if ($redisEnvOverridden) {
+    Restore-EnvVar -Name 'REDIS_ENABLED' -HadValue $hadRedisEnabled -OriginalValue $originalRedisEnabled
+    Restore-EnvVar -Name 'REDIS_URL' -HadValue $hadRedisUrl -OriginalValue $originalRedisUrl
+    Restore-EnvVar -Name 'REDIS_KEY_PREFIX' -HadValue $hadRedisKeyPrefix -OriginalValue $originalRedisKeyPrefix
+  }
+
   if ($startedByScript -and -not $KeepServer) {
     if ($devProcess -and -not $devProcess.HasExited) {
       taskkill /PID $devProcess.Id /F /T | Out-Null

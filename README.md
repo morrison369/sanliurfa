@@ -114,6 +114,10 @@ npm run test:social:smoke:auto
 `test:social:smoke` komutu yeni port açmaz; yalnızca çalışan `http://127.0.0.1:4321` üzerinde sosyal takip + mesajlaşma + mekan takip + yorum temel akışını doğrular.
 `test:social:smoke:auto` komutu ise `4321` boşsa sunucuyu açar, smoke testi bitince sunucuyu kapatır.
 `test:social:smoke:auto` lokal `DATABASE_URL` yoksa geçici varsayılanı kullanır; mekan datası boşsa geçici smoke mekanı ekleyip tam zinciri (takip + mesaj + mekan takip + yorum) çalıştırır.
+`test:social:smoke:auto` varsayılan olarak izole çalışır ve Redis'i bu koşuda devre dışı bırakıp in-memory fallback kullanır (diğer projelerin Redis ayarlarından etkilenmez). Redis ile test etmek için:
+```bash
+powershell -ExecutionPolicy Bypass -File ./scripts/run-social-smoke-4321.ps1 -UseRedis
+```
 
 ## Release ve Stabilizasyon
 - API geçiş politikası: `docs/API_LEGACY_POLICY.md`

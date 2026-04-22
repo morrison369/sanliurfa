@@ -1,10 +1,11 @@
 // Redis Caching Layer with Namespacing
 import { createClient } from 'redis';
 
-const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+const configuredRedisUrl = (process.env.REDIS_URL || '').trim();
+const redisUrl = configuredRedisUrl || 'redis://127.0.0.1:6379';
 const LEGACY_KEY_PREFIX = 'sanliurfa:';
 const KEY_PREFIX = normalizeKeyPrefix(process.env.REDIS_KEY_PREFIX || LEGACY_KEY_PREFIX);
-const REDIS_ENABLED = process.env.REDIS_ENABLED !== 'false';
+const REDIS_ENABLED = resolveRedisEnabled(process.env.REDIS_ENABLED, configuredRedisUrl);
 const REDIS_RETRY_INTERVAL_MS = parsePositiveInt('REDIS_RETRY_INTERVAL_MS', 30000);
 const REDIS_CONNECT_TIMEOUT_MS = parsePositiveInt('REDIS_CONNECT_TIMEOUT_MS', 1500);
 const CACHE_ERROR_LOG_TTL_MS = parsePositiveInt('CACHE_ERROR_LOG_TTL_MS', 60000);
@@ -29,7 +30,7 @@ export async function getRedisClient(options: RedisClientRequestOptions = {}) {
   }
 
   if (!REDIS_ENABLED) {
-    throw new Error('Redis is disabled by REDIS_ENABLED=false');
+    throw new Error('Redis is disabled (set REDIS_URL or REDIS_ENABLED=true to enable)');
   }
 
   const now = Date.now();
@@ -206,7 +207,9 @@ export async function checkRateLimit(key: unknown, limit: number, windowSeconds:
   try {
     const redis = await getOptionalRedisClient({ silent: true });
     if (!redis) {
-      logRedisUnavailableOnce(new Error('Redis unavailable for rate limiting, using in-memory fallback'));
+      if (REDIS_ENABLED) {
+        logRedisUnavailableOnce(new Error('Redis unavailable for rate limiting, using in-memory fallback'));
+      }
       return checkInMemoryRateLimit(normalizedKey, safeLimit, safeWindowSeconds);
     }
     const prefixedKey = prefixKey(`ratelimit:${normalizedKey}`);
@@ -234,6 +237,18 @@ function parsePositiveInt(name: string, fallback: number): number {
 
   const parsed = Number.parseInt(raw, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function resolveRedisEnabled(rawValue: string | undefined, redisUrlValue: string): boolean {
+  const normalized = (rawValue || '').trim().toLowerCase();
+  if (normalized === 'true') {
+    return true;
+  }
+  if (normalized === 'false') {
+    return false;
+  }
+
+  return redisUrlValue.length > 0;
 }
 
 function normalizeKeyPrefix(prefix: string): string {
