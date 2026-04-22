@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface TwoFactorSetupProps {
   userId: string;
@@ -18,9 +19,11 @@ export function TwoFactorSetup({ userId, onSetupComplete }: TwoFactorSetupProps)
   const [verificationCode, setVerificationCode] = useState('');
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSetupMethod = async () => {
     setLoading(true);
+    setError(null);
     try {
       const response = await fetch('/api/auth/2fa/setup', {
         method: 'POST',
@@ -28,16 +31,21 @@ export function TwoFactorSetup({ userId, onSetupComplete }: TwoFactorSetupProps)
         body: JSON.stringify({ method_type: methodType, method_identifier: methodType === 'totp' ? undefined : '' })
       });
 
-      const data = await response.json();
-      if (data.success) {
-        setMethodId(data.data.method_id);
-        if (data.data.totp_uri) {
-          setTotpUri(data.data.totp_uri);
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(getApiErrorMessage(json, 'İki faktörlü doğrulama kurulamadı'));
+      }
+
+      const payload = unwrapApiPayload<{ success?: boolean; data?: { method_id?: string; totp_uri?: string } }>(json);
+      if (payload.success && payload.data?.method_id) {
+        setMethodId(payload.data.method_id);
+        if (payload.data.totp_uri) {
+          setTotpUri(payload.data.totp_uri);
         }
         setStep('verify');
       }
     } catch (error) {
-      console.error('Setup failed', error);
+      setError(error instanceof Error ? error.message : 'İki faktörlü doğrulama kurulamadı');
     } finally {
       setLoading(false);
     }
@@ -45,6 +53,7 @@ export function TwoFactorSetup({ userId, onSetupComplete }: TwoFactorSetupProps)
 
   const handleVerify = async () => {
     setLoading(true);
+    setError(null);
     try {
       const response = await fetch('/api/auth/2fa/verify', {
         method: 'POST',
@@ -52,13 +61,18 @@ export function TwoFactorSetup({ userId, onSetupComplete }: TwoFactorSetupProps)
         body: JSON.stringify({ method_id: methodId, code: verificationCode })
       });
 
-      const data = await response.json();
-      if (data.success) {
-        setRecoveryCodes(data.data.recovery_codes);
+      const json = await response.json();
+      if (!response.ok) {
+        throw new Error(getApiErrorMessage(json, 'Doğrulama başarısız oldu'));
+      }
+
+      const payload = unwrapApiPayload<{ success?: boolean; data?: { recovery_codes?: string[] } }>(json);
+      if (payload.success) {
+        setRecoveryCodes(payload.data?.recovery_codes || []);
         onSetupComplete?.();
       }
     } catch (error) {
-      console.error('Verification failed', error);
+      setError(error instanceof Error ? error.message : 'Doğrulama başarısız oldu');
     } finally {
       setLoading(false);
     }
@@ -84,6 +98,7 @@ export function TwoFactorSetup({ userId, onSetupComplete }: TwoFactorSetupProps)
     return (
       <div className="space-y-4 border rounded-lg p-6">
         <h3 className="font-bold">Doğrulama Kodu Girin</h3>
+        {error && <p className="text-sm text-red-600">{error}</p>}
         
         {totpUri && (
           <div className="text-sm text-gray-600">
@@ -113,6 +128,7 @@ export function TwoFactorSetup({ userId, onSetupComplete }: TwoFactorSetupProps)
   return (
     <div className="space-y-4 border rounded-lg p-6">
       <h3 className="font-bold">İki Faktörlü Kimlik Doğrulama Kur</h3>
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
       {step === 'method-select' && (
         <>

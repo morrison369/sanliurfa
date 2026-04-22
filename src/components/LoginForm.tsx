@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getApiErrorMessage } from "@/lib/client-api";
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -29,7 +30,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Giriş başarısız");
+        throw new Error(getApiErrorMessage(data, "Giriş başarısız"));
       }
 
       if (data.requiresTwoFactor) {
@@ -73,7 +74,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "2FA doğrulama başarısız");
+        throw new Error(getApiErrorMessage(data, "2FA doğrulama başarısız"));
       }
 
       if (data.success) {
