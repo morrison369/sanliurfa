@@ -19,6 +19,8 @@ export interface UserStats {
   totalLikes?: number;
   collectionsCreated: number;
   badgesEarned: number;
+  contributionScore?: number;
+  rankingPercentile?: number;
   joinDate: string;
   lastActiveAt?: string;
 }
@@ -101,7 +103,7 @@ export async function getUserStats(userId: string): Promise<UserStats | null> {
       [userId]
     );
 
-    const stats: UserStats = {
+    const baseStats: UserStats = {
       userId: user.id,
       reviewsWritten: parseInt(reviews?.count || '0'),
       favoriteCount: parseInt(favorites?.count || '0'),
@@ -114,6 +116,13 @@ export async function getUserStats(userId: string): Promise<UserStats | null> {
       badgesEarned: 0, // Would need badges table
       joinDate: user.created_at,
       lastActiveAt: user.last_login_at
+    };
+
+    const contributionScore = calculateContributionScore(baseStats);
+    const stats: UserStats = {
+      ...baseStats,
+      contributionScore,
+      rankingPercentile: await getUserRankingPercentile(userId, contributionScore),
     };
 
     // Cache for 5 minutes
@@ -214,28 +223,7 @@ export async function getUserContributionScore(userId: string): Promise<number> 
     const stats = await getUserStats(userId);
     if (!stats) return 0;
 
-    // Simple scoring algorithm
-    let score = 0;
-
-    // Reviews: 10 points each
-    score += stats.reviewsWritten * 10;
-
-    // Followers: 5 points each
-    score += stats.followersCount * 5;
-
-    // Collections: 20 points each
-    score += stats.collectionsCreated * 20;
-
-    // Favorites: 2 points each
-    score += stats.favoriteCount * 2;
-
-    // Points earned
-    score += Math.floor(stats.points / 10);
-
-    // Level: exponential
-    score += stats.level * 50;
-
-    return score;
+    return calculateContributionScore(stats);
   } catch (error) {
     logger.error(
       'Failed to get contribution score',
@@ -249,18 +237,46 @@ export async function getUserContributionScore(userId: string): Promise<number> 
 /**
  * Get ranking percentile for user
  */
-export async function getUserRankingPercentile(userId: string): Promise<number> {
+export async function getUserRankingPercentile(userId: string, knownScore?: number): Promise<number> {
   try {
-    const userScore = await getUserContributionScore(userId);
+    const userScore = knownScore ?? await getUserContributionScore(userId);
 
     const result = await queryOne(
-      `SELECT COUNT(*) as count FROM users
-       WHERE points < (SELECT points FROM users WHERE id = $1)`,
-      [userId]
+      `WITH user_scores AS (
+        SELECT
+          u.id,
+          (
+            COALESCE(review_counts.count, 0) * 10 +
+            COALESCE(follower_counts.count, 0) * 5 +
+            COALESCE(collection_counts.count, 0) * 20 +
+            COALESCE(favorite_counts.count, 0) * 2 +
+            FLOOR(COALESCE(u.points, 0) / 10) +
+            COALESCE(u.level, 1) * 50
+          ) AS contribution_score
+        FROM users u
+        LEFT JOIN (
+          SELECT user_id, COUNT(*)::int AS count FROM reviews GROUP BY user_id
+        ) review_counts ON review_counts.user_id = u.id
+        LEFT JOIN (
+          SELECT following_id AS user_id, COUNT(*)::int AS count FROM followers GROUP BY following_id
+        ) follower_counts ON follower_counts.user_id = u.id
+        LEFT JOIN (
+          SELECT user_id, COUNT(*)::int AS count FROM place_collections GROUP BY user_id
+        ) collection_counts ON collection_counts.user_id = u.id
+        LEFT JOIN (
+          SELECT user_id, COUNT(*)::int AS count FROM favorites GROUP BY user_id
+        ) favorite_counts ON favorite_counts.user_id = u.id
+      )
+      SELECT
+        COUNT(*)::int AS total_users,
+        COUNT(*) FILTER (WHERE contribution_score < $1)::int AS users_below
+      FROM user_scores`,
+      [userScore]
     );
 
-    const totalUsers = await queryOne('SELECT COUNT(*) as count FROM users');
-    const percentile = totalUsers ? Math.round(((result?.count || 0) / (totalUsers.count || 1)) * 100) : 0;
+    const totalUsers = Number(result?.total_users || 0);
+    const usersBelow = Number(result?.users_below || 0);
+    const percentile = totalUsers > 0 ? Math.max(1, Math.round(((totalUsers - usersBelow) / totalUsers) * 100)) : 0;
 
     return percentile;
   } catch (error) {
@@ -269,6 +285,17 @@ export async function getUserRankingPercentile(userId: string): Promise<number> 
     });
     return 0;
   }
+}
+
+function calculateContributionScore(stats: Pick<UserStats, 'reviewsWritten' | 'followersCount' | 'collectionsCreated' | 'favoriteCount' | 'points' | 'level'>): number {
+  return (
+    stats.reviewsWritten * 10 +
+    stats.followersCount * 5 +
+    stats.collectionsCreated * 20 +
+    stats.favoriteCount * 2 +
+    Math.floor(stats.points / 10) +
+    stats.level * 50
+  );
 }
 
 /**
