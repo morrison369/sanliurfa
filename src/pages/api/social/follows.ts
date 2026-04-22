@@ -21,6 +21,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (action === 'follow') {
       const result = await followUser(locals.user.id, user_id_to_follow);
+      if (!result) {
+        return apiError(ErrorCode.INTERNAL_ERROR, 'Follow operation failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+      }
       return apiResponse({ success: true, data: result }, HttpStatus.CREATED, requestId);
     } else if (action === 'unfollow') {
       await unfollowUser(locals.user.id, user_id_to_follow);

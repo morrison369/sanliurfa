@@ -18,6 +18,12 @@ type HttpJsonResponse = {
   json: Record<string, unknown>;
 };
 
+type PgClient = {
+  connect: () => Promise<void>;
+  end: () => Promise<void>;
+  query: (sql: string, params?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>;
+};
+
 function toRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
@@ -181,6 +187,91 @@ function firstArray(record: Record<string, unknown>, paths: string[][]): unknown
   return null;
 }
 
+async function ensureSmokePlace(): Promise<string | null> {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    console.log('smoke-place-seed-skip no DATABASE_URL');
+    return null;
+  }
+
+  try {
+    const pgModule = await import('pg');
+    const ClientCtor =
+      (pgModule.default as { Client?: new (...args: any[]) => PgClient } | undefined)?.Client ??
+      ((pgModule as unknown as { Client?: new (...args: any[]) => PgClient }).Client ?? null);
+
+    if (!ClientCtor) {
+      console.log('smoke-place-seed-skip pg client unavailable');
+      return null;
+    }
+
+    const client = new ClientCtor({ connectionString: databaseUrl });
+    await client.connect();
+
+    try {
+      const cols = await client.query(
+        `SELECT column_name
+         FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'places'`
+      );
+      const columnSet = new Set(
+        (cols.rows ?? [])
+          .map((row) => (typeof row.column_name === 'string' ? row.column_name : null))
+          .filter((v): v is string => Boolean(v))
+      );
+
+      const required = ['name', 'slug', 'description', 'category', 'address'];
+      if (!required.every((col) => columnSet.has(col))) {
+        console.log('smoke-place-seed-skip required columns missing');
+        return null;
+      }
+
+      const stamp = Date.now();
+      const valueMap = new Map<string, unknown>([
+        ['name', `Smoke Mekan ${stamp}`],
+        ['slug', `smoke-mekan-${stamp}`],
+        ['description', 'Smoke testi için otomatik oluşturulan mekan kaydı.'],
+        ['category', 'Restoran'],
+        ['address', 'Şanlıurfa Merkez'],
+        ['district', 'Haliliye'],
+        ['latitude', 37.1592],
+        ['longitude', 38.7969],
+        ['status', 'active'],
+        ['created_at', new Date()],
+        ['updated_at', new Date()],
+        ['image_url', 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg'],
+      ]);
+
+      const selectedColumns = Array.from(valueMap.keys()).filter((col) => columnSet.has(col));
+      const values = selectedColumns.map((col) => valueMap.get(col));
+      const placeholders = selectedColumns.map((_, idx) => `$${idx + 1}`).join(', ');
+
+      const inserted = await client.query(
+        `INSERT INTO places (${selectedColumns.join(', ')})
+         VALUES (${placeholders})
+         RETURNING id`,
+        values
+      );
+
+      const insertedId = inserted.rows?.[0]?.id;
+      if (typeof insertedId !== 'string' || !insertedId) {
+        console.log('smoke-place-seed-skip insert did not return id');
+        return null;
+      }
+
+      console.log(`smoke-place-seeded ${insertedId}`);
+      return insertedId;
+    } finally {
+      await client.end();
+    }
+  } catch (error) {
+    console.log(
+      `smoke-place-seed-skip ${error instanceof Error ? error.message : String(error)}`
+    );
+    return null;
+  }
+}
+
 async function registerUser(label: string): Promise<Session> {
   const timestamp = Date.now();
   const email = `smoke-${label}-${timestamp}-${Math.floor(Math.random() * 10000)}@example.com`;
@@ -328,19 +419,28 @@ async function main(): Promise<void> {
   }
 
   const places = firstArray(placesJson, [['data'], ['data', 'data']]);
+  let placeId: string | null = null;
+
   if (!places || places.length === 0) {
-    console.log('smoke-place-skip no places found');
-    console.log('social-messaging-smoke OK');
-    return;
+    placeId = await ensureSmokePlace();
+    if (!placeId) {
+      console.log('smoke-place-skip no places found');
+      console.log('social-messaging-smoke OK');
+      return;
+    }
+  } else {
+    const firstPlace = toRecord(places[0]);
+    placeId = typeof firstPlace.id === 'string' ? firstPlace.id : null;
+    if (!placeId) {
+      placeId = await ensureSmokePlace();
+      if (!placeId) {
+        console.log('smoke-place-skip invalid place id');
+        console.log('social-messaging-smoke OK');
+        return;
+      }
+    }
   }
 
-  const firstPlace = toRecord(places[0]);
-  const placeId = typeof firstPlace.id === 'string' ? firstPlace.id : null;
-  if (!placeId) {
-    console.log('smoke-place-skip invalid place id');
-    console.log('social-messaging-smoke OK');
-    return;
-  }
   console.log(`smoke-place ${placeId}`);
 
   await postWithAuth(`/api/places/${placeId}/follow`, userA.authCookie, {}, [200, 201, 409]);

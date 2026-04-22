@@ -376,6 +376,7 @@ const ALLOWED_TABLES = new Set([
   'content_shares',
   'share_analytics',
   'trending_places',
+  'place_followers',
   // Messaging
   'conversations',
   'direct_messages',

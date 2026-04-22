@@ -113,7 +113,7 @@ npm run test:social:smoke:auto
 
 `test:social:smoke` komutu yeni port açmaz; yalnızca çalışan `http://127.0.0.1:4321` üzerinde sosyal takip + mesajlaşma + mekan takip + yorum temel akışını doğrular.
 `test:social:smoke:auto` komutu ise `4321` boşsa sunucuyu açar, smoke testi bitince sunucuyu kapatır.
-`test:social:smoke:auto` lokal `DATABASE_URL` yoksa geçici varsayılanı kullanır ve mekan datası boşsa mekan adımlarını skip ederek core sosyal akışı doğrular.
+`test:social:smoke:auto` lokal `DATABASE_URL` yoksa geçici varsayılanı kullanır; mekan datası boşsa geçici smoke mekanı ekleyip tam zinciri (takip + mesaj + mekan takip + yorum) çalıştırır.
 
 ## Release ve Stabilizasyon
 - API geçiş politikası: `docs/API_LEGACY_POLICY.md`
