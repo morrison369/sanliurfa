@@ -80,7 +80,7 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
   </div>
 </div>
 
-<script define:vars={{ mapId, latitude, longitude }}>
+<script is:inline define:vars={{ mapId, latitude, longitude }}>
   document.getElementById(`copy-coords-${mapId}`)?.addEventListener('click', async function() {
     const coords = `${latitude}, ${longitude}`;
     try {
