@@ -10,6 +10,7 @@ Bu proje Astro SSR-first çalışır. Yeni özelliklerde öncelik sırası kilit
 ## Kesin Kurallar
 
 - Astro'da veya kurulu Astro uyumlu pakette olan özellik yeniden yazılmaz.
+- Markdown tabanlı zengin içerik gerekiyorsa resmi `@astrojs/mdx` entegrasyonu kullanılır; MDX desteği `astro.config.mjs` içinde aktif kalır.
 - Dev, preview ve production Node runtime tek porttur: `127.0.0.1:4321` / `PORT=4321`.
 - Port 4321 doluysa yeni port açılmaz; sadece bu repoya ait 4321 listener'ı durdurulur.
 - Local Redis bağlantısı mevcut Windows `Redis` servisi üzerinden `127.0.0.1:6379` ve `REDIS_KEY_PREFIX=sanliurfa:` ile yapılır; başka projelere ait Redis servisleri durdurulmaz, flush edilmez ve yeniden yapılandırılmaz.
