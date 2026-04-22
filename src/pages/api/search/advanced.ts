@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     if (!query || query.trim().length < 2) {
       recordRequest('GET', '/api/search/advanced', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Query must be at least 2 characters', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Arama terimi en az 2 karakter olmalıdır', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Try cache first
@@ -45,11 +45,12 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     let searchSql = `
       SELECT
         p.id,
-        p.title,
+        p.name as title,
+        p.slug,
         p.description,
         p.category,
-        p.average_rating,
-        p.review_count,
+        p.rating as average_rating,
+        p.rating_count as review_count,
         p.latitude,
         p.longitude,
         p.image_url,
@@ -57,9 +58,8 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
         COUNT(DISTINCT f.id) as favorite_count
       FROM places p
       LEFT JOIN favorites f ON p.id = f.place_id
-      WHERE p.is_active = true
-      AND (p.title ILIKE $1 OR p.description ILIKE $1)
-      AND p.average_rating >= $2
+      WHERE (p.name ILIKE $1 OR p.description ILIKE $1)
+      AND p.rating >= $2
     `;
 
     const params: any[] = [`%${query}%`, minRating];
@@ -71,7 +71,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     searchSql += `
       GROUP BY p.id
-      ORDER BY p.average_rating DESC
+      ORDER BY p.rating DESC
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
     params.push(limit, offset);
@@ -108,6 +108,6 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/search/advanced', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Advanced search failed', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Search failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Arama başarısız oldu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

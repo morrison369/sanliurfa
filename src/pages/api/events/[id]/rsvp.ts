@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
       recordRequest('POST', '/api/events/[id]/rsvp', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -33,7 +33,7 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     const success = await toggleRsvp(id, userId);
 
     if (!success) {
-      throw new Error('Failed to toggle RSVP');
+      throw new Error('Katılım durumu güncellenemedi');
     }
 
     const nowRsvpd = await hasUserRsvpd(id, userId);
@@ -53,7 +53,7 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     logger.error('Failed to toggle RSVP', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to toggle RSVP',
+      'Katılım işlemi başarısız oldu',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

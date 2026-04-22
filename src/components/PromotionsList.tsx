@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PromotionCard } from './PromotionCard';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface Promotion {
   id: string;
@@ -47,16 +48,17 @@ export function PromotionsList({ placeId, trending = false, limit = 12 }: Promot
         }
 
         const response = await fetch(url);
+        const json = await response.json();
 
         if (!response.ok) {
-          throw new Error('Failed to fetch promotions');
+          throw new Error(getApiErrorMessage(json, 'Promosyonlar yüklenemedi'));
         }
 
-        const data = await response.json();
+        const data = unwrapApiPayload<{ promotions?: Promotion[] }>(json);
         setPromotions(data.promotions || []);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
         setPromotions([]);
       } finally {
         setLoading(false);

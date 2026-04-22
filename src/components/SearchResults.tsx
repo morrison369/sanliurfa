@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { unwrapApiPayload } from '@/lib/client-api';
+
+interface SearchPayload {
+  results?: any[];
+  users?: any[];
+  collections?: any[];
+  query?: string;
+  searchType?: string;
+  resultCount?: number;
+}
 
 export default function SearchResults({ query }: { query?: string }) {
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<SearchPayload | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(query || '');
 
@@ -15,15 +25,17 @@ export default function SearchResults({ query }: { query?: string }) {
     setIsLoading(true);
     try {
       const response = await fetch('/api/search?q=' + encodeURIComponent(searchQuery) + '&limit=50');
-      if (!response.ok) throw new Error('Search failed');
-      const data = await response.json();
-      setResults(data.data);
+      if (!response.ok) throw new Error('Arama başarısız oldu');
+      const data = unwrapApiPayload<{ data?: SearchPayload }>(await response.json());
+      setResults(data.data || null);
     } catch (err) {
       console.error('Search error', err);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const placeResults = results?.results || [];
 
   return (
     <div className="space-y-6">
@@ -45,12 +57,12 @@ export default function SearchResults({ query }: { query?: string }) {
         <p className="text-center text-gray-600">Sonuç yok</p>
       ) : (
         <div className="space-y-8">
-          {results.places && results.places.length > 0 && (
+          {placeResults.length > 0 && (
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Mekanlar ({results.places.length})</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Mekanlar ({placeResults.length})</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {results.places.map((place: any) => (
-                  <a key={place.id} href={'/yerler/' + place.id} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                {placeResults.map((place: any) => (
+                  <a key={place.id} href={'/places/' + (place.slug || place.id)} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     {place.image_url && <img src={place.image_url} alt={place.name} className="w-full h-32 object-cover rounded mb-2" />}
                     <p className="font-medium text-gray-900 dark:text-white">{place.name}</p>
                     <p className="text-sm text-gray-600">{place.category}</p>
@@ -98,7 +110,7 @@ export default function SearchResults({ query }: { query?: string }) {
             </div>
           )}
 
-          {!results.places?.length && !results.users?.length && !results.collections?.length && (
+          {!placeResults.length && !results.users?.length && !results.collections?.length && (
             <p className="text-center text-gray-600">Sonuç bulunamadı</p>
           )}
         </div>

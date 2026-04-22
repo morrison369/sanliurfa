@@ -29,7 +29,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       recordRequest('GET', '/api/promotions/search', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Search query must be at least 2 characters or use trending=true',
+        'Arama terimi en az 2 karakter olmalı veya trending=true kullanılmalıdır',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -51,7 +51,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     logger.error('Failed to search promotions', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to search promotions',
+      'Promosyonlar aranamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
