@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 
 export const GET: APIRoute = async () => {
-  const site = import.meta.env.SITE_URL || 'https://sanliurfa.com';
+  const site = process.env.SITE_URL || 'https://sanliurfa.com';
 
   // Fetch all dynamic content
   const [placesResult, blogPostsResult, eventsResult, historicalSitesResult] = await Promise.all([
