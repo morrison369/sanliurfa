@@ -1,7 +1,8 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { z } from 'astro/zod';
 import { hasMatchingMarkdownFiles } from './lib/content-loader-helpers';
 
 function globWhenFilesExist(pattern: string, baseDir: string) {

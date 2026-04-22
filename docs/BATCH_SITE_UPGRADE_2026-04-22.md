@@ -494,3 +494,9 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 2. `package.json` resmi Astro paket aralıkları mevcut kurulu güncel sürümlerle eşitlendi: `astro@^6.1.9`, `@astrojs/node@^10.0.6`, `@astrojs/react@^5.0.4`, `@astrojs/mdx@^5.0.4`, `@astrojs/tailwind@^6.0.2`, `@astrojs/rss@^4.0.18`.
 3. Vercel/Netlify/Cloudflare adapter'ları, Astro DB, Markdoc, Starlight, ikinci UI framework ve statik sitemap entegrasyonu bu proje için kurulmayacak olarak kilitlendi; Vercel hedefi açıkça devre dışı bırakıldı.
 4. Actions ve server islands Astro core özelliği olarak not edildi; mevcut API/auth sözleşmesi bozulmadan ayrı refactor konusu yapılacak.
+
+## Bitirme Modu: Astro 6 Zod Import Temizliği
+
+1. `src/content.config.ts` içindeki deprecated `z from astro:content` kullanımı kaldırıldı.
+2. Content collection şemaları Astro 6 resmi önerisine uygun şekilde `astro/zod` üzerinden `z` import eder.
+3. Bu değişiklik content collection davranışını değiştirmez; yalnızca Astro 6 uyumluluk uyarısını kapatır.
