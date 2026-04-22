@@ -11,27 +11,35 @@ export const GET: APIRoute = async () => {
   const robotsTxt = `# Robots.txt - Şanlıurfa.com
 # Generated dynamically for search engine crawlers
 
-# Allow all crawlers
+# Default crawler rules
 User-agent: *
 Allow: /
-
-# Specific rules for Google
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 1
-
-# Specific rules for Bing
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 1
-
-# Disallow paths
-User-agent: *
 Disallow: /api/
 Disallow: /admin/
 Disallow: /auth/
 Disallow: /giris
 Disallow: /kayit
+Disallow: /abonelik
+Disallow: /akis
+Disallow: /aktivitelerim
+Disallow: /ayarlar
+Disallow: /bildirimler
+Disallow: /bildirim-tercihleri
+Disallow: /canli-analitik
+Disallow: /icerik
+Disallow: /isletme
+Disallow: /işletme
+Disallow: /koleksiyonlar
+Disallow: /kullanici
+Disallow: /loyalty
+Disallow: /mesajlar
+Disallow: /notifications
+Disallow: /profil
+Disallow: /profile
+Disallow: /raporlar
+Disallow: /sosyal
+Disallow: /veri-ambarı
+Disallow: /webhooks
 Disallow: /_astro/
 Disallow: /search
 Disallow: /*?*sort=
@@ -40,9 +48,7 @@ Disallow: /*?*filter=
 Disallow: /*.json
 Disallow: /*.css
 Disallow: /*.js
-
-# Allow specific admin pages if needed
-# Allow: /admin/public/
+Crawl-delay: 1
 
 # Sitemap
 Sitemap: ${baseUrl}/sitemap.xml

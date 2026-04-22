@@ -5,13 +5,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, queryOne } from '../../lib/postgres';
+import { queryMany } from '../../lib/postgres';
 
 export const GET: APIRoute = async () => {
   try {
     // Tüm yayınlanmış yazıları getir
     const posts = await queryMany(`
-      SELECT id, slug, published_at, updated_at, view_count
+      SELECT id, title, slug, featured_image, thumbnail, published_at, updated_at, view_count
       FROM blog_posts
       WHERE status = 'published'
       ORDER BY published_at DESC
@@ -68,17 +68,19 @@ function generateSitemap(
   posts.forEach((post: any) => {
     const lastmod = post.updated_at || post.published_at;
     const priority = calculatePriority(post.view_count);
+    const imageUrl = normalizeImageUrl(post.featured_image || post.thumbnail, baseUrl);
 
     urls.push(`
     <url>
-      <loc>${baseUrl}/blog/${post.slug}</loc>
+      <loc>${escapeXml(`${baseUrl}/blog/${post.slug}`)}</loc>
       <lastmod>${lastmod ? new Date(lastmod).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}</lastmod>
       <changefreq>weekly</changefreq>
       <priority>${priority}</priority>
+      ${imageUrl ? `
       <image:image>
-        <image:loc>${baseUrl}/blog/${post.slug}/og-image.jpg</image:loc>
-        <image:title>${post.title}</image:title>
-      </image:image>
+        <image:loc>${escapeXml(imageUrl)}</image:loc>
+        <image:title>${escapeXml(post.title || 'Şanlıurfa blog yazısı')}</image:title>
+      </image:image>` : ''}
     </url>
     `);
   });
@@ -87,7 +89,7 @@ function generateSitemap(
   categories.forEach((cat: any) => {
     urls.push(`
     <url>
-      <loc>${baseUrl}/blog?category=${cat.slug}</loc>
+      <loc>${escapeXml(`${baseUrl}/blog?category=${cat.slug}`)}</loc>
       <lastmod>${new Date(cat.created_at).toISOString().split('T')[0]}</lastmod>
       <changefreq>weekly</changefreq>
       <priority>0.7</priority>
@@ -114,4 +116,23 @@ function calculatePriority(viewCount: number): string {
   if (viewCount >= 500) return '0.8';
   if (viewCount >= 100) return '0.7';
   return '0.6';
+}
+
+function normalizeImageUrl(imageUrl: string | null | undefined, baseUrl: string): string | null {
+  if (!imageUrl) return null;
+
+  try {
+    return new URL(imageUrl, baseUrl).href;
+  } catch {
+    return null;
+  }
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
