@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { unwrapApiPayload } from '@/lib/client-api';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface SuggestedUser {
   id: string;
@@ -27,12 +27,13 @@ export default function UserSuggestionsPanel() {
       setIsLoading(true);
       setError(null);
       const response = await fetch('/api/users/suggestions?limit=6');
+      const json = await response.json();
 
       if (!response.ok) {
-        throw new Error('Öneriler yüklenemedi');
+        throw new Error(getApiErrorMessage(json, 'Öneriler yüklenemedi'));
       }
 
-      const data = unwrapApiPayload<{ suggestions?: SuggestedUser[] }>(await response.json());
+      const data = unwrapApiPayload<{ suggestions?: SuggestedUser[] }>(json);
       setSuggestions(data.suggestions || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -55,9 +56,10 @@ export default function UserSuggestionsPanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ followed_id: userId }),
       });
+      const json = await response.json();
 
       if (!response.ok) {
-        throw new Error('İşlem başarısız');
+        throw new Error(getApiErrorMessage(json, 'İşlem başarısız'));
       }
 
       // Update suggestion status

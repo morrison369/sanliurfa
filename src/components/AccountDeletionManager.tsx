@@ -26,12 +26,13 @@ export default function AccountDeletionManager() {
     try {
       setIsLoading(true);
       const response = await fetch('/api/users/deletion/status');
+      const json = await response.json();
 
       if (!response.ok) {
-        throw new Error('Status kontrol edilemedi');
+        throw new Error(getApiErrorMessage(json, 'Durum kontrol edilemedi'));
       }
 
-      const data = unwrapApiPayload<DeletionStatus>(await response.json());
+      const data = unwrapApiPayload<DeletionStatus>(json);
       setStatus(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -57,13 +58,13 @@ export default function AccountDeletionManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password, reason })
       });
+      const json = await response.json();
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'Silme isteği gönderilemedi'));
+        throw new Error(getApiErrorMessage(json, 'Silme isteği gönderilemedi'));
       }
 
-      const data = unwrapApiPayload<{ message?: string }>(await response.json());
+      const data = unwrapApiPayload<{ message?: string }>(json);
       setSuccessMessage(data.message || 'Hesap silme isteği alındı');
       setShowDeleteModal(false);
       setPassword('');
@@ -91,13 +92,13 @@ export default function AccountDeletionManager() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
+      const json = await response.json();
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'İptal edilemedi'));
+        throw new Error(getApiErrorMessage(json, 'İptal edilemedi'));
       }
 
-      const data = unwrapApiPayload<{ message?: string }>(await response.json());
+      const data = unwrapApiPayload<{ message?: string }>(json);
       setSuccessMessage(data.message || 'Silme işlemi iptal edildi');
       await checkDeletionStatus();
 

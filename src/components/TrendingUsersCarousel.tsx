@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { unwrapApiPayload } from '@/lib/client-api';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface TrendingUser {
   id: string;
@@ -35,12 +35,13 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
       setIsLoading(true);
       setError(null);
       const response = await fetch(`/api/users/trending?limit=${limit}&period=${period}`);
+      const json = await response.json();
 
       if (!response.ok) {
-        throw new Error('Trending kullanıcılar yüklenemedi');
+        throw new Error(getApiErrorMessage(json, 'Popüler kullanıcılar yüklenemedi'));
       }
 
-      const data = unwrapApiPayload<{ users?: TrendingUser[] }>(await response.json());
+      const data = unwrapApiPayload<{ users?: TrendingUser[] }>(json);
       setUsers(data.users || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -70,7 +71,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
   if (users.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        <p>Trending kullanıcı yok</p>
+        <p>Popüler kullanıcı yok</p>
       </div>
     );
   }

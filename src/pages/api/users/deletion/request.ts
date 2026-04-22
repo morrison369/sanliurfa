@@ -15,7 +15,7 @@ export const POST: APIRoute = async (context) => {
   try {
     // Auth required
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
     }
 
     const userId = context.locals.user.id;
@@ -23,7 +23,7 @@ export const POST: APIRoute = async (context) => {
 
     // Validate password is provided
     if (!body.password || typeof body.password !== 'string') {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Password is required');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Şifre gereklidir');
     }
 
     // Get user with password hash
@@ -33,7 +33,7 @@ export const POST: APIRoute = async (context) => {
     );
 
     if (!user) {
-      return apiError(context, HttpStatus.NOT_FOUND, 'User not found');
+      return apiError(context, HttpStatus.NOT_FOUND, 'Kullanıcı bulunamadı');
     }
 
     // Verify password
@@ -41,7 +41,7 @@ export const POST: APIRoute = async (context) => {
 
     if (!isPasswordValid) {
       logger.warn('Invalid password for account deletion request', { userId });
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Invalid password');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Şifre hatalı');
     }
 
     // Request deletion
@@ -59,6 +59,6 @@ export const POST: APIRoute = async (context) => {
     });
   } catch (error) {
     logger.error('Failed to request account deletion', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to request account deletion');
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Hesap silme isteği gönderilemedi');
   }
 };

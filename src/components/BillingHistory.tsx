@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 interface BillingRecord {
   id: string;
@@ -23,10 +24,6 @@ interface BillingRecord {
 
 interface BillingHistoryProps {}
 
-function unwrapApiPayload(responseBody: any) {
-  return responseBody?.data?.data || responseBody?.data || responseBody;
-}
-
 export default function BillingHistory({}: BillingHistoryProps) {
   const [billing, setBilling] = useState<BillingRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,12 +34,13 @@ export default function BillingHistory({}: BillingHistoryProps) {
       try {
         setLoading(true);
         const response = await fetch('/api/user/subscription/billing');
+        const json = await response.json();
 
         if (!response.ok) {
-          throw new Error('Failed to fetch billing history');
+          throw new Error(getApiErrorMessage(json, 'Ödeme geçmişi yüklenemedi'));
         }
 
-        const data = unwrapApiPayload(await response.json());
+        const data = unwrapApiPayload<{ billing?: BillingRecord[] }>(json);
         setBilling(data.billing || []);
         setError(null);
       } catch (err) {

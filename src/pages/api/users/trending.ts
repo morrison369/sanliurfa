@@ -85,7 +85,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     logger.error('Failed to get trending users', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get trending users',
+      'Popüler kullanıcılar alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
