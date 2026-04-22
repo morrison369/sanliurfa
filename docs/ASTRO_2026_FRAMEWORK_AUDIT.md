@@ -11,7 +11,7 @@ Bu dosya sanliurfa.com için Astro framework kararlarını kilitler. Yeni paket 
 - Node: `22.22.0`
 - Output: `server`
 - Adapter: `@astrojs/node@10.0.6`
-- Aktif entegrasyonlar: `@astrojs/mdx`, `@astrojs/tailwind`, `@astrojs/react`, `@astrojs/partytown`, `astro-compress`
+- Aktif entegrasyonlar: `@astrojs/mdx`, `@astrojs/react`, `@astrojs/partytown`, `astro-compress`, `@tailwindcss/vite`
 - Resmi feed paketi: `@astrojs/rss`
 - Görsel servisi: Astro built-in Sharp image service (`astro/assets/services/sharp`)
 
@@ -22,7 +22,7 @@ Bu dosya sanliurfa.com için Astro framework kararlarını kilitler. Yeni paket 
 | SSR / on-demand rendering | Kullanılıyor | Admin, API, auth, DB ve dinamik şehir içerikleri için `output: "server"` doğru modeldir. |
 | `@astrojs/node` | Kullanılıyor | CentOS Web Panel / Node standalone runtime için doğru resmi adapter budur. |
 | `@astrojs/react` | Kullanılıyor | Mevcut interaktif paneller ve sosyal bileşenler React 19 ile çalışır. |
-| `@astrojs/tailwind` | Kullanılıyor | Mevcut tasarım sistemi Tailwind 3.4 üzerinde; Astro dokümanı Tailwind 4 için Vite plugin'i önerse de bu projede Tailwind 4 geçişi ayrı PR olmalıdır. |
+| Tailwind 4 / `@tailwindcss/vite` | Kullanılıyor | Astro 6 ve Tailwind 4 için resmi önerilen yol Vite plugin modelidir; deprecated `@astrojs/tailwind` kullanılmaz. |
 | `@astrojs/mdx` | Kullanılıyor | Blog, rehber ve doküman içerikleri ileride MDX gerektirirse framework tarafı hazırdır. |
 | `@astrojs/rss` | Kullanılıyor | Public Türkçe feed üretimi için resmi paket kullanılır. |
 | `@astrojs/partytown` | Kullanılıyor | Geçerli analytics/üçüncü parti script olursa ana thread yükünü azaltmak için aktiftir. |
@@ -59,3 +59,4 @@ Bu dosya sanliurfa.com için Astro framework kararlarını kilitler. Yeni paket 
 - Proje SSR Node standalone hedefi korunur.
 - CWP production hedefinde aktif PM2 dosyası `ecosystem.config.cjs`, aktif port `4321`, canonical deploy dokümanı `docs/ACTIVE_DEPLOYMENT_CWP_4321.md` olarak kilitlendi.
 - Tailwind CDN kalıntısı kaldırıldı; React ada bileşenlerinde kritik olmayan hydration kullanımları `client:idle` / `client:visible` olarak sadeleştirildi.
+- Tailwind 4'e geçildi; `@tailwindcss/vite` aktif edildi, `@astrojs/tailwind`, `autoprefixer` ve PostCSS Tailwind config'i kaldırıldı.

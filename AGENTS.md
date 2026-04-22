@@ -67,6 +67,7 @@
 - Do not ship fake public integrations. Analytics scripts require `PUBLIC_GOOGLE_ANALYTICS_ID`; if it is missing or invalid, no analytics tag is rendered.
 - Do not display social media account links or social login buttons unless the real account/provider is configured and working.
 - Do not use the Tailwind CDN. Tailwind must come from the Astro build pipeline via `src/styles/global.css` and `tailwind.config.js`.
+- Tailwind 4 uses the official `@tailwindcss/vite` plugin. Do not reintroduce deprecated `@astrojs/tailwind`, Tailwind PostCSS config, or `autoprefixer`.
 - Keep React as Astro islands for real interactivity only. Prefer `.astro` server-rendered markup for public SEO content, and prefer `client:idle`/`client:visible` over `client:load` when immediate interaction is not required.
 
 ## Architecture Reference
