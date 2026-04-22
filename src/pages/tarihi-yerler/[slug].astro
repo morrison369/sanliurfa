@@ -11,6 +11,8 @@ import {
 import { curatedHistoricalSites, getCuratedHistoricalSites } from '../../data/curated-historical-sites';
 
 const { slug } = Astro.params;
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const isUuid = (value: unknown) => typeof value === 'string' && uuidPattern.test(value);
 
 let site = null;
 
@@ -33,14 +35,16 @@ if (!site) {
 
 let nearbySites: any[] = [];
 
-try {
-  const nearbyResult = await query(
-    "SELECT id, name, slug, location FROM historical_sites WHERE status = 'active' AND id != $1 LIMIT 5",
-    [site.id]
-  );
-  nearbySites = nearbyResult.rows;
-} catch {
-  nearbySites = [];
+if (isUuid(site.id)) {
+  try {
+    const nearbyResult = await query(
+      "SELECT id, name, slug, location FROM historical_sites WHERE status = 'active' AND id != $1 LIMIT 5",
+      [site.id]
+    );
+    nearbySites = nearbyResult.rows;
+  } catch {
+    nearbySites = [];
+  }
 }
 
 if (nearbySites.length === 0) {

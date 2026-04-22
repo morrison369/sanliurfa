@@ -451,3 +451,10 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 2. İlişkili içerik bileşeni DB sorgusu hata verdiğinde sayfayı 500'e düşürmez; Şanlıurfa odaklı curated blog, mekan ve tarihi yer verilerine düşer.
 3. Admin placeholder ve doküman örneklerinde geçen Göbeklitepe, etkinlik, profil avatarı ve genel fotoğraf yolları gerçek `public/images` dosyalarıyla tamamlandı.
 4. Görsel dosyaları mevcut yerel Şanlıurfa görsellerinden üretildi; dış API çağrısı, yeni dev server veya farklı port kullanılmadı.
+
+## Bitirme Modu: Curated ID ve DB Şema Log Temizliği
+
+1. Curated mekan ve tarihi yer kayıtlarının UUID olmayan id değerleri artık PostgreSQL UUID kolonlarına gönderilmez; ilgili alanlar doğrudan curated fallback ile doldurulur.
+2. Mekan detayındaki yorum sorgusu `reviews.is_approved` kolonunu önce şemadan kontrol eder; kolon yoksa sayfa hata logu üretmeden yorumları filtre dışı bırakır.
+3. Mekan ve tarihi yer detay sayfalarında yakın içerik sorguları curated id ile DB hatası üretmez.
+4. `places/gobeklitepe` ve `tarihi-yerler/gobeklitepe` smoke kontrolünde 200 döndü ve yeni DB hata logu oluşmadı.
