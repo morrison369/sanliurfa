@@ -4,11 +4,13 @@
  */
 
 import { useState, useEffect } from 'react';
+import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
 
 export function AdvancedAnalyticsDashboard() {
   const [activeTab, setActiveTab] = useState<'cohorts' | 'funnels' | 'predictions' | 'journeys'>('cohorts');
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadData();
@@ -16,6 +18,7 @@ export function AdvancedAnalyticsDashboard() {
 
   const loadData = async () => {
     setLoading(true);
+    setError('');
     try {
       let url = '';
       switch (activeTab) {
@@ -35,11 +38,16 @@ export function AdvancedAnalyticsDashboard() {
 
       const response = await fetch(url);
       const result = await response.json();
-      if (result.success) {
-        setData(result.data);
+
+      if (!response.ok) {
+        throw new Error(getApiErrorMessage(result, 'Analitik verileri yüklenemedi'));
       }
+
+      const payload = unwrapApiPayload<{ success?: boolean; data?: any }>(result);
+      setData(payload.data ?? payload);
     } catch (error) {
-      console.error('Failed to load analytics', error);
+      setData(null);
+      setError(error instanceof Error ? error.message : 'Analitik verileri yüklenemedi');
     } finally {
       setLoading(false);
     }
@@ -76,6 +84,8 @@ export function AdvancedAnalyticsDashboard() {
 
       {loading ? (
         <div className="text-center py-8 text-gray-500">Yükleniyor...</div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
       ) : (
         <div className="grid gap-4">
           {activeTab === 'cohorts' && Array.isArray(data) && data.map((cohort: any) => (

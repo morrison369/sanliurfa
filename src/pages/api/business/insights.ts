@@ -16,20 +16,20 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/business/insights', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const placeId = url.searchParams.get('placeId');
     if (!placeId) {
       recordRequest('GET', '/api/business/insights', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'placeId required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Verify ownership
     const place = await queryOne('SELECT owner_id FROM places WHERE id = $1', [placeId]);
     if (!place || place.owner_id !== locals.user.id) {
       recordRequest('GET', '/api/business/insights', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Access denied', HttpStatus.FORBIDDEN, undefined, requestId);
+      return apiError(ErrorCode.FORBIDDEN, 'Erişim reddedildi', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
@@ -66,7 +66,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/business/insights', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Failed to get insights', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'İşletme önerileri alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
@@ -78,7 +78,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/business/insights', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -86,14 +86,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (!placeId || !insightId || !action) {
       recordRequest('POST', '/api/business/insights', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Missing required fields', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan, öneri ve işlem bilgisi gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Verify ownership
     const place = await queryOne('SELECT owner_id FROM places WHERE id = $1', [placeId]);
     if (!place || place.owner_id !== locals.user.id) {
       recordRequest('POST', '/api/business/insights', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Access denied', HttpStatus.FORBIDDEN, undefined, requestId);
+      return apiError(ErrorCode.FORBIDDEN, 'Erişim reddedildi', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     if (action === 'acknowledge') {
@@ -111,7 +111,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return apiResponse(
       {
         success: true,
-        message: `Insight ${action} successfully`
+        message: action === 'acknowledge' ? 'Öneri görüldü olarak işaretlendi' : 'Öneri işlemi tamamlandı'
       },
       HttpStatus.OK,
       requestId
@@ -120,6 +120,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/business/insights', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Failed to process insight action', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Öneri işlemi tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
