@@ -7,7 +7,7 @@ let events: any[] = [];
 
 try {
   const result = await query(
-    `SELECT id, title, slug, description, category, location, image_url, start_date, end_date
+    `SELECT *
      FROM events
      WHERE status IN ('published', 'active')
        AND (end_date IS NULL OR end_date >= CURRENT_DATE)
