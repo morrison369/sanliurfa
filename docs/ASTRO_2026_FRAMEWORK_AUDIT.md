@@ -57,3 +57,4 @@ Bu dosya sanliurfa.com için Astro framework kararlarını kilitler. Yeni paket 
 - Astro 6 deprecated `z from astro:content` kullanımı kaldırıldı; content collection şemaları `astro/zod` kullanır.
 - Yeni dev server açılmadı, 4321 dışı port kullanılmadı.
 - Proje SSR Node standalone hedefi korunur.
+- CWP production hedefinde aktif PM2 dosyası `ecosystem.config.cjs`, aktif port `4321`, canonical deploy dokümanı `docs/ACTIVE_DEPLOYMENT_CWP_4321.md` olarak kilitlendi.

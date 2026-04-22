@@ -1,18 +1,19 @@
 #!/bin/bash
-# Debug script - run this on the server
-# ssh sanliur@168.119.79.238 -p 77
-# bash /home/sanliur/public_html/scripts/server_debug.sh
+set -euo pipefail
 
-echo "🔍 Application Debug"
+APP_PORT="${PORT:-4321}"
+APP_ROOT="${APP_ROOT:-/home/sanliur/public_html}"
+
+echo "Application Debug"
 echo "===================="
 
 source ~/.nvm/nvm.sh
-cd /home/sanliur/public_html
+cd "$APP_ROOT"
 
 # 1. PM2 Status
 echo ""
 echo "1️⃣ PM2 Status:"
-pm2 list | grep sanliurfa
+pm2 list | grep sanliurfa || true
 
 # 2. Check build files
 echo ""
@@ -45,15 +46,15 @@ else
     echo "❌ .env.production NOT FOUND"
 fi
 
-# 4. Check port 6000
+# 4. Check application port
 echo ""
-echo "4️⃣ Port 6000:"
-PORT_CHECK=$(ss -tlnp 2>/dev/null | grep 6000 || netstat -tlnp 2>/dev/null | grep 6000)
+echo "4️⃣ Port ${APP_PORT}:"
+PORT_CHECK=$(ss -tlnp 2>/dev/null | grep ":${APP_PORT} " || netstat -tlnp 2>/dev/null | grep ":${APP_PORT} " || true)
 if [ -n "$PORT_CHECK" ]; then
-    echo "✅ Port 6000 is listening"
+    echo "✅ Port ${APP_PORT} is listening"
     echo "   $PORT_CHECK"
 else
-    echo "❌ Port 6000 NOT listening"
+    echo "❌ Port ${APP_PORT} NOT listening"
 fi
 
 # 5. Recent logs
@@ -65,7 +66,7 @@ pm2 logs sanliurfa --lines 20 2>/dev/null | tail -20
 echo ""
 echo "6️⃣ Testing Application Startup:"
 echo "   Starting for 3 seconds..."
-timeout 3 node dist/server/entry.mjs --port 6000 2>&1 &
+timeout 3 env PORT="$APP_PORT" node dist/server/entry.mjs 2>&1 &
 PID=$!
 sleep 3
 kill $PID 2>/dev/null
@@ -98,7 +99,7 @@ echo ""
 
 # Auto-fix option
 echo "🔧 Auto-fix? (y/n)"
-read -t 5 -n 1 -r
+read -t 5 -n 1 -r || true
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo ""
     echo "Applying fixes..."
@@ -113,7 +114,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     fi
     
     # Restart
-    pm2 restart sanliurfa || pm2 start dist/server/entry.mjs --name sanliurfa -- --port 6000
+    pm2 restart sanliurfa || pm2 start ecosystem.config.cjs --env production
     pm2 save
     
     echo "✅ Done! Check: pm2 logs sanliurfa"
