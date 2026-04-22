@@ -274,6 +274,7 @@
     "test:phase:1463-1468": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v187.test.ts",
     "test:phase:1469-1474": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v188.test.ts",
     "test:phase:1475-1480": "vitest run --pool=threads --environment node src/lib/__tests__/governance-assurance-stability-suite-v189.test.ts",
+    "test:phase:1481-1486": "vitest run --pool=threads --environment node src/lib/__tests__/governance-recovery-assurance-suite-v190.test.ts",
     "security:public-readiness": "node scripts/security/public-readiness-gate.mjs",
     "security:scan-secrets": "node scripts/security/scan-secrets.mjs"
   },
