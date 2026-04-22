@@ -139,6 +139,7 @@
     "migrate": "tsx scripts/migrate.ts",
     "migrate:status": "tsx scripts/migrate.ts status",
     "migrate:rollback": "tsx scripts/migrate.ts rollback",
+    "images:places:fill": "tsx scripts/fill-missing-place-images.ts",
     "admin": "tsx scripts/admin-cli.ts",
     "backup": "./scripts/backup.sh",
     "deploy": "./scripts/deploy.sh",
@@ -302,6 +303,7 @@
     "redis": "^4.7.0",
     "resend": "^6.10.0",
     "schema-dts": "^2.0.0",
+    "sharp": "^0.34.5",
     "stripe": "^22.0.2",
     "swagger-ui-dist": "^5.32.1",
     "web-push": "^3.6.7"
