@@ -2,6 +2,12 @@
 import Layout from '../../layouts/Layout.astro';
 import { MapPin, Clock, Camera, Search } from 'lucide-react';
 import { query } from '../../lib/postgres';
+import {
+  buildBreadcrumbSchema,
+  buildHistoricalSiteItemListSchema,
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+} from '../../lib/rich-snippets';
 
 const queryParam = Astro.url.searchParams.get('q') || '';
 
@@ -21,6 +27,17 @@ const sites = result.rows;
 const seo = {
   title: 'Tarihi Yerler - Şanlıurfa\'nın Zengin Tarihi',
   description: 'Göbeklitepe, Harran, Balıklıgöl ve daha fazlası. Şanlıurfa\'nın binlerce yıllık tarihi mirasını keşfedin.',
+  canonicalUrl: 'https://sanliurfa.com/tarihi-yerler',
+  schemaMode: 'replace' as const,
+  schema: [
+    buildOrganizationSchema(),
+    buildWebSiteSchema(),
+    buildBreadcrumbSchema([
+      { name: 'Ana Sayfa', url: '/' },
+      { name: 'Tarihi Yerler', url: '/tarihi-yerler' },
+    ]),
+    buildHistoricalSiteItemListSchema(sites, '/tarihi-yerler'),
+  ],
 };
 ---
 

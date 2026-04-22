@@ -4,6 +4,12 @@ import Layout from '../../layouts/Layout.astro';
 import Breadcrumb from '../../components/Breadcrumb.astro';
 import { getBlogPostBySlug, getBlogPosts } from '../../lib/blog';
 import type { BlogPost } from '../../lib/blog';
+import {
+  buildArticleRichSnippet,
+  buildBreadcrumbSchema,
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+} from '../../lib/rich-snippets';
 
 const { slug } = Astro.params;
 
@@ -50,6 +56,23 @@ const seo = {
   title: currentPost.seoTitle || currentPost.title,
   description: currentPost.seoDescription || currentPost.excerpt,
   image: currentPost.featuredImage,
+  type: 'article' as const,
+  publishDate: currentPost.publishedAt?.toISOString?.(),
+  modifiedDate: currentPost.updatedAt?.toISOString?.(),
+  author: currentPost.authorName || 'Şanlıurfa.com',
+  tags: currentPost.tags || [],
+  canonicalUrl: `https://sanliurfa.com/blog/${currentPost.slug}`,
+  schemaMode: 'replace' as const,
+  schema: [
+    buildOrganizationSchema(),
+    buildWebSiteSchema(),
+    buildBreadcrumbSchema([
+      { name: 'Ana Sayfa', url: '/' },
+      { name: 'Blog', url: '/blog' },
+      { name: currentPost.title, url: `/blog/${currentPost.slug}` },
+    ]),
+    buildArticleRichSnippet(currentPost, `/blog/${currentPost.slug}`),
+  ],
 };
 ---
 
