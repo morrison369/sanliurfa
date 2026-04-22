@@ -31,7 +31,7 @@ const { placeId } = Astro.props;
   </div>
 </div>
 
-<script define:vars={{ placeId }}>
+<script is:inline define:vars={{ placeId }}>
   import { realtimeManager } from '../lib/realtime';
   
   const liveIndicator = document.getElementById('live-reviews');

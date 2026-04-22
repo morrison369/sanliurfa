@@ -51,7 +51,7 @@ const token = Astro.url.searchParams.get("token");
     </div>
   </div>
 
-  <script define:vars={{ token }}>
+  <script is:inline define:vars={{ token }}>
     if (token) {
       // Verify email with token
       fetch(`/api/users/verify-email?token=${encodeURIComponent(token)}`)

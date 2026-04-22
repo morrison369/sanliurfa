@@ -22,7 +22,7 @@ const buttonId = `export-btn-${Math.random().toString(36).substr(2, 9)}`;
   {format === 'csv' ? 'CSV İndir' : 'JSON İndir'}
 </button>
 
-<script define:vars={{ buttonId, data, filename, format, columns }}>
+<script is:inline define:vars={{ buttonId, data, filename, format, columns }}>
   const btn = document.getElementById(buttonId);
   
   function convertToCSV(data, columns) {
