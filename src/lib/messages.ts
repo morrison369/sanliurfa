@@ -5,6 +5,27 @@ import { query, queryOne, queryMany, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 
+function readCachedArray<T = any>(cached: unknown): T[] | null {
+  if (!cached) {
+    return null;
+  }
+
+  if (Array.isArray(cached)) {
+    return cached as T[];
+  }
+
+  if (typeof cached === 'string') {
+    try {
+      const parsed = JSON.parse(cached);
+      return Array.isArray(parsed) ? (parsed as T[]) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
 export async function getOrCreateConversation(userA: string, userB: string) {
   const [p1, p2] = userA < userB ? [userA, userB] : [userB, userA];
   let convo = await queryOne('SELECT * FROM conversations WHERE LEAST(participant_a::text, participant_b::text) = $1 AND GREATEST(participant_a::text, participant_b::text) = $2', [p1, p2]);
@@ -20,8 +41,9 @@ export async function getOrCreateConversation(userA: string, userB: string) {
 
 export async function getConversations(userId: string, limit = 50, offset = 0) {
   const cacheKey = `sanliurfa:conversations:${userId}:inbox:${limit}:${offset}`;
-  const cached = await getCache(cacheKey);
-  if (cached) return JSON.parse(cached);
+  const cached = await getCache<any[] | string>(cacheKey);
+  const cachedList = readCachedArray(cached);
+  if (cachedList) return cachedList;
   const convos = await queryMany(
     `SELECT c.*, u.full_name, u.avatar_url, dm.content, dm.created_at as msg_time,
             COUNT(CASE WHEN dm.read_at IS NULL AND dm.sender_id != $1 THEN 1 END) as unread
@@ -34,8 +56,9 @@ export async function getConversations(userId: string, limit = 50, offset = 0) {
      LIMIT $2 OFFSET $3`,
     [userId, limit, offset]
   );
-  await setCache(cacheKey, JSON.stringify(convos), 300);
-  return convos;
+  const convoList = Array.isArray(convos) ? [...convos] : [];
+  await setCache(cacheKey, convoList, 300);
+  return convoList;
 }
 
 export async function getMessages(conversationId: string, userId: string, limit = 50) {
