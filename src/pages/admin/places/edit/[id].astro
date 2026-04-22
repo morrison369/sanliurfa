@@ -8,7 +8,7 @@ import ProviderImagePicker from '../../../../components/admin/ProviderImagePicke
 const { id } = Astro.params;
 
 if (!Astro.locals.isAdmin) {
-  return Astro.redirect('/giris');
+  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
 }
 
 if (!id) {

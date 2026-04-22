@@ -5,7 +5,7 @@ import MarketingCampaignBuilder from '../../components/MarketingCampaignBuilder'
 
 // Check if user is authenticated
 if (!Astro.locals.user) {
-  return Astro.redirect('/giris');
+  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
 }
 
 const seo = {
