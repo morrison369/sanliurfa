@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import rss, { type RSSFeedItem } from "@astrojs/rss";
 import { getCuratedBlogPosts } from "../data/curated-blog-posts";
-import { query } from "../lib/postgres";
 
 export const GET: APIRoute = async (context) => {
   let posts = getCuratedBlogPosts().map((post) => ({
@@ -12,6 +11,7 @@ export const GET: APIRoute = async (context) => {
   }));
 
   try {
+    const { query } = await import("../lib/postgres");
     const result = await query(
       "SELECT title, slug, excerpt, published_at FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC NULLS LAST, updated_at DESC LIMIT 20",
       [],
