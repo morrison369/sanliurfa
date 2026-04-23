@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
       case 'stats': {
         // Stats with caching (300s TTL)
-        const cacheKey = `sanliurfa:achievements:stats:${userId}`;
+        const cacheKey = `achievements:stats:${userId}`;
         const cached = await getCache(cacheKey);
         if (cached) {
           data = cached;

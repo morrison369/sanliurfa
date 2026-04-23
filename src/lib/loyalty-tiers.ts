@@ -8,7 +8,7 @@ import { deleteCache, getCache, setCache } from './cache';
 
 export async function getUserTierInfo(userId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:tier:user:${userId}`;
+    const cacheKey = `tier:user:${userId}`;
     let tierInfo = await getCache(cacheKey);
 
     if (!tierInfo) {
@@ -112,7 +112,7 @@ export async function updateUserTier(userId: string, newTierId: string, reason?:
       });
     }
 
-    await deleteCache(`sanliurfa:tier:user:${userId}`);
+    await deleteCache(`tier:user:${userId}`);
 
     logger.info('User tier updated', { userId, newTierId, previousTierId, reason });
     return true;
@@ -124,7 +124,7 @@ export async function updateUserTier(userId: string, newTierId: string, reason?:
 
 export async function getTierBenefits(tierId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:tier:benefits:${tierId}`;
+    const cacheKey = `tier:benefits:${tierId}`;
     let benefits = await getCache(cacheKey);
 
     if (!benefits) {
@@ -160,7 +160,7 @@ export async function getTierBenefits(tierId: string): Promise<any | null> {
 
 export async function getTierList(): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:tiers:list';
+    const cacheKey = 'tiers:list';
     let tiers = await getCache(cacheKey);
 
     if (!tiers) {
@@ -233,7 +233,7 @@ export async function processBirthdayBonus(userId: string): Promise<boolean> {
       balance_after: newBalance
     });
 
-    await deleteCache(`sanliurfa:loyalty:points:${userId}`);
+    await deleteCache(`loyalty:points:${userId}`);
 
     logger.info('Birthday bonus awarded', { userId, bonus: tierInfo.birthday_bonus });
     return true;
@@ -295,8 +295,8 @@ export async function processAnnualReset(userId: string): Promise<boolean> {
       });
     }
 
-    await deleteCache(`sanliurfa:loyalty:points:${userId}`);
-    await deleteCache(`sanliurfa:tier:user:${userId}`);
+    await deleteCache(`loyalty:points:${userId}`);
+    await deleteCache(`tier:user:${userId}`);
 
     logger.info('Annual reset processed', { userId, annualGift });
     return true;
@@ -330,7 +330,7 @@ export async function getUserTierHistory(userId: string, limit: number = 20): Pr
 
 export async function getTierStats(): Promise<any | null> {
   try {
-    const cacheKey = 'sanliurfa:tier:stats';
+    const cacheKey = 'tier:stats';
     let stats = await getCache(cacheKey);
 
     if (!stats) {
