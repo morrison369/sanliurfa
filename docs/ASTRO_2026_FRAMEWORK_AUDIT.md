@@ -101,6 +101,7 @@ Bu denetimde yeni zorunlu Astro paketi bulunmadı. Kurulmayan paketler eksik de�
 - `scripts/security/image-provider-secret-contract.ts` ile Pexels/Unsplash provider anahtarlarının yalnızca environment üzerinden kullanıldığı ve source/docs içinde hardcoded key kalmadığı gate zincirinde doğrulanır.
 - `scripts/security/env-template-contract.ts` ile `.env.example` ve `.env.production.template` içindeki canonical domain, CORS origin, `PORT=4321` ve `REDIS_KEY_PREFIX=sanliurfa:` kilidi gate zincirinde doğrulanır.
 - `scripts/security/redis-isolation-contract.ts` ile Redis default DB izolasyonu (`REDIS_DB=15`) ve `sanliurfa:` key prefix kilidi gate zincirinde doğrulanır.
+- `scripts/security/astro-types-entrypoint-contract.ts` ile `src/env.d.ts` Astro type entrypoint satırı ve `tsconfig.json` Astro strict extend kilidi gate zincirinde doğrulanır.
 - Yeni dev server açılmadı, 4321 dışı port kullanılmadı.
 - Proje SSR Node standalone hedefi korunur.
 - CWP production hedefinde aktif PM2 dosyası `ecosystem.config.cjs`, aktif port `4321`, canonical deploy dokümanı `docs/ACTIVE_DEPLOYMENT_CWP_4321.md` olarak kilitlendi.

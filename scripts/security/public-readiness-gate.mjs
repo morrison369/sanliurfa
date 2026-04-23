@@ -140,6 +140,18 @@ if (!redisIsolationContract.ok) {
   );
 }
 
+const astroTypesEntrypointContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/astro-types-entrypoint-contract.ts',
+]);
+if (!astroTypesEntrypointContract.ok) {
+  blockers.push(
+    `astro types entrypoint contract failed:\n${
+      astroTypesEntrypointContract.stderr || astroTypesEntrypointContract.stdout
+    }`,
+  );
+}
+
 const historyDeployKey = runAllowFail('git', ['log', '--all', '--name-only', '--', 'deploy_key']);
 if ((historyDeployKey.stdout || '').includes('deploy_key')) {
   blockers.push('git history contains deploy_key; rotate keys and clean history before public visibility');
