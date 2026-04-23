@@ -52,11 +52,11 @@ export interface TenantMember {
 
 export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
   try {
-    const cacheKey = `sanliurfa:tenant:slug:${slug}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `tenant:slug:${slug}`;
+    const cached = await getCache<Tenant>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const tenant = await queryOne(
@@ -65,7 +65,7 @@ export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
     );
 
     if (tenant) {
-      await setCache(cacheKey, JSON.stringify(tenant), 3600);
+      await setCache(cacheKey, tenant, 3600);
     }
 
     return tenant;
@@ -80,11 +80,11 @@ export async function getTenantBySlug(slug: string): Promise<Tenant | null> {
 
 export async function getTenantByDomain(domain: string): Promise<Tenant | null> {
   try {
-    const cacheKey = `sanliurfa:tenant:domain:${domain}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `tenant:domain:${domain}`;
+    const cached = await getCache<Tenant>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const tenant = await queryOne(
@@ -93,7 +93,7 @@ export async function getTenantByDomain(domain: string): Promise<Tenant | null> 
     );
 
     if (tenant) {
-      await setCache(cacheKey, JSON.stringify(tenant), 3600);
+      await setCache(cacheKey, tenant, 3600);
     }
 
     return tenant;
@@ -144,7 +144,7 @@ export async function createTenant(
       role: 'owner'
     });
 
-    await deleteCache(`sanliurfa:tenant:slug:${slug}`);
+    await deleteCache(`tenant:slug:${slug}`);
     logger.info('Tenant created', { id: tenant.id, slug });
 
     return tenant;
@@ -159,11 +159,11 @@ export async function createTenant(
 
 export async function getTenantBranding(tenantId: string): Promise<TenantBranding | null> {
   try {
-    const cacheKey = `sanliurfa:branding:${tenantId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `branding:${tenantId}`;
+    const cached = await getCache<TenantBranding>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const branding = await queryOne(
@@ -172,7 +172,7 @@ export async function getTenantBranding(tenantId: string): Promise<TenantBrandin
     );
 
     if (branding) {
-      await setCache(cacheKey, JSON.stringify(branding), 3600);
+      await setCache(cacheKey, branding, 3600);
     }
 
     return branding;
@@ -191,7 +191,7 @@ export async function updateTenantBranding(
 ): Promise<boolean> {
   try {
     await update('tenant_branding', { tenant_id: tenantId }, branding);
-    await deleteCache(`sanliurfa:branding:${tenantId}`);
+    await deleteCache(`branding:${tenantId}`);
     logger.info('Tenant branding updated', { tenantId });
     return true;
   } catch (error) {
@@ -269,11 +269,11 @@ export async function isTenantFeatureEnabled(
   featureKey: string
 ): Promise<boolean> {
   try {
-    const cacheKey = `sanliurfa:feature:${tenantId}:${featureKey}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `feature:${tenantId}:${featureKey}`;
+    const cached = await getCache<boolean>(cacheKey);
 
     if (cached !== null) {
-      return cached === 'true';
+      return cached;
     }
 
     const feature = await queryOne(
@@ -282,7 +282,7 @@ export async function isTenantFeatureEnabled(
     );
 
     const enabled = feature?.enabled ?? false;
-    await setCache(cacheKey, String(enabled), 1800);
+    await setCache(cacheKey, enabled, 1800);
 
     return enabled;
   } catch (error) {
@@ -322,7 +322,7 @@ export async function setTenantFeature(
       });
     }
 
-    await deleteCache(`sanliurfa:feature:${tenantId}:${featureKey}`);
+    await deleteCache(`feature:${tenantId}:${featureKey}`);
     logger.info('Tenant feature updated', { tenantId, featureKey, enabled });
 
     return true;

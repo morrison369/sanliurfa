@@ -34,7 +34,7 @@ export async function registerS3File(userId: string, fileKey: string, filename: 
       virus_scan_status: 'pending'
     });
 
-    await deleteCache(`sanliurfa:files:user:${userId}`);
+    await deleteCache(`files:user:${userId}`);
     logger.info('S3 file registered', { fileKey, filename, size: fileSize });
     return result;
   } catch (error) {
@@ -45,11 +45,11 @@ export async function registerS3File(userId: string, fileKey: string, filename: 
 
 export async function getFileById(fileId: string): Promise<S3File | null> {
   try {
-    const cacheKey = `sanliurfa:file:${fileId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `file:${fileId}`;
+    const cached = await getCache<S3File>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const file = await queryOne(
@@ -58,7 +58,7 @@ export async function getFileById(fileId: string): Promise<S3File | null> {
     );
 
     if (file) {
-      await setCache(cacheKey, JSON.stringify(file), 3600);
+      await setCache(cacheKey, file, 3600);
     }
 
     return file || null;
@@ -70,11 +70,11 @@ export async function getFileById(fileId: string): Promise<S3File | null> {
 
 export async function getUserFiles(userId: string, limit: number = 50): Promise<S3File[]> {
   try {
-    const cacheKey = `sanliurfa:files:user:${userId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `files:user:${userId}`;
+    const cached = await getCache<S3File[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const files = await queryMany(
@@ -82,7 +82,7 @@ export async function getUserFiles(userId: string, limit: number = 50): Promise<
       [userId, limit]
     );
 
-    await setCache(cacheKey, JSON.stringify(files), 1800);
+    await setCache(cacheKey, files, 1800);
     return files;
   } catch (error) {
     logger.error('Failed to get user files', error instanceof Error ? error : new Error(String(error)));
@@ -102,7 +102,7 @@ export async function recordFileAccess(fileId: string, userId: string | null, ip
     });
 
     // Update cache invalidation for analytics
-    await deleteCache(`sanliurfa:file:analytics:${fileId}`);
+    await deleteCache(`file:analytics:${fileId}`);
   } catch (error) {
     logger.error('Failed to record file access', error instanceof Error ? error : new Error(String(error)));
   }
@@ -136,7 +136,7 @@ export async function registerFileVariant(originalFileId: string, variantType: s
       dimensions: dimensions || null
     });
 
-    await deleteCache(`sanliurfa:variants:${originalFileId}`);
+    await deleteCache(`variants:${originalFileId}`);
     return result;
   } catch (error) {
     logger.error('Failed to register file variant', error instanceof Error ? error : new Error(String(error)));
@@ -146,11 +146,11 @@ export async function registerFileVariant(originalFileId: string, variantType: s
 
 export async function getFileVariants(fileId: string): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:variants:${fileId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `variants:${fileId}`;
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const variants = await queryMany(
@@ -158,7 +158,7 @@ export async function getFileVariants(fileId: string): Promise<any[]> {
       [fileId]
     );
 
-    await setCache(cacheKey, JSON.stringify(variants), 3600);
+    await setCache(cacheKey, variants, 3600);
     return variants;
   } catch (error) {
     logger.error('Failed to get file variants', error instanceof Error ? error : new Error(String(error)));
@@ -176,7 +176,7 @@ export async function setupCDNCaching(fileId: string, ttlSeconds: number = 86400
       is_cached: true
     });
 
-    await deleteCache(`sanliurfa:file:${fileId}`);
+    await deleteCache(`file:${fileId}`);
     logger.info('CDN caching configured', { fileId, ttl: ttlSeconds });
     return true;
   } catch (error) {
@@ -192,7 +192,7 @@ export async function purgeCDNCache(fileId: string): Promise<boolean> {
       cache_key_version: 1  // Increment to invalidate cache
     });
 
-    await deleteCache(`sanliurfa:file:${fileId}`);
+    await deleteCache(`file:${fileId}`);
     logger.info('CDN cache purged', { fileId });
     return true;
   } catch (error) {
@@ -208,7 +208,7 @@ export async function archiveFile(fileId: string): Promise<boolean> {
       updated_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:file:${fileId}`);
+    await deleteCache(`file:${fileId}`);
     logger.info('File archived', { fileId });
     return true;
   } catch (error) {
