@@ -79,7 +79,7 @@ class VectorStore {
     this.embeddings.set(id, embedding);
 
     // Cache in Redis with TTL
-    const cacheKey = `sanliurfa:embedding:${id}`;
+    const cacheKey = `embedding:${id}`;
     redis.setex(cacheKey, 86400, JSON.stringify(embedding));
 
     logger.debug('Embedding stored', { id, dimension: config.embedding.length, model: config.model });
@@ -93,7 +93,7 @@ class VectorStore {
   deleteEmbedding(id: string): boolean {
     const deleted = this.embeddings.delete(id);
     if (deleted) {
-      redis.del(`sanliurfa:embedding:${id}`);
+      redis.del(`embedding:${id}`);
       logger.debug('Embedding deleted', { id });
     }
     return deleted;
@@ -150,7 +150,7 @@ class EmbeddingCache {
     this.ttlMap.set(key, expiresAt);
 
     // Also store in Redis
-    const cacheKey = `sanliurfa:emb-cache:${key}`;
+    const cacheKey = `emb-cache:${key}`;
     redis.setex(cacheKey, ttlSeconds, JSON.stringify(embedding));
 
     logger.debug('Embedding cached', { key, ttl: ttlSeconds });
@@ -164,7 +164,7 @@ class EmbeddingCache {
     if (expiresAt && Date.now() > expiresAt) {
       this.cache.delete(key);
       this.ttlMap.delete(key);
-      redis.del(`sanliurfa:emb-cache:${key}`);
+      redis.del(`emb-cache:${key}`);
       return null;
     }
 

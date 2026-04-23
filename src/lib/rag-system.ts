@@ -272,7 +272,7 @@ class RAGPipeline {
     const startTime = Date.now();
 
     // Check cache
-    const cacheKey = `sanliurfa:rag:${query}`;
+    const cacheKey = `rag:${query}`;
     const cached = redis.get(cacheKey);
     if (cached) {
       logger.debug('RAG context retrieved from cache', { query });

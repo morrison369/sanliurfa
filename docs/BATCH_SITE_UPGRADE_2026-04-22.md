@@ -570,3 +570,17 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 16. `scripts/fill-missing-content-images.ts` içine kontrollü paralellik eklendi: `--concurrency=<1-10>` (varsayılan `3`).
 17. Pipeline komutu bu concurrency değerini otomatik aktarır; `images:content:pipeline:turbo` profili ile yüksek paralellik hızlı mod açılır.
 18. Pipeline seviyesinde hedef içerik tipi seçimi eklendi: `--type=places|blog|events|all`; kategori odaklı toplu çalıştırma profilleri eklendi.
+
+## 2026-04-23 Toplu Paket (Cache Key Normalizasyonu - Webhook/Media/Search)
+
+1. Webhook modüllerinde hardcoded `sanliurfa:` cache anahtarları kaldırıldı: `webhook-analytics`, `webhook-filters`, `webhook-templates`, `webhook-queue`.
+2. Webhook metrik cache invalidation akışı `setCache('', 1)` yaklaşımından çıkarıldı; doğrudan `deleteCache(...)` kullanımı ile sadeleştirildi.
+3. Webhook ve video tarafında typed cache kullanımı genişletildi; `getCache<T>()` + doğrudan obje/array `setCache(...)` standardına geçirildi.
+4. Video işleme modülünde cache anahtarları normalize edildi: `video:*`, `thumbnails:*`, `captions:*`.
+5. `performance-optimizer` içindeki tüm strateji anahtarları prefix’siz standarda geçirildi.
+6. `performance-optimizations` içindeki `OptimizedCache.CACHE_KEYS` anahtarları prefix’siz standarda geçirildi.
+7. Gamification tarafında cache anahtarları normalize edildi: `badges:user:*`, `leaderboard:*`, `badge-definitions`, `daily-login:*`.
+8. Arama/RAG/embedding modüllerinde cache anahtarları normalize edildi: `rag:*`, `index:*`, `search:*`, `embedding:*`, `emb-cache:*`.
+9. Kullanıcı istatistik cache anahtarı normalize edildi: `stats:*`.
+10. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
+11. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.

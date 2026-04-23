@@ -70,7 +70,7 @@ class SemanticIndex {
     this.documents.set(id, indexed);
 
     // Cache in Redis
-    const cacheKey = `sanliurfa:index:${id}`;
+    const cacheKey = `index:${id}`;
     redis.setex(cacheKey, 86400, JSON.stringify(indexed));
 
     logger.info('Document indexed', { id, title: doc.title });
@@ -165,7 +165,7 @@ class SemanticIndex {
     const updated = { ...doc, ...updates, updatedAt: Date.now() };
     this.documents.set(id, updated);
 
-    const cacheKey = `sanliurfa:index:${id}`;
+    const cacheKey = `index:${id}`;
     redis.setex(cacheKey, 86400, JSON.stringify(updated));
 
     logger.debug('Document updated', { id });
@@ -175,7 +175,7 @@ class SemanticIndex {
   deleteDocument(id: string): boolean {
     const deleted = this.documents.delete(id);
     if (deleted) {
-      redis.del(`sanliurfa:index:${id}`);
+      redis.del(`index:${id}`);
       logger.debug('Document deleted', { id });
     }
     return deleted;
@@ -328,7 +328,7 @@ class SearchOptimizer {
     const optimized = this.optimizeQuery(query);
     this.queryCache.set(optimized, results);
 
-    const cacheKey = `sanliurfa:search:${optimized}`;
+    const cacheKey = `search:${optimized}`;
     redis.setex(cacheKey, 3600, JSON.stringify(results));
 
     logger.debug('Search result cached', { query: optimized, resultCount: results.length });

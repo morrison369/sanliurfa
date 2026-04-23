@@ -49,7 +49,7 @@ export async function createWebhookFilter(
     }
 
     // Invalidate webhook cache
-    await deleteCache(`sanliurfa:webhook:${webhookId}`);
+    await deleteCache(`webhook:${webhookId}`);
 
     return result.rows[0];
   } catch (error) {
@@ -112,7 +112,7 @@ export async function deleteWebhookFilter(
     await pool.query('DELETE FROM webhook_filters WHERE id = $1', [filterId]);
 
     // Invalidate webhook cache
-    await deleteCache(`sanliurfa:webhook:${webhookId}`);
+    await deleteCache(`webhook:${webhookId}`);
 
     return true;
   } catch (error) {
@@ -166,7 +166,7 @@ export async function updateWebhookSettings(
     }
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:webhook:settings:${webhookId}`);
+    await deleteCache(`webhook:settings:${webhookId}`);
 
     return {
       webhookId: result.rows[0].webhook_id,
@@ -193,10 +193,10 @@ export async function getWebhookSettings(
 ): Promise<WebhookSettings> {
   try {
     // Check cache first
-    const cacheKey = `sanliurfa:webhook:settings:${webhookId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `webhook:settings:${webhookId}`;
+    const cached = await getCache<WebhookSettings>(cacheKey);
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const result = await pool.query(
@@ -223,7 +223,7 @@ export async function getWebhookSettings(
     };
 
     // Cache for 10 minutes
-    await setCache(cacheKey, JSON.stringify(settings), 600);
+    await setCache(cacheKey, settings, 600);
 
     return settings;
   } catch (error) {

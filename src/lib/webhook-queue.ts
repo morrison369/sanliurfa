@@ -281,11 +281,16 @@ export class WebhookQueue {
     avgRetries: number;
   }> {
     try {
-      const cacheKey = 'sanliurfa:webhook:queue:stats';
-      const cached = await getCache(cacheKey);
+      const cacheKey = 'webhook:queue:stats';
+      const cached = await getCache<{
+        pending: number;
+        dlq: number;
+        delivered: number;
+        avgRetries: number;
+      }>(cacheKey);
 
       if (cached) {
-        return JSON.parse(cached);
+        return cached;
       }
 
       const result = await pool.query(
@@ -304,7 +309,7 @@ export class WebhookQueue {
         avgRetries: parseInt(result.rows[0].avg_retries || '0')
       };
 
-      await setCache(cacheKey, JSON.stringify(stats), 300); // Cache for 5 min
+      await setCache(cacheKey, stats, 300); // Cache for 5 min
 
       return stats;
     } catch (error) {
