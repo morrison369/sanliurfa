@@ -29,6 +29,8 @@ export function cityServiceDetailSchema(input: {
   const serviceName = input.service?.title || input.title;
   const statusText = input.service?.statusText || 'Şanlıurfa odaklı servis sayfası yayında.';
   const sourceLabel = input.service?.sourceLabel || 'Şanlıurfa yerel veri kaynakları';
+  const sourceUrl = input.service?.sourceUrl || SITE_URL;
+  const lastUpdatedAt = input.service?.lastUpdatedAt;
 
   return [
     {
@@ -49,10 +51,11 @@ export function cityServiceDetailSchema(input: {
       },
       provider: {
         '@type': 'Organization',
-        name: 'sanliurfa.com',
-        url: SITE_URL,
+        name: sourceLabel,
+        url: sourceUrl
       },
       inLanguage: 'tr-TR',
+      ...(lastUpdatedAt ? { dateModified: lastUpdatedAt } : {}),
     },
     {
       '@context': 'https://schema.org',

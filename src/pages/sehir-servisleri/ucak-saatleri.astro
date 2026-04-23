@@ -27,7 +27,9 @@ const seo = {
     title={title}
     description={description}
     sourceLabel={service?.sourceLabel || 'Havalimanı ve uçuş veri kaynakları'}
+    sourceUrl={service?.sourceUrl || ''}
     statusText={service?.statusText || 'Uçuş verisi bağlantısı bekleniyor'}
+    lastUpdatedAt={service?.lastUpdatedAt || ''}
     type="flight"
   />
 </Layout>

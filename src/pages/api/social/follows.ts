@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { followUser, unfollowUser, getFollowers, getFollowing, isFollowing } from '../../../lib/social-features';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
+import { canFollowUser } from '../../../lib/social-policy';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
@@ -20,6 +21,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     if (action === 'follow') {
+      const policy = await canFollowUser(locals.user.id, user_id_to_follow);
+      if (!policy.allowed) {
+        return apiError(ErrorCode.FORBIDDEN, policy.message, HttpStatus.FORBIDDEN, undefined, requestId);
+      }
+
       const result = await followUser(locals.user.id, user_id_to_follow);
       if (!result) {
         return apiError(ErrorCode.INTERNAL_ERROR, 'Takip işlemi tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
