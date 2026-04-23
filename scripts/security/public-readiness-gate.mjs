@@ -38,6 +38,16 @@ if (!currentSecretScan.ok) {
   blockers.push(`current tree secret scan failed:\n${currentSecretScan.stderr || currentSecretScan.stdout}`);
 }
 
+const publicDiscoveryContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/public-discovery-contract.ts',
+]);
+if (!publicDiscoveryContract.ok) {
+  blockers.push(
+    `public discovery contract failed:\n${publicDiscoveryContract.stderr || publicDiscoveryContract.stdout}`,
+  );
+}
+
 const historyDeployKey = runAllowFail('git', ['log', '--all', '--name-only', '--', 'deploy_key']);
 if ((historyDeployKey.stdout || '').includes('deploy_key')) {
   blockers.push('git history contains deploy_key; rotate keys and clean history before public visibility');
