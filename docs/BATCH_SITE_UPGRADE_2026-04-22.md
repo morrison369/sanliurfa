@@ -558,3 +558,6 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 4. Yeni otomasyon scripti eklendi: `scripts/content-image-pipeline.ts`.
 5. Pipeline tek komutta iki aşama yürütür: dry-run raporu + write raporu.
 6. NPM komutu eklendi: `npm run images:content:pipeline` (varsayılan `--query-mode=expanded`).
+7. Pipeline aşama kontrolü eklendi: `--dry-run-only` veya `--write-only` (aynı anda kullanılamaz).
+8. Yeni rapor özetleyici script eklendi: `scripts/image-fill-report-summary.ts`.
+9. Pipeline çalışınca her rapor için otomatik özet yazdırılır (toplamlar + en sık hata nedenleri).
