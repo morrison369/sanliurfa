@@ -37,11 +37,11 @@ interface OAuthAccount {
 
 export async function getOAuthProvider(providerKey: string): Promise<OAuthProvider | null> {
   try {
-    const cacheKey = `sanliurfa:oauth:provider:${providerKey}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `oauth:provider:${providerKey}`;
+    const cached = await getCache<OAuthProvider>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const provider = await queryOne(
@@ -50,7 +50,7 @@ export async function getOAuthProvider(providerKey: string): Promise<OAuthProvid
     );
 
     if (provider) {
-      await setCache(cacheKey, JSON.stringify(provider), 3600);
+      await setCache(cacheKey, provider, 3600);
     }
 
     return provider || null;
@@ -62,11 +62,11 @@ export async function getOAuthProvider(providerKey: string): Promise<OAuthProvid
 
 export async function listOAuthProviders(): Promise<OAuthProvider[]> {
   try {
-    const cacheKey = 'sanliurfa:oauth:providers:list';
-    let cached = await getCache(cacheKey);
+    const cacheKey = 'oauth:providers:list';
+    const cached = await getCache<OAuthProvider[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const providers = await queryMany(
@@ -74,7 +74,7 @@ export async function listOAuthProviders(): Promise<OAuthProvider[]> {
       []
     );
 
-    await setCache(cacheKey, JSON.stringify(providers), 3600);
+    await setCache(cacheKey, providers, 3600);
     return providers;
   } catch (error) {
     logger.error('Failed to list OAuth providers', error instanceof Error ? error : new Error(String(error)));
@@ -139,7 +139,7 @@ export async function linkOAuthAccount(userId: string, providerKey: string, oaut
       last_used_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:user:oauth:${userId}`);
+    await deleteCache(`user:oauth:${userId}`);
     logger.info('OAuth account linked', { userId, provider: providerKey });
     return result;
   } catch (error) {
@@ -150,11 +150,11 @@ export async function linkOAuthAccount(userId: string, providerKey: string, oaut
 
 export async function getUserOAuthAccounts(userId: string): Promise<OAuthAccount[]> {
   try {
-    const cacheKey = `sanliurfa:user:oauth:${userId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `user:oauth:${userId}`;
+    const cached = await getCache<OAuthAccount[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const accounts = await queryMany(
@@ -162,7 +162,7 @@ export async function getUserOAuthAccounts(userId: string): Promise<OAuthAccount
       [userId]
     );
 
-    await setCache(cacheKey, JSON.stringify(accounts), 1800);
+    await setCache(cacheKey, accounts, 1800);
     return accounts;
   } catch (error) {
     logger.error('Failed to get user OAuth accounts', error instanceof Error ? error : new Error(String(error)));
@@ -195,7 +195,7 @@ export async function unlinkOAuthAccount(userId: string, accountId: string): Pro
     // Delete the account
     await queryOne('DELETE FROM user_oauth_accounts WHERE id = $1', [accountId]);
 
-    await deleteCache(`sanliurfa:user:oauth:${userId}`);
+    await deleteCache(`user:oauth:${userId}`);
     logger.info('OAuth account unlinked', { userId, accountId });
     return true;
   } catch (error) {

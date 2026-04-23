@@ -12,11 +12,11 @@ import { getCache, setCache, deleteCache } from './cache';
  */
 export async function getUserPermissions(userId: string): Promise<Set<string>> {
   try {
-    const cacheKey = `sanliurfa:permissions:${userId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `permissions:${userId}`;
+    const cached = await getCache<string[]>(cacheKey);
 
     if (cached) {
-      return new Set(JSON.parse(cached));
+      return new Set(cached);
     }
 
     const result = await pool.query(
@@ -36,7 +36,7 @@ export async function getUserPermissions(userId: string): Promise<Set<string>> {
     const permissions = new Set(result.rows.map(r => r.name).filter(Boolean));
 
     // Cache'e kaydet (1 saat)
-    await setCache(cacheKey, JSON.stringify(Array.from(permissions)), 3600);
+    await setCache(cacheKey, Array.from(permissions), 3600);
 
     return permissions;
   } catch (error) {
@@ -83,7 +83,7 @@ export async function assignRole(userId: string, roleId: string, assignedBy: str
 
     if ((result.rowCount || 0) > 0) {
       // Cache'i sil
-      await deleteCache(`sanliurfa:permissions:${userId}`);
+      await deleteCache(`permissions:${userId}`);
       logger.info('Role atandi', { userId, roleId, assignedBy });
     }
 
@@ -106,7 +106,7 @@ export async function revokeRole(userId: string, roleId: string): Promise<boolea
 
     if ((result.rowCount || 0) > 0) {
       // Cache'i sil
-      await deleteCache(`sanliurfa:permissions:${userId}`);
+      await deleteCache(`permissions:${userId}`);
       logger.info('Role geri alindi', { userId, roleId });
     }
 

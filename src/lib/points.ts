@@ -73,7 +73,7 @@ export async function awardPoints(
     await updateUserPointsTotal(userId);
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:user:points:${userId}`);
+    await deleteCache(`user:points:${userId}`);
 
     logger.info('Points awarded', { userId, action, points: pointsToAward });
 
@@ -129,11 +129,11 @@ async function updateUserPointsTotal(userId: string): Promise<void> {
  */
 export async function getUserPoints(userId: string): Promise<UserPoints | null> {
   try {
-    const cacheKey = `sanliurfa:user:points:${userId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `user:points:${userId}`;
+    const cached = await getCache<UserPoints>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const result = await queryOne(
@@ -154,7 +154,7 @@ export async function getUserPoints(userId: string): Promise<UserPoints | null> 
     };
 
     // Cache for 1 hour
-    await setCache(cacheKey, JSON.stringify(userPoints), 3600);
+    await setCache(cacheKey, userPoints, 3600);
 
     return userPoints;
   } catch (error) {
@@ -197,11 +197,11 @@ export async function getPointsHistory(userId: string, limit: number = 50): Prom
  */
 export async function getRewardLevels(): Promise<RewardLevel[]> {
   try {
-    const cacheKey = 'sanliurfa:rewards:levels';
-    const cached = await getCache(cacheKey);
+    const cacheKey = 'rewards:levels';
+    const cached = await getCache<RewardLevel[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const results = await queryMany(
@@ -221,7 +221,7 @@ export async function getRewardLevels(): Promise<RewardLevel[]> {
     }));
 
     // Cache for 24 hours
-    await setCache(cacheKey, JSON.stringify(levels), 86400);
+    await setCache(cacheKey, levels, 86400);
 
     return levels;
   } catch (error) {
@@ -235,11 +235,11 @@ export async function getRewardLevels(): Promise<RewardLevel[]> {
  */
 export async function getUserRewards(userId: string): Promise<RewardLevel[]> {
   try {
-    const cacheKey = `sanliurfa:user:rewards:${userId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `user:rewards:${userId}`;
+    const cached = await getCache<RewardLevel[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const results = await queryMany(
@@ -261,7 +261,7 @@ export async function getUserRewards(userId: string): Promise<RewardLevel[]> {
     }));
 
     // Cache for 1 hour
-    await setCache(cacheKey, JSON.stringify(rewards), 3600);
+    await setCache(cacheKey, rewards, 3600);
 
     return rewards;
   } catch (error) {
@@ -301,7 +301,7 @@ async function checkAndAwardRewards(userId: string, totalPoints: number): Promis
           logger.info('Reward level achieved', { userId, levelId: level.id });
 
           // Invalidate cache
-          await deleteCache(`sanliurfa:user:rewards:${userId}`);
+          await deleteCache(`user:rewards:${userId}`);
         }
       }
     }
@@ -315,11 +315,11 @@ async function checkAndAwardRewards(userId: string, totalPoints: number): Promis
  */
 export async function getPointsLeaderboard(limit: number = 20): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:leaderboard:points';
-    const cached = await getCache(cacheKey);
+    const cacheKey = 'leaderboard:points';
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const results = await queryMany(
@@ -340,7 +340,7 @@ export async function getPointsLeaderboard(limit: number = 20): Promise<any[]> {
     }));
 
     // Cache for 30 minutes
-    await setCache(cacheKey, JSON.stringify(leaderboard), 1800);
+    await setCache(cacheKey, leaderboard, 1800);
 
     return leaderboard;
   } catch (error) {

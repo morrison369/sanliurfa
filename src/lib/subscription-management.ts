@@ -46,11 +46,11 @@ export interface FeatureAccess {
  */
 export async function getSubscriptionTiers(): Promise<SubscriptionTier[]> {
   try {
-    const cacheKey = 'sanliurfa:subscription:tiers';
-    const cached = await getCache(cacheKey);
+    const cacheKey = 'subscription:tiers';
+    const cached = await getCache<SubscriptionTier[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const results = await queryMany(
@@ -72,7 +72,7 @@ export async function getSubscriptionTiers(): Promise<SubscriptionTier[]> {
       isActive: r.is_active
     }));
 
-    await setCache(cacheKey, JSON.stringify(tiers), 86400);
+    await setCache(cacheKey, tiers, 86400);
 
     return tiers;
   } catch (error) {
@@ -86,11 +86,11 @@ export async function getSubscriptionTiers(): Promise<SubscriptionTier[]> {
  */
 export async function getActiveSubscription(userId: string): Promise<(Subscription & { tier: SubscriptionTier }) | null> {
   try {
-    const cacheKey = `sanliurfa:subscription:user:${userId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `subscription:user:${userId}`;
+    const cached = await getCache<Subscription & { tier: SubscriptionTier }>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const result = await queryOne(
@@ -132,7 +132,7 @@ export async function getActiveSubscription(userId: string): Promise<(Subscripti
       }
     };
 
-    await setCache(cacheKey, JSON.stringify(subscription), 3600);
+    await setCache(cacheKey, subscription, 3600);
 
     return subscription;
   } catch (error) {
@@ -241,7 +241,7 @@ export async function upgradeSubscription(
     });
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:subscription:user:${userId}`);
+    await deleteCache(`subscription:user:${userId}`);
 
     logger.info('Subscription upgraded', { userId, newTierId });
 
@@ -285,7 +285,7 @@ export async function cancelSubscription(subscriptionId: string): Promise<boolea
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:subscription:user:${subscription.user_id}`);
+    await deleteCache(`subscription:user:${subscription.user_id}`);
 
     logger.info('Subscription cancelled', { subscriptionId });
 
