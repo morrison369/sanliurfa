@@ -8,6 +8,11 @@ type BreadcrumbItem = {
   url: string;
 };
 
+type FaqItem = {
+  question: string;
+  answer: string;
+};
+
 type ReviewLike = {
   rating?: number | string | null;
   title?: string | null;
@@ -36,6 +41,8 @@ type PlaceLike = {
   review_count?: number | string | null;
   rating_count?: number | string | null;
   price_range?: number | string | null;
+  tags?: string[] | null;
+  amenities?: string[] | null;
 };
 
 type ArticleLike = {
@@ -253,6 +260,54 @@ export function buildBreadcrumbSchema(items: BreadcrumbItem[]): JsonLdNode {
   };
 }
 
+export function buildWebPageSchema(args: {
+  path: string;
+  name: string;
+  description: string;
+  image?: string | null;
+  breadcrumbPath?: string;
+  primaryEntityId?: string;
+}): JsonLdNode {
+  const url = absoluteUrl(args.path, "/");
+
+  return compactJsonLd({
+    "@type": "WebPage",
+    "@id": `${url}#webpage`,
+    url,
+    name: args.name,
+    description: normalizeDescription(args.description),
+    inLanguage: "tr-TR",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    about: { "@id": `${SITE_URL}/#organization` },
+    primaryImageOfPage: {
+      "@type": "ImageObject",
+      url: absoluteUrl(args.image, DEFAULT_IMAGE),
+      width: 1200,
+      height: 630,
+    },
+    breadcrumb: args.breadcrumbPath
+      ? { "@id": `${absoluteUrl(args.breadcrumbPath, "/")}#breadcrumb` }
+      : undefined,
+    mainEntity: args.primaryEntityId ? { "@id": args.primaryEntityId } : undefined,
+  });
+}
+
+export function buildFAQPageSchema(items: FaqItem[], path: string): JsonLdNode {
+  return compactJsonLd({
+    "@type": "FAQPage",
+    "@id": `${absoluteUrl(path, "/")}#faq`,
+    inLanguage: "tr-TR",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: normalizeDescription(item.answer),
+      },
+    })),
+  });
+}
+
 export function buildPlaceRichSnippet(
   place: PlaceLike,
   options: { path?: string; reviews?: ReviewLike[] } = {},
@@ -275,6 +330,7 @@ export function buildPlaceRichSnippet(
     image: images,
     priceRange: getPriceRange(place.price_range),
     currenciesAccepted: "TRY",
+    keywords: normalizePlaceKeywords(place),
     telephone: place.phone || undefined,
     sameAs:
       place.website && /^https?:\/\//i.test(place.website)
@@ -289,6 +345,8 @@ export function buildPlaceRichSnippet(
     },
     geo: buildGeo(place.latitude, place.longitude),
     openingHours: normalizeOpeningHours(place.opening_hours),
+    amenityFeature: normalizeAmenities(place.amenities),
+    hasOfferCatalog: buildPlaceOfferCatalog(place.price_range, url),
     aggregateRating:
       rating && reviewCount > 0
         ? {
@@ -707,6 +765,69 @@ function normalizeCount(value?: number | string | null): number {
 function getPriceRange(value?: number | string | null): string {
   const level = Math.min(4, Math.max(1, Number(value) || 2));
   return "₺".repeat(level);
+}
+
+function buildPlaceOfferCatalog(
+  value: number | string | null | undefined,
+  url: string,
+): JsonLdNode {
+  const level = Math.min(4, Math.max(1, Number(value) || 2));
+  const priceLabels: Record<number, string> = {
+    1: "Ekonomik",
+    2: "Orta seviye",
+    3: "Premium",
+    4: "Lüks",
+  };
+
+  return {
+    "@type": "OfferCatalog",
+    name: "Fiyat aralığı",
+    itemListElement: [
+      {
+        "@type": "Offer",
+        url,
+        priceCurrency: "TRY",
+        priceSpecification: {
+          "@type": "PriceSpecification",
+          priceCurrency: "TRY",
+          price: level,
+          minPrice: 1,
+          maxPrice: 4,
+        },
+        availability: "https://schema.org/InStock",
+        name: priceLabels[level],
+        description: `${getPriceRange(level)} fiyat aralığı`,
+      },
+    ],
+  };
+}
+
+function normalizeAmenities(value?: string[] | null): JsonLdNode[] | undefined {
+  if (!value?.length) return undefined;
+
+  const amenities = value
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .slice(0, 12);
+
+  return amenities.length
+    ? amenities.map((item) => ({
+        "@type": "LocationFeatureSpecification",
+        name: item,
+        value: true,
+      }))
+    : undefined;
+}
+
+function normalizePlaceKeywords(place: PlaceLike): string {
+  const values = [
+    "Şanlıurfa",
+    place.name,
+    place.category,
+    ...(place.tags || []),
+  ].filter(Boolean);
+
+  return Array.from(new Set(values.map((item) => String(item)))).join(", ");
 }
 
 function buildGeo(
