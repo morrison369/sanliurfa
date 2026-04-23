@@ -10,8 +10,8 @@ import { checkCommonAchievements } from './achievements';
 
 // Constants
 const LEVEL_THRESHOLDS = [0, 100, 300, 700, 1500, 3000, 6000, 12000, 25000, 50000];
-const BADGE_CACHE_KEY = 'sanliurfa:badges:user:';
-const LEADERBOARD_CACHE_KEY = 'sanliurfa:leaderboard:';
+const BADGE_CACHE_KEY = 'badges:user:';
+const LEADERBOARD_CACHE_KEY = 'leaderboard:';
 
 // ==================== POINTS SYSTEM ====================
 
@@ -142,7 +142,7 @@ export async function updateUserLevelIfNeeded(userId: string): Promise<void> {
  */
 export async function getBadgeDefinitions(): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:badge-definitions';
+    const cacheKey = 'badge-definitions';
     const cached = await getCache<any[]>(cacheKey);
     if (cached) return cached;
 
@@ -391,7 +391,7 @@ export async function onReviewHelpfulVote(targetUserId: string): Promise<void> {
 export async function onDailyLogin(userId: string): Promise<void> {
   // Award daily login points only once per day
   const today = new Date().toISOString().split('T')[0];
-  const cacheKey = `sanliurfa:daily-login:${userId}:${today}`;
+  const cacheKey = `daily-login:${userId}:${today}`;
   const hasLoggedIn = await getCache(cacheKey);
 
   if (!hasLoggedIn) {

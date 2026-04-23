@@ -18,72 +18,72 @@ export interface CacheStrategy {
 export const CACHE_STRATEGIES: Record<string, CacheStrategy> = {
   // Places cache - 10 minutes
   places_list: {
-    key: 'sanliurfa:places:list',
+    key: 'places:list',
     ttl: 600,
     invalidateOn: ['create_place', 'update_place', 'delete_place']
   },
   places_detail: {
-    key: 'sanliurfa:places:{id}',
+    key: 'places:{id}',
     ttl: 600,
     invalidateOn: ['update_place']
   },
   places_by_category: {
-    key: 'sanliurfa:places:category:{category}',
+    key: 'places:category:{category}',
     ttl: 600,
     invalidateOn: ['create_place', 'update_place', 'delete_place']
   },
 
   // Reviews cache - 5 minutes
   reviews_list: {
-    key: 'sanliurfa:reviews:place:{placeId}',
+    key: 'reviews:place:{placeId}',
     ttl: 300,
     invalidateOn: ['create_review', 'update_review', 'delete_review']
   },
   reviews_trending: {
-    key: 'sanliurfa:reviews:trending',
+    key: 'reviews:trending',
     ttl: 300,
     invalidateOn: ['create_review']
   },
 
   // User data cache - 5 minutes per user
   user_favorites: {
-    key: 'sanliurfa:favorites:{userId}',
+    key: 'favorites:{userId}',
     ttl: 300,
     invalidateOn: ['add_favorite', 'remove_favorite']
   },
   user_reviews: {
-    key: 'sanliurfa:reviews:user:{userId}',
+    key: 'reviews:user:{userId}',
     ttl: 300,
     invalidateOn: ['create_review', 'update_review']
   },
 
   // Search cache - 1 hour
   search_results: {
-    key: 'sanliurfa:search:{query}:{page}',
+    key: 'search:{query}:{page}',
     ttl: 3600,
     invalidateOn: ['create_place', 'update_place', 'delete_place']
   },
 
   // Aggregations - 1 hour
   stats_daily: {
-    key: 'sanliurfa:stats:daily',
+    key: 'stats:daily',
     ttl: 3600,
     invalidateOn: []
   },
   trending_places: {
-    key: 'sanliurfa:trending:places',
+    key: 'trending:places',
     ttl: 3600,
     invalidateOn: []
   },
 
   // Static content - 24 hours
   categories: {
-    key: 'sanliurfa:categories',
+    key: 'categories',
     ttl: 86400,
     invalidateOn: []
   },
   districts: {
-    key: 'sanliurfa:districts',
+    key: 'districts',
     ttl: 86400,
     invalidateOn: []
   }
@@ -99,11 +99,11 @@ export async function getOrCache<T>(
 ): Promise<T> {
   try {
     // Try to get from cache
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<T>(cacheKey);
 
-    if (cached) {
+    if (cached !== null) {
       logger.debug('Cache HIT', { key: cacheKey });
-      return JSON.parse(cached);
+      return cached;
     }
 
     // Compute value
@@ -112,7 +112,7 @@ export async function getOrCache<T>(
 
     if (value) {
       // Store in cache
-      await setCache(cacheKey, JSON.stringify(value), ttl);
+      await setCache(cacheKey, value, ttl);
     }
 
     return value;
@@ -173,7 +173,7 @@ export async function suggestIndexes(): Promise<string[]> {
  * Batch query optimization - combine N queries into one
  */
 export async function getPlacesWithReviewsCombined(placeIds: string[]): Promise<any[]> {
-  const cacheKey = `sanliurfa:places:combined:${placeIds.join(',')}`;
+  const cacheKey = `places:combined:${placeIds.join(',')}`;
 
   return getOrCache(cacheKey, 600, async () => {
     const query = `
@@ -195,7 +195,7 @@ export async function getPlacesWithReviewsCombined(placeIds: string[]): Promise<
  */
 export async function getPaginatedPlaces(page: number = 1, limit: number = 20): Promise<any> {
   const offset = (page - 1) * limit;
-  const cacheKey = `sanliurfa:places:paginated:${page}:${limit}`;
+  const cacheKey = `places:paginated:${page}:${limit}`;
 
   return getOrCache(cacheKey, 600, async () => {
     const items = await queryMany(
@@ -219,7 +219,7 @@ export async function getPaginatedPlaces(page: number = 1, limit: number = 20): 
  * N+1 query prevention - eager loading
  */
 export async function getPlacesWithDetails(filter: string = ''): Promise<any[]> {
-  const cacheKey = `sanliurfa:places:details:${filter}`;
+  const cacheKey = `places:details:${filter}`;
 
   return getOrCache(cacheKey, 600, async () => {
     const query = `

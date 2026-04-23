@@ -21,7 +21,7 @@ export async function registerVideoMetadata(fileId: string, duration: number, wi
       has_audio: true
     });
 
-    await deleteCache(`sanliurfa:video:${fileId}`);
+    await deleteCache(`video:${fileId}`);
     logger.info('Video metadata registered', { fileId, duration, resolution: `${width}x${height}` });
     return result;
   } catch (error) {
@@ -32,11 +32,11 @@ export async function registerVideoMetadata(fileId: string, duration: number, wi
 
 export async function getVideoMetadata(fileId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:video:${fileId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `video:${fileId}`;
+    const cached = await getCache<any>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const metadata = await queryOne(
@@ -45,7 +45,7 @@ export async function getVideoMetadata(fileId: string): Promise<any | null> {
     );
 
     if (metadata) {
-      await setCache(cacheKey, JSON.stringify(metadata), 3600);
+      await setCache(cacheKey, metadata, 3600);
     }
 
     return metadata || null;
@@ -138,7 +138,7 @@ export async function registerVideoThumbnail(videoFileId: string, thumbnailUrl: 
       is_primary: isPrimary
     });
 
-    await deleteCache(`sanliurfa:thumbnails:${videoFileId}`);
+    await deleteCache(`thumbnails:${videoFileId}`);
     return result;
   } catch (error) {
     logger.error('Failed to register thumbnail', error instanceof Error ? error : new Error(String(error)));
@@ -148,11 +148,11 @@ export async function registerVideoThumbnail(videoFileId: string, thumbnailUrl: 
 
 export async function getVideoThumbnails(videoFileId: string): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:thumbnails:${videoFileId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `thumbnails:${videoFileId}`;
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const thumbnails = await queryMany(
@@ -160,7 +160,7 @@ export async function getVideoThumbnails(videoFileId: string): Promise<any[]> {
       [videoFileId]
     );
 
-    await setCache(cacheKey, JSON.stringify(thumbnails), 3600);
+    await setCache(cacheKey, thumbnails, 3600);
     return thumbnails;
   } catch (error) {
     logger.error('Failed to get thumbnails', error instanceof Error ? error : new Error(String(error)));
@@ -178,7 +178,7 @@ export async function addVideoCaption(videoFileId: string, language: string, cap
       is_default: isDefault
     });
 
-    await deleteCache(`sanliurfa:captions:${videoFileId}`);
+    await deleteCache(`captions:${videoFileId}`);
     return result;
   } catch (error) {
     logger.error('Failed to add caption', error instanceof Error ? error : new Error(String(error)));
@@ -188,11 +188,11 @@ export async function addVideoCaption(videoFileId: string, language: string, cap
 
 export async function getVideoCaptions(videoFileId: string): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:captions:${videoFileId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `captions:${videoFileId}`;
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const captions = await queryMany(
@@ -200,7 +200,7 @@ export async function getVideoCaptions(videoFileId: string): Promise<any[]> {
       [videoFileId]
     );
 
-    await setCache(cacheKey, JSON.stringify(captions), 3600);
+    await setCache(cacheKey, captions, 3600);
     return captions;
   } catch (error) {
     logger.error('Failed to get captions', error instanceof Error ? error : new Error(String(error)));
@@ -224,7 +224,7 @@ export async function configureVideoStreaming(videoFileId: string, adaptiveBitra
       progressive_download_enabled: true
     });
 
-    await deleteCache(`sanliurfa:video:${videoFileId}`);
+    await deleteCache(`video:${videoFileId}`);
     logger.info('Video streaming configured', { videoFileId, adaptiveBitrate, drmEnabled });
     return true;
   } catch (error) {

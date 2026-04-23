@@ -42,7 +42,7 @@ export interface ActivityStats {
  * Get comprehensive user statistics
  */
 export async function getUserStats(userId: string): Promise<UserStats | null> {
-  const cacheKey = `sanliurfa:stats:${userId}`;
+  const cacheKey = `stats:${userId}`;
 
   try {
     // Try cache first
