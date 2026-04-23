@@ -53,7 +53,7 @@ export async function createWebhookTemplate(
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:webhook:templates:${userId}`);
+    await deleteCache(`webhook:templates:${userId}`);
 
     return result.rows[0];
   } catch (error) {
@@ -70,10 +70,10 @@ export async function getUserTemplates(
   userId: string
 ): Promise<WebhookTemplate[]> {
   try {
-    const cacheKey = `sanliurfa:webhook:templates:${userId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `webhook:templates:${userId}`;
+    const cached = await getCache<WebhookTemplate[]>(cacheKey);
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const result = await pool.query(
@@ -87,7 +87,7 @@ export async function getUserTemplates(
     );
 
     // Cache for 10 minutes
-    await setCache(cacheKey, JSON.stringify(result.rows), 600);
+    await setCache(cacheKey, result.rows, 600);
 
     return result.rows;
   } catch (error) {
@@ -166,7 +166,7 @@ export async function applyTemplate(
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:webhook:templates:${userId}`);
+    await deleteCache(`webhook:templates:${userId}`);
 
     return webhookId;
   } catch (error) {
@@ -190,7 +190,7 @@ export async function deleteTemplate(
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:webhook:templates:${userId}`);
+    await deleteCache(`webhook:templates:${userId}`);
 
     return (result.rowCount || 0) > 0;
   } catch (error) {
@@ -207,10 +207,10 @@ export async function getPopularTemplates(
   limit = 10
 ): Promise<WebhookTemplate[]> {
   try {
-    const cacheKey = 'sanliurfa:webhook:templates:popular';
-    const cached = await getCache(cacheKey);
+    const cacheKey = 'webhook:templates:popular';
+    const cached = await getCache<WebhookTemplate[]>(cacheKey);
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const result = await pool.query(
@@ -225,7 +225,7 @@ export async function getPopularTemplates(
     );
 
     // Cache for 1 hour
-    await setCache(cacheKey, JSON.stringify(result.rows), 3600);
+    await setCache(cacheKey, result.rows, 3600);
 
     return result.rows;
   } catch (error) {

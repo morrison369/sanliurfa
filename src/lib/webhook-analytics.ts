@@ -1,5 +1,5 @@
 import type { Pool } from 'pg';
-import { getCache, setCache } from './cache';
+import { getCache, setCache, deleteCache } from './cache';
 
 export interface WebhookMetrics {
   totalWebhooks: number;
@@ -33,12 +33,12 @@ export interface WebhookMetrics {
  * Get webhook analytics and metrics
  */
 export async function getWebhookMetrics(pool: Pool, userId?: string): Promise<WebhookMetrics> {
-  const cacheKey = userId ? `sanliurfa:webhook:metrics:${userId}` : 'sanliurfa:webhook:metrics:global';
+  const cacheKey = userId ? `webhook:metrics:${userId}` : 'webhook:metrics:global';
 
   // Check cache first (5 min TTL)
-  const cached = await getCache(cacheKey);
+  const cached = await getCache<WebhookMetrics>(cacheKey);
   if (cached) {
-    return JSON.parse(cached);
+    return cached;
   }
 
   try {
@@ -170,7 +170,7 @@ export async function getWebhookMetrics(pool: Pool, userId?: string): Promise<We
     };
 
     // Cache for 5 minutes
-    await setCache(cacheKey, JSON.stringify(metrics), 300);
+    await setCache(cacheKey, metrics, 300);
 
     return metrics;
   } catch (error) {
@@ -203,12 +203,8 @@ export async function retryFailedWebhooks(
 
     // Invalidate cache
     await Promise.all([
-      getCache(`sanliurfa:webhook:metrics:${userId}`).then(c => {
-        if (c) return setCache(`sanliurfa:webhook:metrics:${userId}`, '', 1);
-      }),
-      getCache('sanliurfa:webhook:metrics:global').then(c => {
-        if (c) return setCache('sanliurfa:webhook:metrics:global', '', 1);
-      })
+      deleteCache(`webhook:metrics:${userId}`),
+      deleteCache('webhook:metrics:global')
     ]);
 
     return result.rowCount || 0;

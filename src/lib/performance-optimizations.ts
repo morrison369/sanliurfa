@@ -79,12 +79,12 @@ export function fireAndForget(
  */
 export class OptimizedCache {
   static readonly CACHE_KEYS = {
-    ACHIEVEMENTS_USER: (userId: string) => `sanliurfa:achievements:user:${userId}`,
-    ACHIEVEMENTS_STATS: (userId: string) => `sanliurfa:achievements:stats:${userId}`,
-    LOYALTY_BALANCE: (userId: string) => `sanliurfa:loyalty:balance:${userId}`,
-    FOLLOW_STATS: (userId: string) => `sanliurfa:follow:stats:${userId}`,
-    PLATFORM_STATS: 'sanliurfa:platform:stats',
-    ADMIN_USERS: (page: number, limit: number) => `sanliurfa:admin:users:${page}:${limit}`,
+    ACHIEVEMENTS_USER: (userId: string) => `achievements:user:${userId}`,
+    ACHIEVEMENTS_STATS: (userId: string) => `achievements:stats:${userId}`,
+    LOYALTY_BALANCE: (userId: string) => `loyalty:balance:${userId}`,
+    FOLLOW_STATS: (userId: string) => `follow:stats:${userId}`,
+    PLATFORM_STATS: 'platform:stats',
+    ADMIN_USERS: (page: number, limit: number) => `admin:users:${page}:${limit}`,
   };
 
   /**
@@ -95,13 +95,13 @@ export class OptimizedCache {
     computeFn: () => Promise<T>,
     ttlSeconds: number = 300
   ): Promise<T> {
-    const cached = await getCache(cacheKey);
-    if (cached) {
-      return JSON.parse(cached);
+    const cached = await getCache<T>(cacheKey);
+    if (cached !== null) {
+      return cached;
     }
 
     const data = await computeFn();
-    await setCache(cacheKey, JSON.stringify(data), ttlSeconds);
+    await setCache(cacheKey, data, ttlSeconds);
     return data;
   }
 
