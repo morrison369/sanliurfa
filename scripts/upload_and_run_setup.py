@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\n"""Upload and run post-deployment setup"""\nimport paramiko\nimport os\n\nHOST = "168.119.79.238"\nPORT = 77\nUSERNAME = "sanliur"\nPASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"\n\ndef main():\n    ssh = paramiko.SSHClient()\n    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\n    ssh.connect(HOST, port=PORT, username=USERNAME, password=PASSWORD, timeout=30)\n    sftp = ssh.open_sftp()\n    \n    # Upload setup script\n    local = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scripts/post_deploy_setup.sh")\n    remote = "/home/sanliur/post_deploy_setup.sh"\n    print("Uploading setup script...")\n    sftp.put(local, remote)\n    \n    # Make executable\n    ssh.exec_command(f"chmod +x {remote}")\n    print("✅ Script uploaded")\n    print("")\n    print("📝 To run the setup, SSH into the server and execute:")\n    print(f"   ssh {USERNAME}@{HOST} -p {PORT}")\n    print(f"   bash {remote}")\n    \n    sftp.close()\n    ssh.close()\n\nif __name__ == "__main__":\n    main()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

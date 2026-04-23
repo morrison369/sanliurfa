@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\nimport paramiko\n\nssh = paramiko.SSHClient()\nssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\nssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD')\n\nprint("🌐 Port 6000 Test")\nprint("=" * 50)\n\nstdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")\ncode = stdout.read().decode().strip()\nprint(f"HTTP Code: {code}")\n\nif code == "200":\n    print("✅ BAŞARILI! Port 6000 çalışıyor!")\nelif code == "500":\n    print("⚠️ HTTP 500 - Uygulama hata veriyor")\n    print("\nHata detayı:")\n    stdin, stdout, stderr = ssh.exec_command("curl -m 5 -s http://127.0.0.1:6000/ 2>&1 | head -50")\n    print(stdout.read().decode())\nelse:\n    print(f"⚠️ Beklenmeyen yanıt: {code}")\n\nssh.close()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

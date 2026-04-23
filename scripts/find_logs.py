@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\nimport paramiko\n\nssh = paramiko.SSHClient()\nssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\nssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD')\n\nNVM = 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '\n\nprint("📂 PM2 Dizin Yapısı:")\nstdin, stdout, stderr = ssh.exec_command("ls -la /home/sanliur/.pm2/ 2>&1")\nprint(stdout.read().decode())\n\nprint("\n📋 PM2 Show:")\nstdin, stdout, stderr = ssh.exec_command(NVM + "pm2 show sanliurfa 2>&1 | grep -E 'log|out|error'")\nprint(stdout.read().decode())\n\nprint("\n🔍 Log dosyaları aranıyor:")\nstdin, stdout, stderr = ssh.exec_command("find /home/sanliur -name '*.log' -type f 2>/dev/null | grep -i pm2")\nresult = stdout.read().decode()\nif result:\n    print(result)\nelse:\n    print("Log dosyası bulunamadı")\n\nprint("\n📝 Son çıktıyı göster (pm2 monit son 20 satır):")\nstdin, stdout, stderr = ssh.exec_command(NVM + "pm2 logs sanliurfa --lines 20 --nostream 2>&1")\nprint(stdout.read().decode()[-2000:])\n\nssh.close()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

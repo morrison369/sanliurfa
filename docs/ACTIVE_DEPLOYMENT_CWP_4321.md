@@ -22,6 +22,7 @@ Bu dosya sanliurfa.com için aktif production/development runtime kuralıdır. E
 - Sahte Git remote, sahte server IP, sahte deploy user bilgisi config içinde tutulmaz.
 - Cron veya backup kurulumu bu aşamada yapılmaz; production sistem yedeği hosting tarafındadır.
 - Redis başka proje servisleriyle karıştırılmaz; proje prefix'i `sanliurfa:` olarak kalır.
+- Eski SSH/CWP mutation scriptleri aktif deployment yolu değildir; bu scriptler yeniden etkinleştirilemez.
 
 ## Kullanım
 

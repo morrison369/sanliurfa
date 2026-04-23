@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\nimport paramiko\n\nssh = paramiko.SSHClient()\nssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\nssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD')\n\nprint("🌐 Proxy Test")\nprint("=" * 50)\n\nprint("\n📄 .htaccess içeriği:")\nstdin, stdout, stderr = ssh.exec_command("cat /home/sanliur/public_html/.htaccess")\nprint(stdout.read().decode()[:400])\n\nprint("\n🧪 Port 80 test:")\nstdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://168.119.79.238/")\nprint("HTTP Code:", stdout.read().decode())\n\nprint("\n🧪 Port 6000 test (direkt):")\nstdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")\nprint("HTTP Code:", stdout.read().decode())\n\nprint("\n📊 Apache durum:")\nstdin, stdout, stderr = ssh.exec_command("systemctl status httpd --no-pager 2>/dev/null | head -5 || echo 'Status unavailable'")\nprint(stdout.read().decode()[:300])\n\nssh.close()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

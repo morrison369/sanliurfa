@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\nimport paramiko\n\nssh = paramiko.SSHClient()\nssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\nssh.connect('176.9.138.254', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', allow_agent=False, look_for_keys=False)\n\nprint('=== Node.js Versiyonu ===')\nstdin, stdout, stderr = ssh.exec_command('/usr/local/bin/node -v')\nprint('Node:', stdout.read().decode().strip())\n\nstdin, stdout, stderr = ssh.exec_command('/usr/local/bin/npm -v')\nprint('NPM:', stdout.read().decode().strip())\n\nprint('\n=== n Versiyon Yöneticisi ===')\nstdin, stdout, stderr = ssh.exec_command('/usr/local/bin/n --version 2>/dev/null || echo n kurulu degil')\nprint(stdout.read().decode().strip())\n\nprint('\n=== PM2 ===')\nstdin, stdout, stderr = ssh.exec_command('/usr/local/bin/pm2 --version 2>/dev/null || echo PM2 kurulu degil')\nprint(stdout.read().decode().strip())\n\nprint('\n=== PATH ile ===')\nstdin, stdout, stderr = ssh.exec_command('export PATH="/usr/local/bin:$PATH" && node -v && npm -v')\nprint(stdout.read().decode().strip())\n\nprint('\n=== .bashrc Kontrolü ===')\nstdin, stdout, stderr = ssh.exec_command('cat ~/.bashrc | grep -E "(PATH|node)" | head -5')\nresult = stdout.read().decode().strip()\nprint(result or 'PATH tanimi yok')\n\nssh.close()\nprint('\nKontrol tamamlandi!')\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

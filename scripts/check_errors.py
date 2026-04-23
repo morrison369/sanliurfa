@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\nimport paramiko\nimport time\n\nHOST = "168.119.79.238"\nPORT = 77\nUSERNAME = "sanliur"\nPASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"\n\ndef main():\n    ssh = paramiko.SSHClient()\n    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\n    ssh.connect(HOST, port=PORT, username=USERNAME, password=PASSWORD, \n                timeout=20, look_for_keys=False, allow_agent=False)\n    \n    channel = ssh.invoke_shell()\n    time.sleep(2)\n    \n    print("=== HATA LOG LARI ===\n")\n    \n    # Check PM2 logs\n    channel.send("source ~/.nvm/nvm.sh && pm2 logs sanliurfa --lines 20 2>&1 | tail -25\n")\n    time.sleep(5)\n    \n    output = ""\n    while channel.recv_ready():\n        output += channel.recv(4096).decode('utf-8', errors='ignore')\n        time.sleep(1)\n    \n    # Filter error lines\n    error_lines = []\n    for line in output.split('\n'):\n        if any(x in line.lower() for x in ['error', 'err', 'exception', 'failed', 'cannot', 'relation', 'table', 'permission']):\n            error_lines.append(line.strip()[:200])\n    \n    print("SON HATALAR:")\n    for line in error_lines[-15:]:\n        print(line)\n    \n    if not error_lines:\n        print("(Son 20 satirda hata bulunamadi)")\n        print("\nHam cikti:")\n        print(output[-500:])\n    \n    channel.close()\n    ssh.close()\n\nif __name__ == "__main__":\n    main()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

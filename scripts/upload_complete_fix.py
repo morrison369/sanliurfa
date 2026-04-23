@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\n"""Upload complete_fix.sh to server"""\nimport paramiko\n\nHOST = "168.119.79.238"\nPORT = 77\nUSERNAME = "sanliur"\nPASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"\n\ndef main():\n    ssh = paramiko.SSHClient()\n    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\n    ssh.connect(HOST, port=PORT, username=USERNAME, password=PASSWORD, timeout=30)\n    sftp = ssh.open_sftp()\n    \n    print("📤 Uploading complete_fix.sh...")\n    sftp.put('scripts/complete_fix.sh', '/home/sanliur/public_html/scripts/complete_fix.sh')\n    ssh.exec_command('chmod +x /home/sanliur/public_html/scripts/complete_fix.sh')\n    print("✅ Done!")\n    print("")\n    print("🚀 To run the fix:")\n    print("   ssh sanliur@168.119.79.238 -p 77")\n    print("   bash /home/sanliur/public_html/scripts/complete_fix.sh")\n    \n    sftp.close()\n    ssh.close()\n\nif __name__ == "__main__":\n    main()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)
