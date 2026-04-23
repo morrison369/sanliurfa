@@ -23,6 +23,7 @@ import { getCuratedBlogPosts } from "../data/curated-blog-posts";
 import { getCuratedPlaces } from "../data/curated-places";
 
 const publicSiteSettings = await getPublicSiteSettings();
+const homepageSections = publicSiteSettings.homepageSections;
 const homePlaces = getCuratedPlaces(6);
 const homePosts = getCuratedBlogPosts().slice(0, 6);
 const homeDescription =
@@ -72,36 +73,29 @@ const seo = {
   <!-- Hero Section -->
   <Hero settings={publicSiteSettings.hero} />
 
-  <!-- City Utility Section -->
-  <CityUtilities services={publicSiteSettings.cityServices} />
-
-  <!-- Weather Widget -->
-  <section
-    class="bg-gray-50 dark:bg-gray-800 border-y border-gray-100 dark:border-gray-700"
-  >
-    <div class="container-custom py-6">
-      <WeatherWidget />
-    </div>
-  </section>
-
-  <!-- Stats Section -->
-  <Stats />
-
-  <!-- Featured Places -->
-  <FeaturedPlaces />
-
-  <!-- Historical Sites -->
-  <HistoricalSites />
-
-  <!-- Food Guide -->
-  <FoodGuide />
-
-  <!-- Upcoming Events -->
-  <UpcomingEvents />
-
-  <!-- Latest Blog Posts -->
-  <LatestBlog />
-
-  <!-- CTA Section -->
-  <CTASection />
+  {homepageSections.map((sectionId) =>
+    sectionId === "city-utilities" ? (
+      <CityUtilities services={publicSiteSettings.cityServices} />
+    ) : sectionId === "weather" ? (
+      <section class="bg-gray-50 dark:bg-gray-800 border-y border-gray-100 dark:border-gray-700">
+        <div class="container-custom py-6">
+          <WeatherWidget />
+        </div>
+      </section>
+    ) : sectionId === "stats" ? (
+      <Stats />
+    ) : sectionId === "featured-places" ? (
+      <FeaturedPlaces />
+    ) : sectionId === "historical-sites" ? (
+      <HistoricalSites />
+    ) : sectionId === "food-guide" ? (
+      <FoodGuide />
+    ) : sectionId === "upcoming-events" ? (
+      <UpcomingEvents />
+    ) : sectionId === "latest-blog" ? (
+      <LatestBlog />
+    ) : sectionId === "cta" ? (
+      <CTASection />
+    ) : null
+  )}
 </Layout>
