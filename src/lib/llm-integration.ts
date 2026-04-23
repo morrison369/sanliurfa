@@ -4,7 +4,7 @@
  */
 
 import { logger } from './logger';
-import { redis } from './cache';
+import { getCache, setCache } from './cache';
 
 interface LLMRequest {
   id: string;
@@ -98,11 +98,11 @@ class LLMClient {
     const startTime = Date.now();
 
     // Check cache
-    const cacheKey = `sanliurfa:llm:${model}:${prompt}`;
-    const cached = redis.get(cacheKey);
+    const cacheKey = `llm:${model}:${prompt}`;
+    const cached = await getCache<LLMResponse>(cacheKey);
     if (cached) {
       logger.debug('LLM response retrieved from cache', { model, promptLength: prompt.length });
-      const response = JSON.parse(cached);
+      const response = { ...cached };
       response.cached = true;
       response.latencyMs = Date.now() - startTime;
       return response;
@@ -143,7 +143,7 @@ class LLMClient {
     this.responseCache.set(requestId, response);
 
     // Cache response
-    redis.setex(cacheKey, 3600, JSON.stringify(response));
+    await setCache(cacheKey, response, 3600);
 
     logger.info('LLM generation completed', {
       model,

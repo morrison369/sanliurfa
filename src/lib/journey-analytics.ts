@@ -125,7 +125,7 @@ async function recordJourneyPath(sessionId: string): Promise<void> {
       });
     }
 
-    await deleteCache('sanliurfa:journey:paths');
+    await deleteCache('journey:paths');
   } catch (error) {
     logger.error('Failed to record journey path', error instanceof Error ? error : new Error(String(error)));
   }
@@ -133,11 +133,11 @@ async function recordJourneyPath(sessionId: string): Promise<void> {
 
 export async function getTopConvertingPaths(limit: number = 10): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:journey:paths:top';
-    let cached = await getCache(cacheKey);
+    const cacheKey = 'journey:paths:top';
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const paths = await queryMany(
@@ -145,7 +145,7 @@ export async function getTopConvertingPaths(limit: number = 10): Promise<any[]> 
       [limit]
     );
 
-    await setCache(cacheKey, JSON.stringify(paths), 3600);
+    await setCache(cacheKey, paths, 3600);
     return paths;
   } catch (error) {
     logger.error('Failed to get top paths', error instanceof Error ? error : new Error(String(error)));
@@ -191,17 +191,19 @@ export async function getJourneyDetails(journeySessionId: string): Promise<any> 
 
 export async function analyzeBehaviorPattern(userId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:behavior:${userId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `behavior:${userId}`;
+    const cached = await getCache<any>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const journeys = await getUserJourneys(userId, 100);
 
     const engagementScores = journeys.map((j: any) => j.duration_seconds || 0);
-    const avgEngagement = engagementScores.reduce((a: number, b: number) => a + b, 0) / journeys.length;
+    const avgEngagement = journeys.length > 0
+      ? engagementScores.reduce((a: number, b: number) => a + b, 0) / journeys.length
+      : 0;
 
     const conversionCount = journeys.filter((j: any) => j.conversion).length;
     const conversionRate = journeys.length > 0 ? (conversionCount / journeys.length) * 100 : 0;
@@ -217,7 +219,7 @@ export async function analyzeBehaviorPattern(userId: string): Promise<any | null
       avg_engagement: Math.floor(avgEngagement)
     };
 
-    await setCache(cacheKey, JSON.stringify(pattern), 3600);
+    await setCache(cacheKey, pattern, 3600);
     return pattern;
   } catch (error) {
     logger.error('Failed to analyze behavior pattern', error instanceof Error ? error : new Error(String(error)));

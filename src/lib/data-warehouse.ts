@@ -210,15 +210,14 @@ export async function runWarehouseETL(date?: string): Promise<{ dimensions: numb
  */
 export async function queryOLAP(olapQuery: OLAPQuery): Promise<OLAPResult> {
   const startTime = Date.now();
-  const cacheKey = `sanliurfa:olap:${olapQuery.cube}:${JSON.stringify(olapQuery)}`;
+  const cacheKey = `olap:${olapQuery.cube}:${JSON.stringify(olapQuery)}`;
 
   try {
     // Check cache
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<OLAPResult>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
-      const result = JSON.parse(cached);
-      return { ...result, cached: true, duration_ms: duration };
+      return { ...cached, cached: true, duration_ms: duration };
     }
 
     let sql = '';
@@ -303,7 +302,7 @@ export async function queryOLAP(olapQuery: OLAPQuery): Promise<OLAPResult> {
     };
 
     // Cache result (1 hour TTL)
-    await setCache(cacheKey, JSON.stringify(olapResult), 3600);
+    await setCache(cacheKey, olapResult, 3600);
 
     return olapResult;
   } catch (error) {
