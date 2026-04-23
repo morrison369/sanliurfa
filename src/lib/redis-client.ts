@@ -30,6 +30,7 @@ export async function initializeRedis(): Promise<void> {
  * Close Redis connection
  */
 export async function closeRedis(): Promise<void> {
-  const client = await getOptionalRedisClient({ silent: true });
-  await client?.quit?.();
+  // Intentionally no-op: this wrapper uses the shared singleton client from
+  // cache.ts; quitting it here can break other in-flight modules/routes.
+  return;
 }

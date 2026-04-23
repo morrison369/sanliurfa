@@ -7,6 +7,7 @@ const blockers: string[] = [];
 const cacheSource = read("src/lib/cache.ts");
 const envSource = read("src/lib/env.ts");
 const deploymentSource = read("src/lib/deployment.ts");
+const redisClientSource = read("src/lib/redis-client.ts");
 const envExample = read(".env.example");
 const envProductionTemplate = read(".env.production.template");
 
@@ -59,6 +60,15 @@ assertContains(
 );
 if (/redis:\/\/(?:localhost|127\.0\.0\.1):6379\/0/.test(deploymentSource)) {
   blockers.push("deployment layer contains forbidden redis DB 0 fallback");
+}
+
+assertContains(
+  redisClientSource,
+  "export async function closeRedis(): Promise<void> {",
+  "redis-client compatibility wrapper must expose closeRedis",
+);
+if (/export async function closeRedis[\s\S]*?quit\?\.\(/.test(redisClientSource)) {
+  blockers.push("redis-client closeRedis must not quit shared singleton client");
 }
 
 assertEnvValue(".env.example", envExample, "REDIS_DB", "15");
