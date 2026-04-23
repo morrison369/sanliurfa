@@ -37,14 +37,16 @@ const hasGoogleAnalytics = /^G-[A-Z0-9]+$/i.test(googleAnalyticsId);
 // Get current user if authenticated
 const user = Astro.locals.user || null;
 const publicSiteSettings = await getPublicSiteSettings();
-const baseSeoProps = seo || (title ? { title, description, noindex } : undefined);
+const baseSeoProps =
+  seo || (title ? { title, description, noindex } : undefined);
 const seoProps = baseSeoProps
   ? {
       image: publicSiteSettings.seo.defaultImage,
       titleSuffix: publicSiteSettings.seo.titleSuffix,
       keywords: publicSiteSettings.seo.keywords,
       ...baseSeoProps,
-      description: baseSeoProps.description || publicSiteSettings.seo.defaultDescription,
+      description:
+        baseSeoProps.description || publicSiteSettings.seo.defaultDescription,
     }
   : undefined;
 ---
@@ -101,6 +103,26 @@ const seoProps = baseSeoProps
       href="/sitemap-index.xml"
     />
 
+    <!-- Public AI discovery -->
+    <link
+      rel="alternate"
+      type="text/plain"
+      title="sanliurfa.com LLM kaynak dosyası"
+      href="/llms.txt"
+    />
+    <link
+      rel="alternate"
+      type="text/plain"
+      title="sanliurfa.com AI keşif dosyası"
+      href="/ai.txt"
+    />
+    <link
+      rel="author"
+      type="text/plain"
+      title="sanliurfa.com humans.txt"
+      href="/humans.txt"
+    />
+
     <!-- Preload Critical Fonts -->
     <link
       rel="preload"
@@ -130,7 +152,11 @@ const seoProps = baseSeoProps
       Ana içeriğe geç
     </a>
 
-    {!hideHeader && <Header user={user} menuItems={publicSiteSettings.headerMenu} />}
+    {
+      !hideHeader && (
+        <Header user={user} menuItems={publicSiteSettings.headerMenu} />
+      )
+    }
 
     <!-- Theme Toggle (floating) -->
     <div class="fixed top-24 right-4 z-40 hidden lg:block">
@@ -263,7 +289,11 @@ const seoProps = baseSeoProps
             async
             src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
           />
-          <script type="text/partytown" is:inline define:vars={{ googleAnalyticsId }}>
+          <script
+            type="text/partytown"
+            is:inline
+            define:vars={{ googleAnalyticsId }}
+          >
             {`
               const analyticsWindow = window;
               analyticsWindow.dataLayer = analyticsWindow.dataLayer || [];
