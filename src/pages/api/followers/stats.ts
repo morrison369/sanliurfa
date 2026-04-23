@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     }
 
     // Check cache
-    const cacheKey = `sanliurfa:follower-stats:${userId}:${locals.user?.id || 'anonymous'}`;
+    const cacheKey = `follower-stats:${userId}:${locals.user?.id || 'anonymous'}`;
     const cached = await getCache<any>(cacheKey);
 
     if (cached) {
