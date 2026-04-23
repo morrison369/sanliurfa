@@ -5,6 +5,7 @@ import { queryOne } from './lib/postgres';
 import { checkRateLimit } from './lib/cache';
 import { PUBLIC_DISCOVERY_PATHS } from './lib/public-discovery';
 import { logger } from './lib/logging';
+import { getClientIdentifier } from './lib/request-client-id';
 
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
@@ -50,23 +51,6 @@ const securityHeaders = {
   'X-XSS-Protection': '1; mode=block',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
 };
-
-/**
- * Extract client IP from request headers
- * Handles proxy headers and prevents IP spoofing by using rightmost IP
- */
-function getClientIP(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const xRealIp = request.headers.get('x-real-ip');
-
-  if (forwarded) {
-    // x-forwarded-for can be comma-separated list; use rightmost (closest to our server)
-    const ips = forwarded.split(',').map(ip => ip.trim());
-    return ips[ips.length - 1] || 'unknown';
-  }
-
-  return xRealIp || 'unknown';
-}
 
 function canonicalRedirectUrl(url: URL, request: Request): string | null {
   const host = url.hostname.toLowerCase();
@@ -175,7 +159,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // Rate limiting for API (using Redis)
-  const clientIP = getClientIP(request);
+  const clientIP = getClientIdentifier(request);
 
   if (pathname.startsWith('/api/')) {
     const isAllowed = await checkRateLimit(clientIP, RATE_LIMIT, RATE_LIMIT_WINDOW);

@@ -35,7 +35,7 @@ export class SlidingWindowLimiter {
 
   constructor(config: RateLimitConfig) {
     this.config = {
-      keyPrefix: 'sanliurfa:rate_limit:sw:',
+      keyPrefix: 'rate_limit:sw:',
       ...config
     };
   }
@@ -104,7 +104,7 @@ export class TokenBucketLimiter {
 
   constructor(config: RateLimitConfig & { refillRatePerSecond?: number }) {
     this.config = {
-      keyPrefix: 'sanliurfa:rate_limit:tb:',
+      keyPrefix: 'rate_limit:tb:',
       refillRatePerSecond: config.maxRequests / (config.windowSizeMs / 1000),
       ...config
     };
@@ -227,7 +227,7 @@ export class EndpointLimiter {
   registerEndpoint(endpoint: string, config: RateLimitConfig): void {
     this.limiters.set(endpoint, new SlidingWindowLimiter({
       ...config,
-      keyPrefix: `sanliurfa:rate_limit:endpoint:${endpoint}:`
+      keyPrefix: `rate_limit:endpoint:${endpoint}:`
     }));
   }
 
@@ -259,21 +259,21 @@ export class DistributedLimiter {
     this.globalLimiter = new SlidingWindowLimiter({
       windowSizeMs: 60000,
       maxRequests: 10000,
-      keyPrefix: 'sanliurfa:rate_limit:global:'
+      keyPrefix: 'rate_limit:global:'
     });
 
     // Per-user: 100 requests per minute
     this.userLimiter = new SlidingWindowLimiter({
       windowSizeMs: 60000,
       maxRequests: 100,
-      keyPrefix: 'sanliurfa:rate_limit:user:'
+      keyPrefix: 'rate_limit:user:'
     });
 
     // Per-IP: 50 requests per minute (unauthenticated)
     this.ipLimiter = new SlidingWindowLimiter({
       windowSizeMs: 60000,
       maxRequests: 50,
-      keyPrefix: 'sanliurfa:rate_limit:ip:'
+      keyPrefix: 'rate_limit:ip:'
     });
   }
 

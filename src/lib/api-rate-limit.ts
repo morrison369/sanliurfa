@@ -1,15 +1,8 @@
 import { checkRateLimit } from './cache';
+import { getClientIdentifier } from './request-client-id';
 
 function getClientIpFromRequest(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    const ip = forwarded.split(',').map((entry) => entry.trim()).find((entry) => entry.length > 0);
-    if (ip) {
-      return ip;
-    }
-  }
-
-  return request.headers.get('x-real-ip') || 'unknown';
+  return getClientIdentifier(request);
 }
 
 export async function enforceApiRateLimit(
