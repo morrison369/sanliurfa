@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\nimport paramiko\nimport time\n\nssh = paramiko.SSHClient()\nssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\nssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', allow_agent=False, look_for_keys=False)\n\nprint("🔍 Port 6000 Sorun Giderme")\nprint("=" * 50)\n\nNVM_PREFIX = 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '\n\n# Loglar\nprint("\n📋 PM2 Logları:")\nstdin, stdout, stderr = ssh.exec_command(NVM_PREFIX + "pm2 logs sanliurfa --lines 30")\nprint(stdout.read().decode()[-1500:])\n\n# Port dinleme\nprint("\n📋 Port durumu:")\nstdin, stdout, stderr = ssh.exec_command("netstat -tlnp 2>/dev/null | grep -E '6000|3000' || ss -tlnp | grep -E '6000|3000'")\nprint(stdout.read().decode() or "Port bilgisi alınamadı")\n\n# 5 saniye bekle ve test et\nprint("\n⏳ 5 saniye bekleniyor...")\ntime.sleep(5)\n\nprint("\n🌐 Test:")\nstdin, stdout, stderr = ssh.exec_command("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")\ncode = stdout.read().decode()\nprint(f"HTTP: {code}")\n\nssh.close()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

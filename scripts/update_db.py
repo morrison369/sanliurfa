@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\n"""Update database schema"""\nimport paramiko\nimport os\n\nHOST = "168.119.79.238"\nPORT = 77\nUSERNAME = "sanliur"\nPASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"\n\ndef main():\n    ssh = paramiko.SSHClient()\n    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\n    ssh.connect(HOST, port=PORT, username=USERNAME, password=PASSWORD, timeout=30)\n    sftp = ssh.open_sftp()\n    \n    # Upload SQL file\n    local = os.path.join(os.path.dirname(os.path.dirname(__file__)), "database/update_schema.sql")\n    remote = "/home/sanliur/update_schema.sql"\n    print("Uploading SQL file...")\n    sftp.put(local, remote)\n    \n    # Execute SQL\n    print("Executing SQL...")\n    stdin, stdout, stderr = ssh.exec_command(f"psql -U sanliur_sanliurfa -d sanliur_sanliurfa -h localhost -f {remote} 2>&1")\n    output = stdout.read().decode()\n    error = stderr.read().decode()\n    \n    print("Output:", output[-500:] if len(output) > 500 else output)\n    if error:\n        print("Error:", error[:500])\n    \n    # Clean up\n    ssh.exec_command(f"rm {remote}")\n    \n    sftp.close()\n    ssh.close()\n    print("✅ Database update completed")\n\nif __name__ == "__main__":\n    main()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

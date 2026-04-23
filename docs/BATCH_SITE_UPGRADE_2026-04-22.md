@@ -491,7 +491,7 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 ## Bitirme Modu: Astro 2026 Resmi Özellik Kilidi
 
 1. Astro 2026 resmi entegrasyon ve framework özellikleri için karar matrisi `docs/ASTRO_2026_FRAMEWORK_AUDIT.md` dosyasına eklendi.
-2. `package.json` resmi Astro paket aralıkları mevcut kurulu güncel sürümlerle eşitlendi: `astro@^6.1.9`, `@astrojs/node@^10.0.6`, `@astrojs/react@^5.0.4`, `@astrojs/mdx@^5.0.4`, `@astrojs/tailwind@^6.0.2`, `@astrojs/rss@^4.0.18`.
+2. `package.json` resmi Astro paket aralıkları mevcut kurulu güncel sürümlerle eşitlendi: `astro@^6.1.9`, `@astrojs/node@^10.0.6`, `@astrojs/react@^5.0.4`, `@astrojs/mdx@^5.0.4`, `@tailwindcss/vite@^4.2.4`, `@astrojs/rss@^4.0.18`.
 3. Vercel/Netlify/Cloudflare adapter'ları, Astro DB, Markdoc, Starlight, ikinci UI framework ve statik sitemap entegrasyonu bu proje için kurulmayacak olarak kilitlendi; Vercel hedefi açıkça devre dışı bırakıldı.
 4. Actions ve server islands Astro core özelliği olarak not edildi; mevcut API/auth sözleşmesi bozulmadan ayrı refactor konusu yapılacak.
 

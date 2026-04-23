@@ -24,3 +24,8 @@ These are the only commands operators should treat as the primary interface:
 
 ## Change Policy
 - Script surface changes belong in dedicated ops PRs, not mixed into dependency-only PRs unless the change is needed for validation.
+
+## Remote Operation Lock
+- Legacy SSH/CWP mutation scripts are disabled unless they are rewritten to use the active `PORT=4321` PM2 flow from `docs/ACTIVE_DEPLOYMENT_CWP_4321.md`.
+- Do not reintroduce scripts that write `.env.production`, alter Apache/CWP virtual hosts, change PostgreSQL auth, upload debug scripts, install cron/backup jobs, or start Node on old ports.
+- Content/image fetching and phase/test scripts remain allowed when they do not mutate production.

@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\nimport paramiko\n\nssh = paramiko.SSHClient()\nssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\nssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD')\n\nprint("🔍 Detaylı Hata Analizi")\nprint("=" * 60)\n\n# curl ile verbose output\nprint("\n📋 curl verbose:")\nstdin, stdout, stderr = ssh.exec_command("curl -v http://127.0.0.1:6000/ 2>&1 | tail -30")\nprint(stdout.read().decode())\n\n# PM2 error log\nprint("\n📋 PM2 Error Log:")\nstdin, stdout, stderr = ssh.exec_command("cat /home/sanliur/.pm2/logs/sanliurfa-error.log 2>&1 | tail -50")\nerr_log = stdout.read().decode()\nif err_log.strip():\n    print(err_log[-2000:])\nelse:\n    print("(boş)")\n\n# PM2 out log - son 100 satır\nprint("\n📋 PM2 Out Log (son 100 satır):")\nstdin, stdout, stderr = ssh.exec_command("tail -100 /home/sanliur/.pm2/logs/sanliurfa-out.log")\nprint(stdout.read().decode()[-3000:])\n\n# .env.production kontrol\nprint("\n📄 .env.production:")\nstdin, stdout, stderr = ssh.exec_command("cat /home/sanliur/public_html/.env.production | head -20")\nprint(stdout.read().decode())\n\nssh.close()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

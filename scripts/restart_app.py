@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\nimport paramiko\n\nssh = paramiko.SSHClient()\nssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\nssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', allow_agent=False, look_for_keys=False)\n\nprint("🔄 Uygulama Yeniden Başlatılıyor")\nprint("=" * 50)\n\nNVM_PREFIX = 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '\n\n# Restart\ncmd = NVM_PREFIX + 'pm2 restart sanliurfa'\nstdin, stdout, stderr = ssh.exec_command(cmd)\noutput = stdout.read().decode()\nprint(output[:800])\n\n# Durum\nprint("\n📊 Durum:")\nstdin, stdout, stderr = ssh.exec_command(NVM_PREFIX + 'pm2 list')\nprint(stdout.read().decode())\n\n# Test\nprint("\n🌐 HTTP Test:")\nstdin, stdout, stderr = ssh.exec_command('curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/')\ncode = stdout.read().decode()\nif code == "200":\n    print(f"✅ HTTP {code} - Site çalışıyor!")\nelse:\n    print(f"⚠️ HTTP {code}")\n\nssh.close()\nprint("\n" + "=" * 50)\nprint("🎉 YENİDEN BAŞLATMA TAMAMLANDI!")\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

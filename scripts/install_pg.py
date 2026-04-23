@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\n"""pg (node-postgres) kurulumu"""\nimport paramiko\n\nssh = paramiko.SSHClient()\nssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\nssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD')\n\nprint("📦 pg (node-postgres) kurulumu")\nprint("=" * 50)\n\nNVM = 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '\nREMOTE_PATH = "/home/sanliur/public_html"\n\n# pg kur\nprint("\n⬇️ pg kuruluyor...")\ncmd = f"cd {REMOTE_PATH} && " + NVM + "npm install pg @types/pg --legacy-peer-deps"\nstdin, stdout, stderr = ssh.exec_command(cmd, timeout=120)\n\nimport time\nstart = time.time()\nwhile not stdout.channel.exit_status_ready():\n    if time.time() - start > 10:\n        print("  ⏳ Kurulum devam ediyor...")\n        start = time.time()\n    time.sleep(1)\n\nresult = stdout.read().decode()\nif "added" in result:\n    print("✅ pg kuruldu!")\n    lines = [l for l in result.split('\n') if 'added' in l or 'packages' in l]\n    for line in lines[-3:]:\n        print(f"  {line}")\nelse:\n    print("⚠️ Durum:", result[-500:])\n\nssh.close()\nprint("\nTamamlandı!")\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)
