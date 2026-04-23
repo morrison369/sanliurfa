@@ -22,8 +22,11 @@ import RelatedContent from "../../components/RelatedContent.astro";
 import { query, queryOne } from "../../lib/postgres";
 import {
   absoluteUrl,
+  buildBreadcrumbSchema,
+  buildFAQPageSchema,
   buildOrganizationSchema,
   buildPlaceRichSnippet,
+  buildWebPageSchema,
   buildWebSiteSchema,
 } from "../../lib/rich-snippets";
 import { curatedPlaces, getCuratedPlaces } from "../../data/curated-places";
@@ -148,15 +151,47 @@ const placePath = `/places/${place.slug}`;
 const fallbackPlaceImage = "/images/historical/balikligol.jpg";
 const primaryPlaceImage = place.images?.[0] || fallbackPlaceImage;
 const placeImage = absoluteUrl(primaryPlaceImage);
+const placeDescription = place.short_description || place.description;
+const placeSchemaId = `${absoluteUrl(placePath)}#place`;
 const richSnippetGraph = [
   buildOrganizationSchema(),
   buildWebSiteSchema(),
+  buildBreadcrumbSchema([
+    { name: "Ana Sayfa", url: "/" },
+    { name: "Mekânlar", url: "/places" },
+    { name: place.name, url: placePath },
+  ]),
+  buildWebPageSchema({
+    path: placePath,
+    name: `${place.name} - Şanlıurfa`,
+    description: placeDescription,
+    image: primaryPlaceImage,
+    breadcrumbPath: placePath,
+    primaryEntityId: placeSchemaId,
+  }),
   buildPlaceRichSnippet(place, { path: placePath, reviews }),
+  buildFAQPageSchema(
+    [
+      {
+        question: `${place.name} nerede?`,
+        answer: `${place.name}, ${place.address || "Şanlıurfa"} adresinde yer alır.`,
+      },
+      {
+        question: `${place.name} puanı kaç?`,
+        answer: `${place.name} için sanliurfa.com üzerinde gösterilen puan ${place.rating || "4.5"} ve değerlendirme sayısı ${place.review_count || 0}.`,
+      },
+      {
+        question: `${place.name} fiyat aralığı nedir?`,
+        answer: `${place.name} için fiyat aralığı ${priceRangeSymbols(place.price_range || 2)} olarak listelenir.`,
+      },
+    ],
+    placePath,
+  ),
 ];
 
 const seo = {
   title: `${place.name} - ${getCategoryLabel(place.category)}`,
-  description: place.short_description || place.description,
+  description: placeDescription,
   image: placeImage,
   type: "place" as const,
   canonicalUrl: `https://sanliurfa.com${placePath}`,

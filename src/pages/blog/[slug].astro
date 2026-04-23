@@ -11,7 +11,9 @@ import {
 import {
   buildArticleRichSnippet,
   buildBreadcrumbSchema,
+  buildFAQPageSchema,
   buildOrganizationSchema,
+  buildWebPageSchema,
   buildWebSiteSchema,
 } from "../../lib/rich-snippets";
 
@@ -58,6 +60,10 @@ if (relatedPosts.length === 0) {
 }
 
 const currentPost = post as BlogPost;
+const postPath = `/blog/${currentPost.slug}`;
+const postDescription = currentPost.seoDescription || currentPost.excerpt;
+const postImage = currentPost.featuredImage || "/images/og-default.jpg";
+const articleSchemaId = `https://sanliurfa.com${postPath}#article`;
 
 const breadcrumbItems = [
   { label: "Ana Sayfa", href: "/" },
@@ -73,14 +79,14 @@ const breadcrumbItems = [
 
 const seo = {
   title: currentPost.seoTitle || currentPost.title,
-  description: currentPost.seoDescription || currentPost.excerpt,
-  image: currentPost.featuredImage,
+  description: postDescription,
+  image: postImage,
   type: "article" as const,
   publishDate: currentPost.publishedAt?.toISOString?.(),
   modifiedDate: currentPost.updatedAt?.toISOString?.(),
   author: currentPost.authorName || "sanliurfa.com",
   tags: currentPost.tags || [],
-  canonicalUrl: `https://sanliurfa.com/blog/${currentPost.slug}`,
+  canonicalUrl: `https://sanliurfa.com${postPath}`,
   schemaMode: "replace" as const,
   schema: [
     buildOrganizationSchema(),
@@ -88,9 +94,31 @@ const seo = {
     buildBreadcrumbSchema([
       { name: "Ana Sayfa", url: "/" },
       { name: "Blog", url: "/blog" },
-      { name: currentPost.title, url: `/blog/${currentPost.slug}` },
+      { name: currentPost.title, url: postPath },
     ]),
-    buildArticleRichSnippet(currentPost, `/blog/${currentPost.slug}`),
+    buildWebPageSchema({
+      path: postPath,
+      name: currentPost.title,
+      description: postDescription,
+      image: postImage,
+      breadcrumbPath: postPath,
+      primaryEntityId: articleSchemaId,
+    }),
+    buildArticleRichSnippet(currentPost, postPath),
+    buildFAQPageSchema(
+      [
+        {
+          question: `${currentPost.title} yazısı ne anlatıyor?`,
+          answer: postDescription,
+        },
+        {
+          question: "Bu içerik hangi şehirle ilgilidir?",
+          answer:
+            "Bu içerik Şanlıurfa odaklıdır ve sanliurfa.com tarafından Türkçe olarak hazırlanmıştır.",
+        },
+      ],
+      postPath,
+    ),
   ],
 };
 ---

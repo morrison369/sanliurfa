@@ -11,37 +11,59 @@ import Stats from "../components/Stats.astro";
 import CTASection from "../components/CTASection.astro";
 import LatestBlog from "../components/LatestBlog.astro";
 import {
+  buildArticleItemListSchema,
+  buildFAQPageSchema,
   buildOrganizationSchema,
+  buildPlaceItemListSchema,
+  buildWebPageSchema,
   buildWebSiteSchema,
 } from "../lib/rich-snippets";
 import { getPublicSiteSettings } from "../lib/site-settings";
+import { getCuratedBlogPosts } from "../data/curated-blog-posts";
+import { getCuratedPlaces } from "../data/curated-places";
 
 const publicSiteSettings = await getPublicSiteSettings();
+const homePlaces = getCuratedPlaces(6);
+const homePosts = getCuratedBlogPosts().slice(0, 6);
+const homeDescription =
+  "Şanlıurfa'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, Harran, gastronomi ve daha fazlası. Mekânlar, yorumlar ve puanlama sistemi ile keşfedin.";
 
 const seo = {
   title: "Şanlıurfa Şehir Rehberi - Tarihin Sıfır Noktası",
-  description:
-    "Şanlıurfa'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, Harran, gastronomi ve daha fazlası. Mekânlar, yorumlar ve puanlama sistemi ile keşfedin.",
+  description: homeDescription,
   image: "/images/og-home.jpg",
   schemaMode: "replace" as const,
   schema: [
     buildOrganizationSchema(),
     buildWebSiteSchema(),
-    {
-      "@type": "WebPage",
-      "@id": "https://sanliurfa.com/#webpage",
-      url: "https://sanliurfa.com",
+    buildWebPageSchema({
+      path: "/",
       name: "Şanlıurfa Şehir Rehberi - Tarihin Sıfır Noktası",
-      description:
-        "Şanlıurfa'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, Harran, gastronomi ve daha fazlası.",
-      inLanguage: "tr-TR",
-      isPartOf: { "@id": "https://sanliurfa.com/#website" },
-      about: { "@id": "https://sanliurfa.com/#organization" },
-      primaryImageOfPage: {
-        "@type": "ImageObject",
-        url: "https://sanliurfa.com/images/og-home.jpg",
-      },
-    },
+      description: homeDescription,
+      image: "/images/og-home.jpg",
+    }),
+    buildPlaceItemListSchema(homePlaces, "/"),
+    buildArticleItemListSchema(homePosts, "/"),
+    buildFAQPageSchema(
+      [
+        {
+          question: "Şanlıurfa'da gezilecek en önemli yerler nereler?",
+          answer:
+            "Şanlıurfa gezisinde Göbeklitepe, Balıklıgöl, Harran, tarihi çarşılar ve Halfeti öne çıkan duraklardır.",
+        },
+        {
+          question: "sanliurfa.com hangi içerikleri sunar?",
+          answer:
+            "sanliurfa.com Şanlıurfa mekanları, tarihi yerleri, yöresel yemekleri, etkinlikleri ve şehir yaşamı rehberlerini Türkçe olarak sunar.",
+        },
+        {
+          question: "Şanlıurfa mekan puanları nasıl gösterilir?",
+          answer:
+            "Mekan sayfalarında kullanıcı değerlendirmeleri, puan ortalaması, yorum sayısı, görseller ve fiyat aralığı birlikte listelenir.",
+        },
+      ],
+      "/",
+    ),
   ],
 };
 ---
