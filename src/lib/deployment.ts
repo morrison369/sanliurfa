@@ -50,7 +50,7 @@ const deploymentEnvironments: Record<string, DeploymentEnvironment> = {
     url: DEV_URL,
     apiUrl: `${DEV_URL}/api`,
     databaseUrl: process.env.DATABASE_URL || 'postgresql://localhost/sanliurfa_dev',
-    redisUrl: process.env.REDIS_URL || DEFAULT_REDIS_URL,
+    redisUrl: resolveRedisUrl(process.env.REDIS_URL, REDIS_DB, DEFAULT_REDIS_URL),
     logLevel: 'debug',
     sslEnabled: false,
     maintenanceMode: false
@@ -61,7 +61,7 @@ const deploymentEnvironments: Record<string, DeploymentEnvironment> = {
     url: STAGING_URL,
     apiUrl: `${STAGING_URL}/api`,
     databaseUrl: process.env.STAGING_DATABASE_URL || process.env.DATABASE_URL || '',
-    redisUrl: process.env.STAGING_REDIS_URL || process.env.REDIS_URL || '',
+    redisUrl: resolveRedisUrl(process.env.STAGING_REDIS_URL || process.env.REDIS_URL, REDIS_DB, ''),
     logLevel: 'info',
     sslEnabled: true,
     maintenanceMode: false
@@ -72,7 +72,7 @@ const deploymentEnvironments: Record<string, DeploymentEnvironment> = {
     url: SITE_URL,
     apiUrl: `${SITE_URL}/api`,
     databaseUrl: process.env.DATABASE_URL || '',
-    redisUrl: process.env.REDIS_URL || '',
+    redisUrl: resolveRedisUrl(process.env.REDIS_URL, REDIS_DB, ''),
     logLevel: 'warn',
     sslEnabled: true,
     maintenanceMode: false
@@ -268,4 +268,26 @@ function parseRedisDb(rawValue: string | undefined, fallback: number): number {
     return fallback;
   }
   return parsed;
+}
+
+function resolveRedisUrl(rawUrl: string | undefined, redisDb: number, fallback: string): string {
+  if (!rawUrl) {
+    return fallback;
+  }
+
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'redis:' && parsed.protocol !== 'rediss:') {
+      return rawUrl;
+    }
+
+    const pathname = (parsed.pathname || '').trim();
+    if (!pathname || pathname === '/') {
+      parsed.pathname = `/${redisDb}`;
+    }
+
+    return parsed.toString();
+  } catch {
+    return rawUrl;
+  }
 }
