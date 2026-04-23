@@ -5,7 +5,7 @@
  */
 
 import { logger } from './logger';
-import { redis } from './cache';
+import { getCache, setCache } from './cache';
 
 interface DocumentChunk {
   id: string;
@@ -273,10 +273,10 @@ class RAGPipeline {
 
     // Check cache
     const cacheKey = `rag:${query}`;
-    const cached = redis.get(cacheKey);
+    const cached = await getCache<RAGResponse['context']>(cacheKey);
     if (cached) {
       logger.debug('RAG context retrieved from cache', { query });
-      return JSON.parse(cached);
+      return cached;
     }
 
     // Retrieve relevant chunks
@@ -292,7 +292,7 @@ class RAGPipeline {
     });
 
     // Cache result
-    redis.setex(cacheKey, 3600, JSON.stringify(context));
+    await setCache(cacheKey, context, 3600);
 
     logger.info('RAG retrieval completed', {
       query,

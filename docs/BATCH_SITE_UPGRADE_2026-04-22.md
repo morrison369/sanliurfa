@@ -584,3 +584,14 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 9. Kullanıcı istatistik cache anahtarı normalize edildi: `stats:*`.
 10. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
 11. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
+
+## 2026-04-23 Toplu Paket (Typed Cache Temizliği - Mesaj/Sosyal/Push/RAG)
+
+1. `src/lib/messages.ts` içinde eski string-parse uyumluluk yolu kaldırıldı; konuşma inbox cache okuması doğrudan `getCache<any[]>()` ile typed hale getirildi.
+2. `src/lib/social-features.ts` içinde hashtag/feed/trending cache okumaları typed cache standardına geçirildi.
+3. `src/lib/push.ts` içinde abonelik cache okumasındaki `string` fallback parse yolu kaldırıldı; tek kaynak typed array cache oldu.
+4. `src/lib/multi-level-cache.ts` içinde L2 Redis katmanı artık `JSON.parse/stringify` yapmıyor; `getCache<T>()` ve doğrudan `setCache(...)` ile çalışıyor.
+5. `src/lib/rag-system.ts` cache yolu `redis.get/setex` string akışından `getCache/setCache` typed akışına taşındı.
+6. Bu değişiklikle runtime cache anti-pattern taraması temizlendi: `JSON.parse(cached)` ve `setCache(... JSON.stringify(...))` eşleşmeleri kalmadı.
+7. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`.
+8. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.

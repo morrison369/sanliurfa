@@ -89,16 +89,11 @@ export class MultiLevelCache {
     }
 
     // Fall back to L2 (Redis)
-    const l2Hit = await getCache(key);
-    if (l2Hit) {
-      try {
-        const value = JSON.parse(l2Hit) as T;
-        // Promote to L1
-        this.setL1(key, value, l1Ttl);
-        return value;
-      } catch (err) {
-        logger.warn('Failed to parse L2 cache value', { key });
-      }
+    const l2Hit = await getCache<T>(key);
+    if (l2Hit !== null) {
+      // Promote to L1
+      this.setL1(key, l2Hit, l1Ttl);
+      return l2Hit;
     }
 
     return null;
@@ -112,7 +107,7 @@ export class MultiLevelCache {
     this.setL1(key, value, l1Ttl || l2Ttl);
 
     // Set L2 (Redis) for persistence
-    await setCache(key, JSON.stringify(value), l2Ttl);
+    await setCache(key, value, l2Ttl);
   }
 
   /**
