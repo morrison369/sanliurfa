@@ -32,7 +32,7 @@ export function generateRequestId(): string {
 }
 
 class Logger {
-  private isDevelopment = import.meta.env?.DEV ?? process.env.NODE_ENV !== 'production';
+  private isDevelopment = import.meta.env.DEV;
   private requestId: string | undefined;
 
   private normalizeLogValue(value: unknown, depth = 0): unknown {
