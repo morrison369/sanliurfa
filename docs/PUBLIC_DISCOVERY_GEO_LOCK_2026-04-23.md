@@ -38,6 +38,7 @@ Bu not, `sanliurfa.com` public keşif yüzeyinin tekrar dağılmaması için ekl
 11. `scripts/security/canonical-origin-contract.ts`, middleware/env/public-discovery/site konfigürasyonunda `https://sanliurfa.com` canonical host/origin kilidini ve wildcard CORS yasağını kontrol eder.
 12. `scripts/security/turkish-only-contract.ts`, kaynak kodda `hreflang`, `Accept-Language`, `/en`-`/tr` dil prefix route yapısı ve `lang=\"en\"` gibi Türkçe-only kural ihlallerini bloklar.
 13. `scripts/security/port-lock-contract.ts`, `package.json`, `astro.config.mjs`, `ecosystem.config.cjs` ve `src/lib/env.ts` üzerinde 4321 dev/prod port kilidini ve eski port yasağını doğrular.
+14. `scripts/security/image-provider-secret-contract.ts`, `src/lib/image-providers.ts` içinde Pexels/Unsplash anahtarlarının yalnızca `process.env` üzerinden okunmasını ve kaynak kod/dokümanda hardcoded provider key kalıntısı olmamasını doğrular.
 
 ## Doğrulama Beklentisi
 
