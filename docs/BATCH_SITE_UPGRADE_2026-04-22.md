@@ -616,3 +616,13 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 5. Rate-limit akışında komut-adı kaynaklı sessiz hata riski azaltıldı.
 6. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
 7. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
+
+## 2026-04-23 Toplu Paket (Redis Liste Operasyon Sıralama Garantisi)
+
+1. `src/lib/cache.ts` içine key-bazlı async işlem kuyruğu eklendi (`redisKeyOperationQueues`).
+2. `redis.lpush` ve `redis.ltrim` çağrıları aynı key üzerinde artık sıraya alınarak çalışır.
+3. Bu sayede çağıran kod `await` etmese bile `lpush` ardından `ltrim` yarış durumu azaltıldı.
+4. Native Redis yolu ve fallback cache yolu aynı sıralı yürütme davranışını korur.
+5. Queue temizleme mekanizması ile key tamamlandığında bellekten düşürülür.
+6. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
+7. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.

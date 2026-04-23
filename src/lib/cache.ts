@@ -18,6 +18,7 @@ let lastConnectionAttempt = 0;
 let unavailableWarningLogged = false;
 const lastErrorLogBySignature = new Map<string, number>();
 const inMemoryRateLimits = new Map<string, { count: number; resetAt: number }>();
+const redisKeyOperationQueues = new Map<string, Promise<void>>();
 
 interface RedisClientRequestOptions {
   silent?: boolean;
@@ -394,6 +395,18 @@ function checkInMemoryRateLimit(key: string, limit: number, windowSeconds: numbe
   return current.count <= limit;
 }
 
+function enqueueRedisKeyOperation(key: string, task: () => Promise<void>): Promise<void> {
+  const previous = redisKeyOperationQueues.get(key) || Promise.resolve();
+  const next = previous.catch(() => undefined).then(task);
+  redisKeyOperationQueues.set(key, next);
+
+  return next.finally(() => {
+    if (redisKeyOperationQueues.get(key) === next) {
+      redisKeyOperationQueues.delete(key);
+    }
+  });
+}
+
 export const redis = {
   async get(key: string): Promise<string | null> {
     const value = await getCache<unknown>(key);
@@ -410,40 +423,44 @@ export const redis = {
     await deleteCache(key);
   },
   async lpush(key: string, value: string): Promise<void> {
-    try {
-      const client = await getOptionalRedisClient({ silent: true });
-      if (client) {
-        await client.lPush(prefixKey(key), value);
-        return;
+    return enqueueRedisKeyOperation(key, async () => {
+      try {
+        const client = await getOptionalRedisClient({ silent: true });
+        if (client) {
+          await client.lPush(prefixKey(key), value);
+          return;
+        }
+      } catch (error: unknown) {
+        handleRedisCommandFailure(error);
+        if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
+          logCacheError('cache:lpush', key, error);
+        }
       }
-    } catch (error: unknown) {
-      handleRedisCommandFailure(error);
-      if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
-        logCacheError('cache:lpush', key, error);
-      }
-    }
 
-    const list = await getCache<string[]>(key);
-    const nextList = list || [];
-    nextList.unshift(value);
-    await setCache(key, nextList);
+      const list = await getCache<string[]>(key);
+      const nextList = list || [];
+      nextList.unshift(value);
+      await setCache(key, nextList);
+    });
   },
   async ltrim(key: string, start: number, stop: number): Promise<void> {
-    try {
-      const client = await getOptionalRedisClient({ silent: true });
-      if (client) {
-        await client.lTrim(prefixKey(key), start, stop);
-        return;
+    return enqueueRedisKeyOperation(key, async () => {
+      try {
+        const client = await getOptionalRedisClient({ silent: true });
+        if (client) {
+          await client.lTrim(prefixKey(key), start, stop);
+          return;
+        }
+      } catch (error: unknown) {
+        handleRedisCommandFailure(error);
+        if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
+          logCacheError('cache:ltrim', key, error);
+        }
       }
-    } catch (error: unknown) {
-      handleRedisCommandFailure(error);
-      if (!isRedisAuthError(error) && !isRedisConnectivityError(error)) {
-        logCacheError('cache:ltrim', key, error);
-      }
-    }
 
-    const list = await getCache<string[]>(key);
-    await setCache(key, (list || []).slice(start, stop + 1));
+      const list = await getCache<string[]>(key);
+      await setCache(key, (list || []).slice(start, stop + 1));
+    });
   },
   async expire(key: string, seconds: number): Promise<void> {
     try {
