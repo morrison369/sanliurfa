@@ -6,6 +6,7 @@ const blockers: string[] = [];
 
 const cacheSource = read("src/lib/cache.ts");
 const envSource = read("src/lib/env.ts");
+const deploymentSource = read("src/lib/deployment.ts");
 const envExample = read(".env.example");
 const envProductionTemplate = read(".env.production.template");
 
@@ -40,6 +41,25 @@ assertContains(
   "const redisUrl = readProcessEnv('REDIS_URL') || `redis://127.0.0.1:6379/${redisDb}`;",
   "env layer default redis URL must include redisDb",
 );
+
+assertContains(
+  deploymentSource,
+  "const REDIS_DB = parseRedisDb(process.env.REDIS_DB, 15);",
+  "deployment layer must derive REDIS_DB with fallback 15",
+);
+assertContains(
+  deploymentSource,
+  "const DEFAULT_REDIS_URL = `redis://127.0.0.1:6379/${REDIS_DB}`;",
+  "deployment layer default redis URL must include REDIS_DB",
+);
+assertContains(
+  deploymentSource,
+  "redisUrl: process.env.REDIS_URL || DEFAULT_REDIS_URL,",
+  "deployment development redisUrl must use DEFAULT_REDIS_URL fallback",
+);
+if (/redis:\/\/(?:localhost|127\.0\.0\.1):6379\/0/.test(deploymentSource)) {
+  blockers.push("deployment layer contains forbidden redis DB 0 fallback");
+}
 
 assertEnvValue(".env.example", envExample, "REDIS_DB", "15");
 assertEnvValue(".env.example", envExample, "REDIS_KEY_PREFIX", "sanliurfa:");
