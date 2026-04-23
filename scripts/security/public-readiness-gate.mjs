@@ -152,6 +152,16 @@ if (!astroTypesEntrypointContract.ok) {
   );
 }
 
+const runtimeLoggingContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/runtime-logging-contract.ts',
+]);
+if (!runtimeLoggingContract.ok) {
+  blockers.push(
+    `runtime logging contract failed:\n${runtimeLoggingContract.stderr || runtimeLoggingContract.stdout}`,
+  );
+}
+
 const historyDeployKey = runAllowFail('git', ['log', '--all', '--name-only', '--', 'deploy_key']);
 if ((historyDeployKey.stdout || '').includes('deploy_key')) {
   blockers.push('git history contains deploy_key; rotate keys and clean history before public visibility');
