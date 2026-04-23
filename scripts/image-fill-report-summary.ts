@@ -1,43 +1,17 @@
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-
-interface FailureEntry {
-  bucket: 'places' | 'blog' | 'events';
-  id: string;
-  slug: string;
-  title: string;
-  attemptedQueries: string[];
-  reason: string;
-}
-
-interface ImageFillReport {
-  generatedAt: string;
-  mode: 'dry-run' | 'write';
-  type: 'places' | 'blog' | 'events' | 'all';
-  limit: number;
-  queryMode: 'strict' | 'expanded';
-  totals: {
-    scanned: number;
-    filled: number;
-    failed: number;
-  };
-  buckets: Record<'places' | 'blog' | 'events', { scanned: number; filled: number; failed: number }>;
-  failures: FailureEntry[];
-}
+import { fillRate, loadReport, percent, resolveReportPath } from './lib/image-fill-report';
 
 const reportJsonArg = process.argv.find((arg) => arg.startsWith('--report-json='))?.split('=')[1];
+const outputJson = process.argv.includes('--json');
 if (!reportJsonArg) {
   console.error('[images:report] --report-json=<path> parametresi zorunlu.');
   process.exit(1);
 }
 
-const reportPath = path.isAbsolute(reportJsonArg)
-  ? reportJsonArg
-  : path.join(process.cwd(), reportJsonArg);
+const reportPath = resolveReportPath(reportJsonArg);
 
-let parsed: ImageFillReport;
+let parsed;
 try {
-  parsed = JSON.parse(readFileSync(reportPath, 'utf8')) as ImageFillReport;
+  parsed = loadReport(reportJsonArg);
 } catch (error) {
   console.error(`[images:report] rapor okunamadı: ${reportPath}`);
   console.error(error instanceof Error ? error.message : String(error));
@@ -50,9 +24,27 @@ for (const item of parsed.failures || []) {
 }
 const topReasons = [...reasonCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
 
+const currentFillRate = fillRate(parsed);
+const summary = {
+  reportPath,
+  mode: parsed.mode,
+  type: parsed.type,
+  queryMode: parsed.queryMode,
+  limit: parsed.limit,
+  totals: parsed.totals,
+  fillRate: currentFillRate,
+  buckets: parsed.buckets,
+  topReasons,
+};
+
+if (outputJson) {
+  console.log(JSON.stringify(summary, null, 2));
+  process.exit(0);
+}
+
 console.log(`[images:report] ${reportPath}
 - mode=${parsed.mode}, type=${parsed.type}, queryMode=${parsed.queryMode}, limit=${parsed.limit}
-- totals scanned=${parsed.totals.scanned} filled=${parsed.totals.filled} failed=${parsed.totals.failed}
+- totals scanned=${parsed.totals.scanned} filled=${parsed.totals.filled} failed=${parsed.totals.failed} fillRate=${percent(currentFillRate)}
 - places: scanned=${parsed.buckets.places.scanned} filled=${parsed.buckets.places.filled} failed=${parsed.buckets.places.failed}
 - blog: scanned=${parsed.buckets.blog.scanned} filled=${parsed.buckets.blog.filled} failed=${parsed.buckets.blog.failed}
 - events: scanned=${parsed.buckets.events.scanned} filled=${parsed.buckets.events.filled} failed=${parsed.buckets.events.failed}`);

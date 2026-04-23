@@ -35,7 +35,9 @@ Astro SSR ve API route kodları bu değerleri server tarafında `process.env` ü
 - İki aşamalı otomatik akış (dry-run + write + ayrı rapor): `npm run images:content:pipeline`
 - Sadece tarama aşaması: `npm run images:content:pipeline:dry`
 - Sadece yazma aşaması: `npm run images:content:pipeline:write`
+- Kalite eşiğiyle pipeline: `npm run images:content:pipeline:guarded` (`--min-fill-rate=<0-100>`)
 - Rapor özeti: `npm run images:content:report:summary -- --report-json=.tmp/image-fill-report.json`
+- İki rapor karşılaştırma: `npm run images:content:report:compare -- --before-report=<dry-run.json> --after-report=<write.json>`
 - Gelişmiş arama fallback için: `--query-mode=expanded` (başlık + kategori + slug kelimeleri)
 - Env yoksa komut satırından bağlantı verilebilir: `--database-url=postgresql://...`
 - Kaydedilen dosyalar slug bazlıdır: `/uploads/photos/provider/{pexels|unsplash}/{folder}/{slug}.webp`
