@@ -110,6 +110,40 @@ if (!releaseDefinitionContract.ok) {
   );
 }
 
+const socialCapabilityContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/social-capability-contract.ts',
+]);
+if (!socialCapabilityContract.ok) {
+  blockers.push(
+    `social capability contract failed:\n${
+      socialCapabilityContract.stderr || socialCapabilityContract.stdout
+    }`,
+  );
+}
+
+const adminHomepageContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/admin-homepage-contract.ts',
+]);
+if (!adminHomepageContract.ok) {
+  blockers.push(
+    `admin homepage contract failed:\n${adminHomepageContract.stderr || adminHomepageContract.stdout}`,
+  );
+}
+
+const secretsRotationContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/secrets-rotation-contract.ts',
+]);
+if (!secretsRotationContract.ok) {
+  blockers.push(
+    `secrets rotation contract failed:\n${
+      secretsRotationContract.stderr || secretsRotationContract.stdout
+    }`,
+  );
+}
+
 const seoTemplateContract = runAllowFail(process.execPath, [
   'node_modules/tsx/dist/cli.mjs',
   'scripts/security/seo-template-contract.ts',

@@ -7,8 +7,11 @@
 4. `npm run security:seo-template-contract`
 5. `npm run security:turkish-content-quality-contract`
 6. `npm run security:image-slug-contract`
-7. `npm run security:public-readiness`
-8. `npm run build`
+7. `npm run security:social-capability-contract`
+8. `npm run security:admin-homepage-contract`
+9. `npm run security:secrets-rotation-contract`
+10. `npm run security:public-readiness`
+11. `npm run build`
 
 ## Single Command
 ```bash
@@ -18,6 +21,13 @@ npm run release:gate
 ## Ship Command
 ```bash
 npm run release:ship
+```
+
+## Ops Batch Commands
+```bash
+npm run ops:p0:batch
+npm run ops:p1:batch
+npm run ops:p2:batch
 ```
 
 ## Release Mode Lock
