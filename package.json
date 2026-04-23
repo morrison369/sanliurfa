@@ -148,6 +148,8 @@
     "migrate:status": "tsx scripts/migrate.ts status",
     "migrate:rollback": "tsx scripts/migrate.ts rollback",
     "images:places:fill": "tsx scripts/fill-missing-place-images.ts",
+    "images:content:fill": "tsx scripts/fill-missing-content-images.ts",
+    "images:content:fill:write": "tsx scripts/fill-missing-content-images.ts --write --type=all --limit=100",
     "admin": "tsx scripts/admin-cli.ts",
     "backup": "./scripts/backup.sh",
     "deploy": "./scripts/deploy.sh",

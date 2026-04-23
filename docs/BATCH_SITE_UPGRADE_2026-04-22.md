@@ -534,3 +534,17 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 29. `132_social_match_moderation_logs` migration'ı eklendi; kullanıcı/admin eşleşme aksiyonları audit log'a yazılır.
 30. Mesajlaşma gönderim akışına kısa aralıkta aynı içerik tekrarını engelleyen anti-spam guard eklendi.
 31. Sosyal moderasyon SOP ve rollout runbook dökümanları eklendi.
+
+## 2026-04-23 Toplu Paket (Log/Rate Limit + İçerik Görsel Senkron)
+
+1. `src/lib/logging.ts` içinde dinamik `import.meta.env` erişimi kaldırıldı; `import.meta.env.DEV` ile Astro module-runner uyumlu hale getirildi.
+2. `src/lib/api-rate-limit.ts` proxy zincirinde istemci IP'sini ilk geçerli `x-forwarded-for` değeriyle sabitleyerek rate-limit anahtar tutarlılığı artırıldı.
+3. Yeni toplu script eklendi: `scripts/fill-missing-content-images.ts`.
+4. Script, Pexels/Unsplash sağlayıcılarından slug bazlı görselleri çekip şu içerik tiplerini tek akışta doldurur:
+5. `places.image_url` + `places.images`
+6. `blog_posts.featured_image` + `blog_posts.thumbnail`
+7. `events.image_url`
+8. Script varsayılanı dry-run, `--write` ile veritabanına yazar; `--type=places|blog|events|all` ve `--limit=<n>` parametrelerini destekler.
+9. `package.json` komutları eklendi:
+10. `npm run images:content:fill`
+11. `npm run images:content:fill:write`

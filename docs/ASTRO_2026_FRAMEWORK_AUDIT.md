@@ -120,3 +120,5 @@ Bu denetimde yeni zorunlu Astro paketi bulunmadı. Kurulmayan paketler eksik de�
 - `SOCIAL_MATCHING_ENABLED` flag'i ile sosyal swipe yüzeyi runtime'da kontrollü aç/kapat modeline alındı.
 - `social_match_moderation_logs` audit tablosu ile unmatch/deactivate işlemleri source-level izlenebilir hale getirildi.
 - Mesaj API'sinde kısa aralıkta aynı içerik tekrarı için anti-spam guard eklendi.
+- `src/lib/logging.ts` içinde `import.meta.env.DEV` doğrudan kullanılarak Astro module-runner dinamik env erişim uyarısı kapatıldı.
+- Slug bazlı içerik görsel doldurma akışı tek scriptte toplandı: `scripts/fill-missing-content-images.ts` (`places`, `blog_posts`, `events`).
