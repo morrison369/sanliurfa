@@ -595,3 +595,14 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 6. Bu değişiklikle runtime cache anti-pattern taraması temizlendi: `JSON.parse(cached)` ve `setCache(... JSON.stringify(...))` eşleşmeleri kalmadı.
 7. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`.
 8. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
+
+## 2026-04-23 Toplu Paket (Redis Shim Stabilizasyonu)
+
+1. `src/lib/cache.ts` içindeki `redis` uyumluluk objesi senkron no-op davranıştan çıkarıldı; tüm metodlar async gerçek davranışa geçirildi.
+2. `redis.get(key)` artık `getCache` üstünden gerçek değer döndürür; değer string değilse güvenli JSON string çıktısı verir.
+3. `redis.setex/del` artık doğrudan async cache katmanına yazıp siler.
+4. `redis.lpush/ltrim/expire` için Redis erişilebilirse native Redis komutları (`LPUSH`, `LTRIM`, `EXPIRE`) kullanılır.
+5. Redis erişilemezse aynı metodlar mevcut degrade cache fallback ile çalışmayı sürdürür.
+6. Böylece eski phase modüllerinde kullanılan `redis.*` çağrıları sessiz no-op olmaktan çıkarıldı.
+7. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
+8. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
