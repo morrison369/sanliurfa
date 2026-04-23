@@ -9,6 +9,7 @@ interface EnvConfig {
   DATABASE_URL: string;
   JWT_SECRET: string;
   REDIS_URL: string;
+  REDIS_DB: number;
   REDIS_KEY_PREFIX: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
@@ -62,7 +63,8 @@ export function getEnv(key?: string, defaultValue?: string): EnvConfig | string 
 
   const dbUrl = readProcessEnv('DATABASE_URL');
   const jwtSecret = readProcessEnv('JWT_SECRET');
-  const redisUrl = readProcessEnv('REDIS_URL') || 'redis://127.0.0.1:6379';
+  const redisDb = parseRedisDb(readProcessEnv('REDIS_DB'), 15);
+  const redisUrl = readProcessEnv('REDIS_URL') || `redis://127.0.0.1:6379/${redisDb}`;
 
   if (!dbUrl || !jwtSecret) {
     throw new Error('Missing critical env vars: DATABASE_URL and JWT_SECRET must be set');
@@ -77,6 +79,7 @@ export function getEnv(key?: string, defaultValue?: string): EnvConfig | string 
     DATABASE_URL: dbUrl,
     JWT_SECRET: jwtSecret,
     REDIS_URL: redisUrl,
+    REDIS_DB: redisDb,
     REDIS_KEY_PREFIX: readProcessEnv('REDIS_KEY_PREFIX') || 'sanliurfa:',
     STRIPE_SECRET_KEY: readProcessEnv('STRIPE_SECRET_KEY'),
     STRIPE_WEBHOOK_SECRET: readProcessEnv('STRIPE_WEBHOOK_SECRET')
@@ -113,6 +116,14 @@ export const env = {
 function readProcessEnv(key: string): string | undefined {
   const globalProcess = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
   return globalProcess?.env?.[key];
+}
+
+function parseRedisDb(rawValue: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt((rawValue || '').trim(), 10);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 15) {
+    return fallback;
+  }
+  return parsed;
 }
 
 function getPublicClientVar(key: (typeof requiredClientVars)[number]): string {
