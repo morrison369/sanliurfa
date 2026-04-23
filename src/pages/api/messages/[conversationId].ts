@@ -9,11 +9,11 @@
 import type { APIRoute } from 'astro';
 import { getMessages, sendMessage, markConversationRead } from '../../../lib/messages';
 import { queryOne, query } from '../../../lib/postgres';
-import { isUserBlocked } from '../../../lib/blocking';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
+import { canStartConversation } from '../../../lib/social-policy';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
   const requestId = getRequestId({ request } as any);
@@ -172,14 +172,14 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     // Determine recipient
     const recipientId = conversation.participant_a === user.id ? conversation.participant_b : conversation.participant_a;
 
-    // Check if sender is blocked by recipient
-    const isBlocked = await isUserBlocked(recipientId, user.id);
-    if (isBlocked) {
-      recordRequest('POST', `/api/messages/${conversationId}`, HttpStatus.FORBIDDEN, Date.now() - startTime);
+    const policy = await canStartConversation(user.id, recipientId);
+    if (!policy.allowed) {
+      const statusCode = policy.code === 'target_not_found' ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;
+      recordRequest('POST', `/api/messages/${conversationId}`, statusCode, Date.now() - startTime);
       return apiError(
-        ErrorCode.FORBIDDEN,
-        'Bu kullanıcı mesaj almıyor. Sizi engellemiş olabilir.',
-        HttpStatus.FORBIDDEN,
+        statusCode === HttpStatus.NOT_FOUND ? ErrorCode.NOT_FOUND : ErrorCode.FORBIDDEN,
+        policy.message,
+        statusCode,
         undefined,
         requestId
       );

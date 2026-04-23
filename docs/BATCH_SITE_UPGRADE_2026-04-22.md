@@ -500,3 +500,18 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 1. `src/content.config.ts` içindeki deprecated `z from astro:content` kullanımı kaldırıldı.
 2. Content collection şemaları Astro 6 resmi önerisine uygun şekilde `astro/zod` üzerinden `z` import eder.
 3. Bu değişiklik content collection davranışını değiştirmez; yalnızca Astro 6 uyumluluk uyarısını kapatır.
+
+## 2026-04-23 Toplu Paket (Sosyal + Şehir Servisleri)
+
+1. Sosyal etkileşim policy katmanı `src/lib/social-policy.ts` ile merkezileştirildi.
+2. Takip işlemlerinde artık self-follow, engel ilişkisi ve hedef kullanıcı varlık kontrolleri zorunlu.
+3. Mesaj başlatma/gönderme akışlarında engel + mesaj izni (`allow_messages`) politikası tek noktadan uygulanıyor.
+4. Tinder-benzeri ilk faz sosyal keşif altyapısı eklendi (tamamı ücretsiz/açık):
+5. `131_social_swipe_matching` migration: `social_swipe_profiles`, `social_swipes`, `social_matches` tabloları.
+6. Swipe profile API: `GET/PUT /api/social/swipe/profile` (maks 4 foto + bio).
+7. Aday listesi API: `GET /api/social/swipe/candidates`.
+8. Swipe aksiyonu API: `POST /api/social/swipe` (`like`/`pass`).
+9. Eşleşmeler API: `GET /api/social/swipe/matches`.
+10. Şehir servis ayar modeli genişletildi: `sourceUrl`, `lastUpdatedAt` alanları admin JSON ayarına dahil edildi.
+11. Şehir servis detay kartlarında resmi kaynak linki ve son güncelleme tarihi gösterimi eklendi.
+12. City service JSON-LD `Service` şemasında provider URL ve `dateModified` desteği eklendi.

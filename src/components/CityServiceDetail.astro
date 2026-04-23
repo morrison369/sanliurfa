@@ -1,15 +1,26 @@
 ---
-import { ArrowLeft, Bell, Clock, MapPin, Search } from 'lucide-react';
+import { ArrowLeft, Bell, Clock, ExternalLink, MapPin, Search } from 'lucide-react';
 
 interface Props {
   title: string;
   description: string;
   sourceLabel: string;
+  sourceUrl?: string;
   statusText: string;
+  lastUpdatedAt?: string;
   type: 'pharmacy' | 'bus' | 'flight';
 }
 
-const { title, description, sourceLabel, statusText, type } = Astro.props;
+const { title, description, sourceLabel, sourceUrl, statusText, lastUpdatedAt, type } = Astro.props;
+const formattedUpdatedAt = lastUpdatedAt
+  ? new Date(lastUpdatedAt).toLocaleDateString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  : '';
 
 const modules = {
   pharmacy: [
@@ -79,6 +90,19 @@ const modules = {
           <div>
             <p class="text-xs uppercase tracking-wide text-gray-500">Kaynak</p>
             <p class="font-medium text-gray-900 dark:text-white mt-1">{sourceLabel}</p>
+            {
+              sourceUrl && (
+                <a
+                  href={sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1 text-sm text-urfa-700 dark:text-urfa-300 mt-2 hover:underline"
+                >
+                  Resmi kaynağı aç
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              )
+            }
           </div>
         </div>
       </div>
@@ -89,6 +113,9 @@ const modules = {
           <div>
             <p class="text-xs uppercase tracking-wide text-gray-500">Durum</p>
             <p class="font-medium text-gray-900 dark:text-white mt-1">{statusText}</p>
+            {formattedUpdatedAt && (
+              <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">Son güncelleme: {formattedUpdatedAt}</p>
+            )}
           </div>
         </div>
       </div>

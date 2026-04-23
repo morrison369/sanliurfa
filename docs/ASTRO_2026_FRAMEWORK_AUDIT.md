@@ -109,3 +109,6 @@ Bu denetimde yeni zorunlu Astro paketi bulunmadı. Kurulmayan paketler eksik de�
 - CWP production hedefinde aktif PM2 dosyası `ecosystem.config.cjs`, aktif port `4321`, canonical deploy dokümanı `docs/ACTIVE_DEPLOYMENT_CWP_4321.md` olarak kilitlendi.
 - Tailwind CDN kalıntısı kaldırıldı; React ada bileşenlerinde kritik olmayan hydration kullanımları `client:idle` / `client:visible` olarak sadeleştirildi.
 - Tailwind 4'e geçildi; `@tailwindcss/vite` aktif edildi, `@astrojs/tailwind`, `autoprefixer` ve PostCSS Tailwind config'i kaldırıldı.
+- Social policy katmanı (`src/lib/social-policy.ts`) ile follow/message izinleri tek noktadan uygulanır (engel, self-action, allow_messages).
+- İlk faz ücretsiz sosyal keşif altyapısı aktif: swipe profile/candidates/action/matches API yüzeyi ve `131_social_swipe_matching` migration.
+- Şehir servis ayar modelinde `sourceUrl` + `lastUpdatedAt` alanları desteklenir; detay sayfası ve JSON-LD aynı kaynaktan beslenir.

@@ -50,7 +50,9 @@ export interface CityServiceItem {
   detailTitle?: string;
   detailDescription?: string;
   sourceLabel?: string;
+  sourceUrl?: string;
   statusText?: string;
+  lastUpdatedAt?: string;
 }
 
 export interface FooterColumn {
@@ -153,7 +155,9 @@ export const DEFAULT_PUBLIC_SITE_SETTINGS: PublicSiteSettings = {
       detailDescription:
         'Şanlıurfa nöbetçi eczane verisi ilçe bazında yayınlanır. Resmi veri entegrasyonu tamamlandığında eczane adı, adres, telefon ve konum bilgisi bu sayfada listelenir.',
       sourceLabel: 'Resmi nöbetçi eczane kaynakları',
-      statusText: 'Canlı veri entegrasyonu için hazır'
+      sourceUrl: 'https://www.sanliurfaeo.org.tr/',
+      statusText: 'Canlı veri entegrasyonu için hazır',
+      lastUpdatedAt: ''
     },
     {
       slug: 'otobus-saatleri',
@@ -164,7 +168,9 @@ export const DEFAULT_PUBLIC_SITE_SETTINGS: PublicSiteSettings = {
       detailDescription:
         'Şanlıurfa şehir içi hatlar, duraklar ve kalkış saatleri bu bölümde yayınlanır. Hat arama ve ilçe filtreleme için veri modeli hazırdır.',
       sourceLabel: 'Şehir içi ulaşım veri kaynakları',
-      statusText: 'Hat verisi bağlantısı bekleniyor'
+      sourceUrl: 'https://www.sanliurfa.bel.tr/',
+      statusText: 'Hat verisi bağlantısı bekleniyor',
+      lastUpdatedAt: ''
     },
     {
       slug: 'ucak-saatleri',
@@ -175,7 +181,9 @@ export const DEFAULT_PUBLIC_SITE_SETTINGS: PublicSiteSettings = {
       detailDescription:
         'Şanlıurfa GAP Havalimanı kalkış ve varış bilgileri bu bölümde yayınlanır. Canlı uçuş kaynağı bağlandığında havayolu, uçuş kodu, saat ve durum bilgileri gösterilir.',
       sourceLabel: 'Havalimanı ve uçuş veri kaynakları',
-      statusText: 'Uçuş verisi bağlantısı bekleniyor'
+      sourceUrl: 'https://www.dhmi.gov.tr/',
+      statusText: 'Uçuş verisi bağlantısı bekleniyor',
+      lastUpdatedAt: ''
     }
   ],
   footer: {
@@ -375,7 +383,9 @@ function sanitizeCityServices(input: unknown, fallback: CityServiceItem[]): City
         fallbackItem.detailDescription || fallbackItem.description
       ),
       sourceLabel: toTrimmedString(service.sourceLabel, fallbackItem.sourceLabel || 'Veri kaynağı'),
+      sourceUrl: toHref(service.sourceUrl, fallbackItem.sourceUrl || ''),
       statusText: toTrimmedString(service.statusText, fallbackItem.statusText || 'Veri entegrasyonu hazır'),
+      lastUpdatedAt: toTrimmedString(service.lastUpdatedAt, fallbackItem.lastUpdatedAt || ''),
       ...(badge ? { badge } : {})
     });
   });
