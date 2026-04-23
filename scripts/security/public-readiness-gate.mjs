@@ -78,6 +78,16 @@ if (!envAccessContract.ok) {
   );
 }
 
+const canonicalOriginContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/canonical-origin-contract.ts',
+]);
+if (!canonicalOriginContract.ok) {
+  blockers.push(
+    `canonical origin contract failed:\n${canonicalOriginContract.stderr || canonicalOriginContract.stdout}`,
+  );
+}
+
 const historyDeployKey = runAllowFail('git', ['log', '--all', '--name-only', '--', 'deploy_key']);
 if ((historyDeployKey.stdout || '').includes('deploy_key')) {
   blockers.push('git history contains deploy_key; rotate keys and clean history before public visibility');
