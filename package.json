@@ -157,6 +157,7 @@
     "images:content:pipeline": "tsx scripts/content-image-pipeline.ts --limit=100 --query-mode=expanded",
     "images:content:pipeline:dry": "tsx scripts/content-image-pipeline.ts --limit=100 --query-mode=expanded --dry-run-only",
     "images:content:pipeline:write": "tsx scripts/content-image-pipeline.ts --limit=100 --query-mode=expanded --write-only",
+    "images:content:pipeline:fast": "tsx scripts/content-image-pipeline.ts --limit=100 --query-mode=expanded --skip-dry-run-probe",
     "images:content:pipeline:guarded": "tsx scripts/content-image-pipeline.ts --limit=100 --query-mode=expanded --min-fill-rate=20",
     "images:content:report:summary": "tsx scripts/image-fill-report-summary.ts --report-json=.tmp/image-fill-report.json",
     "images:content:report:compare": "tsx scripts/image-fill-report-compare.ts",

@@ -563,3 +563,5 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 9. Pipeline çalışınca her rapor için otomatik özet yazdırılır (toplamlar + en sık hata nedenleri).
 10. Yeni rapor karşılaştırma scripti eklendi: `scripts/image-fill-report-compare.ts` (dry-run vs write delta).
 11. Pipeline'a kalite eşiği eklendi: `--min-fill-rate=<0-100>`; write raporu eşik altında kalırsa süreç non-zero kodla kapanır.
+12. Dry-run aşamasına opsiyonel provider probe eklendi: `--probe-provider-on-dry-run`; uygun görsel bulunabilirliği write öncesi rapora yansır.
+13. Pipeline için hızlı mod eklendi: `--skip-dry-run-probe` (ağ çağrısı azaltılmış hızlı dry-run).

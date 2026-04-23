@@ -12,6 +12,7 @@ const queryModeArg = process.argv.find((arg) => arg.startsWith('--query-mode='))
 const dryRunOnly = process.argv.includes('--dry-run-only');
 const writeOnly = process.argv.includes('--write-only');
 const minFillRateArg = process.argv.find((arg) => arg.startsWith('--min-fill-rate='))?.split('=')[1];
+const skipDryRunProbe = process.argv.includes('--skip-dry-run-probe');
 const limit = Math.max(1, Number.parseInt(limitArg || '100', 10));
 const queryMode = queryModeArg === 'expanded' ? 'expanded' : 'strict';
 const minFillRate = clampRate(minFillRateArg ? Number.parseFloat(minFillRateArg) : 0);
@@ -38,6 +39,7 @@ if (!writeOnly) {
   runFill({
     write: false,
     reportJson: dryRunReport,
+    probeOnDryRun: !skipDryRunProbe,
   });
   runSummary(dryRunReport);
 }
@@ -46,6 +48,7 @@ if (!dryRunOnly) {
   runFill({
     write: true,
     reportJson: writeReport,
+    probeOnDryRun: false,
   });
   runSummary(writeReport);
   enforceMinFillRate(writeReport);
@@ -58,9 +61,10 @@ if (!dryRunOnly && !writeOnly) {
 console.log(`[images:pipeline] tamamlandı
 - dry-run report: ${dryRunOnly ? 'skip' : dryRunReport}
 - write report: ${writeOnly ? 'skip' : writeReport}
-- minFillRate=${percent(minFillRate)}`);
+- minFillRate=${percent(minFillRate)}
+- dryRunProbe=${skipDryRunProbe ? 'off' : 'on'}`);
 
-function runFill(input: { write: boolean; reportJson: string }): void {
+function runFill(input: { write: boolean; reportJson: string; probeOnDryRun: boolean }): void {
   const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
   const args = [
     'run',
@@ -75,6 +79,8 @@ function runFill(input: { write: boolean; reportJson: string }): void {
 
   if (input.write) {
     args.push('--write');
+  } else if (input.probeOnDryRun) {
+    args.push('--probe-provider-on-dry-run');
   }
 
   const result = spawnSync(npmCommand, args, {

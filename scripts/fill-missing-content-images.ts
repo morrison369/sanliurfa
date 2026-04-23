@@ -1,5 +1,9 @@
 import pg from 'pg';
-import { fetchAndStoreProviderImage, hasImageProviderCredentials } from '../src/lib/image-providers';
+import {
+  fetchAndStoreProviderImage,
+  findProviderImage,
+  hasImageProviderCredentials,
+} from '../src/lib/image-providers';
 import { loadLocalEnv } from './lib/load-local-env';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -49,6 +53,7 @@ const limit = Math.max(1, Number.parseInt(limitArg || '25', 10));
 const databaseUrlArg = process.argv.find((arg) => arg.startsWith('--database-url='))?.split('=')[1];
 const reportJsonArg = process.argv.find((arg) => arg.startsWith('--report-json='))?.split('=')[1];
 const queryModeArg = process.argv.find((arg) => arg.startsWith('--query-mode='))?.split('=')[1];
+const probeOnDryRun = args.has('--probe-provider-on-dry-run');
 const queryMode: 'strict' | 'expanded' = queryModeArg === 'expanded' ? 'expanded' : 'strict';
 loadLocalEnv();
 const databaseUrl = databaseUrlArg || process.env.DATABASE_URL;
@@ -87,7 +92,7 @@ const failedItems: FailedItem[] = [];
 
 try {
   console.log(
-    `[images:content] Mod: ${write ? 'write' : 'dry-run'}, type=${type}, limit=${limit}, queryMode=${queryMode}`
+    `[images:content] Mod: ${write ? 'write' : 'dry-run'}, type=${type}, limit=${limit}, queryMode=${queryMode}, probeOnDryRun=${probeOnDryRun}`
   );
 
   if (type === 'all' || type === 'places') {
@@ -127,6 +132,17 @@ async function processPlaces(max: number): Promise<void> {
     console.log(`[images:content] places aranıyor: ${row.name} (${slug})`);
 
     if (!write) {
+      if (probeOnDryRun) {
+        const probe = await probeWithFallbacks(row.name, slug, category);
+        if (probe.found) {
+          summary.filled += 1;
+          bucketSummary.places.filled += 1;
+        } else {
+          summary.failed += 1;
+          bucketSummary.places.failed += 1;
+          recordFailure('places', row.id, slug, row.name, probe.attemptedQueries, 'provider_not_found_dry_probe');
+        }
+      }
       continue;
     }
 
@@ -197,6 +213,17 @@ async function processBlog(max: number): Promise<void> {
     console.log(`[images:content] blog aranıyor: ${row.title} (${slug})`);
 
     if (!write) {
+      if (probeOnDryRun) {
+        const probe = await probeWithFallbacks(row.title, slug, category);
+        if (probe.found) {
+          summary.filled += 1;
+          bucketSummary.blog.filled += 1;
+        } else {
+          summary.failed += 1;
+          bucketSummary.blog.failed += 1;
+          recordFailure('blog', String(row.id), slug, row.title, probe.attemptedQueries, 'provider_not_found_dry_probe');
+        }
+      }
       continue;
     }
 
@@ -261,6 +288,17 @@ async function processEvents(max: number): Promise<void> {
     console.log(`[images:content] events aranıyor: ${row.title} (${slug})`);
 
     if (!write) {
+      if (probeOnDryRun) {
+        const probe = await probeWithFallbacks(row.title, slug, category);
+        if (probe.found) {
+          summary.filled += 1;
+          bucketSummary.events.filled += 1;
+        } else {
+          summary.failed += 1;
+          bucketSummary.events.failed += 1;
+          recordFailure('events', row.id, slug, row.title, probe.attemptedQueries, 'provider_not_found_dry_probe');
+        }
+      }
       continue;
     }
 
@@ -317,6 +355,7 @@ async function maybeWriteReport(): Promise<void> {
     type,
     limit,
     queryMode,
+    dryRunProbeEnabled: !write && probeOnDryRun,
     totals: summary,
     buckets: bucketSummary,
     failures: failedItems,
@@ -350,6 +389,22 @@ async function fetchWithFallbacks(input: {
   }
 
   return { image: null, attemptedQueries: attempts };
+}
+
+async function probeWithFallbacks(
+  title: string,
+  slug: string,
+  category: string
+): Promise<{ found: boolean; attemptedQueries: string[] }> {
+  const attempts = buildQueryCandidates(title, slug, category).map((query) => `${query} Şanlıurfa`.trim());
+  for (const query of attempts) {
+    const candidate = await findProviderImage(query);
+    if (candidate) {
+      return { found: true, attemptedQueries: attempts };
+    }
+  }
+
+  return { found: false, attemptedQueries: attempts };
 }
 
 function buildQueryCandidates(title: string, slug: string, category: string): string[] {
