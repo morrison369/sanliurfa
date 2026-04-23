@@ -1,5 +1,6 @@
 // Redis Caching Layer with Namespacing
 import { createClient } from 'redis';
+import { logger } from './logging';
 
 const configuredRedisUrl = (process.env.REDIS_URL || '').trim();
 const REDIS_DB = parseRedisDb(process.env.REDIS_DB, 15);
@@ -62,7 +63,7 @@ export async function getRedisClient(options: RedisClientRequestOptions = {}) {
     });
 
     client.on('reconnecting', () => {
-      console.warn('Redis reconnecting...');
+      logger.warn('Redis reconnecting');
       connectionError = null;
     });
 
@@ -280,7 +281,9 @@ function logRedisUnavailableOnce(error: Error): void {
   }
 
   unavailableWarningLogged = true;
-  console.warn('Redis unavailable, continuing with graceful degradation:', error.message);
+  logger.warn('Redis unavailable, continuing with graceful degradation', {
+    error: error.message
+  });
 }
 
 function toErrorMessage(error: unknown): string {
@@ -350,7 +353,7 @@ function logCacheError(operation: string, key: unknown, error: unknown): void {
     return;
   }
 
-  console.warn(`${operation} failed`, {
+  logger.warn(`${operation} failed`, {
     key: normalizeCacheKey(key),
     error: message
   });
