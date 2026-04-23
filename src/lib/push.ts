@@ -103,21 +103,10 @@ export async function unsubscribeUser(
 export async function getUserSubscriptions(userId: string): Promise<PushSubscriptionData[]> {
   try {
     const cacheKey = `push:subscriptions:${userId}`;
-    const cached = await getCache<PushSubscriptionData[] | string>(cacheKey);
+    const cached = await getCache<PushSubscriptionData[]>(cacheKey);
 
     if (Array.isArray(cached)) {
       return cached;
-    }
-
-    if (typeof cached === 'string') {
-      try {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-      } catch {
-        // ignore malformed cached payload and repopulate from DB
-      }
     }
 
     const result = await pool.query(
