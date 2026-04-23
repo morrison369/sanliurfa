@@ -2,6 +2,8 @@
  * SEO utilities for meta tags, Open Graph, structured data
  */
 
+import { buildRobotsTxt } from "./public-discovery";
+
 export interface SEOConfig {
   title: string;
   description: string;
@@ -250,65 +252,7 @@ ${urls.join("\n")}
  * Generate robots.txt
  */
 export function generateRobotsTxt(): string {
-  return `User-agent: *
-Allow: /
-Disallow: /api/
-Disallow: /admin/
-Disallow: /giris
-Disallow: /kayit
-Disallow: /abonelik
-Disallow: /akis
-Disallow: /aktivitelerim
-Disallow: /ayarlar
-Disallow: /bildirimler
-Disallow: /bildirim-tercihleri
-Disallow: /canli-analitik
-Disallow: /icerik
-Disallow: /isletme
-Disallow: /koleksiyonlar
-Disallow: /kullanici
-Disallow: /loyalty
-Disallow: /mesajlar
-Disallow: /notifications
-Disallow: /profil
-Disallow: /profile
-Disallow: /raporlar
-Disallow: /sosyal
-Disallow: /veri-ambari
-Disallow: /webhooks
-Disallow: /_astro/
-Disallow: /*.css$
-Disallow: /*.js$
-Disallow: /*.json$
-
-User-agent: Googlebot
-Allow: /
-
-User-agent: GPTBot
-Allow: /
-
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: Claude-User
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-Sitemap: https://sanliurfa.com/sitemap-index.xml
-
-# Crawl-delay to be respectful to server
-Crawl-delay: 1`;
+  return buildRobotsTxt();
 }
 
 /**
