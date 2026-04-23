@@ -17,29 +17,29 @@ Bu dosya sanliurfa.com için Astro framework kararlarını kilitler. Yeni paket 
 
 ## Resmi Astro Özellikleri ve Proje Kararı
 
-| Astro alanı | Proje kararı | Gerekçe |
-| --- | --- | --- |
-| SSR / on-demand rendering | Kullanılıyor | Admin, API, auth, DB ve dinamik şehir içerikleri için `output: "server"` doğru modeldir. |
-| `@astrojs/node` | Kullanılıyor | CentOS Web Panel / Node standalone runtime için doğru resmi adapter budur. |
-| `@astrojs/react` | Kullanılıyor | Mevcut interaktif paneller ve sosyal bileşenler React 19 ile çalışır. |
-| Tailwind 4 / `@tailwindcss/vite` | Kullanılıyor | Astro 6 ve Tailwind 4 için resmi önerilen yol Vite plugin modelidir; deprecated `@astrojs/tailwind` kullanılmaz. |
-| `@astrojs/mdx` | Kullanılıyor | Blog, rehber ve doküman içerikleri ileride MDX gerektirirse framework tarafı hazırdır. |
-| `@astrojs/rss` | Kullanılıyor | Public Türkçe feed üretimi için resmi paket kullanılır. |
-| `@astrojs/partytown` | Kullanılıyor | Geçerli analytics/üçüncü parti script olursa ana thread yükünü azaltmak için aktiftir. |
-| Astro image service / Sharp | Kullanılıyor | Yerel ve provider kaynaklı görsellerin optimize edilmesi için built-in Sharp servisi doğrudur. |
-| Content collections | Kullanılıyor | `src/content.config.ts` ile Türkçe içerik koleksiyonları tanımlıdır. |
-| Astro Zod schema import | Kullanılıyor | Astro 6 uyumu için `z` yalnızca `astro/zod` üzerinden alınır; `astro:content` içinden `z` import edilmez. |
-| Middleware ve API routes | Kullanılıyor | Auth, canonical redirect, rate limit ve public API yüzeyi Astro SSR içinde çalışır. |
-| Astro sessions | Adapter tarafından desteklenir | Mevcut auth Redis/JWT modeli korunur; framework session desteği gerektiğinde aynı Node adapter ile kullanılabilir. |
-| Astro Actions | Şimdilik bekletiliyor | Mevcut 340+ API endpointi ve auth/rate-limit sözleşmesi var; actions'a geçiş ayrı mimari refactor olmalıdır. |
-| Server islands | Şimdilik bekletiliyor | Kişisel alanlarda yararlı olabilir; mevcut sayfa mimarisini bozmayacak şekilde ayrı UX/performance işi olarak ele alınmalıdır. |
-| `@astrojs/sitemap` | Kurulmaz / aktif edilmez | Proje SSR dinamik sitemap route'ları kullanıyor. Resmi sitemap entegrasyonu SSR dinamik route'ları tam üretemediği için özel `src/lib/sitemap.ts` tek kaynaktır. |
-| `@astrojs/db` | Kurulmaz | Projede PostgreSQL 15, mevcut migration sistemi ve `pg` tabanlı veri katmanı var. Astro DB bu mimariyi ikileştirir. |
-| `@astrojs/starlight` | Kurulmaz | Dokümantasyon sitesi değil, şehir rehberi ve topluluk platformu. |
-| `@astrojs/markdoc` | Kurulmaz | MDX resmi entegrasyonu yeterli; ikinci markdown formatı içerik yönetimini böler. |
-| Diğer UI framework entegrasyonları | Kurulmaz | React kullanılıyor; Vue/Svelte/Solid/Preact/Lit eklemek bundle ve bakım karmaşası üretir. |
-| Diğer deployment adapter'ları | Kurulmaz | Vercel, Netlify, Cloudflare adapter'ları CWP Node standalone prod hedefiyle uyumlu değildir. Vercel kullanılmayacak. |
-| i18n / çoklu dil | Yasak | Site yalnızca Türkçe olacak; `/tr`, `/en`, hreflang ve dil seçici yok. |
+| Astro alanı                        | Proje kararı                   | Gerekçe                                                                                                                                                          |
+| ---------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SSR / on-demand rendering          | Kullanılıyor                   | Admin, API, auth, DB ve dinamik şehir içerikleri için `output: "server"` doğru modeldir.                                                                         |
+| `@astrojs/node`                    | Kullanılıyor                   | CentOS Web Panel / Node standalone runtime için doğru resmi adapter budur.                                                                                       |
+| `@astrojs/react`                   | Kullanılıyor                   | Mevcut interaktif paneller ve sosyal bileşenler React 19 ile çalışır.                                                                                            |
+| Tailwind 4 / `@tailwindcss/vite`   | Kullanılıyor                   | Astro 6 ve Tailwind 4 için resmi önerilen yol Vite plugin modelidir; deprecated `@astrojs/tailwind` kullanılmaz.                                                 |
+| `@astrojs/mdx`                     | Kullanılıyor                   | Blog, rehber ve doküman içerikleri ileride MDX gerektirirse framework tarafı hazırdır.                                                                           |
+| `@astrojs/rss`                     | Kullanılıyor                   | Public Türkçe feed üretimi için resmi paket kullanılır.                                                                                                          |
+| `@astrojs/partytown`               | Kullanılıyor                   | Geçerli analytics/üçüncü parti script olursa ana thread yükünü azaltmak için aktiftir.                                                                           |
+| Astro image service / Sharp        | Kullanılıyor                   | Yerel ve provider kaynaklı görsellerin optimize edilmesi için built-in Sharp servisi doğrudur.                                                                   |
+| Content collections                | Kullanılıyor                   | `src/content.config.ts` ile Türkçe içerik koleksiyonları tanımlıdır.                                                                                             |
+| Astro Zod schema import            | Kullanılıyor                   | Astro 6 uyumu için `z` yalnızca `astro/zod` üzerinden alınır; `astro:content` içinden `z` import edilmez.                                                        |
+| Middleware ve API routes           | Kullanılıyor                   | Auth, canonical redirect, rate limit ve public API yüzeyi Astro SSR içinde çalışır.                                                                              |
+| Astro sessions                     | Adapter tarafından desteklenir | Mevcut auth Redis/JWT modeli korunur; framework session desteği gerektiğinde aynı Node adapter ile kullanılabilir.                                               |
+| Astro Actions                      | Şimdilik bekletiliyor          | Mevcut 340+ API endpointi ve auth/rate-limit sözleşmesi var; actions'a geçiş ayrı mimari refactor olmalıdır.                                                     |
+| Server islands                     | Şimdilik bekletiliyor          | Kişisel alanlarda yararlı olabilir; mevcut sayfa mimarisini bozmayacak şekilde ayrı UX/performance işi olarak ele alınmalıdır.                                   |
+| `@astrojs/sitemap`                 | Kurulmaz / aktif edilmez       | Proje SSR dinamik sitemap route'ları kullanıyor. Resmi sitemap entegrasyonu SSR dinamik route'ları tam üretemediği için özel `src/lib/sitemap.ts` tek kaynaktır. |
+| `@astrojs/db`                      | Kurulmaz                       | Projede PostgreSQL 15, mevcut migration sistemi ve `pg` tabanlı veri katmanı var. Astro DB bu mimariyi ikileştirir.                                              |
+| `@astrojs/starlight`               | Kurulmaz                       | Dokümantasyon sitesi değil, şehir rehberi ve topluluk platformu.                                                                                                 |
+| `@astrojs/markdoc`                 | Kurulmaz                       | MDX resmi entegrasyonu yeterli; ikinci markdown formatı içerik yönetimini böler.                                                                                 |
+| Diğer UI framework entegrasyonları | Kurulmaz                       | React kullanılıyor; Vue/Svelte/Solid/Preact/Lit eklemek bundle ve bakım karmaşası üretir.                                                                        |
+| Diğer deployment adapter'ları      | Kurulmaz                       | Vercel, Netlify, Cloudflare adapter'ları CWP Node standalone prod hedefiyle uyumlu değildir. Vercel kullanılmayacak.                                             |
+| i18n / çoklu dil                   | Yasak                          | Site yalnızca Türkçe olacak; `/tr`, `/en`, hreflang ve dil seçici yok.                                                                                           |
 
 ## Kurulum Kuralı
 
@@ -49,6 +49,43 @@ Bu dosya sanliurfa.com için Astro framework kararlarını kilitler. Yeni paket 
 4. Yeni paket ancak yukarıdaki matriste `Kullanılıyor` veya açıkça gerekli hale gelen alan için eklenecek.
 5. Adapter, sitemap, DB, i18n ve ikinci UI framework kararları bu doküman değiştirilmeden değiştirilmeyecek.
 6. Vercel hedefi, Vercel adapter'ı, Vercel analytics endpoint'i veya Vercel deploy dokümanı eklenmeyecek.
+
+## Resmi Astro Referansları - 2026-04-23
+
+- `@astrojs/node`: https://docs.astro.build/en/guides/integrations-guide/node/
+- `@astrojs/react`: https://docs.astro.build/en/guides/integrations-guide/react/
+- `@astrojs/mdx`: https://docs.astro.build/en/guides/integrations-guide/mdx/
+- `@astrojs/partytown`: https://docs.astro.build/en/guides/integrations-guide/partytown/
+- Astro görsel optimizasyonu ve Sharp servis modeli: https://docs.astro.build/en/guides/images/
+- `@astrojs/sitemap`: https://docs.astro.build/en/guides/integrations-guide/sitemap/
+
+## Sitemap Kararı - Resmi Doküman Notu
+
+`@astrojs/sitemap` resmi ve doğru bir Astro entegrasyonudur; ancak bu projede canonical sitemap üreticisi olarak aktif edilmez.
+
+Gerekçe:
+
+1. Proje `output: "server"` ve `@astrojs/node` standalone SSR ile çalışır.
+2. Sitemap içeriği PostgreSQL, curated fallback verileri, görsel girdileri ve runtime Türkçe içerik sözleşmesinden üretilir.
+3. Resmi Astro sitemap dokümanı entegrasyonun build sırasında statik üretilen rotalardan sitemap oluşturduğunu ve SSR moddaki dinamik route girdilerini üretemediğini belirtir.
+4. Bu nedenle `src/lib/sitemap.ts`, `src/pages/sitemap.xml.ts`, `src/pages/sitemap-index.xml.ts` ve `src/pages/blog/sitemap.xml.ts` bu projenin canonical sitemap yüzeyidir.
+5. `scripts/security/sitemap-indexability-contract.ts`, noindex sayfaların statik sitemap listesine geri eklenmesini engeller.
+6. Yeni sitemap işi yapılırken önce bu runtime kontratı güncellenir; sırf resmi paket var diye `@astrojs/sitemap` eklenmez.
+
+## Eksik Paket Denetimi - 2026-04-23
+
+Gerekli ve projeye uyumlu Astro tarafı şu anda kurulu veya aktif:
+
+- SSR adapter: `@astrojs/node`
+- React islands: `@astrojs/react`
+- MDX: `@astrojs/mdx`
+- Üçüncü parti script izolasyonu: `@astrojs/partytown`
+- RSS/feed: `@astrojs/rss`
+- Görsel optimizasyonu: Astro built-in Sharp service + `sharp`
+- Tailwind 4 entegrasyonu: `@tailwindcss/vite`
+- Type checking: `@astrojs/check`
+
+Bu denetimde yeni zorunlu Astro paketi bulunmadı. Kurulmayan paketler eksik değil, bu projenin SSR/CWP/PostgreSQL mimarisine gereksiz veya çakışmalı olduğu için bilinçli olarak dışarıda bırakıldı.
 
 ## Bugünkü Kapanış
 

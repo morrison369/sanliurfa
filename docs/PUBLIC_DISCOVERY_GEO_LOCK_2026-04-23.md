@@ -29,6 +29,7 @@ Bu not, `sanliurfa.com` public keşif yüzeyinin tekrar dağılmaması için ekl
 2. Dinamik `robots.txt` route'u ve legacy SEO helper robots çıktısı aynı `buildRobotsTxt()` fonksiyonunu kullanır.
 3. Statik `public/robots.txt` yalnızca fallback dosyasıdır; değişiklikler önce `src/lib/public-discovery.ts` içine işlenir.
 4. `npm run security:public-readiness`, `scripts/security/public-discovery-contract.ts` ile discovery path'lerini ve robots fallback drift'ini kontrol eder.
+5. `scripts/security/sitemap-indexability-contract.ts`, noindex sayfaların statik sitemap girdilerine geri eklenmesini engeller.
 
 ## Doğrulama Beklentisi
 
