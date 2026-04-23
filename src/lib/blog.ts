@@ -60,11 +60,11 @@ export interface BlogComment {
  */
 export async function getBlogCategories(): Promise<BlogCategory[]> {
   try {
-    const cacheKey = "sanliurfa:blog:categories";
-    const cached = await getCache<BlogCategory[] | string>(cacheKey);
+    const cacheKey = "blog:categories";
+    const cached = await getCache<BlogCategory[]>(cacheKey);
 
     if (cached) {
-      return Array.isArray(cached) ? cached : JSON.parse(cached);
+      return cached;
     }
 
     const result = await queryMany(
@@ -184,7 +184,7 @@ export async function getBlogPostBySlug(
   slug: string,
 ): Promise<BlogPost | null> {
   try {
-    const cacheKey = `sanliurfa:blog:post:${slug}`;
+    const cacheKey = `blog:post:${slug}`;
     const cached = await getCache<BlogPost>(cacheKey);
 
     if (cached) {
@@ -215,7 +215,7 @@ export async function getBlogPostBySlug(
       view_count: result.view_count + 1,
     });
 
-    await setCache(cacheKey, JSON.stringify(post), 1800); // 30 dakika cache
+    await setCache(cacheKey, post, 1800); // 30 dakika cache
     return post;
   } catch (error) {
     logger.error(
@@ -263,7 +263,7 @@ export async function createBlogPost(
     }
 
     // Cache temizle
-    await deleteCachePattern("sanliurfa:blog:*");
+    await deleteCachePattern("blog:*");
 
     logger.info("Blog yazısı oluşturuldu", {
       postId: result.id,
@@ -311,13 +311,13 @@ export async function updateBlogPost(
 
     // Etiketleri güncelle
     if (data.tags) {
-      await deleteCache(`sanliurfa:blog:post_tags:${id}`);
+      await deleteCache(`blog:post_tags:${id}`);
       await queryMany(`DELETE FROM blog_post_tags WHERE post_id = $1`, [id]);
       await addTagsToPost(id, data.tags);
     }
 
     // Cache temizle
-    await deleteCachePattern("sanliurfa:blog:*");
+    await deleteCachePattern("blog:*");
 
     const post = await queryOne("SELECT slug FROM blog_posts WHERE id = $1", [
       id,
@@ -338,7 +338,7 @@ export async function updateBlogPost(
 export async function deleteBlogPost(id: number): Promise<boolean> {
   try {
     await queryMany("DELETE FROM blog_posts WHERE id = $1", [id]);
-    await deleteCachePattern("sanliurfa:blog:*");
+    await deleteCachePattern("blog:*");
 
     logger.info("Blog yazısı silindi", { postId: id });
     return true;
@@ -608,7 +608,7 @@ export async function restoreBlogPostRevision(
     });
 
     // Clear cache
-    await deleteCachePattern("sanliurfa:blog:*");
+    await deleteCachePattern("blog:*");
 
     logger.info("Blog yazı revizyon geri yüklendi", { postId, revisionId });
     return true;
