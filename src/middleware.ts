@@ -4,6 +4,7 @@ import { verifyToken } from './lib/auth';
 import { queryOne } from './lib/postgres';
 import { checkRateLimit } from './lib/cache';
 import { PUBLIC_DISCOVERY_PATHS } from './lib/public-discovery';
+import { logger } from './lib/logging';
 
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
@@ -222,7 +223,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
         }
       }
     } catch (err) {
-      console.error('Auth middleware error:', err);
+      logger.error('Auth middleware error', err instanceof Error ? err : new Error(String(err)), {
+        pathname
+      });
       cookies.delete('auth-token', { path: '/' });
       
       if (!isPublicPath) {
