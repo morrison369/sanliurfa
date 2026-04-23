@@ -33,9 +33,9 @@ export $(cat .env.wsl | grep -v '#' | xargs)
 
 # Start development server
 echo "🌐 Starting development server..."
-echo "📍 Site will be available at: http://localhost:1111"
+echo "📍 Site will be available at: http://localhost:4321"
 echo "📧 MailHog available at: http://localhost:8025"
 echo "💾 MinIO Console: http://localhost:9001"
 echo ""
 
-npm run dev -- --port 1111 --host
+npm run dev -- --host 127.0.0.1 --port 4321

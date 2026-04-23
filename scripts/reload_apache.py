@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\nimport paramiko\nimport time\n\nHOST = "168.119.79.238"\nPORT = 77\nUSERNAME = "sanliur"\nPASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"\nSUDO_PASS = "CHANGE_ME_CWP_SSH_PASSWORD"\n\ndef main():\n    ssh = paramiko.SSHClient()\n    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\n    ssh.connect(HOST, port=PORT, username=USERNAME, password=PASSWORD, \n                timeout=20, look_for_keys=False, allow_agent=False)\n    \n    channel = ssh.invoke_shell()\n    time.sleep(2)\n    \n    print("Reloading Apache...")\n    \n    # Try graceful restart\n    channel.send("sudo /usr/local/apache/bin/apachectl graceful\n")\n    time.sleep(2)\n    channel.send(SUDO_PASS + "\n")\n    time.sleep(5)\n    \n    output = ""\n    while channel.recv_ready():\n        output += channel.recv(4096).decode('utf-8', errors='ignore')\n        time.sleep(1)\n    \n    print("RESULT:")\n    print(output[-400:])\n    \n    # Check Apache status\n    channel.send("systemctl status httpd --no-pager | head -5\n")\n    time.sleep(2)\n    \n    output2 = ""\n    while channel.recv_ready():\n        output2 += channel.recv(4096).decode('utf-8', errors='ignore')\n        time.sleep(0.5)\n    \n    print("\nAPACHE STATUS:")\n    print(output2[-200:])\n    \n    channel.close()\n    ssh.close()\n\nif __name__ == "__main__":\n    main()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

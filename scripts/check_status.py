@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\nimport paramiko\nimport sys\n\nHOST = "168.119.79.238"\nPORT = 77\nUSERNAME = "sanliur"\nPASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"\nNVM_PREFIX = 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '\n\ndef main():\n    ssh = paramiko.SSHClient()\n    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\n    ssh.connect(HOST, port=PORT, username=USERNAME, password=PASSWORD, timeout=30)\n    \n    print("🔍 Deployment Status Check")\n    print("=" * 50)\n    \n    # PM2 status\n    _, stdout, _ = ssh.exec_command(NVM_PREFIX + "pm2 list")\n    pm2 = stdout.read().decode()\n    print("\n📊 PM2 Status:")\n    print(pm2[:500])\n    \n    # HTTP test\n    _, stdout, _ = ssh.exec_command("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")\n    http = stdout.read().decode()\n    print(f"\n🌐 HTTP Status (homepage): {http}")\n    \n    if http == "200":\n        print("✅ Site is UP!")\n    else:\n        print("⚠️ Site returned non-200 status")\n        # Show logs\n        _, stdout, _ = ssh.exec_command(NVM_PREFIX + "pm2 logs sanliurfa --lines 5")\n        logs = stdout.read().decode()\n        print("\nRecent logs:")\n        print(logs)\n    \n    ssh.close()\n\nif __name__ == "__main__":\n    main()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)

@@ -26,6 +26,7 @@
 - `npm run dev:stop`: stop only repo-scoped listeners on local port `4321`.
 - `npm run preview`: local Astro preview on `127.0.0.1:4321` only.
 - `ecosystem.config.cjs`: canonical production PM2 runtime uses `PORT=4321`; do not reintroduce `6000`, `3000`, `1111`, `1112`, `1113`, or fallback ports.
+- Legacy SSH/CWP mutation scripts are disabled. Do not re-enable scripts that SSH to production, rewrite `.env.production`, alter Apache/CWP, modify PostgreSQL auth, install cron/backup jobs, or start Node outside `ecosystem.config.cjs`.
 - `docs/ACTIVE_DEPLOYMENT_CWP_4321.md`: source of truth for CWP + Astro Node standalone deployment. Older `DEPLOYMENT*`, `CWP-*`, and `FINAL_*` files are archival if they conflict with this file.
 - `npm run redis:check`: verify the project Redis connection from ignored `.env.local` without printing secrets or touching other Redis services.
 - `npm run build`: SSR production build to `dist/`.

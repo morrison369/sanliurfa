@@ -1,1 +1,6 @@
-#!/usr/bin/env python3\nimport paramiko\nimport time\n\nHOST = "168.119.79.238"\nPORT = 77\nUSERNAME = "sanliur"\nPASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"\n\ndef main():\n    ssh = paramiko.SSHClient()\n    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\n    ssh.connect(HOST, port=PORT, username=USERNAME, password=PASSWORD, \n                timeout=20, look_for_keys=False, allow_agent=False)\n    \n    channel = ssh.invoke_shell()\n    time.sleep(2)\n    \n    # Test DB connection\n    channel.send("psql -U sanliur_sanliurfa -d sanliur_sanliurfa -h localhost -c 'SELECT 1' 2>&1\n")\n    time.sleep(3)\n    \n    output = ""\n    while channel.recv_ready():\n        output += channel.recv(4096).decode('utf-8', errors='ignore')\n        time.sleep(1)\n    \n    print("DB CONNECTION TEST:")\n    print(output[-400:])\n    \n    # Check pg_hba.conf\n    channel.send("cat /var/lib/pgsql/data/pg_hba.conf | grep -v '^#' | grep -v '^$' | head -10\n")\n    time.sleep(2)\n    \n    output2 = ""\n    while channel.recv_ready():\n        output2 += channel.recv(4096).decode('utf-8', errors='ignore')\n        time.sleep(0.5)\n    \n    print("\nPG_HBA CONFIG:")\n    print(output2[-300:])\n    \n    channel.close()\n    ssh.close()\n\nif __name__ == "__main__":\n    main()\n
+#!/usr/bin/env python3
+"""Disabled legacy remote operation script."""
+
+from _legacy_remote_disabled import main
+
+main(__file__)
