@@ -635,3 +635,13 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 4. Bu değişiklik Redis DB ortak kullanılsa bile proje key izolasyonunu güçlendirir.
 5. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
 6. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
+
+## 2026-04-23 Toplu Paket (Advanced Rate Limit In-Memory Fallback)
+
+1. `src/lib/advanced-rate-limit.ts` içinde Redis erişilemediğinde fail-open davranışı kaldırıldı.
+2. Sliding window limiter için instance-bazlı in-memory fallback pencere takibi eklendi.
+3. Token bucket limiter için instance-bazlı in-memory token/refill fallback eklendi.
+4. Redis komut hatası durumunda da limiter akışı in-memory fallback ile limit uygulamaya devam eder.
+5. Fallback map'leri için boyut/staleness temizliği eklendi (uzun çalışmada bellek büyümesini sınırlamak için).
+6. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
+7. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
