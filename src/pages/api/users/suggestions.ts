@@ -30,13 +30,13 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     const userId = locals.user.id;
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
-    const cacheKey = `sanliurfa:user:suggestions:${userId}`;
+    const cacheKey = `user:suggestions:${userId}`;
 
     // Check cache (30 minutes)
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<any>(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/users/suggestions', HttpStatus.OK, Date.now() - startTime);
-      return apiResponse(JSON.parse(cached), HttpStatus.OK, requestId);
+      return apiResponse(cached, HttpStatus.OK, requestId);
     }
 
     // Get user's interests (places they've interacted with)
@@ -111,7 +111,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     };
 
     // Cache for 30 minutes
-    await setCache(cacheKey, JSON.stringify(responseData), 1800);
+    await setCache(cacheKey, responseData, 1800);
 
     recordRequest('GET', '/api/users/suggestions', HttpStatus.OK, Date.now() - startTime);
 
