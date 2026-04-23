@@ -45,11 +45,13 @@ assertContains(
   'const CANONICAL_SITE_URL = "https://sanliurfa.com";',
   "public discovery canonical URL must be https://sanliurfa.com",
 );
-assertContains(
-  envSource,
-  "SITE_URL: readProcessEnv('SITE_URL') || import.meta.env.PUBLIC_SITE_URL || 'https://sanliurfa.com'",
-  "env default SITE_URL must be https://sanliurfa.com",
-);
+if (
+  !/SITE_URL:\s*readProcessEnv\(["']SITE_URL["']\)\s*\|\|\s*import\.meta\.env\.PUBLIC_SITE_URL\s*\|\|\s*["']https:\/\/sanliurfa\.com["']/.test(
+    envSource,
+  )
+) {
+  blockers.push("env default SITE_URL must be https://sanliurfa.com");
+}
 assertContains(
   siteSource,
   'url: "https://sanliurfa.com",',
