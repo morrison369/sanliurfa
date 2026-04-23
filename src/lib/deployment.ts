@@ -8,6 +8,8 @@ import { logger } from './logging';
 const SITE_URL = (process.env.SITE_URL || 'https://sanliurfa.com').replace(/\/$/, '');
 const STAGING_URL = (process.env.STAGING_URL || 'https://staging.sanliurfa.com').replace(/\/$/, '');
 const DEV_URL = (process.env.DEV_SITE_URL || process.env.SITE_URL || 'http://localhost:4321').replace(/\/$/, '');
+const REDIS_DB = parseRedisDb(process.env.REDIS_DB, 15);
+const DEFAULT_REDIS_URL = `redis://127.0.0.1:6379/${REDIS_DB}`;
 
 export interface DeploymentEnvironment {
   name: 'development' | 'staging' | 'production';
@@ -48,7 +50,7 @@ const deploymentEnvironments: Record<string, DeploymentEnvironment> = {
     url: DEV_URL,
     apiUrl: `${DEV_URL}/api`,
     databaseUrl: process.env.DATABASE_URL || 'postgresql://localhost/sanliurfa_dev',
-    redisUrl: process.env.REDIS_URL || 'redis://localhost:6379/0',
+    redisUrl: process.env.REDIS_URL || DEFAULT_REDIS_URL,
     logLevel: 'debug',
     sslEnabled: false,
     maintenanceMode: false
@@ -258,4 +260,12 @@ export function getReadinessStatus(): {
     checks,
     readyPercentage: Math.round((passedChecks / totalChecks) * 100)
   };
+}
+
+function parseRedisDb(rawValue: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt((rawValue || '').trim(), 10);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 15) {
+    return fallback;
+  }
+  return parsed;
 }

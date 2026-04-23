@@ -645,3 +645,12 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 5. Fallback map'leri için boyut/staleness temizliği eklendi (uzun çalışmada bellek büyümesini sınırlamak için).
 6. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
 7. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
+
+## 2026-04-23 Toplu Paket (Deployment Redis DB Tutarlılığı)
+
+1. `src/lib/deployment.ts` içindeki development Redis varsayılanı proje izolasyon standardı ile hizalandı.
+2. Önceki `redis://localhost:6379/0` fallback değeri kaldırıldı.
+3. Yeni fallback, `REDIS_DB` (geçersizse 15) tabanlı `redis://127.0.0.1:6379/${REDIS_DB}` olarak üretildi.
+4. Bu sayede deployment config katmanında da Redis DB izolasyonu (`15`) korunur.
+5. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
+6. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
