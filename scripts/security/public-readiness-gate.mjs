@@ -140,6 +140,18 @@ if (!redisIsolationContract.ok) {
   );
 }
 
+const rateLimitResilienceContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/rate-limit-resilience-contract.ts',
+]);
+if (!rateLimitResilienceContract.ok) {
+  blockers.push(
+    `rate limit resilience contract failed:\n${
+      rateLimitResilienceContract.stderr || rateLimitResilienceContract.stdout
+    }`,
+  );
+}
+
 const astroTypesEntrypointContract = runAllowFail(process.execPath, [
   'node_modules/tsx/dist/cli.mjs',
   'scripts/security/astro-types-entrypoint-contract.ts',
