@@ -108,6 +108,18 @@ if (!portLockContract.ok) {
   );
 }
 
+const imageProviderSecretContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/image-provider-secret-contract.ts',
+]);
+if (!imageProviderSecretContract.ok) {
+  blockers.push(
+    `image provider secret contract failed:\n${
+      imageProviderSecretContract.stderr || imageProviderSecretContract.stdout
+    }`,
+  );
+}
+
 const historyDeployKey = runAllowFail('git', ['log', '--all', '--name-only', '--', 'deploy_key']);
 if ((historyDeployKey.stdout || '').includes('deploy_key')) {
   blockers.push('git history contains deploy_key; rotate keys and clean history before public visibility');
