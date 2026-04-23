@@ -5,6 +5,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { canStartConversation } from '../../../lib/social-policy';
+import { enforceApiRateLimit } from '../../../lib/api-rate-limit';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
   const requestId = getRequestId({ request } as any);
@@ -15,6 +16,18 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/messages', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    }
+
+    const isAllowed = await enforceApiRateLimit(request, 'messages:inbox:list', 120, 15 * 60, locals.user.id);
+    if (!isAllowed) {
+      recordRequest('GET', '/api/messages', HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return apiError(
+        ErrorCode.RATE_LIMITED,
+        'Çok sık mesaj kutusu sorguluyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
+        HttpStatus.RATE_LIMITED,
+        undefined,
+        requestId
+      );
     }
 
     const limit = parseInt(url.searchParams.get('limit') || '50', 10);
@@ -42,6 +55,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/messages', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    }
+
+    const isAllowed = await enforceApiRateLimit(request, 'messages:conversation:create', 60, 15 * 60, locals.user.id);
+    if (!isAllowed) {
+      recordRequest('POST', '/api/messages', HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return apiError(
+        ErrorCode.RATE_LIMITED,
+        'Çok sık konuşma başlatıyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
+        HttpStatus.RATE_LIMITED,
+        undefined,
+        requestId
+      );
     }
 
     const body = await request.json();

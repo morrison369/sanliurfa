@@ -522,3 +522,7 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 17. Swipe aday sorgusunda engel ilişkisi SQL seviyesinde filtrelenerek N+1 kontrol kaldırıldı.
 18. Swipe profil foto URL doğrulaması sıkılaştırıldı (yalnızca `https` veya site içi `/` yolları).
 19. Profil ekranına `Sosyal eşleşme` hızlı erişim bağlantısı eklendi.
+20. Followers ve messages API uçlarına feature-level (kullanıcı+IP scope) ek rate-limit katmanı eklendi.
+21. Followers API `POST` akışı social policy ile hizalandı (self-follow, blok ilişkisi, hedef varlık kontrolü).
+22. Admin için yeni sosyal eşleşme izleme ekranı eklendi: `/admin/sosyal` (profil/swipe/match metrikleri + son kayıtlar).
+23. Admin ana paneline `Sosyal Eşleşme` yönetim kısayolu eklendi.
