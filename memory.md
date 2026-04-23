@@ -1,8 +1,8 @@
 # Memory
 
 ## Current Phase
-- Active window: `Phase 1619-1624` (planned)
-- Last completed: `Phase 1613-1618 Governance Assurance Stability & Continuity V212`
+- Active window: `Phase 1625-1630` (planned)
+- Last completed: `Phase 1619-1624 Governance Recovery Assurance & Continuity V213`
 
 ## Astro Invariants
 - SSR-first runtime: `output: "server"` with `@astrojs/node` standalone adapter.
@@ -75,17 +75,19 @@
 
 - `Phase 1613-1618 Governance Assurance Stability & Continuity V212`: complete
 
+- `Phase 1619-1624 Governance Recovery Assurance & Continuity V213`: complete
+
 ## Open Tasks
 - No active blocker for completed windows.
-- Optional: Phase 1619-1624 scope definition and kickoff.
+- Optional: Phase 1625-1630 scope definition and kickoff.
 
 ## Next 6 Phases (Planned Scope)
-- `Phase 1619`: Governance Recovery Assurance Router V213
-- `Phase 1620`: Policy Continuity Stability Harmonizer V213
-- `Phase 1621`: Compliance Assurance Recovery Mesh V213
-- `Phase 1622`: Trust Stability Continuity Forecaster V213
-- `Phase 1623`: Board Recovery Stability Coordinator V213
-- `Phase 1624`: Policy Assurance Continuity Engine V213
+- `Phase 1625`: Governance Assurance Stability Router V214
+- `Phase 1626`: Policy Recovery Continuity Harmonizer V214
+- `Phase 1627`: Compliance Stability Continuity Mesh V214
+- `Phase 1628`: Trust Assurance Recovery Forecaster V214
+- `Phase 1629`: Board Stability Continuity Coordinator V214
+- `Phase 1630`: Policy Recovery Assurance Engine V214
 
 ## Checkpoint Rule
 - Every 2 phase blocks, record one short checkpoint note (risk, decision, outcome).
@@ -135,6 +137,8 @@
 - `Checkpoint 1601-1612`: V210-V211 batch delivered cleanly and phase gate + build + smoke chain remained green.
 
 - `Checkpoint 1607-1618`: V211-V212 batch delivered cleanly and phase gate + build + smoke chain remained green.
+
+- `Checkpoint 1613-1624`: V212-V213 batch delivered cleanly and phase gate + build + smoke chain remained green.
 
 ## Blockers
 - No active blocker.
