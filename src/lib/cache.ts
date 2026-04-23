@@ -2,7 +2,8 @@
 import { createClient } from 'redis';
 
 const configuredRedisUrl = (process.env.REDIS_URL || '').trim();
-const redisUrl = configuredRedisUrl || 'redis://127.0.0.1:6379';
+const REDIS_DB = parseRedisDb(process.env.REDIS_DB, 15);
+const redisUrl = configuredRedisUrl || `redis://127.0.0.1:6379/${REDIS_DB}`;
 const LEGACY_KEY_PREFIX = 'sanliurfa:';
 const KEY_PREFIX = normalizeKeyPrefix(process.env.REDIS_KEY_PREFIX || LEGACY_KEY_PREFIX);
 const REDIS_ENABLED = resolveRedisEnabled(process.env.REDIS_ENABLED, configuredRedisUrl);
@@ -237,6 +238,14 @@ function parsePositiveInt(name: string, fallback: number): number {
 
   const parsed = Number.parseInt(raw, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseRedisDb(rawValue: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt((rawValue || '').trim(), 10);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 15) {
+    return fallback;
+  }
+  return parsed;
 }
 
 function resolveRedisEnabled(rawValue: string | undefined, redisUrlValue: string): boolean {
