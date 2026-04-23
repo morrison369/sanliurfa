@@ -96,6 +96,7 @@ Bu denetimde yeni zorunlu Astro paketi bulunmadı. Kurulmayan paketler eksik de�
 - RSS çıktısı `scripts/security/rss-output-contract.ts` ile route çağrısı üzerinden doğrulanır.
 - `scripts/security/env-access-contract.ts` ile dinamik `import.meta.env` erişim kalıpları CI bağımsız yerel gate zincirinde engellenir.
 - `scripts/security/canonical-origin-contract.ts` ile canonical origin (`https://sanliurfa.com`) ve CORS wildcard yasağı gate zincirinde doğrulanır.
+- `scripts/security/turkish-only-contract.ts` ile `hreflang`, `Accept-Language` yönlendirmesi ve `/en`-`/tr` prefix route ihlalleri gate zincirinde engellenir.
 - Yeni dev server açılmadı, 4321 dışı port kullanılmadı.
 - Proje SSR Node standalone hedefi korunur.
 - CWP production hedefinde aktif PM2 dosyası `ecosystem.config.cjs`, aktif port `4321`, canonical deploy dokümanı `docs/ACTIVE_DEPLOYMENT_CWP_4321.md` olarak kilitlendi.

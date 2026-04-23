@@ -88,6 +88,16 @@ if (!canonicalOriginContract.ok) {
   );
 }
 
+const turkishOnlyContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/turkish-only-contract.ts',
+]);
+if (!turkishOnlyContract.ok) {
+  blockers.push(
+    `turkish-only contract failed:\n${turkishOnlyContract.stderr || turkishOnlyContract.stdout}`,
+  );
+}
+
 const historyDeployKey = runAllowFail('git', ['log', '--all', '--name-only', '--', 'deploy_key']);
 if ((historyDeployKey.stdout || '').includes('deploy_key')) {
   blockers.push('git history contains deploy_key; rotate keys and clean history before public visibility');
