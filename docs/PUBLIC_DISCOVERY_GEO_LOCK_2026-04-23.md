@@ -31,6 +31,7 @@ Bu not, `sanliurfa.com` public keşif yüzeyinin tekrar dağılmaması için ekl
 4. `npm run security:public-readiness`, `scripts/security/public-discovery-contract.ts` ile discovery path'lerini ve robots fallback drift'ini kontrol eder.
 5. `scripts/security/sitemap-indexability-contract.ts`, noindex sayfaların statik sitemap girdilerine geri eklenmesini engeller.
 6. Aynı kontrat statik sitemap girdilerinin gerçek `src/pages` Astro route dosyasına karşılık gelmesini ve route dosyasında `noindex` bulunmamasını da kontrol eder.
+7. `scripts/security/public-discovery-contract.ts`, `llms.txt`, `ai.txt` ve `humans.txt` içinde kanonik domain, Türkçe dil/Şanlıurfa odak token'ları ve doğrulanmamış sosyal hesap yasağını kontrol eder.
 
 ## Doğrulama Beklentisi
 

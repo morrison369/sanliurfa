@@ -16,6 +16,39 @@ const routeFiles: Record<string, string> = {
   "/blog/sitemap.xml": "src/pages/blog/sitemap.xml.ts",
 };
 
+const requiredDiscoveryTokens: Record<string, string[]> = {
+  "/llms.txt": [
+    "https://sanliurfa.com",
+    "Şanlıurfa",
+    "Dil: Türkçe",
+    "Sitemap index",
+    "AI Crawler Politikası",
+  ],
+  "/ai.txt": [
+    "Canonical: https://sanliurfa.com",
+    "Language: tr-TR",
+    "Primary keyword: Şanlıurfa",
+    "Primary LLM source: https://sanliurfa.com/llms.txt",
+  ],
+  "/humans.txt": [
+    "Canonical URL: https://sanliurfa.com",
+    "Language: Turkish (tr-TR)",
+    "Primary keyword: Şanlıurfa",
+    "No public social media account is claimed in this file.",
+  ],
+};
+
+const forbiddenDiscoveryTokens = [
+  "@sanliurfa.com.tr",
+  "@sanliurfa-com-tr",
+  "@sanliurfa_comtr",
+  "instagram.com/",
+  "tiktok.com/",
+  "youtube.com/",
+  "twitter.com/",
+  "x.com/",
+];
+
 const normalizeText = (value: string) => value.replace(/\r\n/g, "\n").trim();
 const pathToPublicFile = (path: string) =>
   join(root, "public", path.replace(/^\//, ""));
@@ -26,6 +59,26 @@ for (const path of PUBLIC_DISCOVERY_PATHS) {
 
   if (!existsSync(publicFile) && (!routeFile || !existsSync(routeFile))) {
     blockers.push(`missing public discovery route or file: ${path}`);
+  }
+
+  if (existsSync(publicFile)) {
+    const source = readFileSync(publicFile, "utf8");
+
+    for (const requiredToken of requiredDiscoveryTokens[path] || []) {
+      if (!source.includes(requiredToken)) {
+        blockers.push(
+          `${path} missing required discovery token: ${requiredToken}`,
+        );
+      }
+    }
+
+    for (const forbiddenToken of forbiddenDiscoveryTokens) {
+      if (source.includes(forbiddenToken)) {
+        blockers.push(
+          `${path} contains forbidden unverified social token: ${forbiddenToken}`,
+        );
+      }
+    }
   }
 }
 
