@@ -569,3 +569,4 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 15. Geçici hata kodlarında (`408/425/429/5xx`) otomatik tekrar denenir; timeout/retry parametreleri env ile yönetilir.
 16. `scripts/fill-missing-content-images.ts` içine kontrollü paralellik eklendi: `--concurrency=<1-10>` (varsayılan `3`).
 17. Pipeline komutu bu concurrency değerini otomatik aktarır; `images:content:pipeline:turbo` profili ile yüksek paralellik hızlı mod açılır.
+18. Pipeline seviyesinde hedef içerik tipi seçimi eklendi: `--type=places|blog|events|all`; kategori odaklı toplu çalıştırma profilleri eklendi.
