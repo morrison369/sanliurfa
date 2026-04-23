@@ -39,6 +39,7 @@ Bu not, `sanliurfa.com` public keşif yüzeyinin tekrar dağılmaması için ekl
 12. `scripts/security/turkish-only-contract.ts`, kaynak kodda `hreflang`, `Accept-Language`, `/en`-`/tr` dil prefix route yapısı ve `lang=\"en\"` gibi Türkçe-only kural ihlallerini bloklar.
 13. `scripts/security/port-lock-contract.ts`, `package.json`, `astro.config.mjs`, `ecosystem.config.cjs` ve `src/lib/env.ts` üzerinde 4321 dev/prod port kilidini ve eski port yasağını doğrular.
 14. `scripts/security/image-provider-secret-contract.ts`, `src/lib/image-providers.ts` içinde Pexels/Unsplash anahtarlarının yalnızca `process.env` üzerinden okunmasını ve kaynak kod/dokümanda hardcoded provider key kalıntısı olmamasını doğrular.
+15. `scripts/security/env-template-contract.ts`, `.env.example` ve `.env.production.template` dosyalarında `SITE_URL`, `CORS_ORIGINS`, `PORT=4321` ve `REDIS_KEY_PREFIX=sanliurfa:` kilidini doğrular.
 
 ## Doğrulama Beklentisi
 
