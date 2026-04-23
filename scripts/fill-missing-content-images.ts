@@ -29,6 +29,17 @@ interface EventRow {
   category?: string | null;
 }
 
+type BucketKey = 'places' | 'blog' | 'events';
+
+interface FailedItem {
+  bucket: BucketKey;
+  id: string;
+  slug: string;
+  title: string;
+  attemptedQueries: string[];
+  reason: string;
+}
+
 const args = new Set(process.argv.slice(2));
 const typeArg = process.argv.find((arg) => arg.startsWith('--type='))?.split('=')[1] as ContentType | undefined;
 const type: ContentType = typeArg && ['places', 'blog', 'events', 'all'].includes(typeArg) ? typeArg : 'all';
@@ -37,6 +48,8 @@ const limitArg = process.argv.find((arg) => arg.startsWith('--limit='))?.split('
 const limit = Math.max(1, Number.parseInt(limitArg || '25', 10));
 const databaseUrlArg = process.argv.find((arg) => arg.startsWith('--database-url='))?.split('=')[1];
 const reportJsonArg = process.argv.find((arg) => arg.startsWith('--report-json='))?.split('=')[1];
+const queryModeArg = process.argv.find((arg) => arg.startsWith('--query-mode='))?.split('=')[1];
+const queryMode: 'strict' | 'expanded' = queryModeArg === 'expanded' ? 'expanded' : 'strict';
 loadLocalEnv();
 const databaseUrl = databaseUrlArg || process.env.DATABASE_URL;
 
@@ -70,9 +83,12 @@ const bucketSummary: Record<'places' | 'blog' | 'events', { scanned: number; fil
   blog: { scanned: 0, filled: 0, failed: 0 },
   events: { scanned: 0, filled: 0, failed: 0 },
 };
+const failedItems: FailedItem[] = [];
 
 try {
-  console.log(`[images:content] Mod: ${write ? 'write' : 'dry-run'}, type=${type}, limit=${limit}`);
+  console.log(
+    `[images:content] Mod: ${write ? 'write' : 'dry-run'}, type=${type}, limit=${limit}, queryMode=${queryMode}`
+  );
 
   if (type === 'all' || type === 'places') {
     await processPlaces(limit);
@@ -115,16 +131,18 @@ async function processPlaces(max: number): Promise<void> {
     }
 
     try {
-      const image = await fetchAndStoreProviderImage({
-        query: row.name,
+      const fallback = await fetchWithFallbacks({
+        title: row.name,
         slug,
         category,
         folder: 'places',
       });
+      const image = fallback.image;
 
       if (!image) {
         summary.failed += 1;
         bucketSummary.places.failed += 1;
+        recordFailure('places', row.id, slug, row.name, fallback.attemptedQueries, 'provider_not_found');
         continue;
       }
 
@@ -143,9 +161,17 @@ async function processPlaces(max: number): Promise<void> {
 
       summary.filled += 1;
       bucketSummary.places.filled += 1;
-    } catch {
+    } catch (error) {
       summary.failed += 1;
       bucketSummary.places.failed += 1;
+      recordFailure(
+        'places',
+        row.id,
+        slug,
+        row.name,
+        buildQueryCandidates(row.name, slug, category),
+        error instanceof Error ? error.message : String(error)
+      );
     }
   }
 }
@@ -175,16 +201,18 @@ async function processBlog(max: number): Promise<void> {
     }
 
     try {
-      const image = await fetchAndStoreProviderImage({
-        query: row.title,
+      const fallback = await fetchWithFallbacks({
+        title: row.title,
         slug,
         category,
         folder: 'blog',
       });
+      const image = fallback.image;
 
       if (!image) {
         summary.failed += 1;
         bucketSummary.blog.failed += 1;
+        recordFailure('blog', String(row.id), slug, row.title, fallback.attemptedQueries, 'provider_not_found');
         continue;
       }
 
@@ -199,9 +227,17 @@ async function processBlog(max: number): Promise<void> {
 
       summary.filled += 1;
       bucketSummary.blog.filled += 1;
-    } catch {
+    } catch (error) {
       summary.failed += 1;
       bucketSummary.blog.failed += 1;
+      recordFailure(
+        'blog',
+        String(row.id),
+        slug,
+        row.title,
+        buildQueryCandidates(row.title, slug, category),
+        error instanceof Error ? error.message : String(error)
+      );
     }
   }
 }
@@ -229,16 +265,18 @@ async function processEvents(max: number): Promise<void> {
     }
 
     try {
-      const image = await fetchAndStoreProviderImage({
-        query: row.title,
+      const fallback = await fetchWithFallbacks({
+        title: row.title,
         slug,
         category,
         folder: 'events',
       });
+      const image = fallback.image;
 
       if (!image) {
         summary.failed += 1;
         bucketSummary.events.failed += 1;
+        recordFailure('events', row.id, slug, row.title, fallback.attemptedQueries, 'provider_not_found');
         continue;
       }
 
@@ -252,9 +290,17 @@ async function processEvents(max: number): Promise<void> {
 
       summary.filled += 1;
       bucketSummary.events.filled += 1;
-    } catch {
+    } catch (error) {
       summary.failed += 1;
       bucketSummary.events.failed += 1;
+      recordFailure(
+        'events',
+        row.id,
+        slug,
+        row.title,
+        buildQueryCandidates(row.title, slug, category),
+        error instanceof Error ? error.message : String(error)
+      );
     }
   }
 }
@@ -270,8 +316,10 @@ async function maybeWriteReport(): Promise<void> {
     mode: write ? 'write' : 'dry-run',
     type,
     limit,
+    queryMode,
     totals: summary,
     buckets: bucketSummary,
+    failures: failedItems,
   };
 
   const reportPath = path.isAbsolute(reportJsonArg)
@@ -280,6 +328,69 @@ async function maybeWriteReport(): Promise<void> {
   await mkdir(path.dirname(reportPath), { recursive: true });
   await writeFile(reportPath, JSON.stringify(payload, null, 2), 'utf8');
   console.log(`[images:content] rapor yazıldı: ${reportPath}`);
+}
+
+async function fetchWithFallbacks(input: {
+  title: string;
+  slug: string;
+  category: string;
+  folder: string;
+}): Promise<{ image: Awaited<ReturnType<typeof fetchAndStoreProviderImage>>; attemptedQueries: string[] }> {
+  const attempts = buildQueryCandidates(input.title, input.slug, input.category);
+  for (const query of attempts) {
+    const image = await fetchAndStoreProviderImage({
+      query,
+      slug: input.slug,
+      category: input.category,
+      folder: input.folder,
+    });
+    if (image) {
+      return { image, attemptedQueries: attempts };
+    }
+  }
+
+  return { image: null, attemptedQueries: attempts };
+}
+
+function buildQueryCandidates(title: string, slug: string, category: string): string[] {
+  const strict = [title];
+  if (queryMode !== 'expanded') {
+    return strict;
+  }
+
+  const expanded = [
+    title,
+    `${title} ${category}`,
+    slugToWords(slug),
+    `${slugToWords(slug)} ${category}`,
+  ];
+  return [...new Set(expanded.map((item) => item.trim()).filter(Boolean))];
+}
+
+function slugToWords(slug: string): string {
+  return slug.replace(/-/g, ' ').trim();
+}
+
+function recordFailure(
+  bucket: BucketKey,
+  id: string,
+  slug: string,
+  title: string,
+  attemptedQueries: string[],
+  reason: string
+): void {
+  if (failedItems.length >= 250) {
+    return;
+  }
+
+  failedItems.push({
+    bucket,
+    id,
+    slug,
+    title,
+    attemptedQueries,
+    reason,
+  });
 }
 
 function safeSlug(input: string): string {
