@@ -3,7 +3,7 @@
  * Supports global limits, per-user limits, per-endpoint limits, and burst handling
  */
 
-import { getRedisClient as getPrimaryRedisClient } from './cache';
+import { getRedisClient as getPrimaryRedisClient, prefixKey } from './cache';
 import { logger } from './logging';
 
 export interface RateLimitConfig {
@@ -105,7 +105,7 @@ export class SlidingWindowLimiter {
       return { allowed: true, remaining: -1, resetAt: new Date() };
     }
 
-    const key = `${this.config.keyPrefix}${identifier}`;
+    const key = prefixKey(`${this.config.keyPrefix}${identifier}`);
     const now = Date.now();
     const windowStart = now - this.config.windowSizeMs;
 
@@ -175,7 +175,7 @@ export class TokenBucketLimiter {
       return { allowed: true, remaining: -1, resetAt: new Date() };
     }
 
-    const key = `${this.config.keyPrefix}${identifier}`;
+    const key = prefixKey(`${this.config.keyPrefix}${identifier}`);
     const lastRefillKey = `${key}:last_refill`;
     const now = Date.now() / 1000; // Convert to seconds
 
