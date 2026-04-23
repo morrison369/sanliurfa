@@ -28,6 +28,7 @@ Bu proje Astro SSR-first çalışır. Yeni özelliklerde öncelik sırası kilit
 - Tailwind 4 resmi Vite plugin modeli kullanılır: `@tailwindcss/vite`. Deprecated `@astrojs/tailwind` geri eklenmez.
 - React sadece gerçek etkileşim gereken ada bileşenlerinde kullanılır; statik SEO içerikleri Astro server-rendered HTML olarak kalır.
 - `client:load` yalnızca ilk ekranda hemen etkileşim isteyen formlar, mesajlaşma ve kritik paneller içindir. İkincil liste, öneri, rozet, akış ve analitik bileşenlerinde önce `client:idle` veya `client:visible` tercih edilir.
+- Release kapanış modunda phase mutasyonları kilitlidir (`config/release-mode.json` + `docs/PHASE_FREEZE_POLICY.md`).
 
 ## Rich Snippet Kapsamı
 

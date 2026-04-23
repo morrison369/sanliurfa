@@ -98,6 +98,50 @@ if (!turkishOnlyContract.ok) {
   );
 }
 
+const releaseDefinitionContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/release-definition-contract.ts',
+]);
+if (!releaseDefinitionContract.ok) {
+  blockers.push(
+    `release definition contract failed:\n${
+      releaseDefinitionContract.stderr || releaseDefinitionContract.stdout
+    }`,
+  );
+}
+
+const seoTemplateContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/seo-template-contract.ts',
+]);
+if (!seoTemplateContract.ok) {
+  blockers.push(
+    `seo template contract failed:\n${seoTemplateContract.stderr || seoTemplateContract.stdout}`,
+  );
+}
+
+const turkishContentQualityContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/turkish-content-quality-contract.ts',
+]);
+if (!turkishContentQualityContract.ok) {
+  blockers.push(
+    `turkish content quality contract failed:\n${
+      turkishContentQualityContract.stderr || turkishContentQualityContract.stdout
+    }`,
+  );
+}
+
+const imageSlugContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/image-slug-contract.ts',
+]);
+if (!imageSlugContract.ok) {
+  blockers.push(
+    `image slug contract failed:\n${imageSlugContract.stderr || imageSlugContract.stdout}`,
+  );
+}
+
 const portLockContract = runAllowFail(process.execPath, [
   'node_modules/tsx/dist/cli.mjs',
   'scripts/security/port-lock-contract.ts',
