@@ -121,6 +121,27 @@ export default function SwipeMatchExperience() {
     }
   };
 
+  const onUnmatch = async (matchId: number) => {
+    if (busy) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await fetchJson<{ data: { matchId: number } }>('/api/social/swipe/unmatch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchId })
+      });
+      const latestMatches = await fetchJson<{ data: MatchUser[] }>('/api/social/swipe/matches?limit=50');
+      setMatches(latestMatches.data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="rounded-3xl bg-white/10 p-6 text-sm text-urfa-100">
@@ -227,14 +248,20 @@ export default function SwipeMatchExperience() {
           ) : (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {matches.map((item) => (
-                <a
-                  key={`${item.id}-${item.user_id}`}
-                  href={`/kullanici/${item.user_id}`}
-                  className="rounded-2xl bg-white/90 p-4 text-gray-900 hover:bg-white"
-                >
-                  <p className="font-semibold">{item.full_name || item.username || 'Kullanıcı'}</p>
-                  <p className="text-xs text-gray-600">@{item.username || 'kullanici'}</p>
-                </a>
+                <div key={`${item.id}-${item.user_id}`} className="rounded-2xl bg-white/90 p-4 text-gray-900">
+                  <a href={`/kullanici/${item.user_id}`} className="block hover:opacity-90">
+                    <p className="font-semibold">{item.full_name || item.username || 'Kullanıcı'}</p>
+                    <p className="text-xs text-gray-600">@{item.username || 'kullanici'}</p>
+                  </a>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onUnmatch(item.id)}
+                    className="mt-3 rounded-full border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 disabled:opacity-50"
+                  >
+                    Eşleşmeyi kaldır
+                  </button>
+                </div>
               ))}
             </div>
           )}

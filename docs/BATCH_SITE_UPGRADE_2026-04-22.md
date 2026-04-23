@@ -526,3 +526,7 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 21. Followers API `POST` akışı social policy ile hizalandı (self-follow, blok ilişkisi, hedef varlık kontrolü).
 22. Admin için yeni sosyal eşleşme izleme ekranı eklendi: `/admin/sosyal` (profil/swipe/match metrikleri + son kayıtlar).
 23. Admin ana paneline `Sosyal Eşleşme` yönetim kısayolu eklendi.
+24. Kullanıcı tarafına eşleşme kaldırma akışı eklendi: `POST /api/social/swipe/unmatch`.
+25. Eşleşme ekranında her kart için `Eşleşmeyi kaldır` aksiyonu aktif edildi.
+26. Admin tarafında eşleşme pasifleştirme API'si eklendi: `POST /api/admin/social/matches/{id}/deactivate`.
+27. `/admin/sosyal` ekranına aktif eşleşme için tek tık pasifleştirme butonu eklendi.
