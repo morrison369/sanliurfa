@@ -1,10 +1,9 @@
 import type { APIRoute } from "astro";
+import rss, { type RSSFeedItem } from "@astrojs/rss";
 import { getCuratedBlogPosts } from "../data/curated-blog-posts";
 import { query } from "../lib/postgres";
 
-export const GET: APIRoute = async () => {
-  const site = process.env.SITE_URL || "https://sanliurfa.com";
-
+export const GET: APIRoute = async (context) => {
   let posts = getCuratedBlogPosts().map((post) => ({
     title: post.title,
     slug: post.slug,
@@ -25,50 +24,24 @@ export const GET: APIRoute = async () => {
     );
   }
 
-  const rss = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>sanliurfa.com Blog</title>
-    <link>${site}</link>
-    <description>Şanlıurfa hakkında en güncel yazılar, gezi rehberleri ve gastronomi önerileri.</description>
-    <language>tr</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    ${posts
-      ?.map(
-        (post) => `
-    <item>
-      <title>${escapeXml(post.title)}</title>
-      <link>${site}/blog/${post.slug}</link>
-      <guid isPermaLink="true">${site}/blog/${post.slug}</guid>
-      <pubDate>${toRssDate(post.published_at)}</pubDate>
-      <description>${escapeXml(post.excerpt || "")}</description>
-    </item>
-    `,
-      )
-      .join("")}
-  </channel>
-</rss>`;
+  const items: RSSFeedItem[] = posts.map((post) => ({
+    title: post.title,
+    link: `/blog/${post.slug}`,
+    pubDate: toRssDate(post.published_at),
+    description: post.excerpt || "Şanlıurfa blog yazısı",
+  }));
 
-  return new Response(rss, {
-    headers: {
-      "Content-Type": "application/xml",
-      "Cache-Control": "public, max-age=3600",
-    },
+  return rss({
+    title: "sanliurfa.com Blog",
+    description:
+      "Şanlıurfa hakkında en güncel yazılar, gezi rehberleri ve gastronomi önerileri.",
+    site: context.site || new URL("https://sanliurfa.com"),
+    items,
+    customData: `<language>tr-TR</language>`,
   });
 };
 
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function toRssDate(value: string | Date | null | undefined): string {
+function toRssDate(value: string | Date | null | undefined): Date {
   const date = value ? new Date(value) : new Date();
-  return Number.isNaN(date.getTime())
-    ? new Date().toUTCString()
-    : date.toUTCString();
+  return Number.isNaN(date.getTime()) ? new Date() : date;
 }

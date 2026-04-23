@@ -32,6 +32,7 @@ Bu not, `sanliurfa.com` public keşif yüzeyinin tekrar dağılmaması için ekl
 5. `scripts/security/sitemap-indexability-contract.ts`, noindex sayfaların statik sitemap girdilerine geri eklenmesini engeller.
 6. Aynı kontrat statik sitemap girdilerinin gerçek `src/pages` Astro route dosyasına karşılık gelmesini ve route dosyasında `noindex` bulunmamasını da kontrol eder.
 7. `scripts/security/public-discovery-contract.ts`, `llms.txt`, `ai.txt` ve `humans.txt` içinde kanonik domain, Türkçe dil/Şanlıurfa odak token'ları ve doğrulanmamış sosyal hesap yasağını kontrol eder.
+8. `/rss.xml`, resmi `@astrojs/rss` helper'ından üretilir; public discovery gate route içinde `@astrojs/rss` kullanımını zorunlu tutar.
 
 ## Doğrulama Beklentisi
 
