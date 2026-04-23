@@ -54,7 +54,9 @@ const databaseUrlArg = process.argv.find((arg) => arg.startsWith('--database-url
 const reportJsonArg = process.argv.find((arg) => arg.startsWith('--report-json='))?.split('=')[1];
 const queryModeArg = process.argv.find((arg) => arg.startsWith('--query-mode='))?.split('=')[1];
 const probeOnDryRun = args.has('--probe-provider-on-dry-run');
+const concurrencyArg = process.argv.find((arg) => arg.startsWith('--concurrency='))?.split('=')[1];
 const queryMode: 'strict' | 'expanded' = queryModeArg === 'expanded' ? 'expanded' : 'strict';
+const concurrency = clampConcurrency(concurrencyArg ? Number.parseInt(concurrencyArg, 10) : 3);
 loadLocalEnv();
 const databaseUrl = databaseUrlArg || process.env.DATABASE_URL;
 
@@ -92,7 +94,7 @@ const failedItems: FailedItem[] = [];
 
 try {
   console.log(
-    `[images:content] Mod: ${write ? 'write' : 'dry-run'}, type=${type}, limit=${limit}, queryMode=${queryMode}, probeOnDryRun=${probeOnDryRun}`
+    `[images:content] Mod: ${write ? 'write' : 'dry-run'}, type=${type}, limit=${limit}, queryMode=${queryMode}, probeOnDryRun=${probeOnDryRun}, concurrency=${concurrency}`
   );
 
   if (type === 'all' || type === 'places') {
@@ -124,7 +126,7 @@ async function processPlaces(max: number): Promise<void> {
   );
 
   console.log(`[images:content] places eksik: ${rows.rowCount}`);
-  for (const row of rows.rows) {
+  await runWithConcurrency(rows.rows, concurrency, async (row) => {
     const slug = safeSlug(row.slug || row.name);
     const category = row.category || 'mekan';
     summary.scanned += 1;
@@ -143,7 +145,7 @@ async function processPlaces(max: number): Promise<void> {
           recordFailure('places', row.id, slug, row.name, probe.attemptedQueries, 'provider_not_found_dry_probe');
         }
       }
-      continue;
+      return;
     }
 
     try {
@@ -153,14 +155,13 @@ async function processPlaces(max: number): Promise<void> {
         category,
         folder: 'places',
       });
-      const image = fallback.image;
-
-      if (!image) {
+      if (!fallback.image) {
         summary.failed += 1;
         bucketSummary.places.failed += 1;
         recordFailure('places', row.id, slug, row.name, fallback.attemptedQueries, 'provider_not_found');
-        continue;
+        return;
       }
+      const image = fallback.image;
 
       await pool.query(
         `UPDATE places
@@ -189,7 +190,7 @@ async function processPlaces(max: number): Promise<void> {
         error instanceof Error ? error.message : String(error)
       );
     }
-  }
+  });
 }
 
 async function processBlog(max: number): Promise<void> {
@@ -205,7 +206,7 @@ async function processBlog(max: number): Promise<void> {
   );
 
   console.log(`[images:content] blog eksik: ${rows.rowCount}`);
-  for (const row of rows.rows) {
+  await runWithConcurrency(rows.rows, concurrency, async (row) => {
     const slug = safeSlug(row.slug || row.title);
     const category = row.category_name || 'blog';
     summary.scanned += 1;
@@ -224,7 +225,7 @@ async function processBlog(max: number): Promise<void> {
           recordFailure('blog', String(row.id), slug, row.title, probe.attemptedQueries, 'provider_not_found_dry_probe');
         }
       }
-      continue;
+      return;
     }
 
     try {
@@ -234,14 +235,13 @@ async function processBlog(max: number): Promise<void> {
         category,
         folder: 'blog',
       });
-      const image = fallback.image;
-
-      if (!image) {
+      if (!fallback.image) {
         summary.failed += 1;
         bucketSummary.blog.failed += 1;
         recordFailure('blog', String(row.id), slug, row.title, fallback.attemptedQueries, 'provider_not_found');
-        continue;
+        return;
       }
+      const image = fallback.image;
 
       await pool.query(
         `UPDATE blog_posts
@@ -266,7 +266,7 @@ async function processBlog(max: number): Promise<void> {
         error instanceof Error ? error.message : String(error)
       );
     }
-  }
+  });
 }
 
 async function processEvents(max: number): Promise<void> {
@@ -280,7 +280,7 @@ async function processEvents(max: number): Promise<void> {
   );
 
   console.log(`[images:content] events eksik: ${rows.rowCount}`);
-  for (const row of rows.rows) {
+  await runWithConcurrency(rows.rows, concurrency, async (row) => {
     const slug = safeSlug(row.slug || row.title);
     const category = row.category || 'etkinlik';
     summary.scanned += 1;
@@ -299,7 +299,7 @@ async function processEvents(max: number): Promise<void> {
           recordFailure('events', row.id, slug, row.title, probe.attemptedQueries, 'provider_not_found_dry_probe');
         }
       }
-      continue;
+      return;
     }
 
     try {
@@ -309,14 +309,13 @@ async function processEvents(max: number): Promise<void> {
         category,
         folder: 'events',
       });
-      const image = fallback.image;
-
-      if (!image) {
+      if (!fallback.image) {
         summary.failed += 1;
         bucketSummary.events.failed += 1;
         recordFailure('events', row.id, slug, row.title, fallback.attemptedQueries, 'provider_not_found');
-        continue;
+        return;
       }
+      const image = fallback.image;
 
       await pool.query(
         `UPDATE events
@@ -340,7 +339,7 @@ async function processEvents(max: number): Promise<void> {
         error instanceof Error ? error.message : String(error)
       );
     }
-  }
+  });
 }
 
 async function maybeWriteReport(): Promise<void> {
@@ -461,4 +460,45 @@ function safeSlug(input: string): string {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 140);
+}
+
+function clampConcurrency(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 3;
+  }
+  if (value < 1) {
+    return 1;
+  }
+  if (value > 10) {
+    return 10;
+  }
+  return value;
+}
+
+async function runWithConcurrency<T>(
+  items: T[],
+  maxConcurrency: number,
+  worker: (item: T, index: number) => Promise<void>
+): Promise<void> {
+  if (items.length === 0) {
+    return;
+  }
+
+  let currentIndex = 0;
+
+  async function runWorker(): Promise<void> {
+    while (true) {
+      const idx = currentIndex;
+      currentIndex += 1;
+
+      if (idx >= items.length) {
+        return;
+      }
+
+      await worker(items[idx], idx);
+    }
+  }
+
+  const slots = Math.min(maxConcurrency, items.length);
+  await Promise.all(Array.from({ length: slots }, () => runWorker()));
 }
