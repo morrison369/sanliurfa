@@ -61,8 +61,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         data.awarded = amount;
         
         // Invalidate user's points caches
-        await deleteCache(`sanliurfa:loyalty:balance:${userId}`);
-        await deleteCachePattern(`sanliurfa:tier:user:${userId}`);
+        await deleteCache(`loyalty:balance:${userId}`);
+        await deleteCachePattern(`tier:user:${userId}`);
       }
     } else if (type === 'badge') {
       if (!badgeKey) {
