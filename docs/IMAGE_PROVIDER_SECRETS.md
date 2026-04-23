@@ -17,6 +17,9 @@ PEXELS_API_KEY=your_pexels_api_key
 UNSPLASH_APPLICATION_ID=your_unsplash_application_id
 UNSPLASH_ACCESS_KEY=your_unsplash_access_key
 UNSPLASH_SECRET_KEY=your_unsplash_secret_key
+IMAGE_PROVIDER_FETCH_TIMEOUT_MS=8000
+IMAGE_PROVIDER_RETRY_COUNT=2
+IMAGE_PROVIDER_RETRY_DELAY_MS=400
 ```
 
 ## Kullanım Notu
