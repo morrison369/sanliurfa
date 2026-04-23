@@ -65,8 +65,23 @@ assertContains(
 );
 assertContains(
   deploymentSource,
-  "redisUrl: process.env.REDIS_URL || DEFAULT_REDIS_URL,",
-  "deployment development redisUrl must use DEFAULT_REDIS_URL fallback",
+  "redisUrl: resolveRedisUrl(process.env.REDIS_URL, REDIS_DB, DEFAULT_REDIS_URL),",
+  "deployment development redisUrl must resolve REDIS_URL with REDIS_DB fallback",
+);
+assertContains(
+  deploymentSource,
+  "redisUrl: resolveRedisUrl(process.env.STAGING_REDIS_URL || process.env.REDIS_URL, REDIS_DB, ''),",
+  "deployment staging redisUrl must resolve REDIS_URL with REDIS_DB",
+);
+assertContains(
+  deploymentSource,
+  "redisUrl: resolveRedisUrl(process.env.REDIS_URL, REDIS_DB, ''),",
+  "deployment production redisUrl must resolve REDIS_URL with REDIS_DB",
+);
+assertContains(
+  deploymentSource,
+  "function resolveRedisUrl(rawUrl: string | undefined, redisDb: number, fallback: string): string {",
+  "deployment layer must expose REDIS_DB-aware redis URL resolver",
 );
 if (/redis:\/\/(?:localhost|127\.0\.0\.1):6379\/0/.test(deploymentSource)) {
   blockers.push("deployment layer contains forbidden redis DB 0 fallback");
