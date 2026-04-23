@@ -606,3 +606,13 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 6. Böylece eski phase modüllerinde kullanılan `redis.*` çağrıları sessiz no-op olmaktan çıkarıldı.
 7. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
 8. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
+
+## 2026-04-23 Toplu Paket (Advanced Rate Limit Redis Komut Uyumu)
+
+1. `src/lib/advanced-rate-limit.ts` içinde Redis komut çağrıları için uyum katmanı eklendi.
+2. Sorted-set komutları için camelCase + legacy fallback desteklendi: `zRemRangeByScore/zremrangebyscore`, `zCard/zcard`, `zRange/zrange`, `zAdd/zadd`.
+3. Token bucket yazımında `setEx/setex` uyumlu helper eklendi.
+4. Böylece Node Redis modern client API ile legacy API farklılıkları runtime’da tek akıştan yönetilir hale getirildi.
+5. Rate-limit akışında komut-adı kaynaklı sessiz hata riski azaltıldı.
+6. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
+7. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
