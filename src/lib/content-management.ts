@@ -4,7 +4,7 @@
  */
 import { queryOne, queryMany, insert, update } from './postgres';
 import { logger } from './logging';
-import { getCache, setCache, deleteCache } from './cache';
+import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 
 export async function createContent(userId: string, data: any): Promise<any | null> {
   try {
@@ -35,7 +35,7 @@ export async function createContent(userId: string, data: any): Promise<any | nu
       changes: { created: true }
     });
 
-    await deleteCache('sanliurfa:content:*');
+    await deleteCachePattern('content:*');
     logger.info('Content created', { contentId: result.id, userId });
     return result;
   } catch (error) {
@@ -46,11 +46,11 @@ export async function createContent(userId: string, data: any): Promise<any | nu
 
 export async function getContentById(contentId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:content:${contentId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `content:${contentId}`;
+    let cached = await getCache<any>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const content = await queryOne(
@@ -59,7 +59,7 @@ export async function getContentById(contentId: string): Promise<any | null> {
     );
 
     if (content) {
-      await setCache(cacheKey, JSON.stringify(content), 1800);
+      await setCache(cacheKey, content, 1800);
     }
 
     return content || null;
@@ -101,7 +101,7 @@ export async function updateContent(contentId: string, userId: string, updates: 
       changes: updates
     });
 
-    await deleteCache(`sanliurfa:content:${contentId}`);
+    await deleteCache(`content:${contentId}`);
     return true;
   } catch (error) {
     logger.error('Failed to update content', error instanceof Error ? error : new Error(String(error)));
@@ -133,8 +133,8 @@ export async function publishContent(contentId: string, userId: string): Promise
       changes: { published: true }
     });
 
-    await deleteCache(`sanliurfa:content:${contentId}`);
-    await deleteCache('sanliurfa:content:*');
+    await deleteCache(`content:${contentId}`);
+    await deleteCachePattern('content:*');
     logger.info('Content published', { contentId, userId });
     return true;
   } catch (error) {
@@ -172,11 +172,11 @@ export async function getUserContent(userId: string, limit: number = 20): Promis
 
 export async function getPublishedContent(category?: string, limit: number = 20): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:content:published:${category || 'all'}:${limit}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `content:published:${category || 'all'}:${limit}`;
+    let cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     let query = `
@@ -206,7 +206,7 @@ export async function getPublishedContent(category?: string, limit: number = 20)
     params.push(limit);
 
     const content = await queryMany(query, params);
-    await setCache(cacheKey, JSON.stringify(content), 3600);
+    await setCache(cacheKey, content, 3600);
     return content;
   } catch (error) {
     logger.error('Failed to get published content', error instanceof Error ? error : new Error(String(error)));
@@ -244,7 +244,7 @@ export async function recordContentView(contentId: string, userId?: string): Pro
       });
     }
 
-    await deleteCache(`sanliurfa:content:${contentId}`);
+    await deleteCache(`content:${contentId}`);
   } catch (error) {
     logger.error('Failed to record view', error instanceof Error ? error : new Error(String(error)));
   }
@@ -298,7 +298,7 @@ export async function addContentTags(contentId: string, tags: string[]): Promise
         tag_name: tag
       });
     }
-    await deleteCache(`sanliurfa:content:${contentId}`);
+    await deleteCache(`content:${contentId}`);
   } catch (error) {
     logger.error('Failed to add tags', error instanceof Error ? error : new Error(String(error)));
   }
@@ -318,7 +318,7 @@ export async function likeContent(contentId: string, userId: string): Promise<bo
       });
     }
 
-    await deleteCache(`sanliurfa:content:${contentId}`);
+    await deleteCache(`content:${contentId}`);
     return true;
   } catch (error) {
     logger.error('Failed to like content', error instanceof Error ? error : new Error(String(error)));

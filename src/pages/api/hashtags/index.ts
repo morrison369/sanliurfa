@@ -33,15 +33,15 @@ export const GET: APIRoute = async ({ request, url }) => {
     }
 
     // Check cache
-    const cacheKey = `sanliurfa:hashtags:list:${period}:${limit}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `hashtags:list:${period}:${limit}`;
+    const cached = await getCache<any[]>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', '/api/hashtags', HttpStatus.OK, duration);
       return apiResponse(
         {
           success: true,
-          data: JSON.parse(cached),
+          data: cached,
           count: limit,
           period
         },
@@ -54,7 +54,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const hashtags = await getTrendingHashtags(limit, period as any);
 
     // Cache result (30 min TTL)
-    await setCache(cacheKey, JSON.stringify(hashtags), 1800);
+    await setCache(cacheKey, hashtags, 1800);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/hashtags', HttpStatus.OK, duration);

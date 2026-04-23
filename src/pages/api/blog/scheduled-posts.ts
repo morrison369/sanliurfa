@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
         await update('blog_posts', { id: post.id }, { status: 'published' });
         logger.info('Planlanmış yazı yayınlandı', { postId: post.id, title: post.title });
       }
-      await deleteCachePattern('sanliurfa:blog:*');
+      await deleteCachePattern('blog:*');
     }
 
     const duration = Date.now() - startTime;
@@ -117,7 +117,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     recordRequest('POST', '/api/blog/scheduled-posts', HttpStatus.OK, duration);
     logger.logMutation('schedule', 'blog_posts', postId, locals.user?.id, { publishAt });
 
-    await deleteCachePattern('sanliurfa:blog:*');
+    await deleteCachePattern('blog:*');
 
     return apiResponse(
       {
