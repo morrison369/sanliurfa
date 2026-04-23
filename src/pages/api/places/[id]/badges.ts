@@ -21,13 +21,13 @@ export const GET: APIRoute = async ({ request, params }) => {
     const { id: placeId } = params;
 
     // Check cache first
-    const cacheKey = `sanliurfa:place:badges:${placeId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `place:badges:${placeId}`;
+    const cached = await getCache<any[]>(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/places/[id]/badges', HttpStatus.OK, Date.now() - startTime);
       return apiResponse({
         success: true,
-        badges: JSON.parse(cached)
+        badges: cached
       }, HttpStatus.OK, requestId);
     }
 
@@ -46,6 +46,7 @@ export const GET: APIRoute = async ({ request, params }) => {
 
     // Get badges
     const badges = await getPlaceBadges(placeId);
+    await setCache(cacheKey, badges, 7200);
 
     recordRequest('GET', '/api/places/[id]/badges', HttpStatus.OK, Date.now() - startTime);
 
