@@ -45,6 +45,12 @@ Crawl-delay: 1
 
 # Sitemap
 Sitemap: ${baseUrl}/sitemap-index.xml
+Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: ${baseUrl}/blog/sitemap.xml
+
+# Public AI discovery
+# See: ${baseUrl}/llms.txt
+# See: ${baseUrl}/ai.txt
 
 # AI search crawlers
 User-agent: GPTBot

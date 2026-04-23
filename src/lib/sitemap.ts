@@ -73,6 +73,17 @@ export async function generateSitemap(): Promise<string> {
       },
       { loc: "/etkinlikler", changefreq: "weekly" as const, priority: 0.8 },
       { loc: "/blog", changefreq: "weekly" as const, priority: 0.8 },
+      { loc: "/oneriler", changefreq: "weekly" as const, priority: 0.7 },
+      {
+        loc: "/liderlik-tablosu",
+        changefreq: "weekly" as const,
+        priority: 0.7,
+      },
+      {
+        loc: "/fiyatlandirma",
+        changefreq: "monthly" as const,
+        priority: 0.6,
+      },
       { loc: "/hakkinda", changefreq: "monthly" as const, priority: 0.7 },
       { loc: "/iletisim", changefreq: "monthly" as const, priority: 0.7 },
       { loc: "/sss", changefreq: "monthly" as const, priority: 0.6 },
@@ -354,11 +365,13 @@ function escapeXml(str: string): string {
 }
 
 export async function generateSitemapIndex(): Promise<string> {
+  const today = new Date().toISOString().split("T")[0];
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
   xml += '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
   for (const loc of ["/sitemap.xml", "/blog/sitemap.xml"]) {
     xml += `  <sitemap>\n`;
     xml += `    <loc>${escapeXml(buildAbsoluteUrl(loc))}</loc>\n`;
+    xml += `    <lastmod>${today}</lastmod>\n`;
     xml += `  </sitemap>\n`;
   }
   xml += "</sitemapindex>";
