@@ -73,8 +73,13 @@ class Logger {
         };
       }
 
+      const entries = Object.entries(value as Record<string, unknown>);
+      if (entries.length === 0) {
+        return '[EmptyObject]';
+      }
+
       const normalized: Record<string, unknown> = {};
-      for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+      for (const [key, nested] of entries) {
         normalized[key] = this.normalizeLogValue(nested, depth + 1);
       }
       return normalized;

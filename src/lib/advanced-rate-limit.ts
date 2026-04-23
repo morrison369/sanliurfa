@@ -19,6 +19,19 @@ export interface RateLimitResult {
   retryAfter?: number;
 }
 
+const RATE_LIMIT_ERROR_LOG_TTL_MS = 60000;
+const rateLimitErrorLogMap = new Map<string, number>();
+
+function shouldLogRateLimitError(signature: string): boolean {
+  const now = Date.now();
+  const lastLoggedAt = rateLimitErrorLogMap.get(signature) || 0;
+  if (now - lastLoggedAt < RATE_LIMIT_ERROR_LOG_TTL_MS) {
+    return false;
+  }
+  rateLimitErrorLogMap.set(signature, now);
+  return true;
+}
+
 async function getRateLimitRedisClient(): Promise<any | null> {
   try {
     return (await getPrimaryRedisClient()) as any;
@@ -142,10 +155,14 @@ export class SlidingWindowLimiter {
         resetAt: new Date(now + this.config.windowSizeMs)
       };
     } catch (error) {
-      logger.error('Rate limit check failed', error instanceof Error ? error : new Error(String(error)), {
-        identifier,
-        method: 'sliding_window'
-      });
+      const message = error instanceof Error ? error.message : String(error);
+      if (shouldLogRateLimitError(`sliding_window:${message}`)) {
+        logger.warn('Rate limit check degraded to in-memory fallback', {
+          identifier,
+          method: 'sliding_window',
+          error: message
+        });
+      }
 
       return this.applyInMemoryFallback(identifier);
     }
@@ -267,9 +284,14 @@ export class TokenBucketLimiter {
         };
       }
     } catch (error) {
-      logger.error('Token bucket check failed', error instanceof Error ? error : new Error(String(error)), {
-        identifier
-      });
+      const message = error instanceof Error ? error.message : String(error);
+      if (shouldLogRateLimitError(`token_bucket:${message}`)) {
+        logger.warn('Token bucket degraded to in-memory fallback', {
+          identifier,
+          method: 'token_bucket',
+          error: message
+        });
+      }
 
       return this.applyInMemoryFallback(identifier);
     }
@@ -355,9 +377,13 @@ export class TieredLimiter {
 
       return limiter.isAllowed(identifier);
     } catch (error) {
-      logger.error('Tiered rate limit check failed', error instanceof Error ? error : new Error(String(error)), {
-        identifier
-      });
+      const message = error instanceof Error ? error.message : String(error);
+      if (shouldLogRateLimitError(`tiered:${message}`)) {
+        logger.warn('Tiered rate limit degraded, allowing request', {
+          identifier,
+          error: message
+        });
+      }
 
       return { allowed: true, remaining: -1, resetAt: new Date() };
     }
