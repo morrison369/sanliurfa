@@ -518,3 +518,7 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 13. `/sosyal/eslesme` sayfası statik demo kartlardan canlı API tabanlı React deneyimine geçirildi.
 14. Eşleşme arayüzünde profil yönetimi (maks 4 foto), aday akışı, swipe aksiyonu ve eşleşme listesi tek ekranda birleştirildi.
 15. Varsayılan header menüye Sosyal > Eşleşme bağlantıları eklendi.
+16. Swipe API uçlarına kullanıcı+IP scope'lu ek rate-limit koruması eklendi (`profile`, `candidates`, `matches`, `swipe action`).
+17. Swipe aday sorgusunda engel ilişkisi SQL seviyesinde filtrelenerek N+1 kontrol kaldırıldı.
+18. Swipe profil foto URL doğrulaması sıkılaştırıldı (yalnızca `https` veya site içi `/` yolları).
+19. Profil ekranına `Sosyal eşleşme` hızlı erişim bağlantısı eklendi.
