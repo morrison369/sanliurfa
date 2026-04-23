@@ -18,8 +18,13 @@ assertContains(
 );
 assertContains(
   cacheSource,
-  "const redisUrl = configuredRedisUrl || `redis://127.0.0.1:6379/${REDIS_DB}`;",
-  "cache layer default redis URL must include REDIS_DB",
+  "const redisUrl = resolveRedisUrl(configuredRedisUrl, REDIS_DB);",
+  "cache layer must resolve redis URL via REDIS_DB-aware helper",
+);
+assertContains(
+  cacheSource,
+  "function resolveRedisUrl(rawUrl: string, redisDb: number): string {",
+  "cache layer must expose REDIS_DB-aware redis URL resolver",
 );
 assertContains(
   cacheSource,
@@ -39,8 +44,13 @@ assertContains(
 );
 assertContains(
   envSource,
-  "const redisUrl = readProcessEnv('REDIS_URL') || `redis://127.0.0.1:6379/${redisDb}`;",
-  "env layer default redis URL must include redisDb",
+  "const redisUrl = resolveRedisUrl(readProcessEnv('REDIS_URL'), redisDb);",
+  "env layer must resolve redis URL via REDIS_DB-aware helper",
+);
+assertContains(
+  envSource,
+  "function resolveRedisUrl(rawUrl: string | undefined, redisDb: number): string {",
+  "env layer must expose REDIS_DB-aware redis URL resolver",
 );
 
 assertContains(
