@@ -676,3 +676,13 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 6. Böylece rate-limit dayanıklılığı ve izolasyon davranışında regresyonlar release öncesi yakalanır.
 7. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
 8. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
+
+## 2026-04-23 Toplu Paket (Redis Client Lifecycle Guard)
+
+1. `src/lib/redis-client.ts` içindeki `closeRedis()` fonksiyonu güvenli no-op davranışa alındı.
+2. Amaç: `cache.ts` içindeki paylaşılan singleton Redis istemcisinin uyumluluk katmanından yanlışlıkla `quit()` edilmesini engellemek.
+3. Bu değişiklik, farklı modüller/route'lar aynı istemciyi kullanırken beklenmedik bağlantı kapanması riskini azaltır.
+4. `scripts/security/redis-isolation-contract.ts` genişletildi ve `closeRedis()` içinde `quit()` çağrısı yasaklandı.
+5. Böylece Redis lifecycle regresyonu security contract aşamasında otomatik yakalanır.
+6. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
+7. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
