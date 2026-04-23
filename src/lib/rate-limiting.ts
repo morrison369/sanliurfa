@@ -30,7 +30,7 @@ interface IPStatus {
 // Check if IP is whitelisted
 export async function isIPWhitelisted(ipAddress: string): Promise<boolean> {
   try {
-    const cacheKey = `sanliurfa:whitelist:${ipAddress}`;
+    const cacheKey = `whitelist:${ipAddress}`;
     const cached = await getCache(cacheKey);
 
     if (cached !== null) {
@@ -54,7 +54,7 @@ export async function isIPWhitelisted(ipAddress: string): Promise<boolean> {
 // Check if IP is blacklisted
 export async function isIPBlacklisted(ipAddress: string): Promise<boolean> {
   try {
-    const cacheKey = `sanliurfa:blacklist:${ipAddress}`;
+    const cacheKey = `blacklist:${ipAddress}`;
     const cached = await getCache(cacheKey);
 
     if (cached !== null) {
@@ -87,7 +87,7 @@ export async function addToWhitelist(ipAddress: string, name: string, reason: st
       expires_at: expiresAt || null
     });
 
-    await deleteCache(`sanliurfa:whitelist:${ipAddress}`);
+    await deleteCache(`whitelist:${ipAddress}`);
     logger.info('IP whitelisted', { ipAddress, reason });
     return true;
   } catch (error) {
@@ -109,7 +109,7 @@ export async function addToBlacklist(ipAddress: string, reason: string, severity
       expires_at: expiresAt || null
     });
 
-    await deleteCache(`sanliurfa:blacklist:${ipAddress}`);
+    await deleteCache(`blacklist:${ipAddress}`);
     logger.warn('IP blacklisted', { ipAddress, reason, severity });
     return true;
   } catch (error) {
@@ -122,7 +122,7 @@ export async function addToBlacklist(ipAddress: string, reason: string, severity
 export async function removeFromWhitelist(ipAddress: string): Promise<boolean> {
   try {
     await queryOne('DELETE FROM ip_whitelist WHERE ip_address = $1', [ipAddress]);
-    await deleteCache(`sanliurfa:whitelist:${ipAddress}`);
+    await deleteCache(`whitelist:${ipAddress}`);
     logger.info('IP removed from whitelist', { ipAddress });
     return true;
   } catch (error) {
@@ -135,7 +135,7 @@ export async function removeFromWhitelist(ipAddress: string): Promise<boolean> {
 export async function removeFromBlacklist(ipAddress: string): Promise<boolean> {
   try {
     await queryOne('DELETE FROM ip_blacklist WHERE ip_address = $1', [ipAddress]);
-    await deleteCache(`sanliurfa:blacklist:${ipAddress}`);
+    await deleteCache(`blacklist:${ipAddress}`);
     logger.info('IP removed from blacklist', { ipAddress });
     return true;
   } catch (error) {
@@ -160,9 +160,9 @@ export async function recordRequest(userId: string | null, ipAddress: string, en
     });
 
     // Update rate limit counter in cache
-    const minuteKey = `sanliurfa:ratelimit:${ipAddress}:minute:${Math.floor(Date.now() / 60000)}`;
-    const hourKey = `sanliurfa:ratelimit:${ipAddress}:hour:${Math.floor(Date.now() / 3600000)}`;
-    const dayKey = `sanliurfa:ratelimit:${ipAddress}:day:${Math.floor(Date.now() / 86400000)}`;
+    const minuteKey = `ratelimit:${ipAddress}:minute:${Math.floor(Date.now() / 60000)}`;
+    const hourKey = `ratelimit:${ipAddress}:hour:${Math.floor(Date.now() / 3600000)}`;
+    const dayKey = `ratelimit:${ipAddress}:day:${Math.floor(Date.now() / 86400000)}`;
 
     let minuteCount = await getCache(minuteKey);
     let hourCount = await getCache(hourKey);
@@ -219,7 +219,7 @@ export async function checkRateLimit(ipAddress: string, userId?: string, endpoin
     };
 
     // Check minute limit
-    const minuteKey = `sanliurfa:ratelimit:${ipAddress}:minute:${Math.floor(Date.now() / 60000)}`;
+    const minuteKey = `ratelimit:${ipAddress}:minute:${Math.floor(Date.now() / 60000)}`;
     const minuteCount = parseInt(await getCache(minuteKey) || '0');
 
     if (minuteCount >= limits.requests_per_minute) {
@@ -227,7 +227,7 @@ export async function checkRateLimit(ipAddress: string, userId?: string, endpoin
     }
 
     // Check hour limit
-    const hourKey = `sanliurfa:ratelimit:${ipAddress}:hour:${Math.floor(Date.now() / 3600000)}`;
+    const hourKey = `ratelimit:${ipAddress}:hour:${Math.floor(Date.now() / 3600000)}`;
     const hourCount = parseInt(await getCache(hourKey) || '0');
 
     if (hourCount >= limits.requests_per_hour) {
@@ -235,7 +235,7 @@ export async function checkRateLimit(ipAddress: string, userId?: string, endpoin
     }
 
     // Check day limit
-    const dayKey = `sanliurfa:ratelimit:${ipAddress}:day:${Math.floor(Date.now() / 86400000)}`;
+    const dayKey = `ratelimit:${ipAddress}:day:${Math.floor(Date.now() / 86400000)}`;
     const dayCount = parseInt(await getCache(dayKey) || '0');
 
     if (dayCount >= limits.requests_per_day) {
@@ -258,9 +258,9 @@ export async function checkRateLimit(ipAddress: string, userId?: string, endpoin
 // Get rate limit status for dashboard
 export async function getRateLimitStatus(ipAddress: string): Promise<any> {
   try {
-    const minuteKey = `sanliurfa:ratelimit:${ipAddress}:minute:${Math.floor(Date.now() / 60000)}`;
-    const hourKey = `sanliurfa:ratelimit:${ipAddress}:hour:${Math.floor(Date.now() / 3600000)}`;
-    const dayKey = `sanliurfa:ratelimit:${ipAddress}:day:${Math.floor(Date.now() / 86400000)}`;
+    const minuteKey = `ratelimit:${ipAddress}:minute:${Math.floor(Date.now() / 60000)}`;
+    const hourKey = `ratelimit:${ipAddress}:hour:${Math.floor(Date.now() / 3600000)}`;
+    const dayKey = `ratelimit:${ipAddress}:day:${Math.floor(Date.now() / 86400000)}`;
 
     const minuteCount = parseInt(await getCache(minuteKey) || '0');
     const hourCount = parseInt(await getCache(hourKey) || '0');
