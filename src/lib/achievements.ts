@@ -33,7 +33,7 @@ export interface UserAchievement {
  * Get all achievements
  */
 export async function getAllAchievements(): Promise<Achievement[]> {
-  const cacheKey = 'sanliurfa:achievements:all';
+  const cacheKey = 'achievements:all';
 
   try {
     const cached = await getCache<Achievement[]>(cacheKey);
@@ -100,7 +100,7 @@ export async function unlockAchievementIfEarned(
     }
 
     // Clear cache
-    await deleteCache(`sanliurfa:achievements:user:${userId}`);
+    await deleteCache(`achievements:user:${userId}`);
 
     // Send notification
     await createNotification(
@@ -123,7 +123,7 @@ export async function unlockAchievementIfEarned(
  * Get user's unlocked achievements
  */
 export async function getUserAchievements(userId: string): Promise<(UserAchievement & Achievement)[]> {
-  const cacheKey = `sanliurfa:achievements:user:${userId}`;
+  const cacheKey = `achievements:user:${userId}`;
 
   try {
     const cached = await getCache<(UserAchievement & Achievement)[]>(cacheKey);
@@ -178,7 +178,7 @@ export async function markAchievementViewed(userAchievementId: string, userId: s
     );
 
     // Clear cache
-    await deleteCache(`sanliurfa:achievements:user:${userId}`);
+    await deleteCache(`achievements:user:${userId}`);
   } catch (error) {
     logger.error('Failed to mark achievement viewed', error instanceof Error ? error : new Error(String(error)));
   }

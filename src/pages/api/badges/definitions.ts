@@ -17,18 +17,19 @@ export const GET: APIRoute = async ({ request }) => {
 
   try {
     // Check cache
-    const cacheKey = 'sanliurfa:badge:definitions';
-    const cached = await getCache(cacheKey);
+    const cacheKey = 'badge:definitions';
+    const cached = await getCache<any[]>(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/badges/definitions', HttpStatus.OK, Date.now() - startTime);
       return apiResponse({
         success: true,
-        definitions: JSON.parse(cached)
+        definitions: cached
       }, HttpStatus.OK, requestId);
     }
 
     // Get badge definitions
     const definitions = await getBadgeDefinitions();
+    await setCache(cacheKey, definitions, 3600);
 
     recordRequest('GET', '/api/badges/definitions', HttpStatus.OK, Date.now() - startTime);
 
