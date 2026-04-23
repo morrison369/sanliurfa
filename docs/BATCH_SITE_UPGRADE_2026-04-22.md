@@ -665,3 +665,14 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 6. Böylece Redis izolasyon regresyonu CI/security gate aşamasında otomatik yakalanır.
 7. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
 8. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
+
+## 2026-04-23 Toplu Paket (Rate Limit Resilience Contract)
+
+1. Yeni security contract eklendi: `scripts/security/rate-limit-resilience-contract.ts`.
+2. Kontrat, `advanced-rate-limit.ts` içinde Redis key prefix kullanımını (`prefixKey(...)`) zorunlu doğrular.
+3. Kontrat, Redis erişilemediğinde in-memory fallback akışının zorunlu olduğunu doğrular.
+4. Kontrat, sliding/token fallback cleanup fonksiyonlarının varlığını doğrular (bellek sınırlandırma koruması).
+5. `scripts/security/public-readiness-gate.mjs` içine yeni kontrat bağlandı; gate zincirinde otomatik çalışır.
+6. Böylece rate-limit dayanıklılığı ve izolasyon davranışında regresyonlar release öncesi yakalanır.
+7. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
+8. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
