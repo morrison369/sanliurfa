@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { loadLocalEnv } from './lib/load-local-env';
+import { fillRate, loadReport, percent } from './lib/image-fill-report';
 
 loadLocalEnv();
 
@@ -10,8 +11,10 @@ const limitArg = process.argv.find((arg) => arg.startsWith('--limit='))?.split('
 const queryModeArg = process.argv.find((arg) => arg.startsWith('--query-mode='))?.split('=')[1];
 const dryRunOnly = process.argv.includes('--dry-run-only');
 const writeOnly = process.argv.includes('--write-only');
+const minFillRateArg = process.argv.find((arg) => arg.startsWith('--min-fill-rate='))?.split('=')[1];
 const limit = Math.max(1, Number.parseInt(limitArg || '100', 10));
 const queryMode = queryModeArg === 'expanded' ? 'expanded' : 'strict';
+const minFillRate = clampRate(minFillRateArg ? Number.parseFloat(minFillRateArg) : 0);
 const databaseUrl = databaseUrlArg || process.env.DATABASE_URL;
 
 if (!databaseUrl) {
@@ -45,11 +48,17 @@ if (!dryRunOnly) {
     reportJson: writeReport,
   });
   runSummary(writeReport);
+  enforceMinFillRate(writeReport);
+}
+
+if (!dryRunOnly && !writeOnly) {
+  runCompare(dryRunReport, writeReport);
 }
 
 console.log(`[images:pipeline] tamamlandı
 - dry-run report: ${dryRunOnly ? 'skip' : dryRunReport}
-- write report: ${writeOnly ? 'skip' : writeReport}`);
+- write report: ${writeOnly ? 'skip' : writeReport}
+- minFillRate=${percent(minFillRate)}`);
 
 function runFill(input: { write: boolean; reportJson: string }): void {
   const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -80,18 +89,57 @@ function runFill(input: { write: boolean; reportJson: string }): void {
 }
 
 function runSummary(reportJson: string): void {
-  const nodeCommand = process.platform === 'win32' ? 'node.exe' : 'node';
-  const result = spawnSync(
-    nodeCommand,
-    ['./node_modules/tsx/dist/cli.mjs', 'scripts/image-fill-report-summary.ts', `--report-json=${reportJson}`],
-    {
-      stdio: 'inherit',
-      cwd: process.cwd(),
-      env: process.env,
-    }
-  );
+  const result = runTsxScript('scripts/image-fill-report-summary.ts', [`--report-json=${reportJson}`]);
 
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
   }
+}
+
+function runCompare(beforeReport: string, afterReport: string): void {
+  const result = runTsxScript('scripts/image-fill-report-compare.ts', [
+    `--before-report=${beforeReport}`,
+    `--after-report=${afterReport}`,
+  ]);
+
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1);
+  }
+}
+
+function enforceMinFillRate(reportJson: string): void {
+  if (minFillRate <= 0) {
+    return;
+  }
+
+  const report = loadReport(reportJson);
+  const actualRate = fillRate(report);
+  if (actualRate + Number.EPSILON < minFillRate) {
+    console.error(
+      `[images:pipeline] min fill rate sağlanamadı. expected=${percent(minFillRate)} actual=${percent(actualRate)}`
+    );
+    process.exit(2);
+  }
+}
+
+function runTsxScript(scriptPath: string, args: string[]) {
+  const nodeCommand = process.platform === 'win32' ? 'node.exe' : 'node';
+  return spawnSync(nodeCommand, ['./node_modules/tsx/dist/cli.mjs', scriptPath, ...args], {
+    stdio: 'inherit',
+    cwd: process.cwd(),
+    env: process.env,
+  });
+}
+
+function clampRate(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  if (value < 0) {
+    return 0;
+  }
+  if (value > 100) {
+    return 100;
+  }
+  return value;
 }

@@ -561,3 +561,5 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 7. Pipeline aşama kontrolü eklendi: `--dry-run-only` veya `--write-only` (aynı anda kullanılamaz).
 8. Yeni rapor özetleyici script eklendi: `scripts/image-fill-report-summary.ts`.
 9. Pipeline çalışınca her rapor için otomatik özet yazdırılır (toplamlar + en sık hata nedenleri).
+10. Yeni rapor karşılaştırma scripti eklendi: `scripts/image-fill-report-compare.ts` (dry-run vs write delta).
+11. Pipeline'a kalite eşiği eklendi: `--min-fill-rate=<0-100>`; write raporu eşik altında kalırsa süreç non-zero kodla kapanır.
