@@ -545,6 +545,7 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 6. `blog_posts.featured_image` + `blog_posts.thumbnail`
 7. `events.image_url`
 8. Script varsayılanı dry-run, `--write` ile veritabanına yazar; `--type=places|blog|events|all` ve `--limit=<n>` parametrelerini destekler.
-9. `package.json` komutları eklendi:
-10. `npm run images:content:fill`
-11. `npm run images:content:fill:write`
+9. Env dosyası olmayan ortamlarda `--database-url=<postgresql://...>` override parametresiyle doğrudan bağlantı desteklenir.
+10. `package.json` komutları eklendi:
+11. `npm run images:content:fill`
+12. `npm run images:content:fill:write`

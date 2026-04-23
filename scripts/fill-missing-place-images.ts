@@ -1,5 +1,6 @@
 import pg from 'pg';
 import { fetchAndStoreProviderImage, hasImageProviderCredentials } from '../src/lib/image-providers';
+import { loadLocalEnv } from './lib/load-local-env';
 
 const { Pool } = pg;
 
@@ -14,7 +15,9 @@ const args = new Set(process.argv.slice(2));
 const write = args.has('--write');
 const limitArg = process.argv.find((arg) => arg.startsWith('--limit='));
 const limit = Math.max(1, Number.parseInt(limitArg?.split('=')[1] || '20', 10));
-const databaseUrl = process.env.DATABASE_URL;
+const databaseUrlArg = process.argv.find((arg) => arg.startsWith('--database-url='))?.split('=')[1];
+loadLocalEnv();
+const databaseUrl = databaseUrlArg || process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   console.error('[images] DATABASE_URL tanımlı değil.');
