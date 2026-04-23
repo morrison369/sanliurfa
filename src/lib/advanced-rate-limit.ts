@@ -88,6 +88,7 @@ async function redisSetEx(client: any, key: string, ttlSeconds: number, value: s
  */
 export class SlidingWindowLimiter {
   private config: RateLimitConfig;
+  private fallbackWindows = new Map<string, number[]>();
 
   constructor(config: RateLimitConfig) {
     this.config = {
@@ -102,7 +103,7 @@ export class SlidingWindowLimiter {
   async isAllowed(identifier: string): Promise<RateLimitResult> {
     const redis = await getRateLimitRedisClient();
     if (!redis) {
-      return { allowed: true, remaining: -1, resetAt: new Date() };
+      return this.applyInMemoryFallback(identifier);
     }
 
     const key = prefixKey(`${this.config.keyPrefix}${identifier}`);
@@ -146,8 +147,51 @@ export class SlidingWindowLimiter {
         method: 'sliding_window'
       });
 
-      // Fail open on error
-      return { allowed: true, remaining: -1, resetAt: new Date() };
+      return this.applyInMemoryFallback(identifier);
+    }
+  }
+
+  private applyInMemoryFallback(identifier: string): RateLimitResult {
+    const now = Date.now();
+    const windowStart = now - this.config.windowSizeMs;
+    const bucket = this.fallbackWindows.get(identifier) || [];
+    const filtered = bucket.filter(ts => ts > windowStart);
+
+    if (filtered.length >= this.config.maxRequests) {
+      const oldest = filtered[0] || now;
+      const retryAfter = Math.ceil((oldest + this.config.windowSizeMs - now) / 1000);
+
+      this.fallbackWindows.set(identifier, filtered);
+      this.cleanupFallbackWindowMap(now);
+      return {
+        allowed: false,
+        remaining: 0,
+        resetAt: new Date(oldest + this.config.windowSizeMs),
+        retryAfter
+      };
+    }
+
+    filtered.push(now);
+    this.fallbackWindows.set(identifier, filtered);
+    this.cleanupFallbackWindowMap(now);
+
+    return {
+      allowed: true,
+      remaining: this.config.maxRequests - filtered.length,
+      resetAt: new Date(now + this.config.windowSizeMs)
+    };
+  }
+
+  private cleanupFallbackWindowMap(nowMs: number): void {
+    if (this.fallbackWindows.size < 5000) {
+      return;
+    }
+
+    const minActiveTs = nowMs - (this.config.windowSizeMs * 2);
+    for (const [key, timestamps] of this.fallbackWindows.entries()) {
+      if (timestamps.length === 0 || timestamps[timestamps.length - 1] < minActiveTs) {
+        this.fallbackWindows.delete(key);
+      }
     }
   }
 }
@@ -157,6 +201,7 @@ export class SlidingWindowLimiter {
  */
 export class TokenBucketLimiter {
   private config: RateLimitConfig & { refillRatePerSecond: number };
+  private fallbackBuckets = new Map<string, { tokens: number; lastRefill: number }>();
 
   constructor(config: RateLimitConfig & { refillRatePerSecond?: number }) {
     this.config = {
@@ -172,7 +217,7 @@ export class TokenBucketLimiter {
   async isAllowed(identifier: string): Promise<RateLimitResult> {
     const redis = await getRateLimitRedisClient();
     if (!redis) {
-      return { allowed: true, remaining: -1, resetAt: new Date() };
+      return this.applyInMemoryFallback(identifier);
     }
 
     const key = prefixKey(`${this.config.keyPrefix}${identifier}`);
@@ -226,7 +271,55 @@ export class TokenBucketLimiter {
         identifier
       });
 
-      return { allowed: true, remaining: -1, resetAt: new Date() };
+      return this.applyInMemoryFallback(identifier);
+    }
+  }
+
+  private applyInMemoryFallback(identifier: string): RateLimitResult {
+    const now = Date.now() / 1000;
+    const current = this.fallbackBuckets.get(identifier) || {
+      tokens: this.config.maxRequests,
+      lastRefill: now
+    };
+
+    const elapsedSeconds = now - current.lastRefill;
+    const refilled = Math.min(
+      this.config.maxRequests,
+      current.tokens + (elapsedSeconds * this.config.refillRatePerSecond)
+    );
+
+    if (refilled >= 1) {
+      const tokensAfter = refilled - 1;
+      this.fallbackBuckets.set(identifier, { tokens: tokensAfter, lastRefill: now });
+      this.cleanupFallbackBucketMap(now);
+      return {
+        allowed: true,
+        remaining: Math.floor(tokensAfter),
+        resetAt: new Date((now * 1000) + this.config.windowSizeMs)
+      };
+    }
+
+    const retryAfter = Math.ceil((1 - refilled) / this.config.refillRatePerSecond);
+    this.fallbackBuckets.set(identifier, { tokens: refilled, lastRefill: now });
+    this.cleanupFallbackBucketMap(now);
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: new Date((now + retryAfter) * 1000),
+      retryAfter
+    };
+  }
+
+  private cleanupFallbackBucketMap(nowSeconds: number): void {
+    if (this.fallbackBuckets.size < 5000) {
+      return;
+    }
+
+    const staleBefore = nowSeconds - ((this.config.windowSizeMs / 1000) * 2);
+    for (const [key, bucket] of this.fallbackBuckets.entries()) {
+      if (bucket.lastRefill < staleBefore) {
+        this.fallbackBuckets.delete(key);
+      }
     }
   }
 }
