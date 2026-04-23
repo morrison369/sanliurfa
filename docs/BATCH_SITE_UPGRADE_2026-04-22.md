@@ -567,3 +567,5 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 13. Pipeline için hızlı mod eklendi: `--skip-dry-run-probe` (ağ çağrısı azaltılmış hızlı dry-run).
 14. `src/lib/image-providers.ts` sağlayıcı HTTP çağrılarına timeout + retry/backoff katmanı eklendi.
 15. Geçici hata kodlarında (`408/425/429/5xx`) otomatik tekrar denenir; timeout/retry parametreleri env ile yönetilir.
+16. `scripts/fill-missing-content-images.ts` içine kontrollü paralellik eklendi: `--concurrency=<1-10>` (varsayılan `3`).
+17. Pipeline komutu bu concurrency değerini otomatik aktarır; `images:content:pipeline:turbo` profili ile yüksek paralellik hızlı mod açılır.
