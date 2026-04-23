@@ -68,6 +68,16 @@ if (!rssOutputContract.ok) {
   );
 }
 
+const envAccessContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/env-access-contract.ts',
+]);
+if (!envAccessContract.ok) {
+  blockers.push(
+    `env access contract failed:\n${envAccessContract.stderr || envAccessContract.stdout}`,
+  );
+}
+
 const historyDeployKey = runAllowFail('git', ['log', '--all', '--name-only', '--', 'deploy_key']);
 if ((historyDeployKey.stdout || '').includes('deploy_key')) {
   blockers.push('git history contains deploy_key; rotate keys and clean history before public visibility');
