@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { insert, queryOne } from '../../../lib/postgres';
 import { deleteCachePattern } from '../../../lib/cache';
 import { saveFile } from '../../../lib/file-storage';
+import { evaluatePlaceQuality, normalizePlaceImages, parseGalleryImageUrls } from '../../../lib/place-quality';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -67,11 +68,15 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
     const longitude = formData.get('longitude')?.toString();
     const providerImageUrl = formData.get('provider_image_url')?.toString().trim();
     const coverImage = formData.get('cover_image');
+    const galleryFiles = formData.getAll('gallery').filter((item) => item instanceof File && item.size > 0) as File[];
+    const galleryImageUrls = parseGalleryImageUrls(formData.get('gallery_images_urls'));
     const amenities = formData.getAll('amenities').map(String).filter(Boolean);
     const tags = (formData.get('tags')?.toString() || '')
       .split(',')
       .map((tag) => tag.trim())
       .filter(Boolean);
+    const shortDescription = formData.get('short_description')?.toString().trim() || null;
+    const phone = formData.get('phone')?.toString().trim() || null;
 
     const openingHours: Record<string, string> = {};
     for (const day of ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']) {
@@ -91,6 +96,14 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
     if (imageFile && !ALLOWED_IMAGE_TYPES.has(imageFile.type)) {
       return redirect('/admin/places/add?error=invalid_image_type');
     }
+    for (const galleryFile of galleryFiles) {
+      if (galleryFile.size > MAX_IMAGE_SIZE) {
+        return redirect('/admin/places/add?error=image_too_large');
+      }
+      if (!ALLOWED_IMAGE_TYPES.has(galleryFile.type)) {
+        return redirect('/admin/places/add?error=invalid_image_type');
+      }
+    }
 
     let imagePath = providerImageUrl || null;
     if (imageFile) {
@@ -98,14 +111,48 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
       imagePath = savedImage.filePath;
     }
 
+    const uploadedGalleryPaths: string[] = [];
+    for (let index = 0; index < galleryFiles.length; index += 1) {
+      const galleryFile = galleryFiles[index];
+      const savedImage = await saveFile(galleryFile, 'places', `${slug}-gallery-${index + 1}`);
+      uploadedGalleryPaths.push(savedImage.filePath);
+    }
+
+    const normalizedImages = normalizePlaceImages(
+      [...uploadedGalleryPaths, ...galleryImageUrls],
+      imagePath,
+    );
+
+    const quality = evaluatePlaceQuality({
+      name,
+      category,
+      description,
+      shortDescription,
+      address,
+      phone,
+      latitude,
+      longitude,
+      imageUrl: normalizedImages[0] || imagePath,
+      images: normalizedImages,
+      status,
+    });
+
+    if (status === 'active' && !quality.isPublishable) {
+      return redirect(
+        `/admin/places/add?error=quality_threshold&missing=${encodeURIComponent(
+          quality.missingFields.join(','),
+        )}`,
+      );
+    }
+
     await insert('places', {
       slug,
       name,
       category,
       description,
-      short_description: formData.get('short_description')?.toString().trim() || null,
+      short_description: shortDescription,
       address,
-      phone: formData.get('phone')?.toString().trim() || null,
+      phone,
       email: formData.get('email')?.toString().trim() || null,
       website: formData.get('website')?.toString().trim() || null,
       latitude: latitude ? Number(latitude) : null,
@@ -116,8 +163,8 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
       is_verified: formData.get('is_verified') === 'on',
       amenities,
       tags,
-      image_url: imagePath,
-      images: imagePath ? [imagePath] : [],
+      image_url: normalizedImages[0] || null,
+      images: normalizedImages,
       opening_hours: openingHours,
       created_by: locals.user?.id || null,
       created_at: new Date().toISOString(),

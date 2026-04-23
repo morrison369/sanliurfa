@@ -176,6 +176,26 @@ if (!imageSlugContract.ok) {
   );
 }
 
+const homepageDataContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/homepage-data-contract.ts',
+]);
+if (!homepageDataContract.ok) {
+  blockers.push(
+    `homepage data contract failed:\n${homepageDataContract.stderr || homepageDataContract.stdout}`,
+  );
+}
+
+const placeQualityContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/place-quality-contract.ts',
+]);
+if (!placeQualityContract.ok) {
+  blockers.push(
+    `place quality contract failed:\n${placeQualityContract.stderr || placeQualityContract.stdout}`,
+  );
+}
+
 const portLockContract = runAllowFail(process.execPath, [
   'node_modules/tsx/dist/cli.mjs',
   'scripts/security/port-lock-contract.ts',

@@ -3,24 +3,33 @@ import { Calendar, User, Clock, ArrowRight } from "lucide-react";
 import { query } from "../lib/postgres";
 import { getCuratedBlogPosts } from "../data/curated-blog-posts";
 
-let posts = getCuratedBlogPosts()
+interface Props {
+  posts?: Array<Record<string, any>>;
+}
+
+const { posts: incomingPosts } = Astro.props as Props;
+let posts = (Array.isArray(incomingPosts) && incomingPosts.length > 0 ? incomingPosts : getCuratedBlogPosts()
   .slice(0, 3)
   .map((post) => ({
     ...post,
     full_name: post.authorName,
     published_at: post.publishedAt,
-  }));
+  })));
 
 try {
-  const result = await query(
-    `SELECT bp.*, u.full_name
-     FROM blog_posts bp
-     LEFT JOIN users u ON bp.author_id = u.id
-     WHERE bp.status = 'published'
-     ORDER BY bp.is_featured DESC, bp.published_at DESC
-     LIMIT 3`,
-  );
-  posts = result.rows.length > 0 ? result.rows : posts;
+  if (!incomingPosts || incomingPosts.length === 0) {
+    const result = await query(
+      `SELECT bp.id, bp.slug, bp.title, bp.excerpt, bp.content, bp.cover_image, bp.category, bp.published_at, u.full_name
+       FROM blog_posts bp
+       LEFT JOIN users u ON bp.author_id = u.id
+       WHERE bp.status = 'published'
+       ORDER BY bp.is_featured DESC, bp.published_at DESC
+       LIMIT 3`,
+      [],
+      { useReplica: true },
+    );
+    posts = result.rows.length > 0 ? result.rows : posts;
+  }
 } catch {
   posts = posts;
 }
@@ -40,6 +49,16 @@ const getCategoryLabel = (category: string) => {
 
 const calculateReadTime = (content: string) => {
   return `${Math.ceil((content?.split(/\s+/).length || 0) / 200)} dk`;
+};
+
+const getPostCoverImage = (post: Record<string, any>): string => {
+  if (typeof post.cover_image === "string" && post.cover_image.trim()) {
+    return post.cover_image.trim();
+  }
+  if (typeof post.featuredImage === "string" && post.featuredImage.trim()) {
+    return post.featuredImage.trim();
+  }
+  return "/images/placeholder-blog.jpg";
 };
 ---
 
@@ -75,7 +94,7 @@ const calculateReadTime = (content: string) => {
             <a href={`/blog/${post.slug}`}>
               <div class="relative aspect-[16/10] overflow-hidden">
                 <img
-                  src={post.cover_image || "/images/placeholder-blog.jpg"}
+                  src={getPostCoverImage(post)}
                   alt={post.title}
                   class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   loading="lazy"

@@ -2,6 +2,11 @@
 import { Star, MapPin, Heart, TrendingUp } from 'lucide-react';
 import { query } from '../lib/postgres';
 import { getCuratedPlaces } from '../data/curated-places';
+import { normalizePlaceImages } from '../lib/place-quality';
+
+interface Props {
+  places?: Array<Record<string, any>>;
+}
 
 const categories = [
   { id: 'all', label: 'Tümü' },
@@ -11,15 +16,26 @@ const categories = [
   { id: 'museum', label: 'Müze' },
 ];
 
-let places = getCuratedPlaces(8);
+const { places: incomingPlaces } = Astro.props as Props;
+let places = Array.isArray(incomingPlaces) && incomingPlaces.length > 0 ? incomingPlaces : getCuratedPlaces(8);
 
 try {
-  const result = await query(
-    "SELECT * FROM places WHERE status = 'active' ORDER BY is_featured DESC, rating DESC LIMIT 8"
-  );
-  places = result.rows.length > 0 ? result.rows : places;
+  if (!incomingPlaces || incomingPlaces.length === 0) {
+    const result = await query(
+      `SELECT id, slug, name, description, short_description, category, address, images, image_url,
+              COALESCE(avg_rating, rating, 0) AS rating, COALESCE(review_count, 0) AS review_count,
+              COALESCE(price_range, 2) AS price_range, tags, is_featured, is_verified
+         FROM places
+        WHERE status = 'active'
+        ORDER BY is_featured DESC, COALESCE(avg_rating, rating, 0) DESC
+        LIMIT 8`,
+      [],
+      { useReplica: true },
+    );
+    places = result.rows.length > 0 ? result.rows : places;
+  }
 } catch {
-  places = getCuratedPlaces(8);
+  places = places.length > 0 ? places : getCuratedPlaces(8);
 }
 
 const priceRangeSymbols = (range: number) => '₺'.repeat(range);
@@ -30,6 +46,28 @@ const getCategoryLabel = (category: string) => {
     park: 'Park', shopping: 'Alışveriş', entertainment: 'Eğlence', other: 'Diğer',
   };
   return labels[category] || category;
+};
+
+const getPlaceImage = (place: Record<string, any>): string => {
+  const images = normalizePlaceImages(place.images, place.image_url);
+  return images[0] || '/images/placeholder-place.jpg';
+};
+
+const normalizePlaceTags = (tags: unknown): string[] => {
+  if (Array.isArray(tags)) {
+    return tags.map((tag) => String(tag).trim()).filter(Boolean);
+  }
+  if (typeof tags === 'string' && tags.trim()) {
+    try {
+      const parsed = JSON.parse(tags);
+      if (Array.isArray(parsed)) {
+        return parsed.map((tag) => String(tag).trim()).filter(Boolean);
+      }
+    } catch {
+      return tags.split(',').map((tag) => tag.trim()).filter(Boolean);
+    }
+  }
+  return [];
 };
 ---
 
@@ -70,7 +108,7 @@ const getCategoryLabel = (category: string) => {
           <a href={`/places/${place.slug}`} class="block">
           <div class="relative aspect-[4/3] overflow-hidden rounded-t-xl">
             <img
-              src={place.images?.[0] || '/images/placeholder-place.jpg'}
+              src={getPlaceImage(place)}
               alt={place.name}
               class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               loading="lazy"
@@ -115,7 +153,7 @@ const getCategoryLabel = (category: string) => {
               <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs rounded-full">
                 {getCategoryLabel(place.category)}
               </span>
-              {place.tags?.slice(0, 1).map((tag: string) => (
+              {normalizePlaceTags(place.tags).slice(0, 1).map((tag) => (
                 <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs rounded-full">
                   {tag}
                 </span>

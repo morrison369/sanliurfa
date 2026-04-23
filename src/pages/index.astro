@@ -19,13 +19,13 @@ import {
   buildWebSiteSchema,
 } from "../lib/rich-snippets";
 import { getPublicSiteSettings } from "../lib/site-settings";
-import { getCuratedBlogPosts } from "../data/curated-blog-posts";
-import { getCuratedPlaces } from "../data/curated-places";
+import { getHomepageData } from "../lib/homepage-data";
 
 const publicSiteSettings = await getPublicSiteSettings();
 const homepageSections = publicSiteSettings.homepageSections;
-const homePlaces = getCuratedPlaces(6);
-const homePosts = getCuratedBlogPosts().slice(0, 6);
+const homepageData = await getHomepageData({ placesLimit: 6, postsLimit: 6 });
+const homePlaces = homepageData.places;
+const homePosts = homepageData.posts;
 const homeDescription =
   "Şanlıurfa'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, Harran, gastronomi ve daha fazlası. Mekânlar, yorumlar ve puanlama sistemi ile keşfedin.";
 
@@ -86,7 +86,7 @@ const seo = {
     ) : sectionId === "stats" ? (
       <Stats />
     ) : sectionId === "featured-places" ? (
-      <FeaturedPlaces />
+      <FeaturedPlaces places={homePlaces} />
     ) : sectionId === "historical-sites" ? (
       <HistoricalSites />
     ) : sectionId === "food-guide" ? (
@@ -94,7 +94,7 @@ const seo = {
     ) : sectionId === "upcoming-events" ? (
       <UpcomingEvents />
     ) : sectionId === "latest-blog" ? (
-      <LatestBlog />
+      <LatestBlog posts={homePosts.slice(0, 3)} />
     ) : sectionId === "cta" ? (
       <CTASection />
     ) : null

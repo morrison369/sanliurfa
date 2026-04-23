@@ -7,6 +7,7 @@ Bu dosya proje kapanışını P0/P1/P2 olarak kilitler. Amaç yeni phase üretme
 - [x] Canlı kabul checklist’i oluşturuldu.
 - [x] Port/profil kilidi (`4321`) kontrat seviyesinde aktif.
 - [x] Admin-driven ana sayfa kontratı aktif.
+- [x] Ana sayfa tek-kaynak veri akışı (`src/lib/homepage-data.ts`) aktif.
 - [x] SEO şablon kontratı aktif.
 - [x] Türkçe/UTF-8 kalite kontratı aktif.
 - [x] Görsel slug adlandırma kontratı aktif.
@@ -16,7 +17,7 @@ Bu dosya proje kapanışını P0/P1/P2 olarak kilitler. Amaç yeni phase üretme
 
 ## P1 (İlk Sprint)
 - [ ] Sosyal moderasyon metriklerini admin dashboard’da tek panelde birleştir.
-- [ ] Mekan içerik kalite eşiği (minimum alan) onaysız yayın engeli.
+- [x] Mekan içerik kalite eşiği (minimum alan) onaysız yayın engeli.
 - [ ] Arama sıralama ağırlıkları için ilçe/kategori/popülerlik iyileştirme.
 - [ ] Mobil performans (CWV) alarm eşikleri ve takip paneli.
 
