@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import bcryptjs from 'bcryptjs';
 import { queryOne } from './postgres';
 import { setCache, getCache, deleteCache, isRedisAvailable } from './cache';
+import { logger } from './logging';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -197,7 +198,10 @@ export async function createToken(
       return token;
     }
   } catch (error) {
-    console.error('Failed to create session in Redis:', error);
+    logger.warn(
+      'Failed to create session in Redis; falling back to stateless token',
+      error instanceof Error ? error : new Error(String(error))
+    );
   }
 
   return createStatelessSessionToken(sessionData);
@@ -233,7 +237,7 @@ export async function verifyToken(token: string): Promise<SessionData | null> {
 
     return sessionData;
   } catch (error) {
-    console.error('Token verification error:', error);
+    logger.error('Token verification error', error instanceof Error ? error : new Error(String(error)));
     const fallbackSession = getInMemorySession(token);
     if (fallbackSession) {
       setInMemorySession(token, fallbackSession);
@@ -278,7 +282,7 @@ export async function signOut(token: string): Promise<void> {
   try {
     await deleteCache(`session:${token}`);
   } catch (error) {
-    console.error('Sign out error:', error);
+    logger.warn('Sign out cache cleanup failed', error instanceof Error ? error : new Error(String(error)));
   } finally {
     inMemorySessions.delete(token);
   }
@@ -312,9 +316,12 @@ export async function signIn(email: string, password: string) {
         try {
           const newHash = await hashPassword(password);
           await queryOne('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, user.id]);
-          console.info('Password hash upgraded to bcrypt for user:', email);
+          logger.info('Password hash upgraded to bcrypt', { email });
         } catch (upgradeError) {
-          console.error('Failed to upgrade password hash:', upgradeError);
+          logger.error(
+            'Failed to upgrade password hash',
+            upgradeError instanceof Error ? upgradeError : new Error(String(upgradeError))
+          );
           // Continue anyway - old hash still works
         }
       }
@@ -334,7 +341,7 @@ export async function signIn(email: string, password: string) {
 
     return { data: { user: safeUser, token }, error: null };
   } catch (error: any) {
-    console.error('Sign in error:', error);
+    logger.error('Sign in error', error instanceof Error ? error : new Error(String(error)), { email });
     return { data: null, error: { message: 'Authentication failed' } };
   }
 }
@@ -361,7 +368,7 @@ export async function signUp(email: string, password: string, fullName: string) 
 
     return { data: { user: result }, error: null };
   } catch (error: any) {
-    console.error('Sign up error:', error);
+    logger.error('Sign up error', error instanceof Error ? error : new Error(String(error)), { email });
     return { data: null, error: { message: 'Registration failed' } };
   }
 }
