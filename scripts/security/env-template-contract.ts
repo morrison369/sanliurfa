@@ -24,6 +24,7 @@ function validateEnvTemplate(fileLabel: string, source: string): void {
   assertEnvValue(fileLabel, source, "SITE_URL", "https://sanliurfa.com");
   assertEnvValue(fileLabel, source, "CORS_ORIGINS", "https://sanliurfa.com");
   assertEnvValue(fileLabel, source, "PORT", "4321");
+  assertEnvValue(fileLabel, source, "REDIS_DB", "15");
 
   if (!/\bREDIS_KEY_PREFIX\s*=\s*sanliurfa:\s*$/m.test(source)) {
     blockers.push(`${fileLabel} must define REDIS_KEY_PREFIX=sanliurfa:`);
@@ -31,6 +32,9 @@ function validateEnvTemplate(fileLabel: string, source: string): void {
 
   if (/\bPORT\s*=\s*(1111|1112|1113|3000|5433|6000)\b/m.test(source)) {
     blockers.push(`${fileLabel} contains forbidden legacy PORT value`);
+  }
+  if (/\bREDIS_DB\s*=\s*(?:1[6-9]|[2-9]\d+|-1)\b/m.test(source)) {
+    blockers.push(`${fileLabel} contains out-of-range REDIS_DB`);
   }
 
   if (/\bSITE_URL\s*=\s*https?:\/\/(www\.)?sanliurfa\.com(\/)?\b/m.test(source)) {

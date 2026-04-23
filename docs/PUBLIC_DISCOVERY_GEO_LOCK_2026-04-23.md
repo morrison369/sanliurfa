@@ -40,6 +40,7 @@ Bu not, `sanliurfa.com` public keşif yüzeyinin tekrar dağılmaması için ekl
 13. `scripts/security/port-lock-contract.ts`, `package.json`, `astro.config.mjs`, `ecosystem.config.cjs` ve `src/lib/env.ts` üzerinde 4321 dev/prod port kilidini ve eski port yasağını doğrular.
 14. `scripts/security/image-provider-secret-contract.ts`, `src/lib/image-providers.ts` içinde Pexels/Unsplash anahtarlarının yalnızca `process.env` üzerinden okunmasını ve kaynak kod/dokümanda hardcoded provider key kalıntısı olmamasını doğrular.
 15. `scripts/security/env-template-contract.ts`, `.env.example` ve `.env.production.template` dosyalarında `SITE_URL`, `CORS_ORIGINS`, `PORT=4321` ve `REDIS_KEY_PREFIX=sanliurfa:` kilidini doğrular.
+16. `scripts/security/redis-isolation-contract.ts`, `src/lib/cache.ts` ve `src/lib/env.ts` içinde varsayılan Redis URL'nin projeye ait `REDIS_DB=15` ile ayrıştırılmasını ve env şablonlarında `REDIS_DB` + `REDIS_KEY_PREFIX` kilidini doğrular.
 
 ## Doğrulama Beklentisi
 
