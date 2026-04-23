@@ -1,6 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import { User, Star, Heart, Award, Settings } from "lucide-react";
+import { User, Star, Heart, Award, Settings, Users } from "lucide-react";
 import { query, queryOne } from "../../lib/postgres";
 import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
 
@@ -141,6 +141,13 @@ const seo = {
                     >
                       <Heart className="w-4 h-4" />
                       Favorilerim ({stats.favorites})
+                    </a>
+                    <a
+                      href="/sosyal/eslesme"
+                      class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                    >
+                      <Users className="w-4 h-4" />
+                      Sosyal eşleşme
                     </a>
                     <a
                       href="/profil/ayarlar"

@@ -1,5 +1,4 @@
 import { query, queryMany, queryOne } from './postgres';
-import { isUserBlocked } from './blocking';
 
 export type SwipeDirection = 'like' | 'pass';
 
@@ -15,8 +14,21 @@ function normalizePhotos(input: unknown): string[] {
 
   return input
     .map((item) => (typeof item === 'string' ? item.trim() : ''))
-    .filter((item) => item.length > 0 && item.length <= 500)
+    .filter((item) => item.length > 0 && item.length <= 500 && isAllowedPhotoUrl(item))
     .slice(0, 4);
+}
+
+function isAllowedPhotoUrl(url: string): boolean {
+  if (url.startsWith('/')) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 export async function getSwipeProfile(userId: string) {
@@ -69,6 +81,11 @@ export async function getSwipeCandidates(userId: string, limit = 20) {
      LEFT JOIN social_swipe_profiles p ON p.user_id = u.id
      WHERE u.id <> $1
        AND NOT EXISTS (
+         SELECT 1 FROM user_blocks b
+         WHERE (b.blocker_id = u.id AND b.blocked_id = $1)
+            OR (b.blocker_id = $1 AND b.blocked_id = u.id)
+       )
+       AND NOT EXISTS (
          SELECT 1 FROM social_swipes s
          WHERE s.swiper_id = $1 AND s.target_id = u.id
        )
@@ -86,16 +103,6 @@ export async function getSwipeCandidates(userId: string, limit = 20) {
   }> = [];
 
   for (const row of rows) {
-    const blockedByTarget = await isUserBlocked(row.id, userId);
-    if (blockedByTarget) {
-      continue;
-    }
-
-    const youBlockedTarget = await isUserBlocked(userId, row.id);
-    if (youBlockedTarget) {
-      continue;
-    }
-
     const profilePhotos = normalizePhotos(row.photo_urls);
     const photos = profilePhotos.length > 0 ? profilePhotos : row.avatar_url ? [row.avatar_url] : [];
 
@@ -116,6 +123,10 @@ export async function createSwipe(
   targetId: string,
   direction: SwipeDirection
 ): Promise<{ matched: boolean; matchId: string | null }> {
+  if (swiperId === targetId) {
+    return { matched: false, matchId: null };
+  }
+
   await query(
     `INSERT INTO social_swipes (swiper_id, target_id, direction, created_at, updated_at)
      VALUES ($1, $2, $3, NOW(), NOW())
