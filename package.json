@@ -330,13 +330,15 @@
     "security:seo-template-contract": "npm exec -- tsx scripts/security/seo-template-contract.ts",
     "security:turkish-content-quality-contract": "npm exec -- tsx scripts/security/turkish-content-quality-contract.ts",
     "security:image-slug-contract": "npm exec -- tsx scripts/security/image-slug-contract.ts",
+    "security:homepage-data-contract": "npm exec -- tsx scripts/security/homepage-data-contract.ts",
+    "security:place-quality-contract": "npm exec -- tsx scripts/security/place-quality-contract.ts",
     "security:social-capability-contract": "npm exec -- tsx scripts/security/social-capability-contract.ts",
     "security:admin-homepage-contract": "npm exec -- tsx scripts/security/admin-homepage-contract.ts",
     "security:secrets-rotation-contract": "npm exec -- tsx scripts/security/secrets-rotation-contract.ts",
     "ops:smoke:social:optional": "npm exec -- tsx scripts/optional-social-smoke.ts",
-    "release:ship": "npm run security:release-definition-contract && npm run security:seo-template-contract && npm run security:turkish-content-quality-contract && npm run security:image-slug-contract && npm run security:social-capability-contract && npm run security:admin-homepage-contract && npm run security:secrets-rotation-contract && npm run security:public-readiness && npm run build",
+    "release:ship": "npm run security:release-definition-contract && npm run security:seo-template-contract && npm run security:turkish-content-quality-contract && npm run security:image-slug-contract && npm run security:homepage-data-contract && npm run security:place-quality-contract && npm run security:social-capability-contract && npm run security:admin-homepage-contract && npm run security:secrets-rotation-contract && npm run security:public-readiness && npm run build",
     "ops:p0:batch": "npm run release:ship && npm run ops:smoke:social:optional",
-    "ops:p1:batch": "npm run security:seo-template-contract && npm run security:turkish-content-quality-contract && npm run security:image-slug-contract",
+    "ops:p1:batch": "npm run security:seo-template-contract && npm run security:turkish-content-quality-contract && npm run security:image-slug-contract && npm run security:homepage-data-contract && npm run security:place-quality-contract",
     "ops:p2:batch": "npm run security:public-readiness && npm run build"
   },
   "keywords": [

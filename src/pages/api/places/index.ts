@@ -2,6 +2,7 @@
 import type { APIRoute } from 'astro';
 import { query, insert } from '../../../lib/postgres';
 import { getCache, setCache, deleteCache } from '../../../lib/cache';
+import { evaluatePlaceQuality, normalizePlaceImages, normalizePlaceStatus } from '../../../lib/place-quality';
 
 /**
  * Generate cache key for places list query
@@ -140,9 +141,37 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    const status = normalizePlaceStatus(typeof body.status === 'string' ? body.status : 'pending');
+    const normalizedImages = normalizePlaceImages(body.images, body.image_url);
+    const quality = evaluatePlaceQuality({
+      name: body.name,
+      category: body.category,
+      description: body.description,
+      shortDescription: body.short_description,
+      address: body.address,
+      phone: body.phone,
+      latitude: body.latitude,
+      longitude: body.longitude,
+      imageUrl: normalizedImages[0] || body.image_url || null,
+      images: normalizedImages,
+      status,
+    });
+
+    if (status === 'active' && !quality.isPublishable) {
+      return new Response(
+        JSON.stringify({
+          error: 'Aktif yayın için mekan kalite eşiği sağlanmadı',
+          missing: quality.missingFields,
+        }),
+        { status: 422, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const data = await insert('places', {
       ...body,
-      status: 'active',
+      status,
+      image_url: normalizedImages[0] || body.image_url || null,
+      images: normalizedImages,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     });

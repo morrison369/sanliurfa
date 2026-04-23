@@ -7,11 +7,13 @@
 4. `npm run security:seo-template-contract`
 5. `npm run security:turkish-content-quality-contract`
 6. `npm run security:image-slug-contract`
-7. `npm run security:social-capability-contract`
-8. `npm run security:admin-homepage-contract`
-9. `npm run security:secrets-rotation-contract`
-10. `npm run security:public-readiness`
-11. `npm run build`
+7. `npm run security:homepage-data-contract`
+8. `npm run security:place-quality-contract`
+9. `npm run security:social-capability-contract`
+10. `npm run security:admin-homepage-contract`
+11. `npm run security:secrets-rotation-contract`
+12. `npm run security:public-readiness`
+13. `npm run build`
 
 ## Single Command
 ```bash

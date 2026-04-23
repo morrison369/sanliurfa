@@ -24,6 +24,9 @@ if (existsSync(dodPath)) {
     'Admin-Driven İçerik Yönetimi',
     'SEO/AEO/GEO Kriterleri',
     'Zorunlu Gate Komutları',
+    '/api/admin/system/content-quality',
+    'npm run security:homepage-data-contract',
+    'npm run security:place-quality-contract',
     'npm run release:ship',
   ];
 
