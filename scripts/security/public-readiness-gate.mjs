@@ -98,6 +98,16 @@ if (!turkishOnlyContract.ok) {
   );
 }
 
+const portLockContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/port-lock-contract.ts',
+]);
+if (!portLockContract.ok) {
+  blockers.push(
+    `port lock contract failed:\n${portLockContract.stderr || portLockContract.stdout}`,
+  );
+}
+
 const historyDeployKey = runAllowFail('git', ['log', '--all', '--name-only', '--', 'deploy_key']);
 if ((historyDeployKey.stdout || '').includes('deploy_key')) {
   blockers.push('git history contains deploy_key; rotate keys and clean history before public visibility');

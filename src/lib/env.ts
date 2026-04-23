@@ -73,7 +73,7 @@ export function getEnv(key?: string, defaultValue?: string): EnvConfig | string 
     SUPABASE_ANON_KEY: import.meta.env.PUBLIC_SUPABASE_ANON_KEY || '',
     SITE_URL: readProcessEnv('SITE_URL') || import.meta.env.PUBLIC_SITE_URL || 'https://sanliurfa.com',
     NODE_ENV: (readProcessEnv('NODE_ENV') as any) || (import.meta.env.MODE as any) || 'development',
-    PORT: parseInt(readProcessEnv('PORT') || '3000', 10),
+    PORT: parseInt(readProcessEnv('PORT') || '4321', 10),
     DATABASE_URL: dbUrl,
     JWT_SECRET: jwtSecret,
     REDIS_URL: redisUrl,
