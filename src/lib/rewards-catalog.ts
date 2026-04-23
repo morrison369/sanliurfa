@@ -47,7 +47,7 @@ export async function getRewardsCatalog(
     max_cost?: number;
   }
 ): Promise<{ rewards: Reward[]; total: number }> {
-  const cacheKey = `sanliurfa:rewards:catalog:${limit}:${offset}:${JSON.stringify(filters || {})}`;
+  const cacheKey = `rewards:catalog:${limit}:${offset}:${JSON.stringify(filters || {})}`;
 
   try {
     const cached = await getCache<{ rewards: Reward[]; total: number }>(cacheKey);
@@ -104,7 +104,7 @@ export async function getRewardsCatalog(
  * Get single reward details
  */
 export async function getRewardDetails(rewardId: string): Promise<Reward | null> {
-  const cacheKey = `sanliurfa:reward:${rewardId}`;
+  const cacheKey = `reward:${rewardId}`;
 
   try {
     const cached = await getCache<Reward>(cacheKey);
@@ -168,8 +168,8 @@ export async function redeemReward(
     }
 
     // Clear caches
-    await deleteCache(`sanliurfa:reward:${rewardId}`);
-    await deleteCachePattern(`sanliurfa:rewards:catalog:*`);
+    await deleteCache(`reward:${rewardId}`);
+    await deleteCachePattern(`rewards:catalog:*`);
 
     // Send notification
     await createNotification(
@@ -239,7 +239,7 @@ export async function getUserRedemptions(
  * Get featured rewards
  */
 export async function getFeaturedRewards(limit: number = 8): Promise<Reward[]> {
-  const cacheKey = `sanliurfa:rewards:featured:${limit}`;
+  const cacheKey = `rewards:featured:${limit}`;
 
   try {
     const cached = await getCache<Reward[]>(cacheKey);
@@ -268,7 +268,7 @@ export async function getRewardsByType(
   rewardType: string,
   limit: number = 20
 ): Promise<Reward[]> {
-  const cacheKey = `sanliurfa:rewards:type:${rewardType}:${limit}`;
+  const cacheKey = `rewards:type:${rewardType}:${limit}`;
 
   try {
     const cached = await getCache<Reward[]>(cacheKey);
