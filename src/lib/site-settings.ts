@@ -140,6 +140,14 @@ export const DEFAULT_PUBLIC_SITE_SETTINGS: PublicSiteSettings = {
         { label: 'Etkinlikler', href: '/etkinlikler', description: 'Festivaller, konserler, şehir etkinlikleri' }
       ]
     },
+    {
+      label: 'Sosyal',
+      href: '/sosyal',
+      dropdown: [
+        { label: 'Sosyal Akış', href: '/sosyal', description: 'Takip, hashtag ve topluluk akışı' },
+        { label: 'Eşleşme', href: '/sosyal/eslesme', description: 'Sağa/sola kaydırma ile kullanıcı keşfi' }
+      ]
+    },
     { label: 'Şehir Servisleri', href: '/sehir-servisleri' },
     { label: 'Blog', href: '/blog' },
     { label: 'İletişim', href: '/iletisim' }
