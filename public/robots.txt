@@ -1,5 +1,5 @@
 # robots.txt for sanliurfa.com
-# Static fallback. Keep aligned with src/lib/public-discovery.ts.
+# Generated from src/lib/public-discovery.ts
 
 User-agent: *
 Allow: /
