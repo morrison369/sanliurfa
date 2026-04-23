@@ -54,7 +54,7 @@ export async function logActivity(
 export async function getUserActivity(userId: string, limit: number = 20): Promise<ActivityItem[]> {
   try {
     // Try cache first
-    const cacheKey = `sanliurfa:activity:${userId}`;
+    const cacheKey = `activity:${userId}`;
     const cached = await getCache<ActivityItem[]>(cacheKey);
 
     if (cached) {
@@ -105,7 +105,7 @@ export async function getUserActivity(userId: string, limit: number = 20): Promi
  */
 async function clearUserActivityCache(userId: string): Promise<void> {
   try {
-    const cacheKey = `sanliurfa:activity:${userId}`;
+    const cacheKey = `activity:${userId}`;
     await setCache(cacheKey, null, 0); // Immediate expiry
   } catch (error) {
     logger.warn('Failed to clear activity cache', error instanceof Error ? error : new Error(String(error)));

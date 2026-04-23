@@ -68,8 +68,8 @@ export async function cancelAccountDeletion(userId: string): Promise<boolean> {
     }
 
     // Clear user caches
-    await deleteCache(`sanliurfa:user:profile:${userId}`);
-    await deleteCachePattern(`sanliurfa:user:*:${userId}`);
+    await deleteCache(`user:profile:${userId}`);
+    await deleteCachePattern(`user:*:${userId}`);
 
     logger.info('Account deletion cancelled', { userId });
     return true;
@@ -230,9 +230,9 @@ export async function executeAccountDeletion(userId: string): Promise<void> {
     );
 
     // Clear all user caches
-    await deleteCache(`sanliurfa:user:profile:${userId}`);
-    await deleteCachePattern(`sanliurfa:user:*:${userId}`);
-    await deleteCachePattern(`sanliurfa:*:${userId}`);
+    await deleteCache(`user:profile:${userId}`);
+    await deleteCachePattern(`user:*:${userId}`);
+    await deleteCachePattern(`*:${userId}`);
 
     logger.info('Account successfully deleted and anonymized', { userId });
   } catch (error) {
