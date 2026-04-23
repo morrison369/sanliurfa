@@ -154,6 +154,7 @@
     "images:content:fill:blog": "tsx scripts/fill-missing-content-images.ts --type=blog --limit=100",
     "images:content:fill:events": "tsx scripts/fill-missing-content-images.ts --type=events --limit=100",
     "images:content:fill:report": "tsx scripts/fill-missing-content-images.ts --type=all --limit=100 --report-json=.tmp/image-fill-report.json",
+    "images:content:pipeline": "tsx scripts/content-image-pipeline.ts --limit=100 --query-mode=expanded",
     "admin": "tsx scripts/admin-cli.ts",
     "backup": "./scripts/backup.sh",
     "deploy": "./scripts/deploy.sh",

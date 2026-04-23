@@ -549,3 +549,12 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 10. `package.json` komutları eklendi:
 11. `npm run images:content:fill`
 12. `npm run images:content:fill:write`
+
+## 2026-04-23 Toplu Paket (Görsel Pipeline Otomasyonu)
+
+1. `scripts/fill-missing-content-images.ts` için `--query-mode=strict|expanded` desteği eklendi.
+2. `expanded` modunda sağlayıcıya sıralı fallback sorguları gönderilir: başlık, başlık+kategori, slug kelimeleri, slug+kategori.
+3. Script JSON raporuna başarısız kalan kayıtların detaylarını (`bucket`, `id`, `slug`, `title`, `attemptedQueries`, `reason`) ekler.
+4. Yeni otomasyon scripti eklendi: `scripts/content-image-pipeline.ts`.
+5. Pipeline tek komutta iki aşama yürütür: dry-run raporu + write raporu.
+6. NPM komutu eklendi: `npm run images:content:pipeline` (varsayılan `--query-mode=expanded`).
