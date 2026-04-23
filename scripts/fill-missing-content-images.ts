@@ -1,6 +1,8 @@
 import pg from 'pg';
 import { fetchAndStoreProviderImage, hasImageProviderCredentials } from '../src/lib/image-providers';
 import { loadLocalEnv } from './lib/load-local-env';
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
 const { Pool } = pg;
 
@@ -34,16 +36,19 @@ const write = args.has('--write');
 const limitArg = process.argv.find((arg) => arg.startsWith('--limit='))?.split('=')[1];
 const limit = Math.max(1, Number.parseInt(limitArg || '25', 10));
 const databaseUrlArg = process.argv.find((arg) => arg.startsWith('--database-url='))?.split('=')[1];
+const reportJsonArg = process.argv.find((arg) => arg.startsWith('--report-json='))?.split('=')[1];
 loadLocalEnv();
 const databaseUrl = databaseUrlArg || process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-  console.error('[images:content] DATABASE_URL tanımlı değil.');
+  console.error('[images:content] DATABASE_URL tanımlı değil. --database-url=<postgresql://...> veya .env/.env.local kullanın.');
   process.exit(1);
 }
 
 if (!hasImageProviderCredentials()) {
-  console.error('[images:content] PEXELS_API_KEY veya UNSPLASH_ACCESS_KEY tanımlı değil.');
+  console.error(
+    '[images:content] PEXELS_API_KEY veya UNSPLASH_ACCESS_KEY tanımlı değil. Anahtarları .env.local içine girin.'
+  );
   process.exit(1);
 }
 
@@ -59,6 +64,11 @@ const summary = {
   scanned: 0,
   filled: 0,
   failed: 0,
+};
+const bucketSummary: Record<'places' | 'blog' | 'events', { scanned: number; filled: number; failed: number }> = {
+  places: { scanned: 0, filled: 0, failed: 0 },
+  blog: { scanned: 0, filled: 0, failed: 0 },
+  events: { scanned: 0, filled: 0, failed: 0 },
 };
 
 try {
@@ -77,6 +87,7 @@ try {
   console.log(
     `[images:content] bitti scanned=${summary.scanned} filled=${summary.filled} failed=${summary.failed}`
   );
+  await maybeWriteReport();
 } finally {
   await pool.end();
 }
@@ -96,6 +107,7 @@ async function processPlaces(max: number): Promise<void> {
     const slug = safeSlug(row.slug || row.name);
     const category = row.category || 'mekan';
     summary.scanned += 1;
+    bucketSummary.places.scanned += 1;
     console.log(`[images:content] places aranıyor: ${row.name} (${slug})`);
 
     if (!write) {
@@ -112,6 +124,7 @@ async function processPlaces(max: number): Promise<void> {
 
       if (!image) {
         summary.failed += 1;
+        bucketSummary.places.failed += 1;
         continue;
       }
 
@@ -129,8 +142,10 @@ async function processPlaces(max: number): Promise<void> {
       );
 
       summary.filled += 1;
+      bucketSummary.places.filled += 1;
     } catch {
       summary.failed += 1;
+      bucketSummary.places.failed += 1;
     }
   }
 }
@@ -152,6 +167,7 @@ async function processBlog(max: number): Promise<void> {
     const slug = safeSlug(row.slug || row.title);
     const category = row.category_name || 'blog';
     summary.scanned += 1;
+    bucketSummary.blog.scanned += 1;
     console.log(`[images:content] blog aranıyor: ${row.title} (${slug})`);
 
     if (!write) {
@@ -168,6 +184,7 @@ async function processBlog(max: number): Promise<void> {
 
       if (!image) {
         summary.failed += 1;
+        bucketSummary.blog.failed += 1;
         continue;
       }
 
@@ -181,8 +198,10 @@ async function processBlog(max: number): Promise<void> {
       );
 
       summary.filled += 1;
+      bucketSummary.blog.filled += 1;
     } catch {
       summary.failed += 1;
+      bucketSummary.blog.failed += 1;
     }
   }
 }
@@ -202,6 +221,7 @@ async function processEvents(max: number): Promise<void> {
     const slug = safeSlug(row.slug || row.title);
     const category = row.category || 'etkinlik';
     summary.scanned += 1;
+    bucketSummary.events.scanned += 1;
     console.log(`[images:content] events aranıyor: ${row.title} (${slug})`);
 
     if (!write) {
@@ -218,6 +238,7 @@ async function processEvents(max: number): Promise<void> {
 
       if (!image) {
         summary.failed += 1;
+        bucketSummary.events.failed += 1;
         continue;
       }
 
@@ -230,10 +251,35 @@ async function processEvents(max: number): Promise<void> {
       );
 
       summary.filled += 1;
+      bucketSummary.events.filled += 1;
     } catch {
       summary.failed += 1;
+      bucketSummary.events.failed += 1;
     }
   }
+}
+
+async function maybeWriteReport(): Promise<void> {
+  if (!reportJsonArg) {
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const payload = {
+    generatedAt: now,
+    mode: write ? 'write' : 'dry-run',
+    type,
+    limit,
+    totals: summary,
+    buckets: bucketSummary,
+  };
+
+  const reportPath = path.isAbsolute(reportJsonArg)
+    ? reportJsonArg
+    : path.join(process.cwd(), reportJsonArg);
+  await mkdir(path.dirname(reportPath), { recursive: true });
+  await writeFile(reportPath, JSON.stringify(payload, null, 2), 'utf8');
+  console.log(`[images:content] rapor yazıldı: ${reportPath}`);
 }
 
 function safeSlug(input: string): string {
