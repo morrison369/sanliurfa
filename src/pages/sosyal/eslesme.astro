@@ -2,8 +2,10 @@
 import Layout from "../../layouts/Layout.astro";
 import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
 import SwipeMatchExperience from "../../components/SwipeMatchExperience";
+import { isSocialMatchingEnabled } from "../../lib/feature-flags";
 
 const user = Astro.locals.user;
+const socialMatchingEnabled = isSocialMatchingEnabled();
 
 const seo = {
   title: "Şanlıurfa Sosyal Eşleşme - Fotoğraflı Kullanıcı Keşfi",
@@ -34,11 +36,20 @@ const seo = {
             </p>
           </div>
 
-          <div class="mt-10 grid gap-6 lg:grid-cols-4">
-            <div class="lg:col-span-4">
-              <SwipeMatchExperience client:load />
+          {socialMatchingEnabled ? (
+            <div class="mt-10 grid gap-6 lg:grid-cols-4">
+              <div class="lg:col-span-4">
+                <SwipeMatchExperience client:load />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div class="mt-10 rounded-3xl border border-amber-300/40 bg-amber-500/10 p-6">
+              <h2 class="text-2xl font-display font-bold">Sosyal eşleşme bakımda</h2>
+              <p class="mt-3 text-amber-100">
+                Modül geçici olarak kapalı. Sistem güncellemesi tamamlandıktan sonra tekrar açılacaktır.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     ) : (

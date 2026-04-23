@@ -530,3 +530,7 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 25. Eşleşme ekranında her kart için `Eşleşmeyi kaldır` aksiyonu aktif edildi.
 26. Admin tarafında eşleşme pasifleştirme API'si eklendi: `POST /api/admin/social/matches/{id}/deactivate`.
 27. `/admin/sosyal` ekranına aktif eşleşme için tek tık pasifleştirme butonu eklendi.
+28. Sosyal eşleşme feature flag'i eklendi: `SOCIAL_MATCHING_ENABLED` (kapalıyken UI bakım mesajı + API 503).
+29. `132_social_match_moderation_logs` migration'ı eklendi; kullanıcı/admin eşleşme aksiyonları audit log'a yazılır.
+30. Mesajlaşma gönderim akışına kısa aralıkta aynı içerik tekrarını engelleyen anti-spam guard eklendi.
+31. Sosyal moderasyon SOP ve rollout runbook dökümanları eklendi.

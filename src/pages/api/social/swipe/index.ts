@@ -3,9 +3,20 @@ import { apiError, apiResponse, ErrorCode, getRequestId, HttpStatus } from '../.
 import { createSwipe } from '../../../../lib/social-swipe';
 import { canStartConversation } from '../../../../lib/social-policy';
 import { enforceApiRateLimit } from '../../../../lib/api-rate-limit';
+import { isSocialMatchingEnabled } from '../../../../lib/feature-flags';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId({ request } as any);
+  if (!isSocialMatchingEnabled()) {
+    return apiError(
+      ErrorCode.SERVICE_UNAVAILABLE,
+      'Sosyal eşleşme modülü şu anda bakımda.',
+      HttpStatus.SERVICE_UNAVAILABLE,
+      undefined,
+      requestId
+    );
+  }
+
   if (!locals.user?.id) {
     return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
   }
