@@ -56,7 +56,7 @@ class MessageBroker {
 
     this.messages.set(id, message);
 
-    const streamKey = `sanliurfa:stream:${topic}`;
+    const streamKey = `stream:${topic}`;
     redis.lpush(streamKey, JSON.stringify(message));
     redis.expire(streamKey, 604800); // 7 days retention
 

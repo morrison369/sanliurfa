@@ -75,7 +75,7 @@ export async function createMarketingCampaign(
     });
 
     // Clear cache
-    await deleteCachePattern(`sanliurfa:campaigns:user:${userId}`);
+    await deleteCachePattern(`campaigns:user:${userId}`);
 
     logger.info('Marketing campaign created', { id: campaign.id, placeId, userId });
     return campaign;
@@ -90,7 +90,7 @@ export async function createMarketingCampaign(
  */
 export async function getMarketingCampaign(id: string): Promise<MarketingCampaign | null> {
   try {
-    const cacheKey = `sanliurfa:campaign:${id}`;
+    const cacheKey = `campaign:${id}`;
     const cached = await getCache<MarketingCampaign>(cacheKey);
     if (cached) return cached;
 
@@ -109,7 +109,7 @@ export async function getMarketingCampaign(id: string): Promise<MarketingCampaig
  * Get campaigns for a user
  */
 export async function getUserCampaigns(userId: string): Promise<MarketingCampaign[]> {
-  const cacheKey = `sanliurfa:campaigns:user:${userId}`;
+  const cacheKey = `campaigns:user:${userId}`;
 
   try {
     const cached = await getCache<MarketingCampaign[]>(cacheKey);
@@ -153,8 +153,8 @@ export async function updateMarketingCampaign(
     const updated = await update('marketing_campaigns', { id }, { ...updates, updated_at: new Date() });
 
     // Clear caches
-    await deleteCache(`sanliurfa:campaign:${id}`);
-    await deleteCachePattern(`sanliurfa:campaigns:user:${userId}`);
+    await deleteCache(`campaign:${id}`);
+    await deleteCachePattern(`campaigns:user:${userId}`);
 
     logger.info('Marketing campaign updated', { id, userId });
     return updated;
@@ -190,8 +190,8 @@ export async function publishCampaign(id: string, userId: string): Promise<Marke
     );
 
     // Clear caches
-    await deleteCache(`sanliurfa:campaign:${id}`);
-    await deleteCachePattern(`sanliurfa:campaigns:user:${userId}`);
+    await deleteCache(`campaign:${id}`);
+    await deleteCachePattern(`campaigns:user:${userId}`);
 
     logger.info('Campaign published', { id, userId });
     return updated;
@@ -214,7 +214,7 @@ export async function pauseCampaign(id: string, userId: string): Promise<Marketi
 
     const updated = await update('marketing_campaigns', { id }, { status: 'paused', updated_at: new Date() });
 
-    await deleteCache(`sanliurfa:campaign:${id}`);
+    await deleteCache(`campaign:${id}`);
     return updated;
   } catch (error) {
     logger.error('Failed to pause campaign', error instanceof Error ? error : new Error(String(error)));
@@ -266,7 +266,7 @@ export async function addCampaignTargetingRule(
       operator: rule.operator || 'equals'
     });
 
-    await deleteCache(`sanliurfa:campaign:${campaignId}`);
+    await deleteCache(`campaign:${campaignId}`);
     return targeting;
   } catch (error) {
     logger.error('Failed to add targeting rule', error instanceof Error ? error : new Error(String(error)));
@@ -371,8 +371,8 @@ export async function deleteMarketingCampaign(id: string, userId: string): Promi
     const result = await query('DELETE FROM marketing_campaigns WHERE id = $1', [id]);
 
     // Clear caches
-    await deleteCache(`sanliurfa:campaign:${id}`);
-    await deleteCachePattern(`sanliurfa:campaigns:user:${userId}`);
+    await deleteCache(`campaign:${id}`);
+    await deleteCachePattern(`campaigns:user:${userId}`);
 
     logger.info('Marketing campaign deleted', { id, userId });
     return result.rowCount > 0;
