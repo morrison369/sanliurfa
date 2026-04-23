@@ -654,3 +654,14 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 4. Bu sayede deployment config katmanında da Redis DB izolasyonu (`15`) korunur.
 5. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
 6. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
+
+## 2026-04-23 Toplu Paket (Redis Isolation Contract Genişletmesi)
+
+1. `scripts/security/redis-isolation-contract.ts` deployment katmanını da denetleyecek şekilde genişletildi.
+2. Kontrat artık `src/lib/deployment.ts` içinde `REDIS_DB` fallback'inin `15` olduğunu doğrular.
+3. Kontrat, deployment varsayılan Redis URL’sinin `redis://127.0.0.1:6379/${REDIS_DB}` formatını zorunlu kılar.
+4. Kontrat, development `redisUrl` alanının `DEFAULT_REDIS_URL` fallback kullanmasını zorunlu kılar.
+5. Kontrata `redis://localhost:6379/0` veya `redis://127.0.0.1:6379/0` fallback yasağı eklendi.
+6. Böylece Redis izolasyon regresyonu CI/security gate aşamasında otomatik yakalanır.
+7. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
+8. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
