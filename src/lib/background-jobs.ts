@@ -75,8 +75,8 @@ export class BackgroundJobQueue {
     }
 
     try {
-      const key = `sanliurfa:job:${jobId}`;
-      await setCache(key, JSON.stringify(job), 86400 * 7); // 7 days
+      const key = `job:${jobId}`;
+      await setCache(key, job, 86400 * 7); // 7 days
 
       logger.info('Job enqueued', {
         jobId,
@@ -212,14 +212,14 @@ export class BackgroundJobQueue {
    */
   async getJob(jobId: string): Promise<BackgroundJob | null> {
     try {
-      const key = `sanliurfa:job:${jobId}`;
-      const cached = await getCache(key);
+      const key = `job:${jobId}`;
+      const cached = await getCache<BackgroundJob>(key);
 
       if (!cached) {
         return null;
       }
 
-      return JSON.parse(cached) as BackgroundJob;
+      return cached;
     } catch (error) {
       logger.error('Failed to get job', error instanceof Error ? error : new Error(String(error)), { jobId });
       return null;
@@ -231,8 +231,8 @@ export class BackgroundJobQueue {
    */
   async updateJob(jobId: string, job: BackgroundJob): Promise<void> {
     try {
-      const key = `sanliurfa:job:${jobId}`;
-      await setCache(key, JSON.stringify(job), 86400 * 7);
+      const key = `job:${jobId}`;
+      await setCache(key, job, 86400 * 7);
     } catch (error) {
       logger.error('Failed to update job', error instanceof Error ? error : new Error(String(error)), { jobId });
     }
