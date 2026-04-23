@@ -116,3 +116,4 @@ Bu denetimde yeni zorunlu Astro paketi bulunmadı. Kurulmayan paketler eksik de�
 - `src/lib/api-rate-limit.ts` ile social swipe API uçlarına ek kullanıcı+IP bazlı throttle katmanı eklendi; middleware global limiti korunurken feature-level abuse koruması güçlendirildi.
 - `/admin/sosyal` admin yüzeyi ile swipe/match metrikleri Astro SSR tarafında gözlemlenebilir hale getirildi.
 - Followers/messages uçlarında scoped throttle katmanı uygulanarak global middleware limitine ek feature-level koruma sağlandı.
+- Sosyal eşleşme yaşam döngüsü tamamlandı: kullanıcı unmatch API'si ve admin seviyesinde eşleşme pasifleştirme endpoint'i Astro API surface'e eklendi.
