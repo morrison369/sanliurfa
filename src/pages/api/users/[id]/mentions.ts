@@ -47,12 +47,12 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
     const unreadOnly = url.searchParams.get('unread_only') === 'true';
 
     // Check cache
-    const cacheKey = `sanliurfa:mentions:${userId}:${unreadOnly}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `mentions:${userId}:${unreadOnly}`;
+    const cached = await getCache<any>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', `/api/users/${userId}/mentions`, HttpStatus.OK, duration);
-      return apiResponse(JSON.parse(cached), HttpStatus.OK, requestId);
+      return apiResponse(cached, HttpStatus.OK, requestId);
     }
 
     // Build query
@@ -101,7 +101,7 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
     };
 
     // Cache result (2 min TTL)
-    await setCache(cacheKey, JSON.stringify(response), 120);
+    await setCache(cacheKey, response, 120);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/users/${userId}/mentions`, HttpStatus.OK, duration);
