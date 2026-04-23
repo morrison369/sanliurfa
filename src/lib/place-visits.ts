@@ -48,7 +48,7 @@ export async function recordPlaceVisit(
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:user:visits:${userId}`);
+    await deleteCache(`user:visits:${userId}`);
 
     logger.info('Place visit recorded', { userId, placeId });
 
@@ -74,11 +74,11 @@ export async function recordPlaceVisit(
  */
 export async function getUserVisits(userId: string, limit: number = 50): Promise<PlaceVisit[]> {
   try {
-    const cacheKey = `sanliurfa:user:visits:${userId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `user:visits:${userId}`;
+    const cached = await getCache<PlaceVisit[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const results = await queryMany(
@@ -103,7 +103,7 @@ export async function getUserVisits(userId: string, limit: number = 50): Promise
     }));
 
     // Cache for 30 minutes
-    await setCache(cacheKey, JSON.stringify(visits), 1800);
+    await setCache(cacheKey, visits, 1800);
 
     return visits;
   } catch (error) {
@@ -117,11 +117,11 @@ export async function getUserVisits(userId: string, limit: number = 50): Promise
  */
 export async function getUserVisitStats(userId: string): Promise<any> {
   try {
-    const cacheKey = `sanliurfa:user:visit-stats:${userId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `user:visit-stats:${userId}`;
+    const cached = await getCache<any>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const result = await queryOne(
@@ -145,7 +145,7 @@ export async function getUserVisitStats(userId: string): Promise<any> {
     };
 
     // Cache for 1 hour
-    await setCache(cacheKey, JSON.stringify(stats), 3600);
+    await setCache(cacheKey, stats, 3600);
 
     return stats;
   } catch (error) {
@@ -183,7 +183,7 @@ export async function updatePlaceVisit(
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:user:visits:${userId}`);
+    await deleteCache(`user:visits:${userId}`);
 
     logger.info('Place visit updated', { visitId, userId });
 
@@ -232,7 +232,7 @@ export async function deletePlaceVisit(visitId: string, userId: string): Promise
     );
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:user:visits:${userId}`);
+    await deleteCache(`user:visits:${userId}`);
 
     logger.info('Place visit deleted', { visitId, userId });
     return true;

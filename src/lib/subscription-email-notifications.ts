@@ -44,10 +44,10 @@ export interface EmailQueueItem {
 export async function getEmailTemplate(templateName: string): Promise<EmailTemplate | null> {
   try {
     // Cache'ten kontrol et
-    const cacheKey = `sanliurfa:email:template:${templateName}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `email:template:${templateName}`;
+    const cached = await getCache<EmailTemplate>(cacheKey);
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     // Veritabanından yükle
@@ -62,7 +62,7 @@ export async function getEmailTemplate(templateName: string): Promise<EmailTempl
     }
 
     // Cache'e kaydet (1 saat TTL)
-    await setCache(cacheKey, JSON.stringify(template), 3600);
+    await setCache(cacheKey, template, 3600);
 
     return template as EmailTemplate;
   } catch (error) {
