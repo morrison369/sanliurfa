@@ -72,11 +72,11 @@ export async function getTrendingScores(
   limit: number = 20
 ): Promise<TrendingScore[]> {
   try {
-    const cacheKey = `sanliurfa:trending:${entityType}:${period}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `trending:${entityType}:${period}`;
+    const cached = await getCache<TrendingScore[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const scores = await queryMany(
@@ -87,7 +87,7 @@ export async function getTrendingScores(
       [entityType, period, limit]
     );
 
-    await setCache(cacheKey, JSON.stringify(scores), 1800);
+    await setCache(cacheKey, scores, 1800);
     return scores as TrendingScore[];
   } catch (error) {
     logger.error(
@@ -152,7 +152,7 @@ export async function updateTrendingScore(
       });
     }
 
-    await deleteCache(`sanliurfa:trending:${entityType}:${period}`);
+    await deleteCache(`trending:${entityType}:${period}`);
     return true;
   } catch (error) {
     logger.error(
@@ -277,11 +277,11 @@ export async function saveUserRecommendation(
 
 export async function getUserRecommendations(userId: string, limit: number = 20): Promise<UserRecommendation[]> {
   try {
-    const cacheKey = `sanliurfa:recommendations:${userId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `recommendations:${userId}`;
+    const cached = await getCache<UserRecommendation[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const recommendations = await queryMany(
@@ -292,7 +292,7 @@ export async function getUserRecommendations(userId: string, limit: number = 20)
       [userId, limit]
     );
 
-    await setCache(cacheKey, JSON.stringify(recommendations), 1800);
+    await setCache(cacheKey, recommendations, 1800);
     return recommendations as UserRecommendation[];
   } catch (error) {
     logger.error(
@@ -333,7 +333,7 @@ export async function trackUserInterest(userId: string, category: string, weight
       });
     }
 
-    await deleteCache(`sanliurfa:recommendations:${userId}`);
+    await deleteCache(`recommendations:${userId}`);
     return true;
   } catch (error) {
     logger.error(
@@ -446,11 +446,11 @@ export async function getPopularContent(
 
 export async function getTrendingKeywords(period: 'hourly' | 'daily' | 'weekly', limit: number = 20): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:keywords:${period}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `keywords:${period}`;
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const keywords = await queryMany(
@@ -461,7 +461,7 @@ export async function getTrendingKeywords(period: 'hourly' | 'daily' | 'weekly',
       [period, limit]
     );
 
-    await setCache(cacheKey, JSON.stringify(keywords), 1800);
+    await setCache(cacheKey, keywords, 1800);
     return keywords;
   } catch (error) {
     logger.error(
@@ -476,11 +476,11 @@ export async function getTrendingKeywords(period: 'hourly' | 'daily' | 'weekly',
 
 export async function getDiscoveryFeed(userId: string, limit: number = 50): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:discovery:${userId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `discovery:${userId}`;
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const feed = await queryMany(
@@ -491,7 +491,7 @@ export async function getDiscoveryFeed(userId: string, limit: number = 50): Prom
       [userId, limit]
     );
 
-    await setCache(cacheKey, JSON.stringify(feed), 600);
+    await setCache(cacheKey, feed, 600);
     return feed;
   } catch (error) {
     logger.error(
@@ -519,7 +519,7 @@ export async function addToDiscoveryFeed(
       created_at: new Date()
     });
 
-    await deleteCache(`sanliurfa:discovery:${userId}`);
+    await deleteCache(`discovery:${userId}`);
     return true;
   } catch (error) {
     logger.error(

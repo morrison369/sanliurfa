@@ -196,12 +196,12 @@ async function searchEvents(query: string, filters?: any): Promise<any[]> {
  */
 export async function search(filters: SearchFilters): Promise<SearchResult> {
   const startTime = Date.now();
-  const cacheKey = `sanliurfa:search:${filters.query}:${filters.type || 'all'}`;
+  const cacheKey = `search:${filters.query}:${filters.type || 'all'}`;
 
   // Cache'den kontrol et
-  const cached = await getCache(cacheKey);
+  const cached = await getCache<SearchResult>(cacheKey);
   if (cached) {
-    return JSON.parse(cached);
+    return cached;
   }
 
   try {
@@ -237,7 +237,7 @@ export async function search(filters: SearchFilters): Promise<SearchResult> {
     results.executionTime = Date.now() - startTime;
 
     // Cache'e kaydet (5 dakika)
-    await setCache(cacheKey, JSON.stringify(results), 300);
+    await setCache(cacheKey, results, 300);
 
     // Arama geçmişine ekle
     await recordSearch(filters.query, results.total, Object.keys(results).filter(k => results[k as keyof SearchResult].length > 0));
@@ -293,11 +293,11 @@ export async function recordSearch(query: string, resultsCount: number, resultTy
  */
 export async function getTrendingSearches(limit: number = 10): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:trending:searches';
-    const cached = await getCache(cacheKey);
+    const cacheKey = 'trending:searches';
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const result = await pool.query(
@@ -310,7 +310,7 @@ export async function getTrendingSearches(limit: number = 10): Promise<any[]> {
     );
 
     // Cache'e kaydet (1 saat)
-    await setCache(cacheKey, JSON.stringify(result.rows), 3600);
+    await setCache(cacheKey, result.rows, 3600);
 
     return result.rows;
   } catch (error) {
@@ -343,6 +343,6 @@ export async function getSearchSuggestions(partial: string, limit: number = 5): 
  * Arama cache'ini sil
  */
 export async function invalidateSearchCache(): Promise<void> {
-  await deleteCachePattern('sanliurfa:search:*');
-  await deleteCache('sanliurfa:trending:searches');
+  await deleteCachePattern('search:*');
+  await deleteCache('trending:searches');
 }
