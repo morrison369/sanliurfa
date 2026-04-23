@@ -85,6 +85,14 @@ const seo = { title: 'Site Ayarları - Yönetim Paneli', noindex: true };
         </section>
 
         <section class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm space-y-4">
+          <h2 class="font-semibold text-gray-900 dark:text-white">Anasayfa Bölüm Sırası</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Hero sabittir. Aşağıdaki JSON dizisi hero altındaki blokların sırasını ve görünürlüğünü belirler.
+          </p>
+          <textarea class="input min-h-[140px] font-mono text-xs dark:bg-gray-900 dark:border-gray-700 dark:text-white" name="homepageSections">{JSON.stringify(settings.homepageSections, null, 2)}</textarea>
+        </section>
+
+        <section class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm space-y-4">
           <h2 class="font-semibold text-gray-900 dark:text-white">Üst menü</h2>
           <p class="text-sm text-gray-600 dark:text-gray-400">
             Menü yapısı JSON formatında düzenlenir. Örnek alanlar: label, href, dropdown.
@@ -171,6 +179,7 @@ const seo = { title: 'Site Ayarları - Yönetim Paneli', noindex: true };
           }
         },
         headerMenu: parseJsonField(String(formData.get('headerMenu') || '[]'), 'Header menü'),
+        homepageSections: parseJsonField(String(formData.get('homepageSections') || '[]'), 'Anasayfa bölüm sırası'),
         cityServices: parseJsonField(String(formData.get('cityServices') || '[]'), 'Şehir servisleri'),
         footer: parseJsonField(String(formData.get('footer') || '{}'), 'Footer ayarları'),
         seo: parseJsonField(String(formData.get('seo') || '{}'), 'SEO varsayılanları')
