@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     }
 
     // Check cache first
-    const cacheKey = `sanliurfa:user:profile:${id}`;
+    const cacheKey = `user:profile:${id}`;
     const cached = await getCache<any>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;

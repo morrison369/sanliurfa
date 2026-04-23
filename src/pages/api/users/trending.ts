@@ -18,13 +18,13 @@ export const GET: APIRoute = async ({ request, url }) => {
   try {
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '15'), 50);
     const period = url.searchParams.get('period') || '30'; // days
-    const cacheKey = `sanliurfa:users:trending:${period}`;
+    const cacheKey = `users:trending:${period}`;
 
     // Check cache (1 hour)
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<any>(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/users/trending', HttpStatus.OK, Date.now() - startTime);
-      return apiResponse(JSON.parse(cached), HttpStatus.OK, requestId);
+      return apiResponse(cached, HttpStatus.OK, requestId);
     }
 
     // Validate period
@@ -74,7 +74,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     };
 
     // Cache for 1 hour
-    await setCache(cacheKey, JSON.stringify(responseData), 3600);
+    await setCache(cacheKey, responseData, 3600);
 
     recordRequest('GET', '/api/users/trending', HttpStatus.OK, Date.now() - startTime);
 

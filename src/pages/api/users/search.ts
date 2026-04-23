@@ -66,7 +66,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     }
 
     // Check cache
-    const cacheKey = `sanliurfa:users:search:${query.toLowerCase()}:${sortBy}`;
+    const cacheKey = `users:search:${query.toLowerCase()}:${sortBy}`;
     const cached = await getCache<any[]>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;

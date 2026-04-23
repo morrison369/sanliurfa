@@ -28,7 +28,7 @@ export const POST: APIRoute = async (context) => {
     const { secret, qrCodeUrl, backupCodes } = setupResult;
 
     // Store secret temporarily in cache (10 minute expiration for setup verification)
-    await setCache(`sanliurfa:2fa:setup:${userId}`, secret, 600);
+    await setCache(`2fa:setup:${userId}`, secret, 600);
 
     logger.info('2FA setup initiated', { userId });
 
