@@ -14,6 +14,7 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
 import { canStartConversation } from '../../../lib/social-policy';
+import { enforceApiRateLimit } from '../../../lib/api-rate-limit';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
   const requestId = getRequestId({ request } as any);
@@ -30,6 +31,18 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
         ErrorCode.AUTH_REQUIRED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
+        undefined,
+        requestId
+      );
+    }
+
+    const isAllowed = await enforceApiRateLimit(request, 'messages:conversation:get', 180, 15 * 60, user.id);
+    if (!isAllowed) {
+      recordRequest('GET', `/api/messages/${conversationId}`, HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return apiError(
+        ErrorCode.RATE_LIMITED,
+        'Çok sık konuşma mesajlarını sorguluyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
+        HttpStatus.RATE_LIMITED,
         undefined,
         requestId
       );
@@ -110,6 +123,18 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
         ErrorCode.AUTH_REQUIRED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
+        undefined,
+        requestId
+      );
+    }
+
+    const isAllowed = await enforceApiRateLimit(request, 'messages:conversation:send', 200, 15 * 60, user.id);
+    if (!isAllowed) {
+      recordRequest('POST', `/api/messages/${conversationId}`, HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return apiError(
+        ErrorCode.RATE_LIMITED,
+        'Çok hızlı mesaj gönderiyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
+        HttpStatus.RATE_LIMITED,
         undefined,
         requestId
       );
@@ -251,6 +276,18 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
         ErrorCode.AUTH_REQUIRED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
+        undefined,
+        requestId
+      );
+    }
+
+    const isAllowed = await enforceApiRateLimit(request, 'messages:conversation:hide', 60, 15 * 60, user.id);
+    if (!isAllowed) {
+      recordRequest('DELETE', `/api/messages/${conversationId}`, HttpStatus.RATE_LIMITED, Date.now() - startTime);
+      return apiError(
+        ErrorCode.RATE_LIMITED,
+        'Çok sık konuşma gizleme işlemi yapıyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
+        HttpStatus.RATE_LIMITED,
         undefined,
         requestId
       );
