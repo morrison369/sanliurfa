@@ -36,7 +36,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const sortBy = url.searchParams.get('sortBy') || 'recent'; // recent, popular
 
     // Check cache
-    const cacheKey = `sanliurfa:feed:${user.id}:${filter}:${sortBy}`;
+    const cacheKey = `feed:${user.id}:${filter}:${sortBy}`;
     const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
