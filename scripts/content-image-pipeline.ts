@@ -9,6 +9,7 @@ loadLocalEnv();
 const databaseUrlArg = process.argv.find((arg) => arg.startsWith('--database-url='))?.split('=')[1];
 const limitArg = process.argv.find((arg) => arg.startsWith('--limit='))?.split('=')[1];
 const queryModeArg = process.argv.find((arg) => arg.startsWith('--query-mode='))?.split('=')[1];
+const typeArg = process.argv.find((arg) => arg.startsWith('--type='))?.split('=')[1];
 const concurrencyArg = process.argv.find((arg) => arg.startsWith('--concurrency='))?.split('=')[1];
 const dryRunOnly = process.argv.includes('--dry-run-only');
 const writeOnly = process.argv.includes('--write-only');
@@ -17,6 +18,7 @@ const skipDryRunProbe = process.argv.includes('--skip-dry-run-probe');
 const limit = Math.max(1, Number.parseInt(limitArg || '100', 10));
 const concurrency = clampConcurrency(concurrencyArg ? Number.parseInt(concurrencyArg, 10) : 3);
 const queryMode = queryModeArg === 'expanded' ? 'expanded' : 'strict';
+const type = normalizeType(typeArg);
 const minFillRate = clampRate(minFillRateArg ? Number.parseFloat(minFillRateArg) : 0);
 const databaseUrl = databaseUrlArg || process.env.DATABASE_URL;
 
@@ -65,6 +67,7 @@ if (!dryRunOnly && !writeOnly) {
 console.log(`[images:pipeline] tamamlandı
 - dry-run report: ${dryRunOnly ? 'skip' : dryRunReport}
 - write report: ${writeOnly ? 'skip' : writeReport}
+- type=${type}
 - minFillRate=${percent(minFillRate)}
 - dryRunProbe=${skipDryRunProbe ? 'off' : 'on'}
 - concurrency=${concurrency}`);
@@ -76,7 +79,7 @@ function runFill(input: { write: boolean; reportJson: string; probeOnDryRun: boo
     'images:content:fill',
     '--',
     `--limit=${limit}`,
-    '--type=all',
+    `--type=${type}`,
     `--query-mode=${queryMode}`,
     `--concurrency=${input.concurrency}`,
     `--database-url=${databaseUrl}`,
@@ -167,4 +170,11 @@ function clampConcurrency(value: number): number {
     return 10;
   }
   return value;
+}
+
+function normalizeType(value: string | undefined): 'places' | 'blog' | 'events' | 'all' {
+  if (value === 'places' || value === 'blog' || value === 'events' || value === 'all') {
+    return value;
+  }
+  return 'all';
 }
