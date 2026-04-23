@@ -29,5 +29,9 @@ Astro SSR ve API route kodları bu değerleri server tarafında `process.env` ü
 - Admin API: `POST /api/admin/images/fetch`
 - Eksik mekan görselleri için script: `npm run images:places:fill -- --limit=20` dry-run yapar.
 - DB ve dosya güncellemesi için açık onaylı mod: `npm run images:places:fill -- --limit=20 --write`
+- Mekan+blog+etkinlik toplu tarama: `npm run images:content:fill`
+- Kategori bazlı tarama: `npm run images:content:fill:places`, `npm run images:content:fill:blog`, `npm run images:content:fill:events`
+- JSON rapor üretimi: `npm run images:content:fill:report` -> `.tmp/image-fill-report.json`
+- Env yoksa komut satırından bağlantı verilebilir: `--database-url=postgresql://...`
 - Kaydedilen dosyalar slug bazlıdır: `/uploads/photos/provider/{pexels|unsplash}/{folder}/{slug}.webp`
 - İndirilen sağlayıcı görselleri `sharp` ile 1600x1000 sınırında, büyütmeden, WebP kalite 82 olarak optimize edilir.
