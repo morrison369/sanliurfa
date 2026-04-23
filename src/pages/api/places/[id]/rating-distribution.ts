@@ -17,15 +17,15 @@ export const GET: APIRoute = async ({ request, params }) => {
 
   try {
     const placeId = params.id;
-    const cacheKey = `sanliurfa:rating-dist:${placeId}`;
+    const cacheKey = `rating-dist:${placeId}`;
 
     // Try cache first
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<any>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', `/api/places/${placeId}/rating-distribution`, HttpStatus.OK, duration);
       return apiResponse(
-        { success: true, data: JSON.parse(cached as string) },
+        { success: true, data: cached },
         HttpStatus.OK,
         requestId
       );
@@ -57,7 +57,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     };
 
     // Cache for 1 hour
-    await setCache(cacheKey, JSON.stringify(distribution), 3600);
+    await setCache(cacheKey, distribution, 3600);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/places/${placeId}/rating-distribution`, HttpStatus.OK, duration);
