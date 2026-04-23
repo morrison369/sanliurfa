@@ -1,29 +1,46 @@
 # robots.txt for sanliurfa.com
+# Static fallback. Keep aligned with src/pages/robots.txt.ts.
+
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /profil/
+Disallow: /giris
+Disallow: /kayit
+Disallow: /abonelik
+Disallow: /akis
+Disallow: /aktivitelerim
+Disallow: /ayarlar
+Disallow: /bildirimler
+Disallow: /bildirim-tercihleri
+Disallow: /canli-analitik
+Disallow: /icerik
+Disallow: /isletme
+Disallow: /koleksiyonlar
+Disallow: /kullanici
+Disallow: /loyalty
+Disallow: /mesajlar
+Disallow: /notifications
+Disallow: /profil
+Disallow: /profile
+Disallow: /raporlar
+Disallow: /sosyal
+Disallow: /veri-ambari
+Disallow: /webhooks
+Disallow: /*?*sort=
+Disallow: /*?*page=
+Disallow: /*?*filter=
+Crawl-delay: 1
 
 # Sitemap
 Sitemap: https://sanliurfa.com/sitemap-index.xml
+Sitemap: https://sanliurfa.com/sitemap.xml
+Sitemap: https://sanliurfa.com/blog/sitemap.xml
 
-# Disallow admin paths
-Disallow: /admin/
-Disallow: /profil/
-Disallow: /api/
-Disallow: /giris
-Disallow: /kayit
-
-# Crawl rate
-Crawl-delay: 1
-
-# Allow specific bots
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: DuckDuckBot
-Allow: /
+# Public AI discovery
+# See: https://sanliurfa.com/llms.txt
+# See: https://sanliurfa.com/ai.txt
 
 # AI search crawlers
 User-agent: GPTBot
@@ -45,4 +62,10 @@ User-agent: Claude-User
 Allow: /
 
 User-agent: Google-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
 Allow: /

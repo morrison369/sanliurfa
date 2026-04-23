@@ -36,6 +36,8 @@
 - [Ana sitemap](https://sanliurfa.com/sitemap.xml): Public sayfalar, mekanlar, tarihi yerler, gastronomi, etkinlik ve blog URL'leri.
 - [Blog sitemap](https://sanliurfa.com/blog/sitemap.xml): Blog yazıları ve blog kategorileri.
 - [Robots](https://sanliurfa.com/robots.txt): Arama motoru ve AI crawler erişim politikası.
+- [AI discovery](https://sanliurfa.com/ai.txt): AI arama sistemleri için kısa keşif ve alıntı rehberi.
+- [Humans](https://sanliurfa.com/humans.txt): Site kimliği, dil politikası ve iletişim özeti.
 - [RSS](https://sanliurfa.com/rss.xml): Blog ve yayın akışı.
 
 ## AI Crawler Politikası
