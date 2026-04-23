@@ -18,10 +18,17 @@ let swipeStats = {
 
 let recentSwipes: Array<{ swiper_id: string; target_id: string; direction: string; created_at: string }> = [];
 let recentMatches: Array<{ id: number; user_a: string; user_b: string; created_at: string; is_active: boolean }> = [];
+let moderationLogs: Array<{
+  match_id: number;
+  actor_user_id: string | null;
+  action: string;
+  reason: string | null;
+  created_at: string;
+}> = [];
 let hasSwipeTables = true;
 
 try {
-  const [profilesRes, swipesRes, matchesRes, recentSwipesRes, recentMatchesRes] = await Promise.all([
+  const [profilesRes, swipesRes, matchesRes, recentSwipesRes, recentMatchesRes, moderationLogsRes] = await Promise.all([
     query("SELECT COUNT(*) FROM social_swipe_profiles"),
     query(
       "SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE direction = 'like') as likes, COUNT(*) FILTER (WHERE direction = 'pass') as passes FROM social_swipes"
@@ -34,6 +41,9 @@ try {
     ),
     query(
       "SELECT id, user_a, user_b, created_at, is_active FROM social_matches ORDER BY created_at DESC LIMIT 20"
+    ),
+    query(
+      "SELECT match_id, actor_user_id, action, reason, created_at FROM social_match_moderation_logs ORDER BY created_at DESC LIMIT 30"
     ),
   ]);
 
@@ -48,6 +58,7 @@ try {
 
   recentSwipes = recentSwipesRes.rows;
   recentMatches = recentMatchesRes.rows;
+  moderationLogs = moderationLogsRes.rows;
 } catch {
   hasSwipeTables = false;
 }
@@ -128,6 +139,25 @@ const seo = {
                 </div>
               </section>
             </div>
+
+            <section class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Moderasyon Kayıtları</h2>
+              <div class="space-y-2 max-h-[400px] overflow-auto">
+                {moderationLogs.length === 0 ? (
+                  <p class="text-sm text-gray-500">Kayıt bulunmuyor.</p>
+                ) : (
+                  moderationLogs.map((row) => (
+                    <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-sm">
+                      <div class="font-medium text-gray-900 dark:text-white">{row.action}</div>
+                      <div class="text-gray-600 dark:text-gray-300">match: {row.match_id}</div>
+                      <div class="text-gray-600 dark:text-gray-300 break-all">actor: {row.actor_user_id || "system"}</div>
+                      <div class="text-gray-600 dark:text-gray-300">reason: {row.reason || "-"}</div>
+                      <div class="text-gray-500 mt-1">{new Date(row.created_at).toLocaleString("tr-TR")}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
           </>
         )
       }
@@ -142,9 +172,14 @@ const seo = {
           if (!id) return;
           button.setAttribute('disabled', 'true');
           try {
+            const reason = window.prompt('Pasifleştirme gerekçesini yazın (en az 10 karakter):', 'Moderasyon gereği pasifleştirildi');
+            if (!reason || reason.trim().length < 10) {
+              throw new Error('invalid-reason');
+            }
             const response = await fetch(`/api/admin/social/matches/${id}/deactivate`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' }
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reason })
             });
             if (!response.ok) {
               throw new Error('İşlem başarısız');
@@ -152,7 +187,7 @@ const seo = {
             window.location.reload();
           } catch {
             button.removeAttribute('disabled');
-            alert('Eşleşme pasifleştirilemedi.');
+            alert('Eşleşme pasifleştirilemedi. Gerekçe en az 10 karakter olmalı.');
           }
         });
       });

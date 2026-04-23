@@ -177,6 +177,8 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
+    const normalizedContent = content.trim();
+
     // Get conversation to find recipient (optimized: select only needed columns)
     const conversation = await queryOne(
       'SELECT id, participant_a, participant_b FROM conversations WHERE id = $1',
@@ -210,8 +212,38 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
+    // Simple anti-spam guard: same sender cannot repeat the same message in short window.
+    const lastOwnMessage = await queryOne<{ content: string; created_at: string }>(
+      `SELECT content, created_at
+       FROM direct_messages
+       WHERE conversation_id = $1 AND sender_id = $2
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [conversationId, user.id]
+    );
+
+    if (lastOwnMessage?.content) {
+      const lastContent = lastOwnMessage.content.trim();
+      const lastCreatedAtMs = new Date(lastOwnMessage.created_at).getTime();
+      const nowMs = Date.now();
+      if (
+        Number.isFinite(lastCreatedAtMs) &&
+        nowMs - lastCreatedAtMs < 30_000 &&
+        lastContent.localeCompare(normalizedContent, 'tr', { sensitivity: 'base' }) === 0
+      ) {
+        recordRequest('POST', `/api/messages/${conversationId}`, HttpStatus.RATE_LIMITED, Date.now() - startTime);
+        return apiError(
+          ErrorCode.RATE_LIMITED,
+          'Aynı mesajı çok hızlı tekrar gönderiyorsunuz. Lütfen kısa süre bekleyin.',
+          HttpStatus.RATE_LIMITED,
+          undefined,
+          requestId
+        );
+      }
+    }
+
     // Send message (includes access control check)
-    const message = await sendMessage(conversationId, user.id, content.trim());
+    const message = await sendMessage(conversationId, user.id, normalizedContent);
 
     const duration = Date.now() - startTime;
     recordRequest('POST', `/api/messages/${conversationId}`, HttpStatus.CREATED, duration);

@@ -128,10 +128,11 @@ export default function SwipeMatchExperience() {
     setBusy(true);
     setError(null);
     try {
+      const reason = window.prompt('Eşleşmeyi kaldırma nedeni (isteğe bağlı):', '') || '';
       await fetchJson<{ data: { matchId: number } }>('/api/social/swipe/unmatch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ matchId })
+        body: JSON.stringify({ matchId, reason })
       });
       const latestMatches = await fetchJson<{ data: MatchUser[] }>('/api/social/swipe/matches?limit=50');
       setMatches(latestMatches.data || []);
