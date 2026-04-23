@@ -53,11 +53,11 @@ export interface PromotionMetrics {
  */
 export async function getPlaceAnalytics(placeId: string, days: number = 30): Promise<PlaceAnalytics | null> {
   try {
-    const cacheKey = `sanliurfa:analytics:place:${placeId}:${days}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `analytics:place:${placeId}:${days}`;
+    const cached = await getCache<PlaceAnalytics>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const place = await queryOne(
@@ -116,7 +116,7 @@ export async function getPlaceAnalytics(placeId: string, days: number = 30): Pro
       }))
     };
 
-    await setCache(cacheKey, JSON.stringify(analytics), 3600);
+    await setCache(cacheKey, analytics, 3600);
 
     return analytics;
   } catch (error) {
@@ -288,7 +288,7 @@ export async function recordAnalyticsSnapshot(placeId: string, metrics: any): Pr
     });
 
     // Invalidate cache
-    await deleteCache(`sanliurfa:analytics:place:${placeId}:30`);
+    await deleteCache(`analytics:place:${placeId}:30`);
 
     logger.info('Analytics snapshot recorded', { placeId });
     return true;
@@ -338,11 +338,11 @@ export async function generateAnalyticsReport(placeId: string, startDate: string
  */
 export async function getPlaceDailyMetrics(placeId: string, days: number = 30): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:metrics:daily:${placeId}:${days}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `metrics:daily:${placeId}:${days}`;
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const metrics = await queryMany(`
@@ -362,7 +362,7 @@ export async function getPlaceDailyMetrics(placeId: string, days: number = 30): 
     `, [placeId, days]);
 
     if (metrics.length > 0) {
-      await setCache(cacheKey, JSON.stringify(metrics), 3600);
+      await setCache(cacheKey, metrics, 3600);
     }
 
     return metrics;
@@ -377,11 +377,11 @@ export async function getPlaceDailyMetrics(placeId: string, days: number = 30): 
  */
 export async function getDashboardOverview(placeId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:dashboard:overview:${placeId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `dashboard:overview:${placeId}`;
+    const cached = await getCache<any>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const overview = await queryOne(`
@@ -395,7 +395,7 @@ export async function getDashboardOverview(placeId: string): Promise<any | null>
     `, [placeId]);
 
     if (overview) {
-      await setCache(cacheKey, JSON.stringify(overview), 1800);
+      await setCache(cacheKey, overview, 1800);
     }
 
     return overview;

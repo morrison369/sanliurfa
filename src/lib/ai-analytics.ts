@@ -75,7 +75,7 @@ class EmbeddingAnalytics {
 
     this.metrics.push(metric);
 
-    const cacheKey = `sanliurfa:embedding-metrics:${config.modelId}`;
+    const cacheKey = `embedding-metrics:${config.modelId}`;
     redis.lpush(cacheKey, JSON.stringify(metric));
     redis.ltrim(cacheKey, 0, 999);
 
@@ -171,7 +171,7 @@ class RetrievalAnalytics {
 
     this.metrics.push(metric);
 
-    const cacheKey = 'sanliurfa:retrieval-metrics';
+    const cacheKey = 'retrieval-metrics';
     redis.lpush(cacheKey, JSON.stringify(metric));
     redis.ltrim(cacheKey, 0, 999);
 
@@ -271,7 +271,7 @@ class LLMMetrics {
 
     this.metrics.push(metric);
 
-    const cacheKey = `sanliurfa:llm-metrics:${config.model}`;
+    const cacheKey = `llm-metrics:${config.model}`;
     redis.lpush(cacheKey, JSON.stringify(metric));
     redis.ltrim(cacheKey, 0, 999);
 
@@ -367,7 +367,7 @@ class QualityMonitor {
 
     this.alerts.push(alert);
 
-    const cacheKey = `sanliurfa:alert:${alert.id}`;
+    const cacheKey = `alert:${alert.id}`;
     redis.setex(cacheKey, 86400, JSON.stringify(alert));
 
     logger.warn('Quality alert triggered', {

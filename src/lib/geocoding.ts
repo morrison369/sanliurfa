@@ -20,7 +20,7 @@ const MIN_REQUEST_INTERVAL = 1000; // 1 second
 export async function getAddressFromCoordinates(lat: number, lng: number): Promise<any | null> {
   try {
     // Check cache first
-    const cacheKey = `sanliurfa:geocode:${lat.toFixed(6)}:${lng.toFixed(6)}`;
+    const cacheKey = `geocode:${lat.toFixed(6)}:${lng.toFixed(6)}`;
     const cached = await getCache<any>(cacheKey);
     if (cached) {
       return cached;
@@ -78,7 +78,7 @@ export async function getAddressFromCoordinates(lat: number, lng: number): Promi
 export async function getCoordinatesFromAddress(address: string): Promise<any | null> {
   try {
     // Check cache
-    const cacheKey = `sanliurfa:address:${address.toLowerCase().replace(/\s+/g, '_')}`;
+    const cacheKey = `address:${address.toLowerCase().replace(/\s+/g, '_')}`;
     const cached = await getCache<any>(cacheKey);
     if (cached) {
       return cached;
@@ -102,12 +102,12 @@ export async function getCoordinatesFromAddress(address: string): Promise<any | 
       }
     );
 
-    if (!response.ok || !Array.isArray(response)) {
+    if (!response.ok) {
       return null;
     }
 
     const data = await response.json();
-    if (!data || data.length === 0) {
+    if (!Array.isArray(data) || data.length === 0) {
       return null;
     }
 

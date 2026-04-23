@@ -18,7 +18,7 @@ export async function createCohort(userId: string, cohortName: string, cohortKey
       is_active: true
     });
 
-    await deleteCache('sanliurfa:cohorts:list');
+    await deleteCache('cohorts:list');
     logger.info('Cohort created', { cohortId: result.id, cohortName });
     return result;
   } catch (error) {
@@ -29,11 +29,11 @@ export async function createCohort(userId: string, cohortName: string, cohortKey
 
 export async function getCohortById(cohortId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:cohort:${cohortId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `cohort:${cohortId}`;
+    const cached = await getCache<any>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const cohort = await queryOne(
@@ -42,7 +42,7 @@ export async function getCohortById(cohortId: string): Promise<any | null> {
     );
 
     if (cohort) {
-      await setCache(cacheKey, JSON.stringify(cohort), 3600);
+      await setCache(cacheKey, cohort, 3600);
     }
 
     return cohort || null;
@@ -54,11 +54,11 @@ export async function getCohortById(cohortId: string): Promise<any | null> {
 
 export async function listCohorts(limit: number = 50): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:cohorts:list';
-    let cached = await getCache(cacheKey);
+    const cacheKey = 'cohorts:list';
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const cohorts = await queryMany(
@@ -66,7 +66,7 @@ export async function listCohorts(limit: number = 50): Promise<any[]> {
       [limit]
     );
 
-    await setCache(cacheKey, JSON.stringify(cohorts), 1800);
+    await setCache(cacheKey, cohorts, 1800);
     return cohorts;
   } catch (error) {
     logger.error('Failed to list cohorts', error instanceof Error ? error : new Error(String(error)));
@@ -92,7 +92,7 @@ export async function addUserToCohort(cohortId: string, userId: string): Promise
       member_count: parseInt(count?.count || '0')
     });
 
-    await deleteCache(`sanliurfa:cohort:${cohortId}`);
+    await deleteCache(`cohort:${cohortId}`);
     return true;
   } catch (error) {
     logger.error('Failed to add user to cohort', error instanceof Error ? error : new Error(String(error)));
@@ -114,11 +114,11 @@ export async function getCohortMembers(cohortId: string, limit: number = 100): P
 
 export async function getRetentionCurve(cohortId: string): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:retention:${cohortId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `retention:${cohortId}`;
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const retention = await queryMany(
@@ -126,7 +126,7 @@ export async function getRetentionCurve(cohortId: string): Promise<any[]> {
       [cohortId]
     );
 
-    await setCache(cacheKey, JSON.stringify(retention), 3600);
+    await setCache(cacheKey, retention, 3600);
     return retention;
   } catch (error) {
     logger.error('Failed to get retention curve', error instanceof Error ? error : new Error(String(error)));
@@ -162,7 +162,7 @@ export async function calculateRetention(cohortId: string, weekNumber: number): 
       retention_rate: retentionRate
     });
 
-    await deleteCache(`sanliurfa:retention:${cohortId}`);
+    await deleteCache(`retention:${cohortId}`);
     logger.info('Retention calculated', { cohortId, week: weekNumber, rate: retentionRate });
     return true;
   } catch (error) {
@@ -173,11 +173,11 @@ export async function calculateRetention(cohortId: string, weekNumber: number): 
 
 export async function getCohortMetrics(cohortId: string, days: number = 30): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:cohort:metrics:${cohortId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `cohort:metrics:${cohortId}`;
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const since = new Date(Date.now() - days * 24 * 3600000);
@@ -186,7 +186,7 @@ export async function getCohortMetrics(cohortId: string, days: number = 30): Pro
       [cohortId, since.toISOString().split('T')[0]]
     );
 
-    await setCache(cacheKey, JSON.stringify(metrics), 1800);
+    await setCache(cacheKey, metrics, 1800);
     return metrics;
   } catch (error) {
     logger.error('Failed to get cohort metrics', error instanceof Error ? error : new Error(String(error)));
