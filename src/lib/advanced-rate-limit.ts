@@ -27,6 +27,62 @@ async function getRateLimitRedisClient(): Promise<any | null> {
   }
 }
 
+async function redisZRemRangeByScore(client: any, key: string, min: number, max: number): Promise<void> {
+  if (typeof client?.zRemRangeByScore === 'function') {
+    await client.zRemRangeByScore(key, min, max);
+    return;
+  }
+  if (typeof client?.zremrangebyscore === 'function') {
+    await client.zremrangebyscore(key, min, max);
+    return;
+  }
+  throw new Error('Redis client missing zRemRangeByScore');
+}
+
+async function redisZCard(client: any, key: string): Promise<number> {
+  if (typeof client?.zCard === 'function') {
+    return Number(await client.zCard(key));
+  }
+  if (typeof client?.zcard === 'function') {
+    return Number(await client.zcard(key));
+  }
+  throw new Error('Redis client missing zCard');
+}
+
+async function redisZRange(client: any, key: string, start: number, stop: number): Promise<string[]> {
+  if (typeof client?.zRange === 'function') {
+    return (await client.zRange(key, start, stop)) || [];
+  }
+  if (typeof client?.zrange === 'function') {
+    return (await client.zrange(key, start, stop)) || [];
+  }
+  throw new Error('Redis client missing zRange');
+}
+
+async function redisZAdd(client: any, key: string, score: number, value: string): Promise<void> {
+  if (typeof client?.zAdd === 'function') {
+    await client.zAdd(key, [{ score, value }]);
+    return;
+  }
+  if (typeof client?.zadd === 'function') {
+    await client.zadd(key, score, value);
+    return;
+  }
+  throw new Error('Redis client missing zAdd');
+}
+
+async function redisSetEx(client: any, key: string, ttlSeconds: number, value: string): Promise<void> {
+  if (typeof client?.setEx === 'function') {
+    await client.setEx(key, ttlSeconds, value);
+    return;
+  }
+  if (typeof client?.setex === 'function') {
+    await client.setex(key, ttlSeconds, value);
+    return;
+  }
+  throw new Error('Redis client missing setEx');
+}
+
 /**
  * Sliding window rate limiter (most accurate)
  */
@@ -55,14 +111,14 @@ export class SlidingWindowLimiter {
 
     try {
       // Remove old entries outside the window
-      await redis.zremrangebyscore(key, 0, windowStart);
+      await redisZRemRangeByScore(redis, key, 0, windowStart);
 
       // Count requests in current window
-      const count = await redis.zcard(key);
+      const count = await redisZCard(redis, key);
 
       if (count >= this.config.maxRequests) {
         // At limit - calculate retry after
-        const oldestRequest = await redis.zrange(key, 0, 0);
+        const oldestRequest = await redisZRange(redis, key, 0, 0);
         const retryAfter = oldestRequest[0]
           ? Math.ceil((parseInt(oldestRequest[0]) + this.config.windowSizeMs - now) / 1000)
           : Math.ceil(this.config.windowSizeMs / 1000);
@@ -76,7 +132,7 @@ export class SlidingWindowLimiter {
       }
 
       // Add current request
-      await redis.zadd(key, now, `${now}-${Math.random()}`);
+      await redisZAdd(redis, key, now, `${now}-${Math.random()}`);
       await redis.expire(key, Math.ceil(this.config.windowSizeMs / 1000));
 
       return {
@@ -145,8 +201,8 @@ export class TokenBucketLimiter {
         // Update Redis
         const ttl = Math.ceil(this.config.windowSizeMs / 1000);
         await Promise.all([
-          redis.setex(key, ttl, tokens.toString()),
-          redis.setex(lastRefillKey, ttl, now.toString())
+          redisSetEx(redis, key, ttl, tokens.toString()),
+          redisSetEx(redis, lastRefillKey, ttl, now.toString())
         ]);
 
         return {
