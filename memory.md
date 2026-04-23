@@ -1,8 +1,8 @@
 # Memory
 
 ## Current Phase
-- Active window: `Phase 1511-1516` (planned)
-- Last completed: `Phase 1505-1510 Governance Assurance Stability & Continuity V194`
+- Active window: `Phase 1517-1522` (planned)
+- Last completed: `Phase 1511-1516 Governance Recovery Assurance & Continuity V195`
 
 ## Astro Invariants
 - SSR-first runtime: `output: "server"` with `@astrojs/node` standalone adapter.
@@ -39,17 +39,19 @@
 
 - `Phase 1505-1510 Governance Assurance Stability & Continuity V194`: complete
 
+- `Phase 1511-1516 Governance Recovery Assurance & Continuity V195`: complete
+
 ## Open Tasks
 - No active blocker for completed windows.
-- Optional: Phase 1511-1516 scope definition and kickoff.
+- Optional: Phase 1517-1522 scope definition and kickoff.
 
 ## Next 6 Phases (Planned Scope)
-- `Phase 1511`: Governance Recovery Assurance Router V195
-- `Phase 1512`: Policy Continuity Stability Harmonizer V195
-- `Phase 1513`: Compliance Assurance Recovery Mesh V195
-- `Phase 1514`: Trust Stability Continuity Forecaster V195
-- `Phase 1515`: Board Recovery Stability Coordinator V195
-- `Phase 1516`: Policy Assurance Continuity Engine V195
+- `Phase 1517`: Governance Assurance Stability Router V196
+- `Phase 1518`: Policy Recovery Continuity Harmonizer V196
+- `Phase 1519`: Compliance Stability Continuity Mesh V196
+- `Phase 1520`: Trust Assurance Recovery Forecaster V196
+- `Phase 1521`: Board Stability Continuity Coordinator V196
+- `Phase 1522`: Policy Recovery Assurance Engine V196
 
 ## Checkpoint Rule
 - Every 2 phase blocks, record one short checkpoint note (risk, decision, outcome).
