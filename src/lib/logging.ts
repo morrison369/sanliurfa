@@ -209,16 +209,19 @@ class Logger {
     if (typeof error === 'object') {
       const maybeError = error as { name?: unknown; message?: unknown; stack?: unknown };
       const name = typeof maybeError.name === 'string' ? maybeError.name : undefined;
+      const serializedObject = (() => {
+        try {
+          return JSON.stringify(error);
+        } catch {
+          return String(error);
+        }
+      })();
       const message =
         typeof maybeError.message === 'string'
           ? maybeError.message
-          : (() => {
-              try {
-                return JSON.stringify(error);
-              } catch {
-                return String(error);
-              }
-            })();
+          : serializedObject === '{}'
+          ? 'Unknown error object'
+          : serializedObject;
       const stack = typeof maybeError.stack === 'string' ? maybeError.stack : undefined;
 
       return {
