@@ -53,7 +53,7 @@ export async function createCollection(
     );
 
     // Clear cache
-    await deleteCache(`sanliurfa:collections:${userId}`);
+    await deleteCache(`collections:${userId}`);
 
     logger.info('Collection created', { userId, collectionId: result.id, name });
 
@@ -116,8 +116,8 @@ export async function updateCollection(
     const result = await queryOne(sql, values);
 
     // Clear caches
-    await deleteCache(`sanliurfa:collection:${collectionId}`);
-    await deleteCache(`sanliurfa:collections:${userId}`);
+    await deleteCache(`collection:${collectionId}`);
+    await deleteCache(`collections:${userId}`);
 
     logger.info('Collection updated', { userId, collectionId });
     return !!result;
@@ -148,8 +148,8 @@ export async function deleteCollection(collectionId: string, userId: string): Pr
     ]);
 
     // Clear caches
-    await deleteCache(`sanliurfa:collection:${collectionId}`);
-    await deleteCache(`sanliurfa:collections:${userId}`);
+    await deleteCache(`collection:${collectionId}`);
+    await deleteCache(`collections:${userId}`);
 
     logger.info('Collection deleted', { userId, collectionId });
     return (result.rowCount || 0) > 0;
@@ -290,7 +290,7 @@ export async function addPlaceToCollection(
     ]);
 
     // Clear cache
-    await deleteCache(`sanliurfa:collection:${collectionId}`);
+    await deleteCache(`collection:${collectionId}`);
 
     logger.info('Place added to collection', { userId, collectionId, placeId });
     return result.id;
@@ -340,7 +340,7 @@ export async function removePlaceFromCollection(
       ]);
 
       // Clear cache
-      await deleteCache(`sanliurfa:collection:${collectionId}`);
+      await deleteCache(`collection:${collectionId}`);
     }
 
     logger.info('Place removed from collection', { userId, collectionId, placeId });

@@ -29,13 +29,12 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     }
 
     // Try cache first
-    const cacheKey = `sanliurfa:search:advanced:${query}:${category}:${minRating}:${limit}:${offset}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `search:advanced:${query}:${category}:${minRating}:${limit}:${offset}`;
+    const cached = await getCache<any[]>(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/search/advanced', HttpStatus.OK, Date.now() - startTime);
-      const data = JSON.parse(cached);
       return apiResponse(
-        { success: true, data, cached: true },
+        { success: true, data: cached, cached: true },
         HttpStatus.OK,
         requestId
       );
@@ -85,7 +84,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     await recordSearchQuery(locals.user?.id || null, query, results.length, { category, minRating });
 
     // Cache results
-    await setCache(cacheKey, JSON.stringify(rankedResults), 300);
+    await setCache(cacheKey, rankedResults, 300);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/search/advanced', HttpStatus.OK, duration);

@@ -79,7 +79,7 @@ class EventStore {
 
     this.events.push(event);
 
-    const cacheKey = `sanliurfa:event:${id}`;
+    const cacheKey = `event:${id}`;
     redis.setex(cacheKey, 604800, JSON.stringify(event)); // 7 days
 
     logger.info('Event appended', {
@@ -218,7 +218,7 @@ class EventSnapshot {
     const snapshotId = `${aggregateId}-v${version}`;
     this.snapshots.set(snapshotId, snapshot);
 
-    const cacheKey = `sanliurfa:snapshot:${snapshotId}`;
+    const cacheKey = `snapshot:${snapshotId}`;
     redis.setex(cacheKey, 2592000, JSON.stringify(snapshot)); // 30 days
 
     logger.debug('Snapshot created', { aggregateId, version });
@@ -241,7 +241,7 @@ class EventSnapshot {
 
     for (const [key] of snapshots) {
       this.snapshots.delete(key);
-      redis.del(`sanliurfa:snapshot:${key}`);
+      redis.del(`snapshot:${key}`);
     }
 
     logger.debug('Old snapshots deleted', { aggregateId, deleted: snapshots.length });

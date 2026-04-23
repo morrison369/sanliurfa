@@ -45,11 +45,11 @@ export interface EventAttendee {
  */
 export async function getEventById(eventId: string): Promise<Event | null> {
   try {
-    const cacheKey = `sanliurfa:event:${eventId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `event:${eventId}`;
+    const cached = await getCache<Event>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const result = await queryOne(
@@ -89,7 +89,7 @@ export async function getEventById(eventId: string): Promise<Event | null> {
       updated_at: result.updated_at
     };
 
-    await setCache(cacheKey, JSON.stringify(event), 600);
+    await setCache(cacheKey, event, 600);
 
     return event;
   } catch (error) {
@@ -107,11 +107,11 @@ export async function getEvents(
   filters?: { category?: string; status?: string; placeId?: string }
 ): Promise<{ events: Event[]; total: number }> {
   try {
-    const cacheKey = `sanliurfa:events:list:${limit}:${offset}:${JSON.stringify(filters || {})}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `events:list:${limit}:${offset}:${JSON.stringify(filters || {})}`;
+    const cached = await getCache<{ events: Event[]; total: number }>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     let whereClause = 'WHERE status = $1';
@@ -164,7 +164,7 @@ export async function getEvents(
     }));
 
     const result = { events, total };
-    await setCache(cacheKey, JSON.stringify(result), 300);
+    await setCache(cacheKey, result, 300);
 
     return result;
   } catch (error) {
@@ -248,8 +248,8 @@ export async function toggleRsvp(eventId: string, userId: string): Promise<boole
       );
     }
 
-    await deleteCache(`sanliurfa:event:${eventId}`);
-    await deleteCache(`sanliurfa:event:attendees:${eventId}`);
+    await deleteCache(`event:${eventId}`);
+    await deleteCache(`event:attendees:${eventId}`);
 
     logger.info('RSVP toggled', { eventId, userId });
 
@@ -265,11 +265,11 @@ export async function toggleRsvp(eventId: string, userId: string): Promise<boole
  */
 export async function getEventAttendees(eventId: string): Promise<EventAttendee[]> {
   try {
-    const cacheKey = `sanliurfa:event:attendees:${eventId}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `event:attendees:${eventId}`;
+    const cached = await getCache<EventAttendee[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const results = await queryMany(
@@ -289,7 +289,7 @@ export async function getEventAttendees(eventId: string): Promise<EventAttendee[
       updated_at: r.updated_at
     }));
 
-    await setCache(cacheKey, JSON.stringify(attendees), 300);
+    await setCache(cacheKey, attendees, 300);
 
     return attendees;
   } catch (error) {
@@ -320,11 +320,11 @@ export async function hasUserRsvpd(eventId: string, userId: string): Promise<boo
  */
 export async function getUpcomingEvents(limit: number = 10): Promise<Event[]> {
   try {
-    const cacheKey = `sanliurfa:events:upcoming:${limit}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `events:upcoming:${limit}`;
+    const cached = await getCache<Event[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const results = await queryMany(
@@ -358,7 +358,7 @@ export async function getUpcomingEvents(limit: number = 10): Promise<Event[]> {
       updated_at: r.updated_at
     }));
 
-    await setCache(cacheKey, JSON.stringify(events), 3600);
+    await setCache(cacheKey, events, 3600);
 
     return events;
   } catch (error) {
