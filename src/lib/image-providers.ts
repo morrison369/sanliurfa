@@ -30,6 +30,9 @@ interface FetchProviderImageOptions {
 const SITE_URL = process.env.SITE_URL || 'https://sanliurfa.com';
 const UPLOAD_DIR = process.env.PHOTO_UPLOAD_DIR || process.env.UPLOAD_DIR || 'public/uploads/photos';
 const UPLOAD_PUBLIC_PATH = process.env.UPLOAD_PUBLIC_PATH || '/uploads/photos';
+const PROVIDER_FETCH_TIMEOUT_MS = parsePositiveInt(process.env.IMAGE_PROVIDER_FETCH_TIMEOUT_MS, 8000);
+const PROVIDER_RETRY_COUNT = parsePositiveInt(process.env.IMAGE_PROVIDER_RETRY_COUNT, 2);
+const PROVIDER_RETRY_DELAY_MS = parsePositiveInt(process.env.IMAGE_PROVIDER_RETRY_DELAY_MS, 400);
 
 export function hasImageProviderCredentials(): boolean {
   return Boolean(process.env.PEXELS_API_KEY || process.env.UNSPLASH_ACCESS_KEY);
@@ -73,7 +76,7 @@ export async function searchPexelsImage(query: string): Promise<ProviderImage | 
   url.searchParams.set('orientation', 'landscape');
   url.searchParams.set('locale', 'tr-TR');
 
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url.toString(), {
     headers: {
       Authorization: apiKey,
       Accept: 'application/json',
@@ -127,7 +130,7 @@ export async function searchUnsplashImage(query: string): Promise<ProviderImage 
   url.searchParams.set('orientation', 'landscape');
   url.searchParams.set('content_filter', 'high');
 
-  const response = await fetch(url, {
+  const response = await fetchWithRetry(url.toString(), {
     headers: {
       Authorization: `Client-ID ${accessKey}`,
       Accept: 'application/json',
@@ -174,7 +177,7 @@ async function storeProviderImage(input: {
   slug: string;
   folder: string;
 }): Promise<StoredProviderImage> {
-  const response = await fetch(input.image.url, {
+  const response = await fetchWithRetry(input.image.url, {
     headers: {
       Accept: 'image/avif,image/webp,image/jpeg,image/png,image/*;q=0.8',
       'User-Agent': 'sanliurfa.com image fetcher',
@@ -246,4 +249,58 @@ function joinUrlPath(...parts: string[]): string {
     .map((part) => part.replace(/^\/+|\/+$/g, ''))
     .filter(Boolean)
     .join('/')}`;
+}
+
+async function fetchWithRetry(input: string, init: RequestInit): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= PROVIDER_RETRY_COUNT; attempt += 1) {
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const controller = new AbortController();
+      timeout = setTimeout(() => controller.abort(), PROVIDER_FETCH_TIMEOUT_MS);
+      const response = await fetch(input, {
+        ...init,
+        signal: controller.signal,
+      });
+
+      if (response.ok) {
+        return response;
+      }
+
+      if (!shouldRetryStatus(response.status) || attempt >= PROVIDER_RETRY_COUNT) {
+        return response;
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt >= PROVIDER_RETRY_COUNT) {
+        break;
+      }
+    } finally {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    }
+
+    await delay(PROVIDER_RETRY_DELAY_MS * (attempt + 1));
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('Image provider request failed');
+}
+
+function shouldRetryStatus(status: number): boolean {
+  return status === 408 || status === 425 || status === 429 || (status >= 500 && status <= 599);
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function parsePositiveInt(rawValue: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt((rawValue || '').trim(), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return parsed;
 }

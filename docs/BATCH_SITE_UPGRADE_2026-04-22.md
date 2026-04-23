@@ -565,3 +565,5 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 11. Pipeline'a kalite eşiği eklendi: `--min-fill-rate=<0-100>`; write raporu eşik altında kalırsa süreç non-zero kodla kapanır.
 12. Dry-run aşamasına opsiyonel provider probe eklendi: `--probe-provider-on-dry-run`; uygun görsel bulunabilirliği write öncesi rapora yansır.
 13. Pipeline için hızlı mod eklendi: `--skip-dry-run-probe` (ağ çağrısı azaltılmış hızlı dry-run).
+14. `src/lib/image-providers.ts` sağlayıcı HTTP çağrılarına timeout + retry/backoff katmanı eklendi.
+15. Geçici hata kodlarında (`408/425/429/5xx`) otomatik tekrar denenir; timeout/retry parametreleri env ile yönetilir.
