@@ -1226,6 +1226,12 @@
     "src/lib/governance-assurance-stability-router-v206.ts",
     "src/lib/policy-recovery-assurance-engine-v206.ts",
     "src/lib/policy-recovery-continuity-harmonizer-v206.ts",
-    "src/lib/trust-assurance-recovery-forecaster-v206.ts"
+    "src/lib/trust-assurance-recovery-forecaster-v206.ts",
+    "src/lib/board-recovery-stability-coordinator-v207.ts",
+    "src/lib/compliance-assurance-recovery-mesh-v207.ts",
+    "src/lib/governance-recovery-assurance-router-v207.ts",
+    "src/lib/policy-assurance-continuity-engine-v207.ts",
+    "src/lib/policy-continuity-stability-harmonizer-v207.ts",
+    "src/lib/trust-stability-continuity-forecaster-v207.ts"
   ]
 }
