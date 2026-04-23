@@ -3,6 +3,7 @@ import { defineMiddleware } from 'astro:middleware';
 import { verifyToken } from './lib/auth';
 import { queryOne } from './lib/postgres';
 import { checkRateLimit } from './lib/cache';
+import { PUBLIC_DISCOVERY_PATHS } from './lib/public-discovery';
 
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
@@ -13,7 +14,7 @@ const PUBLIC_PATHS = [
   '/fiyatlandirma', '/gizlilik-politikasi', '/kullanim-kosullari', '/kvkk',
   '/cerez-politikasi', '/sss', '/sifremi-unuttum', '/sifre-sifirla', '/verify-email', '/loading',
   '/search', '/favorites', '/mekanlar', '/hakkimizda', '/profile', '/notifications',
-  '/rss.xml', '/robots.txt', '/sitemap.xml', '/sitemap-index.xml', '/llms.txt',
+  ...PUBLIC_DISCOVERY_PATHS,
   '/api/auth/login', '/api/auth/register', '/api/places', '/api/health',
 ];
 

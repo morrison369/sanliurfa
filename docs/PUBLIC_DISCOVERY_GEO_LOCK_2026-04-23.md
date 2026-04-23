@@ -11,6 +11,7 @@ Bu not, `sanliurfa.com` public keşif yüzeyinin tekrar dağılmaması için ekl
 5. Admin, API, profil, mesaj, ayar, abonelik, sosyal panel ve kullanıcıya özel alanlar public citation kaynağı değildir.
 6. Sahte sosyal medya hesabı veya doğrulanmamış dış platform iddiası eklenmez.
 7. Yeni public sayfa eklendiğinde sitemap, robots politikası ve `llms.txt` kapsamı birlikte kontrol edilir.
+8. Discovery path ve robots crawler kuralları için kod tarafındaki tek kaynak `src/lib/public-discovery.ts` dosyasıdır.
 
 ## Bu Batch'te Yapılanlar
 
@@ -21,6 +22,12 @@ Bu not, `sanliurfa.com` public keşif yüzeyinin tekrar dağılmaması için ekl
 5. `public/humans.txt` site kimliği, Türkçe dil politikası ve public kaynak özeti olarak eklendi.
 6. Sitemap index girdilerine `lastmod` eklendi.
 7. `oneriler`, `liderlik-tablosu` ve `fiyatlandirma` public sayfaları ana sitemap statik sayfa listesine eklendi.
+
+## Runtime Kontrat Güncellemesi
+
+1. `ai.txt`, `humans.txt`, `llms.txt`, sitemap, robots ve RSS path'leri middleware public allow-list içinde `PUBLIC_DISCOVERY_PATHS` üzerinden yönetilir.
+2. Dinamik `robots.txt` route'u ve legacy SEO helper robots çıktısı aynı `buildRobotsTxt()` fonksiyonunu kullanır.
+3. Statik `public/robots.txt` yalnızca fallback dosyasıdır; değişiklikler önce `src/lib/public-discovery.ts` içine işlenir.
 
 ## Doğrulama Beklentisi
 

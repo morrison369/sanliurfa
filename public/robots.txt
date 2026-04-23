@@ -1,5 +1,5 @@
 # robots.txt for sanliurfa.com
-# Static fallback. Keep aligned with src/pages/robots.txt.ts.
+# Static fallback. Keep aligned with src/lib/public-discovery.ts.
 
 User-agent: *
 Allow: /
@@ -41,8 +41,9 @@ Sitemap: https://sanliurfa.com/blog/sitemap.xml
 # Public AI discovery
 # See: https://sanliurfa.com/llms.txt
 # See: https://sanliurfa.com/ai.txt
+# See: https://sanliurfa.com/humans.txt
 
-# AI search crawlers
+# AI and search crawlers
 User-agent: GPTBot
 Allow: /
 
