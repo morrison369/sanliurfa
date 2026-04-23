@@ -130,6 +130,7 @@ import { migration_128_public_site_settings_hardening } from '../migrations/128_
 import { migration_129_content_status_hardening } from '../migrations/129_content_status_hardening';
 import { migration_130_turkish_only_language_lock } from '../migrations/130_turkish_only_language_lock';
 import { migration_131_social_swipe_matching } from '../migrations/131_social_swipe_matching';
+import { migration_132_social_match_moderation_logs } from '../migrations/132_social_match_moderation_logs';
 
 // Tüm migrasyonlar
 const ALL_MIGRATIONS = [
@@ -255,7 +256,8 @@ const ALL_MIGRATIONS = [
   migration_128_public_site_settings_hardening,
   migration_129_content_status_hardening,
   migration_130_turkish_only_language_lock,
-  migration_131_social_swipe_matching
+  migration_131_social_swipe_matching,
+  migration_132_social_match_moderation_logs
 ];
 
 let migrationsInitialized = false;
