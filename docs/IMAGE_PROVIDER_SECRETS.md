@@ -9,6 +9,7 @@
 - Local çalışma için değerler `.env.local` dosyasında tutulur; bu dosya `.gitignore` kapsamındadır.
 - Production/CWP ortamında değerler domain kullanıcısının environment/secret ayarlarına girilir.
 - Görsel dosya adları içerik slug değerine göre üretilir.
+- Rotation adımları için `docs/SECRETS_ROTATION_RUNBOOK.md` uygulanır.
 
 ## Environment Değişkenleri
 

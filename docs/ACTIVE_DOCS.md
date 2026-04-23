@@ -13,6 +13,8 @@ These documents are the active operational surface for this repository.
 - `docs/RELEASE_DEFINITION_OF_DONE.md`
 - `docs/LIVE_ACCEPTANCE_CHECKLIST.md`
 - `docs/PHASE_FREEZE_POLICY.md`
+- `docs/PRODUCT_FINALIZATION_BACKLOG_2026-04-23.md`
+- `docs/SECRETS_ROTATION_RUNBOOK.md`
 - `STALE_WORKTREE.md`
 - `ROOT_INVENTORY_ONLY_POLICY.md`
 

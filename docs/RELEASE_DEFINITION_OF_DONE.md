@@ -35,6 +35,9 @@ Bu doküman `sanliurfa.com` yayın kapanış kriterini kilitler. Aşağıdaki ba
 - `npm run security:seo-template-contract`
 - `npm run security:turkish-content-quality-contract`
 - `npm run security:image-slug-contract`
+- `npm run security:social-capability-contract`
+- `npm run security:admin-homepage-contract`
+- `npm run security:secrets-rotation-contract`
 - `npm run security:public-readiness`
 - `npm run build`
 
