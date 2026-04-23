@@ -64,7 +64,7 @@ export function getEnv(key?: string, defaultValue?: string): EnvConfig | string 
   const dbUrl = readProcessEnv('DATABASE_URL');
   const jwtSecret = readProcessEnv('JWT_SECRET');
   const redisDb = parseRedisDb(readProcessEnv('REDIS_DB'), 15);
-  const redisUrl = readProcessEnv('REDIS_URL') || `redis://127.0.0.1:6379/${redisDb}`;
+  const redisUrl = resolveRedisUrl(readProcessEnv('REDIS_URL'), redisDb);
 
   if (!dbUrl || !jwtSecret) {
     throw new Error('Missing critical env vars: DATABASE_URL and JWT_SECRET must be set');
@@ -124,6 +124,28 @@ function parseRedisDb(rawValue: string | undefined, fallback: number): number {
     return fallback;
   }
   return parsed;
+}
+
+function resolveRedisUrl(rawUrl: string | undefined, redisDb: number): string {
+  if (!rawUrl) {
+    return `redis://127.0.0.1:6379/${redisDb}`;
+  }
+
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'redis:' && parsed.protocol !== 'rediss:') {
+      return rawUrl;
+    }
+
+    const pathname = (parsed.pathname || '').trim();
+    if (!pathname || pathname === '/') {
+      parsed.pathname = `/${redisDb}`;
+    }
+
+    return parsed.toString();
+  } catch {
+    return rawUrl;
+  }
 }
 
 function getPublicClientVar(key: (typeof requiredClientVars)[number]): string {

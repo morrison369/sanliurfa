@@ -4,7 +4,7 @@ import { logger } from './logging';
 
 const configuredRedisUrl = (process.env.REDIS_URL || '').trim();
 const REDIS_DB = parseRedisDb(process.env.REDIS_DB, 15);
-const redisUrl = configuredRedisUrl || `redis://127.0.0.1:6379/${REDIS_DB}`;
+const redisUrl = resolveRedisUrl(configuredRedisUrl, REDIS_DB);
 const LEGACY_KEY_PREFIX = 'sanliurfa:';
 const KEY_PREFIX = normalizeKeyPrefix(process.env.REDIS_KEY_PREFIX || LEGACY_KEY_PREFIX);
 const REDIS_ENABLED = resolveRedisEnabled(process.env.REDIS_ENABLED, configuredRedisUrl);
@@ -248,6 +248,28 @@ function parseRedisDb(rawValue: string | undefined, fallback: number): number {
     return fallback;
   }
   return parsed;
+}
+
+function resolveRedisUrl(rawUrl: string, redisDb: number): string {
+  if (!rawUrl) {
+    return `redis://127.0.0.1:6379/${redisDb}`;
+  }
+
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'redis:' && parsed.protocol !== 'rediss:') {
+      return rawUrl;
+    }
+
+    const pathname = (parsed.pathname || '').trim();
+    if (!pathname || pathname === '/') {
+      parsed.pathname = `/${redisDb}`;
+    }
+
+    return parsed.toString();
+  } catch {
+    return rawUrl;
+  }
 }
 
 function resolveRedisEnabled(rawValue: string | undefined, redisUrlValue: string): boolean {

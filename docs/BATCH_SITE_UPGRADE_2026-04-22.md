@@ -686,3 +686,15 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 5. Böylece Redis lifecycle regresyonu security contract aşamasında otomatik yakalanır.
 6. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
 7. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
+
+## 2026-04-23 Toplu Paket (REDIS_URL + REDIS_DB Yol Normalizasyonu)
+
+1. `src/lib/cache.ts` içinde Redis URL üretimi merkezi resolver'a taşındı: `resolveRedisUrl(configuredRedisUrl, REDIS_DB)`.
+2. `REDIS_URL` değeri DB path içermiyorsa (`redis://host:6379` veya `rediss://.../`) artık otomatik olarak `/${REDIS_DB}` eklenir.
+3. `REDIS_URL` boşsa fallback aynı izolasyon standardını korur: `redis://127.0.0.1:6379/${REDIS_DB}`.
+4. URL parse edilemezse davranış güvenli fallback olarak mevcut ham değer korunur (sessiz davranış değişikliği riski azaltıldı).
+5. `src/lib/env.ts` içinde aynı normalizasyon mantığı uygulandı; runtime env katmanı ve cache katmanı aynı Redis DB hedefini kullanır.
+6. `scripts/security/redis-isolation-contract.ts` kontratı güncellendi; yeni resolver kullanımını ve helper varlığını zorunlu doğrular.
+7. Böylece `REDIS_DB=15` tanımlı iken `REDIS_URL` path'siz verilse bile yanlışlıkla DB 0'a düşme riski kapatıldı.
+8. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
+9. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
