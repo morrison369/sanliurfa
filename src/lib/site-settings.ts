@@ -80,6 +80,7 @@ export interface SeoDefaults {
 
 export interface PublicSiteSettings {
   hero: HeroSettings;
+  homepageSections: string[];
   headerMenu: HeaderMenuItem[];
   cityServices: CityServiceItem[];
   footer: FooterSettings;
@@ -115,6 +116,17 @@ export const DEFAULT_PUBLIC_SITE_SETTINGS: PublicSiteSettings = {
       href: '/tarihi-yerler'
     }
   },
+  homepageSections: [
+    'city-utilities',
+    'weather',
+    'stats',
+    'featured-places',
+    'historical-sites',
+    'food-guide',
+    'upcoming-events',
+    'latest-blog',
+    'cta'
+  ],
   headerMenu: [
     {
       label: 'Keşfet',
@@ -453,11 +465,46 @@ function sanitizePublicSiteSettings(input: unknown): PublicSiteSettings {
 
   return {
     hero: sanitizeHeroSettings(candidate.hero, DEFAULT_PUBLIC_SITE_SETTINGS.hero),
+    homepageSections: sanitizeHomepageSections(
+      candidate.homepageSections,
+      DEFAULT_PUBLIC_SITE_SETTINGS.homepageSections
+    ),
     headerMenu: sanitizeHeaderMenu(candidate.headerMenu, DEFAULT_PUBLIC_SITE_SETTINGS.headerMenu),
     cityServices: sanitizeCityServices(candidate.cityServices, DEFAULT_PUBLIC_SITE_SETTINGS.cityServices),
     footer: sanitizeFooterSettings(candidate.footer, DEFAULT_PUBLIC_SITE_SETTINGS.footer),
     seo: sanitizeSeoDefaults(candidate.seo, DEFAULT_PUBLIC_SITE_SETTINGS.seo)
   };
+}
+
+function sanitizeHomepageSections(input: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(input)) {
+    return fallback;
+  }
+
+  const allowed = new Set([
+    'city-utilities',
+    'weather',
+    'stats',
+    'featured-places',
+    'historical-sites',
+    'food-guide',
+    'upcoming-events',
+    'latest-blog',
+    'cta'
+  ]);
+
+  const normalized = input
+    .map((entry) => (typeof entry === 'string' ? entry.trim().toLowerCase() : ''))
+    .filter((entry) => entry.length > 0 && allowed.has(entry));
+
+  const deduped: string[] = [];
+  for (const item of normalized) {
+    if (!deduped.includes(item)) {
+      deduped.push(item);
+    }
+  }
+
+  return deduped.length > 0 ? deduped : fallback;
 }
 
 export async function getPublicSiteSettings(): Promise<PublicSiteSettings> {
