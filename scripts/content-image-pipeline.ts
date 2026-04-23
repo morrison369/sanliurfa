@@ -8,12 +8,19 @@ loadLocalEnv();
 const databaseUrlArg = process.argv.find((arg) => arg.startsWith('--database-url='))?.split('=')[1];
 const limitArg = process.argv.find((arg) => arg.startsWith('--limit='))?.split('=')[1];
 const queryModeArg = process.argv.find((arg) => arg.startsWith('--query-mode='))?.split('=')[1];
+const dryRunOnly = process.argv.includes('--dry-run-only');
+const writeOnly = process.argv.includes('--write-only');
 const limit = Math.max(1, Number.parseInt(limitArg || '100', 10));
 const queryMode = queryModeArg === 'expanded' ? 'expanded' : 'strict';
 const databaseUrl = databaseUrlArg || process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   console.error('[images:pipeline] DATABASE_URL bulunamadı. --database-url=<postgresql://...> verin.');
+  process.exit(1);
+}
+
+if (dryRunOnly && writeOnly) {
+  console.error('[images:pipeline] --dry-run-only ve --write-only birlikte kullanılamaz.');
   process.exit(1);
 }
 
@@ -24,19 +31,25 @@ const writeReport = path.join(reportDir, `write-${timestamp}.json`);
 
 await mkdir(reportDir, { recursive: true });
 
-runFill({
-  write: false,
-  reportJson: dryRunReport,
-});
+if (!writeOnly) {
+  runFill({
+    write: false,
+    reportJson: dryRunReport,
+  });
+  runSummary(dryRunReport);
+}
 
-runFill({
-  write: true,
-  reportJson: writeReport,
-});
+if (!dryRunOnly) {
+  runFill({
+    write: true,
+    reportJson: writeReport,
+  });
+  runSummary(writeReport);
+}
 
 console.log(`[images:pipeline] tamamlandı
-- dry-run report: ${dryRunReport}
-- write report: ${writeReport}`);
+- dry-run report: ${dryRunOnly ? 'skip' : dryRunReport}
+- write report: ${writeOnly ? 'skip' : writeReport}`);
 
 function runFill(input: { write: boolean; reportJson: string }): void {
   const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -60,6 +73,23 @@ function runFill(input: { write: boolean; reportJson: string }): void {
     cwd: process.cwd(),
     env: process.env,
   });
+
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1);
+  }
+}
+
+function runSummary(reportJson: string): void {
+  const nodeCommand = process.platform === 'win32' ? 'node.exe' : 'node';
+  const result = spawnSync(
+    nodeCommand,
+    ['./node_modules/tsx/dist/cli.mjs', 'scripts/image-fill-report-summary.ts', `--report-json=${reportJson}`],
+    {
+      stdio: 'inherit',
+      cwd: process.cwd(),
+      env: process.env,
+    }
+  );
 
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
