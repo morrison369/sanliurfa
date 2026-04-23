@@ -626,3 +626,12 @@ Bu doküman, sanliurfa.com için tek pakette tamamlanan altyapı ve içerik yön
 5. Queue temizleme mekanizması ile key tamamlandığında bellekten düşürülür.
 6. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
 7. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
+
+## 2026-04-23 Toplu Paket (Rate Limit Redis Key Prefix İzolasyonu)
+
+1. `src/lib/advanced-rate-limit.ts` içinde üretilen Redis anahtarları merkezi `prefixKey(...)` ile namespace'lenir hale getirildi.
+2. Sliding window limiter anahtarı artık doğrudan prefiksli üretilir; çoklu proje ortamında key çakışma riski azaltıldı.
+3. Token bucket limiter için hem token key hem `:last_refill` key aynı prefix standardına bağlandı.
+4. Bu değişiklik Redis DB ortak kullanılsa bile proje key izolasyonunu güçlendirir.
+5. Doğrulama komutları başarılı: `npm run typecheck:mem`, `npm run build`, `npm run security:public-readiness`.
+6. Bu toplu pakette dev server açılmadı; port yapılandırmasına dokunulmadı.
