@@ -48,6 +48,16 @@ if (!publicDiscoveryContract.ok) {
   );
 }
 
+const sitemapIndexabilityContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/sitemap-indexability-contract.ts',
+]);
+if (!sitemapIndexabilityContract.ok) {
+  blockers.push(
+    `sitemap indexability contract failed:\n${sitemapIndexabilityContract.stderr || sitemapIndexabilityContract.stdout}`,
+  );
+}
+
 const historyDeployKey = runAllowFail('git', ['log', '--all', '--name-only', '--', 'deploy_key']);
 if ((historyDeployKey.stdout || '').includes('deploy_key')) {
   blockers.push('git history contains deploy_key; rotate keys and clean history before public visibility');

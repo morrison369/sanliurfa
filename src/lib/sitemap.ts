@@ -11,24 +11,10 @@ import { getCuratedFoods } from "../data/curated-foods";
 import { getCuratedHistoricalSites } from "../data/curated-historical-sites";
 import { getCuratedPlaces } from "../data/curated-places";
 import { blogCategories, placeCategories } from "../data/categories";
-
-export interface SitemapEntry {
-  loc: string;
-  lastmod?: string;
-  changefreq?:
-    | "always"
-    | "hourly"
-    | "daily"
-    | "weekly"
-    | "monthly"
-    | "yearly"
-    | "never";
-  priority?: number;
-  images?: Array<{
-    loc: string;
-    title?: string;
-  }>;
-}
+import {
+  PUBLIC_STATIC_SITEMAP_ENTRIES,
+  type SitemapEntry,
+} from "./sitemap-contract";
 
 const BASE_URL = (
   process.env.PUBLIC_SITE_URL || "https://sanliurfa.com"
@@ -38,74 +24,7 @@ export async function generateSitemap(): Promise<string> {
   try {
     const entries: SitemapEntry[] = [];
 
-    // Static pages
-    const staticPages = [
-      { loc: "/", changefreq: "daily" as const, priority: 1.0 },
-      { loc: "/places", changefreq: "daily" as const, priority: 0.9 },
-      { loc: "/arama", changefreq: "weekly" as const, priority: 0.8 },
-      { loc: "/kullanicilar", changefreq: "weekly" as const, priority: 0.6 },
-      {
-        loc: "/kullanici/sadakat",
-        changefreq: "weekly" as const,
-        priority: 0.6,
-      },
-      { loc: "/tarihi-yerler", changefreq: "weekly" as const, priority: 0.8 },
-      { loc: "/gastronomi", changefreq: "weekly" as const, priority: 0.8 },
-      {
-        loc: "/sehir-servisleri",
-        changefreq: "weekly" as const,
-        priority: 0.8,
-      },
-      {
-        loc: "/sehir-servisleri/nobetci-eczaneler",
-        changefreq: "daily" as const,
-        priority: 0.8,
-      },
-      {
-        loc: "/sehir-servisleri/otobus-saatleri",
-        changefreq: "weekly" as const,
-        priority: 0.7,
-      },
-      {
-        loc: "/sehir-servisleri/ucak-saatleri",
-        changefreq: "weekly" as const,
-        priority: 0.7,
-      },
-      { loc: "/etkinlikler", changefreq: "weekly" as const, priority: 0.8 },
-      { loc: "/blog", changefreq: "weekly" as const, priority: 0.8 },
-      { loc: "/oneriler", changefreq: "weekly" as const, priority: 0.7 },
-      {
-        loc: "/liderlik-tablosu",
-        changefreq: "weekly" as const,
-        priority: 0.7,
-      },
-      {
-        loc: "/fiyatlandirma",
-        changefreq: "monthly" as const,
-        priority: 0.6,
-      },
-      { loc: "/hakkinda", changefreq: "monthly" as const, priority: 0.7 },
-      { loc: "/iletisim", changefreq: "monthly" as const, priority: 0.7 },
-      { loc: "/sss", changefreq: "monthly" as const, priority: 0.6 },
-      {
-        loc: "/gizlilik-politikasi",
-        changefreq: "monthly" as const,
-        priority: 0.5,
-      },
-      {
-        loc: "/kullanim-kosullari",
-        changefreq: "monthly" as const,
-        priority: 0.5,
-      },
-      {
-        loc: "/cerez-politikasi",
-        changefreq: "monthly" as const,
-        priority: 0.5,
-      },
-      { loc: "/kvkk", changefreq: "monthly" as const, priority: 0.5 },
-    ];
-
-    entries.push(...staticPages);
+    entries.push(...PUBLIC_STATIC_SITEMAP_ENTRIES);
 
     // Dynamic places
     const places = await safeQueryMany(
