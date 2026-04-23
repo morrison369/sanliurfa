@@ -9,11 +9,11 @@ import { getCache, setCache, deleteCache } from './cache';
 
 export async function predictUserChurn(userId: string): Promise<any | null> {
   try {
-    const cacheKey = `sanliurfa:prediction:churn:${userId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `prediction:churn:${userId}`;
+    const cached = await getCache<any>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     // Get user activity data
@@ -38,7 +38,7 @@ export async function predictUserChurn(userId: string): Promise<any | null> {
       prediction_date: new Date()
     };
 
-    await setCache(cacheKey, JSON.stringify(prediction), 86400); // Cache for 24 hours
+    await setCache(cacheKey, prediction, 86400); // Cache for 24 hours
 
     // Update or insert prediction
     const existing = await queryOne(
@@ -188,11 +188,11 @@ export async function detectAnomalies(metricName: string, threshold: number = 2.
 
 export async function getRecommendations(userId: string): Promise<any[]> {
   try {
-    const cacheKey = `sanliurfa:recommendations:${userId}`;
-    let cached = await getCache(cacheKey);
+    const cacheKey = `recommendations:${userId}`;
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const recommendations = await queryMany(
@@ -200,7 +200,7 @@ export async function getRecommendations(userId: string): Promise<any[]> {
       [userId]
     );
 
-    await setCache(cacheKey, JSON.stringify(recommendations), 3600);
+    await setCache(cacheKey, recommendations, 3600);
     return recommendations;
   } catch (error) {
     logger.error('Failed to get recommendations', error instanceof Error ? error : new Error(String(error)));
@@ -224,11 +224,11 @@ export async function recordRecommendationFeedback(recommendationId: string, cli
 
 export async function getHighRiskUsers(limit: number = 50): Promise<any[]> {
   try {
-    const cacheKey = 'sanliurfa:users:high_risk';
-    let cached = await getCache(cacheKey);
+    const cacheKey = 'users:high_risk';
+    const cached = await getCache<any[]>(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return cached;
     }
 
     const users = await queryMany(
@@ -236,7 +236,7 @@ export async function getHighRiskUsers(limit: number = 50): Promise<any[]> {
       ['high', limit]
     );
 
-    await setCache(cacheKey, JSON.stringify(users), 3600);
+    await setCache(cacheKey, users, 3600);
     return users;
   } catch (error) {
     logger.error('Failed to get high risk users', error instanceof Error ? error : new Error(String(error)));

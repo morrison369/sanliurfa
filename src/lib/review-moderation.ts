@@ -37,7 +37,7 @@ export async function flagReview(
     });
 
     // Clear review cache
-    await deleteCache(`sanliurfa:review:${reviewId}:flags`);
+    await deleteCache(`review:${reviewId}:flags`);
 
     logger.info('Review flagged', { reviewId, reason, reportedBy: reportedByUserId });
     return flag;
@@ -55,7 +55,7 @@ export async function getModerationQueue(
   limit: number = 50,
   offset: number = 0
 ): Promise<{ flags: ReviewFlag[]; total: number }> {
-  const cacheKey = `sanliurfa:moderation:queue:${status}:${limit}:${offset}`;
+  const cacheKey = `moderation:queue:${status}:${limit}:${offset}`;
 
   try {
     const cached = await getCache<{ flags: ReviewFlag[]; total: number }>(cacheKey);
@@ -130,8 +130,8 @@ export async function resolveFlag(
     });
 
     // Clear caches
-    await deleteCache(`sanliurfa:moderation:queue:pending:*`);
-    await deleteCache(`sanliurfa:review:${flag.review_id}:*`);
+    await deleteCache(`moderation:queue:pending:*`);
+    await deleteCache(`review:${flag.review_id}:*`);
 
     logger.info('Flag resolved', { flagId, action, adminId });
   } catch (error) {
