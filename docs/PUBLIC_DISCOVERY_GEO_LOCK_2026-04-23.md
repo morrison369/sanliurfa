@@ -36,6 +36,7 @@ Bu not, `sanliurfa.com` public keşif yüzeyinin tekrar dağılmaması için ekl
 9. `scripts/security/rss-output-contract.ts`, RSS route'unu doğrudan çağırıp gerçek XML çıktısında kanonik domain, `tr-TR`, Şanlıurfa içeriği ve yasak sosyal izleri kontrol eder.
 10. `scripts/security/env-access-contract.ts`, `src/` ve `scripts/` altında dinamik `import.meta.env` erişim kalıplarını (`import.meta.env[...]`, `Object.keys(import.meta.env)` vb.) bloklar.
 11. `scripts/security/canonical-origin-contract.ts`, middleware/env/public-discovery/site konfigürasyonunda `https://sanliurfa.com` canonical host/origin kilidini ve wildcard CORS yasağını kontrol eder.
+12. `scripts/security/turkish-only-contract.ts`, kaynak kodda `hreflang`, `Accept-Language`, `/en`-`/tr` dil prefix route yapısı ve `lang=\"en\"` gibi Türkçe-only kural ihlallerini bloklar.
 
 ## Doğrulama Beklentisi
 
