@@ -4,6 +4,7 @@ import { queryOne } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
+import { canStartConversation } from '../../../lib/social-policy';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
   const requestId = getRequestId({ request } as any);
@@ -51,10 +52,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'recipient_id required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
-    const recipient = await queryOne('SELECT id FROM users WHERE id = $1', [recipient_id]);
-    if (!recipient) {
-      recordRequest('POST', '/api/messages', HttpStatus.NOT_FOUND, Date.now() - startTime);
-      return apiError(ErrorCode.NOT_FOUND, 'User not found', HttpStatus.NOT_FOUND, undefined, requestId);
+    const policy = await canStartConversation(locals.user.id, recipient_id);
+    if (!policy.allowed) {
+      const statusCode = policy.code === 'target_not_found' ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;
+      recordRequest('POST', '/api/messages', statusCode, Date.now() - startTime);
+      return apiError(
+        statusCode === HttpStatus.NOT_FOUND ? ErrorCode.NOT_FOUND : ErrorCode.FORBIDDEN,
+        policy.message,
+        statusCode,
+        undefined,
+        requestId
+      );
     }
 
     const convo = await getOrCreateConversation(locals.user.id, recipient_id);
