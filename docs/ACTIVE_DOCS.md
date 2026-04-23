@@ -10,6 +10,9 @@ These documents are the active operational surface for this repository.
 - `docs/WORKTREE_SOURCE_OF_TRUTH.md`
 - `docs/DEPENDENCY_TRIAGE.md`
 - `docs/SCRIPT_SURFACE_POLICY.md`
+- `docs/RELEASE_DEFINITION_OF_DONE.md`
+- `docs/LIVE_ACCEPTANCE_CHECKLIST.md`
+- `docs/PHASE_FREEZE_POLICY.md`
 - `STALE_WORKTREE.md`
 - `ROOT_INVENTORY_ONLY_POLICY.md`
 
