@@ -5,25 +5,8 @@ import { query, queryOne, queryMany, insert, update } from './postgres';
 import { logger } from './logging';
 import { getCache, setCache, deleteCache, deleteCachePattern } from './cache';
 
-function readCachedArray<T = any>(cached: unknown): T[] | null {
-  if (!cached) {
-    return null;
-  }
-
-  if (Array.isArray(cached)) {
-    return cached as T[];
-  }
-
-  if (typeof cached === 'string') {
-    try {
-      const parsed = JSON.parse(cached);
-      return Array.isArray(parsed) ? (parsed as T[]) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  return null;
+function readCachedArray<T = any>(cached: T[] | null): T[] | null {
+  return Array.isArray(cached) ? cached : null;
 }
 
 export async function getOrCreateConversation(userA: string, userB: string) {
@@ -41,7 +24,7 @@ export async function getOrCreateConversation(userA: string, userB: string) {
 
 export async function getConversations(userId: string, limit = 50, offset = 0) {
   const cacheKey = `conversations:${userId}:inbox:${limit}:${offset}`;
-  const cached = await getCache<any[] | string>(cacheKey);
+  const cached = await getCache<any[]>(cacheKey);
   const cachedList = readCachedArray(cached);
   if (cachedList) return cachedList;
   const convos = await queryMany(

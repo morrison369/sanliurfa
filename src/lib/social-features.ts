@@ -9,25 +9,8 @@ import { getCache, setCache, deleteCache } from './cache';
 import { batchInsert, fireAndForget } from './performance-optimizations';
 import crypto from 'crypto';
 
-function readCachedArray<T = any>(cached: unknown): T[] | null {
-  if (!cached) {
-    return null;
-  }
-
-  if (Array.isArray(cached)) {
-    return cached as T[];
-  }
-
-  if (typeof cached === 'string') {
-    try {
-      const parsed = JSON.parse(cached);
-      return Array.isArray(parsed) ? (parsed as T[]) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  return null;
+function readCachedArray<T = any>(cached: T[] | null): T[] | null {
+  return Array.isArray(cached) ? cached : null;
 }
 
 interface UserFollowColumns {
@@ -138,7 +121,7 @@ export async function getOrCreateHashtag(tagName: string): Promise<any | null> {
 export async function getTrendingHashtags(limit: number = 20, period: string = 'day'): Promise<any[]> {
   try {
     const cacheKey = `trending:hashtags:${period}`;
-    const cached = await getCache<any[] | string>(cacheKey);
+    const cached = await getCache<any[]>(cacheKey);
     const cachedList = readCachedArray(cached);
 
     if (cachedList) {
@@ -354,7 +337,7 @@ export async function createActivity(userId: string, activityType: string, objec
 export async function getUserFeed(userId: string, limit: number = 50): Promise<any[]> {
   try {
     const cacheKey = `feed:${userId}`;
-    const cached = await getCache<any[] | string>(cacheKey);
+    const cached = await getCache<any[]>(cacheKey);
     const cachedList = readCachedArray(cached);
 
     if (cachedList) {
@@ -384,7 +367,7 @@ export async function getUserFeed(userId: string, limit: number = 50): Promise<a
 export async function getTrendingPlaces(limit: number = 20, period: string = 'day'): Promise<any[]> {
   try {
     const cacheKey = `trending:places:${period}`;
-    const cached = await getCache<any[] | string>(cacheKey);
+    const cached = await getCache<any[]>(cacheKey);
     const cachedList = readCachedArray(cached);
 
     if (cachedList) {
