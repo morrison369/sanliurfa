@@ -4438,3 +4438,21 @@ export { BoardStabilityContinuityBookV216, BoardStabilityContinuityCoordinatorV2
 
 // Phase 1642: Policy Recovery Assurance Engine V216
 export { PolicyRecoveryAssuranceBookV216, PolicyRecoveryAssuranceEngineV216, PolicyRecoveryAssuranceGateV216, PolicyRecoveryAssuranceReporterV216, policyRecoveryAssuranceBookV216, policyRecoveryAssuranceEngineV216, policyRecoveryAssuranceGateV216, policyRecoveryAssuranceReporterV216 } from './policy-recovery-assurance-engine-v216';
+
+// Phase 1643: Governance Recovery Assurance Router V217
+export { GovernanceRecoveryAssuranceBookV217, GovernanceRecoveryAssuranceScorerV217, GovernanceRecoveryAssuranceRouterV217, GovernanceRecoveryAssuranceReporterV217, governanceRecoveryAssuranceBookV217, governanceRecoveryAssuranceScorerV217, governanceRecoveryAssuranceRouterV217, governanceRecoveryAssuranceReporterV217 } from './governance-recovery-assurance-router-v217';
+
+// Phase 1644: Policy Continuity Stability Harmonizer V217
+export { PolicyContinuityStabilityBookV217, PolicyContinuityStabilityHarmonizerV217, PolicyContinuityStabilityGateV217, PolicyContinuityStabilityReporterV217, policyContinuityStabilityBookV217, policyContinuityStabilityHarmonizerV217, policyContinuityStabilityGateV217, policyContinuityStabilityReporterV217 } from './policy-continuity-stability-harmonizer-v217';
+
+// Phase 1645: Compliance Assurance Recovery Mesh V217
+export { ComplianceAssuranceRecoveryBookV217, ComplianceAssuranceRecoveryScorerV217, ComplianceAssuranceRecoveryRouterV217, ComplianceAssuranceRecoveryReporterV217, complianceAssuranceRecoveryBookV217, complianceAssuranceRecoveryScorerV217, complianceAssuranceRecoveryRouterV217, complianceAssuranceRecoveryReporterV217 } from './compliance-assurance-recovery-mesh-v217';
+
+// Phase 1646: Trust Stability Continuity Forecaster V217
+export { TrustStabilityContinuityBookV217, TrustStabilityContinuityForecasterV217, TrustStabilityContinuityGateV217, TrustStabilityContinuityReporterV217, trustStabilityContinuityBookV217, trustStabilityContinuityForecasterV217, trustStabilityContinuityGateV217, trustStabilityContinuityReporterV217 } from './trust-stability-continuity-forecaster-v217';
+
+// Phase 1647: Board Recovery Stability Coordinator V217
+export { BoardRecoveryStabilityBookV217, BoardRecoveryStabilityCoordinatorV217, BoardRecoveryStabilityGateV217, BoardRecoveryStabilityReporterV217, boardRecoveryStabilityBookV217, boardRecoveryStabilityCoordinatorV217, boardRecoveryStabilityGateV217, boardRecoveryStabilityReporterV217 } from './board-recovery-stability-coordinator-v217';
+
+// Phase 1648: Policy Assurance Continuity Engine V217
+export { PolicyAssuranceContinuityBookV217, PolicyAssuranceContinuityEngineV217, PolicyAssuranceContinuityGateV217, PolicyAssuranceContinuityReporterV217, policyAssuranceContinuityBookV217, policyAssuranceContinuityEngineV217, policyAssuranceContinuityGateV217, policyAssuranceContinuityReporterV217 } from './policy-assurance-continuity-engine-v217';
