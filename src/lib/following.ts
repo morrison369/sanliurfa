@@ -37,10 +37,10 @@ export async function followUser(followerId: string, followedId: string): Promis
     });
 
     // Clear caches
-    await deleteCache(`sanliurfa:followers:${followedId}`);
-    await deleteCache(`sanliurfa:following:${followerId}`);
-    await deleteCache(`sanliurfa:follower_count:${followedId}`);
-    await deleteCache(`sanliurfa:following_count:${followerId}`);
+    await deleteCache(`followers:${followedId}`);
+    await deleteCache(`following:${followerId}`);
+    await deleteCache(`follower_count:${followedId}`);
+    await deleteCache(`following_count:${followerId}`);
   } catch (error) {
     // If unique constraint violation, user already follows (not an error)
     if (error instanceof Error && error.message.includes('duplicate')) {
@@ -66,10 +66,10 @@ export async function unfollowUser(followerId: string, followedId: string): Prom
 
     if ((result.rowCount || 0) > 0) {
       // Clear caches
-      await deleteCache(`sanliurfa:followers:${followedId}`);
-      await deleteCache(`sanliurfa:following:${followerId}`);
-      await deleteCache(`sanliurfa:follower_count:${followedId}`);
-      await deleteCache(`sanliurfa:following_count:${followerId}`);
+      await deleteCache(`followers:${followedId}`);
+      await deleteCache(`following:${followerId}`);
+      await deleteCache(`follower_count:${followedId}`);
+      await deleteCache(`following_count:${followerId}`);
       return true;
     }
     return false;
@@ -105,7 +105,7 @@ export async function isFollowing(followerId: string, followedId: string): Promi
  * Get list of followers for a user
  */
 export async function getFollowers(userId: string, limit: number = 50, offset: number = 0): Promise<FollowUser[]> {
-  const cacheKey = `sanliurfa:followers:${userId}:${limit}:${offset}`;
+  const cacheKey = `followers:${userId}:${limit}:${offset}`;
 
   try {
     // Try cache first
@@ -157,7 +157,7 @@ export async function getFollowers(userId: string, limit: number = 50, offset: n
  * Get list of users that a user is following
  */
 export async function getFollowing(userId: string, limit: number = 50, offset: number = 0): Promise<FollowUser[]> {
-  const cacheKey = `sanliurfa:following:${userId}:${limit}:${offset}`;
+  const cacheKey = `following:${userId}:${limit}:${offset}`;
 
   try {
     // Try cache first
@@ -209,7 +209,7 @@ export async function getFollowing(userId: string, limit: number = 50, offset: n
  * Get follower count for a user
  */
 export async function getFollowerCount(userId: string): Promise<number> {
-  const cacheKey = `sanliurfa:follower_count:${userId}`;
+  const cacheKey = `follower_count:${userId}`;
 
   try {
     // Try cache first
@@ -239,7 +239,7 @@ export async function getFollowerCount(userId: string): Promise<number> {
  * Get following count for a user
  */
 export async function getFollowingCount(userId: string): Promise<number> {
-  const cacheKey = `sanliurfa:following_count:${userId}`;
+  const cacheKey = `following_count:${userId}`;
 
   try {
     // Try cache first

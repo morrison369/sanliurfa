@@ -294,7 +294,11 @@ function toErrorMessage(error: unknown): string {
     return error;
   }
   try {
-    return JSON.stringify(error);
+    const serialized = JSON.stringify(error);
+    if (serialized === '{}' || serialized === '[]') {
+      return 'Unknown structured error';
+    }
+    return serialized;
   } catch {
     return String(error);
   }
