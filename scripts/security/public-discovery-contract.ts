@@ -49,6 +49,10 @@ const forbiddenDiscoveryTokens = [
   "x.com/",
 ];
 
+const requiredRouteSourceTokens: Record<string, string[]> = {
+  "/rss.xml": ["@astrojs/rss"],
+};
+
 const normalizeText = (value: string) => value.replace(/\r\n/g, "\n").trim();
 const pathToPublicFile = (path: string) =>
   join(root, "public", path.replace(/^\//, ""));
@@ -59,6 +63,18 @@ for (const path of PUBLIC_DISCOVERY_PATHS) {
 
   if (!existsSync(publicFile) && (!routeFile || !existsSync(routeFile))) {
     blockers.push(`missing public discovery route or file: ${path}`);
+  }
+
+  if (routeFile && existsSync(routeFile)) {
+    const routeSource = readFileSync(routeFile, "utf8");
+
+    for (const requiredToken of requiredRouteSourceTokens[path] || []) {
+      if (!routeSource.includes(requiredToken)) {
+        blockers.push(
+          `${path} route missing required source token: ${requiredToken}`,
+        );
+      }
+    }
   }
 
   if (existsSync(publicFile)) {
