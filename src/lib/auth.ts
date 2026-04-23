@@ -266,7 +266,9 @@ export async function getCurrentUser(token: string): Promise<any> {
 
     return user;
   } catch (error) {
-    console.error('Get current user error:', error);
+    logger.error('Get current user error', error instanceof Error ? error : new Error(String(error)), {
+      userId: sessionData.userId
+    });
     return null;
   }
 }
