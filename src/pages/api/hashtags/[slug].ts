@@ -20,12 +20,12 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
 
     // Check cache
-    const cacheKey = `sanliurfa:hashtag:slug:${slug}`;
-    const cached = await getCache(cacheKey);
+    const cacheKey = `hashtag:slug:${slug}`;
+    const cached = await getCache<any>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', `/api/hashtags/${slug}`, HttpStatus.OK, duration);
-      return apiResponse(JSON.parse(cached), HttpStatus.OK, requestId);
+      return apiResponse(cached, HttpStatus.OK, requestId);
     }
 
     // Fetch hashtag metadata
@@ -92,7 +92,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     };
 
     // Cache result (10 min TTL)
-    await setCache(cacheKey, JSON.stringify(response), 600);
+    await setCache(cacheKey, response, 600);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/hashtags/${slug}`, HttpStatus.OK, duration);
