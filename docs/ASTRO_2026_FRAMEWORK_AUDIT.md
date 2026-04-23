@@ -99,6 +99,7 @@ Bu denetimde yeni zorunlu Astro paketi bulunmadı. Kurulmayan paketler eksik de�
 - `scripts/security/turkish-only-contract.ts` ile `hreflang`, `Accept-Language` yönlendirmesi ve `/en`-`/tr` prefix route ihlalleri gate zincirinde engellenir.
 - `scripts/security/port-lock-contract.ts` ile 4321 dışında app port drift'i (`1111`, `1112`, `1113`, `3000`, `6000`) gate zincirinde engellenir.
 - `scripts/security/image-provider-secret-contract.ts` ile Pexels/Unsplash provider anahtarlarının yalnızca environment üzerinden kullanıldığı ve source/docs içinde hardcoded key kalmadığı gate zincirinde doğrulanır.
+- `scripts/security/env-template-contract.ts` ile `.env.example` ve `.env.production.template` içindeki canonical domain, CORS origin, `PORT=4321` ve `REDIS_KEY_PREFIX=sanliurfa:` kilidi gate zincirinde doğrulanır.
 - Yeni dev server açılmadı, 4321 dışı port kullanılmadı.
 - Proje SSR Node standalone hedefi korunur.
 - CWP production hedefinde aktif PM2 dosyası `ecosystem.config.cjs`, aktif port `4321`, canonical deploy dokümanı `docs/ACTIVE_DEPLOYMENT_CWP_4321.md` olarak kilitlendi.

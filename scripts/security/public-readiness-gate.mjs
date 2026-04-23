@@ -120,6 +120,16 @@ if (!imageProviderSecretContract.ok) {
   );
 }
 
+const envTemplateContract = runAllowFail(process.execPath, [
+  'node_modules/tsx/dist/cli.mjs',
+  'scripts/security/env-template-contract.ts',
+]);
+if (!envTemplateContract.ok) {
+  blockers.push(
+    `env template contract failed:\n${envTemplateContract.stderr || envTemplateContract.stdout}`,
+  );
+}
+
 const historyDeployKey = runAllowFail('git', ['log', '--all', '--name-only', '--', 'deploy_key']);
 if ((historyDeployKey.stdout || '').includes('deploy_key')) {
   blockers.push('git history contains deploy_key; rotate keys and clean history before public visibility');
