@@ -326,6 +326,12 @@ const ALLOWED_TABLES = new Set([
   'place_sla_alert_state', 'place_lifecycle_events',
   // Recipes
   'recipes',
+  // Chat (migration 166)
+  'chat_rooms', 'chat_messages', 'chat_participants', 'chat_message_status',
+  // Social messaging (migration 167)
+  'conversation_participants', 'messages',
+  // Search logs (migration 166)
+  'search_logs',
   // Reports
   'scheduled_reports',
   // Multi-tenant social

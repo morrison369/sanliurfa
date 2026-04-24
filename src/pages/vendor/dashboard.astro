@@ -20,19 +20,25 @@ if (!Astro.locals.user) {
 
 const userId = Astro.locals.user.id;
 
-const [placesResult, subResult] = await Promise.all([
-  query(
-    `SELECT id, slug, name FROM places WHERE owner_id = $1 AND status != 'deleted' ORDER BY created_at DESC`,
-    [userId]
-  ),
-  query(
-    `SELECT st.name as plan FROM subscriptions s
-     JOIN subscription_tiers st ON st.id = s.tier_id
-     WHERE s.user_id = $1 AND s.status = 'active'
-     ORDER BY s.created_at DESC LIMIT 1`,
-    [userId]
-  ),
-]);
+let placesResult: any = { rows: [] };
+let subResult: any = { rows: [] };
+try {
+  [placesResult, subResult] = await Promise.all([
+    query(
+      `SELECT id, slug, name FROM places WHERE owner_id = $1 AND status != 'deleted' ORDER BY created_at DESC`,
+      [userId]
+    ),
+    query(
+      `SELECT st.name as plan FROM subscriptions s
+       JOIN subscription_tiers st ON st.id = s.tier_id
+       WHERE s.user_id = $1 AND s.status = 'active'
+       ORDER BY s.created_at DESC LIMIT 1`,
+      [userId]
+    ),
+  ]);
+} catch (e) {
+  console.error('Vendor dashboard query failed:', e);
+}
 
 const vendor = {
   id: userId,

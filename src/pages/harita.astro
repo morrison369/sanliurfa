@@ -11,13 +11,21 @@ const { baseUrl } = await getSiteBranding();
 const url = new URL(Astro.request.url);
 const category = url.searchParams.get('kategori') || undefined;
 
-const [{ places }, categoriesResult] = await Promise.all([
-  getPlaces({ status: 'active', category, limit: 200 }),
-  query(`SELECT id, slug, name, icon, color, is_active FROM categories WHERE is_active = true ORDER BY sort_order, name`),
-]);
-const categories = categoriesResult.rows;
+let places: any[] = [];
+let categories: any[] = [];
 
-const validPlaces = places.filter(p => p.latitude && p.longitude).map(p => ({
+try {
+  const [placesResult, categoriesResult] = await Promise.all([
+    getPlaces({ status: 'active', category, limit: 200 }),
+    query(`SELECT id, slug, name, icon, color, is_active FROM categories WHERE is_active = true ORDER BY sort_order, name`),
+  ]);
+  places = placesResult.places;
+  categories = categoriesResult.rows;
+} catch (e) {
+  console.error('Harita verileri yüklenemedi:', e);
+}
+
+const validPlaces = places.filter((p: any) => p.latitude && p.longitude).map((p: any) => ({
   id: p.id,
   name: p.name,
   lat: p.latitude,

@@ -21,23 +21,27 @@ const token = Astro.cookies.get('token')?.value;
 let recommendations: RecommendedPlace[] = [];
 let isPersonalized = false;
 
-recommendations = await queryMany<RecommendedPlace>(
-  `SELECT
-     p.id::text,
-     p.slug,
-     p.name,
-     COALESCE(c.name, p.category, 'Mekan') as category,
-     COALESCE(p.short_description, p.description) as short_description,
-     COALESCE(p.thumbnail_url, p.images[1]) as cover_image,
-     COALESCE(p.rating, 0)::float as rating,
-     COALESCE(p.rating_count, p.review_count, 0)::int as rating_count,
-     COALESCE(p.view_count, 0)::int as view_count
-   FROM places p
-   LEFT JOIN categories c ON c.id = p.category_id
-   WHERE p.status = 'active'
-   ORDER BY COALESCE(p.review_count, 0) DESC, COALESCE(p.rating, 0) DESC, p.created_at DESC
-   LIMIT 12`
-);
+try {
+  recommendations = await queryMany<RecommendedPlace>(
+    `SELECT
+       p.id::text,
+       p.slug,
+       p.name,
+       COALESCE(c.name, p.category, 'Mekan') as category,
+       COALESCE(p.short_description, p.description) as short_description,
+       COALESCE(p.thumbnail_url, p.images[1]) as cover_image,
+       COALESCE(p.rating, 0)::float as rating,
+       COALESCE(p.rating_count, p.review_count, 0)::int as rating_count,
+       COALESCE(p.view_count, 0)::int as view_count
+     FROM places p
+     LEFT JOIN categories c ON c.id = p.category_id
+     WHERE p.status = 'active'
+     ORDER BY COALESCE(p.review_count, 0) DESC, COALESCE(p.rating, 0) DESC, p.created_at DESC
+     LIMIT 12`
+  );
+} catch (e) {
+  console.error('Öneriler sayfası query hatası:', e);
+}
 isPersonalized = Boolean(token);
 
 const seo = {

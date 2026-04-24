@@ -13,25 +13,34 @@ if (!slug) {
   return Astro.redirect('/');
 }
 
-const catResult = await query(
-  `SELECT id, slug, name, description, icon, color, is_active FROM categories WHERE slug = $1`,
-  [slug]
-);
-const catRow = catResult.rows[0];
+let catRow: any = null;
+let places: any[] = [];
+
+try {
+  const catResult = await query(
+    `SELECT id, slug, name, description, icon, color, is_active FROM categories WHERE slug = $1`,
+    [slug]
+  );
+  catRow = catResult.rows[0];
+} catch (e) {
+  console.error('Category query failed:', e);
+}
+
 if (!catRow) {
   return Astro.redirect('/404');
 }
+
 const category = {
   ...catRow,
   metaDescription: catRow.description,
 };
 
-const { places } = await getPlaces({
-  category: slug,
-  status: 'active',
-  limit: 50,
-  sortBy: 'rating',
-});
+try {
+  const result = await getPlaces({ category: slug, status: 'active', limit: 50, sortBy: 'rating' });
+  places = result.places;
+} catch (e) {
+  console.error('Places query failed:', e);
+}
 
 const seo = {
   title: `${category.name} - Şanlıurfa Rehberi`,

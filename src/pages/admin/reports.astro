@@ -1,0 +1,134 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+
+if (!Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/reports');
+}
+
+let scheduledReports: any[] = [];
+let recentExecutions: any[] = [];
+
+try {
+  const [repResult, execResult] = await Promise.all([
+    query(`SELECT * FROM scheduled_reports ORDER BY created_at DESC LIMIT 50`),
+    query(`SELECT * FROM report_executions ORDER BY created_at DESC LIMIT 20`),
+  ]);
+  scheduledReports = repResult.rows;
+  recentExecutions = execResult.rows;
+} catch (e) {
+  console.error('Reports admin query failed:', e);
+}
+
+const typeLabels: Record<string, string> = {
+  users: 'Kullanıcılar',
+  places: 'Mekanlar',
+  reviews: 'Yorumlar',
+  revenue: 'Gelir',
+  engagement: 'Etkileşim',
+};
+
+const seo = { title: 'Rapor Yönetimi - Admin', noIndex: true };
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
+    <div class="container mx-auto px-4 max-w-5xl">
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <a href="/admin" class="text-sm text-gray-500 hover:text-gray-700">← Admin Paneli</a>
+          <h1 class="text-2xl font-bold mt-1">Rapor Yönetimi</h1>
+          <p class="text-sm text-gray-500 mt-1">{scheduledReports.length} zamanlanmış rapor</p>
+        </div>
+        <div class="flex gap-2">
+          <a href="/admin/analytics" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+            Analitik Dashboard →
+          </a>
+        </div>
+      </div>
+
+      <!-- Hızlı Raporlar -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {['users', 'places', 'reviews', 'revenue'].map(type => (
+          <a
+            href={`/api/admin/reports/generate?type=${type}&period=monthly&format=json`}
+            target="_blank"
+            class="bg-white rounded-xl border border-gray-200 p-4 text-center hover:border-blue-300 hover:shadow-sm transition-all"
+          >
+            <div class="text-2xl mb-2">
+              {type === 'users' ? '👥' : type === 'places' ? '📍' : type === 'reviews' ? '⭐' : '💰'}
+            </div>
+            <div class="text-sm font-medium text-gray-700">{typeLabels[type]}</div>
+            <div class="text-xs text-gray-400 mt-1">Aylık rapor</div>
+          </a>
+        ))}
+      </div>
+
+      <!-- Zamanlanmış Raporlar -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+        <div class="p-4 border-b bg-gray-50">
+          <h2 class="font-semibold text-gray-700 text-sm">Zamanlanmış Raporlar</h2>
+        </div>
+        {scheduledReports.length === 0 ? (
+          <div class="p-8 text-center text-gray-400 text-sm">Henüz zamanlanmış rapor yok.</div>
+        ) : (
+          <table class="w-full text-sm">
+            <thead class="border-b bg-gray-50">
+              <tr>
+                <th class="py-3 px-4 text-left font-medium text-gray-600">Tür</th>
+                <th class="py-3 px-4 text-left font-medium text-gray-600">Periyot</th>
+                <th class="py-3 px-4 text-left font-medium text-gray-600">E-posta</th>
+                <th class="py-3 px-4 text-left font-medium text-gray-600">Sıklık</th>
+                <th class="py-3 px-4 text-left font-medium text-gray-600">Oluşturulma</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scheduledReports.map(rep => (
+                <tr class="border-b last:border-0 hover:bg-gray-50">
+                  <td class="py-3 px-4 font-medium">{typeLabels[rep.type] || rep.type}</td>
+                  <td class="py-3 px-4 text-gray-600">{rep.period}</td>
+                  <td class="py-3 px-4 text-gray-600 truncate max-w-xs">{rep.email}</td>
+                  <td class="py-3 px-4 text-gray-600">{rep.frequency}</td>
+                  <td class="py-3 px-4 text-gray-500 text-xs">
+                    {new Date(rep.created_at).toLocaleDateString('tr-TR')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <!-- Son Çalışmalar -->
+      {recentExecutions.length > 0 && (
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="p-4 border-b bg-gray-50">
+            <h2 class="font-semibold text-gray-700 text-sm">Son Rapor Çalışmaları</h2>
+          </div>
+          <table class="w-full text-sm">
+            <thead class="border-b bg-gray-50">
+              <tr>
+                <th class="py-3 px-4 text-left font-medium text-gray-600">Rapor</th>
+                <th class="py-3 px-4 text-left font-medium text-gray-600">Durum</th>
+                <th class="py-3 px-4 text-left font-medium text-gray-600">Tarih</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentExecutions.map(exec => (
+                <tr class="border-b last:border-0 hover:bg-gray-50">
+                  <td class="py-3 px-4">{exec.report_id || exec.type || '—'}</td>
+                  <td class="py-3 px-4">
+                    <span class={`text-xs px-2 py-0.5 rounded-full font-medium ${exec.status === 'completed' ? 'bg-green-100 text-green-700' : exec.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                      {exec.status || 'bilinmiyor'}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-gray-500 text-xs">{new Date(exec.created_at).toLocaleDateString('tr-TR')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>
