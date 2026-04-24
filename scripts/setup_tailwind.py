@@ -5,7 +5,7 @@ import paramiko
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='BcqH7t5zNKfw', allow_agent=False, look_for_keys=False)
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', allow_agent=False, look_for_keys=False)
 
 print("🎨 Tailwind için Astro 6 Kurulumu")
 print("=" * 50)

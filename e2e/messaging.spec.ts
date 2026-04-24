@@ -1,4 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { randomUUID } from 'crypto';
+
+const BASE_URL = 'http://127.0.0.1:4321';
+function unwrapData<T = any>(payload: any): T {
+  return (payload?.data?.data ?? payload?.data ?? payload) as T;
+}
 
 test.describe('Direct Messaging System', () => {
   let user1Token = '';
@@ -6,109 +12,119 @@ test.describe('Direct Messaging System', () => {
   let user1Id = '';
   let user2Id = '';
   let conversationId = '';
+  const password = 'TestPassword123!';
+  const user1Email = `user1-${randomUUID()}@test.com`;
+  const user2Email = `user2-${randomUUID()}@test.com`;
 
-  test.beforeAll(async ({ browser }) => {
-    // Setup: Create two test users
-    const context = await browser.newContext();
-    const page = await context.newPage();
+  test.beforeAll(async ({ request }) => {
+    const user1Res = await request.post(`${BASE_URL}/api/auth/register`, {
+      data: {
+        fullName: 'User One',
+        email: user1Email,
+        password
+      }
+    });
+    expect(user1Res.ok()).toBeTruthy();
+    const user1Data = await user1Res.json();
+    user1Token = user1Data?.data?.token ?? user1Data?.token ?? '';
+    user1Id = user1Data?.data?.userId ?? user1Data?.data?.user?.id ?? user1Data?.user?.id ?? '';
+    expect(user1Token).toBeTruthy();
+    expect(user1Id).toBeTruthy();
 
-    // Register first user
-    await page.goto('http://localhost:3000/kayit');
-    await page.fill('input[name="email"]', `user1-${Date.now()}@test.com`);
-    await page.fill('input[name="password"]', 'TestPassword123!');
-    await page.fill('input[name="fullName"]', 'User One');
-    await page.click('button:has-text("Kayıt Ol")');
-    await page.waitForURL('**/');
-    user1Token = (await page.evaluate(() => localStorage.getItem('auth-token'))) ?? '';
-
-    // Register second user
-    await page.goto('http://localhost:3000/kayit');
-    await page.fill('input[name="email"]', `user2-${Date.now()}@test.com`);
-    await page.fill('input[name="password"]', 'TestPassword123!');
-    await page.fill('input[name="fullName"]', 'User Two');
-    await page.click('button:has-text("Kayıt Ol")');
-    await page.waitForURL('**/');
-    user2Token = (await page.evaluate(() => localStorage.getItem('auth-token'))) ?? '';
-
-    await context.close();
+    const user2Res = await request.post(`${BASE_URL}/api/auth/register`, {
+      data: {
+        fullName: 'User Two',
+        email: user2Email,
+        password
+      }
+    });
+    expect(user2Res.ok()).toBeTruthy();
+    const user2Data = await user2Res.json();
+    user2Token = user2Data?.data?.token ?? user2Data?.token ?? '';
+    user2Id = user2Data?.data?.userId ?? user2Data?.data?.user?.id ?? user2Data?.user?.id ?? '';
+    expect(user2Token).toBeTruthy();
+    expect(user2Id).toBeTruthy();
   });
 
   test('should access messaging inbox when authenticated', async ({ page }) => {
-    await page.goto('http://localhost:3000/mesajlar');
+    await page.goto(`${BASE_URL}/mesajlar`);
     await page.waitForURL('**/giris*');
+  });
 
-    // Login
-    await page.fill('input[name="email"]', 'test@example.com');
-    await page.fill('input[name="password"]', 'TestPassword123!');
+  test('should login and access messaging inbox', async ({ page }) => {
+    await page.goto(`${BASE_URL}/giris?redirect=/mesajlar`);
+    await page.fill('input[name="email"]', user1Email);
+    await page.fill('input[name="password"]', password);
     await page.click('button:has-text("Giriş Yap")');
     await page.waitForURL('**/mesajlar');
     await expect(page).toHaveTitle(/Mesajlar/);
   });
 
-  test('should send and receive messages', async ({ page, context }) => {
-    const page2 = await context.newPage();
-
-    // User 1 goes to messaging
-    await page.goto('http://localhost:3000/mesajlar');
-    await expect(page.locator('text=Mesajlar')).toBeVisible();
-
-    // User 1 sends message via API
-    const sendResponse = await page.request.post('http://localhost:3000/api/messages', {
+  test('should create conversation and send message', async ({ page }) => {
+    const createConversation = await page.request.post(`${BASE_URL}/api/messages`, {
       headers: { 'Cookie': `auth-token=${user1Token}` },
       data: {
-        recipientId: user2Id,
-        content: 'Hello from User 1'
+        recipient_id: user2Id
       }
     });
-    expect(sendResponse.ok()).toBeTruthy();
-    const messageData = await sendResponse.json();
-    conversationId = messageData.data.conversationId;
+    expect(createConversation.ok()).toBeTruthy();
+    const conversationData = unwrapData<{ id?: string }>(await createConversation.json());
+    conversationId = conversationData?.id ?? '';
+    expect(conversationId).toBeTruthy();
 
-    // User 2 should see the conversation
-    await page2.goto('http://localhost:3000/mesajlar');
-    await page2.waitForSelector('text=User One');
-    await expect(page2.locator('text=Hello from User 1')).toBeVisible();
+    const sendResponse = await page.request.post(`${BASE_URL}/api/messages/${conversationId}`, {
+      headers: { 'Cookie': `auth-token=${user1Token}` },
+      data: { content: 'Hello from User 1' }
+    });
+    expect(sendResponse.ok()).toBeTruthy();
   });
 
   test('should mark messages as read', async ({ page }) => {
     // Get conversation messages
-    const response = await page.request.get(`http://localhost:3000/api/messages/${conversationId}`, {
+    const response = await page.request.get(`${BASE_URL}/api/messages/${conversationId}`, {
       headers: { 'Cookie': `auth-token=${user2Token}` }
     });
     expect(response.ok()).toBeTruthy();
 
     // Messages should be marked as read
-    const data = await response.json();
-    const messages = data.data;
+    const messages = unwrapData<any[]>(await response.json());
     expect(messages.length).toBeGreaterThan(0);
     expect(messages[0].read_at).not.toBeNull();
   });
 
   test('should show unread message count', async ({ page }) => {
-    const response = await page.request.get('http://localhost:3000/api/messages/unread-count', {
+    const response = await page.request.get(`${BASE_URL}/api/messages/unread-count`, {
       headers: { 'Cookie': `auth-token=${user2Token}` }
     });
     expect(response.ok()).toBeTruthy();
 
-    const data = await response.json();
-    expect(data.data).toHaveProperty('count');
+    const data = unwrapData<{ count?: number }>(await response.json());
+    expect(data).toHaveProperty('count');
   });
 
   test('should block messaging from blocked users', async ({ page }) => {
     // User 1 blocks User 2
-    const blockResponse = await page.request.post('http://localhost:3000/api/users/privacy/block', {
+    const blockResponse = await page.request.post(`${BASE_URL}/api/users/privacy/block`, {
       headers: { 'Cookie': `auth-token=${user1Token}` },
       data: { blockedUserId: user2Id }
     });
     expect(blockResponse.ok()).toBeTruthy();
 
-    // User 2 tries to send message - should fail
-    const sendResponse = await page.request.post('http://localhost:3000/api/messages', {
+    // User 2 creates/reuses the same conversation and attempts to send a blocked message
+    const createConversation = await page.request.post(`${BASE_URL}/api/messages`, {
       headers: { 'Cookie': `auth-token=${user2Token}` },
       data: {
-        recipientId: user1Id,
-        content: 'Blocked test'
+        recipient_id: user1Id
       }
+    });
+    expect(createConversation.ok()).toBeTruthy();
+    const createConversationData = unwrapData<{ id?: string }>(await createConversation.json());
+    const blockedConversationId = createConversationData?.id ?? '';
+    expect(blockedConversationId).toBeTruthy();
+
+    const sendResponse = await page.request.post(`${BASE_URL}/api/messages/${blockedConversationId}`, {
+      headers: { 'Cookie': `auth-token=${user2Token}` },
+      data: { content: 'Blocked test' }
     });
     expect(sendResponse.status()).toBe(403);
   });

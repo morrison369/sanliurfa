@@ -16,24 +16,24 @@ pm2 kill 2>/dev/null || true
 sleep 3
 
 echo "[2/6] Portlar temizleniyor..."
-fuser -k 6000/tcp 2>/dev/null || true
+fuser -k 4321/tcp 2>/dev/null || true
 fuser -k 4321/tcp 2>/dev/null || true
 sleep 2
 
 echo "[3/6] Port kontrolu..."
-if ss -tlnp | grep -q 6000; then
-    echo "HATA: Port 6000 hala kullanımda!"
+if ss -tlnp | grep -q 4321; then
+    echo "HATA: Port 4321 hala kullanımda!"
     exit 1
 fi
-echo "Port 6000 bosta"
+echo "Port 4321 bosta"
 
 echo "[4/6] Uygulama baslatiliyor..."
 cd $DIR
-NODE_ENV=production PORT=6000 nohup node dist/server/entry.mjs > /tmp/app.log 2>&1 &
+NODE_ENV=production PORT=4321 nohup node dist/server/entry.mjs > /tmp/app.log 2>&1 &
 sleep 12
 
 echo "[5/6] Saglik kontrolu..."
-HEALTH=$(curl -sf http://127.0.0.1:6000/api/health 2>&1 || echo "FAIL")
+HEALTH=$(curl -sf http://127.0.0.1:4321/api/health 2>&1 || echo "FAIL")
 echo "$HEALTH"
 
 if echo "$HEALTH" | grep -q "healthy"; then
@@ -45,7 +45,7 @@ if echo "$HEALTH" | grep -q "healthy"; then
     echo "✅ DEPLOY BASARILI!"
     echo "========================================"
     echo "Site: https://sanliurfa.com"
-    echo "Health: http://127.0.0.1:6000/api/health"
+    echo "Health: http://127.0.0.1:4321/api/health"
     pm2 list
 else
     echo ""

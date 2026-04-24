@@ -70,7 +70,7 @@ export function computeWeightedScore(scores: number[], weights: number[]): numbe
   return weightedSum / totalWeight;
 }
 
-export function routeToHandler(handlerId: string, signal: unknown): string {
+export function routeToHandler(handlerId: string, _signal: unknown): string {
   return `routed-to-${handlerId}`;
 }
 

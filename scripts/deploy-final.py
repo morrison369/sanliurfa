@@ -7,7 +7,7 @@ import sys
 HOST = '168.119.79.238'
 PORT = 77
 USER = 'sanliur'
-PASS = 'zIT7Y9yrJZRV'
+PASS = 'CHANGE_ME_CWP_SSH_PASSWORD'
 
 def main():
     print("Baglaniyor...", flush=True)
@@ -29,20 +29,20 @@ def main():
         'pkill -9 -f node 2>/dev/null',
         'pm2 kill 2>/dev/null',
         'sleep 3',
-        'fuser -k 6000/tcp 2>/dev/null',
+        'fuser -k 4321/tcp 2>/dev/null',
         'fuser -k 4321/tcp 2>/dev/null',
         'sleep 2',
         'echo "=== PORTS ==="',
-        'ss -tlnp | grep 6000 || echo P6000_FREE',
+        'ss -tlnp | grep 4321 || echo P6000_FREE',
         'ss -tlnp | grep 4321 || echo P4321_FREE',
         'echo "=== ENV ==="',
         'grep "DATABASE_URL" /home/sanliur/public_html/.env',
         'echo "=== START ==="',
         'cd /home/sanliur/public_html',
-        'NODE_ENV=production PORT=6000 node dist/server/entry.mjs &',
+        'NODE_ENV=production PORT=4321 node dist/server/entry.mjs &',
         'sleep 10',
         'echo "=== HEALTH ==="',
-        'curl -sf http://127.0.0.1:6000/api/health || echo HEALTH_FAIL',
+        'curl -sf http://127.0.0.1:4321/api/health || echo HEALTH_FAIL',
         'echo "=== PM2 ==="',
         'pm2 delete all 2>/dev/null || true',
         'pm2 start /home/sanliur/public_html/dist/server/entry.mjs --name sanliurfa-app',

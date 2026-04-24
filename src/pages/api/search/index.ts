@@ -4,14 +4,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { searchPlaces, searchReviews, searchEvents, recordSearchQuery, getTrendingSearches } from '../../../lib/search/search-engine';
+import { searchPlaces, searchReviews, searchEvents, recordSearchQuery } from '../../../lib/search/search-engine';
 import { recordSuggestionImpression, updateAutocompleteIndex, recordZeroResultSearch } from '../../../lib/search/search-suggestions';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

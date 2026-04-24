@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { verifyToken } from '../../lib/auth';
 
-// Check authentication
+// Oturumu kontrol et.
 const token = Astro.cookies.get('token')?.value;
 if (!token) {
   return Astro.redirect('/giris');
@@ -13,26 +13,24 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
   return Astro.redirect('/?error=unauthorized');
 }
 
-// In a real implementation, we'd fetch data from /api/admin/revenue
-// For now, this is a template showing the structure
+// Gelir verisi istemci tarafında /api/admin/revenue üzerinden yenilenir.
 ---
 
-<Layout title="Gelir Yönetimi - Admin Panel">
+<Layout title="Gelir Yönetimi - Yönetim Paneli">
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
     <div class="container max-w-7xl mx-auto">
-      <!-- Header -->
+      <!-- Başlık -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">ğŸ’° Gelir Yönetimi</h1>
-        <p class="text-gray-600 dark:text-gray-400">Abonelik geliri, MRR ve çurluk oranı analitikleri</p>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Gelir Yönetimi</h1>
+        <p class="text-gray-600 dark:text-gray-400">Abonelik geliri, MRR ve kayıp oranı analitikleri</p>
       </div>
 
-      <!-- Summary Cards -->
+      <!-- Özet kartları -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Total MRR -->
+        <!-- Toplam MRR -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Aylık Gelir (MRR)</h3>
-            <span class="text-2xl">ğŸ“ˆ</span>
           </div>
           <div class="text-3xl font-bold text-gray-900 dark:text-white" id="totalMRR">
             $0.00
@@ -40,11 +38,10 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
           <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Aktif aboneliklerden</p>
         </div>
 
-        <!-- Active Subscriptions -->
+        <!-- Aktif abonelikler -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Aktif Abonelikler</h3>
-            <span class="text-2xl">ğŸ‘¥</span>
           </div>
           <div class="text-3xl font-bold text-gray-900 dark:text-white" id="activeSubscriptions">
             0
@@ -52,11 +49,10 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
           <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Tüm katmanlar</p>
         </div>
 
-        <!-- Churn Rate -->
+        <!-- Kayıp oranı -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Çurluk Oranı (30g)</h3>
-            <span class="text-2xl">ğŸ“‰</span>
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Kayıp Oranı (30g)</h3>
           </div>
           <div class="text-3xl font-bold text-red-600 dark:text-red-400" id="churnRate">
             0%
@@ -64,11 +60,10 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
           <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Kaybedilen abonelikler</p>
         </div>
 
-        <!-- Total Revenue -->
+        <!-- Toplam gelir -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Toplam Gelir</h3>
-            <span class="text-2xl">ğŸ’µ</span>
           </div>
           <div class="text-3xl font-bold text-green-600 dark:text-green-400" id="totalRevenue">
             $0.00
@@ -77,14 +72,14 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
         </div>
       </div>
 
-      <!-- Tiers Breakdown -->
+      <!-- Plan kırılımı -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {['free', 'premium', 'pro'].map((tier) => (
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 capitalize">
-              {tier === 'free' && 'ğŸ Ücretsiz'}
+              {tier === 'free' && 'Ücretsiz'}
               {tier === 'premium' && '⭐ Premium'}
-              {tier === 'pro' && 'ğŸ‘‘ Pro'}
+              {tier === 'pro' && 'Pro'}
             </h3>
 
             {tier === 'free' && (
@@ -127,9 +122,9 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
         ))}
       </div>
 
-      <!-- Note -->
+      <!-- Not -->
       <div class="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-        <h3 class="font-semibold text-blue-900 dark:text-blue-200 mb-2">ğŸ“Š Grafik Yükleniyor</h3>
+        <h3 class="font-semibold text-blue-900 dark:text-blue-200 mb-2">Grafik Yükleniyor</h3>
         <p class="text-sm text-blue-800 dark:text-blue-300">
           Günlük gelir grafiği burada gösterilecek (Chart.js ile). Son 30 günün gelir trendini takip et.
         </p>
@@ -138,22 +133,22 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
   </div>
 
   <script>
-    // Fetch revenue data
+    // Gelir verisini yükle.
     async function loadRevenueData() {
       try {
         const response = await fetch('/api/admin/revenue');
-        if (!response.ok) throw new Error('Failed to fetch revenue data');
+        if (!response.ok) throw new Error('Gelir verisi alınamadı.');
 
         const result = await response.json();
         const { summary, byTier } = result.data;
 
-        // Update summary cards
+        // Özet kartlarını güncelle.
         document.getElementById('totalMRR')!.textContent = `$${summary.totalMRR.toFixed(2)}`;
         document.getElementById('activeSubscriptions')!.textContent = summary.totalActiveSubscriptions.toString();
         document.getElementById('churnRate')!.textContent = `${summary.churnRatePercent}%`;
         document.getElementById('totalRevenue')!.textContent = `$${summary.totalRevenueAllTime.toFixed(2)}`;
 
-        // Update tier breakdowns
+        // Plan kırılımlarını güncelle.
         if (byTier.premium) {
           document.getElementById('premiumTierCount')!.textContent = byTier.premium.count.toString();
           document.getElementById('premiumTierRevenue')!.textContent = `$${byTier.premium.monthlyRevenue.toFixed(2)}`;
@@ -164,14 +159,14 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
           document.getElementById('proTierRevenue')!.textContent = `$${byTier.pro.monthlyRevenue.toFixed(2)}`;
         }
       } catch (error) {
-        console.error('Error loading revenue data:', error);
+        console.error('Gelir verisi yüklenemedi:', error);
       }
     }
 
-    // Load on page load
+    // Sayfa açıldığında yükle.
     loadRevenueData();
 
-    // Refresh every 5 minutes
+    // Her 5 dakikada yenile.
     setInterval(loadRevenueData, 5 * 60 * 1000);
   </script>
 </Layout>

@@ -11,11 +11,11 @@ if (!user) {
 }
 ---
 
-<Layout title="Koleksiyonlarım - Şanlıurfa">
+<Layout seo={{ title: "Koleksiyonlarım - Şanlıurfa", noIndex: true }}>
   <div class="container mx-auto px-4 py-8 max-w-6xl">
     <h1 class="text-4xl font-bold mb-2">Koleksiyonlarım</h1>
     <p class="text-gray-600 mb-8">Mekanları organize edebileceğiniz kişisel listeleriniz</p>
 
-    <CollectionsManager client:load userId={user.id} />
+    <CollectionsManager client:visible={{ rootMargin: '140px' }} userId={user.id} />
   </div>
 </Layout>

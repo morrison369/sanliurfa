@@ -494,3 +494,4 @@ function mapMessageRow(row: any): ChatMessage {
     isDeleted: row.is_deleted,
   };
 }
+

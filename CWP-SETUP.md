@@ -5,7 +5,7 @@
 ### 1. CWP Panel'e Giriş
 - URL: https://168.119.79.238:2083
 - Kullanıcı: sanliur
-- Şifre: BcqH7t5zNKfw
+- Şifre: CHANGE_ME_CWP_SSH_PASSWORD
 
 ### 2. Domain Yapılandırması
 ```

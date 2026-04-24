@@ -4,7 +4,7 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 NVM_PREFIX = 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '
 
 def main():
@@ -21,21 +21,21 @@ def main():
     pm2 = stdout.read().decode()
     print(pm2 if pm2 else "No PM2 output")
     
-    # 2. Check port 6000
-    print("\n🔌 Port 6000:")
-    _, stdout, _ = ssh.exec_command("netstat -tlnp 2>/dev/null | grep 6000 || ss -tlnp | grep 6000")
+    # 2. Check port 4321
+    print("\n🔌 Port 4321:")
+    _, stdout, _ = ssh.exec_command("netstat -tlnp 2>/dev/null | grep 4321 || ss -tlnp | grep 4321")
     port = stdout.read().decode().strip()
-    print(port if port else "❌ No process on port 6000")
+    print(port if port else "❌ No process on port 4321")
     
     # 3. HTTP Test homepage
     print("\n🌐 HTTP Test (homepage):")
-    _, stdout, _ = ssh.exec_command("curl -s --max-time 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")
+    _, stdout, _ = ssh.exec_command("curl -s --max-time 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/")
     http = stdout.read().decode().strip()
     print(f"Status: {http}")
     
     # 4. HTTP Test API
     print("\n🔌 HTTP Test (/api/health):")
-    _, stdout, _ = ssh.exec_command("curl -s --max-time 5 http://127.0.0.1:6000/api/health")
+    _, stdout, _ = ssh.exec_command("curl -s --max-time 5 http://127.0.0.1:4321/api/health")
     health = stdout.read().decode().strip()
     print(f"Response: {health[:200] if health else 'No response'}")
     

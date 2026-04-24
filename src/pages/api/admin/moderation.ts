@@ -8,13 +8,24 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { requireRole } from '../../../lib/auth';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
+import { assertPlaceStatusTransition } from '../../../lib/place/lifecycle';
+import { recordPlaceLifecycleEvent } from '../../../lib/place/lifecycle-events';
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
 export const GET: APIRoute = async ({ request, url }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-moderation-unauthorized',
+        instance: '/api/admin/moderation',
+      });
+    }
 
     const type = url.searchParams.get('type');
 
@@ -67,31 +78,46 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     return new Response(
       JSON.stringify({ error: 'type parametresi gereklidir: reviews|submissions' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
+      { status: 400, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
     );
   } catch (error) {
     logger.error('Moderation GET error:', error);
-    return new Response(JSON.stringify({ error: 'Moderation verisi alınamadı' }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 500,
+      title: 'Moderasyon Verisi Alınamadı',
+      detail: error instanceof Error ? error.message : 'moderation_fetch_failed',
+      type: '/problems/admin-moderation-fetch-failed',
+      instance: '/api/admin/moderation',
     });
   }
 };
 
 // ─── POST ─────────────────────────────────────────────────────────────────────
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-moderation-unauthorized',
+        instance: '/api/admin/moderation',
+      });
+    }
 
     const body = await request.json();
     const { type, action, id, reason, notes } = body;
 
     if (!type || !action || !id) {
-      return new Response(
-        JSON.stringify({ error: 'type, action ve id gereklidir' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'type, action ve id gereklidir',
+        type: '/problems/admin-moderation-validation',
+        instance: '/api/admin/moderation',
+      });
     }
 
     // ── Review moderation ─────────────────────────────────────────────────────
@@ -139,6 +165,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // ── Submission (place) moderation ─────────────────────────────────────────
     if (type === 'submission') {
       if (action === 'approve') {
+        const existing = await query(`SELECT status FROM places WHERE id = $1`, [id]);
+        const currentStatus = existing.rows[0]?.status;
+        const transition = assertPlaceStatusTransition(currentStatus, 'active', 'admin');
+        if (!transition.ok) {
+          return problemJson({
+            status: 400,
+            title: 'Geçersiz Durum Geçişi',
+            detail: 'error' in transition ? transition.error : 'Geçersiz durum geçişi',
+            type: '/problems/admin-moderation-submission-transition-invalid',
+            instance: '/api/admin/moderation',
+          });
+        }
         const result = await query(
           `UPDATE places SET status = 'active', updated_at = NOW()
            WHERE id = $1 AND status IN ('pending', 'needs_info')
@@ -150,6 +188,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
             status: 404, headers: { 'Content-Type': 'application/json' },
           });
         }
+        await recordPlaceLifecycleEvent({
+          placeId: String(id),
+          fromStatus: currentStatus || null,
+          toStatus: 'active',
+          actorUserId: auth.user.id,
+          reason: 'admin_approve',
+        }).catch(() => null);
         return new Response(
           JSON.stringify({ success: true, submission: result.rows[0] }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -162,12 +207,32 @@ export const POST: APIRoute = async ({ request, locals }) => {
             status: 400, headers: { 'Content-Type': 'application/json' },
           });
         }
+        const existing = await query(`SELECT status FROM places WHERE id = $1`, [id]);
+        const currentStatus = existing.rows[0]?.status;
+        const transition = assertPlaceStatusTransition(currentStatus, 'rejected', 'admin');
+        if (!transition.ok) {
+          return problemJson({
+            status: 400,
+            title: 'Geçersiz Durum Geçişi',
+            detail: 'error' in transition ? transition.error : 'Geçersiz durum geçişi',
+            type: '/problems/admin-moderation-submission-transition-invalid',
+            instance: '/api/admin/moderation',
+          });
+        }
         const result = await query(
           `UPDATE places SET status = 'rejected', updated_at = NOW()
            WHERE id = $1
            RETURNING id, name, status`,
           [id]
         );
+        await recordPlaceLifecycleEvent({
+          placeId: String(id),
+          fromStatus: currentStatus || null,
+          toStatus: 'rejected',
+          actorUserId: auth.user.id,
+          reason: reason || 'admin_reject',
+          metadata: notes ? { notes } : undefined,
+        }).catch(() => null);
         return new Response(
           JSON.stringify({ success: true, submission: result.rows[0], reason }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -180,12 +245,32 @@ export const POST: APIRoute = async ({ request, locals }) => {
             status: 400, headers: { 'Content-Type': 'application/json' },
           });
         }
+        const existing = await query(`SELECT status FROM places WHERE id = $1`, [id]);
+        const currentStatus = existing.rows[0]?.status;
+        const transition = assertPlaceStatusTransition(currentStatus, 'needs_info', 'admin');
+        if (!transition.ok) {
+          return problemJson({
+            status: 400,
+            title: 'Geçersiz Durum Geçişi',
+            detail: 'error' in transition ? transition.error : 'Geçersiz durum geçişi',
+            type: '/problems/admin-moderation-submission-transition-invalid',
+            instance: '/api/admin/moderation',
+          });
+        }
         const result = await query(
           `UPDATE places SET status = 'needs_info', updated_at = NOW()
            WHERE id = $1
            RETURNING id, name, status`,
           [id]
         );
+        await recordPlaceLifecycleEvent({
+          placeId: String(id),
+          fromStatus: currentStatus || null,
+          toStatus: 'needs_info',
+          actorUserId: auth.user.id,
+          reason: reason || 'admin_request_info',
+          metadata: notes ? { notes } : undefined,
+        }).catch(() => null);
         return new Response(
           JSON.stringify({ success: true, submission: result.rows[0], requestedInfo: reason }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -194,12 +279,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     return new Response(JSON.stringify({ error: 'Geçersiz type veya action' }), {
-      status: 400, headers: { 'Content-Type': 'application/json' },
+      status: 400, headers: { 'Content-Type': 'application/json; charset=utf-8' },
     });
   } catch (error) {
     logger.error('Moderation POST error:', error);
-    return new Response(JSON.stringify({ error: 'Moderasyon işlemi başarısız' }), {
-      status: 400, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 400,
+      title: 'Moderasyon İşlemi Başarısız',
+      detail: error instanceof Error ? error.message : 'moderation_action_failed',
+      type: '/problems/admin-moderation-action-failed',
+      instance: '/api/admin/moderation',
     });
   }
 };

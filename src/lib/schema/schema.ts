@@ -23,11 +23,6 @@ export function getOrganizationSchema(): SchemaData {
     url: BASE_URL,
     logo: `${BASE_URL}/logo.png`,
     description: 'Şanlıurfa şehrinin en kapsamlı rehberi. Mekanlar, etkinlikler, harita ve yorumlar.',
-    sameAs: [
-      'https://facebook.com/sanliurfaguide',
-      'https://twitter.com/sanliurfaguide',
-      'https://instagram.com/sanliurfaguide'
-    ],
     address: {
       '@type': 'PostalAddress',
       streetAddress: 'Şanlıurfa',
@@ -48,7 +43,9 @@ export async function getPlaceSchema(placeId: string): Promise<SchemaData | null
   try {
     const place = await queryOne(
       `SELECT id, name, description, latitude, longitude, address, category,
-              image_url, average_rating, review_count, phone, website, opening_hours
+              COALESCE(thumbnail_url, images[1]) as image_url,
+              COALESCE(rating, avg_rating, 0) as average_rating,
+              review_count, phone, website, opening_hours
        FROM places WHERE id = $1`,
       [placeId]
     );

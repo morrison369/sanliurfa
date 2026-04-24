@@ -3,7 +3,6 @@
  * Query plan analysis, performance prediction, optimization suggestions
  */
 
-import { logger } from '../logger';
 
 // ==================== QUERY ANALYSIS ====================
 
@@ -243,7 +242,6 @@ export class QueryRewriter {
    * Detect N+1 queries and suggest bulk fetch
    */
   detectNPlusOne(queries: string[]): { pattern: string; suggestion: string } | null {
-    const selectCount = queries.filter(q => q.trim().toUpperCase().startsWith('SELECT')).length;
     const groupedQueries = new Map<string, number>();
 
     for (const query of queries) {

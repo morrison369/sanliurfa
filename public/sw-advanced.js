@@ -16,8 +16,8 @@ const STATIC_ASSETS = [
   '/',
   '/manifest.json',
   '/offline.html',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
 ];
 
 // Install event
@@ -281,8 +281,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Şanlıurfa.com';
   const options = {
     body: data.body || 'Yeni bir bildiriminiz var',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/badge-72.png',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/badge-72x72.png',
     image: data.image,
     data: data.data || {},
     actions: data.actions || [],

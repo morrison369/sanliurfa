@@ -1,15 +1,18 @@
 ---
+
 // Map Page - All Places
 import Layout from '../layouts/Layout.astro';
 import LeafletMap from '../components/map/LeafletMap.astro';
 import { getPlaces } from '../lib/places/db';
 import { query } from '../lib/postgres';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const url = new URL(Astro.request.url);
 const category = url.searchParams.get('kategori') || undefined;
 
 const [{ places }, categoriesResult] = await Promise.all([
-  getPlaces({ status: 'approved', category, limit: 200 }),
+  getPlaces({ status: 'active', category, limit: 200 }),
   query(`SELECT id, slug, name, icon, color, is_active FROM categories WHERE is_active = true ORDER BY sort_order, name`),
 ]);
 const categories = categoriesResult.rows;
@@ -28,7 +31,15 @@ const validPlaces = places.filter(p => p.latitude && p.longitude).map(p => ({
 const seo = {
   title: 'Harita - Şanlıurfa Mekanları',
   description: `Şanlıurfa'daki ${validPlaces.length}+ mekanı haritada keşfedin. Restoranlar, oteller, tarihi yerler ve daha fazlası.`,
+  keywords: ['şanlıurfa harita', 'urfa mekan haritası', 'şanlıurfa mekanlar nerede', 'urfa haritada gezilecek yerler', 'şanlıurfa konum'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/harita',
 };
+const faqItems = [
+  { S: 'Şanlıurfa haritasında hangi mekanlar görüntülenir?', C: 'Restoran, kafe, tarihi yer, eczane, market ve hizmet noktaları dahil tüm aktif mekanlar haritada işaretlidir.' },
+  { S: 'Harita üzerinde nasıl arama yapabilirim?', C: 'Harita sayfasında kategori filtresi ve ilçe seçeneğiyle mekanları daraltabilir, yakınlaştırarak detaylı görünüm elde edebilirsiniz.' },
+  { S: 'Mobil cihazdan haritaya nasıl ulaşabilirim?', C: 'Harita sayfası mobil cihazlara tam uyumludur; konumunuza en yakın mekanları da filtreleyebilirsiniz.' },
+];
 ---
 
 <Layout seo={seo}>
@@ -91,7 +102,7 @@ const seo = {
 
     {/* Mobile Place List Modal */}
     <div id="place-list-modal" class="fixed inset-0 bg-black/50 z-[500] hidden" onclick="togglePlaceList()">
-      <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[70vh] overflow-hidden" onclick="event.stopPropagation()">
+      <div id="place-list-panel" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[70vh] overflow-hidden">
         <div class="p-4 border-b flex items-center justify-between">
           <h3 class="font-bold">Mekanlar ({validPlaces.length})</h3>
           <button onclick="togglePlaceList()" class="p-2 hover:bg-gray-100 rounded-full">
@@ -102,7 +113,7 @@ const seo = {
         </div>
         <div class="overflow-y-auto max-h-[60vh]">
           {validPlaces.map(place => (
-            <a href={`/places/${place.slug}`} class="flex items-center gap-3 p-4 border-b hover:bg-gray-50">
+            <a href={`/isletme/${place.slug}`} class="flex items-center gap-3 p-4 border-b hover:bg-gray-50">
               <div class="w-12 h-12 rounded-lg bg-gray-200 flex-shrink-0">
                 {place.thumbnail ? (
                   <img src={place.thumbnail} alt={place.name} class="w-full h-full object-cover rounded-lg" />
@@ -125,11 +136,45 @@ const seo = {
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     function togglePlaceList() {
       const modal = document.getElementById('place-list-modal');
       modal.classList.toggle('hidden');
       document.body.style.overflow = modal.classList.contains('hidden') ? '' : 'hidden';
     }
+    window['togglePlaceList'] = togglePlaceList;
+
+    const panel = document.getElementById('place-list-panel');
+    if (panel) {
+      panel.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+    }
   </script>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Map',
+    name: 'Şanlıurfa Mekan Haritası',
+    description: 'Şanlıurfa\'daki tüm mekanların interaktif haritası',
+    url: `${baseUrl}/harita`,
+    about: { '@type': 'City', name: 'Şanlıurfa', url: `${baseUrl}` },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Harita', item: `${baseUrl}/harita` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

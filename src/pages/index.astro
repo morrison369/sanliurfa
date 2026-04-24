@@ -2,10 +2,41 @@
 import Layout from '../layouts/Layout.astro';
 import PlaceCard from '../components/PlaceCard.astro';
 import { query } from '../lib/postgres';
+import { getSiteSetting, getSiteSettingRequired } from '../lib/site-content';
+import {
+  getMediaAsset,
+  getSeoOverride,
+  listActiveHomepageSections,
+  listActiveSiteServiceEntries,
+} from '../lib/site-platform';
 
-const seo = {
-  title: 'Şanlıurfa Rehberi | Mekanlar, Kebapçılar, Gezilecek Yerler, Etkinlikler',
-  description: 'Şanlıurfa\'nın en kapsamlı şehir rehberi. Kebapçılar, ciğerciler, gezilecek yerler, oteller, etkinlikler ve nöbetçi eczaneler.',
+let seo = {
+  title: 'Sanliurfa.com | Şanlıurfa Şehir Rehberi, Mekanlar ve Günlük Yaşam',
+  description:
+    'Şanlıurfa şehir rehberi: mekanlar, nöbetçi eczaneler, otobüs saatleri, etkinlikler, ilçeler, gezi rotaları ve yemek tarifleri.',
+  canonical: '/',
+  ogImage: '/images/hero/hero-home.webp',
+  keywords: [
+    'Şanlıurfa',
+    'Şanlıurfa şehir rehberi',
+    'Şanlıurfa mekanlar',
+    'Şanlıurfa nöbetçi eczane',
+    'Şanlıurfa otobüs saatleri',
+    'Şanlıurfa gezilecek yerler',
+    'Sanliurfa.com',
+  ],
+};
+let homepageSchema = {
+  siteName: 'Sanliurfa.com',
+  alternateName: 'Şanlıurfa Şehir Rehberi',
+  baseUrl: 'https://sanliurfa.com',
+  searchPathTemplate: '/arama?q={search_term_string}',
+  organizationId: '/#organization',
+  webpageId: '/#webpage',
+  cityName: 'Şanlıurfa',
+  trendingListName: 'Şanlıurfa Bugün En Çok Arananlar',
+  servicesListName: 'Şanlıurfa Hızlı Servisler',
+  webpageName: 'Şanlıurfa Şehir Rehberi | Sanliurfa.com',
 };
 
 let featuredPlaces: any[] = [];
@@ -14,15 +45,379 @@ let recentPosts: any[] = [];
 let mainCategories: any[] = [];
 let districts: any[] = [];
 let featuredSites: any[] = [];
+let featuredRecipes: any[] = [];
+let trendingSearches: any[] = [];
+let categoryHeatmap: any[] = [];
+let districtSpotlights: any[] = [];
+let recentReviewHighlights: any[] = [];
+let upcomingEventsCount = 0;
+let pharmacyCount = 0;
+let busRouteCount = 0;
+let totalPlaceCount = 0;
+let serviceFreshness: Record<string, string> = {};
+let platformHeroAssetUrl = '';
+let platformHomepageSeoPayload: Record<string, any> | null = null;
+let platformHomepageCanonical = '';
+let platformCityServices: any[] = [];
+let platformHomepageSections: any[] = [];
+let heroConfig = {
+  badge: 'ŞANLIURFA ODAKLI DİJİTAL REHBER',
+  title: 'Şanlıurfa için hızlı, modern ve güvenilir şehir rehberi',
+  description:
+    'Mekan keşfi, nöbetçi eczane, otobüs saatleri, ilçe bazlı içerik ve yemek tariflerini tek bir profesyonel platformda toplayan Şanlıurfa odaklı rehber.',
+  searchPlaceholder: "Şanlıurfa'da mekan, kategori veya ilçe ara...",
+  backgroundImage: '/images/hero/hero-home.webp',
+};
+let heroMeta = {
+  heroSectionClass: 'relative overflow-hidden border-b border-slate-800',
+  heroOverlayClass:
+    'absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(248,113,113,0.18),transparent_45%),radial-gradient(circle_at_80%_10%,rgba(56,189,248,0.16),transparent_45%),linear-gradient(180deg,#020617,#0f172a)]',
+  heroContainerClass: 'relative container mx-auto px-4 pt-28 pb-20',
+  heroGridClass: 'grid lg:grid-cols-2 gap-10 items-center',
+  heroStatsPanelClass: 'rounded-3xl border border-slate-700 bg-slate-900/70 p-6 backdrop-blur',
+  heroStatsPanelTitleClass: 'text-lg font-bold text-white',
+  heroStatsPanelSubtitleClass: 'mt-1 text-sm text-slate-400',
+  heroStatsUpdatedClass: 'mt-4 text-xs text-slate-500',
+  heroImageAlt: 'Şanlıurfa Hero',
+  searchButtonLabel: 'Ara',
+  businessCardBadge: 'Ücretsiz Açık',
+  businessCardTitle: "İşletmeni Sanliurfa.com'a Ekle",
+  businessCardDescription: 'İlk aşamada tüm işletme kayıt özellikleri ücretsiz ve tam erişim açık.',
+  communityCardBadge: 'Topluluk Modu',
+  communityCardTitle: 'Mesajlaşma ve Eşleşmeye Katıl',
+  communityCardDescription: 'Kullanıcılar arası takip, mesaj ve eşleşme deneyimini hemen kullan.',
+  statsPanelTitle: 'Şanlıurfa Bugün',
+  statsPanelSubtitle: 'Anlık şehir verileri ve içerik yoğunluğu',
+  statsActivePlacesLabel: 'Aktif Mekan',
+  statsPharmacyLabel: 'Nöbetçi Eczane',
+  statsBusRouteLabel: 'Otobüs Hattı',
+  statsEventsLabel: 'Etkinlik',
+  statsUpdatedPrefix: 'Güncelleme:',
+  statsCardClass: 'rounded-xl border border-slate-700 bg-slate-950/80 p-4',
+  statsLabelClass: 'text-xs text-slate-400',
+  statsValueClass: 'mt-1 text-2xl font-bold text-white',
+  heroQuickLinkClass:
+    'rounded-full border border-slate-600 bg-slate-900/70 px-4 py-2 text-sm font-semibold',
+  heroQuickLinkHoverClass: 'hover:border-red-400 hover:text-red-200',
+  searchFormClass: 'mt-7 max-w-2xl rounded-2xl bg-white p-2 shadow-2xl shadow-black/40',
+  searchRowClass: 'flex gap-2',
+  searchInputClass: 'flex-1 rounded-xl px-5 py-4 text-slate-800 focus:outline-none',
+  searchButtonClass:
+    'rounded-xl bg-red-600 px-6 py-4 font-semibold text-white transition hover:bg-red-700',
+  businessCardClass:
+    'rounded-2xl border border-red-400/50 bg-red-500/15 p-4 transition hover:border-red-300 hover:bg-red-500/25',
+  communityCardClass:
+    'rounded-2xl border border-sky-400/50 bg-sky-500/15 p-4 transition hover:border-sky-300 hover:bg-sky-500/25',
+  heroBadgeClass:
+    'inline-flex items-center rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs font-semibold tracking-wide text-slate-300',
+  heroTitleClass: 'mt-5 text-4xl md:text-6xl font-extrabold leading-tight text-white',
+  heroDescriptionClass: 'mt-5 text-lg text-slate-300 max-w-2xl',
+};
+let mainCtaConfig = {
+  title: 'İşletmenizi Şanlıurfa rehberine ekleyin',
+  description:
+    'Sanliurfa.com üzerinde görünürlük kazanmak, yerel kullanıcıya ulaşmak ve işletme profilinizi yönetmek için hemen başvurun.',
+  primaryLabel: 'İşletme Kaydı Başlat',
+  primaryHref: '/isletme-kayit',
+  secondaryLabel: 'İletişim ve Destek',
+  secondaryHref: '/iletisim',
+};
+let sectionCopy = {
+  mvpQuickStartBadge: 'MVP Hızlı Başlangıç',
+  mvpQuickStartTitle: "Şanlıurfa'da en çok kullanılan akışlar tek yerde",
+  mvpQuickStartDescription:
+    'Siteyi kullanan kişi önce günlük servise, sonra mekan/gezi keşfine, ardından topluluk veya işletme başvurusuna hızlıca ulaşmalı.',
+  mvpQuickStartCtaLabel: 'Tüm Şanlıurfa modülleri',
+  mvpQuickStartCtaHref: '/kesfet',
+  quickActionsTitle: 'Hızlı Erişim Modülleri',
+  quickActionsDescription: "Şanlıurfa'da günlük ihtiyaçlar için tek tıkla erişim",
+  quickActionsCtaLabel: 'Tüm modüller →',
+  liveStatusTitle: 'Güncel Durum Merkezi',
+  liveStatusDescription: 'Nöbetçi eczane, otobüs ve uçak servislerinin operasyonel görünümü',
+  liveStatusUpdatedPrefix: 'Son güncelleme',
+  districtServiceTitle: 'Konum ve İlçeye Göre Hızlı Başlangıç',
+  districtServiceDescription: 'Yaşadığın veya gideceğin ilçeyi seç, servisleri ilçe odaklı başlat.',
+  districtServiceCtaLabel: 'Tüm ilçe rehberi →',
+  popularCategoriesTitle: 'Popüler Mekan Kategorileri',
+  popularCategoriesCtaLabel: 'Mekan Rehberi →',
+  trendingTitle: 'Bugün En Çok Arananlar',
+  trendingCtaLabel: 'Aramaya Git →',
+  densityTitle: 'Kategori Yoğunluk Haritası',
+  densityCtaLabel: 'Kategoriler →',
+  districtsTitle: 'İlçe Bazlı Şanlıurfa Rehberi',
+  districtsCtaLabel: 'Tüm İlçeler →',
+  historicalSitesTitle: 'Şanlıurfa Gezilecek Yerler',
+  historicalSitesCtaLabel: 'Gezi Rehberi →',
+  featuredPlacesTitle: 'Öne Çıkan Mekanlar',
+  featuredPlacesCtaLabel: 'Tümü →',
+  recentPlacesTitle: 'Yeni Eklenen Mekanlar',
+  trustSignalsTitle: 'Son Güncellenen Mekanlar',
+  trustSignalsSubtitle: 'Güven sinyali: canlı içerik güncelleme akışı',
+  guidesTitle: 'Öne Çıkan Rehber Sayfaları',
+  audiencePlansTitle: 'Niyete Göre Hazır Şanlıurfa Planları',
+  audiencePlansDescription: 'Turist, aile ve öğrenci odaklı hızlı başlangıç rotalarını tek ekranda açın.',
+  districtSpotlightsTitle: 'İlçeye Göre Öne Çıkan Mekanlar',
+  districtSpotlightsDescription: 'Her merkez ilçe için puan ve yorum gücü yüksek işletmeleri öne çıkarın.',
+  districtSpotlightsCtaLabel: 'İlçeleri İncele →',
+  recentReviewsTitle: 'Son Yorumlanan Mekanlar',
+  recentReviewsDescription: 'Kullanıcıların son değerlendirmeleriyle güven sinyali üreten güncel mekan akışı.',
+  mainCategoriesTitle: 'Şanlıurfa Ana Kategoriler',
+  recipesTitle: 'Şanlıurfa Özel Yemek Tarifleri',
+  recipesCtaLabel: 'Tüm Tarifler →',
+  blogTitle: 'Blogdan Son Yazılar',
+  blogCtaLabel: 'Blog →',
+  faqTitle: 'AEO ve GEO için hızlı cevap bölümü',
+  faqDescription:
+    'Bu bölüm, kullanıcıların en sık sorduğu Şanlıurfa odaklı sorulara kısa ve net yanıtlar sunar.',
+};
+let sectionStyles = {
+  sectionHeadingClass: 'text-2xl md:text-3xl font-bold',
+  sectionHeadingSpacedClass: 'text-2xl md:text-3xl font-bold mb-6',
+  sectionHeadingSpacedLgClass: 'text-2xl md:text-3xl font-bold mb-8',
+  sectionCtaLinkClass: 'text-red-600 font-semibold hover:text-red-700',
+  sectionMutedTextLineClampClass: 'text-sm text-slate-600 mt-1 line-clamp-2',
+  mvpQuickStartSectionClass: 'relative z-10 -mt-8 px-4',
+  mvpQuickStartContainerClass: 'container mx-auto',
+  mvpQuickStartPanelClass: 'rounded-[2rem] border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-950/20 md:p-6',
+  mvpQuickStartHeaderClass: 'flex flex-col gap-3 border-b border-slate-200 pb-5 md:flex-row md:items-end md:justify-between',
+  mvpQuickStartBadgeClass: 'text-xs font-bold uppercase tracking-[0.26em] text-red-600',
+  mvpQuickStartTitleClass: 'mt-2 text-2xl font-extrabold text-slate-950 md:text-3xl',
+  mvpQuickStartDescriptionClass: 'mt-2 max-w-3xl text-sm text-slate-600 md:text-base',
+  mvpQuickStartCtaClass: 'inline-flex items-center justify-center rounded-2xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700',
+  mvpQuickStartGridClass: 'mt-5 grid gap-4 lg:grid-cols-3',
+  mvpQuickStartCardClass: 'rounded-3xl border border-slate-200 bg-[linear-gradient(180deg,#f8fafc,#ffffff)] p-5 transition hover:-translate-y-0.5 hover:border-red-300 hover:shadow-xl',
+  mvpQuickStartCardLinkClass: 'block',
+  mvpQuickStartCardBadgeClass: 'inline-flex rounded-full bg-red-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-red-700',
+  mvpQuickStartCardTitleClass: 'mt-4 text-xl font-extrabold text-slate-950',
+  mvpQuickStartCardDescriptionClass: 'mt-2 text-sm leading-6 text-slate-600',
+  mvpQuickStartLinksWrapClass: 'mt-5 flex flex-wrap gap-2',
+  mvpQuickStartLinkClass: 'rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-red-300 hover:text-red-700',
+  quickActionsSectionClass: 'bg-white text-slate-900 py-12',
+  quickActionsContainerClass: 'container mx-auto px-4',
+  quickActionsHeaderWrapClass: 'flex items-end justify-between mb-6',
+  quickActionsGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-4',
+  quickActionsCardClass:
+    'group rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:-translate-y-0.5 hover:border-red-300 hover:shadow-lg',
+  liveStatusSectionClass: 'bg-slate-950 text-white py-12 border-y border-slate-800',
+  liveStatusContainerClass: 'container mx-auto px-4',
+  liveStatusHeaderWrapClass: 'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6',
+  liveStatusGridClass: 'grid lg:grid-cols-3 gap-4',
+  liveStatusCardClass: 'rounded-2xl border border-slate-700 bg-slate-900/80 p-5',
+  districtServiceSectionClass: 'bg-slate-900 text-white py-12 border-t border-slate-800',
+  districtServiceContainerClass: 'container mx-auto px-4',
+  districtServiceHeaderWrapClass: 'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 mb-6',
+  districtServiceGridClass: 'grid lg:grid-cols-3 gap-4',
+  districtServiceCardClass: 'rounded-2xl border border-slate-700 bg-slate-950/80 p-5 transition',
+  districtServiceChipsWrapClass: 'mt-6 flex flex-wrap gap-2',
+  districtServiceChipClass:
+    'rounded-full border border-slate-700 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-red-400 hover:text-red-200',
+  popularCategoriesSectionClass: 'bg-slate-100 text-slate-900 py-12',
+  popularCategoriesContainerClass: 'container mx-auto px-4',
+  popularCategoriesHeaderWrapClass: 'flex items-center justify-between mb-6',
+  popularCategoriesGridClass: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3',
+  popularCategoriesCardClass:
+    'rounded-xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold text-slate-800 transition hover:border-red-300 hover:text-red-700',
+  trendDensitySectionClass: 'bg-white text-slate-900 py-12 border-t border-slate-200',
+  trendDensityContainerClass: 'container mx-auto px-4',
+  trendDensityGridClass: 'grid lg:grid-cols-2 gap-6',
+  trendDensityCardClass: 'rounded-2xl border border-slate-200 bg-slate-50 p-6',
+  trendDensityHeaderWrapClass: 'flex items-center justify-between mb-4',
+  trendDensityTrendGridClass: 'grid sm:grid-cols-2 gap-2',
+  trendDensityTrendItemClass:
+    'rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition hover:border-red-300 hover:text-red-700',
+  trendDensityDensityWrapClass: 'space-y-3',
+  trendDensityDensityItemClass:
+    'block rounded-xl border border-slate-200 bg-white p-3 hover:border-red-300 transition',
+  districtsSectionClass: 'bg-white text-slate-900 py-12',
+  districtsContainerClass: 'container mx-auto px-4',
+  districtsHeaderWrapClass: 'flex items-center justify-between mb-6',
+  districtsGridClass: 'grid md:grid-cols-3 gap-4',
+  districtsCardClass:
+    'rounded-xl border border-slate-200 bg-slate-50 p-5 transition hover:border-red-300 hover:shadow-lg',
+  historicalSitesSectionClass: 'bg-amber-50 text-slate-900 py-12',
+  historicalSitesContainerClass: 'container mx-auto px-4',
+  historicalSitesHeaderWrapClass: 'flex items-center justify-between mb-6',
+  historicalSitesGridClass: 'grid md:grid-cols-3 gap-5',
+  historicalSitesCardClass:
+    'group overflow-hidden rounded-2xl border border-amber-200 bg-white transition hover:shadow-xl',
+  historicalSitesImageWrapClass: 'h-44 overflow-hidden bg-slate-200',
+  historicalSitesImageClass: 'h-full w-full object-cover transition duration-300 group-hover:scale-105',
+  featuredPlacesSectionClass: 'bg-white text-slate-900 py-14',
+  featuredPlacesContainerClass: 'container mx-auto px-4',
+  featuredPlacesHeaderWrapClass: 'flex items-center justify-between mb-8',
+  featuredPlacesGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-6',
+  recentPlacesSectionClass: 'bg-slate-100 text-slate-900 py-14',
+  recentPlacesContainerClass: 'container mx-auto px-4',
+  recentPlacesGridClass: 'grid md:grid-cols-2 lg:grid-cols-4 gap-6',
+  trustSignalsSectionClass: 'bg-white text-slate-900 py-12 border-t border-slate-200',
+  trustSignalsContainerClass: 'container mx-auto px-4',
+  trustSignalsHeaderWrapClass: 'flex items-center justify-between mb-6',
+  trustSignalsGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-4',
+  trustSignalsCardClass:
+    'rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-red-300 hover:bg-white hover:shadow-md',
+  guidesCommunitySectionClass: 'bg-white text-slate-900 py-12',
+  guidesCommunityContainerClass: 'container mx-auto px-4',
+  guidesCommunityPanelClass: 'mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5',
+  guidesCommunityLinksWrapClass: 'mt-3 flex flex-wrap gap-2',
+  guidesCommunityLinkClass:
+    'rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100',
+  guidesCommunityGridClass: 'grid sm:grid-cols-2 lg:grid-cols-3 gap-4',
+  guidesCommunityGuideCardClass:
+    'rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 font-semibold text-slate-800 transition hover:border-red-300 hover:text-red-700',
+  audiencePlansSectionClass: 'bg-slate-950 text-white py-12 border-t border-slate-800',
+  audiencePlansContainerClass: 'container mx-auto px-4',
+  audiencePlansHeaderWrapClass: 'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6',
+  audiencePlansGridClass: 'grid lg:grid-cols-3 gap-4',
+  audiencePlansCardClass:
+    'rounded-3xl border border-slate-800 bg-[linear-gradient(180deg,rgba(15,23,42,.96),rgba(2,6,23,.98))] p-6 shadow-[0_20px_60px_rgba(2,6,23,.35)] transition hover:-translate-y-0.5 hover:border-red-400/50',
+  audiencePlansBadgeClass:
+    'inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-300',
+  audiencePlansListClass: 'mt-4 space-y-2 text-sm text-slate-300',
+  audiencePlansActionClass:
+    'mt-5 inline-flex items-center rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:border-red-400 hover:text-red-200',
+  districtSpotlightsSectionClass: 'bg-white text-slate-900 py-12 border-t border-slate-200',
+  districtSpotlightsContainerClass: 'container mx-auto px-4',
+  districtSpotlightsHeaderWrapClass: 'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6',
+  districtSpotlightsGridClass: 'grid md:grid-cols-2 xl:grid-cols-3 gap-4',
+  districtSpotlightsCardClass:
+    'rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:border-red-300 hover:bg-white hover:shadow-lg',
+  recentReviewsSectionClass: 'bg-slate-100 text-slate-900 py-12',
+  recentReviewsContainerClass: 'container mx-auto px-4',
+  recentReviewsHeaderWrapClass: 'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6',
+  recentReviewsGridClass: 'grid md:grid-cols-2 xl:grid-cols-3 gap-4',
+  recentReviewsCardClass:
+    'rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-red-300 hover:shadow-lg',
+  mainCategoriesSectionClass: 'bg-slate-100 text-slate-900 py-12',
+  mainCategoriesContainerClass: 'container mx-auto px-4',
+  mainCategoriesGridClass: 'grid grid-cols-2 md:grid-cols-4 gap-3',
+  mainCategoriesCardClass:
+    'rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-red-300 hover:text-red-700',
+  recipesSectionClass: 'bg-amber-50 text-slate-900 py-12',
+  recipesContainerClass: 'container mx-auto px-4',
+  recipesHeaderWrapClass: 'flex items-center justify-between mb-6',
+  recipesGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-5',
+  recipesCardClass:
+    'group overflow-hidden rounded-xl border border-amber-200 bg-white transition hover:shadow-lg',
+  recipesImageWrapClass: 'h-44 overflow-hidden bg-amber-100',
+  recipesImageClass: 'h-full w-full object-cover transition duration-300 group-hover:scale-105',
+  blogSectionClass: 'bg-white text-slate-900 py-14',
+  blogContainerClass: 'container mx-auto px-4',
+  blogHeaderWrapClass: 'flex items-center justify-between mb-8',
+  blogGridClass: 'grid md:grid-cols-3 gap-6',
+  blogCardClass:
+    'group block overflow-hidden rounded-xl border border-slate-200 bg-slate-50 transition hover:shadow-lg',
+  blogImageClass: 'h-48 w-full object-cover transition group-hover:scale-105',
+  blogImageFallbackClass: 'h-48 w-full bg-slate-200',
+  faqSectionClass: 'bg-slate-900 text-white py-14 border-t border-slate-800',
+  faqContainerClass: 'container mx-auto px-4',
+  faqIntroWrapClass: 'max-w-4xl',
+  faqGridClass: 'mt-6 grid md:grid-cols-2 gap-4',
+  faqCardClass: 'rounded-xl border border-slate-700 bg-slate-950 p-5',
+  mainCtaSectionClass: 'bg-slate-950 text-white py-16 border-t border-slate-800',
+  mainCtaContainerClass: 'container mx-auto px-4 text-center',
+  mainCtaDescriptionClass: 'mt-3 text-slate-300 max-w-2xl mx-auto',
+  mainCtaActionsWrapClass: 'mt-7 flex flex-col sm:flex-row gap-3 justify-center',
+  mainCtaPrimaryButtonClass: 'rounded-xl bg-red-600 px-7 py-3 font-bold text-white transition hover:bg-red-700',
+  mainCtaSecondaryButtonClass:
+    'rounded-xl border border-slate-600 bg-slate-900 px-7 py-3 font-bold text-white transition hover:border-slate-400',
+};
 
 try {
-  const [featuredResult, recentResult, postsResult, catResult, distResult, sitesResult] = await Promise.all([
+  const [
+    featuredResult,
+    recentResult,
+    postsResult,
+    catResult,
+    distResult,
+    sitesResult,
+    eventCountResult,
+    pharmacyCountResult,
+    busRouteCountResult,
+    totalPlaceCountResult,
+    recipeResult,
+    trendingResult,
+    categoryHeatmapResult,
+    districtSpotlightsResult,
+    recentReviewHighlightsResult,
+    settingsFreshnessResult,
+  ] = await Promise.all([
     query("SELECT * FROM places WHERE status = 'active' AND is_featured = true ORDER BY rating DESC LIMIT 6"),
     query("SELECT * FROM places WHERE status = 'active' ORDER BY created_at DESC LIMIT 8"),
     query("SELECT * FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC LIMIT 3"),
-    query("SELECT * FROM categories WHERE parent_id IS NULL AND is_active = true ORDER BY sort_order LIMIT 10"),
-    query("SELECT d.*, (SELECT COUNT(*) FROM places p WHERE p.district_id = d.id AND p.status = 'active') as place_count FROM districts d WHERE d.is_central = true ORDER BY d.sort_order"),
+    query("SELECT * FROM categories WHERE parent_id IS NULL AND is_active = true ORDER BY sort_order LIMIT 12"),
+    query(
+      "SELECT d.*, (SELECT COUNT(*) FROM places p WHERE p.district_id = d.id AND p.status = 'active') as place_count FROM districts d WHERE d.is_central = true ORDER BY d.sort_order",
+    ),
     query("SELECT * FROM historical_sites WHERE status = 'active' AND is_featured = true ORDER BY created_at LIMIT 3"),
+    query("SELECT COUNT(*)::int AS count FROM events WHERE status = 'published'"),
+    query(
+      "SELECT COUNT(*)::int AS count FROM places p LEFT JOIN categories c ON p.category_id = c.id WHERE p.status = 'active' AND c.slug IN ('eczaneler','nobetci-eczaneler')",
+    ),
+    query(
+      "SELECT COUNT(*)::int AS count FROM places p LEFT JOIN categories c ON p.category_id = c.id WHERE p.status = 'active' AND c.slug = 'otobus-hatlari'",
+    ),
+    query("SELECT COUNT(*)::int AS count FROM places WHERE status = 'active'"),
+    query("SELECT id, slug, name, description, cover_image, rating FROM recipes WHERE status = 'published' ORDER BY is_featured DESC, rating DESC NULLS LAST, created_at DESC LIMIT 6"),
+    query(
+      `SELECT query, search_count, last_searched_at
+       FROM trending_searches
+       ORDER BY search_count DESC NULLS LAST, last_searched_at DESC NULLS LAST
+       LIMIT 10`,
+    ),
+    query(
+      `SELECT c.slug, c.name, COUNT(*)::int AS place_count
+       FROM places p
+       JOIN categories c ON c.id = p.category_id
+       WHERE p.status = 'active' AND c.is_active = true
+       GROUP BY c.slug, c.name
+       ORDER BY COUNT(*) DESC
+       LIMIT 12`,
+    ),
+    query(
+      `SELECT *
+       FROM (
+         SELECT
+           d.name AS district_name,
+           d.slug AS district_slug,
+           p.name AS place_name,
+           p.slug AS place_slug,
+           p.rating,
+           COALESCE(p.review_count, 0) AS review_count,
+           ROW_NUMBER() OVER (
+             PARTITION BY d.id
+             ORDER BY COALESCE(p.rating, 0) DESC, COALESCE(p.review_count, 0) DESC, p.created_at DESC
+           ) AS rank_no
+         FROM districts d
+         JOIN places p ON p.district_id = d.id
+         WHERE d.is_central = true
+           AND p.status = 'active'
+       ) ranked
+       WHERE rank_no = 1
+       ORDER BY COALESCE(rating, 0) DESC, review_count DESC
+       LIMIT 6`,
+    ),
+    query(
+      `SELECT
+         r.id,
+         r.content,
+         r.rating,
+         r.created_at,
+         p.name AS place_name,
+         p.slug AS place_slug,
+         COALESCE(u.full_name, u.name, split_part(u.email, '@', 1), 'Ziyaretçi') AS author_name
+       FROM reviews r
+       JOIN places p ON p.id = r.place_id
+       LEFT JOIN users u ON u.id = r.user_id
+       WHERE p.status = 'active'
+         AND r.status = 'active'
+       ORDER BY r.created_at DESC
+       LIMIT 6`,
+    ),
+    query(
+      `SELECT setting_key, setting_value
+       FROM site_settings
+       WHERE setting_key IN ('transport.lastUpdated','weather.lastUpdated','jobs.contentQuality.lastRun')`,
+    ),
   ]);
 
   featuredPlaces = featuredResult.rows;
@@ -31,218 +426,1183 @@ try {
   mainCategories = catResult.rows;
   districts = distResult.rows;
   featuredSites = sitesResult.rows;
+  upcomingEventsCount = Number(eventCountResult.rows[0]?.count || 0);
+  pharmacyCount = Number(pharmacyCountResult.rows[0]?.count || 0);
+  busRouteCount = Number(busRouteCountResult.rows[0]?.count || 0);
+  totalPlaceCount = Number(totalPlaceCountResult.rows[0]?.count || 0);
+  featuredRecipes = recipeResult.rows;
+  trendingSearches = trendingResult.rows;
+  categoryHeatmap = categoryHeatmapResult.rows;
+  districtSpotlights = districtSpotlightsResult.rows;
+  recentReviewHighlights = recentReviewHighlightsResult.rows;
+  serviceFreshness = Object.fromEntries(
+    (settingsFreshnessResult.rows || []).map((row: any) => [
+      row.setting_key,
+      String(row.setting_value?.at || row.setting_value?.updatedAt || row.setting_value?.lastUpdated || ''),
+    ]),
+  );
 } catch (e) {
   console.error('Error loading homepage data:', e);
 }
 
-const quickCategories = [
-  { slug: 'kebapcilar', name: 'Kebapçılar', icon: '🍖' },
-  { slug: 'cigerciler', name: 'Ciğerciler', icon: '🥩' },
-  { slug: 'kahvalti-mekanlari', name: 'Kahvaltı', icon: '🍳' },
-  { slug: 'tatlicilar', name: 'Tatlıcılar', icon: '🍮' },
-  { slug: 'kafeler', name: 'Kafeler', icon: '☕' },
-  { slug: 'cig-kofteciler', name: 'Çiğ Köfte', icon: '🧆' },
+try {
+  const [heroAsset, homepageSeoOverride, cityServices, homepageSections] = await Promise.all([
+    getMediaAsset('homepage.hero.background'),
+    getSeoOverride('homepage', 'home'),
+    listActiveSiteServiceEntries('city-services'),
+    listActiveHomepageSections(),
+  ]);
+  platformHeroAssetUrl = String(heroAsset?.url || '').trim();
+  platformHomepageSeoPayload = homepageSeoOverride?.seo_payload || null;
+  platformHomepageCanonical = String(homepageSeoOverride?.canonical_path || '').trim();
+  platformCityServices = cityServices;
+  platformHomepageSections = homepageSections;
+} catch (error) {
+  console.error('Error loading homepage platform data:', error);
+}
+
+heroConfig = await getSiteSettingRequired('homepage.hero');
+heroMeta = await getSiteSettingRequired('homepage.heroMeta');
+mainCtaConfig = await getSiteSettingRequired('homepage.mainCta');
+seo = await getSiteSettingRequired('homepage.seo');
+homepageSchema = await getSiteSettingRequired('homepage.schema');
+sectionCopy = {
+  ...sectionCopy,
+  ...(await getSiteSetting('homepage.sectionCopy', sectionCopy)),
+};
+sectionStyles = {
+  ...sectionStyles,
+  ...(await getSiteSetting('homepage.sectionStyles', sectionStyles)),
+};
+
+if (platformHeroAssetUrl) {
+  heroConfig = {
+    ...heroConfig,
+    backgroundImage: platformHeroAssetUrl,
+  };
+}
+
+if (platformHomepageSeoPayload) {
+  seo = {
+    ...seo,
+    ...platformHomepageSeoPayload,
+    canonical:
+      platformHomepageCanonical || platformHomepageSeoPayload.canonical || seo.canonical,
+  };
+}
+
+let primaryActions = [
+  {
+    title: 'Nöbetçi Eczaneler',
+    description: 'İlçe bazlı güncel nöbetçi eczane listesi.',
+    href: '/saglik/nobetci-eczaneler',
+    stat: `${pharmacyCount}+ eczane`,
+  },
+  {
+    title: 'Otobüs Saatleri',
+    description: 'Şehir içi otobüs saat ve hat bilgileri.',
+    href: '/ulasim/otobus-saatleri',
+    stat: `${busRouteCount}+ hat`,
+  },
+  {
+    title: 'Uçak Saatleri',
+    description: 'GAP Havalimanı odaklı uçuş planlama rehberi.',
+    href: '/ulasim/ucak-saatleri',
+    stat: 'Güncel uçuş rehberi',
+  },
+  {
+    title: 'Etkinlik Takvimi',
+    description: 'Konser, festival ve yerel etkinlik akışı.',
+    href: '/etkinlikler',
+    stat: `${upcomingEventsCount}+ etkinlik`,
+  },
+  {
+    title: 'Yemek Tarifleri',
+    description: 'Şanlıurfa özel tarifler ve mutfak rehberi.',
+    href: '/yemek-tarifleri',
+    stat: `${featuredRecipes.length}+ öne çıkan`,
+  },
+  {
+    title: 'İlçeler Rehberi',
+    description: 'İlçe bazlı mekan ve yaşam içerikleri.',
+    href: '/ilceler',
+    stat: `${districts.length} merkez ilçe`,
+  },
+  {
+    title: 'Mekanlar Rehberi',
+    description: 'Kebapçılar, ciğerciler, kahvaltı ve daha fazlası.',
+    href: '/mekanlar',
+    stat: `${totalPlaceCount}+ aktif mekan`,
+  },
 ];
+
+const platformPrimaryActions = platformCityServices.map((entry: any) => ({
+  title: String(entry.title || ''),
+  description: String(entry.summary || entry.payload?.description || 'Şehir servisi bağlantısı.'),
+  href: String(entry.href || '#'),
+  stat: String(entry.payload?.stat || entry.badge || 'Canlı servis'),
+}));
+
+let quickCategories = [
+  { slug: 'kebapcilar', name: 'Kebapçılar' },
+  { slug: 'cigerciler', name: 'Ciğerciler' },
+  { slug: 'lahmacuncular', name: 'Lahmacuncular' },
+  { slug: 'pideciler', name: 'Pideciler' },
+  { slug: 'cig-kofteciler', name: 'Çiğ Köfteciler' },
+  { slug: 'yoresel-yemekler', name: 'Yöresel Yemekler' },
+  { slug: 'kahvalti-mekanlari', name: 'Kahvaltı Mekanları' },
+  { slug: 'tatlicilar', name: 'Tatlıcılar' },
+  { slug: 'kafeler', name: 'Kafeler' },
+  { slug: 'cay-bahceleri', name: 'Çay Bahçeleri' },
+  { slug: 'firinlar', name: 'Fırınlar' },
+  { slug: 'balik-restoranlari', name: 'Balık Restoranları' },
+];
+
+let featuredGuides = [
+  { title: 'Şanlıurfa Kebapçılar Rehberi', href: '/mekanlar/kebapcilar' },
+  { title: 'Şanlıurfa Ciğerciler Rehberi', href: '/mekanlar/cigerciler' },
+  { title: 'Şanlıurfa Kahvaltı Mekanları', href: '/mekanlar/kahvalti-mekanlari' },
+  { title: 'Şanlıurfa Gezilecek Yerler', href: '/gezilecek-yerler' },
+  { title: 'Şanlıurfa Otobüs Saatleri', href: '/ulasim/otobus-saatleri' },
+  { title: 'Şanlıurfa Uçak Saatleri', href: '/ulasim/ucak-saatleri' },
+  { title: 'Şanlıurfa Nöbetçi Eczaneler', href: '/saglik/nobetci-eczaneler' },
+  { title: 'Şanlıurfa Topluluk Özellikleri', href: '/topluluk' },
+];
+
+let heroQuickLinks = [
+  { label: 'Nöbetçi Eczaneler', href: '/saglik/nobetci-eczaneler' },
+  { label: 'Otobüs Saatleri', href: '/ulasim/otobus-saatleri' },
+  { label: 'Uçak Saatleri', href: '/ulasim/ucak-saatleri' },
+  { label: 'Etkinlikler', href: '/etkinlikler' },
+  { label: 'Yemek Tarifleri', href: '/yemek-tarifleri' },
+];
+
+const platformHeroQuickLinks = platformCityServices.map((entry: any) => ({
+  label: String(entry.title || ''),
+  href: String(entry.href || '#'),
+}));
+
+let communityPanel = {
+  title: 'Topluluk ve Eşleşme',
+  description:
+    'Sosyal özellikler (takip, aktivite, mesajlaşma) ve eşleşme modülüyle topluluk deneyimini genişletebilirsiniz.',
+  items: [
+    { label: 'Topluluk Özellikleri', href: '/topluluk' },
+    { label: 'Eşleşme', href: '/eslesme' },
+    { label: 'Üyelik ve Planlar', href: '/fiyatlandirma' },
+  ],
+};
+
+let trendingFallbackQueries = [
+  { query: 'Şanlıurfa nöbetçi eczane', search_count: 0 },
+  { query: 'Şanlıurfa otobüs saatleri', search_count: 0 },
+  { query: 'Şanlıurfa uçak saatleri', search_count: 0 },
+  { query: 'Şanlıurfa kebapçılar', search_count: 0 },
+  { query: 'Şanlıurfa gezilecek yerler', search_count: 0 },
+];
+
+if (!trendingSearches.length) {
+  trendingSearches = trendingFallbackQueries;
+}
+
+const maxCategoryDensity = Math.max(...categoryHeatmap.map((c) => Number(c.place_count || 0)), 1);
+const categoryDensityCards = categoryHeatmap.map((item) => {
+  const count = Number(item.place_count || 0);
+  const ratio = Math.max(8, Math.round((count / maxCategoryDensity) * 100));
+  return {
+    ...item,
+    count,
+    ratio,
+  };
+});
+
+let faqItems = [
+  {
+    S: 'Şanlıurfa nöbetçi eczane listesi nereden öğrenilir?',
+    C: 'Güncel nöbetçi eczaneler için doğrudan /saglik/nobetci-eczaneler sayfasını kullanabilirsiniz.',
+  },
+  {
+    S: 'Şanlıurfa otobüs saatleri bu sitede var mı?',
+    C: 'Evet. /ulasim/otobus-saatleri sayfasında hat ve saat bilgilerine hızlıca erişebilirsiniz.',
+  },
+  {
+    S: 'Şanlıurfa uçak saatleri nereden takip edilir?',
+    C: 'GAP Havalimanı uçuş planlama rehberi için /ulasim/ucak-saatleri sayfasını kullanabilirsiniz.',
+  },
+  {
+    S: "Şanlıurfa'da en iyi mekanlar nasıl bulunur?",
+    C: 'Mekanlar bölümünde kategori, ilçe ve puana göre filtreleyerek size uygun işletmeleri sıralayabilirsiniz.',
+  },
+  {
+    S: 'Şanlıurfa yemek tarifleri içerikleri mevcut mu?',
+    C: 'Evet. /yemek-tarifleri sayfasında Şanlıurfa mutfağına özel tarifler yayınlanmaktadır.',
+  },
+];
+
+const primaryActionsSetting = await getSiteSetting('homepage.primaryActions', { items: primaryActions });
+const quickCategoriesSetting = await getSiteSetting('homepage.quickCategories', { items: quickCategories });
+const featuredGuidesSetting = await getSiteSetting('homepage.featuredGuides', { items: featuredGuides });
+const faqSetting = await getSiteSetting('homepage.faq', { items: faqItems });
+const heroQuickLinksSetting = await getSiteSetting('homepage.heroQuickLinks', { items: heroQuickLinks });
+const liveStatusCardsSetting = await getSiteSetting('homepage.liveStatusCards', { items: [] });
+const serviceQuickLinksSetting = await getSiteSetting('homepage.serviceQuickLinks', { items: [] });
+const communityPanelSetting = await getSiteSetting('homepage.communityPanel', communityPanel);
+const trendingFallbackQueriesSetting = await getSiteSetting('homepage.trendingFallbackQueries', {
+  items: trendingFallbackQueries,
+});
+
+if (Array.isArray((primaryActionsSetting as any)?.items) && (primaryActionsSetting as any).items.length > 0) {
+  primaryActions = (primaryActionsSetting as any).items;
+} else if (platformPrimaryActions.length > 0) {
+  primaryActions = [...platformPrimaryActions, ...primaryActions].slice(0, 8);
+}
+if (Array.isArray((quickCategoriesSetting as any)?.items) && (quickCategoriesSetting as any).items.length > 0) {
+  quickCategories = (quickCategoriesSetting as any).items
+    .map((item: any) => ({
+      slug: String(item?.slug || '').trim(),
+      name: String(item?.name || '').trim(),
+    }))
+    .filter((item: { slug: string; name: string }) => item.slug && item.name);
+}
+if (Array.isArray((featuredGuidesSetting as any)?.items) && (featuredGuidesSetting as any).items.length > 0) {
+  featuredGuides = (featuredGuidesSetting as any).items;
+}
+if (Array.isArray((faqSetting as any)?.items) && (faqSetting as any).items.length > 0) {
+  faqItems = (faqSetting as any).items;
+}
+if (Array.isArray((heroQuickLinksSetting as any)?.items) && (heroQuickLinksSetting as any).items.length > 0) {
+  heroQuickLinks = (heroQuickLinksSetting as any).items;
+} else if (platformHeroQuickLinks.length > 0) {
+  heroQuickLinks = platformHeroQuickLinks.slice(0, 5);
+}
+if (Array.isArray((trendingFallbackQueriesSetting as any)?.items) && (trendingFallbackQueriesSetting as any).items.length > 0) {
+  trendingFallbackQueries = (trendingFallbackQueriesSetting as any).items.map((item: any) => ({
+    query: String(item?.query || '').trim(),
+    search_count: 0,
+  }));
+}
+if (!trendingSearches.length) {
+  trendingSearches = trendingFallbackQueries.filter((item) => item.query);
+}
+if ((communityPanelSetting as any)?.title && (communityPanelSetting as any)?.description) {
+  communityPanel = {
+    title: String((communityPanelSetting as any).title),
+    description: String((communityPanelSetting as any).description),
+    items: Array.isArray((communityPanelSetting as any).items)
+      ? (communityPanelSetting as any).items
+      : communityPanel.items,
+  };
+}
+
+const getHistoricalCardImage = (site: any) => site?.cover_image || site?.images?.[0] || '/images/hero/hero-home.webp';
+const generatedAtIso = new Date().toISOString();
+const parseIsoOrEmpty = (value?: string) => {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toISOString();
+};
+const maxFreshnessIso = [
+  parseIsoOrEmpty(serviceFreshness['transport.lastUpdated']),
+  parseIsoOrEmpty(serviceFreshness['weather.lastUpdated']),
+  parseIsoOrEmpty(serviceFreshness['jobs.contentQuality.lastRun']),
+]
+  .filter(Boolean)
+  .sort()
+  .pop() || generatedAtIso;
+const formatShortDate = (value?: string | Date) => {
+  if (!value) return 'Tarih bilgisi yok';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return 'Tarih bilgisi yok';
+  return new Intl.DateTimeFormat('tr-TR', { dateStyle: 'medium' }).format(d);
+};
+const lastUpdatedLabel = new Intl.DateTimeFormat('tr-TR', {
+  dateStyle: 'short',
+  timeStyle: 'short',
+}).format(new Date(maxFreshnessIso));
+const freshnessLabel = (key: string) =>
+  serviceFreshness[key] ? formatShortDate(serviceFreshness[key]) : 'henüz güncellenmedi';
+
+const liveStatusCardsBase = [
+  {
+    key: 'pharmacy',
+    title: 'Nöbetçi Eczane Durumu',
+    metricLabel: 'kayıtlı nöbetçi eczane',
+    statusText: pharmacyCount > 0 ? 'Aktif veri akışı' : 'Veri güncellemesi bekleniyor',
+    href: '/saglik/nobetci-eczaneler',
+    cta: 'Nöbetçi Eczaneleri Aç',
+    badgeClass: pharmacyCount > 0 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40' : 'bg-amber-500/15 text-amber-300 border-amber-500/40',
+  },
+  {
+    key: 'bus',
+    title: 'Otobüs Saatleri Durumu',
+    metricLabel: 'aktif otobüs hattı',
+    statusText: busRouteCount > 0 ? 'Hat verisi hazır' : 'Hat verisi hazırlanıyor',
+    href: '/ulasim/otobus-saatleri',
+    cta: 'Otobüs Saatlerini Aç',
+    badgeClass: busRouteCount > 0 ? 'bg-sky-500/15 text-sky-300 border-sky-500/40' : 'bg-amber-500/15 text-amber-300 border-amber-500/40',
+  },
+  {
+    key: 'flight',
+    title: 'Uçak Saatleri Durumu',
+    metricLabel: 'havalimanı odaklı takip',
+    statusText: 'Planlama rehberi aktif',
+    href: '/ulasim/ucak-saatleri',
+    cta: 'Uçak Saatlerini Aç',
+    badgeClass: 'bg-violet-500/15 text-violet-300 border-violet-500/40',
+  },
+];
+
+const liveStatusCardItems =
+  Array.isArray((liveStatusCardsSetting as any)?.items) &&
+  (liveStatusCardsSetting as any).items.length > 0
+    ? (liveStatusCardsSetting as any).items
+    : platformCityServices.length > 0
+      ? platformCityServices.slice(0, 3).map((entry: any) => ({
+          key: entry.service_key,
+          title: String(entry.title || 'Şehir Servisi'),
+          metricLabel: String(entry.payload?.metricLabel || 'canlı servis'),
+          statusText: String(entry.payload?.statusText || entry.summary || 'Servis aktif'),
+          href: String(entry.href || '#'),
+          cta: String(entry.payload?.cta || `${entry.title} aç`),
+          badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
+        }))
+      : liveStatusCardsBase;
+
+const liveStatusCards = liveStatusCardItems.map((card: any) => {
+  const key = String(card?.key || '');
+  const customMetric = String(card?.metric || card?.payload?.metric || '').trim();
+  const metric =
+    customMetric ||
+    (key === 'pharmacy'
+      ? `${pharmacyCount}+`
+      : key === 'bus'
+        ? `${busRouteCount}+`
+        : key === 'flight'
+          ? 'GAP'
+          : '--');
+  const freshnessKey = String(card?.freshnessKey || card?.payload?.freshnessKey || '').trim();
+  const freshness =
+    freshnessKey
+      ? freshnessLabel(freshnessKey)
+      : key === 'pharmacy'
+      ? freshnessLabel('jobs.contentQuality.lastRun')
+      : key === 'bus'
+        ? freshnessLabel('transport.lastUpdated')
+        : freshnessLabel('weather.lastUpdated');
+  return { ...card, metric, freshness };
+});
+
+const serviceQuickLinks =
+  Array.isArray((serviceQuickLinksSetting as any)?.items) &&
+  (serviceQuickLinksSetting as any).items.length > 0
+    ? (serviceQuickLinksSetting as any).items
+    : platformCityServices.length > 0
+      ? platformCityServices.slice(0, 3).map((entry: any, index: number) => ({
+          key: entry.service_key,
+          categoryLabel: String(entry.payload?.categoryLabel || entry.service_group || 'Şehir Servisi'),
+          title: String(entry.title || 'Şehir Servisi'),
+          description: String(entry.summary || entry.payload?.description || 'Şehir servisine hızlı erişim.'),
+          href: String(entry.href || '#'),
+          hoverBorderClass:
+            index === 0
+              ? 'hover:border-emerald-400/60'
+              : index === 1
+                ? 'hover:border-sky-400/60'
+                : 'hover:border-violet-400/60',
+          categoryLabelClass:
+            index === 0
+              ? 'text-emerald-300'
+              : index === 1
+                ? 'text-sky-300'
+                : 'text-violet-300',
+        }))
+      : [
+        {
+          key: 'pharmacy',
+          categoryLabel: 'Sağlık',
+          title: 'Yakındaki Nöbetçi Eczane Akışı',
+          description: 'İlçe seçimiyle anında nöbetçi eczane sonuçlarını açın.',
+          href: '/saglik/nobetci-eczaneler',
+          hoverBorderClass: 'hover:border-emerald-400/60',
+          categoryLabelClass: 'text-emerald-300',
+        },
+        {
+          key: 'bus',
+          categoryLabel: 'Ulaşım',
+          title: 'İlçe Bazlı Otobüs Saatleri',
+          description: 'Günlük rota planı için hat ve saat ekranına hızlı geçiş yapın.',
+          href: '/ulasim/otobus-saatleri',
+          hoverBorderClass: 'hover:border-sky-400/60',
+          categoryLabelClass: 'text-sky-300',
+        },
+        {
+          key: 'flight',
+          categoryLabel: 'Havalimanı',
+          title: 'GAP Uçak Saatleri ve Planlama',
+          description: 'Varış-kalkış odaklı uçuş planlamasını tek ekranda yönetin.',
+          href: '/ulasim/ucak-saatleri',
+          hoverBorderClass: 'hover:border-violet-400/60',
+          categoryLabelClass: 'text-violet-300',
+        },
+      ];
+
+const homepageSectionsFallback = {
+  order: [
+    'hero',
+    'mvp-quick-start',
+    'quick-actions',
+    'live-status',
+    'district-service',
+    'popular-categories',
+    'trend-density',
+    'districts',
+    'historical-sites',
+    'featured-places',
+    'recent-places',
+    'trust-signals',
+    'guides-community',
+    'audience-plans',
+    'district-spotlights',
+    'recent-reviews',
+    'main-categories',
+    'recipes',
+    'blog',
+    'faq',
+    'main-cta',
+  ],
+  visibility: {},
+};
+const homepageSectionsSetting = await getSiteSetting('homepage.sections', homepageSectionsFallback);
+const homepageSectionIds = homepageSectionsFallback.order;
+const homepageSettingVisibility =
+  (homepageSectionsSetting as any)?.visibility &&
+  typeof (homepageSectionsSetting as any).visibility === 'object'
+    ? (homepageSectionsSetting as any).visibility
+    : {};
+const platformHomepageSectionMap = new Map(
+  platformHomepageSections.map((section: any) => [String(section.section_key || '').trim(), section]),
+);
+const configuredSectionOrder =
+  platformHomepageSections.length > 0
+    ? platformHomepageSections
+        .map((item: any) => String(item.section_key || '').trim())
+        .filter((item: string) => item)
+    : Array.isArray((homepageSectionsSetting as any)?.order)
+      ? (homepageSectionsSetting as any).order
+          .map((item: any) => String(item || '').trim())
+          .filter((item: string) => item)
+      : homepageSectionsFallback.order;
+const sectionOrderList = [
+  ...configuredSectionOrder.filter((id: string) => homepageSectionIds.includes(id)),
+  ...homepageSectionIds.filter((id) => !configuredSectionOrder.includes(id)),
+];
+const sectionOrderMap = Object.fromEntries(sectionOrderList.map((id, index) => [id, index + 1]));
+const sectionVisibilitySetting =
+  platformHomepageSections.length > 0
+    ? Object.fromEntries(
+        homepageSectionIds.map((id) => [
+          id,
+          platformHomepageSectionMap.has(id)
+            ? platformHomepageSectionMap.get(id)?.is_active !== false
+            : homepageSettingVisibility[id],
+        ]),
+      )
+    : homepageSettingVisibility;
+const getSectionOrder = (id: string) => Number(sectionOrderMap[id] || 999);
+const isSectionEnabled = (id: string) => sectionVisibilitySetting[id] !== false;
+const homepageSectionRegistry = Object.fromEntries(
+  platformHomepageSections.map((section: any) => [String(section.section_key || '').trim(), section]),
+);
+
+const applySectionContentOverride = (
+  sectionKey: string,
+  keys: { title?: keyof typeof sectionCopy; description?: keyof typeof sectionCopy; cta?: keyof typeof sectionCopy },
+) => {
+  const section = homepageSectionRegistry[sectionKey];
+  if (!section) return;
+  if (keys.title && section.title) {
+    (sectionCopy as any)[keys.title] = String(section.title);
+  }
+  if (keys.description && section.description) {
+    (sectionCopy as any)[keys.description] = String(section.description);
+  }
+  if (keys.cta && section.config?.ctaLabel) {
+    (sectionCopy as any)[keys.cta] = String(section.config.ctaLabel);
+  }
+};
+
+applySectionContentOverride('quick-actions', {
+  title: 'quickActionsTitle',
+  description: 'quickActionsDescription',
+  cta: 'quickActionsCtaLabel',
+});
+applySectionContentOverride('mvp-quick-start', {
+  title: 'mvpQuickStartTitle',
+  description: 'mvpQuickStartDescription',
+  cta: 'mvpQuickStartCtaLabel',
+});
+applySectionContentOverride('live-status', {
+  title: 'liveStatusTitle',
+  description: 'liveStatusDescription',
+});
+applySectionContentOverride('district-service', {
+  title: 'districtServiceTitle',
+  description: 'districtServiceDescription',
+  cta: 'districtServiceCtaLabel',
+});
+applySectionContentOverride('popular-categories', {
+  title: 'popularCategoriesTitle',
+  cta: 'popularCategoriesCtaLabel',
+});
+applySectionContentOverride('districts', {
+  title: 'districtsTitle',
+  cta: 'districtsCtaLabel',
+});
+applySectionContentOverride('historical-sites', {
+  title: 'historicalSitesTitle',
+  cta: 'historicalSitesCtaLabel',
+});
+applySectionContentOverride('featured-places', {
+  title: 'featuredPlacesTitle',
+  cta: 'featuredPlacesCtaLabel',
+});
+applySectionContentOverride('recent-places', {
+  title: 'recentPlacesTitle',
+});
+applySectionContentOverride('trust-signals', {
+  title: 'trustSignalsTitle',
+  description: 'trustSignalsSubtitle',
+});
+applySectionContentOverride('guides-community', {
+  title: 'guidesTitle',
+});
+applySectionContentOverride('audience-plans', {
+  title: 'audiencePlansTitle',
+  description: 'audiencePlansDescription',
+});
+applySectionContentOverride('district-spotlights', {
+  title: 'districtSpotlightsTitle',
+  description: 'districtSpotlightsDescription',
+  cta: 'districtSpotlightsCtaLabel',
+});
+applySectionContentOverride('recent-reviews', {
+  title: 'recentReviewsTitle',
+  description: 'recentReviewsDescription',
+});
+applySectionContentOverride('main-categories', {
+  title: 'mainCategoriesTitle',
+});
+applySectionContentOverride('recipes', {
+  title: 'recipesTitle',
+  cta: 'recipesCtaLabel',
+});
+applySectionContentOverride('blog', {
+  title: 'blogTitle',
+  cta: 'blogCtaLabel',
+});
+applySectionContentOverride('faq', {
+  title: 'faqTitle',
+  description: 'faqDescription',
+});
+
+const districtServiceLinks = districts.slice(0, 8).map((district) => ({
+  name: district.name,
+  href: `/ilceler/${district.slug}`,
+  placeCount: Number(district.place_count || 0),
+}));
+
+const recentTrustSignals = recentPlaces.slice(0, 6).map((place) => ({
+  id: place.id,
+  name: place.name,
+  slug: place.slug,
+  district: place.district_name || place.address_district || 'Şanlıurfa',
+  updatedAt: formatShortDate(place.updated_at || place.created_at),
+  rating: place.rating ? Number(place.rating).toFixed(1) : '-',
+}));
+let mvpQuickStartCards = [
+  {
+    badge: 'Günlük İhtiyaç',
+    title: 'Nöbetçi eczane, otobüs ve uçak saatleri',
+    description: "Şanlıurfa'da bugün ihtiyacın olan servisleri tek ekrandan aç.",
+    href: '/kesfet',
+    links: [
+      { href: '/saglik/nobetci-eczaneler', label: 'Nöbetçi Eczane' },
+      { href: '/ulasim/otobus-saatleri', label: 'Otobüs Saatleri' },
+      { href: '/ulasim/ucak-saatleri', label: 'Uçak Saatleri' },
+    ],
+  },
+  {
+    badge: 'Keşif',
+    title: 'Mekan, gezi rotası ve yemek tarifleri',
+    description: 'Kebapçılar, tarihi yerler, ilçeler ve Şanlıurfa tariflerini hızlı başlat.',
+    href: '/mekanlar',
+    links: [
+      { href: '/mekanlar/kebapcilar', label: 'Kebapçılar' },
+      { href: '/gezilecek-yerler', label: 'Gezilecek Yerler' },
+      { href: '/yemek-tarifleri', label: 'Yemek Tarifleri' },
+    ],
+  },
+  {
+    badge: 'Topluluk',
+    title: 'Ücretsiz sosyal özellikler ve işletme başvurusu',
+    description: 'Mesajlaşma, eşleşme, takip ve işletme ekleme ilk aşamada açık.',
+    href: '/topluluk',
+    links: [
+      { href: '/topluluk', label: 'Topluluk' },
+      { href: '/eslesme', label: 'Eşleşme' },
+      { href: '/isletme-kayit', label: 'İşletme Ekle' },
+    ],
+  },
+];
+const mvpQuickStartSetting = await getSiteSetting('homepage.mvpQuickStart', {
+  items: mvpQuickStartCards,
+});
+if (Array.isArray((mvpQuickStartSetting as any)?.items) && (mvpQuickStartSetting as any).items.length > 0) {
+  mvpQuickStartCards = (mvpQuickStartSetting as any).items
+    .map((card: any) => ({
+      badge: String(card?.badge || '').trim(),
+      title: String(card?.title || '').trim(),
+      description: String(card?.description || '').trim(),
+      href: String(card?.href || '/').trim(),
+      links: Array.isArray(card?.links)
+        ? card.links
+            .map((link: any) => ({
+              href: String(link?.href || '').trim(),
+              label: String(link?.label || '').trim(),
+            }))
+            .filter((link: any) => link.href.startsWith('/') && link.label)
+        : [],
+    }))
+    .filter((card: any) => card.badge && card.title && card.description && card.href.startsWith('/'));
+}
+const audiencePlans = [
+  {
+    badge: 'Turist Rotası',
+    title: '1 günde Şanlıurfa',
+    description: 'Göbeklitepe, Balıklıgöl ve çarşı hattını hızlı bir şehir turunda birleştirin.',
+    bullets: ['Sabah tarihi duraklar', 'Öğlen yöresel yemek molası', 'Akşam merkezi yürüyüş rotası'],
+    href: '/gezilecek-yerler',
+    cta: 'Rotayı Aç',
+  },
+  {
+    badge: 'Aile Planı',
+    title: 'Ailece güvenli ve rahat mekanlar',
+    description: 'Çocuk dostu, oturma alanı güçlü ve erişimi kolay mekanları öne çıkarın.',
+    bullets: ['Kahvaltı ve aile masaları', 'Merkez ilçelere hızlı erişim', 'Etkinlik ve park yakınlığı'],
+    href: '/yeme-icme/aile-mekanlari',
+    cta: 'Aile Mekanlarını Aç',
+  },
+  {
+    badge: 'Öğrenci Rehberi',
+    title: 'Bütçe dostu günlük plan',
+    description: 'Uygun fiyatlı yemek, kafe ve ulaşım odaklı hızlı şehir kullanım rehberi.',
+    bullets: ['Ekonomik yeme içme', 'Otobüs saatleri ile planlama', 'Topluluk ve buluşma odaklı akış'],
+    href: '/yeme-icme/uygun-fiyatli-mekanlar',
+    cta: 'Öğrenci Planını Aç',
+  },
+];
+const reviewHighlights = recentReviewHighlights.map((item: any) => ({
+  ...item,
+  excerpt:
+    String(item.content || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 180) || 'Bu mekan için yeni bir değerlendirme eklendi.',
+  createdLabel: formatShortDate(item.created_at),
+}));
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen">
-    {/* Hero Section */}
-    <section class="relative bg-gradient-to-br from-red-600 to-orange-500 text-white pt-32 pb-20 px-4">
-      <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.4"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]" />
-      
-      <div class="container mx-auto max-w-4xl text-center relative z-10">
-        <h1 class="text-4xl md:text-6xl font-bold mb-6">
-          Şanlıurfa'nın En İyi<br />Mekanlarını Keşfedin
-        </h1>
-        <p class="text-xl text-red-100 mb-8 max-w-2xl mx-auto">
-          Restoranlardan otellere, tarihi yerlerden alışveriş noktalarına 
-          şehrin tüm incileri tek platformda.
-        </p>
-        
-        {/* Search Box */}
-        <form action="/ara" class="max-w-2xl mx-auto bg-white rounded-2xl p-2 shadow-2xl">
-          <div class="flex gap-2">
-            <input
-              type="text"
-              name="q"
-              placeholder="Mekan, restoran veya otel ara..."
-              class="flex-1 px-6 py-4 text-gray-800 rounded-xl focus:outline-none text-lg"
-            />
-            <button
-              type="submit"
-              class="px-8 py-4 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors flex items-center gap-2"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <span class="hidden sm:inline">Ara</span>
-            </button>
-          </div>
-        </form>
+  <Fragment slot="head">
+    <link rel="preload" as="image" href={heroConfig.backgroundImage} fetchpriority="high" />
+  </Fragment>
 
-        {/* Quick Category Links */}
-        <div class="flex flex-wrap justify-center gap-3 mt-8">
-          {quickCategories.map(cat => (
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: homepageSchema.siteName,
+      alternateName: homepageSchema.alternateName,
+      url: homepageSchema.baseUrl,
+      inLanguage: 'tr-TR',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: `${homepageSchema.baseUrl}${homepageSchema.searchPathTemplate}`,
+        'query-input': 'required name=search_term_string',
+      },
+    })}
+    is:inline
+  />
+
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: homepageSchema.trendingListName,
+      itemListElement: trendingSearches.slice(0, 10).map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.query,
+        url: `${homepageSchema.baseUrl}/arama?q=${encodeURIComponent(item.query)}`,
+      })),
+    })}
+    is:inline
+  />
+
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      '@id': `${homepageSchema.baseUrl}${homepageSchema.organizationId}`,
+      name: homepageSchema.siteName,
+      url: homepageSchema.baseUrl,
+      areaServed: {
+        '@type': 'City',
+        name: homepageSchema.cityName,
+      },
+      sameAs: [],
+    })}
+    is:inline
+  />
+
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      '@id': `${homepageSchema.baseUrl}${homepageSchema.webpageId}`,
+      url: `${homepageSchema.baseUrl}/`,
+      name: homepageSchema.webpageName,
+      inLanguage: 'tr-TR',
+      isPartOf: {
+        '@id': `${homepageSchema.baseUrl}${homepageSchema.organizationId}`,
+      },
+      about: {
+        '@type': 'City',
+        name: homepageSchema.cityName,
+      },
+    })}
+    is:inline
+  />
+
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqItems.map((item) => ({
+        '@type': 'Question',
+        name: item.S,
+        acceptedAnswer: { '@type': 'Answer', text: item.C },
+      })),
+    })}
+    is:inline
+  />
+
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: homepageSchema.servicesListName,
+      itemListElement: primaryActions.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.title,
+        url: `${homepageSchema.baseUrl}${item.href}`,
+      })),
+    })}
+    is:inline
+  />
+
+  <div class="bg-slate-950 text-slate-100 flex flex-col">
+    {isSectionEnabled('hero') && (
+    <section class={heroMeta.heroSectionClass} style={`order:${getSectionOrder('hero')}`}>
+      <div class="absolute inset-0">
+        <img
+          src={heroConfig.backgroundImage}
+          alt={heroMeta.heroImageAlt}
+          class="h-full w-full object-cover opacity-20"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+          width="1600"
+          height="900"
+        />
+      </div>
+      <div class={heroMeta.heroOverlayClass}></div>
+      <div class={heroMeta.heroContainerClass}>
+        <div class={heroMeta.heroGridClass}>
+          <div>
+            <p class={heroMeta.heroBadgeClass}>
+              {heroConfig.badge}
+            </p>
+            <h1 class={heroMeta.heroTitleClass}>
+              {heroConfig.title}
+            </h1>
+            <p class={heroMeta.heroDescriptionClass}>
+              {heroConfig.description}
+            </p>
+
+            <form action="/arama" class={heroMeta.searchFormClass}>
+              <div class={heroMeta.searchRowClass}>
+                <input
+                  type="text"
+                  name="q"
+                  placeholder={heroConfig.searchPlaceholder}
+                  class={heroMeta.searchInputClass}
+                />
+                <button type="submit" class={heroMeta.searchButtonClass}>
+                  {heroMeta.searchButtonLabel}
+                </button>
+              </div>
+            </form>
+
+            <div class="mt-5 flex flex-wrap gap-2">
+              {heroQuickLinks.map((item: any) => (
+                <a
+                  href={item.href}
+                  class={`${heroMeta.heroQuickLinkClass} ${heroMeta.heroQuickLinkHoverClass}`}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+
+            <div class="mt-7 grid sm:grid-cols-2 gap-3 max-w-2xl">
+              <a href="/isletme-kayit" class={heroMeta.businessCardClass}>
+                <p class="text-xs font-semibold uppercase tracking-wide text-red-200">{heroMeta.businessCardBadge}</p>
+                <h2 class="mt-1 text-base font-bold text-white">{heroMeta.businessCardTitle}</h2>
+                <p class="mt-1 text-sm text-slate-200">{heroMeta.businessCardDescription}</p>
+              </a>
+              <a href="/topluluk" class={heroMeta.communityCardClass}>
+                <p class="text-xs font-semibold uppercase tracking-wide text-sky-200">{heroMeta.communityCardBadge}</p>
+                <h2 class="mt-1 text-base font-bold text-white">{heroMeta.communityCardTitle}</h2>
+                <p class="mt-1 text-sm text-slate-200">{heroMeta.communityCardDescription}</p>
+              </a>
+            </div>
+          </div>
+
+          <div class={heroMeta.heroStatsPanelClass}>
+            <h2 class={heroMeta.heroStatsPanelTitleClass}>{heroMeta.statsPanelTitle}</h2>
+            <p class={heroMeta.heroStatsPanelSubtitleClass}>{heroMeta.statsPanelSubtitle}</p>
+            <div class="mt-5 grid grid-cols-2 gap-3">
+              <div class={heroMeta.statsCardClass}>
+                <p class={heroMeta.statsLabelClass}>{heroMeta.statsActivePlacesLabel}</p>
+                <p class={heroMeta.statsValueClass}>{totalPlaceCount}+</p>
+              </div>
+              <div class={heroMeta.statsCardClass}>
+                <p class={heroMeta.statsLabelClass}>{heroMeta.statsPharmacyLabel}</p>
+                <p class={heroMeta.statsValueClass}>{pharmacyCount}+</p>
+              </div>
+              <div class={heroMeta.statsCardClass}>
+                <p class={heroMeta.statsLabelClass}>{heroMeta.statsBusRouteLabel}</p>
+                <p class={heroMeta.statsValueClass}>{busRouteCount}+</p>
+              </div>
+              <div class={heroMeta.statsCardClass}>
+                <p class={heroMeta.statsLabelClass}>{heroMeta.statsEventsLabel}</p>
+                <p class={heroMeta.statsValueClass}>{upcomingEventsCount}+</p>
+              </div>
+            </div>
+            <p class={heroMeta.heroStatsUpdatedClass}>{heroMeta.statsUpdatedPrefix} {new Date(generatedAtIso).toLocaleDateString('tr-TR')}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    )}
+
+    {isSectionEnabled('mvp-quick-start') && (
+    <section
+      id="mvp-hizli-baslangic"
+      data-section="mvp-quick-start"
+      class={sectionStyles.mvpQuickStartSectionClass}
+      style={`order:${getSectionOrder('mvp-quick-start')}`}
+    >
+      <div class={sectionStyles.mvpQuickStartContainerClass}>
+        <div class={sectionStyles.mvpQuickStartPanelClass}>
+          <div class={sectionStyles.mvpQuickStartHeaderClass}>
+            <div>
+              <p class={sectionStyles.mvpQuickStartBadgeClass}>
+                {sectionCopy.mvpQuickStartBadge}
+              </p>
+              <h2 class={sectionStyles.mvpQuickStartTitleClass}>
+                {sectionCopy.mvpQuickStartTitle}
+              </h2>
+              <p class={sectionStyles.mvpQuickStartDescriptionClass}>
+                {sectionCopy.mvpQuickStartDescription}
+              </p>
+            </div>
             <a
-              href={`/mekanlar/${cat.slug}`}
-              class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors"
+              href={sectionCopy.mvpQuickStartCtaHref}
+              class={sectionStyles.mvpQuickStartCtaClass}
             >
-              {cat.icon} {cat.name}
+              {sectionCopy.mvpQuickStartCtaLabel}
+            </a>
+          </div>
+          <div class={sectionStyles.mvpQuickStartGridClass}>
+            {mvpQuickStartCards.map((card) => (
+              <article class={sectionStyles.mvpQuickStartCardClass}>
+                <a href={card.href} class={sectionStyles.mvpQuickStartCardLinkClass}>
+                  <span class={sectionStyles.mvpQuickStartCardBadgeClass}>
+                    {card.badge}
+                  </span>
+                  <h3 class={sectionStyles.mvpQuickStartCardTitleClass}>{card.title}</h3>
+                  <p class={sectionStyles.mvpQuickStartCardDescriptionClass}>{card.description}</p>
+                </a>
+                <div class={sectionStyles.mvpQuickStartLinksWrapClass}>
+                  {card.links.map((link) => (
+                    <a
+                      href={link.href}
+                      class={sectionStyles.mvpQuickStartLinkClass}
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+    )}
+
+    {isSectionEnabled('quick-actions') && (
+    <section class={sectionStyles.quickActionsSectionClass} style={`order:${getSectionOrder('quick-actions')}`}>
+      <div class={sectionStyles.quickActionsContainerClass}>
+        <div class={sectionStyles.quickActionsHeaderWrapClass}>
+          <div>
+            <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.quickActionsTitle}</h2>
+            <p class="text-slate-600 mt-1">{sectionCopy.quickActionsDescription}</p>
+          </div>
+          <a href="/kesfet" class={`hidden sm:inline ${sectionStyles.sectionCtaLinkClass}`}>{sectionCopy.quickActionsCtaLabel}</a>
+        </div>
+        <div class={sectionStyles.quickActionsGridClass}>
+          {primaryActions.map((item) => (
+            <a href={item.href} class={sectionStyles.quickActionsCardClass}>
+              <p class="text-xs font-semibold uppercase tracking-wider text-red-600">{item.stat}</p>
+              <h3 class="mt-2 text-lg font-bold text-slate-900 group-hover:text-red-700">{item.title}</h3>
+              <p class="mt-1 text-sm text-slate-600">{item.description}</p>
             </a>
           ))}
         </div>
       </div>
     </section>
+    )}
 
-    {/* Popüler Kategoriler */}
-    <section class="py-16 bg-gray-50">
-      <div class="container mx-auto px-4">
-        <div class="flex items-center justify-between mb-8">
-          <h2 class="text-2xl font-bold text-gray-900">Kategoriler</h2>
-          <a href="/mekanlar" class="text-red-600 hover:text-red-700 font-medium">Tümünü Gör →</a>
+    {isSectionEnabled('live-status') && (
+    <section class={sectionStyles.liveStatusSectionClass} style={`order:${getSectionOrder('live-status')}`}>
+      <div class={sectionStyles.liveStatusContainerClass}>
+        <div class={sectionStyles.liveStatusHeaderWrapClass}>
+          <div>
+            <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.liveStatusTitle}</h2>
+            <p class="text-slate-300 mt-1">{sectionCopy.liveStatusDescription}</p>
+          </div>
+          <p class="text-xs text-slate-400">{sectionCopy.liveStatusUpdatedPrefix}: {lastUpdatedLabel}</p>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {quickCategories.map(cat => (
-            <a href={`/mekanlar/${cat.slug}`} class="bg-white rounded-xl p-6 text-center hover:shadow-lg transition-all hover:-translate-y-1 group">
-              <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">{cat.icon}</div>
-              <h3 class="font-medium text-gray-900">{cat.name}</h3>
-            </a>
+
+        <div class={sectionStyles.liveStatusGridClass}>
+          {liveStatusCards.map((card: any) => (
+            <article class={sectionStyles.liveStatusCardClass}>
+              <div class="flex items-start justify-between gap-3">
+                <h3 class="font-semibold text-white">{card.title}</h3>
+                <span class={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${card.badgeClass}`}>
+                  {card.statusText}
+                </span>
+              </div>
+              <p class="mt-4 text-3xl font-extrabold tracking-tight text-white">{card.metric}</p>
+              <p class="text-sm text-slate-400">{card.metricLabel}</p>
+              <p class="mt-1 text-xs text-slate-500">Veri tazeliği: {card.freshness}</p>
+              <a
+                href={card.href}
+                class="mt-5 inline-flex items-center rounded-xl border border-slate-600 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:border-red-400 hover:text-red-200"
+              >
+                {card.cta}
+              </a>
+            </article>
           ))}
         </div>
+      </div>
+    </section>
+    )}
 
-        {/* Ana Kategoriler */}
-        {mainCategories.length > 0 && (
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-            {mainCategories.map(cat => (
-              <a href={
-                  ['mekanlar','gezilecek-yerler','etkinlikler','saglik','egitim','ulasim',
-                   'alisveris','hizmetler','emlak','konaklama','yeme-icme','ilceler','blog'].includes(cat.slug)
-                    ? `/${cat.slug}`
-                    : `/mekanlar/${cat.slug}`
-                }
-                 class="flex items-center gap-3 bg-white rounded-lg p-3 hover:bg-red-50 transition-colors group">
-                <span class="text-xl">{
-                  cat.slug === 'mekanlar' ? '🍽️' : cat.slug === 'yeme-icme' ? '🥘' :
-                  cat.slug === 'gezilecek-yerler' ? '🏛️' : cat.slug === 'etkinlikler' ? '🎭' :
-                  cat.slug === 'saglik' ? '🏥' : cat.slug === 'egitim' ? '🎓' :
-                  cat.slug === 'konaklama' ? '🏨' : cat.slug === 'alisveris' ? '🛍️' : '📍'
-                }</span>
-                <span class="font-medium text-gray-700 group-hover:text-red-600 text-sm">{cat.name}</span>
+    {isSectionEnabled('district-service') && (
+    <section class={sectionStyles.districtServiceSectionClass} style={`order:${getSectionOrder('district-service')}`}>
+      <div class={sectionStyles.districtServiceContainerClass}>
+        <div class={sectionStyles.districtServiceHeaderWrapClass}>
+          <div>
+            <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.districtServiceTitle}</h2>
+            <p class="text-slate-300 mt-1">{sectionCopy.districtServiceDescription}</p>
+          </div>
+          <a href="/ilceler" class="text-sm font-semibold text-red-300 hover:text-red-200">{sectionCopy.districtServiceCtaLabel}</a>
+        </div>
+
+        <div class={sectionStyles.districtServiceGridClass}>
+          {serviceQuickLinks.map((item: any) => {
+            const labelClass =
+              item.key === 'pharmacy'
+                ? 'text-emerald-300'
+                : item.key === 'bus'
+                  ? 'text-sky-300'
+                  : item.key === 'flight'
+                    ? 'text-violet-300'
+                    : 'text-slate-300';
+            return (
+              <a href={item.href} class={`${sectionStyles.districtServiceCardClass} ${item.hoverBorderClass || 'hover:border-red-400/60'}`}>
+                <p class={`text-xs font-semibold uppercase tracking-wide ${labelClass}`}>{item.categoryLabel}</p>
+                <h3 class="mt-2 text-lg font-bold">{item.title}</h3>
+                <p class="mt-2 text-sm text-slate-300">{item.description}</p>
+              </a>
+            );
+          })}
+        </div>
+
+        {districtServiceLinks.length > 0 && (
+          <div class={sectionStyles.districtServiceChipsWrapClass}>
+            {districtServiceLinks.map((district) => (
+              <a
+                href={district.href}
+                class={sectionStyles.districtServiceChipClass}
+              >
+                {district.name} <span class="text-slate-400">({district.placeCount})</span>
               </a>
             ))}
           </div>
         )}
       </div>
     </section>
-
-    {/* İlçeler */}
-    {districts.length > 0 && (
-      <section class="py-12">
-        <div class="container mx-auto px-4">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-gray-900">İlçeler</h2>
-            <a href="/ilceler" class="text-red-600 hover:text-red-700 font-medium">Tüm İlçeler →</a>
-          </div>
-          <div class="grid md:grid-cols-3 gap-4">
-            {districts.map(d => (
-              <a href={`/ilceler/${d.slug}`} class="bg-white rounded-xl p-5 border hover:shadow-lg hover:border-red-200 transition-all group">
-                <h3 class="font-bold text-gray-900 group-hover:text-red-600">{d.name}</h3>
-                <p class="text-sm text-gray-500 mt-1 line-clamp-1">{d.description}</p>
-                <span class="text-xs text-gray-400 mt-2 block">{d.place_count || 0} mekan</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
     )}
 
-    {/* Gezilecek Yerler */}
-    {featuredSites.length > 0 && (
-      <section class="py-12 bg-amber-50">
-        <div class="container mx-auto px-4">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-gray-900">Mutlaka Görülmesi Gereken Yerler</h2>
-            <a href="/gezilecek-yerler" class="text-amber-700 hover:text-amber-800 font-medium">Tümünü Gör →</a>
-          </div>
-          <div class="grid md:grid-cols-3 gap-6">
-            {featuredSites.map((site: any) => (
-              <a href={`/gezilecek-yerler/${site.slug}`} class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group">
-                <div class="h-44 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                  <span class="text-6xl opacity-50">
-                    {site.slug === 'gobeklitepe' ? '🏛️' :
-                     site.slug === 'balikligol' ? '🐟' :
-                     site.slug === 'halfeti-batik-sehir' ? '🌹' : '📍'}
-                  </span>
-                </div>
-                <div class="p-5">
-                  <h3 class="font-bold text-lg text-gray-900 group-hover:text-amber-700">{site.name}</h3>
-                  <p class="text-sm text-gray-500 mt-1 line-clamp-2">{site.short_description}</p>
-                  {site.location && <p class="text-xs text-gray-400 mt-2">📍 {site.location}</p>}
-                </div>
-              </a>
-            ))}
-          </div>
+    {isSectionEnabled('popular-categories') && (
+    <section class={sectionStyles.popularCategoriesSectionClass} style={`order:${getSectionOrder('popular-categories')}`}>
+      <div class={sectionStyles.popularCategoriesContainerClass}>
+        <div class={sectionStyles.popularCategoriesHeaderWrapClass}>
+          <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.popularCategoriesTitle}</h2>
+          <a href="/mekanlar" class={sectionStyles.sectionCtaLinkClass}>{sectionCopy.popularCategoriesCtaLabel}</a>
         </div>
-      </section>
-    )}
-
-    {/* Popüler Rehberler */}
-    <section class="py-12 bg-red-50">
-      <div class="container mx-auto px-4">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Popüler Rehberler</h2>
-        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
-          <a href="/en-iyi-kebapcilar" class="bg-white rounded-xl p-4 hover:shadow-lg transition-all group">
-            <span class="text-2xl">🍖</span>
-            <h3 class="font-bold text-gray-900 group-hover:text-red-600 mt-2">En İyi Kebapçılar</h3>
-          </a>
-          <a href="/en-iyi-cigerciler" class="bg-white rounded-xl p-4 hover:shadow-lg transition-all group">
-            <span class="text-2xl">🥩</span>
-            <h3 class="font-bold text-gray-900 group-hover:text-red-600 mt-2">En İyi Ciğerciler</h3>
-          </a>
-          <a href="/sanliurfa-kahvalti-mekanlari" class="bg-white rounded-xl p-4 hover:shadow-lg transition-all group">
-            <span class="text-2xl">🍳</span>
-            <h3 class="font-bold text-gray-900 group-hover:text-red-600 mt-2">Kahvaltı Mekanları</h3>
-          </a>
-          <a href="/sanliurfada-ne-yenir" class="bg-white rounded-xl p-4 hover:shadow-lg transition-all group">
-            <span class="text-2xl">🥘</span>
-            <h3 class="font-bold text-gray-900 group-hover:text-red-600 mt-2">Ne Yenir?</h3>
-          </a>
-          <a href="/gezilecek-yerler" class="bg-white rounded-xl p-4 hover:shadow-lg transition-all group">
-            <span class="text-2xl">🏛️</span>
-            <h3 class="font-bold text-gray-900 group-hover:text-red-600 mt-2">Gezilecek Yerler</h3>
-          </a>
-          <a href="/saglik/nobetci-eczaneler" class="bg-white rounded-xl p-4 hover:shadow-lg transition-all group">
-            <span class="text-2xl">💊</span>
-            <h3 class="font-bold text-gray-900 group-hover:text-red-600 mt-2">Nöbetçi Eczaneler</h3>
-          </a>
-          <a href="/etkinlikler" class="bg-white rounded-xl p-4 hover:shadow-lg transition-all group">
-            <span class="text-2xl">🎭</span>
-            <h3 class="font-bold text-gray-900 group-hover:text-red-600 mt-2">Etkinlikler</h3>
-          </a>
-          <a href="/blog/sanliurfa-hafta-sonu-rehberi" class="bg-white rounded-xl p-4 hover:shadow-lg transition-all group">
-            <span class="text-2xl">📅</span>
-            <h3 class="font-bold text-gray-900 group-hover:text-red-600 mt-2">Hafta Sonu Rehberi</h3>
-          </a>
+        <div class={sectionStyles.popularCategoriesGridClass}>
+          {quickCategories.map((cat) => (
+            <a href={`/mekanlar/${cat.slug}`} class={sectionStyles.popularCategoriesCardClass}>
+              {cat.name}
+            </a>
+          ))}
         </div>
       </div>
     </section>
+    )}
 
-    {/* Featured Places */}
-    {featuredPlaces.length > 0 && (
-      <section class="py-16">
-        <div class="container mx-auto px-4">
-          <div class="flex items-center justify-between mb-8">
-            <h2 class="text-2xl font-bold text-gray-900">Öne Çıkan Mekanlar</h2>
-            <a href="/places" class="text-red-600 hover:text-red-700 font-medium flex items-center gap-1">
-              Tümünü Gör
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </a>
+    {isSectionEnabled('trend-density') && (
+    <section class={sectionStyles.trendDensitySectionClass} style={`order:${getSectionOrder('trend-density')}`}>
+      <div class={sectionStyles.trendDensityContainerClass}>
+        <div class={sectionStyles.trendDensityGridClass}>
+          <article class={sectionStyles.trendDensityCardClass}>
+            <div class={sectionStyles.trendDensityHeaderWrapClass}>
+              <h2 class="text-xl md:text-2xl font-bold">{sectionCopy.trendingTitle}</h2>
+              <a href="/arama" class="text-sm font-semibold text-red-600 hover:text-red-700">{sectionCopy.trendingCtaLabel}</a>
+            </div>
+            <div class={sectionStyles.trendDensityTrendGridClass}>
+              {trendingSearches.slice(0, 10).map((item, idx) => (
+                <a
+                  href={`/arama?q=${encodeURIComponent(item.query)}`}
+                  class={sectionStyles.trendDensityTrendItemClass}
+                >
+                  <span class="mr-2 text-xs text-slate-500">#{idx + 1}</span>{item.query}
+                </a>
+              ))}
+            </div>
+          </article>
+
+          <article class={sectionStyles.trendDensityCardClass}>
+            <div class={sectionStyles.trendDensityHeaderWrapClass}>
+              <h2 class="text-xl md:text-2xl font-bold">{sectionCopy.densityTitle}</h2>
+              <a href="/kesfet" class="text-sm font-semibold text-red-600 hover:text-red-700">{sectionCopy.densityCtaLabel}</a>
+            </div>
+            {categoryDensityCards.length > 0 ? (
+              <div class={sectionStyles.trendDensityDensityWrapClass}>
+                {categoryDensityCards.slice(0, 8).map((item) => (
+                  <a href={`/mekanlar/${item.slug}`} class={sectionStyles.trendDensityDensityItemClass}>
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="font-semibold text-slate-900">{item.name}</span>
+                      <span class="text-slate-500">{item.count}</span>
+                    </div>
+                    <div class="mt-2 h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+                      <div class="h-full rounded-full bg-gradient-to-r from-red-500 to-amber-500" style={`width:${item.ratio}%`}></div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p class="text-sm text-slate-600">Yoğunluk verisi hazırlanıyor.</p>
+            )}
+          </article>
+        </div>
+      </div>
+    </section>
+    )}
+
+    {isSectionEnabled('districts') && districts.length > 0 && (
+      <section class={sectionStyles.districtsSectionClass} style={`order:${getSectionOrder('districts')}`}>
+        <div class={sectionStyles.districtsContainerClass}>
+          <div class={sectionStyles.districtsHeaderWrapClass}>
+            <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.districtsTitle}</h2>
+            <a href="/ilceler" class={sectionStyles.sectionCtaLinkClass}>{sectionCopy.districtsCtaLabel}</a>
           </div>
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredPlaces.map(place => (
+          <div class={sectionStyles.districtsGridClass}>
+            {districts.map((district) => (
+              <a href={`/ilceler/${district.slug}`} class={sectionStyles.districtsCardClass}>
+                <h3 class="font-bold text-lg text-slate-900">{district.name}</h3>
+                <p class={sectionStyles.sectionMutedTextLineClampClass}>{district.description || 'İlçe bazlı mekan, sağlık ve günlük yaşam içerikleri.'}</p>
+                <p class="mt-3 text-xs font-semibold text-slate-500">{district.place_count || 0} aktif mekan</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {isSectionEnabled('historical-sites') && featuredSites.length > 0 && (
+      <section class={sectionStyles.historicalSitesSectionClass} style={`order:${getSectionOrder('historical-sites')}`}>
+        <div class={sectionStyles.historicalSitesContainerClass}>
+          <div class={sectionStyles.historicalSitesHeaderWrapClass}>
+            <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.historicalSitesTitle}</h2>
+            <a href="/gezilecek-yerler" class="text-amber-700 font-semibold hover:text-amber-800">{sectionCopy.historicalSitesCtaLabel}</a>
+          </div>
+          <div class={sectionStyles.historicalSitesGridClass}>
+            {featuredSites.map((site) => (
+              <a href={`/gezilecek-yerler/${site.slug}`} class={sectionStyles.historicalSitesCardClass}>
+                <div class={sectionStyles.historicalSitesImageWrapClass}>
+                  <img
+                    src={getHistoricalCardImage(site)}
+                    alt={site.name}
+                    class={sectionStyles.historicalSitesImageClass}
+                    loading="lazy"
+                    onerror="this.setAttribute('src','/images/hero/hero-home.webp')"
+                  />
+                </div>
+                <div class="p-4">
+                  <h3 class="font-bold text-lg text-slate-900">{site.name}</h3>
+                  <p class={sectionStyles.sectionMutedTextLineClampClass}>{site.short_description || 'Şanlıurfa tarihi ve turistik noktaları hakkında özet bilgi.'}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {isSectionEnabled('featured-places') && featuredPlaces.length > 0 && (
+      <section class={sectionStyles.featuredPlacesSectionClass} style={`order:${getSectionOrder('featured-places')}`}>
+        <div class={sectionStyles.featuredPlacesContainerClass}>
+          <div class={sectionStyles.featuredPlacesHeaderWrapClass}>
+            <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.featuredPlacesTitle}</h2>
+            <a href="/mekanlar" class={sectionStyles.sectionCtaLinkClass}>{sectionCopy.featuredPlacesCtaLabel}</a>
+          </div>
+          <div class={sectionStyles.featuredPlacesGridClass}>
+            {featuredPlaces.map((place) => (
               <PlaceCard place={place} />
             ))}
           </div>
@@ -250,13 +1610,12 @@ const quickCategories = [
       </section>
     )}
 
-    {/* Recent Places */}
-    {recentPlaces.length > 0 && (
-      <section class="py-16 bg-gray-50">
-        <div class="container mx-auto px-4">
-          <h2 class="text-2xl font-bold text-gray-900 mb-8">Yeni Eklenenler</h2>
-          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {recentPlaces.map(place => (
+    {isSectionEnabled('recent-places') && recentPlaces.length > 0 && (
+      <section class={sectionStyles.recentPlacesSectionClass} style={`order:${getSectionOrder('recent-places')}`}>
+        <div class={sectionStyles.recentPlacesContainerClass}>
+          <h2 class={sectionStyles.sectionHeadingSpacedLgClass}>{sectionCopy.recentPlacesTitle}</h2>
+          <div class={sectionStyles.recentPlacesGridClass}>
+            {recentPlaces.map((place) => (
               <PlaceCard place={place} compact />
             ))}
           </div>
@@ -264,29 +1623,22 @@ const quickCategories = [
       </section>
     )}
 
-    {/* Blog Section */}
-    {recentPosts.length > 0 && (
-      <section class="py-16">
-        <div class="container mx-auto px-4">
-          <div class="flex items-center justify-between mb-8">
-            <h2 class="text-2xl font-bold text-gray-900">Blog'dan Son Yazılar</h2>
-            <a href="/blog" class="text-red-600 hover:text-red-700 font-medium">Tüm Yazılar →</a>
+    {isSectionEnabled('trust-signals') && recentTrustSignals.length > 0 && (
+      <section class={sectionStyles.trustSignalsSectionClass} style={`order:${getSectionOrder('trust-signals')}`}>
+        <div class={sectionStyles.trustSignalsContainerClass}>
+          <div class={sectionStyles.trustSignalsHeaderWrapClass}>
+            <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.trustSignalsTitle}</h2>
+            <p class="text-sm text-slate-500">{sectionCopy.trustSignalsSubtitle}</p>
           </div>
-          <div class="grid md:grid-cols-3 gap-6">
-            {recentPosts.map(post => (
-              <a href={`/blog/${post.slug}`} class="group">
-                <article class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
-                  {post.cover_image ? (
-                    <img src={post.cover_image} alt={post.title} class="w-full h-48 object-cover group-hover:scale-105 transition-transform" />
-                  ) : (
-                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-4xl">📝</div>
-                  )}
-                  <div class="p-5">
-                    <span class="text-xs text-red-600 font-medium">{post.category}</span>
-                    <h3 class="font-bold text-gray-900 mt-2 line-clamp-2">{post.title}</h3>
-                    <p class="text-gray-500 text-sm mt-2 line-clamp-2">{post.excerpt}</p>
-                  </div>
-                </article>
+          <div class={sectionStyles.trustSignalsGridClass}>
+            {recentTrustSignals.map((place) => (
+              <a href={`/isletme/${place.slug}`} class={sectionStyles.trustSignalsCardClass}>
+                <h3 class="font-bold text-slate-900">{place.name}</h3>
+                <p class="mt-1 text-sm text-slate-600">{place.district}</p>
+                <div class="mt-3 flex items-center justify-between text-xs">
+                  <span class="font-semibold text-slate-500">Güncelleme: {place.updatedAt}</span>
+                  <span class="rounded-full bg-red-100 px-2 py-1 font-semibold text-red-700">Puan: {place.rating}</span>
+                </div>
               </a>
             ))}
           </div>
@@ -294,46 +1646,242 @@ const quickCategories = [
       </section>
     )}
 
-    {/* CTA Section */}
-    <section class="py-20 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-      <div class="container mx-auto px-4 text-center">
-        <h2 class="text-3xl md:text-4xl font-bold mb-4">İşletmenizi Eklemek İster Misiniz?</h2>
-        <p class="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
-          Şanlıurfa.com'a katılın, binlerce potansiyel müşteriye ulaşın.
-          Kayıt ücretsiz, yönetimi kolay.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a href="/isletme-kayit" class="px-8 py-4 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors">
-            Hemen Başvurun
-          </a>
-          <a href="/iletisim" class="px-8 py-4 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-colors">
-            Daha Fazla Bilgi
-          </a>
+    {isSectionEnabled('guides-community') && (
+    <section class={sectionStyles.guidesCommunitySectionClass} style={`order:${getSectionOrder('guides-community')}`}>
+      <div class={sectionStyles.guidesCommunityContainerClass}>
+        <div class={sectionStyles.guidesCommunityPanelClass}>
+          <h2 class="text-xl font-bold text-amber-900">{communityPanel.title}</h2>
+          <p class="mt-1 text-sm text-amber-800">{communityPanel.description}</p>
+          <div class={sectionStyles.guidesCommunityLinksWrapClass}>
+            {communityPanel.items.map((item: any) => (
+              <a
+                href={item.href}
+                class={sectionStyles.guidesCommunityLinkClass}
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </div>
+        <h2 class={sectionStyles.sectionHeadingSpacedClass}>{sectionCopy.guidesTitle}</h2>
+        <div class={sectionStyles.guidesCommunityGridClass}>
+          {featuredGuides.map((guide) => (
+            <a href={guide.href} class={sectionStyles.guidesCommunityGuideCardClass}>
+              {guide.title}
+            </a>
+          ))}
         </div>
       </div>
     </section>
+    )}
 
-    {/* Features */}
-    <section class="py-16 bg-gray-50">
-      <div class="container mx-auto px-4">
-        <div class="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto text-center">
-          <div>
-            <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">⭐</div>
-            <h3 class="font-bold text-gray-900 mb-2">Güvenilir Değerlendirmeler</h3>
-            <p class="text-gray-600">Gerçek kullanıcı yorumları ve puanlamaları</p>
+    {isSectionEnabled('audience-plans') && (
+      <section class={sectionStyles.audiencePlansSectionClass} style={`order:${getSectionOrder('audience-plans')}`}>
+        <div class={sectionStyles.audiencePlansContainerClass}>
+          <div class={sectionStyles.audiencePlansHeaderWrapClass}>
+            <div>
+              <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.audiencePlansTitle}</h2>
+              <p class="mt-1 text-slate-300">{sectionCopy.audiencePlansDescription}</p>
+            </div>
           </div>
-          <div>
-            <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">📍</div>
-            <h3 class="font-bold text-gray-900 mb-2">Kolay Lokasyon</h3>
-            <p class="text-gray-600">Harita üzerinden hızlı yol tarifi</p>
+          <div class={sectionStyles.audiencePlansGridClass}>
+            {audiencePlans.map((plan) => (
+              <article class={sectionStyles.audiencePlansCardClass}>
+                <span class={sectionStyles.audiencePlansBadgeClass}>{plan.badge}</span>
+                <h3 class="mt-4 text-2xl font-bold text-white">{plan.title}</h3>
+                <p class="mt-2 text-sm text-slate-300">{plan.description}</p>
+                <ul class={sectionStyles.audiencePlansListClass}>
+                  {plan.bullets.map((bullet) => (
+                    <li class="flex items-start gap-2">
+                      <span class="mt-1 h-2 w-2 rounded-full bg-red-400"></span>
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+                <a href={plan.href} class={sectionStyles.audiencePlansActionClass}>{plan.cta}</a>
+              </article>
+            ))}
           </div>
-          <div>
-            <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">📱</div>
-            <h3 class="font-bold text-gray-900 mb-2">Her Yerden Erişim</h3>
-            <p class="text-gray-600">Mobil uyumlu tasarım</p>
+        </div>
+      </section>
+    )}
+
+    {isSectionEnabled('district-spotlights') && districtSpotlights.length > 0 && (
+      <section class={sectionStyles.districtSpotlightsSectionClass} style={`order:${getSectionOrder('district-spotlights')}`}>
+        <div class={sectionStyles.districtSpotlightsContainerClass}>
+          <div class={sectionStyles.districtSpotlightsHeaderWrapClass}>
+            <div>
+              <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.districtSpotlightsTitle}</h2>
+              <p class="mt-1 text-slate-600">{sectionCopy.districtSpotlightsDescription}</p>
+            </div>
+            <a href="/ilceler" class={sectionStyles.sectionCtaLinkClass}>{sectionCopy.districtSpotlightsCtaLabel}</a>
           </div>
+          <div class={sectionStyles.districtSpotlightsGridClass}>
+            {districtSpotlights.map((item: any) => (
+              <article class={sectionStyles.districtSpotlightsCardClass}>
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-red-600">{item.district_name}</p>
+                <a href={`/isletme/${item.place_slug}`} class="mt-3 block text-xl font-bold text-slate-900 hover:text-red-700">
+                  {item.place_name}
+                </a>
+                <div class="mt-4 flex items-center justify-between text-sm">
+                  <span class="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+                    Puan {item.rating ? Number(item.rating).toFixed(1) : '-'}
+                  </span>
+                  <span class="text-slate-500">{Number(item.review_count || 0)} yorum</span>
+                </div>
+                <a href={`/ilceler/${item.district_slug}`} class="mt-4 inline-flex items-center text-sm font-semibold text-slate-700 hover:text-red-700">
+                  {item.district_name} rehberini aç
+                </a>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {isSectionEnabled('recent-reviews') && reviewHighlights.length > 0 && (
+      <section class={sectionStyles.recentReviewsSectionClass} style={`order:${getSectionOrder('recent-reviews')}`}>
+        <div class={sectionStyles.recentReviewsContainerClass}>
+          <div class={sectionStyles.recentReviewsHeaderWrapClass}>
+            <div>
+              <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.recentReviewsTitle}</h2>
+              <p class="mt-1 text-slate-600">{sectionCopy.recentReviewsDescription}</p>
+            </div>
+          </div>
+          <div class={sectionStyles.recentReviewsGridClass}>
+            {reviewHighlights.map((item: any) => (
+              <article class={sectionStyles.recentReviewsCardClass}>
+                <div class="flex items-center justify-between gap-3">
+                  <a href={`/isletme/${item.place_slug}`} class="font-bold text-slate-900 hover:text-red-700">
+                    {item.place_name}
+                  </a>
+                  <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                    {item.rating ? `${Number(item.rating).toFixed(1)} / 5` : 'Yeni yorum'}
+                  </span>
+                </div>
+                <p class="mt-3 line-clamp-4 text-sm leading-6 text-slate-600">"{item.excerpt}"</p>
+                <div class="mt-4 flex items-center justify-between text-xs text-slate-500">
+                  <span>{item.author_name}</span>
+                  <span>{item.createdLabel}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {isSectionEnabled('main-categories') && mainCategories.length > 0 && (
+      <section class={sectionStyles.mainCategoriesSectionClass} style={`order:${getSectionOrder('main-categories')}`}>
+        <div class={sectionStyles.mainCategoriesContainerClass}>
+          <h2 class={sectionStyles.sectionHeadingSpacedClass}>{sectionCopy.mainCategoriesTitle}</h2>
+          <div class={sectionStyles.mainCategoriesGridClass}>
+            {mainCategories.map((cat) => (
+              <a
+                href={
+                  ['mekanlar', 'gezilecek-yerler', 'etkinlikler', 'saglik', 'egitim', 'ulasim', 'alisveris', 'hizmetler', 'emlak', 'konaklama', 'yeme-icme', 'ilceler', 'blog'].includes(cat.slug)
+                    ? `/${cat.slug}`
+                    : `/mekanlar/${cat.slug}`
+                }
+                class={sectionStyles.mainCategoriesCardClass}
+              >
+                {cat.name}
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {isSectionEnabled('recipes') && featuredRecipes.length > 0 && (
+      <section class={sectionStyles.recipesSectionClass} style={`order:${getSectionOrder('recipes')}`}>
+        <div class={sectionStyles.recipesContainerClass}>
+          <div class={sectionStyles.recipesHeaderWrapClass}>
+            <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.recipesTitle}</h2>
+            <a href="/yemek-tarifleri" class={sectionStyles.sectionCtaLinkClass}>{sectionCopy.recipesCtaLabel}</a>
+          </div>
+          <div class={sectionStyles.recipesGridClass}>
+            {featuredRecipes.map((recipe) => (
+              <a href={`/yemek-tarifleri/${recipe.slug}`} class={sectionStyles.recipesCardClass}>
+                <div class={sectionStyles.recipesImageWrapClass}>
+                  <img
+                    src={recipe.cover_image || '/images/foods/default.jpg'}
+                    alt={recipe.name}
+                    class={sectionStyles.recipesImageClass}
+                    loading="lazy"
+                    onerror="this.setAttribute('src','/images/foods/default.jpg')"
+                  />
+                </div>
+                <div class="p-4">
+                  <h3 class="font-bold text-slate-900">{recipe.name}</h3>
+                  <p class="mt-1 text-sm text-slate-600 line-clamp-2">{recipe.description || 'Şanlıurfa mutfağına ait özel tarif içeriği.'}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {isSectionEnabled('blog') && recentPosts.length > 0 && (
+      <section class={sectionStyles.blogSectionClass} style={`order:${getSectionOrder('blog')}`}>
+        <div class={sectionStyles.blogContainerClass}>
+          <div class={sectionStyles.blogHeaderWrapClass}>
+            <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.blogTitle}</h2>
+            <a href="/blog" class={sectionStyles.sectionCtaLinkClass}>{sectionCopy.blogCtaLabel}</a>
+          </div>
+          <div class={sectionStyles.blogGridClass}>
+            {recentPosts.map((post) => (
+              <a href={`/blog/${post.slug}`} class={sectionStyles.blogCardClass}>
+                {post.cover_image ? (
+                  <img src={post.cover_image} alt={post.title} class={sectionStyles.blogImageClass} loading="lazy" />
+                ) : (
+                  <div class={sectionStyles.blogImageFallbackClass}></div>
+                )}
+                <div class="p-4">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-red-600">{post.category || 'Rehber'}</p>
+                  <h3 class="mt-2 font-bold text-slate-900 line-clamp-2">{post.title}</h3>
+                  <p class="mt-2 text-sm text-slate-600 line-clamp-2">{post.excerpt || 'Şanlıurfa hakkında güncel rehber içerikleri.'}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    {isSectionEnabled('faq') && (
+    <section class={sectionStyles.faqSectionClass} style={`order:${getSectionOrder('faq')}`}>
+      <div class={sectionStyles.faqContainerClass}>
+        <div class={sectionStyles.faqIntroWrapClass}>
+          <h2 class={sectionStyles.sectionHeadingClass}>{sectionCopy.faqTitle}</h2>
+          <p class="mt-2 text-slate-300">{sectionCopy.faqDescription}</p>
+        </div>
+        <div class={sectionStyles.faqGridClass}>
+          {faqItems.map((item) => (
+            <article class={sectionStyles.faqCardClass}>
+              <h3 class="font-semibold text-white">{item.S}</h3>
+              <p class="mt-2 text-sm text-slate-300">{item.C}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>
+    )}
+
+    {isSectionEnabled('main-cta') && (
+    <section class={sectionStyles.mainCtaSectionClass} style={`order:${getSectionOrder('main-cta')}`}>
+      <div class={sectionStyles.mainCtaContainerClass}>
+        <h2 class="text-3xl md:text-4xl font-extrabold">{mainCtaConfig.title}</h2>
+        <p class={sectionStyles.mainCtaDescriptionClass}>
+          {mainCtaConfig.description}
+        </p>
+        <div class={sectionStyles.mainCtaActionsWrapClass}>
+          <a href={mainCtaConfig.primaryHref} class={sectionStyles.mainCtaPrimaryButtonClass}>{mainCtaConfig.primaryLabel}</a>
+          <a href={mainCtaConfig.secondaryHref} class={sectionStyles.mainCtaSecondaryButtonClass}>{mainCtaConfig.secondaryLabel}</a>
+        </div>
+      </div>
+    </section>
+    )}
   </div>
 </Layout>

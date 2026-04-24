@@ -6,6 +6,7 @@
 import { queryOne, queryMany, update as updateDb } from '../postgres';
 import { getActiveSubscription } from '../subscription/subscription-management';
 import { logger } from '../logger';
+import { PHASE1_FREE_MODE } from '../runtime/phase-policy';
 
 /**
  * Quota configuration per tier and feature
@@ -142,6 +143,15 @@ export async function checkQuota(userId: string, feature: QuotaFeature): Promise
   limit: number | null;
   remaining: number | null;
 }> {
+  if (PHASE1_FREE_MODE) {
+    return {
+      canUse: true,
+      current: 0,
+      limit: null,
+      remaining: null,
+    };
+  }
+
   try {
     const usage = await getOrInitializeUsage(userId, feature);
 
@@ -187,6 +197,10 @@ export async function checkQuota(userId: string, feature: QuotaFeature): Promise
  * Returns the new usage count
  */
 export async function incrementUsage(userId: string, feature: QuotaFeature, amount: number = 1): Promise<number> {
+  if (PHASE1_FREE_MODE) {
+    return 0;
+  }
+
   try {
     await getOrInitializeUsage(userId, feature);
 
@@ -236,6 +250,20 @@ export async function resetUsage(userId: string, feature: QuotaFeature): Promise
  * Get all usage records for a user
  */
 export async function getUserUsage(userId: string): Promise<UsageRecord[]> {
+  if (PHASE1_FREE_MODE) {
+    const now = new Date().toISOString();
+    return (Object.keys(FEATURE_QUOTAS) as QuotaFeature[]).map((feature) => ({
+      id: `phase1-${feature.toLowerCase()}`,
+      userId,
+      featureName: feature,
+      limitValue: null,
+      currentUsage: 0,
+      resetDate: null,
+      createdAt: now,
+      updatedAt: now,
+    }));
+  }
+
   try {
     const results = await queryMany(
       `SELECT id, user_id, feature_name, limit_value, current_usage, reset_date, created_at, updated_at
@@ -264,9 +292,9 @@ export async function getUserUsage(userId: string): Promise<UsageRecord[]> {
 /**
  * Get quota status message
  */
-export function getQuotaMessage(feature: QuotaFeature, quota: { current: number; limit: number | null; remaining: number | null }): string {
+export function getQuotaMessage(_feature: QuotaFeature, quota: { current: number; limit: number | null; remaining: number | null }): string {
   if (quota.limit === null) {
-    return 'Sınırsız';
+    return 'Faz 1 kapsamında sınırsız';
   }
 
   const percentageUsed = Math.round((quota.current / quota.limit) * 100);

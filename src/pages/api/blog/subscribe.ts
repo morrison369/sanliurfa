@@ -5,16 +5,17 @@
  */
 
 import type { APIRoute } from 'astro';
-import { insert, queryOne } from '../../../lib/postgres';
+import { queryOne } from '../../../lib/postgres';
 import { validateWithSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
+import { subscribeToBlogNewsletter } from '../../../lib/blog/newsletter-subscriptions';
 
 // Abonelik
 export const POST: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -40,13 +41,12 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // E-posta zaten abone mi?
-    const existing = await queryOne(
-      'SELECT id FROM blog_subscriptions WHERE email = $1 AND status = $2',
-      [validation.data.email, 'subscribed']
+    const subscription = await subscribeToBlogNewsletter(
+      validation.data.email,
+      validation.data.categories,
     );
 
-    if (existing) {
+    if (subscription.alreadySubscribed) {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/blog/subscribe', HttpStatus.CONFLICT, duration);
       return apiError(
@@ -58,22 +58,13 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Abonelik oluştur ya da güncelle
-    const subscription = await insert('blog_subscriptions', {
-      email: validation.data.email,
-      categories: validation.data.categories,
-      status: 'subscribed'
-    });
-
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/blog/subscribe', HttpStatus.CREATED, duration);
-    logger.logMutation('create', 'blog_subscriptions', subscription.id, null, {
+    logger.logMutation('create', 'blog_subscriptions', validation.data.email, undefined);
+    logger.info('Blog aboneliği oluşturuldu', {
       email: validation.data.email,
-      duration
+      duration,
     });
-
-    // Cache temizle
-    await deleteCache('blog:subscriptions:count');
 
     return apiResponse(
       {
@@ -102,7 +93,7 @@ export const POST: APIRoute = async ({ request }) => {
 
 // Abonelikten çık
 export const DELETE: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -126,8 +117,7 @@ export const DELETE: APIRoute = async ({ request }) => {
       );
     }
 
-    // Aboneliği iptal et
-    await queryOne(
+    const updated = await queryOne(
       `UPDATE blog_subscriptions
        SET status = $1, unsubscribed_at = NOW()
        WHERE email = $2`,
@@ -136,7 +126,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/blog/subscribe', HttpStatus.OK, duration);
-    logger.info('Abonelik iptal edildi', { email: validation.data.email });
+    logger.info('Abonelik iptal edildi', { email: validation.data.email, updated: Boolean(updated) });
 
     // Cache temizle
     await deleteCache('blog:subscriptions:count');
@@ -165,3 +155,4 @@ export const DELETE: APIRoute = async ({ request }) => {
     );
   }
 };
+

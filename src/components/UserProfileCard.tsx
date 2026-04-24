@@ -54,7 +54,7 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
         setIsFollowing(data.data.is_following);
       }
     } catch (err) {
-      console.error('Failed to load follower stats:', err);
+      console.error('Takipçi istatistikleri yüklenemedi:', err);
     }
   };
 
@@ -83,7 +83,7 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
         await loadFollowerStats();
       }
     } catch (err) {
-      console.error('Failed to toggle follow:', err);
+      console.error('Takip durumu güncellenemedi:', err);
     } finally {
       setIsLoadingFollow(false);
     }
@@ -132,21 +132,21 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
 
   return (
     <div>
-      {/* Header with navigation */}
+      {/* Navigasyon başlığı */}
       <div className="mb-8">
         <a href="/" className="text-blue-600 hover:underline text-sm">
           ← Ana sayfa
         </a>
       </div>
 
-      {/* Profile Card */}
+      {/* Profil kartı */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 max-w-2xl mx-auto">
-        {/* Cover background */}
+        {/* Kapak alanı */}
         <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-500 rounded-t-lg"></div>
 
         {/* Profile content */}
         <div className="px-6 pb-6">
-          {/* Avatar and basic info */}
+          {/* Avatar ve temel bilgiler */}
           <div className="flex flex-col sm:flex-row gap-6 -mt-16 mb-6">
             {user.avatar_url ? (
               <img
@@ -171,7 +171,7 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
                   )}
                 </div>
                 <div className={`px-4 py-2 rounded-lg font-medium text-sm ${getLevelColor(user.level)}`}>
-                  Level {user.level}
+                  Seviye {user.level}
                 </div>
               </div>
 
@@ -185,7 +185,7 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
             </div>
           </div>
 
-          {/* Stats grid */}
+          {/* İstatistik alanı */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8 py-6 border-t border-b border-gray-200 dark:border-gray-700">
             <div className="text-center">
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -221,7 +221,7 @@ export default function UserProfileCard({ user, stats, currentUserId }: UserProf
             )}
           </div>
 
-          {/* Action buttons */}
+          {/* Aksiyon butonları */}
           {currentUserId && currentUserId !== user.id && (
             <div className="flex flex-col sm:flex-row gap-3">
               <button

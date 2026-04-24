@@ -10,8 +10,10 @@ Astro.cookies.delete('token', { path: '/' });
 return Astro.redirect('/?logout=success');
 ---
 
-<Layout seo={{ title: 'Çıkış Yapılıyor...' }}>
+<Layout seo={{ title: 'Çıkış Yapılıyor...', description: 'Sanliurfa.com hesabınızdan çıkış yapılıyor.', noIndex: true }}>
   <div class="min-h-screen flex items-center justify-center">
     <p class="text-gray-600">Çıkış yapılıyor...</p>
   </div>
 </Layout>
+
+

@@ -1,21 +1,40 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
+import { query } from '../../../lib/postgres';
+
+interface UserStats {
+  total: number;
+  active: number;
+  vendors: number;
+  pending: number;
+  newToday: number;
+}
+
+interface UserStatsRow {
+  total?: string | number;
+  active?: string | number;
+  vendors?: string | number;
+  pending?: string | number;
+  new_today?: string | number;
+}
+
+function parseStat(value: string | number | undefined): number {
+  return Number.parseInt(String(value || '0'), 10);
+}
 
 const seo = {
-  title: 'Kullanıcı Yönetimi - Admin Panel',
+  title: 'Kullanıcı Yönetimi - Yönetim Paneli',
   description: 'Kullanıcıları yönetin',
-  noindex: true,
+  noIndex: true,
 };
-
-import { query } from '../../../lib/postgres';
 
 if (!Astro.locals.isAdmin) {
   return Astro.redirect('/giris?redirect=/admin/users');
 }
 
-let stats = { total: 0, active: 0, vendors: 0, pending: 0, newToday: 0 };
+let stats: UserStats = { total: 0, active: 0, vendors: 0, pending: 0, newToday: 0 };
 try {
-  const result = await query(`
+  const result = await query<UserStatsRow>(`
     SELECT
       COUNT(*)                                                      AS total,
       COUNT(*) FILTER (WHERE status = 'active')                    AS active,
@@ -26,11 +45,11 @@ try {
   `);
   const r = result.rows[0];
   stats = {
-    total:    parseInt(r.total    || '0'),
-    active:   parseInt(r.active   || '0'),
-    vendors:  parseInt(r.vendors  || '0'),
-    pending:  parseInt(r.pending  || '0'),
-    newToday: parseInt(r.new_today|| '0'),
+    total: parseStat(r?.total),
+    active: parseStat(r?.active),
+    vendors: parseStat(r?.vendors),
+    pending: parseStat(r?.pending),
+    newToday: parseStat(r?.new_today),
   };
 } catch (e) {
   console.error('Users stats error:', e);
@@ -156,7 +175,7 @@ try {
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     let currentPage = 1;
     let selectedUsers = new Set();
     let allUsers = [];
@@ -375,7 +394,16 @@ try {
 
     document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
 
+    window['goToPage'] = goToPage;
+    window['toggleSelection'] = toggleSelection;
+    window['bulkAction'] = bulkAction;
+    window['suspendUser'] = suspendUser;
+    window['activateUser'] = activateUser;
+
     // Initial load
     loadUsers();
   </script>
 </Layout>
+
+
+

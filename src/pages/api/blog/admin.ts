@@ -2,15 +2,19 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 // List blog posts (admin)
 export const GET: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth || auth.user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/blog-admin-unauthorized',
+        instance: '/api/blog/admin',
       });
     }
 
@@ -71,9 +75,12 @@ export const GET: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Blog admin list error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Blog Yazıları Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/blog-admin-get-failed',
+      instance: '/api/blog/admin',
     });
   }
 };
@@ -83,9 +90,12 @@ export const POST: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth || auth.user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/blog-admin-unauthorized',
+        instance: '/api/blog/admin',
       });
     }
 
@@ -105,32 +115,38 @@ export const POST: APIRoute = async (context) => {
     } = body;
 
     if (!title || !slug || !content) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Zorunlu alanlar eksik',
+        type: '/problems/blog-admin-validation',
+        instance: '/api/blog/admin',
       });
     }
 
     // Check slug uniqueness
     const slugCheck = await query('SELECT id FROM blog_posts WHERE slug = $1', [slug]);
     if (slugCheck.rows.length > 0) {
-      return new Response(JSON.stringify({ error: 'Slug already exists' }), {
+      return problemJson({
         status: 409,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Çakışma',
+        detail: 'Slug zaten mevcut',
+        type: '/problems/blog-admin-slug-conflict',
+        instance: '/api/blog/admin',
       });
     }
 
     const result = await query(
       `INSERT INTO blog_posts (
-        title, slug, excerpt, content, cover_image, category, tags,
-        status, author_id, meta_title, meta_description, featured,
+        title, slug, excerpt, content, featured_image,
+        status, author_id, seo_title, seo_description, is_featured,
         published_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 
-        CASE WHEN $8 = 'published' THEN NOW() ELSE NULL END
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        CASE WHEN $6 = 'published' THEN NOW() ELSE NULL END
       ) RETURNING *`,
       [
         title, slug, excerpt || null, content, coverImage || null,
-        category || null, tags || [], status, auth.user.id,
+        status, auth.user.id,
         metaTitle || null, metaDescription || null, featured
       ]
     );
@@ -145,9 +161,12 @@ export const POST: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Create blog post error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Blog Yazısı Oluşturulamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/blog-admin-create-failed',
+      instance: '/api/blog/admin',
     });
   }
 };

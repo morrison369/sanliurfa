@@ -1,8 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
 
-let categories: any[] = [];
 let featuredPlaces: any[] = [];
 
 const saglikCategories = [
@@ -30,7 +30,26 @@ try {
 const seo = {
   title: 'Şanlıurfa Sağlık Rehberi | Hastaneler, Eczaneler ve Klinikler',
   description: 'Şanlıurfa\'da devlet ve özel hastaneler, diş klinikleri, eczaneler, nöbetçi eczaneler ve veteriner klinikler.',
+  keywords: ['şanlıurfa hastaneler', 'urfa nöbetçi eczane', 'şanlıurfa eczane', 'urfa devlet hastanesi', 'şanlıurfa özel hastane', 'urfa diş klinik', 'şanlıurfa veteriner'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/saglik',
 };
+const { baseUrl } = await getSiteBranding();
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa nöbetçi eczaneler nereden öğrenilir?',
+    C: 'Nöbetçi eczane listesine sağlık sayfasındaki hızlı erişim kutusundan veya /saglik/nobetci-eczaneler sayfasından ulaşabilirsiniz.',
+  },
+  {
+    S: 'Sağlık kategorilerinde hangi hizmetler var?',
+    C: 'Devlet hastaneleri, özel hastaneler, diş klinikleri, eczaneler ve veteriner hizmetleri ayrı kategorilerde listelenir.',
+  },
+  {
+    S: 'Sağlık kuruluşları iletişim bilgileri var mı?',
+    C: 'Öne çıkan sağlık kuruluşlarında adres ve telefon gibi temel iletişim bilgileri gösterilir.',
+  },
+];
 ---
 
 <Layout seo={seo}>
@@ -39,12 +58,19 @@ const seo = {
       <div class="container mx-auto px-4">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">Sağlık Rehberi</h1>
         <p class="text-xl text-green-100 max-w-2xl">
-          Şanlıurfa'da hastaneler, klinikler, eczaneler ve sağlık hizmetleri
+          Şanlıurfa’da hastaneler, klinikler, eczaneler ve sağlık hizmetleri
         </p>
       </div>
     </div>
 
     <div class="container mx-auto px-4 py-12">
+      <div class="rounded-2xl border border-green-100 bg-green-50 p-5 mb-8">
+        <h2 class="text-lg font-bold text-green-900">Hızlı Cevap</h2>
+        <p class="text-sm text-green-800 mt-1">
+          Şanlıurfa sağlık rehberinde hastane, klinik ve eczane kategorilerine hızlıca erişebilir; nöbetçi eczane bilgisine anında ulaşabilirsiniz.
+        </p>
+      </div>
+
       <!-- Hızlı Erişim: Nöbetçi Eczane -->
       <div class="bg-red-50 border border-red-200 rounded-2xl p-6 mb-10 flex items-center justify-between">
         <div>
@@ -77,7 +103,7 @@ const seo = {
           <h2 class="text-2xl font-bold text-gray-900 mb-6">Öne Çıkan Sağlık Kuruluşları</h2>
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {featuredPlaces.map((place) => (
-              <a href={`/places/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+              <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
                 <div class="flex items-start gap-3">
                   <span class="text-2xl">🏥</span>
                   <div>
@@ -98,8 +124,20 @@ const seo = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: 'https://sanliurfa.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Sağlık', item: 'https://sanliurfa.com/saglik' },
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Sağlık', item: `${baseUrl}/saglik` },
     ]
-  })} />
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.C,
+      },
+    })),
+  })} is:inline />
 </Layout>

@@ -56,7 +56,7 @@ if (auth instanceof Response) return auth;
       <div id="category-result" class="mt-4 hidden">
         <div class="bg-green-50 border border-green-200 rounded-lg p-4">
           <p class="text-green-800 font-medium">✅ İçerik başarıyla oluşturuldu!</p>
-          <a id="category-link" href="#" class="text-blue-600 hover:underline mt-2 inline-block">Yazıyı görüntüle →</a>
+          <a id="category-link" href="/admin/blog" class="text-blue-600 hover:underline mt-2 inline-block">Yazıyı görüntüle →</a>
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@ if (auth instanceof Response) return auth;
       </div>
     </div>
 
-    <!-- Generation History -->
+    <!-- Oluşturma geçmişi -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Oluşturma Geçmişi</h2>
       <div id="history-list" class="space-y-3">
@@ -103,11 +103,11 @@ if (auth instanceof Response) return auth;
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     let placesWithoutContent = [];
     let selectedPlaces = new Set();
 
-    // Generate category guide
+    // Kategori rehberi oluştur
     async function generateCategoryGuide(category) {
       const resultDiv = document.getElementById('category-result');
       resultDiv.classList.add('hidden');
@@ -133,7 +133,7 @@ if (auth instanceof Response) return auth;
       }
     }
 
-    // Load places without content
+    // İçeriği olmayan mekanları yükle
     async function loadPlacesWithoutContent() {
       try {
         const response = await fetch('/api/admin/content-bot/generate');
@@ -164,7 +164,7 @@ if (auth instanceof Response) return auth;
       }
     }
 
-    // Toggle place selection
+    // Mekan seçimini değiştir
     function togglePlace(id) {
       if (selectedPlaces.has(id)) {
         selectedPlaces.delete(id);
@@ -174,7 +174,7 @@ if (auth instanceof Response) return auth;
       updateGenerateButton();
     }
 
-    // Toggle select all
+    // Tümünü seç/kaldır
     function toggleSelectAll() {
       const checkboxes = document.querySelectorAll('#places-list input[type="checkbox"]');
       const selectAll = document.getElementById('select-all').checked;
@@ -191,14 +191,14 @@ if (auth instanceof Response) return auth;
       updateGenerateButton();
     }
 
-    // Update generate button state
+    // Oluşturma butonunu güncelle
     function updateGenerateButton() {
       const btn = document.getElementById('generate-btn');
       btn.disabled = selectedPlaces.size === 0;
       btn.textContent = `Seçili ${selectedPlaces.size} Mekan İçin İçerik Oluştur`;
     }
 
-    // Generate for selected places
+    // Seçili mekanlar için içerik oluştur
     async function generateForSelected() {
       if (selectedPlaces.size === 0) return;
       
@@ -233,7 +233,7 @@ if (auth instanceof Response) return auth;
       }
     }
 
-    // Load generation history
+    // Oluşturma geçmişini yükle
     async function loadHistory() {
       try {
         const response = await fetch('/api/admin/content-bot/generate');
@@ -257,16 +257,27 @@ if (auth instanceof Response) return auth;
                 job.status === 'completed' ? 'bg-green-100 text-green-800' :
                 job.status === 'failed' ? 'bg-red-100 text-red-800' :
                 'bg-yellow-100 text-yellow-800'
-              }">${job.status}</span>
+              }">${
+                job.status === 'completed' ? 'Tamamlandı' :
+                job.status === 'failed' ? 'Başarısız' :
+                job.status === 'running' ? 'Çalışıyor' :
+                job.status === 'queued' ? 'Sırada' :
+                'Beklemede'
+              }</span>
             </div>
           `).join('');
         }
       } catch (error) {
-        console.error('Failed to load history:', error);
+        console.error('Oluşturma geçmişi yüklenemedi:', error);
       }
     }
 
-    // Load history on page load
+    // Sayfa açılışında geçmişi yükle
+    window.generateCategoryGuide = generateCategoryGuide;
+    window.loadPlacesWithoutContent = loadPlacesWithoutContent;
+    window.togglePlace = togglePlace;
+    window.toggleSelectAll = toggleSelectAll;
+    window.generateForSelected = generateForSelected;
     loadHistory();
   </script>
 </AdminLayout>

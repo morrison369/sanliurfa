@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
+import { createHmac } from 'node:crypto';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 // Webhook tetikleme endpoint'i
 export const POST: APIRoute = async (context) => {
@@ -9,9 +11,12 @@ export const POST: APIRoute = async (context) => {
     const { event, payload, placeId } = body;
 
     if (!event || !payload) {
-      return new Response(JSON.stringify({ error: 'Event and payload required' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'event ve payload zorunludur',
+        type: '/problems/webhook-trigger-validation',
+        instance: '/api/webhooks/trigger',
       });
     }
 
@@ -19,7 +24,7 @@ export const POST: APIRoute = async (context) => {
     const webhooksResult = await query(
       `SELECT w.* FROM webhooks w
        JOIN webhook_events we ON w.id = we.webhook_id
-       WHERE we.event_type = $1 AND w.is_active = true
+       WHERE we.event_type = $1 AND w.active = true
        ${placeId ? 'AND w.place_id = $2' : ''}`,
       placeId ? [event, placeId] : [event]
     );
@@ -59,16 +64,17 @@ export const POST: APIRoute = async (context) => {
         });
 
       } catch (err) {
+        const errMessage = err instanceof Error ? err.message : 'webhook_trigger_failed';
         // Log failure
         await query(
           `INSERT INTO webhook_logs (webhook_id, event_type, payload, error)
            VALUES ($1, $2, $3, $4)`,
-          [webhook.id, event, JSON.stringify(payload), err.message]
+          [webhook.id, event, JSON.stringify(payload), errMessage]
         );
 
         results.push({
           webhookId: webhook.id,
-          error: err.message,
+          error: errMessage,
           success: false
         });
       }
@@ -85,14 +91,18 @@ export const POST: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Webhook trigger error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Webhook Tetiklenemedi',
+      detail: error instanceof Error ? error.message : 'server_error',
+      type: '/problems/webhook-trigger-failed',
+      instance: '/api/webhooks/trigger',
     });
   }
 };
 
 function generateSignature(payload: any, secret: string): string {
-  // Basit HMAC imza (gerçek uygulamada crypto kullanılmalı)
-  return 'sha256=' + Buffer.from(JSON.stringify(payload) + secret).toString('base64');
+  return 'sha256=' + createHmac('sha256', secret || '')
+    .update(JSON.stringify(payload))
+    .digest('hex');
 }

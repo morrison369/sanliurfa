@@ -5,9 +5,9 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 DOMAIN = "sanliurfa.com"
-APP_PORT = 6000
+APP_PORT = 4321
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -118,10 +118,10 @@ print(f"     {firewall_status[:500]}")
 firewall_commands = [
     # Firewalld kullanıyorsa
     ("sudo systemctl is-active firewalld", "Firewalld aktif mi?"),
-    ("sudo firewall-cmd --permanent --remove-port=6000/tcp 2>/dev/null; echo 'OK'", "Port 6000 dışarıya kapat"),
+    ("sudo firewall-cmd --permanent --remove-port=4321/tcp 2>/dev/null; echo 'OK'", "Port 4321 dışarıya kapat"),
     ("sudo firewall-cmd --permanent --add-port=80/tcp 2>/dev/null; echo 'OK'", "Port 80 açık"),
     ("sudo firewall-cmd --permanent --add-port=443/tcp 2>/dev/null; echo 'OK'", "Port 443 açık"),
-    ("sudo firewall-cmd --permanent --add-rich-rule='rule family=ipv4 source address=127.0.0.1 port port=6000 protocol=tcp accept' 2>/dev/null; echo 'OK'", "Port 6000 sadece localhost"),
+    ("sudo firewall-cmd --permanent --add-rich-rule='rule family=ipv4 source address=127.0.0.1 port port=4321 protocol=tcp accept' 2>/dev/null; echo 'OK'", "Port 4321 sadece localhost"),
     ("sudo firewall-cmd --reload 2>/dev/null; echo 'OK'", "Firewall yenile"),
 ]
 
@@ -137,7 +137,7 @@ for cmd, desc in firewall_commands:
 # Alternatif: iptables
 print(f"\n  📝 Alternatif iptables kuralları:")
 iptables_rules = f"""
-# Port 6000'ü sadece localhost'a izin ver
+# Port 4321'ü sadece localhost'a izin ver
 iptables -A INPUT -p tcp --dport {APP_PORT} -s 127.0.0.1 -j ACCEPT
 iptables -A INPUT -p tcp --dport {APP_PORT} -j DROP
 
@@ -162,7 +162,7 @@ if code == "200":
 else:
     print(f"    ⚠️ {DOMAIN}: HTTP {code}")
 
-# Port 6000 dışarıdan erişilemez olmalı
+# Port 4321 dışarıdan erişilemez olmalı
 print(f"  🔒 Port {APP_PORT} güvenlik testi:")
 stdin, stdout, stderr = ssh.exec_command(f"timeout 3 bash -c '</dev/tcp/localhost/{APP_PORT}' && echo 'LOCALHOST: Açık' || echo 'LOCALHOST: Kapalı'")
 local_result = stdout.read().decode().strip()

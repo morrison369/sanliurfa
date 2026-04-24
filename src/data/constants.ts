@@ -1,6 +1,6 @@
 // Uygulama sabitleri
 
-export const APP_NAME = 'Şanlıurfa.com';
+export const APP_NAME = 'Sanliurfa.com';
 export const APP_VERSION = '1.0.0';
 
 // API Routes

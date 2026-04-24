@@ -5,7 +5,7 @@
  */
 
 import type { SEOConfig, StructuredData } from '../lib/seo';
-import { generateMetaTags } from '../lib/seo';
+import { getSiteSetting } from '../lib/site-content';
 
 interface Props extends SEOConfig {
   structuredData?: StructuredData | StructuredData[];
@@ -27,24 +27,16 @@ const {
   structuredData
 } = Astro.props;
 
-const metaTags = generateMetaTags({
-  title,
-  description,
-  canonical,
-  ogImage,
-  ogType,
-  twitterCard,
-  robots,
-  author,
-  publishedTime,
-  modifiedTime,
-  tags,
-  // lang - SABİT: 'tr'
-});
-
-const siteTitle = `${title} | Şanlıurfa.com`;
-const imageUrl = ogImage || 'https://sanliurfa.com/og-image.png';
-const canonicalUrl = canonical || `https://sanliurfa.com${Astro.url.pathname}`;
+const homepageSchemaFallback = {
+  siteName: 'Sanliurfa.com',
+  baseUrl: 'https://sanliurfa.com',
+};
+const homepageSchema = await getSiteSetting('homepage.schema', homepageSchemaFallback);
+const siteName = String((homepageSchema as any)?.siteName || homepageSchemaFallback.siteName);
+const siteUrl = String((homepageSchema as any)?.baseUrl || homepageSchemaFallback.baseUrl);
+const siteTitle = `${title} | ${siteName}`;
+const imageUrl = ogImage || `${siteUrl}/og-image.png`;
+const canonicalUrl = canonical || `${siteUrl}${Astro.url.pathname}`;
 ---
 
 <!-- Primary Meta Tags -->
@@ -67,7 +59,7 @@ const canonicalUrl = canonical || `https://sanliurfa.com${Astro.url.pathname}`;
 <meta property="og:image" content={imageUrl} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:site_name" content="Şanlıurfa.com" />
+<meta property="og:site_name" content={siteName} />
 <meta property="og:locale" content="tr_TR" />
 
 <!-- Twitter Card Meta Tags -->
@@ -76,7 +68,6 @@ const canonicalUrl = canonical || `https://sanliurfa.com${Astro.url.pathname}`;
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={imageUrl} />
-<meta name="twitter:site" content="@sanliurfa" />
 
 <!-- Article Meta Tags (if published/modified times) -->
 {publishedTime && (
@@ -99,7 +90,7 @@ const canonicalUrl = canonical || `https://sanliurfa.com${Astro.url.pathname}`;
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Şanlıurfa.com" />
+<meta name="apple-mobile-web-app-title" content={siteName} />
 
 <!-- Structured Data (JSON-LD) -->
 {structuredData && (
@@ -110,7 +101,7 @@ const canonicalUrl = canonical || `https://sanliurfa.com${Astro.url.pathname}`;
         Array.isArray(structuredData) ? { '@context': 'https://schema.org', '@graph': structuredData } : structuredData
       )
     }
-  />
+  is:inline />
 )}
 
 <!-- Preconnect to external domains for performance -->
@@ -119,7 +110,7 @@ const canonicalUrl = canonical || `https://sanliurfa.com${Astro.url.pathname}`;
 <link rel="dns-prefetch" href="https://cdn.example.com" />
 
 <!-- Favicon -->
-<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
 <!-- Theme Color -->

@@ -3,7 +3,7 @@ import paramiko
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='BcqH7t5zNKfw')
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD')
 
 print("🌐 Proxy Test")
 print("=" * 50)
@@ -16,8 +16,8 @@ print("\n🧪 Port 80 test:")
 stdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://168.119.79.238/")
 print("HTTP Code:", stdout.read().decode())
 
-print("\n🧪 Port 6000 test (direkt):")
-stdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")
+print("\n🧪 Port 4321 test (direkt):")
+stdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/")
 print("HTTP Code:", stdout.read().decode())
 
 print("\n📊 Apache durum:")

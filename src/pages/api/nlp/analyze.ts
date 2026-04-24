@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
-import { 
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
+import {
   tokenize, 
   extractKeywords, 
   analyzeSentiment, 
@@ -10,19 +11,50 @@ import { logger } from '../../../lib/logging';
   spellCheck,
 } from '../../../lib/nlp';
 
+type AnalyzeOperation = 'all' | 'tokenize' | 'keywords' | 'sentiment' | 'entities' | 'summarize' | 'suggestions' | 'spellcheck';
+type AnalyzeResult = {
+  text: string;
+  tokens?: ReturnType<typeof tokenize>;
+  keywords?: string[];
+  sentiment?: ReturnType<typeof analyzeSentiment>;
+  entities?: ReturnType<typeof extractEntities>;
+  summary?: ReturnType<typeof summarize>;
+  suggestions?: ReturnType<typeof generateSearchSuggestions>;
+  spellcheck?: ReturnType<typeof spellCheck>;
+};
+
+const isValidOperation = (value: string): value is AnalyzeOperation => {
+  return [
+    'all',
+    'tokenize',
+    'keywords',
+    'sentiment',
+    'entities',
+    'summarize',
+    'suggestions',
+    'spellcheck',
+  ].includes(value);
+};
+
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
-    const { text, operation = 'all' } = body;
+    const body = (await request.json()) as Record<string, unknown>;
+    const text = typeof body.text === 'string' ? body.text : '';
+    const operation: AnalyzeOperation = typeof body.operation === 'string' && isValidOperation(body.operation)
+      ? body.operation
+      : 'all';
 
     if (!text) {
-      return new Response(JSON.stringify({ error: 'Missing text' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        title: 'Geçersiz İstek',
+        detail: 'Missing text',
+        type: '/problems/nlp-analyze-validation',
+        instance: '/api/nlp/analyze',
       });
     }
 
-    const result: Record<string, any> = { text };
+    const result: AnalyzeResult = { text };
 
     switch (operation) {
       case 'tokenize':
@@ -56,19 +88,22 @@ export const POST: APIRoute = async ({ request }) => {
         break;
     }
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      data: result,
-    }), {
+      return new Response(JSON.stringify({ 
+        success: true, 
+        data: result,
+      }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     logger.error('NLP analyze error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      title: 'NLP Analizi Başarısız',
+      detail: 'Internal server error',
+      type: '/problems/nlp-analyze-failed',
+      instance: '/api/nlp/analyze',
     });
   }
 };

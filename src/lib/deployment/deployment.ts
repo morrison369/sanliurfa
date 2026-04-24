@@ -4,6 +4,10 @@
  */
 
 import { logger } from '../logger';
+import { getPublicAppUrl } from '../public-app-url';
+
+const PUBLIC_APP_URL = getPublicAppUrl();
+const STAGING_URL = process.env.STAGING_URL || 'https://staging.sanliurfa.com';
 
 export interface DeploymentEnvironment {
   name: 'development' | 'staging' | 'production';
@@ -41,10 +45,10 @@ export interface BackupResult {
 const deploymentEnvironments: Record<string, DeploymentEnvironment> = {
   development: {
     name: 'development',
-    url: 'http://localhost:3000',
-    apiUrl: 'http://localhost:3000/api',
+    url: 'http://localhost:4321',
+    apiUrl: 'http://localhost:4321/api',
     databaseUrl: process.env.DATABASE_URL || 'postgresql://localhost/sanliurfa_dev',
-    redisUrl: process.env.REDIS_URL || 'redis://localhost:6379/0',
+    redisUrl: process.env.REDIS_URL || 'redis://127.0.0.1:6381/0',
     logLevel: 'debug',
     sslEnabled: false,
     maintenanceMode: false
@@ -52,8 +56,8 @@ const deploymentEnvironments: Record<string, DeploymentEnvironment> = {
 
   staging: {
     name: 'staging',
-    url: process.env.STAGING_URL || 'https://staging.sanliurfa.com',
-    apiUrl: process.env.STAGING_URL + '/api' || 'https://staging.sanliurfa.com/api',
+    url: STAGING_URL,
+    apiUrl: `${STAGING_URL}/api`,
     databaseUrl: process.env.STAGING_DATABASE_URL || process.env.DATABASE_URL || '',
     redisUrl: process.env.STAGING_REDIS_URL || process.env.REDIS_URL || '',
     logLevel: 'info',
@@ -63,8 +67,8 @@ const deploymentEnvironments: Record<string, DeploymentEnvironment> = {
 
   production: {
     name: 'production',
-    url: 'https://sanliurfa.com',
-    apiUrl: 'https://sanliurfa.com/api',
+    url: PUBLIC_APP_URL,
+    apiUrl: `${PUBLIC_APP_URL}/api`,
     databaseUrl: process.env.DATABASE_URL || '',
     redisUrl: process.env.REDIS_URL || '',
     logLevel: 'warn',

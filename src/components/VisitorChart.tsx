@@ -2,9 +2,7 @@
  * Visitor Chart Component
  * Display visitor statistics in chart format
  */
-
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface VisitorStat {
   date: string;
   visitorCount: number;
@@ -35,14 +33,14 @@ export function VisitorChart({ placeId, startDate, endDate }: VisitorChartProps)
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch visitor stats');
+          throw new Error('Ziyaretçi istatistikleri yüklenemedi.');
         }
 
         const data = await response.json();
         setStats(data.visitorStats || []);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Bilinmeyen hata oluştu.');
         setStats([]);
       } finally {
         setLoading(false);
@@ -59,7 +57,7 @@ export function VisitorChart({ placeId, startDate, endDate }: VisitorChartProps)
   if (error || stats.length === 0) {
     return (
       <div className="bg-gray-50 rounded-lg border border-gray-200 p-8 text-center">
-        <p className="text-gray-600">{error || 'No visitor data available'}</p>
+        <p className="text-gray-600">{error || 'Ziyaretçi verisi bulunamadı.'}</p>
       </div>
     );
   }
@@ -84,7 +82,7 @@ export function VisitorChart({ placeId, startDate, endDate }: VisitorChartProps)
         </div>
       </div>
 
-      {/* Mini Bar Chart */}
+      {/* Mini çubuk grafik */}
       <div className="space-y-3">
         {stats.slice(-7).reverse().map((stat, idx) => {
           const percentage = (stat.visitorCount / maxVisitors) * 100;

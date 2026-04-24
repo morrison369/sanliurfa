@@ -1,11 +1,24 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { getCacheStats, clearNamespace, CACHE_NAMESPACES } from '../../../lib/cache/redis-cache';
 import { getCacheStats as getImageCacheStats, clearImageCache } from '../../../lib/image-optimizer';
+import { problemJson } from '../../../lib/api';
 
-export const GET: APIRoute = async () => {
-  // Check admin auth here in production
-  
+interface CacheClearRequest {
+  type?: 'image' | 'namespace' | 'all';
+  namespace?: string;
+}
+
+export const GET: APIRoute = async ({ locals }) => {
+  if (!locals.isAdmin) {
+    return problemJson({
+      status: 403,
+      title: 'Forbidden',
+      detail: 'Admin erişimi gerekli',
+      type: '/problems/cache-stats-forbidden',
+      instance: '/api/cache/stats',
+    });
+  }
+
   const [cacheStats, imageStats] = await Promise.all([
     getCacheStats(),
     getImageCacheStats(),
@@ -21,15 +34,24 @@ export const GET: APIRoute = async () => {
   );
 };
 
-// POST to clear cache
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+  if (!locals.isAdmin) {
+    return problemJson({
+      status: 403,
+      title: 'Forbidden',
+      detail: 'Admin erişimi gerekli',
+      type: '/problems/cache-stats-forbidden',
+      instance: '/api/cache/stats',
+    });
+  }
+
   try {
-    const data = await request.json();
+    const data = (await request.json()) as CacheClearRequest;
     const { type, namespace } = data;
 
     if (type === 'image') {
       clearImageCache();
-    } else if (type === 'namespace' && namespace) {
+    } else if (type === 'namespace' && namespace && Object.values(CACHE_NAMESPACES).includes(namespace as any)) {
       await clearNamespace(namespace);
     } else if (type === 'all') {
       clearImageCache();
@@ -40,10 +62,13 @@ export const POST: APIRoute = async ({ request }) => {
       JSON.stringify({ success: true, message: 'Cache cleared' }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ error: 'Failed to clear cache' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+  } catch {
+    return problemJson({
+      status: 500,
+      title: 'Cache Temizlenemedi',
+      detail: 'Failed to clear cache',
+      type: '/problems/cache-stats-clear-failed',
+      instance: '/api/cache/stats',
+    });
   }
 };

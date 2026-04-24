@@ -280,14 +280,14 @@ export class TraceContext {
   /**
    * Add tag to current span
    */
-  addTag(key: string, value: string | number | boolean): void {
+  addTag(_key: string, _value: string | number | boolean): void {
     // Implementation would store in current span
   }
 
   /**
    * Add log to current span
    */
-  addLog(message: string): void {
+  addLog(_message: string): void {
     // Implementation would store in current span
   }
 }

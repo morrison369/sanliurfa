@@ -32,7 +32,7 @@ const updatePreferencesSchema = {
 };
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -89,7 +89,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -182,3 +182,4 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     );
   }
 };
+

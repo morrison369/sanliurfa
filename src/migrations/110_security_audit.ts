@@ -28,6 +28,13 @@ export const migration_110_security_audit = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE security_events ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE security_events ADD COLUMN IF NOT EXISTS is_suspicious BOOLEAN DEFAULT false;
+      ALTER TABLE security_events ADD COLUMN IF NOT EXISTS event_type VARCHAR(100);
+      ALTER TABLE security_events ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_security_events_user
       ON security_events(user_id, created_at DESC)
     `);
@@ -64,6 +71,14 @@ export const migration_110_security_audit = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS session_token VARCHAR(500);
+      ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS last_activity_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;
+      ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS invalidated_at TIMESTAMP;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_user_sessions_user
       ON user_sessions(user_id, last_activity_at DESC)
     `);
@@ -97,6 +112,11 @@ export const migration_110_security_audit = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE trusted_devices ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE trusted_devices ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_trusted_devices_user
       ON trusted_devices(user_id, is_active)
     `);
@@ -114,6 +134,10 @@ export const migration_110_security_audit = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(key_version)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE encryption_keys ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
     `);
 
     await pool.query(`

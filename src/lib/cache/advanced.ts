@@ -3,7 +3,7 @@
  * Multi-layer caching with cache warming, invalidation, and analytics
  */
 
-import { getRedisClient, isRedisAvailable } from './cache';
+import { getRedisClient } from './cache';
 import { logger } from '../logging';
 
 // Cache configuration
@@ -56,6 +56,11 @@ interface CacheStats {
   evictions: number;
 }
 
+function toError(error: unknown): Error {
+  if (error instanceof Error) return error;
+  return new Error(String(error));
+}
+
 /**
  * Advanced Cache Manager
  */
@@ -81,10 +86,6 @@ class AdvancedCacheManager {
   }
 
   async get<T>(namespace: string, key: string): Promise<T | null> {
-    if (!await isRedisAvailable()) {
-      return null;
-    }
-
     try {
       const redis = await getRedisClient();
       const cacheKey = this.key(namespace, key);
@@ -117,7 +118,7 @@ class AdvancedCacheManager {
       this.updateHitRate();
       return entry.data;
     } catch (error) {
-      logger.error('Cache get error:', error);
+      logger.error('Cache get error', toError(error));
       return null;
     }
   }
@@ -128,10 +129,6 @@ class AdvancedCacheManager {
     value: T,
     options: CacheOptions = {}
   ): Promise<void> {
-    if (!await isRedisAvailable()) {
-      return;
-    }
-
     const ttl = options.ttl || DEFAULT_TTL;
     const staleTtl = options.staleWhileRevalidate || STALE_WHILE_REVALIDATE;
 
@@ -148,13 +145,13 @@ class AdvancedCacheManager {
       const cacheKey = this.key(namespace, key);
       const serialized = this.compress(entry);
 
-      await (redis as any).setex(cacheKey, ttl + staleTtl, serialized);
+      await redis.setEx(cacheKey, ttl + staleTtl, serialized);
 
       for (const tag of entry.tags) {
-        await (redis as any).sadd(`cache:tags:${tag}`, cacheKey);
+        await redis.sAdd(`cache:tags:${tag}`, cacheKey);
       }
     } catch (error) {
-      logger.error('Cache set error:', error);
+      logger.error('Cache set error', toError(error));
     }
   }
 
@@ -175,10 +172,6 @@ class AdvancedCacheManager {
   }
 
   async delete(namespace: string, key: string): Promise<void> {
-    if (!await isRedisAvailable()) {
-      return;
-    }
-
     try {
       const redis = await getRedisClient();
       const cacheKey = this.key(namespace, key);
@@ -187,47 +180,39 @@ class AdvancedCacheManager {
       if (value) {
         const entry: CacheEntry<any> = this.decompress(value);
         for (const tag of entry.tags) {
-          await (redis as any).srem(`cache:tags:${tag}`, cacheKey);
+          await redis.sRem(`cache:tags:${tag}`, cacheKey);
         }
       }
 
       await redis.del(cacheKey);
       this.stats.evictions++;
     } catch (error) {
-      logger.error('Cache delete error:', error);
+      logger.error('Cache delete error', toError(error));
     }
   }
 
   async invalidateByTag(tag: string): Promise<number> {
-    if (!await isRedisAvailable()) {
-      return 0;
-    }
-
     try {
       const redis = await getRedisClient();
       const cacheKey = `cache:tags:${tag}`;
-      const keys = await (redis as any).smembers(cacheKey);
+      const keys = await redis.sMembers(cacheKey);
 
       if (keys.length === 0) {
         return 0;
       }
 
-      await redis.del(...keys);
+      await redis.del(keys);
       await redis.del(cacheKey);
 
       this.stats.evictions += keys.length;
       return keys.length;
     } catch (error) {
-      logger.error('Cache invalidate by tag error:', error);
+      logger.error('Cache invalidate by tag error', toError(error));
       return 0;
     }
   }
 
   async invalidateNamespace(namespace: string): Promise<void> {
-    if (!await isRedisAvailable()) {
-      return;
-    }
-
     try {
       const redis = await getRedisClient();
       const pattern = `cache:${namespace}:*`;
@@ -243,15 +228,11 @@ class AdvancedCacheManager {
         }
       } while (cursor !== 0);
     } catch (error) {
-      logger.error('Cache invalidate namespace error:', error);
+      logger.error('Cache invalidate namespace error', toError(error));
     }
   }
 
   async clear(): Promise<void> {
-    if (!await isRedisAvailable()) {
-      return;
-    }
-
     try {
       const redis = await getRedisClient();
 
@@ -267,7 +248,7 @@ class AdvancedCacheManager {
 
       this.version++;
     } catch (error) {
-      logger.error('Cache clear error:', error);
+      logger.error('Cache clear error', toError(error));
     }
   }
 

@@ -3,8 +3,6 @@
  * Full-text search, faceting, autocomplete, relevance ranking, personalization
  */
 
-import { logger } from '../logger';
-
 // ==================== FULL-TEXT SEARCH ====================
 
 export interface SearchResult<T> {

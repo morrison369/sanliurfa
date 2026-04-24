@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface UserData {
   id: string;
   email: string;
@@ -45,7 +44,7 @@ export default function UserProfile() {
       setIsLoading(true);
       const response = await fetch('/api/auth/me');
       if (!response.ok) {
-        throw new Error('Failed to fetch user data');
+        throw new Error('Kullanıcı bilgisi alınamadı.');
       }
       const userData = await response.json();
       setUser({
@@ -56,7 +55,7 @@ export default function UserProfile() {
         createdAt: userData.created_at
       });
     } catch (error) {
-      console.error('Failed to load user data', error);
+      console.error('Kullanıcı bilgisi yüklenemedi:', error);
     } finally {
       setIsLoading(false);
     }
@@ -67,12 +66,12 @@ export default function UserProfile() {
     try {
       const response = await fetch('/api/activity');
       if (!response.ok) {
-        throw new Error('Failed to fetch activity');
+        throw new Error('Aktivite bilgisi alınamadı.');
       }
       const data = await response.json();
       setActivity(data.data || []);
     } catch (error) {
-      console.error('Failed to load activity', error);
+      console.error('Aktivite bilgisi yüklenemedi:', error);
     }
   };
 
@@ -104,7 +103,7 @@ export default function UserProfile() {
       case 'badge_earned':
         return `"${item.metadata?.badgeName || 'Rozet'}" rozeti kazandı`;
       case 'level_up':
-        return `Level ${item.metadata?.newLevel || '?'} oldu`;
+        return `Seviye ${item.metadata?.newLevel || '?'} oldu`;
       case 'comment_posted':
         return 'Blog yazısına yorum yaptı';
       case 'points_earned':
@@ -132,13 +131,13 @@ export default function UserProfile() {
 
   return (
     <div className="container-custom py-12">
-      {/* Header */}
+      {/* Başlık */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Profilim</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">Profil bilgileri ve tercihlerini yönet</p>
       </div>
 
-      {/* Tabs */}
+      {/* Sekmeler */}
       <div className="mb-8">
         <div className="flex flex-wrap gap-2 border-b border-gray-200 dark:border-gray-700">
           {tabs.map((tab) => (
@@ -158,7 +157,7 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {/* Profile Tab */}
+      {/* Profil sekmesi */}
       {activeTab === 'profile' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
           <div className="space-y-6">
@@ -217,7 +216,7 @@ export default function UserProfile() {
         </div>
       )}
 
-      {/* Favorites Tab */}
+      {/* Favoriler sekmesi */}
       {activeTab === 'favorites' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -230,7 +229,7 @@ export default function UserProfile() {
         </div>
       )}
 
-      {/* Activity Tab */}
+      {/* Aktivite sekmesi */}
       {activeTab === 'activity' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
           {activity.length > 0 ? (
@@ -270,7 +269,7 @@ export default function UserProfile() {
         </div>
       )}
 
-      {/* Settings Tab */}
+      {/* Ayarlar sekmesi */}
       {activeTab === 'settings' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
           <div className="space-y-6">
@@ -301,7 +300,7 @@ export default function UserProfile() {
         </div>
       )}
 
-      {/* Security Tab */}
+      {/* Güvenlik sekmesi */}
       {activeTab === 'security' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
           <div className="space-y-6">

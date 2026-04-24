@@ -1,20 +1,38 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
+
+interface AuditLogPayload {
+  entity?: string;
+  entityId?: string;
+  action?: string;
+  metadata?: unknown;
+  changes?: {
+    old?: unknown;
+    new?: unknown;
+  };
+}
+
+interface AuditInsertRow {
+  id: string;
+}
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const data = await request.json();
+    const data = (await request.json()) as AuditLogPayload;
 
     if (!data.entity || !data.action) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Zorunlu alanlar eksik',
+        type: '/problems/audit-log-validation',
+        instance: '/api/audit/log',
+      });
     }
 
-    const result = await query(
+    const result = await query<AuditInsertRow>(
       `INSERT INTO audit_logs
          (user_id, action, resource_type, resource_id, description,
           old_values, new_values, ip_address, user_agent, status)
@@ -28,7 +46,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         data.metadata ? JSON.stringify(data.metadata) : null,
         data.changes?.old ? JSON.stringify(data.changes.old) : null,
         data.changes?.new ? JSON.stringify(data.changes.new) : null,
-        locals.clientAddress || null,
+        request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
         request.headers.get('user-agent') || null,
       ]
     );
@@ -39,17 +57,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Audit log POST error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Audit Log Yazılamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/audit-log-post-failed',
+      instance: '/api/audit/log',
+    });
   }
 };
 
 export const GET: APIRoute = async ({ request, locals }) => {
   if (!locals.user || locals.user.role !== 'admin') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 401,
+      title: 'Unauthorized',
+      detail: 'Admin yetkisi gerekli',
+      type: '/problems/audit-log-unauthorized',
+      instance: '/api/audit/log',
     });
   }
 
@@ -60,7 +85,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const actor  = url.searchParams.get('actor');
     const limit  = Math.min(parseInt(url.searchParams.get('limit') || '100'), 1000);
 
-    const params: any[] = [];
+    const params: string[] = [];
     let where = 'WHERE 1=1';
     let idx = 1;
 
@@ -93,9 +118,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Audit log GET error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Audit Log Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/audit-log-get-failed',
+      instance: '/api/audit/log',
+    });
   }
 };

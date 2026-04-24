@@ -5,7 +5,7 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const PUT: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -37,7 +37,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
 export const PATCH = PUT;
 
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

@@ -1,11 +1,18 @@
 ---
+
 import Layout from '../../../layouts/Layout.astro';
 import { query, queryOne } from '../../../lib/postgres';
+import { getMediaAsset, getSeoOverride } from '../../../lib/site-platform';
+import { getSiteBranding } from '../../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const { ilce, kategori } = Astro.params;
 let district: any = null;
 let category: any = null;
 let places: any[] = [];
+let heroImage = '/images/hero/hero-home.webp';
+let seoOverridePayload: Record<string, any> | null = null;
+let seoOverrideCanonical = '';
 
 try {
   district = await queryOne("SELECT * FROM districts WHERE slug = $1", [ilce]);
@@ -27,10 +34,42 @@ try {
   console.error('Error:', e);
 }
 
+try {
+  const [heroAsset, seoOverride] = await Promise.all([
+    getMediaAsset(
+      `district-category.${String(ilce || '').trim()}.${String(kategori || '').trim()}.hero`,
+    ),
+    getSeoOverride(
+      'district-category',
+      `${String(ilce || '').trim()}/${String(kategori || '').trim()}`,
+    ),
+  ]);
+  heroImage = String(heroAsset?.url || heroImage);
+  seoOverridePayload = seoOverride?.seo_payload || null;
+  seoOverrideCanonical = String(seoOverride?.canonical_path || '').trim();
+} catch (e) {
+  console.error('Error loading district category platform data:', e);
+}
+
 const seo = {
   title: `${district?.name || ilce} ${category?.name || kategori} | Şanlıurfa`,
   description: `${district?.name} ilçesindeki en iyi ${(category?.name || '').toLowerCase()} mekanları.`,
+  canonical: `/ilceler/${ilce}/${kategori}`,
+  keywords: [(district?.name || ilce) + ' ' + (category?.name || kategori).toLowerCase(), 'şanlıurfa ' + (category?.name || kategori).toLowerCase()],
+  ogImage: '/images/hero/hero-home.webp',
 };
+
+if (seoOverridePayload) {
+  Object.assign(seo, seoOverridePayload, {
+    canonical: seoOverrideCanonical || seoOverridePayload.canonical || seo.canonical,
+  });
+}
+const faqItems = [
+  { S: `${district?.name || ilce} ilçesinde ${category?.name || kategori} var mı?`, C: `${district?.name || ilce} ilçesindeki ${category?.name || kategori} mekanları puan ve öne çıkarılma durumuna göre listelenmiştir.` },
+  { S: `${category?.name || kategori} mekanlarına nasıl ulaşabilirim?`, C: `Mekan adreslerine tıklayarak harita üzerinde konumlarını görebilir ve yol tarifi alabilirsiniz.` },
+  { S: `${district?.name || ilce} ilçesinde başka hangi kategoriler var?`, C: `${district?.name || ilce} ilçesinin tüm mekan kategorileri için /ilceler/${ilce} sayfasını ziyaret edebilirsiniz.` },
+];
+
 ---
 
 <Layout seo={seo}>
@@ -46,10 +85,20 @@ const seo = {
       </div>
     </div>
 
-    <div class="bg-gradient-to-br from-teal-700 to-teal-900 text-white py-10">
+    <div class="relative overflow-hidden bg-gradient-to-br from-teal-700 to-teal-900 text-white py-10">
+      <img
+        src={heroImage}
+        alt={`${district?.name || ilce} ${category?.name || kategori} hero`}
+        class="absolute inset-0 h-full w-full object-cover opacity-15"
+        loading="eager"
+        onerror="this.style.display='none'"
+      />
+      <div class="absolute inset-0 bg-gradient-to-br from-teal-900/85 to-teal-700/80"></div>
       <div class="container mx-auto px-4">
-        <h1 class="text-3xl font-bold">{district?.name} {category?.name}</h1>
-        <p class="text-teal-100 mt-1">{places.length} mekan bulundu</p>
+        <div class="relative">
+          <h1 class="text-3xl font-bold">{district?.name} {category?.name}</h1>
+          <p class="text-teal-100 mt-1">{places.length} mekan bulundu</p>
+        </div>
       </div>
     </div>
 
@@ -57,12 +106,23 @@ const seo = {
       {places.length > 0 ? (
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {places.map((place) => (
-            <a href={`/places/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+            <a href={`/isletme/${place.slug}`} class="group overflow-hidden bg-white rounded-xl shadow-sm hover:shadow-lg transition-all">
+              <div class="h-36 overflow-hidden bg-gradient-to-br from-teal-50 to-cyan-50">
+                <img
+                  src={place.cover_image || place.images?.[0] || heroImage}
+                  alt={place.name}
+                  class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                  loading="lazy"
+                  onerror={`this.setAttribute('src','${heroImage}')`}
+                />
+              </div>
+              <div class="p-5">
               <h3 class="font-bold text-gray-900 group-hover:text-teal-600">{place.name}</h3>
               <p class="text-sm text-gray-500 mt-2">{place.short_description || place.address}</p>
               <div class="flex items-center gap-1 mt-3">
                 <span class="text-yellow-500">★</span>
                 <span class="font-medium">{place.rating || '-'}</span>
+              </div>
               </div>
             </a>
           ))}
@@ -75,4 +135,42 @@ const seo = {
       )}
     </div>
   </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `${district?.name || ilce} ${category?.name || kategori}`,
+    description: `${district?.name} ilçesindeki en iyi ${(category?.name || '').toLowerCase()} mekanları.`,
+    url: `${baseUrl}/ilceler/${ilce}/${kategori}`,
+    about: { '@type': 'City', name: 'Şanlıurfa' },
+    itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'LocalBusiness',
+        '@id': `${baseUrl}/isletme/${p.slug}`,
+        name: p.name,
+        url: `${baseUrl}/isletme/${p.slug}`,
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'İlçeler', item: `${baseUrl}/ilceler` },
+      { '@type': 'ListItem', position: 3, name: district?.name || ilce, item: `${baseUrl}/ilceler/${ilce}` },
+      { '@type': 'ListItem', position: 4, name: category?.name || kategori, item: `${baseUrl}/ilceler/${ilce}/${kategori}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

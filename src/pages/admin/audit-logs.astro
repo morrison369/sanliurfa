@@ -3,14 +3,14 @@ import Layout from '../../layouts/Layout.astro';
 import AuditLogViewer from '../../components/admin/AuditLogViewer';
 
 const seo = {
-  title: 'Audit Logs - Şanlıurfa.com Admin',
+  title: 'Denetim Kayıtları - Sanliurfa.com Yönetim',
   description: 'Sistem aktivitesi ve değişiklikleri izle',
-  noindex: true
+  noIndex: true
 };
 ---
 
 <Layout seo={seo}>
   <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20">
-    <AuditLogViewer client:load />
+    <AuditLogViewer client:visible />
   </div>
 </Layout>

@@ -50,14 +50,14 @@
 Host: 168.119.79.238
 Port: 77
 User: sanliur
-Pass: BcqH7t5zNKfw
+Pass: CHANGE_ME_CWP_SSH_PASSWORD
 ```
 
 ### CWP Panel
 ```
 URL: https://168.119.79.238:2083
 User: sanliur
-Pass: BcqH7t5zNKfw
+Pass: CHANGE_ME_CWP_SSH_PASSWORD
 ```
 
 ### PostgreSQL
@@ -66,7 +66,7 @@ Host: localhost
 Port: 5432
 Database: sanliurfa
 User: sanliurfa_user
-Pass: Urfa_2024_Secure!
+Pass: CHANGE_ME_DB_PASSWORD
 ```
 
 ---

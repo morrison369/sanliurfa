@@ -68,7 +68,7 @@ export async function getContentFlags(status: string = 'pending', limit: number 
 export async function assignModerationQueueItem(queueItemId: string, adminId: string): Promise<void> {
   try {
     await update('moderation_queue', { id: queueItemId }, {
-      assigned_to_admin_id: adminId,
+      assigned_to: adminId,
       status: 'in_review',
       updated_at: new Date()
     });
@@ -83,7 +83,7 @@ export async function resolveModerationQueueItem(queueItemId: string, adminId: s
   try {
     await update('moderation_queue', { id: queueItemId }, {
       status: 'resolved',
-      assigned_to_admin_id: adminId,
+      assigned_to: adminId,
       updated_at: new Date()
     });
     logger.info('Queue item resolved', { queueItemId, adminId, resolution });

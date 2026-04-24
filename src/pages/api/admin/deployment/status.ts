@@ -9,19 +9,19 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.isAdmin) {
       recordRequest('GET', '/api/admin/deployment/status', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
+      return apiError(ErrorCode.FORBIDDEN, 'Admin yetkisi gerekli', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const environment = getCurrentEnvironment();
-    const readiness = getReadinessStatus();
-    const checklist = getDeploymentChecklist();
+    const environment = await getCurrentEnvironment();
+    const readiness = await getReadinessStatus();
+    const checklist = await getDeploymentChecklist();
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/deployment/status', HttpStatus.OK, duration);
@@ -30,17 +30,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: {
-          environment: {
-            name: environment.name,
-            url: environment.url,
-            logLevel: environment.logLevel,
-            sslEnabled: environment.sslEnabled,
-            maintenanceMode: environment.maintenanceMode
-          },
+          environment,
           readiness,
           checklist,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       },
       HttpStatus.OK,
       requestId
@@ -48,7 +42,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/deployment/status', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Deployment status check failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Deployment durum kontrolü başarısız', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
+

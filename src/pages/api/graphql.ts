@@ -8,7 +8,7 @@
 
 import type { APIRoute } from 'astro';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async () => {
   return new Response(
     JSON.stringify({
       message: 'GraphQL endpoint ready',

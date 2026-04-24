@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface TwoFactorManagerProps {
   onStatusChange?: (enabled: boolean) => void;
 }
@@ -29,7 +28,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
       const response = await fetch('/api/users/2fa/status');
 
       if (!response.ok) {
-        throw new Error('Failed to check 2FA status');
+        throw new Error('2FA durumu kontrol edilemedi.');
       }
 
       const data = await response.json();
@@ -101,7 +100,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
       setSecret(null);
       onStatusChange?.(true);
 
-      // Auto-hide success message
+      // Başarı mesajını kısa süre sonra gizle.
       setTimeout(() => setSuccessMessage(null), 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -280,7 +279,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
               <div className="text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">QR Kod</p>
                 <div className="bg-white p-4 rounded inline-block">
-                  {/* QR code will be generated client-side with qrcode.react */}
+                  {/* QR kod istemci tarafında oluşturulur. */}
                   <div className="w-40 h-40 bg-gray-200 flex items-center justify-center rounded text-xs text-gray-500">
                     Tarama için QR kodu
                   </div>

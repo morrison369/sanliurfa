@@ -15,7 +15,7 @@
 1. CWP User Panel → **Software** → **Node.js Selector**
 2. **Node.js 22** seçin ve **Enable** tıklayın
 3. Uygulama yolu: `/home/sanliurfa/public_html`
-4. Port: `6000`
+4. Port: `4321`
 
 ### 1.3 PostgreSQL Veritabanı
 1. CWP User Panel → **SQL Services** → **PostgreSQL Databases**
@@ -142,8 +142,8 @@ pm2 start ecosystem.config.cjs --name sanliurfa-app
 
 ### Port Çakışması
 ```bash
-# Port 6000'i kullanan process
-netstat -tulpn | grep 6000
+# Port 4321'i kullanan process
+netstat -tulpn | grep 4321
 
 # Alternatif port
 PORT=6001 node dist/server/entry.mjs
@@ -201,7 +201,7 @@ pm2 status
 pm2 logs sanliurfa-app
 
 # Sağlık kontrolü
-curl http://127.0.0.1:6000/api/health
+curl http://127.0.0.1:4321/api/health
 ```
 
 ---

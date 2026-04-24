@@ -336,7 +336,6 @@ export class ThreatDetectionSystem {
 export class SecretManagement {
   private secrets = new Map<string, Record<string, any>>();
   private secretCount = 0;
-  private accessLog: Record<string, any>[] = [];
 
   /**
    * Store secret

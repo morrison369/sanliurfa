@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
 import { getWebhookAuditHistory, getUserActivitySummary } from '../../../lib/webhook/webhook-audit';
@@ -10,7 +9,7 @@ import { logger } from '../../../lib/logging';
  * Get audit logs or activity summary
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

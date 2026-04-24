@@ -2,7 +2,7 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 
 const user = Astro.locals.user;
-if (!user?.is_admin) {
+if (user?.role !== 'admin') {
   return Astro.redirect('/giris');
 }
 ---
@@ -62,3 +62,5 @@ if (!user?.is_admin) {
     display: none;
   }
 </style>
+
+

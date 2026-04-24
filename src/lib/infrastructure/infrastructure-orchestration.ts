@@ -116,7 +116,7 @@ export class ContainerManager {
   /**
    * Get container logs
    */
-  getContainerLogs(containerId: string, limit?: number): LogEntry[] {
+  getContainerLogs(_containerId: string, limit?: number): LogEntry[] {
     const logs: LogEntry[] = [];
 
     for (let i = 0; i < (limit || 10); i++) {

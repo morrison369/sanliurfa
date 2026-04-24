@@ -1,6 +1,6 @@
 # UI Components Library
 
-Complete component library for Şanlıurfa.com with accessibility, responsive design, and Turkish language support.
+Complete component library for Sanliurfa.com with accessibility, responsive design, and Turkish language support.
 
 ## Core Components
 

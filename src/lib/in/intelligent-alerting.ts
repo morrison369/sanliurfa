@@ -238,6 +238,4 @@ export const alertRouter = new AlertRouter();
 export const alertDeduplicator = new AlertDeduplicator();
 export const dynamicThresholdManager = new DynamicThresholdManager();
 
-export type { AlertRule, Alert, AlertRoute, DynamicThreshold };
-
-
+export { AlertRule, Alert, AlertRoute, DynamicThreshold };

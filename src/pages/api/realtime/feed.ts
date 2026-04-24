@@ -15,6 +15,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   }
 
   logger.info('Real-time feed connection established', { userId: user.id });
+  const closeAfterInitial = new URL(request.url).searchParams.get('once') === '1';
 
   // SSE headers
   const headers = {
@@ -30,9 +31,23 @@ export const GET: APIRoute = async ({ request, locals }) => {
   const response = new Response(
     new ReadableStream({
       async start(controller) {
+        const closeStream = () => {
+          if (isClosed) return;
+          isClosed = true;
+          try {
+            controller.close();
+          } catch {
+            // Stream may already be closed by runtime abort.
+          }
+        };
+
         try {
           // Send initial connection message
           controller.enqueue(`data: ${JSON.stringify({ type: 'connected', userId: user.id })}\n\n`);
+          if (closeAfterInitial) {
+            closeStream();
+            return;
+          }
 
           // On first tick, establish baseline activity ID (no event sent)
           let isFirstTick = true;
@@ -41,7 +56,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
           const interval = setInterval(async () => {
             if (isClosed) {
               clearInterval(interval);
-              controller.close();
               return;
             }
 
@@ -50,10 +64,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
               if (isFirstTick) {
                 isFirstTick = false;
                 const baselineResult = await queryOne(
-                  `SELECT id FROM user_activity
-                   INNER JOIN followers f ON user_activity.user_id = f.following_id
+                  `SELECT ua.id FROM user_activity ua
+                   INNER JOIN followers f ON ua.user_id = f.following_id
                    WHERE f.follower_id = $1
-                   ORDER BY user_activity.created_at DESC LIMIT 1`,
+                   ORDER BY ua.created_at DESC LIMIT 1`,
                   [user.id]
                 );
                 if (baselineResult) {
@@ -105,22 +119,25 @@ export const GET: APIRoute = async ({ request, locals }) => {
                 type: 'error',
                 message: 'Server error'
               };
-              controller.enqueue(`data: ${JSON.stringify(errorData)}\n\n`);
+              if (!isClosed) {
+                controller.enqueue(`data: ${JSON.stringify(errorData)}\n\n`);
+              }
             }
           }, 15000); // 15 second interval
 
           // Handle client disconnect
           request.signal.addEventListener('abort', () => {
-            isClosed = true;
             clearInterval(interval);
-            controller.close();
+            closeStream();
             logger.info('Real-time feed connection closed', { userId: user.id });
           });
         } catch (error) {
           logger.error('SSE setup failed', error instanceof Error ? error : new Error(String(error)), {
             userId: user.id
           });
-          controller.close();
+          if (!isClosed) {
+            closeStream();
+          }
         }
       }
     }),

@@ -53,7 +53,7 @@ export const defaultTemplates: Record<string, EmailTemplate> = {
 <body>
   <div class="container">
     <div class="header">
-      <h1>Şanlıurfa'ya Hoş Geldiniz!</h1>
+      <h1>Şanlıurfa’ya Hoş Geldiniz!</h1>
     </div>
     <div class="content">
       <p>Merhaba {{name}},</p>

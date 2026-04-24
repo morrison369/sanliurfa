@@ -6,10 +6,18 @@ on:
   pull_request:
     branches: [main, develop]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   dead-code-check:
     name: 🔍 Dead Code Detection
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       
@@ -30,9 +38,14 @@ jobs:
         run: npx unimported --flow=stdout
         continue-on-error: true
 
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
+
   circular-dependency-check:
     name: 🔄 Circular Dependency Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       
@@ -48,9 +61,14 @@ jobs:
       - name: Check circular dependencies
         run: npx madge --circular --extensions ts src/lib/index.ts
 
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
+
   bundle-size-check:
     name: 📦 Bundle Size Check
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       
@@ -65,14 +83,22 @@ jobs:
       
       - name: Build
         run: npm run build
+
+      - name: Runtime single-process gate
+        run: npm run runtime:single-process:gate
       
       - name: Check bundle size
         run: npx bundlesize
         continue-on-error: true
 
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
+
   dependency-audit:
     name: 🔒 Security Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       
@@ -86,9 +112,14 @@ jobs:
         run: npm audit --audit-level=moderate
         continue-on-error: true
 
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
+
   lint-and-type-check:
     name: 🧹 Lint & Type Check
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       
@@ -106,3 +137,22 @@ jobs:
       
       - name: Type check
         run: npx tsc --noEmit --incremental
+
+      - name: Env gate (no dynamic import.meta.env)
+        run: npm run env:gate
+
+      - name: Workflow standards verify
+        run: npm run workflow:standards:verify
+
+      - name: Upload workflow standards report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workflow-standards-report-${{ github.job }}
+          path: |
+            docs/workflow-standards-report.json
+            docs/workflow-standards-report.md
+
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan

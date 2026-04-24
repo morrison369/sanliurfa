@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Tenant Detail API
  * Get, update tenant settings
@@ -13,7 +12,7 @@ import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -112,7 +111,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const PATCH: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

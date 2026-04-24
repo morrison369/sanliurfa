@@ -14,7 +14,7 @@ const FACEBOOK_APP_SECRET = process.env.FACEBOOK_APP_SECRET;
 const TWITTER_CLIENT_ID = process.env.TWITTER_CLIENT_ID;
 const TWITTER_CLIENT_SECRET = process.env.TWITTER_CLIENT_SECRET;
 
-const BASE_URL = process.env.SITE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.SITE_URL || 'http://localhost:4321';
 
 export interface SocialUser {
   id: string;
@@ -119,7 +119,7 @@ class GoogleAuth {
     if (result.rows.length === 0) {
       // Create new user
       const insertResult = await query(
-        `INSERT INTO users (email, full_name, avatar, provider, provider_id, created_at, status)
+        `INSERT INTO users (email, full_name, avatar_url, provider, provider_id, created_at, status)
          VALUES ($1, $2, $3, $4, $5, NOW(), 'active')
          RETURNING id`,
         [socialUser.email, socialUser.name, socialUser.picture, socialUser.provider, socialUser.id]
@@ -129,13 +129,13 @@ class GoogleAuth {
       // Update existing user with social info
       userId = (result.rows[0] as any).id;
       await query(
-        'UPDATE users SET provider = $1, provider_id = $2, avatar = $3 WHERE id = $4',
+        'UPDATE users SET provider = $1, provider_id = $2, avatar_url = $3 WHERE id = $4',
         [socialUser.provider, socialUser.id, socialUser.picture, userId]
       );
     }
 
     // Generate JWT
-    const token = await generateJWT(userId, socialUser.email);
+    const token = generateJWT(userId, socialUser.email);
 
     return {
       success: true,
@@ -220,7 +220,7 @@ class FacebookAuth {
 
     if (result.rows.length === 0) {
       const insertResult = await query(
-        `INSERT INTO users (email, full_name, avatar, provider, provider_id, created_at, status)
+        `INSERT INTO users (email, full_name, avatar_url, provider, provider_id, created_at, status)
          VALUES ($1, $2, $3, $4, $5, NOW(), 'active')
          RETURNING id`,
         [socialUser.email, socialUser.name, socialUser.picture, socialUser.provider, socialUser.id]
@@ -229,12 +229,12 @@ class FacebookAuth {
     } else {
       userId = (result.rows[0] as any).id;
       await query(
-        'UPDATE users SET provider = $1, provider_id = $2, avatar = $3 WHERE id = $4',
+        'UPDATE users SET provider = $1, provider_id = $2, avatar_url = $3 WHERE id = $4',
         [socialUser.provider, socialUser.id, socialUser.picture, userId]
       );
     }
 
-    const token = await generateJWT(userId, socialUser.email);
+    const token = generateJWT(userId, socialUser.email);
 
     return {
       success: true,
@@ -333,7 +333,7 @@ class TwitterAuth {
 
     if (result.rows.length === 0) {
       const insertResult = await query(
-        `INSERT INTO users (email, full_name, avatar, provider, provider_id, created_at, status)
+        `INSERT INTO users (email, full_name, avatar_url, provider, provider_id, created_at, status)
          VALUES ($1, $2, $3, $4, $5, NOW(), 'active')
          RETURNING id`,
         [socialUser.email, socialUser.name, socialUser.picture, socialUser.provider, socialUser.id]
@@ -343,7 +343,7 @@ class TwitterAuth {
       userId = (result.rows[0] as any).id;
     }
 
-    const token = await generateJWT(userId, socialUser.email);
+    const token = generateJWT(userId, socialUser.email);
 
     return {
       success: true,

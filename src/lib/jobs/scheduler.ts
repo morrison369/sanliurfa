@@ -195,3 +195,4 @@ registerJob('backup', '0 3 * * 0', backupDatabase); // Weekly on Sunday at 3 AM
 registerJob('trending', '0 */6 * * *', updateTrendingPlaces); // Every 6 hours
 registerJob('notifications', '*/5 * * * *', sendScheduledNotifications); // Every 5 minutes
 registerJob('refresh-views', '0 4 * * *', refreshMaterializedViews); // Daily at 4 AM
+

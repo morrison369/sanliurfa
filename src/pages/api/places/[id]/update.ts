@@ -1,16 +1,20 @@
 // API: Place update (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { update } from '../../../../lib/postgres';
+import { problemJson } from '../../../../lib/api';
 
 export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
   try {
     const { id } = params;
     
     if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/places-update-unauthorized',
+        instance: `/api/places/${id}/update`,
+      });
     }
 
     const formData = await request.formData();

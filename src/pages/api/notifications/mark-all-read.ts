@@ -1,14 +1,18 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 // Tüm bildirimleri okundu işaretle
 export const POST: APIRoute = async ({ locals }) => {
   const user = locals.user;
   if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    return problemJson({
       status: 401,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Unauthorized',
+      detail: 'Giriş gerekli',
+      type: '/problems/auth-required',
+      instance: '/api/notifications/mark-all-read',
     });
   }
 
@@ -24,9 +28,12 @@ export const POST: APIRoute = async ({ locals }) => {
     });
   } catch (error: any) {
     logger.error('Mark all read error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Server Error',
+      detail: 'Bildirimler güncellenirken hata oluştu',
+      type: '/problems/notifications-mark-all-read-failed',
+      instance: '/api/notifications/mark-all-read',
     });
   }
 };

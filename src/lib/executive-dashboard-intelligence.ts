@@ -272,4 +272,4 @@ export const executiveScorecardGenerator = new ExecutiveScorecardGenerator();
 export const boardReportGenerator = new BoardReportGenerator();
 export const trendAlertEngine = new TrendAlertEngine();
 
-export { KPIRecord, ExecutiveScorecardRecord, BoardReportRecord, TrendAlertRecord };
+export {KPIRecord, ExecutiveScorecardRecord, BoardReportRecord, TrendAlertRecord};

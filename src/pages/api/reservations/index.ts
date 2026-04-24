@@ -1,17 +1,21 @@
 import type { APIRoute } from 'astro';
-import { query, transaction } from '../../../lib/postgres';
-import { authenticateUser, requireAuth } from '../../../lib/auth/middleware';
+import { query } from '../../../lib/postgres';
+import { authenticateUser } from '../../../lib/auth/middleware';
 import { sendEmail } from '../../../lib/email';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 // Rezervasyonları listele (işletme sahibi veya admin)
 export const GET: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/reservations-list-unauthorized',
+        instance: '/api/reservations',
       });
     }
 
@@ -65,9 +69,12 @@ export const GET: APIRoute = async (context) => {
     });
   } catch (error) {
     logger.error('Reservations list error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Rezervasyonlar Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/reservations-list-failed',
+      instance: '/api/reservations',
     });
   }
 };
@@ -90,21 +97,24 @@ export const POST: APIRoute = async (context) => {
 
     // Validasyon
     if (!placeId || !customerName || !customerPhone || !reservationDate || !reservationTime || !partySize) {
-      return new Response(JSON.stringify({ 
-        error: 'Missing required fields',
-        fields: ['placeId', 'customerName', 'customerPhone', 'reservationDate', 'reservationTime', 'partySize']
-      }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Zorunlu alanlar eksik',
+        type: '/problems/reservations-create-validation',
+        instance: '/api/reservations',
       });
     }
 
     // Telefon validasyonu
     const phoneRegex = /^[0-9]{10,11}$/;
     if (!phoneRegex.test(customerPhone.replace(/\D/g, ''))) {
-      return new Response(JSON.stringify({ error: 'Invalid phone number' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Telefon numarası geçersiz',
+        type: '/problems/reservations-create-phone-invalid',
+        instance: '/api/reservations',
       });
     }
 
@@ -116,16 +126,22 @@ export const POST: APIRoute = async (context) => {
     maxDate.setMonth(maxDate.getMonth() + 3);
 
     if (reservationDateObj < today) {
-      return new Response(JSON.stringify({ error: 'Reservation date cannot be in the past' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Rezervasyon tarihi geçmişte olamaz',
+        type: '/problems/reservations-create-date-past',
+        instance: '/api/reservations',
       });
     }
 
     if (reservationDateObj > maxDate) {
-      return new Response(JSON.stringify({ error: 'Reservation can only be made up to 3 months in advance' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Rezervasyon en fazla 3 ay sonrası için yapılabilir',
+        type: '/problems/reservations-create-date-max',
+        instance: '/api/reservations',
       });
     }
 
@@ -136,17 +152,23 @@ export const POST: APIRoute = async (context) => {
     );
 
     if (placeResult.rows.length === 0) {
-      return new Response(JSON.stringify({ error: 'Place not found' }), {
+      return problemJson({
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Bulunamadı',
+        detail: 'Mekan bulunamadı',
+        type: '/problems/reservations-create-place-not-found',
+        instance: '/api/reservations',
       });
     }
 
     const place = placeResult.rows[0];
     if (!place.accepts_reservations) {
-      return new Response(JSON.stringify({ error: 'This place does not accept reservations' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Bu mekan rezervasyon kabul etmiyor',
+        type: '/problems/reservations-create-place-not-accepting',
+        instance: '/api/reservations',
       });
     }
 
@@ -159,11 +181,12 @@ export const POST: APIRoute = async (context) => {
     );
 
     if (existingResult.rows.length > 0) {
-      return new Response(JSON.stringify({ 
-        error: 'You already have a reservation for this date and time'
-      }), {
+      return problemJson({
         status: 409,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Çakışma',
+        detail: 'Bu tarih ve saat için mevcut rezervasyonunuz var',
+        type: '/problems/reservations-create-conflict',
+        instance: '/api/reservations',
       });
     }
 
@@ -220,9 +243,12 @@ export const POST: APIRoute = async (context) => {
     });
   } catch (error) {
     logger.error('Reservation creation error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Rezervasyon Oluşturulamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/reservations-create-failed',
+      instance: '/api/reservations',
     });
   }
 };

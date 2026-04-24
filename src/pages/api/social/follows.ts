@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
-import { followUser, unfollowUser, getFollowers, getFollowing, isFollowing } from '../../../lib/social/social-features';
+import { followUser, unfollowUser, getFollowers, getFollowing } from '../../../lib/social/social-features';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -51,12 +51,14 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'User ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
-    let data;
-    if (type === 'followers') {
-      data = await getFollowers(userId, limit);
-    } else if (type === 'following') {
-      data = await getFollowing(userId, limit);
-    } else {
+    const data =
+      type === 'followers'
+        ? await getFollowers(userId, limit)
+        : type === 'following'
+          ? await getFollowing(userId, limit)
+          : null;
+
+    if (!data) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid type', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 

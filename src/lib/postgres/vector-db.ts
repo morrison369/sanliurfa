@@ -358,7 +358,4 @@ export const embeddingCache = new EmbeddingCache();
 export const similaritySearch = new SimilaritySearch();
 export const vectorIndexManager = new VectorIndexManager();
 
-export type { EmbeddingMetadata, StoredEmbedding, SimilarityResult, VectorSearchOptions, EmbeddingJob, VectorIndex };
-
-
-
+export { EmbeddingMetadata, StoredEmbedding, SimilarityResult, VectorSearchOptions, EmbeddingJob, VectorIndex };

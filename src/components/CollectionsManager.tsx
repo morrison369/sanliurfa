@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 
 interface Collection {
   id: string;
@@ -51,7 +51,7 @@ export default function CollectionsManager({ userId }: CollectionsManagerProps) 
     }
   };
 
-  const handleCreateCollection = async (e: React.FormEvent) => {
+  const handleCreateCollection = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!newCollectionForm.name.trim()) {

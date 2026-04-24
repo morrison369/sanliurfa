@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * User Leaderboards API
  * GET: Retrieve top users by different metrics (points, level, activity, recent)
@@ -12,7 +11,7 @@ import { logger } from '../../../lib/logging';
 import { getCache, setCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

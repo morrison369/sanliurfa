@@ -34,12 +34,10 @@ export async function awardPoints(
     );
 
     // Update user points
-    await update('users', userId, {
-      points: queryOne(
-        `SELECT (COALESCE(points, 0) + $1) as new_points FROM users WHERE id = $2`,
-        [amount, userId]
-      )
-    });
+    await query(
+      `UPDATE users SET points = COALESCE(points, 0) + $1 WHERE id = $2`,
+      [amount, userId]
+    );
 
     // Clear leaderboard cache
     await deleteCachePattern(`${LEADERBOARD_CACHE_KEY}*`);

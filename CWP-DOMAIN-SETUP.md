@@ -31,7 +31,7 @@
 
 1. **CWP Panel**'e giriş: https://168.119.79.238:2083
    - Kullanıcı: `sanliur`
-   - Şifre: `BcqH7t5zNKfw`
+   - Şifre: `CHANGE_ME_CWP_SSH_PASSWORD`
 
 2. **Sol Menü** → `Domains` → `Add Domain`
 

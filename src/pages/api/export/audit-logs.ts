@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
 import { convertToCSV, convertToJSON, getContentType, getFileExtension, getFormattedDate } from '../../../lib/export/export';
@@ -6,7 +5,7 @@ import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api'
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

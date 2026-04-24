@@ -2,9 +2,6 @@
  * Event Card Component
  * Displays event information in a card format
  */
-
-import React from 'react';
-
 interface EventCardProps {
   id: string;
   title: string;
@@ -22,7 +19,7 @@ interface EventCardProps {
 }
 
 export function EventCard({
-  id,
+  id: _id,
   title,
   slug,
   description,

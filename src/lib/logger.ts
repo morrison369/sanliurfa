@@ -37,27 +37,6 @@ class Logger {
     return `[${timestamp}] ${entry.level.toUpperCase()}: ${entry.message} ${contextStr}${errorStr}`;
   }
 
-  private async saveToDatabase(entry: LogEntry): Promise<void> {
-    if (!this.isProduction) return;
-
-    try {
-      // Lazy import to break circular dependency (logger <-> postgres)
-      const { query } = await import('./postgres');
-      await query(
-        `INSERT INTO system_logs (level, message, context, metadata, created_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [
-          entry.level,
-          entry.message,
-          entry.context ? JSON.stringify(entry.context) : null,
-          entry.metadata ? JSON.stringify(entry.metadata) : null
-        ]
-      );
-    } catch (err) {
-      console.error('Failed to save log to database:', err);
-    }
-  }
-
   private log(entry: LogEntry): void {
     const formatted = this.formatMessage(entry);
 
@@ -78,30 +57,106 @@ class Logger {
         break;
     }
 
-    // Save to database in production
-    if (['error', 'fatal', 'warn'].includes(entry.level)) {
-      this.saveToDatabase(entry);
+    // Database log persistence intentionally disabled to keep logger client-safe.
+    // Persistent logs should be routed through dedicated server-only audit modules.
+  }
+
+  private normalizeContext(context?: LogContext | string): LogContext | undefined {
+    if (!context) return undefined;
+    if (typeof context === 'string') return { detail: context };
+    return context;
+  }
+
+  debug(message: string, context?: LogContext | string, metadata?: Record<string, any>): void {
+    this.log({ level: 'debug', message, context: this.normalizeContext(context), metadata });
+  }
+
+  info(message: string, context?: LogContext | string, metadata?: Record<string, any>): void {
+    this.log({ level: 'info', message, context: this.normalizeContext(context), metadata });
+  }
+
+  warn(message: string, context?: LogContext | string, metadata?: Record<string, any>): void {
+    this.log({ level: 'warn', message, context: this.normalizeContext(context), metadata });
+  }
+
+  error(
+    message: string,
+    errorOrContext?: unknown,
+    contextOrMetadata?: LogContext | Record<string, any> | string,
+    metadata?: Record<string, any>
+  ): void {
+    let normalizedError: Error | undefined;
+    let normalizedContext: LogContext | undefined;
+    let normalizedMetadata = metadata;
+
+    if (errorOrContext instanceof Error) {
+      normalizedError = errorOrContext;
+    } else if (typeof errorOrContext === 'string') {
+      normalizedError = new Error(errorOrContext);
+    } else if (errorOrContext && typeof errorOrContext === 'object') {
+      normalizedContext = errorOrContext as LogContext;
     }
+
+    if (typeof contextOrMetadata === 'string') {
+      normalizedContext = { ...(normalizedContext || {}), detail: contextOrMetadata };
+    } else if (contextOrMetadata && typeof contextOrMetadata === 'object') {
+      if (!normalizedContext) {
+        normalizedContext = contextOrMetadata as LogContext;
+      } else {
+        normalizedMetadata = {
+          ...(contextOrMetadata as Record<string, any>),
+          ...(normalizedMetadata || {})
+        };
+      }
+    }
+
+    this.log({
+      level: 'error',
+      message,
+      error: normalizedError,
+      context: normalizedContext,
+      metadata: normalizedMetadata
+    });
   }
 
-  debug(message: string, context?: LogContext, metadata?: Record<string, any>): void {
-    this.log({ level: 'debug', message, context, metadata });
-  }
+  fatal(
+    message: string,
+    errorOrContext?: unknown,
+    contextOrMetadata?: LogContext | Record<string, any> | string,
+    metadata?: Record<string, any>
+  ): void {
+    let normalizedError: Error | undefined;
+    let normalizedContext: LogContext | undefined;
+    let normalizedMetadata = metadata;
 
-  info(message: string, context?: LogContext, metadata?: Record<string, any>): void {
-    this.log({ level: 'info', message, context, metadata });
-  }
+    if (errorOrContext instanceof Error) {
+      normalizedError = errorOrContext;
+    } else if (typeof errorOrContext === 'string') {
+      normalizedError = new Error(errorOrContext);
+    } else if (errorOrContext && typeof errorOrContext === 'object') {
+      normalizedContext = errorOrContext as LogContext;
+    }
 
-  warn(message: string, context?: LogContext, metadata?: Record<string, any>): void {
-    this.log({ level: 'warn', message, context, metadata });
-  }
+    if (typeof contextOrMetadata === 'string') {
+      normalizedContext = { ...(normalizedContext || {}), detail: contextOrMetadata };
+    } else if (contextOrMetadata && typeof contextOrMetadata === 'object') {
+      if (!normalizedContext) {
+        normalizedContext = contextOrMetadata as LogContext;
+      } else {
+        normalizedMetadata = {
+          ...(contextOrMetadata as Record<string, any>),
+          ...(normalizedMetadata || {})
+        };
+      }
+    }
 
-  error(message: string, error?: Error, context?: LogContext, metadata?: Record<string, any>): void {
-    this.log({ level: 'error', message, error, context, metadata });
-  }
-
-  fatal(message: string, error?: Error, context?: LogContext, metadata?: Record<string, any>): void {
-    this.log({ level: 'fatal', message, error, context, metadata });
+    this.log({
+      level: 'fatal',
+      message,
+      error: normalizedError,
+      context: normalizedContext,
+      metadata: normalizedMetadata
+    });
   }
 
   // Request logging
@@ -117,19 +172,19 @@ class Logger {
   }
 
   // Performance logging
-  performance(operation: string, duration: number, context?: LogContext): void {
+  performance(operation: string, duration: number, context?: LogContext | string): void {
     this.log({
       level: duration > 1000 ? 'warn' : 'info',
       message: `Performance: ${operation} took ${duration}ms`,
-      context,
+      context: this.normalizeContext(context),
       metadata: { operation, duration }
     });
   }
 
   // Compat methods used across API endpoints (no-op implementations)
   setRequestId(_requestId: string): void { /* request-scoped logging not needed at module level */ }
-  logMutation(action: string, table: string, id: string, userId?: string): void {
-    this.info(`Mutation: ${action} ${table} ${id}`, { userId });
+  logMutation(action: string, table: string, id: string, userId?: string, meta?: Record<string, any>): void {
+    this.info(`Mutation: ${action} ${table} ${id}`, { userId, ...meta });
   }
   logQuery(sql: string, duration: number): void {
     if (duration > 500) this.warn(`Slow query (${duration}ms): ${sql.slice(0, 200)}`);

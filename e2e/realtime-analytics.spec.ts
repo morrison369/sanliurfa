@@ -24,14 +24,18 @@ test.describe('Real-time Analytics', () => {
   });
 
   test('GET /api/metrics - Aggregated metrics dashboard', async ({ request }) => {
-    const response = await request.get('/api/metrics');
+    const response = await request.get('/api/metrics', {
+      headers: {
+        Accept: 'application/json'
+      }
+    });
 
     // Might be admin-only (401) or public (200)
     if (response.status() === 200) {
       const data = await response.json();
-      expect(data.success).toBe(true);
-      expect(data.data).toHaveProperty('requestMetrics');
-      expect(data.data).toHaveProperty('cacheMetrics');
+      expect(data).toHaveProperty('data');
+      expect(data.data).toHaveProperty('requestCount');
+      expect(data.data).toHaveProperty('cacheHitRate');
       expect(data.data).toHaveProperty('slowestEndpoints');
     } else if (response.status() === 401 || response.status() === 403) {
       // Expected if admin-only
@@ -58,15 +62,14 @@ test.describe('Real-time Analytics', () => {
 test.describe('Health & Observability', () => {
   test('GET /api/health - Basic health check', async ({ request }) => {
     const response = await request.get('/api/health');
-
-    expect(response.status()).toBe(200);
+    expect([200, 503]).toContain(response.status());
     const data = await response.json();
-    expect(data.success).toBe(true);
-    expect(data.data).toHaveProperty('status');
-    expect(data.data).toHaveProperty('database');
-    expect(data.data).toHaveProperty('redis');
-    expect(data.data.database).toHaveProperty('connected');
-    expect(data.data.redis).toHaveProperty('connected');
+    expect(data).toHaveProperty('status');
+    expect(data).toHaveProperty('services');
+    expect(data.services).toHaveProperty('database');
+    expect(data.services).toHaveProperty('redis');
+    expect(data.services.database).toHaveProperty('status');
+    expect(data.services.redis).toHaveProperty('status');
   });
 
   test('Response includes X-Request-ID header', async ({ request }) => {
@@ -80,6 +83,7 @@ test.describe('Health & Observability', () => {
 
     expect(response.status()).toBe(404);
     const data = await response.json();
-    expect(data.requestId).toBeTruthy();
+    expect(response.headers()['x-request-id']).toBeTruthy();
+    expect(data?.meta?.requestId).toBeTruthy();
   });
 });

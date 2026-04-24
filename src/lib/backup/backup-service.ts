@@ -341,8 +341,8 @@ export async function restoreBackup(
  * Restore database
  */
 async function restoreDatabase(
-  backup: BackupRecord,
-  tables?: string[]
+  _backup: BackupRecord,
+  _tables?: string[]
 ): Promise<void> {
   // In production: psql < backup_file
   await new Promise(resolve => setTimeout(resolve, 5000));
@@ -351,14 +351,14 @@ async function restoreDatabase(
 /**
  * Restore files
  */
-async function restoreFiles(backup: BackupRecord): Promise<void> {
+async function restoreFiles(_backup: BackupRecord): Promise<void> {
   await new Promise(resolve => setTimeout(resolve, 3000));
 }
 
 /**
  * Restore config
  */
-async function restoreConfig(backup: BackupRecord): Promise<void> {
+async function restoreConfig(_backup: BackupRecord): Promise<void> {
   await new Promise(resolve => setTimeout(resolve, 1000));
 }
 

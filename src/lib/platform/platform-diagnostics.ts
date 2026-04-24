@@ -289,7 +289,7 @@ export class DependencyGraph {
   getCriticalPath(): string[] {
     const criticalServices: string[] = [];
 
-    for (const [service, deps] of this.dependencies) {
+    for (const [service, _deps] of this.dependencies) {
       // A service is critical if many others depend on it
       let dependentCount = 0;
       for (const [, serviceDeps] of this.dependencies) {

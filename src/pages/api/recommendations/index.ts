@@ -10,7 +10,7 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -31,17 +31,15 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const refresh = url.searchParams.get('refresh') === 'true';
 
     // Check cache first (unless refresh requested)
-    let recommendations;
-    if (refresh) {
-      recommendations = await generateUserRecommendations(locals.user.id, limit);
-    } else {
-      recommendations = await getUserRecommendations(locals.user.id, limit);
-
-      // If no cached recommendations, generate new ones
-      if (recommendations.length === 0) {
-        recommendations = await generateUserRecommendations(locals.user.id, limit);
-      }
-    }
+    const recommendations = refresh
+      ? await generateUserRecommendations(locals.user.id, limit)
+      : await (async () => {
+          const cached = await getUserRecommendations(locals.user.id, limit);
+          if (cached.length > 0) {
+            return cached;
+          }
+          return generateUserRecommendations(locals.user.id, limit);
+        })();
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/recommendations', HttpStatus.OK, duration);
@@ -73,7 +71,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

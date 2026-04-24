@@ -5,11 +5,20 @@
 import type { APIRoute } from 'astro';
 import { requireRole } from '../../../../lib/auth';
 import { getCategories, createCategory } from '../../../../lib/blog/db';
+import { problemJson } from '../../../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-blog-categories-unauthorized',
+        instance: '/api/admin/blog/categories',
+      });
+    }
 
     const categories = await getCategories();
     
@@ -18,25 +27,39 @@ export const GET: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to get categories' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Kategori Listesi Alınamadı',
+      detail: error instanceof Error ? error.message : 'Kategoriler alınamadı',
+      type: '/problems/admin-blog-categories-get-failed',
+      instance: '/api/admin/blog/categories',
+    });
   }
 };
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-blog-categories-unauthorized',
+        instance: '/api/admin/blog/categories',
+      });
+    }
 
     const body = await request.json();
     
     if (!body.slug || !body.name) {
-      return new Response(
-        JSON.stringify({ error: 'Slug and name are required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Slug ve isim zorunludur',
+        type: '/problems/admin-blog-categories-validation',
+        instance: '/api/admin/blog/categories',
+      });
     }
 
     const category = await createCategory({
@@ -55,9 +78,12 @@ export const POST: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to create category' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Kategori Oluşturulamadı',
+      detail: error instanceof Error ? error.message : 'Kategori oluşturulamadı',
+      type: '/problems/admin-blog-categories-create-failed',
+      instance: '/api/admin/blog/categories',
+    });
   }
 };

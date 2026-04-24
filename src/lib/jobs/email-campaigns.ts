@@ -30,7 +30,7 @@ export interface CampaignResult {
 /**
  * Send a campaign by ID
  */
-export async function sendCampaign(campaignId: string): Promise<boolean> {
+export async function sendCampaign(_campaignId: string): Promise<boolean> {
   // Stub implementation - would send the campaign
   return Promise.resolve(true);
 }
@@ -38,7 +38,7 @@ export async function sendCampaign(campaignId: string): Promise<boolean> {
 /**
  * Get campaign by ID
  */
-export async function getCampaign(campaignId: string): Promise<Campaign | null> {
+export async function getCampaign(_campaignId: string): Promise<Campaign | null> {
   return Promise.resolve(null);
 }
 
@@ -46,8 +46,8 @@ export async function getCampaign(campaignId: string): Promise<Campaign | null> 
  * Schedule a campaign
  */
 export async function scheduleCampaign(
-  campaignId: string,
-  scheduledAt: Date
+  _campaignId: string,
+  _scheduledAt: Date
 ): Promise<boolean> {
   return Promise.resolve(true);
 }
@@ -56,10 +56,10 @@ export async function scheduleCampaign(
  * Create new campaign
  */
 export async function createCampaign(
-  data: Partial<Campaign>
+  _data: Partial<Campaign>
 ): Promise<{ id: string; success: boolean }> {
   return Promise.resolve({
-    id: `camp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `camp_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
     success: true
   });
 }
@@ -74,7 +74,7 @@ export async function getScheduledCampaigns(): Promise<Campaign[]> {
 /**
  * Get campaign stats
  */
-export async function getCampaignStats(campaignId: string): Promise<{
+export async function getCampaignStats(_campaignId: string): Promise<{
   sent: number;
   delivered: number;
   opened: number;

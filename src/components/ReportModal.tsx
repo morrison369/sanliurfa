@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState} from 'react';
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -34,7 +34,7 @@ export default function ReportModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!reason) {

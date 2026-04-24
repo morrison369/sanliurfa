@@ -1,15 +1,50 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import LeaderboardsDisplay from '../components/LeaderboardsDisplay';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'Liderlik Tablosu - Sanliurfa.com',
+  description: 'Şanlıurfa topluluğunun en aktif üyeleri, rozetleri ve katkı sıralamaları',
+  keywords: ['liderlik tablosu', 'şanlıurfa topluluğu', 'rozet', 'sıralama', 'puan', 'aktif üyeler'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/liderlik-tablosu',
+};
+
+const faqItems = [
+  { S: 'Liderlik tablosu nasıl güncelleniyor?', C: "Liderlik tablosu, kullanıcıların yorum, beğeni ve katkı aktivitelerine göre gerçek zamanlı olarak güncellenir." },
+  { S: 'Liderlik tablosuna nasıl girebilirim?', C: "Mekan değerlendirmesi yaparak, toplulukta gönderi paylaşarak ve diğer kullanıcılarla etkileşime girerek puan kazanabilirsiniz." },
+  { S: 'Rozet nedir?', C: "Rozetler, belirli başarıları tamamlayan kullanıcılara verilen ödüllerdir. Liderlik tablosundaki rozet sayısı topluluk prestijinizi gösterir." },
+];
 ---
 
-<Layout title="Liderlik Tablosu - Şanlıurfa.com">
+<Layout seo={seo}>
   <div class="container-custom py-8">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">ğŸ† Liderlik Tablosu</h1>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Liderlik Tablosu</h1>
       <p class="text-gray-600 dark:text-gray-400 mt-2">Topluluğun en etkin üyelerini keşfet ve onlarla yarışa</p>
     </div>
 
-    <LeaderboardsDisplay client:load currentUserId={Astro.locals.user?.id} />
+    <LeaderboardsDisplay client:visible={{ rootMargin: '120px' }} />
   </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Liderlik Tablosu', item: `${baseUrl}/liderlik-tablosu` },
+    ],
+  })} is:inline />
 </Layout>
+
+

@@ -7,11 +7,21 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { logger } from '../../../../lib/logging';
+import { problemJson } from '../../../../lib/api';
+import {
+  type AdminUserStatusAction,
+  normalizeAdminUserStatusAction,
+  updateAdminUsersStatusBulk,
+} from '../../../../lib/admin/admin-users';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   if (!locals.user || locals.user.role !== 'admin') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 401,
+      title: 'Unauthorized',
+      detail: 'Admin yetkisi gerekli',
+      type: '/problems/admin-users-unauthorized',
+      instance: '/api/admin/users',
     });
   }
 
@@ -76,8 +86,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   } catch (error) {
     logger.error('Admin users GET error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 500,
+      title: 'Kullanıcılar Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/admin-users-get-failed',
+      instance: '/api/admin/users',
     });
   }
 };
@@ -85,8 +99,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
 // Toplu işlem
 export const PUT: APIRoute = async ({ request, locals }) => {
   if (!locals.user || locals.user.role !== 'admin') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 401,
+      title: 'Unauthorized',
+      detail: 'Admin yetkisi gerekli',
+      type: '/problems/admin-users-unauthorized',
+      instance: '/api/admin/users',
     });
   }
 
@@ -94,36 +112,42 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const { userIds, action } = await request.json();
 
     if (!Array.isArray(userIds) || userIds.length === 0) {
-      return new Response(JSON.stringify({ error: 'userIds gerekli' }), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'userIds gerekli',
+        type: '/problems/admin-users-validation',
+        instance: '/api/admin/users',
       });
     }
 
-    const statusMap: Record<string, string> = {
-      activate: 'active',
-      suspend:  'suspended',
-      delete:   'deleted',
-    };
-
-    if (!statusMap[action]) {
-      return new Response(JSON.stringify({ error: 'Geçersiz action' }), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
+    let normalizedAction: AdminUserStatusAction;
+    try {
+      normalizedAction = normalizeAdminUserStatusAction(action);
+    } catch {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Geçersiz action',
+        type: '/problems/admin-users-action-invalid',
+        instance: '/api/admin/users',
       });
     }
 
-    await query(
-      `UPDATE users SET status = $1, updated_at = NOW() WHERE id = ANY($2)`,
-      [statusMap[action], userIds]
-    );
+    const result = await updateAdminUsersStatusBulk(userIds, locals.user.id, normalizedAction);
 
-    return new Response(JSON.stringify({ success: true, action, count: userIds.length }), {
+    return new Response(JSON.stringify(result), {
       status: 200, headers: { 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     logger.error('Admin users PUT error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 500,
+      title: 'Toplu İşlem Başarısız',
+      detail: 'Sunucu hatası',
+      type: '/problems/admin-users-put-failed',
+      instance: '/api/admin/users',
     });
   }
 };

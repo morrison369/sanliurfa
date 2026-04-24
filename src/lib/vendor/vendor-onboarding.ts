@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Vendor Onboarding
  * Handles vendor registration and setup process
@@ -231,6 +230,7 @@ export async function getOnboardingProgress(userId: string): Promise<VendorOnboa
 
     return results.map((r: any) => ({
       step: r.step,
+      name: r.name || `Step ${r.step}`,
       completed: !!r.data,
       data: r.data ? JSON.parse(r.data) : {}
     }));

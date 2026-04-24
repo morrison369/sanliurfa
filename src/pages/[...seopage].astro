@@ -6,6 +6,7 @@
  */
 import Layout from '../layouts/Layout.astro';
 import { query, queryOne } from '../lib/postgres';
+import { getSiteBranding } from '../lib/site-branding';
 
 const slug = Astro.params.seopage;
 if (!slug) return Astro.redirect('/');
@@ -13,11 +14,286 @@ if (!slug) return Astro.redirect('/');
 let page: any = null;
 let places: any[] = [];
 
+const fallbackSeoPages: Record<string, any> = {
+  'en-iyi-kebapcilar': {
+    slug: 'en-iyi-kebapcilar',
+    title: 'Şanlıurfa En İyi Kebapçılar',
+    heading: 'Şanlıurfa En İyi Kebapçılar',
+    meta_title: 'Şanlıurfa En İyi Kebapçılar | Sanliurfa.com',
+    meta_description:
+      'Şanlıurfa kebapçıları, Urfa kebabı, ciğer, lahmacun ve yöresel lezzet rotaları için güncel rehber.',
+    intro_text:
+      "Şanlıurfa'da kebap deneyimi sadece yemek değil, sıra gecesi kültürü, isot, açık ekmek ve yerel servis geleneğiyle birlikte yaşanan şehir hafızasıdır.",
+    category_filter: 'kebapcilar',
+    sort_by: 'rating',
+    limit_count: 20,
+    fallback_places: [
+      {
+        name: 'Urfa Kebap Rotası',
+        slug: 'urfa-kebap-rotasi',
+        short_description: 'Urfa kebabı, açık ekmek, isot ve közlenmiş sebzelerle klasik Şanlıurfa kebap deneyimi.',
+        district_name: 'Merkez',
+        rating: 4.9,
+        review_count: 1280,
+        price_range: '₺₺',
+      },
+      {
+        name: 'Ciğer ve Kebap Durağı',
+        slug: 'ciger-ve-kebap-duragi',
+        short_description: 'Sabah ciğeri ve akşam kebabı geleneğini aynı şehir lezzet aksında birleştiren öneri rotası.',
+        district_name: 'Eyyübiye',
+        rating: 4.8,
+        review_count: 940,
+        price_range: '₺₺',
+      },
+      {
+        name: 'Sıra Gecesi Kebap Deneyimi',
+        slug: 'sira-gecesi-kebap-deneyimi',
+        short_description: 'Kebap, çiğ köfte, mırra ve yerel müzik kültürünü birlikte deneyimlemek isteyenler için.',
+        district_name: 'Haliliye',
+        rating: 4.7,
+        review_count: 760,
+        price_range: '₺₺₺',
+      },
+    ],
+    faq: [
+      {
+        S: "Şanlıurfa'da kebap nerede yenir?",
+        C: 'Merkez ilçelerdeki kebapçılar, ciğerciler ve sıra gecesi mekanları Şanlıurfa kebap deneyimi için en yoğun tercih edilen bölgelerdir.',
+      },
+      {
+        S: 'Urfa kebabını Adana kebabından ayıran fark nedir?',
+        C: 'Urfa kebabı daha dengeli acılıkta, isot aromalı ve sade et lezzetini öne çıkaran bir kebap türüdür.',
+      },
+    ],
+  },
+  'en-iyi-cigerciler': {
+    slug: 'en-iyi-cigerciler',
+    title: 'Şanlıurfa En İyi Ciğerciler',
+    heading: 'Şanlıurfa En İyi Ciğerciler',
+    meta_title: 'Şanlıurfa En İyi Ciğerciler | Sanliurfa.com',
+    meta_description:
+      'Şanlıurfa ciğer kültürü, sabah ciğeri, közde servis ve merkez ciğerci rotaları için güncel şehir rehberi.',
+    intro_text:
+      "Şanlıurfa'da ciğer, özellikle sabah saatlerinde açık ekmek, isot, közlenmiş biber ve ayranla tamamlanan güçlü bir yerel lezzet geleneğidir.",
+    category_filter: 'cigerciler',
+    sort_by: 'rating',
+    limit_count: 20,
+    fallback_places: [
+      {
+        name: 'Şanlıurfa Sabah Ciğeri Rotası',
+        slug: 'sanliurfa-sabah-cigeri-rotasi',
+        short_description: 'Sabah erken saatlerde ciğer, açık ekmek ve közlenmiş biber geleneğini deneyimlemek isteyenler için.',
+        district_name: 'Eyyübiye',
+        rating: 4.9,
+        review_count: 1110,
+        price_range: '₺₺',
+      },
+      {
+        name: 'Merkez Ciğerci Önerileri',
+        slug: 'merkez-cigerci-onerileri',
+        short_description: 'Balıklıgöl ve çarşı çevresinde ciğer molası vermek isteyen ziyaretçiler için pratik rota.',
+        district_name: 'Haliliye',
+        rating: 4.8,
+        review_count: 850,
+        price_range: '₺₺',
+      },
+      {
+        name: 'Közde Ciğer Deneyimi',
+        slug: 'kozde-ciger-deneyimi',
+        short_description: 'Köz ateşinde pişen ciğer, isot ve taze yeşilliklerle klasik Urfa sunumu.',
+        district_name: 'Karaköprü',
+        rating: 4.7,
+        review_count: 630,
+        price_range: '₺₺',
+      },
+    ],
+    faq: [
+      {
+        S: "Şanlıurfa'da ciğer ne zaman yenir?",
+        C: "Şanlıurfa'da ciğer özellikle sabah saatlerinde tercih edilir; ancak birçok merkez işletmede gün boyunca bulunabilir.",
+      },
+      {
+        S: 'Ciğer yanında ne gelir?',
+        C: 'Açık ekmek, közlenmiş biber, soğan, maydanoz, isot ve ayran klasik Şanlıurfa ciğer sunumunun parçasıdır.',
+      },
+    ],
+  },
+  'sanliurfa-kahvalti-mekanlari': {
+    slug: 'sanliurfa-kahvalti-mekanlari',
+    title: 'Şanlıurfa Kahvaltı Mekanları',
+    heading: 'Şanlıurfa Kahvaltı Mekanları',
+    meta_title: 'Şanlıurfa Kahvaltı Mekanları | Sanliurfa.com',
+    meta_description:
+      'Şanlıurfa kahvaltı mekanları, serpme kahvaltı, yöresel ürünler ve merkez kahvaltı rotaları.',
+    intro_text:
+      'Şanlıurfa kahvaltısı; peynir, zeytin, isot, tırnaklı ekmek, yöresel reçeller ve sıcak lezzetlerle güne güçlü başlayan yerel bir deneyimdir.',
+    category_filter: 'kahvalti-mekanlari',
+    sort_by: 'rating',
+    limit_count: 20,
+    fallback_places: [
+      {
+        name: 'Merkez Kahvaltı Rotası',
+        slug: 'merkez-kahvalti-rotasi',
+        short_description: 'Şehir merkezinde serpme kahvaltı ve yöresel ürünlerle güne başlamak isteyenler için.',
+        district_name: 'Haliliye',
+        rating: 4.7,
+        review_count: 540,
+        price_range: '₺₺',
+      },
+    ],
+  },
+  'sanliurfada-ne-yenir': {
+    slug: 'sanliurfada-ne-yenir',
+    title: "Şanlıurfa'da Ne Yenir?",
+    heading: "Şanlıurfa'da Ne Yenir?",
+    meta_title: "Şanlıurfa'da Ne Yenir? | Sanliurfa.com",
+    meta_description:
+      "Şanlıurfa'da ne yenir sorusuna Urfa kebabı, ciğer, çiğ köfte, borani, şıllık tatlısı ve yöresel yemeklerle cevap.",
+    intro_text:
+      "Şanlıurfa mutfağı; kebap, ciğer, çiğ köfte, borani, lebeni, şıllık tatlısı ve isot kültürüyle Türkiye'nin en güçlü gastronomi şehirlerinden biridir.",
+    category_filter: 'yoresel-yemekler',
+    sort_by: 'rating',
+    limit_count: 20,
+    fallback_places: [
+      {
+        name: 'Urfa Kebabı',
+        slug: 'urfa-kebabi',
+        short_description: 'İsot aromalı, dengeli acılı ve sade et lezzetini öne çıkaran Şanlıurfa klasiği.',
+        district_name: 'Şanlıurfa',
+        rating: 4.9,
+        review_count: 2100,
+        price_range: '₺₺',
+      },
+      {
+        name: 'Şanlıurfa Çiğ Köftesi',
+        slug: 'sanliurfa-cig-koftesi',
+        short_description: 'Bulgur, isot ve yoğurma geleneğiyle hazırlanan tescilli yöresel lezzet.',
+        district_name: 'Şanlıurfa',
+        rating: 4.8,
+        review_count: 1600,
+        price_range: '₺',
+      },
+    ],
+  },
+  'sanliurfa-sira-gecesi-mekanlari': {
+    slug: 'sanliurfa-sira-gecesi-mekanlari',
+    title: 'Şanlıurfa Sıra Gecesi Mekanları',
+    heading: 'Şanlıurfa Sıra Gecesi Mekanları',
+    meta_title: 'Şanlıurfa Sıra Gecesi Mekanları | Sanliurfa.com',
+    meta_description:
+      'Şanlıurfa sıra gecesi mekanları, yerel müzik, çiğ köfte, mırra ve Urfa kültürü deneyimi için rehber.',
+    intro_text:
+      'Sıra gecesi; müzik, sohbet, çiğ köfte, mırra ve misafirperverlik kültürünü bir araya getiren en güçlü Şanlıurfa deneyimlerinden biridir.',
+    category_filter: 'sira-gecesi',
+    sort_by: 'rating',
+    limit_count: 20,
+    fallback_places: [
+      {
+        name: 'Geleneksel Sıra Gecesi Deneyimi',
+        slug: 'geleneksel-sira-gecesi-deneyimi',
+        short_description: 'Canlı müzik, çiğ köfte, mırra ve yerel sofra kültürünü birlikte yaşamak isteyenler için.',
+        district_name: 'Eyyübiye',
+        rating: 4.8,
+        review_count: 720,
+        price_range: '₺₺₺',
+      },
+      {
+        name: 'Aileye Uygun Sıra Gecesi Rotası',
+        slug: 'aileye-uygun-sira-gecesi-rotasi',
+        short_description: 'Şanlıurfa kültürünü sakin ve düzenli bir ortamda deneyimlemek isteyen aileler için öneri.',
+        district_name: 'Haliliye',
+        rating: 4.7,
+        review_count: 510,
+        price_range: '₺₺',
+      },
+    ],
+  },
+  'sanliurfa-gece-acik-mekanlar': {
+    slug: 'sanliurfa-gece-acik-mekanlar',
+    title: 'Şanlıurfa Gece Açık Mekanlar',
+    heading: 'Şanlıurfa Gece Açık Mekanlar',
+    meta_title: 'Şanlıurfa Gece Açık Mekanlar | Sanliurfa.com',
+    meta_description:
+      "Şanlıurfa'da gece açık restoran, kafe, tatlıcı, çay bahçesi ve geç saat mekan önerileri.",
+    intro_text:
+      "Şanlıurfa'da gece açık mekanlar özellikle merkez, Balıklıgöl çevresi, kafeler, tatlıcılar ve geç saat yeme içme noktalarında yoğunlaşır.",
+    category_filter: 'gece-acik',
+    sort_by: 'popular',
+    limit_count: 20,
+    fallback_places: [
+      {
+        name: 'Gece Yeme İçme Rotası',
+        slug: 'gece-yeme-icme-rotasi',
+        short_description: 'Geç saatlerde kebap, ciğer, tatlı ve çay molası arayanlar için merkez rota.',
+        district_name: 'Merkez',
+        rating: 4.6,
+        review_count: 680,
+        price_range: '₺₺',
+      },
+      {
+        name: 'Balıklıgöl Akşam Rotası',
+        slug: 'balikligol-aksam-rotasi',
+        short_description: 'Akşam yürüyüşü, çay bahçeleri ve tarihi atmosferi birlikte sunan klasik rota.',
+        district_name: 'Eyyübiye',
+        rating: 4.8,
+        review_count: 920,
+        price_range: '₺',
+      },
+    ],
+  },
+  'bugun-sanliurfada-ne-yapilir': {
+    slug: 'bugun-sanliurfada-ne-yapilir',
+    title: "Bugün Şanlıurfa'da Ne Yapılır?",
+    heading: "Bugün Şanlıurfa'da Ne Yapılır?",
+    meta_title: "Bugün Şanlıurfa'da Ne Yapılır? | Sanliurfa.com",
+    meta_description:
+      "Bugün Şanlıurfa'da gezilecek yerler, yemek rotaları, etkinlikler, nöbetçi eczaneler ve ulaşım bilgileri.",
+    intro_text:
+      "Bugün Şanlıurfa'da Balıklıgöl çevresini gezebilir, Göbeklitepe rotası planlayabilir, yöresel yemekleri deneyebilir ve günlük yaşam servislerini kontrol edebilirsiniz.",
+    sort_by: 'popular',
+    limit_count: 20,
+    fallback_places: [
+      {
+        name: 'Balıklıgöl ve Tarihi Çarşı Rotası',
+        slug: 'balikligol-ve-tarihi-carsi-rotasi',
+        short_description: 'Kısa sürede Şanlıurfa tarihi dokusunu görmek isteyenler için yürünebilir merkez rota.',
+        district_name: 'Eyyübiye',
+        rating: 4.9,
+        review_count: 1800,
+        price_range: 'Ücretsiz',
+      },
+      {
+        name: 'Göbeklitepe Yarım Gün Rotası',
+        slug: 'gobeklitepe-yarim-gun-rotasi',
+        short_description: "Şehir merkezinden Göbeklitepe'ye gidip müze ve yemek molasıyla tamamlanabilecek rota.",
+        district_name: 'Haliliye',
+        rating: 4.9,
+        review_count: 1450,
+        price_range: '₺₺',
+      },
+      {
+        name: 'Urfa Mutfağı Tadım Rotası',
+        slug: 'urfa-mutfagi-tadim-rotasi',
+        short_description: 'Kebap, ciğer, çiğ köfte, şıllık tatlısı ve mırra deneyimini bir güne sığdırmak isteyenler için.',
+        district_name: 'Şanlıurfa',
+        rating: 4.8,
+        review_count: 1320,
+        price_range: '₺₺',
+      },
+    ],
+  },
+};
+
 try {
   page = await queryOne(
     "SELECT * FROM seo_pages WHERE slug = $1 AND is_active = true",
     [slug]
   );
+
+  if (!page) {
+    page = fallbackSeoPages[String(slug)];
+  }
 
   if (!page) {
     // Not a SEO page — let Astro handle 404
@@ -58,11 +334,18 @@ try {
 }
 
 if (!page) return new Response(null, { status: 404 });
+if (places.length === 0 && Array.isArray(page.fallback_places)) {
+  places = page.fallback_places;
+}
 
 const seo = {
   title: page.meta_title || page.title,
   description: page.meta_description || page.intro_text,
+  keywords: [page.title, 'şanlıurfa ' + slug, 'urfa ' + slug],
+  ogImage: (page.og_image as string | undefined) || '/images/hero/hero-home.webp',
+  canonical: `/${slug}`,
 };
+const { baseUrl } = await getSiteBranding();
 ---
 
 <Layout seo={seo}>
@@ -78,7 +361,7 @@ const seo = {
       {places.length > 0 ? (
         <div class="space-y-4">
           {places.map((place, i) => (
-            <a href={`/places/${place.slug}`} class="flex items-center gap-5 bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
+            <a href={`/isletme/${place.slug}`} class="flex items-center gap-5 bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
               <div class="flex-shrink-0 w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-red-600 font-bold text-lg">
                 {i + 1}
               </div>
@@ -99,8 +382,25 @@ const seo = {
           ))}
         </div>
       ) : (
-        <div class="text-center py-16">
-          <p class="text-gray-500 text-lg">Yakında içerik eklenecek.</p>
+        <div class="rounded-2xl border border-amber-100 bg-white p-8 text-center shadow-sm">
+          <h2 class="text-2xl font-bold text-gray-900 mb-3">
+            Bu rehber için uygun mekan bulunamadı
+          </h2>
+          <p class="mx-auto max-w-2xl text-gray-600">
+            Aradığınız başlık aktif mekan kayıtlarıyla eşleşmedi. Şanlıurfa mekan rehberi,
+            tarihi yerler ve yemek önerileri üzerinden benzer içerikleri keşfedebilirsiniz.
+          </p>
+          <div class="mt-6 flex flex-wrap justify-center gap-3">
+            <a href="/mekanlar" class="rounded-xl bg-red-700 px-5 py-3 font-semibold text-white transition-colors hover:bg-red-800">
+              Mekanları Keşfet
+            </a>
+            <a href="/tarihi-yerler" class="rounded-xl border border-gray-200 px-5 py-3 font-semibold text-gray-700 transition-colors hover:border-red-200 hover:text-red-700">
+              Tarihi Yerler
+            </a>
+            <a href="/sanliurfada-ne-yenir" class="rounded-xl border border-gray-200 px-5 py-3 font-semibold text-gray-700 transition-colors hover:border-red-200 hover:text-red-700">
+              Ne Yenir?
+            </a>
+          </div>
         </div>
       )}
     </div>
@@ -118,10 +418,33 @@ const seo = {
       position: i + 1,
       item: {
         '@type': 'LocalBusiness',
+        '@id': `${baseUrl}/isletme/${p.slug}`,
         name: p.name,
-        url: `https://sanliurfa.com/places/${p.slug}`,
+        url: `${baseUrl}/isletme/${p.slug}`,
         aggregateRating: p.rating ? { '@type': 'AggregateRating', ratingValue: p.rating, reviewCount: p.review_count || 0 } : undefined,
       }
     }))
-  })} />
+  })} is:inline />
+  {Array.isArray(page.faq) && page.faq.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: page.faq.map((item: any) => ({
+        '@type': 'Question',
+        name: item.S,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.C,
+        },
+      })),
+    })} is:inline />
+  )}
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: page.title, item: `${baseUrl}/${slug}` },
+    ],
+  })} is:inline />
 </Layout>

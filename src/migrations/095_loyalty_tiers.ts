@@ -30,6 +30,11 @@ export const migration_095_loyalty_tiers = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE loyalty_tiers ADD COLUMN IF NOT EXISTS tier_level INT;
+      ALTER TABLE loyalty_tiers ADD COLUMN IF NOT EXISTS min_points_required INT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_loyalty_tiers_level
       ON loyalty_tiers(tier_level)
     `);
@@ -56,6 +61,11 @@ export const migration_095_loyalty_tiers = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_tier_membership ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_tier_membership ADD COLUMN IF NOT EXISTS current_tier_id UUID;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_tier_membership_user
       ON user_tier_membership(user_id)
     `);
@@ -78,6 +88,11 @@ export const migration_095_loyalty_tiers = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE tier_history ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE tier_history ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_tier_history_user
       ON tier_history(user_id, created_at DESC)
     `);
@@ -93,6 +108,11 @@ export const migration_095_loyalty_tiers = async (pool: Pool) => {
         redemption_date DATE,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE tier_benefits_redeemed ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE tier_benefits_redeemed ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`

@@ -7,12 +7,12 @@ pm2 delete all 2>/dev/null
 pm2 kill 2>/dev/null
 sleep 3
 
-echo "2. Checking port 6000..."
-if ss -tulpn | grep -q 6000; then
-    echo "ERROR: Port 6000 still in use!"
+echo "2. Checking port 4321..."
+if ss -tulpn | grep -q 4321; then
+    echo "ERROR: Port 4321 still in use!"
     exit 1
 fi
-echo "Port 6000 is free"
+echo "Port 4321 is free"
 
 echo "3. Starting application..."
 cd /home/sanliur/public_html
@@ -31,10 +31,10 @@ else
 fi
 
 echo "6. Port check..."
-ss -tulpn | grep 6000 || echo "PORT: NOT LISTENING"
+ss -tulpn | grep 4321 || echo "PORT: NOT LISTENING"
 
 echo "7. Health check..."
-curl -s http://127.0.0.1:6000/api/health 2>&1 || echo "HEALTH: FAILED"
+curl -s http://127.0.0.1:4321/api/health 2>&1 || echo "HEALTH: FAILED"
 
 echo "8. App log (last 15 lines)..."
 tail -15 /tmp/app.log

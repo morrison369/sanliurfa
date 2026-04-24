@@ -60,7 +60,8 @@ const icons = {
   });
   
   // Listen for theme changes from other toggles
-  window.addEventListener('themechange', (/** @type {CustomEvent} */ e) => {
-    setTheme(e.detail.dark);
+  window.addEventListener('themechange', (e: Event) => {
+    const detail = (e as CustomEvent<{ dark: boolean }>).detail;
+    setTheme(Boolean(detail?.dark));
   });
 </script>

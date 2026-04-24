@@ -24,6 +24,12 @@ export const migration_118_hashtags_trending = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE hashtags ADD COLUMN IF NOT EXISTS tag_name VARCHAR(100);
+      ALTER TABLE hashtags ADD COLUMN IF NOT EXISTS is_trending BOOLEAN DEFAULT false;
+      ALTER TABLE hashtags ADD COLUMN IF NOT EXISTS trending_rank INT;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_hashtags_name
       ON hashtags(tag_name)
     `);
@@ -43,6 +49,12 @@ export const migration_118_hashtags_trending = async (pool: Pool) => {
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         used_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE hashtag_usage ADD COLUMN IF NOT EXISTS hashtag_id UUID;
+      ALTER TABLE hashtag_usage ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE hashtag_usage ADD COLUMN IF NOT EXISTS used_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`
@@ -72,6 +84,13 @@ export const migration_118_hashtags_trending = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE trending_analytics ADD COLUMN IF NOT EXISTS entity_type VARCHAR(50);
+      ALTER TABLE trending_analytics ADD COLUMN IF NOT EXISTS entity_id UUID;
+      ALTER TABLE trending_analytics ADD COLUMN IF NOT EXISTS period_type VARCHAR(50);
+      ALTER TABLE trending_analytics ADD COLUMN IF NOT EXISTS rank_position INT;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_trending_type
       ON trending_analytics(entity_type, rank_position ASC)
     `);
@@ -89,6 +108,12 @@ export const migration_118_hashtags_trending = async (pool: Pool) => {
         calculated_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(place_id, period_type)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE trending_places ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE trending_places ADD COLUMN IF NOT EXISTS period_type VARCHAR(50);
+      ALTER TABLE trending_places ADD COLUMN IF NOT EXISTS trending_score FLOAT;
     `);
 
     await pool.query(`

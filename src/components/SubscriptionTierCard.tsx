@@ -2,9 +2,6 @@
  * Subscription Tier Card Component
  * Display subscription tier options
  */
-
-import React from 'react';
-
 interface SubscriptionTierCardProps {
   id: string;
   name: string;

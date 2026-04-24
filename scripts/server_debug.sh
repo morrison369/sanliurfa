@@ -45,15 +45,15 @@ else
     echo "❌ .env.production NOT FOUND"
 fi
 
-# 4. Check port 6000
+# 4. Check port 4321
 echo ""
-echo "4️⃣ Port 6000:"
-PORT_CHECK=$(ss -tlnp 2>/dev/null | grep 6000 || netstat -tlnp 2>/dev/null | grep 6000)
+echo "4️⃣ Port 4321:"
+PORT_CHECK=$(ss -tlnp 2>/dev/null | grep 4321 || netstat -tlnp 2>/dev/null | grep 4321)
 if [ -n "$PORT_CHECK" ]; then
-    echo "✅ Port 6000 is listening"
+    echo "✅ Port 4321 is listening"
     echo "   $PORT_CHECK"
 else
-    echo "❌ Port 6000 NOT listening"
+    echo "❌ Port 4321 NOT listening"
 fi
 
 # 5. Recent logs
@@ -65,7 +65,7 @@ pm2 logs sanliurfa --lines 20 2>/dev/null | tail -20
 echo ""
 echo "6️⃣ Testing Application Startup:"
 echo "   Starting for 3 seconds..."
-timeout 3 node dist/server/entry.mjs --port 6000 2>&1 &
+timeout 3 node dist/server/entry.mjs --port 4321 2>&1 &
 PID=$!
 sleep 3
 kill $PID 2>/dev/null
@@ -113,7 +113,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     fi
     
     # Restart
-    pm2 restart sanliurfa || pm2 start dist/server/entry.mjs --name sanliurfa -- --port 6000
+    pm2 restart sanliurfa || pm2 start dist/server/entry.mjs --name sanliurfa -- --port 4321
     pm2 save
     
     echo "✅ Done! Check: pm2 logs sanliurfa"

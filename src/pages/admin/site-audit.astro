@@ -1,0 +1,177 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const seo = {
+  title: 'Site Denetim Zaman Çizelgesi - Sanliurfa.com',
+  description: 'Site içerik ve sosyal audit timeline yönetimi',
+  noIndex: true,
+};
+---
+
+<Layout seo={seo}>
+  <div class="bg-gray-50 min-h-screen pt-24 pb-10">
+    <div class="container mx-auto px-4">
+      <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Site Denetim Zaman Çizelgesi</h1>
+        <p class="mt-2 text-gray-600">İçerik, medya ve sosyal abuse kayıtlarını izleyin ve dışa aktarın.</p>
+      </div>
+
+      <div class="rounded-xl border border-gray-200 bg-white p-5">
+        <h2 class="text-xl font-bold text-gray-900 mb-3">Anomaly Özeti (24s)</h2>
+        <div id="anomalyCard" class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          Yükleniyor...
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-gray-200 bg-white p-5">
+        <div class="grid gap-3 md:grid-cols-5">
+          <input id="filterKey" class="rounded-lg border border-gray-300 px-3 py-2" placeholder="key filtresi" />
+          <input id="filterAction" class="rounded-lg border border-gray-300 px-3 py-2" placeholder="action filtresi" />
+          <input id="filterLimit" type="number" value="50" class="rounded-lg border border-gray-300 px-3 py-2" />
+          <button id="btnLoad" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-black">Timeline Getir</button>
+          <a id="btnExport" class="rounded-lg bg-emerald-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-emerald-700" href="/api/admin/site/audit/export?limit=50">CSV Dışa Aktar</a>
+        </div>
+
+        <div class="mt-4 flex items-center gap-3">
+          <button id="prevPage" class="rounded border border-gray-300 px-3 py-1 text-sm">Önceki</button>
+          <button id="nextPage" class="rounded border border-gray-300 px-3 py-1 text-sm">Sonraki</button>
+          <span id="pageInfo" class="text-sm text-gray-600"></span>
+        </div>
+
+        <div class="mt-4 overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200 text-left text-gray-600">
+                <th class="px-2 py-2">Tarih</th>
+                <th class="px-2 py-2">Key</th>
+                <th class="px-2 py-2">Action</th>
+                <th class="px-2 py-2">Email</th>
+                <th class="px-2 py-2">IP</th>
+                <th class="px-2 py-2">Metadata</th>
+              </tr>
+            </thead>
+            <tbody id="auditBody">
+              <tr><td colspan="6" class="px-2 py-6 text-center text-gray-400">Yükleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let offset = 0;
+    let total = 0;
+
+    const byId = (id: string) => {
+      const node = document.getElementById(id);
+      if (!node) throw new Error(`Element bulunamadı: ${id}`);
+      return node;
+    };
+    const filterKey = byId('filterKey') as HTMLInputElement;
+    const filterAction = byId('filterAction') as HTMLInputElement;
+    const filterLimit = byId('filterLimit') as HTMLInputElement;
+    const body = byId('auditBody') as HTMLTableSectionElement;
+    const pageInfo = byId('pageInfo');
+    const anomalyCard = byId('anomalyCard');
+    const btnExport = byId('btnExport');
+    const btnLoad = byId('btnLoad');
+    const prevPage = byId('prevPage');
+    const nextPage = byId('nextPage');
+    const readValue = (node: Element | null) => {
+      if (
+        node instanceof HTMLInputElement ||
+        node instanceof HTMLTextAreaElement ||
+        node instanceof HTMLSelectElement
+      ) {
+        return node.value;
+      }
+      return '';
+    };
+    const setHref = (node: Element | null, href: string) => {
+      if (node instanceof HTMLAnchorElement) {
+        node.href = href;
+      }
+    };
+
+    function buildParams() {
+      const limit = Math.max(1, Number(readValue(filterLimit) || 50));
+      const qp = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+      const keyValue = readValue(filterKey).trim();
+      if (keyValue) {
+        qp.set('key', keyValue);
+      }
+      const actionValue = readValue(filterAction).trim();
+      if (actionValue) {
+        qp.set('action', actionValue);
+      }
+      return qp;
+    }
+
+    async function load() {
+      const qp = buildParams();
+      const res = await fetch(`/api/admin/site/audit?${qp.toString()}`);
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        body.innerHTML = `<tr><td colspan="6" class="px-2 py-6 text-center text-red-600">${data.error || 'Hata'}</td></tr>`;
+        return;
+      }
+
+      total = Number(data.total || 0);
+      const rows = Array.isArray(data.items) ? data.items : [];
+      if (rows.length === 0) {
+        body.innerHTML = '<tr><td colspan="6" class="px-2 py-6 text-center text-gray-400">Kayıt bulunamadı</td></tr>';
+      } else {
+        body.innerHTML = rows.map((r: any) => `
+          <tr class="border-b border-gray-100">
+            <td class="px-2 py-2 text-xs text-gray-700">${new Date(r.created_at).toLocaleString('tr-TR')}</td>
+            <td class="px-2 py-2 text-xs font-mono text-gray-800">${r.setting_key || '-'}</td>
+            <td class="px-2 py-2 text-xs text-blue-700">${r.action || '-'}</td>
+            <td class="px-2 py-2 text-xs text-gray-700">${r.actor_email || '-'}</td>
+            <td class="px-2 py-2 text-xs text-gray-700">${r.ip_address || '-'}</td>
+            <td class="px-2 py-2 text-xs font-mono text-gray-700">${JSON.stringify(r.metadata || {}).slice(0, 140)}</td>
+          </tr>
+        `).join('');
+      }
+
+      const limit = Math.max(1, Number(readValue(filterLimit) || 50));
+      pageInfo.textContent = `${offset + 1}-${Math.min(offset + limit, total)} / ${total}`;
+      setHref(btnExport, `/api/admin/site/audit/export?${qp.toString().replace(/offset=\d+&?/, '')}`);
+    }
+
+    async function loadAnomaly() {
+      const res = await fetch('/api/admin/site/audit/anomaly');
+      const json = await res.json();
+      if (!res.ok || !json?.success) {
+        anomalyCard.textContent = json?.error || 'Anomaly yüklenemedi';
+        return;
+      }
+      const d = json.data || {};
+      anomalyCard.innerHTML = `
+        <div>Toplam Event: <strong>${d.totalEvents || 0}</strong></div>
+        <div>Social Abuse Oranı: <strong>%${d.socialAbuseRate || 0}</strong></div>
+        <div>Şüpheli IP Sayısı: <strong>${d.suspiciousIpCount || 0}</strong></div>
+      `;
+    }
+
+    btnLoad.addEventListener('click', () => {
+      offset = 0;
+      load();
+    });
+    prevPage.addEventListener('click', () => {
+      const limit = Math.max(1, Number(readValue(filterLimit) || 50));
+      offset = Math.max(0, offset - limit);
+      load();
+    });
+    nextPage.addEventListener('click', () => {
+      const limit = Math.max(1, Number(readValue(filterLimit) || 50));
+      if (offset + limit < total) {
+        offset += limit;
+        load();
+      }
+    });
+
+    load();
+    loadAnomaly();
+  </script>
+</Layout>

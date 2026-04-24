@@ -1,7 +1,7 @@
 /**
  * analytics.ts - Sayfa görüntüleme takibi ve analitik modülü
  *
- * Bu modül, Şanlıurfa.com sitesi için sayfa görüntüleme takibi,
+ * Bu modül, Sanliurfa.com sitesi için sayfa görüntüleme takibi,
  * popüler sayfaların analizi ve tarih aralığına göre istatistik
  * toplama işlevlerini sağlar. PostgreSQL veritabanı kullanılır.
  */

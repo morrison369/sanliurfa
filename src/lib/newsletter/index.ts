@@ -91,7 +91,7 @@ export async function subscribe(
 /**
  * Unsubscribe from newsletter
  */
-export async function unsubscribe(email: string, token?: string): Promise<boolean> {
+export async function unsubscribe(email: string, _token?: string): Promise<boolean> {
   try {
     const result = await query(
       `UPDATE newsletter_subscribers 
@@ -242,13 +242,13 @@ async function sendWelcomeEmail(email: string, name?: string): Promise<void> {
   const html = `
     <h1>Hoşgeldiniz!</h1>
     <p>Merhaba ${name || ''},</p>
-    <p>Şanlıurfa.com bültenine abone olduğunuz için teşekkür ederiz.</p>
+    <p>Sanliurfa.com bültenine abone olduğunuz için teşekkür ederiz.</p>
     <p>En güncel haberleri ve fırsatları kaçırmayın!</p>
   `;
 
   await queueEmail({
     to: email,
-    subject: 'Bülten Aboneliğiniz Başladı - Şanlıurfa.com',
+    subject: 'Bülten Aboneliğiniz Başladı - Sanliurfa.com',
     html,
     text: 'Bültenimize hoşgeldiniz!',
   });

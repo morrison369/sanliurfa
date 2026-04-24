@@ -5,25 +5,48 @@
  */
 
 import Layout from '../../../layouts/Layout.astro';
-import { queryMany, queryOne, update } from '../../../lib/postgres';
+import { queryMany, queryOne } from '../../../lib/postgres';
+
+type CommentStatus = 'pending' | 'approved' | 'rejected';
+
+interface CommentStatsRow {
+  pending: string | number;
+  approved: string | number;
+  rejected: string | number;
+}
+
+interface BlogCommentModerationRow {
+  id: string | number;
+  author_name: string | null;
+  author_email: string | null;
+  content: string;
+  created_at: string | Date;
+  status: CommentStatus;
+  post_title: string;
+  slug: string;
+}
+
+const isCommentStatus = (value: string | null): value is CommentStatus =>
+  value === 'pending' || value === 'approved' || value === 'rejected';
 
 const user = Astro.locals.user;
 if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/login');
+  return Astro.redirect('/giris?redirect=/admin/blog/comments');
 }
 
 // Moderasyon status'unu al
-const status = Astro.url.searchParams.get('status') || 'pending';
+const requestedStatus = Astro.url.searchParams.get('status');
+const status: CommentStatus = isCommentStatus(requestedStatus) ? requestedStatus : 'pending';
 const limit = 20;
 const offset = 0;
 
-let comments: any[] = [];
+let comments: BlogCommentModerationRow[] = [];
 let stats = { pending: 0, approved: 0, rejected: 0 };
 let error = '';
 
 try {
   // İstatistikleri getir
-  const statsResult = await queryOne(`
+  const statsResult = await queryOne<CommentStatsRow>(`
     SELECT
       COUNT(*) FILTER (WHERE status = 'pending') as pending,
       COUNT(*) FILTER (WHERE status = 'approved') as approved,
@@ -33,14 +56,14 @@ try {
 
   if (statsResult) {
     stats = {
-      pending: parseInt(statsResult.pending || '0'),
-      approved: parseInt(statsResult.approved || '0'),
-      rejected: parseInt(statsResult.rejected || '0')
+      pending: Number(statsResult.pending || 0),
+      approved: Number(statsResult.approved || 0),
+      rejected: Number(statsResult.rejected || 0)
     };
   }
 
   // Yorumları getir
-  const result = await queryMany(`
+  const result = await queryMany<BlogCommentModerationRow>(`
     SELECT bc.*, bp.title as post_title, bp.slug
     FROM blog_comments bc
     JOIN blog_posts bp ON bc.post_id = bp.id
@@ -57,7 +80,8 @@ try {
 
 const seo = {
   title: 'Yorum Moderasyonu - Yönetim Paneli',
-  noindex: true
+  description: 'Blog yorum onay, ret ve silme moderasyon ekranı',
+  noIndex: true
 };
 ---
 
@@ -127,7 +151,7 @@ const seo = {
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         {comments.length > 0 ? (
           <div class="divide-y divide-gray-200 dark:divide-gray-700">
-            {comments.map((comment: any) => (
+            {comments.map((comment) => (
               <div class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <div class="flex items-start justify-between mb-3">
                   <div>
@@ -160,7 +184,7 @@ const seo = {
                       onclick={`deleteComment(${comment.id})`}
                       class="px-3 py-1 bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-white rounded text-sm hover:bg-gray-400"
                     >
-                      🗑ï¸ Sil
+                      Sil
                     </button>
                   </div>
                 </div>
@@ -170,7 +194,7 @@ const seo = {
                 </p>
 
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                  ğŸ“ Yazı: <a href={`/blog/${comment.slug}`} target="_blank" class="text-blue-600 hover:underline">
+                  Yazı: <a href={`/blog/${comment.slug}`} target="_blank" class="text-blue-600 hover:underline">
                     {comment.post_title}
                   </a>
                 </p>
@@ -200,7 +224,7 @@ const seo = {
 </Layout>
 
 <script is:inline>
-  async function approveComment(id: number) {
+  async function approveComment(id) {
     const response = await fetch(`/api/blog/comments/${id}/approve`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' }
@@ -214,7 +238,7 @@ const seo = {
     }
   }
 
-  async function rejectComment(id: number) {
+  async function rejectComment(id) {
     const response = await fetch(`/api/blog/comments/${id}/reject`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' }
@@ -228,7 +252,7 @@ const seo = {
     }
   }
 
-  async function deleteComment(id: number) {
+  async function deleteComment(id) {
     if (!confirm('Bu yorumu silmek istediğinize emin misiniz?')) return;
 
     const response = await fetch(`/api/blog/comments/${id}`, {
@@ -242,4 +266,10 @@ const seo = {
       alert('Yorum silinirken hata oluştu');
     }
   }
+  window.approveComment = approveComment;
+  window.rejectComment = rejectComment;
+  window.deleteComment = deleteComment;
 </script>
+
+
+

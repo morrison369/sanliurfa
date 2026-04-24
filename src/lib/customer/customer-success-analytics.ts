@@ -148,7 +148,7 @@ export class RetentionAnalyzer {
   /**
    * Predict retention
    */
-  predictRetention(customerId: string): number {
+  predictRetention(_customerId: string): number {
     return Math.round(70 + Math.random() * 30);
   }
 
@@ -168,7 +168,7 @@ export class RetentionAnalyzer {
   /**
    * Calculate lifetime value
    */
-  calculateLifetimeValue(customerId: string): number {
+  calculateLifetimeValue(_customerId: string): number {
     return Math.round(5000 + Math.random() * 45000);
   }
 
@@ -211,7 +211,7 @@ export class ExpansionAnalyzer {
   /**
    * Identify upsell opportunities
    */
-  identifyUpsellOpportunities(customerId: string): string[] {
+  identifyUpsellOpportunities(_customerId: string): string[] {
     return [
       'Feature pack upgrade',
       'Team expansion',
@@ -237,14 +237,14 @@ export class ExpansionAnalyzer {
   /**
    * Estimate expansion revenue
    */
-  estimateExpansionRevenue(accountId: string): number {
+  estimateExpansionRevenue(_accountId: string): number {
     return Math.round(10000 + Math.random() * 40000);
   }
 
   /**
    * Track expansion progress
    */
-  trackExpansionProgress(customerId: string, months: number): number[] {
+  trackExpansionProgress(_customerId: string, months: number): number[] {
     const progress: number[] = [];
     for (let i = 0; i < months; i++) {
       progress.push(Math.round(1000 + Math.random() * 9000));

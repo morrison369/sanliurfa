@@ -5,7 +5,7 @@ import time
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 def main():
     ssh = paramiko.SSHClient()
@@ -19,7 +19,7 @@ def main():
     print("Final DB Fix...")
     
     # Export PGPASSWORD and test
-    channel.send("export PGPASSWORD='vyD7l4kGFtnw'\n")
+    channel.send("export PGPASSWORD='CHANGE_ME_DB_PASSWORD'\n")
     time.sleep(1)
     
     # Test with password env
@@ -34,9 +34,9 @@ def main():
     env_lines = [
         "SITE_URL=https://sanliurfa.com",
         "NODE_ENV=production", 
-        "PORT=6000",
+        "PORT=4321",
         "HOST=127.0.0.1",
-        "DATABASE_URL=postgresql://sanliur_sanliurfa:vyD7l4kGFtnw@localhost:5432/sanliur_sanliurfa",
+        "DATABASE_URL=postgresql://sanliur_sanliurfa:CHANGE_ME_DB_PASSWORD@localhost:5432/sanliur_sanliurfa",
         "JWT_SECRET=change-this-secret-key-min-32-chars",
         ""
     ]

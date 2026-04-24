@@ -37,25 +37,22 @@ export async function authenticateUser(
   };
 }
 
-/**
- * Require authentication — returns user or null
- */
-export function requireAuth(
+export async function requireAuth(
   context: APIContext
 ): Promise<AuthenticatedUser | null> {
-  return authenticateUser(context).then((auth) => auth?.user || null);
+  const auth = await authenticateUser(context);
+  return auth?.user || null;
 }
 
 /**
  * Require specific role(s) — returns user or null
  */
-export function requireRole(
+export async function requireRole(
   context: APIContext,
   roles: string[]
 ): Promise<AuthenticatedUser | null> {
-  return authenticateUser(context).then((auth) => {
-    if (!auth) return null;
-    if (!roles.includes(auth.user.role)) return null;
-    return auth.user;
-  });
+  const auth = await authenticateUser(context);
+  if (!auth) return null;
+  if (!roles.includes(auth.user.role)) return null;
+  return auth.user;
 }

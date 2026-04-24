@@ -2,9 +2,7 @@
  * Quota Usage Display Component
  * Show user's feature quotas and usage
  */
-
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface QuotaItem {
   feature: string;
   current: number;
@@ -42,14 +40,14 @@ export default function QuotaUsageDisplay({ compact = false }: QuotaUsageDisplay
         const response = await fetch('/api/user/quotas');
 
         if (!response.ok) {
-          throw new Error('Failed to fetch quotas');
+          throw new Error('Kota bilgileri yüklenemedi.');
         }
 
         const quotaData = await response.json() as QuotaResponse;
         setData(quotaData);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load quotas');
+        setError(err instanceof Error ? err.message : 'Kota bilgileri yüklenemedi.');
       } finally {
         setLoading(false);
       }
@@ -109,7 +107,7 @@ export default function QuotaUsageDisplay({ compact = false }: QuotaUsageDisplay
   return (
     <div className="space-y-4">
       {compact ? (
-        // Compact view - only show limited features
+        // Kompakt görünümde yalnızca sınırlı özellikleri göster.
         <div className="space-y-3">
           {limitedQuotas.map((quota) => (
             <div
@@ -135,7 +133,7 @@ export default function QuotaUsageDisplay({ compact = false }: QuotaUsageDisplay
           ))}
         </div>
       ) : (
-        // Full view - show all quotas
+        // Tam görünümde tüm kotaları göster.
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Kullanım Kotaları
@@ -197,13 +195,11 @@ export default function QuotaUsageDisplay({ compact = false }: QuotaUsageDisplay
           {data.tier && (
             <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <p className="text-sm text-blue-900 dark:text-blue-300">
-                <span className="font-semibold">Mevcut plan:</span> {data.tier.name}
+                <span className="font-semibold">Erişim modu:</span> Faz 1 açık erişim
               </p>
-              {limitedQuotas.length > 0 && (
-                <p className="text-sm text-blue-800 dark:text-blue-400 mt-2">
-                  Premium plana yükseltin ve tüm kotalı özelliklere sınırsız erişim elde edin.
-                </p>
-              )}
+              <p className="text-sm text-blue-800 dark:text-blue-400 mt-2">
+                Bu aşamada özellikler ücretsiz ve sınırsız olarak kullanılabilir.
+              </p>
             </div>
           )}
         </div>

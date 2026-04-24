@@ -1,4 +1,5 @@
 ---
+import { actions, isInputError } from 'astro:actions';
 import Layout from '../../../../../layouts/Layout.astro';
 import { queryOne } from '../../../../../lib/postgres';
 
@@ -12,6 +13,23 @@ const icons = {
 };
 
 let site: any = null;
+const routeId = Astro.params.id;
+const user = Astro.locals.user;
+
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/historical-sites');
+}
+
+if (!routeId) {
+  return Astro.redirect('/admin/historical-sites');
+}
+
+const siteResult = Astro.getActionResult(actions.updateAdminHistoricalSite);
+const siteInputErrors = isInputError(siteResult?.error) ? siteResult.error.fields : {};
+const siteActionError =
+  !isInputError(siteResult?.error) && siteResult?.error?.message
+    ? siteResult.error.message
+    : null;
 
 const periods = [
   { id: 'tunç-çağı', label: 'Tunç Çağı' },
@@ -27,8 +45,7 @@ const periods = [
 ];
 
 try {
-  const { id } = Astro.params;
-  site = await queryOne('SELECT * FROM historical_sites WHERE id = $1', [id]);
+  site = await queryOne('SELECT * FROM historical_sites WHERE id = $1', [routeId]);
   if (!site) {
     return Astro.redirect('/admin/historical-sites');
   }
@@ -37,8 +54,9 @@ try {
 }
 
 const seo = {
-  title: site ? `${site.name} - Düzenle` : 'Düzenle - Admin Panel',
-  noindex: true,
+  title: site ? `${site.name} - Düzenle` : 'Düzenle - Yönetim Paneli',
+  description: 'Admin tarihi yer düzenleme sayfası',
+  noIndex: true,
 };
 ---
 
@@ -56,9 +74,27 @@ const seo = {
         </div>
       </div>
     </div>
+
+    {siteResult?.data?.success && (
+      <div class="container-custom py-4">
+        <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
+          {siteResult.data.message || 'Tarihi yer güncellendi.'}
+          <a href="/admin/historical-sites" class="ml-2 font-medium underline">Tarihi yer listesine dön</a>
+        </div>
+      </div>
+    )}
+
+    {siteActionError && (
+      <div class="container-custom py-4">
+        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+          {siteActionError}
+        </div>
+      </div>
+    )}
     
     <div class="container-custom py-8">
-      <form action={`/api/historical-sites/${id}/update`} method="POST" class="grid lg:grid-cols-3 gap-8">
+      <form action={actions.updateAdminHistoricalSite} method="POST" class="grid lg:grid-cols-3 gap-8">
+        <input type="hidden" name="id" value={routeId} />
         <div class="lg:col-span-2 space-y-6">
           <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel Bilgiler</h2>
@@ -66,6 +102,7 @@ const seo = {
               <div>
                 <label for="name" class="label dark:text-gray-300">Yer Adı *</label>
                 <input type="text" id="name" name="name" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={site.name} />
+                {siteInputErrors.name && <p class="mt-1 text-sm text-red-600">{siteInputErrors.name[0]}</p>}
               </div>
               <div>
                 <label for="short_description" class="label dark:text-gray-300">Kısa Açıklama</label>
@@ -74,6 +111,7 @@ const seo = {
               <div>
                 <label for="description" class="label dark:text-gray-300">Açıklama *</label>
                 <textarea id="description" name="description" rows="5" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none">{site.description}</textarea>
+                {siteInputErrors.description && <p class="mt-1 text-sm text-red-600">{siteInputErrors.description[0]}</p>}
               </div>
               <div>
                 <label for="period" class="label dark:text-gray-300">Tarihi Dönem</label>
@@ -95,6 +133,7 @@ const seo = {
                 <div class="relative">
                   <span set:html={icons.mapPin} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
                   <input type="text" id="location" name="location" required class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={site.location} />
+                  {siteInputErrors.location && <p class="mt-1 text-sm text-red-600">{siteInputErrors.location[0]}</p>}
                 </div>
               </div>
               <div class="grid sm:grid-cols-2 gap-4">
@@ -105,6 +144,41 @@ const seo = {
                 <div>
                   <label for="longitude" class="label dark:text-gray-300">Boylam</label>
                   <input type="number" id="longitude" name="longitude" step="any" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={site.longitude || ''} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ziyaret Bilgileri</h2>
+            <div class="space-y-4">
+              <div>
+                <label for="opening_hours" class="label dark:text-gray-300">Çalışma Saatleri</label>
+                <div class="relative">
+                  <span set:html={icons.clock} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
+                  <input
+                    type="text"
+                    id="opening_hours"
+                    name="opening_hours"
+                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    value={site.visiting_hours || site.opening_hours || ''}
+                    placeholder="Örn: 08:00 - 18:00"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label for="entry_fee" class="label dark:text-gray-300">Giriş Ücreti</label>
+                <div class="relative">
+                  <span set:html={icons.dollarSign} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
+                  <input
+                    type="text"
+                    id="entry_fee"
+                    name="entry_fee"
+                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    value={site.entrance_fee || site.entry_fee || ''}
+                    placeholder="Örn: 50 TL veya Ücretsiz"
+                  />
                 </div>
               </div>
             </div>
@@ -150,3 +224,4 @@ const seo = {
     </div>
   </div>
 </Layout>
+

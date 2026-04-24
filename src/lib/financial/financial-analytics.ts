@@ -66,7 +66,7 @@ export class FinancialMetrics {
   /**
    * Calculate metrics
    */
-  calculateMetrics(startDate: number, endDate: number): FinancialMetricsInterface {
+  calculateMetrics(_startDate: number, _endDate: number): FinancialMetricsInterface {
     const revenue = 500000;
     const costOfRevenue = 150000;
     const operatingExpenses = 100000;
@@ -133,7 +133,7 @@ export class ProfitabilityAnalyzer {
   /**
    * Analyze
    */
-  analyze(startDate: number, endDate: number): ProfitabilityAnalysis {
+  analyze(_startDate: number, _endDate: number): ProfitabilityAnalysis {
     const totalRevenue = Math.random() * 500000 + 100000;
     const totalCost = totalRevenue * (Math.random() * 0.5 + 0.3);
     const grossProfit = totalRevenue - totalCost;
@@ -158,7 +158,7 @@ export class ProfitabilityAnalyzer {
   /**
    * Get product profitability
    */
-  getProductProfitability(productId: string, period: string): { revenue: number; cost: number; profit: number; margin: number } {
+  getProductProfitability(productId: string, _period: string): { revenue: number; cost: number; profit: number; margin: number } {
     const revenue = Math.random() * 50000 + 10000;
     const cost = revenue * (Math.random() * 0.5 + 0.2);
     const profit = revenue - cost;
@@ -172,7 +172,7 @@ export class ProfitabilityAnalyzer {
   /**
    * Get customer profitability
    */
-  getCustomerProfitability(customerId: string, period: string): Record<string, number> {
+  getCustomerProfitability(_customerId: string, _period: string): Record<string, number> {
     return {
       revenue: Math.random() * 100000 + 10000,
       cost: Math.random() * 30000 + 5000,
@@ -234,7 +234,7 @@ export class CashFlowAnalyzer {
   /**
    * Analyze
    */
-  analyze(startDate: number, endDate: number): CashFlowAnalysis {
+  analyze(_startDate: number, _endDate: number): CashFlowAnalysis {
     const operatingCash = Math.random() * 100000 + 20000;
     const investingCash = Math.random() * -50000 - 5000;
     const financingCash = Math.random() * 30000 - 10000;
@@ -255,7 +255,7 @@ export class CashFlowAnalyzer {
   /**
    * Get cash position
    */
-  getCashPosition(asOfDate: number): { available: number; committed: number; forecasted: number } {
+  getCashPosition(_asOfDate: number): { available: number; committed: number; forecasted: number } {
     return {
       available: Math.random() * 100000 + 50000,
       committed: Math.random() * 50000 + 10000,
@@ -266,7 +266,7 @@ export class CashFlowAnalyzer {
   /**
    * Analyze liquidity
    */
-  analyzeLiquidity(asOfDate: number): { current_ratio: number; quick_ratio: number; health: string } {
+  analyzeLiquidity(_asOfDate: number): { current_ratio: number; quick_ratio: number; health: string } {
     const currentRatio = Math.random() * 1.5 + 1.5;
     const quickRatio = currentRatio * 0.8;
     const health = currentRatio > 1.5 ? 'healthy' : currentRatio > 1 ? 'acceptable' : 'concerning';
@@ -326,7 +326,7 @@ export class FinancialHealth {
   /**
    * Calculate health
    */
-  calculateHealth(asOfDate: number): FinancialHealth {
+  calculateHealth(_asOfDate: number): FinancialHealth {
     const score = Math.random() * 40 + 60; // 60-100
     const trend: 'improving' | 'declining' | 'stable' = ['improving', 'declining', 'stable'][Math.floor(Math.random() * 3)] as any;
     const issues: string[] = [];
@@ -350,14 +350,14 @@ export class FinancialHealth {
   /**
    * Get health score
    */
-  getHealthScore(asOfDate: number): number {
+  getHealthScore(_asOfDate: number): number {
     return Math.random() * 40 + 60; // 60-100
   }
 
   /**
    * Get recommendations
    */
-  getRecommendations(asOfDate: number): string[] {
+  getRecommendations(_asOfDate: number): string[] {
     return [
       'Improve working capital management',
       'Optimize capital allocation',
@@ -369,7 +369,7 @@ export class FinancialHealth {
   /**
    * Compare to priors
    */
-  compareToPriors(period: string): Record<string, any> {
+  compareToPriors(_period: string): Record<string, any> {
     return {
       scoreChange: Math.random() * 20 - 10,
       marginChange: Math.random() * 5 - 2.5,
@@ -385,6 +385,4 @@ const profitabilityAnalyzer = new ProfitabilityAnalyzer();
 const cashFlowAnalyzer = new CashFlowAnalyzer();
 const financialHealth = new FinancialHealth();
 
-export type { financialMetrics, profitabilityAnalyzer, cashFlowAnalyzer, financialHealth };
-
-
+export { financialMetrics, profitabilityAnalyzer, cashFlowAnalyzer, financialHealth };

@@ -13,7 +13,7 @@ const [followers, stats] = await Promise.all([
 ]);
 ---
 
-<Layout title={`Takipçiler (${stats?.follower_count || 0}) - Şanlıurfa Rehberi`}>
+<Layout seo={{ title: `Takipçiler (${stats?.follower_count || 0}) - Şanlıurfa Rehberi`, noIndex: true }}>
   <div class="min-h-screen bg-gray-50">
     <div class="container-custom py-8">
       <div class="max-w-3xl mx-auto">
@@ -34,7 +34,7 @@ const [followers, stats] = await Promise.all([
             <div class="divide-y">
               {followers.map(user => (
                 <div class="p-6 flex items-center justify-between">
-                  <a href={`/kullanici/${user.username || user.id}`} class="flex items-center gap-4">
+                  <a href={`/kullanıcı/${user.username || user.id}`} class="flex items-center gap-4">
                     <div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xl font-bold">
                       {user.avatar_url ? (
                         <img src={user.avatar_url} alt={user.full_name} class="w-full h-full rounded-full object-cover" />
@@ -64,7 +64,7 @@ const [followers, stats] = await Promise.all([
                     ) : null}
                     
                     <a
-                      href={`/messages?user=${user.id}`}
+                      href={`/mesajlar?user=${user.id}`}
                       class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
                       title="Mesaj gönder"
                     >
@@ -91,8 +91,8 @@ const [followers, stats] = await Promise.all([
     </div>
   </div>
 
-  <script>
-    async function followUser(userId) {
+  <script is:inline>
+    window.followUser = async function (userId) {
       try {
         const response = await fetch('/api/social/follow', {
           method: 'POST',
@@ -103,21 +103,21 @@ const [followers, stats] = await Promise.all([
         if (response.ok) {
           window.location.reload();
         }
-      } catch (error) {
+      } catch {
         alert('Takip işlemi başarısız');
       }
-    }
+    };
     
-    function shareProfile() {
+    window.shareProfile = function () {
       if (navigator.share) {
         navigator.share({
           title: 'Profilim - Şanlıurfa Rehberi',
-          url: window.location.origin + '/profile',
+          url: window.location.origin + '/profil',
         });
       } else {
-        navigator.clipboard.writeText(window.location.origin + '/profile');
+        navigator.clipboard.writeText(window.location.origin + '/profil');
         alert('Profil linki kopyalandı!');
       }
-    }
+    };
   </script>
 </Layout>

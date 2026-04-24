@@ -12,12 +12,12 @@ if (!locals.user || locals.user.role !== 'admin') {
 }
 ---
 
-<Layout title="Admin Dashboard | Şanlıurfa.com">
+<Layout title="Yönetim Paneli | Sanliurfa.com">
   <div class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Yönetim Paneli</h1>
         <p class="text-gray-600 mt-2">Platform yönetimi, moderasyon ve kullanıcı yönetimi</p>
       </div>
 
@@ -50,27 +50,27 @@ if (!locals.user || locals.user.role !== 'admin') {
 
       {/* Content Sections */}
       <div id="overview-section">
-        <AdminDashboardOverview client:load />
+        <AdminDashboardOverview client:visible />
       </div>
 
       <div id="moderation-section" class="hidden">
         <div class="bg-white border border-gray-200 rounded-lg p-6">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">Moderasyon Kuyruğu</h2>
-          <ModerationQueueManager client:load />
+          <ModerationQueueManager client:visible />
         </div>
       </div>
 
       <div id="users-section" class="hidden">
         <div class="bg-white border border-gray-200 rounded-lg p-6">
           <h2 class="text-xl font-semibold text-gray-900 mb-4">Kullanıcı Yönetimi</h2>
-          <UserManagementTable client:load />
+          <UserManagementTable client:visible />
         </div>
       </div>
     </div>
   </div>
 
   <script is:inline>
-    function switchTab(tabName: string) {
+    function switchTab(tabName) {
       // Hide all sections
       document.getElementById('overview-section')?.classList.add('hidden');
       document.getElementById('moderation-section')?.classList.add('hidden');
@@ -95,3 +95,6 @@ if (!locals.user || locals.user.role !== 'admin') {
     }
   </script>
 </Layout>
+
+
+

@@ -320,7 +320,7 @@ export class WebhookQueue {
    * Generate unique ID
    */
   private generateId(): string {
-    return `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `wh_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }
 }
 
@@ -339,7 +339,7 @@ export function getWebhookQueue(): WebhookQueue {
 /**
  * Start webhook processor (run periodically, e.g., every 30 seconds)
  */
-export function startWebhookProcessor(intervalMs: number = 30000): NodeJS.Timer {
+export function startWebhookProcessor(intervalMs: number = 30000): ReturnType<typeof setInterval> {
   const processQueue = async () => {
     const queue = getWebhookQueue();
     await queue.processPending();

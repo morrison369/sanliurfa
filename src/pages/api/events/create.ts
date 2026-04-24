@@ -1,15 +1,19 @@
 // API: Event create (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { insert } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
+import { createAdminEvent } from '../../../lib/admin/events-admin';
 
 export const POST: APIRoute = async ({ request, redirect, locals }) => {
   try {
     if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/events-create-unauthorized',
+        instance: '/api/events/create',
+      });
     }
 
     const formData = await request.formData();
@@ -21,32 +25,24 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
     const endDate = formData.get('end_date')?.toString();
     const category = formData.get('category')?.toString();
     const image = formData.get('image')?.toString();
-    const isFeatured = formData.get('is_featured') === 'on';
+    const isFeatured = formData.get('is_featured')?.toString();
     const status = formData.get('status')?.toString() || 'draft';
 
     if (!title || !description || !location || !startDate || !category) {
       return redirect('/admin/events/add?error=missing_fields');
     }
 
-    const slug = title.toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 100);
-
-    await insert('events', {
+    await createAdminEvent({
       title,
-      slug,
       description,
       location,
-      start_date: startDate,
-      end_date: endDate || null,
+      startDate,
+      endDate: endDate || null,
       category,
-      image_url: image,
-      is_featured: isFeatured,
+      image: image || null,
+      isFeatured: isFeatured || null,
       status,
-      created_by: locals.user?.id,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      userId: locals.user?.id || null,
     });
 
     return redirect('/admin/events?success=created');

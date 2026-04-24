@@ -1,6 +1,9 @@
 ---
+
 import Layout from '../../../layouts/Layout.astro';
 import { query, queryOne } from '../../../lib/postgres';
+import { getSiteBranding } from '../../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const { ilce, mahalle } = Astro.params;
 let district: any = null;
@@ -39,7 +42,16 @@ try {
 const seo = {
   title: `${neighborhood?.name || mahalle} Mahallesi - ${district?.name || ilce} | Şanlıurfa`,
   description: `${district?.name} ${neighborhood?.name} mahallesindeki mekanlar, eczaneler ve yaşam rehberi.`,
+  keywords: [(neighborhood?.name || mahalle) + ' mahallesi', (district?.name || ilce) + ' mahalle', 'şanlıurfa mahalle rehberi'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: `/mahalleler/${ilce}/${mahalle}`,
 };
+const faqItems = [
+  { S: `${neighborhood?.name || mahalle} mahallesi hangi ilçeye bağlı?`, C: `${neighborhood?.name || mahalle} mahallesi, ${district?.name || ilce} ilçesine bağlıdır.` },
+  { S: `${neighborhood?.name || mahalle} mahallesinde hangi mekanlar var?`, C: `${neighborhood?.name || mahalle} mahallesindeki aktif mekanlar sayfamızda listelenmektedir.` },
+  { S: `${district?.name || ilce} ilçesindeki diğer mahalleleri nasıl görüntüleyebilirim?`, C: `${district?.name || ilce} ilçesindeki tüm mahallelere /ilceler/${ilce} sayfasından ulaşabilirsiniz.` },
+];
+
 ---
 
 <Layout seo={seo}>
@@ -69,7 +81,7 @@ const seo = {
           {places.length > 0 ? (
             <div class="space-y-3">
               {places.map((p) => (
-                <a href={`/places/${p.slug}`} class="flex items-center gap-4 bg-white rounded-xl p-4 shadow-sm hover:shadow-lg transition-all group">
+                <a href={`/isletme/${p.slug}`} class="flex items-center gap-4 bg-white rounded-xl p-4 shadow-sm hover:shadow-lg transition-all group">
                   <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-xl flex-shrink-0">📍</div>
                   <div class="flex-1">
                     <h3 class="font-bold text-gray-900 group-hover:text-indigo-600">{p.name}</h3>
@@ -117,4 +129,42 @@ const seo = {
       </div>
     </div>
   </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Neighborhood',
+    name: neighborhood.name,
+    description: neighborhood.description || `${neighborhood.name} mahallesi, ${district?.name || ''} ilçesi, Şanlıurfa`,
+    url: `${baseUrl}/mahalleler/${Astro.params.ilce}/${Astro.params.mahalle}`,
+    containedInPlace: {
+      '@type': 'AdministrativeArea',
+      name: district?.name || 'Şanlıurfa',
+      url: district?.slug ? `${baseUrl}/ilceler/${district.slug}` : `${baseUrl}/ilceler`,
+    },
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: district?.name || 'Şanlıurfa',
+      addressRegion: 'Şanlıurfa',
+      addressCountry: 'TR',
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Mahalleler', item: `${baseUrl}/mahalleler` },
+      { '@type': 'ListItem', position: 3, name: district?.name || ilce, item: `${baseUrl}/mahalleler/${ilce}` },
+      { '@type': 'ListItem', position: 4, name: neighborhood?.name || mahalle, item: `${baseUrl}/mahalleler/${ilce}/${mahalle}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

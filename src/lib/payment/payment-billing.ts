@@ -208,7 +208,7 @@ export class RefundManager {
    */
   createRefund(transactionId: string, subscriptionId: string, amount: number, reason: string): Refund {
     const refund: Refund = {
-      id: `REF-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `REF-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
       transactionId,
       subscriptionId,
       amount,

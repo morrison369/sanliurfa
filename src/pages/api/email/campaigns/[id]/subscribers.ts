@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Campaign Subscribers API
  * GET: List campaign subscribers
@@ -13,7 +12,7 @@ import { recordRequest } from '../../../../../lib/metrics';
 import { logger } from '../../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -74,7 +73,7 @@ export const GET: APIRoute = async ({ request, locals, params, url }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

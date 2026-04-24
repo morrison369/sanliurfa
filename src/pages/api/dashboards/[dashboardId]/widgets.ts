@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Dashboard Widgets API
  * Add and manage widgets on dashboards
@@ -21,7 +20,7 @@ const widgetSchema = {
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

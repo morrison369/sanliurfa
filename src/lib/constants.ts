@@ -5,7 +5,7 @@
 
 export const UI_TEXT = {
   // App
-  appName: 'Şanlıurfa.com',
+  appName: 'Sanliurfa.com',
   appTagline: 'Tarihin Sıfır Noktası',
   
   // Navigation
@@ -120,7 +120,7 @@ export const UI_TEXT = {
   
   // Footer
   footer: {
-    copyright: '© 2024 Şanlıurfa.com. Tüm hakları saklıdır.',
+    copyright: '© 2024 Sanliurfa.com. Tüm hakları saklıdır.',
     terms: 'Kullanım Koşulları',
     privacy: 'Gizlilik Politikası',
     cookies: 'Çerezler',

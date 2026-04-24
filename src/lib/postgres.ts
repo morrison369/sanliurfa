@@ -146,9 +146,8 @@ export async function deleteQuery<T = any>(
   return queryOne<T>(text, [where]);
 }
 
-export { deleteQuery as delete };
-export { deleteQuery as remove };
-
+export {deleteQuery as delete};
+export {deleteQuery as remove};
 /**
  * Execute queries within a transaction
  */
@@ -203,7 +202,7 @@ const ALLOWED_TABLES = new Set([
   'categories', 'place_daily_analytics',
   'districts', 'neighborhoods', 'pharmacies', 'seo_pages',
   'notifications',
-  'loyalty_points', 'loyalty_tiers', 'user_badges', 'user_achievements',
+  'loyalty_points', 'loyalty_tiers', 'loyalty_transactions', 'user_badges', 'user_achievements',
   'rewards', 'reward_inventory', 'user_tier_history',
   'user_activity', 'followers', 'mentions',
   'user_subscriptions', 'subscription_usage',
@@ -214,14 +213,14 @@ const ALLOWED_TABLES = new Set([
   'user_blocks', 'content_reports',
   'system_logs', 'migration_tracking',
   'photos', 'photo_albums',
-  'messages', 'conversations',
+  'messages', 'conversations', 'direct_messages', 'conversation_deletions',
   'coupons', 'coupon_usage',
   'featured_listings',
   'search_history',
   'email_subscriptions',
   'contact_submissions',
   'notification_broadcasts', 'notification_drafts',
-  'client_errors',
+  'client_errors', 'client_performance_metrics',
   's3_files', 'push_subscriptions',
   'two_factor_audit', 'trusted_devices',
   'place_hours', 'place_analytics_events',
@@ -258,6 +257,100 @@ const ALLOWED_TABLES = new Set([
   // Admin & infrastructure
   'admin_dashboard_widgets', 'push_subscription_stats',
   'transcoding_jobs',
+  // Monitoring & alerts
+  'alert_rules', 'active_alerts', 'alert_notifications',
+  'push_notification_logs',
+  // Backup
+  'backup_configs', 'backups',
+  // AI / recommendations
+  'recommendation_feedback', 'recommendation_weights',
+  // Analytics execution
+  'report_executions',
+  // Error tracking
+  'error_fingerprints',
+  // Multi-tenant
+  'tenant_users',
+  // Social matchmaking
+  'user_match_profiles',
+  // Webhook queue
+  'webhook_delivery_queue', 'webhook_dlq_alerts',
+  // Monitoring & logging
+  'performance_metrics', 'notification_logs', 'notification_drafts',
+  // Blog extensions
+  'blog_post_tags', 'blog_tags', 'blog_reading_history',
+  // Place extensions
+  'place_visits', 'place_visitors', 'place_verification',
+  // Review extensions
+  'review_flags', 'review_moderation_actions', 'review_reactions', 'review_responses',
+  // User extensions
+  'blocked_users', 'user_follows', 'user_mentions', 'user_activities',
+  'user_interests', 'user_interactions', 'user_preferences', 'user_audit_log',
+  'user_loyalty_balance', 'user_points_transactions', 'user_tier_membership',
+  'user_reward_achievements',
+  // Subscriptions & billing
+  'subscriptions', 'subscription_events', 'billing_history',
+  'admin_subscription_logs',
+  // Rewards & points
+  'reward_redemptions', 'points_transactions',
+  // Content & social
+  'comment_votes', 'content_shares', 'content_tags', 'content_versions',
+  'content_analytics', 'content_audit_trail', 'content_filter_rules', 'content_popularity',
+  'discovery_feeds', 'shares',
+  // Analytics & conversion
+  'analytics_snapshots', 'conversion_funnels', 'conversion_goals', 'conversions',
+  'retention_cohorts', 'cohort_members', 'trending_scores', 'request_metrics', 'search_clicks',
+  // Admin
+  'admin_dashboard_settings',
+  // Tenant / multi-tenant
+  'tenants', 'tenant_members', 'tenant_settings', 'tenant_features',
+  'tenant_audit_logs',
+  // Promotions
+  'promotion_redemptions', 'discount_codes',
+  // Tier system
+  'tier_history', 'tier_reset_schedule',
+  // Privacy
+  'privacy_settings', 'data_deletion_requests',
+  // Edit operations (collaboration)
+  'edit_operations', 'edit_snapshots',
+  // Video
+  'video_captions', 'video_metadata', 'video_streaming_settings', 'video_thumbnails',
+  // Webhooks
+  'webhook_events',
+  // Bus / transit
+  'bus_routes', 'bus_schedules',
+  // Email templates & newsletters
+  'email_templates', 'newsletter_subscribers',
+  // Site & admin settings
+  'site_settings',
+  // Place lifecycle
+  'place_sla_alert_state', 'place_lifecycle_events',
+  // Recipes
+  'recipes',
+  // Reports
+  'scheduled_reports',
+  // Multi-tenant social
+  'tenant_social_policies',
+  // Support tickets
+  'ticket_responses',
+  // Search & user favorites
+  'user_searches', 'user_favorites',
+  // Email campaigns & sequences
+  'campaign_subscribers', 'campaign_targeting', 'campaign_targeting_rules',
+  'email_sent_logs', 'email_sequence_steps', 'email_sequences',
+  // Events
+  'event_attendees',
+  // Security / IP filtering
+  'encryption_keys', 'ip_blacklist', 'ip_whitelist',
+  // Analytics & engagement
+  'engagement_events', 'featured_listing_clicks', 'funnel_step_completions',
+  'page_views', 'leaderboard_snapshots',
+  // Social / community
+  'hashtag_usage', 'moderation_actions', 'muted_users',
+  'place_badges', 'place_followers', 'place_likes',
+  // Notifications
+  'notification_channels', 'notification_deliveries',
+  // Journeys
+  'journey_steps',
 ]);
 
 function validateTable(table: string): void {
@@ -269,8 +362,7 @@ function validateTable(table: string): void {
 // Read replica pool — same pool for now, can be split for read-heavy workloads
 export const readReplicaPool = pool;
 
-export { pool, ALLOWED_TABLES };
-
+export {pool, ALLOWED_TABLES};
 export default {
   pool,
   query,

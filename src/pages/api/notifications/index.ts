@@ -7,6 +7,7 @@
 
 import type { APIRoute } from 'astro';
 import { requireAuth } from '../../../lib/auth';
+import { problemJson } from '../../../lib/api';
 import {
   getUserNotifications,
   markAsRead,
@@ -17,7 +18,15 @@ import {
 export const GET: APIRoute = async ({ request, url }) => {
   try {
     const auth = await requireAuth(request);
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Giriş gerekli',
+        type: '/problems/auth-required',
+        instance: '/api/notifications',
+      });
+    }
 
     const searchParams = new URL(url).searchParams;
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
@@ -33,17 +42,28 @@ export const GET: APIRoute = async ({ request, url }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to get notifications' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Bildirimler Alınamadı',
+      detail: error instanceof Error ? error.message : 'Failed to get notifications',
+      type: '/problems/notifications-fetch-failed',
+      instance: '/api/notifications',
+    });
   }
 };
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireAuth(request);
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Giriş gerekli',
+        type: '/problems/auth-required',
+        instance: '/api/notifications',
+      });
+    }
 
     const body = await request.json();
     const { notificationId, markAll } = body;
@@ -53,10 +73,13 @@ export const POST: APIRoute = async ({ request }) => {
     } else if (notificationId) {
       await markAsRead(notificationId, auth.user.id);
     } else {
-      return new Response(
-        JSON.stringify({ error: 'notificationId or markAll required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Eksik Parametre',
+        detail: 'notificationId veya markAll zorunlu',
+        type: '/problems/notifications-mark-validation',
+        instance: '/api/notifications',
+      });
     }
 
     // Get updated unread count
@@ -67,9 +90,12 @@ export const POST: APIRoute = async ({ request }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to mark as read' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Bildirim Güncellenemedi',
+      detail: error instanceof Error ? error.message : 'Failed to mark as read',
+      type: '/problems/notifications-mark-failed',
+      instance: '/api/notifications',
+    });
   }
 };

@@ -27,35 +27,21 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const view = url.searchParams.get('view') || 'all';
     const userId = locals.user.id;
 
-    let data;
-
-    switch (view) {
-      case 'unviewed': {
-        // Real-time unviewed achievements (no cache)
-        data = await getUnviewedAchievements(userId);
-        break;
-      }
-
-      case 'stats': {
-        // Stats with caching (300s TTL)
-        const cacheKey = `achievements:stats:${userId}`;
-        const cached = await getCache(cacheKey);
-        if (cached) {
-          data = cached;
-        } else {
-          data = await getAchievementStats(userId);
-          await setCache(cacheKey, data, 300);
-        }
-        break;
-      }
-
-      case 'all':
-      default: {
-        // All achievements (has internal caching: 1800s)
-        data = await getUserAchievements(userId);
-        break;
-      }
-    }
+    const data =
+      view === 'unviewed'
+        ? await getUnviewedAchievements(userId)
+        : view === 'stats'
+          ? await (async () => {
+              const cacheKey = `achievements:stats:${userId}`;
+              const cached = await getCache(cacheKey);
+              if (cached) {
+                return cached;
+              }
+              const stats = await getAchievementStats(userId);
+              await setCache(cacheKey, stats, 300);
+              return stats;
+            })()
+          : await getUserAchievements(userId);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/loyalty/achievements', 200, duration);

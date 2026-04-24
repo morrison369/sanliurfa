@@ -1,10 +1,43 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import TrendingPlaces from "../../components/TrendingPlaces";
+import { getSiteBranding } from "../../lib/site-branding";
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'Trend Mekanlar - Şanlıurfa',
+  description: "Şanlıurfa'da bu hafta en çok ziyaret edilen ve beğenilen trend mekanları keşfedin.",
+  keywords: ['trend mekanlar', 'şanlıurfa popüler yerler', 'bu hafta popüler', 'şanlıurfa gidilecek yerler'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/trend',
+};
+
+const faqItems = [
+  { S: "Trend mekanlar nasıl belirleniyor?", C: "Trend mekanlar son 7 günde en çok ziyaret edilen, yorum alan ve beğenilen mekanlar baz alınarak belirlenir." },
+  { S: "Trend listesi ne sıklıkla güncelleniyor?", C: "Trend listesi her gün otomatik olarak güncellenir." },
+  { S: "Mekanım trend listesine nasıl girebilir?", C: "Müşterilerinizi yorum yazmaya teşvik edin ve işletme sayfanızın güncel tutulmasını sağlayın." },
+];
 ---
 
-<Layout title="Trend Mekanlar - Şanlıurfa.com">
+<Layout seo={seo}>
   <div class="max-w-6xl mx-auto px-4 py-8">
-    <TrendingPlaces client:load />
+    <TrendingPlaces client:visible={{ rootMargin: '180px' }} />
   </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Trend Mekanlar', item: `${baseUrl}/trend` },
+    ],
+  })} is:inline />
 </Layout>

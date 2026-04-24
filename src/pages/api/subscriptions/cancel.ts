@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Cancel Subscription
  * POST /api/subscriptions/cancel - Cancel active subscription
@@ -12,7 +11,7 @@ import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

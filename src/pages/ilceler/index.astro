@@ -1,8 +1,25 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
 
 let districts: any[] = [];
+
+const fallbackDistricts = [
+  { slug: 'eyyubiye', name: 'Eyyübiye', description: 'Balıklıgöl, tarihi çarşılar ve inanç turizmi aksının merkez ilçesi.', is_central: true, sort_order: 1, place_count: 0 },
+  { slug: 'haliliye', name: 'Haliliye', description: 'Şehir merkezi, kamu hizmetleri, yeme içme ve günlük yaşam noktalarının yoğun olduğu ilçe.', is_central: true, sort_order: 2, place_count: 0 },
+  { slug: 'karakopru', name: 'Karaköprü', description: 'Yeni yaşam alanları, kafeler, konut bölgeleri ve modern şehir aksı.', is_central: true, sort_order: 3, place_count: 0 },
+  { slug: 'siverek', name: 'Siverek', description: 'Takoran Vadisi, doğal güzellikler ve geniş kırsal kültürüyle öne çıkan ilçe.', is_central: false, sort_order: 4, place_count: 0 },
+  { slug: 'viransehir', name: 'Viranşehir', description: 'Tarih, tarım ve bölgesel ulaşım akslarıyla güçlü bir ilçe merkezi.', is_central: false, sort_order: 5, place_count: 0 },
+  { slug: 'suruc', name: 'Suruç', description: 'Yerel kültür, sınır hattı ticareti ve kırsal yaşam dinamikleriyle bilinir.', is_central: false, sort_order: 6, place_count: 0 },
+  { slug: 'birecik', name: 'Birecik', description: 'Fırat Nehri, kelaynak kuşları ve nehir kıyısı gezi rotalarıyla tanınır.', is_central: false, sort_order: 7, place_count: 0 },
+  { slug: 'akcakale', name: 'Akçakale', description: 'Sınır ticareti, tarım alanları ve yerel pazar kültürüyle öne çıkar.', is_central: false, sort_order: 8, place_count: 0 },
+  { slug: 'ceylanpinar', name: 'Ceylanpınar', description: 'Geniş tarım arazileri ve sınır hattı yaşamıyla bilinen ilçe.', is_central: false, sort_order: 9, place_count: 0 },
+  { slug: 'halfeti', name: 'Halfeti', description: 'Saklı cennet olarak bilinen, tekne turları ve sular altında kalan tarihi dokusuyla ünlü ilçe.', is_central: false, sort_order: 10, place_count: 0 },
+  { slug: 'harran', name: 'Harran', description: 'Kümbet evleri, tarihi üniversite kalıntıları ve Mezopotamya mirasıyla öne çıkar.', is_central: false, sort_order: 11, place_count: 0 },
+  { slug: 'hilvan', name: 'Hilvan', description: 'Atatürk Barajı çevresi ve kırsal gezi rotalarıyla bilinir.', is_central: false, sort_order: 12, place_count: 0 },
+  { slug: 'bozova', name: 'Bozova', description: 'Atatürk Barajı, su sporları ve doğa rotalarıyla öne çıkan ilçe.', is_central: false, sort_order: 13, place_count: 0 },
+];
 
 try {
   const result = await query(
@@ -16,13 +33,36 @@ try {
   console.error('Error loading districts:', e);
 }
 
+if (districts.length === 0) {
+  districts = fallbackDistricts;
+}
+
 const centralDistricts = districts.filter(d => d.is_central);
 const otherDistricts = districts.filter(d => !d.is_central);
 
 const seo = {
   title: 'Şanlıurfa İlçeler Rehberi | Tüm İlçeler ve Yaşam',
   description: 'Şanlıurfa\'nın 13 ilçesi hakkında detaylı bilgi. Eyyübiye, Haliliye, Karaköprü, Siverek, Halfeti ve daha fazlası.',
+  keywords: ['şanlıurfa ilçeler', 'urfa eyyübiye', 'urfa haliliye', 'şanlıurfa karaköprü', 'şanlıurfa halfeti', 'urfa harran', 'şanlıurfa siverek', 'şanlıurfa birecik'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/ilceler',
 };
+const { baseUrl } = await getSiteBranding();
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa merkez ilçeler hangileri?',
+    C: 'Merkez ilçeler Eyyübiye, Haliliye ve Karaköprü olarak listelenir.',
+  },
+  {
+    S: 'İlçe sayfalarında ne tür bilgiler var?',
+    C: 'İlçe sayfalarında mekan yoğunluğu, temel yaşam bilgileri ve kategori bazlı içerik bağlantıları yer alır.',
+  },
+  {
+    S: 'İlçelere göre mekan araması yapılabilir mi?',
+    C: 'Evet. İlçe detay sayfasına girerek ilgili ilçedeki mekanları filtrelenmiş şekilde inceleyebilirsiniz.',
+  },
+];
 ---
 
 <Layout seo={seo}>
@@ -35,6 +75,13 @@ const seo = {
     </div>
 
     <div class="container mx-auto px-4 py-12">
+      <div class="rounded-2xl border border-teal-100 bg-teal-50 p-5 mb-8">
+        <h2 class="text-lg font-bold text-teal-900">Hızlı Cevap</h2>
+        <p class="text-sm text-teal-800 mt-1">
+          İlçe rehberi üzerinden Şanlıurfa’nın tüm ilçelerini tek ekranda görebilir ve ilçe bazlı mekan içeriklerine geçiş yapabilirsiniz.
+        </p>
+      </div>
+
       {/* Merkez İlçeler */}
       <h2 class="text-2xl font-bold text-gray-900 mb-6">Merkez İlçeler</h2>
       <div class="grid md:grid-cols-3 gap-6 mb-12">
@@ -80,9 +127,29 @@ const seo = {
       item: {
         '@type': 'City',
         name: d.name,
-        url: `https://sanliurfa.com/ilceler/${d.slug}`,
+        url: `${baseUrl}/ilceler/${d.slug}`,
         containedInPlace: { '@type': 'AdministrativeArea', name: 'Şanlıurfa' },
       }
     }))
-  })} />
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.C,
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'İlçeler', item: `${baseUrl}/ilceler` },
+    ],
+  })} is:inline />
 </Layout>

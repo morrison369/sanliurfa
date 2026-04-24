@@ -13,7 +13,7 @@ import os
 HOST = "176.9.138.254"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 class CWPDeployer:
     def __init__(self, host, port, username, password):

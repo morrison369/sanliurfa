@@ -13,13 +13,13 @@ if (!Astro.locals.user) {
 }
 ---
 
-<Layout title="Aktivite Akışı - Şanlıurfa.com">
+<Layout seo={{ title: "Aktivite Akışı - Sanliurfa.com", noIndex: true }}>
   <div class="container-custom py-8">
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Aktivite Akışı</h1>
       <p class="text-gray-600 dark:text-gray-400 mt-2">Takip ettiğin kullanıcıların aktivitelerini gör</p>
     </div>
 
-    <ActivityFeed client:load userId={Astro.locals.user.id} />
+    <ActivityFeed client:visible={{ rootMargin: '130px' }} userId={Astro.locals.user.id} />
   </div>
 </Layout>

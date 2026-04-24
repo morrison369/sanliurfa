@@ -64,7 +64,7 @@ export function slugify(str: string): string {
 /**
  * SEO başlığı oluşturma
  */
-export function createSEOTitle(title: string, siteName = 'Şanlıurfa.com'): string {
+export function createSEOTitle(title: string, siteName = 'Sanliurfa.com'): string {
   if (title.includes(siteName)) return title;
   return `${title} | ${siteName}`;
 }

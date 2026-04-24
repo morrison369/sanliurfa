@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface DailyData {
   date: string;
   views: number;
@@ -30,10 +29,10 @@ interface AnalyticsDashboardProps {
 }
 
 const PERIODS = [
-  { value: '7d', label: 'Son 7 Gun' },
-  { value: '30d', label: 'Son 30 Gun' },
-  { value: '90d', label: 'Son 90 Gun' },
-  { value: '365d', label: 'Son 1 Yil' },
+  { value: '7d', label: 'Son 7 Gün' },
+  { value: '30d', label: 'Son 30 Gün' },
+  { value: '90d', label: 'Son 90 Gün' },
+  { value: '365d', label: 'Son 1 Yıl' },
 ];
 
 export default function AnalyticsDashboard({ placeId }: AnalyticsDashboardProps) {
@@ -50,11 +49,11 @@ export default function AnalyticsDashboard({ placeId }: AnalyticsDashboardProps)
     try {
       setLoading(true);
       const response = await fetch(`/api/analytics/dashboard?placeId=${placeId}&period=${period}`);
-      if (!response.ok) throw new Error('Failed to load');
+      if (!response.ok) throw new Error('Analitik verileri yüklenemedi.');
       const result = await response.json();
       setData(result);
     } catch (err) {
-      setError('Analitik verileri yuklenemedi');
+      setError('Analitik verileri yüklenemedi');
     } finally {
       setLoading(false);
     }
@@ -83,7 +82,7 @@ export default function AnalyticsDashboard({ placeId }: AnalyticsDashboardProps)
                 {label}
               </span>
               <div className="absolute bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-                {item[key]} goruntulenme
+                {item[key]} görüntülenme
               </div>
             </div>
           );
@@ -155,7 +154,7 @@ export default function AnalyticsDashboard({ placeId }: AnalyticsDashboardProps)
   if (error || !data) {
     return (
       <div className="p-8 text-center text-red-600">
-        <p>{error || 'Bir hata olustu'}</p>
+        <p>{error || 'Bir hata oluştu'}</p>
         <button onClick={loadAnalytics} className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg">
           Tekrar Dene
         </button>
@@ -169,7 +168,7 @@ export default function AnalyticsDashboard({ placeId }: AnalyticsDashboardProps)
     <div className="bg-white rounded-xl shadow-sm border border-gray-200">
       <div className="p-6 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold text-gray-900">Analitik Dashboard</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Analitik Paneli</h2>
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
@@ -192,7 +191,7 @@ export default function AnalyticsDashboard({ placeId }: AnalyticsDashboardProps)
         </div>
         <div className="bg-gray-50 rounded-xl p-4">
           <div className="text-3xl font-bold text-gray-900">{summary.phoneClicks.total}</div>
-          <div className="text-sm text-gray-500">Telefon Tiklamasi</div>
+          <div className="text-sm text-gray-500">Telefon Tıklaması</div>
           <div className={`text-xs mt-1 ${summary.phoneClicks.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {summary.phoneClicks.change >= 0 ? '+' : ''}{summary.phoneClicks.change}%
           </div>
@@ -209,11 +208,11 @@ export default function AnalyticsDashboard({ placeId }: AnalyticsDashboardProps)
 
       <div className="p-6 grid lg:grid-cols-2 gap-6">
         <div className="bg-gray-50 rounded-xl p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Gunluk Görüntülenme</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">Günlük Görüntülenme</h3>
           {renderBarChart(data.daily, 'views')}
         </div>
         <div className="bg-gray-50 rounded-xl p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Cihaz Dagilimi</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">Cihaz Dağılımı</h3>
           {renderPieChart(data.devices)}
         </div>
       </div>
@@ -221,11 +220,11 @@ export default function AnalyticsDashboard({ placeId }: AnalyticsDashboardProps)
       {data.sources.length > 0 && (
         <div className="px-6 pb-6">
           <div className="bg-gray-50 rounded-xl p-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Trafik Kaynaklari</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">Trafik Kaynakları</h3>
             <div className="space-y-2">
               {data.sources.map((source, i) => (
                 <div key={i} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 capitalize">{source.source || 'Diger'}</span>
+                  <span className="text-sm text-gray-600 capitalize">{source.source || 'Diğer'}</span>
                   <div className="flex items-center gap-3">
                     <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div 

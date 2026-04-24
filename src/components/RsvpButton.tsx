@@ -2,9 +2,7 @@
  * RSVP Button Component
  * Toggle event attendance with visual feedback
  */
-
-import React, { useState, useEffect } from 'react';
-
+import { useState } from 'react';
 interface RsvpButtonProps {
   eventId: string;
   isLoggedIn: boolean;

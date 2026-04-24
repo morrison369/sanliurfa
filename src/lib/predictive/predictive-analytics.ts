@@ -5,7 +5,7 @@
 
 import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
-import { getCache, setCache, deleteCache } from '../cache';
+import { getCache, setCache } from '../cache';
 
 export async function predictUserChurn(userId: string): Promise<any | null> {
   try {
@@ -78,16 +78,6 @@ export async function calculateLifetimeValue(userId: string): Promise<number> {
     );
 
     const totalRevenue = parseFloat(revenue?.total || '0');
-
-    // Get user tenure
-    const userProfile = await queryOne(
-      'SELECT created_at FROM users WHERE id = $1',
-      [userId]
-    );
-
-    const tenureDays = userProfile?.created_at
-      ? Math.floor((Date.now() - new Date(userProfile.created_at).getTime()) / (24 * 3600000))
-      : 1;
 
     // Simple LTV = total revenue (more sophisticated models would use monthly spend * expected lifespan)
     const ltv = totalRevenue;
@@ -274,5 +264,3 @@ export async function getModelPerformanceMetrics(): Promise<any> {
     return {};
   }
 }
-
-

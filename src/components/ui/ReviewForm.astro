@@ -1,16 +1,37 @@
 ---
+import { actions, isInputError } from 'astro:actions';
+
 interface Props {
   placeId: string;
   placeName: string;
 }
 
 const { placeId, placeName } = Astro.props;
+const reviewResult = Astro.getActionResult(actions.submitPlaceReview);
+const reviewInputErrors = isInputError(reviewResult?.error) ? reviewResult.error.fields : {};
+const reviewSubmitError =
+  !isInputError(reviewResult?.error) && reviewResult?.error?.message
+    ? reviewResult.error.message
+    : null;
 ---
 
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6" data-review-form>
   <h3 class="text-lg font-semibold text-gray-900 mb-4">Değerlendirme Yaz</h3>
+
+  {reviewResult?.data?.success && (
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+      Yorumunuz alındı. {reviewResult.data.pointsEarned > 0 ? `+${reviewResult.data.pointsEarned} puan kazandınız.` : 'Onaylandıktan sonra yayınlanacaktır.'}
+    </div>
+  )}
+
+  {reviewSubmitError && (
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+      {reviewSubmitError}
+    </div>
+  )}
   
-  <form class="space-y-4" data-place-id={placeId}>
+  <form action={actions.submitPlaceReview} method="POST" class="space-y-4">
+    <input type="hidden" name="placeId" value={placeId} />
     <!-- Rating -->
     <div>
       <label class="label block mb-2">Puanınız</label>
@@ -26,6 +47,9 @@ const { placeId, placeName } = Astro.props;
         ))}
       </div>
       <input type="hidden" name="rating" data-rating-value required />
+      {reviewInputErrors.rating && (
+        <p class="mt-2 text-sm text-red-600">{reviewInputErrors.rating.join(', ')}</p>
+      )}
     </div>
     
     <!-- Title -->
@@ -38,6 +62,9 @@ const { placeId, placeName } = Astro.props;
         class="input"
         placeholder="Örn: Harika bir deneyim"
       />
+      {reviewInputErrors.title && (
+        <p class="mt-2 text-sm text-red-600">{reviewInputErrors.title.join(', ')}</p>
+      )}
     </div>
     
     <!-- Content -->
@@ -52,6 +79,9 @@ const { placeId, placeName } = Astro.props;
         required
         minlength="10"
       ></textarea>
+      {reviewInputErrors.content && (
+        <p class="mt-2 text-sm text-red-600">{reviewInputErrors.content.join(', ')}</p>
+      )}
       <p class="text-xs text-gray-500 mt-1">En az 10 karakter</p>
     </div>
     
@@ -61,7 +91,7 @@ const { placeId, placeName } = Astro.props;
       <input
         type="date"
         id="visit-date"
-        name="visit_date"
+        name="visitDate"
         class="input"
         max={new Date().toISOString().split('T')[0]}
       />
@@ -72,23 +102,21 @@ const { placeId, placeName } = Astro.props;
       <p class="text-sm text-gray-500">
         <span class="text-yellow-500">+50 puan</span> kazanacaksınız
       </p>
-      <button type="submit" class="btn-primary" data-submit-btn>
+      <button type="submit" class="btn-primary">
         Gönder
       </button>
     </div>
   </form>
 </div>
 
-<script>
+<script is:inline>
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.querySelector('[data-review-form]');
     if (!form) return;
     
     const ratingInput = form.querySelector('[data-rating-input]');
-    const ratingValue = form.querySelector('[data-rating-value]') as HTMLInputElement;
+    const ratingValue = form.querySelector('[data-rating-value]');
     const stars = form.querySelectorAll('[data-rating]');
-    const submitBtn = form.querySelector($1);
-    
     let selectedRating = 0;
     
     // Rating selection
@@ -133,55 +161,8 @@ const { placeId, placeName } = Astro.props;
       });
     });
     
-    // Form submission
-    const formElement = form.querySelector('form');
-    formElement?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      if (selectedRating === 0) {
-        (window as any).toast?.error('Lütfen bir puan seçin');
-        return;
-      }
-      
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Gönderiliyor...';
-      
-      const formData = new FormData(formElement);
-      const data = {
-        place_id: formElement.getAttribute('data-place-id'),
-        rating: selectedRating,
-        title: formData.get('id'),
-        content: formData.get('id'),
-        visit_date: formData.get('id')
-      };
-      
-      try {
-        const response = await fetch('/api/reviews/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          (window as any).toast?.success(`Yorumunuz eklendi! +${result.pointsEarned} puan kazandınız`);
-          formElement.reset();
-          selectedRating = 0;
-          ratingValue.value = '';
-          stars.forEach(s => {
-            s.classList.remove('text-yellow-400');
-            s.classList.add('text-gray-300');
-          });
-        } else {
-          (window as any).toast?.error(result.error || 'Bir hata oluştu');
-        }
-      } catch (error) {
-        (window as any).toast?.error('Bağlantı hatası. Lütfen tekrar deneyin.');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Gönder';
-      }
-    });
   });
 </script>
+
+
+

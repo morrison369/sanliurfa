@@ -4,8 +4,32 @@
  */
 
 import { writeFileSync, mkdirSync, existsSync, unlinkSync } from 'fs';
-import { join } from 'path';
+import { join, extname } from 'path';
 import { logger } from '../logger';
+
+const BLOCKED_EXTENSIONS = new Set(['.exe', '.bat', '.sh', '.php', '.js', '.mjs', '.py', '.rb', '.pl', '.html', '.htm', '.svg', '.xml']);
+
+export function validateImageSignature(buffer: Buffer, mimeType: string): boolean {
+  if (buffer.length < 12) return false;
+  switch (mimeType) {
+    case 'image/jpeg':
+      return buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+    case 'image/png':
+      return buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+    case 'image/webp':
+      return buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+             buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
+    case 'image/gif':
+      return buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38;
+    default:
+      return false;
+  }
+}
+
+export function validateFileExtension(fileName: string): boolean {
+  const ext = extname(fileName).toLowerCase();
+  return !BLOCKED_EXTENSIONS.has(ext);
+}
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || 'public/uploads/photos';
 const PUBLIC_URL_PREFIX = process.env.PUBLIC_APP_URL || '';
@@ -16,7 +40,8 @@ const PUBLIC_URL_PREFIX = process.env.PUBLIC_APP_URL || '';
 export async function saveFile(
   file: File,
   folder: string,
-  fileName?: string
+  fileName?: string,
+  preReadBuffer?: Buffer,
 ): Promise<{ filePath: string; publicUrl: string }> {
   const finalFileName =
     fileName || `${Date.now()}-${Math.random().toString(36).substring(7)}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
@@ -28,7 +53,7 @@ export async function saveFile(
     mkdirSync(dirPath, { recursive: true });
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = preReadBuffer ?? Buffer.from(await file.arrayBuffer());
   writeFileSync(fullPath, buffer);
 
   const publicPath = `/uploads/photos/${folder}/${finalFileName}`;

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface ActivityStats {
   views: number;
   searches: number;

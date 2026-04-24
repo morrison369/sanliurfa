@@ -4,7 +4,8 @@
  */
 
 import type { APIRoute } from 'astro';
-import { submitReport, isUserBanned } from '../../../lib/moderation';
+import { submitReport } from '../../../lib/moderation/moderation';
+import { isUserBanned } from '../../../lib/moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -38,7 +39,7 @@ const reportSchema = {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -130,3 +131,4 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 };
+

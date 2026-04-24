@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface PlaceAnalytics {
   views: number;
   uniqueViewers: number;
@@ -12,7 +11,7 @@ interface PlaceVendorDashboardProps {
 }
 
 /**
- * Dashboard for place owners/vendors to view analytics
+ * İşletme sahipleri için mekan analitik paneli.
  */
 export default function PlaceVendorDashboard({ placeId }: PlaceVendorDashboardProps) {
   const [analytics, setAnalytics] = useState<PlaceAnalytics | null>(null);
@@ -37,7 +36,7 @@ export default function PlaceVendorDashboard({ placeId }: PlaceVendorDashboardPr
         setError(data.error || 'Analitikler yüklenemedi');
       }
     } catch (err) {
-      console.error('Failed to load analytics:', err);
+      console.error('Analitikler yüklenemedi:', err);
       setError('Analitikler yüklenirken bir hata oluştu');
     } finally {
       setIsLoading(false);
@@ -58,7 +57,7 @@ export default function PlaceVendorDashboard({ placeId }: PlaceVendorDashboardPr
 
   return (
     <div className="space-y-6">
-      {/* Period Selector */}
+      {/* Dönem seçici */}
       <div className="flex gap-2">
         {[7, 30, 90].map(d => (
           <button
@@ -75,7 +74,7 @@ export default function PlaceVendorDashboard({ placeId }: PlaceVendorDashboardPr
         ))}
       </div>
 
-      {/* Key Metrics */}
+      {/* Ana metrikler */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Toplam Görüntüleme</p>
@@ -95,7 +94,7 @@ export default function PlaceVendorDashboard({ placeId }: PlaceVendorDashboardPr
         </div>
       </div>
 
-      {/* Activity Breakdown */}
+      {/* Aktivite kırılımı */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-xl font-bold mb-4">Aktivite Dağılımı</h3>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -119,7 +118,7 @@ export default function PlaceVendorDashboard({ placeId }: PlaceVendorDashboardPr
         </div>
       </div>
 
-      {/* Daily Views Chart Info */}
+      {/* Günlük görüntülenme bilgisi */}
       {analytics.dailyViews && analytics.dailyViews.length > 0 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <h3 className="text-xl font-bold mb-4">Günlük Görüntülemeler</h3>

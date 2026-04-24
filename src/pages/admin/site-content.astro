@@ -1,0 +1,28 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SiteContentManager from '../../components/admin/SiteContentManager';
+import SiteOperationsOverview from '../../components/admin/SiteOperationsOverview';
+import SitePlatformBlueprint from '../../components/admin/SitePlatformBlueprint';
+
+const seo = {
+  title: 'Site İçerik Yönetimi - Sanliurfa.com',
+  description: 'Ana sayfa hero ve site içerik bloklarını database üzerinden yönetin.',
+  noIndex: true,
+};
+---
+
+<Layout seo={seo}>
+  <div class="bg-gray-50 min-h-screen pt-24 pb-10">
+    <div class="container mx-auto px-4">
+      <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Site İçerik Yönetimi</h1>
+        <p class="mt-2 text-gray-600">
+          Tüm kritik içerik alanları admin paneli üzerinden database kaynaklı yönetim modeline geçirildi.
+        </p>
+      </div>
+      <SiteOperationsOverview client:visible />
+      <SitePlatformBlueprint client:visible />
+      <SiteContentManager client:visible />
+    </div>
+  </div>
+</Layout>

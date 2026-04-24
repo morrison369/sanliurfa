@@ -4,10 +4,18 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 import { requireRole } from '../../lib/auth';
 import { query } from '../../lib/postgres';
 
+interface ImportCategoryRow {
+  id: string | number;
+  slug: string;
+  name: string;
+}
+
 const auth = await requireRole(Astro.request, 'admin');
 if (auth instanceof Response) return auth;
 
-const catResult = await query(`SELECT id, slug, name FROM categories WHERE is_active = true ORDER BY sort_order, name`);
+const catResult = await query<ImportCategoryRow>(
+  `SELECT id, slug, name FROM categories WHERE is_active = true ORDER BY sort_order, name`
+);
 const categories = catResult.rows;
 ---
 
@@ -102,25 +110,13 @@ const categories = catResult.rows;
         <span>💾</span> Yedekleme
       </h2>
       
-      <div class="flex gap-4">
-        <button
-          onclick="createBackup()"
-          class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-        >
-          Yedek Oluştur
-        </button>
-        
-        <button
-          onclick="restoreBackup()"
-          class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-        >
-          Yedekten Geri Yükle
-        </button>
+      <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        Production ortamında manuel uygulama yedeği kullanılmıyor. CentOS Web Panel tarafındaki günlük otomatik sistem yedeği esas alınır; bu panel sadece CSV içe/dışa aktarma için tutulur.
       </div>
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     document.getElementById('import-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -165,13 +161,8 @@ const categories = catResult.rows;
         resultDiv.innerHTML = '<p class="text-red-600">Bir hata oluştu</p>';
       }
     });
-    
-    async function createBackup() {
-      alert('Yedekleme özelliği yakında geliyor!');
-    }
-    
-    async function restoreBackup() {
-      alert('Geri yükleme özelliği yakında geliyor!');
-    }
   </script>
 </AdminLayout>
+
+
+

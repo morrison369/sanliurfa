@@ -3,15 +3,19 @@ import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { sendEmail } from '../../../lib/email';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 // Rezervasyon detayı görüntüle
 export const GET: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/reservations-detail-unauthorized',
+        instance: `/api/reservations/${context.params.id}`,
       });
     }
 
@@ -26,9 +30,12 @@ export const GET: APIRoute = async (context) => {
     );
 
     if (result.rows.length === 0) {
-      return new Response(JSON.stringify({ error: 'Reservation not found' }), {
+      return problemJson({
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Bulunamadı',
+        detail: 'Rezervasyon bulunamadı',
+        type: '/problems/reservations-detail-not-found',
+        instance: `/api/reservations/${id}`,
       });
     }
 
@@ -36,9 +43,12 @@ export const GET: APIRoute = async (context) => {
 
     // Yetki kontrolü
     if (auth.user.role === 'vendor' && auth.placeId !== reservation.place_id) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+      return problemJson({
         status: 403,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Forbidden',
+        detail: 'Bu rezervasyon için yetkiniz yok',
+        type: '/problems/reservations-detail-forbidden',
+        instance: `/api/reservations/${id}`,
       });
     }
 
@@ -51,9 +61,12 @@ export const GET: APIRoute = async (context) => {
     });
   } catch (error) {
     logger.error('Reservation detail error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Rezervasyon Detayı Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/reservations-detail-failed',
+      instance: `/api/reservations/${context.params.id}`,
     });
   }
 };
@@ -63,9 +76,12 @@ export const PUT: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/reservations-update-unauthorized',
+        instance: `/api/reservations/${context.params.id}`,
       });
     }
 
@@ -80,9 +96,12 @@ export const PUT: APIRoute = async (context) => {
     );
 
     if (existingResult.rows.length === 0) {
-      return new Response(JSON.stringify({ error: 'Reservation not found' }), {
+      return problemJson({
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Bulunamadı',
+        detail: 'Rezervasyon bulunamadı',
+        type: '/problems/reservations-update-not-found',
+        instance: `/api/reservations/${id}`,
       });
     }
 
@@ -90,18 +109,24 @@ export const PUT: APIRoute = async (context) => {
 
     // Yetki kontrolü
     if (auth.user.role === 'vendor' && auth.placeId !== reservation.place_id) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+      return problemJson({
         status: 403,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Forbidden',
+        detail: 'Bu rezervasyon için yetkiniz yok',
+        type: '/problems/reservations-update-forbidden',
+        instance: `/api/reservations/${id}`,
       });
     }
 
     // Status güncelleme validasyonu
     const validStatuses = ['pending', 'confirmed', 'cancelled', 'completed', 'no_show'];
     if (status && !validStatuses.includes(status)) {
-      return new Response(JSON.stringify({ error: 'Invalid status' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Geçersiz rezervasyon durumu',
+        type: '/problems/reservations-update-status-invalid',
+        instance: `/api/reservations/${id}`,
       });
     }
 
@@ -137,9 +162,12 @@ export const PUT: APIRoute = async (context) => {
     }
 
     if (updates.length === 0) {
-      return new Response(JSON.stringify({ error: 'No fields to update' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Güncellenecek alan yok',
+        type: '/problems/reservations-update-no-fields',
+        instance: `/api/reservations/${id}`,
       });
     }
 
@@ -187,9 +215,12 @@ export const PUT: APIRoute = async (context) => {
     });
   } catch (error) {
     logger.error('Reservation update error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Rezervasyon Güncellenemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/reservations-update-failed',
+      instance: `/api/reservations/${context.params.id}`,
     });
   }
 };
@@ -199,9 +230,12 @@ export const DELETE: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth || auth.user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/reservations-delete-unauthorized',
+        instance: `/api/reservations/${context.params.id}`,
       });
     }
 
@@ -213,9 +247,12 @@ export const DELETE: APIRoute = async (context) => {
     );
 
     if (result.rows.length === 0) {
-      return new Response(JSON.stringify({ error: 'Reservation not found' }), {
+      return problemJson({
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Bulunamadı',
+        detail: 'Rezervasyon bulunamadı',
+        type: '/problems/reservations-delete-not-found',
+        instance: `/api/reservations/${id}`,
       });
     }
 
@@ -228,9 +265,12 @@ export const DELETE: APIRoute = async (context) => {
     });
   } catch (error) {
     logger.error('Reservation delete error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Rezervasyon Silinemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/reservations-delete-failed',
+      instance: `/api/reservations/${context.params.id}`,
     });
   }
 };

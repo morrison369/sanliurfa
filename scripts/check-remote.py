@@ -5,7 +5,7 @@ import time
 print("Baglaniyor...", flush=True)
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='zIT7Y9yrJZRV', timeout=30)
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', timeout=30)
 print("SSH OK", flush=True)
 
 # Check .env
@@ -21,7 +21,7 @@ stdin, stdout, stderr = ssh.exec_command('pm2 list')
 print(f"PM2:\n{stdout.read().decode()}", flush=True)
 
 # Health
-stdin, stdout, stderr = ssh.exec_command('sleep 2 && curl -s http://127.0.0.1:6000/api/health')
+stdin, stdout, stderr = ssh.exec_command('sleep 2 && curl -s http://127.0.0.1:4321/api/health')
 print(f"Health:\n{stdout.read().decode()}", flush=True)
 
 ssh.close()

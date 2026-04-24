@@ -4,12 +4,12 @@
  */
 
 import type { APIRoute } from 'astro';
-import { createTranscodingJob, getPendingTranscodingJobs, getTranscodingStats } from '../../../lib/video/video-processing';
+import { createTranscodingJob } from '../../../lib/video/video-processing';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

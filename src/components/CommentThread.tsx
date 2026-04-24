@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 
 interface Comment {
   id: string;
@@ -56,7 +56,7 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
     }
   };
 
-  const handleSubmitComment = async (e: React.FormEvent, parentCommentId?: string) => {
+  const handleSubmitComment = async (e: React.SyntheticEvent<HTMLFormElement>, parentCommentId?: string) => {
     e.preventDefault();
 
     if (!newComment.trim() || !currentUserId) {
@@ -144,7 +144,7 @@ export default function CommentThread({ targetType, targetId, currentUserId }: C
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-3">
-          <a href={`/kullanıcı/${comment.user_id}`} className="flex items-center gap-2 hover:opacity-75">
+          <a href={`/kullanici/${comment.user_id}`} className="flex items-center gap-2 hover:opacity-75">
             {comment.user_avatar ? (
               <img
                 src={comment.user_avatar}

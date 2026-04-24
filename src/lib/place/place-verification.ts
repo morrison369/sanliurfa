@@ -3,7 +3,7 @@
  * Manage place verification status and trust badges
  */
 
-import { query, queryOne, queryMany, insert, update } from '../postgres';
+import { query, queryOne, queryMany, insert } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
 
@@ -365,5 +365,4 @@ export async function getPendingVerifications(limit: number = 50): Promise<any[]
     return [];
   }
 }
-
 

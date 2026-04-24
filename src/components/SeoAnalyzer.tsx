@@ -2,9 +2,7 @@
  * SEO Analyzer Component
  * Real-time SEO analysis and recommendations
  */
-
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface SeoAnalysisResult {
   url: string;
   score: number;
@@ -85,7 +83,8 @@ export default function SeoAnalyzer() {
       const wordCount = bodyText.split(/\s+/).length;
 
       const isResponsive = window.innerWidth > 0; // Simple check
-      const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+      const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+      const loadTime = navEntry ? navEntry.loadEventEnd : 0;
 
       const data: PageSeoData = {
         title,

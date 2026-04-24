@@ -2,7 +2,7 @@
  * Content Manager Component
  * Create, edit, and publish content
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState} from 'react';
 
 interface ContentItem {
   id: string;
@@ -47,7 +47,7 @@ export function ContentManager() {
     }
   };
 
-  const handleCreateContent = async (e: React.FormEvent) => {
+  const handleCreateContent = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {

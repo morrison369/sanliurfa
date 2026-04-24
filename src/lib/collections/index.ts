@@ -192,7 +192,7 @@ export async function addPlaceToCollection(
 
   // Get place info
   const placeResult = await query(
-    'SELECT name, (SELECT url FROM place_images WHERE place_id = $1 LIMIT 1) as image FROM places WHERE id = $1',
+    'SELECT name, COALESCE(thumbnail_url, images[1]) as image FROM places WHERE id = $1',
     [placeId]
   );
 
@@ -328,17 +328,17 @@ export async function getFeaturedCollections(limit = 10): Promise<Collection[]> 
   return result.rows.map(mapCollectionRow);
 }
 
-export async function searchCollections(query: string, limit = 20): Promise<Collection[]> {
+export async function searchCollections(searchTerm: string, limit = 20): Promise<Collection[]> {
   const result = await query(
-    `SELECT c.*, 
+    `SELECT c.*,
       (SELECT COUNT(*) FROM collection_places WHERE collection_id = c.id) as place_count,
       (SELECT COUNT(*) FROM collection_followers WHERE collection_id = c.id) as followers
      FROM collections c
-     WHERE c.is_public = true 
+     WHERE c.is_public = true
      AND (c.name ILIKE $1 OR c.description ILIKE $1 OR $2 = ANY(c.tags))
      ORDER BY followers DESC
      LIMIT $3`,
-    [`%${query}%`, query, limit]
+    [`%${searchTerm}%`, searchTerm, limit]
   );
 
   return result.rows.map(mapCollectionRow);
@@ -359,3 +359,4 @@ function mapCollectionRow(row: any): Collection {
     updatedAt: new Date(row.updated_at),
   };
 }
+

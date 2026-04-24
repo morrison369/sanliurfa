@@ -2,7 +2,7 @@
  * Campaign Builder Component
  * Create and manage email campaigns
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState} from 'react';
 
 interface Campaign {
   id: string;
@@ -46,7 +46,7 @@ export function CampaignBuilder() {
     }
   };
 
-  const handleCreateCampaign = async (e: React.FormEvent) => {
+  const handleCreateCampaign = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {

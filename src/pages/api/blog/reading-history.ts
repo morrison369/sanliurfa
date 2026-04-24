@@ -13,7 +13,7 @@ import { logger } from '../../../lib/logging';
 
 // Okuma geçmişi kaydet
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -91,7 +91,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
 // Okuma geçmişini getir
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

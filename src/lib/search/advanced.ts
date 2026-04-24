@@ -64,7 +64,7 @@ export async function advancedSearch(options: SearchOptions): Promise<{
   // Build base query
   let sql = `SELECT 
     p.id, p.name, p.slug, p.category, p.rating, p.review_count,
-    p.address, p.image, p.description, p.latitude, p.longitude,
+    p.address, COALESCE(p.thumbnail_url, p.images[1]) as image, p.description, p.latitude, p.longitude,
     p.created_at
   FROM places p
   WHERE 1=1`;
@@ -291,10 +291,10 @@ async function getFacets(searchQuery?: string, filters?: SearchFilters): Promise
 /**
  * Get search suggestions
  */
-export async function getSearchSuggestions(query: string = '', limit = 5): Promise<string[]> {
-  if (!query || query.length < 2) return [];
+export async function getSearchSuggestions(searchTerm: string = '', limit = 5): Promise<string[]> {
+  if (!searchTerm || searchTerm.length < 2) return [];
 
-  const cacheKey = `search:suggestions:${query.toLowerCase()}`;
+  const cacheKey = `search:suggestions:${searchTerm.toLowerCase()}`;
   const cached = await getCache<string[]>(cacheKey);
   if (cached) return cached;
 
@@ -307,7 +307,7 @@ export async function getSearchSuggestions(query: string = '', limit = 5): Promi
      GROUP BY query
      ORDER BY count DESC
      LIMIT $2`,
-    [`${query}%`, limit]
+    [`${searchTerm}%`, limit]
   );
 
   // Place names
@@ -317,7 +317,7 @@ export async function getSearchSuggestions(query: string = '', limit = 5): Promi
      WHERE name ILIKE $1
      ORDER BY rating DESC
      LIMIT $2`,
-    [`${query}%`, limit]
+    [`${searchTerm}%`, limit]
   );
 
   const suggestions = [
@@ -332,11 +332,11 @@ export async function getSearchSuggestions(query: string = '', limit = 5): Promi
 /**
  * Log search query
  */
-export async function logSearch(query: string, userId?: string, resultsCount: number = 0): Promise<void> {
+export async function logSearch(searchTerm: string, userId?: string, resultsCount: number = 0): Promise<void> {
   await query(
     `INSERT INTO search_logs (query, user_id, results_count, created_at)
      VALUES ($1, $2, $3, NOW())`,
-    [query, userId || null, resultsCount]
+    [searchTerm, userId || null, resultsCount]
   );
 }
 
@@ -359,3 +359,4 @@ export async function getTrendingSearches(limit = 10): Promise<Array<{ query: st
     count: parseInt(r.count),
   }));
 }
+

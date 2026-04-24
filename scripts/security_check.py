@@ -3,7 +3,7 @@ import paramiko
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='BcqH7t5zNKfw')
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD')
 
 print("🔒 GÜVENLİK KONTROLÜ")
 print("=" * 60)
@@ -14,8 +14,8 @@ for line in stdout.read().decode().split('\n')[:8]:
     if line.strip():
         print(f"  {line.strip()[:70]}")
 
-print("\n🔐 Port 6000 Güvenlik:")
-stdin, stdout, stderr = ssh.exec_command("nc -zv 127.0.0.1 6000 2>&1 | grep -i succeeded || echo 'Localhost test yapildi'")
+print("\n🔐 Port 4321 Güvenlik:")
+stdin, stdout, stderr = ssh.exec_command("nc -zv 127.0.0.1 4321 2>&1 | grep -i succeeded || echo 'Localhost test yapildi'")
 print(f"  Localhost: ✅ Uygulama çalışıyor")
 
 print("\n📊 Uygulama Durumu:")

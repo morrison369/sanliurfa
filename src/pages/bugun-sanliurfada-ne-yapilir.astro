@@ -1,0 +1,172 @@
+---
+
+import Layout from '../layouts/Layout.astro';
+import { query } from '../lib/postgres';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const today = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+let events: any[] = [];
+let featuredPlaces: any[] = [];
+
+try {
+  const [eventsResult, placesResult] = await Promise.all([
+    query(`SELECT id, slug, title, description, start_date, end_date, location, image_url
+           FROM events
+           WHERE status = 'published'
+             AND (end_date IS NULL OR end_date >= CURRENT_DATE)
+           ORDER BY start_date ASC LIMIT 6`),
+    query(`SELECT p.slug, p.name, p.address, p.rating, p.review_count, c.name AS category_name
+           FROM places p LEFT JOIN categories c ON p.category_id = c.id
+           WHERE p.status = 'active' AND p.is_featured = true
+           ORDER BY p.rating DESC NULLS LAST LIMIT 8`),
+  ]);
+  events = eventsResult.rows;
+  featuredPlaces = placesResult.rows;
+} catch (e) {
+  console.error('bugun-sanliurfada verileri yüklenemedi:', e);
+}
+
+const aktiviteler = [
+  { title: 'Balıklıgöl\'ü Ziyaret Et', emoji: '🐟', href: '/isletme/balikligol', desc: 'İbrahim Peygamber\'in ateşe atıldığı kutsal göl' },
+  { title: 'Urfa Kalesi\'ne Çık', emoji: '🏰', href: '/isletme/urfa-kalesi', desc: 'Şehrin panoramik manzarası' },
+  { title: 'Tarihi Çarşıyı Gez', emoji: '🛍️', href: '/isletme/kapali-carsi', desc: 'Bedesten ve Kapalı Çarşı' },
+  { title: 'Yöresel Lezzet Tad', emoji: '🍽️', href: '/sanliurfada-ne-yenir', desc: 'Kebap, ciğer ve çiğ köfte' },
+  { title: 'Göbeklitepe\'ye Git', emoji: '🏛️', href: '/isletme/gobeklitepe', desc: 'Dünyanın en eski tapınağı' },
+  { title: 'Halfeti\'yi Keşfet', emoji: '⛵', href: '/isletme/halfeti', desc: 'Kırmızı gülleri ile ünlü koy' },
+];
+
+const seo = {
+  title: `Bugün Şanlıurfa'da Ne Yapılır? | ${today}`,
+  description: "Şanlıurfa\'da yapılacak şeyler; etkinlikler, tarihi yerler, yöresel lezzetler ve öne çıkan mekanlar.",
+  keywords: ['şanlıurfada ne yapılır', 'urfa bugün etkinlik', 'şanlıurfa gezilecek yer bugün', 'urfa aktiviteler', 'şanlıurfa hafta sonu'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/bugun-sanliurfada-ne-yapilir',
+};
+
+const faqItems = [
+  {
+    S: "Bugün Şanlıurfa\'da ne yapılır?",
+    C: "Şanlıurfa\'da bugün tarihi yerleri ziyaret edebilir, yöresel lezzetler tadabilir ve güncel etkinliklere katılabilirsiniz. Göbeklitepe, Balıklıgöl ve Kapalı Çarşı en popüler güzergahlar arasındadır.",
+  },
+  {
+    S: "Şanlıurfa\'da ücretsiz yapılacak şeyler neler?",
+    C: 'Balıklıgöl çevresi, Dergah ve tarihi çarşılar ücretsiz gezilebilir. Sabah erken saatlerde şehrin sessiz dokusunu keşfetmek de ayrıca güzeldir.',
+  },
+  {
+    S: "Şanlıurfa\'da çocuklarla nereye gidilir?",
+    C: 'Balıklıgöl ve çevresindeki parklar, Şanlıurfa Müzesi ve tarihi çarşılar aile dostu mekanlardır. Göbeklitepe gezisi çocuklar için eğitici bir deneyim sunar.',
+  },
+];
+---
+
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-indigo-700 to-purple-800 text-white py-16">
+      <div class="container mx-auto px-4 max-w-5xl">
+        <p class="text-indigo-200 font-medium mb-2">{today}</p>
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Bugün Şanlıurfa’da<br />Ne Yapılır?</h1>
+        <p class="text-indigo-100 text-lg max-w-2xl">
+          Etkinlikler, gezilecek yerler ve öne çıkan mekanlar. Şanlıurfa’da vakit geçirmenin en güzel yolları.
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 max-w-5xl py-12 space-y-12">
+      <!-- Aktiviteler -->
+      <section>
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Yapılacaklar Listesi</h2>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {aktiviteler.map((a) => (
+            <a href={a.href} class="bg-white rounded-xl p-5 shadow-sm border hover:shadow-lg transition-all group">
+              <div class="text-3xl mb-3">{a.emoji}</div>
+              <h3 class="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{a.title}</h3>
+              <p class="text-sm text-gray-500 mt-1">{a.desc}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <!-- Etkinlikler -->
+      {events.length > 0 && (
+        <section>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Yaklaşan Etkinlikler</h2>
+            <a href="/etkinlikler" class="text-indigo-600 hover:text-indigo-700 font-medium text-sm">Tümünü Gör →</a>
+          </div>
+          <div class="grid md:grid-cols-2 gap-4">
+            {events.map((e) => (
+              <a href={`/etkinlikler/${e.slug}`} class="bg-white rounded-xl p-5 shadow-sm border hover:shadow-lg transition-all group">
+                <div class="flex items-start gap-3">
+                  <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-2xl shrink-0">🎉</div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-1">{e.title}</h3>
+                    <p class="text-xs text-indigo-600 mt-0.5">{e.location || 'Şanlıurfa'}</p>
+                    <p class="text-sm text-gray-500 mt-1 line-clamp-2">{e.description}</p>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Öne Çıkan Mekanlar -->
+      {featuredPlaces.length > 0 && (
+        <section>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Öne Çıkan Mekanlar</h2>
+            <a href="/mekanlar" class="text-indigo-600 hover:text-indigo-700 font-medium text-sm">Tüm Mekanlar →</a>
+          </div>
+          <div class="grid md:grid-cols-2 gap-4">
+            {featuredPlaces.map((p) => (
+              <a href={`/isletme/${p.slug}`} class="bg-white rounded-xl p-4 shadow-sm border hover:shadow-lg transition-all group flex items-center gap-4">
+                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-xl shrink-0">📍</div>
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-semibold text-gray-900 group-hover:text-indigo-600 truncate">{p.name}</h3>
+                  <p class="text-xs text-gray-500">{p.category_name}</p>
+                </div>
+                {p.rating && <span class="text-yellow-600 font-bold shrink-0">★ {p.rating}</span>}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'TouristDestination',
+    name: 'Şanlıurfa',
+    description: 'Şanlıurfa\'da yapılacak aktiviteler, etkinlikler ve gezilecek yerler.',
+    url: `${baseUrl}/bugun-sanliurfada-ne-yapilir`,
+    touristType: ['Kültür Turizmi', 'Gastronomi Turizmi', 'Tarih Turizmi'],
+    includesAttraction: aktiviteler.map((a) => ({
+      '@type': 'TouristAttraction',
+      name: a.title,
+      description: a.desc,
+      url: `${baseUrl}${a.href}`,
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Etkinlikler', item: `${baseUrl}/etkinlikler` },
+      { '@type': 'ListItem', position: 3, name: 'Bugün Şanlıurfa\'da Ne Yapılır?', item: `${baseUrl}/bugun-sanliurfada-ne-yapilir` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

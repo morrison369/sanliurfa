@@ -94,7 +94,7 @@ export function generateTwitterCard(params: {
     description,
     image,
     card = 'summary_large_image',
-    site = `@${SITE.twitter}`,
+    site,
     creator,
   } = params;
 
@@ -102,8 +102,12 @@ export function generateTwitterCard(params: {
     'twitter:card': card,
     'twitter:title': title,
     'twitter:description': description,
-    'twitter:site': site,
   };
+
+  const resolvedSite = site ?? (SITE.twitter ? `@${SITE.twitter}` : '');
+  if (resolvedSite) {
+    tags['twitter:site'] = resolvedSite;
+  }
 
   if (image) {
     const imageUrl = image.startsWith('http')
@@ -334,9 +338,12 @@ export function generateSEOMeta(params: {
     'twitter:card': 'summary_large_image',
     'twitter:title': title,
     'twitter:description': description,
-    'twitter:site': `@${SITE.twitter}`,
     'canonical': canonicalUrl,
   };
+
+  if (SITE.twitter) {
+    meta['twitter:site'] = `@${SITE.twitter}`;
+  }
 
   // Gorseller
   const imageUrl = image

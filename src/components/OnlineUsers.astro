@@ -26,7 +26,7 @@ const { showCount = true } = Astro.props;
 
   if (countElement) {
     // Subscribe to online users updates
-    const cleanup = sseManager.onOnlineUsersUpdate = (/** @type {number} */ count) => {
+    sseManager.onOnlineUsersUpdate = (count: number) => {
       countElement.textContent = String(count).toLocaleString();
     };
 

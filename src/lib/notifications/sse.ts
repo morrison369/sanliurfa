@@ -3,8 +3,6 @@
  * Real-time notifications for users
  */
 
-import type { APIContext } from 'astro';
-
 interface Notification {
   id: string;
   userId: string;
@@ -141,7 +139,7 @@ import { query, queryOne } from '../postgres';
  */
 export async function saveNotification(notification: Omit<Notification, 'id' | 'createdAt'>): Promise<Notification> {
   const result = await queryOne<Notification>(
-    `INSERT INTO notifications (user_id, type, title, message, link, read)
+    `INSERT INTO notifications (user_id, type, title, message, action_url, read)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
     [notification.userId, notification.type, notification.title, notification.message, notification.link, notification.read]
@@ -231,7 +229,7 @@ export const notify = {
       type: 'review',
       title: 'Yeni Değerlendirme',
       message: `${reviewerName}, ${placeName} hakkında yorum yaptı.`,
-      link: `/profile`,
+      link: `/profil`,
     });
   },
 
@@ -251,7 +249,7 @@ export const notify = {
       type: 'message',
       title: 'Yeni Mesaj',
       message: `${senderName} size bir mesaj gönderdi.`,
-      link: `/messages`,
+      link: `/mesajlar`,
     });
   },
 
@@ -261,7 +259,7 @@ export const notify = {
       type: 'place_approved',
       title: 'Mekan Onaylandı',
       message: `${placeName} öneriniz onaylandı ve yayına alındı.`,
-      link: `/places/${placeSlug}`,
+      link: `/isletme/${placeSlug}`,
     });
   },
 

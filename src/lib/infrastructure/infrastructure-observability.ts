@@ -305,6 +305,4 @@ export const costAnalyzer = new CostAnalyzer();
 export const resourceOptimizer = new ResourceOptimizer();
 export const alertingEngine = new AlertingEngine();
 
-export type { MetricDatapoint, ServiceCost, ResourceRecommendation, AlertRule };
-
-
+export { MetricDatapoint, ServiceCost, ResourceRecommendation, AlertRule };

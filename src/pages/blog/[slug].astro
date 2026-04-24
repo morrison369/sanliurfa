@@ -1,7 +1,11 @@
 ---
+
 // Blog Post Detail Page — reads from DB, falls back to content collection
 import Layout from '../../layouts/Layout.astro';
 import { queryOne, query } from '../../lib/postgres';
+import { resolveContentImage } from '../../lib/content-images';
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const { slug } = Astro.params;
 if (!slug) return Astro.redirect('/blog');
@@ -49,13 +53,84 @@ if (!post) {
   } catch { /* content collection not available in SSR */ }
 }
 
+const fallbackPosts: Record<string, any> = {
+  'sanliurfa-hafta-sonu-rehberi': {
+    slug: 'sanliurfa-hafta-sonu-rehberi',
+    title: 'Şanlıurfa Hafta Sonu Rehberi: 2 Günde Neler Yapılır?',
+    excerpt:
+      "Şanlıurfa'da 2 günlük gezi planı. Cumartesi ve pazar günü yapılacaklar, gezilecek yerler ve yeme içme önerileri.",
+    content: `## 1. Gün: Tarih ve Kültür
+Sabah erken saatlerde Göbeklitepe ile başlayın. Ziyaret için 2-3 saat ayırmak, hem müze alanını hem de ana kazı bölgesini rahat gezmek için yeterlidir.
+
+Öğle saatlerinde şehir merkezine dönüp ciğer kebabı, lahmacun veya patlıcan kebabı tercih edebilirsiniz. Kalabalık saatlere kalmamak için öğle planını erken yapmak daha kullanışlı olur.
+
+Öğleden sonra Balıklıgöl, Dergah bölgesi, Rızvaniye Camii ve çevredeki tarihi sokaklar için idealdir. Bu rota yürüyerek gezilebilir ve fotoğraf için en güçlü şehir dokusunu verir.
+
+Akşam Gümrük Hanı çevresinde mırra içebilir, Kapalı Çarşı ve Bakırcılar Çarşısı tarafında yerel ürünlere bakabilirsiniz.
+
+## 2. Gün: Doğa, Lezzet ve Sıra Gecesi
+İkinci gün için Harran kümbet evleri, geleneksel mimari ve ovayı kapsayan yarım günlük bir rota planlanabilir.
+
+Öğle yemeğinde Şanlıurfa mutfağından lahmacun, bostana, kebap çeşitleri veya yöresel ev yemekleri seçilebilir.
+
+Öğleden sonra Halfeti tekne turu için ayrılabilir. Batık şehir, Rumkale çevresi ve Fırat manzarası hafta sonu rotasına farklı bir tempo katar.
+
+Akşam programında sıra gecesi tercih edilecekse rezervasyon, ulaşım ve dönüş saatleri önceden netleştirilmelidir.
+
+## Pratik Planlama Notları
+- Göbeklitepe ve Harran gibi merkez dışı rotalarda ulaşımı önceden planlayın.
+- Yaz aylarında öğle saatlerini kapalı alan, müze veya yemek molası için kullanın.
+- Balıklıgöl ve çarşı rotasını aynı gün içinde yürüyerek gezebilirsiniz.
+- Halfeti için tekne saatlerini gitmeden önce kontrol edin.
+- Şanlıurfa gezisinde rahat ayakkabı ve mevsime uygun kıyafet önemlidir.`,
+    content_html: null,
+    author_name: 'Şanlıurfa Rehberi',
+    published_at: '2026-04-11T00:00:00.000Z',
+    reading_time: 3,
+    featured_image: '/images/blog/tarihi-yerler-rehberi.jpg',
+    category: 'Gezi',
+    tags: [
+      { name: 'Şanlıurfa Gezi', slug: 'sanliurfa-gezi' },
+      { name: 'Hafta Sonu', slug: 'hafta-sonu' },
+    ],
+  },
+};
+
+if (!post && slug && fallbackPosts[slug]) {
+  post = fallbackPosts[slug];
+}
+
 if (!post) return Astro.redirect('/blog');
 
 const title = post.title;
 const description = post.excerpt || post.meta_description || '';
+const getBlogImage = (entry: any, thumb = false) =>
+  resolveContentImage({
+    category: 'blog',
+    slug: entry?.slug,
+    explicit: entry?.featured_image || entry?.cover_image || entry?.image,
+    placeholder: '/images/placeholder-blog.jpg',
+    thumb,
+  });
+const faqItems = [
+  { S: `${post.title} hakkında ne bilinmeli?`, C: post.excerpt || `${post.title} için detaylı bilgiyi yazımızda bulabilirsiniz.` },
+  { S: `Bu yazı hangi kategoride?`, C: `Bu yazı ${post.category || 'Genel'} kategorisinde yayınlanmıştır.` },
+  { S: `Şanlıurfa hakkında daha fazla yazı nerede bulunur?`, C: 'Şanlıurfa rehberiyle ilgili tüm yazılarımıza /blog sayfasından ulaşabilirsiniz.' },
+];
+
 ---
 
-<Layout seo={{ title, description }}>
+<Layout seo={{
+  title,
+  description,
+  ogImage: getBlogImage(post),
+  type: 'article',
+  publishedTime: post.created_at || post.published_at,
+  modifiedTime: post.updated_at,
+  keywords: post.tags?.length ? post.tags : ['Şanlıurfa', 'şehir rehberi', post.category || 'blog'],
+  author: post.author_name || 'Sanliurfa.com',
+  canonical: `/blog/${post.slug}`,
+}}>
   <article class="min-h-screen bg-white">
     <!-- Hero -->
     <div class="bg-gradient-to-br from-amber-600 to-orange-700 text-white">
@@ -90,17 +165,16 @@ const description = post.excerpt || post.meta_description || '';
     </div>
 
     {/* Featured Image */}
-    {post.featured_image && (
-      <div class="container mx-auto px-4 -mt-8">
-        <div class="max-w-4xl mx-auto">
-          <img
-            src={post.featured_image}
-            alt={post.title}
-            class="w-full h-64 md:h-96 object-cover rounded-2xl shadow-lg"
-          />
-        </div>
+    <div class="container mx-auto px-4 -mt-8">
+      <div class="max-w-4xl mx-auto">
+        <img
+          src={getBlogImage(post)}
+          alt={post.title}
+          class="w-full h-64 md:h-96 object-cover rounded-2xl shadow-lg"
+          onerror="this.setAttribute('src','/images/placeholder-blog.jpg')"
+        />
       </div>
-    )}
+    </div>
 
     {/* Content */}
     <div class="container mx-auto px-4 py-12">
@@ -116,7 +190,7 @@ const description = post.excerpt || post.meta_description || '';
             <Fragment set:html={post.content_html} />
           ) : (
             <div class="markdown-content">
-              {post.content.split('\n').map(line => {
+              {post.content.split('\n').map((line: string) => {
                 if (line.startsWith('# ')) {
                   return <h1 class="text-3xl font-bold mt-8 mb-4">{line.slice(2)}</h1>;
                 } else if (line.startsWith('## ')) {
@@ -144,7 +218,7 @@ const description = post.excerpt || post.meta_description || '';
           <div class="mt-12 pt-8 border-t">
             <h4 class="font-bold text-gray-900 mb-3">Etiketler</h4>
             <div class="flex flex-wrap gap-2">
-              {post.tags.map(tag => (
+              {post.tags.map((tag: any) => (
                 <a
                   href={`/blog/etiket/${tag.slug}`}
                   class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-amber-100 hover:text-amber-700 transition-colors"
@@ -160,20 +234,11 @@ const description = post.excerpt || post.meta_description || '';
         <div class="mt-8 flex items-center gap-4">
           <span class="font-medium text-gray-700">Paylaş:</span>
           <div class="flex gap-2">
-            <button onclick="shareTwitter()" class="w-10 h-10 bg-blue-400 text-white rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/>
-              </svg>
+            <button onclick="sharePage()" class="h-10 px-4 bg-amber-600 text-white rounded-full flex items-center justify-center hover:bg-amber-700 transition-colors">
+              Paylaş
             </button>
-            <button onclick="shareFacebook()" class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd"/>
-              </svg>
-            </button>
-            <button onclick="shareWhatsApp()" class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-              </svg>
+            <button onclick="copyLink()" class="h-10 px-4 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+              Linki Kopyala
             </button>
           </div>
         </div>
@@ -190,15 +255,7 @@ const description = post.excerpt || post.meta_description || '';
               <a href={`/blog/${related.slug}`} class="group">
                 <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                   <div class="h-40 bg-gradient-to-br from-amber-100 to-orange-100">
-                    {related.featured_image ? (
-                      <img src={related.featured_image} alt={related.title} class="w-full h-full object-cover" />
-                    ) : (
-                      <div class="w-full h-full flex items-center justify-center text-amber-300">
-                        <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
-                        </svg>
-                      </div>
-                    )}
+                    <img src={getBlogImage(related, true)} alt={related.title} class="w-full h-full object-cover" loading="lazy" onerror="this.setAttribute('src','/images/placeholder-blog.jpg')" />
                   </div>
                   <div class="p-4">
                     <h3 class="font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2">
@@ -215,19 +272,72 @@ const description = post.excerpt || post.meta_description || '';
     )}
   </article>
 
-  <script define:vars={{ slug: post.slug, title: post.title }}>
+  <script define:vars={{ slug: post.slug, title: post.title }} is:inline>
     const url = window.location.href;
     
-    function shareTwitter() {
-      window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
+    async function copyLink() {
+      try {
+        await navigator.clipboard.writeText(url);
+        alert('Link kopyalandı');
+      } catch {
+        alert('Link kopyalanamadı');
+      }
     }
-    
-    function shareFacebook() {
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-    }
-    
-    function shareWhatsApp() {
-      window.open(`https://wa.me/?text=${encodeURIComponent(title + ' ' + url)}`, '_blank');
+
+    async function sharePage() {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, url });
+          return;
+        } catch {
+          // fall back to copy
+        }
+      }
+      await copyLink();
     }
   </script>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${baseUrl}/blog` },
+      { '@type': 'ListItem', position: 3, name: post.title, item: `${baseUrl}/blog/${post.slug}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt || description,
+    inLanguage: 'tr',
+    url: `${baseUrl}/blog/${post.slug}`,
+    image: (() => { const img = getBlogImage(post); return img.startsWith('http') ? img : `${baseUrl}${img}`; })(),
+    datePublished: post.published_at || post.created_at,
+    dateModified: post.updated_at || post.published_at || post.created_at,
+    author: {
+      '@type': 'Person',
+      name: post.author_name || 'Sanliurfa.com',
+    },
+    '@id': `${baseUrl}/blog/${post.slug}`,
+    publisher: {
+      '@type': 'Organization',
+      name: 'Sanliurfa.com',
+      url: baseUrl,
+      logo: { '@type': 'ImageObject', url: `${baseUrl}/favicon.svg`, width: 200, height: 200 },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${baseUrl}/blog/${post.slug}`,
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

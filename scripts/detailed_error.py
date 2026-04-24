@@ -3,14 +3,14 @@ import paramiko
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='BcqH7t5zNKfw')
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD')
 
 print("🔍 Detaylı Hata Analizi")
 print("=" * 60)
 
 # curl ile verbose output
 print("\n📋 curl verbose:")
-stdin, stdout, stderr = ssh.exec_command("curl -v http://127.0.0.1:6000/ 2>&1 | tail -30")
+stdin, stdout, stderr = ssh.exec_command("curl -v http://127.0.0.1:4321/ 2>&1 | tail -30")
 print(stdout.read().decode())
 
 # PM2 error log

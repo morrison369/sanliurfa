@@ -50,6 +50,7 @@ export interface SessionConfig {
  * Get production security configuration
  */
 export function getProductionSecurityConfig(): SecurityConfig {
+  const publicAppUrl = 'https://sanliurfa.com';
   return {
     headers: {
       'X-Frame-Options': 'DENY',
@@ -65,12 +66,12 @@ export function getProductionSecurityConfig(): SecurityConfig {
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
       fontSrc: ["'self'", 'data:'],
-      connectSrc: ["'self'", 'https://api.sanliurfa.com'],
+      connectSrc: ["'self'", `${publicAppUrl}/api`],
       frameSrc: ["'none'"],
       upgradeInsecureRequests: true,
     },
     cors: {
-      origins: ['https://sanliurfa.com', 'https://www.sanliurfa.com'],
+      origins: [publicAppUrl],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       headers: ['Content-Type', 'Authorization', 'X-Requested-With'],
       credentials: true,
@@ -169,7 +170,7 @@ export async function runSecurityAudit(): Promise<{
  * Generate security headers middleware
  */
 export function securityHeadersMiddleware(config: SecurityConfig) {
-  return async (request: Request, next: () => Promise<Response>): Promise<Response> => {
+  return async (_request: Request, next: () => Promise<Response>): Promise<Response> => {
     const response = await next();
 
     // Add security headers

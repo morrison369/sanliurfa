@@ -27,11 +27,11 @@ export class RedisClient {
   }
 
   async set(key: string, value: string, ttl?: number): Promise<void> {
-    logger.info('[Redis] SET', key, ttl ? `(TTL: ${ttl}s)` : '');
+    logger.info(`[Redis] SET ${key}${ttl ? ` (TTL: ${ttl}s)` : ''}`);
   }
 
   async del(key: string): Promise<void> {
-    logger.info('[Redis] DEL', key);
+    logger.info(`[Redis] DEL ${key}`);
   }
 
   async disconnect(): Promise<void> {
@@ -40,7 +40,8 @@ export class RedisClient {
 }
 
 export const redisClient = new RedisClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
+  url: process.env.REDIS_URL || 'redis://127.0.0.1:6381'
 });
 
 export default redisClient;
+

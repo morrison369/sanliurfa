@@ -133,12 +133,13 @@ export function errorResponse(
 export function apiResponse(
   dataOrContext: any,
   statusCodeOrData?: number | any,
-  requestId?: string
+  requestId?: string,
+  extraHeaders?: Record<string, string>
 ): Response {
   // Handle both signatures: apiResponse(data, statusCode) and apiResponse(context, data, statusCode)
   let data: any;
   let statusCode: number;
-  
+
   if (statusCodeOrData && typeof statusCodeOrData === 'object') {
     // Signature: apiResponse(context, data, statusCode)
     data = statusCodeOrData;
@@ -148,9 +149,9 @@ export function apiResponse(
     data = dataOrContext;
     statusCode = statusCodeOrData || 200;
   }
-  
+
   const [body, status, headers] = successResponse(data, statusCode, undefined);
-  return new Response(JSON.stringify(body), { status, headers });
+  return new Response(JSON.stringify(body), { status, headers: { ...headers, ...extraHeaders } });
 }
 
 /**
@@ -182,6 +183,37 @@ export function apiError(
   
   const [body, status, headers] = errorResponse(code, message, statusCode, details, requestId);
   return new Response(JSON.stringify(body), { status, headers });
+}
+
+/**
+ * RFC 7807 / problem+json response
+ */
+export function problemJson(input: {
+  status: number;
+  title: string;
+  detail?: string;
+  type?: string;
+  instance?: string;
+  extensions?: Record<string, unknown>;
+}): Response {
+  const payload: Record<string, unknown> = {
+    type: input.type || 'about:blank',
+    title: input.title,
+    status: input.status,
+  };
+  if (input.detail) payload.detail = input.detail;
+  if (input.instance) payload.instance = input.instance;
+  if (input.extensions) {
+    for (const [k, v] of Object.entries(input.extensions)) payload[k] = v;
+  }
+
+  return new Response(JSON.stringify(payload), {
+    status: input.status,
+    headers: {
+      'Content-Type': 'application/problem+json; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 /**
@@ -273,8 +305,16 @@ export function sanitizeInput(input: string): string {
 /**
  * Extract request ID or generate one
  */
-export function getRequestId(context: APIContext): string {
-  return context.request.headers.get('x-request-id') || `req-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+export function getRequestId(contextOrRequest?: APIContext | Request | { request?: Request } | null): string {
+  const request =
+    contextOrRequest instanceof Request
+      ? contextOrRequest
+      : (contextOrRequest as APIContext | { request?: Request } | null | undefined)?.request;
+
+  return (
+    request?.headers?.get('x-request-id') ||
+    `req-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+  );
 }
 
 /**
@@ -301,11 +341,13 @@ export const HttpStatus = {
 export const ErrorCode = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   UNAUTHORIZED: 'UNAUTHORIZED',
+  AUTH_REQUIRED: 'UNAUTHORIZED',
   FORBIDDEN: 'FORBIDDEN',
   NOT_FOUND: 'NOT_FOUND',
   CONFLICT: 'CONFLICT',
   RATE_LIMITED: 'RATE_LIMITED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   INVALID_INPUT: 'INVALID_INPUT',
-  AUTHENTICATION_FAILED: 'AUTHENTICATION_FAILED'
+  AUTHENTICATION_FAILED: 'AUTHENTICATION_FAILED',
+  AUTH_FAILED: 'AUTHENTICATION_FAILED'
 } as const;

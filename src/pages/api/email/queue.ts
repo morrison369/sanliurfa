@@ -10,7 +10,7 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           pending: stats.pending,
           sent: stats.sent,
           failed: stats.failed,
-          avgDeliveryTime: Math.round(stats.avgDeliveryTime),
+          avgDeliveryTime: Math.round((stats as any).avgDeliveryTime || 0),
         },
       },
       HttpStatus.OK,
@@ -51,3 +51,4 @@ export const GET: APIRoute = async ({ request, locals }) => {
     );
   }
 };
+

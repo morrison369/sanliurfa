@@ -1,5 +1,4 @@
 import { logger } from '../logging';
-// @ts-nocheck
 /**
  * PWA Utilities
  * - Service Worker registration
@@ -43,7 +42,7 @@ export async function subscribeToPush(vapidPublicKey: string): Promise<PushSubsc
     
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as any
     });
 
     // Send subscription to backend
@@ -202,3 +201,4 @@ function arrayBufferToBase64(buffer: ArrayBuffer | null): string {
   }
   return window.btoa(binary);
 }
+

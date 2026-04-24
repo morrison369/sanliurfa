@@ -111,7 +111,7 @@ async function getOverviewStats(since: Date): Promise<OverviewStats> {
       (SELECT COUNT(*) FROM places WHERE created_at >= $1) as new_places_today,
       (SELECT COUNT(*) FROM reviews) as total_reviews,
       (SELECT COUNT(*) FROM reviews WHERE created_at >= $1) as new_reviews_today,
-      (SELECT COUNT(DISTINCT user_id) FROM user_sessions WHERE last_active >= $1) as active_users_today`,
+      (SELECT COUNT(DISTINCT user_id) FROM user_sessions WHERE last_activity_at >= $1) as active_users_today`,
     [since]
   );
 
@@ -182,7 +182,7 @@ async function getUserStats(since: Date): Promise<UserStats> {
       COUNT(DISTINCT user_id) as active_users,
       (SELECT COUNT(*) FROM users WHERE created_at < $1 AND deleted_at IS NULL) as total_users
     FROM user_sessions
-    WHERE last_active >= $1`,
+    WHERE last_activity_at >= $1`,
     [new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)]
   );
   const totalUsers = parseInt(retentionResult.rows[0].total_users);
@@ -271,12 +271,12 @@ async function getContentStats(since: Date): Promise<ContentStats> {
 
 async function getEngagementStats(since: Date): Promise<EngagementStats> {
   const result = await query(
-    `SELECT 
-      AVG(duration_ms) as avg_duration,
+    `SELECT
+      0 as avg_duration,
       COUNT(*) FILTER (WHERE event_type = 'search') as searches,
       COUNT(*) FILTER (WHERE event_type = 'share') as shares,
       COUNT(*) FILTER (WHERE event_type = 'favorite') as favorites
-    FROM analytics_events
+    FROM engagement_events
     WHERE created_at >= $1`,
     [since]
   );
@@ -308,22 +308,12 @@ async function getEngagementStats(since: Date): Promise<EngagementStats> {
 
 async function getModerationStats(since: Date): Promise<ModerationStats> {
   const result = await query(
-    `SELECT 
-      COUNT(*) FILTER (WHERE status = 'pending') as pending_reports,
-      COUNT(*) FILTER (WHERE status = 'flagged') as flagged_content,
-      COUNT(*) FILTER (WHERE is_banned = true) as banned_users,
-      COUNT(*) FILTER (WHERE moderated_at >= $1) as moderated_today,
-      COUNT(*) FILTER (WHERE is_auto_moderated = true AND moderated_at >= $1) as auto_moderated
-    FROM (
-      SELECT status, NULL as is_banned, NULL as moderated_at, NULL as is_auto_moderated
-      FROM content_reports WHERE status = 'pending'
-      UNION ALL
-      SELECT status, NULL, NULL, NULL FROM comments WHERE status = 'flagged'
-      UNION ALL
-      SELECT NULL, is_banned, NULL, NULL FROM users WHERE is_banned = true
-      UNION ALL
-      SELECT NULL, NULL, moderated_at, is_auto_moderated FROM moderation_queue
-    ) combined`,
+    `SELECT
+      (SELECT COUNT(*) FROM reports WHERE status = 'pending') as pending_reports,
+      (SELECT COUNT(*) FROM moderation_queue WHERE status = 'pending') as flagged_content,
+      (SELECT COUNT(*) FROM users WHERE is_banned = true) as banned_users,
+      (SELECT COUNT(*) FROM moderation_queue WHERE status = 'resolved' AND updated_at >= $1) as moderated_today
+    `,
     [since]
   );
 
@@ -333,7 +323,7 @@ async function getModerationStats(since: Date): Promise<ModerationStats> {
     flaggedContent: parseInt(row.flagged_content) || 0,
     bannedUsers: parseInt(row.banned_users) || 0,
     moderatedToday: parseInt(row.moderated_today) || 0,
-    autoModerated: parseInt(row.auto_moderated) || 0,
+    autoModerated: 0,
   };
 }
 
@@ -361,7 +351,7 @@ export async function getRealtimeAdminStats(): Promise<{
 
   const result = await query(
     `SELECT 
-      (SELECT COUNT(DISTINCT user_id) FROM user_sessions WHERE last_active >= $1) as current_users,
+      (SELECT COUNT(DISTINCT user_id) FROM user_sessions WHERE last_activity_at >= $1) as current_users,
       (SELECT COUNT(*) FROM api_request_logs WHERE created_at >= $1) / 5 as requests_per_minute,
       (SELECT COUNT(*) FROM api_request_logs WHERE status >= 500 AND created_at >= $2) as errors_last_hour`,
     [fiveMinutesAgo, oneHourAgo]

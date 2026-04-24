@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Disable 2FA
  * POST /api/users/2fa/disable
@@ -8,41 +7,52 @@
 import type { APIRoute } from 'astro';
 import { disableTwoFactor } from '../../../../lib/two-factor';
 import { queryOne } from '../../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import bcryptjs from 'bcryptjs';
 
-export const POST: APIRoute = async (context) => {
+type DisableBody = {
+  password?: unknown;
+};
+
+type PasswordRow = {
+  password_hash: string | null;
+};
+
+export const POST: APIRoute = async ({ request, locals }) => {
+  const requestId = getRequestId(request);
+  logger.setRequestId(requestId);
+
   try {
     // Auth required
-    if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+    if (!locals.user) {
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const userId = context.locals.user.id;
-    const body = await context.request.json();
+    const userId = locals.user.id;
+    const body = (await request.json()) as DisableBody;
 
     // Validate password is provided
     if (!body.password || typeof body.password !== 'string') {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Password is required');
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Şifre gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Get user with password hash
-    const user = await queryOne(
-      'SELECT password FROM users WHERE id = $1',
+    const user = await queryOne<PasswordRow>(
+      'SELECT password_hash FROM users WHERE id = $1',
       [userId]
     );
 
-    if (!user) {
-      return apiError(context, HttpStatus.NOT_FOUND, 'User not found');
+    if (!user || !user.password_hash) {
+      return apiError(ErrorCode.NOT_FOUND, 'Kullanıcı bulunamadı', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
     // Verify password
-    const isPasswordValid = await bcryptjs.compare(body.password, user.password);
+    const isPasswordValid = await bcryptjs.compare(body.password, user.password_hash);
 
     if (!isPasswordValid) {
       logger.warn('Invalid password for 2FA disable', { userId });
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Invalid password');
+      return apiError(ErrorCode.UNAUTHORIZED, 'Şifre geçersiz', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     // Disable 2FA
@@ -50,12 +60,12 @@ export const POST: APIRoute = async (context) => {
 
     logger.info('2FA disabled', { userId });
 
-    return apiResponse(context, HttpStatus.OK, {
+    return apiResponse({
       success: true,
-      message: '2FA successfully disabled'
-    });
+      message: '2FA devre dışı bırakıldı',
+    }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to disable 2FA', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to disable 2FA');
+    return apiError(ErrorCode.INTERNAL_ERROR, '2FA devre dışı bırakılamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

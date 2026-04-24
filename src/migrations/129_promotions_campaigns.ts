@@ -1,7 +1,7 @@
 import type { Migration } from '../lib/migrations/migration-system';
 
 const migration: Migration = {
-  version: 129,
+  version: '129',
   name: 'promotions_campaigns',
   description: 'Add promotions and campaigns system for places',
   
@@ -54,6 +54,18 @@ const migration: Migration = {
       );
     `);
 
+    await client.query(`
+      ALTER TABLE promotions
+      ADD COLUMN IF NOT EXISTS place_id UUID,
+      ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active',
+      ADD COLUMN IF NOT EXISTS start_date DATE,
+      ADD COLUMN IF NOT EXISTS end_date DATE,
+      ADD COLUMN IF NOT EXISTS featured BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS promotion_type VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS usage_limit INTEGER,
+      ADD COLUMN IF NOT EXISTS usage_count INTEGER DEFAULT 0;
+    `);
+
     // Kampanyalar tablosu (daha büyük ölçekli etkinlikler)
     await client.query(`
       CREATE TABLE IF NOT EXISTS campaigns (
@@ -92,6 +104,14 @@ const migration: Migration = {
       );
     `);
 
+    await client.query(`
+      ALTER TABLE campaigns
+      ADD COLUMN IF NOT EXISTS place_id UUID,
+      ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'draft',
+      ADD COLUMN IF NOT EXISTS start_date DATE,
+      ADD COLUMN IF NOT EXISTS end_date DATE;
+    `);
+
     // Kullanıcı promosyon kullanımları
     await client.query(`
       CREATE TABLE IF NOT EXISTS user_promotion_redemptions (
@@ -109,21 +129,28 @@ const migration: Migration = {
       );
     `);
 
+    await client.query(`
+      ALTER TABLE user_promotion_redemptions
+      ADD COLUMN IF NOT EXISTS promotion_id UUID,
+      ADD COLUMN IF NOT EXISTS user_id UUID,
+      ADD COLUMN IF NOT EXISTS redemption_code VARCHAR(20);
+    `);
+
     // İndeksler
     await client.query(`
-      CREATE INDEX idx_promotions_place_id ON promotions(place_id);
-      CREATE INDEX idx_promotions_status ON promotions(status);
-      CREATE INDEX idx_promotions_dates ON promotions(start_date, end_date);
-      CREATE INDEX idx_promotions_featured ON promotions(featured) WHERE featured = true;
-      CREATE INDEX idx_promotions_type ON promotions(promotion_type);
+      CREATE INDEX IF NOT EXISTS idx_promotions_place_id ON promotions(place_id);
+      CREATE INDEX IF NOT EXISTS idx_promotions_status ON promotions(status);
+      CREATE INDEX IF NOT EXISTS idx_promotions_dates ON promotions(start_date, end_date);
+      CREATE INDEX IF NOT EXISTS idx_promotions_featured ON promotions(featured) WHERE featured = true;
+      CREATE INDEX IF NOT EXISTS idx_promotions_type ON promotions(promotion_type);
       
-      CREATE INDEX idx_campaigns_place_id ON campaigns(place_id);
-      CREATE INDEX idx_campaigns_status ON campaigns(status);
-      CREATE INDEX idx_campaigns_dates ON campaigns(start_date, end_date);
+      CREATE INDEX IF NOT EXISTS idx_campaigns_place_id ON campaigns(place_id);
+      CREATE INDEX IF NOT EXISTS idx_campaigns_status ON campaigns(status);
+      CREATE INDEX IF NOT EXISTS idx_campaigns_dates ON campaigns(start_date, end_date);
       
-      CREATE INDEX idx_redemptions_promotion_id ON user_promotion_redemptions(promotion_id);
-      CREATE INDEX idx_redemptions_user_id ON user_promotion_redemptions(user_id);
-      CREATE INDEX idx_redemptions_code ON user_promotion_redemptions(redemption_code);
+      CREATE INDEX IF NOT EXISTS idx_redemptions_promotion_id ON user_promotion_redemptions(promotion_id);
+      CREATE INDEX IF NOT EXISTS idx_redemptions_user_id ON user_promotion_redemptions(user_id);
+      CREATE INDEX IF NOT EXISTS idx_redemptions_code ON user_promotion_redemptions(redemption_code);
     `);
 
     // Aktif promosyonlar görünümü
@@ -182,3 +209,4 @@ const migration: Migration = {
 };
 
 export default migration;
+

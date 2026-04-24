@@ -1,12 +1,50 @@
-// @ts-nocheck
 /**
  * Mobile Places API
  * Optimized for mobile apps with offline sync support
  */
 
 import type { APIRoute } from 'astro';
-import { query, queryOne } from '../../../lib/postgres';
+import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { resolveContentImage } from '../../../lib/content-images';
+import { problemJson } from '../../../lib/api';
+
+interface MobilePlaceRow {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  address: string | null;
+  latitude: string | number | null;
+  longitude: string | number | null;
+  rating: string | number | null;
+  review_count: string | number | null;
+  images: string[] | null;
+  phone: string | null;
+  open_hours: unknown;
+  price_range: string | null;
+  tags: string[] | null;
+  updated_at: string | Date | null;
+  category: string | null;
+}
+
+interface SyncPlaceRow {
+  id: string;
+  rating: string | number | null;
+  review_count: string | number | null;
+  updated_at: string | Date | null;
+}
+
+interface SyncRequestBody {
+  lastSync?: string;
+  categories?: string[];
+}
+
+function toNumber(value: string | number | null | undefined): number {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return parseFloat(value);
+  return 0;
+}
 
 // GET: List places with pagination
 export const GET: APIRoute = async ({ request }) => {
@@ -20,7 +58,7 @@ export const GET: APIRoute = async ({ request }) => {
     const lon = url.searchParams.get('lon');
     const radius = url.searchParams.get('radius'); // km
 
-    const params: any[] = [];
+    const params: Array<string | number> = [];
     let where = `WHERE p.status = 'active'`;
     let idx = 1;
 
@@ -49,11 +87,11 @@ export const GET: APIRoute = async ({ request }) => {
     );
     const total = parseInt(countResult.rows[0].count || '0');
 
-    const dataResult = await query(
+    const dataResult = await query<MobilePlaceRow>(
       `SELECT
          p.id, p.slug, p.name, p.description, p.address,
          p.latitude, p.longitude, p.rating, p.review_count,
-         p.images, p.phone, p.open_hours, p.price_range, p.tags,
+         p.images, p.phone, p.opening_hours as open_hours, p.price_range, p.tags,
          p.updated_at,
          COALESCE(p.category, c.slug) AS category
        FROM places p
@@ -64,24 +102,45 @@ export const GET: APIRoute = async ({ request }) => {
       [...params, limit, offset]
     );
 
-    const places = dataResult.rows.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      category: p.category,
-      rating: parseFloat(p.rating) || 0,
-      reviewCount: p.review_count || 0,
-      location: p.latitude && p.longitude
-        ? { lat: parseFloat(p.latitude), lon: parseFloat(p.longitude) }
-        : null,
-      images: p.images || [],
-      address: p.address,
-      phone: p.phone,
-      openHours: p.open_hours,
-      priceRange: p.price_range,
-      tags: p.tags || [],
-      lastUpdated: p.updated_at,
-    }));
+    const places = dataResult.rows.map((p) => {
+      const normalizedImages = Array.isArray(p.images) && p.images.length > 0
+        ? p.images
+        : [
+            resolveContentImage({
+              category: 'places',
+              slug: p.slug,
+              explicit: null,
+              placeholder: '/images/placeholder-place.jpg',
+            }),
+          ];
+
+      return {
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        description: p.description,
+        category: p.category,
+        rating: toNumber(p.rating) || 0,
+        reviewCount: p.review_count || 0,
+        location: p.latitude && p.longitude
+          ? { lat: toNumber(p.latitude), lon: toNumber(p.longitude) }
+          : null,
+        images: normalizedImages,
+        thumbnail: resolveContentImage({
+          category: 'places',
+          slug: p.slug,
+          explicit: normalizedImages[0],
+          placeholder: '/images/placeholder-place.jpg',
+          thumb: true,
+        }),
+        address: p.address,
+        phone: p.phone,
+        openHours: p.open_hours,
+        priceRange: p.price_range,
+        tags: p.tags || [],
+        lastUpdated: p.updated_at,
+      };
+    });
 
     return new Response(
       JSON.stringify({
@@ -98,22 +157,25 @@ export const GET: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     logger.error('Mobile places error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Failed to fetch places' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Mobil Mekan Hatası',
+      detail: 'Mekanlar alınamadı',
+      type: '/problems/mobile-places-fetch-failed',
+      instance: '/api/mobile/places',
+    });
   }
 };
 
 // POST: Sync places updated since lastSync
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { lastSync, categories } = await request.json();
+    const { lastSync, categories } = (await request.json()) as SyncRequestBody;
 
     const since = lastSync ? new Date(lastSync) : new Date(0);
 
     let where = `WHERE p.status = 'active' AND p.updated_at > $1`;
-    const params: any[] = [since];
+    const params: Array<Date | string[]> = [since];
     let idx = 2;
 
     if (categories && Array.isArray(categories) && categories.length > 0) {
@@ -122,7 +184,7 @@ export const POST: APIRoute = async ({ request }) => {
       idx++;
     }
 
-    const result = await query(
+    const result = await query<SyncPlaceRow>(
       `SELECT p.id, p.slug, p.name, p.rating, p.review_count, p.updated_at
        FROM places p
        LEFT JOIN categories c ON c.id = p.category_id
@@ -132,11 +194,11 @@ export const POST: APIRoute = async ({ request }) => {
       params
     );
 
-    const updates = result.rows.map((p: any) => ({
+    const updates = result.rows.map((p) => ({
       id: p.id,
       action: 'update',
       data: {
-        rating: parseFloat(p.rating) || 0,
+        rating: toNumber(p.rating) || 0,
         reviewCount: p.review_count || 0,
         lastUpdated: p.updated_at,
       },
@@ -151,20 +213,12 @@ export const POST: APIRoute = async ({ request }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: 'Sync failed' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Mobil Mekan Senkronizasyon Hatası',
+      detail: 'Senkronizasyon başarısız',
+      type: '/problems/mobile-places-sync-failed',
+      instance: '/api/mobile/places',
+    });
   }
 };
-
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}

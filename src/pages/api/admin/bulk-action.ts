@@ -15,7 +15,7 @@ const SUPPORTED_ACTIONS = new Set([
 ]);
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     if (!locals.isAdmin) {
@@ -54,11 +54,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
     };
     const table = tableMap[resourceType] || 'places';
 
+    // places and users use status column; other tables use is_active
+    const usesStatusCol = table === 'places' || table === 'users';
+
     switch (action) {
       case 'delete':
         if (table === 'users') {
           const result = await query(
-            `UPDATE users SET is_active = false, deleted_at = NOW() WHERE id IN (${placeholders})`,
+            `UPDATE users SET status = 'deleted', deleted_at = NOW() WHERE id IN (${placeholders})`,
+            safeItems
+          );
+          affected = result.rowCount ?? 0;
+        } else if (usesStatusCol) {
+          const result = await query(
+            `UPDATE ${table} SET status = 'inactive' WHERE id IN (${placeholders})`,
             safeItems
           );
           affected = result.rowCount ?? 0;
@@ -74,21 +83,37 @@ export const POST: APIRoute = async ({ request, locals }) => {
       case 'activate':
       case 'publish':
       case 'restore':
-        const activateResult = await query(
-          `UPDATE ${table} SET is_active = true WHERE id IN (${placeholders})`,
-          safeItems
-        );
-        affected = activateResult.rowCount ?? 0;
+        if (usesStatusCol) {
+          const activateResult = await query(
+            `UPDATE ${table} SET status = 'active' WHERE id IN (${placeholders})`,
+            safeItems
+          );
+          affected = activateResult.rowCount ?? 0;
+        } else {
+          const activateResult = await query(
+            `UPDATE ${table} SET is_active = true WHERE id IN (${placeholders})`,
+            safeItems
+          );
+          affected = activateResult.rowCount ?? 0;
+        }
         break;
       case 'reject':
       case 'deactivate':
       case 'unpublish':
       case 'archive':
-        const deactivateResult = await query(
-          `UPDATE ${table} SET is_active = false WHERE id IN (${placeholders})`,
-          safeItems
-        );
-        affected = deactivateResult.rowCount ?? 0;
+        if (usesStatusCol) {
+          const deactivateResult = await query(
+            `UPDATE ${table} SET status = 'inactive' WHERE id IN (${placeholders})`,
+            safeItems
+          );
+          affected = deactivateResult.rowCount ?? 0;
+        } else {
+          const deactivateResult = await query(
+            `UPDATE ${table} SET is_active = false WHERE id IN (${placeholders})`,
+            safeItems
+          );
+          affected = deactivateResult.rowCount ?? 0;
+        }
         break;
       case 'ban':
         const banResult = await query(

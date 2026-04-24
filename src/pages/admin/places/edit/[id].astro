@@ -45,13 +45,13 @@ try {
 }
 
 if (!place) {
-  return Astro.redirect('/admin/places.astro?error=not_found');
+  return Astro.redirect('/admin/places?error=not_found');
 }
 
 const seo = {
-  title: `Mekan Düzenle: ${place.name} - Admin Panel`,
+  title: `Mekan Düzenle: ${place.name} - Yönetim Paneli`,
   description: 'Mekan düzenleme',
-  noindex: true,
+  noIndex: true,
 };
 
 const amenitiesList = [

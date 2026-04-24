@@ -84,12 +84,12 @@ export async function createDashboard(
   data: Omit<Dashboard, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<Dashboard> {
   const result = await query(
-    `INSERT INTO dashboards (name, description, tenant_id, user_id, layout, widgets, is_default, is_public)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO dashboards (name, description, owner_id, layout, widgets, is_public)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [data.name, data.description, data.tenantId, data.userId,
-     JSON.stringify(data.layout), JSON.stringify(data.widgets), 
-     data.isDefault, data.isPublic]
+    [data.name, data.description, data.userId ?? data.tenantId,
+     JSON.stringify(data.layout), JSON.stringify(data.widgets),
+     data.isPublic]
   );
 
   return result.rows[0];
@@ -111,9 +111,9 @@ export async function getDashboard(dashboardId: string): Promise<Dashboard | nul
  */
 export async function getUserDashboards(userId: string): Promise<Dashboard[]> {
   const result = await query(
-    `SELECT * FROM dashboards 
-     WHERE user_id = $1 OR is_public = true
-     ORDER BY is_default DESC, created_at DESC`,
+    `SELECT * FROM dashboards
+     WHERE owner_id = $1 OR is_public = true
+     ORDER BY created_at DESC`,
     [userId]
   );
   return result.rows;
@@ -249,13 +249,15 @@ async function getStatCardData(
 async function getLineChartData(config: WidgetConfig, context?: any): Promise<any> {
   const days = config.filters?.days || 30;
   
+  const ALLOWED_SOURCES = ['page_views', 'reviews', 'places', 'events', 'users'];
+  const source = ALLOWED_SOURCES.includes(config.dataSource) ? config.dataSource : 'page_views';
   const result = await query(`
     SELECT DATE(created_at) as date, COUNT(*) as value
-    FROM ${config.dataSource}
+    FROM ${source}
     WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
     GROUP BY DATE(created_at)
     ORDER BY date ASC
-  `);
+  `, [days]);
 
   return {
     labels: result.rows.map((r: any) => r.date),
@@ -270,9 +272,11 @@ async function getLineChartData(config: WidgetConfig, context?: any): Promise<an
  * Get bar chart data
  */
 async function getBarChartData(config: WidgetConfig, context?: any): Promise<any> {
+  const ALLOWED_SOURCES = ['places', 'reviews', 'events', 'users', 'page_views'];
+  const source = ALLOWED_SOURCES.includes(config.dataSource) ? config.dataSource : 'places';
   const result = await query(`
     SELECT category_id, COUNT(*) as value
-    FROM ${config.dataSource}
+    FROM ${source}
     GROUP BY category_id
     ORDER BY value DESC
     LIMIT 10
@@ -309,12 +313,13 @@ async function getPieChartData(config: WidgetConfig, context?: any): Promise<any
  */
 async function getTableData(config: WidgetConfig, context?: any): Promise<any> {
   const limit = config.filters?.limit || 10;
-  
+  const ALLOWED_SOURCES = ['reviews', 'places', 'events', 'users', 'page_views'];
+  const source = ALLOWED_SOURCES.includes(config.dataSource) ? config.dataSource : 'reviews';
   const result = await query(`
-    SELECT * FROM ${config.dataSource}
+    SELECT * FROM ${source}
     ORDER BY created_at DESC
     LIMIT $1
-  `, [limit, days]);
+  `, [limit]);
 
   return result.rows;
 }
@@ -326,7 +331,7 @@ async function getRecentActivityData(config: WidgetConfig, context?: any): Promi
   const limit = config.filters?.limit || 10;
   
   const result = await query(`
-    SELECT ua.*, u.name as user_name
+    SELECT ua.*, u.full_name as user_name
     FROM user_activities ua
     LEFT JOIN users u ON ua.user_id = u.id
     ORDER BY ua.created_at DESC
@@ -350,10 +355,10 @@ async function getTopListData(config: WidgetConfig, context?: any): Promise<any>
       LIMIT 10
     `,
     'top-users': `
-      SELECT u.name, COUNT(r.id) as review_count
+      SELECT u.full_name as name, COUNT(r.id) as review_count
       FROM users u
       LEFT JOIN reviews r ON u.id = r.user_id
-      GROUP BY u.id, u.name
+      GROUP BY u.id, u.full_name
       ORDER BY review_count DESC
       LIMIT 10
     `
@@ -373,7 +378,7 @@ export async function createReport(
   data: Omit<Report, 'id' | 'createdAt' | 'lastRun' | 'lastResult'>
 ): Promise<Report> {
   const result = await query(
-    `INSERT INTO reports (name, description, type, query, parameters, schedule, tenant_id, created_by)
+    `INSERT INTO analytics_reports (name, description, type, query, parameters, schedule, tenant_id, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING *`,
     [data.name, data.description, data.type, data.query,
@@ -395,18 +400,18 @@ export async function executeReport(
   if (!report) throw new Error('Report not found');
 
   // Apply parameters
-  let query = report.query;
+  let sql = report.query;
   if (parameters) {
     for (const [key, value] of Object.entries(parameters)) {
-      query = query.replace(`:${key}`, value);
+      sql = sql.replace(`:${key}`, value);
     }
   }
 
-  const result = await query(query);
+  const result = await query(sql);
 
   // Update last run
   await query(
-    `UPDATE reports SET last_run = NOW(), last_result = $1 WHERE id = $2`,
+    `UPDATE analytics_reports SET last_run = NOW(), last_result = $1 WHERE id = $2`,
     [JSON.stringify(result.rows), reportId]
   );
 
@@ -417,7 +422,7 @@ export async function executeReport(
  * Get report by ID
  */
 export async function getReport(reportId: string): Promise<Report | null> {
-  const result = await query(`SELECT * FROM reports WHERE id = $1`, [reportId]);
+  const result = await query(`SELECT * FROM analytics_reports WHERE id = $1`, [reportId]);
   return result.rows[0] || null;
 }
 
@@ -476,3 +481,4 @@ export function getWidgetTemplates(): Array<{ type: WidgetType; name: string; de
     }
   ];
 }
+

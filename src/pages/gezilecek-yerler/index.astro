@@ -1,6 +1,11 @@
 ---
+
 import Layout from '../../layouts/Layout.astro';
+import Image from '../../components/Image.astro';
 import { query } from '../../lib/postgres';
+import { resolveContentImage } from '../../lib/content-images';
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 let subcategories: any[] = [];
 let featuredSites: any[] = [];
@@ -21,8 +26,34 @@ try {
 
 const seo = {
   title: 'Şanlıurfa Gezilecek Yerler | Tarihi ve Turistik Noktalar',
-  description: 'Göbeklitepe, Balıklıgöl, Harran, Halfeti ve diğer turistik yerler. Şanlıurfa\'da görülmesi gereken yerler rehberi.',
+  description: "Göbeklitepe, Balıklıgöl, Harran, Halfeti ve diğer turistik yerler. Şanlıurfa\'da görülmesi gereken yerler rehberi.",
+  keywords: ['şanlıurfa gezilecek yerler', 'göbeklitepe', 'balıklıgöl', 'harran kümbet evleri', 'halfeti', 'şanlıurfa tarihi yerler', 'urfa turizm', 'şanlıurfa tourist attractions'],
+  ogImage: '/images/tarihi-yerler/harran-kumbet-evleri.jpg',
+  canonical: '/gezilecek-yerler',
 };
+
+const faqItems = [
+  {
+    S: "Şanlıurfa'da ilk görülmesi gereken yer neresi?",
+    C: 'Göbeklitepe ve Balıklıgöl, Şanlıurfa gezi planlarında genellikle ilk duraklar arasında yer alır.',
+  },
+  {
+    S: 'Gezilecek yerler listesi güncel mi?',
+    C: 'Tarihi yerler listesi aktif içerikler üzerinden düzenli olarak güncellenir.',
+  },
+  {
+    S: 'Gezi noktalarını kategoriye göre görebilir miyim?',
+    C: 'Evet. Alt kategori kartlarından müzeler, çarşılar ve tarihi alanlar gibi başlıklara geçebilirsiniz.',
+  },
+];
+
+const getHistoricalImage = (site: any) =>
+  resolveContentImage({
+    category: 'tarihi-yerler',
+    slug: site?.slug,
+    explicit: site?.cover_image || site?.images?.[0],
+    placeholder: '/images/placeholder-historical.jpg',
+  });
 ---
 
 <Layout seo={seo}>
@@ -31,12 +62,19 @@ const seo = {
       <div class="container mx-auto px-4">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">Gezilecek Yerler</h1>
         <p class="text-xl text-amber-100 max-w-2xl">
-          Tarihin sıfır noktası Şanlıurfa'nın eşsiz mekanlarını keşfedin
+          Tarihin sıfır noktası Şanlıurfa’nın eşsiz mekanlarını keşfedin
         </p>
       </div>
     </div>
 
     <div class="container mx-auto px-4 py-12">
+      <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 mb-8">
+        <h2 class="text-lg font-bold text-amber-900">Hızlı Cevap</h2>
+        <p class="text-sm text-amber-800 mt-1">
+          Şanlıurfa’da gezilecek yerleri tematik başlıklarla inceleyebilir, her noktanın detay sayfasına doğrudan erişebilirsiniz.
+        </p>
+      </div>
+
       {/* Alt Kategoriler */}
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
         {subcategories.map((cat) => (
@@ -63,8 +101,15 @@ const seo = {
           <div class="grid md:grid-cols-2 gap-6">
             {featuredSites.map((site) => (
               <a href={`/tarihi-yerler/${site.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group flex">
-                <div class="w-40 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center flex-shrink-0">
-                  <span class="text-4xl opacity-50">🏛️</span>
+                <div class="w-40 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <Image
+                    src={getHistoricalImage(site)}
+                    alt={site.name}
+                    class="w-full h-full object-cover"
+                    width={320}
+                    height={240}
+                    loading="lazy"
+                  />
                 </div>
                 <div class="p-5 flex-1">
                   <h3 class="font-bold text-lg text-gray-900 group-hover:text-amber-600">{site.name}</h3>
@@ -90,5 +135,25 @@ const seo = {
       name: 'Şanlıurfa',
       containedInPlace: { '@type': 'Country', name: 'Türkiye' }
     }
-  })} />
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.C,
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Gezilecek Yerler', item: `${baseUrl}/gezilecek-yerler` },
+    ],
+  })} is:inline />
 </Layout>

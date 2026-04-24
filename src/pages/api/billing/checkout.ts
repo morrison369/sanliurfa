@@ -9,6 +9,7 @@ import { validateWithSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
+import { PHASE1_FREE_MODE } from '../../../lib/runtime/phase-policy';
 
 const checkoutSchema = {
   tier: {
@@ -23,11 +24,25 @@ const checkoutSchema = {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
+    if (PHASE1_FREE_MODE) {
+      recordRequest('POST', '/api/billing/checkout', HttpStatus.OK, Date.now() - startTime);
+      return apiResponse(
+        {
+          success: true,
+          phase1FreeMode: true,
+          checkoutDisabled: true,
+          message: 'Faz 1 döneminde tüm özellikler ücretsizdir. Checkout devre dışıdır.',
+        },
+        HttpStatus.OK,
+        requestId
+      );
+    }
+
     // Check authentication
     if (!locals.user?.id) {
       recordRequest('POST', '/api/billing/checkout', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
@@ -86,3 +101,4 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
+

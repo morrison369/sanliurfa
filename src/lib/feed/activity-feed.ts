@@ -3,7 +3,7 @@
  * Personalized feed showing activities from followed users and collections
  */
 
-import { queryMany, queryOne } from '../postgres';
+import { queryMany } from '../postgres';
 import { getCache, setCache } from '../cache';
 import { logger } from '../logger';
 
@@ -243,5 +243,6 @@ export async function clearFeedCache(userId: string): Promise<void> {
     );
   }
 }
+
 
 

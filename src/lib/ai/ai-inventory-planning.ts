@@ -43,7 +43,6 @@ export interface AnomalyPattern {
 // ==================== AI INVENTORY FORECASTER ====================
 
 export class AIInventoryForecaster {
-  private models = new Map<string, any>();
   private performance = new Map<string, number>();
 
   /**
@@ -86,7 +85,7 @@ export class AIInventoryForecaster {
   /**
    * Detect anomalies
    */
-  detectAnomalies(sku: string, threshold: number): AnomalyPattern[] {
+  detectAnomalies(sku: string, _threshold: number): AnomalyPattern[] {
     const patterns: AnomalyPattern[] = [];
 
     if (Math.random() > 0.7) {
@@ -148,7 +147,7 @@ export class AutoReplenishment {
    * Create replenishment order
    */
   createOrder(sku: string): ReplenishmentOrder {
-    const orderId = 'reorder-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const orderId = 'reorder-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
 
     const order: ReplenishmentOrder = {
       id: orderId,
@@ -192,7 +191,7 @@ export class AutoReplenishment {
   /**
    * Get replenishment statistics
    */
-  getReplenishmentStats(period: string): { totalOrders: number; avgTime: number; costSavings: number } {
+  getReplenishmentStats(_period: string): { totalOrders: number; avgTime: number; costSavings: number } {
     return {
       totalOrders: this.orderCount,
       avgTime: Math.round(Math.random() * 7 + 3),
@@ -210,7 +209,7 @@ export class PredictiveAlerts {
   /**
    * Generate alerts
    */
-  generateAlerts(period: string): PredictiveAlert[] {
+  generateAlerts(_period: string): PredictiveAlert[] {
     const generatedAlerts: PredictiveAlert[] = [];
 
     if (Math.random() > 0.6) {

@@ -237,6 +237,4 @@ export const contractTester = new ContractTester();
 export const mutationTestRunner = new MutationTestRunner();
 export const testOrchestrator = new TestOrchestrator();
 
-export type { ScreenshotDiff, ContractValidation, MutationResult, TestAutomation };
-
-
+export { ScreenshotDiff, ContractValidation, MutationResult, TestAutomation };

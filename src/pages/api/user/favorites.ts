@@ -2,20 +2,25 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
+import { resolveContentImage } from '../../../lib/content-images';
+import { problemJson } from '../../../lib/api';
 
 // List user's favorite places
 export const GET: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/user-favorites-unauthorized',
+        instance: '/api/user/favorites',
       });
     }
 
     const result = await query(
-      `SELECT p.id, p.name, p.slug, p.image_url, p.category, p.rating, p.price_range, p.address
+      `SELECT p.id, p.name, p.slug, COALESCE(p.thumbnail_url, p.images[1]) as image_url, p.thumbnail_url, p.category, p.rating, p.price_range, p.address
        FROM user_favorites uf
        JOIN places p ON uf.place_id = p.id
        WHERE uf.user_id = $1 AND p.status = 'active'
@@ -23,9 +28,26 @@ export const GET: APIRoute = async (context) => {
       [auth.user.id]
     );
 
+    const favorites = result.rows.map((row: any) => ({
+      ...row,
+      image_url: resolveContentImage({
+        category: 'places',
+        slug: row.slug,
+        explicit: row.image_url || row.thumbnail_url,
+        placeholder: '/images/placeholder-place.jpg',
+      }),
+      thumbnail_url: resolveContentImage({
+        category: 'places',
+        slug: row.slug,
+        explicit: row.thumbnail_url || row.image_url,
+        placeholder: '/images/placeholder-place.jpg',
+        thumb: true,
+      }),
+    }));
+
     return new Response(JSON.stringify({
       success: true,
-      favorites: result.rows
+      favorites
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -33,9 +55,12 @@ export const GET: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Get favorites error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Favoriler Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/user-favorites-get-failed',
+      instance: '/api/user/favorites',
     });
   }
 };
@@ -45,9 +70,12 @@ export const POST: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/user-favorites-unauthorized',
+        instance: '/api/user/favorites',
       });
     }
 
@@ -55,9 +83,12 @@ export const POST: APIRoute = async (context) => {
     const { placeId } = body;
 
     if (!placeId) {
-      return new Response(JSON.stringify({ error: 'placeId required' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'placeId gerekli',
+        type: '/problems/user-favorites-validation',
+        instance: '/api/user/favorites',
       });
     }
 
@@ -92,9 +123,12 @@ export const POST: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Add favorite error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Favori Eklenemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/user-favorites-create-failed',
+      instance: '/api/user/favorites',
     });
   }
 };
@@ -104,9 +138,12 @@ export const DELETE: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/user-favorites-unauthorized',
+        instance: '/api/user/favorites',
       });
     }
 
@@ -114,9 +151,12 @@ export const DELETE: APIRoute = async (context) => {
     const placeId = url.searchParams.get('placeId');
 
     if (!placeId) {
-      return new Response(JSON.stringify({ error: 'placeId required' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'placeId gerekli',
+        type: '/problems/user-favorites-validation',
+        instance: '/api/user/favorites',
       });
     }
 
@@ -135,9 +175,12 @@ export const DELETE: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Remove favorite error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Favori Silinemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/user-favorites-delete-failed',
+      instance: '/api/user/favorites',
     });
   }
 };

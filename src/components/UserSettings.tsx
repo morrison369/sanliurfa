@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 import TwoFactorManager from './TwoFactorManager';
 
 interface UserProfile {
@@ -57,13 +57,6 @@ export default function UserSettings() {
     confirm_password: ''
   });
 
-  // Preferences form state
-  const [preferencesForm, setPreferencesForm] = useState({
-    email: true,
-    push: true,
-    in_app: true,
-    digest: 'weekly'
-  });
 
   // Privacy form state
   const [privacyForm, setPrivacyForm] = useState({
@@ -97,7 +90,6 @@ export default function UserSettings() {
       setSettingsForm({
         theme_preference: data.data.theme_preference
       });
-      setPreferencesForm(data.data.notification_preferences);
       setPrivacyForm(data.data.privacy_settings);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -106,7 +98,7 @@ export default function UserSettings() {
     }
   };
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
     setError(null);
@@ -133,7 +125,7 @@ export default function UserSettings() {
     }
   };
 
-  const handleSaveSettings = async (e: React.FormEvent) => {
+  const handleSaveSettings = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
     setError(null);
@@ -161,7 +153,7 @@ export default function UserSettings() {
     }
   };
 
-  const handleChangePassword = async (e: React.FormEvent) => {
+  const handleChangePassword = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
     setError(null);
@@ -192,34 +184,7 @@ export default function UserSettings() {
     }
   };
 
-  const handleSavePreferences = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/users/preferences', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(preferencesForm)
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Tercihler güncellenemedi');
-      }
-
-      setSuccessMessage('Tercihler başarıyla güncellendi');
-      setTimeout(() => setSuccessMessage(null), 3000);
-      await loadProfile();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleSavePrivacy = async (e: React.FormEvent) => {
+  const handleSavePrivacy = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
     setError(null);

@@ -1,0 +1,134 @@
+---
+
+import Layout from '../layouts/Layout.astro';
+import { query } from '../lib/postgres';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+let geceMekanlari: any[] = [];
+try {
+  const result = await query(`
+    SELECT p.slug, p.name, p.address, p.rating, p.review_count, c.name AS category_name
+    FROM places p
+    LEFT JOIN categories c ON p.category_id = c.id
+    WHERE p.status = 'active'
+      AND (
+        c.slug IN ('kafeterya', 'cafe', 'eglence', 'bar')
+        OR p.name ILIKE '%24%'
+        OR p.name ILIKE '%gece%'
+      )
+    ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+    LIMIT 20
+  `);
+  geceMekanlari = result.rows;
+} catch (e) {
+  console.error('Gece açık mekanlar yüklenemedi:', e);
+}
+
+const seo = {
+  title: 'Şanlıurfa Gece Açık Mekanlar | Gece Hayatı Rehberi',
+  description: 'Şanlıurfa\'da gece açık olan mekanlar; kafeler, çay ocakları ve eğlence yerleri. Geç saate kadar açık adresler.',
+  keywords: ['şanlıurfa gece açık', 'urfa gece mekanları', 'şanlıurfa geç saate kadar', 'urfa gece kafeler', 'şanlıurfa gece hayatı'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/sanliurfa-gece-acik-mekanlar',
+};
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa\'da gece açık mekanlar nerede?',
+    C: 'Şanlıurfa\'da gece açık kafeler, çay ocakları ve bazı restoranlar genellikle şehir merkezinde, Balıklıgöl çevresi ve ana caddelerde yoğunlaşmaktadır.',
+  },
+  {
+    S: 'Şanlıurfa gece geç saate kadar açık yerler var mı?',
+    C: 'Evet. Özellikle Ramazan ayında gece boyunca açık birçok mekan bulunur. Çay bahçeleri ve bazı kafeler geç saatlere kadar müşteri ağırlar.',
+  },
+  {
+    S: 'Şanlıurfa\'da gece eğlence imkanları neler?',
+    C: 'Şanlıurfa\'da gece sıra gecesi, canlı müzik mekanları ve geleneksel çay bahçesi kültürü öne çıkar. Modern kafe ve restoranlar da alternatif sunar.',
+  },
+];
+---
+
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="bg-gradient-to-br from-slate-800 to-blue-900 text-white py-16">
+      <div class="container mx-auto px-4 max-w-5xl">
+        <p class="text-slate-300 font-medium mb-2">Şanlıurfa Gece Hayatı</p>
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Gece Açık Mekanlar</h1>
+        <p class="text-slate-200 text-lg max-w-2xl">
+          Geç saatlerde bile canlı olan Şanlıurfa’nın gece mekanları. Çay bahçelerinden kafelere, eğlence mekanlarına kadar tüm seçenekler.
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 max-w-5xl py-12">
+      {geceMekanlari.length > 0 ? (
+        <div class="grid md:grid-cols-2 gap-5">
+          {geceMekanlari.map((place) => (
+            <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm border hover:shadow-lg transition-all group flex">
+              <div class="w-24 h-24 bg-slate-100 shrink-0 flex items-center justify-center text-3xl">🌙</div>
+              <div class="p-4 flex-1">
+                <h3 class="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{place.name}</h3>
+                <p class="text-xs text-gray-500 mt-0.5">{place.category_name || 'Mekan'}</p>
+                {place.address && <p class="text-sm text-gray-600 mt-1 line-clamp-1">{place.address}</p>}
+                <div class="flex items-center gap-3 mt-2 text-sm">
+                  {place.rating && <span class="text-yellow-600 font-semibold">★ {place.rating}</span>}
+                  {place.review_count > 0 && <span class="text-gray-400">{place.review_count} yorum</span>}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16 text-gray-400">
+          <p class="text-4xl mb-4">🌙</p>
+          <p>Gece mekanları yakında eklenecek.</p>
+        </div>
+      )}
+
+      <div class="mt-10 flex flex-wrap gap-3">
+        <a href="/mekanlar" class="px-5 py-2.5 rounded-full bg-slate-700 text-white hover:bg-slate-800 transition-colors font-medium">Tüm Mekanlar</a>
+        <a href="/sanliurfa-sira-gecesi-mekanlari" class="px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors">Sıra Gecesi Mekanları →</a>
+        <a href="/bugun-sanliurfada-ne-yapilir" class="px-5 py-2.5 rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">Bugün Ne Yapılır? →</a>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Şanlıurfa Gece Açık Mekanlar',
+    description: 'Şanlıurfa\'da geç saate kadar açık olan mekanlar',
+    url: `${baseUrl}/sanliurfa-gece-acik-mekanlar`,
+    itemListElement: geceMekanlari.slice(0, 10).map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'LocalBusiness',
+        '@id': `${baseUrl}/isletme/${p.slug}`,
+        name: p.name,
+        url: `${baseUrl}/isletme/${p.slug}`,
+        address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressCountry: 'TR' },
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Yeme İçme', item: `${baseUrl}/yeme-icme` },
+      { '@type': 'ListItem', position: 3, name: 'Gece Açık Mekanlar', item: `${baseUrl}/sanliurfa-gece-acik-mekanlar` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

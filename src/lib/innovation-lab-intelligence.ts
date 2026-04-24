@@ -218,4 +218,4 @@ export const prototypeManager = new PrototypeManager();
 export const ideationFunnelAnalyzer = new IdeationFunnelAnalyzer();
 export const labROICalculator = new LabROICalculator();
 
-export { ExperimentRecord, PrototypeRecord, IdeationFunnelRecord, LabROIRecord };
+export {ExperimentRecord, PrototypeRecord, IdeationFunnelRecord, LabROIRecord};

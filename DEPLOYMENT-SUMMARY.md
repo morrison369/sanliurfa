@@ -75,5 +75,5 @@ Ana Sayfa:          ✅ Erişilebilir
 ## 📞 Bilgiler
 - **Server**: 168.119.79.238:77
 - **Kullanıcı**: sanliur
-- **DB**: sanliur_sanliurfa / vyD7l4kGFtnw
+- **DB**: sanliur_sanliurfa / CHANGE_ME_DB_PASSWORD
 - **Port**: 4321 (Node.js), 80 (Apache)

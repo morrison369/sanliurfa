@@ -55,13 +55,6 @@ export interface InstallmentInfo {
   }>;
 }
 
-// Configuration
-const IYZICO_API_KEY = process.env.IYZICO_API_KEY || '';
-const IYZICO_SECRET_KEY = process.env.IYZICO_SECRET_KEY || '';
-const IYZICO_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://api.iyzipay.com'
-  : 'https://sandbox-api.iyzipay.com';
-
 /**
  * Create payment request
  */
@@ -195,7 +188,7 @@ export async function getInstallmentInfo(
  */
 export async function refundPayment(
   paymentId: string,
-  amount?: number
+  _amount?: number
 ): Promise<{ success: boolean; refundId?: string; error?: string }> {
   try {
     // Mock refund
@@ -244,21 +237,10 @@ async function savePayment(data: {
 }
 
 /**
- * Generate iyzico authorization header
- */
-function generateIyzicoAuth(body: any): string {
-  // iyzico uses HMAC-SHA256 for authorization
-  // This is simplified - actual implementation would use crypto
-  const randomKey = Math.random().toString(36).substring(7);
-  const signature = `${IYZICO_API_KEY}:${randomKey}`;
-  return `IYZWSv2 ${Buffer.from(signature).toString('base64')}`;
-}
-
-/**
  * Webhook handler for iyzico callbacks
  */
 export async function handleWebhook(payload: any): Promise<void> {
-  const { status, paymentId, conversationId } = payload;
+  const { status, paymentId } = payload;
 
   if (status === 'SUCCESS') {
     await query(

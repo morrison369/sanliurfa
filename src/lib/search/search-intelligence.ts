@@ -84,7 +84,7 @@ export class SearchIndex {
       }));
   }
 
-  searchWithFilters(query: string, filters: Record<string, any>, limit: number = 10): SearchResult[] {
+  searchWithFilters(query: string, _filters: Record<string, any>, limit: number = 10): SearchResult[] {
     return this.search(query, limit);
   }
 }
@@ -101,15 +101,15 @@ export class RankingEngine {
     this.signals.get(docId)!.set(signal, value);
   }
 
-  rerank(results: SearchResult[], userId?: string): SearchResult[] {
+  rerank(results: SearchResult[], _userId?: string): SearchResult[] {
     return results.sort((a, b) => b.score - a.score);
   }
 
-  learnFromClick(userId: string, query: string, clickedDocId: string): void {
+  learnFromClick(userId: string, _query: string, clickedDocId: string): void {
     logger.debug('Click learned', { userId, docId: clickedDocId });
   }
 
-  getClickStats(docId: string): { clicks: number; avgPosition: number } {
+  getClickStats(_docId: string): { clicks: number; avgPosition: number } {
     return { clicks: 0, avgPosition: 5 };
   }
 }
@@ -117,7 +117,7 @@ export class RankingEngine {
 // ==================== QUERY ANALYZER ====================
 
 export class QueryAnalyzer {
-  analyze(query: string): QueryIntent {
+  analyze(_query: string): QueryIntent {
     return { type: 'informational', entities: [], filters: {} };
   }
 
@@ -129,7 +129,7 @@ export class QueryAnalyzer {
     return query;
   }
 
-  autocomplete(prefix: string, limit: number = 5): string[] {
+  autocomplete(_prefix: string, _limit: number = 5): string[] {
     return [];
   }
 }
@@ -163,9 +163,9 @@ export function recordSearchQuery(query: string, resultCount: number): void {
  * Get personalized recommendations based on user context
  */
 export function getPersonalizedRecommendations(
-  userId: string,
+  _userId: string,
   results: SearchResult[],
-  context?: Record<string, any>
+  _context?: Record<string, any>
 ): SearchResult[] {
   return results;
 }

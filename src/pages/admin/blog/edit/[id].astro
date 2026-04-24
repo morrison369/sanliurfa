@@ -255,7 +255,7 @@ const postTagIds = post.tags?.map(t => t.id) || [];
     )}
   </div>
 
-  <script define:vars={{ postId: post.id }}>
+  <script define:vars={{ postId: post.id }} is:inline>
     // Format text
     function formatText(command) {
       const textarea = document.getElementById('content');

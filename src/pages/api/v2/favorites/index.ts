@@ -5,25 +5,33 @@
 import type { APIRoute } from 'astro';
 import { verifyToken } from '../../../../lib/auth';
 import { query } from '../../../../lib/postgres';
+import { resolveContentImage } from '../../../../lib/content-images';
+import { problemJson } from '../../../../lib/api';
 
 // GET /api/v2/favorites - List user favorites
 export const GET: APIRoute = async ({ request }) => {
   try {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Bearer token gerekli',
+        type: '/problems/v2-favorites-unauthorized',
+        instance: '/api/v2/favorites',
       });
     }
 
     const token = authHeader.slice(7);
-    const user = verifyToken(token);
+    const user = await verifyToken(token);
     
     if (!user) {
-      return new Response(JSON.stringify({ success: false, error: 'Invalid token' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Geçersiz token',
+        type: '/problems/v2-favorites-token-invalid',
+        instance: '/api/v2/favorites',
       });
     }
 
@@ -31,8 +39,9 @@ export const GET: APIRoute = async ({ request }) => {
       SELECT 
         f.id as favorite_id,
         f.created_at as favorited_at,
-        p.id, p.name, p.slug, p.rating, p.review_count,
-        p.price_level, p.address, p.district,
+        p.id, p.name, p.slug, COALESCE(p.thumbnail_url, p.images[1]) as image_url,
+        p.thumbnail_url, p.rating, p.review_count,
+        p.price_range, p.address,
         c.name as category_name, c.icon as category_icon
       FROM favorites f
       JOIN places p ON f.place_id = p.id
@@ -41,19 +50,39 @@ export const GET: APIRoute = async ({ request }) => {
       ORDER BY f.created_at DESC
     `, [user.userId]);
 
+    const data = result.rows.map((row) => ({
+      ...row,
+      image_url: resolveContentImage({
+        category: 'places',
+        slug: row.slug,
+        explicit: row.image_url || row.thumbnail_url,
+        placeholder: '/images/placeholder-place.jpg',
+      }),
+      thumbnail_url: resolveContentImage({
+        category: 'places',
+        slug: row.slug,
+        explicit: row.thumbnail_url || row.image_url,
+        placeholder: '/images/placeholder-place.jpg',
+        thumb: true,
+      }),
+    }));
+
     return new Response(JSON.stringify({
       success: true,
-      data: result.rows,
-      count: result.rows.length
+      data,
+      count: data.length
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ success: false, error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Favoriler Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/v2-favorites-get-failed',
+      instance: '/api/v2/favorites',
     });
   }
 };
@@ -63,19 +92,25 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Bearer token gerekli',
+        type: '/problems/v2-favorites-unauthorized',
+        instance: '/api/v2/favorites',
       });
     }
 
     const token = authHeader.slice(7);
-    const user = verifyToken(token);
+    const user = await verifyToken(token);
     
     if (!user) {
-      return new Response(JSON.stringify({ success: false, error: 'Invalid token' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Geçersiz token',
+        type: '/problems/v2-favorites-token-invalid',
+        instance: '/api/v2/favorites',
       });
     }
 
@@ -83,9 +118,12 @@ export const POST: APIRoute = async ({ request }) => {
     const { place_id } = body;
 
     if (!place_id) {
-      return new Response(JSON.stringify({ success: false, error: 'Place ID required' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Place ID gerekli',
+        type: '/problems/v2-favorites-validation',
+        instance: '/api/v2/favorites',
       });
     }
 
@@ -100,9 +138,12 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ success: false, error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Favori Eklenemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/v2-favorites-create-failed',
+      instance: '/api/v2/favorites',
     });
   }
 };
@@ -112,27 +153,36 @@ export const DELETE: APIRoute = async ({ request, url }) => {
   try {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Bearer token gerekli',
+        type: '/problems/v2-favorites-unauthorized',
+        instance: '/api/v2/favorites',
       });
     }
 
     const token = authHeader.slice(7);
-    const user = verifyToken(token);
+    const user = await verifyToken(token);
     
     if (!user) {
-      return new Response(JSON.stringify({ success: false, error: 'Invalid token' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Geçersiz token',
+        type: '/problems/v2-favorites-token-invalid',
+        instance: '/api/v2/favorites',
       });
     }
 
     const placeId = url.searchParams.get('place_id');
     if (!placeId) {
-      return new Response(JSON.stringify({ success: false, error: 'Place ID required' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Place ID gerekli',
+        type: '/problems/v2-favorites-validation',
+        instance: '/api/v2/favorites',
       });
     }
 
@@ -147,9 +197,12 @@ export const DELETE: APIRoute = async ({ request, url }) => {
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ success: false, error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Favori Silinemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/v2-favorites-delete-failed',
+      instance: '/api/v2/favorites',
     });
   }
 };

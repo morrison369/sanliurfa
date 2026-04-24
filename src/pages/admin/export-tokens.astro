@@ -1,0 +1,226 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const seo = {
+  title: 'Dışa Aktarma Token Yönetimi - Admin',
+  description: 'Kısa ömürlü dışa aktarma tokenlarını listele ve iptal et.',
+  noIndex: true,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
+    <div class="container mx-auto px-4 space-y-6">
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h1 class="text-2xl font-bold text-gray-900">Dışa Aktarma Token Yönetimi</h1>
+        <p class="text-gray-500 mt-1">Aktif/pasif tokenları izle ve ihtiyaç halinde iptal et.</p>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm p-6 flex flex-wrap items-center gap-3">
+        <select id="resourceKey" class="border rounded-lg px-3 py-2">
+          <option value="">Tüm kaynaklar</option>
+          <option value="admin.social.events.export">admin.social.events.export</option>
+          <option value="admin.places.lifecycle.export">admin.places.lifecycle.export</option>
+          <option value="admin.reports.social-lifecycle">admin.reports.social-lifecycle</option>
+        </select>
+        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+          <input id="activeOnly" type="checkbox" class="rounded" checked />
+          Sadece aktifler
+        </label>
+        <button id="refreshBtn" class="rounded-lg bg-slate-900 text-white px-4 py-2 font-semibold">Yenile</button>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm p-6 space-y-3">
+        <h2 class="text-lg font-bold text-gray-900">Yeni Token Üret</h2>
+        <div class="grid md:grid-cols-6 gap-3">
+          <select id="createResourceKey" class="border rounded-lg px-3 py-2">
+            <option value="admin.social.events.export">admin.social.events.export</option>
+            <option value="admin.places.lifecycle.export">admin.places.lifecycle.export</option>
+            <option value="admin.reports.social-lifecycle">admin.reports.social-lifecycle</option>
+          </select>
+          <input id="ttlSeconds" class="border rounded-lg px-3 py-2" type="number" value="300" />
+          <input id="maxDownloads" class="border rounded-lg px-3 py-2" type="number" value="1" />
+          <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input id="bindIp" type="checkbox" checked />
+            IP bağla
+          </label>
+          <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input id="bindUa" type="checkbox" checked />
+            Tarayıcı bilgisini bağla
+          </label>
+          <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <input id="replayProtection" type="checkbox" checked />
+            Tekrar kullanım koruması
+          </label>
+        </div>
+        <div class="grid md:grid-cols-2 gap-3">
+          <input id="allowedIpCidrs" class="border rounded-lg px-3 py-2" placeholder="İzinli CIDR (virgülle): 10.0.0.0/8,192.168.0.0/16" />
+          <input id="allowedCountries" class="border rounded-lg px-3 py-2" placeholder="İzinli ülke (virgülle): TR,DE" />
+        </div>
+        <button id="createBtn" class="rounded-lg bg-emerald-700 text-white px-4 py-2 font-semibold">Token Oluştur</button>
+        <div id="tokenReveal" class="hidden rounded border border-amber-200 bg-amber-50 p-3 text-sm">
+          <p class="font-semibold text-amber-900">Token sadece bu ekranda tek sefer gösterilir.</p>
+          <div class="mt-2 flex items-center gap-2">
+            <code id="rawToken" class="text-xs break-all"></code>
+            <button id="copyBtn" class="rounded border border-amber-400 px-2 py-1 text-xs text-amber-900">Kopyala</button>
+          </div>
+          <p id="revealTimer" class="mt-1 text-xs text-amber-800"></p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-3 py-2 text-left">Kaynak</th>
+                <th class="px-3 py-2 text-left">Kullanım</th>
+                <th class="px-3 py-2 text-left">Bitiş</th>
+                <th class="px-3 py-2 text-left">Bağlama</th>
+                <th class="px-3 py-2 text-left">Durum</th>
+                <th class="px-3 py-2 text-left">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="tokenRows">
+              <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Yükleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    const tbody = document.getElementById('tokenRows');
+    let revealTimeout = null;
+    let revealCountdown = null;
+
+    async function loadTokens() {
+      const resourceKey = document.getElementById('resourceKey').value;
+      const activeOnly = document.getElementById('activeOnly').checked;
+      const qp = new URLSearchParams({ limit: '100' });
+      if (resourceKey) qp.set('resourceKey', resourceKey);
+      if (activeOnly) qp.set('activeOnly', '1');
+
+      const res = await fetch(`/api/admin/exports/token?${qp.toString()}`);
+      const json = await res.json();
+      if (!res.ok || !json?.success) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-red-600">Token listesi alınamadı</td></tr>';
+        return;
+      }
+      const rows = Array.isArray(json.tokens) ? json.tokens : [];
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">Kayıt yok</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map((x) => {
+        const active = !x.revoked_at && new Date(x.expires_at).getTime() > Date.now();
+        const bind = [x.bound_ip ? 'IP' : '', x.bound_user_agent ? 'UA' : ''].filter(Boolean).join('+') || '-';
+        const policy = x.payload?.__tokenPolicy || {};
+        const cidrs = Array.isArray(policy.allowedIpCidrs) ? policy.allowedIpCidrs.join(',') : '';
+        const countries = Array.isArray(policy.allowedCountries) ? policy.allowedCountries.join(',') : '';
+        return `
+          <tr class="border-b border-gray-100">
+            <td class="px-3 py-2 font-mono text-xs">${x.resource_key}</td>
+            <td class="px-3 py-2">${x.used_count}/${x.max_downloads}</td>
+            <td class="px-3 py-2 text-xs">${new Date(x.expires_at).toLocaleString('tr-TR')}</td>
+            <td class="px-3 py-2">
+              <div>${bind}</div>
+              <div class="text-[10px] text-gray-500">${cidrs || '-'} / ${countries || '-'}</div>
+            </td>
+            <td class="px-3 py-2">
+              <span class="px-2 py-1 rounded text-xs ${active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}">
+                ${active ? 'aktif' : 'pasif'}
+              </span>
+            </td>
+            <td class="px-3 py-2">
+              ${
+                active
+                  ? `<button data-id="${x.id}" class="revokeBtn rounded border border-rose-400 text-rose-700 px-2 py-1 text-xs">İptal Et</button>`
+                  : '<span class="text-xs text-gray-400">-</span>'
+              }
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.revokeBtn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const tokenId = btn.getAttribute('data-id');
+          const reason = prompt('İptal nedeni (opsiyonel):') || '';
+          const resp = await fetch('/api/admin/exports/token', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tokenId, reason }),
+          });
+          const payload = await resp.json();
+          if (!resp.ok || !payload?.success) {
+            alert('İptal işlemi başarısız');
+            return;
+          }
+          await loadTokens();
+        });
+      });
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', () => void loadTokens());
+    document.getElementById('createBtn').addEventListener('click', async () => {
+      const payload = {
+        resourceKey: document.getElementById('createResourceKey').value,
+        ttlSeconds: Number(document.getElementById('ttlSeconds').value || 300),
+        maxDownloads: Number(document.getElementById('maxDownloads').value || 1),
+        bindIp: document.getElementById('bindIp').checked,
+        bindUserAgent: document.getElementById('bindUa').checked,
+        replayProtection: document.getElementById('replayProtection').checked,
+        allowedIpCidrs: String(document.getElementById('allowedIpCidrs').value || '')
+          .split(',')
+          .map((x) => x.trim())
+          .filter(Boolean),
+        allowedCountries: String(document.getElementById('allowedCountries').value || '')
+          .split(',')
+          .map((x) => x.trim().toUpperCase())
+          .filter(Boolean),
+      };
+      const res = await fetch('/api/admin/exports/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.success) {
+        alert('Token oluşturulamadı');
+        return;
+      }
+      const reveal = document.getElementById('tokenReveal');
+      const rawToken = document.getElementById('rawToken');
+      const timer = document.getElementById('revealTimer');
+      reveal.classList.remove('hidden');
+      rawToken.textContent = json.token;
+      let remaining = 45;
+      timer.textContent = `Kapanma: ${remaining}s`;
+      if (revealTimeout) clearTimeout(revealTimeout);
+      if (revealCountdown) clearInterval(revealCountdown);
+      revealCountdown = setInterval(() => {
+        remaining -= 1;
+        timer.textContent = `Kapanma: ${remaining}s`;
+        if (remaining <= 0 && revealCountdown) clearInterval(revealCountdown);
+      }, 1000);
+      revealTimeout = setTimeout(() => {
+        rawToken.textContent = '';
+        reveal.classList.add('hidden');
+      }, 45000);
+
+      document.getElementById('copyBtn').onclick = async () => {
+        await navigator.clipboard.writeText(json.token);
+        await fetch('/api/admin/exports/token/clipboard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resourceKey: payload.resourceKey }),
+        });
+      };
+
+      await loadTokens();
+    });
+    void loadTokens();
+  </script>
+</Layout>

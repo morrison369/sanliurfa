@@ -75,9 +75,9 @@
           navigator.sendBeacon('/api/analytics/performance', data);
         }
 
-        // Console log in dev mode
+        // Debug log in dev mode
         if (import.meta.env.DEV) {
-          console.log(`[Performance] ${name}: ${value}`);
+          console.debug(`[Performance] ${name}: ${value}`);
         }
       }
     })();

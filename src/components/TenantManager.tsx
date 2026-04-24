@@ -3,7 +3,7 @@
  * Multi-tenant administration and white-label configuration
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 
 interface Tenant {
   id: string;
@@ -37,7 +37,7 @@ export default function TenantManager() {
     description: ''
   });
 
-  // Load tenants
+  // Kiracı listesini yükle.
   useEffect(() => {
     loadTenants();
   }, []);
@@ -46,14 +46,14 @@ export default function TenantManager() {
     try {
       setLoading(true);
       const response = await fetch('/api/tenants');
-      if (!response.ok) throw new Error('Failed to load tenants');
+      if (!response.ok) throw new Error('Kiracı listesi yüklenemedi.');
       const result = await response.json();
       setTenants(result.data || []);
       if (result.data?.length > 0) {
         loadTenantDetails(result.data[0].id);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading tenants');
+      setError(err instanceof Error ? err.message : 'Kiracı listesi yüklenemedi.');
     } finally {
       setLoading(false);
     }
@@ -62,16 +62,16 @@ export default function TenantManager() {
   const loadTenantDetails = async (tenantId: string) => {
     try {
       const response = await fetch(`/api/tenants/${tenantId}`);
-      if (!response.ok) throw new Error('Failed to load tenant details');
+      if (!response.ok) throw new Error('Kiracı detayları yüklenemedi.');
       const result = await response.json();
       setSelectedTenant(result.data.tenant);
       setBranding(result.data.branding);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading tenant details');
+      setError(err instanceof Error ? err.message : 'Kiracı detayları yüklenemedi.');
     }
   };
 
-  const createTenant = async (e: React.FormEvent) => {
+  const createTenant = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const response = await fetch('/api/tenants', {
@@ -80,13 +80,13 @@ export default function TenantManager() {
         body: JSON.stringify(newTenant)
       });
 
-      if (!response.ok) throw new Error('Failed to create tenant');
+      if (!response.ok) throw new Error('Kiracı oluşturulamadı.');
       const result = await response.json();
       setTenants([...tenants, result.data]);
       setNewTenant({ name: '', slug: '', description: '' });
       setShowCreateForm(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error creating tenant');
+      setError(err instanceof Error ? err.message : 'Kiracı oluşturulamadı.');
     }
   };
 
@@ -100,11 +100,10 @@ export default function TenantManager() {
         body: JSON.stringify({ branding })
       });
 
-      if (!response.ok) throw new Error('Failed to update branding');
-      // Show success message
-      alert('Branding updated successfully');
+      if (!response.ok) throw new Error('Markalama güncellenemedi.');
+      alert('Markalama başarıyla güncellendi.');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error updating branding');
+      setError(err instanceof Error ? err.message : 'Markalama güncellenemedi.');
     }
   };
 
@@ -121,7 +120,7 @@ export default function TenantManager() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Başlık */}
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold text-gray-900">Kiracı Yönetimi</h2>
         <button
@@ -185,7 +184,7 @@ export default function TenantManager() {
       )}
 
       <div className="grid grid-cols-4 gap-6">
-        {/* Tenants List */}
+        {/* Kiracı listesi */}
         <div className="col-span-1 bg-white rounded-lg shadow">
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold">Kiracılar ({tenants.length})</h3>
@@ -206,10 +205,10 @@ export default function TenantManager() {
           </div>
         </div>
 
-        {/* Details and Branding */}
+        {/* Detaylar ve markalama */}
         {selectedTenant && branding && (
           <div className="col-span-3 space-y-6">
-            {/* Tenant Info */}
+            {/* Kiracı bilgileri */}
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-4">Kiracı Bilgileri</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -232,7 +231,7 @@ export default function TenantManager() {
               </div>
             </div>
 
-            {/* Branding */}
+            {/* Markalama */}
             <div className="bg-white p-6 rounded-lg shadow">
               <h3 className="text-lg font-semibold mb-4">Markalama</h3>
               <div className="space-y-4">
@@ -297,7 +296,7 @@ export default function TenantManager() {
                     onChange={(e) => setBranding({ ...branding, hide_branding: e.target.checked })}
                     className="w-4 h-4 border border-gray-300 rounded"
                   />
-                  <span className="text-sm font-medium text-gray-700">Orijinal Branding'i Gizle</span>
+                  <span className="text-sm font-medium text-gray-700">Orijinal markalamayı gizle</span>
                 </label>
 
                 <button

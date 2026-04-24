@@ -213,7 +213,6 @@ export class LogAggregator {
 export class DistributedTracing {
   private traces = new Map<string, Trace>();
   private traceCount = 0;
-  private spanCount = 0;
 
   /**
    * Start trace
@@ -326,9 +325,9 @@ export class DistributedTracing {
 
 export class ObservabilityDashboard {
   constructor(
-    private metricsCollector: MetricsCollector,
-    private logAggregator: LogAggregator,
-    private distributedTracing: DistributedTracing
+    _metricsCollector: MetricsCollector,
+    _logAggregator: LogAggregator,
+    _distributedTracing: DistributedTracing
   ) {}
 
   /**

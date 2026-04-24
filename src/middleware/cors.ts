@@ -2,6 +2,13 @@
  * CORS Middleware
  * Secure Cross-Origin Resource Sharing configuration
  */
+function getCanonicalOrigin(): string {
+  return process.env.SITE_URL || process.env.PUBLIC_SITE_URL || 'https://sanliurfa.com';
+}
+function getAllowedOriginsFromEnv(raw?: string): string[] {
+  if (!raw) return [];
+  return raw.split(',').map(o => o.trim()).filter(Boolean);
+}
 
 export interface CorsOptions {
   allowedOrigins?: string[];
@@ -197,16 +204,12 @@ export function createCors(options?: CorsOptions): CorsMiddleware {
 export const cors = createCors();
 
 export const strictCors = createCors({
-  allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [],
+  allowedOrigins: getAllowedOriginsFromEnv(process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGINS),
   credentials: true,
 });
 
 export const apiCors = createCors({
-  allowedOrigins: [
-    'https://sanliurfa.com',
-    'https://www.sanliurfa.com',
-    'https://api.sanliurfa.com',
-  ],
+  allowedOrigins: getAllowedOriginsFromEnv(process.env.CORS_ORIGINS || getCanonicalOrigin()),
   allowedMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: [
     'Content-Type',

@@ -64,7 +64,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         COUNT(*) FILTER (WHERE created_at > CURRENT_DATE) as new_today,
         COUNT(*) FILTER (WHERE last_login_at > CURRENT_DATE) as active_today
       FROM users
-      WHERE is_deleted = false
+      WHERE status = 'active'
     `),
     
     // Places
@@ -90,7 +90,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       SELECT 
         COUNT(*) as total,
         COUNT(*) FILTER (WHERE status = 'published') as published,
-        COALESCE(SUM(views), 0) as views
+        COALESCE(SUM(view_count), 0) as views
       FROM blog_posts
     `),
   ]);
@@ -135,7 +135,7 @@ export async function getRecentActivity(limit = 20): Promise<ActivityItem[]> {
         created_at as timestamp,
         NULL as link
       FROM users
-      WHERE is_deleted = false
+      WHERE status = 'active'
       
       UNION ALL
       
@@ -269,7 +269,7 @@ export async function getUserGrowthChart(months = 6): Promise<ChartData> {
       COUNT(*) as new_users
     FROM users
     WHERE created_at > CURRENT_DATE - ($1 * INTERVAL '1 month')
-      AND is_deleted = false
+      AND deleted_at IS NULL
     GROUP BY DATE_TRUNC('month', created_at)
     ORDER BY month
   `,
@@ -303,7 +303,7 @@ export async function getModerationStats(): Promise<{
       (SELECT COUNT(*) FROM places WHERE status = 'pending') as pending_places,
       (SELECT COUNT(*) FROM reviews WHERE status = 'pending') as pending_reviews,
       (SELECT COUNT(*) FROM blog_comments WHERE status = 'pending') as pending_comments,
-      (SELECT COUNT(*) FROM content_reports WHERE status = 'open') as reported_content
+      (SELECT COUNT(*) FROM reports WHERE status = 'pending') as reported_content
   `);
 
   return {

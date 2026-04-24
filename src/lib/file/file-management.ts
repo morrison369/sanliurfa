@@ -6,7 +6,7 @@
 import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { getCache, setCache, deleteCache } from '../cache';
-import crypto from 'crypto';
+import _crypto from 'crypto';
 
 interface S3File {
   id: string;
@@ -269,5 +269,6 @@ export function generateUploadSignature(bucket: string, key: string, expiresInSe
     expires_at: new Date(Date.now() + expiresInSeconds * 1000)
   };
 }
+
 
 

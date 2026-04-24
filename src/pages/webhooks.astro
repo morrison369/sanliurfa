@@ -13,7 +13,7 @@ if (!user) {
 const authToken = Astro.cookies.get('token')?.value || '';
 ---
 
-<Layout title="Webhooks">
+<Layout seo={{ title: "Webhooks", noIndex: true }}>
   <div class="max-w-7xl mx-auto px-4 py-8">
     <div class="mb-8">
       <h1 class="text-4xl font-bold text-gray-900">Webhooks</h1>
@@ -24,7 +24,6 @@ const authToken = Astro.cookies.get('token')?.value || '';
       <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 border border-blue-200">
         <div class="flex items-center justify-between mb-2">
           <h3 class="font-semibold text-blue-900">Webhook Nedir?</h3>
-          <span class="text-2xl">ğŸ”—</span>
         </div>
         <p class="text-sm text-blue-800">
           Webhooks, belirli olaylar gerçekleştiğinde URL'nize HTTP POST istekleri göndererek sisteminizi güncellenmiş tutar.
@@ -34,7 +33,6 @@ const authToken = Astro.cookies.get('token')?.value || '';
       <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border border-green-200">
         <div class="flex items-center justify-between mb-2">
           <h3 class="font-semibold text-green-900">Güvenlik</h3>
-          <span class="text-2xl">ğŸ”’</span>
         </div>
         <p class="text-sm text-green-800">
           Tüm webhook istekleri HMAC-SHA256 imzası ile doğrulanır. X-Signature başlığında bulunur.
@@ -44,7 +42,6 @@ const authToken = Astro.cookies.get('token')?.value || '';
       <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6 border border-purple-200">
         <div class="flex items-center justify-between mb-2">
           <h3 class="font-semibold text-purple-900">Otomatik Yeniden Deneme</h3>
-          <span class="text-2xl">ğŸ”„</span>
         </div>
         <p class="text-sm text-purple-800">
           Başarısız teslimler otomatik olarak katlanarak artan gecikmelerle yeniden denenilir.
@@ -54,12 +51,12 @@ const authToken = Astro.cookies.get('token')?.value || '';
 
     <!-- Webhook Manager -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-      <WebhookManager client:load userId={user.id} token={authToken} />
+      <WebhookManager client:visible token={authToken} />
     </div>
 
     <!-- Webhook Analytics Dashboard -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-      <WebhookAnalyticsDashboard client:load token={authToken} />
+      <WebhookAnalyticsDashboard client:visible token={authToken} />
     </div>
 
     <!-- Documentation -->
@@ -68,20 +65,20 @@ const authToken = Astro.cookies.get('token')?.value || '';
 
       <div class="space-y-6">
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">1ï¸⃣ Webhook Oluşturun</h3>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">1. Webhook Oluşturun</h3>
           <p class="text-gray-600 mb-2">
             Yukarıdaki "Yeni Webhook" butonuna tıklayarak yeni webhook oluşturun.
             Olay türü, URL ve (isteğe bağlı) secret sağlayın.
           </p>
           <div class="bg-gray-50 rounded p-3 text-sm font-mono">
             Event: place.created<br/>
-            URL: https://yourapp.com/webhooks/places<br/>
-            Secret: your-secret-key
+            URL: https://sanliurfa.com/webhooks/places<br/>
+            Secret: webhook-secret
           </div>
         </div>
 
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">2ï¸⃣ İmzayı Doğrulayın</h3>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">2. İmzayı Doğrulayın</h3>
           <p class="text-gray-600 mb-2">
             Her webhook isteği X-Signature başlığında HMAC-SHA256 imzası ile gelir.
           </p>
@@ -95,14 +92,14 @@ const authToken = Astro.cookies.get('token')?.value || '';
         </div>
 
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">3ï¸⃣ Test Edin</h3>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">3. Test Edin</h3>
           <p class="text-gray-600">
             Webhook listesinden webhook seçerek "Test Et" butonuyla örnek olay gönderin.
           </p>
         </div>
 
         <div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">4ï¸⃣ İzleyin</h3>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">4. İzleyin</h3>
           <p class="text-gray-600">
             "Analitikler" sekmesinden webhook teslim oranını, başarısız olayları ve performans metriklerini izleyin.
           </p>
@@ -111,7 +108,7 @@ const authToken = Astro.cookies.get('token')?.value || '';
 
       <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
         <p class="text-sm text-blue-800">
-          <strong>ğŸ’¡ İpucu:</strong> Webhook URL'niz geçerli bir HTTPS adresi olmalı ve 200-299 arasında HTTP durum kodu döndürmelidir.
+          <strong>İpucu:</strong> Webhook URL'niz geçerli bir HTTPS adresi olmalı ve 200-299 arasında HTTP durum kodu döndürmelidir.
         </p>
       </div>
     </div>

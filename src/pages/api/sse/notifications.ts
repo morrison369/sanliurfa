@@ -1,6 +1,6 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { registerSSE, unregisterSSE, getNotifications, markAsRead, markAllAsRead, deleteNotification } from '../../../lib/notifications/realtime-notifications';
+import { problemJson } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const userId = locals.user?.id || 'anonymous';
@@ -45,10 +45,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const userId = locals.user?.id;
   
   if (!userId) {
-    return new Response(
-      JSON.stringify({ error: 'Unauthorized' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 401,
+      title: 'Unauthorized',
+      detail: 'Oturum açmanız gerekiyor',
+      type: '/problems/sse-notifications-unauthorized',
+      instance: '/api/sse/notifications',
+    });
   }
 
   try {
@@ -78,9 +81,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: 'Invalid request' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 400,
+      title: 'Geçersiz İstek',
+      detail: 'Invalid request',
+      type: '/problems/sse-notifications-invalid-request',
+      instance: '/api/sse/notifications',
+    });
   }
 };

@@ -3,7 +3,7 @@ import paramiko
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='BcqH7t5zNKfw', allow_agent=False, look_for_keys=False)
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', allow_agent=False, look_for_keys=False)
 
 print("🐘 PostgreSQL Final Yapılandırma")
 print("=" * 50)
@@ -35,22 +35,22 @@ for line in stdout.read().decode().split('\n')[2:-2]:
 # .env.production güncelle
 print("\n📝 .env.production güncelleniyor...")
 env_content = """# PostgreSQL Database
-DATABASE_URL=postgresql://sanliurfa_user:Urfa_2024_Secure!@localhost:5432/sanliurfa
+DATABASE_URL=postgresql://sanliurfa_user:CHANGE_ME_DB_PASSWORD@localhost:5432/sanliurfa
 PGHOST=localhost
 PGPORT=5432
 PGDATABASE=sanliurfa
 PGUSER=sanliurfa_user
-PGPASSWORD=Urfa_2024_Secure!
+PGPASSWORD=CHANGE_ME_DB_PASSWORD
 
 # Supabase (PostgreSQL olarak kullanıyoruz)
 SUPABASE_URL=postgresql://localhost:5432/sanliurfa
-SUPABASE_ANON_KEY=sanliurfa_user:Urfa_2024_Secure!
-SUPABASE_SERVICE_ROLE_KEY=sanliurfa_user:Urfa_2024_Secure!
+SUPABASE_ANON_KEY=sanliurfa_user:CHANGE_ME_DB_PASSWORD
+SUPABASE_SERVICE_ROLE_KEY=sanliurfa_user:CHANGE_ME_DB_PASSWORD
 
 # Site
 SITE_URL=http://168.119.79.238
 NODE_ENV=production
-PORT=3000
+PORT=4321
 
 # Security
 JWT_SECRET=change-this-to-a-secure-random-string-min-32-chars
@@ -90,10 +90,10 @@ print("""
   Port: 5432
   Database: sanliurfa
   User: sanliurfa_user
-  Password: Urfa_2024_Secure!
+  Password: CHANGE_ME_DB_PASSWORD
 
 🔗 Connection String:
-  postgresql://sanliurfa_user:Urfa_2024_Secure!@localhost:5432/sanliurfa
+  postgresql://sanliurfa_user:CHANGE_ME_DB_PASSWORD@localhost:5432/sanliurfa
 
 📝 ÖNEMLİ: Uygulama kodunda Supabase client yerine 
    PostgreSQL client (pg, node-postgres) kullanmalısınız!

@@ -5,6 +5,7 @@
 
 import { pool } from '../postgres';
 import { logger } from '../logger';
+import { getPublicAppUrl } from '../public-app-url';
 
 export interface SecurityCheckResult {
   check: string;
@@ -190,7 +191,7 @@ async function checkUserPermissions(): Promise<SecurityCheckResult> {
  */
 async function checkAuditLogging(): Promise<SecurityCheckResult> {
   try {
-    const result = await pool.query('SELECT COUNT(*) FROM audit_logs LIMIT 1');
+    await pool.query('SELECT COUNT(*) FROM audit_logs LIMIT 1');
 
     return {
       check: 'Audit Logging',
@@ -276,7 +277,7 @@ function checkRateLimiting(): SecurityCheckResult {
  * Check CORS configuration
  */
 function checkCORS(): SecurityCheckResult {
-  const corsOrigins = process.env.CORS_ORIGINS || 'https://sanliurfa.com';
+  const corsOrigins = process.env.CORS_ORIGINS || getPublicAppUrl();
   const isWildcard = corsOrigins.includes('*');
 
   return {

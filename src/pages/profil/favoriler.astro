@@ -9,9 +9,9 @@ if (!user) {
 }
 
 let favorites: any[] = [];
-let icons: any = {};
+let icons: Record<string, string> = {};
 const seo = {
-    title: 'Favorilerim - Şanlıurfa.com',
+    title: 'Favorilerim - Sanliurfa.com',
     description: 'Favori mekanlarınızı görüntüleyin.',
   };
 
@@ -29,7 +29,7 @@ try {
   favorites = result.rows;
 
   // SVG ikonlar
-  const icons = {
+  icons = {
     user: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
     star: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
     heart: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
@@ -93,10 +93,10 @@ try {
                       src={fav.place_images?.[0] || '/images/placeholder.jpg'}
                       alt={fav.place_name}
                       class="w-24 h-24 rounded-lg object-cover flex-shrink-0"
-                      onerror="this.src='/images/placeholder.jpg'"
+                      onerror="this.setAttribute('src','/images/placeholder.jpg')"
                     />
                     <div class="flex-1 min-w-0">
-                      <a href={`/places/${fav.place_slug}`} class="font-semibold text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400">
+                      <a href={`/isletme/${fav.place_slug}`} class="font-semibold text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400">
                         {fav.place_name}
                       </a>
                       <div class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -123,7 +123,7 @@ try {
                 <span set:html={icons.heartLarge}></span>
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Henüz favori yok</h3>
                 <p class="text-gray-600 dark:text-gray-400 mb-4">Beğendiğiniz mekanları favorilere ekleyin.</p>
-                <a href="/places" class="inline-block px-6 py-3 bg-urfa-600 text-white rounded-lg hover:bg-urfa-700 transition-colors">
+                <a href="/mekanlar" class="inline-block px-6 py-3 bg-urfa-600 text-white rounded-lg hover:bg-urfa-700 transition-colors">
                   Mekanları Keşfet
                 </a>
               </div>
@@ -136,8 +136,9 @@ try {
 
   <script>
     // Event delegation ile favori kaldırma
-    document.addEventListener('click', async (e) => {
-      const btn = e.target.closest('.remove-fav-btn');
+    document.addEventListener('click', async (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      const btn = target?.closest('.remove-fav-btn') as HTMLElement | null;
       if (!btn) return;
 
       const id = btn.dataset.favoriteId;

@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
   Shield,
-  Users,
   Database,
   AlertTriangle,
   CheckCircle,
-  Clock,
   FileText,
   Lock,
   RefreshCw,
@@ -59,7 +57,6 @@ export default function GovernanceDashboard() {
   const [data, setData] = useState<GovernanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'audit' | 'compliance'>('overview');
-  const [expandedSections, setExpandedSections] = useState<string[]>(['summary']);
 
   useEffect(() => {
     fetchGovernanceData();
@@ -75,14 +72,6 @@ export default function GovernanceDashboard() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => 
-      prev.includes(section) 
-        ? prev.filter(s => s !== section)
-        : [...prev, section]
-    );
   };
 
   const getStatusColor = (status: string) => {
@@ -135,12 +124,12 @@ export default function GovernanceDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Governance Dashboard</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Yönetişim Paneli</h2>
           <p className="text-gray-600 mt-1">Veri yönetimi, denetim ve uyumluluk takibi</p>
         </div>
         <div className="flex items-center gap-3">
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(data.compliance.status)}`}>
-            Compliance Score: {data.compliance.score}%
+            Uyumluluk Skoru: {data.compliance.score}%
           </span>
           <button 
             onClick={fetchGovernanceData}
@@ -365,7 +354,7 @@ export default function GovernanceDashboard() {
       {/* Compliance Tab */}
       {activeTab === 'compliance' && (
         <div className="space-y-6">
-          {/* Compliance Score */}
+          {/* Uyumluluk skoru */}
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
               <div>

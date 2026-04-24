@@ -6,6 +6,7 @@
  * - Kategoriler
  */
 
+import { actions, isInputError } from 'astro:actions';
 import { getBlogPosts, getBlogCategories } from '../lib/blog';
 
 interface Props {
@@ -14,6 +15,12 @@ interface Props {
 }
 
 const { currentPostId, currentCategoryId } = Astro.props;
+const newsletterResult = Astro.getActionResult(actions.subscribeBlogNewsletter);
+const newsletterErrors = isInputError(newsletterResult?.error) ? newsletterResult.error.fields : {};
+const newsletterSubmitError =
+  !isInputError(newsletterResult?.error) && newsletterResult?.error?.message
+    ? newsletterResult.error.message
+    : null;
 
 let topPosts: any[] = [];
 let recentPosts: any[] = [];
@@ -24,16 +31,14 @@ try {
   // En çok okunan yazıları getir
   const result = await getBlogPosts({
     status: 'published',
-    limit: 5,
-    sort: 'popular'
+    limit: 5
   });
   topPosts = result.posts.slice(0, 5);
 
   // Son yazıları getir
   const recentResult = await getBlogPosts({
     status: 'published',
-    limit: 5,
-    sort: 'recent'
+    limit: 5
   });
   recentPosts = recentResult.posts.slice(0, 5);
 
@@ -144,14 +149,28 @@ try {
     <p class="text-sm text-blue-100 mb-4">
       En yeni yazılardan ilk siz haberdar olun.
     </p>
-    <form class="space-y-3" onsubmit="handleSubscribe(event)">
+    {newsletterResult && !newsletterResult.error && (
+      <div class="rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-sm text-white">
+        {newsletterResult.data.message}
+      </div>
+    )}
+    {newsletterSubmitError && (
+      <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {newsletterSubmitError}
+      </div>
+    )}
+    <form action={actions.subscribeBlogNewsletter} method="POST" class="space-y-3">
       <input
         type="email"
         name="email"
         placeholder="E-posta adresiniz"
         required
+        aria-invalid={newsletterErrors.email ? 'true' : 'false'}
         class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:border-white/40"
       />
+      {newsletterErrors.email && (
+        <p class="text-xs text-red-100">{newsletterErrors.email.join(', ')}</p>
+      )}
       <button
         type="submit"
         class="w-full py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
@@ -164,33 +183,3 @@ try {
     </p>
   </div>
 </aside>
-
-<script>
-  async function handleSubscribe(event) {
-    event.preventDefault();
-    const form = /** @type {HTMLFormElement} */ (event.target);
-    const emailInput = /** @type {HTMLInputElement} */ (form.querySelector('input[name="email"]'));
-    const email = emailInput?.value;
-
-    if (!email) return;
-
-    try {
-      const response = await fetch('/api/blog/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert('Başarıyla abone oldunuz!');
-        form.reset();
-      } else {
-        alert(data.error || 'Abone olurken hata oluştu');
-      }
-    } catch (err) {
-      alert('Hata: ' + String(err));
-    }
-  }
-</script>

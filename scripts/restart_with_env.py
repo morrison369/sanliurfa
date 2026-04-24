@@ -3,7 +3,7 @@ import paramiko
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='BcqH7t5zNKfw')
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD')
 
 print("🔄 PM2 Environment Variables ile Yeniden Başlatma")
 print("=" * 50)
@@ -21,8 +21,8 @@ ecosystem = """module.exports = {
     cwd: '/home/sanliur/public_html',
     env: {
       NODE_ENV: 'production',
-      PORT: 6000,
-      DATABASE_URL: 'postgresql://sanliurfa_user:Urfa_2024_Secure!@localhost:5432/sanliurfa'
+      PORT:$24321,
+      DATABASE_URL: 'postgresql://sanliurfa_user:CHANGE_ME_DB_PASSWORD@localhost:5432/sanliurfa'
     },
     instances: 1,
     exec_mode: 'fork',
@@ -57,13 +57,13 @@ print("\n📊 Durum:")
 stdin, stdout, stderr = ssh.exec_command(NVM + "pm2 list")
 print(stdout.read().decode())
 
-# 6. Port 6000 test
-print("\n🌐 Port 6000 test (5 saniye bekleyin)...")
+# 6. Port 4321 test
+print("\n🌐 Port 4321 test (5 saniye bekleyin)...")
 time.sleep(5)
-stdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")
+stdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/")
 code = stdout.read().decode()
 if code == "200":
-    print(f"✅ HTTP {code} - Port 6000 çalışıyor!")
+    print(f"✅ HTTP {code} - Port 4321 çalışıyor!")
 else:
     print(f"⚠️ HTTP {code}")
     print("\n📋 Loglar:")

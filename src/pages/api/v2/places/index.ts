@@ -6,6 +6,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { logger } from '../../../../lib/logging';
+import { problemJson } from '../../../../lib/api';
 
 export const GET: APIRoute = async ({ url }) => {
   try {
@@ -21,8 +22,8 @@ export const GET: APIRoute = async ({ url }) => {
 
     let sql = `
       SELECT
-        p.id, p.name, p.slug, p.description, p.address, p.district,
-        p.rating, p.review_count, p.price_level,
+        p.id, p.name, p.slug, p.description, p.address,
+        p.rating, p.review_count, p.price_range,
         p.latitude, p.longitude, p.phone, p.website,
         c.name as category_name, c.icon as category_icon,
         ${lat && lng ? `
@@ -71,7 +72,7 @@ export const GET: APIRoute = async ({ url }) => {
         main_image: `/uploads/photos/places/${place.id}/thumb.jpg`,
       })),
       pagination: { limit, offset, has_more: result.rows.length === limit },
-      meta: { version: '2.0', api: 'mobile' }
+      meta: { version: '2.0', api: 'mobile', radius }
     }), {
       status: 200,
       headers: { 
@@ -82,9 +83,12 @@ export const GET: APIRoute = async ({ url }) => {
 
   } catch (error) {
     logger.error('API v2 places error:', error);
-    return new Response(JSON.stringify({ success: false, error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Mekanlar Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/v2-places-get-failed',
+      instance: '/api/v2/places',
     });
   }
 };

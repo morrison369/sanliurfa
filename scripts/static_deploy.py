@@ -14,7 +14,7 @@ import subprocess
 HOST = "176.9.138.254"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 REMOTE_PATH = "/home/sanliur/public_html"
 LOCAL_BUILD_DIR = "dist"
 

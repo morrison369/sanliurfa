@@ -12,7 +12,7 @@ import { logger } from '../logging';
  * Sign up - delegates to auth.ts
  */
 export async function signUp(email: string, password: string, fullName: string) {
-  return auth.signUp(email, password, fullName);
+  return auth.signUp(email, password, { fullName });
 }
 
 /**
@@ -24,7 +24,7 @@ export async function signIn(email: string, password: string) {
     if (result.error) {
       return result;
     }
-    return { data: { user: result.data?.user, session: { access_token: result.data?.token } }, error: null };
+    return { data: { user: (result as any).data?.user, session: { access_token: (result as any).data?.token } }, error: null };
   } catch (error: any) {
     return { data: null, error: { message: error.message } };
   }
@@ -150,6 +150,4 @@ export function subscribeToTable(table: string, callback: (payload: any) => void
   return { unsubscribe: () => {} };
 }
 
-export type { pool };
-
-
+export { pool };

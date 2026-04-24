@@ -2,14 +2,19 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
+import { resolveContentImage } from '../../../lib/content-images';
+import { problemJson } from '../../../lib/api';
 
 export const GET: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth || auth.user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-dashboard-unauthorized',
+        instance: '/api/admin/dashboard',
       });
     }
 
@@ -87,13 +92,13 @@ export const GET: APIRoute = async (context) => {
 
       // En cok goruntulenen isletmeler
       query(`
-        SELECT p.id, p.name, p.slug, p.image_url,
+        SELECT p.id, p.name, p.slug, COALESCE(p.thumbnail_url, p.images[1]) as image_url,
                COALESCE(SUM(a.views), 0) as total_views
         FROM places p
-        LEFT JOIN place_daily_analytics a ON p.id = a.place_id 
+        LEFT JOIN place_daily_analytics a ON p.id = a.place_id
           AND a.date >= $1
         WHERE p.status = 'active'
-        GROUP BY p.id, p.name, p.slug, p.image_url
+        GROUP BY p.id, p.name, p.slug, p.thumbnail_url, p.images
         ORDER BY total_views DESC
         LIMIT 5
       `, [thirtyDaysAgo.toISOString().split('T')[0]]),
@@ -112,6 +117,23 @@ export const GET: APIRoute = async (context) => {
       `)
     ]);
 
+    const topPlaces = topPlacesResult.rows.map((row) => ({
+      ...row,
+      image_url: resolveContentImage({
+        category: 'places',
+        slug: row.slug,
+        explicit: row.image_url,
+        placeholder: '/images/placeholder-place.jpg',
+      }),
+      thumbnail_url: resolveContentImage({
+        category: 'places',
+        slug: row.slug,
+        explicit: row.image_url,
+        placeholder: '/images/placeholder-place.jpg',
+        thumb: true,
+      }),
+    }));
+
     return new Response(JSON.stringify({
       success: true,
       stats: {
@@ -124,7 +146,7 @@ export const GET: APIRoute = async (context) => {
         users: recentUsersResult.rows,
         places: recentPlacesResult.rows
       },
-      topPlaces: topPlacesResult.rows,
+      topPlaces,
       dailyStats: dailyStatsResult.rows
     }), {
       status: 200,
@@ -133,9 +155,12 @@ export const GET: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Admin dashboard error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Admin Dashboard Alınamadı',
+      detail: error instanceof Error ? error.message : 'server_error',
+      type: '/problems/admin-dashboard-failed',
+      instance: '/api/admin/dashboard',
     });
   }
 };

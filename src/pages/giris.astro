@@ -1,16 +1,42 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { actions, isInputError } from 'astro:actions';
 
 const seo = {
-  title: 'Giriş Yap - Şanlıurfa.com',
+  title: 'Giriş Yap - Sanliurfa.com',
   description: 'Hesabınıza giriş yapın',
-  noindex: true,
+  noIndex: true,
 };
 
 // Check if already logged in
 const user = Astro.locals.user;
 if (user) {
   return Astro.redirect('/');
+}
+
+const redirectTarget = Astro.url.searchParams.get('redirect') || '/';
+const loginResult = Astro.getActionResult(actions.login);
+const loginInputErrors = isInputError(loginResult?.error) ? loginResult.error.fields : {};
+const loginSubmitError =
+  !isInputError(loginResult?.error) && loginResult?.error?.message
+    ? loginResult.error.message
+    : null;
+const verifyResult = Astro.getActionResult(actions.verifyLoginTwoFactor);
+const verifyInputErrors = isInputError(verifyResult?.error) ? verifyResult.error.fields : {};
+const verifySubmitError =
+  !isInputError(verifyResult?.error) && verifyResult?.error?.message
+    ? verifyResult.error.message
+    : null;
+const twoFactorState = loginResult?.data?.requiresTwoFactor
+  ? { active: true, tempToken: loginResult.data.tempToken || '' }
+  : null;
+
+if (loginResult?.data?.success && !loginResult.data.requiresTwoFactor) {
+  return Astro.redirect(redirectTarget);
+}
+
+if (verifyResult?.data?.success) {
+  return Astro.redirect(redirectTarget);
 }
 ---
 <Layout seo={seo} hideFooter>
@@ -24,46 +50,105 @@ if (user) {
       </div>
 
       <div class="bg-white rounded-2xl shadow-lg p-8">
-        <div id="errorBox" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+        {twoFactorState ? (
+          <form action={actions.verifyLoginTwoFactor} method="POST" class="space-y-6">
+            <input type="hidden" name="tempToken" value={twoFactorState.tempToken} />
+            <input type="hidden" name="redirect" value={redirectTarget} />
 
-        <form id="loginForm" class="space-y-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
-            <input 
-              type="email" 
-              name="email" 
-              required 
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              placeholder="ornek@email.com"
-            />
-          </div>
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900">İki Adımlı Doğrulama</h2>
+              <p class="mt-2 text-sm text-gray-500">
+                Kimlik doğrulayıcı uygulamanızdaki 6 haneli kodu girin.
+              </p>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
-            <input 
-              type="password" 
-              name="password" 
-              required 
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-          </div>
+            {verifySubmitError && (
+              <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {verifySubmitError}
+              </div>
+            )}
 
-          <div class="flex items-center justify-between">
-            <label class="flex items-center">
-              <input type="checkbox" name="remember" class="w-4 h-4 text-red-600 rounded border-gray-300" />
-              <span class="ml-2 text-sm text-gray-600">Beni hatırla</span>
-            </label>
-            <a href="/sifremi-unuttum" class="text-sm text-red-600 hover:underline">Şifremi unuttum</a>
-          </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Doğrulama Kodu</label>
+              <input
+                type="text"
+                name="code"
+                inputmode="numeric"
+                pattern="[0-9]{6}"
+                maxlength="6"
+                required
+                aria-invalid={verifyInputErrors.code ? 'true' : 'false'}
+                class="w-full px-4 py-3 text-center tracking-[0.4em] border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="000000"
+              />
+              {verifyInputErrors.code && (
+                <p class="mt-2 text-sm text-red-600">{verifyInputErrors.code.join(', ')}</p>
+              )}
+            </div>
 
-          <button 
-            type="submit" 
-            class="w-full py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-          >
-            Giriş Yap
-          </button>
-        </form>
+            <button
+              type="submit"
+              class="w-full py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+            >
+              Kodu Doğrula
+            </button>
+          </form>
+        ) : (
+          <form action={actions.login} method="POST" class="space-y-6">
+            <input type="hidden" name="redirect" value={redirectTarget} />
+            {loginSubmitError && (
+              <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {loginSubmitError}
+              </div>
+            )}
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
+              <input 
+                type="email" 
+                name="email" 
+                required
+                transition:persist
+                aria-invalid={loginInputErrors.email ? 'true' : 'false'}
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="ornek@email.com"
+              />
+              {loginInputErrors.email && (
+                <p class="mt-2 text-sm text-red-600">{loginInputErrors.email.join(', ')}</p>
+              )}
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
+              <input 
+                type="password" 
+                name="password" 
+                required
+                aria-invalid={loginInputErrors.password ? 'true' : 'false'}
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="••••••••"
+              />
+              {loginInputErrors.password && (
+                <p class="mt-2 text-sm text-red-600">{loginInputErrors.password.join(', ')}</p>
+              )}
+            </div>
+
+            <div class="flex items-center justify-between">
+              <label class="flex items-center">
+                <input type="checkbox" name="remember" class="w-4 h-4 text-red-600 rounded border-gray-300" />
+                <span class="ml-2 text-sm text-gray-600">Beni hatırla</span>
+              </label>
+              <a href="/sifremi-unuttum" class="text-sm text-red-600 hover:underline">Şifremi unuttum</a>
+            </div>
+
+            <button 
+              type="submit" 
+              class="w-full py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+            >
+              Giriş Yap
+            </button>
+          </form>
+        )}
 
         <div class="mt-6 text-center">
           <p class="text-gray-500">
@@ -75,10 +160,13 @@ if (user) {
         <div class="mt-6 pt-6 border-t border-gray-200">
           <p class="center text-sm text-gray-500 mb-4">Veya ile giriş yap</p>
           <div class="space-y-3">
-            <button class="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors" id="googleLogin">
+            <a
+              href={`/api/auth/oauth/authorize?provider=google&redirect=${encodeURIComponent(redirectTarget)}`}
+              class="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+            >
               <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
               Google ile Devam Et
-            </button>
+            </a>
           </div>
         </div>
       </div>
@@ -88,59 +176,7 @@ if (user) {
       </p>
     </div>
   </div>
-
-  <script>
-    // Handle redirect after login
-    const urlParams = new URLSearchParams(window.location.search);
-    const redirect = urlParams.get('redirect') || '/';
-
-    const errorBox = document.getElementById('errorBox');
-    const loginBtn = document.querySelector('#loginForm button[type="submit"]');
-
-    function showError(msg) {
-      errorBox.textContent = msg;
-      errorBox.classList.remove('hidden');
-    }
-
-    function hideError() {
-      errorBox.classList.add('hidden');
-    }
-
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      hideError();
-      loginBtn.disabled = true;
-      loginBtn.textContent = 'Giriş yapılıyor...';
-
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-
-      try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-          window.location.href = redirect;
-        } else {
-          showError(result.error || 'Giriş başarısız');
-          loginBtn.disabled = false;
-          loginBtn.textContent = 'Giriş Yap';
-        }
-      } catch (err) {
-        showError('Bağlantı hatası. Lütfen tekrar deneyin.');
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Giriş Yap';
-      }
-    });
-
-    // Google login
-    document.getElementById('googleLogin')?.addEventListener('click', () => {
-      window.location.href = '/api/auth/google';
-    });
-  </script>
 </Layout>
+
+
+

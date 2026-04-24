@@ -1,17 +1,15 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
 import { getWebhookMetrics } from '../../../lib/webhook/webhook-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
-// @ts-nocheck
 /**
  * GET /api/webhooks/analytics
  * Get webhook metrics and analytics for authenticated user
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

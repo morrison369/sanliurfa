@@ -3,8 +3,6 @@
  * Multiplayer editing, operational transformation, presence detection, conflict resolution
  */
 
-import { logger } from '../logger';
-
 // ==================== OPERATIONAL TRANSFORMATION ====================
 
 export interface DocumentChange {
@@ -27,7 +25,7 @@ export class OperationalTransformation {
   /**
    * Apply local change
    */
-  applyLocalChange(userId: string, change: Omit<DocumentChange, 'id' | 'timestamp' | 'version'>): DocumentChange {
+  applyLocalChange(_userId: string, change: Omit<DocumentChange, 'id' | 'timestamp' | 'version'>): DocumentChange {
     const documented: DocumentChange = {
       ...change,
       id: `change-${Date.now()}-${Math.random()}`,
@@ -212,12 +210,12 @@ export class ConflictResolver {
     // Register default strategies
     this.registerStrategy({
       name: 'last-write-wins',
-      resolve: (local, remote) => remote // Remote (later) wins
+      resolve: (_local, remote) => remote // Remote (later) wins
     });
 
     this.registerStrategy({
       name: 'first-write-wins',
-      resolve: (local, remote) => local // Local (first) wins
+      resolve: (local, _remote) => local // Local (first) wins
     });
 
     this.registerStrategy({

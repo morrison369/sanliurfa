@@ -12,7 +12,7 @@ logger.info('[Worker] Starting queue workers...');
 const workers = createWorkers();
 
 // Schedule recurring jobs
-scheduleRecurringJobs().catch(console.error);
+scheduleRecurringJobs().catch((err) => logger.error('Recurring jobs scheduling failed', err instanceof Error ? err : new Error(String(err))));
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {

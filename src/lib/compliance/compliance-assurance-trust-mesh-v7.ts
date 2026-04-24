@@ -2,7 +2,7 @@
  * Phase 385: Compliance Assurance Trust Mesh V7
  */
 
-import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
+import { SignalBook, computeBalancedScore, routeByThresholds } from './governance-kit';
 
 export interface ComplianceAssuranceTrustSignalV7 {
   signalId: string;
@@ -34,7 +34,7 @@ class ComplianceAssuranceTrustRouterV7 {
 }
 
 class ComplianceAssuranceTrustReporterV7 {
-  report(signalId: string, route: string): string {
+  report(_signalId: string, _route: string): string {
     return "" as any;
   }
 }
@@ -50,4 +50,7 @@ export {
   ComplianceAssuranceTrustRouterV7,
   ComplianceAssuranceTrustReporterV7
 };
+
+
+
 

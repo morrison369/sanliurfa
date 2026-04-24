@@ -7,9 +7,9 @@ import { getSocialStats } from '../lib/social/friendship-db';
 import { query } from '../lib/postgres';
 
 const auth = await requireAuth(Astro.request);
-if (auth instanceof Response) return auth;
+if (!auth.user) return Astro.redirect(auth.redirect || '/giris');
 
-const [profile, socialStats, reviewsResult, submissionsResult] = await Promise.all([
+const [profile, socialStats, reviewsResult, submissionsResult, favoritesResult] = await Promise.all([
   getUserProfile(auth.user.id),
   getSocialStats(auth.user.id),
   query(
@@ -25,13 +25,56 @@ const [profile, socialStats, reviewsResult, submissionsResult] = await Promise.a
     `SELECT id, name, category, status, created_at
      FROM places
      WHERE owner_id = $1 AND status IN ('draft','pending','active','rejected','needs_info')
-     ORDER BY created_at DESC`,
+    ORDER BY created_at DESC`,
+    [auth.user.id]
+  ),
+  query(
+    `SELECT f.id, f.created_at,
+            p.name AS place_name,
+            p.slug AS place_slug,
+            p.images AS place_images,
+            p.rating AS place_rating,
+            p.address AS place_address
+     FROM favorites f
+     JOIN places p ON p.id = f.place_id
+     WHERE f.user_id = $1
+     ORDER BY f.created_at DESC`,
     [auth.user.id]
   ),
 ]);
 
 const reviews    = reviewsResult.rows;
 const submissions = submissionsResult.rows;
+const favorites = favoritesResult.rows;
+const activityItems = [
+  ...reviews.map((review) => ({
+    type: 'review',
+    title: `${review.place_name} için değerlendirme yazıldı`,
+    description: `${review.rating}/5 puan`,
+    href: `/isletme/${review.place_slug}`,
+    created_at: review.created_at,
+  })),
+  ...submissions.map((submission) => ({
+    type: 'place',
+    title: `${submission.name} mekan önerisi gönderildi`,
+    description: submission.status === 'active'
+      ? 'Yayında'
+      : submission.status === 'pending'
+        ? 'Onay bekliyor'
+        : submission.status === 'rejected'
+          ? 'Reddedildi'
+          : 'Taslak',
+    href: '/isletme-kayit',
+    created_at: submission.created_at,
+  })),
+  ...favorites.map((favorite) => ({
+    type: 'favorite',
+    title: `${favorite.place_name} kaydedildi`,
+    description: favorite.place_address || 'Favori mekan',
+    href: `/isletme/${favorite.place_slug}`,
+    created_at: favorite.created_at,
+  })),
+].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 12);
 ---
 
 <Layout title={`${profile?.full_name || 'Profil'} - Şanlıurfa Rehberi`}>
@@ -68,7 +111,9 @@ const submissions = submissionsResult.rows;
           {/* Info */}
           <div class="flex-1 text-center md:text-left">
             <h1 class="text-3xl font-bold">{profile?.full_name}</h1>
-            <p class="text-gray-500 mt-1">@{profile?.username || auth.user.username}</p>
+            <p class="text-gray-500 mt-1">
+              @{profile?.username || auth.user.full_name || auth.user.email.split('@')[0]}
+            </p>
             <p class="text-gray-600 mt-2 max-w-lg">{profile?.bio || 'Henüz biyografi eklenmemiş.'}</p>
             
             {/* Stats */}
@@ -101,7 +146,7 @@ const submissions = submissionsResult.rows;
               Profili Düzenle
             </a>
             <a
-              href="/places/ekle"
+              href="/isletme-kayit"
               class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-center"
             >
               Mekan Ekle
@@ -121,7 +166,7 @@ const submissions = submissionsResult.rows;
               Değerlendirmelerim ({reviews.length})
             </button>
             <button onclick="switchTab('saved')" class="tab-btn px-6 py-4 font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="saved">
-              Kaydedilenler
+              Kaydedilenler ({favorites.length})
             </button>
             <button onclick="switchTab('submissions')" class="tab-btn px-6 py-4 font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="submissions">
               Mekan Önerilerim ({submissions.length})
@@ -141,7 +186,7 @@ const submissions = submissionsResult.rows;
                 {reviews.map(review => (
                   <div class="border-b border-gray-100 pb-6 last:border-0">
                     <div class="flex items-center justify-between mb-3">
-                      <a href={`/places/${review.place_slug}`} class="font-medium text-lg hover:text-amber-600">
+                      <a href={`/isletme/${review.place_slug}`} class="font-medium text-lg hover:text-amber-600">
                         {review.place_name}
                       </a>
                       <div class="flex text-yellow-400">
@@ -165,7 +210,7 @@ const submissions = submissionsResult.rows;
                 <div class="text-5xl mb-4">📝</div>
                 <h3 class="text-lg font-medium mb-2">Henüz değerlendirme yok</h3>
                 <p class="text-gray-500 mb-4">Ziyaret ettiğiniz mekanları değerlendirin</p>
-                <a href="/places" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                <a href="/mekanlar" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
                   Mekanları Keşfet
                 </a>
               </div>
@@ -174,14 +219,38 @@ const submissions = submissionsResult.rows;
           
           {/* Saved Tab */}
           <div id="tab-saved" class="tab-content hidden">
-            <div class="text-center py-12">
-              <div class="text-5xl mb-4">🔖</div>
-              <h3 class="text-lg font-medium mb-2">Kaydedilmiş mekan yok</h3>
-              <p class="text-gray-500 mb-4">Beğendiğiniz mekanları kaydedin</p>
-              <a href="/places" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
-                Mekanları Keşfet
-              </a>
-            </div>
+            {favorites.length > 0 ? (
+              <div class="grid gap-4 md:grid-cols-2">
+                {favorites.map((favorite) => (
+                  <a href={`/isletme/${favorite.place_slug}`} class="flex gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:border-amber-200 hover:bg-amber-50">
+                    <img
+                      src={favorite.place_images?.[0] || '/images/placeholder.jpg'}
+                      alt={`${favorite.place_name} görseli`}
+                      class="h-20 w-24 shrink-0 rounded-lg object-cover"
+                      loading="lazy"
+                    />
+                    <div class="min-w-0 flex-1">
+                      <h4 class="truncate font-medium text-gray-900">{favorite.place_name}</h4>
+                      <p class="mt-1 line-clamp-2 text-sm text-gray-500">
+                        {favorite.place_address || 'Şanlıurfa'}
+                      </p>
+                      <p class="mt-2 text-sm font-medium text-amber-700">
+                        {favorite.place_rating ? `${Number(favorite.place_rating).toFixed(1)} puan` : 'Puan bekleniyor'}
+                      </p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <div class="text-5xl mb-4">🔖</div>
+                <h3 class="text-lg font-medium mb-2">Henüz kaydedilmiş mekan yok</h3>
+                <p class="text-gray-500 mb-4">Beğendiğiniz mekanları kaydedin</p>
+                <a href="/mekanlar" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                  Mekanları Keşfet
+                </a>
+              </div>
+            )}
           </div>
           
           {/* Submissions Tab */}
@@ -212,7 +281,7 @@ const submissions = submissionsResult.rows;
                 <div class="text-5xl mb-4">📍</div>
                 <h3 class="text-lg font-medium mb-2">Henüz mekan önerisi yok</h3>
                 <p class="text-gray-500 mb-4">Bildiğiniz mekanları ekleyin</p>
-                <a href="/places/ekle" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                <a href="/isletme-kayit" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
                   Mekan Ekle
                 </a>
               </div>
@@ -221,16 +290,37 @@ const submissions = submissionsResult.rows;
           
           {/* Activity Tab */}
           <div id="tab-activity" class="tab-content hidden">
-            <div class="text-center py-12 text-gray-500">
-              Aktivite geçmişi yakında burada
-            </div>
+            {activityItems.length > 0 ? (
+              <div class="space-y-4">
+                {activityItems.map((item) => (
+                  <a href={item.href} class="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-4 transition-colors hover:border-amber-200 hover:bg-amber-50">
+                    <div>
+                      <h4 class="font-medium text-gray-900">{item.title}</h4>
+                      <p class="text-sm text-gray-500">{item.description}</p>
+                    </div>
+                    <time class="text-sm text-gray-500" datetime={new Date(item.created_at).toISOString()}>
+                      {new Date(item.created_at).toLocaleDateString('tr-TR')}
+                    </time>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <div class="text-5xl mb-4">📌</div>
+                <h3 class="text-lg font-medium mb-2">Henüz aktivite yok</h3>
+                <p class="text-gray-500 mb-4">Mekan ekleyerek veya değerlendirme yazarak profilinizi hareketlendirin</p>
+                <a href="/mekanlar" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
+                  Mekanları Keşfet
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </section>
   </div>
 
-  <script>
+  <script is:inline>
     function switchTab(tabName) {
       // Hide all tabs
       document.querySelectorAll('.tab-content').forEach(tab => {
@@ -246,12 +336,15 @@ const submissions = submissionsResult.rows;
         btn.classList.add('border-transparent', 'text-gray-500');
       });
       
-      event.target.classList.remove('border-transparent', 'text-gray-500');
-      event.target.classList.add('border-amber-600', 'text-amber-600');
+      const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+      if (targetBtn instanceof Element) {
+        targetBtn.classList.remove('border-transparent', 'text-gray-500');
+        targetBtn.classList.add('border-amber-600', 'text-amber-600');
+      }
     }
     
     function changeAvatar() {
-      alert('Avatar değiştirme yakında geliyor!');
+      window.location.href = '/ayarlar';
     }
     
     async function deleteReview(reviewId) {
@@ -273,3 +366,6 @@ const submissions = submissionsResult.rows;
     }
   </script>
 </Layout>
+
+
+

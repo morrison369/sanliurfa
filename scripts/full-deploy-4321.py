@@ -4,7 +4,7 @@ import paramiko, time, os
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='zIT7Y9yrJZRV', timeout=30)
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', timeout=30)
 
 def upload_file(local, remote):
     sftp = ssh.open_sftp()
@@ -43,7 +43,7 @@ ssh.exec_command('pkill -9 node 2>/dev/null; pm2 kill 2>/dev/null; fuser -k 4321
 time.sleep(3)
 
 print('5. Start on 4321...', flush=True)
-ssh.exec_command('cd /home/sanliur/public_html && NODE_ENV=production PORT=4321 HOST=127.0.0.1 DATABASE_URL=postgresql://sanliur_sanliurfa:kWtUYbyYgbS7@localhost:5432/sanliur_sanliurfa nohup node dist/server/entry.mjs > /tmp/app.log 2>&1 &')
+ssh.exec_command('cd /home/sanliur/public_html && NODE_ENV=production PORT=4321 HOST=127.0.0.1 DATABASE_URL=postgresql://sanliur_sanliurfa:CHANGE_ME_DB_PASSWORD@localhost:5432/sanliur_sanliurfa nohup node dist/server/entry.mjs > /tmp/app.log 2>&1 &')
 time.sleep(12)
 
 print('6. Health...', flush=True)

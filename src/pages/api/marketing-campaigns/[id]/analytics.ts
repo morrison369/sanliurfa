@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Marketing Campaign Analytics API
  * GET: Get campaign performance metrics
@@ -11,7 +10,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

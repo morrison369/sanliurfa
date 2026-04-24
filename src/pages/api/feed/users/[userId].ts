@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Get activities from a specific user
  * GET /api/feed/users/[userId]
@@ -6,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getUserActivities } from '../../../../lib/feed/activity-feed';
-import { getActivityDescription, getActivityIcon } from '../../../../lib/activity';
+import { getActivityDescription, getActivityIcon } from '../../../../lib/activity/activity';
 import { apiResponse, apiError, HttpStatus } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 
@@ -28,12 +27,7 @@ export const GET: APIRoute = async (context) => {
       timeAgo: getTimeAgo(new Date(item.createdAt))
     }));
 
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      data: feed,
-      count: feed.length,
-      userId
-    });
+    return apiResponse({ success: true, data: feed, count: feed.length, userId }, HttpStatus.OK);
   } catch (error) {
     logger.error('Failed to get user activities', error instanceof Error ? error : new Error(String(error)));
     return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to get user activities');

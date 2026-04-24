@@ -1,5 +1,5 @@
 -- ============================================
--- Şanlıurfa.com 2026 Gerçek Mekan Verileri
+-- Sanliurfa.com 2026 Gerçek Mekan Verileri
 -- ============================================
 
 -- Kategorileri ekle/ güncelle

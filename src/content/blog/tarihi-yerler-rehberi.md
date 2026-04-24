@@ -9,7 +9,7 @@ author: "Şanlıurfa Rehberi"
 publishedAt: "2025-04-12"
 pubDate: "2025-04-12"
 readingTime: 8
-image: "/images/blog/gobeklitepe.jpg"
+image: "/images/blog/tarihi-yerler-rehberi.jpg"
 featured: true
 ---
 

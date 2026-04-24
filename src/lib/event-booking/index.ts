@@ -57,7 +57,7 @@ export async function bookTickets(
 ): Promise<{ success: boolean; ticketId?: string; error?: string }> {
   // Check availability
   const event = await query(
-    `SELECT capacity, sold_tickets, price FROM events WHERE id = $1`,
+    `SELECT capacity, attendee_count, price FROM events WHERE id = $1`,
     [eventId]
   );
 
@@ -65,9 +65,9 @@ export async function bookTickets(
     return { success: false, error: 'Event not found' };
   }
 
-  const { capacity, sold_tickets, price } = event.rows[0];
-  
-  if (parseInt(sold_tickets) + quantity > capacity) {
+  const { capacity, attendee_count, price } = event.rows[0];
+
+  if (parseInt(attendee_count) + quantity > capacity) {
     return { success: false, error: 'Not enough tickets available' };
   }
 
@@ -79,9 +79,9 @@ export async function bookTickets(
     [eventId, userId, type, price * quantity, quantity]
   );
 
-  // Update sold count
+  // Update attendee count
   await query(
-    `UPDATE events SET sold_tickets = sold_tickets + $1 WHERE id = $2`,
+    `UPDATE events SET attendee_count = attendee_count + $1 WHERE id = $2`,
     [quantity, eventId]
   );
 
@@ -118,7 +118,7 @@ export async function cancelTicket(ticketId: string, userId: string): Promise<bo
   if (result.rows.length > 0) {
     // Restore capacity
     await query(
-      `UPDATE events SET sold_tickets = sold_tickets - $1 WHERE id = $2`,
+      `UPDATE events SET attendee_count = GREATEST(0, attendee_count - $1) WHERE id = $2`,
       [result.rows[0].quantity, result.rows[0].event_id]
     );
     return true;

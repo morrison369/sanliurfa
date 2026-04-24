@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-
+import { useState, useEffect } from 'react';
 interface Recommendation {
   id: string;
+  slug?: string;
   name: string;
   category: string;
   rating: number;
@@ -107,7 +107,7 @@ export default function RecommendedPlaces({
         {recommendations.map(rec => (
           <a
             key={rec.id}
-            href={`/mekan/${rec.id}`}
+            href={rec.slug ? `/isletme/${rec.slug}` : '/mekanlar'}
             className="group bg-white dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-lg transition"
           >
             {/* Image */}

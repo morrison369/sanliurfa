@@ -5,7 +5,7 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 def main():
     ssh = paramiko.SSHClient()
@@ -30,7 +30,7 @@ def main():
     # 3. Try to start and capture error
     print("\n3. Manual start error:")
     stdin, stdout, stderr = ssh.exec_command(
-        f"cd /home/sanliur/public_html && {NVM} timeout 10 node dist/server/entry.mjs --port 6000 2>&1"
+        f"cd /home/sanliur/public_html && {NVM} timeout 10 node dist/server/entry.mjs --port 4321 2>&1"
     )
     output = stdout.read().decode()
     error = stderr.read().decode()

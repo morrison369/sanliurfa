@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-
+import {  useState, useEffect  } from 'react';
 interface Profile {
   full_name: string;
   bio?: string;
@@ -26,14 +25,13 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
       .then(d => { setProfile(d.data); setIsLoading(false); })
       .catch(() => setIsLoading(false));
 
-    // Check blocking status if current user exists
+    // Oturum sahibi kullanıcı varsa engel ve takip durumunu kontrol et.
     if (currentUserId) {
       fetch("/api/blocking/check?user_id=" + userId)
         .then(r => r.json())
         .then(d => setIsBlocked(d.data?.blocked_user || false))
         .catch(() => {});
 
-      // Check following status
       fetch("/api/following/check?user_id=" + userId)
         .then(r => r.json())
         .then(d => setIsFollowing(d.data?.is_following || false))
@@ -57,7 +55,7 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
         setIsFollowing(!currentlyFollowing);
       }
     } catch (err) {
-      console.error('Follow error:', err);
+      console.error('Takip işlemi hatası:', err);
     } finally {
       setIsFollowingLoading(false);
     }
@@ -80,14 +78,14 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
         setIsBlocked(!isBlocked);
       }
     } catch (err) {
-      console.error('Block error:', err);
+      console.error('Engelleme işlemi hatası:', err);
     } finally {
       setIsBlocking(false);
     }
   };
 
-  if (isLoading) return <div className="text-center py-12">Loading...</div>;
-  if (!profile) return <div>Profile not found</div>;
+  if (isLoading) return <div className="text-center py-12">Yükleniyor...</div>;
+  if (!profile) return <div>Profil bulunamadı.</div>;
 
   return (
     <div className="space-y-6">
@@ -98,8 +96,8 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
             <h1 className="text-3xl font-bold mb-2">{profile.full_name}</h1>
             {profile.bio && <p className="text-gray-600 mb-4">{profile.bio}</p>}
             <div className="flex gap-4 mb-4">
-              <div><p className="text-2xl font-bold">{profile.stats.followers}</p><p className="text-sm">Followers</p></div>
-              <div><p className="text-2xl font-bold">{profile.stats.following}</p><p className="text-sm">Following</p></div>
+              <div><p className="text-2xl font-bold">{profile.stats.followers}</p><p className="text-sm">Takipçi</p></div>
+              <div><p className="text-2xl font-bold">{profile.stats.following}</p><p className="text-sm">Takip edilen</p></div>
             </div>
             {!profile.is_own_profile && currentUserId && (
               <div className="flex gap-2">

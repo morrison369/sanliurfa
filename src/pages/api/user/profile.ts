@@ -9,7 +9,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logger';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     if (!locals.user?.id) {
@@ -29,7 +29,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     if (!locals.user?.id) {

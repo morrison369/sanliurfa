@@ -10,7 +10,7 @@ if (!locals.user || locals.user.role !== 'admin') {
 }
 
 const seo = {
-  title: 'Governance Dashboard | Şanlıurfa.com',
+  title: 'Yönetişim Paneli | Sanliurfa.com',
   description: 'Veri yönetimi, denetim ve uyumluluk takibi',
 };
 ---
@@ -18,7 +18,7 @@ const seo = {
 <Layout seo={seo}>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="max-w-7xl mx-auto px-4 py-8">
-      <GovernanceDashboard client:load />
+      <GovernanceDashboard client:visible />
     </div>
   </div>
 </Layout>

@@ -1,4 +1,5 @@
 ---
+import Image from './Image.astro';
 const icons = {
   ArrowRight: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`,
 };
@@ -9,12 +10,11 @@ import { query } from '../lib/postgres';
 interface Props {
   type: 'place' | 'blog' | 'historical';
   currentId: string;
-  tags?: string[];
   category?: string;
   limit?: number;
 }
 
-const { type, currentId, tags = [], category, limit = 3 } = Astro.props;
+const { type, currentId, category, limit = 3 } = Astro.props;
 
 let relatedItems: any[] = [];
 
@@ -43,7 +43,7 @@ if (type === 'place') {
     relatedItems = [...relatedItems, ...moreResult.rows];
   }
 } else if (type === 'blog') {
-  let sql = "SELECT * FROM blog_posts WHERE is_published = true AND id != $1";
+  let sql = "SELECT * FROM blog_posts WHERE status = 'published' AND id != $1";
   const params: any[] = [currentId];
   
   if (category) {
@@ -72,7 +72,7 @@ const getItemLink = (item: any) => {
       return `/blog/${item.slug}`;
     case 'place':
     default:
-      return `/places/${item.slug}`;
+      return `/isletme/${item.slug}`;
   }
 };
 
@@ -95,7 +95,7 @@ const titles = {
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-display font-bold text-gray-900 dark:text-white">{titles[type]}</h2>
       <a 
-        href={type === 'place' ? '/places' : type === 'blog' ? '/blog' : '/tarihi-yerler'}
+        href={type === 'place' ? '/mekanlar' : type === 'blog' ? '/blog' : '/tarihi-yerler'}
         class="text-urfa-600 dark:text-urfa-400 hover:underline flex items-center gap-1"
       >
         Tümünü Gör <span set:html={icons.ArrowRight}></span>
@@ -109,11 +109,13 @@ const titles = {
           class="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all"
         >
           <div class="aspect-video overflow-hidden">
-            <img 
+            <Image 
               src={getItemImage(item)}
               alt={item.name || item.title}
               class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               loading="lazy"
+              width={960}
+              height={540}
             />
           </div>
           <div class="p-4">

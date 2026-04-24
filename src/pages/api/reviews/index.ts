@@ -7,6 +7,11 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { requireAuth } from '../../../lib/auth';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
+import {
+  submitPlaceReview,
+  type ReviewSubmissionResult,
+} from '../../../lib/review/review-submission';
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
@@ -78,8 +83,11 @@ export const GET: APIRoute = async ({ url }) => {
     }
 
     if (ratingFilter) {
-      where += ` AND r.rating = $${idx++}`;
-      params.push(parseInt(ratingFilter));
+      const ratingValue = parseInt(ratingFilter, 10);
+      if (!isNaN(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
+        where += ` AND r.rating = $${idx++}`;
+        params.push(ratingValue);
+      }
     }
 
     const countResult = await query(
@@ -123,53 +131,63 @@ export const GET: APIRoute = async ({ url }) => {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireAuth(request);
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Giriş gerekli',
+        type: '/problems/auth-required',
+        instance: '/api/reviews',
+      });
+    }
 
     const body = await request.json();
-    const { action = 'create', reviewId, placeId, rating, title, content, images = [], visitType } = body;
+    const {
+      action = 'create',
+      reviewId,
+      placeId,
+      place_id,
+      rating,
+      title,
+      content,
+      images = [],
+      visitType,
+      visit_date,
+    } = body;
+    const normalizedPlaceId = placeId || place_id;
 
     // CREATE
     if (action === 'create') {
-      if (!placeId || !rating || !content) {
-        return new Response(
-          JSON.stringify({ error: 'placeId, rating, content gereklidir' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
+      let result: ReviewSubmissionResult;
+      try {
+        result = await submitPlaceReview(
+          { id: auth.user.id, email: auth.user.email || null },
+          {
+            placeId: normalizedPlaceId,
+            rating,
+            title,
+            content,
+            images,
+            visitType: visitType || visit_date || null,
+            awardUserPoints: Boolean(body.awardUserPoints),
+            ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
+            userAgent: request.headers.get('user-agent') || null,
+          },
         );
+      } catch (error) {
+        return problemJson({
+          status: 400,
+          title: 'Yorum Gönderilemedi',
+          detail: error instanceof Error && error.message ? error.message : 'Yorum gönderilemedi.',
+          type: '/problems/review-create-validation',
+          instance: '/api/reviews',
+        });
       }
 
-      // Prevent duplicate reviews
-      const existing = await query(
-        `SELECT id FROM reviews WHERE place_id = $1 AND user_id = $2 AND status != 'deleted'`,
-        [placeId, auth.user.id]
-      );
-      if (existing.rows.length > 0) {
-        return new Response(
-          JSON.stringify({ error: 'Bu mekan için zaten yorum yazdınız' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const result = await query(
-        `INSERT INTO reviews (place_id, user_id, rating, title, content, images, visit_type, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
-         RETURNING *`,
-        [placeId, auth.user.id, rating, title || null, content, images, visitType || null]
-      );
-
-      // Update place rating
-      await query(
-        `UPDATE places SET
-           rating = (SELECT AVG(rating) FROM reviews WHERE place_id = $1 AND status != 'deleted'),
-           review_count = (SELECT COUNT(*) FROM reviews WHERE place_id = $1 AND status != 'deleted'),
-           updated_at = NOW()
-         WHERE id = $1`,
-        [placeId]
-      );
-
-      return new Response(
-        JSON.stringify({ success: true, review: result.rows[0] }),
-        { status: 201, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify(result), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // UPDATE
@@ -212,19 +230,19 @@ export const POST: APIRoute = async ({ request }) => {
 
     // HELPFUL VOTE
     if ((action === 'helpful' || action === 'unhelpful') && reviewId) {
-      const voteType = action;
+      const isHelpful = action === 'helpful';
       // Upsert vote
       await query(
-        `INSERT INTO review_votes (review_id, user_id, vote_type)
+        `INSERT INTO review_votes (review_id, user_id, helpful)
          VALUES ($1, $2, $3)
-         ON CONFLICT (review_id, user_id) DO UPDATE SET vote_type = $3`,
-        [reviewId, auth.user.id, voteType]
+         ON CONFLICT (review_id, user_id) DO UPDATE SET helpful = $3`,
+        [reviewId, auth.user.id, isHelpful]
       );
       // Refresh counts
       await query(
         `UPDATE reviews SET
-           helpful_count   = (SELECT COUNT(*) FROM review_votes WHERE review_id = $1 AND vote_type = 'helpful'),
-           unhelpful_count = (SELECT COUNT(*) FROM review_votes WHERE review_id = $1 AND vote_type = 'unhelpful')
+           helpful_count   = (SELECT COUNT(*) FROM review_votes WHERE review_id = $1 AND helpful = true),
+           unhelpful_count = (SELECT COUNT(*) FROM review_votes WHERE review_id = $1 AND helpful = false)
          WHERE id = $1`,
         [reviewId]
       );

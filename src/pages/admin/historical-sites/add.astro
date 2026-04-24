@@ -1,4 +1,5 @@
 ---
+import { actions, isInputError } from 'astro:actions';
 import Layout from '../../../layouts/Layout.astro';
 
 const icons = {
@@ -23,16 +24,27 @@ const periods = [
   { id: 'cumhuriyet', label: 'Cumhuriyet Dönemi' },
 ];
 
-const errorMessage = Astro.url.searchParams.get('token');
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/historical-sites/add');
+}
+
+const siteResult = Astro.getActionResult(actions.createAdminHistoricalSite);
+const siteInputErrors = isInputError(siteResult?.error) ? siteResult.error.fields : {};
+const siteActionError =
+  !isInputError(siteResult?.error) && siteResult?.error?.message
+    ? siteResult.error.message
+    : null;
+const errorMessage = Astro.url.searchParams.get('error');
 const errorMessages: Record<string, string> = {
   'missing_fields': 'İsim, açıklama ve konum zorunludur.',
   'server_error': 'Bir hata oluştu. Lütfen tekrar deneyin.',
 };
 
 const seo = {
-  title: 'Yeni Tarihi Yer - Admin Panel',
+  title: 'Yeni Tarihi Yer - Yönetim Paneli',
   description: 'Yeni tarihi yer ekleme',
-  noindex: true
+  noIndex: true
 };
 ---
 
@@ -59,9 +71,26 @@ const seo = {
         </div>
       </div>
     )}
+
+    {siteResult?.data?.success && (
+      <div class="container-custom py-4">
+        <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
+          {siteResult.data.message || 'Tarihi yer oluşturuldu.'}
+          <a href="/admin/historical-sites" class="ml-2 font-medium underline">Tarihi yer listesine dön</a>
+        </div>
+      </div>
+    )}
+
+    {siteActionError && (
+      <div class="container-custom py-4">
+        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+          {siteActionError}
+        </div>
+      </div>
+    )}
     
     <div class="container-custom py-8">
-      <form action="/api/historical-sites/create" method="POST" class="grid lg:grid-cols-3 gap-8">
+      <form action={actions.createAdminHistoricalSite} method="POST" class="grid lg:grid-cols-3 gap-8">
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
           <!-- Basic Info -->
@@ -78,6 +107,7 @@ const seo = {
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   placeholder="Örn: Göbeklitepe"
                 />
+                {siteInputErrors.name && <p class="mt-1 text-sm text-red-600">{siteInputErrors.name[0]}</p>}
               </div>
               
               <div>
@@ -101,6 +131,7 @@ const seo = {
                   class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
                   placeholder="Detaylı açıklama..."
                 ></textarea>
+                {siteInputErrors.description && <p class="mt-1 text-sm text-red-600">{siteInputErrors.description[0]}</p>}
               </div>
               
               <div>
@@ -131,6 +162,7 @@ const seo = {
                     class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="Örn: Örencik Mahallesi, Haliliye/Şanlıurfa"
                   />
+                  {siteInputErrors.location && <p class="mt-1 text-sm text-red-600">{siteInputErrors.location[0]}</p>}
                 </div>
               </div>
               

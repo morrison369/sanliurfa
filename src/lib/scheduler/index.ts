@@ -404,7 +404,7 @@ async function generateAnalyticsReport(period: string) {
   
   const [pageViews, uniqueVisitors, topPages] = await Promise.all([
     query(`SELECT COUNT(*) FROM page_views WHERE created_at >= $1`, [startDate]),
-    query(`SELECT COUNT(DISTINCT visitor_id) FROM page_views WHERE created_at >= $1`, [startDate]),
+    query(`SELECT COUNT(DISTINCT COALESCE(user_id::text, session_id)) FROM page_views WHERE created_at >= $1`, [startDate]),
     query(`SELECT path, COUNT(*) as views FROM page_views WHERE created_at >= $1 GROUP BY path ORDER BY views DESC LIMIT 10`, [startDate]),
   ]);
   
@@ -461,8 +461,9 @@ async function generateUserReport(period: string) {
  */
 export function startScheduler(intervalMs: number = 60000): () => void {
   const interval = setInterval(() => {
-    runSchedulerTick().catch(console.error);
+    runSchedulerTick().catch((err) => logger.error('Scheduler tick failed', err instanceof Error ? err : new Error(String(err))));
   }, intervalMs);
 
   return () => clearInterval(interval);
 }
+

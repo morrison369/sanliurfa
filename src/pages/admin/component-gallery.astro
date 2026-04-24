@@ -1,138 +1,138 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
 
-const title = 'Component Gallery';
+const title = 'Bileşen Galerisi';
 ---
 
-<Layout title={title}>
+<AdminLayout title={title}>
   <div class="container mx-auto py-8">
     <h1 class="text-3xl font-bold mb-8">{title}</h1>
     
-    <!-- Buttons Section -->
+    <!-- Butonlar -->
     <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Buttons</h2>
+      <h2 class="text-2xl font-semibold mb-4">Butonlar</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="p-4 border rounded">
-          <p class="text-sm text-gray-500 mb-2">Primary</p>
+          <p class="text-sm text-gray-500 mb-2">Birincil</p>
           <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Primary
+            Birincil
           </button>
         </div>
         <div class="p-4 border rounded">
-          <p class="text-sm text-gray-500 mb-2">Secondary</p>
+          <p class="text-sm text-gray-500 mb-2">İkincil</p>
           <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
-            Secondary
+            İkincil
           </button>
         </div>
         <div class="p-4 border rounded">
-          <p class="text-sm text-gray-500 mb-2">Danger</p>
+          <p class="text-sm text-gray-500 mb-2">Tehlike</p>
           <button class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-            Danger
+            Tehlike
           </button>
         </div>
         <div class="p-4 border rounded">
-          <p class="text-sm text-gray-500 mb-2">Outline</p>
+          <p class="text-sm text-gray-500 mb-2">Çerçeveli</p>
           <button class="px-4 py-2 border-2 border-blue-600 text-blue-600 rounded hover:bg-blue-50">
-            Outline
+            Çerçeveli
           </button>
         </div>
       </div>
     </section>
     
-    <!-- Badges Section -->
+    <!-- Rozetler -->
     <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Badges</h2>
+      <h2 class="text-2xl font-semibold mb-4">Rozetler</h2>
       <div class="flex flex-wrap gap-2">
-        <span class="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded">Default</span>
-        <span class="px-2 py-1 bg-green-100 text-green-800 text-sm rounded">Success</span>
-        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-sm rounded">Warning</span>
-        <span class="px-2 py-1 bg-red-100 text-red-800 text-sm rounded">Error</span>
-        <span class="px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded">Gray</span>
+        <span class="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded">Varsayılan</span>
+        <span class="px-2 py-1 bg-green-100 text-green-800 text-sm rounded">Başarılı</span>
+        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-sm rounded">Uyarı</span>
+        <span class="px-2 py-1 bg-red-100 text-red-800 text-sm rounded">Hata</span>
+        <span class="px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded">Gri</span>
       </div>
     </section>
     
-    <!-- Cards Section -->
+    <!-- Kartlar -->
     <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Cards</h2>
+      <h2 class="text-2xl font-semibold mb-4">Kartlar</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold mb-2">Basic Card</h3>
-          <p class="text-gray-600">This is a basic card with shadow.</p>
+          <h3 class="text-lg font-semibold mb-2">Temel Kart</h3>
+          <p class="text-gray-600">Gölge kullanan temel kart örneği.</p>
         </div>
         <div class="bg-white rounded-lg shadow border border-blue-200 p-6">
-          <h3 class="text-lg font-semibold mb-2 text-blue-600">Bordered Card</h3>
-          <p class="text-gray-600">Card with colored border.</p>
+          <h3 class="text-lg font-semibold mb-2 text-blue-600">Çerçeveli Kart</h3>
+          <p class="text-gray-600">Renkli kenarlık kullanan kart örneği.</p>
         </div>
         <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow p-6 text-white">
-          <h3 class="text-lg font-semibold mb-2">Gradient Card</h3>
-          <p class="text-white/90">Card with gradient background.</p>
+          <h3 class="text-lg font-semibold mb-2">Geçişli Kart</h3>
+          <p class="text-white/90">Gradient arka plan kullanan kart örneği.</p>
         </div>
       </div>
     </section>
     
-    <!-- Forms Section -->
+    <!-- Formlar -->
     <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Form Elements</h2>
+      <h2 class="text-2xl font-semibold mb-4">Form Elemanları</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Text Input</label>
-            <input type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="Enter text..." />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Metin Alanı</label>
+            <input type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="Metin girin..." />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Select</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Seçim</label>
             <select class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500">
-              <option>Option 1</option>
-              <option>Option 2</option>
-              <option>Option 3</option>
+              <option>Seçenek 1</option>
+              <option>Seçenek 2</option>
+              <option>Seçenek 3</option>
             </select>
           </div>
         </div>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Textarea</label>
-            <textarea class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Enter long text..."></textarea>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Uzun Metin</label>
+            <textarea class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Uzun metin girin..."></textarea>
           </div>
           <div class="flex items-center space-x-2">
             <input type="checkbox" id="checkbox" class="rounded" />
-            <label for="checkbox" class="text-sm text-gray-700">Checkbox option</label>
+            <label for="checkbox" class="text-sm text-gray-700">Onay kutusu seçeneği</label>
           </div>
         </div>
       </div>
     </section>
     
-    <!-- Typography Section -->
+    <!-- Tipografi -->
     <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Typography</h2>
+      <h2 class="text-2xl font-semibold mb-4">Tipografi</h2>
       <div class="space-y-4">
-        <h1 class="text-4xl font-bold">Heading 1</h1>
-        <h2 class="text-3xl font-bold">Heading 2</h2>
-        <h3 class="text-2xl font-semibold">Heading 3</h3>
-        <h4 class="text-xl font-semibold">Heading 4</h4>
-        <p class="text-base text-gray-600">Body text with <a href="#" class="text-blue-600 hover:underline">link</a> and <strong>bold</strong> and <em>italic</em> styles.</p>
-        <p class="text-sm text-gray-500">Small text for captions and metadata.</p>
+        <h1 class="text-4xl font-bold">Başlık 1</h1>
+        <h2 class="text-3xl font-bold">Başlık 2</h2>
+        <h3 class="text-2xl font-semibold">Başlık 3</h3>
+        <h4 class="text-xl font-semibold">Başlık 4</h4>
+        <p class="text-base text-gray-600">Gövde metni içinde <a href="/admin/component-gallery" class="text-blue-600 hover:underline">örnek link</a>, <strong>kalın</strong> ve <em>italik</em> stiller.</p>
+        <p class="text-sm text-gray-500">Açıklama ve meta bilgiler için küçük metin.</p>
       </div>
     </section>
     
-    <!-- Colors Section -->
+    <!-- Renkler -->
     <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Colors</h2>
+      <h2 class="text-2xl font-semibold mb-4">Renkler</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="space-y-2">
           <div class="h-20 bg-blue-600 rounded"></div>
-          <p class="text-sm font-medium">Primary</p>
+          <p class="text-sm font-medium">Birincil</p>
         </div>
         <div class="space-y-2">
           <div class="h-20 bg-green-600 rounded"></div>
-          <p class="text-sm font-medium">Success</p>
+          <p class="text-sm font-medium">Başarılı</p>
         </div>
         <div class="space-y-2">
           <div class="h-20 bg-yellow-500 rounded"></div>
-          <p class="text-sm font-medium">Warning</p>
+          <p class="text-sm font-medium">Uyarı</p>
         </div>
         <div class="space-y-2">
           <div class="h-20 bg-red-600 rounded"></div>
-          <p class="text-sm font-medium">Danger</p>
+          <p class="text-sm font-medium">Tehlike</p>
         </div>
       </div>
     </section>

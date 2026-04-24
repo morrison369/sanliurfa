@@ -2,8 +2,7 @@
  * Pricing Plans Component
  * Display and manage subscription tier selection
  */
-
-import React, { useState, useEffect } from 'react';
+import {  useState, useEffect  } from 'react';
 import { SubscriptionTierCard } from './SubscriptionTierCard';
 
 interface SubscriptionTier {
@@ -26,22 +25,22 @@ export default function PricingPlans({}: PricingPlansProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [phase1FreeMode, setPhase1FreeMode] = useState(false);
 
-  // Fetch tiers and current subscription
+  // Planları ve mevcut aboneliği yükle.
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // Fetch available tiers
         const tiersResponse = await fetch('/api/subscriptions/tiers');
         if (!tiersResponse.ok) {
-          throw new Error('Failed to fetch tiers');
+          throw new Error('Plan bilgileri yüklenemedi.');
         }
         const tiersData = await tiersResponse.json();
         setTiers(tiersData.tiers || []);
+        setPhase1FreeMode(Boolean(tiersData.phase1FreeMode));
 
-        // Fetch current subscription
         const subResponse = await fetch('/api/user/subscription');
         if (subResponse.ok) {
           const subData = await subResponse.json();
@@ -52,7 +51,7 @@ export default function PricingPlans({}: PricingPlansProps) {
 
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load pricing plans');
+        setError(err instanceof Error ? err.message : 'Plan bilgileri yüklenemedi.');
       } finally {
         setLoading(false);
       }
@@ -61,46 +60,17 @@ export default function PricingPlans({}: PricingPlansProps) {
     fetchData();
   }, []);
 
-  const handleSelectTier = async (tierId: string) => {
-    if (tierId === currentTier) {
-      return; // Already on this tier
-    }
-
-    setSelectedTier(tierId);
-    setIsProcessing(true);
-
-    try {
-      // Create Stripe checkout session
-      const response = await fetch('/api/subscriptions/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tierId,
-          billingCycle: 'monthly',
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json() as any;
-        throw new Error(errorData.error || 'Checkout oturumu oluşturulamadı');
-      }
-
-      const data = await response.json() as any;
-
-      if (data.success && data.checkoutUrl) {
-        // Redirect to Stripe checkout
-        window.location.href = data.checkoutUrl;
-      } else {
-        throw new Error('Checkout URL alınamadı');
-      }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Abonelik güncellenemedi');
-    } finally {
-      setIsProcessing(false);
+  const handleSelectTier = async (_tierId: string) => {
+    if (phase1FreeMode) {
       setSelectedTier(null);
+      setIsProcessing(false);
+      alert('Faz 1 döneminde tüm özellikler ücretsiz ve herkese açık.');
+      return;
     }
+
+    setSelectedTier(null);
+    setIsProcessing(false);
+    alert('Abonelik seçimi şu anda devre dışı.');
   };
 
   if (loading) {
@@ -125,7 +95,13 @@ export default function PricingPlans({}: PricingPlansProps) {
   }
 
   return (
-    <div className="grid md:grid-cols-4 gap-6 max-w-7xl mx-auto">
+    <div className="space-y-4">
+      {phase1FreeMode && (
+        <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-green-900">
+          Faz 1 açık erişim aktif: tüm plan özellikleri şu anda ücretsiz sunuluyor.
+        </div>
+      )}
+      <div className="grid md:grid-cols-4 gap-6 max-w-7xl mx-auto">
       {tiers.map((tier) => (
         <SubscriptionTierCard
           key={tier.id}
@@ -142,6 +118,7 @@ export default function PricingPlans({}: PricingPlansProps) {
           isLoading={isProcessing && selectedTier === tier.id}
         />
       ))}
+      </div>
     </div>
   );
 }

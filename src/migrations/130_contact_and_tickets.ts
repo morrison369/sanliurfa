@@ -1,7 +1,7 @@
 import type { Migration } from '../lib/migrations/migration-system';
 
 const migration: Migration = {
-  version: 130,
+  version: '130',
   name: 'contact_and_tickets',
   description: 'Add contact form and support ticket system',
   
@@ -42,6 +42,18 @@ const migration: Migration = {
         -- Internal notes
         internal_notes TEXT
       );
+    `);
+
+    await client.query(`
+      ALTER TABLE support_tickets
+      ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'open',
+      ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'medium',
+      ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'general',
+      ADD COLUMN IF NOT EXISTS assigned_to UUID,
+      ADD COLUMN IF NOT EXISTS email VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW(),
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW(),
+      ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMPTZ;
     `);
 
     // Ticket responses tablosu
@@ -91,12 +103,12 @@ const migration: Migration = {
 
     // Indexes
     await client.query(`
-      CREATE INDEX idx_support_tickets_status ON support_tickets(status);
-      CREATE INDEX idx_support_tickets_email ON support_tickets(email);
-      CREATE INDEX idx_support_tickets_created ON support_tickets(created_at);
-      CREATE INDEX idx_support_tickets_assigned ON support_tickets(assigned_to);
-      CREATE INDEX idx_ticket_responses_ticket ON ticket_responses(ticket_id);
-      CREATE INDEX idx_ticket_history_ticket ON ticket_history(ticket_id);
+      CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);
+      CREATE INDEX IF NOT EXISTS idx_support_tickets_email ON support_tickets(email);
+      CREATE INDEX IF NOT EXISTS idx_support_tickets_created ON support_tickets(created_at);
+      CREATE INDEX IF NOT EXISTS idx_support_tickets_assigned ON support_tickets(assigned_to);
+      CREATE INDEX IF NOT EXISTS idx_ticket_responses_ticket ON ticket_responses(ticket_id);
+      CREATE INDEX IF NOT EXISTS idx_ticket_history_ticket ON ticket_history(ticket_id);
     `);
 
     // Update trigger
@@ -127,3 +139,4 @@ const migration: Migration = {
 };
 
 export default migration;
+

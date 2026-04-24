@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Heart, Share2, MessageCircle } from 'lucide-react';
+import {  useState, useEffect  } from 'react';
+import { Heart, Share2 } from 'lucide-react';
 
 interface SocialInteractionsProps {
   placeId: string;

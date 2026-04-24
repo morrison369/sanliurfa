@@ -3,7 +3,7 @@
  * Campaign analytics, engagement metrics, and reporting
  */
 
-import { query, queryOne, queryMany } from '../postgres';
+import { queryOne, queryMany } from '../postgres';
 import { logger } from '../logger';
 
 export interface AnalyticsCampaignMetrics {
@@ -371,5 +371,6 @@ export async function getSubscriberSegments(campaignId: string): Promise<any[]> 
     return [];
   }
 }
+
 
 

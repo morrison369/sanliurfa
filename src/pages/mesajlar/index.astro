@@ -10,7 +10,7 @@ if (!Astro.locals.user) {
 
 <Layout title="Mesajlar - Şanlıurfa Rehberi">
   <div class="min-h-screen bg-gray-50">
-    <MessagingInbox client:load />
+    <MessagingInbox client:visible={{ rootMargin: '160px' }} />
   </div>
 </Layout>
 

@@ -2,14 +2,18 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { authenticateUser } from '../../../../lib/auth/middleware';
 import { logger } from '../../../../lib/logging';
+import { problemJson } from '../../../../lib/api';
 
 export const GET: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth || auth.user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/contact-ticket-unauthorized',
+        instance: `/api/contact/${context.params.id}`,
       });
     }
 
@@ -24,9 +28,12 @@ export const GET: APIRoute = async (context) => {
     );
 
     if (result.rows.length === 0) {
-      return new Response(JSON.stringify({ error: 'Ticket not found' }), {
+      return problemJson({
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Bulunamadı',
+        detail: 'Talep bulunamadı',
+        type: '/problems/contact-ticket-not-found',
+        instance: `/api/contact/${id}`,
       });
     }
 
@@ -50,9 +57,12 @@ export const GET: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Get ticket error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Talep Detayı Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/contact-ticket-get-failed',
+      instance: `/api/contact/${context.params.id}`,
     });
   }
 };
@@ -61,9 +71,12 @@ export const PUT: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth || auth.user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/contact-ticket-unauthorized',
+        instance: `/api/contact/${context.params.id}`,
       });
     }
 
@@ -88,9 +101,12 @@ export const PUT: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Update ticket error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Talep Güncellenemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/contact-ticket-update-failed',
+      instance: `/api/contact/${context.params.id}`,
     });
   }
 };
@@ -99,9 +115,12 @@ export const POST: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth || auth.user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/contact-ticket-unauthorized',
+        instance: `/api/contact/${context.params.id}`,
       });
     }
 
@@ -133,9 +152,12 @@ export const POST: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Add reply error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Yanıt Eklenemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/contact-ticket-reply-failed',
+      instance: `/api/contact/${context.params.id}`,
     });
   }
 };

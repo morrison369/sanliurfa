@@ -6,6 +6,7 @@
 import { query, queryOne, queryMany, insert, update } from '../postgres';
 import { getCache, setCache, deleteCache, deleteCachePattern } from '../cache';
 import { logger } from '../logger';
+import { resolveContentImage } from '../content-images';
 
 export interface FeaturedListing {
   id: string;
@@ -38,6 +39,18 @@ export interface FeaturedListingMetrics {
   ctr: number;
   conversion_rate: number;
   revenue_generated: number;
+}
+
+function normalizeFeaturedImage(
+  explicit: string | null | undefined,
+  placeSlug: string | null | undefined
+): string {
+  return resolveContentImage({
+    category: 'places',
+    slug: placeSlug,
+    explicit,
+    placeholder: '/images/placeholder-place.jpg',
+  });
 }
 
 /**
@@ -101,8 +114,15 @@ export async function getFeaturedListing(id: string): Promise<FeaturedListing | 
     const cached = await getCache<FeaturedListing>(cacheKey);
     if (cached) return cached;
 
-    const listing = await queryOne('SELECT * FROM featured_listings WHERE id = $1', [id]);
+    const listing = await queryOne(
+      `SELECT fl.*, p.slug as place_slug
+       FROM featured_listings fl
+       LEFT JOIN places p ON p.id = fl.place_id
+       WHERE fl.id = $1`,
+      [id]
+    );
     if (listing) {
+      listing.featured_image_url = normalizeFeaturedImage(listing.featured_image_url, listing.place_slug);
       await setCache(cacheKey, listing, 300);
     }
     return listing;
@@ -149,8 +169,13 @@ export async function getActiveFeaturedListings(limit: number = 10, offset: numb
       [now]
     );
 
+    const listings = result.map((row: any) => ({
+      ...row,
+      featured_image_url: normalizeFeaturedImage(row.featured_image_url, row.place_slug),
+    }));
+
     const data = {
-      listings: result,
+      listings,
       total: parseInt(countResult?.total || '0')
     };
 
@@ -172,12 +197,19 @@ export async function getUserFeaturedListings(userId: string): Promise<FeaturedL
     const cached = await getCache<FeaturedListing[]>(cacheKey);
     if (cached) return cached;
 
-    const listings = await queryMany(
-      `SELECT * FROM featured_listings
-       WHERE user_id = $1
-       ORDER BY created_at DESC`,
+    const listingsRaw = await queryMany(
+      `SELECT fl.*, p.slug as place_slug
+       FROM featured_listings fl
+       LEFT JOIN places p ON p.id = fl.place_id
+       WHERE fl.user_id = $1
+       ORDER BY fl.created_at DESC`,
       [userId]
     );
+
+    const listings = listingsRaw.map((row: any) => ({
+      ...row,
+      featured_image_url: normalizeFeaturedImage(row.featured_image_url, row.place_slug),
+    }));
 
     await setCache(cacheKey, listings, 300);
     return listings;
@@ -387,5 +419,4 @@ export async function deleteFeaturedListing(id: string, userId: string): Promise
     throw error;
   }
 }
-
 

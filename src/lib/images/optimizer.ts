@@ -3,7 +3,7 @@
  * Compression, resizing, and format conversion
  */
 
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join, dirname, extname, basename } from 'path';
 import sharp from 'sharp';
@@ -201,7 +201,7 @@ export function validateImage(file: File): { valid: boolean; error?: string } {
 export async function processUpload(
   file: Buffer,
   filename: string,
-  options: OptimizeOptions = {}
+  _options: OptimizeOptions = {}
 ): Promise<OptimizedImage> {
   const uploadPath = join(UPLOAD_DIR, filename);
   

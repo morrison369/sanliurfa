@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import { useState, useEffect } from 'react';
 interface PlaceFollowersCountProps {
   placeId: string;
   initialCount?: number;
@@ -63,7 +62,7 @@ export default function PlaceFollowersCount({
             {followers.slice(0, previewLimit).map((follower) => (
               <a
                 key={follower.id}
-                href={`/kullanıcı/${follower.id}`}
+                href={`/kullanici/${follower.id}`}
                 className="flex items-center gap-2 hover:opacity-75 transition-opacity group"
               >
                 {follower.avatar ? (
@@ -91,7 +90,7 @@ export default function PlaceFollowersCount({
 
           {count > previewLimit && (
             <a
-              href={`/mekan/${placeId}/followers`}
+              href="/mekanlar"
               className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium mt-2 block"
             >
               +{count - previewLimit} daha →

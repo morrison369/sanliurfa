@@ -1,0 +1,226 @@
+{
+  "generatedAt": "2026-04-21T12:26:23.236Z",
+  "totals": {
+    "total": 12,
+    "passed": 12,
+    "failed": 0
+  },
+  "rows": [
+    {
+      "workflow": "api-contract-gate.yml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    },
+    {
+      "workflow": "ci-cd.yml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    },
+    {
+      "workflow": "ci-enhanced.yml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    },
+    {
+      "workflow": "ci-optimized.yml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    },
+    {
+      "workflow": "ci.yml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    },
+    {
+      "workflow": "deploy.yml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    },
+    {
+      "workflow": "e2e-nightly.yml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    },
+    {
+      "workflow": "gitops-deploy.yaml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    },
+    {
+      "workflow": "quality-checks.yml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    },
+    {
+      "workflow": "release.yml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    },
+    {
+      "workflow": "security.yml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    },
+    {
+      "workflow": "workflow-standards.yml",
+      "checks": {
+        "concurrency": true,
+        "permissions": true,
+        "timeout-minutes": true,
+        "workflow-standards-verify": true,
+        "workflow-standards-report-artifact": true,
+        "workflow-standards-report-artifact-scoped-name": true,
+        "orphan-check": true,
+        "playwright_clean": true,
+        "artifact_v4_only": true,
+        "cache_v4_only": true,
+        "verify_only": true,
+        "node22_pinned": true
+      },
+      "passed": true
+    }
+  ]
+}

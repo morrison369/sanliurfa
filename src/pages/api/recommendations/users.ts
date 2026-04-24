@@ -1,11 +1,18 @@
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ locals, url }) => {
   try {
     if (!locals.user?.id) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/recommendations-users-unauthorized',
+        instance: '/api/recommendations/users',
+      });
     }
 
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
@@ -28,6 +35,12 @@ export const GET: APIRoute = async ({ locals, url }) => {
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
     logger.error('Recommendations error', error);
-    return new Response(JSON.stringify({ error: 'Failed' }), { status: 500 });
+    return problemJson({
+      status: 500,
+      title: 'Kullanıcı Önerileri Alınamadı',
+      detail: 'Failed',
+      type: '/problems/recommendations-users-failed',
+      instance: '/api/recommendations/users',
+    });
   }
 };

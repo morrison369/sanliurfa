@@ -4,7 +4,7 @@ import time
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='BcqH7t5zNKfw', allow_agent=False, look_for_keys=False)
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', allow_agent=False, look_for_keys=False)
 
 print("🔧 PostgreSQL Auth Düzeltme")
 print("=" * 50)
@@ -33,7 +33,7 @@ time.sleep(3)
 
 # Test
 print("\n🧪 Test:")
-stdin, stdout, stderr = ssh.exec_command("PGPASSWORD=Urfa_2024_Secure! psql -h localhost -U sanliurfa_user -d sanliurfa -c 'SELECT 1 as test;' 2>&1")
+stdin, stdout, stderr = ssh.exec_command("PGPASSWORD=CHANGE_ME_DB_PASSWORD psql -h localhost -U sanliurfa_user -d sanliurfa -c 'SELECT 1 as test;' 2>&1")
 result = stdout.read().decode()
 if "test" in result or "1" in result:
     print("✅ Bağlantı başarılı!")
@@ -42,7 +42,7 @@ else:
 
 # Tabloları kontrol et
 print("\n📋 Tablolar:")
-stdin, stdout, stderr = ssh.exec_command("PGPASSWORD=Urfa_2024_Secure! psql -h localhost -U sanliurfa_user -d sanliurfa -c 'SELECT tablename FROM pg_tables WHERE schemaname = public;' 2>&1")
+stdin, stdout, stderr = ssh.exec_command("PGPASSWORD=CHANGE_ME_DB_PASSWORD psql -h localhost -U sanliurfa_user -d sanliurfa -c 'SELECT tablename FROM pg_tables WHERE schemaname = public;' 2>&1")
 print(stdout.read().decode())
 
 ssh.close()

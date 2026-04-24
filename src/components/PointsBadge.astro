@@ -37,7 +37,7 @@ const progress = Math.min(100, ((points - (level.next / 2)) / (level.next - (lev
   )}
 </div>
 
-<script>
+<script is:inline>
   // Puan animasyonu
   document.addEventListener('DOMContentLoaded', () => {
     const badge = document.querySelector('[data-points-badge]');
@@ -47,7 +47,7 @@ const progress = Math.min(100, ((points - (level.next / 2)) / (level.next - (lev
     }
   });
 
-  function animatePoints(element: Element, target: number) {
+  function animatePoints(element, target) {
     let current = 0;
     const increment = target / 20;
     const timer = setInterval(() => {
@@ -60,3 +60,6 @@ const progress = Math.min(100, ((points - (level.next / 2)) / (level.next - (lev
     }, 50);
   }
 </script>
+
+
+

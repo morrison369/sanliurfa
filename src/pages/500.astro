@@ -10,8 +10,10 @@ const icons = {
 const seo = {
   title: 'Sunucu Hatası - 500',
   description: 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
-  noindex: true
+  noIndex: true
 };
+
+const errorCode = `500-ERR-${Math.random().toString(36).slice(2, 11).toUpperCase()}`;
 ---
 
 <Layout seo={seo} hideHeader={false} hideFooter={true}>
@@ -64,9 +66,11 @@ const seo = {
 
         <!-- Error ID (for debugging) -->
         <p class="text-sm text-gray-400 mt-8">
-          Hata Kodu: <code className="bg-gray-100 px-2 py-1 rounded">500-ERR-{Math.random().toString(36).substr(2, 9).toUpperCase()}</code>
+          Hata Kodu: <code class="bg-gray-100 px-2 py-1 rounded">{errorCode}</code>
         </p>
       </div>
     </div>
   </div>
 </Layout>
+
+

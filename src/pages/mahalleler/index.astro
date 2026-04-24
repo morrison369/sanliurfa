@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
 
 let districts: any[] = [];
 let neighborhoodCount = 0;
@@ -22,8 +23,27 @@ try {
 
 const seo = {
   title: 'Şanlıurfa Mahalleler Rehberi | İlçe ve Mahalle Bilgileri',
-  description: 'Şanlıurfa\'nın tüm mahallelerini keşfedin. İlçe ve mahallelere göre mekanlar, eczaneler, okullar ve daha fazlası.',
+  description: "Şanlıurfa\'nın tüm mahallelerini keşfedin. İlçe ve mahallelere göre mekanlar, eczaneler, okullar ve daha fazlası.",
+  keywords: ['şanlıurfa mahalleler', 'urfa mahalle listesi', 'şanlıurfa eyyübiye mahalleleri', 'urfa haliliye mahalleler', 'şanlıurfa adres', 'urfa semt rehberi'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/mahalleler',
 };
+const { baseUrl } = await getSiteBranding();
+
+const faqItems = [
+  {
+    S: "Şanlıurfa\'nın kaç ilçesi var?",
+    C: "Şanlıurfa\'ya bağlı 13 ilçe bulunmaktadır. Merkez ilçeler Eyyübiye, Haliliye ve Karaköprü'dür.",
+  },
+  {
+    S: "Şanlıurfa\'da en kalabalık mahalleler hangileri?",
+    C: 'Dergah, Balıklıgöl, Camikebir gibi tarihi merkez mahalleleri ve Haliliye ilçesindeki yeni yapılaşma bölgeleri en kalabalık mahalleler arasında yer almaktadır.',
+  },
+  {
+    S: 'Mahalle bazında mekan ve hizmet bilgilerine nasıl ulaşılır?',
+    C: 'Mahalleler rehberinden ilgili ilçeye ve ardından mahalleye tıklayarak o mahalledeki eczane, okul ve yakın mekan bilgilerine ulaşabilirsiniz.',
+  },
+];
 ---
 
 <Layout seo={seo}>
@@ -32,7 +52,7 @@ const seo = {
       <div class="container mx-auto px-4">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">Mahalleler Rehberi</h1>
         <p class="text-xl text-indigo-100 max-w-2xl">
-          Şanlıurfa'nın tüm mahallelerini ilçelere göre keşfedin
+          Şanlıurfa’nın tüm mahallelerini ilçelere göre keşfedin
         </p>
         {neighborhoodCount > 0 && (
           <p class="text-indigo-200 mt-2">{neighborhoodCount} mahalle listelendi</p>
@@ -104,8 +124,17 @@ const seo = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: 'https://sanliurfa.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Mahalleler', item: 'https://sanliurfa.com/mahalleler' },
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Mahalleler', item: `${baseUrl}/mahalleler` },
     ]
-  })} />
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

@@ -1,5 +1,5 @@
 -- ============================================
--- Şanlıurfa.com 2026 Blog Yazıları
+-- Sanliurfa.com 2026 Blog Yazıları
 -- ============================================
 
 INSERT INTO blog_posts (
@@ -55,7 +55,7 @@ INSERT INTO blog_posts (
 <p><strong>2026 Bütçe Önerisi:</strong> Günlük ₺1.200-1.800 yemek bütçesi ile tüm bu lezzetleri tadabilirsiniz.</p>',
   'Yemek', 'yemek',
   '/images/blog/sanliurfa-lezzetler-2026.webp',
-  'author-1', 'Şanlıurfa.com Editörü',
+  'author-1', 'Sanliurfa.com Editörü',
   'published', NOW(), NOW()
 ),
 
@@ -121,7 +121,7 @@ INSERT INTO blog_posts (
 </ul>',
   'Gezi', 'gezi',
   '/images/blog/gobeklitepe-2026.webp',
-  'author-1', 'Şanlıurfa.com Editörü',
+  'author-1', 'Sanliurfa.com Editörü',
   'published', NOW(), NOW()
 ),
 
@@ -179,7 +179,7 @@ INSERT INTO blog_posts (
 </ol>',
   'Konaklama', 'konaklama',
   '/images/blog/sanliurfa-otel-2026.webp',
-  'author-1', 'Şanlıurfa.com Editörü',
+  'author-1', 'Sanliurfa.com Editörü',
   'published', NOW(), NOW()
 )
 ON CONFLICT (id) DO UPDATE SET

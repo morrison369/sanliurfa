@@ -235,4 +235,4 @@ export const conversionOptimizer = new ConversionOptimizer();
 export const abandonmentDetector = new AbandonmentDetector();
 export const revenueAttributionTracker = new RevenueAttributionTracker();
 
-export { ConversionSignal, AbandonmentEvent, AttributionTouchpoint, ConversionOptimizationAction };
+export {ConversionSignal, AbandonmentEvent, AttributionTouchpoint, ConversionOptimizationAction};

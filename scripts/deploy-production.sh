@@ -99,10 +99,10 @@ deploy_blue_green() {
     
     if [[ "$CURRENT_COLOR" == "blue" ]]; then
         NEW_COLOR="green"
-        NEW_PORT="3001"
+        NEW_PORT="4322"
     else
         NEW_COLOR="blue"
-        NEW_PORT="3000"
+        NEW_PORT="4321"
     fi
     
     log "Current color: $CURRENT_COLOR, deploying to: $NEW_COLOR"
@@ -122,7 +122,7 @@ deploy_blue_green() {
     # Switch nginx to new color
     log "Switching traffic to $NEW_COLOR..."
     # Update nginx upstream configuration
-    sed -i "s/proxy_pass http:\/\/app-$CURRENT_COLOR:3000;/proxy_pass http:\/\/app-$NEW_COLOR:3000;/" nginx/nginx.prod.conf
+    sed -i "s/proxy_pass http:\/\/app-$CURRENT_COLOR:4321;/proxy_pass http:\/\/app-$NEW_COLOR:4321;/" nginx/nginx.prod.conf
     docker-compose -f docker-compose.prod.yml exec -T nginx nginx -s reload
     
     # Stop old containers

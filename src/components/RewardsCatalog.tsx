@@ -51,13 +51,13 @@ export function RewardsCatalog() {
       }
 
       const res = await fetch(`/api/loyalty/rewards?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch rewards');
+      if (!res.ok) throw new Error('Ödül kataloğu yüklenemedi.');
 
       const data = await res.json();
       setRewards(data.data?.rewards || []);
       setPromos(data.data?.promotionalOffers || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load rewards');
+      setError(err instanceof Error ? err.message : 'Ödül kataloğu yüklenemedi.');
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ export function RewardsCatalog() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Redemption failed');
+        throw new Error(data.error || 'Ödül kullanımı tamamlanamadı.');
       }
 
       const data = await res.json();
@@ -83,12 +83,12 @@ export function RewardsCatalog() {
         text: `Ödül başarıyla kazanıldı! Kod: ${data.data?.redemptionCode}`
       });
 
-      // Refresh rewards to update available stock
+      // Stok bilgisini güncellemek için ödülleri yenile.
       setTimeout(fetchRewards, 1000);
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Redemption failed'
+        text: err instanceof Error ? err.message : 'Ödül kullanımı tamamlanamadı.'
       });
     } finally {
       setRedeeming(null);
@@ -109,7 +109,7 @@ export function RewardsCatalog() {
 
   return (
     <div className="space-y-6">
-      {/* Promotional Offers */}
+      {/* Promosyon teklifleri */}
       {promos.length > 0 && (
         <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-orange-200 rounded-lg p-4">
           <h3 className="font-semibold text-orange-900 mb-3">🎉 Özel Teklifler</h3>
@@ -130,7 +130,7 @@ export function RewardsCatalog() {
         </div>
       )}
 
-      {/* Message */}
+      {/* Durum mesajı */}
       {message && (
         <div
           className={`rounded-lg p-4 ${message.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}
@@ -139,7 +139,7 @@ export function RewardsCatalog() {
         </div>
       )}
 
-      {/* Category Filter */}
+      {/* Kategori filtresi */}
       {categories.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <button
@@ -168,7 +168,7 @@ export function RewardsCatalog() {
         </div>
       )}
 
-      {/* Rewards Grid */}
+      {/* Ödül listesi */}
       {error ? (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">{error}</p>

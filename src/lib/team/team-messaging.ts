@@ -192,7 +192,7 @@ export class MessageFormatter {
   extractMentions(content: string): string[] {
     const mentionRegex = /@(\w+)/g;
     const matches = content.match(mentionRegex) || [];
-    return matches.map(m => m.substring(1));
+    return matches.map((m: string) => m.substring(1));
   }
 
   /**

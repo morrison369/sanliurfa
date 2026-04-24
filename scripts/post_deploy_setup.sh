@@ -97,7 +97,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 cd /home/sanliur/public_html
-pm2 restart sanliurfa || pm2 start dist/server/entry.mjs --name sanliurfa -- --port 6000
+pm2 restart sanliurfa || pm2 start dist/server/entry.mjs --name sanliurfa -- --port 4321
 pm2 save
 
 echo "✅ Application restarted"
@@ -106,7 +106,7 @@ echo "✅ Application restarted"
 echo "🧪 Testing..."
 sleep 3
 
-HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/)
+HTTP_STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/)
 if [ "$HTTP_STATUS" = "200" ]; then
     echo "✅ Site is UP (HTTP 200)"
 else

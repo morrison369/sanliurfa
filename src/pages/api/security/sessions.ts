@@ -9,7 +9,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

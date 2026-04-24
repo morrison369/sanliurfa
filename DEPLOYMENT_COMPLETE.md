@@ -117,7 +117,7 @@ App Memory: ~97MB
 ```
 URL: https://168.119.79.238:2083
 User: sanliur
-Pass: BcqH7t5zNKfw
+Pass: CHANGE_ME_CWP_SSH_PASSWORD
 ```
 
 ### SSH

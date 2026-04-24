@@ -83,19 +83,11 @@ export const DELETE: APIRoute = async (context) => {
       return apiError(context, HttpStatus.BAD_REQUEST, 'Collection ID is required');
     }
 
-    const deleted = await deleteCollection(id, context.locals.user.id);
-
-    if (!deleted) {
-      return apiError(context, HttpStatus.NOT_FOUND, 'Collection not found');
-    }
+    await deleteCollection(id, context.locals.user.id);
 
     logger.info('Collection deleted via API', { userId: context.locals.user.id, collectionId: id });
 
-    // @ts-expect-error - apiResponse signature mismatch
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      message: 'Koleksiyon silindi'
-    });
+    return apiResponse({ success: true, message: 'Koleksiyon silindi' }, HttpStatus.OK);
   } catch (error) {
     if (error instanceof Error && error.message === 'Access denied') {
       return apiError(context, HttpStatus.FORBIDDEN, 'Access denied');
@@ -104,3 +96,4 @@ export const DELETE: APIRoute = async (context) => {
     return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to delete collection');
   }
 };
+

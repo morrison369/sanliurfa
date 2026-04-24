@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface SearchHistoryItem {
   id: string;
   query: string;
@@ -29,7 +28,7 @@ export default function SearchHistoryViewer({ limit = 20 }: SearchHistoryViewerP
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch('/api/search/history');
+      const response = await fetch(`/api/search/history?limit=${limit}`);
 
       if (!response.ok) {
         throw new Error('Arama geçmişi yüklenemedi');

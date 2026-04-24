@@ -10,7 +10,7 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       );
     }
 
-    const posts = await searchBlogPosts(query.trim(), limit);
+    const result = await searchBlogPosts(query.trim(), { limit });
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/blog/search', HttpStatus.OK, duration);
@@ -51,8 +51,8 @@ export const GET: APIRoute = async ({ request, url }) => {
       {
         success: true,
         data: {
-          posts,
-          count: posts.length,
+          posts: result.posts,
+          count: result.total,
           query: query.trim()
         }
       },
@@ -75,3 +75,4 @@ export const GET: APIRoute = async ({ request, url }) => {
     );
   }
 };
+

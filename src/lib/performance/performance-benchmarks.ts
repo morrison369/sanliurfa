@@ -152,7 +152,6 @@ export class LoadTester {
   private config: LoadTestConfig;
   private results: number[] = [];
   private errors: number = 0;
-  private startTime?: number;
 
   constructor(config: LoadTestConfig) {
     this.config = config;
@@ -177,8 +176,6 @@ export class LoadTester {
   }> {
     this.results = [];
     this.errors = 0;
-    this.startTime = Date.now();
-
     const { duration, concurrency, rampUp = 0, targetRps } = this.config;
 
     // Create queue of requests
@@ -206,8 +203,6 @@ export class LoadTester {
 
     // Ramp up: gradually increase concurrency
     const rampUpDuration = rampUp > 0 ? rampUp : 0;
-    const rampUpSteps = Math.min(concurrency, 10);
-    const stepDuration = rampUpDuration / rampUpSteps;
     const targetConcurrency = concurrency;
 
     // Execute requests

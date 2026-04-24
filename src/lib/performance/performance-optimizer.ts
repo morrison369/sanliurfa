@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Performance Optimizer
  * Implements aggressive caching and query optimization strategies
@@ -104,7 +103,7 @@ export async function getOrCache<T>(
 
     if (cached) {
       logger.debug('Cache HIT', { key: cacheKey });
-      return JSON.parse(cached);
+      return JSON.parse(cached as string);
     }
 
     // Compute value

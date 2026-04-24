@@ -1,17 +1,23 @@
-// @ts-nocheck
 /**
  * Performance Optimization Recommendations (Admin)
  */
 
 import type { APIRoute } from 'astro';
-import { suggestIndexes, getQueryMetrics, getSlowQueries, CACHE_STRATEGIES } from '../../../../lib/performance/performance-optimizer';
+import { suggestIndexes, getSlowQueries, CACHE_STRATEGIES } from '../../../../lib/performance/performance-optimizer';
 import { metricsCollector } from '../../../../lib/metrics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
+interface PerformanceRecommendation {
+  priority: 'high' | 'medium' | 'low';
+  title: string;
+  description: string;
+  action: string;
+}
+
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -29,11 +35,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
       strategiesCount: Object.keys(CACHE_STRATEGIES).length
     };
 
-    const requestMetrics = metricsCollector.getAggregated();
+    const requestMetrics = metricsCollector.getMetrics();
     const slowOperations = metricsCollector.getSlowOperations(20);
 
     // Generate recommendations
-    const recommendations: any[] = [];
+    const recommendations: PerformanceRecommendation[] = [];
 
     if (slowQueries.length > 5) {
       recommendations.push({
@@ -88,7 +94,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           cacheStrategies: cacheStats,
           indexSuggestions: indexSuggestions.slice(0, 5),
           slowOperations: slowOperations.map(op => ({
-            operation: op.operation,
+            operation: op.message,
             duration: op.duration,
             timestamp: op.timestamp
           })),
@@ -102,6 +108,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/performance/optimization', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Performance optimization failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Performans optimizasyon verisi alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -2,7 +2,7 @@
  * Moderation Queue Manager Component
  * Manage pending moderation items
  */
-import React, { useState, useEffect } from 'react';
+import {  useState, useEffect  } from 'react';
 import { AlertCircle, CheckCircle, Clock, Loader } from 'lucide-react';
 
 interface QueueItem {

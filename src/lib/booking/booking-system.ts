@@ -104,7 +104,7 @@ export class CalendarManager {
   /**
    * Get slot occupancy
    */
-  getOccupancy(vendorId: string, slotId: string): { booked: number; capacity: number } {
+  getOccupancy(_vendorId: string, slotId: string): { booked: number; capacity: number } {
     const slot = this.slots.get(slotId);
     if (!slot) {
       return { booked: 0, capacity: 0 };
@@ -204,8 +204,7 @@ export class BookingManager {
   /**
    * Check if slot is available for guest count
    */
-  checkAvailability(slotId: string, guestCount: number): boolean {
-    const currentBookings = this.slotBookings.get(slotId) || 0;
+  checkAvailability(_slotId: string, _guestCount: number): boolean {
     // Would need to reference CalendarManager to get capacity
     return true; // Placeholder
   }
@@ -220,8 +219,6 @@ export class AvailabilityScheduler {
    * Set availability rule
    */
   setRule(rule: AvailabilityRule): void {
-    const key = rule.vendorId + '_' + rule.dayOfWeek;
-
     if (!this.rules.has(rule.vendorId)) {
       this.rules.set(rule.vendorId, []);
     }
@@ -282,7 +279,7 @@ export class AvailabilityScheduler {
   /**
    * Get utilization metrics
    */
-  getUtilization(vendorId: string, period: string): { bookingRate: number; avgOccupancy: number } {
+  getUtilization(_vendorId: string, _period: string): { bookingRate: number; avgOccupancy: number } {
     return { bookingRate: 0.75, avgOccupancy: 0.85 };
   }
 }

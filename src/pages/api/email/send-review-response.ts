@@ -17,7 +17,7 @@ const schema = {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -56,7 +56,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const sent = await sendEmail({
       to: reviewer.email,
-      subject: `${placeName}'e Yanıt Geldi - Şanlıurfa.com`,
+      subject: `${placeName}'e Yanıt Geldi - Sanliurfa.com`,
       html
     });
 

@@ -263,7 +263,7 @@ export class SearchEngine {
   /**
    * Search knowledge
    */
-  searchKnowledge(query: string, limit?: number): KnowledgeArticle[] {
+  searchKnowledge(_query: string, limit?: number): KnowledgeArticle[] {
     const results: KnowledgeArticle[] = [];
     // Simplified search implementation
     return results.slice(0, limit || 10);
@@ -272,14 +272,14 @@ export class SearchEngine {
   /**
    * Get related articles
    */
-  getRelatedArticles(articleId: string, limit?: number): KnowledgeArticle[] {
+  getRelatedArticles(_articleId: string, _limit?: number): KnowledgeArticle[] {
     return [];
   }
 
   /**
    * Get suggested articles
    */
-  getSuggestedArticles(userContext: Record<string, any>): KnowledgeArticle[] {
+  getSuggestedArticles(_userContext: Record<string, any>): KnowledgeArticle[] {
     return [];
   }
 
@@ -319,7 +319,7 @@ export class ContentOrganization {
   /**
    * Get category articles
    */
-  getCategoryArticles(categoryId: string): KnowledgeArticle[] {
+  getCategoryArticles(_categoryId: string): KnowledgeArticle[] {
     return [];
   }
 

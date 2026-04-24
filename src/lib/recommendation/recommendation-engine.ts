@@ -179,7 +179,7 @@ export class ContentBasedFilter {
   /**
    * Get content-based recommendations
    */
-  getRecommendations(userId: string, interactions: UserInteraction[], limit: number = 10): Recommendation[] {
+  getRecommendations(_userId: string, interactions: UserInteraction[], limit: number = 10): Recommendation[] {
     const userItemFeatures = new Map<string, number>();
 
     // Aggregate features from items user interacted with

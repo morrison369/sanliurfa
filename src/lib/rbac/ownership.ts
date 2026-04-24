@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Ownership-Based Access Control
  * Users can operate on resources they own without explicit permissions

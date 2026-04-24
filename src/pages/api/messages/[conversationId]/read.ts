@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Mark Conversation as Read API
  * POST: Mark all unread messages in conversation as read
@@ -12,20 +11,31 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const user = locals.user;
-    const { conversationId } = params;
+    const conversationId = params.conversationId;
 
     if (!user) {
       recordRequest('POST', `/api/messages/${conversationId}/read`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
+        undefined,
+        requestId
+      );
+    }
+
+    if (!conversationId) {
+      recordRequest('POST', '/api/messages/unknown/read', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Konuşma kimliği gereklidir',
+        HttpStatus.BAD_REQUEST,
         undefined,
         requestId
       );

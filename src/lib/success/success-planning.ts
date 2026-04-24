@@ -120,7 +120,7 @@ export class SuccessPlanManager {
   /**
    * Get plan progress
    */
-  getPlanProgress(planId: string): { completed: number; total: number; percentage: number } {
+  getPlanProgress(_planId: string): { completed: number; total: number; percentage: number } {
     // This would integrate with milestone and goal managers
     return {
       completed: 3,
@@ -278,7 +278,6 @@ export class GoalManager {
     }
 
     const progress = (goal.currentValue / goal.targetValue) * 100;
-    const timeRemaining = goal.dueDate - Date.now();
     const progressNeeded = (progress / 100) * (goal.dueDate - goal.createdAt);
     const onTrack = (Date.now() - goal.createdAt) <= progressNeeded;
 

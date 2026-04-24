@@ -134,7 +134,6 @@ export class DeveloperPortal {
 
 export class AnalyticsDashboard {
   private dashboards = new Map<string, APIMetrics>();
-  private dashboardCount = 0;
 
   /**
    * Get dashboard
@@ -206,7 +205,6 @@ export class AnalyticsDashboard {
 
 export class DocumentationManager {
   private docs = new Map<string, string>();
-  private docCount = 0;
 
   /**
    * Generate quick start
@@ -249,7 +247,7 @@ export class DocumentationManager {
   /**
    * Generate API examples
    */
-  generateExamples(apiId: string): Record<string, string> {
+  generateExamples(_apiId: string): Record<string, string> {
     return {
       'list-users': `GET /api/users`,
       'get-user': `GET /api/users/:id`,

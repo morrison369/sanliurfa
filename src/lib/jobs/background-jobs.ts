@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Background job queue system for async tasks
  * Supports email sending, notifications, reports, etc.
@@ -220,7 +219,7 @@ export class BackgroundJobQueue {
         return null;
       }
 
-      return JSON.parse(cached) as BackgroundJob;
+      return JSON.parse(cached as string) as BackgroundJob;
     } catch (error) {
       logger.error('Failed to get job', error instanceof Error ? error : new Error(String(error)), { jobId });
       return null;
@@ -298,7 +297,7 @@ export class BackgroundJobQueue {
    * Generate job ID
    */
   private generateId(): string {
-    return `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `job_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }
 }
 
@@ -405,7 +404,7 @@ function setupDefaultHandlers(queue: BackgroundJobQueue): void {
 /**
  * Start background job processor
  */
-export function startJobProcessor(intervalMs: number = 5000, maxConcurrent: number = 5): NodeJS.Timer {
+export function startJobProcessor(intervalMs: number = 5000, maxConcurrent: number = 5): ReturnType<typeof setInterval> {
   const queue = getJobQueue();
   queue['maxConcurrent'] = maxConcurrent;
 
@@ -426,8 +425,8 @@ export function startJobProcessor(intervalMs: number = 5000, maxConcurrent: numb
  * Start background automation jobs (sequences, scheduled campaigns, etc)
  */
 export function startAutomationJobs(): {
-  sequenceProcessor: NodeJS.Timer;
-  campaignScheduler: NodeJS.Timer;
+  sequenceProcessor: ReturnType<typeof setInterval>;
+  campaignScheduler: ReturnType<typeof setInterval>;
 } {
   const queue = getJobQueue();
 
@@ -456,5 +455,4 @@ export function startAutomationJobs(): {
 
   return { sequenceProcessor, campaignScheduler };
 }
-
 

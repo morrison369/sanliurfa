@@ -21,7 +21,7 @@ export type FieldValidator = (value: any) => boolean | string;
  */
 export interface ValidationSchema {
   [key: string]: {
-    type: 'string' | 'number' | 'email' | 'boolean' | 'array';
+    type: 'string' | 'number' | 'email' | 'boolean' | 'array' | 'object';
     required?: boolean;
     minLength?: number;
     maxLength?: number;

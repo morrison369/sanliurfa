@@ -4,6 +4,7 @@
  */
 import { query, queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
+import { pickFirstExistingColumn } from './schema-compat';
 
 export async function getSearchHistory(userId: string, limit: number = 20): Promise<any[]> {
   try {
@@ -144,6 +145,8 @@ export async function updateSavedSearchResults(savedSearchId: string, resultCoun
 
 export async function getRecentSearches(userId: string | undefined, limit: number = 5): Promise<string[]> {
   try {
+    const historyQueryColumn = (await pickFirstExistingColumn('search_history', ['query', 'search_query'])) || 'search_query';
+
     if (!userId) {
       // Return global trending for anonymous users
       const trending = await queryMany(`
@@ -156,7 +159,7 @@ export async function getRecentSearches(userId: string | undefined, limit: numbe
     }
 
     const recent = await queryMany(`
-      SELECT DISTINCT search_query FROM search_history
+      SELECT DISTINCT ${historyQueryColumn} AS search_query FROM search_history
       WHERE user_id = $1
       ORDER BY created_at DESC
       LIMIT $2

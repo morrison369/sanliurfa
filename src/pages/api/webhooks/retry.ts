@@ -1,17 +1,15 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
 import { retryFailedWebhooks } from '../../../lib/webhook/webhook-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
-// @ts-nocheck
 /**
  * POST /api/webhooks/retry
  * Retry failed webhook events
  */
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

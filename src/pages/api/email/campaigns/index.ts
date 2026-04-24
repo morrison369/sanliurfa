@@ -4,7 +4,6 @@
  * POST: Create campaign
  */
 
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../../lib/postgres';
 import { createCampaign } from '../../../../lib/email/email-campaigns';
@@ -16,7 +15,7 @@ import { logger } from '../../../../lib/logging';
 const recordRequest = (...args: any[]) => {};
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -78,7 +77,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -109,15 +108,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const campaign = await createCampaign(
-      locals.user.id,
+    const campaign = await createCampaign({
+      userId: locals.user.id,
       name,
-      campaign_type,
-      from_email,
-      subject_line,
-      html_content,
-      plain_text_content
-    );
+      campaignType: campaign_type,
+      fromEmail: from_email,
+      subjectLine: subject_line,
+      htmlContent: html_content,
+      plainTextContent: plain_text_content,
+      status: 'draft'
+    } as any);
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/email/campaigns', HttpStatus.CREATED, duration);

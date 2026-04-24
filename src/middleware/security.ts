@@ -1,5 +1,17 @@
 // Security middleware - CSP, Security Headers
 import type { MiddlewareHandler } from 'astro';
+function getCanonicalOrigin(): string {
+  return process.env.SITE_URL || process.env.PUBLIC_SITE_URL || 'https://sanliurfa.com';
+}
+function getAllowedOriginsFromEnv(raw?: string): string[] {
+  if (!raw) return [];
+  return raw.split(',').map(o => o.trim()).filter(Boolean);
+}
+
+const canonicalOrigin = getCanonicalOrigin();
+const allowedOrigins = getAllowedOriginsFromEnv(
+  process.env.CORS_ORIGINS || process.env.SITE_URL || process.env.PUBLIC_SITE_URL || canonicalOrigin,
+);
 
 export const securityHeaders: MiddlewareHandler = async (context, next) => {
   const response = await next();
@@ -36,10 +48,16 @@ export const securityHeaders: MiddlewareHandler = async (context, next) => {
   
   // CORS headers for API routes
   if (context.url.pathname.startsWith('/api/')) {
-    response.headers.set('Access-Control-Allow-Origin', import.meta.env.SITE_URL || 'https://sanliurfa.com');
+    const requestOrigin = context.request.headers.get('origin');
+    const selectedOrigin =
+      requestOrigin && allowedOrigins.includes(requestOrigin)
+        ? requestOrigin
+        : canonicalOrigin;
+    response.headers.set('Access-Control-Allow-Origin', selectedOrigin);
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     response.headers.set('Access-Control-Max-Age', '86400');
+    response.headers.set('Vary', 'Origin');
   }
   
   return response;

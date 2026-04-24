@@ -13,7 +13,7 @@ import subprocess
 HOST = "176.9.138.254"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 REMOTE_PATH = "/home/sanliur/public_html"
 APP_NAME = "sanliurfa"
 NODE_CMD = "/usr/bin/node"
@@ -182,7 +182,7 @@ def main():
     ssh.exec_command(f'pm2 delete {APP_NAME} 2>/dev/null')
     
     # Yeni process başlat
-    start_cmd = f'cd {REMOTE_PATH} && pm2 start {REMOTE_PATH}/dist/server/entry.mjs --name "{APP_NAME}" -- --port 3000'
+    start_cmd = f'cd {REMOTE_PATH} && pm2 start {REMOTE_PATH}/dist/server/entry.mjs --name "{APP_NAME}" -- --port 4321'
     stdin, stdout, stderr = ssh.exec_command(start_cmd)
     print(stdout.read().decode())
     print(stderr.read().decode())
@@ -214,7 +214,7 @@ def main():
 VEYA .htaccess ile (public_html/.htaccess):
 
 RewriteEngine On
-RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+RewriteRule ^(.*)$ http://127.0.0.1:4321/$1 [P,L]
     """)
     
     # Kontrol
@@ -227,7 +227,7 @@ RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
     else:
         print("⚠️ PM2 process bulunamadı")
     
-    stdin, stdout, stderr = ssh.exec_command('curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/')
+    stdin, stdout, stderr = ssh.exec_command('curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:4321/')
     status = stdout.read().decode().strip()
     if status == "200":
         print(f"✅ Uygulama çalışıyor (HTTP {status})")
@@ -254,7 +254,7 @@ RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
   PM2 Logs: pm2 logs {APP_NAME}
   PM2 Restart: pm2 restart {APP_NAME}
 
-⚠️  NOT: CWP Panel'de Apache → Custom Port (3000) yapılandırması gerekli!
+⚠️  NOT: CWP Panel'de Apache → $14321) yapılandırması gerekli!
 """)
 
 if __name__ == "__main__":

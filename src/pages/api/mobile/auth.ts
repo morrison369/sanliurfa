@@ -8,6 +8,7 @@ import { queryOne } from '../../../lib/postgres';
 import { comparePassword, createToken } from '../../../lib/auth';
 import { setCache, getCache, deleteCache } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 const REFRESH_TOKEN_TTL = 30 * 24 * 60 * 60; // 30 days in seconds
 
@@ -21,31 +22,40 @@ export const POST: APIRoute = async ({ request }) => {
     const { email, password } = await request.json();
 
     if (!email || !password) {
-      return new Response(
-        JSON.stringify({ error: 'Email ve şifre zorunludur' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Eksik Parametre',
+        detail: 'Email ve şifre zorunludur',
+        type: '/problems/mobile-auth-validation',
+        instance: '/api/mobile/auth',
+      });
     }
 
     const user = await queryOne(
-      `SELECT id, email, full_name, role, password_hash, is_active, is_verified
+      `SELECT id, email, full_name, role, password_hash, status, is_verified
        FROM users WHERE email = $1`,
       [email.toLowerCase().trim()]
     );
 
-    if (!user || !user.is_active) {
-      return new Response(
-        JSON.stringify({ error: 'Geçersiz email veya şifre' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+    if (!user || user.status === 'deleted' || user.status === 'banned') {
+      return problemJson({
+        status: 401,
+        title: 'Authentication Failed',
+        detail: 'Geçersiz email veya şifre',
+        type: '/problems/mobile-auth-failed',
+        instance: '/api/mobile/auth',
+      });
     }
 
     const valid = await comparePassword(password, user.password_hash);
     if (!valid) {
-      return new Response(
-        JSON.stringify({ error: 'Geçersiz email veya şifre' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 401,
+        title: 'Authentication Failed',
+        detail: 'Geçersiz email veya şifre',
+        type: '/problems/mobile-auth-failed',
+        instance: '/api/mobile/auth',
+      });
     }
 
     const accessToken = createToken({ userId: user.id, email: user.email, role: user.role });
@@ -75,10 +85,13 @@ export const POST: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     logger.error('Mobile login error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Giriş yapılırken bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Mobile Login Error',
+      detail: 'Giriş yapılırken bir hata oluştu',
+      type: '/problems/mobile-login-failed',
+      instance: '/api/mobile/auth',
+    });
   }
 };
 
@@ -88,33 +101,42 @@ export const PUT: APIRoute = async ({ request }) => {
     const { refreshToken } = await request.json();
 
     if (!refreshToken) {
-      return new Response(
-        JSON.stringify({ error: 'Refresh token zorunludur' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Eksik Parametre',
+        detail: 'Refresh token zorunludur',
+        type: '/problems/mobile-refresh-validation',
+        instance: '/api/mobile/auth',
+      });
     }
 
     const data = await getCache<{ userId: string; email: string; role: string }>(
       refreshTokenKey(refreshToken)
     );
     if (!data) {
-      return new Response(
-        JSON.stringify({ error: 'Geçersiz veya süresi dolmuş refresh token' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 401,
+        title: 'Invalid Refresh Token',
+        detail: 'Geçersiz veya süresi dolmuş refresh token',
+        type: '/problems/mobile-refresh-invalid',
+        instance: '/api/mobile/auth',
+      });
     }
 
     const user = await queryOne(
-      `SELECT id, email, full_name, role, is_active FROM users WHERE id = $1`,
+      `SELECT id, email, full_name, role, status, email_verified AS is_verified FROM users WHERE id = $1`,
       [data.userId]
     );
 
-    if (!user || !user.is_active) {
+    if (!user || user.status === 'deleted' || user.status === 'banned') {
       await deleteCache(refreshTokenKey(refreshToken));
-      return new Response(
-        JSON.stringify({ error: 'Kullanıcı bulunamadı' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 401,
+        title: 'User Not Found',
+        detail: 'Kullanıcı bulunamadı',
+        type: '/problems/mobile-refresh-user-not-found',
+        instance: '/api/mobile/auth',
+      });
     }
 
     const accessToken = createToken({ userId: user.id, email: user.email, role: user.role });
@@ -134,10 +156,13 @@ export const PUT: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     logger.error('Token refresh error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Token yenileme başarısız' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Token Refresh Error',
+      detail: 'Token yenileme başarısız',
+      type: '/problems/mobile-refresh-failed',
+      instance: '/api/mobile/auth',
+    });
   }
 };
 
@@ -153,9 +178,12 @@ export const DELETE: APIRoute = async ({ request }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: 'Çıkış yapılırken hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Logout Error',
+      detail: 'Çıkış yapılırken hata oluştu',
+      type: '/problems/mobile-logout-failed',
+      instance: '/api/mobile/auth',
+    });
   }
 };

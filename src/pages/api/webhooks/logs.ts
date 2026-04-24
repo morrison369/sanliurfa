@@ -9,7 +9,7 @@ import { logger } from '../../../lib/logging';
  * Get webhook delivery logs
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -65,7 +65,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
  * Clear old webhook logs
  */
 export const DELETE: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

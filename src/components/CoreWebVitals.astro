@@ -5,13 +5,12 @@
 
 <script>
   // Core Web Vitals ölçümü
-  import { getCLS, getFCP, getFID, getINP, getLCP, getTTFB } from 'web-vitals';
+  import { onCLS, onFCP, onINP, onLCP, onTTFB } from 'web-vitals';
   
   // Metrik değerlerini sakla
   const vitals = {
     CLS: 0,
     FCP: 0,
-    FID: 0,
     INP: 0,
     LCP: 0,
     TTFB: 0,
@@ -20,7 +19,6 @@
   // Hedef değerler
   const thresholds = {
     LCP: { good: 2500, poor: 4000 },
-    FID: { good: 100, poor: 300 },
     INP: { good: 200, poor: 500 },
     CLS: { good: 0.1, poor: 0.25 },
     FCP: { good: 1800, poor: 3000 },
@@ -41,19 +39,21 @@
   // Console'da göster (development)
   function logVitals() {
     if (import.meta.env.DEV) {
-      console.log('%c📊 Core Web Vitals', 'font-size: 16px; font-weight: bold;');
+      console.debug('%c📊 Core Web Vitals', 'font-size: 16px; font-weight: bold;');
       Object.entries(vitals).forEach(([name, value]) => {
         const status = getStatus(name, value);
         const color = status === 'good' ? '🟢' : status === 'needs-improvement' ? '🟡' : '🔴';
-        console.log(`${color} ${name}: ${value}${name === 'CLS' ? '' : 'ms'}`);
+        console.debug(`${color} ${name}: ${value}${name === 'CLS' ? '' : 'ms'}`);
       });
     }
   }
   
   // Analytics'e gönder
-  function sendToAnalytics(metric: any) {
+  function sendToAnalytics(metric: { name: string; value: number; id: string }) {
     const { name, value, id } = metric;
-    vitals[name as keyof typeof vitals] = value;
+    if (name in vitals) {
+      vitals[name as keyof typeof vitals] = value;
+    }
     
     // Google Analytics 4
     if (window.gtag) {
@@ -69,17 +69,16 @@
     if (import.meta.env.DEV) {
       const status = getStatus(name, value);
       const color = status === 'good' ? 'color: green' : status === 'needs-improvement' ? 'color: orange' : 'color: red';
-      console.log(`%c${name}: ${value}${name === 'CLS' ? '' : 'ms'}`, color);
+      console.debug(`%c${name}: ${value}${name === 'CLS' ? '' : 'ms'}`, color);
     }
   }
   
   // Metrikleri topla
-  getCLS(sendToAnalytics);
-  getFCP(sendToAnalytics);
-  getFID(sendToAnalytics);
-  getINP(sendToAnalytics);
-  getLCP(sendToAnalytics);
-  getTTFB(sendToAnalytics);
+  onCLS(sendToAnalytics);
+  onFCP(sendToAnalytics);
+  onINP(sendToAnalytics);
+  onLCP(sendToAnalytics);
+  onTTFB(sendToAnalytics);
   
   // Sayfa tamamen yüklendiğinde özet göster
   window.addEventListener('load', () => {
@@ -94,7 +93,8 @@
       const lastEntry = entries[entries.length - 1];
       
       if (import.meta.env.DEV) {
-        console.log('LCP Element:', lastEntry.element);
+        const entry = lastEntry as PerformanceEntry & { element?: Element };
+        console.debug('LCP Element:', entry.element ?? null);
       }
     });
     
@@ -114,10 +114,6 @@
       <div class="flex justify-between gap-4">
         <span>LCP:</span>
         <span id="lcp-value" class="font-bold">-</span>
-      </div>
-      <div class="flex justify-between gap-4">
-        <span>FID:</span>
-        <span id="fid-value" class="font-bold">-</span>
       </div>
       <div class="flex justify-between gap-4">
         <span>CLS:</span>

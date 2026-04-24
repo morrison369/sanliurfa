@@ -12,14 +12,14 @@ export type FeatureName =
   | 'ai_recommendations'
   | 'bulk_operations';
 
-export function hasFeatureAccess(userId: string, feature: FeatureName): boolean {
+export function hasFeatureAccess(_userId: string, _feature: FeatureName): boolean {
   return true;
 }
 
-export function getEnabledFeatures(userId: string): FeatureName[] {
+export function getEnabledFeatures(_userId: string): FeatureName[] {
   return [];
 }
 
-export function isFeatureEnabled(feature: FeatureName): boolean {
+export function isFeatureEnabled(_feature: FeatureName): boolean {
   return true;
 }

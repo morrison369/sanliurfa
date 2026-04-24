@@ -90,7 +90,7 @@ export class FinancialReporter {
   /**
    * Generate cash flow
    */
-  generateCashFlow(startDate: number, endDate: number): Record<string, number> {
+  generateCashFlow(_startDate: number, _endDate: number): Record<string, number> {
     return {
       operatingCash: Math.random() * 100000 + 20000,
       investingCash: Math.random() * -50000 - 5000,
@@ -102,7 +102,7 @@ export class FinancialReporter {
    * Generate report
    */
   generateReport(type: ReportType, period: string): FinancialStatement {
-    const reportId = 'report-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const reportId = 'report-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
 
     let data: Record<string, any> = {};
 
@@ -261,7 +261,7 @@ export class AuditTrail {
   /**
    * Get change history
    */
-  getChangeHistory(entityType: string, period?: string): AuditLog[] {
+  getChangeHistory(entityType: string, _period?: string): AuditLog[] {
     return this.logs.filter(l => l.entityType === entityType);
   }
 
@@ -291,6 +291,4 @@ const financialReporter = new FinancialReporter();
 const reportGenerator = new ReportGenerator();
 const auditTrail = new AuditTrail();
 
-export type { financialReporter, reportGenerator, auditTrail };
-
-
+export { financialReporter, reportGenerator, auditTrail };

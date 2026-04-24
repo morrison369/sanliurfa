@@ -11,8 +11,7 @@
  */
 
 import type { APIRoute } from 'astro';
-
-const SITE_URL = import.meta.env.SITE_URL || 'https://sanliurfa.com';
+import { getSiteBranding } from '../../lib/site-branding';
 
 /**
  * SVG tabanli OG gorseli olusturur (satori/canvas yoksa fallback)
@@ -21,8 +20,10 @@ function generateSVGImage(params: {
   title: string;
   description: string;
   category: string;
+  siteName: string;
+  siteUrl: string;
 }): string {
-  const { title, description, category } = params;
+  const { title, description, category, siteName, siteUrl } = params;
 
   // Turkce karakterleri SVG'de guvenli hale getir
   const safeTitle = escapeXml(title);
@@ -64,7 +65,7 @@ function generateSVGImage(params: {
   <rect x="40" y="40" width="1120" height="550" fill="none" stroke="rgba(212,168,67,0.2)" stroke-width="1" rx="8"/>
 
   <!-- Logo / Marka alani -->
-  <text x="60" y="90" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="bold" fill="#d4a843">Şanlıurfa.com</text>
+  <text x="60" y="90" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="bold" fill="#d4a843">${siteName}</text>
   <text x="60" y="118" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="rgba(255,255,255,0.6)">Tarihin Sifir Noktasi</text>
 
   <!-- Kategori etiketi -->
@@ -82,7 +83,7 @@ function generateSVGImage(params: {
   </text>
 
   <!-- Alt bilgi -->
-  <text x="60" y="540" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="rgba(255,255,255,0.4)">${SITE_URL}</text>
+  <text x="60" y="540" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="rgba(255,255,255,0.4)">${siteUrl}</text>
 
   <!-- Alt altin cizgi -->
   <rect x="0" y="624" width="1200" height="6" fill="url(#accent)"/>
@@ -113,12 +114,13 @@ function svgToBuffer(svg: string): Buffer {
   return Buffer.from(svg, 'utf-8');
 }
 
-export const GET: APIRoute = async ({ request, url }) => {
+export const GET: APIRoute = async ({ request }) => {
   try {
+    const { baseUrl: siteUrl, siteName } = await getSiteBranding();
     // Query parametrelerini al
     const searchParams = new URL(request.url).searchParams;
     
-    let title = searchParams.get('title') || 'Şanlıurfa.com';
+    let title = searchParams.get('title') || siteName;
     let description = searchParams.get('desc') || 'Tarihin Sıfır Noktası';
     let category = searchParams.get('category') || 'Şehir Rehberi';
 
@@ -154,7 +156,7 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     // Aciklama ve kategori icin varsayilan degerler
     if (!searchParams.get('desc')) {
-      description = `${title} - Şanlıurfa'nın en güzel noktalarından birini keşfedin. Detaylı bilgi, fotoğraflar ve kullanıcı yorumları Şanlıurfa.com'da.`;
+      description = `${title} - Şanlıurfa’nın en güzel noktalarından birini keşfedin. Detaylı bilgi, fotoğraflar ve kullanıcı yorumları ${siteName}'da.`;
     }
 
     if (!searchParams.get('category')) {
@@ -162,7 +164,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     }
 
     // SVG gorselini olustur
-    const svg = generateSVGImage({ title, description, category });
+    const svg = generateSVGImage({ title, description, category, siteName, siteUrl });
 
     // SVG'yi buffer'a cevir
     const buffer = svgToBuffer(svg);
@@ -172,7 +174,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const format = searchParams.get('format');
 
     if (format === 'svg') {
-      return new Response(buffer, {
+      return new Response(new Uint8Array(buffer), {
         headers: {
           'Content-Type': 'image/svg+xml; charset=utf-8',
           'Cache-Control': 'public, max-age=86400, s-maxage=604800', // 1 gun CDN, 1 hafta edge
@@ -184,7 +186,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     // Varsayilan: SVG (PNG fallback olarak)
     // Not: Gercek PNG render icin satori + resvg-js gibi kutuphaneler gerekir.
     // Bu implementation SVG formatinda dondurur ki bu da cogu platform tarafindan desteklenir.
-    return new Response(buffer, {
+    return new Response(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'image/svg+xml; charset=utf-8',
         'Cache-Control': 'public, max-age=86400, s-maxage=604800',
@@ -197,13 +199,16 @@ export const GET: APIRoute = async ({ request, url }) => {
     console.error('OG gorsel olusturma hatasi:', error);
 
     // Hata durumunda varsayilan gorsel
+    const { baseUrl: siteUrl, siteName } = await getSiteBranding();
     const defaultSvg = generateSVGImage({
-      title: 'Şanlıurfa.com',
+      title: siteName,
       description: 'Tarihin Sıfır Noktası - Şehir Rehberi',
       category: 'Şanlıurfa',
+      siteName,
+      siteUrl,
     });
 
-    return new Response(Buffer.from(defaultSvg, 'utf-8'), {
+    return new Response(new Uint8Array(Buffer.from(defaultSvg, 'utf-8')), {
       status: 500,
       headers: {
         'Content-Type': 'image/svg+xml; charset=utf-8',

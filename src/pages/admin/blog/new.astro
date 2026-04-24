@@ -213,7 +213,7 @@ const [categories, tags] = await Promise.all([
     });
 
     // Format text
-    function formatText(command) {
+    function formatText(command: string) {
       const textarea = document.getElementById('content') as HTMLTextAreaElement;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
@@ -307,5 +307,8 @@ const [categories, tags] = await Promise.all([
         alert('Bir hata oluştu');
       }
     });
+    (window as any).formatText = formatText;
+    (window as any).insertLink = insertLink;
+    (window as any).insertImage = insertImage;
   </script>
 </AdminLayout>

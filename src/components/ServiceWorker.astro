@@ -9,7 +9,9 @@
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('/service-worker.js')
           .then(function(registration) {
-            console.log('[SW] Registered:', registration.scope);
+            if (import.meta.env.DEV) {
+              console.debug('[SW] Registered:', registration.scope);
+            }
             
             // Check for updates
             registration.addEventListener('updatefound', function() {
@@ -27,7 +29,7 @@
             });
           })
           .catch(function(error) {
-            console.log('[SW] Registration failed:', error);
+            console.error('[SW] Registration failed:', error);
           });
       });
     }
@@ -36,6 +38,6 @@
 
 {import.meta.env.DEV && (
   <script>
-    console.log('[SW] Service Worker disabled in development mode');
+    console.debug('[SW] Service Worker disabled in development mode');
   </script>
 )}

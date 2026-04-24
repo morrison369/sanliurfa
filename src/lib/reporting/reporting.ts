@@ -3,7 +3,7 @@
  * Handles reporting, analytics exports, and scheduled reports
  */
 
-import { queryMany, queryOne } from '../postgres';
+import { queryMany } from '../postgres';
 import { logger } from '../logger';
 
 export interface Report {

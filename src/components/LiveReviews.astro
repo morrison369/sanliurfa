@@ -31,7 +31,7 @@ const { placeId } = Astro.props;
   </div>
 </div>
 
-<script define:vars={{ placeId }}>
+<script define:vars={{ placeId }} is:inline>
   import { realtimeManager } from '../lib/realtime';
   
   const liveIndicator = document.getElementById('live-reviews');
@@ -44,7 +44,7 @@ const { placeId } = Astro.props;
   }
   
   // Subscribe to new reviews
-  const cleanup = realtimeManager.subscribeToReviews(placeId, (review) => {
+  const cleanup = realtimeManager.subscribeToReviews(placeId, (_review) => {
     // Show toast notification
     if (toast) {
       toast.classList.remove('hidden');

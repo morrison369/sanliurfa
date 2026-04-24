@@ -9,7 +9,7 @@ import time
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 VHOST_CONFIG = """<VirtualHost *:80>
     ServerName sanliurfa.com
@@ -19,14 +19,14 @@ VHOST_CONFIG = """<VirtualHost *:80>
     
     # Proxy to Node.js app
     ProxyPreserveHost On
-    ProxyPass / http://127.0.0.1:6000/
-    ProxyPassReverse / http://127.0.0.1:6000/
+    ProxyPass / http://127.0.0.1:4321/
+    ProxyPassReverse / http://127.0.0.1:4321/
     
     # WebSocket support
     RewriteEngine On
     RewriteCond %{HTTP:Upgrade} websocket [NC]
     RewriteCond %{HTTP:Connection} upgrade [NC]
-    RewriteRule ^/?(.*) "ws://127.0.0.1:6000/$1" [P,L]
+    RewriteRule ^/?(.*) "ws://127.0.0.1:4321/$1" [P,L]
     
     <Directory /home/sanliur/public_html>
         Options -Indexes +FollowSymLinks
@@ -50,14 +50,14 @@ VHOST_CONFIG = """<VirtualHost *:80>
     
     # Proxy to Node.js app
     ProxyPreserveHost On
-    ProxyPass / http://127.0.0.1:6000/
-    ProxyPassReverse / http://127.0.0.1:6000/
+    ProxyPass / http://127.0.0.1:4321/
+    ProxyPassReverse / http://127.0.0.1:4321/
     
     # WebSocket support
     RewriteEngine On
     RewriteCond %{HTTP:Upgrade} websocket [NC]
     RewriteCond %{HTTP:Connection} upgrade [NC]
-    RewriteRule ^/?(.*) "ws://127.0.0.1:6000/$1" [P,L]
+    RewriteRule ^/?(.*) "ws://127.0.0.1:4321/$1" [P,L]
     
     <Directory /home/sanliur/public_html>
         Options -Indexes +FollowSymLinks
@@ -137,7 +137,7 @@ def main():
     
     if "online" not in pm2_status.lower():
         print("   🚀 Uygulama başlatılıyor...")
-        ssh.exec_command(NVM_PREFIX + "cd /home/sanliur/public_html && pm2 start dist/server/entry.mjs --name sanliurfa -- --port 6000")
+        ssh.exec_command(NVM_PREFIX + "cd /home/sanliur/public_html && pm2 start dist/server/entry.mjs --name sanliurfa -- --port 4321")
         time.sleep(3)
         ssh.exec_command(NVM_PREFIX + "pm2 save")
     else:

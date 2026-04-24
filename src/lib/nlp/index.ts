@@ -15,13 +15,6 @@ const STOP_WORDS = new Set([
   'sizin', 'onlarin', 'bana', 'sana', 'ona', 'bize', 'size', 'onlara'
 ]);
 
-// Turkish character mappings for normalization
-const TR_CHAR_MAP: Record<string, string> = {
-  'ç': 'c', 'Ç': 'C', 'ğ': 'g', 'Ğ': 'G',
-  'ı': 'i', 'İ': 'I', 'ö': 'o', 'Ö': 'O',
-  'ş': 's', 'Ş': 'S', 'ü': 'u', 'Ü': 'U',
-};
-
 export interface TokenizeResult {
   tokens: string[];
   bigrams: string[];
@@ -73,11 +66,6 @@ export function tokenize(text: string): TokenizeResult {
  */
 export function normalizeText(text: string): string {
   let normalized = text;
-
-  // Fix encoding issues
-  for (const [bad, good] of Object.entries(TR_CHAR_MAP)) {
-    normalized = normalized.replace(new RegExp(bad, 'g'), good);
-  }
 
   // Lowercase (preserve Turkish I with locale)
   normalized = normalized.toLocaleLowerCase('tr-TR');
@@ -185,7 +173,7 @@ export function extractEntities(text: string): Entity[] {
   ];
 
   locationPatterns.forEach(pattern => {
-    let match;
+    let match: RegExpExecArray | null;
     while ((match = pattern.exec(text)) !== null) {
       entities.push({
         text: match[1],
@@ -198,13 +186,13 @@ export function extractEntities(text: string): Entity[] {
 
   // Time patterns
   const timePatterns = [
-    /(\d{1,2}[\:\.]\d{2}(?:\s*[AaPp][Mm])?)/g,
+    /(\d{1,2}[:.]\d{2}(?:\s*[AaPp][Mm])?)/g,
     /(\d{1,2}\s*(?:saat|s)\b)/gi,
     /(\d{1,2}\s*(?:dakika|dk|d)\b)/gi,
   ];
 
   timePatterns.forEach(pattern => {
-    let match;
+    let match: RegExpExecArray | null;
     while ((match = pattern.exec(text)) !== null) {
       entities.push({
         text: match[1],
@@ -222,7 +210,7 @@ export function extractEntities(text: string): Entity[] {
   ];
 
   numberPatterns.forEach(pattern => {
-    let match;
+    let match: RegExpExecArray | null;
     while ((match = pattern.exec(text)) !== null) {
       entities.push({
         text: match[1],

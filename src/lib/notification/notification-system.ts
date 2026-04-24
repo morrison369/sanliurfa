@@ -201,7 +201,7 @@ export class NotificationManager {
   private extractVariables(message: string): string[] {
     const regex = /\{(\w+)\}/g;
     const matches = message.match(regex) || [];
-    return matches.map(m => m.slice(1, -1));
+    return matches.map((m: string) => m.slice(1, -1));
   }
 
   /**
@@ -309,8 +309,6 @@ export class NotificationPreferences {
    * Set user preferences
    */
   setUserPreferences(userId: string, prefs: Partial<NotificationPreference>): NotificationPreference {
-    const existing = this.preferences.get(userId);
-
     const preference: NotificationPreference = {
       userId,
       channels: prefs.channels || {

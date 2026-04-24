@@ -46,7 +46,7 @@ export class SMTPProvider implements EmailProvider {
       // Dynamic import nodemailer
       const nodemailer = await import('nodemailer');
       
-      const transporter = nodemailer.createTransporter({
+      const transporter = nodemailer.createTransport({
         host: this.config.host,
         port: this.config.port,
         secure: this.config.secure,
@@ -156,3 +156,4 @@ export function createEmailProvider(): EmailProvider {
   // Fallback to mock (logs to console)
   return new MockProvider();
 }
+

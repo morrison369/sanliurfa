@@ -5,10 +5,10 @@ import time
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='zIT7Y9yrJZRV', timeout=30)
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', timeout=30)
 
 # Test different passwords — set actual passwords on server, not in code
-passwords = ['kWtUYbyYgbS7', 'Dxrmxc5B6SbP', 'sanliur', 'postgres']
+passwords = ['CHANGE_ME_DB_PASSWORD', 'Dxrmxc5B6SbP', 'sanliur', 'postgres']
 users = ['sanliur_sanliurfa', 'sanliurfa_user', 'sanliurfa', 'postgres']
 
 for user in users:

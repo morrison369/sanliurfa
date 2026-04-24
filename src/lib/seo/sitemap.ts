@@ -3,7 +3,7 @@
  * Dynamic XML sitemap for SEO crawlability
  */
 
-import { queryMany, queryOne } from '../postgres';
+import { queryMany } from '../postgres';
 import { logger } from '../logger';
 
 export interface SitemapEntry {
@@ -60,7 +60,7 @@ export async function generateSitemap(): Promise<string> {
 
     // Events
     const events = await queryMany(
-      `SELECT id, slug, date FROM events WHERE date > NOW() ORDER BY date DESC LIMIT 1000`
+      `SELECT id, slug, start_date as date FROM events WHERE start_date > NOW() ORDER BY start_date DESC LIMIT 1000`
     );
 
     for (const event of events) {

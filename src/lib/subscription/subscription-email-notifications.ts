@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Subscription Email Notifications
  * Abonelik olayları için email bildirimleri
@@ -9,9 +8,11 @@ import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { createNotification } from '../notification/notifications-queue';
 import { getCache, setCache, deleteCache } from '../cache';
+import { getPublicAppUrl } from '../public-app-url';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const FROM_EMAIL = 'noreply@sanliurfa.com';
+const PUBLIC_APP_URL = getPublicAppUrl();
 
 export interface EmailTemplate {
   id: string;
@@ -48,7 +49,7 @@ export async function getEmailTemplate(templateName: string): Promise<EmailTempl
     const cacheKey = `email:template:${templateName}`;
     const cached = await getCache(cacheKey);
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached as string);
     }
 
     // Veritabanından yükle
@@ -289,7 +290,7 @@ export async function sendPaymentFailedEmail(
     amount,
     tierName,
     retryDate: retryDate.toLocaleDateString('tr-TR'),
-    supportUrl: 'https://sanliurfa.com/support'
+    supportUrl: `${PUBLIC_APP_URL}/support`
   });
 }
 
@@ -369,7 +370,7 @@ export async function sendSubscriptionCancelledEmail(
     tierName,
     cancelDate: cancelDate.toLocaleDateString('tr-TR'),
     accessUntilDate: accessUntilDate.toLocaleDateString('tr-TR'),
-    reactivateUrl: 'https://sanliurfa.com/abonelik'
+    reactivateUrl: `${PUBLIC_APP_URL}/abonelik`
   });
 }
 
@@ -411,7 +412,7 @@ export async function sendQuotaWarningEmail(
     usagePercent,
     limit,
     current,
-    upgradeUrl: 'https://sanliurfa.com/fiyatlandirma'
+    upgradeUrl: `${PUBLIC_APP_URL}/fiyatlandirma`
   });
 }
 
@@ -429,7 +430,7 @@ export async function sendBillingIssueEmail(
     userName,
     issueType,
     description,
-    supportUrl: 'https://sanliurfa.com/support',
+    supportUrl: `${PUBLIC_APP_URL}/support`,
     contactEmail: 'support@sanliurfa.com'
   });
 }
@@ -534,7 +535,7 @@ export async function initializeDefaultEmailTemplates(): Promise<void> {
           <p><strong>Fiyat:</strong> ₺{{price}}</p>
           <p><strong>Yenileme Tarihi:</strong> {{renewalDate}}</p>
           <p>Tüm premium özelliklere erişim sağlayabilirsiniz.</p>
-          <p><a href="https://sanliurfa.com/abonelik" style="background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none;">Abonelikmi Yönet</a></p>
+          <p><a href="${PUBLIC_APP_URL}/abonelik" style="background-color: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none;">Abonelikmi Yönet</a></p>
         `,
         category: 'subscription'
       },
@@ -689,5 +690,4 @@ export async function initializeDefaultEmailTemplates(): Promise<void> {
     logger.error('Failed to initialize email templates', error instanceof Error ? error : new Error(String(error)));
   }
 }
-
 

@@ -11,7 +11,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -58,9 +58,9 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     // Try to insert vote
     try {
       await query(
-        `INSERT INTO review_votes (review_id, user_id, vote_type)
+        `INSERT INTO review_votes (review_id, user_id, helpful)
          VALUES ($1, $2, $3)`,
-        [params.id, user.id, voteType]
+        [params.id, user.id, voteType === 'helpful']
       );
 
       // Update helpful/unhelpful count
@@ -112,3 +112,4 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     );
   }
 };
+

@@ -1,13 +1,12 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
-import { validateWithSchema, commonSchemas } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { deleteCachePattern } from '../../../lib/cache';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

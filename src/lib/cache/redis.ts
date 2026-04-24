@@ -7,6 +7,13 @@ import { createClient, RedisClientType } from 'redis';
 import { logger } from '../logger';
 
 let client: RedisClientType | null = null;
+let redisErrorWarned = false;
+let redisConnectWarned = false;
+
+function toError(error: unknown): Error {
+  if (error instanceof Error) return error;
+  return new Error(String(error));
+}
 
 export async function getRedisClient(): Promise<RedisClientType | null> {
   if (client?.isOpen) return client;
@@ -21,7 +28,12 @@ export async function getRedisClient(): Promise<RedisClientType | null> {
     client = createClient({ url: redisUrl });
     
     client.on('error', (err) => {
-      logger.error('Redis error', err);
+      if (!redisErrorWarned) {
+        logger.warn('Redis error detected, cache operations will fail-open until connection is restored', {
+          message: err instanceof Error ? err.message : String(err),
+        });
+        redisErrorWarned = true;
+      }
     });
 
     await client.connect();
@@ -29,7 +41,12 @@ export async function getRedisClient(): Promise<RedisClientType | null> {
     
     return client;
   } catch (error) {
-    logger.error('Failed to connect to Redis', error as Error);
+    if (!redisConnectWarned) {
+      logger.warn('Failed to connect to Redis, cache operations will fail-open (logging once)', {
+        message: toError(error).message,
+      });
+      redisConnectWarned = true;
+    }
     return null;
   }
 }
@@ -49,7 +66,7 @@ export async function get<T>(key: string): Promise<T | null> {
 
     return JSON.parse(value) as T;
   } catch (error) {
-    logger.error('Cache get error', error as Error, { key });
+    logger.error('Cache get error', toError(error), { key });
     return null;
   }
 }
@@ -80,7 +97,7 @@ export async function set<T>(
 
     return true;
   } catch (error) {
-    logger.error('Cache set error', error as Error, { key });
+    logger.error('Cache set error', toError(error), { key });
     return false;
   }
 }
@@ -93,7 +110,7 @@ export async function del(key: string): Promise<boolean> {
     await redis.del(key);
     return true;
   } catch (error) {
-    logger.error('Cache delete error', error as Error, { key });
+    logger.error('Cache delete error', toError(error), { key });
     return false;
   }
 }
@@ -112,7 +129,7 @@ export async function invalidateByTag(tag: string): Promise<number> {
     logger.info(`Invalidated ${keys.length} cache entries for tag: ${tag}`);
     return keys.length;
   } catch (error) {
-    logger.error('Cache invalidation error', error as Error, { tag });
+    logger.error('Cache invalidation error', toError(error), { tag });
     return 0;
   }
 }
@@ -126,7 +143,7 @@ export async function clear(): Promise<boolean> {
     logger.info('Cache cleared');
     return true;
   } catch (error) {
-    logger.error('Cache clear error', error as Error);
+    logger.error('Cache clear error', toError(error));
     return false;
   }
 }

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * KPI Values API
  * Record and retrieve KPI values (time-series)
@@ -19,7 +18,7 @@ const recordValueSchema = {
 };
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -84,7 +83,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

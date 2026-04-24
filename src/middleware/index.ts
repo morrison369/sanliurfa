@@ -1,10 +1,8 @@
-// @ts-nocheck
 import { defineMiddleware } from 'astro:middleware';
 import { securityHeaders } from './security';
 import { performanceOptimizations } from './performance';
 import { rateLimitMiddleware, authRateLimitMiddleware } from './rate-limit';
 
-// @ts-nocheck
 /**
  * Main middleware chain
  * Combines all middleware functions

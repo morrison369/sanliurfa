@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * File Access & Analytics Endpoint
  * Track file access and get statistics
@@ -10,7 +9,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -26,7 +25,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     const file = await getFileById(fileId);
-    if (!file || (file.uploaded_by_user_id !== locals.user.id && !locals.isAdmin)) {
+    if (!file || ((file as any).uploaded_by_user_id !== locals.user.id && !locals.isAdmin)) {
       return apiError(ErrorCode.FORBIDDEN, 'Cannot access this file', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
@@ -43,7 +42,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

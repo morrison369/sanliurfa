@@ -183,7 +183,7 @@ export class ContractAnalyzer {
   /**
    * Calculate contract value
    */
-  calculateContractValue(period: string): number {
+  calculateContractValue(_period: string): number {
     return 700000;
   }
 }
@@ -212,7 +212,7 @@ export class ComplianceAnalyzer {
   /**
    * Get framework compliance
    */
-  getFrameworkCompliance(framework: string): { compliant: number; total: number; percentage: number } {
+  getFrameworkCompliance(_framework: string): { compliant: number; total: number; percentage: number } {
     const compliant = 18;
     const total = 20;
     return { compliant, total, percentage: (compliant / total) * 100 };
@@ -299,7 +299,7 @@ export class RiskAnalytics {
   /**
    * Analyze risk trends
    */
-  analyzeRiskTrends(months: number): { period: string; highRisks: number }[] {
+  analyzeRiskTrends(_months: number): { period: string; highRisks: number }[] {
     return [
       { period: '2026-01', highRisks: 6 },
       { period: '2026-02', highRisks: 5 },

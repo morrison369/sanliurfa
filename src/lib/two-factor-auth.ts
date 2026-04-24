@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Two-Factor Authentication Library
  * TOTP, Email, SMS, and recovery codes for 2FA
@@ -129,7 +128,13 @@ function generateBackupCodes(count: number = 10): string[] {
 
 // Hash backup code for storage
 function hashBackupCode(code: string): string {
-  return createHmac('sha256', process.env.JWT_SECRET || 'secret')
+  const jwtSecret =
+    process.env.JWT_SECRET ||
+    (process.env.NODE_ENV === 'test' ? 'test-jwt-secret-key-minimum-32-characters-long' : '');
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return createHmac('sha256', jwtSecret)
     .update(code)
     .digest('hex');
 }
@@ -164,7 +169,7 @@ export async function get2FAMethods(userId: string): Promise<TwoFAMethod[]> {
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached as string);
     }
 
     const methods = await queryMany(

@@ -214,7 +214,7 @@ export async function getPublishedContent(category?: string, limit: number = 20)
   }
 }
 
-export async function recordContentView(contentId: string, userId?: string): Promise<void> {
+export async function recordContentView(contentId: string, _userId?: string): Promise<void> {
   try {
     await update('content_items', { id: contentId }, {
       view_count: queryOne('SELECT view_count FROM content_items WHERE id = $1', [contentId])
@@ -304,7 +304,7 @@ export async function addContentTags(contentId: string, tags: string[]): Promise
   }
 }
 
-export async function likeContent(contentId: string, userId: string): Promise<boolean> {
+export async function likeContent(contentId: string, _userId: string): Promise<boolean> {
   try {
     const existing = await queryOne(
       'SELECT id FROM content_items WHERE id = $1 AND like_count > 0',

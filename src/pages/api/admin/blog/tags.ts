@@ -5,11 +5,20 @@
 import type { APIRoute } from 'astro';
 import { requireRole } from '../../../../lib/auth';
 import { getTags, createTag } from '../../../../lib/blog/db';
+import { problemJson } from '../../../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-blog-tags-unauthorized',
+        instance: '/api/admin/blog/tags',
+      });
+    }
 
     const tags = await getTags();
     
@@ -18,25 +27,39 @@ export const GET: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to get tags' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Etiketler Alınamadı',
+      detail: error instanceof Error ? error.message : 'Etiketler alınamadı',
+      type: '/problems/admin-blog-tags-get-failed',
+      instance: '/api/admin/blog/tags',
+    });
   }
 };
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-blog-tags-unauthorized',
+        instance: '/api/admin/blog/tags',
+      });
+    }
 
     const body = await request.json();
     
     if (!body.slug || !body.name) {
-      return new Response(
-        JSON.stringify({ error: 'Slug and name are required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Slug ve isim zorunludur',
+        type: '/problems/admin-blog-tags-validation',
+        instance: '/api/admin/blog/tags',
+      });
     }
 
     const tag = await createTag({
@@ -51,9 +74,12 @@ export const POST: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to create tag' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Etiket Oluşturulamadı',
+      detail: error instanceof Error ? error.message : 'Etiket oluşturulamadı',
+      type: '/problems/admin-blog-tags-create-failed',
+      instance: '/api/admin/blog/tags',
+    });
   }
 };

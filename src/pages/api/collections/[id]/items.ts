@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Collection items endpoints
  * POST /api/collections/[id]/items — Add place to collection
@@ -28,7 +27,7 @@ export const POST: APIRoute = async (context) => {
       return apiError(context, HttpStatus.BAD_REQUEST, 'Place ID is required');
     }
 
-    const itemId = await addPlaceToCollection(id, body.placeId, context.locals.user.id, body.note || undefined);
+    await addPlaceToCollection(id, body.placeId, context.locals.user.id, body.note || undefined);
 
     logger.info('Place added to collection', {
       userId: context.locals.user.id,
@@ -36,11 +35,7 @@ export const POST: APIRoute = async (context) => {
       placeId: body.placeId
     });
 
-    return apiResponse(context, HttpStatus.CREATED, {
-      success: true,
-      message: 'Yer koleksiyona eklendi',
-      itemId
-    });
+    return apiResponse({ success: true, message: 'Yer koleksiyona eklendi' }, HttpStatus.CREATED);
   } catch (error) {
     if (error instanceof Error && error.message === 'Access denied') {
       return apiError(context, HttpStatus.FORBIDDEN, 'Access denied');
@@ -67,11 +62,7 @@ export const DELETE: APIRoute = async (context) => {
       return apiError(context, HttpStatus.BAD_REQUEST, 'Place ID is required');
     }
 
-    const removed = await removePlaceFromCollection(id, placeId, context.locals.user.id);
-
-    if (!removed) {
-      return apiError(context, HttpStatus.NOT_FOUND, 'Place not found in collection');
-    }
+    await removePlaceFromCollection(id, placeId, context.locals.user.id);
 
     logger.info('Place removed from collection', {
       userId: context.locals.user.id,
@@ -79,10 +70,7 @@ export const DELETE: APIRoute = async (context) => {
       placeId
     });
 
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      message: 'Yer koleksiyondan kaldırıldı'
-    });
+    return apiResponse({ success: true, message: 'Yer koleksiyondan kaldırıldı' }, HttpStatus.OK);
   } catch (error) {
     if (error instanceof Error && error.message === 'Access denied') {
       return apiError(context, HttpStatus.FORBIDDEN, 'Access denied');

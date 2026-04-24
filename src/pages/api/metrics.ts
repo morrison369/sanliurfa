@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, getRequestId } from '../../lib/api';
 import { pool, readReplicaPool } from '../../lib/postgres';
-import { getRedisClient, isRedisAvailable } from '../../lib/cache';
+import { getRedisClient } from '../../lib/cache';
 import { metricsCollector } from '../../lib/metrics';
 import { logger } from '../../lib/logging';
 
@@ -41,14 +41,6 @@ export function recordError(type: string): void {
 }
 
 /**
- * Calculate average from array
- */
-function avg(arr: number[]): number {
-  if (arr.length === 0) return 0;
-  return arr.reduce((a, b) => a + b, 0) / arr.length;
-}
-
-/**
  * Calculate percentile
  */
 function percentile(arr: number[], p: number): number {
@@ -62,7 +54,7 @@ function percentile(arr: number[], p: number): number {
  * GET /api/metrics - Prometheus metrics endpoint
  */
 export const GET: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     // Basic auth check (in production, use proper auth)
@@ -120,7 +112,14 @@ export const GET: APIRoute = async ({ request }) => {
     } : null;
     
     // Redis status
-    const redisStatus = isRedisAvailable();
+    let redisStatus = false;
+    try {
+      const redis = await getRedisClient();
+      await redis.ping();
+      redisStatus = true;
+    } catch {
+      redisStatus = false;
+    }
     
     // Build Prometheus format output
     const output: string[] = [];

@@ -27,11 +27,16 @@ export interface ImportResult {
 /**
  * Export data to format
  */
+const ALLOWED_EXPORT_TABLES = new Set(['places', 'users', 'reviews', 'events', 'categories', 'blog_posts', 'collections']);
+
 export async function exportData(options: ExportOptions): Promise<{
   data: string | Buffer;
   filename: string;
   contentType: string;
 }> {
+  if (!ALLOWED_EXPORT_TABLES.has(options.table)) {
+    throw new Error(`Export not allowed for table: ${options.table}`);
+  }
   // Build query
   let sql = `SELECT * FROM ${options.table}`;
   
@@ -107,14 +112,30 @@ function convertToCSV(rows: any[]): string {
  */
 async function convertToExcel(rows: any[], sheetName: string): Promise<Buffer> {
   try {
-    // Dynamic import xlsx
-    const XLSX = await import('xlsx');
-    
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-    
-    return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    const ExcelJS = await import('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const safeName = String(sheetName || 'Export').slice(0, 31);
+    const worksheet = workbook.addWorksheet(safeName || 'Export');
+
+    if (rows.length === 0) {
+      const buf = await workbook.xlsx.writeBuffer();
+      return Buffer.from(buf);
+    }
+
+    const headers = Object.keys(rows[0]);
+    worksheet.columns = headers.map((header) => ({
+      header,
+      key: header,
+      width: Math.min(40, Math.max(12, header.length + 2)),
+    }));
+
+    for (const row of rows) {
+      worksheet.addRow(row);
+    }
+    worksheet.getRow(1).font = { bold: true };
+
+    const buf = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buf);
   } catch (error) {
     logger.error('Excel export error:', error);
     // Fallback to CSV
@@ -151,7 +172,7 @@ export async function importFromJSON(
         // Upsert logic
         const updateSet = columns
           .filter(col => col !== options.uniqueKey)
-          .map((col, idx) => `${col} = EXCLUDED.${col}`)
+          .map((col, _idx) => `${col} = EXCLUDED.${col}`)
           .join(', ');
 
         await query(
@@ -305,7 +326,7 @@ export async function exportUsers(format: ExportFormat): Promise<{
   return exportData({
     table: 'users',
     format,
-    where: 'is_deleted = false',
+    where: "status = 'active'",
   });
 }
 
@@ -321,6 +342,6 @@ export async function exportReviews(format: ExportFormat): Promise<{
     table: 'reviews',
     format,
     where: 'status = $1',
-    params: ['approved'],
+    params: ['active'],
   });
 }

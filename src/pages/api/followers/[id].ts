@@ -9,7 +9,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logger';
 
 export const POST: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     if (!locals.user?.id) {
@@ -36,7 +36,7 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     if (!locals.user?.id) {

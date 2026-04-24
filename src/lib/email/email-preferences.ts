@@ -3,7 +3,7 @@
  * Handles user notification preferences
  */
 
-import { queryOne, queryMany, update } from '../postgres';
+import { queryOne, update } from '../postgres';
 import { logger } from '../logger';
 
 export type NotificationChannel = 'email' | 'in_app' | 'push';
@@ -213,5 +213,6 @@ export async function unsubscribeAll(userId: string): Promise<boolean> {
     return false;
   }
 }
+
 
 

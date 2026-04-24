@@ -10,16 +10,16 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.user?.id) {
+    if (!locals.isAdmin) {
       recordRequest('POST', '/api/warehouse/query', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Authentication required',
+        'Admin access required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -40,12 +40,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    const ALLOWED_CUBES = ['place_activity', 'user_activity', 'review_activity'];
+    const ALLOWED_DIMENSIONS = ['category', 'district', 'year', 'month', 'week', 'date'];
+    const ALLOWED_MEASURES = ['visit_sum', 'review_avg', 'interaction_sum', 'visit_count', 'review_count'];
+    const ALLOWED_ORDER_BY = ['visit_sum', 'review_avg', 'interaction_sum', 'visit_count', 'review_count', 'year', 'month'];
+
+    if (!ALLOWED_CUBES.includes(cube)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid cube', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const safeDimensions = (dimensions as string[]).filter((d: string) => ALLOWED_DIMENSIONS.includes(d));
+    const safeMeasures = (measures as string[]).filter((m: string) => ALLOWED_MEASURES.includes(m));
+    const safeOrderBy = ALLOWED_ORDER_BY.includes(orderBy) ? orderBy : undefined;
+
     const result = await queryOLAP({
       cube,
-      dimensions,
-      measures,
+      dimensions: safeDimensions,
+      measures: safeMeasures,
       filters,
-      orderBy,
+      orderBy: safeOrderBy,
       limit: Math.min(limit || 100, 1000)
     });
 

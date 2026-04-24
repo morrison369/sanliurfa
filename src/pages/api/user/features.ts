@@ -5,14 +5,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { checkFeaturesAccess, hasFeatureAccess, getUserTierInfo, PREMIUM_FEATURES } from '../../../lib/feature/feature-gating';
+import { checkFeaturesAccess, getUserTierInfo, PREMIUM_FEATURES } from '../../../lib/feature/feature-gating';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 
 // GET - Get all available features and user's access status
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -69,7 +69,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
 // POST - Check access to specific features
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

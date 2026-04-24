@@ -5,8 +5,9 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { getCache, setCache } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
-export const GET: APIRoute = async ({ url, locals }) => {
+export const GET: APIRoute = async ({ url }) => {
   try {
     const district = url.searchParams.get('ilce');
     const date = url.searchParams.get('tarih') || new Date().toISOString().split('T')[0];
@@ -50,9 +51,12 @@ export const GET: APIRoute = async ({ url, locals }) => {
     });
   } catch (e: any) {
     logger.error('Nobetci API error:', e);
-    return new Response(JSON.stringify({ error: 'Veri yüklenemedi', pharmacies: [], count: 0 }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Nöbetçi Eczane Verisi Alınamadı',
+      detail: 'Veri yüklenemedi',
+      type: '/problems/saglik-nobetci-failed',
+      instance: '/api/saglik/nobetci',
     });
   }
 };

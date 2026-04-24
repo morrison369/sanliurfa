@@ -3,8 +3,6 @@
  * Data classification, PII detection, data masking, privacy enforcement
  */
 
-import { logger } from '../logger';
-
 // ==================== TYPES & INTERFACES ====================
 
 export type DataSensitivity = 'public' | 'internal' | 'confidential' | 'restricted';
@@ -47,7 +45,7 @@ export class DataClassifier {
   /**
    * Classify a field
    */
-  classifyField(fieldName: string, value?: any): DataField {
+  classifyField(fieldName: string, _value?: any): DataField {
     const lowerName = fieldName.toLowerCase();
 
     // Check for sensitive patterns
@@ -123,7 +121,7 @@ export class PIIDetector {
     const matches: PIIMatch[] = [];
 
     for (const [type, pattern] of Object.entries(this.PII_PATTERNS)) {
-      let match;
+      let match: RegExpExecArray | null;
       while ((match = pattern.exec(text)) !== null) {
         matches.push({
           type,
@@ -230,4 +228,5 @@ export class DataMasker {
 export const dataClassifier = new DataClassifier();
 export const piiDetector = new PIIDetector();
 export const dataMasker = new DataMasker();
+
 

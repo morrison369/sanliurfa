@@ -1,18 +1,16 @@
 /**
  * Social Share Button Component
  */
-
-import React, { useState } from 'react';
-import { Share2, Copy, Check } from 'lucide-react';
+import {  useState  } from 'react';
+import { Share2, Check } from 'lucide-react';
 
 interface ShareButtonProps {
   title: string;
   url: string;
   description?: string;
-  imageUrl?: string;
 }
 
-export default function ShareButton({ title, url, description, imageUrl }: ShareButtonProps) {
+export default function ShareButton({ title, url, description }: ShareButtonProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 

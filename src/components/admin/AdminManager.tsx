@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-
+import {  useState  } from 'react';
 type ResourceType = 'places' | 'reviews' | 'users';
 
 const RESOURCE_TABS = [
@@ -10,8 +9,6 @@ const RESOURCE_TABS = [
 
 export default function AdminManager() {
   const [activeTab, setActiveTab] = useState<ResourceType>('places');
-  const [isLoading, setIsLoading] = useState(false);
-  const [items, setItems] = useState<any[]>([]);
 
   return (
     <div className="container-custom py-8">
@@ -160,7 +157,7 @@ function UsersManager() {
         </thead>
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
           <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
-            <td className="px-6 py-3 text-gray-900 dark:text-white font-medium">user@example.com</td>
+            <td className="px-6 py-3 text-gray-900 dark:text-white font-medium">kullanici.ornek@sanliurfa.com</td>
             <td className="px-6 py-3 text-gray-600 dark:text-gray-400">Kullanıcı</td>
             <td className="px-6 py-3 text-gray-600 dark:text-gray-400">2 gün önce</td>
             <td className="px-6 py-3 text-right">

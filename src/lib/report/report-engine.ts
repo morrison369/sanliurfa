@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Report Engine
  * Execute reports and generate exports in multiple formats
@@ -182,7 +181,7 @@ async function collectPlacesData(filters: ReportFilters): Promise<{ headers: str
   try {
     const limit = filters.limit || 1000;
     const places = await queryMany(
-      `SELECT id, title, category, rating, visit_count, follower_count, created_at
+      `SELECT id, name as title, category, rating, visit_count, follower_count, created_at
        FROM places ORDER BY visit_count DESC LIMIT $1`,
       [limit]
     );
@@ -213,7 +212,7 @@ async function collectReviewsData(filters: ReportFilters): Promise<{ headers: st
   try {
     const limit = filters.limit || 1000;
     const reviews = await queryMany(
-      `SELECT r.id, r.place_id, p.title as place_title, r.rating, r.comment, r.created_at
+      `SELECT r.id, r.place_id, p.name as place_title, r.rating, r.content, r.created_at
        FROM reviews r
        LEFT JOIN places p ON r.place_id = p.id
        ORDER BY r.created_at DESC LIMIT $1`,
@@ -227,7 +226,7 @@ async function collectReviewsData(filters: ReportFilters): Promise<{ headers: st
       r.place_id,
       r.place_title || 'N/A',
       r.rating || 0,
-      r.comment || '',
+      r.content || '',
       r.created_at
     ]);
 
@@ -250,7 +249,7 @@ export async function executeReport(
   try {
     // Fetch report config
     const report = await queryOne(
-      `SELECT id, name, report_type, filters FROM reports WHERE id = $1`,
+      `SELECT id, name, report_type, filters FROM analytics_reports WHERE id = $1`,
       [reportId]
     );
 
@@ -296,7 +295,7 @@ export async function executeReport(
         fileExtension = 'json';
         break;
       case 'excel':
-        buffer = toExcel(exportData.headers, exportData.rows, reportType);
+        buffer = toExcel(exportData.headers, exportData.rows);
         contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         fileExtension = 'xlsx';
         break;

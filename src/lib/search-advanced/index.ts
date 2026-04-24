@@ -3,7 +3,7 @@
  * Full-text search with faceted navigation
  */
 
-import { query } from '../postgres';
+import { query as dbQuery } from '../postgres';
 
 export interface SearchFacet {
   field: string;
@@ -66,27 +66,23 @@ function buildSearchQuery(
     paramIndex += filters.categories.length;
   }
 
-  // Location filter
+  // Location filter — places has district_id FK, filter via subquery on district names
   if (filters.locations?.length) {
-    const placeholders = filters.locations.map((_, i) => `$${paramIndex + i}`).join(',');
-    sql += ` AND district IN (${placeholders})`;
-    countSql += ` AND district IN (${placeholders})`;
-    params.push(...filters.locations);
-    paramIndex += filters.locations.length;
+    sql += ` AND district_id IN (SELECT id FROM districts WHERE name = ANY($${paramIndex}::text[]))`;
+    countSql += ` AND district_id IN (SELECT id FROM districts WHERE name = ANY($${paramIndex}::text[]))`;
+    params.push(filters.locations);
+    paramIndex++;
   }
 
-  // Price range filter
-  if (filters.priceRange) {
-    if (filters.priceRange.min !== undefined) {
-      sql += ` AND price_level >= $${paramIndex}`;
-      countSql += ` AND price_level >= $${paramIndex}`;
-      params.push(filters.priceRange.min);
-      paramIndex++;
-    }
-    if (filters.priceRange.max !== undefined) {
-      sql += ` AND price_level <= $${paramIndex}`;
-      countSql += ` AND price_level <= $${paramIndex}`;
-      params.push(filters.priceRange.max);
+  // Price range filter — places has price_range VARCHAR(10), skip numeric min/max
+  if (filters.priceRange?.min !== undefined || filters.priceRange?.max !== undefined) {
+    const level = filters.priceRange?.min ?? filters.priceRange?.max ?? 1;
+    const rangeMap: Record<number, string> = { 1: '₺', 2: '₺₺', 3: '₺₺₺', 4: '₺₺₺₺' };
+    const rangeValue = rangeMap[level];
+    if (rangeValue) {
+      sql += ` AND price_range = $${paramIndex}`;
+      countSql += ` AND price_range = $${paramIndex}`;
+      params.push(rangeValue);
       paramIndex++;
     }
   }
@@ -149,10 +145,10 @@ export async function searchPlaces(
       sortSql += ' ORDER BY created_at DESC';
       break;
     case 'price_asc':
-      sortSql += ' ORDER BY price_level ASC NULLS LAST';
+      sortSql += ' ORDER BY COALESCE(price_range, \'₺₺₺₺₺\') ASC';
       break;
     case 'price_desc':
-      sortSql += ' ORDER BY price_level DESC NULLS LAST';
+      sortSql += ' ORDER BY COALESCE(price_range, \'\') DESC';
       break;
     default:
       // Relevance: prioritize exact matches
@@ -177,8 +173,8 @@ export async function searchPlaces(
 
   // Execute queries
   const [itemsResult, countResult] = await Promise.all([
-    query(sortSql, params),
-    query(countSql, params.slice(0, -2)) // Remove limit/offset params
+    dbQuery(sortSql, params),
+    dbQuery(countSql, params.slice(0, -2)) // Remove limit/offset params
   ]);
 
   // Get facets
@@ -221,7 +217,7 @@ async function getPlaceFacets(filters: SearchFilters): Promise<SearchFacet[]> {
   }
 
   // Category facet
-  const categoryResult = await query(`
+  const categoryResult = await dbQuery(`
     SELECT c.id, c.name, COUNT(p.id) as count
     FROM categories c
     LEFT JOIN places p ON p.category_id = c.id ${whereClause}
@@ -242,12 +238,13 @@ async function getPlaceFacets(filters: SearchFilters): Promise<SearchFacet[]> {
     });
   }
 
-  // District/Location facet
-  const locationResult = await query(`
-    SELECT district, COUNT(*) as count
-    FROM places
-    ${whereClause}
-    GROUP BY district
+  // District/Location facet — places.district_id FK → districts.name
+  const locationResult = await dbQuery(`
+    SELECT d.name as district, COUNT(*) as count
+    FROM places p
+    JOIN districts d ON d.id = p.district_id
+    ${whereClause.replace(/\bplaces\b/g, 'p')}
+    GROUP BY d.name
     ORDER BY count DESC
     LIMIT 20
   `, params);
@@ -264,28 +261,31 @@ async function getPlaceFacets(filters: SearchFilters): Promise<SearchFacet[]> {
   }
 
   // Price level facet
-  const priceResult = await query(`
-    SELECT price_level, COUNT(*) as count
+  const priceResult = await dbQuery(`
+    SELECT price_range, COUNT(*) as count
     FROM places
-    ${whereClause} AND price_level IS NOT NULL
-    GROUP BY price_level
-    ORDER BY price_level
+    ${whereClause} AND price_range IS NOT NULL
+    GROUP BY price_range
+    ORDER BY price_range
   `, params);
 
   if (priceResult.rows.length > 0) {
+    const priceLabels: Record<string, string> = {
+      '₺': '₺ Ucuz', '₺₺': '₺₺ Orta', '₺₺₺': '₺₺₺ Pahalı', '₺₺₺₺': '₺₺₺₺ Lüks'
+    };
     facets.push({
       field: 'price',
       label: 'Fiyat Aralığı',
       values: priceResult.rows.map(r => ({
-        value: String(r.price_level),
-        label: getPriceLabel(r.price_level),
+        value: r.price_range,
+        label: priceLabels[r.price_range] || r.price_range,
         count: parseInt(r.count)
       }))
     });
   }
 
   // Rating facet
-  const ratingResult = await query(`
+  const ratingResult = await dbQuery(`
     SELECT 
       CASE 
         WHEN rating >= 4.5 THEN '4.5+'
@@ -330,18 +330,17 @@ function getPriceLabel(level: number): string {
 /**
  * Get search suggestions
  */
-async function getSearchSuggestions(query: string): Promise<string[]> {
-  // Get similar searches from history
-  const result = await query(`
+async function getSearchSuggestions(searchTerm: string): Promise<string[]> {
+  const result = await dbQuery(`
     SELECT query, COUNT(*) as count
     FROM search_history
-    WHERE query ILIKE $1 
+    WHERE query ILIKE $1
     AND query != $2
     AND created_at >= NOW() - INTERVAL '30 days'
     GROUP BY query
     ORDER BY count DESC
     LIMIT 5
-  `, [`%${query}%`, query]);
+  `, [`%${searchTerm}%`, searchTerm]);
 
   return result.rows.map(r => r.query);
 }
@@ -349,16 +348,15 @@ async function getSearchSuggestions(query: string): Promise<string[]> {
 /**
  * Get "did you mean" suggestion
  */
-async function getDidYouMean(query: string): Promise<string | undefined> {
-  // Simple spelling correction using similar words
-  const result = await query(`
+async function getDidYouMean(searchTerm: string): Promise<string | undefined> {
+  const result = await dbQuery(`
     SELECT query, similarity(query, $1) as sim
     FROM search_history
     WHERE query % $1
     AND created_at >= NOW() - INTERVAL '30 days'
     ORDER BY sim DESC, created_at DESC
     LIMIT 1
-  `, [query]);
+  `, [searchTerm]);
 
   if (result.rows.length > 0 && result.rows[0].sim > 0.3) {
     return result.rows[0].query;
@@ -382,7 +380,7 @@ export async function autocomplete(
   const results: Array<any> = [];
 
   // Search places
-  const places = await query(`
+  const places = await dbQuery(`
     SELECT id, name, category_id
     FROM places
     WHERE name ILIKE $1
@@ -399,7 +397,7 @@ export async function autocomplete(
   })));
 
   // Search categories
-  const categories = await query(`
+  const categories = await dbQuery(`
     SELECT id, name
     FROM categories
     WHERE name ILIKE $1
@@ -423,7 +421,7 @@ export async function saveSearchQuery(
   userId?: string,
   resultsCount?: number
 ): Promise<void> {
-  await query(
+  await dbQuery(
     `INSERT INTO search_history (query, user_id, results_count, created_at)
      VALUES ($1, $2, $3, NOW())`,
     [query, userId || null, resultsCount]
@@ -437,7 +435,7 @@ export async function getPopularSearches(
   limit: number = 10,
   days: number = 7
 ): Promise<Array<{ query: string; count: number }>> {
-  const result = await query(`
+  const result = await dbQuery(`
     SELECT query, COUNT(*) as count
     FROM search_history
     WHERE created_at >= NOW() - ($2 * INTERVAL '1 day')
@@ -489,8 +487,8 @@ export async function searchEvents(
   params.push(perPage, offset);
 
   const [itemsResult, countResult] = await Promise.all([
-    query(sql, params),
-    query(countSql, params.slice(0, -2))
+    dbQuery(sql, params),
+    dbQuery(countSql, params.slice(0, -2))
   ]);
 
   return {
@@ -501,3 +499,4 @@ export async function searchEvents(
     facets: []
   };
 }
+

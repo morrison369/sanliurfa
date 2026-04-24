@@ -219,7 +219,7 @@ export async function verify2FACode(
 
     if (codeIndex !== -1) {
       // Remove used backup code
-      const updatedCodes = backupCodes.filter((_, i) => i !== codeIndex);
+      const updatedCodes = backupCodes.filter((_code: string, i: number) => i !== codeIndex);
       await updateDb('users', userId, {
         two_factor_backup_codes: updatedCodes
       });

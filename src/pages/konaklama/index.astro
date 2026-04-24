@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
 
 let hotels: any[] = [];
 
@@ -26,7 +27,17 @@ try {
 const seo = {
   title: 'Şanlıurfa Oteller ve Konaklama Rehberi | En İyi Oteller',
   description: 'Şanlıurfa\'da oteller, butik oteller ve pansiyonlar. Balıklıgöl\'e yakın, tarihi hanlar ve modern konaklama seçenekleri.',
+  ogImage: '/images/hero/hero-hotel.webp',
+  keywords: ['şanlıurfa oteller', 'urfa konaklama', 'şanlıurfa pansiyon', 'urfa butik otel', 'şanlıurfa en iyi oteller', 'urfa balıklıgöl otel', 'şanlıurfa ucuz konaklama'],
+  canonical: '/konaklama',
 };
+
+const faqItems = [
+  { S: 'Şanlıurfa\'da nerede kalınır?', C: 'Şanlıurfa\'da Balıklıgöl çevresindeki tarihi oteller ve butik tesisler en popüler konaklama seçeneklerini sunar. Şehir merkezinde modern oteller, ilçelerde ise uygun fiyatlı pansiyonlar bulunur.' },
+  { S: 'Göbeklitepe\'ye yakın otel var mı?', C: 'Göbeklitepe şehir merkezine 18 km uzaklıktadır. Şanlıurfa merkezdeki otellerde kalarak sabahın erken saatlerinde rahatlıkla Göbeklitepe\'ye ulaşabilirsiniz.' },
+  { S: 'Halfeti\'de konaklama seçenekleri neler?', C: 'Halfeti\'de butik oteller ve tatil evleri bulunmaktadır. Fırat Nehri kıyısındaki küçük oteller doğayla iç içe bir konaklama deneyimi sunar.' },
+];
+const { baseUrl } = await getSiteBranding();
 ---
 
 <Layout seo={seo}>
@@ -35,7 +46,7 @@ const seo = {
       <div class="container mx-auto px-4">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">Konaklama Rehberi</h1>
         <p class="text-xl text-amber-100 max-w-2xl">
-          Şanlıurfa'da oteller, butik tesisler ve pansiyonlar. Tarihi hanlardan modern otellere
+          Şanlıurfa’da oteller, butik tesisler ve pansiyonlar. Tarihi hanlardan modern otellere
         </p>
       </div>
     </div>
@@ -68,7 +79,7 @@ const seo = {
           <h2 class="text-2xl font-bold text-gray-900 mb-6">Tüm Konaklama Yerleri</h2>
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {hotels.map((hotel) => (
-              <a href={`/places/${hotel.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group">
+              <a href={`/isletme/${hotel.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group">
                 <div class="h-44 bg-gradient-to-br from-amber-100 to-yellow-100 flex items-center justify-center">
                   <span class="text-5xl opacity-50">🏨</span>
                 </div>
@@ -104,9 +115,26 @@ const seo = {
       item: {
         '@type': 'Hotel',
         name: h.name,
-        url: `https://sanliurfa.com/places/${h.slug}`,
+        url: `${baseUrl}/isletme/${h.slug}`,
         address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressCountry: 'TR' }
       }
     }))
-  })} />
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Konaklama', item: `${baseUrl}/konaklama` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

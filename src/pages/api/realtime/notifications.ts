@@ -26,8 +26,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
   };
 
   let isClosed = false;
-  let lastNotificationId = '';
-
   const response = new Response(
     new ReadableStream({
       async start(controller) {
@@ -46,9 +44,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
             try {
               // Get unread notifications for user
               const notifications = await queryMany(
-                `SELECT id, user_id, title, message, type, data, is_read, created_at
+                `SELECT id, user_id, title, message, type, created_at
                  FROM notifications
-                 WHERE user_id = $1 AND is_read = false
+                 WHERE user_id = $1 AND read = false
                  ORDER BY created_at DESC
                  LIMIT 10`,
                 [user.id]

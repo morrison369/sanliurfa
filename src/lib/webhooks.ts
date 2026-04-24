@@ -32,7 +32,7 @@ export class WebhookManager {
     return Array.from(this.webhooks.values());
   }
 
-  async trigger(event: string, payload: any): Promise<void> {
+  async trigger(event: string, _payload: any): Promise<void> {
     const matching = Array.from(this.webhooks.values())
       .filter(w => w.active && w.events.includes(event));
     

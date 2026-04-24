@@ -5,14 +5,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { followUser, unfollowUser, getFollowers, getFollowing } from '../../../lib/following';
+import { followUser, getFollowers, getFollowing } from '../../../lib/following';
 import { queryOne } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -33,12 +33,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
-    let data;
-    if (type === 'following') {
-      data = await getFollowing(user.id, limit, offset);
-    } else {
-      data = await getFollowers(user.id, limit, offset);
-    }
+    const data =
+      type === 'following'
+        ? await getFollowing(user.id, limit, offset)
+        : await getFollowers(user.id, limit, offset);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/following', HttpStatus.OK, duration);
@@ -68,7 +66,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

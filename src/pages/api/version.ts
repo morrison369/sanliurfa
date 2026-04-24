@@ -3,7 +3,7 @@ import { API_VERSIONS } from '../../lib/api/api-versioning';
 import { apiResponse, HttpStatus, getRequestId } from '../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   return apiResponse({
     versions: API_VERSIONS,

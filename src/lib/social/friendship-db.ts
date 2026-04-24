@@ -14,9 +14,9 @@ export interface Friendship {
   id: string;
   follower_user_id: string;
   following_user_id: string;
-  is_approved: boolean;
   followed_at: string;
   created_at: string;
+  is_approved?: boolean;
 }
 
 // Follow request
@@ -92,8 +92,8 @@ export async function followUser(followerId: string, followingId: string): Promi
     if (isPublic) {
       // Direct follow for public profiles
       const result = await client.query<Friendship>(
-        `INSERT INTO user_follows (follower_user_id, following_user_id, is_approved)
-         VALUES ($1, $2, true)
+        `INSERT INTO user_follows (follower_id, following_id, follower_user_id, following_user_id)
+         VALUES ($1, $2, $1, $2)
          RETURNING *`,
         [followerId, followingId]
       );
@@ -201,8 +201,8 @@ export async function acceptFollowRequest(requestId: string, userId: string): Pr
 
     // Create friendship
     const friendshipResult = await client.query<Friendship>(
-      `INSERT INTO user_follows (follower_user_id, following_user_id, is_approved)
-       VALUES ($1, $2, true)
+      `INSERT INTO user_follows (follower_id, following_id, follower_user_id, following_user_id)
+       VALUES ($1, $2, $1, $2)
        RETURNING *`,
       [request.requester_user_id, userId]
     );

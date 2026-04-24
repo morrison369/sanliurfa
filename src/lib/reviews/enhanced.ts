@@ -55,18 +55,17 @@ export async function createReview(input: CreateReviewInput): Promise<Review> {
   }
 
   const userResult = await query(
-    'SELECT full_name, avatar_url, is_local_guide FROM users WHERE id = $1',
+    'SELECT full_name, avatar_url FROM users WHERE id = $1',
     [input.userId]
   );
   const user = userResult.rows[0];
 
   const result = await query(
-    `INSERT INTO reviews (place_id, user_id, user_name, user_avatar, rating, title, comment, 
-                         visit_date, is_verified, is_local_guide, language, status, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false, $9, 'tr', 'active', NOW())
+    `INSERT INTO reviews (place_id, user_id, rating, title, content, visit_type, is_verified, status, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, false, 'active', NOW())
      RETURNING *`,
-    [input.placeId, input.userId, user?.full_name, user?.avatar_url, 
-     input.rating, input.title, input.comment, input.visitDate, user?.is_local_guide || false]
+    [input.placeId, input.userId, input.rating, input.title, input.comment,
+     input.visitDate ? 'visited' : null, false]
   );
 
   const review = result.rows[0];
@@ -123,7 +122,7 @@ export async function getPlaceReviews(
   let whereClause = "place_id = $1 AND status = 'active'";
   if (filter === 'verified') whereClause += ' AND is_verified = true';
   if (filter === 'withPhotos') whereClause += ' AND EXISTS(SELECT 1 FROM review_photos WHERE review_id = reviews.id)';
-  if (filter === 'localGuide') whereClause += ' AND is_local_guide = true';
+  if (filter === 'localGuide') whereClause += ' AND is_verified = true';
 
   let orderBy = 'created_at DESC';
   if (sortBy === 'oldest') orderBy = 'created_at ASC';
@@ -180,7 +179,7 @@ function mapReviewRow(row: any, photos: ReviewPhoto[] = []): Review {
     userAvatar: row.user_avatar,
     rating: row.rating,
     title: row.title,
-    comment: row.comment,
+    comment: row.content,
     photos,
     helpfulCount: row.helpful_count || 0,
     visitDate: row.visit_date,
@@ -231,10 +230,10 @@ export async function updateReview(
     values.push(updates.title);
   }
   if (updates.comment !== undefined) {
-    sets.push(`comment = $${idx++}`);
+    sets.push(`content = $${idx++}`);
     values.push(updates.comment);
   }
-  sets.push(`edited_at = NOW()`);
+  sets.push(`updated_at = NOW()`);
 
   values.push(reviewId, userId);
 

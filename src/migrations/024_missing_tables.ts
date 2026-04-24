@@ -152,7 +152,7 @@ export const migration_024_missing_tables = {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS blog_post_revisions (
         id SERIAL PRIMARY KEY,
-        post_id INTEGER REFERENCES blog_posts(id) ON DELETE CASCADE,
+        post_id UUID REFERENCES blog_posts(id) ON DELETE CASCADE,
         title VARCHAR(500),
         content TEXT,
         editor_id UUID REFERENCES users(id) ON DELETE SET NULL,

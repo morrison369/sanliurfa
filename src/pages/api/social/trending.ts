@@ -3,8 +3,8 @@ import { getTrendingHashtags, getTrendingPlaces } from '../../../lib/social/soci
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
-export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+export const GET: APIRoute = async ({ request, url }) => {
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -12,12 +12,14 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const limit = parseInt(url.searchParams.get('limit') || '20');
     const period = url.searchParams.get('period') || 'day';
 
-    let data;
-    if (type === 'hashtags') {
-      data = await getTrendingHashtags(limit, period);
-    } else if (type === 'places') {
-      data = await getTrendingPlaces(limit, period);
-    } else {
+    const data =
+      type === 'hashtags'
+        ? await getTrendingHashtags(limit, period)
+        : type === 'places'
+          ? await getTrendingPlaces(limit, period)
+          : null;
+
+    if (!data) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid type', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 

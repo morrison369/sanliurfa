@@ -6,21 +6,33 @@
 import type { APIRoute } from 'astro';
 import { requireRole } from '../../../lib/auth';
 import { createPlace } from '../../../lib/places/db';
+import { problemJson } from '../../../lib/api';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-import-unauthorized',
+        instance: '/api/admin/import',
+      });
+    }
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const categoryId = formData.get('categoryId') as string;
 
     if (!file) {
-      return new Response(
-        JSON.stringify({ error: 'Dosya gerekli' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Dosya gerekli',
+        type: '/problems/admin-import-file-required',
+        instance: '/api/admin/import',
+      });
     }
 
     const content = await file.text();
@@ -71,7 +83,7 @@ export const POST: APIRoute = async ({ request }) => {
           phone,
           latitude: lat ? parseFloat(lat) : undefined,
           longitude: lon ? parseFloat(lon) : undefined,
-          status: 'approved',
+          status: 'active',
         });
 
         results.success++;
@@ -86,9 +98,12 @@ export const POST: APIRoute = async ({ request }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'İmport başarısız' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'İçe Aktarım Başarısız',
+      detail: error instanceof Error ? error.message : 'İmport başarısız',
+      type: '/problems/admin-import-failed',
+      instance: '/api/admin/import',
+    });
   }
 };

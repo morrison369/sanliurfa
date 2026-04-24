@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Admin: User Subscription Management
  * GET /api/admin/subscriptions/users - List users with subscriptions
@@ -7,29 +6,34 @@
 
 import type { APIRoute } from 'astro';
 import { queryMany, queryOne } from '../../../../lib/postgres';
-import { getUserSubscriptionDetails, changeUserTier, logAdminAction } from '../../../../lib/subscription/subscription-admin';
+import { getUserSubscriptionDetails, changeUserTier } from '../../../../lib/subscription/subscription-admin';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
-import { validateWithSchema } from '../../../../lib/validation';
+import { validateWithSchema, type ValidationSchema } from '../../../../lib/validation';
 
-const changeTierSchema = {
+type ChangeTierPayload = {
+  newTierId: string;
+  reason?: string;
+};
+
+const changeTierSchema: ValidationSchema = {
   newTierId: {
-    type: 'string' as const,
+    type: 'string',
     required: true,
     minLength: 36,
     maxLength: 36,
   },
   reason: {
-    type: 'string' as const,
+    type: 'string',
     required: false,
     maxLength: 500,
   },
-} as any;
+};
 
 // GET - List users with subscriptions
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -38,7 +42,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       recordRequest('GET', '/api/admin/subscriptions/users', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
-        'Admin access required',
+        'Admin yetkisi gerekli',
         HttpStatus.FORBIDDEN,
         undefined,
         requestId
@@ -48,7 +52,8 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const search = url.searchParams.get('search');
     const tier = url.searchParams.get('tier');
     const status = url.searchParams.get('status') || 'active';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
+    const requestedLimit = Number.parseInt(url.searchParams.get('limit') || '50', 10);
+    const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 100) : 50;
 
     let sql = `SELECT u.id, u.email, u.full_name, s.id as subscription_id, st.display_name as tier, s.status, s.created_at
                FROM users u
@@ -56,7 +61,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
                LEFT JOIN subscription_tiers st ON s.tier_id = st.id
                WHERE 1=1`;
 
-    const params: any[] = [status];
+    const params: Array<string | number> = [status];
     let paramCount = 2;
 
     if (search) {
@@ -90,10 +95,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/subscriptions/users', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to get users', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Kullanıcı abonelik listesi alınamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get users',
+      'Kullanıcılar alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -102,8 +107,8 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 };
 
 // POST - Manage user subscription
-export const POST: APIRoute = async ({ request, locals, params, url }) => {
-  const requestId = getRequestId({ request } as any);
+export const POST: APIRoute = async ({ request, locals, url }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -112,7 +117,7 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
       recordRequest('POST', '/api/admin/subscriptions/users', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
-        'Admin access required',
+        'Admin yetkisi gerekli',
         HttpStatus.FORBIDDEN,
         undefined,
         requestId
@@ -124,7 +129,7 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
       recordRequest('POST', '/api/admin/subscriptions/users', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid user ID',
+        'Kullanıcı ID geçersiz',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -142,14 +147,14 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
         recordRequest('POST', '/api/admin/subscriptions/users', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
         return apiError(
           ErrorCode.VALIDATION_ERROR,
-          'Invalid input',
+          'Girdi geçersiz',
           HttpStatus.UNPROCESSABLE_ENTITY,
           validation.errors,
           requestId
         );
       }
 
-      const { newTierId, reason } = validation.data;
+      const { newTierId, reason } = validation.data as ChangeTierPayload;
 
       // Verify tier exists
       const tier = await queryOne('SELECT id FROM subscription_tiers WHERE id = $1', [newTierId]);
@@ -157,7 +162,7 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
         recordRequest('POST', '/api/admin/subscriptions/users', HttpStatus.NOT_FOUND, Date.now() - startTime);
         return apiError(
           ErrorCode.NOT_FOUND,
-          'Tier not found',
+          'Abonelik paketi bulunamadı',
           HttpStatus.NOT_FOUND,
           undefined,
           requestId
@@ -170,8 +175,8 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
       if (!success) {
         recordRequest('POST', '/api/admin/subscriptions/users', HttpStatus.BAD_REQUEST, Date.now() - startTime);
         return apiError(
-          ErrorCode.BAD_REQUEST,
-          'No active subscription found',
+          ErrorCode.INVALID_INPUT,
+          'Aktif abonelik bulunamadı',
           HttpStatus.BAD_REQUEST,
           undefined,
           requestId
@@ -183,7 +188,7 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
       return apiResponse(
         {
           success: true,
-          message: 'User tier changed successfully',
+          message: 'Kullanıcı abonelik paketi güncellendi',
         },
         HttpStatus.OK,
         requestId
@@ -198,7 +203,7 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
         recordRequest('POST', '/api/admin/subscriptions/users', HttpStatus.NOT_FOUND, Date.now() - startTime);
         return apiError(
           ErrorCode.NOT_FOUND,
-          'User or subscription not found',
+          'Kullanıcı veya abonelik bulunamadı',
           HttpStatus.NOT_FOUND,
           undefined,
           requestId
@@ -219,8 +224,8 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
 
     recordRequest('POST', '/api/admin/subscriptions/users', HttpStatus.BAD_REQUEST, Date.now() - startTime);
     return apiError(
-      ErrorCode.BAD_REQUEST,
-      'Invalid action',
+      ErrorCode.INVALID_INPUT,
+      'İşlem geçersiz',
       HttpStatus.BAD_REQUEST,
       undefined,
       requestId
@@ -228,10 +233,10 @@ export const POST: APIRoute = async ({ request, locals, params, url }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/subscriptions/users', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to manage user', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Kullanıcı aboneliği yönetilemedi', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to manage user',
+      'Kullanıcı aboneliği yönetilemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

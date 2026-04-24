@@ -2,7 +2,7 @@
  * Phase 379: Compliance Trust Continuity Mesh V6
  */
 
-import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
+import { SignalBook, computeBalancedScore, routeByThresholds } from './governance-kit';
 
 export interface ComplianceTrustContinuitySignalV6 {
   signalId: string;
@@ -34,7 +34,7 @@ class ComplianceTrustContinuityRouterV6 {
 }
 
 class ComplianceTrustContinuityReporterV6 {
-  report(signalId: string, route: string): string {
+  report(_signalId: string, _route: string): string {
     return "" as any;
   }
 }
@@ -50,4 +50,7 @@ export {
   ComplianceTrustContinuityRouterV6,
   ComplianceTrustContinuityReporterV6
 };
+
+
+
 

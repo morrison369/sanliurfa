@@ -120,12 +120,15 @@ export function validateCSPHeader(cspHeader: string): { valid: boolean; errors: 
  * Check if URL is safe for redirect
  */
 export function isSafeRedirectUrl(url: string, allowedOrigins: string[] = []): boolean {
+  const fallbackOrigin =
+    (typeof process !== 'undefined' && process.env && (process.env.PUBLIC_APP_URL || process.env.SITE_URL || process.env.PUBLIC_SITE_URL)) ||
+    'https://sanliurfa.com';
   try {
     // Block absolute URLs to different origins (open redirect prevention)
     if (url.startsWith('http://') || url.startsWith('https://')) {
       try {
         const urlObj = new URL(url);
-        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://sanliurfa.com';
+        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : fallbackOrigin;
 
         if (urlObj.origin !== currentOrigin && !allowedOrigins.includes(urlObj.origin)) {
           return false;

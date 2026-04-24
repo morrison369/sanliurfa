@@ -15,7 +15,7 @@ import os
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "zIT7Y9yrJZRV"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 REMOTE_DIR = "/home/sanliur/public_html"
 LOCAL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -95,13 +95,13 @@ def main():
     # Saglik kontrolu
     time.sleep(3)
     print_green("\n🏥 Saglik kontrolu...")
-    run_command(ssh, "curl -s http://127.0.0.1:6000/api/health")
+    run_command(ssh, "curl -s http://127.0.0.1:4321/api/health")
 
     print_green("\n" + "=" * 60)
     print_green("✅ DEPLOY TAMAMLANDI!")
     print_green("=" * 60)
     print_green("\nSite: https://sanliurfa.com")
-    print_green("Health: http://127.0.0.1:6000/api/health")
+    print_green("Health: http://127.0.0.1:4321/api/health")
     print_yellow("\nVeritabani seed icin calistirin:")
     print_yellow(f"  cd {REMOTE_DIR} && npx tsx scripts/seed-content.ts")
     

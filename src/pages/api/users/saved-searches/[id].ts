@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Delete a saved search
  * DELETE /api/users/saved-searches/[id]
@@ -32,10 +31,7 @@ export const DELETE: APIRoute = async (context) => {
 
     logger.info('Saved search deleted', { userId, searchId: id });
 
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      message: 'Arama silindi'
-    });
+    return apiResponse({ success: true, message: 'Arama silindi' }, HttpStatus.OK);
   } catch (error) {
     logger.error('Failed to delete saved search', error instanceof Error ? error : new Error(String(error)));
     return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to delete saved search');

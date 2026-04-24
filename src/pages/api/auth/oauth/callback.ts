@@ -7,11 +7,37 @@ import type { APIRoute } from 'astro';
 import { verifyOAuthState, getOAuthProvider, linkOAuthAccount, getOAuthAccountByProvider } from '../../../../lib/oauth';
 import { createUserSession } from '../../../../lib/security';
 import { queryOne } from '../../../../lib/postgres';
-import { apiError, apiResponse, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 
-export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+type OAuthProviderConfig = NonNullable<Awaited<ReturnType<typeof getOAuthProvider>>> & {
+  client_secret: string;
+};
+type OAuthState = {
+  provider_key: string;
+  redirect_uri: string;
+  user_id?: string | null;
+};
+type OAuthAccount = {
+  user_id?: string | null;
+};
+type OAuthTokenData = {
+  access_token: string;
+  refresh_token?: string;
+  expires_at: Date;
+};
+type OAuthUserInfo = {
+  id: string;
+  email: string;
+  name?: string;
+  picture?: string;
+};
+type UserIdRow = {
+  id: string;
+};
+
+export const GET: APIRoute = async ({ request, url }) => {
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -21,45 +47,45 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     if (error) {
       logger.warn('OAuth error', Object.assign(new Error('OAuth error'), { error, error_description: url.searchParams.get('error_description') }));
-      return apiError(ErrorCode.AUTHENTICATION_FAILED, `OAuth error: ${error}`, HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.AUTHENTICATION_FAILED, `OAuth hatası: ${error}`, HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     if (!code || !state) {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Code and state required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Kod ve state gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Verify state token
-    const oauthState = await verifyOAuthState(state);
+    const oauthState = await verifyOAuthState(state) as OAuthState | null;
     if (!oauthState) {
-      return apiError(ErrorCode.AUTHENTICATION_FAILED, 'Invalid or expired state', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.AUTHENTICATION_FAILED, 'State geçersiz veya süresi dolmuş', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Get provider
-    const provider = await getOAuthProvider(oauthState.provider_key);
+    const provider = await getOAuthProvider(oauthState.provider_key) as OAuthProviderConfig | null;
     if (!provider) {
-      return apiError(ErrorCode.NOT_FOUND, 'OAuth provider not found', HttpStatus.NOT_FOUND, undefined, requestId);
+      return apiError(ErrorCode.NOT_FOUND, 'OAuth sağlayıcısı bulunamadı', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
     // Exchange code for token (simplified - implement with provider SDK)
     const tokenData = await exchangeCodeForToken(provider, code, oauthState.redirect_uri);
     if (!tokenData) {
-      return apiError(ErrorCode.AUTHENTICATION_FAILED, 'Failed to exchange code', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.AUTHENTICATION_FAILED, 'Kod token ile değiştirilemedi', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Get user info from provider
     const userInfo = await getUserInfoFromProvider(provider, tokenData.access_token);
     if (!userInfo) {
-      return apiError(ErrorCode.AUTHENTICATION_FAILED, 'Failed to get user info', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.AUTHENTICATION_FAILED, 'Kullanıcı bilgisi alınamadı', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Check if OAuth account already exists
-    let oauthAccount = await getOAuthAccountByProvider(oauthState.provider_key, userInfo.id);
+    let oauthAccount = await getOAuthAccountByProvider(oauthState.provider_key, userInfo.id) as OAuthAccount | null;
 
     let userId = oauthAccount?.user_id;
 
     if (!userId) {
       // Check if user exists by email
-      const existingUser = await queryOne(
+      const existingUser = await queryOne<UserIdRow>(
         'SELECT id FROM users WHERE email = $1',
         [userInfo.email]
       );
@@ -67,7 +93,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       if (existingUser) {
         userId = existingUser.id;
       } else {
-        return apiError(ErrorCode.AUTHENTICATION_FAILED, 'User not found. Please sign up first.', HttpStatus.NOT_FOUND, undefined, requestId);
+        return apiError(ErrorCode.AUTHENTICATION_FAILED, 'Kullanıcı bulunamadı. Önce kayıt olun.', HttpStatus.NOT_FOUND, undefined, requestId);
       }
     }
 
@@ -100,7 +126,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     );
 
     if (!session) {
-      return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to create session', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+      return apiError(ErrorCode.INTERNAL_ERROR, 'Oturum oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
     }
 
     logger.info('OAuth login successful', { userId, provider: oauthState.provider_key });
@@ -116,11 +142,15 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     });
   } catch (error) {
     logger.error('OAuth callback failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'OAuth callback failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'OAuth geri dönüş işlemi başarısız', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
-async function exchangeCodeForToken(provider: any, code: string, redirectUri: string): Promise<any> {
+async function exchangeCodeForToken(
+  provider: OAuthProviderConfig,
+  code: string,
+  redirectUri: string
+): Promise<OAuthTokenData | null> {
   try {
     // In production, use provider SDK (like google-auth-library)
     // For now, simplified implementation
@@ -136,11 +166,14 @@ async function exchangeCodeForToken(provider: any, code: string, redirectUri: st
       }).toString()
     });
 
-    const data = await response.json();
+    const data = await response.json() as Record<string, unknown>;
+    if (typeof data.access_token !== 'string') return null;
+    const expiresIn = typeof data.expires_in === 'number' ? data.expires_in : 3600;
+
     return {
       access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      expires_at: new Date(Date.now() + data.expires_in * 1000)
+      refresh_token: typeof data.refresh_token === 'string' ? data.refresh_token : undefined,
+      expires_at: new Date(Date.now() + expiresIn * 1000),
     };
   } catch (error) {
     logger.error('Code exchange failed', error instanceof Error ? error : new Error(String(error)));
@@ -148,19 +181,26 @@ async function exchangeCodeForToken(provider: any, code: string, redirectUri: st
   }
 }
 
-async function getUserInfoFromProvider(provider: any, accessToken: string): Promise<any> {
+async function getUserInfoFromProvider(
+  provider: OAuthProviderConfig,
+  accessToken: string
+): Promise<OAuthUserInfo | null> {
   try {
     const response = await fetch(provider.userinfo_url, {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     });
 
-    const data = await response.json();
+    const data = await response.json() as Record<string, unknown>;
+    const id = typeof data.sub === 'string' ? data.sub : typeof data.id === 'string' ? data.id : '';
+    const email = typeof data.email === 'string' ? data.email : '';
+
+    if (!id || !email) return null;
 
     return {
-      id: data.sub || data.id,
-      email: data.email,
-      name: data.name,
-      picture: data.picture
+      id,
+      email,
+      name: typeof data.name === 'string' ? data.name : undefined,
+      picture: typeof data.picture === 'string' ? data.picture : undefined,
     };
   } catch (error) {
     logger.error('Get user info failed', error instanceof Error ? error : new Error(String(error)));

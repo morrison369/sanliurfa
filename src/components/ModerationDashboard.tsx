@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 
 interface Report {
   id: string;
@@ -66,7 +66,7 @@ export default function ModerationDashboard() {
     }
   };
 
-  const handleActionSubmit = async (e: React.FormEvent) => {
+  const handleActionSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!actionForm.report_id || !actionForm.target_user_id) {
       setError('Rapor ID ve kullanıcı ID gereklidir');

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * API: Loyalty Points
  * GET - User's loyalty points and balance

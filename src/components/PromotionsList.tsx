@@ -2,8 +2,7 @@
  * Promotions List Component
  * Display promotions in a grid or list format
  */
-
-import React, { useState, useEffect } from 'react';
+import {  useState, useEffect  } from 'react';
 import { PromotionCard } from './PromotionCard';
 
 interface Promotion {
@@ -49,14 +48,14 @@ export function PromotionsList({ placeId, trending = false, limit = 12 }: Promot
         const response = await fetch(url);
 
         if (!response.ok) {
-          throw new Error('Failed to fetch promotions');
+          throw new Error('Promosyonlar yüklenemedi.');
         }
 
         const data = await response.json();
         setPromotions(data.promotions || []);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Bilinmeyen hata oluştu.');
         setPromotions([]);
       } finally {
         setLoading(false);

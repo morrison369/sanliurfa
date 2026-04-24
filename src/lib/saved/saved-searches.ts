@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { pool } from '../postgres';
 import { logger } from '../logger';
 import { deleteCache } from '../cache';

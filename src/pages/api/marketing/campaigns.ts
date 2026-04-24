@@ -20,7 +20,7 @@ const createSchema = {
 
 // GET campaigns list
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -63,7 +63,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
 // POST create campaign
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -126,7 +126,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
 // PUT update campaign
 export const PUT: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -164,3 +164,4 @@ export const PUT: APIRoute = async ({ request, locals, url }) => {
     return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
+

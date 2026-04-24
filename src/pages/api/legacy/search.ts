@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Advanced Search with Filters
  * GET /api/search?q=kebab&category=restaurants&rating=4&sort=rating
@@ -11,9 +10,38 @@ import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
 import { applyLegacyHeaders } from '../../../lib/api/api-legacy';
+import { resolveContentImage } from '../../../lib/content-images';
+
+interface SearchPlaceRow {
+  id: string;
+  slug: string;
+  name: string;
+  category: string | null;
+  rating: string | number | null;
+  image_url: string | null;
+}
+
+interface SearchUserRow {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+}
+
+interface SearchCollectionRow {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+interface SearchResults {
+  places: Array<SearchPlaceRow & { image_url: string }>;
+  users: SearchUserRow[];
+  collections: SearchCollectionRow[];
+}
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -39,19 +67,19 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     // Check cache
     const cacheKey = `search:${q}:${type}:${category}:${minRating}:${sort}:${limit}`;
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<string>(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/search', HttpStatus.OK, Date.now() - startTime);
       return applyLegacyHeaders(apiResponse(JSON.parse(cached), HttpStatus.OK, requestId));
     }
 
     const searchTerm = '%' + q + '%';
-    let results = { places: [], users: [], collections: [] };
+    const results: SearchResults = { places: [], users: [], collections: [] };
 
     // Search places
     if (type === 'all' || type === 'places') {
-      let placesQuery = `SELECT id, name, category, rating, image_url FROM places WHERE status = 'active' AND (name ILIKE $1 OR description ILIKE $1)`;
-      const params: any[] = [searchTerm];
+      let placesQuery = `SELECT id, slug, name, category, rating, COALESCE(thumbnail_url, images[1]) as image_url FROM places WHERE status = 'active' AND (name ILIKE $1 OR COALESCE(short_description, description, '') ILIKE $1)`;
+      const params: Array<string | number> = [searchTerm];
       let paramCount = 2;
 
       if (category) {
@@ -77,13 +105,21 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       placesQuery += ` LIMIT $${paramCount}`;
       params.push(limit);
 
-      const places = await queryMany(placesQuery, params);
-      results.places = places;
+      const places = await queryMany<SearchPlaceRow>(placesQuery, params);
+      results.places = places.map((place) => ({
+        ...place,
+        image_url: resolveContentImage({
+          category: 'places',
+          slug: place.slug,
+          explicit: place.image_url,
+          placeholder: '/images/placeholder-place.jpg',
+        }),
+      }));
     }
 
     // Search users
     if (type === 'all' || type === 'users') {
-      const users = await queryMany(
+      const users = await queryMany<SearchUserRow>(
         `SELECT id, full_name, username, avatar_url FROM users WHERE full_name ILIKE $1 OR username ILIKE $1 LIMIT $2`,
         [searchTerm, Math.floor(limit / 2)]
       );
@@ -92,7 +128,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     // Search collections
     if (type === 'all' || type === 'collections') {
-      const collections = await queryMany(
+      const collections = await queryMany<SearchCollectionRow>(
         `SELECT id, name, description FROM place_collections WHERE public = true AND (name ILIKE $1 OR description ILIKE $1) LIMIT $2`,
         [searchTerm, Math.floor(limit / 2)]
       );

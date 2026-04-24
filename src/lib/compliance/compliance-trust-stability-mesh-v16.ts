@@ -2,7 +2,7 @@
  * Phase 439: Compliance Trust Stability Mesh V16
  */
 
-import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
+import { SignalBook, computeBalancedScore, routeByThresholds } from './governance-kit';
 
 export interface ComplianceTrustStabilitySignalV16 {
   signalId: string;
@@ -34,7 +34,7 @@ class ComplianceTrustStabilityRouterV16 {
 }
 
 class ComplianceTrustStabilityReporterV16 {
-  report(signalId: string, route: string): string {
+  report(_signalId: string, _route: string): string {
     return "" as any;
   }
 }
@@ -50,4 +50,7 @@ export {
   ComplianceTrustStabilityRouterV16,
   ComplianceTrustStabilityReporterV16
 };
+
+
+
 

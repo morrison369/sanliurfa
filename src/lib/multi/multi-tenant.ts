@@ -458,7 +458,6 @@ export function buildTenantQuery(baseQuery: string, tenantId: string, paramIndex
   // Usage: buildTenantQuery("SELECT * FROM places WHERE category = $1", tenantId, 1)
   // Results in: "SELECT * FROM places WHERE tenant_id = $1 AND category = $2"
 
-  const placeholder = `$${paramIndex}`;
   const tenantPlaceholder = `$${paramIndex + 1}`;
 
   let modifiedQuery = baseQuery;

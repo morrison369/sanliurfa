@@ -8,7 +8,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logger';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     if (!locals.isAdmin) {
@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const [totalResult, unreadResult, todayResult, subscriptionsResult] = await Promise.all([
       query('SELECT COUNT(*) FROM notifications', []),
-      query("SELECT COUNT(*) FROM notifications WHERE is_read = false", []),
+      query("SELECT COUNT(*) FROM notifications WHERE read = false", []),
       query("SELECT COUNT(*) FROM notifications WHERE created_at >= NOW() - INTERVAL '1 day'", []),
       query('SELECT COUNT(*) FROM push_subscriptions WHERE is_active = true', []),
     ]);

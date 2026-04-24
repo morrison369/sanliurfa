@@ -53,9 +53,10 @@ pm2 delete $PM2_NAME 2>/dev/null
 echo "🔄 PM2 başlatılıyor..."
 pm2 start "$APP_DIR/ecosystem.config.cjs" --name $PM2_NAME
 
-# PM2'yi kullanıcı oturumu başladığında otomatik başlat
+# PM2 process listesini kaydet
 pm2 save
-pm2 startup 2>/dev/null || echo "⚠️ 'pm2 startup' komutunu manuel çalıştırmanız gerekebilir"
+echo "ℹ️ CWP shared hosting ortamında 'pm2 startup' genellikle root gerektirir; otomatik çağrı atlandı."
+echo "ℹ️ Sunucu reboot sonrası otomatik kalkış için kullanıcı crontab'ına '@reboot pm2 resurrect' ekleyin."
 
 echo ""
 echo "📊 PM2 Durumu:"

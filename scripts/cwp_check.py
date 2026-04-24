@@ -10,7 +10,7 @@ import sys
 HOST = "176.9.138.254"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 def main():
     print("🚀 CWP Sunucu Kontrolü")
@@ -91,7 +91,7 @@ def main():
         ("netstat -tlnp 2>/dev/null | grep ':80 ' || ss -tlnp | grep ':80 '", "HTTP (80)"),
         ("netstat -tlnp 2>/dev/null | grep ':443 ' || ss -tlnp | grep ':443 '", "HTTPS (443)"),
         ("netstat -tlnp 2>/dev/null | grep ':2083 ' || ss -tlnp | grep ':2083 '", "CWP Panel (2083)"),
-        ("netstat -tlnp 2>/dev/null | grep ':3000 ' || ss -tlnp | grep ':3000 '", "Node.js (3000)"),
+        ("netstat -tlnp 2>/dev/null | grep ':4321 ' || ss -tlnp | grep ':4321 '", "Node.js (4321)"),
     ]
     
     for cmd, label in port_checks:

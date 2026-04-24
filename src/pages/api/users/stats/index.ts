@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Get user statistics including activity trends
  * GET /api/users/stats?userId=...
@@ -25,13 +24,7 @@ export const GET: APIRoute = async (context) => {
 
     const trends = await getActivityTrends(userId);
 
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      data: {
-        ...stats,
-        trends
-      }
-    });
+    return apiResponse({ success: true, data: { ...stats, trends } }, HttpStatus.OK);
   } catch (error) {
     logger.error('Failed to get user stats', error instanceof Error ? error : new Error(String(error)));
     return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to get user stats');

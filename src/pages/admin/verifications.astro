@@ -16,7 +16,7 @@ if (!user || user.role !== 'admin') {
 const seo = {
   title: 'Mekan Doğrulama Yönetimi - Admin',
   description: 'Mekan sahiplerinin doğrulama başvurularını inceleyin ve yönetin',
-  noindex: true
+  noIndex: true
 };
 ---
 
@@ -28,7 +28,7 @@ const seo = {
         <p class="text-gray-600 dark:text-gray-400">Mekan sahiplerinin doğrulama başvurularını inceleyin ve yönetin.</p>
       </div>
 
-      <AdminVerificationQueue client:load />
+      <AdminVerificationQueue client:visible />
     </div>
   </div>
 </Layout>

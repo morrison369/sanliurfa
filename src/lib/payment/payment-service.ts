@@ -88,7 +88,7 @@ export function initPaymentService(): void {
   if (PAYMENT_CONFIG.stripe.secretKey) {
     currentProvider = 'stripe';
     logger.info('[Payment] Using Stripe provider');
-  } else if (PAYMENT_CONFIG.iyizico.apiKey && PAYMENT_CONFIG.iyizico.secretKey) {
+  } else if (PAYMENT_CONFIG.iyzico.apiKey && PAYMENT_CONFIG.iyzico.secretKey) {
     currentProvider = 'iyzico';
     logger.info('[Payment] Using iyzico provider');
   } else {
@@ -390,14 +390,14 @@ export function getPaymentStats(): {
  * Generate payment ID
  */
 function generatePaymentId(): string {
-  return `pay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `pay_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
 /**
  * Generate subscription ID
  */
 function generateSubscriptionId(): string {
-  return `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `sub_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
 /**
@@ -409,3 +409,4 @@ export function getPaymentProvider(): string {
 
 // Initialize on module load
 initPaymentService();
+

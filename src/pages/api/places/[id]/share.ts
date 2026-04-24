@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { sharePlace, getShareCount } from '../../../../lib/social/social-interactions';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
@@ -6,7 +5,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -43,7 +42,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

@@ -83,14 +83,22 @@ export const migration_126_data_warehouse = async (pool: Pool) => {
         avg_rating FLOAT,
         interaction_count INT DEFAULT 0,
         share_count INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(date_key, place_key, COALESCE(user_key, '00000000-0000-0000-0000-000000000000'::UUID))
+        created_at TIMESTAMP DEFAULT NOW()
       )
     `);
 
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_fact_place_activity_date_place
       ON fact_place_activity(date_key, place_key)
+    `);
+
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_fact_place_activity_unique
+      ON fact_place_activity(
+        date_key,
+        place_key,
+        COALESCE(user_key, '00000000-0000-0000-0000-000000000000'::UUID)
+      )
     `);
 
     await pool.query(`
@@ -107,9 +115,13 @@ export const migration_126_data_warehouse = async (pool: Pool) => {
         measures JSONB NOT NULL,
         aggregation_level VARCHAR(50),
         valid_until TIMESTAMP,
-        computed_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(cube_name, aggregation_level, (dimension_keys::text))
+        computed_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_olap_aggregates_unique
+      ON olap_aggregates(cube_name, aggregation_level, (dimension_keys::text))
     `);
 
     await pool.query(`

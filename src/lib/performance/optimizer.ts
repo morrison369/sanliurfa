@@ -155,7 +155,7 @@ async function getCacheStats(): Promise<any[]> {
 /**
  * Optimize images batch
  */
-export async function optimizeImages(options: {
+export async function optimizeImages(_options: {
   quality?: number;
   maxWidth?: number;
   concurrency?: number;

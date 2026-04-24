@@ -15,8 +15,12 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
+type DeleteAccountPrivacyBody = {
+  reason?: unknown;
+};
+
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -63,7 +67,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -79,7 +83,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const body = await request.json();
+    const body = await request.json() as DeleteAccountPrivacyBody;
     const { reason } = body;
 
     // Validate reason (optional but recommended)
@@ -94,11 +98,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const deletionRequest = await requestDataDeletion(locals.user.id, reason);
+    const normalizedReason = typeof reason === 'string' && reason.trim().length > 0
+      ? reason.trim()
+      : undefined;
+    const deletionRequest = await requestDataDeletion(locals.user.id, normalizedReason);
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/users/privacy/delete-account', HttpStatus.CREATED, duration);
-    logger.logMutation('create', 'data_deletion_requests', deletionRequest.id, locals.user.id, { reason });
+    logger.logMutation('create', 'data_deletion_requests', deletionRequest.id, locals.user.id);
 
     return apiResponse(
       {
@@ -135,7 +142,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -151,13 +158,11 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const cancelled = await cancelDataDeletion(locals.user.id);
+    await cancelDataDeletion(locals.user.id);
 
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/users/privacy/delete-account', HttpStatus.OK, duration);
-    logger.logMutation('update', 'data_deletion_requests', locals.user.id, locals.user.id, {
-      status: 'cancelled'
-    });
+    logger.logMutation('update', 'data_deletion_requests', locals.user.id, locals.user.id);
 
     return apiResponse(
       {
@@ -191,3 +196,4 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     );
   }
 };
+

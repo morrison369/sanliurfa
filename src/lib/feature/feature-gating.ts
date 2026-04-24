@@ -5,6 +5,7 @@
 
 import { getActiveSubscription } from '../subscription/subscription-management';
 import { logger } from '../logger';
+import { PHASE1_FREE_MODE } from '../runtime/phase-policy';
 
 /**
  * Feature definition mapping tier levels to available features
@@ -126,6 +127,10 @@ export async function hasFeatureAccess(
   userId: string,
   feature: FeatureName
 ): Promise<boolean> {
+  if (PHASE1_FREE_MODE) {
+    return true;
+  }
+
   try {
     const subscription = await getActiveSubscription(userId);
 
@@ -145,6 +150,10 @@ export async function hasFeatureAccess(
  * Get tier name and level from user subscription
  */
 export async function getUserTierInfo(userId: string): Promise<{ name: string; level: number } | null> {
+  if (PHASE1_FREE_MODE) {
+    return { name: 'faz1-ucretsiz', level: 99 };
+  }
+
   try {
     const subscription = await getActiveSubscription(userId);
 

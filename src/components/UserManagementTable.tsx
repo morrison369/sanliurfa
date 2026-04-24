@@ -2,7 +2,7 @@
  * User Management Table Component
  * Manage users and their account status
  */
-import React, { useState, useEffect } from 'react';
+import {  useState, useEffect  } from 'react';
 import { Search, AlertCircle, Eye } from 'lucide-react';
 
 interface User {

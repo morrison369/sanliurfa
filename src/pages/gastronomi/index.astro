@@ -1,6 +1,9 @@
 ---
+
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const icons = {
   Utensils: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>',
@@ -31,19 +34,22 @@ try {
 const seo = {
   title: 'Gastronomi Rehberi - Urfa Lezzetleri',
   description: 'Şanlıurfa mutfağının eşsiz lezzetlerini keşfedin. Ciğer kebabı, çiğ köfte, isot ve daha fazlası.',
+  keywords: ['urfa mutfağı', 'şanlıurfa gastronomi', 'urfa kebabı', 'şanlıurfa yemekleri', 'urfa çiğ köfte', 'şanlıurfa isot', 'urfa lezzetleri', 'şanlıurfa yöresel yemekler'],
+  ogImage: '/images/blog/sanliurfa-lezzetler-2026.webp',
+  canonical: '/gastronomi',
 };
 
 let featuredFoods: any[] = [];
 try {
   const foodsResult = await query(
-    `SELECT id, slug, name, description, cover_image, images, is_spicy, difficulty, rating
-     FROM foods ORDER BY rating DESC NULLS LAST LIMIT 4`
+    `SELECT id, slug, name, description, cover_image, is_spicy, difficulty, rating
+     FROM recipes WHERE status = 'published' ORDER BY is_featured DESC, rating DESC NULLS LAST LIMIT 4`
   );
   featuredFoods = foodsResult.rows.map((f: any) => ({
-    id: f.slug || f.id,
+    id: f.slug,
     name: f.name,
     description: f.description || '',
-    image: f.cover_image || (f.images?.[0]) || '/images/foods/default.jpg',
+    image: f.cover_image || '/images/foods/default.jpg',
     isSpicy: f.is_spicy || false,
     difficulty: f.difficulty || '',
     rating: parseFloat(f.rating) || 0,
@@ -51,7 +57,23 @@ try {
 } catch (e) {
   console.error('Error loading featured foods:', e);
 }
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa\'nın en meşhur yemekleri neler?',
+    C: 'Şanlıurfa mutfağının başında çiğ köfte, Urfa kebabı, tandır ciğeri, lahmacun ve borani gelmektedir. İsot (kurutulmuş kırmızı biber), Urfa mutfağının vazgeçilmez lezzetidir.',
+  },
+  {
+    S: 'Şanlıurfa mutfağı neden ünlüdür?',
+    C: 'Mezopotamya\'nın merkezinde yer alan Şanlıurfa, binlerce yıllık yemek kültürüne ev sahipliği yapar. Baharatlı et yemekleri, tahıl bazlı tarifler ve yöresel tatlılarıyla UNESCO Gastronomi Şehri adayları arasındadır.',
+  },
+  {
+    S: 'Şanlıurfa\'da isot nereden alınır?',
+    C: 'İsot, Şanlıurfa\'nın kapalı çarşısı ve tarihi Gümrük Hanı çevresindeki aktarlardan ve yöresel ürün dükkanlarından satın alınabilir.',
+  },
+];
 ---
+
 
 <Layout seo={seo}>
   <section class="relative py-24 lg:py-32 bg-gradient-to-br from-urfa-800 to-urfa-900 overflow-hidden">
@@ -69,7 +91,7 @@ try {
           <span class="text-urfa-200">Gastronomi Rehberi</span>
         </h1>
         <p class="text-xl text-urfa-100 mb-8 leading-relaxed">
-          UNESCO Gastronomi Şehri adayı Şanlıurfa'nın dünyaca ünlü mutfağını keşfedin.
+          UNESCO Gastronomi Şehri adayı Şanlıurfa’nın dünyaca ünlü mutfağını keşfedin.
         </p>
         <div class="flex flex-wrap gap-4">
           <a href="#yemekler" class="btn-accent">
@@ -119,7 +141,7 @@ try {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {featuredFoods.map((food) => (
           <article class="card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden group">
-            <a href={`/gastronomi/${food.id}`}>
+            <a href={`/yemek-tarifleri/${food.id}`}>
               <div class="relative aspect-square overflow-hidden">
                 <img 
                   src={food.image}
@@ -173,7 +195,7 @@ try {
             Usta ellerden çıkan, geleneksel tariflerle hazırlanan lezzetleri sunan en iyi restoranlar.
           </p>
         </div>
-        <a href="/places?category=restaurant" class="btn-outline inline-flex items-center gap-2">
+        <a href="/mekanlar?category=restaurant" class="btn-outline inline-flex items-center gap-2">
           Tüm Restoranları Gör
           <span set:html={icons.ArrowRight}></span>
         </a>
@@ -182,7 +204,7 @@ try {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {restaurants?.map((restaurant) => (
           <article class="card-hover bg-white dark:bg-gray-800 rounded-xl overflow-hidden group">
-            <a href={`/places/${restaurant.slug}`}>
+            <a href={`/isletme/${restaurant.slug}`}>
               <div class="relative aspect-video overflow-hidden">
                 <img 
                   src={restaurant.images?.[0] || '/images/placeholder-place.jpg'}
@@ -221,4 +243,39 @@ try {
       </div>
     </div>
   </section>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Şanlıurfa Gastronomi Rehberi',
+    description: 'Şanlıurfa\'nın en iyi restoranları, kebapçıları ve yöresel lezzetleri',
+    url: `${baseUrl}/gastronomi`,
+    itemListElement: restaurants.slice(0, 10).map((r: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Restaurant',
+        name: r.name,
+        url: `${baseUrl}/isletme/${r.slug}`,
+        address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressCountry: 'TR' },
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Gastronomi', item: `${baseUrl}/gastronomi` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

@@ -3,7 +3,7 @@
  * Allows users to submit verification requests for places
  */
 
-import React, { useState } from 'react';
+import { useState} from 'react';
 
 interface VerificationRequestFormProps {
   placeId: string;
@@ -37,14 +37,13 @@ export function VerificationRequestForm({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setState({ isLoading: true, error: null, success: false });
 
     try {
-      // In a real app, you'd upload documents to a file service first
-      // For now, just send the verification request
+      // Belgeler şimdilik metadata olarak gönderiliyor.
       const response = await fetch(`/api/places/${placeId}/request-verification`, {
         method: 'POST',
         headers: {
@@ -57,21 +56,21 @@ export function VerificationRequestForm({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Verification request failed');
+        throw new Error(errorData.error || 'Doğrulama talebi gönderilemedi.');
       }
 
       setState({ isLoading: false, error: null, success: true });
       onSuccess?.();
 
-      // Reset form
+      // Formu sıfırla.
       setDocuments([]);
 
-      // Clear success message after 3 seconds
+      // Başarı mesajını 3 saniye sonra temizle.
       setTimeout(() => {
         setState({ isLoading: false, error: null, success: false });
       }, 3000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage = err instanceof Error ? err.message : 'Bilinmeyen hata oluştu.';
       setState({ isLoading: false, error: errorMessage, success: false });
       onError?.(errorMessage);
     }
@@ -97,7 +96,7 @@ export function VerificationRequestForm({
       {state.success && (
         <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-sm text-green-700">
-            ✓ Doğrulama talebiniz başarıyla gönderildi. Admin tarafından incelenecektir.
+            Doğrulama talebiniz başarıyla gönderildi. Yönetim ekibi tarafından incelenecektir.
           </p>
         </div>
       )}

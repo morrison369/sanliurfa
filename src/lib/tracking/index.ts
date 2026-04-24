@@ -60,14 +60,14 @@ export interface UserJourney {
  * Generate unique visitor ID
  */
 export function generateVisitorId(): string {
-  return `v_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `v_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
 /**
  * Generate session ID
  */
 export function generateSessionId(): string {
-  return `s_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `s_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
 /**
@@ -193,7 +193,7 @@ export async function getAnalyticsDashboard(
     referrerResult
   ] = await Promise.all([
     query(`SELECT COUNT(*) FROM page_views WHERE created_at >= $1`, [startDate]),
-    query(`SELECT COUNT(DISTINCT visitor_id) FROM page_views WHERE created_at >= $1`, [startDate]),
+    query(`SELECT COUNT(DISTINCT COALESCE(user_id::text, session_id)) FROM page_views WHERE created_at >= $1`, [startDate]),
     query(`
       SELECT AVG(duration) as avg_duration FROM (
         SELECT session_id, 
@@ -443,7 +443,7 @@ export async function trackConversion(
   properties?: Record<string, any>
 ): Promise<void> {
   const sessionResult = await query(
-    `SELECT visitor_id FROM page_views WHERE session_id = $1 LIMIT 1`,
+    `SELECT COALESCE(user_id::text, session_id) as visitor_id FROM page_views WHERE session_id = $1 LIMIT 1`,
     [sessionId]
   );
   const visitorId = sessionResult.rows[0]?.visitor_id || '';

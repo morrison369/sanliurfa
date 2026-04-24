@@ -4,6 +4,8 @@
  */
 
 import { sendEmail } from './email-service';
+import { getPublicAppUrl } from '../public-app-url';
+const PUBLIC_APP_URL = getPublicAppUrl();
 
 interface NotificationData {
   to: string;
@@ -63,7 +65,7 @@ export async function sendNewReviewNotification(data: NotificationData & {
         </div>
         <div class="footer">
           <p>Bu e-posta Sanliurfa.com tarafindan otomatik olarak gonderilmistir.</p>
-          <p><a href="https://sanliurfa.com">sanliurfa.com</a></p>
+          <p><a href="${PUBLIC_APP_URL}">sanliurfa.com</a></p>
         </div>
       </div>
     </body>

@@ -66,7 +66,7 @@ class RealtimeManager {
     }
 
     let recipientCount = 0;
-    for (const [clientId, client] of this.clients) {
+    for (const [_clientId, client] of this.clients) {
       if (client.channels.has(channel)) {
         recipientCount++;
       }
@@ -75,9 +75,9 @@ class RealtimeManager {
     return recipientCount;
   }
 
-  async sendToUser(userId: string, type: string, data: Record<string, any>): Promise<number> {
+  async sendToUser(userId: string, _type: string, _data: Record<string, any>): Promise<number> {
     let recipientCount = 0;
-    for (const [clientId, client] of this.clients) {
+    for (const [_clientId, client] of this.clients) {
       if (client.userId === userId) {
         recipientCount++;
       }

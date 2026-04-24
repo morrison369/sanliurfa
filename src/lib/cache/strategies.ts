@@ -175,22 +175,18 @@ export async function staleWhileRevalidate(
   const cached = await cache.match(request);
 
   // Return cached immediately if available
-  const fetchPromise = fetch(request).then(networkResponse => {
+  const fetchPromise: Promise<Response> = fetch(request).then(networkResponse => {
     if (networkResponse.ok) {
       cache.put(request, networkResponse.clone());
     }
     return networkResponse;
-  }).catch(() => {
-    // Network failed, already returned cache
-  });
+  }).catch(() => new Response(null, { status: 503 }));
 
   if (cached) {
-    // Revalidate in background
     fetchPromise.catch(() => {});
     return cached;
   }
 
-  // No cache, wait for network
   return fetchPromise;
 }
 
@@ -471,3 +467,4 @@ export const CACHE_STRATEGIES = {
   networkOnly,
   cacheOnly,
 };
+

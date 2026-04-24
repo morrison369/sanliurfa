@@ -8,7 +8,7 @@ interface Props {
 const { type = 'card', count = 1, class: className = '' } = Astro.props;
 ---
 
-{Array.from({ length: count }).map((_, i) => (
+{Array.from({ length: count }).map((_) => (
   <div class:list={[
     'animate-pulse',
     type === 'card' && 'bg-white dark:bg-gray-800 rounded-xl p-4',

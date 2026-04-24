@@ -1,17 +1,21 @@
 // API: Event update (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { update } from '../../../../lib/postgres';
 import { logger } from '../../../../lib/logging';
+import { problemJson } from '../../../../lib/api';
+import { updateAdminEvent } from '../../../../lib/admin/events-admin';
 
 export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
   try {
     const { id } = params;
     
     if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/events-update-unauthorized',
+        instance: `/api/events/${id}/update`,
+      });
     }
 
     const formData = await request.formData();
@@ -23,24 +27,23 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
     const endDate = formData.get('end_date')?.toString();
     const category = formData.get('category')?.toString();
     const image = formData.get('image')?.toString();
-    const isFeatured = formData.get('is_featured') === 'on';
+    const isFeatured = formData.get('is_featured')?.toString();
     const status = formData.get('status')?.toString() || 'draft';
 
     if (!title || !description || !location || !startDate || !category) {
       return redirect(`/admin/events/edit/${id}?error=missing_fields`);
     }
 
-    await update('events', id, {
+    await updateAdminEvent(id || '', {
       title,
       description,
       location,
-      start_date: startDate,
-      end_date: endDate || null,
+      startDate,
+      endDate: endDate || null,
       category,
-      image_url: image,
-      is_featured: isFeatured,
+      image: image || null,
+      isFeatured: isFeatured || null,
       status,
-      updated_at: new Date().toISOString(),
     });
 
     return redirect('/admin/events?success=updated');

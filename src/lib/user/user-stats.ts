@@ -186,7 +186,7 @@ export async function getUserTopRatedPlaces(userId: string, limit: number = 5) {
       `SELECT
         p.id,
         p.name,
-        p.image,
+        COALESCE(p.thumbnail_url, p.images[1]) as image,
         r.rating,
         r.created_at
        FROM reviews r
@@ -251,7 +251,7 @@ export async function getUserContributionScore(userId: string): Promise<number> 
  */
 export async function getUserRankingPercentile(userId: string): Promise<number> {
   try {
-    const userScore = await getUserContributionScore(userId);
+    await getUserContributionScore(userId);
 
     const result = await queryOne(
       `SELECT COUNT(*) as count FROM users

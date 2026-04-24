@@ -16,14 +16,17 @@ import React from 'react';
 /*  SVG İkonlar - Her varyant için özel ikon                          */
 /* ------------------------------------------------------------------ */
 
+type EmptyStateIconProps = React.SVGProps<SVGSVGElement>;
+
 // Veri yok ikonu - Klasör
-const IconNoData: React.FC<{ className?: string }> = ({ className }) => (
+const IconNoData: React.FC<EmptyStateIconProps> = ({ className, ...props }) => (
   <svg
     className={className}
     viewBox="0 0 64 64"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
+    {...props}
   >
     <path
       d="M8 16C8 14.8954 8.89543 14 10 14H22L28 20H54C55.1046 20 56 20.8954 56 22V50C56 51.1046 55.1046 52 54 52H10C8.89543 52 8 51.1046 8 50V16Z"
@@ -42,13 +45,14 @@ const IconNoData: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 // Sonuç yok ikonu - Arama
-const IconNoResults: React.FC<{ className?: string }> = ({ className }) => (
+const IconNoResults: React.FC<EmptyStateIconProps> = ({ className, ...props }) => (
   <svg
     className={className}
     viewBox="0 0 64 64"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
+    {...props}
   >
     <circle cx="26" cy="26" r="16" stroke="currentColor" strokeWidth="2.5" />
     <path
@@ -67,13 +71,14 @@ const IconNoResults: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 // Hata ikonu - Uyarı üçgeni
-const IconError: React.FC<{ className?: string }> = ({ className }) => (
+const IconError: React.FC<EmptyStateIconProps> = ({ className, ...props }) => (
   <svg
     className={className}
     viewBox="0 0 64 64"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
+    {...props}
   >
     <path
       d="M32 8L4 56H60L32 8Z"
@@ -93,13 +98,14 @@ const IconError: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 // Çevrimdışı ikonu - Wifi kesik
-const IconOffline: React.FC<{ className?: string }> = ({ className }) => (
+const IconOffline: React.FC<EmptyStateIconProps> = ({ className, ...props }) => (
   <svg
     className={className}
     viewBox="0 0 64 64"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
+    {...props}
   >
     <path
       d="M4 24C10.5 16.5 20.5 12 32 12C43.5 12 53.5 16.5 60 24"
@@ -136,7 +142,7 @@ const IconOffline: React.FC<{ className?: string }> = ({ className }) => (
 type EmptyVariant = 'no-data' | 'no-results' | 'error' | 'offline';
 
 interface VariantConfig {
-  icon: React.FC<{ className?: string }>;
+  icon: React.FC<EmptyStateIconProps>;
   defaultTitle: string;
   defaultDescription: string;
   defaultActionText: string;
@@ -260,3 +266,4 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 };
 
 export default EmptyState;
+

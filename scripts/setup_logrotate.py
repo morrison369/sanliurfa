@@ -5,7 +5,7 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 def main():
     ssh = paramiko.SSHClient()
@@ -25,7 +25,7 @@ def main():
         "cwd": "/home/sanliur/public_html",
         "env": {
           "NODE_ENV": "production",
-          "PORT": 6000
+          "PORT": 4321
         },
         "instances": 1,
         "exec_mode": "fork",

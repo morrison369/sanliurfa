@@ -104,7 +104,6 @@ export class VendorAnalytics {
 export class KPIManager {
   private kpis = new Map<string, (vendorId: string) => number>();
   private targets = new Map<string, Map<string, number>>();
-  private healthChecks = new Map<string, string[]>();
 
   /**
    * Define KPI with calculator function
@@ -187,7 +186,7 @@ export class ReportGenerator {
    * Generate report
    */
   generateReport(vendorId: string, type: 'sales' | 'performance' | 'financial'): Report {
-    const reportId = 'report-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const reportId = 'report-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
 
     const report: Report = {
       vendorId,
@@ -206,7 +205,7 @@ export class ReportGenerator {
    * Schedule recurring report
    */
   scheduleReport(vendorId: string, type: string, frequency: string): string {
-    const scheduleId = 'schedule-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const scheduleId = 'schedule-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
 
     this.reportSchedules.set(scheduleId, {
       type,

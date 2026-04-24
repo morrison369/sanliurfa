@@ -5,7 +5,6 @@
 
 import { query, queryOne, queryMany, insert, update } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
-import { createNotification } from '../notification/notifications-queue';
 import { logger } from '../logger';
 
 export interface ReviewFlag {
@@ -276,5 +275,6 @@ export async function verifyReviewerPurchase(reviewId: string): Promise<boolean>
     return false;
   }
 }
+
 
 

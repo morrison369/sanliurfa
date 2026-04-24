@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getAllFlags, isEnabled } from '../../lib/feature-flags/feature-flags';
+import { problemJson } from '../../lib/api';
 
 // GET: Get all flag values for current user
 export const GET: APIRoute = async ({ locals }) => {
@@ -22,9 +23,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: 'Invalid request' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 400,
+      title: 'Geçersiz İstek',
+      detail: 'Geçersiz istek gövdesi',
+      type: '/problems/flags-invalid-request',
+      instance: '/api/flags',
+    });
   }
 };

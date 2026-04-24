@@ -4,6 +4,7 @@
  */
 import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
+import { hasColumn, pickFirstExistingColumn } from './schema-compat';
 
 export async function searchPlaces(
   query: string,
@@ -13,14 +14,16 @@ export async function searchPlaces(
   offset: number = 0
 ): Promise<any[]> {
   try {
+    const hasPlacesCity = await hasColumn('places', 'city');
+    const hasPlacesDistrict = await hasColumn('places', 'district');
     let sql = `
       SELECT
         p.id,
         p.name,
         p.description,
         p.category,
-        p.city,
-        p.district,
+        ${hasPlacesCity ? 'p.city' : 'NULL::text AS city'},
+        ${hasPlacesDistrict ? 'p.district' : 'NULL::text AS district'},
         p.latitude,
         p.longitude,
         p.rating,
@@ -51,7 +54,7 @@ export async function searchPlaces(
       paramIndex++;
     }
 
-    if (filters?.city) {
+    if (filters?.city && hasPlacesCity) {
       sql += ` AND p.city = $${paramIndex}`;
       params.push(filters.city);
       paramIndex++;
@@ -141,13 +144,14 @@ export async function searchEvents(
   offset: number = 0
 ): Promise<any[]> {
   try {
+    const hasEventsCity = await hasColumn('events', 'city');
     let sql = `
       SELECT
         e.id,
         e.title,
         e.description,
         e.event_date,
-        e.city,
+        ${hasEventsCity ? 'e.city' : 'NULL::text AS city'},
         e.category,
         e.created_at,
         ts_rank(
@@ -168,7 +172,7 @@ export async function searchEvents(
       paramIndex++;
     }
 
-    if (filters?.city) {
+    if (filters?.city && hasEventsCity) {
       sql += ` AND e.city = $${paramIndex}`;
       params.push(filters.city);
       paramIndex++;
@@ -197,34 +201,61 @@ export async function recordSearchQuery(
   filters?: any
 ): Promise<void> {
   try {
+    const searchQueryColumn = await pickFirstExistingColumn('search_history', ['query', 'search_query']);
+    const resultCountColumn = await pickFirstExistingColumn('search_history', ['results_count', 'result_count']);
+    const searchTypeColumn = await pickFirstExistingColumn('search_history', ['search_type']);
+    const filtersColumn = await pickFirstExistingColumn('search_history', ['filters']);
+
+    if (!searchQueryColumn || !resultCountColumn) {
+      return;
+    }
+
     await insert('search_history', {
       user_id: userId,
-      search_query: searchQuery,
-      search_type: searchType,
-      result_count: resultCount,
-      filters: filters ? JSON.stringify(filters) : null
+      [searchQueryColumn]: searchQuery,
+      ...(searchTypeColumn ? { [searchTypeColumn]: searchType } : {}),
+      [resultCountColumn]: resultCount,
+      ...(filtersColumn ? { [filtersColumn]: filters ? JSON.stringify(filters) : null } : {})
     });
 
     // Update analytics
-    const existing = await queryOne(
-      'SELECT id FROM search_analytics WHERE search_query = $1 AND search_type = $2',
-      [searchQuery, searchType]
-    );
+    const analyticsHasSearchCount = await hasColumn('search_analytics', 'search_count');
+    const analyticsHasAvgResultCount = await hasColumn('search_analytics', 'avg_result_count');
+    const analyticsHasType = await hasColumn('search_analytics', 'search_type');
+    if (!analyticsHasSearchCount) {
+      return;
+    }
+    const analyticsWhere = analyticsHasType
+      ? 'search_query = $1 AND search_type = $2'
+      : 'search_query = $1';
+    const analyticsParams = analyticsHasType ? [searchQuery, searchType] : [searchQuery];
+
+    const existing = await queryOne(`SELECT id FROM search_analytics WHERE ${analyticsWhere}`, analyticsParams);
 
     if (existing) {
-      await update('search_analytics', { search_query: searchQuery, search_type: searchType }, {
-        search_count: (await queryOne(
-          'SELECT COUNT(*) as count FROM search_history WHERE search_query = $1 AND search_type = $2',
-          [searchQuery, searchType]
-        )).count || 0,
-        last_searched_at: new Date()
-      });
+      const historyWhere = searchTypeColumn
+        ? `${searchQueryColumn} = $1 AND ${searchTypeColumn} = $2`
+        : `${searchQueryColumn} = $1`;
+      const historyParams = searchTypeColumn ? [searchQuery, searchType] : [searchQuery];
+      const countResult = await queryOne<{ count?: string }>(
+        `SELECT COUNT(*) as count FROM search_history WHERE ${historyWhere}`,
+        historyParams
+      );
+
+      await update(
+        'search_analytics',
+        analyticsHasType ? { search_query: searchQuery, search_type: searchType } : { search_query: searchQuery },
+        {
+          search_count: Number(countResult?.count || '0'),
+          last_searched_at: new Date()
+        }
+      );
     } else {
       await insert('search_analytics', {
         search_query: searchQuery,
-        search_type: searchType,
+        ...(analyticsHasType ? { search_type: searchType } : {}),
         search_count: 1,
-        avg_result_count: resultCount,
+        ...(analyticsHasAvgResultCount ? { avg_result_count: resultCount } : {}),
         last_searched_at: new Date()
       });
     }
@@ -235,6 +266,7 @@ export async function recordSearchQuery(
 
 export async function getTrendingSearches(searchType: string = 'places', limit: number = 10): Promise<any[]> {
   try {
+    const analyticsHasType = await hasColumn('search_analytics', 'search_type');
     const results = await queryMany(`
       SELECT
         search_query,
@@ -242,10 +274,10 @@ export async function getTrendingSearches(searchType: string = 'places', limit: 
         trend_score,
         last_searched_at
       FROM search_analytics
-      WHERE search_type = $1 AND is_trending = true
+      WHERE ${analyticsHasType ? 'search_type = $1 AND ' : ''}is_trending = true
       ORDER BY trend_score DESC
-      LIMIT $2
-    `, [searchType, limit]);
+      LIMIT $${analyticsHasType ? 2 : 1}
+    `, analyticsHasType ? [searchType, limit] : [limit]);
     return results;
   } catch (error) {
     logger.error('Failed to get trending searches', error instanceof Error ? error : new Error(String(error)));
@@ -255,15 +287,16 @@ export async function getTrendingSearches(searchType: string = 'places', limit: 
 
 export async function getSearchFilters(searchType: string): Promise<any[]> {
   try {
+    const filtersHasType = await hasColumn('search_filters', 'search_type');
     const filters = await queryMany(`
       SELECT
         filter_key,
         filter_label,
         filter_values
       FROM search_filters
-      WHERE search_type = $1 AND is_active = true
+      WHERE ${filtersHasType ? 'search_type = $1 AND ' : ''}is_active = true
       ORDER BY display_order ASC
-    `, [searchType]);
+    `, filtersHasType ? [searchType] : []);
     return filters;
   } catch (error) {
     logger.error('Failed to get search filters', error instanceof Error ? error : new Error(String(error)));

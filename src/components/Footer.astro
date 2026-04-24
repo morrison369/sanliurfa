@@ -1,7 +1,9 @@
 ---
+import { getSiteSetting } from '../lib/site-content';
+
 const currentYear = new Date().getFullYear();
 
-const footerLinks = {
+const footerLinksFallback = {
   explore: [
     { label: 'Mekanlar', href: '/mekanlar' },
     { label: 'Kebapçılar', href: '/mekanlar/kebapcilar' },
@@ -22,26 +24,65 @@ const footerLinks = {
     { label: 'En İyi Kebapçılar', href: '/en-iyi-kebapcilar' },
     { label: 'Kahvaltı Mekanları', href: '/sanliurfa-kahvalti-mekanlari' },
     { label: 'Ne Yenir?', href: '/sanliurfada-ne-yenir' },
+    { label: 'Yemek Tarifleri', href: '/yemek-tarifleri' },
     { label: 'Nöbetçi Eczaneler', href: '/saglik/nobetci-eczaneler' },
+    { label: 'Topluluk Özellikleri', href: '/topluluk' },
     { label: 'Hafta Sonu Rehberi', href: '/blog/sanliurfa-hafta-sonu-rehberi' },
     { label: 'Blog', href: '/blog' },
   ],
   company: [
     { label: 'Hakkımızda', href: '/hakkinda' },
     { label: 'İletişim', href: '/iletisim' },
-    { label: 'İşletme Ekleyin', href: '/iletisim' },
+    { label: 'İşletme Ekleyin', href: '/isletme-kayit' },
     { label: 'Gizlilik Politikası', href: '/gizlilik-politikasi' },
     { label: 'Kullanım Koşulları', href: '/kullanim-kosullari' },
     { label: 'KVKK', href: '/kvkk' },
   ],
+  services: [
+    { label: 'Nöbetçi Eczaneler', href: '/saglik/nobetci-eczaneler' },
+    { label: 'Otobüs Saatleri', href: '/ulasim/otobus-saatleri' },
+    { label: 'Uçak Saatleri', href: '/ulasim/ucak-saatleri' },
+    { label: 'Etkinlik Takvimi', href: '/etkinlikler' },
+    { label: 'Yemek Tarifleri', href: '/yemek-tarifleri' },
+    { label: 'Premium Üyelik', href: '/fiyatlandirma' },
+    { label: 'İlçe Rehberi', href: '/ilceler' },
+    { label: 'Mekan Rehberi', href: '/mekanlar' },
+  ],
 };
 
-const socialLinks = [
-  { label: 'Facebook', icon: '📘', href: '#' },
-  { label: 'Instagram', icon: '📷', href: '#' },
-  { label: 'Twitter', icon: '🐦', href: '#' },
-  { label: 'YouTube', icon: '📺', href: '#' },
-];
+const footerLinks = await getSiteSetting('footer.links', footerLinksFallback);
+const footerBrandFallback = {
+  title: 'Sanliurfa.com',
+  highlight: '.com',
+  description:
+    "Şanlıurfa’nın en kapsamlı şehir rehberi. Mekanlar, gezilecek yerler, etkinlikler ve daha fazlası.",
+  infoNote: 'Resmi sosyal medya hesabımız bulunmamaktadır.',
+};
+const footerBottomFallback = {
+  copyrightLabel: `© ${currentYear} Sanliurfa.com — Tarihin Sıfır Noktası`,
+  legalLinks: [
+    { label: 'Gizlilik', href: '/gizlilik-politikasi' },
+    { label: 'Koşullar', href: '/kullanim-kosullari' },
+    { label: 'İletişim', href: '/iletisim' },
+  ],
+};
+
+const footerBrand = await getSiteSetting('footer.brand', footerBrandFallback);
+const footerBottom = await getSiteSetting('footer.bottom', footerBottomFallback);
+const socialProfilesFallback = {
+  instagram: { enabled: false, handle: '', url: '' },
+  tiktok: { enabled: false, handle: '', url: '' },
+  youtube: { enabled: false, handle: '', url: '' },
+  x: { enabled: false, handle: '', url: '' },
+};
+const socialProfilesRaw = await getSiteSetting('social.profiles', socialProfilesFallback);
+const socialProfiles = Object.entries(socialProfilesRaw as Record<string, any>)
+  .filter(([, v]) => v?.enabled && v?.url)
+  .map(([platform, v]) => ({ platform, url: v.url, handle: v.handle || '' }));
+const bottomLinks = Array.isArray((footerBottom as any)?.legalLinks)
+  ? (footerBottom as any).legalLinks
+  : footerBottomFallback.legalLinks;
+
 ---
 
 <footer class="bg-gray-900 text-white">
@@ -50,19 +91,14 @@ const socialLinks = [
       {/* Brand */}
       <div class="lg:col-span-2">
         <a href="/" class="text-2xl font-bold text-white mb-4 inline-block">
-          Şanlıurfa<span class="text-red-500">.com</span>
+          {(footerBrand as any).title || 'Sanliurfa'}<span class="text-red-500">{(footerBrand as any).highlight || '.com'}</span>
         </a>
         <p class="text-gray-400 mb-6 max-w-sm">
-          Şanlıurfa'nın en kapsamlı şehir rehberi. Mekanlar, gezilecek yerler,
-          etkinlikler ve daha fazlası.
+          {(footerBrand as any).description || footerBrandFallback.description}
         </p>
-        <div class="flex gap-4">
-          {socialLinks.map(social => (
-            <a href={social.href} class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-700 transition-colors" aria-label={social.label}>
-              <span class="text-xl">{social.icon}</span>
-            </a>
-          ))}
-        </div>
+        <p class="text-sm text-gray-500">
+          {(footerBrand as any).infoNote || footerBrandFallback.infoNote}
+        </p>
       </div>
 
       <div>
@@ -102,15 +138,57 @@ const socialLinks = [
       </div>
     </div>
 
+    <div class="mb-8 rounded-2xl border border-gray-800 bg-gray-950 p-5">
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div>
+          <p class="text-xs uppercase tracking-wider text-gray-500">Platform</p>
+          <p class="mt-1 text-sm text-gray-300">Şanlıurfa odaklı yerel dijital rehber</p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-gray-500">Kapsam</p>
+          <p class="mt-1 text-sm text-gray-300">Mekan, sağlık, ulaşım, gezi, ilçe ve tarif içerikleri</p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-gray-500">Hızlı Servisler</p>
+          <ul class="mt-1 space-y-1">
+            {footerLinks.services.slice(0, 3).map((link) => (
+              <li><a href={link.href} class="text-sm text-gray-300 hover:text-white transition-colors">{link.label}</a></li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-gray-500">Bilgilendirme</p>
+          {socialProfiles.length > 0 ? (
+            <ul class="mt-1 space-y-1">
+              {socialProfiles.map((profile) => (
+                <li>
+                  <a
+                    href={profile.url}
+                    rel="noopener noreferrer nofollow"
+                    target="_blank"
+                    class="text-sm text-gray-300 hover:text-white transition-colors"
+                  >
+                    {profile.platform.toUpperCase()} {profile.handle}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="mt-1 text-sm text-gray-300">{(footerBrand as any).infoNote || footerBrandFallback.infoNote}</p>
+          )}
+        </div>
+      </div>
+    </div>
+
     {/* Bottom */}
     <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
       <p class="text-gray-400 text-sm">
-        © {currentYear} Şanlıurfa.com — Tarihin Sıfır Noktası
+        {(footerBottom as any).copyrightLabel || footerBottomFallback.copyrightLabel}
       </p>
       <div class="flex gap-6 text-sm text-gray-400">
-        <a href="/gizlilik-politikasi" class="hover:text-white transition-colors">Gizlilik</a>
-        <a href="/kullanim-kosullari" class="hover:text-white transition-colors">Koşullar</a>
-        <a href="/iletisim" class="hover:text-white transition-colors">İletişim</a>
+        {bottomLinks.map((link: { label: string; href: string }) => (
+          <a href={link.href} class="hover:text-white transition-colors">{link.label}</a>
+        ))}
       </div>
     </div>
   </div>

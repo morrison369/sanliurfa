@@ -58,7 +58,7 @@ echo -e "${YELLOW}🏥 Sağlık kontrolü...${NC}"
 sleep 3
 
 # Portu ecosystem.config.cjs'den al
-PORT=$(grep -oP 'PORT[=:]\s*\K[0-9]+' "$APP_DIR/ecosystem.config.cjs" 2>/dev/null || echo "6000")
+PORT=$(grep -oP 'PORT[=:]\s*\K[0-9]+' "$APP_DIR/ecosystem.config.cjs" 2>/dev/null || echo "4321")
 
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$PORT/api/health" 2>/dev/null || echo "000")
 

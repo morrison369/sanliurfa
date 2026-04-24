@@ -14,6 +14,10 @@ Sanliurfa'nin en kapsamli mekan rehberi platformu.
 
 ## Ozellikler
 
+### Urun Politikasi (Faz 1)
+- [x] Ilk asamada tum ozellikler ucretsiz ve tam acik
+- [x] Premium/uyelik kilidi yok (erken erisim donemi)
+
 ### Genel
 - [x] Ana sayfa (Hero, arama, kategoriler, one cikan mekanlar)
 - [x] Arama sistemi (Full-text search + filtreler)
@@ -22,6 +26,8 @@ Sanliurfa'nin en kapsamli mekan rehberi platformu.
 - [x] SEO optimizasyonu
 - [x] PWA destegi
 - [x] Dark mode
+- [x] Astro core prefetch (dahili linklerde hizli gecis)
+- [x] Astro remote image authorization (Pexels/Unsplash)
 
 ### Mekanlar
 - [x] Mekan listeleme ve detay sayfalari
@@ -37,6 +43,13 @@ Sanliurfa'nin en kapsamli mekan rehberi platformu.
 - [x] Favori mekanlar
 - [x] Yorum yapma
 - [x] Sosyal giris (Google)
+- [x] Uyeler arasi mesajlasma
+- [x] Arkadas ekleme / takip sistemi
+- [x] Uye profiline en fazla 4 foto ekleme
+- [x] Swipe tabanli eslesme (saga/sola kaydirma)
+- [x] Eslesen uyeler ile mesajlasma baslatma
+- [x] Eslesme aninda otomatik sohbet olusturma
+- [x] Gunluk swipe limiti (konfigure edilebilir)
 
 ### Isletme Paneli (Vendor)
 - [x] Dashboard
@@ -53,6 +66,11 @@ Sanliurfa'nin en kapsamli mekan rehberi platformu.
 - [x] Isletme onay/red
 - [x] Blog yonetimi
 - [x] Destek ticketlari
+- [x] Site icerik yonetimi (DB-first)
+- [x] Ana sayfa hero metin/gorsel yonetimi (admin + database)
+- [x] Header hizli linkleri ve footer link gruplari (admin + database)
+- [x] Ana sayfa ana CTA alani (admin + database)
+- [x] Ana sayfa hizli moduller, rehber linkleri ve SSS (admin + database)
 
 ### Iletisim
 - [x] Iletisim formu
@@ -66,6 +84,7 @@ Sanliurfa'nin en kapsamli mekan rehberi platformu.
 - [x] Input validasyonu
 - [x] Webhook sistemi
 - [x] Health check endpoint
+- [x] Partytown ile 3. parti scriptleri web worker'da calistirma
 
 ## Docker ile Kurulum
 
@@ -132,6 +151,10 @@ GET /api/health - Saglik kontrolu
 - `/giris` - Giris
 - `/kayit` - Kayit
 - `/profil` - Profilim
+- `/mesajlar` - Uye mesajlasma merkezi
+- `/takipciler` - Takipciler
+- `/takip-edilenler` - Takip edilenler
+- `/eslesme` - Swipe eslesme ve profil foto yonetimi
 
 ### Isletme
 - `/vendor/dashboard` - Panel
@@ -139,6 +162,7 @@ GET /api/health - Saglik kontrolu
 
 ### Admin
 - `/admin` - Dashboard
+- `/admin/site-content` - Site icerik yonetimi (DB-first)
 - `/admin/users` - Kullanicilar
 - `/admin/places` - Isletmeler
 - `/admin/blog` - Blog yonetimi
@@ -155,6 +179,22 @@ GET /api/health - Saglik kontrolu
 - `GET /api/places/[id]` - Detay
 - `POST /api/places/apply` - Basvuru yap
 - `POST /api/places/[id]/reviews` - Yorum ekle
+- `POST /api/places/submit` - Uye tarafindan mekan ekleme
+- `POST /api/places/[id]/like` - Mekan begenme/etkilesim
+- `POST /api/places/[id]/share` - Mekan paylasim kaydi
+
+### Social
+- `POST /api/social/follow` - Takip/arkadaslik iliskisi
+- `GET /api/social/followers` - Takipci/takip edilen listesi
+- `GET /api/messages` - Konusma listesi
+- `POST /api/messages` - Alici ile konusma baslat
+- `GET/POST/DELETE /api/messages/[conversationId]` - Mesajlari listele/gonder/konusmayi gizle
+- `GET /api/social/feed` - Aktivite akisi
+- `GET/POST /api/social/match-profile` - Eslesme profili (max 4 foto)
+- `GET /api/social/match-candidates` - Swipe adaylari
+- `POST /api/social/swipe` - Sola/saga kaydirma
+- `GET /api/social/matches` - Eslesen uyeler
+- `GET /api/social/capabilities` - Sosyal ozellik durumu + swipe kotasi
 
 ### Search
 - `GET /api/search?q=` - Ara
@@ -172,6 +212,7 @@ GET /api/health - Saglik kontrolu
 - `GET /api/admin/dashboard` - Istatistikler
 - `GET/PUT /api/admin/users` - Kullanici yonetimi
 - `GET/PUT /api/admin/places` - Isletme yonetimi
+- `GET/PUT /api/admin/site/settings?key=...` - Site ayarlari (DB-first icerik)
 
 ### User
 - `GET/POST/DELETE /api/user/favorites` - Favoriler
@@ -220,6 +261,12 @@ REDIS_URL=redis://localhost:6379
 
 # API Keys
 GOOGLE_MAPS_API_KEY=
+PUBLIC_FACEBOOK_PIXEL_ID=
+PUBLIC_TIKTOK_PIXEL_ID=
+SOCIAL_OPEN_ACCESS=true
+SOCIAL_TINDER_ENABLED=true
+SOCIAL_AUTO_CONVERSATION=true
+SOCIAL_SWIPE_DAILY_LIMIT=100
 
 # Application
 NODE_ENV=production
@@ -293,9 +340,59 @@ npm run test:unit
 # E2E testler
 npm run test:e2e
 
+# PR icin hizli E2E (sadece chromium)
+npm run test:e2e:chromium
+
+# Gece tam matrix E2E
+npm run test:e2e:nightly
+
 # Load test
 npm run load:test
 ```
+
+### API Release Gate
+
+```bash
+# OpenAPI + endpoint contract + smoke gate (onerilen)
+npm run api:release:gate
+
+# Workflow dosyalari standart/hijyen dogrulamasi (onerilen)
+npm run workflow:standards:verify
+
+# Workflow standard otomatik duzeltme kontrolu
+npm run workflow:standards:autofix:check
+
+# API contract suite (coverage threshold dahil)
+npm run test:api-contract:coverage
+
+# OpenAPI route drift regression gate
+npm run openapi:sync:routes:gate
+
+# Baseline dosyasini guncelle (bilincli operasyon)
+npm run openapi:sync:routes:baseline
+
+# Sadece degisen dosyalarda lint (PR gate)
+npm run lint:changed
+
+# OpenAPI gap domain ozeti
+npm run openapi:gap:summary
+
+# Secret leakage taramasi
+npm run security:scan-secrets
+
+# Migration duplicate kontrolu
+npm run db:migrate:check-duplicates
+```
+
+Not: `docs/openapi-route-gap-baseline.json` dosyasi mevcut dokumante edilmemis route setini sabitler.
+Yeni bir route dosyasi eklenip OpenAPI'ye eklenmezse gate fail olur.
+
+CI notu: API degisikliklerinde hizli kontrol icin `.github/workflows/api-contract-gate.yml`
+workflow'u otomatik calisir ve PR'a OpenAPI gap ozeti yorumu yazar.
+
+Guvenlik notu: key rotation adimlari icin `docs/security-key-rotation-runbook.md` dosyasini izleyin.
+PR parcalama plani icin `docs/pr-split-plan.md` dosyasini kullanin.
+Branch protection checklist icin `docs/branch-protection-checklist.md` dosyasini kullanin.
 
 ## Katkida Bulunma
 
@@ -309,6 +406,8 @@ npm run load:test
 
 - [Deployment Rehberi](DEPLOYMENT.md) - Detayli deployment adimlari
 - [API Dokumantasyonu](src/pages/api/docs.ts) - API endpoint referansi
+- [OpenAPI Coverage Plan](docs/openapi-coverage-plan.md) - Gap azaltma sprint plani
+- [Type-Check Priority Backlog](docs/typecheck-priority-backlog.md) - Tip hatasi kapanis sirasi
 
 ## Lisans
 

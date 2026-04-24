@@ -1,7 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { SubscriptionManager } from '../components/SubscriptionManager';
-import BillingHistory from '../components/BillingHistory';
 
 // Require authentication
 if (!Astro.locals.user) {
@@ -9,29 +8,34 @@ if (!Astro.locals.user) {
 }
 ---
 
-<Layout title="Abonelik Yönetimi - Şanlıurfa">
+<Layout title="Üyelik Durumu - Şanlıurfa">
   <div class="max-w-4xl mx-auto px-4 py-8">
     <!-- Header -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-        Abonelik Yönetimi
+        Üyelik Durumu
       </h1>
       <p class="text-gray-600 dark:text-gray-400">
-        Aktif aboneliğinizi yönetin, planı değiştirin veya ödeme geçmişini görüntüleyin
+        Faz 1 açık erişim döneminde tüm özellikler ücretsiz olarak sunulmaktadır.
       </p>
     </div>
 
     <!-- Subscription Manager -->
     <div class="mb-12">
-      <SubscriptionManager client:load onUpgrade={() => window.location.href = '/fiyatlandirma'} />
+      <SubscriptionManager
+        client:visible={{ rootMargin: '140px' }}
+        onUpgrade={() => window.location.href = '/fiyatlandirma'}
+      />
     </div>
 
     <!-- Billing History -->
     <div class="mb-8">
       <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-        Ödeme Geçmişi
+        Bilgilendirme
       </h2>
-      <BillingHistory client:load />
+      <div class="rounded-lg border border-green-200 bg-green-50 p-4 text-green-900">
+        Bu aşamada ücretli faturalama devre dışı. Ödeme geçmişi ekranı daha sonraki fazlarda aktif edilecektir.
+      </div>
     </div>
 
     <!-- Help Section -->
@@ -40,7 +44,7 @@ if (!Astro.locals.user) {
         Yardıma İhtiyacınız var mı?
       </h3>
       <p class="text-blue-800 dark:text-blue-400 mb-4">
-        Aboneliğinizle ilgili sorularınız varsa, lütfen iletişim kurun.
+        Üyelik modeliyle ilgili sorularınız için bizimle iletişime geçebilirsiniz.
       </p>
       <a
         href="mailto:support@sanliurfa.com"

@@ -61,7 +61,7 @@ export async function getPlaceBusinessAnalytics(placeId: string, days: number = 
     }
 
     const place = await queryOne(
-      'SELECT id, title, rating, visit_count, follower_count FROM places WHERE id = $1',
+      'SELECT id, name as title, rating, visit_count, follower_count FROM places WHERE id = $1',
       [placeId]
     );
 
@@ -168,7 +168,7 @@ export async function getReviewAnalysis(placeId: string): Promise<ReviewAnalysis
     );
 
     const recentReviews = await queryMany(
-      `SELECT id, user_id, rating, comment, created_at FROM reviews
+      `SELECT id, user_id, rating, content, created_at FROM reviews
        WHERE place_id = $1 ORDER BY created_at DESC LIMIT 5`,
       [placeId]
     );
@@ -411,7 +411,7 @@ export async function getTopPerformingPlaces(limit: number = 10): Promise<any[]>
     const results = await queryMany(
       `SELECT
         p.id,
-        p.title,
+        p.name as title,
         p.rating,
         COUNT(DISTINCT pv.id) as visitor_count,
         COUNT(DISTINCT r.id) as review_count,
@@ -422,7 +422,7 @@ export async function getTopPerformingPlaces(limit: number = 10): Promise<any[]>
        LEFT JOIN reviews r ON p.id = r.place_id
        LEFT JOIN events e ON p.id = e.place_id AND e.start_date > NOW()
        LEFT JOIN promotions pr ON p.id = pr.place_id AND pr.is_active = true
-       GROUP BY p.id, p.title, p.rating
+       GROUP BY p.id, p.name, p.rating
        ORDER BY p.rating DESC, visitor_count DESC
        LIMIT $1`,
       [limit]
@@ -809,7 +809,7 @@ export async function createReport(
 ): Promise<Report | null> {
   try {
     const result = await queryOne(
-      `INSERT INTO reports (name, description, owner_id, report_type, metric_ids, filters, schedule, format, recipients, is_active)
+      `INSERT INTO analytics_reports (name, description, owner_id, report_type, metric_ids, filters, schedule, format, recipients, is_active)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true)
        RETURNING id, name, description, owner_id, report_type, metric_ids, filters, schedule, next_run_at, format, recipients, is_active, created_at, updated_at`,
       [
@@ -839,7 +839,7 @@ export async function getReports(userId: string, isActive: boolean = true): Prom
   try {
     const results = await queryMany(
       `SELECT id, name, description, owner_id, report_type, metric_ids, filters, schedule, next_run_at, format, recipients, is_active, created_at, updated_at
-       FROM reports
+       FROM analytics_reports
        WHERE owner_id = $1 AND is_active = $2
        ORDER BY created_at DESC`,
       [userId, isActive]

@@ -46,7 +46,6 @@ export interface AnomalyDetection {
 
 export class InsightEngine {
   private insights: Insight[] = [];
-  private insightCount = 0;
 
   /**
    * Generate insights
@@ -113,7 +112,7 @@ export class InsightEngine {
   /**
    * Get trend insights
    */
-  getTrendInsights(metric: string, periods: number): Insight[] {
+  getTrendInsights(metric: string, _periods: number): Insight[] {
     return [
       {
         id: 'insight-' + Date.now() + '-trend-1',
@@ -132,7 +131,7 @@ export class InsightEngine {
   /**
    * Get recommendations
    */
-  getRecommendations(userId: string, context: Record<string, any>): Insight[] {
+  getRecommendations(userId: string, _context: Record<string, any>): Insight[] {
     return [
       {
         id: 'insight-' + Date.now() + '-rec-1',
@@ -151,7 +150,7 @@ export class InsightEngine {
   /**
    * Score insight relevance
    */
-  scoreInsightRelevance(insight: Insight, userId: string): number {
+  scoreInsightRelevance(_insight: Insight, _userId: string): number {
     return Math.random();
   }
 }
@@ -187,14 +186,14 @@ export class PredictiveAnalytics {
   /**
    * Predict customer churn
    */
-  predictCustomerChurn(customerId: string): number {
+  predictCustomerChurn(_customerId: string): number {
     return Math.random() * 100;
   }
 
   /**
    * Predict revenue opportunity
    */
-  predictRevenueOpportunity(accountId: string): number {
+  predictRevenueOpportunity(_accountId: string): number {
     return 5000 + Math.random() * 45000;
   }
 
@@ -226,7 +225,7 @@ export class PredictiveAnalytics {
   /**
    * Predictive scoring
    */
-  predictiveScoring(entityType: string, entityId: string): number {
+  predictiveScoring(_entityType: string, _entityId: string): number {
     return Math.round(Math.random() * 100);
   }
 }
@@ -268,7 +267,7 @@ export class AnomalyDetector {
   /**
    * Get baseline metrics
    */
-  getBaselineMetrics(metric: string): Record<string, number> {
+  getBaselineMetrics(_metric: string): Record<string, number> {
     return {
       mean: 100,
       stdDev: 15,

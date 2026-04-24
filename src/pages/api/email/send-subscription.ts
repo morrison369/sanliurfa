@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Send Subscription Confirmation Email
  */
@@ -18,7 +17,7 @@ const schema = {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -53,7 +52,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.NOT_FOUND, 'User not found', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
-    const html = getSubscriptionEmailHTML(user.full_name || 'Kullanıcı', tier, price);
+    const html = getSubscriptionEmailHTML(user.full_name || 'Kullanıcı');
 
     const sent = await sendEmail({
       to: user.email,

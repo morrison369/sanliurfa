@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Send Password Reset Email
  */
@@ -11,13 +10,19 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { createToken } from '../../../lib/auth';
+import { getCache, setCache } from '../../../lib/cache';
+
+const RATE_LIMIT = 3;
+const RATE_WINDOW = 3600; // 1 saat
+
+const PUBLIC_APP_URL = (process.env.PUBLIC_APP_URL || 'https://sanliurfa.com').replace(/\/$/, '');
 
 const schema = {
   email: { type: 'string' as const, required: true, pattern: '^[^@]+@[^@]+\\.[^@]+$' }
 };
 
 export const POST: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -38,6 +43,15 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { email } = validation.data as { email: string };
 
+    // Rate limiting per email
+    const rateLimitKey = `reset:email:${email.toLowerCase()}`;
+    const attemptCount = Number(await getCache(rateLimitKey).catch(() => null)) || 0;
+    if (attemptCount >= RATE_LIMIT) {
+      recordRequest('POST', '/api/email/send-reset', HttpStatus.OK, Date.now() - startTime);
+      return apiResponse({ success: true, data: { email, sent: false } }, HttpStatus.OK, requestId);
+    }
+    await setCache(rateLimitKey, attemptCount + 1, RATE_WINDOW).catch(() => null);
+
     // Check if user exists
     const user = await queryOne('SELECT id, full_name FROM users WHERE email = $1', [email]);
 
@@ -49,13 +63,13 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Create reset token (valid for 24 hours)
     const resetToken = createToken({ userId: user.id, email, role: 'user' });
-    const resetLink = `https://sanliurfa.com/reset-password?token=${resetToken}`;
+    const resetLink = `${PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
 
     const html = getPasswordResetEmailHTML(user.full_name || 'Kullanıcı', resetLink);
 
     const sent = await sendEmail({
       to: email,
-      subject: 'Şifreni Sıfırla - Şanlıurfa.com',
+      subject: 'Şifreni Sıfırla - Sanliurfa.com',
       html
     });
 

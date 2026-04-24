@@ -11,7 +11,7 @@ if (!user) {
 let reviews: any[] = [];
 let icons: any = {};
 const seo = {
-    title: 'Yorumlarım - Şanlıurfa.com',
+    title: 'Yorumlarım - Sanliurfa.com',
     description: 'Yaptığınız yorumları görüntüleyin.',
   };
 
@@ -28,7 +28,7 @@ try {
   reviews = result.rows;
 
   // SVG ikonlar
-  const icons = {
+  icons = {
     user: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
     messageSquare: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
     heart: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
@@ -90,7 +90,7 @@ try {
                   <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                     <div class="flex items-start justify-between">
                       <div>
-                        <a href={`/places/${review.place_slug}`} class="font-semibold text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400">
+                        <a href={`/isletme/${review.place_slug}`} class="font-semibold text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400">
                           {review.place_name}
                         </a>
                         <div class="flex items-center gap-0.5 mt-1">
@@ -120,7 +120,7 @@ try {
                 <span set:html={icons.messageLarge}></span>
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Henüz yorum yok</h3>
                 <p class="text-gray-600 dark:text-gray-400 mb-4">Ziyaret ettiğiniz mekanlar hakkında yorum yapın.</p>
-                <a href="/places" class="inline-block px-6 py-3 bg-urfa-600 text-white rounded-lg hover:bg-urfa-700 transition-colors">
+                <a href="/mekanlar" class="inline-block px-6 py-3 bg-urfa-600 text-white rounded-lg hover:bg-urfa-700 transition-colors">
                   Mekanları Keşfet
                 </a>
               </div>

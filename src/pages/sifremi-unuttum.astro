@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { actions, isInputError } from 'astro:actions';
 
 // SVG ikonlar
 const icons = {
@@ -11,13 +12,19 @@ const icons = {
 };
 
 const seo = {
-  title: 'Şifremi Unuttum - Şanlıurfa.com',
+  title: 'Şifremi Unuttum - Sanliurfa.com',
   description: 'Şifrenizi sıfırlayın',
-  noindex: true
+  noIndex: true
 };
 
 const success = Astro.url.searchParams.get('success');
 const error = Astro.url.searchParams.get('error');
+const result = Astro.getActionResult(actions.requestPasswordReset);
+const inputErrors = isInputError(result?.error) ? result.error.fields : {};
+const submitError =
+  !isInputError(result?.error) && result?.error?.message
+    ? result.error.message
+    : null;
 ---
 
 <Layout seo={seo}>
@@ -36,7 +43,7 @@ const error = Astro.url.searchParams.get('error');
           </p>
         </div>
         
-        {success ? (
+        {success || (result && !result.error) ? (
           <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
             <div class="flex items-start gap-3">
               <span set:html={icons.checkCircle}></span>
@@ -45,14 +52,14 @@ const error = Astro.url.searchParams.get('error');
                   Bağlantı Gönderildi
                 </p>
                 <p class="text-green-700 text-sm mt-1">
-                  E-posta adresinize şifre sıfırlama bağlantısı gönderdik. Lütfen gelen kutunuzu kontrol edin.
+                  {result?.data?.message || 'E-posta adresinize şifre sıfırlama bağlantısı gönderdik. Lütfen gelen kutunuzu kontrol edin.'}
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <form action="/api/auth/forgot-password" method="POST" class="space-y-6">
-            {error && (
+          <form action={actions.requestPasswordReset} method="POST" class="space-y-6">
+            {(error || submitError) && (
               <div class="bg-red-50 border border-red-200 rounded-xl p-4">
                 <div class="flex items-start gap-3">
                   <span set:html={icons.alertCircle}></span>
@@ -61,9 +68,9 @@ const error = Astro.url.searchParams.get('error');
                       {error === 'email_not_found' ? 'E-posta adresi bulunamadı' : 'Bir hata oluştu'}
                     </p>
                     <p class="text-red-700 text-sm mt-1">
-                      {error === 'email_not_found' 
+                      {submitError || (error === 'email_not_found' 
                         ? 'Bu e-posta adresiyle kayıtlı bir hesap bulunmuyor.' 
-                        : 'Lütfen tekrar deneyin.'}
+                        : 'Lütfen tekrar deneyin.')}
                     </p>
                   </div>
                 </div>
@@ -74,17 +81,21 @@ const error = Astro.url.searchParams.get('error');
               <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-posta Adresi</label>
               <div class="relative mt-1">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <span set:html={icons.mail}></span>
                 </div>
                 <input
                   id="email"
                   name="email"
                   type="email"
                   required
+                  aria-invalid={inputErrors.email ? 'true' : 'false'}
                   class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   placeholder="ornek@email.com"
                 />
               </div>
+              {inputErrors.email && (
+                <p class="mt-2 text-sm text-red-600">{inputErrors.email.join(', ')}</p>
+              )}
             </div>
             
             <button 
@@ -98,7 +109,7 @@ const error = Astro.url.searchParams.get('error');
         
         <div class="mt-6 text-center">
           <a href="/giris" class="inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-700">
-            <ArrowLeft className="w-4 h-4" />
+            <span set:html={icons.arrowLeft}></span>
             Giriş sayfasına dön
           </a>
         </div>

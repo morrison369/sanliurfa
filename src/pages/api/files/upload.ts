@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { saveFile } from '../../../lib/file/file-storage';
+import { saveFile, validateImageSignature, validateFileExtension } from '../../../lib/file/file-storage';
 import { query } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logger';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     if (!locals.user) {
@@ -35,10 +35,28 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Dosya boyutu 10MB sınırını aşıyor', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Desteklenmeyen dosya türü', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+
+    if (!validateFileExtension(file.name)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz dosya uzantısı', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+
+    // Validate magic bytes for image files
+    let preReadBuffer: Buffer | undefined;
+    if (file.type.startsWith('image/')) {
+      preReadBuffer = Buffer.from(await file.arrayBuffer());
+      if (!validateImageSignature(preReadBuffer, file.type)) {
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Dosya içeriği geçersiz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      }
+    }
+
     const allowedFolders = ['places', 'avatars', 'blog', 'events', 'general'];
     const safeFolder = allowedFolders.includes(folder) ? folder : 'general';
 
-    const saved = await saveFile(file, safeFolder);
+    const saved = await saveFile(file, safeFolder, undefined, preReadBuffer);
 
     // Register in file registry table — s3_files is legacy name, used for local files too
     try {

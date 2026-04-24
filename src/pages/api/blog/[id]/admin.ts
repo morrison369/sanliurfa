@@ -2,14 +2,18 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { authenticateUser } from '../../../../lib/auth/middleware';
 import { logger } from '../../../../lib/logging';
+import { problemJson } from '../../../../lib/api';
 
 export const PUT: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth || auth.user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/blog-admin-post-unauthorized',
+        instance: `/api/blog/${context.params.id}/admin`,
       });
     }
 
@@ -18,24 +22,35 @@ export const PUT: APIRoute = async (context) => {
 
     const existing = await query('SELECT id, status FROM blog_posts WHERE id = $1', [id]);
     if (existing.rows.length === 0) {
-      return new Response(JSON.stringify({ error: 'Post not found' }), {
+      return problemJson({
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Bulunamadı',
+        detail: 'Yazı bulunamadı',
+        type: '/problems/blog-admin-post-not-found',
+        instance: `/api/blog/${id}/admin`,
       });
     }
 
     const allowedFields = [
-      'title', 'slug', 'excerpt', 'content', 'cover_image', 
-      'category', 'tags', 'status', 'meta_title', 'meta_description', 'featured'
+      'title', 'slug', 'excerpt', 'content', 'featured_image',
+      'status', 'seo_title', 'seo_description', 'is_featured',
+      'seo_keywords', 'read_time_minutes',
     ];
+    const fieldMap: Record<string, string> = {
+      cover_image: 'featured_image',
+      meta_title: 'seo_title',
+      meta_description: 'seo_description',
+      featured: 'is_featured',
+    };
     
     const updates: string[] = [];
     const params: any[] = [];
     let paramIndex = 1;
 
     for (const [key, value] of Object.entries(body)) {
-      if (allowedFields.includes(key)) {
-        updates.push(`${key} = $${paramIndex}`);
+      const col = fieldMap[key] ?? key;
+      if (allowedFields.includes(col)) {
+        updates.push(`${col} = $${paramIndex}`);
         params.push(value);
         paramIndex++;
       }
@@ -46,9 +61,12 @@ export const PUT: APIRoute = async (context) => {
     }
 
     if (updates.length === 0) {
-      return new Response(JSON.stringify({ error: 'No valid fields' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Geçerli güncelleme alanı yok',
+        type: '/problems/blog-admin-post-no-fields',
+        instance: `/api/blog/${id}/admin`,
       });
     }
 
@@ -70,9 +88,12 @@ export const PUT: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Update blog post error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Blog Yazısı Güncellenemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/blog-admin-post-update-failed',
+      instance: `/api/blog/${context.params.id}/admin`,
     });
   }
 };
@@ -81,9 +102,12 @@ export const DELETE: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth || auth.user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/blog-admin-post-unauthorized',
+        instance: `/api/blog/${context.params.id}/admin`,
       });
     }
 
@@ -101,9 +125,12 @@ export const DELETE: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Delete blog post error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Blog Yazısı Silinemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/blog-admin-post-delete-failed',
+      instance: `/api/blog/${context.params.id}/admin`,
     });
   }
 };

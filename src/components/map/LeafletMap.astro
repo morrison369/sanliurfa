@@ -25,7 +25,7 @@ const {
   singlePlace = false
 } = Astro.props;
 
-const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
+const mapId = `map-${Math.random().toString(36).slice(2, 11)}`;
 ---
 
 <div id={mapId} style={`height: ${height}; width: 100%; border-radius: 1rem; z-index: 1;`}></div>
@@ -33,7 +33,7 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<script define:vars={{ mapId, places, center, zoom, singlePlace }}>
+<script define:vars={{ mapId, places, center, zoom, singlePlace }} is:inline>
   // Initialize map
   const map = L.map(mapId).setView(center, zoom);
   
@@ -114,7 +114,7 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
           </div>
         ` : ''}
         ${place.slug ? `
-          <a href="/places/${place.slug}" style="color: #D97706; text-decoration: none; font-weight: 500; display: inline-block; margin-top: 4px;">
+          <a href="/isletme/${place.slug}" style="color: #D97706; text-decoration: none; font-weight: 500; display: inline-block; margin-top: 4px;">
             Detayları Gör →
           </a>
         ` : ''}
@@ -131,8 +131,8 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
     map.fitBounds(group.getBounds().pad(0.1));
   }
   
-  // Add locate control for user position
-  L.control.locate = L.Control.extend({
+  // Add locate control for user position without mutating typed Leaflet namespaces.
+  const LocateControl = L.Control.extend({
     options: {
       position: 'bottomright',
       title: 'Konumumu Bul',
@@ -167,7 +167,7 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
     }
   });
   
-  new L.control.locate().addTo(map);
+  new LocateControl().addTo(map);
 </script>
 
 <style>

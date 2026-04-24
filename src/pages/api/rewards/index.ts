@@ -17,7 +17,7 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -29,25 +29,23 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const offset = parseInt(url.searchParams.get('offset') || '0');
     const myRedemptions = url.searchParams.get('my') === 'true';
 
-    let data;
-
-    if (myRedemptions) {
-      if (!locals.user?.id) {
-        recordRequest('GET', '/api/rewards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-        return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
-      }
-      const status = url.searchParams.get('status');
-      data = await getUserRedemptions(locals.user.id, status, limit, offset);
-    } else if (featured) {
-      data = await getFeaturedRewards(limit);
-    } else {
-      const filters: any = {};
-      if (url.searchParams.get('max_cost')) {
-        filters.max_cost = parseInt(url.searchParams.get('max_cost')!);
-      }
-      if (type) filters.reward_type = type;
-      data = await getRewardsCatalog(limit, offset, filters);
+    if (myRedemptions && !locals.user?.id) {
+      recordRequest('GET', '/api/rewards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
+
+    const data = myRedemptions
+      ? await getUserRedemptions(locals.user!.id, url.searchParams.get('status'), limit, offset)
+      : featured
+        ? await getFeaturedRewards(limit)
+        : await (async () => {
+            const filters: any = {};
+            if (url.searchParams.get('max_cost')) {
+              filters.max_cost = parseInt(url.searchParams.get('max_cost')!);
+            }
+            if (type) filters.reward_type = type;
+            return getRewardsCatalog(limit, offset, filters);
+          })();
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/rewards', HttpStatus.OK, duration);
@@ -72,7 +70,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

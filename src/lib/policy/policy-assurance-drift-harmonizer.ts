@@ -3,7 +3,7 @@
  */
 
 import { logger } from '../logger';
-import { SignalBook, computeBalancedScore, scorePasses } from './governance-kit';
+import { SignalBook, scorePasses } from './governance-kit';
 
 export interface AssuranceDriftSignal {
   signalId: string;
@@ -45,6 +45,7 @@ export {
   AssuranceDriftGate,
   AssuranceDriftReporter
 };
+
 
 
 

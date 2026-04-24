@@ -1,12 +1,24 @@
 ---
+
 import Layout from '../layouts/Layout.astro';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const seo = {
-  title: 'Kullanım Koşulları - Şanlıurfa.com',
-  description: 'Şanlıurfa.com kullanım koşulları ve kuralları.',
+  title: 'Kullanım Koşulları - Sanliurfa.com',
+  description: 'Sanliurfa.com kullanım koşulları ve kuralları.',
+  keywords: ['kullanım koşulları', 'hizmet şartları', 'kullanıcı sözleşmesi', 'sanliurfa.com'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/kullanim-kosullari',
 };
 
 const lastUpdated = '1 Nisan 2025';
+const faqItems = [
+  { S: "Sanliurfa.com kullanım koşulları nelerdir?", C: "Platformu kullanmak, yayınlanan kullanım koşullarını kabul ettiğiniz anlamına gelir. Detaylar için koşullar sayfamızı okuyunuz." },
+  { S: "Hesabım askıya alınabilir mi?", C: "Topluluk kurallarına aykırı davranışlarda hesap kısıtlaması veya kalıcı askıya alma uygulanabilir." },
+  { S: "İçerik kaldırma talebi nasıl yapılır?", C: "İletişim formundan ya da support@sanliurfa.com adresiyle içerik kaldırma talebinde bulunabilirsiniz." },
+];
+
 ---
 
 <Layout seo={seo}>
@@ -28,13 +40,13 @@ const lastUpdated = '1 Nisan 2025';
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 md:p-12">
           <div class="prose dark:prose-invert max-w-none">
             <p class="lead">
-              Şanlıurfa.com'u kullanarak aşağıdaki kullanım koşullarını kabul etmiş sayılırsınız. 
+              Sanliurfa.com'u kullanarak aşağıdaki kullanım koşullarını kabul etmiş sayılırsınız. 
               Lütfen bu koşulları dikkatlice okuyun.
             </p>
             
             <h2>1. Hizmet Kapsamı</h2>
             <p>
-              Şanlıurfa.com, Şanlıurfa şehri hakkında bilgi sunan bir platformdur. Hizmetlerimiz şunları içerir:
+              Sanliurfa.com, Şanlıurfa şehri hakkında bilgi sunan bir platformdur. Hizmetlerimiz şunları içerir:
             </p>
             <ul>
               <li>Mekan listeleme ve arama</li>
@@ -69,7 +81,7 @@ const lastUpdated = '1 Nisan 2025';
             
             <h2>4. Fikri Mülkiyet</h2>
             <p>
-              Şanlıurfa.com'un tüm içeriği, logosu, tasarımı ve yazılımı fikri mülkiyet koruması altındadır. 
+              Sanliurfa.com'un tüm içeriği, logosu, tasarımı ve yazılımı fikri mülkiyet koruması altındadır. 
               İzinsiz kopyalama, dağıtma veya ticari kullanım yasaktır.
             </p>
             
@@ -120,4 +132,34 @@ const lastUpdated = '1 Nisan 2025';
       </div>
     </div>
   </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Kullanım Koşulları',
+    url: `${baseUrl}/kullanim-kosullari`,
+    dateModified: '2025-04-01',
+    publisher: {
+      '@type': 'Organization',
+      name: 'Sanliurfa.com',
+      url: `${baseUrl}`,
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Kullanım Koşulları', item: `${baseUrl}/kullanim-kosullari` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

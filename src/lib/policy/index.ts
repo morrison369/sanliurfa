@@ -1,4 +1,3 @@
-// @ts-nocheck
 // policy module - consolidated
 
 export * from './policy-analytics';
@@ -12,7 +11,8 @@ export * from './policy-assurance-relay-hub';
 export * from './policy-assurance-resilience-engine';
 export * from './policy-assurance-resilience-engine-v5';
 export * from './policy-confidence-continuity-engine';
-export * from './policy-conflict-resolution';
+// policy-conflict-resolution not re-exported to avoid PolicyRule conflict with policy-engine
+// import directly from './policy-conflict-resolution' if needed
 export * from './policy-continuity-assurance-engine-v3';
 export * from './policy-continuity-assurance-harmonizer-v13';
 export * from './policy-continuity-assurance-harmonizer-v9';

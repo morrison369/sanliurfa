@@ -4,14 +4,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserUsage, getQuotaMessage, FEATURE_QUOTAS } from '../../../lib/usage/usage-tracking';
+import { getUserUsage, getQuotaMessage } from '../../../lib/usage/usage-tracking';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { getUserTierInfo } from '../../../lib/feature/feature-gating';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

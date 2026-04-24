@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import { useState, useEffect } from 'react';
 interface RecommendedUser {
   id: string;
   full_name: string;
@@ -24,7 +23,7 @@ export default function UserRecommendations() {
       const data = await response.json();
       setUsers(data.data || []);
     } catch (err) {
-      console.error('Error', err);
+      console.error('Kullanıcı önerileri yüklenemedi', err);
     } finally {
       setIsLoading(false);
     }
@@ -34,7 +33,7 @@ export default function UserRecommendations() {
     try {
       const method = followingIds.has(userId) ? 'DELETE' : 'POST';
       const response = await fetch('/api/followers/' + userId, { method });
-      if (!response.ok) throw new Error('Failed');
+      if (!response.ok) throw new Error('Takip işlemi tamamlanamadı');
       
       const newSet = new Set(followingIds);
       if (newSet.has(userId)) {
@@ -44,7 +43,7 @@ export default function UserRecommendations() {
       }
       setFollowingIds(newSet);
     } catch (err) {
-      console.error('Error', err);
+      console.error('Takip işlemi tamamlanamadı', err);
     }
   };
 
@@ -67,7 +66,7 @@ export default function UserRecommendations() {
               )}
               <div className="flex-1">
                 <p className="font-medium text-gray-900 dark:text-white">{user.full_name}</p>
-                <p className="text-xs text-gray-600">Level {user.level} • {user.review_count} inceleme</p>
+                <p className="text-xs text-gray-600">Seviye {user.level} • {user.review_count} inceleme</p>
               </div>
             </a>
             <button

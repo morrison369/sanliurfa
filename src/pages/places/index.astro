@@ -1,7 +1,12 @@
 ---
+
 import Layout from '../../layouts/Layout.astro';
 import Pagination from '../../components/Pagination.astro';
+import Image from '../../components/Image.astro';
 import { query } from '../../lib/postgres';
+import { resolveContentImage } from '../../lib/content-images';
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const icons = {
   mapPin: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
@@ -83,9 +88,33 @@ const getCategoryLabel = (category: string) => {
 };
 
 const seo = {
-  title: queryParam ? `"${queryParam}" - Mekanlar` : 'Mekanlar - Restoran, Otel, Kafe ve Daha Fazlası',
-  description: 'Şanlıurfa\'nın en iyi restoranları, otelleri, kafeleri ve müzelerini keşfedin. Kullanıcı yorumları ve puanlarıyla karşılaştırın.',
+  title: queryParam
+    ? `"${queryParam}" Arama Sonuçları - Şanlıurfa Mekanlar`
+    : categoryFilter !== 'all'
+      ? `${categoryFilter} Mekanları - Şanlıurfa Rehberi`
+      : 'Şanlıurfa Mekanlar - Restoran, Otel, Kafe, Tarihi Yerler',
+  description: queryParam
+    ? `"${queryParam}" için Şanlıurfa'da ${count} mekan bulundu. Yorumlar ve puanlarla karşılaştırın.`
+    : "Şanlıurfa'nın en iyi restoranları, otelleri, kafeleri, tarihi yerleri ve müzelerini keşfedin. Kullanıcı yorumları ve puanlarıyla karşılaştırın.",
+  ogImage: '/images/places/gobeklitepe.jpg',
+  keywords: ['Şanlıurfa mekanlar', 'Şanlıurfa restoran', 'Şanlıurfa otel', 'Göbeklitepe', 'Balıklıgöl', 'Şanlıurfa gezilecek yerler'],
+  canonical: '/mekanlar',
+  noIndex: true,
 };
+
+const faqItems = [
+  { S: "Şanlıurfa'da hangi mekan kategorileri mevcut?", C: "Restoran, kafe, otel, müze, park, alışveriş ve eğlence kategorilerinde yüzlerce Şanlıurfa mekanını listeleyip filtreleyebilirsiniz." },
+  { S: "Mekan puanları nasıl hesaplanıyor?", C: "Puanlar, gerçek kullanıcıların verdiği yıldız değerlendirmelerinin ortalaması alınarak hesaplanır." },
+  { S: "İşletmemi bu listeye nasıl ekleyebilirim?", C: "Mekan başvuru formu aracılığıyla işletmenizi ücretsiz olarak platforma ekleyebilirsiniz." },
+];
+
+const getPlaceImage = (place: any) =>
+  resolveContentImage({
+    category: 'places',
+    slug: place?.slug,
+    explicit: place?.images?.[0] || place?.thumbnail,
+    placeholder: '/images/placeholder-place.jpg',
+  });
 
 const searchParams = new URLSearchParams();
 if (categoryFilter !== 'all') searchParams.set('category', categoryFilter);
@@ -97,11 +126,11 @@ if (queryParam) searchParams.set('q', queryParam);
     <div class="page-header-content">
       <h1 class="page-header-title">Mekanlar</h1>
       <p class="page-header-description">
-        Şanlıurfa'nın en iyi restoranlarından otellerine, kafelerinden müzelerine kadar tüm mekanları keşfedin.
+        Şanlıurfa’nın en iyi restoranlarından otellerine, kafelerinden müzelerine kadar tüm mekanları keşfedin.
       </p>
       
       <div class="mt-8 max-w-2xl mx-auto">
-        <form action="/places" class="relative">
+        <form action="/mekanlar" class="relative">
           <input 
             type="search"
             name="q"
@@ -126,14 +155,14 @@ if (queryParam) searchParams.set('q', queryParam);
           
           <div class="space-y-2">
             <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Kategoriler</h4>
-            <a href="/places" class={`flex items-center justify-between p-2 rounded-lg transition-colors ${
+            <a href="/mekanlar" class={`flex items-center justify-between p-2 rounded-lg transition-colors ${
               categoryFilter === 'all' ? 'bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}>
               <span class="text-sm text-gray-700 dark:text-gray-300">Tümü</span>
             </a>
             {categories.map((cat) => (
               <a 
-                href={`/places?category=${cat.id}`}
+                href={`/mekanlar?category=${cat.id}`}
                 class={`flex items-center justify-between p-2 rounded-lg transition-colors ${
                   categoryFilter === cat.id ? 'bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
@@ -191,13 +220,15 @@ if (queryParam) searchParams.set('q', queryParam);
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           {places?.map((place) => (
             <article class="card-hover bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
-              <a href={`/places/${place.slug}`}>
+              <a href={`/isletme/${place.slug}`}>
                 <div class="relative aspect-video overflow-hidden">
-                  <img 
-                    src={place.images?.[0] || '/images/placeholder-place.jpg'}
+                  <Image
+                    src={getPlaceImage(place)}
                     alt={place.name}
                     class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
+                    width={960}
+                    height={540}
                   />
                   <div class="absolute top-3 right-3">
                     <span class="badge bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white">
@@ -255,7 +286,7 @@ if (queryParam) searchParams.set('q', queryParam);
         <Pagination 
           currentPage={currentPage}
           totalPages={totalPages}
-          baseUrl="/places"
+          baseUrl="/mekanlar"
           searchParams={searchParams}
         />
         
@@ -269,4 +300,21 @@ if (queryParam) searchParams.set('q', queryParam);
       </main>
     </div>
   </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: `${baseUrl}/mekanlar` },
+    ],
+  })} is:inline />
 </Layout>

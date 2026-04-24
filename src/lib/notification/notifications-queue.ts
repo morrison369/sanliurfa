@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * In-App Notification System
  * - Real-time notifications via WebSocket
@@ -90,7 +89,7 @@ export async function createNotification(
 export async function getUnreadNotifications(userId: string, limit: number = 20): Promise<Notification[]> {
   try {
     const cacheKey = `notifications:unread:${userId}`;
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<Notification[]>(cacheKey);
 
     if (cached) {
       return cached;

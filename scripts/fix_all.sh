@@ -152,11 +152,11 @@ if [ ! -f ".env.production" ]; then
     cat > .env.production << 'EOF'
 SITE_URL=https://sanliurfa.com
 NODE_ENV=production
-PORT=6000
+PORT=4321
 HOST=127.0.0.1
 DATABASE_URL=postgresql://sanliur_sanliurfa@localhost:5432/sanliur_sanliurfa
 JWT_SECRET=change-this-secret-$(date +%s)
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://127.0.0.1:6381
 EOF
     echo "   ✅ Created .env.production"
 fi

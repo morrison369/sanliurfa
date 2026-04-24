@@ -7,7 +7,7 @@ import sys
 HOST = '168.119.79.238'
 PORT = 77
 USER = 'sanliur'
-PASS = 'zIT7Y9yrJZRV'
+PASS = 'CHANGE_ME_CWP_SSH_PASSWORD'
 
 def main():
     print("Baglaniyor...", flush=True)
@@ -21,22 +21,22 @@ def main():
 cd /home/sanliur/public_html
 
 # Fix port
-find dist/server -name '*.mjs' -exec sed -i 's/const port = 4321/const port = 6000/g' {} +
+find dist/server -name '*.mjs' -exec sed -i 's/const port = 4321/const port = 4321/g' {} +
 
 # Create .env
 cat > .env << 'ENVEOF'
 NODE_ENV=production
-PORT=6000
+PORT=4321
 HOST=127.0.0.1
-DATABASE_URL=postgresql://sanliur_sanliurfa:kWtUYbyYgbS7@localhost:5432/sanliur_sanliurfa
+DATABASE_URL=postgresql://sanliur_sanliurfa:CHANGE_ME_DB_PASSWORD@localhost:5432/sanliur_sanliurfa
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=sanliur_sanliurfa
 DB_USER=sanliur_sanliurfa
-DB_PASSWORD=kWtUYbyYgbS7
+DB_PASSWORD=CHANGE_ME_DB_PASSWORD
 JWT_SECRET=test-jwt-secret-key-32chars-min
 SESSION_SECRET=test-session-secret-key-32chars
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://127.0.0.1:6381
 CORS_ORIGINS=https://sanliurfa.com
 SMTP_HOST=localhost
 SMTP_PORT=587
@@ -52,19 +52,19 @@ ENVEOF
 # Kill old
 pkill -9 node 2>/dev/null
 pm2 kill 2>/dev/null
-fuser -k 6000/tcp 2>/dev/null
+fuser -k 4321/tcp 2>/dev/null
 fuser -k 4321/tcp 2>/dev/null
 sleep 3
 
 # Check ports
-echo "PORTS: $(ss -tlnp | grep -E '6000|4321' || echo FREE)"
+echo "PORTS: $(ss -tlnp | grep -E '4321|4321' || echo FREE)"
 
 # Start
 nohup node dist/server/entry.mjs > /tmp/app.log 2>&1 &
 sleep 12
 
 # Check
-echo "HEALTH: $(curl -s http://127.0.0.1:6000/api/health 2>&1 || echo FAIL)"
+echo "HEALTH: $(curl -s http://127.0.0.1:4321/api/health 2>&1 || echo FAIL)"
 echo "LOG: $(tail -10 /tmp/app.log)"
 
 # PM2

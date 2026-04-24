@@ -2,14 +2,18 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 export const PUT: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/promotions-update-unauthorized',
+        instance: `/api/promotions/${context.params.id}`,
       });
     }
 
@@ -23,9 +27,12 @@ export const PUT: APIRoute = async (context) => {
     );
 
     if (promoResult.rows.length === 0) {
-      return new Response(JSON.stringify({ error: 'Promotion not found' }), {
+      return problemJson({
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Bulunamadı',
+        detail: 'Promosyon bulunamadı',
+        type: '/problems/promotions-update-not-found',
+        instance: `/api/promotions/${id}`,
       });
     }
 
@@ -38,9 +45,12 @@ export const PUT: APIRoute = async (context) => {
         [promotion.place_id, auth.user.id]
       );
       if (placeCheck.rows.length === 0) {
-        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        return problemJson({
           status: 403,
-          headers: { 'Content-Type': 'application/json' }
+          title: 'Forbidden',
+          detail: 'Bu promosyon için yetkiniz yok',
+          type: '/problems/promotions-update-forbidden',
+          instance: `/api/promotions/${id}`,
         });
       }
     }
@@ -59,9 +69,12 @@ export const PUT: APIRoute = async (context) => {
     }
 
     if (updates.length === 0) {
-      return new Response(JSON.stringify({ error: 'No valid fields to update' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Güncellenecek geçerli alan yok',
+        type: '/problems/promotions-update-no-fields',
+        instance: `/api/promotions/${id}`,
       });
     }
 
@@ -83,9 +96,12 @@ export const PUT: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Update promotion error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Promosyon Güncellenemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/promotions-update-failed',
+      instance: `/api/promotions/${context.params.id}`,
     });
   }
 };
@@ -94,9 +110,12 @@ export const DELETE: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth || auth.user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/promotions-delete-unauthorized',
+        instance: `/api/promotions/${context.params.id}`,
       });
     }
 
@@ -114,9 +133,12 @@ export const DELETE: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Delete promotion error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Promosyon Silinemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/promotions-delete-failed',
+      instance: `/api/promotions/${context.params.id}`,
     });
   }
 };

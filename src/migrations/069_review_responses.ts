@@ -23,6 +23,13 @@ export const migration_069_review_responses = async (pool: Pool) => {
       )
     `);
 
+    await pool.query(`
+      ALTER TABLE review_responses ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE review_responses ADD COLUMN IF NOT EXISTS owner_id UUID;
+      ALTER TABLE review_responses ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE review_responses ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+    `);
+
     // Indexes for responses
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_review_responses_review

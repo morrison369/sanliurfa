@@ -5,7 +5,7 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 DB_NAME = "sanliur_sanliurfa"
 DB_USER = "sanliur_sanliurfa"
 

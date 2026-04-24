@@ -1,6 +1,9 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import Image from '../../components/Image.astro';
 import { query } from '../../lib/postgres';
+import { resolveContentImage } from '../../lib/content-images';
+import { getSiteBranding } from '../../lib/site-branding';
 
 const queryParam = Astro.url.searchParams.get('q') || '';
 
@@ -30,10 +33,37 @@ const formatDate = (dateStr: string) => {
   });
 };
 
+const getEventImage = (event: any) =>
+  resolveContentImage({
+    category: 'etkinlikler',
+    slug: event?.slug,
+    explicit: event?.image_url,
+    placeholder: '/images/placeholder-event.jpg',
+  });
+
 const seo = {
   title: 'Etkinlikler - Şanlıurfa\'da Bugün ve Yakında',
   description: 'Şanlıurfa\'daki konserler, festivaller, sergiler ve diğer etkinlikler. Kültürel etkinlikleri takip edin.',
+  keywords: ['şanlıurfa etkinlikler', 'urfa konser', 'şanlıurfa festival', 'urfa kültür etkinlikleri', 'şanlıurfa bugün ne var', 'urfa sergi', 'şanlıurfa organizasyon'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/etkinlikler',
 };
+const { baseUrl } = await getSiteBranding();
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa etkinlik takvimi nasıl takip edilir?',
+    C: 'Etkinlikler sayfasında yayınlanan aktif etkinlikler tarih sırasına göre listelenir ve arama kutusuyla filtrelenebilir.',
+  },
+  {
+    S: 'Konser ve festival etkinlikleri bu sayfada yer alıyor mu?',
+    C: 'Evet. Konser, festival, sergi ve benzeri etkinlik içerikleri kategori etiketleriyle birlikte gösterilir.',
+  },
+  {
+    S: 'Etkinlik detayına nasıl giderim?',
+    C: 'Listede yer alan herhangi bir etkinlik kartına tıklayarak detay sayfasına geçebilirsiniz.',
+  },
+];
 
 try {
   const result = await query(sql, values);
@@ -46,9 +76,9 @@ try {
 <Layout seo={seo}>
   <div class="page-header">
     <div class="page-header-content">
-      <h1 class="page-header-title">Etkinlikler</h1>
+      <h1 class="page-header-title">Şanlıurfa Etkinlikleri</h1>
       <p class="page-header-description">
-        Şanlıurfa'daki kültürel etkinlikleri keşfedin.
+        Şanlıurfa’daki kültürel etkinlikleri keşfedin.
       </p>
       
       <div class="mt-8 max-w-2xl mx-auto">
@@ -68,16 +98,25 @@ try {
   
   <div class="section bg-gray-50 dark:bg-gray-900">
     <div class="container-custom">
+      <div class="rounded-2xl border border-indigo-100 bg-indigo-50 dark:border-indigo-900/40 dark:bg-indigo-950/20 p-5 mb-8">
+        <h2 class="text-lg font-bold text-indigo-900 dark:text-indigo-200">Hızlı Cevap</h2>
+        <p class="text-sm text-indigo-800 dark:text-indigo-300 mt-1">
+          Şanlıurfa etkinlik takvimini bu sayfadan takip edebilir, tarih ve konuma göre uygun etkinliği hızlıca bulabilirsiniz.
+        </p>
+      </div>
+
       <div class="space-y-6">
         {events.map((event) => (
           <article class="card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden">
             <a href={`/etkinlikler/${event.slug}`} class="flex flex-col md:flex-row">
               <div class="md:w-1/3 aspect-video md:aspect-auto overflow-hidden">
-                <img 
-                  src={event.image_url || '/images/placeholder-event.jpg'}
+                <Image
+                  src={getEventImage(event)}
                   alt={event.title}
                   class="w-full h-full object-cover"
                   loading="lazy"
+                  width={960}
+                  height={540}
                 />
               </div>
               
@@ -115,12 +154,54 @@ try {
       </div>
 
       {events.length === 0 && (
-        <div class="text-center py-16">
-          <span set:html={icons.calendar}></span>
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Etkinlik bulunmuyor</h3>
-          <p class="text-gray-600 dark:text-gray-400">Yakında yeni etkinlikler eklenecek.</p>
+        <div class="rounded-2xl border border-indigo-100 bg-white p-8 text-center shadow-sm dark:border-indigo-900/40 dark:bg-gray-800">
+          <span class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300" set:html={icons.calendar}></span>
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Aktif etkinlik bulunamadı</h3>
+          <p class="mx-auto max-w-2xl text-gray-600 dark:text-gray-400">
+            Bugün için veritabanında yayınlanmış etkinlik kaydı yok. Şanlıurfa gezi planınızı
+            mekan rehberi, tarihi yerler ve yemek önerileriyle tamamlayabilirsiniz.
+          </p>
+          <div class="mt-6 flex flex-wrap justify-center gap-3">
+            <a href="/mekanlar" class="rounded-xl bg-urfa-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-urfa-700">
+              Mekanları Keşfet
+            </a>
+            <a href="/tarihi-yerler" class="rounded-xl border border-gray-200 px-5 py-3 font-semibold text-gray-700 transition-colors hover:border-urfa-200 hover:text-urfa-700 dark:border-gray-700 dark:text-gray-200">
+              Tarihi Yerler
+            </a>
+          </div>
         </div>
       )}
     </div>
   </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.C,
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Şanlıurfa Etkinlik Listesi',
+    itemListElement: events.slice(0, 12).map((event, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: event.title,
+      url: `${baseUrl}/etkinlikler/${event.slug}`,
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Etkinlikler', item: `${baseUrl}/etkinlikler` },
+    ],
+  })} is:inline />
 </Layout>

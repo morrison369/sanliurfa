@@ -10,10 +10,10 @@ if (!locals.user) {
 }
 ---
 
-<Layout title="Bildirim Tercihleri | Şanlıurfa.com">
+<Layout seo={{ title: "Bildirim Tercihleri | Sanliurfa.com", noIndex: true }}>
   <div class="min-h-screen bg-gray-50">
     <div class="max-w-3xl mx-auto px-4 py-8">
-      <NotificationPreferencesManager client:load />
+      <NotificationPreferencesManager client:visible={{ rootMargin: '120px' }} />
     </div>
   </div>
 </Layout>

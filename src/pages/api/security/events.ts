@@ -9,7 +9,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -21,12 +21,9 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const eventType = url.searchParams.get('type');
     const limit = parseInt(url.searchParams.get('limit') || '20');
 
-    let events;
-    if (suspicious) {
-      events = await getSuspiciousActivities(locals.user.id, limit);
-    } else {
-      events = await getSecurityEvents(locals.user.id, eventType || undefined, limit);
-    }
+    const events = suspicious
+      ? await getSuspiciousActivities(locals.user.id, limit)
+      : await getSecurityEvents(locals.user.id, eventType || undefined, limit);
 
     return apiResponse({
       success: true,

@@ -4,8 +4,9 @@
  */
 
 import { query, queryOne, queryMany, insert } from '../postgres';
-import { getCache, setCache, deleteCache, deleteCachePattern } from '../cache';
+import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
+import { resolveContentImage } from '../content-images';
 
 /**
  * Follow a place
@@ -94,7 +95,7 @@ export async function getUserFollowedPlaces(userId: string, limit: number = 50):
     }
 
     const results = await queryMany(
-      `SELECT p.id, p.name, p.category, p.rating, p.image_url, pf.followed_at
+      `SELECT p.id, p.slug, p.name, p.category, p.rating, COALESCE(p.thumbnail_url, p.images[1]) as image_url, p.thumbnail_url, pf.followed_at
        FROM place_followers pf
        JOIN places p ON pf.place_id = p.id
        WHERE pf.user_id = $1
@@ -105,10 +106,23 @@ export async function getUserFollowedPlaces(userId: string, limit: number = 50):
 
     const places = results.map((r: any) => ({
       id: r.id,
+      slug: r.slug,
       name: r.name,
       category: r.category,
       rating: r.rating,
-      image: r.image_url,
+      image: resolveContentImage({
+        category: 'places',
+        slug: r.slug,
+        explicit: r.image_url || r.thumbnail_url,
+        placeholder: '/images/placeholder-place.jpg',
+      }),
+      thumbnail: resolveContentImage({
+        category: 'places',
+        slug: r.slug,
+        explicit: r.thumbnail_url || r.image_url,
+        placeholder: '/images/placeholder-place.jpg',
+        thumb: true,
+      }),
       followedAt: r.followed_at
     }));
 
@@ -191,7 +205,7 @@ export async function getTrendingPlacesByFollowers(limit: number = 20): Promise<
     }
 
     const results = await queryMany(
-      `SELECT id, name, category, rating, image_url, follower_count
+      `SELECT id, slug, name, category, rating, thumbnail_url, COALESCE(thumbnail_url, images[1]) as image_url, follower_count
        FROM places
        WHERE status = 'active'
        ORDER BY follower_count DESC
@@ -201,10 +215,23 @@ export async function getTrendingPlacesByFollowers(limit: number = 20): Promise<
 
     const places = results.map((r: any) => ({
       id: r.id,
+      slug: r.slug,
       name: r.name,
       category: r.category,
       rating: r.rating,
-      image: r.image_url,
+      image: resolveContentImage({
+        category: 'places',
+        slug: r.slug,
+        explicit: r.image_url || r.thumbnail_url,
+        placeholder: '/images/placeholder-place.jpg',
+      }),
+      thumbnail: resolveContentImage({
+        category: 'places',
+        slug: r.slug,
+        explicit: r.thumbnail_url || r.image_url,
+        placeholder: '/images/placeholder-place.jpg',
+        thumb: true,
+      }),
       followers: r.follower_count
     }));
 
@@ -217,5 +244,3 @@ export async function getTrendingPlacesByFollowers(limit: number = 20): Promise<
     return [];
   }
 }
-
-

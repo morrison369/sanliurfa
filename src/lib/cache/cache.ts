@@ -2,11 +2,55 @@
 import { createClient } from 'redis';
 import { logger } from '../logging';
 
-const redisUrl = process.env.REDIS_URL || import.meta.env.REDIS_URL || 'redis://localhost:6379';
-const KEY_PREFIX = process.env.REDIS_KEY_PREFIX || 'sanliurfa:';
+const redisUrl =
+  process.env.REDIS_URL ||
+  import.meta.env?.REDIS_URL ||
+  'redis://127.0.0.1:6381';
+const KEY_PREFIX = process.env.REDIS_KEY_PREFIX || import.meta.env?.REDIS_KEY_PREFIX || '';
 
 let client: ReturnType<typeof createClient> | null = null;
 let connectionError: Error | null = null;
+let rateLimitFallbackWarned = false;
+let cacheDeleteFallbackWarned = false;
+let cachePatternFallbackWarned = false;
+let rateLimitErrorWarned = false;
+let redisClientErrorWarned = false;
+let redisConnectionFailedWarned = false;
+
+function toError(error: unknown): Error {
+  if (error instanceof Error) return error;
+  return new Error(String(error));
+}
+
+function isRedisConnectionIssue(error: unknown): boolean {
+  if (connectionError || !isRedisAvailable()) {
+    return true;
+  }
+
+  if (error && typeof error === 'object' && Object.keys(error).length === 0) {
+    return true;
+  }
+
+  const objectMeta =
+    error && typeof error === 'object'
+      ? `${(error as { code?: unknown }).code || ''} ${(error as { message?: unknown }).message || ''}`
+      : '';
+  const text =
+    error instanceof Error
+      ? `${error.name} ${error.message}`
+      : `${String(error)} ${objectMeta}`.trim();
+  const lowered = text.toLowerCase();
+  return (
+    lowered.includes('redis') ||
+    lowered.includes('socket') ||
+    lowered.includes('econnrefused') ||
+    lowered.includes('etimedout') ||
+    lowered.includes('nr_closed') ||
+    lowered.includes('closed') ||
+    lowered.includes('connect') ||
+    lowered.includes('not open')
+  );
+}
 
 /**
  * Get or create Redis client with proper error handling
@@ -20,7 +64,9 @@ export async function getRedisClient() {
     client = createClient({
       url: redisUrl,
       socket: {
+        connectTimeout: 1000,
         reconnectStrategy: (retries: number) => {
+          if (retries > 3) return false;
           const delay = Math.min(retries * 100, 3000);
           return delay;
         }
@@ -29,7 +75,12 @@ export async function getRedisClient() {
 
     client.on('error', (err) => {
       connectionError = err;
-      logger.error('Redis Client Error:', err);
+      if (!redisClientErrorWarned) {
+        logger.warn('Redis unavailable, cache and rate limit operations will fail-open (logging once)', {
+          message: err instanceof Error ? err.message : String(err),
+        });
+        redisClientErrorWarned = true;
+      }
     });
 
     client.on('reconnecting', () => {
@@ -42,7 +93,12 @@ export async function getRedisClient() {
     return client;
   } catch (error) {
     connectionError = error instanceof Error ? error : new Error(String(error));
-    logger.error('Redis connection failed:', connectionError);
+    if (!redisConnectionFailedWarned) {
+      logger.warn('Redis connection failed, continuing with fail-open cache and rate limits (logging once)', {
+        message: connectionError.message,
+      });
+      redisConnectionFailedWarned = true;
+    }
     throw connectionError;
   }
 }
@@ -66,15 +122,12 @@ export function prefixKey(key: string): string {
  */
 export async function getCache<T>(key: string): Promise<T | null> {
   try {
-    if (!isRedisAvailable()) {
-      return null;
-    }
     const redis = await getRedisClient();
     const prefixedKey = prefixKey(key);
     const value = await redis.get(prefixedKey);
     return value ? JSON.parse(value) : null;
   } catch (error) {
-    logger.error('Cache get error:', { key, error });
+    logger.error('Cache get error', toError(error), { key });
     return null;
   }
 }
@@ -84,14 +137,11 @@ export async function getCache<T>(key: string): Promise<T | null> {
  */
 export async function setCache(key: string, value: any, ttlSeconds = 3600): Promise<void> {
   try {
-    if (!isRedisAvailable()) {
-      return;
-    }
     const redis = await getRedisClient();
     const prefixedKey = prefixKey(key);
     await redis.setEx(prefixedKey, ttlSeconds, JSON.stringify(value));
   } catch (error) {
-    logger.error('Cache set error:', { key, error });
+    logger.error('Cache set error', toError(error), { key });
   }
 }
 
@@ -100,14 +150,18 @@ export async function setCache(key: string, value: any, ttlSeconds = 3600): Prom
  */
 export async function deleteCache(key: string): Promise<void> {
   try {
-    if (!isRedisAvailable()) {
-      return;
-    }
     const redis = await getRedisClient();
     const prefixedKey = prefixKey(key);
     await redis.del(prefixedKey);
   } catch (error) {
-    logger.error('Cache delete error:', { key, error });
+    if (isRedisConnectionIssue(error)) {
+      if (!cacheDeleteFallbackWarned) {
+        logger.warn('Redis unavailable for cache delete, skipping invalidation (logging once)', { key });
+        cacheDeleteFallbackWarned = true;
+      }
+      return;
+    }
+    logger.error('Cache delete error', toError(error), { key });
   }
 }
 
@@ -117,9 +171,6 @@ export async function deleteCache(key: string): Promise<void> {
  */
 export async function deleteCachePattern(pattern: string): Promise<void> {
   try {
-    if (!isRedisAvailable()) {
-      return;
-    }
     const redis = await getRedisClient();
     const prefixedPattern = prefixKey(pattern);
     const keys = await redis.keys(prefixedPattern);
@@ -127,7 +178,17 @@ export async function deleteCachePattern(pattern: string): Promise<void> {
       await redis.del(keys);
     }
   } catch (error) {
-    logger.error('Cache pattern delete error:', { pattern, error });
+    if (isRedisConnectionIssue(error)) {
+      if (!cachePatternFallbackWarned) {
+        logger.warn(
+          'Redis unavailable for cache pattern delete, skipping invalidation (logging once)',
+          { pattern },
+        );
+        cachePatternFallbackWarned = true;
+      }
+      return;
+    }
+    logger.error('Cache pattern delete error', toError(error), { pattern });
   }
 }
 
@@ -164,10 +225,6 @@ export const redis = {
  */
 export async function checkRateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
   try {
-    if (!isRedisAvailable()) {
-      logger.warn('Redis unavailable for rate limiting, allowing request');
-      return true; // Fail-open with warning
-    }
     const redis = await getRedisClient();
     const prefixedKey = prefixKey(`ratelimit:${key}`);
     const current = await redis.incr(prefixedKey);
@@ -178,7 +235,17 @@ export async function checkRateLimit(key: string, limit: number, windowSeconds: 
 
     return current <= limit;
   } catch (error) {
-    logger.error('Rate limit check error:', { key, error });
+    if (isRedisConnectionIssue(error)) {
+      if (!rateLimitErrorWarned) {
+        logger.warn('Redis unavailable for rate limiting, allowing requests (logging once)', {
+          key: key || 'unknown',
+        });
+        rateLimitErrorWarned = true;
+      }
+      return true;
+    }
+    logger.error('Rate limit check error', toError(error), { key: key || 'unknown' });
     return true; // Allow on error (fail-open)
   }
 }
+

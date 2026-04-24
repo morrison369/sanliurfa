@@ -39,22 +39,14 @@ export const POST: APIRoute = async (context) => {
     }
 
     // Send verification email
-    // @ts-expect-error - requestEmailVerification arguments mismatch
-    const sent = await requestEmailVerification(userId, user.email, user.full_name);
-
-    if (!sent) {
-      return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to send verification email');
-    }
+    await requestEmailVerification(userId, user.email, user.full_name);
 
     logger.info('Verification email resent', { userId, email: user.email } as any);
 
-    // @ts-expect-error - apiResponse signature mismatch
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      message: 'Verification email sent successfully'
-    });
+    return apiResponse({ success: true, message: 'Verification email sent successfully' }, HttpStatus.OK);
   } catch (error) {
     logger.error('Resend verification error', error instanceof Error ? error : new Error(String(error)), {} as any);
     return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to resend verification email');
   }
 };
+

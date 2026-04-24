@@ -3,9 +3,10 @@
  * Track user visits to places with notes and ratings
  */
 
-import { query, queryOne, queryMany, insert, update } from '../postgres';
+import { query, queryOne, queryMany, insert } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
+import { resolveContentImage } from '../content-images';
 
 export interface PlaceVisit {
   id: string;
@@ -249,7 +250,7 @@ export async function getUserVisitedPlaces(userId: string, limit: number = 30): 
   try {
     const results = await queryMany(
       `SELECT
-        p.id, p.name, p.category, p.rating, p.image_url,
+        p.id, p.slug, p.name, p.category, p.rating, COALESCE(p.thumbnail_url, p.images[1]) as image_url, p.thumbnail_url,
         COUNT(pv.id) as visit_count,
         MAX(pv.visited_at) as last_visit,
         AVG(pv.rating) as avg_rating
@@ -264,10 +265,23 @@ export async function getUserVisitedPlaces(userId: string, limit: number = 30): 
 
     return results.map((r: any) => ({
       id: r.id,
+      slug: r.slug,
       name: r.name,
       category: r.category,
       rating: r.rating,
-      image: r.image_url,
+      image: resolveContentImage({
+        category: 'places',
+        slug: r.slug,
+        explicit: r.image_url || r.thumbnail_url,
+        placeholder: '/images/placeholder-place.jpg',
+      }),
+      thumbnail: resolveContentImage({
+        category: 'places',
+        slug: r.slug,
+        explicit: r.thumbnail_url || r.image_url,
+        placeholder: '/images/placeholder-place.jpg',
+        thumb: true,
+      }),
       visitCount: r.visit_count,
       lastVisit: r.last_visit,
       averageRating: r.avg_rating ? parseFloat(r.avg_rating).toFixed(1) : null
@@ -308,5 +322,3 @@ export async function getMostVisitedPlaces(userId: string, limit: number = 10): 
     return [];
   }
 }
-
-

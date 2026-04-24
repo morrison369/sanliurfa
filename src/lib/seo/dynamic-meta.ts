@@ -23,7 +23,7 @@ const DEFAULT_DESCRIPTION = 'Şanlıurfa\'nın tarihi yerleri, mekanları ve kü
  */
 export function generateMetaTags(meta: Partial<SEOMeta> = {}): SEOMeta {
   return {
-    title: meta.title ? `${meta.title} | Şanlıurfa.com` : 'Şanlıurfa.com - Şehrin Rehberi',
+    title: meta.title ? `${meta.title} | Sanliurfa.com` : 'Sanliurfa.com - Şehrin Rehberi',
     description: meta.description || DEFAULT_DESCRIPTION,
     keywords: meta.keywords || ['şanlıurfa', 'göbeklitepe', 'balıklıgöl', 'urfa', 'tarihi yerler'],
     ogImage: meta.ogImage || DEFAULT_IMAGE,
@@ -163,11 +163,11 @@ function generateArticleStructuredData(
         }
       : {
           '@type': 'Organization',
-          name: 'Şanlıurfa.com',
+          name: 'Sanliurfa.com',
         },
     publisher: {
       '@type': 'Organization',
-      name: 'Şanlıurfa.com',
+      name: 'Sanliurfa.com',
       logo: {
         '@type': 'ImageObject',
         url: `${BASE_URL}/logo.png`,
@@ -183,14 +183,9 @@ export function generateOrganizationStructuredData(): Record<string, any> {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Şanlıurfa.com',
+    name: 'Sanliurfa.com',
     url: BASE_URL,
     logo: `${BASE_URL}/logo.png`,
-    sameAs: [
-      'https://facebook.com/sanliurfa',
-      'https://twitter.com/sanliurfa',
-      'https://instagram.com/sanliurfa',
-    ],
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer support',

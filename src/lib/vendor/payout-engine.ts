@@ -134,7 +134,7 @@ export class EarningsTracker {
    */
   getSummary(
     vendorId: string,
-    period: string
+    _period: string
   ): { totalEarnings: number; totalCommission: number; netEarnings: number } {
     const vendorEarnings = this.earnings.get(vendorId) || [];
 
@@ -182,7 +182,7 @@ export class PayoutProcessor {
    * Create payout
    */
   createPayout(vendorId: string, amount: number, settlementDate: number): Payout {
-    const payoutId = 'payout-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const payoutId = 'payout-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
 
     const payout: Payout = {
       id: payoutId,

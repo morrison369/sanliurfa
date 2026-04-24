@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Toggle Event RSVP
  * POST /api/events/[id]/rsvp - Toggle RSVP for an event
@@ -11,7 +10,7 @@ import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
 export const POST: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

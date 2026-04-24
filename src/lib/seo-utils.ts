@@ -3,11 +3,12 @@
  */
 
 import type { Breadcrumb, FAQ, Review } from '../types/seo';
+import { getPublicAppUrl } from './public-app-url';
 
 /**
  * Generate canonical URL
  */
-export function getCanonicalUrl(path: string, baseUrl = 'https://sanliurfa.com'): string {
+export function getCanonicalUrl(path: string, baseUrl = getPublicAppUrl()): string {
   // Remove trailing slash except for root
   const cleanPath = path === '/' ? '' : path.replace(/\/$/, '');
   return `${baseUrl}${cleanPath}`;
@@ -41,7 +42,7 @@ export function getOgImageUrl(options: {
   
   // Generate OG image with title
   const title = encodeURIComponent(options.title);
-  return `https://sanliurfa.com/og-image.png?title=${title}`;
+  return `${getPublicAppUrl()}/og-image.png?title=${title}`;
 }
 
 /**
@@ -107,15 +108,16 @@ export function generateReviewSchema(review: Review & { itemName: string }): Rec
  * Generate JSON-LD local business structured data
  */
 export function generateLocalBusinessSchema(): Record<string, any> {
+  const appUrl = getPublicAppUrl();
   return {
     '@context': 'https://schema.org',
     '@type': 'TravelAgency',
-    name: 'Şanlıurfa.com',
+    name: 'Sanliurfa.com',
     description: 'Şanlıurfa gezi rehberi - Balıklıgöl, Göbeklitepe ve daha fazlası',
-    url: 'https://sanliurfa.com',
+    url: appUrl,
     logo: {
       '@type': 'ImageObject',
-      url: 'https://sanliurfa.com/logo.png',
+      url: `${appUrl}/logo.png`,
     },
     address: {
       '@type': 'PostalAddress',
@@ -128,11 +130,6 @@ export function generateLocalBusinessSchema(): Record<string, any> {
       latitude: 37.1591,
       longitude: 38.7969,
     },
-    sameAs: [
-      'https://facebook.com/sanliurfa',
-      'https://twitter.com/sanliurfa',
-      'https://instagram.com/sanliurfa',
-    ],
   };
 }
 
@@ -294,7 +291,7 @@ export function calculateReadingTime(content: string): number {
 export function extractHeadings(content: string): Array<{ id: string; text: string; level: number }> {
   const headings: Array<{ id: string; text: string; level: number }> = [];
   const regex = /<h([2-4])[^>]*>([^<]+)<\/h\1>/gi;
-  let match;
+  let match: RegExpExecArray | null;
 
   while ((match = regex.exec(content)) !== null) {
     const level = parseInt(match[1]);
@@ -311,7 +308,7 @@ export function extractHeadings(content: string): Array<{ id: string; text: stri
  * Generate hreflang tags for multilingual content
  */
 export function generateHreflang(
-  path: string,
+  _path: string,
   languages: Array<{ code: string; url: string }>,
   defaultLang = 'tr'
 ): Array<{ rel: string; hreflang: string; href: string }> {

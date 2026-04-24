@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, MessageCircle, CheckCircle, XCircle, Reply, Flag } from 'lucide-react';
+import { Star, MessageCircle, CheckCircle, XCircle, Reply } from 'lucide-react';
 
 interface Review {
   id: string;

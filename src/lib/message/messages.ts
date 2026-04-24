@@ -1,8 +1,7 @@
-// @ts-nocheck
 /**
  * Direct Messages
  */
-import { query, queryOne, queryMany, insert, update } from '../postgres';
+import { query, queryOne, queryMany, insert } from '../postgres';
 import { logger } from '../logger';
 import { getCache, setCache, deleteCache, deleteCachePattern } from '../cache';
 
@@ -22,7 +21,7 @@ export async function getOrCreateConversation(userA: string, userB: string) {
 export async function getConversations(userId: string, limit = 50, offset = 0) {
   const cacheKey = `conversations:${userId}:inbox:${limit}:${offset}`;
   const cached = await getCache(cacheKey);
-  if (cached) return JSON.parse(cached);
+  if (cached) return JSON.parse(cached as string);
   const convos = await queryMany(
     `SELECT c.*, u.full_name, u.avatar_url, dm.content, dm.created_at as msg_time,
             COUNT(CASE WHEN dm.read_at IS NULL AND dm.sender_id != $1 THEN 1 END) as unread
@@ -50,7 +49,10 @@ export async function sendMessage(conversationId: string, senderId: string, cont
   if (!convo || (convo.participant_a !== senderId && convo.participant_b !== senderId)) throw new Error('Unauthorized');
   const id = crypto.randomUUID();
   await insert('direct_messages', { id, conversation_id: conversationId, sender_id: senderId, content, created_at: new Date() });
-  await update('conversations', { id: conversationId }, { last_message_id: id, last_activity_at: new Date() });
+  await query(
+    'UPDATE conversations SET last_message_id = $1, last_activity_at = NOW() WHERE id = $2',
+    [id, conversationId],
+  );
   await deleteCachePattern(`conversations:*:inbox:*`);
   return queryOne('SELECT * FROM direct_messages WHERE id = $1', [id]);
 }
@@ -74,5 +76,4 @@ export async function deleteConversation(conversationId: string, userId: string)
   await insert('conversation_deletions', { conversation_id: conversationId, user_id: userId, deleted_at: new Date() });
   await deleteCachePattern(`conversations:${userId}:inbox:*`);
 }
-
 

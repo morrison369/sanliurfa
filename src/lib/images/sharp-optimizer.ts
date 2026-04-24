@@ -3,7 +3,9 @@
  * Production-ready image processing with Sharp
  */
 
-import type { OptimizeOptions, OptimizedImage, ImageMetadata } from './optimizer';
+import type { ImageMetadata } from './optimizer';
+type OptimizeOptions = any;
+type OptimizedImage = any;
 import { logger } from '../logging';
 
 // Sharp will be dynamically imported to avoid issues when not installed
@@ -186,3 +188,4 @@ export async function processImageUpload(
   
   return { variants, placeholder };
 }
+

@@ -1,4 +1,5 @@
 import { logger } from '../logging';
+import { getPublicAppUrl } from '../public-app-url';
 /**
  * Email Service
  * Nodemailer-based email sending with queue management
@@ -25,6 +26,7 @@ const queueStats = {
 
 // Nodemailer transporter
 let transporter: any = null;
+const PUBLIC_APP_URL = getPublicAppUrl();
 
 async function getTransporter(): Promise<any> {
   if (transporter) return transporter;
@@ -165,7 +167,7 @@ export async function sendBulkEmail(
 
 // Add email to queue
 export function queueEmail(options: Omit<EmailQueueItem, 'id' | 'retries' | 'maxRetries'>): string {
-  const id = `email_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const id = `email_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   const queueItem: EmailQueueItem = {
     ...options,
     id,
@@ -232,11 +234,11 @@ export async function sendEmailMessage(data: {
 // Email Templates
 export const emailTemplates = {
   welcome: (name: string): { subject: string; html: string } => ({
-    subject: 'Şanlıurfa.com\'a Hoş Geldiniz!',
+    subject: 'Sanliurfa.com\'a Hoş Geldiniz!',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #dc2626;">Hoş Geldiniz, ${name}!</h1>
-        <p>Şanlıurfa.com'a katıldığınız için teşekkür ederiz.</p>
+        <p>Sanliurfa.com'a katıldığınız için teşekkür ederiz.</p>
         <p>Şehrin en iyi mekanlarını keşfetmeye başlayın:</p>
         <ul>
           <li>Restoranlar ve kafeler</li>
@@ -244,13 +246,13 @@ export const emailTemplates = {
           <li>Tarihi yerler</li>
           <li>Etkinlikler</li>
         </ul>
-        <a href="https://sanliurfa.com/places" style="display: inline-block; padding: 12px 24px; background: #dc2626; color: white; text-decoration: none; border-radius: 8px;">Mekanları Keşfet</a>
+        <a href="${PUBLIC_APP_URL}/places" style="display: inline-block; padding: 12px 24px; background: #dc2626; color: white; text-decoration: none; border-radius: 8px;">Mekanları Keşfet</a>
       </div>
     `,
   }),
 
   passwordReset: (name: string, resetUrl: string): { subject: string; html: string } => ({
-    subject: 'Şifre Sıfırlama - Şanlıurfa.com',
+    subject: 'Şifre Sıfırlama - Sanliurfa.com',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #dc2626;">Şifre Sıfırlama</h1>
@@ -265,7 +267,7 @@ export const emailTemplates = {
   }),
 
   reviewApproved: (placeName: string, reviewUrl: string): { subject: string; html: string } => ({
-    subject: 'Yorumunuz Onaylandı - Şanlıurfa.com',
+    subject: 'Yorumunuz Onaylandı - Sanliurfa.com',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #dc2626;">Yorumunuz Onaylandı!</h1>
@@ -277,13 +279,13 @@ export const emailTemplates = {
   }),
 
   placeVerified: (placeName: string, placeUrl: string): { subject: string; html: string } => ({
-    subject: 'Mekanınız Doğrulandı - Şanlıurfa.com',
+    subject: 'Mekanınız Doğrulandı - Sanliurfa.com',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #dc2626;">Tebrikler!</h1>
         <p><strong>${placeName}</strong> doğrulandı ve yayınlandı.</p>
         <a href="${placeUrl}" style="display: inline-block; padding: 12px 24px; background: #dc2626; color: white; text-decoration: none; border-radius: 8px;">Mekanı Görüntüle</a>
-        <p style="margin-top: 24px; color: #666;">Artık müşterileriniz sizi Şanlıurfa.com'da bulabilir!</p>
+        <p style="margin-top: 24px; color: #666;">Artık müşterileriniz sizi Sanliurfa.com'da bulabilir!</p>
       </div>
     `,
   }),
@@ -293,13 +295,13 @@ export const emailTemplates = {
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: #dc2626; padding: 20px; text-align: center;">
-          <h1 style="color: white; margin: 0;">Şanlıurfa.com</h1>
+          <h1 style="color: white; margin: 0;">Sanliurfa.com</h1>
         </div>
         <div style="padding: 20px;">
           ${content}
         </div>
         <div style="padding: 20px; background: #f3f4f6; text-align: center; font-size: 12px; color: #666;">
-          <p>Bu e-postayı Şanlıurfa.com bültenine abone olduğunuz için alıyorsunuz.</p>
+          <p>Bu e-postayı Sanliurfa.com bültenine abone olduğunuz için alıyorsunuz.</p>
           <a href="${unsubscribeUrl}" style="color: #dc2626;">Bülten aboneliğinden çık</a>
         </div>
       </div>
@@ -316,3 +318,4 @@ export default {
   verifyEmailConnection,
   emailTemplates,
 };
+

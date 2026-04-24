@@ -65,12 +65,12 @@ export function subscribeToOnlineUsers(callback: (count: number) => void): () =>
 }
 
 // Notification badge
-export function getUnreadNotificationCount(userId: string): number {
+export function getUnreadNotificationCount(_userId: string): number {
   return 0;
 }
 
 export function subscribeToNotifications(
-  userId: string, 
+  _userId: string, 
   callback: (count: number) => void
 ): () => void {
   callback(0);

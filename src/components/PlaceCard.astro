@@ -65,7 +65,7 @@ const categoryNames: Record<string, string> = {
 ---
 
 <article class={`group bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow ${compact ? '' : 'dark:bg-gray-800'}`}>
-  <a href={`/places/${placeSlug}`} class="block">
+  <a href={`/isletme/${placeSlug}`} class="block">
     <!-- Image Container -->
     <div class={`relative overflow-hidden ${compact ? 'aspect-[4/3]' : 'aspect-[4/3]'}`}>
       <img
@@ -73,7 +73,7 @@ const categoryNames: Record<string, string> = {
         alt={name}
         loading="lazy"
         class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-        onerror="this.src='/images/placeholder.jpg'"
+        onerror="this.setAttribute('src','/images/placeholder.jpg')"
       />
       
       <!-- Category Badge -->

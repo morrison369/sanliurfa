@@ -166,4 +166,4 @@ export const eventVersionManager = new EventVersionManager();
 export const eventSnapshot = new EventSnapshotManager();
 export const eventRecovery = new EventRecovery();
 
-export type { Event, EventVersion, EventSnapshot as EventSnapshotType, RecoveryPoint };
+export { Event, EventVersion, EventSnapshot as EventSnapshotType, RecoveryPoint };

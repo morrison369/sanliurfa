@@ -7,13 +7,24 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { requireAuth } from '../../../lib/auth';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
+import { assertPlaceStatusTransition } from '../../../lib/place/lifecycle';
+import { recordPlaceLifecycleEvent } from '../../../lib/place/lifecycle-events';
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
 export const GET: APIRoute = async ({ request, url }) => {
   try {
     const auth = await requireAuth(request);
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/places-submissions-unauthorized',
+        instance: '/api/places/submissions',
+      });
+    }
 
     const id     = url.searchParams.get('id');
     const status = url.searchParams.get('status');
@@ -28,13 +39,21 @@ export const GET: APIRoute = async ({ request, url }) => {
       );
       const submission = result.rows[0];
       if (!submission) {
-        return new Response(JSON.stringify({ error: 'Başvuru bulunamadı' }), {
-          status: 404, headers: { 'Content-Type': 'application/json' },
+        return problemJson({
+          status: 404,
+          title: 'Bulunamadı',
+          detail: 'Başvuru bulunamadı',
+          type: '/problems/places-submissions-not-found',
+          instance: '/api/places/submissions',
         });
       }
       if (submission.owner_id !== auth.user.id && auth.user.role !== 'admin') {
-        return new Response(JSON.stringify({ error: 'Yetkisiz' }), {
-          status: 403, headers: { 'Content-Type': 'application/json' },
+        return problemJson({
+          status: 403,
+          title: 'Forbidden',
+          detail: 'Yetkisiz',
+          type: '/problems/places-submissions-forbidden',
+          instance: '/api/places/submissions',
         });
       }
       return new Response(JSON.stringify({ submission }), {
@@ -70,8 +89,12 @@ export const GET: APIRoute = async ({ request, url }) => {
     });
   } catch (error) {
     logger.error('Submissions GET error:', error);
-    return new Response(JSON.stringify({ error: 'Başvurular alınamadı' }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 500,
+      title: 'Başvurular Alınamadı',
+      detail: 'Başvurular alınamadı',
+      type: '/problems/places-submissions-get-failed',
+      instance: '/api/places/submissions',
     });
   }
 };
@@ -81,7 +104,15 @@ export const GET: APIRoute = async ({ request, url }) => {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireAuth(request);
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/places-submissions-unauthorized',
+        instance: '/api/places/submissions',
+      });
+    }
 
     const body = await request.json();
     const {
@@ -106,7 +137,7 @@ export const POST: APIRoute = async ({ request }) => {
            phone = COALESCE($8, phone),
            website = COALESCE($9, website),
            email = COALESCE($10, email),
-           open_hours = COALESCE($11, open_hours),
+           opening_hours = COALESCE($11, opening_hours),
            tags = COALESCE($12, tags),
            price_range = COALESCE($13, price_range),
            images = COALESCE($14, images),
@@ -126,11 +157,30 @@ export const POST: APIRoute = async ({ request }) => {
 
     // SUBMIT FOR REVIEW (draft → pending)
     if (action === 'submitForReview' && submissionId) {
+      const current = await query(`SELECT status FROM places WHERE id = $1 AND owner_id = $2`, [submissionId, auth.user.id]);
+      const currentStatus = current.rows[0]?.status;
+      const transition = assertPlaceStatusTransition(currentStatus, 'pending', auth.user.role === 'admin' ? 'admin' : 'user');
+      if (!transition.ok) {
+        return problemJson({
+          status: 400,
+          title: 'Geçersiz Durum Geçişi',
+          detail: 'error' in transition ? transition.error : 'Geçersiz durum geçişi',
+          type: '/problems/places-submissions-transition-invalid',
+          instance: '/api/places/submissions',
+        });
+      }
       await query(
         `UPDATE places SET status = 'pending', updated_at = NOW()
-         WHERE id = $1 AND owner_id = $2 AND status = 'draft'`,
+         WHERE id = $1 AND owner_id = $2`,
         [submissionId, auth.user.id]
       );
+      await recordPlaceLifecycleEvent({
+        placeId: submissionId,
+        fromStatus: currentStatus || null,
+        toStatus: 'pending',
+        actorUserId: auth.user.id,
+        reason: 'submitForReview',
+      }).catch(() => null);
       const result = await query(`SELECT * FROM places WHERE id = $1`, [submissionId]);
       return new Response(JSON.stringify({ success: true, submission: result.rows[0] }), {
         status: 200, headers: { 'Content-Type': 'application/json' },
@@ -139,10 +189,13 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Validate for new submission
     if (!name || !category || !description || !address) {
-      return new Response(
-        JSON.stringify({ error: 'name, category, description, address zorunludur' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'name, category, description, address zorunludur',
+        type: '/problems/places-submissions-validation',
+        instance: '/api/places/submissions',
+      });
     }
 
     // Duplicate check
@@ -169,7 +222,7 @@ export const POST: APIRoute = async ({ request }) => {
     const result = await query(
       `INSERT INTO places
          (name, slug, category, description, short_description, address,
-          latitude, longitude, phone, website, email, open_hours,
+          latitude, longitude, phone, website, email, opening_hours,
           tags, price_range, images, owner_id, status)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
        RETURNING *`,
@@ -179,19 +232,33 @@ export const POST: APIRoute = async ({ request }) => {
        features.length ? features : null, priceRange || null,
        photos.length ? photos : null, auth.user.id, newStatus]
     );
+    const created = result.rows[0];
+    if (created?.id) {
+      await recordPlaceLifecycleEvent({
+        placeId: created.id,
+        fromStatus: null,
+        toStatus: newStatus,
+        actorUserId: auth.user.id,
+        reason: action === 'draft' ? 'draft_create' : 'submit_create',
+      }).catch(() => null);
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        submission: result.rows[0],
+        submission: created,
         message: action === 'draft' ? 'Taslak kaydedildi' : 'Başvuru incelemeye gönderildi',
       }),
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     logger.error('Submissions POST error:', error);
-    return new Response(JSON.stringify({ error: 'Başvuru işlemi başarısız' }), {
-      status: 400, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 400,
+      title: 'Başvuru İşlemi Başarısız',
+      detail: 'Başvuru işlemi başarısız',
+      type: '/problems/places-submissions-post-failed',
+      instance: '/api/places/submissions',
     });
   }
 };

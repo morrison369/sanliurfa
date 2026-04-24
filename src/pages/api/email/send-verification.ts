@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Send Email Verification
  */
@@ -12,12 +11,14 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { createToken } from '../../../lib/auth';
 
+const PUBLIC_APP_URL = (process.env.PUBLIC_APP_URL || 'https://sanliurfa.com').replace(/\/$/, '');
+
 const schema = {
   email: { type: 'string' as const, required: true, pattern: '^[^@]+@[^@]+\\.[^@]+$' }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -54,13 +55,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Create verification token
     const verifyToken = createToken({ userId: user.id, email, role: 'user' });
-    const verifyLink = `https://sanliurfa.com/verify-email?token=${verifyToken}`;
+    const verifyLink = `${PUBLIC_APP_URL}/verify-email?token=${verifyToken}`;
 
     const html = getEmailVerificationHTML(user.full_name || 'Kullanıcı', verifyLink);
 
     const sent = await sendEmail({
       to: email,
-      subject: 'E-posta Adresini Doğrula - Şanlıurfa.com',
+      subject: 'E-posta Adresini Doğrula - Sanliurfa.com',
       html
     });
 

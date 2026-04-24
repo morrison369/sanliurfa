@@ -3,40 +3,38 @@
  * Model explainability, bias detection, AI governance, compliance
  */
 
-import { logger } from '../logger';
-
 export class ModelExplainability {
-  explainPrediction(modelId: string, input: Record<string, any>, method: string): any { return {}; }
-  getFeatureImportance(modelId: string): Record<string, number> { return {}; }
-  visualizeDecisionPath(modelId: string, inputId: string): Record<string, any> { return {}; }
-  generateHumanReadableExplanation(explanationId: string): string { return ''; }
-  compareExplanations(explanationIds: string[]): Record<string, any> { return {}; }
+  explainPrediction(_modelId: string, _input: Record<string, any>, _method: string): any { return {}; }
+  getFeatureImportance(_modelId: string): Record<string, number> { return {}; }
+  visualizeDecisionPath(_modelId: string, _inputId: string): Record<string, any> { return {}; }
+  generateHumanReadableExplanation(_explanationId: string): string { return ''; }
+  compareExplanations(_explanationIds: string[]): Record<string, any> { return {}; }
 }
 
 export class BiasDetection {
-  detectBias(modelId: string, testDataset: Record<string, any>[]): any[] { return []; }
-  analyzeGroupFairness(modelId: string, groups: string[]): Record<string, number> { return {}; }
-  assessEqualOpportunity(modelId: string): Record<string, any> { return {}; }
-  mitigateBias(modelId: string, strategy: string): void {}
-  generateFairnessReport(modelId: string): Record<string, any> { return {}; }
+  detectBias(_modelId: string, _testDataset: Record<string, any>[]): any[] { return []; }
+  analyzeGroupFairness(_modelId: string, _groups: string[]): Record<string, number> { return {}; }
+  assessEqualOpportunity(_modelId: string): Record<string, any> { return {}; }
+  mitigateBias(_modelId: string, _strategy: string): void {}
+  generateFairnessReport(_modelId: string): Record<string, any> { return {}; }
 }
 
 export class AIGovernance {
-  createAuditTrail(modelId: string): void {}
-  recordModelChange(modelId: string, changeType: string, details: Record<string, any>): void {}
-  auditModel(modelId: string): any { return {}; }
-  enforceCompliance(modelId: string, framework: string): boolean { return true; }
-  getComplianceStatus(modelId: string): Record<string, any> { return {}; }
-  generateGovernanceReport(modelId: string, period: string): Record<string, any> { return {}; }
+  createAuditTrail(_modelId: string): void {}
+  recordModelChange(_modelId: string, _changeType: string, _details: Record<string, any>): void {}
+  auditModel(_modelId: string): any { return {}; }
+  enforceCompliance(_modelId: string, _framework: string): boolean { return true; }
+  getComplianceStatus(_modelId: string): Record<string, any> { return {}; }
+  generateGovernanceReport(_modelId: string, _period: string): Record<string, any> { return {}; }
 }
 
 export class ExplainableAI {
-  buildInterpretableModel(datasetId: string, targetVariable: string): string { return ''; }
-  explainModelBehavior(modelId: string): Record<string, any> { return {}; }
-  generateTransparencyDashboard(modelId: string): Record<string, any> { return {}; }
-  validateModelAssumptions(modelId: string): Record<string, any> { return {}; }
-  auditForTransparency(modelId: string): Record<string, any> { return {}; }
-  createComplianceReport(modelId: string, audience: string): Record<string, any> { return {}; }
+  buildInterpretableModel(_datasetId: string, _targetVariable: string): string { return ''; }
+  explainModelBehavior(_modelId: string): Record<string, any> { return {}; }
+  generateTransparencyDashboard(_modelId: string): Record<string, any> { return {}; }
+  validateModelAssumptions(_modelId: string): Record<string, any> { return {}; }
+  auditForTransparency(_modelId: string): Record<string, any> { return {}; }
+  createComplianceReport(_modelId: string, _audience: string): Record<string, any> { return {}; }
 }
 
 export const modelExplainability = new ModelExplainability();

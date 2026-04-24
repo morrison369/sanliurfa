@@ -1,39 +1,168 @@
 ---
 /**
- * Blog Analitikleri Dashboardi
+ * Blog analitik paneli
  * İstatistikler, en çok okunan yazılar, kategori performansı
  */
 
 import Layout from '../../../layouts/Layout.astro';
 import { queryOne, queryMany } from '../../../lib/postgres';
 
-const user = Astro.locals.user;
-if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/login');
+interface CountRow {
+  count: string | number;
 }
 
-let analytics = null;
+interface TotalRow {
+  total: string | number | null;
+}
+
+interface AvgRow {
+  average: string | number | null;
+}
+
+interface BlogTopPostRow {
+  id: string;
+  title: string;
+  slug: string;
+  view_count: string | number | null;
+  like_count?: string | number | null;
+  comment_count?: string | number | null;
+  status?: string;
+  created_at?: string | Date;
+}
+
+interface BlogCategoryStatsRow {
+  category: string | null;
+  post_count: string | number;
+  total_views: string | number | null;
+}
+
+interface BlogAnalytics {
+  posts: {
+    total: number;
+    published: number;
+    draft: number;
+    totalViews: number;
+    avgViews: number;
+  };
+  comments: {
+    approved: number;
+    pending: number;
+  };
+  subscribers: {
+    active: number;
+    total: number;
+  };
+  engagement: {
+    uniqueReaders: number;
+    avgReadTimeSeconds: number;
+    avgScrollPercentage: number;
+  };
+  topPosts: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    views: number;
+    likes: number;
+  }>;
+  categories: Array<{
+    name: string;
+    postCount: number;
+    totalViews: number;
+  }>;
+  recentPosts: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    status: string;
+  }>;
+}
+
+const asNumber = (value: string | number | null | undefined): number => Number(value ?? 0);
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/admin/blog/analytics');
+}
+
+let analytics: BlogAnalytics | null = null;
 let error = '';
 
 try {
-  const [totalPosts, totalViews, totalComments, topPosts, categoryStats] = await Promise.all([
-    queryOne('SELECT COUNT(*) as count FROM blog_posts WHERE status = \'published\''),
-    queryOne('SELECT COALESCE(SUM(view_count), 0) as total FROM blog_posts'),
-    queryOne('SELECT COUNT(*) as count FROM blog_comments WHERE status = \'approved\''),
-    queryMany(`SELECT id, title, slug, view_count, comment_count, created_at
+  const [
+    totalPosts,
+    publishedPosts,
+    draftPosts,
+    totalViews,
+    avgViews,
+    approvedComments,
+    pendingComments,
+    totalSubscribers,
+    activeSubscribers,
+    topPosts,
+    categoryStats,
+    recentPosts,
+  ] = await Promise.all([
+    queryOne<CountRow>('SELECT COUNT(*) as count FROM blog_posts'),
+    queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_posts WHERE status = 'published'"),
+    queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_posts WHERE status = 'draft'"),
+    queryOne<TotalRow>('SELECT COALESCE(SUM(view_count), 0) as total FROM blog_posts'),
+    queryOne<AvgRow>('SELECT COALESCE(ROUND(AVG(view_count)), 0) as average FROM blog_posts'),
+    queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_comments WHERE status = 'approved'"),
+    queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_comments WHERE status = 'pending'"),
+    queryOne<CountRow>('SELECT COUNT(*) as count FROM blog_subscribers'),
+    queryOne<CountRow>(
+      "SELECT COUNT(*) as count FROM blog_subscribers WHERE status = 'active' OR is_active = true"
+    ),
+    queryMany<BlogTopPostRow>(`SELECT id, title, slug, view_count, like_count, comment_count, created_at
                FROM blog_posts WHERE status = 'published'
                ORDER BY view_count DESC NULLS LAST LIMIT 10`),
-    queryMany(`SELECT category, COUNT(*) as post_count, SUM(view_count) as total_views
+    queryMany<BlogCategoryStatsRow>(`SELECT COALESCE(category, 'Genel') as category, COUNT(*) as post_count, SUM(view_count) as total_views
                FROM blog_posts WHERE status = 'published'
                GROUP BY category ORDER BY post_count DESC`),
+    queryMany<BlogTopPostRow>(`SELECT id, title, slug, status, view_count, like_count, created_at
+               FROM blog_posts
+               ORDER BY created_at DESC NULLS LAST LIMIT 8`),
   ]);
 
   analytics = {
-    totalPosts: Number(totalPosts?.count || 0),
-    totalViews: Number(totalViews?.total || 0),
-    totalComments: Number(totalComments?.count || 0),
-    topPosts,
-    categoryStats,
+    posts: {
+      total: asNumber(totalPosts?.count),
+      published: asNumber(publishedPosts?.count),
+      draft: asNumber(draftPosts?.count),
+      totalViews: asNumber(totalViews?.total),
+      avgViews: asNumber(avgViews?.average),
+    },
+    comments: {
+      approved: asNumber(approvedComments?.count),
+      pending: asNumber(pendingComments?.count),
+    },
+    subscribers: {
+      active: asNumber(activeSubscribers?.count),
+      total: asNumber(totalSubscribers?.count),
+    },
+    engagement: {
+      uniqueReaders: 0,
+      avgReadTimeSeconds: 0,
+      avgScrollPercentage: 0,
+    },
+    topPosts: topPosts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+      views: asNumber(post.view_count),
+      likes: asNumber(post.like_count),
+    })),
+    categories: categoryStats.map((category) => ({
+      name: category.category || 'Genel',
+      postCount: asNumber(category.post_count),
+      totalViews: asNumber(category.total_views),
+    })),
+    recentPosts: recentPosts.map((post) => ({
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+      status: post.status || 'draft',
+    })),
   };
 } catch (err) {
   error = 'Sunucu hatası: ' + String(err);
@@ -41,7 +170,8 @@ try {
 
 const seo = {
   title: 'Blog Analitikleri - Yönetim Paneli',
-  noindex: true
+  description: 'Blog istatistikleri, yazı performansı ve yorum durumu',
+  noIndex: true
 };
 ---
 
@@ -75,7 +205,7 @@ const seo = {
             <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Toplam Yazı</p>
               <p class="text-3xl font-bold text-gray-900 dark:text-white">{analytics.posts.total}</p>
-              <p class="text-xs text-gray-500 mt-2">ğŸ“ {analytics.posts.published} yayınlı, {analytics.posts.draft} taslak</p>
+              <p class="text-xs text-gray-500 mt-2">{analytics.posts.published} yayınlı, {analytics.posts.draft} taslak</p>
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
@@ -93,7 +223,7 @@ const seo = {
             <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Abone</p>
               <p class="text-3xl font-bold text-purple-600">{analytics.subscribers.active}</p>
-              <p class="text-xs text-gray-500 mt-2">ğŸ“§ {analytics.subscribers.total} toplam</p>
+              <p class="text-xs text-gray-500 mt-2">{analytics.subscribers.total} toplam</p>
             </div>
           </div>
 
@@ -127,7 +257,7 @@ const seo = {
                       <a href={`/blog/${post.slug}`} target="_blank" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 truncate">
                         {post.title}
                       </a>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">ğŸ‘ï¸ {post.views} • ❤ï¸ {post.likes}</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">{post.views} görüntüleme - {post.likes} beğeni</p>
                     </div>
                   </div>
                 ))}
@@ -176,7 +306,7 @@ const seo = {
                       ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                   }`}>
-                    {post.status === 'published' ? '✓' : post.status === 'draft' ? 'ğŸ“‹' : '🗑ï¸'}
+                    {post.status === 'published' ? 'Yayında' : post.status === 'draft' ? 'Taslak' : 'Arşiv'}
                   </span>
                 </div>
               ))}
@@ -187,3 +317,5 @@ const seo = {
     </div>
   </div>
 </Layout>
+
+

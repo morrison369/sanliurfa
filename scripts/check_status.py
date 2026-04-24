@@ -5,7 +5,7 @@ import sys
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 NVM_PREFIX = 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '
 
 def main():
@@ -23,7 +23,7 @@ def main():
     print(pm2[:500])
     
     # HTTP test
-    _, stdout, _ = ssh.exec_command("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")
+    _, stdout, _ = ssh.exec_command("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/")
     http = stdout.read().decode()
     print(f"\n🌐 HTTP Status (homepage): {http}")
     

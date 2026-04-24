@@ -60,17 +60,8 @@ export class QualityRuleEngine {
   /**
    * Create quality rule
    */
-  createRule(name: string, type: QualityRuleType, parameters: Record<string, any>): string {
+  createRule(name: string, type: QualityRuleType, _parameters: Record<string, any>): string {
     const id = 'rule-' + Date.now() + '-' + this.ruleCount++;
-
-    const rule: QualityRule = {
-      id,
-      name,
-      type,
-      parameters,
-      severity: 'error',
-      enabled: true
-    };
 
     logger.info('Quality rule created', { ruleId: id, name, type });
 

@@ -3,7 +3,7 @@
  * Admin functions for subscription management and analytics
  */
 
-import { query, queryOne, queryMany, insert, update as updateDb } from '../postgres';
+import { queryOne, queryMany, insert, update as updateDb } from '../postgres';
 import { logger } from '../logger';
 
 /**

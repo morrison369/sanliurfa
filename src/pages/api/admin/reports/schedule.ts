@@ -7,7 +7,7 @@ import { validateWithSchema } from '../../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
-import { queryMany, insert, update, queryOne } from '../../../../lib/postgres';
+import { queryMany, update, queryOne } from '../../../../lib/postgres';
 
 const schema = {
   type: {
@@ -34,7 +34,7 @@ const schema = {
 
 // GET scheduled reports
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -69,7 +69,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
 // POST create scheduled report
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -135,7 +135,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
 // DELETE scheduled report
 export const DELETE: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

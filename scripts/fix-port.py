@@ -4,7 +4,7 @@ import time
 print("Baglaniyor...", flush=True)
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='zIT7Y9yrJZRV', timeout=30)
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', timeout=30)
 print("SSH OK", flush=True)
 
 # 1. Tum node prosesleri oldur
@@ -19,9 +19,9 @@ stdin, stdout, stderr = ssh.exec_command('pm2 delete all; pm2 kill; sleep 1')
 time.sleep(2)
 print(stdout.read().decode(), flush=True)
 
-# 3. Port 6000 kontrol
-print("3. Port 6000 kontrolu...", flush=True)
-stdin, stdout, stderr = ssh.exec_command('ss -tulpn | grep 6000 || echo "Port 6000 bosta"')
+# 3. Port 4321 kontrol
+print("3. Port 4321 kontrolu...", flush=True)
+stdin, stdout, stderr = ssh.exec_command('ss -tulpn | grep 4321 || echo "Port 4321 bosta"')
 time.sleep(1)
 print(stdout.read().decode(), flush=True)
 
@@ -41,7 +41,7 @@ print(stdout.read().decode(), flush=True)
 # 6. Health check
 print("6. Saglik kontrolu...", flush=True)
 time.sleep(3)
-stdin, stdout, stderr = ssh.exec_command('curl -s http://127.0.0.1:6000/api/health')
+stdin, stdout, stderr = ssh.exec_command('curl -s http://127.0.0.1:4321/api/health')
 health = stdout.read().decode()
 print(health, flush=True)
 

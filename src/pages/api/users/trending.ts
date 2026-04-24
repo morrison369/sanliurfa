@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Trending Users
  * GET /api/users/trending - Get most active and popular users
@@ -12,7 +11,7 @@ import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -25,7 +24,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const cached = await getCache(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/users/trending', HttpStatus.OK, Date.now() - startTime);
-      return apiResponse(JSON.parse(cached), HttpStatus.OK, requestId);
+      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
     }
 
     // Validate period

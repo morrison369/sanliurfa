@@ -5,6 +5,15 @@
 
 import { query, queryOne, transaction } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
+import { publishMessageEvent } from './message-events';
+
+type TypingState = {
+  userId: string;
+  expiresAt: number;
+};
+
+const typingStateByConversation = new Map<string, Map<string, TypingState>>();
+const TYPING_TTL_MS = 10000;
 
 // Message types
 export type MessageType = 'text' | 'image' | 'location' | 'place_share' | 'voice';
@@ -51,6 +60,13 @@ export interface ConversationParticipant {
   username?: string;
   avatar_url?: string;
   joined_at: string;
+  last_read_at?: string;
+}
+
+export interface ConversationReadReceipt {
+  user_id: string;
+  full_name: string;
+  username?: string;
   last_read_at?: string;
 }
 
@@ -189,6 +205,12 @@ export async function sendMessage(
     // Clear cache
     await deleteCache(`messages:${conversationId}`);
     await deleteCache(`conversations:${senderId}`);
+    await publishMessageEvent({
+      eventType: 'message',
+      conversationId,
+      actorUserId: senderId,
+      createdAt: message.created_at,
+    });
 
     return message;
   });
@@ -236,11 +258,28 @@ export async function getMessages(
   const result = await query<Message>(query_str, params);
 
   // Mark messages as read
-  await query(
+  const readResult = await query(
     `UPDATE messages SET is_read = true, read_at = NOW()
      WHERE conversation_id = $1 AND sender_id != $2 AND is_read = false`,
     [conversationId, userId]
   );
+
+  if ((readResult.rowCount || 0) > 0) {
+    await query(
+      `UPDATE conversation_participants
+       SET last_read_at = NOW()
+       WHERE conversation_id = $1 AND user_id = $2`,
+      [conversationId, userId]
+    );
+    await deleteCache(`conversations:${userId}`);
+    await deleteCache(`unread:${userId}`);
+    await publishMessageEvent({
+      eventType: 'read',
+      conversationId,
+      actorUserId: userId,
+      createdAt: new Date().toISOString(),
+    });
+  }
 
   return result.rows.reverse(); // Return in chronological order
 }
@@ -486,6 +525,138 @@ export async function getConversationParticipants(
      FROM conversation_participants cp
      JOIN users u ON u.id = cp.user_id
      WHERE cp.conversation_id = $1`,
+    [conversationId]
+  );
+
+  return result.rows;
+}
+
+/**
+ * Explicitly mark a conversation as read and return affected row count.
+ */
+export async function markConversationRead(conversationId: string, userId: string): Promise<number> {
+  const hasAccess = await queryOne(
+    'SELECT 1 FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
+    [conversationId, userId]
+  );
+
+  if (!hasAccess) {
+    throw new Error('Access denied');
+  }
+
+  const updated = await query(
+    `UPDATE messages
+     SET is_read = true, read_at = NOW()
+     WHERE conversation_id = $1 AND sender_id != $2 AND is_read = false`,
+    [conversationId, userId]
+  );
+
+  await query(
+    `UPDATE conversation_participants
+     SET last_read_at = NOW()
+     WHERE conversation_id = $1 AND user_id = $2`,
+    [conversationId, userId]
+  );
+
+  await deleteCache(`messages:${conversationId}`);
+  await deleteCache(`conversations:${userId}`);
+  await deleteCache(`unread:${userId}`);
+
+  await publishMessageEvent({
+    eventType: 'read',
+    conversationId,
+    actorUserId: userId,
+    createdAt: new Date().toISOString(),
+  });
+
+  return updated.rowCount || 0;
+}
+
+/**
+ * Set typing status for a user in a conversation.
+ */
+export async function setConversationTyping(
+  conversationId: string,
+  userId: string,
+  isTyping: boolean
+): Promise<void> {
+  const hasAccess = await queryOne(
+    'SELECT 1 FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
+    [conversationId, userId]
+  );
+
+  if (!hasAccess) {
+    throw new Error('Access denied');
+  }
+
+  const bucket = typingStateByConversation.get(conversationId) || new Map<string, TypingState>();
+  if (isTyping) {
+    bucket.set(userId, { userId, expiresAt: Date.now() + TYPING_TTL_MS });
+    typingStateByConversation.set(conversationId, bucket);
+  } else {
+    bucket.delete(userId);
+    if (bucket.size === 0) typingStateByConversation.delete(conversationId);
+  }
+
+  await publishMessageEvent({
+    eventType: 'typing',
+    conversationId,
+    actorUserId: userId,
+    createdAt: new Date().toISOString(),
+    isTyping,
+  });
+}
+
+/**
+ * Return active typing user ids in a conversation.
+ */
+export function getConversationTypingUsers(conversationId: string, excludeUserId?: string): string[] {
+  const now = Date.now();
+  const bucket = typingStateByConversation.get(conversationId);
+  if (!bucket) return [];
+
+  const result: string[] = [];
+  for (const [userId, state] of bucket.entries()) {
+    if (state.expiresAt <= now) {
+      bucket.delete(userId);
+      continue;
+    }
+    if (excludeUserId && userId === excludeUserId) continue;
+    result.push(userId);
+  }
+
+  if (bucket.size === 0) {
+    typingStateByConversation.delete(conversationId);
+  }
+
+  return result;
+}
+
+/**
+ * Returns conversation-level read timeline for participants.
+ */
+export async function getConversationReadReceipts(
+  conversationId: string,
+  userId: string
+): Promise<ConversationReadReceipt[]> {
+  const hasAccess = await queryOne(
+    'SELECT 1 FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
+    [conversationId, userId]
+  );
+  if (!hasAccess) {
+    throw new Error('Access denied');
+  }
+
+  const result = await query<ConversationReadReceipt>(
+    `SELECT
+      cp.user_id,
+      u.full_name,
+      u.username,
+      cp.last_read_at
+     FROM conversation_participants cp
+     JOIN users u ON u.id = cp.user_id
+     WHERE cp.conversation_id = $1
+     ORDER BY cp.last_read_at DESC NULLS LAST, cp.joined_at ASC`,
     [conversationId]
   );
 

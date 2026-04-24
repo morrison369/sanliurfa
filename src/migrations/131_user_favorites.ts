@@ -1,7 +1,7 @@
 import type { Migration } from '../lib/migrations/migration-system';
 
 const migration: Migration = {
-  version: 131,
+  version: '131',
   name: 'user_favorites',
   description: 'Add user favorites/places saved table',
   
@@ -28,3 +28,4 @@ const migration: Migration = {
 };
 
 export default migration;
+

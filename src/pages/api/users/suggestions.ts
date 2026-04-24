@@ -1,18 +1,17 @@
-// @ts-nocheck
 /**
  * User Suggestions
  * GET /api/users/suggestions - Get user suggestions based on interests and activity
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, queryOne } from '../../../lib/postgres';
+import { queryMany } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -37,7 +36,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const cached = await getCache(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/users/suggestions', HttpStatus.OK, Date.now() - startTime);
-      return apiResponse(JSON.parse(cached), HttpStatus.OK, requestId);
+      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
     }
 
     // Get user's interests (places they've interacted with)
@@ -79,6 +78,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     // If not enough suggestions, add trending/active users
     if (suggestedUsers.length < limit) {
+      const excludedIds = suggestedUsers
+        .map((u: any) => u.id)
+        .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0);
+
       const additionalUsers = await queryMany(
         `SELECT u.id, u.full_name, u.username, u.avatar_url,
                 (SELECT COUNT(*) FROM followers WHERE follower_id = $1 AND following_id = u.id) as is_following,
@@ -86,10 +89,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
          FROM users u
          WHERE u.id != $1
            AND u.id NOT IN (SELECT following_id FROM followers WHERE follower_id = $1)
-           AND u.id NOT IN (${suggestedUsers.map(u => `'${u.id}'`).join(',') || 'NULL'})
+           AND NOT (u.id = ANY($2::uuid[]))
          ORDER BY activity_count DESC
-         LIMIT $2`,
-        [userId, limit - suggestedUsers.length]
+         LIMIT $3`,
+        [userId, excludedIds, limit - suggestedUsers.length]
       );
 
       suggestedUsers = [...suggestedUsers, ...additionalUsers];

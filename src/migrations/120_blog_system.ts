@@ -36,6 +36,14 @@ export const migration_120_blog_system = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS slug VARCHAR(255);
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS category_id UUID;
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'draft';
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS published_at TIMESTAMP;
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON blog_posts(slug)
     `);
 
@@ -68,6 +76,14 @@ export const migration_120_blog_system = async (pool: Pool) => {
       )
     `);
 
+    await pool.query(`
+      ALTER TABLE blog_categories ADD COLUMN IF NOT EXISTS slug VARCHAR(100);
+      ALTER TABLE blog_categories ADD COLUMN IF NOT EXISTS color VARCHAR(7);
+      ALTER TABLE blog_categories ADD COLUMN IF NOT EXISTS icon VARCHAR(50);
+      ALTER TABLE blog_categories ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
+      ALTER TABLE blog_categories ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+    `);
+
     // Blog tags table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS blog_tags (
@@ -79,6 +95,11 @@ export const migration_120_blog_system = async (pool: Pool) => {
         post_count INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE blog_tags ADD COLUMN IF NOT EXISTS slug VARCHAR(100);
+      ALTER TABLE blog_tags ADD COLUMN IF NOT EXISTS color VARCHAR(7);
     `);
 
     // Post-Tag relationship
@@ -138,7 +159,7 @@ export const migration_120_blog_system = async (pool: Pool) => {
     // Insert default categories
     await pool.query(`
       INSERT INTO blog_categories (slug, name, description, color, icon, sort_order) VALUES
-      ('tarih', 'Tarih', 'Şanlıurfa\'nın zengin tarihi ve kültürel mirası', '#8B4513', 'Landmark', 1),
+      ('tarih', 'Tarih', 'Şanlıurfa''nın zengin tarihi ve kültürel mirası', '#8B4513', 'Landmark', 1),
       ('yemek', 'Yemek', 'Urfa mutfağından eşsiz lezzetler', '#E63946', 'UtensilsCrossed', 2),
       ('gezi', 'Gezi', 'Şanlıurfa gezi rehberleri ve rotaları', '#2A9D8F', 'Map', 3),
       ('kultur', 'Kültür', 'Yerel kültür ve gelenekler', '#F4A261', 'Palmtree', 4),

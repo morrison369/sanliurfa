@@ -91,7 +91,6 @@ export async function validateApiKey(
     }
 
     // Rate limit kontrol et
-    const rateLimitKey = `sanliurfa:api_key_rate:${apiKey.id}`;
     const limited = await checkRateLimit(ipAddress || 'unknown', apiKey.rate_limit, apiKey.rate_limit_window);
 
     if (!limited) {

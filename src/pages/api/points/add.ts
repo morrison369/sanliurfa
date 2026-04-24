@@ -1,14 +1,18 @@
 import type { APIRoute } from 'astro';
 import { query, queryOne, insert } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const user = locals.user;
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/points-add-unauthorized',
+        instance: '/api/points/add',
       });
     }
 
@@ -16,9 +20,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { amount, reason, type = 'earn' } = body;
 
     if (!amount || !reason) {
-      return new Response(JSON.stringify({ error: 'Amount and reason required' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Amount ve reason gerekli',
+        type: '/problems/points-add-validation',
+        instance: '/api/points/add',
       });
     }
 
@@ -48,9 +55,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   } catch (error) {
     logger.error('Points API error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Puan İşlemi Başarısız',
+      detail: 'Sunucu hatası',
+      type: '/problems/points-add-failed',
+      instance: '/api/points/add',
     });
   }
 };

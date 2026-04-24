@@ -9,7 +9,7 @@ import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/a
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -17,13 +17,13 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const redirectUri = url.searchParams.get('redirect_uri') || `${url.origin}/api/auth/oauth/callback`;
 
     if (!providerKey) {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Provider key required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Sağlayıcı anahtarı gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Get provider configuration
     const provider = await getOAuthProvider(providerKey);
     if (!provider) {
-      return apiError(ErrorCode.NOT_FOUND, 'OAuth provider not found', HttpStatus.NOT_FOUND, undefined, requestId);
+      return apiError(ErrorCode.NOT_FOUND, 'OAuth sağlayıcısı bulunamadı', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
     // Generate state token (CSRF protection)
@@ -51,6 +51,6 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     });
   } catch (error) {
     logger.error('OAuth authorization failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'OAuth authorization failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'OAuth yetkilendirme başarısız', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -1,7 +1,7 @@
 /**
  * notifications.ts - Kullanıcı bildirim sistemi modülü
  *
- * Bu modül, Şanlıurfa.com kullanıcıları için bildirim oluşturma,
+ * Bu modül, Sanliurfa.com kullanıcıları için bildirim oluşturma,
  * listeleme, okundu olarak işaretleme ve toplu okundu işaretleme
  * işlevlerini sağlar. PostgreSQL veritabanı kullanılır.
  */
@@ -26,7 +26,7 @@ export async function sendNotification(
   link?: string
 ): Promise<string> {
   const result = await query(
-    `INSERT INTO notifications (user_id, type, title, message, link, created_at, is_read)
+    `INSERT INTO notifications (user_id, type, title, message, action_url, created_at, read)
      VALUES ($1, $2, $3, $4, $5, NOW(), false)
      RETURNING id`,
     [userId, type, title, message, link || null]

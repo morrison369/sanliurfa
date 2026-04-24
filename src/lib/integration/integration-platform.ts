@@ -124,7 +124,7 @@ export class IntegrationManager {
   /**
    * Test integration
    */
-  testIntegration(integrationId: string, config: Record<string, any>): { success: boolean; message: string } {
+  testIntegration(integrationId: string, _config: Record<string, any>): { success: boolean; message: string } {
     const success = Math.random() > 0.1;
     const message = success ? 'Connection successful' : 'Connection failed';
 
@@ -278,7 +278,7 @@ export class IntegrationMarketplace {
   /**
    * Rate integration
    */
-  rateIntegration(integrationId: string, rating: number, review?: string): void {
+  rateIntegration(integrationId: string, rating: number, _review?: string): void {
     const items = Array.from(this.items.values());
     const item = items.find(i => i.integrationId === integrationId);
     if (item) {
@@ -303,7 +303,7 @@ export class IntegrationMarketplace {
   /**
    * Get integration reviews
    */
-  getIntegrationReviews(integrationId: string): Record<string, any>[] {
+  getIntegrationReviews(_integrationId: string): Record<string, any>[] {
     return [
       { rating: 5, text: 'Excellent integration', author: 'user1' },
       { rating: 4, text: 'Works well, good documentation', author: 'user2' }
@@ -335,7 +335,7 @@ export class WebhookOrchestrator {
   /**
    * Test webhook delivery
    */
-  testWebhookDelivery(integrationId: string, testData: Record<string, any>): boolean {
+  testWebhookDelivery(integrationId: string, _testData: Record<string, any>): boolean {
     const success = Math.random() > 0.2;
     logger.debug('Webhook delivery test', { integrationId, success });
     return success;
@@ -366,7 +366,7 @@ export class WebhookOrchestrator {
   /**
    * Get webhook logs
    */
-  getWebhookLogs(integrationId: string, limit?: number): Record<string, any>[] {
+  getWebhookLogs(_integrationId: string, limit?: number): Record<string, any>[] {
     const logs: Record<string, any>[] = [];
 
     for (let i = 0; i < (limit || 10); i++) {
@@ -401,7 +401,7 @@ export class MiddlewareManager {
   /**
    * Transform data
    */
-  transformData(data: Record<string, any>, rules: Record<string, any>): Record<string, any> {
+  transformData(data: Record<string, any>, _rules: Record<string, any>): Record<string, any> {
     const transformed = { ...data };
     // Apply transformation rules
     return transformed;

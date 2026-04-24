@@ -2,34 +2,44 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { logger } from '../../../../lib/logging';
+import { problemJson } from '../../../../lib/api';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
   try {
     const { id } = params;
     
     if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/users-update-role-unauthorized',
+        instance: `/api/users/${id}/update-role`,
+      });
     }
 
     const formData = await request.formData();
     const role = formData.get('role')?.toString();
 
     if (!role || !['user', 'admin', 'moderator'].includes(role)) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid role' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Geçersiz rol',
+        type: '/problems/users-update-role-invalid',
+        instance: `/api/users/${id}/update-role`,
+      });
     }
 
     // Admin kendi rolünü değiştiremesin
     if (id === locals.user?.id && role !== 'admin') {
-      return new Response(
-        JSON.stringify({ error: 'Cannot change own role' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Kendi rolünüzü değiştiremezsiniz',
+        type: '/problems/users-update-role-self',
+        instance: `/api/users/${id}/update-role`,
+      });
     }
 
     await query('UPDATE users SET role = $1 WHERE id = $2', [role, id]);
@@ -40,9 +50,12 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     );
   } catch (err) {
     logger.error('Update role error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Rol Güncellenemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/users-update-role-failed',
+      instance: `/api/users/${params.id}/update-role`,
+    });
   }
 };

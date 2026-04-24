@@ -1,4 +1,5 @@
 ---
+import Image from './Image.astro';
 const icons = {
   Star: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
   MapPin: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
@@ -43,7 +44,7 @@ const getCategoryLabel = (category: string) => {
         </span>
         <h2 class="section-title dark:text-white">Öne Çıkan Mekanlar</h2>
         <p class="section-subtitle max-w-2xl dark:text-gray-400">
-          Şanlıurfa'nın en çok ziyaret edilen ve en yüksek puan alan mekanlarını keşfedin.
+          Şanlıurfa’nın en çok ziyaret edilen ve en yüksek puan alan mekanlarını keşfedin.
         </p>
       </div>
       
@@ -66,11 +67,13 @@ const getCategoryLabel = (category: string) => {
           style={`animation-delay: ${index * 100}ms`}
         >
           <div class="relative aspect-[4/3] overflow-hidden rounded-t-xl">
-            <img 
+            <Image 
               src={place.images?.[0] || '/images/placeholder-place.jpg'}
               alt={place.name}
               class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               loading="lazy"
+              width={640}
+              height={480}
             />
             
             <div class="absolute top-3 left-3 flex flex-wrap gap-2">
@@ -138,7 +141,7 @@ const getCategoryLabel = (category: string) => {
     </div>
     
     <div class="text-center mt-10">
-      <a href="/places" class="btn-outline inline-flex items-center gap-2">
+      <a href="/mekanlar" class="btn-outline inline-flex items-center gap-2">
         Tüm Mekanları Gör
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

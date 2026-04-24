@@ -2,9 +2,7 @@
  * Trending & Recommendations Component
  * Display trending content and personalized recommendations
  */
-
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface TrendingItem {
   id: string;
   entity_id: string;
@@ -48,12 +46,12 @@ export default function TrendingRecommendations() {
       setError(null);
 
       const response = await fetch(`/api/trending?type=places&period=${period}&limit=20&keywords=true`);
-      if (!response.ok) throw new Error('Failed to load trending');
+      if (!response.ok) throw new Error('Trend listesi yüklenemedi.');
 
       const result = await response.json();
       setTrending(result.data.trending || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading trending');
+      setError(err instanceof Error ? err.message : 'Trend listesi yüklenemedi.');
     } finally {
       setLoading(false);
     }
@@ -65,12 +63,12 @@ export default function TrendingRecommendations() {
       setError(null);
 
       const response = await fetch('/api/recommendations?limit=20');
-      if (!response.ok) throw new Error('Failed to load recommendations');
+      if (!response.ok) throw new Error('Tavsiyeler yüklenemedi.');
 
       const result = await response.json();
       setRecommendations(result.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading recommendations');
+      setError(err instanceof Error ? err.message : 'Tavsiyeler yüklenemedi.');
     } finally {
       setLoading(false);
     }
@@ -80,11 +78,11 @@ export default function TrendingRecommendations() {
     try {
       setLoading(true);
       const response = await fetch('/api/recommendations?refresh=true');
-      if (!response.ok) throw new Error('Failed to refresh');
+      if (!response.ok) throw new Error('Tavsiyeler yenilenemedi.');
       const result = await response.json();
       setRecommendations(result.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error refreshing');
+      setError(err instanceof Error ? err.message : 'Tavsiyeler yenilenemedi.');
     } finally {
       setLoading(false);
     }
@@ -98,13 +96,13 @@ export default function TrendingRecommendations() {
         body: JSON.stringify({ category, action })
       });
     } catch (err) {
-      // Silent fail for tracking
+      // İlgi takibi kritik akışı bozmasın.
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
+      {/* Sekmeler */}
       <div className="flex space-x-2 border-b border-gray-200">
         <button
           onClick={() => setTab('trending')}
@@ -114,7 +112,7 @@ export default function TrendingRecommendations() {
               : 'border-transparent text-gray-600 hover:text-gray-900'
           }`}
         >
-          🔥 Trending
+          Trendler
         </button>
         <button
           onClick={() => setTab('recommendations')}
@@ -134,7 +132,7 @@ export default function TrendingRecommendations() {
         </div>
       )}
 
-      {/* Trending Tab */}
+      {/* Trendler sekmesi */}
       {tab === 'trending' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -193,7 +191,7 @@ export default function TrendingRecommendations() {
         </div>
       )}
 
-      {/* Recommendations Tab */}
+      {/* Tavsiyeler sekmesi */}
       {tab === 'recommendations' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">

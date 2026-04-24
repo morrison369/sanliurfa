@@ -7,6 +7,7 @@ import type { APIRoute } from 'astro';
 import { requireRole } from '../../../../lib/auth';
 import { query, queryOne } from '../../../../lib/postgres';
 import { createPost } from '../../../../lib/blog/db';
+import { problemJson } from '../../../../lib/api';
 
 // Content templates
 const CONTENT_TEMPLATES = {
@@ -43,7 +44,7 @@ function generatePlaceContent(place: any): { title: string; content: string; exc
   const sections = template.sections.map(section => {
     return `## ${section}
 
-${generateSectionContent(section, place)}
+${generateSectionContent(section)}
 `;
   }).join('\n');
 
@@ -69,7 +70,7 @@ ${place.name}, Şanlıurfa ziyaretinizde mutlaka uğramanız gereken yerlerden b
   };
 }
 
-function generateSectionContent(section: string, place: any): string {
+function generateSectionContent(section: string): string {
   const contents: Record<string, string[]> = {
     'Tarihçe': [
       'Bu mekan, binlerce yıllık geçmişiyle Şanlıurfa\'nın en önemli tarihi yapılarından biridir.',
@@ -128,10 +129,18 @@ function generateSectionContent(section: string, place: any): string {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-content-bot-unauthorized',
+        instance: '/api/admin/content-bot/generate',
+      });
+    }
 
     const body = await request.json();
-    const { type, category, placeIds, count = 1 } = body;
+    const { type, category, placeIds } = body;
 
     if (type === 'places') {
       // Generate content for specific places
@@ -201,12 +210,11 @@ export const POST: APIRoute = async ({ request }) => {
         [category]
       );
 
-      const placeNames = places.rows.map((p: any) => p.name).join(', ');
-      const title = `Şanlıurfa'da ${places.rows.length} En İyi ${category}`;
+      const title = `Şanlıurfa’da ${places.rows.length} En İyi ${category}`;
       const slug = `en-iyi-${category}-sanliurfa`;
 
       let content = `# ${title}\n\n`;
-      content += `${category} kategorisinde Şanlıurfa'da görülmesi gereken yerleri sizin için derledik.\n\n`;
+      content += `${category} kategorisinde Şanlıurfa’da görülmesi gereken yerleri sizin için derledik.\n\n`;
 
       places.rows.forEach((place: any, index: number) => {
         content += `## ${index + 1}. ${place.name}\n\n`;
@@ -215,12 +223,12 @@ export const POST: APIRoute = async ({ request }) => {
       });
 
       content += `\n## Sonuç\n\n`;
-      content += `Şanlıurfa'da ${category} deneyimi yaşamak için bu rehberi kullanabilirsiniz.\n`;
+      content += `Şanlıurfa’da ${category} deneyimi yaşamak için bu rehberi kullanabilirsiniz.\n`;
 
       const post = await createPost({
         title,
         slug,
-        excerpt: `Şanlıurfa'da ${category} kategorisinde ${places.rows.length} mekan hakkında detaylı bilgi.`,
+        excerpt: `Şanlıurfa’da ${category} kategorisinde ${places.rows.length} mekan hakkında detaylı bilgi.`,
         content,
         category_id: (await queryOne('SELECT id FROM blog_categories WHERE slug = $1', [category === 'restoran' ? 'yemek' : 'gezi']))?.id,
         author_id: auth.user.id,
@@ -238,22 +246,36 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    return new Response(
-      JSON.stringify({ error: 'Invalid type. Use: places or category-guide' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 400,
+      title: 'Geçersiz İstek',
+      detail: 'Geçersiz type. places veya category-guide kullanın',
+      type: '/problems/admin-content-bot-validation',
+      instance: '/api/admin/content-bot/generate',
+    });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Generation failed' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'İçerik Üretimi Başarısız',
+      detail: error instanceof Error ? error.message : 'Generation failed',
+      type: '/problems/admin-content-bot-failed',
+      instance: '/api/admin/content-bot/generate',
+    });
   }
 };
 
 export const GET: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-content-bot-unauthorized',
+        instance: '/api/admin/content-bot/generate',
+      });
+    }
 
     // Get generation jobs
     const jobs = await query(
@@ -285,9 +307,12 @@ export const GET: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to get data' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'İçerik Bot Verileri Alınamadı',
+      detail: error instanceof Error ? error.message : 'Failed to get data',
+      type: '/problems/admin-content-bot-get-failed',
+      instance: '/api/admin/content-bot/generate',
+    });
   }
 };

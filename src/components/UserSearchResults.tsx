@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface User {
   id: string;
@@ -23,7 +23,7 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!query.trim() || query.length < 2) {
@@ -158,7 +158,7 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
           {users.map((user) => (
             <a
               key={user.id}
-              href={`/kullanıcı/${user.id}`}
+              href={`/kullanici/${user.id}`}
               className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow"
             >
               {/* Cover */}
@@ -211,7 +211,7 @@ export default function UserSearchResults({ currentUserId }: UserSearchResultsPr
                     <button
                       onClick={(e) => {
                         e.preventDefault();
-                        window.location.href = `/api/messages?recipientId=${user.id}`;
+                        window.location.href = `/mesajlar?recipientId=${encodeURIComponent(user.id)}`;
                       }}
                       className="flex-1 text-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium py-1"
                     >

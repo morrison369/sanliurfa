@@ -1,6 +1,8 @@
 ---
+
 // Search Results Page
 import Layout from '../layouts/Layout.astro';
+import Image from '../components/Image.astro';
 import { searchPlaces } from '../lib/places/db';
 import { searchPosts } from '../lib/blog';
 
@@ -13,6 +15,8 @@ let historicalSites = [];
 let districts = [];
 
 import { query as dbQuery } from '../lib/postgres';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 if (query.length >= 2) {
   const [placesResult, postsResult, sitesResult, distResult] = await Promise.all([
@@ -44,7 +48,16 @@ const totalResults = places.length + posts.length + historicalSites.length + dis
 const seo = {
   title: query ? `"${query}" Arama Sonuçları - Şanlıurfa Rehberi` : 'Ara - Şanlıurfa Rehberi',
   description: query ? `"${query}" için ${totalResults} sonuç bulundu.` : 'Şanlıurfa mekanları ve blog yazılarında arayın.',
+  keywords: ['şanlıurfa arama', 'urfa mekan ara', 'şanlıurfa mekan bul'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/ara',
+  noIndex: true,
 };
+const faqItems = [
+  { S: 'Şanlıurfa arama sayfasında ne arayabilirim?', C: 'Mekan adı, restoran, kafe, tarihi yer, eczane veya hizmet gibi anahtar kelimelerle arama yapabilirsiniz.' },
+  { S: 'Arama sonuçları nasıl sıralanır?', C: 'Sonuçlar alaka düzeyi, kullanıcı puanı ve aktiflik durumuna göre otomatik olarak sıralanır.' },
+  { S: 'Mekan bulamadım, ne yapabilirim?', C: 'Farklı anahtar kelimelerle tekrar arayabilir ya da Mekanlar sayfasından kategori seçerek ilerliyebilirsiniz.' },
+];
 ---
 
 <Layout seo={seo}>
@@ -117,11 +130,18 @@ const seo = {
               </h2>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {places.map(place => (
-                  <a href={`/places/${place.slug}`} class="group">
+                  <a href={`/isletme/${place.slug}`} class="group">
                     <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
                       <div class="h-48 bg-gray-200">
                         {place.thumbnail ? (
-                          <img src={place.thumbnail} alt={place.name} class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <Image
+                            src={place.thumbnail}
+                            alt={place.name}
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            width={720}
+                            height={480}
+                            loading="lazy"
+                          />
                         ) : (
                           <div class="w-full h-full flex items-center justify-center text-gray-300 text-4xl">📍</div>
                         )}
@@ -201,7 +221,14 @@ const seo = {
                     <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
                       <div class="h-48 bg-gradient-to-br from-gray-100 to-gray-200">
                         {post.featured_image ? (
-                          <img src={post.featured_image} alt={post.title} class="w-full h-full object-cover" />
+                          <Image
+                            src={post.featured_image}
+                            alt={post.title}
+                            class="w-full h-full object-cover"
+                            width={720}
+                            height={480}
+                            loading="lazy"
+                          />
                         ) : (
                           <div class="w-full h-full flex items-center justify-center text-gray-300 text-4xl">📝</div>
                         )}
@@ -224,4 +251,33 @@ const seo = {
       )}
     </div>
   </section>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Sanliurfa.com',
+    url: `${baseUrl}`,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: `${baseUrl}/ara?q={search_term_string}` },
+      'query-input': 'required name=search_term_string',
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Arama', item: `${baseUrl}/ara` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

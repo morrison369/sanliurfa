@@ -3,7 +3,7 @@
  * Handle business promotions, discounts, and coupon validation
  */
 
-import { query, queryOne, queryMany, insert, update } from '../postgres';
+import { query, queryOne, queryMany, insert } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
 
@@ -390,5 +390,4 @@ export async function getTrendingPromotions(limit: number = 10): Promise<Promoti
     return [];
   }
 }
-
 

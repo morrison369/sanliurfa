@@ -7,10 +7,10 @@ import time
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 REMOTE_PATH = "/home/sanliur/public_html"
 APP_NAME = "sanliurfa"
-NODE_PORT = 3000
+NODE_PORT = 4321
 
 NVM_PREFIX = 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '
 
@@ -85,5 +85,5 @@ Yönetim:
 📋 CWP Apache Yapılandırması:
   https://168.119.79.238:2083
   Webserver Settings → Webserver Domain Conf
-  Apache → Proxy → Custom Port (3000)
+  Apache → Proxy → $14321)
 """)

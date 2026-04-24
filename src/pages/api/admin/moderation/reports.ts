@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Admin Moderation Reports API
  * GET: Get reports for review
@@ -10,13 +9,22 @@ import { getReports, updateReportStatus } from '../../../../lib/moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
-import { validateWithSchema } from '../../../../lib/validation';
+import { validateWithSchema, type ValidationSchema } from '../../../../lib/validation';
 
-const updateReportSchema = {
+type ReportStatus = 'open' | 'investigating' | 'resolved' | 'dismissed';
+
+interface UpdateReportBody {
+  status: ReportStatus;
+  resolution_note?: string;
+}
+
+const REPORT_STATUSES = new Set<ReportStatus>(['open', 'investigating', 'resolved', 'dismissed']);
+
+const updateReportSchema: ValidationSchema = {
   status: {
     type: 'string' as const,
     required: true,
-    pattern: '^(pending|under_review|resolved|dismissed)$'
+    pattern: '^(open|investigating|resolved|dismissed)$'
   },
   resolution_note: {
     type: 'string' as const,
@@ -26,8 +34,19 @@ const updateReportSchema = {
   }
 };
 
+function toPositiveInt(value: string | null, fallback: number, max?: number): number {
+  const parsed = Number.parseInt(value || '', 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
+  return max ? Math.min(parsed, max) : parsed;
+}
+
+function getReportStatus(value: string | null): ReportStatus | 'all' {
+  if (value === 'all') return 'all';
+  return value && REPORT_STATUSES.has(value as ReportStatus) ? (value as ReportStatus) : 'open';
+}
+
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -45,11 +64,12 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       );
     }
 
-    const status = url.searchParams.get('status') as any;
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const status = getReportStatus(url.searchParams.get('status'));
+    const limit = toPositiveInt(url.searchParams.get('limit'), 50, 100);
+    const offset = Math.max(Number.parseInt(url.searchParams.get('offset') || '0', 10) || 0, 0);
+    const page = Math.floor(offset / limit) + 1;
 
-    const reports = await getReports(status, limit, offset);
+    const reports = await getReports(status, page, limit);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/moderation/reports', HttpStatus.OK, duration);
@@ -80,7 +100,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -110,7 +130,7 @@ export const PUT: APIRoute = async ({ request, locals, url }) => {
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json().catch(() => ({}))) as Partial<UpdateReportBody>;
     const validation = validateWithSchema(body, updateReportSchema);
 
     if (!validation.valid) {
@@ -124,16 +144,17 @@ export const PUT: APIRoute = async ({ request, locals, url }) => {
       );
     }
 
+    const data = validation.data as UpdateReportBody;
     const updatedReport = await updateReportStatus(
       reportId,
-      validation.data.status,
+      data.status,
       user.id,
-      validation.data.resolution_note
+      data.resolution_note
     );
 
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/admin/moderation/reports', HttpStatus.OK, duration);
-    logger.logMutation('update', 'reports', reportId, user.id, { status: validation.data.status });
+    logger.logMutation('update', 'reports', reportId, user.id);
 
     return apiResponse(
       {

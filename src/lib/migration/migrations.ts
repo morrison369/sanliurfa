@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Veritabanı migrasyon sistemi
  * Tüm şema değişiklikleri burada tanımlanır
@@ -55,7 +54,7 @@ async function getExecutedMigrations(): Promise<MigrationHistory[]> {
       FROM migrations
       ORDER BY executed_at ASC
     `);
-    return result;
+    return result.rows;
   } catch (error) {
     logger.error('Migrasyon geçmişi okunurken hata', error instanceof Error ? error : new Error(String(error)));
     return [];

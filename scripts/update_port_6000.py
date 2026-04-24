@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Port 3000 -> 6000 Güncellemesi"""
+"""Port 3000 -> 4321 Güncellemesi"""
 
 import paramiko
 
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 OLD_PORT = 3000
-NEW_PORT = 6000
+NEW_PORT = 4321
 APP_NAME = "sanliurfa"
 
 ssh = paramiko.SSHClient()

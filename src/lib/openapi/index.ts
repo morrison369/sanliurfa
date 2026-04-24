@@ -2,6 +2,7 @@
  * OpenAPI Documentation Generator
  * Auto-generates API documentation from route handlers
  */
+import { getPublicAppUrl } from '../public-app-url';
 
 export interface OpenAPIInfo {
   title: string;
@@ -239,7 +240,8 @@ export const schemas = {
 /**
  * Generate OpenAPI document for Şanlıurfa API
  */
-export function generateSanliurfaAPIDoc(baseUrl: string = 'https://api.sanliurfa.com'): OpenAPIDocument {
+export function generateSanliurfaAPIDoc(baseUrl: string = `${getPublicAppUrl()}/api`): OpenAPIDocument {
+  const publicAppUrl = getPublicAppUrl();
   const doc = createOpenAPIDocument(
     {
       title: 'Şanlıurfa API',
@@ -248,7 +250,7 @@ export function generateSanliurfaAPIDoc(baseUrl: string = 'https://api.sanliurfa
       contact: {
         name: 'Şanlıurfa Support',
         email: 'api@sanliurfa.com',
-        url: 'https://sanliurfa.com/docs',
+        url: `${publicAppUrl}/docs`,
       },
     },
     [
@@ -480,7 +482,6 @@ export function exportToJSON(doc: OpenAPIDocument): string {
  */
 export function exportToYAML(doc: OpenAPIDocument): string {
   // Simple YAML conversion (for full YAML support, use a library like js-yaml)
-  const json = JSON.stringify(doc);
   return `# Şanlıurfa API OpenAPI Specification
 # Generated automatically
 

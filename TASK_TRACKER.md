@@ -295,10 +295,37 @@ Last updated: 2026-04-08
   - docs: `PHASE_437_442_GOVERNANCE_STABILITY_CONTINUITY_V16.md`
 
 ## Open
-- `T-048` Phase 443-448 planning
-  - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
-  - Owner: engineering
-  - Status: ready
+- `T-048` Phase 443-448 — İPTAL EDİLDİ (2026-04-23)
+  - Neden: Governance/enterprise modülleri şehir rehberi platformuyla ilgisiz. Gerçek platform ihtiyaçlarına geçildi.
+  - Yerine yapılanlar: T-049 - T-056
+
+- `T-049` Admin entegrasyon ayarları — TAMAMLANDI (2026-04-23)
+  - `/api/admin/site/integrations` endpoint
+  - `IntegrationsSettings.tsx` bileşeni
+  - `/admin/integrations.astro` sayfası
+
+- `T-050` Runtime email/GA key DB'den oku — TAMAMLANDI (2026-04-23)
+  - `email.ts`: 60 saniyelik cache ile `site_settings.integrations.email` okur
+  - `Layout.astro`: GA ID `site_settings.integrations.analytics` okur
+
+- `T-051` SEO meta tag iyileştirmeleri — TAMAMLANDI (2026-04-23)
+  - Blog sayfaları: type:article, publishedTime, keywords, author
+  - Mekan listesi: dinamik title/description, keywords
+
+- `T-052` Sitemap ilçe sayfaları — TAMAMLANDI (2026-04-23)
+  - `sitemap-dynamic.xml.ts`: districts tablosundan `/ilceler/{slug}` ekler
+
+- `T-053` Fotoğraf yükleme UX — TAMAMLANDI (2026-04-23)
+  - Çoklu dosya seçimi, gerçek XHR progress, yükleme öncesi önizleme
+
+- `T-054` Migration 162 bus_schedules — TAMAMLANDI (2026-04-23)
+  - bus_routes + bus_schedules tabloları, 4 temel Şanlıurfa hattı seed
+
+- `T-055` Admin eczane API — TAMAMLANDI (2026-04-23)
+  - `/api/admin/pharmacies`: nöbetçi listeleme, toplu nöbet atama, eczane ekleme
+
+- `T-056` Otobüs sayfası DB entegrasyonu — TAMAMLANDI (2026-04-23)
+  - `otobus-saatleri.astro`: bus_routes + bus_schedules tablosundan okur
 
 ## Closed Template
 - Standard closure format: `6 libs + 24 tests + docs + index exports + gate green`.

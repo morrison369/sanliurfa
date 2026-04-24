@@ -1,14 +1,16 @@
 import type { APIRoute } from 'astro';
 
+const PUBLIC_APP_URL = (process.env.PUBLIC_APP_URL || 'https://sanliurfa.com').replace(/\/$/, '');
+
 const openApiSpec = {
   "openapi": "3.1.0",
   "info": {
-    "title": "Şanlıurfa.com API",
+    "title": "Sanliurfa.com API",
     "description": "City guide and social platform API with webhooks, messaging, and analytics",
     "version": "1.0.0"
   },
   "servers": [
-    { "url": "https://sanliurfa.com" },
+    { "url": PUBLIC_APP_URL },
     { "url": "http://localhost:4321" }
   ],
   "tags": [

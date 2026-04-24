@@ -1,6 +1,25 @@
 ---
+import { actions } from 'astro:actions';
 import Layout from '../../../layouts/Layout.astro';
 import { query } from '../../../lib/postgres';
+
+interface HistoricalSiteRow {
+  id: string;
+  slug: string;
+  name: string;
+  period?: string | null;
+  location?: string | null;
+  status?: string | null;
+  is_unesco?: boolean | null;
+  is_featured?: boolean | null;
+}
+
+interface HistoricalSiteStats {
+  total: string | number;
+  unesco: string | number;
+  featured: string | number;
+  active: string | number;
+}
 
 const icons = {
   landmark: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="13"/><path d="M22 20H2"/><path d="m19 9-3.5 1 3.5 7"/><path d="m5 9 3.5 1-3.5 7"/><path d="M8 20V9l4-7 4 7v11"/></svg>`,
@@ -17,12 +36,19 @@ if (!user || !Astro.locals.isAdmin) {
   return Astro.redirect('/giris?redirect=/admin/historical-sites');
 }
 
-let sites: any[] = [];
-let stats: any[] = [];
+let sites: HistoricalSiteRow[] = [];
+let stats: HistoricalSiteStats = {
+  total: 0,
+  unesco: 0,
+  featured: 0,
+  active: 0,
+};
 const seo = {
-    title: 'Tarihi Yerler Yönetimi - Admin Panel',
-    noindex: true
-  };
+  title: 'Tarihi Yerler Yönetimi - Yönetim Paneli',
+  description: 'Admin tarihi yerler yönetimi ekranı',
+  noIndex: true,
+};
+const deleteResult = Astro.getActionResult(actions.deleteAdminHistoricalSite);
 
 try {
 
@@ -37,7 +63,7 @@ try {
       COUNT(*) FILTER (WHERE status = 'active') as active
      FROM historical_sites`
   );
-  stats = statsResult.rows[0];
+  stats = statsResult.rows[0] || stats;
 
 } catch (e) {
   console.error('Error loading data:', e);
@@ -62,6 +88,18 @@ try {
     </div>
     
     <div class="container-custom py-8">
+      {deleteResult?.data?.success && (
+        <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
+          {deleteResult.data.message || 'Tarihi yer silindi.'}
+        </div>
+      )}
+
+      {deleteResult?.error && (
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+          {deleteResult.error.message || 'Tarihi yer silinemedi.'}
+        </div>
+      )}
+
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
           <p class="text-sm text-gray-600 dark:text-gray-400">Toplam Yer</p>
@@ -94,7 +132,7 @@ try {
               </tr>
             </thead>
             <tbody>
-              {sites?.map(site => (
+              {sites.map(site => (
                 <tr class="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td class="py-4 px-4">
                     <div class="flex items-start gap-3">
@@ -144,7 +182,8 @@ try {
                       <a href={`/admin/historical-sites/edit/${site.id}`} class="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Düzenle">
                         <span set:html={icons.edit}></span>
                       </a>
-                      <form method="POST" action={`/api/historical-sites/${site.id}/delete`} class="inline" onsubmit="return confirm('Bu tarihi yeri silmek istediğinize emin misiniz?');">
+                      <form method="POST" action={actions.deleteAdminHistoricalSite} class="inline" onsubmit="return confirm('Bu tarihi yeri silmek istediğinize emin misiniz?');">
+                        <input type="hidden" name="id" value={site.id} />
                         <button type="submit" class="p-2 text-gray-400 hover:text-red-600 transition-colors" title="Sil">
                           <span set:html={icons.trash2}></span>
                         </button>
@@ -169,3 +208,5 @@ try {
     </div>
   </div>
 </Layout>
+
+

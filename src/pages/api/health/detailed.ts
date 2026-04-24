@@ -1,8 +1,7 @@
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { pool } from '../../../lib/postgres';
-import { getRedisClient, isRedisAvailable } from '../../../lib/cache';
-import { query } from '../../../lib/postgres';
+import { getRedisClient } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
 
 interface DetailedHealth {
@@ -44,7 +43,7 @@ interface DetailedHealth {
  * GET /api/health/detailed - Detailed health check with system metrics
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   // Only admin can access detailed health
   if (!locals.isAdmin) {
@@ -75,13 +74,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     // Check Redis
     try {
-      if (isRedisAvailable()) {
-        const redisStart = Date.now();
-        const redis = await getRedisClient();
-        await redis.ping();
-        redisResponseTime = Date.now() - redisStart;
-        redisStatus = 'up';
-      }
+      const redisStart = Date.now();
+      const redis = await getRedisClient();
+      await redis.ping();
+      redisResponseTime = Date.now() - redisStart;
+      redisStatus = 'up';
     } catch (error) {
       logger.error('Redis health check failed:', error);
       redisStatus = 'down';

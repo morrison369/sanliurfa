@@ -61,7 +61,7 @@ echo "Updating Nginx configuration..."
 # Generate nginx SSL config
 cat > "$NGINX_CONF" << 'EOF'
 upstream app_servers {
-    server app:3000;
+    server app:4321;
     keepalive 32;
 }
 

@@ -1,67 +1,50 @@
 import type { APIRoute } from 'astro';
-import { insert, queryOne, update as updateDb } from '../../../lib/postgres';
+
+import { problemJson } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
+import { submitPlaceReview } from '../../../lib/review/review-submission';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const user = locals.user;
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    if (!user?.id) {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Giriş gerekli',
+        type: '/problems/auth-required',
+        instance: '/api/reviews/add',
       });
     }
 
     const body = await request.json();
-    const { place_id, rating, title, content, images = [] } = body;
+    const result = await submitPlaceReview(
+      { id: user.id, email: user.email || null },
+      {
+        placeId: body.placeId || body.place_id,
+        rating: body.rating,
+        title: body.title,
+        content: body.content,
+        images: body.images || [],
+        visitType: body.visitType || body.visit_date || null,
+        awardUserPoints: true,
+        ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
+        userAgent: request.headers.get('user-agent') || null,
+      },
+    );
 
-    if (!place_id || !rating || !content) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Yorum kaydet
-    const review = await insert('reviews', {
-      place_id,
-      user_id: user.id,
-      rating,
-      title,
-      content,
-      images,
-      created_at: new Date().toISOString()
-    });
-
-    // Puan ekle (yorum için 50 puan)
-    await insert('points_transactions', {
-      user_id: user.id,
-      amount: 50,
-      type: 'earn',
-      reason: 'Yorum yapıldı',
-      reference_id: review.id
-    });
-
-    // Profili güncelle
-    const profile = await queryOne('SELECT points FROM users WHERE id = $1', [user.id]);
-    await updateDb('users', user.id, { 
-      points: (profile?.points || 0) + 50 
-    });
-
-    return new Response(JSON.stringify({
-      success: true,
-      review,
-      pointsEarned: 50
-    }), {
+    return new Response(JSON.stringify(result), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
-
   } catch (error) {
-    logger.error('Review API error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
+    logger.error('Review add API error:', error);
+    return problemJson({
+      status: 400,
+      title: 'Yorum Gönderilemedi',
+      detail: error instanceof Error && error.message ? error.message : 'Yorum gönderilemedi.',
+      type: '/problems/review-add-failed',
+      instance: '/api/reviews/add',
     });
   }
 };

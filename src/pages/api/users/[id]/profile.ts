@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * User Public Profile API
  * GET: Get public user profile information
@@ -13,7 +12,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -26,6 +25,19 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
         ErrorCode.VALIDATION_ERROR,
         'Kullanıcı ID gereklidir',
         HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      recordRequest('GET', '/api/users/[id]/profile', HttpStatus.NOT_FOUND, Date.now() - startTime);
+      return apiError(
+        ErrorCode.NOT_FOUND,
+        'Kullanıcı bulunamadı',
+        HttpStatus.NOT_FOUND,
         undefined,
         requestId
       );
@@ -99,9 +111,9 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       // Show email only if privacy setting allows it
       email: userProfile.privacy_settings?.show_email && (isOwnProfile || currentUserId) ? userProfile.email : undefined,
       stats: {
-        followers: stats.follower_count,
+        followers: stats.followers_count,
         following: stats.following_count,
-        mutual: stats.mutual_friends_count
+        mutual: (stats as any).mutual_friends_count
       },
       is_following: isFollowingUser,
       is_own_profile: isOwnProfile,

@@ -6,9 +6,15 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
-      - 'scripts/**'
   pull_request:
     branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 env:
   NODE_VERSION: '22'
@@ -18,6 +24,7 @@ jobs:
   # Install dependencies once and cache
   install:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       
@@ -31,7 +38,7 @@ jobs:
         run: npm ci
       
       - name: Cache node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ env.CACHE_KEY }}-node_modules
@@ -40,28 +47,73 @@ jobs:
   lint:
     needs: install
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       
       - name: Restore node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ env.CACHE_KEY }}-node_modules
       
       - name: Run Astro check
-        run: npm run lint
+        run: npm run lint 2>&1 | tee lint.log
         continue-on-error: true
+
+      - name: Type check (advisory)
+        run: npm run type-check 2>&1 | tee type-check.log
+        continue-on-error: true
+
+      - name: Env gate (no dynamic import.meta.env)
+        run: npm run env:gate
+
+      - name: Workflow standards verify
+        run: npm run workflow:standards:verify
+
+      - name: Append workflow standards summary
+        shell: bash
+        run: |
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Workflow Standards" >> "$GITHUB_STEP_SUMMARY"
+          cat docs/workflow-standards-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Migration duplicate check (advisory)
+        run: npm run db:migrate:check-duplicates
+        continue-on-error: true
+
+      - name: Lint changed files (PR gate)
+        if: github.event_name == 'pull_request'
+        run: npm run lint:changed
+
+      - name: Upload lint/type logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lint-type-logs
+          path: |
+            lint.log
+            type-check.log
+
+      - name: Upload workflow standards report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workflow-standards-report-${{ github.job }}
+          path: |
+            docs/workflow-standards-report.json
+            docs/workflow-standards-report.md
 
   # Build application
   build:
     needs: [install, lint]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       
       - name: Restore node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ env.CACHE_KEY }}-node_modules
@@ -71,9 +123,12 @@ jobs:
         env:
           NODE_ENV: production
           SITE_URL: https://sanliurfa.com
+
+      - name: Runtime single-process gate
+        run: npm run runtime:single-process:gate
       
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build
           path: dist/
@@ -83,6 +138,7 @@ jobs:
   test-unit:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     services:
       postgres:
@@ -112,7 +168,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Restore node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ env.CACHE_KEY }}-node_modules
@@ -123,23 +179,73 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
           REDIS_URL: redis://localhost:6379
           NODE_ENV: test
+
+      - name: API release gate
+        shell: bash
+        run: |
+          npm run api:release:gate 2>&1 | tee api-release-gate.log
+          echo "## API Release Gate" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- workflow: Optimized CI/CD" >> "$GITHUB_STEP_SUMMARY"
+          echo "- command: npm run api:release:gate" >> "$GITHUB_STEP_SUMMARY"
+          echo "- status: success" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload API gate report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-release-gate-report
+          path: api-release-gate.log
+
+      - name: Download lint/type logs
+        uses: actions/download-artifact@v4
+        if: always()
+        with:
+          name: lint-type-logs
+          path: .
+
+      - name: Collect quality metrics
+        if: always()
+        shell: bash
+        run: |
+          npm run quality:metrics:ci | tee quality-metrics-summary.log
+          npm run warning:debt:summary
+          cat quality-metrics-summary.log >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload quality metrics
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-metrics
+          path: |
+            quality-metrics.json
+            quality-metrics-summary.log
+            docs/warning-debt-summary.json
       
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
           path: test-results/
 
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
+
   # Security audit
   security:
     needs: install
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       
       - name: Restore node_modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ env.CACHE_KEY }}-node_modules
@@ -147,6 +253,9 @@ jobs:
       - name: Run security audit
         run: npm audit --omit=dev --audit-level=high
         continue-on-error: true
+
+      - name: Scan for leaked secrets
+        run: npm run security:scan-secrets
       
       - name: Check for secrets
         uses: trufflesecurity/trufflehog@main
@@ -159,11 +268,12 @@ jobs:
   bundle-size:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build
           path: dist/
@@ -182,12 +292,13 @@ jobs:
     needs: [test-unit, security, bundle-size]
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: staging
     steps:
       - uses: actions/checkout@v4
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build
           path: dist/
@@ -204,12 +315,13 @@ jobs:
     needs: [test-unit, security, bundle-size]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: production
     steps:
       - uses: actions/checkout@v4
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build
           path: dist/

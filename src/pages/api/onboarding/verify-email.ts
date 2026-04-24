@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Verify User Email
  */
@@ -16,7 +15,7 @@ const schema = {
 };
 
 export const POST: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

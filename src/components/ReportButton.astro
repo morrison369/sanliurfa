@@ -2,10 +2,9 @@
 interface Props {
   type: 'place' | 'review' | 'user';
   id: string;
-  reason?: string;
 }
 
-const { type, id, reason = '' } = Astro.props;
+const { type, id } = Astro.props;
 
 const reportReasons = [
   { value: 'inappropriate', label: 'Uygunsuz İçerik' },
@@ -104,7 +103,7 @@ const reportReasons = [
   </div>
 </div>
 
-<script define:vars={{ type, id }}>
+<script define:vars={{ type, id }} is:inline>
   const btn = document.getElementById(`report-btn-${type}-${id}`);
   const modal = document.getElementById(`report-modal-${type}-${id}`);
   const closeBtn = document.getElementById(`report-close-${type}-${id}`);
@@ -141,7 +140,7 @@ const reportReasons = [
     e.preventDefault();
     
     const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
+    Object.fromEntries(formData);
     
     try {
       // In a real app, send to API

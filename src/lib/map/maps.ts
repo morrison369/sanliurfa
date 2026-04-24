@@ -187,7 +187,7 @@ export function formatPlacePopup(place: any): string {
       <h3 class="font-bold text-sm">${place.name}</h3>
       <p class="text-xs text-gray-600">${place.category}</p>
       ${place.rating ? `<p class="text-xs">⭐ ${place.rating.toFixed(1)}</p>` : ''}
-      <a href="/places/${place.slug}" class="text-blue-600 text-xs hover:underline">Detaylar →</a>
+      <a href="/isletme/${place.slug}" class="text-blue-600 text-xs hover:underline">Detaylar →</a>
     </div>
   `;
 }
@@ -198,5 +198,4 @@ export function formatPlacePopup(place: any): string {
 export function validateCoordinates(lat: number, lng: number): boolean {
   return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 }
-
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Trash2, Play, Pause, Plus, Save } from 'lucide-react';
@@ -54,7 +54,7 @@ export default function MarketingCampaignBuilder({ placeId, onCampaignCreated }:
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const response = await fetch('/api/marketing-campaigns', {

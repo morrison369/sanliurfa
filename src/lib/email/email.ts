@@ -7,6 +7,32 @@ import { randomBytes } from 'crypto';
 import { insert, queryMany, query, queryOne } from '../postgres';
 import { logger } from '../logger';
 
+// DB'den Resend key ve from email oku — 60 saniyelik bellekte cache
+let _emailConfigCache: { api_key: string; from_email: string } | null = null;
+let _emailConfigCacheAt = 0;
+async function getEmailConfig(): Promise<{ api_key: string; from_email: string }> {
+  const now = Date.now();
+  if (_emailConfigCache && now - _emailConfigCacheAt < 60_000) return _emailConfigCache;
+  try {
+    const row = await queryOne<{ setting_value: any }>(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.email'`,
+      [],
+    );
+    const v = row?.setting_value || {};
+    _emailConfigCache = {
+      api_key: v.api_key || process.env.RESEND_API_KEY || '',
+      from_email: v.from_email || process.env.MAIL_FROM || 'noreply@sanliurfa.com',
+    };
+  } catch {
+    _emailConfigCache = {
+      api_key: process.env.RESEND_API_KEY || '',
+      from_email: process.env.MAIL_FROM || 'noreply@sanliurfa.com',
+    };
+  }
+  _emailConfigCacheAt = now;
+  return _emailConfigCache;
+}
+
 export interface EmailTemplate {
   subject: string;
   html: string;
@@ -14,7 +40,7 @@ export interface EmailTemplate {
 
 const TEMPLATES: { [key: string]: (data: any) => EmailTemplate } = {
   welcome: (data) => ({
-    subject: 'Şanlıurfa.com\'a Hoş Geldiniz',
+    subject: 'Sanliurfa.com\'a Hoş Geldiniz',
     html: `<h1>Hoş Geldiniz, ${data.fullName}!</h1><p>Hesabınız başarıyla oluşturuldu.</p>`
   }),
 
@@ -33,8 +59,8 @@ const TEMPLATES: { [key: string]: (data: any) => EmailTemplate } = {
     html: `<h1>Mekanınız İncelendi</h1><p>${data.reviewerName}, ${data.placeName} için şu incelemeyi yaptı: "${data.reviewPreview}"</p><p><a href="${data.reviewUrl}">İncelemeyi Oku</a></p>`
   }),
 
-  weekly_digest: (data) => ({
-    subject: 'Haftalık Özet - Şanlıurfa.com',
+  weekly_digest: (_data) => ({
+    subject: 'Haftalık Özet - Sanliurfa.com',
     html: `<h1>Bu Hafta Neler Oldu?</h1><p>En beğenilen incelemeler ve takip ettiklerinizin aktiviteleri...</p>`
   })
 };
@@ -54,7 +80,7 @@ export async function queueEmail(
       throw new Error(`Template not found: ${templateType}`);
     }
 
-    const { subject, html } = template(data);
+    const { subject, html: _html } = template(data);
 
     await insert('email_queue', {
       recipient_email: recipientEmail,
@@ -171,8 +197,7 @@ export async function sendEmail(options: { to: string; subject: string; html: st
   const subject = typeof options === 'string' ? subjectOrHtml! : options.subject;
   const html = typeof options === 'string' ? htmlOpt! : options.html;
   try {
-    const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const FROM_EMAIL = process.env.MAIL_FROM || 'noreply@sanliurfa.com';
+    const { api_key: RESEND_API_KEY, from_email: FROM_EMAIL } = await getEmailConfig();
 
     if (!RESEND_API_KEY) {
       logger.warn('RESEND_API_KEY not configured, email not sent', Object.assign(new Error('RESEND_API_KEY not configured'), { to, subject }));
@@ -237,7 +262,7 @@ export function getEmailVerificationHTML(verificationLink: string): string {
 export function getWelcomeEmailHTML(fullName: string): string {
   return `
     <h1>Hoş Geldiniz, ${fullName}!</h1>
-    <p>Şanlıurfa.com'a katılmak için teşekkürler.</p>
+    <p>Sanliurfa.com'a katılmak için teşekkürler.</p>
     <p>Profilinizi tamamlayabilir ve şehir hakkında bilgi paylaşmaya başlayabilirsiniz.</p>
   `;
 }
@@ -333,5 +358,6 @@ export async function verifyEmailWithToken(token: string): Promise<boolean> {
     return false;
   }
 }
+
 
 

@@ -15,7 +15,7 @@ import { logger } from '../../../lib/logging';
  * List templates
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -26,12 +26,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const url = new URL(request.url);
     const popular = url.searchParams.get('popular') === 'true';
 
-    let data;
-    if (popular) {
-      data = await getPopularTemplates(postgresPool as any);
-    } else {
-      data = await getUserTemplates(postgresPool as any, locals.user.id);
-    }
+    const data = popular
+      ? await getPopularTemplates(postgresPool as any)
+      : await getUserTemplates(postgresPool as any, locals.user.id);
 
     return apiResponse(
       { success: true, data, count: data.length },
@@ -49,7 +46,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
  * Create template
  */
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -108,7 +105,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
  * Delete template
  */
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

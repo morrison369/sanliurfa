@@ -17,7 +17,7 @@ const {
   zoom = 15
 } = Astro.props;
 
-const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
+const mapId = `map-${Math.random().toString(36).slice(2, 11)}`;
 ---
 
 <div class="relative rounded-xl overflow-hidden" style={`height: ${height}`}>
@@ -80,7 +80,7 @@ const mapId = `map-${Math.random().toString(36).substr(2, 9)}`;
   </div>
 </div>
 
-<script define:vars={{ mapId, latitude, longitude }}>
+<script define:vars={{ mapId, latitude, longitude }} is:inline>
   document.getElementById(`copy-coords-${mapId}`)?.addEventListener('click', async function() {
     const coords = `${latitude}, ${longitude}`;
     try {

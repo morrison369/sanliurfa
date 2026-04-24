@@ -2,14 +2,18 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 export const GET: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Giriş yapmalısınız',
+        type: '/problems/analytics-dashboard-unauthorized',
+        instance: '/api/analytics/dashboard',
       });
     }
 
@@ -18,9 +22,12 @@ export const GET: APIRoute = async (context) => {
     const period = url.searchParams.get('period') || '30d'; // 7d, 30d, 90d, 1y
 
     if (!placeId) {
-      return new Response(JSON.stringify({ error: 'placeId required' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'placeId zorunludur',
+        type: '/problems/analytics-dashboard-validation',
+        instance: '/api/analytics/dashboard',
       });
     }
 
@@ -31,9 +38,12 @@ export const GET: APIRoute = async (context) => {
         [placeId, auth.user.id]
       );
       if (placeCheck.rows.length === 0) {
-        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        return problemJson({
           status: 403,
-          headers: { 'Content-Type': 'application/json' }
+          title: 'Forbidden',
+          detail: 'Bu kaydı görüntüleme yetkiniz yok',
+          type: '/problems/analytics-dashboard-forbidden',
+          instance: '/api/analytics/dashboard',
         });
       }
     }
@@ -155,9 +165,12 @@ export const GET: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Analytics error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Dashboard Analitiği Alınamadı',
+      detail: error instanceof Error ? error.message : 'server_error',
+      type: '/problems/analytics-dashboard-failed',
+      instance: '/api/analytics/dashboard',
     });
   }
 };

@@ -1,9 +1,7 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { getRedisClient } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
 
-// @ts-nocheck
 /**
  * Server-Sent Events endpoint for real-time online user count
  * Client connects via EventSource and receives updates every 30 seconds
@@ -21,6 +19,21 @@ export const GET: APIRoute = async ({ request }) => {
 
   // Custom response body handler
   let isClosed = false;
+  let interval: NodeJS.Timeout | null = null;
+
+  const safeClose = (controller: ReadableStreamDefaultController) => {
+    if (isClosed) return;
+    isClosed = true;
+    if (interval) {
+      clearInterval(interval);
+      interval = null;
+    }
+    try {
+      controller.close();
+    } catch {
+      // Stream may already be closed by runtime; ignore.
+    }
+  };
 
   const response = new Response(
     new ReadableStream({
@@ -32,10 +45,9 @@ export const GET: APIRoute = async ({ request }) => {
           controller.enqueue(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
 
           // Send updates every 30 seconds
-          const interval = setInterval(async () => {
+          interval = setInterval(async () => {
             if (isClosed) {
-              clearInterval(interval);
-              controller.close();
+              safeClose(controller);
               return;
             }
 
@@ -47,7 +59,7 @@ export const GET: APIRoute = async ({ request }) => {
               const onlineCount = keys.length;
 
               // Get trending searches in last hour
-              const trendingSearches = await redis.zRevRangeByScore(
+              const trendingSearches = await (redis as any).zRevRangeByScore(
                 'sanliurfa:trending:searches:1h',
                 '+inf',
                 '-inf',
@@ -55,7 +67,7 @@ export const GET: APIRoute = async ({ request }) => {
               );
 
               // Get active places (places with recent views)
-              const activePlaces = await redis.zRevRangeByScore(
+              const activePlaces = await (redis as any).zRevRangeByScore(
                 'sanliurfa:active:places:1h',
                 '+inf',
                 '-inf',
@@ -70,27 +82,29 @@ export const GET: APIRoute = async ({ request }) => {
                 activePlaces: activePlaces || []
               };
 
-              controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
+              if (!isClosed) {
+                controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
+              }
             } catch (error) {
               logger.error('SSE heartbeat failed', error instanceof Error ? error : new Error(String(error)));
               const errorData = {
                 type: 'error',
                 message: 'Server error'
               };
-              controller.enqueue(`data: ${JSON.stringify(errorData)}\n\n`);
+              if (!isClosed) {
+                controller.enqueue(`data: ${JSON.stringify(errorData)}\n\n`);
+              }
             }
           }, 30000); // 30 second interval
 
           // Handle client disconnect
           request.signal.addEventListener('abort', () => {
-            isClosed = true;
-            clearInterval(interval);
-            controller.close();
+            safeClose(controller);
             logger.info('Real-time presence connection closed');
           });
         } catch (error) {
           logger.error('SSE setup failed', error instanceof Error ? error : new Error(String(error)));
-          controller.close();
+          safeClose(controller);
         }
       }
     }),

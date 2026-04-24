@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Place Analytics API
  * GET: Get analytics for a specific place
@@ -12,7 +11,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -36,7 +35,7 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
 
     const url = new URL(request.url);
     const days = Math.min(parseInt(url.searchParams.get('days') || '30'), 365);
-    const analytics = await getPlaceAnalytics(placeId, days);
+    const analytics = await getPlaceAnalytics(placeId);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/places/${placeId}/analytics`, HttpStatus.OK, duration);

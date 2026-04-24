@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 export default function NotificationBadge() {
   const [unreadCount, setUnreadCount] = useState(0);
 

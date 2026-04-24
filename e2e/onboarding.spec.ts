@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'http://localhost:4321';
 
 test.describe('User Onboarding', () => {
   test('Complete user onboarding', async ({ page, context }) => {

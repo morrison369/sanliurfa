@@ -3,8 +3,6 @@
  * Usage-based billing, revenue attribution, revenue forecasting
  */
 
-import { logger } from '../logger';
-
 export interface MeterEvent {
   meterId: string;
   userId: string;
@@ -78,7 +76,7 @@ export class RevenueAttributor {
     attribution.conversions++;
   }
 
-  getAttribution(period?: string): RevenueAttribution[] {
+  getAttribution(_period?: string): RevenueAttribution[] {
     return [...this.attributions];
   }
 

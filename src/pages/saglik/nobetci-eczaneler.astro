@@ -1,6 +1,9 @@
 ---
+
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const today = new Date().toISOString().split('T')[0];
 let onDutyPharmacies: any[] = [];
@@ -32,20 +35,52 @@ const formatDate = (date: string) => new Date(date).toLocaleDateString('tr-TR', 
 const seo = {
   title: `Şanlıurfa Nöbetçi Eczaneler - ${formatDate(today)}`,
   description: `Şanlıurfa'da bugün nöbetçi olan eczaneler. ${formatDate(today)} tarihli güncel nöbetçi eczane listesi. Adres ve telefon bilgileri.`,
+  keywords: ['şanlıurfa nöbetçi eczane', 'urfa nöbetçi eczane bugün', 'şanlıurfa eczane açık', 'urfa gece eczane', 'şanlıurfa eczane listesi'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/saglik/nobetci-eczaneler',
 };
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa nöbetçi eczane listesi ne kadar güncel?',
+    C: 'Nöbetçi eczane listesi gün içinde düzenli kontrol edilerek yenilenir.',
+  },
+  {
+    S: 'Nöbetçi eczanelere nasıl hızlı ulaşırım?',
+    C: 'Listeden doğrudan telefon bağlantısını kullanabilir veya ilçe filtresi ile arama daraltabilirsiniz.',
+  },
+  {
+    S: 'Nöbetçi eczaneler hangi saatlerde hizmet verir?',
+    C: 'Nöbetçi eczaneler gece ve resmi tatil dönemlerinde kesintisiz hizmet için nöbet planına göre açık kalır.',
+  },
+];
 ---
 
 <Layout seo={seo}>
   <div class="min-h-screen bg-gray-50">
     <div class="bg-gradient-to-br from-green-600 to-emerald-700 text-white py-12">
       <div class="container mx-auto px-4">
-        <h1 class="text-3xl md:text-4xl font-bold mb-2">Nöbetçi Eczaneler</h1>
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">Şanlıurfa Nöbetçi Eczaneler</h1>
         <p class="text-green-100 text-lg">{formatDate(today)}</p>
         <p class="text-green-200 mt-2">{onDutyPharmacies.length} nöbetçi eczane</p>
       </div>
     </div>
 
     <div class="container mx-auto px-4 py-8">
+      <section class="mb-8 rounded-2xl border border-green-200 bg-green-50 p-5">
+        <p class="text-sm font-semibold uppercase tracking-wide text-green-700">Hızlı Cevap</p>
+        <h2 class="mt-1 text-xl font-bold text-green-950">Şanlıurfa nöbetçi eczane bilgisi nasıl kullanılır?</h2>
+        <p class="mt-2 text-sm leading-6 text-green-800">
+          Şanlıurfa nöbetçi eczaneler sayfası, bugün açık olan eczaneleri ilçe, adres ve telefon bilgisiyle
+          hızlıca bulmanız için hazırlanır. Veri admin onaylı kayıtlar ve tazelik kontrolüyle yönetilir.
+        </p>
+        <div class="mt-3 flex flex-wrap gap-3 text-sm">
+          <a href="/saglik/nobetci-eczaneler" class="font-semibold text-green-800 underline underline-offset-4">Nöbetçi eczane listesi</a>
+          <a href="/saglik" class="font-semibold text-green-800 underline underline-offset-4">Sağlık rehberi</a>
+          <a href="/ulasim/otobus-saatleri" class="font-semibold text-green-800 underline underline-offset-4">Otobüs saatleri</a>
+        </div>
+      </section>
+
       {/* İlçe Filtreleri */}
       {districts.length > 0 && (
         <div class="flex flex-wrap gap-2 mb-8">
@@ -84,7 +119,7 @@ const seo = {
         <div class="text-center py-16 bg-white rounded-xl">
           <div class="text-6xl mb-4">💊</div>
           <h2 class="text-xl font-bold text-gray-900 mb-2">Nöbetçi Eczane Verisi Bekleniyor</h2>
-          <p class="text-gray-500">Nöbetçi eczane bilgileri yakında güncellenecektir.</p>
+          <p class="text-gray-500">Bugün için veritabanında aktif nöbetçi eczane kaydı bulunamadı.</p>
           <p class="text-sm text-gray-400 mt-4">Acil durumlar için: <a href="tel:182" class="text-green-600 font-bold">182</a> (ALO Eczane)</p>
         </div>
       )}
@@ -102,17 +137,18 @@ const seo = {
   </div>
 
   <script>
-    document.querySelectorAll('[data-filter]').forEach(btn => {
+    document.querySelectorAll('[data-filter]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const filter = btn.getAttribute('data-filter');
-        document.querySelectorAll('[data-district]').forEach(card => {
+        document.querySelectorAll('[data-district]').forEach((card) => {
+          const el = card as HTMLElement;
           if (filter === 'all' || card.getAttribute('data-district') === filter) {
-            card.style.display = '';
+            el.style.display = '';
           } else {
-            card.style.display = 'none';
+            el.style.display = 'none';
           }
         });
-        document.querySelectorAll('[data-filter]').forEach(b => {
+        document.querySelectorAll('[data-filter]').forEach((b) => {
           b.className = b === btn
             ? 'px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium'
             : 'px-4 py-2 bg-white border rounded-full text-sm font-medium hover:border-green-500 hover:text-green-600 transition-colors';
@@ -120,4 +156,25 @@ const seo = {
       });
     });
   </script>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.C,
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Sağlık', item: `${baseUrl}/saglik` },
+      { '@type': 'ListItem', position: 3, name: 'Nöbetçi Eczaneler', item: `${baseUrl}/saglik/nobetci-eczaneler` },
+    ],
+  })} is:inline />
 </Layout>

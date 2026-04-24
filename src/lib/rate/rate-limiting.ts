@@ -7,7 +7,7 @@ import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { getCache, setCache, deleteCache } from '../cache';
 
-interface RateLimitRule {
+export interface RateLimitRule {
   id: string;
   user_id?: string;
   ip_address: string;
@@ -19,7 +19,7 @@ interface RateLimitRule {
   is_whitelisted: boolean;
 }
 
-interface IPStatus {
+export interface IPStatus {
   ip_address: string;
   is_whitelisted: boolean;
   is_blacklisted: boolean;
@@ -357,5 +357,4 @@ export async function getRequestStatistics(hours: number = 24): Promise<any> {
     return [];
   }
 }
-
 

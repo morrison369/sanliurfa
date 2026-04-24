@@ -143,7 +143,7 @@ export class ModelMonitor {
     };
   }
 
-  getUnderperformingModels(minConfidence: number = 0.75): ModelVersion[] {
+  getUnderperformingModels(_minConfidence: number = 0.75): ModelVersion[] {
     return [];
   }
 }
@@ -156,7 +156,7 @@ export class ExperimentRunner {
   private assignments = new Map<string, string>();
 
   createExperiment(experiment: Omit<ModelExperiment, 'id'>): ModelExperiment {
-    const id = 'exp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const id = 'exp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
 
     const exp: ModelExperiment = {
       ...experiment,
@@ -187,7 +187,7 @@ export class ExperimentRunner {
     return assigned;
   }
 
-  recordOutcome(experimentId: string, userId: string, success: boolean): void {
+  recordOutcome(experimentId: string, _userId: string, success: boolean): void {
     if (!this.outcomes.has(experimentId)) {
       this.outcomes.set(experimentId, []);
     }

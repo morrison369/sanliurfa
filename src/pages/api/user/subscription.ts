@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * User Subscription Management
  * GET /api/user/subscription - Get active subscription
@@ -12,6 +11,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { validateWithSchema } from '../../../lib/validation';
+import { PHASE1_FREE_MODE } from '../../../lib/runtime/phase-policy';
 
 const upgradeSchema = {
   tierId: {
@@ -29,7 +29,7 @@ const upgradeSchema = {
 
 // GET - Get active subscription
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -52,6 +52,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     return apiResponse({
       success: true,
+      phase1FreeMode: PHASE1_FREE_MODE,
+      checkoutDisabled: PHASE1_FREE_MODE,
       subscription,
       features,
       hasActiveSubscription: !!subscription
@@ -72,11 +74,23 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
 // POST - Upgrade or change subscription
 export const POST: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
+    if (PHASE1_FREE_MODE) {
+      return apiResponse(
+        {
+          success: true,
+          phase1FreeMode: true,
+          message: 'Faz 1 döneminde ücretli abonelik değişikliği kapalıdır.',
+        },
+        HttpStatus.OK,
+        requestId
+      );
+    }
+
     if (!locals.user) {
       recordRequest('POST', '/api/user/subscription', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(

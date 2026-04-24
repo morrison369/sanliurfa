@@ -25,6 +25,12 @@ export const migration_099_search_intelligence = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE search_queries ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE search_queries ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE search_queries ADD COLUMN IF NOT EXISTS query_text VARCHAR(255);
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_search_queries_user
       ON search_queries(user_id, created_at DESC)
     `);
@@ -46,6 +52,11 @@ export const migration_099_search_intelligence = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(searchable_id, searchable_type)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE search_embeddings ADD COLUMN IF NOT EXISTS searchable_type VARCHAR(50);
+      ALTER TABLE search_embeddings ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`
@@ -72,6 +83,10 @@ export const migration_099_search_intelligence = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE ranking_signals ADD COLUMN IF NOT EXISTS overall_rank_score FLOAT;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_ranking_signals_score
       ON ranking_signals(overall_rank_score DESC)
     `);
@@ -91,6 +106,10 @@ export const migration_099_search_intelligence = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE search_corrections ADD COLUMN IF NOT EXISTS original_query VARCHAR(255);
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_corrections_original
       ON search_corrections(original_query)
     `);
@@ -106,6 +125,10 @@ export const migration_099_search_intelligence = async (pool: Pool) => {
         expires_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE search_result_cache ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;
     `);
 
     await pool.query(`

@@ -220,16 +220,4 @@ export async function updateNotificationTypePreferences(
   }
 }
 
-async function getPushSubscriptions(userId: string): Promise<any[]> {
-  try {
-    return await queryMany(
-      'SELECT * FROM push_subscriptions WHERE user_id = $1 AND is_active = true',
-      [userId]
-    );
-  } catch (error) {
-    logger.error('Failed to get push subscriptions', error instanceof Error ? error : new Error(String(error)));
-    return [];
-  }
-}
-
 

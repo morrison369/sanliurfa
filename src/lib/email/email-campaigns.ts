@@ -3,7 +3,7 @@
  * Create, manage, and track email marketing campaigns
  */
 
-import { queryMany, queryOne, insert, update } from '../postgres';
+import { queryMany, queryOne, update } from '../postgres';
 import { logger } from '../logger';
 
 export type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'failed';
@@ -181,8 +181,12 @@ export async function updateCampaign(campaignId: string, updates: Partial<EmailC
 
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.subject) dbUpdates.subject = updates.subject;
+    if (updates.fromName) dbUpdates.from_name = updates.fromName;
+    if (updates.fromEmail) dbUpdates.from_email = updates.fromEmail;
     if (updates.htmlContent) dbUpdates.html_content = updates.htmlContent;
     if (updates.textContent) dbUpdates.text_content = updates.textContent;
+    if (updates.segment) dbUpdates.segment = updates.segment;
+    if (updates.segmentFilters) dbUpdates.segment_filters = JSON.stringify(updates.segmentFilters);
     if (updates.status) dbUpdates.status = updates.status;
     if (updates.scheduledAt) dbUpdates.scheduled_at = updates.scheduledAt;
 
@@ -378,8 +382,6 @@ export async function sendCampaign(campaignId: number | string, testMode: boolea
     }
 
     // In test mode, only send to first user (admin email)
-    const recipientEmails = testMode ? users.slice(0, 1).map(u => u.email) : users.map(u => u.email);
-
     let sentCount = 0;
     let failedCount = 0;
 
@@ -513,14 +515,14 @@ export async function trackCampaignEvent(campaignId: number, userId: string, eve
 export const EMAIL_TEMPLATES = {
   welcome: {
     subject: 'Şanlıurfa\'ya Hoşgeldin!',
-    htmlContent: '<h1>Hoşgeldin</h1><p>Şanlıurfa.com topluluğuna katılmış olmaktan mutluyuz.</p>'
+    htmlContent: '<h1>Hoşgeldin</h1><p>Sanliurfa.com topluluğuna katılmış olmaktan mutluyuz.</p>'
   },
   promotion: {
     subject: 'Özel İndirim Sadece Senin İçin 🎉',
     htmlContent: '<h1>Özel Teklif</h1><p>Premium üyelikte %20 indirim seni bekliyor!</p>'
   },
   announcement: {
-    subject: 'Şanlıurfa.com Haber',
+    subject: 'Sanliurfa.com Haber',
     htmlContent: '<h1>Yeni Özellikler</h1><p>Platformumuzda yeni özellikler yayınlandı.</p>'
   },
   reengagement: {
@@ -528,5 +530,6 @@ export const EMAIL_TEMPLATES = {
     htmlContent: '<h1>Seni Özledik</h1><p>Yeni yerler ve yorumlar seni bekliyor.</p>'
   }
 };
+
 
 

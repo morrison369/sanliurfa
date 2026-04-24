@@ -10,12 +10,26 @@ if (!user) {
 
 let notifications: any[] = [];
 let unreadCount: any = null;
-let icons: any = {};
-let notificationTypeConfig: any = null;
+let icons: Record<string, string> = {};
+let notificationTypeConfig: Record<string, { icon: string; color: string; label: string }> = {};
 const seo = {
-    title: 'Bildirimlerim - Şanlıurfa.com',
+    title: 'Bildirimlerim - Sanliurfa.com',
     description: 'Bildirimlerinizi görüntüleyin ve yönetin.',
   };
+
+function getTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Az önce';
+  if (diffMins < 60) return `${diffMins} dakika önce`;
+  if (diffHours < 24) return `${diffHours} saat önce`;
+  if (diffDays < 7) return `${diffDays} gün önce`;
+  return date.toLocaleDateString('tr-TR');
+}
 
 try {
 
@@ -36,7 +50,7 @@ try {
   unreadCount = parseInt(unreadResult.rows[0]?.count || '0');
 
   // SVG ikonlar
-  const icons = {
+  icons = {
     user: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
     star: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
     heart: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
@@ -49,7 +63,7 @@ try {
   };
 
   // Bildirim tipi ikonları ve renkleri
-  const notificationTypeConfig: Record<string, { icon: string; color: string; label: string }> = {
+  notificationTypeConfig = {
     review: { icon: icons.star, color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400', label: 'Yorum' },
     comment: { icon: icons.star, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400', label: 'Yorum' },
     like: { icon: icons.heart, color: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400', label: 'Beğeni' },
@@ -59,21 +73,6 @@ try {
     booking: { icon: icons.bell, color: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400', label: 'Rezervasyon' },
     promotion: { icon: icons.bell, color: 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400', label: 'Kampanya' },
   };
-
-  // Yardımcı fonksiyon: zaman farkını hesapla
-  function getTimeAgo(date: Date): string {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Az önce';
-    if (diffMins < 60) return `${diffMins} dakika önce`;
-    if (diffHours < 24) return `${diffHours} saat önce`;
-    if (diffDays < 7) return `${diffDays} gün önce`;
-    return date.toLocaleDateString('tr-TR');
-  }
 
 } catch (e) {
   console.error('Error loading data:', e);
@@ -205,7 +204,7 @@ try {
     // Bildirime tıkla -> okundu işaretle
     document.addEventListener('click', async (e: Event) => {
       const target = e.target as HTMLElement;
-      const item = target.closest('.notification-item');
+      const item = target.closest('.notification-item') as HTMLElement | null;
       if (item && !target.closest('.delete-notification')) {
         const id = item.dataset.notificationId;
         if (id) {
@@ -222,11 +221,11 @@ try {
     // Bildirimi sil
     document.addEventListener('click', async (e: Event) => {
       const target = e.target as HTMLElement;
-      const btn = target.closest('.delete-notification');
+      const btn = target.closest('.delete-notification') as HTMLElement | null;
       if (!btn) return;
 
       e.stopPropagation();
-      const id = (btn as HTMLElement).dataset.notificationId;
+      const id = btn.dataset.notificationId;
       await deleteNotification(id!);
       btn.closest('.notification-item')?.remove();
     });

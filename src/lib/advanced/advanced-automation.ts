@@ -148,7 +148,7 @@ export class WorkflowExecutor {
   /**
    * Execute workflow
    */
-  executeWorkflow(workflowId: string, context: Record<string, any>): WorkflowExecution {
+  executeWorkflow(workflowId: string, _context: Record<string, any>): WorkflowExecution {
     const id = 'exec-' + Date.now() + '-' + this.executionCount++;
 
     const execution: WorkflowExecution = {
@@ -231,7 +231,7 @@ export class ProcessAnalyzer {
   /**
    * Identify bottlenecks
    */
-  identifyBottlenecks(workflowId: string): string[] {
+  identifyBottlenecks(_workflowId: string): string[] {
     return [
       'Step 3 (approval) takes 45% of total execution time',
       'Step 5 (external API call) has 8% failure rate',
@@ -242,7 +242,7 @@ export class ProcessAnalyzer {
   /**
    * Suggest optimizations
    */
-  suggestOptimizations(workflowId: string): string[] {
+  suggestOptimizations(_workflowId: string): string[] {
     return [
       'Parallelize steps 4 and 5 for 20% improvement',
       'Cache external API responses to reduce failures',
@@ -268,7 +268,7 @@ export class ProcessAnalyzer {
   /**
    * Predict execution time
    */
-  predictExecutionTime(workflowId: string): number {
+  predictExecutionTime(_workflowId: string): number {
     return 3.5; // minutes
   }
 }
@@ -334,7 +334,7 @@ export class ScheduledAutomation {
   /**
    * Get schedule execution history
    */
-  getScheduleExecutionHistory(scheduleId: string): WorkflowExecution[] {
+  getScheduleExecutionHistory(_scheduleId: string): WorkflowExecution[] {
     return [];
   }
 }

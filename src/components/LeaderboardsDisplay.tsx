@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-
+import { useState, useEffect } from 'react';
 interface LeaderboardUser {
   id: string;
   rank: number;
@@ -23,11 +22,11 @@ export default function LeaderboardsDisplay() {
     setIsLoading(true);
     try {
       const response = await fetch("/api/leaderboards/users?sortBy=" + sortBy + "&limit=50");
-      if (!response.ok) throw new Error("Failed to load");
+      if (!response.ok) throw new Error("Liderlik tablosu yüklenemedi.");
       const data = await response.json();
       setLeaderboard(data.data || []);
     } catch (err) {
-      console.error("Error loading leaderboard", err);
+      console.error("Liderlik tablosu yüklenemedi:", err);
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +50,7 @@ export default function LeaderboardsDisplay() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12">Yukluniyor...</div>
+        <div className="text-center py-12">Yükleniyor...</div>
       ) : (
         <div className="space-y-2">
           {leaderboard.map((user) => (
@@ -68,7 +67,7 @@ export default function LeaderboardsDisplay() {
               </div>
               <div className="text-right">
                 <p className="text-lg font-bold text-gray-900">{user.points}</p>
-                <p className="text-xs text-gray-600">Level {user.level}</p>
+                <p className="text-xs text-gray-600">Seviye {user.level}</p>
               </div>
             </a>
           ))}

@@ -1,113 +1,381 @@
-import React, { useState, useEffect } from 'react';
-import { Send, Trash2, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Search, Send, Trash2 } from 'lucide-react';
 
-interface Conversation {
+interface ConversationApiRow {
   id: string;
+  participant_a?: string;
+  participant_b?: string;
+  full_name?: string;
+  avatar_url?: string;
+  content?: string;
+  msg_time?: string;
+  unread?: number | string;
+}
+
+interface ConversationUi {
+  id: string;
+  participantA?: string;
+  participantB?: string;
   participantName: string;
+  avatarUrl?: string;
   lastMessage: string;
   lastMessageTime: string;
   unreadCount: number;
 }
 
-interface Message {
+interface MessageRow {
   id: string;
+  sender_id: string;
   content: string;
-  createdAt: string;
+  created_at: string;
+}
+
+function toUiConversation(row: ConversationApiRow): ConversationUi {
+  return {
+    id: row.id,
+    participantA: row.participant_a,
+    participantB: row.participant_b,
+    participantName: row.full_name || 'Kullanıcı',
+    avatarUrl: row.avatar_url || undefined,
+    lastMessage: row.content || 'Henüz mesaj yok',
+    lastMessageTime: row.msg_time || '',
+    unreadCount: Number(row.unread || 0),
+  };
 }
 
 export default function MessagingInbox() {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [conversations, setConversations] = useState<ConversationUi[]>([]);
   const [selectedConvoId, setSelectedConvoId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageRow[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [unreadTotal, setUnreadTotal] = useState(0);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [lastReadLabel, setLastReadLabel] = useState<string>('');
+  const [unreadDrift, setUnreadDrift] = useState<number>(0);
+
+  const selectedConversation = useMemo(
+    () => conversations.find((c) => c.id === selectedConvoId) || null,
+    [conversations, selectedConvoId]
+  );
+  const typingLabel = useMemo(() => {
+    if (!selectedConversation || typingUsers.length === 0) return '';
+    const idToName = new Map<string, string>();
+    if (selectedConversation.participantA) idToName.set(selectedConversation.participantA, selectedConversation.participantName);
+    if (selectedConversation.participantB) idToName.set(selectedConversation.participantB, selectedConversation.participantName);
+    const names = typingUsers
+      .filter((id) => id !== currentUserId)
+      .map((id) => idToName.get(id) || 'Kullanıcı');
+    if (names.length === 0) return '';
+    return names.slice(0, 2).join(', ');
+  }, [selectedConversation, typingUsers, currentUserId]);
+
+  const filteredConversations = useMemo(() => {
+    const term = searchQuery.trim().toLowerCase();
+    if (!term) return conversations;
+    return conversations.filter((c) => c.participantName.toLowerCase().includes(term));
+  }, [conversations, searchQuery]);
+
+  async function fetchCurrentUser() {
+    try {
+      const res = await fetch('/api/users/profile');
+      if (!res.ok) return;
+      const json = await res.json();
+      const id = json?.data?.id;
+      if (typeof id === 'string' && id.length > 0) {
+        setCurrentUserId(id);
+      }
+    } catch {
+      // No-op: UI can continue in neutral mode.
+    }
+  }
+
+  async function fetchConversations() {
+    const res = await fetch('/api/messages?limit=100');
+    if (!res.ok) return;
+    const json = await res.json();
+    const rows: ConversationApiRow[] = Array.isArray(json?.data) ? json.data : [];
+    const mapped = rows.map(toUiConversation);
+    setConversations(mapped);
+    const localUnread = mapped.reduce((acc, c) => acc + Number(c.unreadCount || 0), 0);
+    setUnreadDrift(localUnread - unreadTotal);
+    if (!selectedConvoId && mapped.length > 0) {
+      setSelectedConvoId(mapped[0].id);
+    }
+  }
+
+  async function fetchMessages(conversationId: string) {
+    const res = await fetch(`/api/messages/${conversationId}?limit=100`);
+    if (!res.ok) return;
+    const json = await res.json();
+    const rows: MessageRow[] = Array.isArray(json?.data) ? json.data : [];
+    setMessages(rows);
+  }
+
+  async function fetchReadReceipts(conversationId: string) {
+    const res = await fetch(`/api/social/messages/receipts?conversationId=${encodeURIComponent(conversationId)}`);
+    if (!res.ok) return;
+    const json = await res.json();
+    const receipts = Array.isArray(json?.receipts) ? json.receipts : [];
+    const latest = receipts.find((r: any) => r?.last_read_at);
+    if (!latest) {
+      setLastReadLabel('');
+      return;
+    }
+    const name = latest.full_name || latest.username || latest.user_id || 'Kullanıcı';
+    setLastReadLabel(`${name} • ${new Date(latest.last_read_at).toLocaleString('tr-TR')}`);
+  }
+
+  async function maybeCreateConversationFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const conversationId = params.get('conversation');
+    if (conversationId) {
+      setSelectedConvoId(conversationId);
+      return;
+    }
+
+    const recipientId = params.get('recipientId') || params.get('user');
+    if (!recipientId) return;
+
+    const res = await fetch('/api/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipient_id: recipientId }),
+    });
+    if (!res.ok) return;
+
+    const json = await res.json();
+    const createdId = json?.data?.id;
+    if (typeof createdId === 'string') {
+      setSelectedConvoId(createdId);
+    }
+  }
 
   useEffect(() => {
-    const fetchConversations = async () => {
-      const res = await fetch('/api/messages');
-      if (res.ok) setConversations((await res.json()).data);
-    };
-    fetchConversations();
+    let mounted = true;
+
+    (async () => {
+      try {
+        await Promise.all([fetchCurrentUser(), fetchConversations()]);
+        await maybeCreateConversationFromUrl();
+        await fetchConversations();
+      } finally {
+        if (mounted) setLoadingConversations(false);
+      }
+    })();
+
     const interval = setInterval(fetchConversations, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
+    const es = new EventSource('/api/social/messages/stream');
+    es.addEventListener('sync', (event) => {
+      try {
+        const parsed = JSON.parse((event as MessageEvent).data || '{}');
+        if (typeof parsed.unreadCount === 'number') setUnreadTotal(parsed.unreadCount);
+        if (Array.isArray(parsed.typingUsers)) setTypingUsers(parsed.typingUsers);
+        void fetchConversations();
+        if (selectedConvoId) {
+          void fetchMessages(selectedConvoId);
+          void fetchReadReceipts(selectedConvoId);
+        }
+      } catch {
+        // noop
+      }
+    });
+    return () => es.close();
+  }, [selectedConvoId]);
+
+  useEffect(() => {
     if (!selectedConvoId) return;
-    const fetchMessages = async () => {
-      const res = await fetch(`/api/messages/${selectedConvoId}`);
-      if (res.ok) setMessages((await res.json()).data);
+    fetchMessages(selectedConvoId);
+    fetchReadReceipts(selectedConvoId);
+    void fetch('/api/social/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'markRead', conversationId: selectedConvoId }),
+    }).catch(() => {});
+    const interval = setInterval(() => fetchMessages(selectedConvoId), 10000);
+    const receiptInterval = setInterval(() => fetchReadReceipts(selectedConvoId), 15000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(receiptInterval);
     };
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 10000);
-    return () => clearInterval(interval);
   }, [selectedConvoId]);
 
   const handleSend = async () => {
-    if (!newMessage.trim() || !selectedConvoId) return;
+    const content = newMessage.trim();
+    if (!content || !selectedConvoId) return;
+
     const res = await fetch(`/api/messages/${selectedConvoId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: newMessage }),
+      body: JSON.stringify({ content }),
     });
-    if (res.ok) {
-      setNewMessage('');
-      const updated = await fetch(`/api/messages/${selectedConvoId}`);
-      setMessages((await updated.json()).data);
-    }
+    if (!res.ok) return;
+
+    setNewMessage('');
+    void fetch('/api/social/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'typing', conversationId: selectedConvoId, isTyping: false }),
+    }).catch(() => {});
+    await Promise.all([fetchMessages(selectedConvoId), fetchConversations()]);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete?')) return;
+  const handleDeleteConversation = async (id: string) => {
+    if (!confirm('Bu konuşmayı gizlemek istediğinize emin misiniz?')) return;
     const res = await fetch(`/api/messages/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      setConversations(conversations.filter(c => c.id !== id));
-      if (selectedConvoId === id) setSelectedConvoId(null);
-    }
-  };
+    if (!res.ok) return;
 
-  const filtered = conversations.filter(c => c.participantName.toLowerCase().includes(searchQuery.toLowerCase()));
+    const next = conversations.filter((c) => c.id !== id);
+    setConversations(next);
+    setSelectedConvoId(next[0]?.id || null);
+    setMessages([]);
+  };
 
   return (
-    <div className="flex h-full bg-gray-50">
+    <div className="flex h-[calc(100vh-160px)] min-h-[620px] bg-gray-50">
       <div className="w-80 border-r border-gray-200 bg-white flex flex-col">
         <div className="p-4 border-b">
-          <h2 className="text-xl font-bold mb-4">Messages</h2>
+          <h2 className="text-xl font-bold mb-4">Mesajlar</h2>
+          {unreadTotal > 0 && <p className="mb-2 text-xs text-amber-700">Toplam okunmamış: {unreadTotal}</p>}
+          {unreadDrift !== 0 && (
+            <p className="mb-2 text-xs text-rose-700">Unread drift alarmı: {unreadDrift > 0 ? '+' : ''}{unreadDrift}</p>
+          )}
           <div className="relative">
             <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-            <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 px-4 py-2 border rounded-lg text-sm" />
+            <input
+              type="text"
+              placeholder="Sohbet ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 px-4 py-2 border rounded-lg text-sm"
+            />
           </div>
         </div>
+
         <div className="flex-1 overflow-y-auto">
-          {filtered.map(c => (
-            <div key={c.id} onClick={() => setSelectedConvoId(c.id)} className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${selectedConvoId === c.id ? 'bg-blue-50' : ''}`}>
-              <div className="flex justify-between items-center">
-                <div className="flex-1">
-                  <h3 className="font-semibold">{c.participantName}</h3>
-                  <p className="text-sm text-gray-600 truncate">{c.lastMessage}</p>
+          {loadingConversations ? (
+            <div className="p-4 text-sm text-gray-500">Yükleniyor...</div>
+          ) : filteredConversations.length === 0 ? (
+            <div className="p-6 text-sm text-gray-500">Henüz sohbet yok.</div>
+          ) : (
+            filteredConversations.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setSelectedConvoId(c.id)}
+                className={`w-full p-4 border-b text-left hover:bg-gray-50 ${
+                  selectedConvoId === c.id ? 'bg-amber-50' : ''
+                }`}
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold truncate">{c.participantName}</h3>
+                    <p className="text-sm text-gray-600 truncate">{c.lastMessage}</p>
+                    {c.lastMessageTime && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(c.lastMessageTime).toLocaleString('tr-TR')}
+                      </p>
+                    )}
+                  </div>
+                  {c.unreadCount > 0 && (
+                    <span className="bg-amber-600 text-white text-xs rounded-full px-2 py-0.5">
+                      {c.unreadCount}
+                    </span>
+                  )}
                 </div>
-                {c.unreadCount > 0 && <span className="bg-blue-500 text-white text-xs rounded-full px-2">{c.unreadCount}</span>}
-              </div>
-            </div>
-          ))}
+              </button>
+            ))
+          )}
         </div>
       </div>
-      {selectedConvoId ? (
-        <div className="flex-1 flex flex-col">
-          <div className="p-4 border-b flex justify-between">
-            <h2 className="font-semibold">{conversations.find(c => c.id === selectedConvoId)?.participantName}</h2>
-            <button onClick={() => handleDelete(selectedConvoId)} className="p-2 hover:bg-gray-100"><Trash2 className="w-5 h-5" /></button>
+
+      {selectedConvoId && selectedConversation ? (
+        <div className="flex-1 flex flex-col bg-white">
+          <div className="p-4 border-b flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold">{selectedConversation.participantName}</h2>
+              {typingLabel && <p className="text-xs text-emerald-700">{typingLabel} yazıyor...</p>}
+              {lastReadLabel && <p className="text-xs text-gray-500">Son okuma: {lastReadLabel}</p>}
+            </div>
+            <button
+              onClick={() => handleDeleteConversation(selectedConvoId)}
+              className="p-2 hover:bg-gray-100 rounded"
+              aria-label="Sohbeti gizle"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map(m => <div key={m.id} className="bg-gray-100 px-4 py-2 rounded-lg max-w-xs"><p className="text-sm">{m.content}</p></div>)}
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {messages.length === 0 ? (
+              <div className="text-sm text-gray-500">Henüz mesaj yok. İlk mesajı gönderin.</div>
+            ) : (
+              messages.map((m) => {
+                const isMine = currentUserId ? m.sender_id === currentUserId : false;
+                return (
+                  <div key={m.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                    <div
+                      className={`px-4 py-2 rounded-2xl max-w-[70%] ${
+                        isMine ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-900'
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap break-words">{m.content}</p>
+                      <p className={`text-xs mt-1 ${isMine ? 'text-amber-100' : 'text-gray-500'}`}>
+                        {new Date(m.created_at).toLocaleTimeString('tr-TR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
+
           <div className="p-4 border-t flex gap-2">
-            <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSend()} placeholder="Type..." className="flex-1 px-4 py-2 border rounded-lg" />
-            <button onClick={handleSend} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><Send className="w-5 h-5" /></button>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => {
+                const value = e.target.value;
+                setNewMessage(value);
+                if (!selectedConvoId) return;
+                void fetch('/api/social/messages', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    action: 'typing',
+                    conversationId: selectedConvoId,
+                    isTyping: value.trim().length > 0,
+                  }),
+                }).catch(() => {});
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              placeholder="Mesaj yaz..."
+              className="flex-1 px-4 py-2 border rounded-lg"
+            />
+            <button
+              onClick={handleSend}
+              className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+              aria-label="Mesaj gönder"
+            >
+              <Send className="w-5 h-5" />
+            </button>
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center text-gray-500">Select a conversation</div>
+        <div className="flex-1 flex items-center justify-center text-gray-500 bg-white">
+          Sohbet seçin
+        </div>
       )}
     </div>
   );

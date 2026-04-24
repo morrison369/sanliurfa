@@ -39,7 +39,7 @@ export function sanitizeHTML(dirty: string): string {
   
   // Only allow specific tags - remove any tag not in allowed list
   const tagRegex = /<(\/?)([\w]+)([^>]*)>/gi;
-  clean = clean.replace(tagRegex, (match, closing, tagName, attributes) => {
+  clean = clean.replace(tagRegex, (_match, closing, tagName, attributes) => {
     const lowerTag = tagName.toLowerCase();
     if (!ALLOWED_TAGS.includes(lowerTag)) {
       return '';
@@ -49,7 +49,7 @@ export function sanitizeHTML(dirty: string): string {
     let cleanAttrs = '';
     if (attributes) {
       const attrRegex = /(\w+)="([^"]*)"/gi;
-      let attrMatch;
+      let attrMatch: RegExpExecArray | null;
       while ((attrMatch = attrRegex.exec(attributes)) !== null) {
         const attrName = attrMatch[1].toLowerCase();
         const attrValue = attrMatch[2];

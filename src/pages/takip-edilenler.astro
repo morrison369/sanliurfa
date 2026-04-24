@@ -1,0 +1,100 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { requireAuth } from '../lib/auth';
+import { getFollowing, getSocialStats } from '../lib/social/friendship-db';
+
+const auth = await requireAuth(Astro.request);
+if (auth instanceof Response) return auth;
+
+const [following, stats] = await Promise.all([
+  getFollowing(auth.user.id, 50),
+  getSocialStats(auth.user.id),
+]);
+---
+
+<Layout seo={{ title: `Takip Edilenler (${stats?.following_count || 0}) - Şanlıurfa Rehberi`, noIndex: true }}>
+  <div class="min-h-screen bg-gray-50">
+    <div class="container-custom py-8">
+      <div class="max-w-3xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h1 class="text-3xl font-bold">Takip Edilenler</h1>
+            <p class="text-gray-600 mt-1">Senin takip ettiğin {stats?.following_count || 0} kişi</p>
+          </div>
+          <a href="/takipciler" class="text-amber-600 hover:text-amber-700">
+            ← Takipçiler
+          </a>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm">
+          {following.length > 0 ? (
+            <div class="divide-y">
+              {following.map(user => (
+                <div class="p-6 flex items-center justify-between">
+                  <a href={`/kullanıcı/${user.username || user.id}`} class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xl font-bold">
+                      {user.avatar_url ? (
+                        <img src={user.avatar_url} alt={user.full_name} class="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        user.full_name?.charAt(0).toUpperCase() || 'U'
+                      )}
+                    </div>
+                    <div>
+                      <h3 class="font-bold text-lg hover:text-amber-600 transition-colors">{user.full_name}</h3>
+                      <p class="text-gray-500">@{user.username || 'kullanici'}</p>
+                      <p class="text-sm text-gray-400 mt-1">{user.follower_count} takipçi • {user.following_count} takip</p>
+                    </div>
+                  </a>
+
+                  <div class="flex items-center gap-3">
+                    <button
+                      onclick={`unfollowUser('${user.id}')`}
+                      class="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
+                    >
+                      Takipten Çık
+                    </button>
+                    <a
+                      href={`/mesajlar?user=${user.id}`}
+                      class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
+                      title="Mesaj gönder"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div class="text-center py-16">
+              <div class="text-6xl mb-4">👥</div>
+              <h3 class="text-xl font-bold mb-2">Henüz kimseyi takip etmiyorsunuz</h3>
+              <p class="text-gray-600">Topluluk sayfasından kullanıcıları keşfedip takip edebilirsiniz.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    window.unfollowUser = async function (userId) {
+      try {
+        const response = await fetch('/api/social/follow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, action: 'unfollow' }),
+        });
+
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('İşlem başarısız');
+        }
+      } catch {
+        alert('Bağlantı hatası');
+      }
+    };
+  </script>
+</Layout>

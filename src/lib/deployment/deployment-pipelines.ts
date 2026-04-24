@@ -276,6 +276,4 @@ export const releaseOrchestrator = new ReleaseOrchestrator();
 export const canaryDeployment = new CanaryDeployment();
 export const deploymentValidator = new DeploymentValidator();
 
-export type { PipelineRun, ReleaseManifest, CanaryMetrics, DeploymentStrategy };
-
-
+export { PipelineRun, ReleaseManifest, CanaryMetrics, DeploymentStrategy };

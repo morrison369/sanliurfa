@@ -39,10 +39,10 @@ const weatherData = {
     </div>
     <div>
       <div class="flex items-baseline gap-2">
-        <span class="text-3xl font-bold text-gray-900 dark:text-white">{weatherData.current.temp}°C</span>
-        <span class="text-gray-500 dark:text-gray-400">{weatherData.current.condition}</span>
+        <span id="weather-temp" class="text-3xl font-bold text-gray-900 dark:text-white">{weatherData.current.temp}°C</span>
+        <span id="weather-condition" class="text-gray-500 dark:text-gray-400">{weatherData.current.condition}</span>
       </div>
-      <p class="text-sm text-gray-500 dark:text-gray-400">
+      <p id="weather-feels-like" class="text-sm text-gray-500 dark:text-gray-400">
         Hissedilen: {weatherData.current.feelsLike}°C
       </p>
     </div>
@@ -52,30 +52,30 @@ const weatherData = {
   <div class="flex items-center gap-6 text-sm">
     <div class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
       <span set:html={icons.droplets}></span>
-      <span>Nem: %{weatherData.current.humidity}</span>
+      <span id="weather-humidity">Nem: %{weatherData.current.humidity}</span>
     </div>
     <div class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
       <span set:html={icons.wind}></span>
-      <span>Rüzgar: {weatherData.current.windSpeed} km/s</span>
+      <span id="weather-wind">Rüzgar: {weatherData.current.windSpeed} km/s</span>
     </div>
     <div class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
       <span set:html={icons.eye}></span>
-      <span>Görüş: {weatherData.current.visibility} km</span>
+      <span id="weather-visibility">Görüş: {weatherData.current.visibility} km</span>
     </div>
     <div class="flex items-center gap-2 text-gray-600 dark:text-gray-300">
       <span set:html={icons.thermometer}></span>
-      <span>UV: {weatherData.current.uvIndex}</span>
+      <span id="weather-uv">UV: {weatherData.current.uvIndex}</span>
     </div>
   </div>
   
   <!-- Forecast -->
   <div class="flex items-center gap-4">
-    {weatherData.forecast.map((day) => (
-      <div class="text-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">{day.day}</div>
+    {weatherData.forecast.map((day, index) => (
+      <div class="text-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" data-forecast-index={index}>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1 forecast-day">{day.day}</div>
         <span set:html={day.icon}></span>
-        <div class="text-sm font-medium text-gray-900 dark:text-white">{day.high}°</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400">{day.low}°</div>
+        <div class="text-sm font-medium text-gray-900 dark:text-white forecast-high">{day.high}°</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 forecast-low">{day.low}°</div>
       </div>
     ))}
   </div>
@@ -87,28 +87,47 @@ const weatherData = {
   </div>
 </div>
 
-<!-- Weather API Integration Script -->
 <script is:inline>
-  // TODO: Integrate with OpenWeatherMap or similar API
-  // API Key should be stored in environment variables
-  const WEATHER_API_KEY = import.meta.env.PUBLIC_WEATHER_API_KEY;
-  
   async function fetchWeather() {
     try {
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=Sanliurfa,TR&appid=${WEATHER_API_KEY}&units=metric&lang=tr`
-      );
-      const data = await response.json();
-      // Update UI with real data
+      const response = await fetch('/api/weather/current');
+      if (!response.ok) return;
+      const body = await response.json();
+      if (!body?.success || !body?.data) return;
+      const current = body.data.current || {};
+      const forecast = Array.isArray(body.data.forecast) ? body.data.forecast : [];
+
+      const tempEl = document.getElementById('weather-temp');
+      const conditionEl = document.getElementById('weather-condition');
+      const feelsLikeEl = document.getElementById('weather-feels-like');
+      const humidityEl = document.getElementById('weather-humidity');
+      const windEl = document.getElementById('weather-wind');
+      const visibilityEl = document.getElementById('weather-visibility');
+      const uvEl = document.getElementById('weather-uv');
+
+      if (tempEl && typeof current.temperature === 'number') tempEl.textContent = `${Math.round(current.temperature)}°C`;
+      if (conditionEl && typeof current.weatherLabel === 'string') conditionEl.textContent = current.weatherLabel;
+      if (feelsLikeEl && typeof current.feelsLike === 'number') feelsLikeEl.textContent = `Hissedilen: ${Math.round(current.feelsLike)}°C`;
+      if (humidityEl && typeof current.humidity === 'number') humidityEl.textContent = `Nem: %${Math.round(current.humidity)}`;
+      if (windEl && typeof current.windSpeed === 'number') windEl.textContent = `Rüzgar: ${Math.round(current.windSpeed)} km/s`;
+      if (visibilityEl && typeof current.visibilityKm === 'number') visibilityEl.textContent = `Görüş: ${Math.round(current.visibilityKm)} km`;
+      if (uvEl && typeof current.uvIndex === 'number') uvEl.textContent = `UV: ${Math.round(current.uvIndex)}`;
+
+      const cards = document.querySelectorAll('[data-forecast-index]');
+      cards.forEach((card, index) => {
+        const day = card.querySelector('.forecast-day');
+        const high = card.querySelector('.forecast-high');
+        const low = card.querySelector('.forecast-low');
+        const dayEntry = forecast[index] || {};
+        if (day && typeof dayEntry.dayLabel === 'string') day.textContent = dayEntry.dayLabel;
+        if (high && typeof dayEntry.high === 'number') high.textContent = `${Math.round(dayEntry.high)}°`;
+        if (low && typeof dayEntry.low === 'number') low.textContent = `${Math.round(dayEntry.low)}°`;
+      });
     } catch (error) {
       console.error('Weather fetch error:', error);
     }
   }
-  
-  // Fetch weather on mount
-  if (WEATHER_API_KEY) {
-    fetchWeather();
-    // Update every 30 minutes
-    setInterval(fetchWeather, 30 * 60 * 1000);
-  }
+
+  fetchWeather();
+  setInterval(fetchWeather, 30 * 60 * 1000);
 </script>

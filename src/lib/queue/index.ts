@@ -120,14 +120,14 @@ export async function scheduleRecurringJobs(): Promise<void> {
   
   // Daily cleanup job
   await cleanupQueue.add('daily-cleanup', {}, {
-    repeat: { cron: '0 2 * * *' }, // 2 AM daily
+    repeat: { pattern: '0 2 * * *' }, // 2 AM daily
     jobId: 'daily-cleanup',
   });
 
   // Weekly analytics aggregation
   const analyticsQueue = getQueue(QUEUES.ANALYTICS);
   await analyticsQueue.add('weekly-report', {}, {
-    repeat: { cron: '0 9 * * MON' }, // Monday 9 AM
+    repeat: { pattern: '0 9 * * MON' }, // Monday 9 AM
     jobId: 'weekly-report',
   });
 }
@@ -225,3 +225,4 @@ export async function closeQueues(): Promise<void> {
   }
   await redisConnection.quit();
 }
+

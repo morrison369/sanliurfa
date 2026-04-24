@@ -41,7 +41,7 @@ export class GoogleAnalytics {
 
     // Initialize gtag
     window.dataLayer = window.dataLayer || [];
-    function gtag(...args: any[]) {
+    function gtag(..._args: any[]) {
       window.dataLayer.push(arguments);
     }
     window.gtag = gtag;
@@ -261,7 +261,7 @@ export class GoogleAnalytics {
     const stored = sessionStorage.getItem('ga_session_id');
     if (stored) return stored;
 
-    const sessionId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = `${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     sessionStorage.setItem('ga_session_id', sessionId);
     return sessionId;
   }

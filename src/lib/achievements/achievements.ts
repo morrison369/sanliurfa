@@ -88,7 +88,7 @@ export async function unlockAchievementIfEarned(
     }
 
     // Unlock achievement
-    const userAchievement = await insert('user_achievements', {
+    await insert('user_achievements', {
       user_id: userId,
       achievement_id: achievement.id,
       unlocked_at: new Date()
@@ -139,7 +139,7 @@ export async function getUserAchievements(userId: string): Promise<(UserAchievem
     );
 
     // Extended TTL: 1800s (30 min) instead of 600s - achievements change infrequently
-    await setCache(cacheKey, achievements, 1800);
+    await setCache(`sanliurfa:${cacheKey}`, achievements, 1800);
     return achievements;
   } catch (error) {
     logger.error('Failed to get user achievements', error instanceof Error ? error : new Error(String(error)));
@@ -294,5 +294,4 @@ export async function checkCommonAchievements(userId: string): Promise<void> {
     logger.error('Failed to check common achievements', error instanceof Error ? error : new Error(String(error)));
   }
 }
-
 

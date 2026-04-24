@@ -2,9 +2,7 @@
  * Review Statistics Component
  * Display review analysis and sentiment
  */
-
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface ReviewAnalysis {
   totalReviews: number;
   averageRating: number;
@@ -31,14 +29,14 @@ export function ReviewStats({ placeId }: ReviewStatsProps) {
         const response = await fetch(`/api/owner/analytics/reviews/${placeId}`);
 
         if (!response.ok) {
-          throw new Error('Failed to fetch review analysis');
+          throw new Error('Yorum analizi yüklenemedi.');
         }
 
         const data = await response.json();
         setAnalysis(data.reviewAnalysis);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : 'Bilinmeyen hata oluştu.');
         setAnalysis(null);
       } finally {
         setLoading(false);
@@ -55,7 +53,7 @@ export function ReviewStats({ placeId }: ReviewStatsProps) {
   if (error || !analysis) {
     return (
       <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
-        <p className="text-gray-600">{error || 'Review data not available'}</p>
+        <p className="text-gray-600">{error || 'Yorum verisi bulunamadı.'}</p>
       </div>
     );
   }
@@ -68,7 +66,7 @@ export function ReviewStats({ placeId }: ReviewStatsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Sentiment Summary */}
+      {/* Duyarlılık özeti */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Yorum Duyarlılığı</h3>
 
@@ -114,7 +112,7 @@ export function ReviewStats({ placeId }: ReviewStatsProps) {
         </div>
       </div>
 
-      {/* Average Rating */}
+      {/* Ortalama puan */}
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200 p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -130,7 +128,7 @@ export function ReviewStats({ placeId }: ReviewStatsProps) {
         </div>
       </div>
 
-      {/* Recent Reviews */}
+      {/* Son yorumlar */}
       {analysis.recentReviews.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h4 className="text-sm font-semibold text-gray-900 mb-4">En Son Yorumlar</h4>

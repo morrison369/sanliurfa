@@ -174,10 +174,9 @@ export class TieredLimiter {
   private limiters: Map<string, SlidingWindowLimiter> = new Map();
 
   constructor(
-    private tiers: Record<string, RateLimitConfig>,
+    tiers: Record<string, RateLimitConfig>,
     private getTierForIdentifier: (identifier: string) => Promise<string>
   ) {
-    // Initialize limiters for each tier
     Object.entries(tiers).forEach(([tier, config]) => {
       this.limiters.set(tier, new SlidingWindowLimiter(config));
     });

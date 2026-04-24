@@ -1,30 +1,67 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { getPersonalizedRecommendations, getTrendingPlaces } from '../lib/recommendation/recommendations';
+import { queryMany } from '../lib/postgres';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+interface RecommendedPlace {
+  id: string;
+  slug: string;
+  name: string;
+  category: string;
+  short_description: string | null;
+  cover_image: string | null;
+  rating: number;
+  rating_count: number;
+  view_count: number;
+}
 
 // Check if user is authenticated
 const token = Astro.cookies.get('token')?.value;
-let recommendations = [];
+let recommendations: RecommendedPlace[] = [];
 let isPersonalized = false;
 
-if (token) {
-  // For personalized recommendations, we'd need to verify the token and get userId
-  // In this implementation, we'll fetch trending as fallback since actual impl needs token verification
-  recommendations = await getTrendingPlaces(12);
-  isPersonalized = true;
-} else {
-  // Anonymous users get trending places
-  recommendations = await getTrendingPlaces(12);
-}
+recommendations = await queryMany<RecommendedPlace>(
+  `SELECT
+     p.id::text,
+     p.slug,
+     p.name,
+     COALESCE(c.name, p.category, 'Mekan') as category,
+     COALESCE(p.short_description, p.description) as short_description,
+     COALESCE(p.thumbnail_url, p.images[1]) as cover_image,
+     COALESCE(p.rating, 0)::float as rating,
+     COALESCE(p.rating_count, p.review_count, 0)::int as rating_count,
+     COALESCE(p.view_count, 0)::int as view_count
+   FROM places p
+   LEFT JOIN categories c ON c.id = p.category_id
+   WHERE p.status = 'active'
+   ORDER BY COALESCE(p.review_count, 0) DESC, COALESCE(p.rating, 0) DESC, p.created_at DESC
+   LIMIT 12`
+);
+isPersonalized = Boolean(token);
+
+const seo = {
+  title: isPersonalized ? 'Sana Özel Öneriler - Sanliurfa.com' : 'Popüler Mekan Önerileri - Sanliurfa.com',
+  description: "Şanlıurfa mekanları arasından popüler ve yüksek puanlı önerileri keşfedin.",
+  keywords: ['şanlıurfa mekan önerileri', 'popüler mekanlar', 'kişiselleştirilmiş öneriler', 'şanlıurfa gezilecek yerler'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/oneriler',
+};
+
+const faqItems = [
+  { S: "Öneriler nasıl belirleniyor?", C: "Öneriler, kullanıcı puanları, yorum sayısı ve görüntülenme verisi baz alınarak akıllı sıralama algoritması tarafından belirlenir." },
+  { S: "Kişiselleştirilmiş öneriler nasıl alabilirim?", C: "Hesabınıza giriş yaparak ilgi alanlarınıza göre kişiselleştirilmiş mekan önerileri alabilirsiniz." },
+  { S: "Önerilen mekanlar ne sıklıkla güncelleniyor?", C: "Öneriler her gün kullanıcı aktivitelerine göre otomatik güncellenir." },
+];
 ---
 
-<Layout title="Önerilen Yerler - Şanlıurfa.com">
+<Layout seo={seo}>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
     <div class="container max-w-6xl mx-auto">
       <!-- Header -->
       <div class="mb-12">
         <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          ğŸ’¡ {isPersonalized ? 'Sana Özel Öneriler' : 'En Popüler Yerler'}
+          {isPersonalized ? 'Sana Özel Öneriler' : 'En Popüler Yerler'}
         </h1>
         <p class="text-lg text-gray-600 dark:text-gray-300">
           {isPersonalized
@@ -42,9 +79,9 @@ if (token) {
             </p>
           </div>
         ) : (
-          recommendations.map((place: any) => (
+          recommendations.map((place) => (
             <a
-              href={`/places/${place.slug}`}
+              href={`/isletme/${place.slug}`}
               class="group bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
             >
               <!-- Image -->
@@ -58,7 +95,7 @@ if (token) {
                 </div>
               ) : (
                 <div class="w-full h-48 bg-gradient-to-br from-orange-200 to-red-200 flex items-center justify-center">
-                  <span class="text-5xl">ğŸ“</span>
+                  <span class="text-5xl" aria-hidden="true">📍</span>
                 </div>
               )}
 
@@ -86,8 +123,8 @@ if (token) {
                   <div class="flex items-center gap-2 mb-4">
                     <div class="flex items-center">
                       {[...Array(5)].map((_, i) => (
-                        <span key={i} class={i < Math.floor(place.rating) ? 'text-yellow-400' : 'text-gray-300'}>
-                          â˜…
+                        <span class={i < Math.floor(place.rating) ? 'text-yellow-400' : 'text-gray-300'}>
+                          ★
                         </span>
                       ))}
                     </div>
@@ -100,7 +137,7 @@ if (token) {
                 <!-- View Count (if available) -->
                 {place.view_count && (
                   <div class="text-xs text-gray-500 dark:text-gray-400">
-                    ğŸ‘ï¸ {place.view_count.toLocaleString()} görüş
+                    {place.view_count.toLocaleString('tr-TR')} görüntüleme
                   </div>
                 )}
               </div>
@@ -133,4 +170,23 @@ if (token) {
       )}
     </div>
   </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Öneriler', item: `${baseUrl}/oneriler` },
+    ],
+  })} is:inline />
 </Layout>
+
+

@@ -265,6 +265,4 @@ export const vulnerabilityTracker = new VulnerabilityTracker();
 export const sbomGenerator = new SBOMGenerator();
 export const licenseCompliance = new LicenseCompliance();
 
-export type { Dependency, Vulnerability, SBOMComponent, LicenseInfo };
-
-
+export { Dependency, Vulnerability, SBOMComponent, LicenseInfo };

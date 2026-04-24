@@ -1,0 +1,153 @@
+# Sanliurfa.com — Şanlıurfa Şehir Rehberi
+
+> Şanlıurfa'nın en kapsamlı dijital rehberi. Mekan keşfi, nöbetçi eczane, otobüs saatleri, uçak saatleri, etkinlikler, ilçe rehberleri, yemek tarifleri ve turizm bilgileri.
+
+## Platform Hakkında
+
+Sanliurfa.com, Türkiye'nin Şanlıurfa iline odaklanmış bir şehir rehberi platformudur. Günlük yaşam bilgileri (nöbetçi eczane, otobüs saatleri, uçak saatleri), mekan rehberi (restoranlar, oteller, turistik yerler), etkinlik takvimi, topluluk eşleşme modülü ve yerel içerikler sunar.
+
+## Ana İçerik Bölümleri
+
+- [Ana Sayfa](https://sanliurfa.com/) — Platform genel görünümü, öne çıkan mekanlar ve güncel bilgiler
+- [Mekanlar](https://sanliurfa.com/mekanlar) — Restoranlar, kafeler, oteller, turistik mekanlar ve işletmeler
+- [İşletmeler](https://sanliurfa.com/isletme) — Şanlıurfa'daki tüm kayıtlı işletmelerin listesi ve kategoriler
+- [Keşfet](https://sanliurfa.com/kesfet) — Trend mekanlar ve topluluk önerileri
+- [Topluluk](https://sanliurfa.com/topluluk) — Şanlıurfa topluluğu, gönderi paylaşımı, sosyal etkileşim
+- [Eşleşme](https://sanliurfa.com/eslesme) — Tinder benzeri swipe eşleşme modülü, profil oluşturma ve mesajlaşma
+- [Blog](https://sanliurfa.com/blog) — Şanlıurfa hakkında rehber yazıları ve makaleler
+- [Etkinlikler](https://sanliurfa.com/etkinlikler) — Şanlıurfa etkinlik takvimi ve kategori sayfaları
+- [Ara](https://sanliurfa.com/ara) — Şanlıurfa mekan, işletme, tarihi yer ve blog arama
+- [Gelişmiş Arama](https://sanliurfa.com/arama/gelismis) — Filtre ve AI destekli gelişmiş mekan arama
+
+## Sağlık
+
+- [Sağlık](https://sanliurfa.com/saglik) — Hastaneler, klinikler, eczaneler, veterinerler
+- [Nöbetçi Eczaneler](https://sanliurfa.com/saglik/nobetci-eczaneler) — Günlük nöbetçi eczane listesi
+- [Devlet Hastaneleri](https://sanliurfa.com/saglik/devlet-hastaneleri) — Kamu hastaneleri listesi
+- [Özel Hastaneler](https://sanliurfa.com/saglik/ozel-hastaneler) — Özel hastaneler ve klinikler
+
+## Ulaşım
+
+- [Ulaşım](https://sanliurfa.com/ulasim) — Şanlıurfa ulaşım rehberi genel sayfa
+- [Otobüs Saatleri](https://sanliurfa.com/ulasim/otobus-saatleri) — Şanlıurfa şehir içi toplu taşıma saatleri
+- [Otobüs Hatları](https://sanliurfa.com/ulasim/otobus-hatlari) — Hat bazlı sefer bilgileri ve güzergahlar
+- [Uçak Saatleri](https://sanliurfa.com/ulasim/ucak-saatleri) — GAP Havalimanı uçuş saatleri, varış ve kalkış bilgileri
+
+## Gastronomi ve Yemek Rehberi
+
+- [Gastronomi](https://sanliurfa.com/gastronomi) — UNESCO Gastronomi Şehri adayı Şanlıurfa'nın mutfak rehberi
+- [Yeme İçme](https://sanliurfa.com/yeme-icme) — Şanlıurfa restoran, kafe ve yeme içme rehberi
+- [Yemek Tarifleri](https://sanliurfa.com/yemek-tarifleri) — Şanlıurfa mutfağı tarifleri (Urfa Kebabı, Çiğ Köfte, Borani, Şıllık vb.)
+- [Şanlıurfa'da Ne Yenir?](https://sanliurfa.com/sanliurfada-ne-yenir) — Urfa mutfağının öne çıkan lezzetleri ve tarif rehberi
+- [En İyi Kebapçılar](https://sanliurfa.com/en-iyi-kebapcilar) — Urfa kebabı ve ocakbaşı mekanları listesi
+- [En İyi Cigerciler](https://sanliurfa.com/en-iyi-cigerciler) — Tandır ciğeri mekanları
+- [Kahvaltı Mekanları](https://sanliurfa.com/sanliurfa-kahvalti-mekanlari) — Yöresel kahvaltı ve çay bahçeleri
+- [Urfa Kebabı Tarifi](https://sanliurfa.com/yemek-tarifleri/urfa-kebabi) — Adım adım Urfa kebabı tarifi
+- [Çiğ Köfte Tarifi](https://sanliurfa.com/yemek-tarihleri/cig-kofte) — Urfa usulü çiğ köfte
+- [Borani Tarifi](https://sanliurfa.com/yemek-tarifleri/borani) — Yoğurt ve pazılı yöresel yemek
+- [Şıllık Tatlısı Tarifi](https://sanliurfa.com/yemek-tarifleri/sillik-tatlisi) — Cevizli krep tatlısı
+
+## Turizm ve Gezilecek Yerler
+
+- [Gezilecek Yerler](https://sanliurfa.com/gezilecek-yerler) — Şanlıurfa'da gezilecek tarihi ve turistik yerler
+- [Tarihi Yerler](https://sanliurfa.com/tarihi-yerler) — Göbeklitepe, Harran, Balıklıgöl ve diğer tarihi miras alanları
+- [Bugün Şanlıurfa'da Ne Yapılır?](https://sanliurfa.com/bugun-sanliurfada-ne-yapilir) — Günlük etkinlik ve mekan önerileri
+- [Sıra Gecesi Mekanları](https://sanliurfa.com/sanliurfa-sira-gecesi-mekanlari) — Geleneksel sıra gecesi kültürü ve mekanlar
+- [Gece Açık Mekanlar](https://sanliurfa.com/sanliurfa-gece-acik-mekanlar) — Geç saate kadar açık kafeler ve eğlence yerleri
+
+## Öne Çıkan Turistik Yerler
+
+- **Göbeklitepe** — Dünyanın en eski tapınak kompleksi (MÖ 10.000) — [Detay](https://sanliurfa.com/isletme/gobeklitepe)
+- **Balıklıgöl** — Hz. İbrahim'in atıldığı havuz, kutsal sazan balıkları — [Detay](https://sanliurfa.com/isletme/balikligol)
+- **Halfeti** — Fırat üzerinde sular altında şehir, tekne turları — [Detay](https://sanliurfa.com/isletme/halfeti)
+- **Harran Kümbet Evleri** — Dünyanın hâlâ yaşanan en eski konili evleri — [Detay](https://sanliurfa.com/isletme/harran)
+- **Şanlıurfa Kalesi** — Sütunlar ve şehir panoraması — [Detay](https://sanliurfa.com/isletme/urfa-kalesi)
+- **Ayna Çarşı ve Kapalı Çarşı** — Tarihi çarşı ve el sanatları — [Detay](https://sanliurfa.com/isletme/kapali-carsi)
+
+## Etkinlikler ve Blog
+
+- [Etkinlikler](https://sanliurfa.com/etkinlikler) — Tüm etkinlikler takvimi
+- [Kültür Etkinlikleri](https://sanliurfa.com/etkinlikler/kultur) — Konser, sergi, tiyatro
+- [Spor Etkinlikleri](https://sanliurfa.com/etkinlikler/spor) — Turnuvalar ve spor organizasyonları
+- [Festival ve Şenlikler](https://sanliurfa.com/etkinlikler/festival) — Yerel festivaller ve şenlikler
+- [Blog](https://sanliurfa.com/blog) — Şanlıurfa hakkında tüm blog yazıları
+- [İçerik Rehberi](https://sanliurfa.com/icerik-rehberi) — Platform içerik katkısı kılavuzu
+
+## Hizmetler
+
+- [Hizmetler](https://sanliurfa.com/hizmetler) — Kuaförler, berberler, temizlik, nakliyat, çilingir, elektrikçi, tesisatçı
+- [7/24 Çilingir](https://sanliurfa.com/hizmetler/cilingir) — Acil çilingir hizmeti
+- [Elektrikçi](https://sanliurfa.com/hizmetler/elektrikci) — Elektrik tadilat ve tamir
+
+## Emlak ve Konaklama
+
+- [Emlak](https://sanliurfa.com/emlak) — Satılık ve kiralık daireler, emlak ofisleri
+- [Satılık Daireler](https://sanliurfa.com/emlak/satilik-daire) — Şanlıurfa'da satılık konutlar
+- [Kiralık Daireler](https://sanliurfa.com/emlak/kiralik-daire) — Şanlıurfa'da kiralık konutlar
+- [Konaklama](https://sanliurfa.com/konaklama) — Oteller, butik oteller, pansiyonlar
+
+## Alışveriş ve Eğitim
+
+- [Alışveriş](https://sanliurfa.com/alisveris) — AVM'ler, çarşılar, yöresel ürünler, kuyumcular
+- [Eğitim](https://sanliurfa.com/egitim) — Okullar, üniversiteler, dershaneler, kurslar
+- [Harran Üniversitesi](https://sanliurfa.com/egitim/universiteler) — Harran Üniversitesi ve yükseköğretim
+
+## İlçe Rehberleri
+
+- [Tüm İlçeler](https://sanliurfa.com/ilceler) — Şanlıurfa'nın 13 ilçesinin genel rehberi
+- [Eyyübiye](https://sanliurfa.com/ilceler/eyyubiye) — Balıklıgöl, tarihi çarşılar, Göbeklitepe yakını
+- [Haliliye](https://sanliurfa.com/ilceler/haliliye) — Şehir merkezi, kamu hizmetleri, alışveriş
+- [Karaköprü](https://sanliurfa.com/ilceler/karakopru) — Modern mahalleler, kafeler
+- [Halfeti](https://sanliurfa.com/ilceler/halfeti) — Saklı cennet, tekne turları, sular altı köy
+- [Harran](https://sanliurfa.com/ilceler/harran) — Kümbet evleri, Mezopotamya mirası
+- [Birecik](https://sanliurfa.com/ilceler/birecik) — Fırat Nehri, kelaynak kuşları koruma alanı
+- [Siverek](https://sanliurfa.com/ilceler/siverek) — Takoran Vadisi, doğal güzellikler
+- [Viranşehir](https://sanliurfa.com/ilceler/viransehir) — Tarih, tarım, ticaret
+- [Bozova](https://sanliurfa.com/ilceler/bozova) — Atatürk Barajı kıyısı, balıkçılık
+- [Ceylanpınar](https://sanliurfa.com/ilceler/ceylanpinar) — Sınır ilçesi, tarım arazileri
+- [Akçakale](https://sanliurfa.com/ilceler/akcakale) — Suriye sınırı, Harran Ovası
+- [Suruç](https://sanliurfa.com/ilceler/suruc) — Tarihi yerleşim, Fırat havzası
+- [Hilvan](https://sanliurfa.com/ilceler/hilvan) — Kaplıcalar, termal turizm
+
+## Mahalle Rehberleri
+
+- [Mahalleler](https://sanliurfa.com/mahalleler) — Tüm ilçe ve mahallelerin listesi
+- [Eyyübiye Mahalleleri](https://sanliurfa.com/mahalleler/eyyubiye) — Eyyübiye ilçesi mahalleleri
+- [Haliliye Mahalleleri](https://sanliurfa.com/mahalleler/haliliye) — Haliliye ilçesi mahalleleri
+- [Karaköprü Mahalleleri](https://sanliurfa.com/mahalleler/karakopru) — Karaköprü ilçesi mahalleleri
+
+## Topluluk ve Sosyal
+
+- [Topluluk](https://sanliurfa.com/topluluk) — Şanlıurfa topluluğu; gönderi paylaşımı, yorum, beğeni
+- [Eşleşme](https://sanliurfa.com/eslesme) — Swipe bazlı eşleşme modülü (ücretsiz; en fazla 4 fotoğraf, karşılıklı eşleşme sonrası mesajlaşma)
+- [Kullanıcılar](https://sanliurfa.com/kullanicilar) — Platform üyelerini keşfet, takip et ve bağlantı kur
+- [Liderlik Tablosu](https://sanliurfa.com/liderlik-tablosu) — En aktif üyeler, rozetler ve katkı sıralamaları
+- [Sıralamalar](https://sanliurfa.com/siralamalar) — Kullanıcı başarı ve aktivite sıralamaları
+- [Öneriler](https://sanliurfa.com/oneriler) — Kişiselleştirilmiş ve popüler mekan önerileri
+- [Trend Mekanlar](https://sanliurfa.com/trend) — Bu hafta en çok ziyaret edilen mekanlar
+- [Kayıt Ol](https://sanliurfa.com/kayit) — Ücretsiz hesap oluşturma
+- [Giriş Yap](https://sanliurfa.com/giris) — Kullanıcı girişi
+- [Profil](https://sanliurfa.com/profil) — Kullanıcı profil sayfası (giriş gerektirir)
+- [Ayarlar](https://sanliurfa.com/ayarlar) — Hesap ve bildirim ayarları
+
+## Platform Bilgileri
+
+- [Hakkında](https://sanliurfa.com/hakkinda) — Platform hakkında detaylı bilgi
+- [İletişim](https://sanliurfa.com/iletisim) — İletişim formu ve adres
+- [Fiyatlandırma](https://sanliurfa.com/fiyatlandirma) — Premium üyelik planları
+- [SSS](https://sanliurfa.com/sss) — Sık sorulan sorular
+
+## Hukuki Sayfalar
+
+- [Gizlilik Politikası](https://sanliurfa.com/gizlilik-politikasi)
+- [Kullanım Koşulları](https://sanliurfa.com/kullanim-kosullari)
+- [KVKK](https://sanliurfa.com/kvkk) — Kişisel Verilerin Korunması Kanunu aydınlatma metni
+- [Çerez Politikası](https://sanliurfa.com/cerez-politikasi)
+
+## Teknik Bilgi
+
+Platform: Astro 6.1 SSR + React 19
+Dil: Türkçe (yalnızca)
+Güncelleme sıklığı: Günlük (nöbetçi eczane, uçak saatleri) / Haftalık (diğer içerikler)
+Sitemap: https://sanliurfa.com/sitemap.xml
+robots.txt: Tüm büyük AI botlara (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, Amazonbot) tam erişim izni verilmiştir.

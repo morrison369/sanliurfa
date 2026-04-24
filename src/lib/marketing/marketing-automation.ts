@@ -41,7 +41,7 @@ export class CampaignManager {
   private schedules = new Map<string, number>();
 
   createCampaign(campaign: Omit<Campaign, 'id' | 'status'>): Campaign {
-    const campaignId = 'campaign-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const campaignId = 'campaign-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
     const fullCampaign: Campaign = { ...campaign, id: campaignId, status: 'draft' };
     this.campaigns.set(campaignId, fullCampaign);
     const vendorId = campaign.target.split(':')[0];
@@ -102,7 +102,7 @@ export class TemplateEngine {
   private vendorTemplates = new Map<string, Set<string>>();
 
   createTemplate(name: string, content: string, variables: string[]): string {
-    const templateId = 'template-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const templateId = 'template-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
     this.templates.set(templateId, { content, variables });
     logger.debug('Template created', { templateId, name, variables: variables.length });
     return templateId;
@@ -121,7 +121,7 @@ export class TemplateEngine {
 
   listTemplates(vendorId: string): { id: string; name: string }[] {
     const templateIds = this.vendorTemplates.get(vendorId) || new Set();
-    return Array.from(templateIds).map(id => ({ id, name: 'Template ' + id.substr(0, 8) }));
+    return Array.from(templateIds).map(id => ({ id, name: 'Template ' + id.slice(0, 8) }));
   }
 
   registerTemplate(vendorId: string, templateId: string): void {
@@ -143,7 +143,7 @@ export class EngagementAutomation {
     logger.debug('Engagement rule added', { trigger: rule.trigger, action: rule.action });
   }
 
-  evaluateRules(userId: string, context: Record<string, any>): EngagementRule[] {
+  evaluateRules(_userId: string, context: Record<string, any>): EngagementRule[] {
     const matching: EngagementRule[] = [];
     for (const rule of this.rules) {
       if (this.matchesCondition(rule.condition, context)) {

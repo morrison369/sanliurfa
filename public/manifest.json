@@ -61,50 +61,27 @@
       "purpose": "maskable any"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshots/home-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Şanlıurfa.com Ana Sayfa"
-    },
-    {
-      "src": "/screenshots/place-detail.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Mekan Detay Sayfası"
-    },
-    {
-      "src": "/screenshots/home-mobile.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Mobil Ana Sayfa"
-    }
-  ],
   "shortcuts": [
     {
-      "name": "Restoranlar",
-      "short_name": "Restoran",
-      "description": "Şanlıurfa'daki en iyi restoranlar",
-      "url": "/kategori/restoran",
-      "icons": [{ "src": "/icons/restaurant.png", "sizes": "96x96" }]
+      "name": "Yöresel Yemekler",
+      "short_name": "Yemek",
+      "description": "Şanlıurfa'daki yöresel yemek mekanları",
+      "url": "/mekanlar/yoresel-yemekler",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
       "name": "Oteller",
       "short_name": "Otel",
       "description": "Konaklama seçenekleri",
-      "url": "/kategori/otel",
-      "icons": [{ "src": "/icons/hotel.png", "sizes": "96x96" }]
+      "url": "/konaklama",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
       "name": "Göbeklitepe",
       "short_name": "Göbeklitepe",
       "description": "Dünyanın ilk tapınağı",
-      "url": "/places/gobeklitepe",
-      "icons": [{ "src": "/icons/monument.png", "sizes": "96x96" }]
+      "url": "/isletme/gobeklitepe",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     }
   ],
   "related_applications": [],

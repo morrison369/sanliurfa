@@ -1,7 +1,7 @@
 import type { Migration } from '../lib/migrations/migration-system';
 
 const migration: Migration = {
-  version: 132,
+  version: '132',
   name: 'rate_limiting',
   description: 'Add rate limiting logs table',
   
@@ -70,3 +70,4 @@ const migration: Migration = {
 };
 
 export default migration;
+

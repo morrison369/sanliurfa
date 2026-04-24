@@ -12,6 +12,11 @@ export const migration_003_fulltext_search: Migration = {
   up: async (pool: any) => {
     // Places tablosuna tsvector sütunu ekle (Turkish)
     await pool.query(`
+      ALTER TABLE places ADD COLUMN IF NOT EXISTS name VARCHAR(255);
+      ALTER TABLE places ADD COLUMN IF NOT EXISTS description TEXT;
+      ALTER TABLE places ADD COLUMN IF NOT EXISTS category VARCHAR(100);
+      ALTER TABLE places ADD COLUMN IF NOT EXISTS address VARCHAR(500);
+
       ALTER TABLE places
       ADD COLUMN IF NOT EXISTS search_vector tsvector
       GENERATED ALWAYS AS (
@@ -27,6 +32,9 @@ export const migration_003_fulltext_search: Migration = {
 
     // Reviews tablosuna tsvector sütunu ekle
     await pool.query(`
+      ALTER TABLE reviews ADD COLUMN IF NOT EXISTS title VARCHAR(255);
+      ALTER TABLE reviews ADD COLUMN IF NOT EXISTS content TEXT;
+
       ALTER TABLE reviews
       ADD COLUMN IF NOT EXISTS search_vector tsvector
       GENERATED ALWAYS AS (
@@ -40,6 +48,9 @@ export const migration_003_fulltext_search: Migration = {
 
     // Blog posts tablosuna tsvector sütunu ekle
     await pool.query(`
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS title VARCHAR(500);
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS content TEXT;
+
       ALTER TABLE blog_posts
       ADD COLUMN IF NOT EXISTS search_vector tsvector
       GENERATED ALWAYS AS (
@@ -53,6 +64,10 @@ export const migration_003_fulltext_search: Migration = {
 
     // Events tablosuna tsvector sütunu ekle
     await pool.query(`
+      ALTER TABLE events ADD COLUMN IF NOT EXISTS title VARCHAR(500);
+      ALTER TABLE events ADD COLUMN IF NOT EXISTS description TEXT;
+      ALTER TABLE events ADD COLUMN IF NOT EXISTS location VARCHAR(500);
+
       ALTER TABLE events
       ADD COLUMN IF NOT EXISTS search_vector tsvector
       GENERATED ALWAYS AS (

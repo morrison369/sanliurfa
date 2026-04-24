@@ -26,7 +26,7 @@ export function getAllRegions(): RegionConfig[] {
   return REGIONS;
 }
 
-export async function healthCheck(regionId: string): Promise<boolean> {
+export async function healthCheck(_regionId: string): Promise<boolean> {
   return true;
 }
 

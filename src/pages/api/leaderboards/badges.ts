@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Badge Leaderboards API
  * GET: Retrieve users by badge achievements and earned badges
@@ -11,8 +10,41 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { getCache, setCache } from '../../../lib/cache';
 
+interface BadgeLeaderboardRow {
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  points: string | number | null;
+  level: string | number | null;
+  badge_count: string | number | null;
+  total_badges_earned: string | number | null;
+  badges: Array<string | null> | null;
+  last_badge_earned: string | Date | null;
+}
+
+interface BadgeLeaderboardItem {
+  rank: number;
+  id: string;
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  points: string | number | null;
+  level: string | number | null;
+  badge_count: number;
+  total_badges_earned: number;
+  badges: string[];
+  last_badge_earned: string | Date | null;
+}
+
+function toInteger(value: string | number | null | undefined): number {
+  if (typeof value === 'number') return Math.trunc(value);
+  if (typeof value === 'string') return parseInt(value, 10) || 0;
+  return 0;
+}
+
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -22,7 +54,7 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     // Check cache
     const cacheKey = `leaderboard:badges:${limit}`;
-    const cached = await getCache<any[]>(cacheKey);
+    const cached = await getCache<BadgeLeaderboardItem[]>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', '/api/leaderboards/badges', HttpStatus.OK, duration);
@@ -33,8 +65,7 @@ export const GET: APIRoute = async ({ request, url }) => {
           count: cached.length
         },
         HttpStatus.OK,
-        requestId,
-        { 'X-Cache': 'HIT' }
+        requestId
       );
     }
 
@@ -60,10 +91,10 @@ export const GET: APIRoute = async ({ request, url }) => {
       LIMIT $1
     `;
 
-    const result = await queryMany(sql, [limit]);
+    const result = await queryMany<BadgeLeaderboardRow>(sql, [limit]);
 
     // Format response with ranks
-    const leaderboard = result.map((row: any, index: number) => ({
+    const leaderboard: BadgeLeaderboardItem[] = result.map((row, index) => ({
       rank: index + 1,
       id: row.id,
       full_name: row.full_name,
@@ -71,9 +102,9 @@ export const GET: APIRoute = async ({ request, url }) => {
       avatar_url: row.avatar_url,
       points: row.points,
       level: row.level,
-      badge_count: parseInt(row.badge_count || '0'),
-      total_badges_earned: parseInt(row.total_badges_earned || '0'),
-      badges: row.badges ? row.badges.filter((b: any) => b) : [],
+      badge_count: toInteger(row.badge_count),
+      total_badges_earned: toInteger(row.total_badges_earned),
+      badges: row.badges ? row.badges.filter((badge): badge is string => Boolean(badge)) : [],
       last_badge_earned: row.last_badge_earned
     }));
 

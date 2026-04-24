@@ -1,4 +1,4 @@
--- Şanlıurfa.com Gerçek Mekan Verileri 2026
+-- Sanliurfa.com Gerçek Mekan Verileri 2026
 -- Tüm kategoriler ve güncel fiyatlar
 
 -- ============================================

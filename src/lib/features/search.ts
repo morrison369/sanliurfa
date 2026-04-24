@@ -1,7 +1,7 @@
 /**
  * search.ts - Gelişmiş arama işlevselliği modülü
  *
- * Bu modül, Şanlıurfa.com sitesi için mekanlar, blog yazıları
+ * Bu modül, Sanliurfa.com sitesi için mekanlar, blog yazıları
  * ve etkinliklerde tam metin arama (full-text search) yapmayı,
  * ayrıca arama önerileri sunmayı sağlar. PostgreSQL tsvector
  * tam metin arama özelliği kullanılır.
@@ -31,19 +31,17 @@ export async function searchPlaces(
     description: string;
     category: string;
     rating: number;
-    city: string;
-    district: string;
     rank: number;
   }>
 > {
   let sql = `SELECT
-    id, name, description, category, rating, city, district,
+    id, name, COALESCE(short_description, description) as description, category, COALESCE(rating, 0) as rating,
     ts_rank(
-      to_tsvector('turkish', coalesce(name, '') || ' ' || coalesce(description, '')),
+      to_tsvector('turkish', coalesce(name, '') || ' ' || coalesce(short_description, description, '')),
       plainto_tsquery('turkish', $1)
     ) AS rank
   FROM places
-  WHERE to_tsvector('turkish', coalesce(name, '') || ' ' || coalesce(description, ''))
+  WHERE to_tsvector('turkish', coalesce(name, '') || ' ' || coalesce(short_description, description, ''))
         @@ plainto_tsquery('turkish', $1)`;
 
   const values: (string | number)[] = [searchQuery];
@@ -63,19 +61,7 @@ export async function searchPlaces(
     paramIndex++;
   }
 
-  // Şehir filtresi
-  if (filters?.city) {
-    sql += ` AND city = $${paramIndex}`;
-    values.push(filters.city);
-    paramIndex++;
-  }
-
-  // İlçe filtresi
-  if (filters?.district) {
-    sql += ` AND district = $${paramIndex}`;
-    values.push(filters.district);
-    paramIndex++;
-  }
+  // Şehir ve ilçe filtreleri — places tablosunda city/district text kolonu yok, atlanıyor
 
   sql += ` ORDER BY rank DESC, rating DESC LIMIT 50`;
 
@@ -87,8 +73,6 @@ export async function searchPlaces(
     description: string;
     category: string;
     rating: number;
-    city: string;
-    district: string;
     rank: number;
   }>;
 }

@@ -2,9 +2,9 @@
 import Layout from '../../layouts/Layout.astro';
 
 const seo = {
-  title: 'İşletme Yönetimi - Admin Panel',
+  title: 'İşletme Yönetimi - Yönetim Paneli',
   description: 'İşletmeleri yönetin',
-  noindex: true,
+  noIndex: true,
 };
 ---
 
@@ -74,7 +74,7 @@ const seo = {
             </tr>
           </thead>
           <tbody id="placesTable" class="divide-y divide-gray-100">
-            <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yukleniyor...</td></tr>
+            <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yükleniyor...</td></tr>
           </tbody>
         </table>
         
@@ -99,10 +99,9 @@ const seo = {
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     let currentPage = 1;
     let selectedPlaces = new Set();
-    let allPlaces = [];
 
     const statusLabels = {
       active: { text: 'Aktif', class: 'bg-green-100 text-green-700' },
@@ -127,7 +126,6 @@ const seo = {
         const data = await response.json();
 
         if (data.success) {
-          allPlaces = data.places;
           renderPlaces(data.places);
           updatePagination(data.pagination);
           updateStats(data.places);
@@ -180,7 +178,7 @@ const seo = {
           </td>
           <td class="px-4 py-3">
             <div class="flex gap-2">
-              <a href="/places/${place.slug}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">Görüntüle</a>
+              <a href="/isletme/${place.slug}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">Görüntüle</a>
               ${place.status === 'pending' ? `
                 <button onclick="approvePlace('${place.id}')" class="text-green-600 hover:text-green-800 text-sm">Onayla</button>
               ` : ''}
@@ -252,6 +250,8 @@ const seo = {
     }
 
     function goToPage(page) { currentPage = page; loadPlaces(); }
+    window.approvePlace = approvePlace;
+    window.goToPage = goToPage;
 
     document.getElementById('selectAll').addEventListener('change', (e) => {
       document.querySelectorAll('.place-checkbox').forEach(cb => {
@@ -265,3 +265,6 @@ const seo = {
     loadPlaces();
   </script>
 </Layout>
+
+
+

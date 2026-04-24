@@ -40,9 +40,9 @@ export async function trackEvent(
 
   try {
     await query(
-      `INSERT INTO events (name, properties, user_id, created_at)
+      `INSERT INTO engagement_events (user_id, event_type, event_data, created_at)
        VALUES ($1, $2, $3, NOW())`,
-      [eventName, JSON.stringify(properties), userId || null]
+      [userId || null, eventName, JSON.stringify(properties)]
     );
   } catch (error) {
     logger.error('Analytics error:', error);
@@ -51,11 +51,11 @@ export async function trackEvent(
 
 // Track search
 export async function trackSearch(
-  query: string,
+  searchTerm: string,
   resultsCount: number,
   userId?: string
 ): Promise<void> {
-  await trackEvent('search', { query, results_count: resultsCount }, userId);
+  await trackEvent('search', { query: searchTerm, results_count: resultsCount }, userId);
 }
 
 // Track place view
@@ -112,10 +112,10 @@ export async function getTopSearches(
 ): Promise<{ query: string; count: number }[]> {
   const result = await query(
     `SELECT
-      properties->>'query' as query,
+      event_data->>'query' as query,
       COUNT(*)::int as count
-     FROM events
-     WHERE name = 'search'
+     FROM engagement_events
+     WHERE event_type = 'search'
        AND created_at > NOW() - ($1 * INTERVAL '1 day')
      GROUP BY properties->>'query'
      ORDER BY count DESC
@@ -594,7 +594,7 @@ export async function recordPageView(data: {
   ip?: string;
 }): Promise<void> {
   await query(
-    `INSERT INTO page_views (path, user_id, referrer, user_agent, ip, created_at)
+    `INSERT INTO page_views (path, user_id, referrer, user_agent, ip_address, created_at)
      VALUES ($1, $2, $3, $4, $5, NOW())`,
     [data.path, data.userId || null, data.referrer || null, data.userAgent || null, data.ip || null]
   );
@@ -682,7 +682,7 @@ export async function getUserReviews(userId: string, limit = 10): Promise<Array<
       r.place_id as placeId,
       p.name as placeName,
       r.rating,
-      r.comment,
+      r.content,
       r.created_at as createdAt
      FROM reviews r
      JOIN places p ON r.place_id = p.id
@@ -697,7 +697,7 @@ export async function getUserReviews(userId: string, limit = 10): Promise<Array<
     placeId: row.placeid,
     placeName: row.placename,
     rating: row.rating,
-    comment: row.comment,
+    comment: row.content,
     createdAt: new Date(row.createdat),
   }));
 }
@@ -717,7 +717,7 @@ export async function getUserFavorites(userId: string, limit = 10): Promise<Arra
       uf.id,
       uf.place_id as placeId,
       p.name as placeName,
-      p.image as placeImage,
+      COALESCE(p.thumbnail_url, p.images[1]) as placeImage,
       uf.created_at as createdAt
      FROM user_favorites uf
      JOIN places p ON uf.place_id = p.id

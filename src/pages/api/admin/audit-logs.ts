@@ -17,7 +17,7 @@ import { logger } from '../../../lib/logging';
  *   - summary: true ise sadece özet göster
  */
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   // Sadece admin erişebilir

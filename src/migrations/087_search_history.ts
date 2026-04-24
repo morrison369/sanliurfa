@@ -25,6 +25,12 @@ export const migration_087_search_history = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE search_history ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE search_history ADD COLUMN IF NOT EXISTS search_query VARCHAR(255);
+      ALTER TABLE search_history ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_search_history_user
       ON search_history(user_id, created_at DESC)
     `);
@@ -54,6 +60,12 @@ export const migration_087_search_history = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE saved_searches ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE saved_searches ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE saved_searches ADD COLUMN IF NOT EXISTS is_favorite BOOLEAN DEFAULT false;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_saved_searches_user
       ON saved_searches(user_id, created_at DESC)
     `);
@@ -74,6 +86,12 @@ export const migration_087_search_history = async (pool: Pool) => {
         sent_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE search_alerts ADD COLUMN IF NOT EXISTS saved_search_id UUID;
+      ALTER TABLE search_alerts ADD COLUMN IF NOT EXISTS alert_sent BOOLEAN DEFAULT false;
+      ALTER TABLE search_alerts ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`

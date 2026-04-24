@@ -37,6 +37,12 @@ export const migration_104_marketing_campaigns = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE email_campaigns ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'draft';
+      ALTER TABLE email_campaigns ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE email_campaigns ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMP;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_campaigns_status
       ON email_campaigns(status, created_at DESC)
     `);
@@ -50,12 +56,17 @@ export const migration_104_marketing_campaigns = async (pool: Pool) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS campaign_segments (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        campaign_id UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
-        segment_id UUID NOT NULL REFERENCES user_segments(id) ON DELETE CASCADE,
+        campaign_id INTEGER NOT NULL,
+        segment_id UUID NOT NULL,
         recipient_count INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(campaign_id, segment_id)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE campaign_segments ADD COLUMN IF NOT EXISTS campaign_id INTEGER;
+      ALTER TABLE campaign_segments ADD COLUMN IF NOT EXISTS segment_id UUID;
     `);
 
     await pool.query(`
@@ -67,7 +78,7 @@ export const migration_104_marketing_campaigns = async (pool: Pool) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS campaign_metrics (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        campaign_id UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+        campaign_id INTEGER NOT NULL,
         metric_date DATE NOT NULL,
         sent INT DEFAULT 0,
         opened INT DEFAULT 0,
@@ -82,6 +93,11 @@ export const migration_104_marketing_campaigns = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE campaign_metrics ADD COLUMN IF NOT EXISTS campaign_id INTEGER;
+      ALTER TABLE campaign_metrics ADD COLUMN IF NOT EXISTS metric_date DATE;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_campaign_metrics_date
       ON campaign_metrics(campaign_id, metric_date DESC)
     `);
@@ -90,7 +106,7 @@ export const migration_104_marketing_campaigns = async (pool: Pool) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS campaign_recipients (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        campaign_id UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+        campaign_id INTEGER NOT NULL,
         recipient_email VARCHAR(255) NOT NULL,
         user_id UUID REFERENCES users(id) ON DELETE SET NULL,
         status VARCHAR(50) DEFAULT 'pending',
@@ -105,6 +121,12 @@ export const migration_104_marketing_campaigns = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE campaign_recipients ADD COLUMN IF NOT EXISTS campaign_id INTEGER;
+      ALTER TABLE campaign_recipients ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending';
+      ALTER TABLE campaign_recipients ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_campaign_recipients_status
       ON campaign_recipients(campaign_id, status, created_at DESC)
     `);
@@ -113,13 +135,18 @@ export const migration_104_marketing_campaigns = async (pool: Pool) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS campaign_links (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        campaign_id UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+        campaign_id INTEGER NOT NULL,
         original_url VARCHAR(2048) NOT NULL,
         tracking_code VARCHAR(255) UNIQUE NOT NULL,
         click_count INT DEFAULT 0,
         unique_click_count INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE campaign_links ADD COLUMN IF NOT EXISTS campaign_id INTEGER;
+      ALTER TABLE campaign_links ADD COLUMN IF NOT EXISTS tracking_code VARCHAR(255);
     `);
 
     await pool.query(`

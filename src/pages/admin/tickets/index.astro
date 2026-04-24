@@ -1,6 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yönetimi', noindex: true };
+const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yönetimi', noIndex: true };
 ---
 <Layout seo={seo}>
   <div class="min-h-screen bg-gray-50 pt-20 pb-12">
@@ -31,7 +31,7 @@ const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yönetimi'
             </tr>
           </thead>
           <tbody id="ticketsTable" class="divide-y">
-            <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yukleniyor...</td></tr>
+            <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yükleniyor...</td></tr>
           </tbody>
         </table>
       </div>
@@ -53,7 +53,7 @@ const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yönetimi'
         
         if (data.success) {
           const tbody = document.getElementById('ticketsTable');
-          tbody.innerHTML = data.tickets.map(t => `
+          tbody.innerHTML = data.tickets.map((t: any) => `
             <tr class="hover:bg-gray-50">
               <td class="px-4 py-3 font-mono text-sm text-gray-600">${t.ticket_number}</td>
               <td class="px-4 py-3">
@@ -73,15 +73,15 @@ const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yönetimi'
             </tr>
           `).join('');
           
-          document.getElementById('openCount').textContent = data.tickets.filter(t => t.status === 'open').length;
-          document.getElementById('inProgressCount').textContent = data.tickets.filter(t => t.status === 'in_progress').length;
+          document.getElementById('openCount').textContent = data.tickets.filter((t: any) => t.status === 'open').length;
+          document.getElementById('inProgressCount').textContent = data.tickets.filter((t: any) => t.status === 'in_progress').length;
         }
       } catch (err) {
         console.error('Error:', err);
       }
     }
 
-    async function updateStatus(id, status) {
+    async function updateStatus(id: string, status: string) {
       await fetch(`/api/contact/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -90,6 +90,7 @@ const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yönetimi'
       loadTickets();
     }
 
+    (window as any).updateStatus = updateStatus;
     loadTickets();
   </script>
 </Layout>

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:4321/api';
 
 // Test users
 const testUser1 = {

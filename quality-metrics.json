@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-04-20T20:40:48.050Z",
+  "lint": {
+    "errors": 0,
+    "warnings": 890,
+    "problems": 890
+  },
+  "typecheck": {
+    "errors": 0,
+    "warnings": 0,
+    "hints": 4
+  },
+  "apiReleaseGate": {
+    "passed": true
+  },
+  "openapi": {
+    "missingInSpec": 227
+  }
+}

@@ -8,22 +8,53 @@
 import type { APIRoute } from 'astro';
 import { requireRole } from '../../../../lib/auth';
 import { getPostBySlug, updatePost, deletePost, getPostRevisions } from '../../../../lib/blog/db';
+import { problemJson } from '../../../../lib/api';
 
-export const GET: APIRoute = async ({ request, url }) => {
+type BlogStatus = 'draft' | 'published' | 'scheduled' | 'archived';
+
+type UpdateBlogPostBody = {
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  content?: string;
+  content_html?: string;
+  category_id?: string;
+  featured_image?: string;
+  status?: BlogStatus;
+  published_at?: string;
+  meta_title?: string;
+  meta_description?: string;
+  is_featured?: boolean;
+  is_pinned?: boolean;
+  tag_ids?: string[];
+};
+
+export const GET: APIRoute = async ({ request, url, params }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-blog-post-unauthorized',
+        instance: url.pathname,
+      });
+    }
 
-    const id = url.pathname.split('/').pop();
+    const id = params.id;
     if (!id) {
-      return new Response(JSON.stringify({ error: 'Post ID required' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Yazı kimliği gerekli',
+        type: '/problems/admin-blog-post-id-required',
+        instance: url.pathname,
       });
     }
 
     // Check if requesting revisions
-    const searchParams = new URL(url).searchParams;
+    const searchParams = url.searchParams;
     if (searchParams.get('revisions') === 'true') {
       const revisions = await getPostRevisions(id);
       return new Response(JSON.stringify({ revisions }), {
@@ -34,9 +65,12 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     const post = await getPostBySlug(id);
     if (!post) {
-      return new Response(JSON.stringify({ error: 'Post not found' }), {
+      return problemJson({
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Bulunamadı',
+        detail: 'Yazı bulunamadı',
+        type: '/problems/admin-blog-post-not-found',
+        instance: url.pathname,
       });
     }
 
@@ -45,27 +79,41 @@ export const GET: APIRoute = async ({ request, url }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to get post' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Yazı Detayı Alınamadı',
+      detail: error instanceof Error ? error.message : 'Yazı detayı alınamadı',
+      type: '/problems/admin-blog-post-get-failed',
+      instance: url.pathname,
+    });
   }
 };
 
-export const PUT: APIRoute = async ({ request, url }) => {
+export const PUT: APIRoute = async ({ request, url, params }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
-
-    const id = url.pathname.split('/').pop();
-    if (!id) {
-      return new Response(JSON.stringify({ error: 'Post ID required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-blog-post-unauthorized',
+        instance: url.pathname,
       });
     }
 
-    const body = await request.json();
+    const id = params.id;
+    if (!id) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Yazı kimliği gerekli',
+        type: '/problems/admin-blog-post-id-required',
+        instance: url.pathname,
+      });
+    }
+
+    const body = (await request.json().catch(() => ({}))) as UpdateBlogPostBody;
     
     const post = await updatePost(
       id,
@@ -86,7 +134,7 @@ export const PUT: APIRoute = async ({ request, url }) => {
         tag_ids: body.tag_ids,
       },
       auth.user.id,
-      auth.user.full_name || auth.user.username
+      auth.user.full_name || auth.user.email
     );
 
     return new Response(JSON.stringify({ success: true, post }), {
@@ -94,32 +142,49 @@ export const PUT: APIRoute = async ({ request, url }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to update post' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Yazı Güncellenemedi',
+      detail: error instanceof Error ? error.message : 'Yazı güncellenemedi',
+      type: '/problems/admin-blog-post-update-failed',
+      instance: url.pathname,
+    });
   }
 };
 
-export const DELETE: APIRoute = async ({ request, url }) => {
+export const DELETE: APIRoute = async ({ request, url, params }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-blog-post-unauthorized',
+        instance: url.pathname,
+      });
+    }
 
-    const id = url.pathname.split('/').pop();
+    const id = params.id;
     if (!id) {
-      return new Response(JSON.stringify({ error: 'Post ID required' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Yazı kimliği gerekli',
+        type: '/problems/admin-blog-post-id-required',
+        instance: url.pathname,
       });
     }
 
     const success = await deletePost(id);
     
     if (!success) {
-      return new Response(JSON.stringify({ error: 'Post not found' }), {
+      return problemJson({
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Bulunamadı',
+        detail: 'Yazı bulunamadı',
+        type: '/problems/admin-blog-post-not-found',
+        instance: url.pathname,
       });
     }
 
@@ -128,9 +193,13 @@ export const DELETE: APIRoute = async ({ request, url }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to delete post' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Yazı Silinemedi',
+      detail: error instanceof Error ? error.message : 'Yazı silinemedi',
+      type: '/problems/admin-blog-post-delete-failed',
+      instance: url.pathname,
+    });
   }
 };
+

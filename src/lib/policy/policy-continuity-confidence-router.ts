@@ -3,7 +3,7 @@
  */
 
 import { logger } from '../logger';
-import { SignalBook, computeBalancedScore, scorePasses } from './governance-kit';
+import { SignalBook, computeBalancedScore } from './governance-kit';
 
 export interface ContinuityConfidenceSignal {
   signalId: string;
@@ -51,6 +51,9 @@ export {
   ContinuityConfidenceRouter,
   ContinuityConfidenceReporter
 };
+
+
+
 
 
 

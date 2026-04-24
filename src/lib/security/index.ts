@@ -1,4 +1,3 @@
-// @ts-nocheck
 // security module - consolidated
 
 export * from './secrets-management';

@@ -1,9 +1,7 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
-import type { Pool } from 'pg';
 import { getWebhookSettings, updateWebhookSettings } from '../../../lib/webhook/webhook-filters';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import type { APIContext } from 'astro';
 import { logger } from '../../../lib/logging';
 
 /**
@@ -11,7 +9,7 @@ import { logger } from '../../../lib/logging';
  * Get webhook settings
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -44,7 +42,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
  * Update webhook settings
  */
 export const PUT: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

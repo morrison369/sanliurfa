@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Loyalty Points Module
  * Manages user loyalty points, transactions, and rewards
@@ -24,7 +23,7 @@ export interface LoyaltyTransaction {
 }
 
 const CACHE_TTL = 300; // 5 minutes
-const CACHE_PREFIX = 'sanliurfa:loyalty';
+const CACHE_PREFIX = 'loyalty';
 
 /**
  * Get user's current loyalty points
@@ -32,9 +31,9 @@ const CACHE_PREFIX = 'sanliurfa:loyalty';
 export async function getUserPoints(userId: string): Promise<LoyaltyPoints> {
   try {
     // Check cache first
-    const cached = await getCache(`${CACHE_PREFIX}:balance:${userId}`);
+    const cached = await getCache<LoyaltyPoints>(`${CACHE_PREFIX}:balance:${userId}`);
     if (cached) {
-      return typeof cached === 'string' ? JSON.parse(cached) : cached;
+      return cached;
     }
 
     // Fetch from database

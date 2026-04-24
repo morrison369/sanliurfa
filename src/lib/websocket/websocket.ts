@@ -7,15 +7,7 @@ import { logger } from '../logging';
  *   npm install socket.io @socket.io/redis-adapter
  */
 
-// Placeholder implementation
-interface ConnectedUser {
-  userId: string;
-  socketId: string;
-  rooms: string[];
-}
-
 class WebSocketManager {
-  private users: Map<string, ConnectedUser> = new Map();
   private isInitialized = false;
 
   initialize(): void {

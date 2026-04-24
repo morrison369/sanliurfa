@@ -46,7 +46,7 @@ test.describe('Profile - Authenticated Access', () => {
       {
         name: 'auth-token',
         value: 'mock-authenticated-user-jwt',
-        url: 'http://localhost:3000',
+        url: 'http://localhost:4321',
         httpOnly: true,
         secure: false,
         sameSite: 'Lax',
@@ -78,7 +78,7 @@ test.describe('Profile - Sub-pages Navigation', () => {
       {
         name: 'auth-token',
         value: 'mock-authenticated-user-jwt',
-        url: 'http://localhost:3000',
+        url: 'http://localhost:4321',
         httpOnly: true,
         secure: false,
         sameSite: 'Lax',
@@ -128,7 +128,7 @@ test.describe('Profile - Sidebar Navigation', () => {
       {
         name: 'auth-token',
         value: 'mock-authenticated-user-jwt',
-        url: 'http://localhost:3000',
+        url: 'http://localhost:4321',
         httpOnly: true,
         secure: false,
         sameSite: 'Lax',
@@ -205,7 +205,7 @@ test.describe('Profile - Settings Page', () => {
       {
         name: 'auth-token',
         value: 'mock-authenticated-user-jwt',
-        url: 'http://localhost:3000',
+        url: 'http://localhost:4321',
         httpOnly: true,
         secure: false,
         sameSite: 'Lax',
@@ -244,7 +244,7 @@ test.describe('Profile - Responsive Design', () => {
       {
         name: 'auth-token',
         value: 'mock-authenticated-user-jwt',
-        url: 'http://localhost:3000',
+        url: 'http://localhost:4321',
         httpOnly: true,
         secure: false,
         sameSite: 'Lax',

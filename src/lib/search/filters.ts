@@ -3,7 +3,7 @@
  * Faceted search with multiple filter options
  */
 
-import { query } from '../postgres';
+import { query as dbQuery } from '../postgres';
 
 export interface SearchFilters {
   query?: string;
@@ -145,7 +145,7 @@ export function buildSearchQuery(
 
   // Has photos
   if (filters.hasPhotos) {
-    conditions.push(`EXISTS (SELECT 1 FROM place_images WHERE place_id = ${baseTable}.id)`);
+    conditions.push(`EXISTS (SELECT 1 FROM place_photos WHERE place_id = ${baseTable}.id)`);
   }
 
   // Date range
@@ -183,11 +183,13 @@ export function applySorting(sql: string, sortBy: SearchFilters['sortBy'], filte
       return `${sql} ORDER BY rating DESC, review_count DESC`;
     case 'distance':
       if (filters.location) {
+        const lat = Number(filters.location.lat);
+        const lng = Number(filters.location.lng);
         return `${sql} ORDER BY (
           6371000 * acos(
-            cos(radians(${filters.location.lat})) * cos(radians(latitude)) *
-            cos(radians(longitude) - radians(${filters.location.lng})) +
-            sin(radians(${filters.location.lat})) * sin(radians(latitude))
+            cos(radians(${lat})) * cos(radians(latitude)) *
+            cos(radians(longitude) - radians(${lng})) +
+            sin(radians(${lat})) * sin(radians(latitude))
           )
         ) ASC`;
       }
@@ -198,12 +200,12 @@ export function applySorting(sql: string, sortBy: SearchFilters['sortBy'], filte
       return `${sql} ORDER BY view_count DESC, review_count DESC`;
     case 'relevance':
     default:
-      // Default relevance sorting (if search query present)
       if (filters.query) {
-        return `${sql} ORDER BY 
-          CASE 
-            WHEN name ILIKE '%${filters.query}%' THEN 1
-            WHEN description ILIKE '%${filters.query}%' THEN 2
+        const escaped = filters.query.replace(/'/g, "''");
+        return `${sql} ORDER BY
+          CASE
+            WHEN name ILIKE '%${escaped}%' THEN 1
+            WHEN description ILIKE '%${escaped}%' THEN 2
             ELSE 3
           END,
           rating DESC`;
@@ -230,7 +232,7 @@ export async function getFacetCounts(
   const { sql: baseSql, params } = buildSearchQuery(baseTable, filtersWithoutFacets, options);
 
   // Get category counts
-  const categoryResult = await query(
+  const categoryResult = await dbQuery(
     `SELECT category_id, COUNT(*) as count 
     FROM (${baseSql}) filtered 
     GROUP BY category_id`,
@@ -238,7 +240,7 @@ export async function getFacetCounts(
   );
 
   // Get rating distribution
-  const ratingResult = await query(
+  const ratingResult = await dbQuery(
     `SELECT FLOOR(rating) as rating_bucket, COUNT(*) as count
     FROM (${baseSql}) filtered
     GROUP BY FLOOR(rating)`,
@@ -246,7 +248,7 @@ export async function getFacetCounts(
   );
 
   // Get price range counts
-  const priceResult = await query(
+  const priceResult = await dbQuery(
     `SELECT price_level, COUNT(*) as count
     FROM (${baseSql}) filtered
     GROUP BY price_level`,
@@ -254,7 +256,7 @@ export async function getFacetCounts(
   );
 
   // Get amenity counts (flatten array and count)
-  const amenityResult = await query(
+  const amenityResult = await dbQuery(
     `SELECT unnest(amenities) as amenity, COUNT(*) as count
     FROM (${baseSql}) filtered
     GROUP BY unnest(amenities)`,
@@ -262,7 +264,7 @@ export async function getFacetCounts(
   );
 
   // Get tag counts
-  const tagResult = await query(
+  const tagResult = await dbQuery(
     `SELECT unnest(tags) as tag, COUNT(*) as count
     FROM (${baseSql}) filtered
     GROUP BY unnest(tags)`,
@@ -295,8 +297,8 @@ export async function executeFacetedSearch<T>(
   const sql = `${sortedSql} LIMIT ${limit} OFFSET ${offset}`;
 
   const [countResult, itemsResult, facets] = await Promise.all([
-    query(countSql, params),
-    query(sql, params),
+    dbQuery(countSql, params),
+    dbQuery(sql, params),
     getFacetCounts(baseTable, filters, options),
   ]);
 
@@ -321,14 +323,14 @@ export async function getAutocompleteSuggestions(
   const suggestions: Array<{ type: string; value: string; label: string }> = [];
 
   // Search places
-  const placesResult = await query(
-    `SELECT id, name, category_id FROM places 
+  const placesResult = await dbQuery(
+    `SELECT id, name, category_id FROM places
     WHERE name ILIKE $1 AND status = 'active'
     LIMIT $2`,
     [`%${query}%`, limit]
   );
 
-  placesResult.rows.forEach(row => {
+  placesResult.rows.forEach((row: any) => {
     suggestions.push({
       type: 'place',
       value: row.id,
@@ -337,12 +339,12 @@ export async function getAutocompleteSuggestions(
   });
 
   // Search categories
-  const categoriesResult = await query(
+  const categoriesResult = await dbQuery(
     `SELECT id, name FROM categories WHERE name ILIKE $1 LIMIT $2`,
     [`%${query}%`, Math.floor(limit / 2)]
   );
 
-  categoriesResult.rows.forEach(row => {
+  categoriesResult.rows.forEach((row: any) => {
     suggestions.push({
       type: 'category',
       value: row.id,
@@ -351,12 +353,12 @@ export async function getAutocompleteSuggestions(
   });
 
   // Search tags
-  const tagsResult = await query(
+  const tagsResult = await dbQuery(
     `SELECT DISTINCT unnest(tags) as tag FROM places WHERE tags @> ARRAY[$1::text] LIMIT $2`,
     [query, Math.floor(limit / 2)]
   );
 
-  tagsResult.rows.forEach(row => {
+  tagsResult.rows.forEach((row: any) => {
     suggestions.push({
       type: 'tag',
       value: row.tag,
@@ -376,9 +378,10 @@ export async function saveSearchQuery(
   resultsCount: number,
   userId?: string
 ): Promise<void> {
-  await query(
+  await dbQuery(
     `INSERT INTO search_logs (query, filters, results_count, user_id, created_at)
      VALUES ($1, $2, $3, $4, NOW())`,
     [query, JSON.stringify(filters), resultsCount, userId || null]
   );
 }
+

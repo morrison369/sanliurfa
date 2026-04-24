@@ -2,7 +2,7 @@
  * Phase 343: Compliance Trust Recovery Mesh
  */
 
-import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
+import { SignalBook, computeBalancedScore, routeByThresholds } from './governance-kit';
 
 export interface TrustRecoverySignalV2 {
   signalId: string;
@@ -34,7 +34,7 @@ class TrustRecoveryRouteV2 {
 }
 
 class TrustRecoveryReporterV2 {
-  report(signalId: string, route: string): string {
+  report(_signalId: string, _route: string): string {
     return "" as any;
   }
 }
@@ -50,4 +50,7 @@ export {
   TrustRecoveryRouteV2,
   TrustRecoveryReporterV2
 };
+
+
+
 

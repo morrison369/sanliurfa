@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Privacy & Data Management
  * User privacy settings, blocking, muting, and account deletion
@@ -94,7 +93,7 @@ export async function updatePrivacySettings(
       updated_at: new Date().toISOString()
     };
 
-    const updated = await updateDb('privacy_settings', userId, updateData, 'user_id');
+    const updated = await updateDb('privacy_settings', { user_id: userId }, updateData);
 
     // Invalidate cache
     await deleteCache(`privacy:${userId}`);

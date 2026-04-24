@@ -208,4 +208,4 @@ export const contentRecommender = new ContentRecommender();
 export const contentPerformanceTracker = new ContentPerformanceTracker();
 export const contentOptimizationSuggester = new ContentOptimizationSuggester();
 
-export { ContentScore, ContentPerformance, OptimizationSuggestion };
+export {ContentScore, ContentPerformance, OptimizationSuggestion};

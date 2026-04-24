@@ -9,7 +9,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../../lib/logger';
 
 export const GET: APIRoute = async ({ request, params, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     const { id } = params;
@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     // Get place reservation settings
     const place = await query(
       `SELECT id, name, reservation_required, max_party_size, min_party_size
-       FROM places WHERE id = $1 AND is_active = true`,
+       FROM places WHERE id = $1 AND status = 'active'`,
       [id]
     );
 

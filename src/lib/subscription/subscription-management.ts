@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Subscription Management Library
  * Handle subscription tiers, billing, and feature access
@@ -51,7 +50,7 @@ export async function getSubscriptionTiers(): Promise<SubscriptionTier[]> {
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached as string);
     }
 
     const results = await queryMany(
@@ -91,7 +90,7 @@ export async function getActiveSubscription(userId: string): Promise<(Subscripti
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached as string);
     }
 
     const result = await queryOne(

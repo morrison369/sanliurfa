@@ -11,7 +11,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     }
 
     // Get activity stats
-    const stats = await getUserActivitySummary(userId, 30);
+    const stats = await getUserActivitySummary(userId);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/users/${userId}/activity-stats`, HttpStatus.OK, duration);
@@ -58,3 +58,4 @@ export const GET: APIRoute = async ({ request, params }) => {
     );
   }
 };
+

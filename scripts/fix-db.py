@@ -5,11 +5,11 @@ import time
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='zIT7Y9yrJZRV', timeout=30)
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', timeout=30)
 
 # 1. Kill app
 print('1. Killing...', flush=True)
-ssh.exec_command('pkill -9 node 2>/dev/null; pm2 kill 2>/dev/null; fuser -k 6000/tcp 2>/dev/null; fuser -k 4321/tcp 2>/dev/null; sleep 2')
+ssh.exec_command('pkill -9 node 2>/dev/null; pm2 kill 2>/dev/null; fuser -k 4321/tcp 2>/dev/null; fuser -k 4321/tcp 2>/dev/null; sleep 2')
 time.sleep(3)
 
 # 2. Fix hardcoded DB user in dist files
@@ -21,17 +21,17 @@ print(out.read().decode().strip(), flush=True)
 # 3. Write correct .env
 print('3. Writing .env...', flush=True)
 env = """NODE_ENV=production
-PORT=6000
+PORT=4321
 HOST=127.0.0.1
-DATABASE_URL=postgresql://sanliur_sanliurfa:kWtUYbyYgbS7@localhost:5432/sanliur_sanliurfa
+DATABASE_URL=postgresql://sanliur_sanliurfa:CHANGE_ME_DB_PASSWORD@localhost:5432/sanliur_sanliurfa
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=sanliur_sanliurfa
 DB_USER=sanliur_sanliurfa
-DB_PASSWORD=kWtUYbyYgbS7
+DB_PASSWORD=CHANGE_ME_DB_PASSWORD
 JWT_SECRET=test-jwt-secret-key-32chars-min
 SESSION_SECRET=test-session-secret-key-32chars
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://127.0.0.1:6381
 CORS_ORIGINS=https://sanliurfa.com
 SMTP_HOST=localhost
 SMTP_PORT=587
@@ -52,7 +52,7 @@ time.sleep(12)
 
 # 5. Check health
 print('5. Health check...', flush=True)
-_, out, _ = ssh.exec_command('curl -s http://127.0.0.1:6000/api/health')
+_, out, _ = ssh.exec_command('curl -s http://127.0.0.1:4321/api/health')
 time.sleep(2)
 health = out.read().decode()
 print(f'  {health[:400]}', flush=True)

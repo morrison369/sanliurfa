@@ -6,6 +6,7 @@
 import { query, queryOne, queryMany, insert } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
+import { resolveContentImage } from '../content-images';
 
 export interface Event {
   id: string;
@@ -40,6 +41,40 @@ export interface EventAttendee {
   updated_at: string;
 }
 
+function normalizeEventImage(row: any): string {
+  return resolveContentImage({
+    category: 'etkinlikler',
+    slug: row?.slug,
+    explicit: row?.image_url,
+    placeholder: '/images/placeholder-event.jpg',
+  });
+}
+
+function toEvent(row: any): Event {
+  return {
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    description: row.description,
+    place_id: row.place_id,
+    start_date: row.start_date,
+    end_date: row.end_date,
+    location: row.location,
+    organizer: row.organizer,
+    category: row.category,
+    capacity: row.capacity,
+    image_url: normalizeEventImage(row),
+    is_online: row.is_online,
+    is_free: row.is_free,
+    price: row.price,
+    view_count: row.view_count,
+    status: row.status,
+    attendee_count: row.attendee_count,
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
 /**
  * Get event by ID
  */
@@ -66,28 +101,7 @@ export async function getEventById(eventId: string): Promise<Event | null> {
       [eventId]
     );
 
-    const event: Event = {
-      id: result.id,
-      title: result.title,
-      slug: result.slug,
-      description: result.description,
-      place_id: result.place_id,
-      start_date: result.start_date,
-      end_date: result.end_date,
-      location: result.location,
-      organizer: result.organizer,
-      category: result.category,
-      capacity: result.capacity,
-      image_url: result.image_url,
-      is_online: result.is_online,
-      is_free: result.is_free,
-      price: result.price,
-      view_count: result.view_count,
-      status: result.status,
-      attendee_count: result.attendee_count,
-      created_at: result.created_at,
-      updated_at: result.updated_at
-    };
+    const event: Event = toEvent(result);
 
     await setCache(cacheKey, JSON.stringify(event), 600);
 
@@ -140,28 +154,7 @@ export async function getEvents(
       [...params, limit, offset]
     );
 
-    const events: Event[] = results.map((r: any) => ({
-      id: r.id,
-      title: r.title,
-      slug: r.slug,
-      description: r.description,
-      place_id: r.place_id,
-      start_date: r.start_date,
-      end_date: r.end_date,
-      location: r.location,
-      organizer: r.organizer,
-      category: r.category,
-      capacity: r.capacity,
-      image_url: r.image_url,
-      is_online: r.is_online,
-      is_free: r.is_free,
-      price: r.price,
-      view_count: r.view_count,
-      status: r.status,
-      attendee_count: r.attendee_count,
-      created_at: r.created_at,
-      updated_at: r.updated_at
-    }));
+    const events: Event[] = results.map((r: any) => toEvent(r));
 
     const result = { events, total };
     await setCache(cacheKey, JSON.stringify(result), 300);
@@ -187,28 +180,7 @@ export async function searchEvents(queryText: string, limit: number = 20): Promi
       [`%${queryText}%`, limit]
     );
 
-    return results.map((r: any) => ({
-      id: r.id,
-      title: r.title,
-      slug: r.slug,
-      description: r.description,
-      place_id: r.place_id,
-      start_date: r.start_date,
-      end_date: r.end_date,
-      location: r.location,
-      organizer: r.organizer,
-      category: r.category,
-      capacity: r.capacity,
-      image_url: r.image_url,
-      is_online: r.is_online,
-      is_free: r.is_free,
-      price: r.price,
-      view_count: r.view_count,
-      status: r.status,
-      attendee_count: r.attendee_count,
-      created_at: r.created_at,
-      updated_at: r.updated_at
-    }));
+    return results.map((r: any) => toEvent(r));
   } catch (error) {
     logger.error('Failed to search events', error instanceof Error ? error : new Error(String(error)));
     return [];
@@ -335,28 +307,7 @@ export async function getUpcomingEvents(limit: number = 10): Promise<Event[]> {
       [limit]
     );
 
-    const events: Event[] = results.map((r: any) => ({
-      id: r.id,
-      title: r.title,
-      slug: r.slug,
-      description: r.description,
-      place_id: r.place_id,
-      start_date: r.start_date,
-      end_date: r.end_date,
-      location: r.location,
-      organizer: r.organizer,
-      category: r.category,
-      capacity: r.capacity,
-      image_url: r.image_url,
-      is_online: r.is_online,
-      is_free: r.is_free,
-      price: r.price,
-      view_count: r.view_count,
-      status: r.status,
-      attendee_count: r.attendee_count,
-      created_at: r.created_at,
-      updated_at: r.updated_at
-    }));
+    const events: Event[] = results.map((r: any) => toEvent(r));
 
     await setCache(cacheKey, JSON.stringify(events), 3600);
 
@@ -366,5 +317,4 @@ export async function getUpcomingEvents(limit: number = 10): Promise<Event[]> {
     return [];
   }
 }
-
 

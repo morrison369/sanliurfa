@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Change Password API
  * POST: Change user password (requires current password verification)
@@ -33,7 +32,7 @@ const changePasswordSchema = {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

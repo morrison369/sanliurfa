@@ -2,9 +2,8 @@
  * Premium Feature Guard Component
  * Display a prompt to upgrade when accessing premium features without permission
  */
-
-import React, { type ReactNode } from 'react';
-
+import {  type ReactNode  } from 'react';
+import { PHASE1_FREE_MODE } from '../lib/runtime/phase-policy';
 interface PremiumFeatureGuardProps {
   featureName: string;
   featureDescription: string;
@@ -20,7 +19,9 @@ export function PremiumFeatureGuard({
   children,
   fallback,
 }: PremiumFeatureGuardProps) {
-  if (hasAccess) {
+  const phase1FreeMode = PHASE1_FREE_MODE;
+
+  if (hasAccess || phase1FreeMode) {
     return <>{children}</>;
   }
 

@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { actions, isInputError } from 'astro:actions';
 
 // SVG ikonlar
 const icons = {
@@ -9,17 +10,23 @@ const icons = {
 };
 
 const seo = {
-  title: 'Şifre Sıfırla - Şanlıurfa.com',
+  title: 'Şifre Sıfırla - Sanliurfa.com',
   description: 'Yeni şifre oluşturun',
-  noindex: true
+  noIndex: true
 };
 
 const token = Astro.url.searchParams.get('token');
-const error = Astro.url.searchParams.get('token');
-const success = Astro.url.searchParams.get('token');
+const error = Astro.url.searchParams.get('error');
+const success = Astro.url.searchParams.get('success');
+const result = Astro.getActionResult(actions.resetPassword);
+const inputErrors = isInputError(result?.error) ? result.error.fields : {};
+const submitError =
+  !isInputError(result?.error) && result?.error?.message
+    ? result.error.message
+    : null;
 
 // If no token, show error
-if (!token && !error && !success) {
+if (!token && !error && !success && !(result && !result.error)) {
   return Astro.redirect('/sifremi-unuttum?error=invalid_token');
 }
 ---
@@ -40,16 +47,16 @@ if (!token && !error && !success) {
           </p>
         </div>
         
-        {success ? (
+        {success || (result && !result.error) ? (
           <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
             <div class="flex items-start gap-3">
-              <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <span set:html={icons.checkCircle}></span>
               <div>
                 <p class="text-green-800 dark:text-green-300 font-medium">
                   Şifreniz Güncellendi
                 </p>
                 <p class="text-green-700 dark:text-green-400 text-sm mt-1">
-                  Yeni şifrenizle giriş yapabilirsiniz.
+                  {result?.data?.message || 'Yeni şifrenizle giriş yapabilirsiniz.'}
                 </p>
               </div>
             </div>
@@ -60,21 +67,21 @@ if (!token && !error && !success) {
             </div>
           </div>
         ) : (
-          <form action="/api/auth/reset-password" method="POST" class="space-y-6" onsubmit="return validatePasswords()">
+          <form id="reset-password-form" action={actions.resetPassword} method="POST" class="space-y-6">
             <input type="hidden" name="token" value={token} />
             
-            {error && (
+            {(error || submitError) && (
               <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
                 <div class="flex items-start gap-3">
-                  <Alert className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <span set:html={icons.alertCircle}></span>
                   <div>
                     <p class="text-red-800 dark:text-red-300 font-medium">
                       {error === 'invalid_token' ? 'Geçersiz veya Süresi Dolmuş Bağlantı' : 'Bir Hata Oluştu'}
                     </p>
                     <p class="text-red-700 dark:text-red-400 text-sm mt-1">
-                      {error === 'invalid_token' 
+                      {submitError || (error === 'invalid_token' 
                         ? 'Lütfen yeni bir şifre sıfırlama talebinde bulunun.' 
-                        : 'Lütfen tekrar deneyin.'}
+                        : 'Lütfen tekrar deneyin.')}
                     </p>
                   </div>
                 </div>
@@ -89,9 +96,13 @@ if (!token && !error && !success) {
                 type="password"
                 required
                 minlength="6"
+                aria-invalid={inputErrors.password ? 'true' : 'false'}
                 class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 placeholder="••••••••"
               />
+              {inputErrors.password && (
+                <p class="text-sm text-red-500 mt-1">{inputErrors.password.join(', ')}</p>
+              )}
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">En az 6 karakter</p>
             </div>
             
@@ -102,10 +113,13 @@ if (!token && !error && !success) {
                 name="confirm_password"
                 type="password"
                 required
+                aria-invalid={inputErrors.confirm_password ? 'true' : 'false'}
                 class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 placeholder="••••••••"
               />
-              <p id="password-error" class="text-sm text-red-500 mt-1 hidden">Şifreler eşleşmiyor.</p>
+              <p id="password-error" class:list={['text-sm text-red-500 mt-1', { hidden: !inputErrors.confirm_password }]}>
+                {inputErrors.confirm_password ? inputErrors.confirm_password.join(', ') : 'Şifreler eşleşmiyor.'}
+              </p>
             </div>
             
             <button type="submit" class="btn-primary w-full flex justify-center">
@@ -118,18 +132,24 @@ if (!token && !error && !success) {
   </div>
   
   <script is:inline>
-    function validatePasswords() {
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirm_password').value;
-      const errorElement = document.getElementById('password-error');
-      
-      if (password !== confirmPassword) {
-        errorElement.classList.remove('hidden');
-        return false;
-      }
-      
-      errorElement.classList.add('hidden');
-      return true;
+    const form = document.getElementById('reset-password-form');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        const passwordEl = document.getElementById('password');
+        const confirmEl = document.getElementById('confirm_password');
+        const errorElement = document.getElementById('password-error');
+        if (!passwordEl || !confirmEl || !errorElement) {
+          return;
+        }
+        const password = passwordEl.value;
+        const confirmPassword = confirmEl.value;
+        if (password !== confirmPassword) {
+          e.preventDefault();
+          errorElement.classList.remove('hidden');
+          return;
+        }
+        errorElement.classList.add('hidden');
+      });
     }
   </script>
 </Layout>

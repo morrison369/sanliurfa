@@ -7,9 +7,22 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logger';
+import { resolveContentImage } from '../../../lib/content-images';
+
+function normalizeRecommendationImage(rows: any[]) {
+  return rows.map((row: any) => ({
+    ...row,
+    image_url: resolveContentImage({
+      category: 'places',
+      slug: row.slug,
+      explicit: row.image_url,
+      placeholder: '/images/placeholder-place.jpg',
+    }),
+  }));
+}
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     const type = url.searchParams.get('type') || 'hybrid';
@@ -18,29 +31,32 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     // For trending type (no auth required), return top-rated places
     if (type === 'trending' || !locals.user?.id) {
       const result = await query(
-        `SELECT p.id, p.name, p.slug, p.category, p.average_rating as rating,
-                p.main_image as image_url, p.district,
+        `SELECT p.id, p.name, p.slug, p.category,
+                COALESCE(p.rating, p.avg_rating, 0) as rating,
+                COALESCE(p.thumbnail_url, p.images[1]) as image_url,
                 'Şanlıurfa''da popüler' as reason,
-                p.average_rating as score
+                COALESCE(p.rating, p.avg_rating, 0) as score
          FROM places p
-         WHERE p.is_active = true
-         ORDER BY p.average_rating DESC NULLS LAST, p.total_reviews DESC NULLS LAST
+         WHERE p.status = 'active'
+         ORDER BY COALESCE(p.rating, p.avg_rating, 0) DESC NULLS LAST, COALESCE(p.review_count, 0) DESC NULLS LAST
          LIMIT $1`,
         [limit]
       );
-      return apiResponse({ success: true, data: result.rows, count: result.rows.length }, HttpStatus.OK, requestId);
+      const data = normalizeRecommendationImage(result.rows);
+      return apiResponse({ success: true, data, count: data.length }, HttpStatus.OK, requestId);
     }
 
     const userId = locals.user.id;
 
     // Hybrid: mix of user favorites' categories and top-rated in those categories
     const result = await query(
-      `SELECT DISTINCT p.id, p.name, p.slug, p.category, p.average_rating as rating,
-              p.main_image as image_url, p.district,
+      `SELECT DISTINCT p.id, p.name, p.slug, p.category,
+              COALESCE(p.rating, p.avg_rating, 0) as rating,
+              COALESCE(p.thumbnail_url, p.images[1]) as image_url,
               'Beğenilerinize göre' as reason,
-              p.average_rating as score
+              COALESCE(p.rating, p.avg_rating, 0) as score
        FROM places p
-       WHERE p.is_active = true
+       WHERE p.status = 'active'
          AND p.id NOT IN (
            SELECT place_id FROM favorites WHERE user_id = $1
          )
@@ -51,25 +67,27 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
              WHERE f.user_id = $1
              LIMIT 5
            )
-           OR p.average_rating >= 4.0
+           OR COALESCE(p.rating, p.avg_rating, 0) >= 4.0
          )
-       ORDER BY p.average_rating DESC NULLS LAST
+       ORDER BY COALESCE(p.rating, p.avg_rating, 0) DESC NULLS LAST
        LIMIT $2`,
       [userId, limit]
     );
 
     // If user has no favorites, fall back to top-rated
     const rows = result.rows.length > 0 ? result.rows : (await query(
-      `SELECT p.id, p.name, p.slug, p.category, p.average_rating as rating,
-              p.main_image as image_url, p.district,
+      `SELECT p.id, p.name, p.slug, p.category,
+              COALESCE(p.rating, p.avg_rating, 0) as rating,
+              COALESCE(p.thumbnail_url, p.images[1]) as image_url,
               'Şanlıurfa''da popüler' as reason,
-              p.average_rating as score
-       FROM places p WHERE p.is_active = true
-       ORDER BY p.average_rating DESC NULLS LAST LIMIT $1`,
+              COALESCE(p.rating, p.avg_rating, 0) as score
+       FROM places p WHERE p.status = 'active'
+       ORDER BY COALESCE(p.rating, p.avg_rating, 0) DESC NULLS LAST LIMIT $1`,
       [limit]
     )).rows;
 
-    return apiResponse({ success: true, data: rows, count: rows.length }, HttpStatus.OK, requestId);
+    const data = normalizeRecommendationImage(rows);
+    return apiResponse({ success: true, data, count: data.length }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Recommendations hybrid failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(ErrorCode.INTERNAL_ERROR, 'Öneriler alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);

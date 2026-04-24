@@ -5,7 +5,7 @@ import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api'
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

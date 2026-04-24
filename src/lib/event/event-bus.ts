@@ -119,7 +119,7 @@ export class MessageQueue {
   /**
    * Enqueue message
    */
-  enqueue<T>(queueName: string, message: T, priority: number = 0): string {
+  enqueue<T>(queueName: string, message: T, _priority: number = 0): string {
     const id = `msg-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const queued: QueuedMessage<T> = {
       id,
@@ -155,7 +155,7 @@ export class MessageQueue {
   /**
    * Acknowledge message
    */
-  acknowledge(queueName: string, messageId: string): void {
+  acknowledge(queueName: string, _messageId: string): void {
     const stats = this.stats.get(queueName);
     if (stats) {
       stats.processed++;

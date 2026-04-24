@@ -81,6 +81,21 @@ export async function getUrfaPhotos() {
 }
 ```
 
+### Şanlıurfa.com İçin Hazır Görsel Pipeline
+```bash
+# 1) Unsplash/Pexels'ten slug bazlı indir
+npm run images:download
+
+# 2) İçerik markdown frontmatter alanlarına otomatik bağla
+npm run images:map
+
+# 3) Görselleri DB'ye (site_media_assets) aktar
+npm run images:sync-db
+
+# Tek komutta tam akış
+npm run images:pipeline:db
+```
+
 ### 3. Wikimedia Commons
 **Limit:** Yok
 ```javascript

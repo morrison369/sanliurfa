@@ -231,9 +231,14 @@ export function formatErrorForDisplay(error: AppError, _lang?: 'tr'): {
   message: string;
   action?: string;
 } {
+  const fallbackMessage =
+    errorMessages[error.type]?.userMessage ||
+    errorMessages[error.type]?.tr ||
+    errorMessages[ErrorType.UNKNOWN].tr;
+
   return {
     title: getDebugMessage(error.type),
-    message: error.userMessage || getUserMessage(error.type),
+    message: error.userMessage || fallbackMessage,
     action: error.retryable ? 'Tekrar Dene' : undefined
   };
 }

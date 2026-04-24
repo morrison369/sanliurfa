@@ -1,27 +1,34 @@
 // API: Newsletter subscription (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { queryOne, insert, update as updateDb } from '../../../lib/postgres';
+import { queryOne, insert } from '../../../lib/postgres';
 import { sendEmail } from '../../../lib/email';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
     const { email } = await request.json();
 
     if (!email) {
-      return new Response(
-        JSON.stringify({ error: 'E-posta adresi gereklidir' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'E-posta adresi gereklidir',
+        type: '/problems/newsletter-subscribe-validation',
+        instance: '/api/newsletter/subscribe',
+      });
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return new Response(
-        JSON.stringify({ error: 'Geçerli bir e-posta adresi girin' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Geçerli bir e-posta adresi girin',
+        type: '/problems/newsletter-subscribe-email-invalid',
+        instance: '/api/newsletter/subscribe',
+      });
     }
 
     // Check if already subscribed
@@ -31,10 +38,13 @@ export const POST: APIRoute = async ({ request }) => {
     );
 
     if (existing && existing.status === 'active') {
-      return new Response(
-        JSON.stringify({ error: 'Bu e-posta adresi zaten kayıtlı' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Bu e-posta adresi zaten kayıtlı',
+        type: '/problems/newsletter-subscribe-already-exists',
+        instance: '/api/newsletter/subscribe',
+      });
     }
 
     if (existing) {
@@ -54,8 +64,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     await sendEmail({
       to: email,
-      subject: "Şanlıurfa.com Bültenine Hoşgeldiniz!",
-      html: `<p>Bültenimize abone olduğunuz için teşekkür ederiz. Şanlıurfa'daki etkinlikler, mekanlar ve haberlerden ilk siz haberdar olacaksınız.</p>
+      subject: "Sanliurfa.com Bültenine Hoşgeldiniz!",
+      html: `<p>Bültenimize abone olduğunuz için teşekkür ederiz. Şanlıurfa’daki etkinlikler, mekanlar ve haberlerden ilk siz haberdar olacaksınız.</p>
 <p><a href="${process.env.PUBLIC_APP_URL || 'https://sanliurfa.com'}/newsletter/unsubscribe?email=${encodeURIComponent(email)}">Abonelikten çıkmak için tıklayın</a></p>`,
     });
 
@@ -68,10 +78,13 @@ export const POST: APIRoute = async ({ request }) => {
     );
   } catch (err) {
     logger.error('Newsletter subscription error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Bülten Aboneliği Başarısız',
+      detail: 'Bir hata oluştu',
+      type: '/problems/newsletter-subscribe-failed',
+      instance: '/api/newsletter/subscribe',
+    });
   }
 };
 
@@ -81,10 +94,13 @@ export const DELETE: APIRoute = async ({ request }) => {
     const { email } = await request.json();
 
     if (!email) {
-      return new Response(
-        JSON.stringify({ error: 'E-posta adresi gereklidir' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'E-posta adresi gereklidir',
+        type: '/problems/newsletter-unsubscribe-validation',
+        instance: '/api/newsletter/subscribe',
+      });
     }
 
     await queryOne(
@@ -101,9 +117,12 @@ export const DELETE: APIRoute = async ({ request }) => {
     );
   } catch (err) {
     logger.error('Unsubscribe error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Bülten Abonelikten Çıkış Başarısız',
+      detail: 'Bir hata oluştu',
+      type: '/problems/newsletter-unsubscribe-failed',
+      instance: '/api/newsletter/subscribe',
+    });
   }
 };

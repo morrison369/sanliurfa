@@ -145,9 +145,8 @@ export class GeoFenceManager {
    */
   checkPoint(point: GeoPoint): string[] {
     const fenceIds: string[] = [];
-    const ps = new ProximitySearch();
 
-    for (const [id, fence] of this.fences) {
+    for (const [id, _fence] of this.fences) {
       if (this.isInFence(id, point)) {
         fenceIds.push(id);
       }

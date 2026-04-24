@@ -13,7 +13,7 @@ if (!user || user.role !== 'admin') {
 const seo = {
   title: 'Analitik - Admin',
   description: 'Sistem analitikleri ve istatistikleri',
-  noindex: true
+  noIndex: true
 };
 ---
 
@@ -22,23 +22,23 @@ const seo = {
     <div class="container-custom py-8">
       <div class="mb-12">
         <h1 class="text-4xl font-bold mb-2">Analitikler</h1>
-        <p class="text-gray-600 dark:text-gray-400">Platform-çapında istatistikler ve insights</p>
+        <p class="text-gray-600 dark:text-gray-400">Platform çapında istatistikler ve içgörüler</p>
       </div>
 
       <div class="space-y-12">
         <section>
-          <h2 class="text-2xl font-bold mb-6">Performance Monitoring</h2>
-          <AdminPerformanceDashboard client:load />
+          <h2 class="text-2xl font-bold mb-6">Performans İzleme</h2>
+          <AdminPerformanceDashboard client:visible />
         </section>
         <hr class="dark:border-gray-700" />
         <section>
-          <h2 class="text-2xl font-bold mb-6">Platform Analytics</h2>
-          <AdminAnalyticsDashboard client:load />
+          <h2 class="text-2xl font-bold mb-6">Platform Analitiği</h2>
+          <AdminAnalyticsDashboard client:visible />
         </section>
         <hr class="dark:border-gray-700" />
         <section>
-          <h2 class="text-2xl font-bold mb-6">System Metrics</h2>
-          <AnalyticsPanel client:load />
+          <h2 class="text-2xl font-bold mb-6">Sistem Metrikleri</h2>
+          <AnalyticsPanel client:visible />
         </section>
       </div>
     </div>

@@ -2,9 +2,6 @@
  * Promotion Card Component
  * Display promotion/coupon information in card format
  */
-
-import React from 'react';
-
 interface PromotionCardProps {
   id: string;
   title: string;
@@ -21,7 +18,7 @@ interface PromotionCardProps {
 }
 
 export function PromotionCard({
-  id,
+  id: _id,
   title,
   description,
   discountType,

@@ -211,7 +211,7 @@ export class ContentVersioner {
   /**
    * Diff versions
    */
-  diffVersions(contentId: string, v1: string, v2: string): { added: any[]; removed: any[]; changed: any[] } {
+  diffVersions(_contentId: string, _v1: string, _v2: string): { added: any[]; removed: any[]; changed: any[] } {
     return { added: [], removed: [], changed: [] };
   }
 }

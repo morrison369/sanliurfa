@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
-
-const BASE_URL = process.env.PUBLIC_APP_URL || 'https://sanliurfa.com';
+import { getSiteBranding } from '../lib/site-branding';
 
 export const GET: APIRoute = async () => {
+  const { baseUrl, siteName } = await getSiteBranding();
   const isProduction = process.env.NODE_ENV === 'production';
 
   // Disallow paths
@@ -19,13 +19,15 @@ export const GET: APIRoute = async () => {
   ];
 
   const robots = isProduction
-    ? `# Robots.txt for Şanlıurfa.com
+    ? `# Robots.txt for ${siteName}
 User-agent: *
 Allow: /
 ${disallowedPaths.map(path => `Disallow: ${path}`).join('\n')}
 
 # Sitemap
-Sitemap: ${BASE_URL}/sitemap.xml
+Sitemap: ${baseUrl}/sitemap-index.xml
+Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: ${baseUrl}/sitemap-dynamic.xml
 
 # Crawl-delay
 Crawl-delay: 1
@@ -38,6 +40,18 @@ User-agent: Bingbot
 Allow: /
 
 User-agent: DuckDuckBot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
 Allow: /
 
 # Block bad bots

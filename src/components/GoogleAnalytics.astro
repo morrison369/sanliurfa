@@ -14,14 +14,15 @@ const { measurementId, debug = false } = Astro.props;
 if (!measurementId) return;
 ---
 
-<!-- Google tag (gtag.js) -->
-<script async src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}></script>
+<!-- Google tag (gtag.js) via Partytown -->
+<script type="text/partytown" is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}></script>
 
-<script define:vars={{ measurementId, debug }}>
+<script type="text/partytown" is:inline define:vars={{ measurementId, debug }}>
   window.dataLayer = window.dataLayer || [];
   function gtag() {
     dataLayer.push(arguments);
   }
+  window.gtag = gtag;
   gtag('js', new Date());
   
   // Config with enhanced measurement
@@ -84,8 +85,9 @@ if (!measurementId) return;
 <!-- User properties for segmentation -->
 <script>
   // Set user properties if logged in
+  const gtagFn = window.gtag;
   if (window.__USER__?.id) {
-    gtag('set', 'user_properties', {
+    gtagFn?.('set', 'user_properties', {
       user_id: window.__USER__.id,
       user_type: window.__USER__.type || 'guest',
       subscription_tier: window.__USER__.subscription || 'free',

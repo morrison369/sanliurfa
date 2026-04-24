@@ -1,15 +1,27 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { actions, isInputError } from 'astro:actions';
 
 const seo = {
-  title: 'Kayıt Ol - Şanlıurfa.com',
+  title: 'Kayıt Ol - Sanliurfa.com',
   description: 'Yeni hesap oluşturun',
-  noindex: true,
+  noIndex: true,
 };
 
 // Check if already logged in
 const user = Astro.locals.user;
 if (user) {
+  return Astro.redirect('/');
+}
+
+const registerResult = Astro.getActionResult(actions.register);
+const registerInputErrors = isInputError(registerResult?.error) ? registerResult.error.fields : {};
+const registerSubmitError =
+  !isInputError(registerResult?.error) && registerResult?.error?.message
+    ? registerResult.error.message
+    : null;
+
+if (registerResult?.data?.success) {
   return Astro.redirect('/');
 }
 ---
@@ -24,18 +36,27 @@ if (user) {
       </div>
 
       <div class="bg-white rounded-2xl shadow-lg p-8">
-        <div id="errorBox" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+        {registerSubmitError && (
+          <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {registerSubmitError}
+          </div>
+        )}
 
-        <form id="registerForm" class="space-y-4">
+        <form action={actions.register} method="POST" class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Ad Soyad</label>
             <input 
               type="text" 
               name="name" 
-              required 
+              required
+              transition:persist
+              aria-invalid={registerInputErrors.name ? 'true' : 'false'}
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               placeholder="Adınız Soyadınız"
             />
+            {registerInputErrors.name && (
+              <p class="mt-2 text-sm text-red-600">{registerInputErrors.name.join(', ')}</p>
+            )}
           </div>
 
           <div>
@@ -43,10 +64,15 @@ if (user) {
             <input 
               type="email" 
               name="email" 
-              required 
+              required
+              transition:persist
+              aria-invalid={registerInputErrors.email ? 'true' : 'false'}
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               placeholder="ornek@email.com"
             />
+            {registerInputErrors.email && (
+              <p class="mt-2 text-sm text-red-600">{registerInputErrors.email.join(', ')}</p>
+            )}
           </div>
 
           <div>
@@ -56,9 +82,13 @@ if (user) {
               name="password" 
               required 
               minlength="6"
+              aria-invalid={registerInputErrors.password ? 'true' : 'false'}
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               placeholder="En az 6 karakter"
             />
+            {registerInputErrors.password && (
+              <p class="mt-2 text-sm text-red-600">{registerInputErrors.password.join(', ')}</p>
+            )}
           </div>
 
           <div>
@@ -67,9 +97,13 @@ if (user) {
               type="password" 
               name="passwordConfirm" 
               required 
+              aria-invalid={registerInputErrors.passwordConfirm ? 'true' : 'false'}
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               placeholder="Şifrenizi tekrar girin"
             />
+            {registerInputErrors.passwordConfirm && (
+              <p class="mt-2 text-sm text-red-600">{registerInputErrors.passwordConfirm.join(', ')}</p>
+            )}
           </div>
 
           <div class="flex items-start">
@@ -77,13 +111,17 @@ if (user) {
               type="checkbox" 
               name="terms" 
               required
+              aria-invalid={registerInputErrors.terms ? 'true' : 'false'}
               class="w-4 h-4 mt-1 text-red-600 rounded border-gray-300"
             />
             <label class="ml-2 text-sm text-gray-600">
-              <a href="/kosullar" class="text-red-600 hover:underline">Kullanım koşullarını</a> ve
-              <a href="/gizlilik" class="text-red-600 hover:underline">gizlilik politikasını</a> kabul ediyorum
+              <a href="/kullanim-kosullari" class="text-red-600 hover:underline">Kullanım koşullarını</a> ve
+              <a href="/gizlilik-politikasi" class="text-red-600 hover:underline">gizlilik politikasını</a> kabul ediyorum
             </label>
           </div>
+          {registerInputErrors.terms && (
+            <p class="mt-2 text-sm text-red-600">{registerInputErrors.terms.join(', ')}</p>
+          )}
 
           <button 
             type="submit" 
@@ -106,60 +144,7 @@ if (user) {
       </p>
     </div>
   </div>
-
-  <script>
-    const errorBox = document.getElementById('errorBox');
-    const registerBtn = document.querySelector('#registerForm button[type="submit"]');
-
-    function showError(msg) {
-      errorBox.textContent = msg;
-      errorBox.classList.remove('hidden');
-    }
-
-    function hideError() {
-      errorBox.classList.add('hidden');
-    }
-
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      hideError();
-
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
-
-      if (data.password !== data.passwordConfirm) {
-        showError('Şifreler eşleşmiyor');
-        return;
-      }
-
-      registerBtn.disabled = true;
-      registerBtn.textContent = 'Kayıt yapılıyor...';
-
-      try {
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fullName: data.name,
-            email: data.email,
-            password: data.password
-          })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-          window.location.href = '/';
-        } else {
-          showError(result.error || 'Kayıt başarısız');
-          registerBtn.disabled = false;
-          registerBtn.textContent = 'Kayıt Ol';
-        }
-      } catch (err) {
-        showError('Bağlantı hatası. Lütfen tekrar deneyin.');
-        registerBtn.disabled = false;
-        registerBtn.textContent = 'Kayıt Ol';
-      }
-    });
-  </script>
 </Layout>
+
+
+

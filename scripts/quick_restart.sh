@@ -21,19 +21,19 @@ else
 fi
 
 # Kill port if in use
-echo "3. Clearing port 6000..."
-fuser -k 6000/tcp 2>/dev/null || true
+echo "3. Clearing port 4321..."
+fuser -k 4321/tcp 2>/dev/null || true
 
 # Start
 echo "4. Starting app..."
 pm2 delete sanliurfa 2>/dev/null
-pm2 start dist/server/entry.mjs --name sanliurfa -- --port 6000
+pm2 start dist/server/entry.mjs --name sanliurfa -- --port 4321
 sleep 2
 pm2 save
 
 # Test
 echo "5. Testing..."
-HTTP=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/)
+HTTP=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/)
 if [ "$HTTP" = "200" ]; then
     echo "✅ HTTP 200 - Site is UP!"
 else

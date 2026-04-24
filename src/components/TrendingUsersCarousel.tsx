@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface TrendingUser {
   id: string;
   name: string;
@@ -36,7 +35,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
       const response = await fetch(`/api/users/trending?limit=${limit}&period=${period}`);
 
       if (!response.ok) {
-        throw new Error('Trending kullanıcılar yüklenemedi');
+        throw new Error('Trend kullanıcılar yüklenemedi.');
       }
 
       const data = await response.json();
@@ -69,7 +68,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
   if (users.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-        <p>Trending kullanıcı yok</p>
+        <p>Trend kullanıcı yok</p>
       </div>
     );
   }
@@ -88,7 +87,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
       )}
 
       <div className="relative">
-        {/* Carousel */}
+        {/* Kaydırmalı liste */}
         <div
           id="trending-carousel"
           className="flex gap-4 overflow-x-auto scroll-smooth pb-2"
@@ -97,7 +96,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
           {users.map((user) => (
             <a
               key={user.id}
-              href={`/kullanıcı/${user.id}`}
+              href={`/kullanici/${user.id}`}
               className="flex-shrink-0 w-48 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md dark:hover:shadow-lg transition-shadow"
             >
               <div className="flex flex-col items-center text-center">
@@ -114,7 +113,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
                   </div>
                 )}
 
-                {/* Name */}
+                {/* Ad */}
                 <h3 className="font-bold text-gray-900 dark:text-white truncate w-full">
                   {user.name}
                 </h3>
@@ -122,7 +121,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
                   @{user.username}
                 </p>
 
-                {/* Stats */}
+                {/* İstatistikler */}
                 <div className="grid grid-cols-2 gap-2 w-full mt-3 text-xs">
                   <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
                     <p className="text-gray-600 dark:text-gray-400">Aktivite</p>
@@ -138,14 +137,14 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
                   </div>
                 </div>
 
-                {/* Expertise Badge */}
+                {/* Uzmanlık rozeti */}
                 {user.expertise > 0 && (
                   <div className="mt-3 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded text-xs font-medium">
                     {user.expertise} kategori uzmanı
                   </div>
                 )}
 
-                {/* Follow Button */}
+                {/* Takip düğmesi */}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -160,7 +159,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
           ))}
         </div>
 
-        {/* Navigation Buttons */}
+        {/* Gezinme düğmeleri */}
         {users.length > 4 && (
           <>
             <button
@@ -179,7 +178,7 @@ export default function TrendingUsersCarousel({ limit = 8, period = '30' }: Tren
         )}
       </div>
 
-      {/* Period Info */}
+      {/* Dönem bilgisi */}
       <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
         Son {period === '7' ? '7 gün' : period === '30' ? '30 gün' : '90 gün'} içinde en aktif kullanıcılar
       </p>

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Rewards Library
  * Rewards catalog, redemption, and inventory management
@@ -90,7 +89,7 @@ export async function processRewardRedemption(userId: string, rewardId: string):
       return { success: false, error: 'Insufficient points' };
     }
 
-    const redemptionCode = `RWD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    const redemptionCode = `RWD-${Date.now()}-${Math.random().toString(36).slice(2, 11).toUpperCase()}`;
 
     await insert('reward_redemptions', {
       user_id: userId,
@@ -156,7 +155,7 @@ export async function getRedemptionHistory(userId: string, limit: number = 50): 
 export async function getPromotionalOffers(): Promise<any[]> {
   try {
     const cacheKey = 'promo:offers';
-    let offers = await getCache(cacheKey);
+    let offers = await getCache<any[]>(cacheKey);
 
     if (!offers) {
       offers = await queryMany(`

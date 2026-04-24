@@ -1,32 +1,32 @@
 // API: Review reject (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { query } from '../../../../lib/postgres';
 import { logger } from '../../../../lib/logging';
+import { problemJson } from '../../../../lib/api';
+import { moderateReview } from '../../../../lib/review/admin-review-moderation';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
   try {
     const { id } = params;
     
     if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/review-reject-unauthorized',
+        instance: '/api/reviews/{id}/reject',
+      });
     }
 
     const formData = await request.formData();
     const rejectionReason = formData.get('rejection_reason')?.toString() || 'Uygun görülmedi';
 
-    await query(
-      `UPDATE reviews SET 
-        is_approved = false, 
-        is_moderated = true, 
-        moderated_at = $1, 
-        moderated_by = $2, 
-        rejection_reason = $3 
-       WHERE id = $4`,
-      [new Date().toISOString(), locals.user?.id, rejectionReason, id]
-    );
+    await moderateReview({
+      id: String(id || ''),
+      decision: 'reject',
+      moderatorId: locals.user?.id || null,
+      rejectionReason,
+    });
 
     return new Response(
       JSON.stringify({ success: true }),
@@ -34,9 +34,12 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     );
   } catch (err) {
     logger.error('Review reject error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Yorum Reddedilemedi',
+      detail: err instanceof Error ? err.message : 'server_error',
+      type: '/problems/review-reject-failed',
+      instance: '/api/reviews/{id}/reject',
+    });
   }
 };

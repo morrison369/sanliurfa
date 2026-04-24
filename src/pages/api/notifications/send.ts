@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { query, queryMany, insert } from '../../../lib/postgres';
+import { queryMany, insert } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logger';
 import { sendPushToUser } from '../../../lib/push/push';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     if (!locals.isAdmin) {
@@ -27,12 +27,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Determine recipients
     let recipientIds: string[] = [];
     if (target === 'all') {
-      const users = await queryMany('SELECT id FROM users WHERE is_active = true LIMIT 10000', []);
+      const users = await queryMany(`SELECT id FROM users WHERE status = 'active' LIMIT 10000`, []);
       recipientIds = users.map((u: any) => u.id);
     } else if (target === 'specific' && Array.isArray(userIds)) {
       recipientIds = userIds;
     } else if (target === 'segment' && segment) {
-      const users = await queryMany('SELECT id FROM users WHERE subscription_tier = $1 AND is_active = true', [segment]);
+      const users = await queryMany(`SELECT id FROM users WHERE subscription_tier = $1 AND status = 'active'`, [segment]);
       recipientIds = users.map((u: any) => u.id);
     } else {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz hedef', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);

@@ -32,6 +32,22 @@ export interface WebhookDelivery {
 
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 5000, 15000]; // ms
+let webhookColumnsCache: Set<string> | null = null;
+
+async function getWebhookColumns(): Promise<Set<string>> {
+  if (webhookColumnsCache) return webhookColumnsCache;
+  try {
+    const res = await query(
+      `SELECT column_name
+       FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'webhooks'`,
+    );
+    webhookColumnsCache = new Set(res.rows.map((r: any) => String(r.column_name)));
+  } catch {
+    webhookColumnsCache = new Set();
+  }
+  return webhookColumnsCache;
+}
 
 /**
  * Create webhook
@@ -117,9 +133,23 @@ export async function triggerWebhook(
   payload: any,
   userId?: string
 ): Promise<void> {
-  // Find active webhooks for this event
-  let sql = `SELECT * FROM webhooks WHERE status = 'active' AND events @> $1::jsonb`;
-  const params: any[] = [JSON.stringify([event])];
+  const cols = await getWebhookColumns();
+  const activePredicate = cols.has('status')
+    ? "status = 'active'"
+    : cols.has('is_active')
+      ? 'is_active = true'
+      : cols.has('active')
+        ? 'active = true'
+        : '1=1';
+  const eventPredicate = cols.has('events')
+    ? '$1 = ANY(events)'
+    : cols.has('event')
+      ? 'event = $1'
+      : '1=1';
+
+  // Find active webhooks for this event (schema-compat mode)
+  let sql = `SELECT * FROM webhooks WHERE ${activePredicate} AND ${eventPredicate}`;
+  const params: any[] = [event];
 
   if (userId) {
     sql += ' AND user_id = $2';

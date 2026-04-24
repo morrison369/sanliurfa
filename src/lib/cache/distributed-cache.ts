@@ -45,7 +45,7 @@ export class DistributedLock {
       this.locks.delete(key); // Expired lock, remove it
     }
 
-    const token = 'token-' + Math.random().toString(36).substr(2, 9);
+    const token = 'token-' + Math.random().toString(36).slice(2, 11);
     const lock: Lock = {
       key,
       token,
@@ -181,7 +181,7 @@ export class CacheWarmer {
    * Schedule warm
    */
   scheduleWarm(cacheKey: string, intervalMs: number): string {
-    const scheduleId = 'schedule-' + Math.random().toString(36).substr(2, 9);
+    const scheduleId = 'schedule-' + Math.random().toString(36).slice(2, 11);
 
     const interval = setInterval(() => {
       this.warmKey(cacheKey);

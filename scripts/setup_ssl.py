@@ -5,7 +5,7 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -74,8 +74,8 @@ https_config = f"""# HTTPS Configuration for 168.119.79.238
     # Proxy to Node.js
     ProxyPreserveHost On
     ProxyRequests Off
-    ProxyPass / http://127.0.0.1:6000/
-    ProxyPassReverse / http://127.0.0.1:6000/
+    ProxyPass / http://127.0.0.1:4321/
+    ProxyPassReverse / http://127.0.0.1:4321/
     
     <Directory /home/sanliur/public_html>
         Options -Indexes +FollowSymLinks

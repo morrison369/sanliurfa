@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Review Management System
  * Owner responses, helpful votes, sentiment tracking
@@ -60,7 +59,7 @@ export async function addReviewResponse(
         review.user_id,
         `${ownerName} yorumunuza yanıt verdi`,
         responseText.substring(0, 100) + '...',
-        'comment',
+        'info',
         {
           actionUrl: `/yer/${placeId}?reviewId=${reviewId}#responses`,
           actionLabel: 'Yanıtı Gör'

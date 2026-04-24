@@ -1,4 +1,3 @@
-import { logger } from '../logging';
 /**
  * Phase 8: Frontend Optimization
  * Image optimization, bundle size analysis, PWA enhancement hints
@@ -31,7 +30,6 @@ export function generateResponsiveImageSrcset(
   config: ImageOptimizationConfig
 ): OptimizedImage {
   const basePath = imagePath.replace(/\.[^.]+$/, ''); // Remove extension
-  const filename = imagePath.split('/').pop()?.replace(/\.[^.]+$/, '');
 
   // Generate multiple widths for responsive loading
   const widths = [320, 640, 1024, 1440];
@@ -235,9 +233,9 @@ export function getServiceWorkerScript(): string {
   return `
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then(registration => {
-        logger.info('ServiceWorker registration successful');
+        console.info('ServiceWorker registration successful');
       }).catch(err => {
-        logger.info('ServiceWorker registration failed: ', err);
+        console.info('ServiceWorker registration failed: ', err);
       });
     }
   `;
@@ -284,3 +282,4 @@ export function getVitalStatus(
 
   return threshold as 'good' | 'needsImprovement' | 'poor';
 }
+

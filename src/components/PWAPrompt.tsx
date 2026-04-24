@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import {  useState, useEffect  } from 'react';
 import { setupInstallPrompt, isInstalledApp, requestNotificationPermission, subscribeToPush } from '../lib/pwa';
 
 export default function PWAPrompt() {
@@ -68,7 +68,7 @@ export default function PWAPrompt() {
       <div className="flex items-start gap-3">
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900 mb-1">
-            Şanlıurfa'yı Kullan
+            Şanlıurfa’yı Kullan
           </h3>
           <p className="text-sm text-gray-600 mb-3">
             Ana ekrana ekleyerek daha hızlı erişim sağlayın ve çevrimdışı kullanın.

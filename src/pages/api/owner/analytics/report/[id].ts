@@ -11,7 +11,7 @@ import { recordRequest } from '../../../../../lib/metrics';
 import { queryOne } from '../../../../../lib/postgres';
 
 export const GET: APIRoute = async ({ request, params, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

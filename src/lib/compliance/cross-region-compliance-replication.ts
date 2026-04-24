@@ -2,8 +2,6 @@
  * Phase 181: Cross-Region Compliance Replication
  */
 
-import { logger } from '../logger';
-
 export interface ComplianceSnapshot {
   snapshotId: string;
   region: string;
@@ -56,5 +54,6 @@ export {
   RegionalComplianceRouter,
   ReplicationFailoverPlanner
 };
+
 
 

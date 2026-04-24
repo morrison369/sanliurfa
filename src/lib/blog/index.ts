@@ -11,20 +11,17 @@ export {
   deletePost,
   getFeaturedPosts,
   getRelatedPosts,
-  searchPosts,
-  
+
   // Category & Tag
   getCategories,
   getTags,
   createCategory,
   createTag,
-  
+
   // Other
   getPostRevisions,
   getBlogStats,
-  calculateReadingTime,
-  generateRSS,
-  
+
   // Types
   type BlogPost,
   type BlogCategory,
@@ -32,5 +29,3 @@ export {
   type BlogRevision,
 } from './db';
 
-// Constants
-export { BLOG_CATEGORIES } from './db';

@@ -14,10 +14,10 @@ import time
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 REMOTE_PATH = "/home/sanliur/public_html"
 APP_NAME = "sanliurfa"
-NODE_PORT = 3000
+NODE_PORT = 4321
 
 class CWPDeployer:
     def __init__(self):
@@ -279,12 +279,12 @@ Dosya: /etc/nginx/conf.d/vhosts/senin-domainin.conf
 
 Aşağıdaki satırları ekle:
 
-ProxyPass / http://127.0.0.1:3000/
-ProxyPassReverse / http://127.0.0.1:3000/
+ProxyPass / http://127.0.0.1:4321/
+ProxyPassReverse / http://127.0.0.1:4321/
 
 RewriteEngine On
 RewriteCond %{HTTP:Upgrade} websocket [NC]
-RewriteRule ^/?(.*) "ws://127.0.0.1:3000/$1" [P,L]
+RewriteRule ^/?(.*) "ws://127.0.0.1:4321/$1" [P,L]
 """)
     
     def verify_deployment(self):

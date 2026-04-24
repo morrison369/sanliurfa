@@ -77,3 +77,30 @@ For every new phase range:
 - **İZİN VERİLEN:** Ücretsiz alternatifler (OpenStreetMap, Ücretsiz SMTP, Local image processing)
 
 **Neden:** Proje sahibi açıkça ücretsiz, açık kaynak çözümler istemiştir.
+
+## 🧭 DB-First İçerik Yönetimi (Zorunlu)
+
+**Kalıcı Kural:**
+- Sitedeki tüm yönetilebilir içerikler admin panelinden ve database üzerinden yönetilir.
+- Ana sayfa hero metinleri ve hero görseli dahil hiçbir kritik landing içeriği dosya içinde sabit kalmaz.
+
+**Uygulama Standardı:**
+- Yeni yönetilebilir alan eklendiğinde önce DB şeması (`site_settings`, `site_content_blocks`, `site_media_assets`) hazırlanır.
+- Ardından admin API endpoint'i eklenir.
+- Son olarak admin panel ekranı eklenir.
+- Hardcoded değerler yalnızca fallback olarak kalabilir.
+
+**Referans Doküman:**
+- `docs/DB_FIRST_SITE_MANAGEMENT.md`
+
+## 🎯 MVP Bitirme Modu (Varsayılan)
+
+**Kalıcı Kural:**
+- Bu proje varsayılan olarak MVP bitirme modunda ilerler.
+- Öncelik altyapı, test, CI veya deploy döngüleri değil; kullanıcıya görünen site, admin paneli ve temel kullanıcı akışlarıdır.
+- Zorunlu runtime hatası dışında port/Redis/dev-server operasyonlarına geri dönülmez.
+- Test yazımı ve büyük gate çalıştırmaları kullanıcı açıkça istemedikçe ertelenir.
+- Her çalışma turu ana sayfa, mekan sistemi, admin yönetimi, sosyal MVP veya SEO/AEO/GEO yüzeyinden somut bir eksik kapatmalıdır.
+
+**Referans Doküman:**
+- `docs/MVP_BITIRME_MODU.md`

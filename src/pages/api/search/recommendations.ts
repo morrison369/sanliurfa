@@ -1,10 +1,9 @@
-// @ts-nocheck
 /**
  * API: Search Recommendations
  * GET - Personalized place recommendations
  */
 import type { APIRoute } from 'astro';
-import { getPersonalizedRecommendations } from '../../../lib/search/search-intelligence';
+import { getPersonalizedRecommendations } from '../../../lib/recommendation/recommendations';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';

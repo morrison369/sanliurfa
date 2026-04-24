@@ -1,22 +1,29 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 // Favori ID ile silme
 export const DELETE: APIRoute = async ({ params, locals }) => {
   const user = locals.user;
   if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    return problemJson({
       status: 401,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Unauthorized',
+      detail: 'Oturum açmanız gerekiyor',
+      type: '/problems/favorite-delete-unauthorized',
+      instance: '/api/favorites/[id]',
     });
   }
 
   const { id } = params;
   if (!id) {
-    return new Response(JSON.stringify({ error: 'Favorite ID required' }), {
+    return problemJson({
       status: 400,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Geçersiz İstek',
+      detail: 'Favori kimliği gerekli',
+      type: '/problems/favorite-delete-id-required',
+      instance: '/api/favorites/[id]',
     });
   }
 
@@ -27,9 +34,12 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     );
 
     if (result.rowCount === 0) {
-      return new Response(JSON.stringify({ error: 'Favorite not found' }), {
+      return problemJson({
         status: 404,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Bulunamadı',
+        detail: 'Favori bulunamadı',
+        type: '/problems/favorite-delete-not-found',
+        instance: `/api/favorites/${id}`,
       });
     }
 
@@ -39,9 +49,12 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     });
   } catch (error: any) {
     logger.error('Delete favorite error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Favori Silinemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/favorite-delete-failed',
+      instance: `/api/favorites/${id}`,
     });
   }
 };

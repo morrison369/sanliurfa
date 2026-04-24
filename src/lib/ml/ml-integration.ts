@@ -3,8 +3,6 @@
  * Recommendations engine, personalization, churn prediction, user segmentation
  */
 
-import { logger } from '../logger';
-
 // ==================== RECOMMENDATIONS ENGINE ====================
 
 export interface UserProfile {
@@ -28,12 +26,11 @@ export interface RecommendationItem {
 export class RecommendationEngine {
   private userProfiles = new Map<string, UserProfile>();
   private itemClusters = new Map<string, Set<string>>(); // Items grouped by similarity
-  private userSimilarity = new Map<string, Map<string, number>>(); // User-to-user similarity
 
   /**
    * Update user profile based on interaction
    */
-  recordInteraction(userId: string, itemId: string, interactionType: 'view' | 'like' | 'purchase'): void {
+  recordInteraction(userId: string, _itemId: string, interactionType: 'view' | 'like' | 'purchase'): void {
     let profile = this.userProfiles.get(userId);
 
     if (!profile) {
@@ -121,7 +118,7 @@ export class RecommendationEngine {
   /**
    * Get popular items (fallback for new users)
    */
-  private getPopularItems(limit: number): RecommendationItem[] {
+  private getPopularItems(_limit: number): RecommendationItem[] {
     // In production, fetch from database
     return [];
   }

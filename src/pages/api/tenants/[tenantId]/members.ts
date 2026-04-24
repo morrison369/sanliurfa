@@ -5,13 +5,13 @@
 
 import type { APIRoute } from 'astro';
 import { queryOne, queryMany } from '../../../../lib/postgres';
-import { getTenantMembers, addTenantMember, removeTenantMember, logTenantAudit } from '../../../../lib/multi/multi-tenant';
+import { addTenantMember, removeTenantMember, logTenantAudit } from '../../../../lib/multi/multi-tenant';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -85,7 +85,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -175,7 +175,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, params, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

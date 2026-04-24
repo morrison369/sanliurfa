@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Admin Moderation Actions API
  * POST: Take moderation action on a user or content
@@ -10,9 +9,19 @@ import { takeModerationAction, getUserBanHistory } from '../../../../lib/moderat
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
-import { validateWithSchema } from '../../../../lib/validation';
+import { validateWithSchema, type ValidationSchema } from '../../../../lib/validation';
 
-const actionSchema = {
+type ModerationActionType = 'warning' | 'content_removed' | 'suspend' | 'ban' | 'appeal_granted';
+
+interface ModerationActionBody {
+  report_id: string;
+  target_user_id: string;
+  action_type: ModerationActionType;
+  reason: string;
+  duration_days?: number;
+}
+
+const actionSchema: ValidationSchema = {
   report_id: {
     type: 'string' as const,
     required: true
@@ -41,7 +50,7 @@ const actionSchema = {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -59,7 +68,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json().catch(() => ({}))) as Partial<ModerationActionBody>;
     const validation = validateWithSchema(body, actionSchema);
 
     if (!validation.valid) {
@@ -73,8 +82,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    const data = validation.data as ModerationActionBody;
+
     // Ban action requires duration
-    if (validation.data.action_type === 'ban' && !validation.data.duration_days) {
+    if (data.action_type === 'ban' && !data.duration_days) {
       recordRequest('POST', '/api/admin/moderation/actions', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
@@ -86,20 +97,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const action = await takeModerationAction(
-      validation.data.report_id,
-      validation.data.target_user_id,
-      validation.data.action_type,
-      validation.data.reason,
+      data.report_id,
+      data.target_user_id,
+      data.action_type,
+      data.reason,
       user.id,
-      validation.data.duration_days
+      data.duration_days
     );
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/moderation/actions', HttpStatus.CREATED, duration);
-    logger.logMutation('create', 'moderation_actions', action.id, user.id, {
-      action_type: validation.data.action_type,
-      target_user: validation.data.target_user_id
-    });
+    logger.logMutation('create', 'moderation_actions', action.id, user.id);
 
     return apiResponse(
       {
@@ -124,7 +132,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

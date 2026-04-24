@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Performance Summary for Admin Dashboard
  * GET: Get comprehensive performance statistics and insights
@@ -8,6 +7,31 @@ import type { APIRoute } from 'astro';
 import { queryMany, queryOne } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
+
+interface PerformanceStatsRow {
+  avg_ttfb: number | string | null;
+  avg_lcp: number | string | null;
+}
+
+interface PagePerformanceRow {
+  url: string;
+  lcp_violations: number | string;
+}
+
+interface ConnectionStatsRow {
+  connection_type: string | null;
+}
+
+interface DbStatsRow {
+  active_connections: number | string | null;
+  total_disk_reads: number | string | null;
+  total_cache_hits: number | string | null;
+}
+
+function toNumber(value: number | string | null | undefined): number {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
 export const GET: APIRoute = async ({ locals }) => {
   try {
@@ -21,7 +45,7 @@ export const GET: APIRoute = async ({ locals }) => {
     }
 
     // Get client performance metrics stats
-    const performanceStats = await queryOne(`
+    const performanceStats = await queryOne<PerformanceStatsRow>(`
       SELECT
         COUNT(*) as total_metrics,
         AVG(ttfb) as avg_ttfb,
@@ -39,7 +63,7 @@ export const GET: APIRoute = async ({ locals }) => {
     `).catch(() => null);
 
     // Get page-level performance
-    const pagePerformance = await queryMany(`
+    const pagePerformance = await queryMany<PagePerformanceRow>(`
       SELECT
         url,
         COUNT(*) as samples,
@@ -53,10 +77,10 @@ export const GET: APIRoute = async ({ locals }) => {
       GROUP BY url
       ORDER BY avg_lcp DESC
       LIMIT 10
-    `).catch(() => ({ rows: [] }));
+    `).catch(() => []);
 
     // Get connection type distribution
-    const connectionStats = await queryMany(`
+    const connectionStats = await queryMany<ConnectionStatsRow>(`
       SELECT
         connection_type,
         COUNT(*) as count,
@@ -65,10 +89,10 @@ export const GET: APIRoute = async ({ locals }) => {
       FROM client_performance_metrics
       WHERE created_at > NOW() - INTERVAL '24 hours'
       GROUP BY connection_type
-    `).catch(() => ({ rows: [] }));
+    `).catch(() => []);
 
     // Get database stats
-    const dbStats = await queryOne(`
+    const dbStats = await queryOne<DbStatsRow>(`
       SELECT
         (SELECT count(*) FROM pg_stat_activity) as active_connections,
         (SELECT sum(heap_blks_read) FROM pg_statio_user_tables) as total_disk_reads,
@@ -79,27 +103,30 @@ export const GET: APIRoute = async ({ locals }) => {
     // Calculate cache hit ratio
     let cacheHitRatio = 0;
     if (dbStats?.total_cache_hits && dbStats?.total_disk_reads) {
-      const total = (dbStats.total_cache_hits || 0) + (dbStats.total_disk_reads || 0);
-      cacheHitRatio = total > 0 ? (dbStats.total_cache_hits / total) * 100 : 0;
+      const cacheHits = toNumber(dbStats.total_cache_hits);
+      const diskReads = toNumber(dbStats.total_disk_reads);
+      const total = cacheHits + diskReads;
+      cacheHitRatio = total > 0 ? (cacheHits / total) * 100 : 0;
     }
 
     // Generate recommendations
     const recommendations: string[] = [];
 
-    if (performanceStats?.avg_lcp && performanceStats.avg_lcp > 2500) {
-      recommendations.push('LCP needs improvement - consider image optimization and lazy loading');
+    if (performanceStats?.avg_lcp && toNumber(performanceStats.avg_lcp) > 2500) {
+      recommendations.push('LCP iyileştirilmeli: görsel optimizasyonu ve lazy loading kontrol edilmeli');
     }
 
-    if (performanceStats?.avg_ttfb && performanceStats.avg_ttfb > 600) {
-      recommendations.push('Server response time is high - check database queries and caching');
+    if (performanceStats?.avg_ttfb && toNumber(performanceStats.avg_ttfb) > 600) {
+      recommendations.push('Sunucu yanıt süresi yüksek: veritabanı sorguları ve cache katmanı kontrol edilmeli');
     }
 
     if (cacheHitRatio < 80) {
-      recommendations.push('Cache hit ratio below target - review Redis TTLs and invalidation logic');
+      recommendations.push('Cache hit oranı hedefin altında: Redis TTL ve invalidation kuralları gözden geçirilmeli');
     }
 
-    if (pagePerformance.some((p: any) => p.lcp_violations > 0)) {
-      recommendations.push(`${pagePerformance.filter((p: any) => p.lcp_violations > 0).length} pages have LCP violations`);
+    const lcpViolationPages = pagePerformance.filter((p) => toNumber(p.lcp_violations) > 0);
+    if (lcpViolationPages.length > 0) {
+      recommendations.push(`${lcpViolationPages.length} sayfada LCP ihlali var`);
     }
 
     return apiResponse(
@@ -125,7 +152,7 @@ export const GET: APIRoute = async ({ locals }) => {
     logger.error('Performance summary failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get performance summary',
+      'Performans özeti alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR
     );
   }

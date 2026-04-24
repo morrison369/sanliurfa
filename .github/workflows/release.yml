@@ -5,25 +5,85 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sanliurfa_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Workflow standards verify
+        run: npm run workflow:standards:verify
+
       - name: Run tests
         run: npm run test:unit
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          REDIS_URL: redis://localhost:6379
 
       - name: Build
         run: npm run build
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: API release gate (hard block)
+        run: npm run api:release:gate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload workflow standards report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workflow-standards-report-${{ github.job }}
+          path: |
+            docs/workflow-standards-report.json
+            docs/workflow-standards-report.md
+
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
 
       - name: Create Release
         uses: actions/create-release@v1

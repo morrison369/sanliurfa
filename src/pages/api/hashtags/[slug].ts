@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Hashtag Content API
  * Get hashtag metadata and tagged places/reviews
@@ -12,7 +11,7 @@ import { getCache, setCache } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -26,7 +25,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', `/api/hashtags/${slug}`, HttpStatus.OK, duration);
-      return apiResponse(JSON.parse(cached), HttpStatus.OK, requestId);
+      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
     }
 
     // Fetch hashtag metadata
@@ -49,7 +48,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
 
     // Fetch tagged places
     const places = await queryMany(
-      `SELECT DISTINCT p.id, p.name, p.slug, p.category, p.rating_avg, p.address,
+      `SELECT DISTINCT p.id, p.name, p.slug, p.category, COALESCE(p.rating, p.avg_rating, 0) as rating_avg, p.address,
               hu.used_at as tagged_at
        FROM places p
        INNER JOIN hashtag_usage hu ON p.id = hu.content_id

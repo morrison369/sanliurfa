@@ -6,8 +6,15 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
@@ -15,6 +22,7 @@ jobs:
   # Test Job
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -36,16 +44,35 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Env gate (no dynamic import.meta.env)
+        run: npm run env:gate
+
+      - name: Runtime single-process gate
+        run: npm run runtime:single-process:gate
+
+      - name: Workflow standards verify
+        run: npm run workflow:standards:verify
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build
           path: dist/
 
+      - name: Upload workflow standards report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workflow-standards-report-${{ github.job }}
+          path: |
+            docs/workflow-standards-report.json
+            docs/workflow-standards-report.md
+
   # E2E Tests
   e2e:
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -62,7 +89,11 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npm run test:e2e:clean
+
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -76,6 +107,7 @@ jobs:
   docker:
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -118,6 +150,7 @@ jobs:
     needs: [test, docker]
     if: github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: staging
     steps:
       - name: Deploy to Staging
@@ -130,6 +163,7 @@ jobs:
     needs: [test, docker, e2e]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: production
     steps:
       - name: Deploy to Production

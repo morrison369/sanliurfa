@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Phase 157: Secrets Management & Rotation
  * Secure secrets storage, rotation, and injection
@@ -250,6 +249,4 @@ export const secretRotationManager = new SecretRotationManager();
 export const secretInjector = new SecretInjector();
 export const secretAuditor = new SecretAuditor();
 
-export type { Secret, SecretRotationConfig, SecretAccessLog, SecretInjectionConfig };
-
-
+export { Secret, SecretRotationConfig, SecretAccessLog, SecretInjectionConfig };

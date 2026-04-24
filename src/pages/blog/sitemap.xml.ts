@@ -5,10 +5,12 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, queryOne } from '../../lib/postgres';
+import { queryMany } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
 
 export const GET: APIRoute = async () => {
   try {
+    const { baseUrl } = await getSiteBranding();
     // Tüm yayınlanmış yazıları getir
     const posts = await queryMany(`
       SELECT id, slug, published_at, updated_at, view_count
@@ -25,7 +27,7 @@ export const GET: APIRoute = async () => {
     `);
 
     // Sitemap XML oluştur
-    const sitemap = generateSitemap(posts, categories);
+    const sitemap = generateSitemap(posts, categories, baseUrl);
 
     return new Response(sitemap, {
       status: 200,
@@ -49,9 +51,9 @@ export const GET: APIRoute = async () => {
  */
 function generateSitemap(
   posts: any[],
-  categories: any[]
+  categories: any[],
+  baseUrl: string,
 ): string {
-  const baseUrl = 'https://sanliurfa.com';
   const urls: string[] = [];
 
   // Blog ana sayfası

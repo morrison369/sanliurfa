@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Trash2, Eye, TrendingUp, Plus } from 'lucide-react';
@@ -26,7 +26,6 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
   const [listings, setListings] = useState<FeaturedListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     place_id: '',
     title: '',
@@ -56,7 +55,7 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const response = await fetch('/api/featured-listings', {
@@ -86,7 +85,7 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Yeminli listeyi silmek istediğinizden emin misiniz?')) return;
+    if (!confirm('Öne çıkan listeyi silmek istediğinizden emin misiniz?')) return;
 
     try {
       const response = await fetch(`/api/featured-listings/${id}`, {
@@ -113,7 +112,7 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Yeminli Listeler</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Öne Çıkan Listeler</h2>
         <button
           onClick={() => setShowForm(!showForm)}
           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -125,7 +124,7 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
 
       {showForm && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Yeni Yeminli Liste Oluştur</h3>
+          <h3 className="text-lg font-semibold mb-4">Yeni Öne Çıkan Liste Oluştur</h3>
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <input
@@ -202,7 +201,7 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
       <div className="grid gap-4">
         {listings.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            Henüz yeminli liste yok. Yeni bir tane oluşturmak için yukarıdaki butona tıklayın.
+            Henüz öne çıkan liste yok. Yeni bir tane oluşturmak için yukarıdaki butona tıklayın.
           </div>
         ) : (
           listings.map((listing) => (

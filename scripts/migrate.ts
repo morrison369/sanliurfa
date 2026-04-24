@@ -10,7 +10,7 @@
 
 import { readdir } from 'fs/promises';
 import { join, resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { pool } from '../src/lib/postgres';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -59,24 +59,30 @@ async function executeMigration(filename: string): Promise<void> {
   console.log(`⏳ Running: ${filename}`);
 
   // Dynamic import of the migration module
-  const mod = await import(filepath);
+  const mod = await import(pathToFileURL(filepath).href);
 
-  // Find the exported migration object (first export matching Migration shape)
-  const migration = Object.values(mod).find(
+  // Preferred shape: migration object with up()/down()
+  const migrationObj = Object.values(mod).find(
     (v: any) => v && typeof v === 'object' && typeof v.up === 'function'
-  ) as { version: string; description: string; up: (p: any) => Promise<void> } | undefined;
+  ) as { version?: string; description?: string; up: (p: any) => Promise<void> } | undefined;
 
-  if (!migration) {
+  // Legacy shape: file exports a direct migration function
+  const upFn = Object.values(mod).find((v: any) => typeof v === 'function') as
+    | ((p: any) => Promise<void>)
+    | undefined;
+
+  const runUp = migrationObj?.up || upFn;
+  if (!runUp) {
     throw new Error(`No valid migration export found in ${filename}`);
   }
 
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    await migration.up(client);
+    await runUp(client);
     await client.query(
       'INSERT INTO schema_migrations (version, filename, description) VALUES ($1, $2, $3)',
-      [version, filename, migration.description || '']
+      [version, filename, migrationObj?.description || '']
     );
     await client.query('COMMIT');
     console.log(`✅ Done: ${filename}`);
@@ -156,16 +162,24 @@ async function rollback(): Promise<void> {
   // Try to run down() if available
   try {
     const filepath = join(MIGRATIONS_DIR, filename);
-    const mod = await import(filepath);
+    const mod = await import(pathToFileURL(filepath).href);
     const migration = Object.values(mod).find(
       (v: any) => v && typeof v === 'object' && typeof v.down === 'function'
     ) as { down: (p: any) => Promise<void> } | undefined;
 
-    if (migration) {
+    const rollbackFn = (Object.entries(mod).find(([key, value]) =>
+      typeof value === 'function' && /^rollback_|^down$/i.test(key)
+    )?.[1] || undefined) as ((p: any) => Promise<void>) | undefined;
+
+    if (migration || rollbackFn) {
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
-        await migration.down(client);
+        if (migration) {
+          await migration.down(client);
+        } else if (rollbackFn) {
+          await rollbackFn(client);
+        }
         await client.query('DELETE FROM schema_migrations WHERE version = $1', [version]);
         await client.query('COMMIT');
         console.log(`✅ Rolled back: ${filename}`);

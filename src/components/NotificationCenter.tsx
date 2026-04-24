@@ -2,8 +2,8 @@
  * Notification Center Component
  * Displays user notifications with read/archive actions
  */
-import React, { useState, useEffect } from 'react';
-import { Bell, Archive, Trash2, AlertCircle, Loader } from 'lucide-react';
+import {  useState, useEffect  } from 'react';
+import { Bell, Archive, AlertCircle, Loader } from 'lucide-react';
 
 interface Notification {
   id: string;

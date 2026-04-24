@@ -5,7 +5,6 @@
 
 import { setCache } from './index';
 import { query } from '../postgres';
-import { warmCache } from './strategies';
 import { logger } from '../logging';
 
 /**
@@ -16,10 +15,10 @@ export async function warmHomepageCache(): Promise<void> {
 
   // Featured places
   const featuredPlaces = await query(
-    `SELECT id, slug, name, category, rating, image 
-     FROM places 
-     WHERE is_featured = true 
-     ORDER BY rating DESC 
+    `SELECT id, slug, name, category, rating, COALESCE(thumbnail_url, images[1]) as image
+     FROM places
+     WHERE is_featured = true
+     ORDER BY rating DESC
      LIMIT 6`
   );
 
@@ -59,7 +58,7 @@ export async function warmPlacesCache(): Promise<void> {
 
   for (const category of categories) {
     const places = await query(
-      `SELECT id, slug, name, category, rating, review_count, image
+      `SELECT id, slug, name, category, rating, review_count, COALESCE(thumbnail_url, images[1]) as image
        FROM places
        WHERE category = $1
        ORDER BY rating DESC, review_count DESC
@@ -174,11 +173,11 @@ export function scheduleCacheWarming(intervalMinutes = 30): void {
   logger.info(`📅 Scheduled cache warming every ${intervalMinutes} minutes`);
 
   // Initial warm
-  warmAllCaches().catch(console.error);
+  warmAllCaches().catch((err) => logger.error('Cache warming failed', err instanceof Error ? err : new Error(String(err))));
 
   // Periodic warm
   setInterval(() => {
-    warmAllCaches().catch(console.error);
+    warmAllCaches().catch((err) => logger.error('Cache warming failed', err instanceof Error ? err : new Error(String(err))));
   }, intervalMinutes * 60 * 1000);
 }
 
@@ -208,3 +207,4 @@ export async function refreshCache(key: string): Promise<void> {
       logger.warn(`Unknown cache key: ${key}`);
   }
 }
+

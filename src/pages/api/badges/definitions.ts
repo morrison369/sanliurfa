@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Badge Definitions
  * GET /api/badges/definitions - Get all available badge types
@@ -9,17 +8,17 @@ import { getBadgeDefinitions } from '../../../lib/place/place-verification';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
-import { getCache, setCache } from '../../../lib/cache';
+import { getCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Check cache
     const cacheKey = 'badge:definitions';
-    const cached = await getCache(cacheKey);
+    const cached = await getCache<string>(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/badges/definitions', HttpStatus.OK, Date.now() - startTime);
       return apiResponse({
@@ -43,7 +42,7 @@ export const GET: APIRoute = async ({ request }) => {
     logger.error('Failed to get badge definitions', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get badge definitions',
+      'Rozet tanımları alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

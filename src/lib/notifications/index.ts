@@ -6,7 +6,7 @@
 import { query } from '../postgres';
 import { sendEmail } from '../email';
 import { sendSMS } from '../sms';
-import { sendPushNotification } from '../push';
+import { sendNotification as sendPushNotification } from '../push';
 
 export interface NotificationPayload {
   type: 'email' | 'sms' | 'push' | 'in-app';
@@ -155,10 +155,9 @@ async function sendPushNotificationInternal(payload: NotificationPayload) {
  */
 async function sendInAppNotification(payload: NotificationPayload) {
   await query(
-    `INSERT INTO notifications (user_id, type, title, message, data, priority, created_at)
-     VALUES ($1, 'in-app', $2, $3, $4, $5, NOW())`,
-    [payload.recipient, payload.title, payload.message, 
-     JSON.stringify(payload.data), payload.priority || 'normal']
+    `INSERT INTO notifications (user_id, type, title, message, created_at)
+     VALUES ($1, 'in-app', $2, $3, NOW())`,
+    [payload.recipient, payload.title, payload.message]
   );
 
   await logNotification({ ...payload, status: 'sent' });
@@ -378,7 +377,7 @@ export async function markAllNotificationsAsRead(userId: string): Promise<void> 
  */
 export async function getUnreadCount(userId: string): Promise<number> {
   const result = await query(
-    `SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND read_at IS NULL`,
+    `SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND read = false`,
     [userId]
   );
   return parseInt(result.rows[0].count);
@@ -439,3 +438,4 @@ export async function sendBulkNotifications(
 
   return { total: recipients.length, sent, failed };
 }
+

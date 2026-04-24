@@ -13,7 +13,7 @@ import { logger } from '../../../lib/logging';
  * List webhook filters
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -50,7 +50,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
  * Create webhook filter
  */
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -94,7 +94,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
  * DELETE /api/webhooks/filters/:id
  */
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

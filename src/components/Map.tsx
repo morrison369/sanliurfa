@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
-
+import {  useEffect, useRef, useState  } from 'react';
 interface MapProps {
   lat: number;
   lng: number;

@@ -1,6 +1,7 @@
 ---
 // Schema.org Structured Data Component
 // Supports: LocalBusiness, Restaurant, TouristAttraction, Article, FAQPage, BreadcrumbList
+import { getSiteSetting } from '../lib/site-content';
 
 export interface LocalBusinessSchema {
   '@type': string;
@@ -58,7 +59,13 @@ interface Props {
 }
 
 const { type, data, articleData } = Astro.props;
-const siteUrl = import.meta.env.SITE_URL || 'https://sanliurfa.com';
+const homepageSchemaFallback = {
+  siteName: 'Sanliurfa.com',
+  baseUrl: 'https://sanliurfa.com',
+};
+const homepageSchema = await getSiteSetting('homepage.schema', homepageSchemaFallback);
+const siteName = String((homepageSchema as any)?.siteName || homepageSchemaFallback.siteName);
+const siteUrl = String((homepageSchema as any)?.baseUrl || import.meta.env.SITE_URL || homepageSchemaFallback.baseUrl);
 
 let schemaData: any;
 
@@ -149,14 +156,14 @@ switch (type) {
     schemaData = {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
-      name: 'Şanlıurfa.com',
+      name: siteName,
       url: siteUrl,
       description: 'Şanlıurfa\'nın en kapsamlı şehir rehberi - Göbeklitepe, Balıklıgöl ve gastronomi',
       potentialAction: {
         '@type': 'SearchAction',
         target: {
           '@type': 'EntryPoint',
-          urlTemplate: `${siteUrl}/ara?q={search_term_string}`,
+          urlTemplate: `${siteUrl}/arama?q={search_term_string}`,
         },
         'query-input': 'required name=search_term_string',
       },
@@ -179,11 +186,8 @@ switch (type) {
         },
         publisher: {
           '@type': 'Organization',
-          name: 'Şanlıurfa.com',
-          logo: {
-            '@type': 'ImageObject',
-            url: `${siteUrl}/logo.png`,
-          },
+          name: siteName,
+          logo: { '@type': 'ImageObject', url: `${siteUrl}/favicon.svg`, width: 200, height: 200 },
         },
       };
     }
@@ -193,4 +197,4 @@ switch (type) {
 const jsonLd = JSON.stringify(schemaData, null, 2);
 ---
 
-<script type="application/ld+json" set:html={jsonLd} />
+<script type="application/ld+json" set:html={jsonLd} is:inline />

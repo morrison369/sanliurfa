@@ -1,17 +1,17 @@
 // Site yapılandırması ve sabitleri
 
 export const SITE = {
-  name: 'Şanlıurfa.com',
+  name: 'Sanliurfa.com',
   tagline: 'Tarihin Sıfır Noktası',
   description: 'Şanlıurfa şehir rehberi - Tarihi yerler, mekanlar, etkinlikler ve daha fazlası',
   url: 'https://sanliurfa.com',
   ogImage: '/images/og-image.jpg',
   locale: 'tr-TR',
   language: 'tr',
-  twitter: '@sanliurfa',
-  facebook: 'sanliurfa',
-  instagram: 'sanliurfa',
-  author: 'Şanlıurfa.com Ekibi',
+  twitter: '',
+  facebook: '',
+  instagram: '',
+  author: 'Sanliurfa.com Ekibi',
   email: 'info@sanliurfa.com',
   phone: '+90 414 000 00 00',
   address: 'Şanlıurfa, Türkiye',
@@ -24,10 +24,15 @@ export const SITE = {
 export const NAVIGATION = {
   main: [
     { name: 'Ana Sayfa', href: '/', icon: 'home' },
-    { name: 'Mekanlar', href: '/places', icon: 'map-pin' },
+    { name: 'Mekanlar', href: '/mekanlar', icon: 'map-pin' },
+    { name: 'Nöbetçi Eczaneler', href: '/saglik/nobetci-eczaneler', icon: 'cross' },
+    { name: 'Otobüs Saatleri', href: '/ulasim/otobus-saatleri', icon: 'bus' },
+    { name: 'Uçak Saatleri', href: '/ulasim/ucak-saatleri', icon: 'plane' },
     { name: 'Tarihi Yerler', href: '/tarihi-yerler', icon: 'landmark' },
     { name: 'Etkinlikler', href: '/etkinlikler', icon: 'calendar' },
-    { name: 'Gastronomi', href: '/gastronomi', icon: 'utensils' },
+    { name: 'Yemek Tarifleri', href: '/yemek-tarifleri', icon: 'utensils' },
+    { name: 'Topluluk', href: '/topluluk', icon: 'users' },
+    { name: 'Eşleşme', href: '/eslesme', icon: 'heart' },
     { name: 'Blog', href: '/blog', icon: 'file-text' },
   ],
   footer: [
@@ -50,8 +55,8 @@ export const NAVIGATION = {
 } as const;
 
 export const SEO = {
-  titleTemplate: '%s | Şanlıurfa.com',
-  defaultTitle: 'Şanlıurfa.com - Tarihin Sıfır Noktası',
+  titleTemplate: '%s | Şanlıurfa Rehberi',
+  defaultTitle: 'Şanlıurfa Şehir Rehberi - Tarihin Sıfır Noktası',
   defaultDescription: 'Şanlıurfa şehir rehberi. Tarihi yerler, mekanlar, etkinlikler, gastronomi ve daha fazlası. Göbeklitepe, Balıklıgöl ve Şanlıurfa\'nın tüm güzellikleri.',
   keywords: [
     'Şanlıurfa',

@@ -1,4 +1,3 @@
-// @ts-nocheck
 // compliance module - consolidated
 
 export * from './compliance-assurance-confidence-mesh';

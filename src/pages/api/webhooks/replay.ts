@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
 import { requestEventReplay, getReplayHistory, cancelReplay } from '../../../lib/webhook/webhook-replay';
@@ -10,7 +9,7 @@ import { logger } from '../../../lib/logging';
  * Request event replay
  */
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -53,7 +52,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
  * Get replay history
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -90,7 +89,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
  * Cancel pending replay
  */
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

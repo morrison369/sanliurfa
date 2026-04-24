@@ -13,7 +13,7 @@ import { logger } from '../../../lib/logging';
  *   - offset: Pagination
  */
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   if (!locals.isAdmin) {
@@ -51,7 +51,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
  * PUT /api/admin/alerts/:id - Alert'i güncelle
  */
 export const PUT: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   if (!locals.isAdmin) {

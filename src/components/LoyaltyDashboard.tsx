@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { TrendingUp, Trophy, Gift, Zap, Star, Lock } from 'lucide-react';
+import {  useState, useEffect  } from 'react';
+import { TrendingUp, Trophy, Gift, Zap, Star } from 'lucide-react';
 
 interface LoyaltyData {
   balance: {

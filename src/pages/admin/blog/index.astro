@@ -2,9 +2,9 @@
 import Layout from '../../../layouts/Layout.astro';
 
 const seo = {
-  title: 'Blog Yönetimi - Admin Panel',
+  title: 'Blog Yönetimi - Yönetim Paneli',
   description: 'Blog yazılarını yönetin',
-  noindex: true,
+  noIndex: true,
 };
 ---
 
@@ -65,7 +65,7 @@ const seo = {
             <tbody id="postsTableBody" class="divide-y divide-gray-100">
               <tr>
                 <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                  Yukleniyor...
+                  Yükleniyor...
                 </td>
               </tr>
             </tbody>
@@ -83,7 +83,7 @@ const seo = {
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     let currentPage = 1;
 
     const statusLabels = {
@@ -94,7 +94,7 @@ const seo = {
 
     async function loadPosts() {
       const tbody = document.getElementById('postsTableBody');
-      tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yukleniyor...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yükleniyor...</td></tr>';
 
       const params = new URLSearchParams({ page: currentPage.toString() });
       
@@ -113,7 +113,7 @@ const seo = {
           updatePagination(data.pagination);
         }
       } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-red-500">Hata olustu</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-red-500">Hata oluştu</td></tr>';
       }
     }
 
@@ -223,6 +223,11 @@ const seo = {
       loadPosts();
     });
 
+    window.goToPage = goToPage;
+    window.deletePost = deletePost;
     loadPosts();
   </script>
 </Layout>
+
+
+

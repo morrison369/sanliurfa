@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
 import { convertToCSV, convertToJSON, getContentType, getFileExtension, getFormattedDate } from '../../../lib/export/export';
@@ -6,7 +5,7 @@ import { apiError, apiResponse, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -23,13 +22,13 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     // Get user's reviews
     const reviewsResult = await pool.query(
-      `SELECT id, place_id, rating, text, created_at FROM reviews WHERE user_id = $1 ORDER BY created_at DESC`,
+      `SELECT id, place_id, rating, content, created_at FROM reviews WHERE user_id = $1 ORDER BY created_at DESC`,
       [locals.user.id]
     );
 
     // Get user's favorites
     const favoritesResult = await pool.query(
-      `SELECT place_id, added_at FROM favorites WHERE user_id = $1 ORDER BY added_at DESC`,
+      `SELECT place_id, created_at as added_at FROM favorites WHERE user_id = $1 ORDER BY created_at DESC`,
       [locals.user.id]
     );
 
@@ -67,7 +66,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       }))
     };
 
-    const data = format === 'csv' ? convertToCSV(export_data) : convertToJSON(export_data);
+    const data = format === 'csv' ? convertToCSV([export_data] as any[]) : convertToJSON([export_data] as any[]);
     const extension = getFileExtension(format);
     const filename = `personal-data-${getFormattedDate()}.${extension}`;
 

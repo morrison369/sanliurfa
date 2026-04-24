@@ -39,7 +39,7 @@ export function generateMetaTags(config: SEOConfig): Record<string, string> {
     'twitter:image': config.ogImage || '/og-image.png',
     'description': config.description,
     'keywords': config.tags?.join(', ') || '',
-    'author': config.author || 'Şanlıurfa.com',
+    'author': config.author || 'Sanliurfa.com',
     'robots': config.robots || 'index, follow',
     'language': 'Turkish',  // SABİT: Site SADECE Türkçe
     'revisit-after': '7 days',
@@ -54,7 +54,7 @@ export function generateOrganizationSchema(baseUrl: string): StructuredData {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    'name': 'Şanlıurfa.com',
+    'name': 'Sanliurfa.com',
     'description': 'Şanlıurfa\'nın En Kapsamlı Rehberi',
     'url': baseUrl,
     'logo': `${baseUrl}/logo.png`,
@@ -64,12 +64,6 @@ export function generateOrganizationSchema(baseUrl: string): StructuredData {
       'telephone': '+90-414-XXXXXXX',
       'email': 'info@sanliurfa.com'
     },
-    'sameAs': [
-      'https://www.facebook.com/sanliurfa',
-      'https://www.twitter.com/sanliurfa',
-      'https://www.instagram.com/sanliurfa',
-      'https://www.youtube.com/sanliurfa'
-    ],
     'address': {
       '@type': 'PostalAddress',
       'addressCountry': 'TR',

@@ -3,31 +3,70 @@ import { recordPageView, recordInteraction, recordSearch, recordPlaceView } from
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 
+type AnalyticsEventType = 'pageview' | 'interaction' | 'search' | 'place_view';
+
+interface AnalyticsEventBody {
+  sessionId?: string;
+  userId?: string;
+  eventType?: AnalyticsEventType;
+  metadata?: {
+    pageUrl?: string;
+    type?: string;
+    element?: string;
+    query?: string;
+    filters?: unknown;
+    resultCount?: number;
+    placeId?: string;
+    source?: string;
+    [key: string]: unknown;
+  };
+}
+
 export const POST: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
 
   try {
-    const body = await request.json();
+    const body = (await request.json()) as AnalyticsEventBody;
     const { sessionId, userId, eventType, metadata } = body;
 
     if (!sessionId || !eventType) {
       recordRequest('POST', '/api/analytics/events', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Missing required fields', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Zorunlu alanlar eksik', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     switch (eventType) {
       case 'pageview':
-        await recordPageView(sessionId, userId, metadata?.pageUrl, metadata);
+        await recordPageView({
+          path: metadata?.pageUrl || '/',
+          userId,
+        });
         break;
       case 'interaction':
-        await recordInteraction(sessionId, userId, metadata?.type, metadata);
+        await recordInteraction({
+          type: metadata?.type || 'interaction',
+          element: metadata?.element || 'unknown',
+          userId,
+          metadata,
+        });
         break;
       case 'search':
-        await recordSearch(sessionId, userId, metadata?.query, metadata?.filters, metadata?.resultCount);
+        await recordSearch({
+          query: metadata?.query || '',
+          resultsCount: metadata?.resultCount || 0,
+          userId,
+        });
         break;
       case 'place_view':
-        await recordPlaceView(metadata?.placeId, userId, metadata);
+        if (!metadata?.placeId) {
+          recordRequest('POST', '/api/analytics/events', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+          return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+        }
+        await recordPlaceView({
+          placeId: metadata.placeId,
+          userId,
+          source: typeof metadata.source === 'string' ? metadata.source : undefined,
+        });
         break;
     }
 
@@ -37,6 +76,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/analytics/events', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Analitik olayı kaydedilemedi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
+

@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
 
 let categories: any[] = [];
 let featuredPlaces: any[] = [];
@@ -21,8 +22,27 @@ try {
 
 const seo = {
   title: 'Şanlıurfa Mekanlar Rehberi | En İyi Mekanlar ve Yerel Lezzetler',
-  description: 'Şanlıurfa\'nın en popüler mekanları. Kebapçılar, ciğerciler, kafeler, tatlıcılar ve daha fazlası. Güncel fiyatlar ve yorumlarla.',
+  description: "Şanlıurfa\'nın en popüler mekanları. Kebapçılar, ciğerciler, kafeler, tatlıcılar ve daha fazlası. Güncel fiyatlar ve yorumlarla.",
+  keywords: ['şanlıurfa mekanlar', 'urfa mekanlar', 'şanlıurfa restoranlar', 'urfa kebapçılar', 'şanlıurfa kafeler', 'urfa yemek yerleri', 'şanlıurfa işletmeler'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/mekanlar',
 };
+const { baseUrl } = await getSiteBranding();
+
+const faqItems = [
+  {
+    S: "Şanlıurfa'da en iyi kebapçılar nerede?",
+    C: 'Mekanlar sayfasındaki kebapçılar kategorisinde puan, yorum ve ilçe bazlı filtreyle en iyi seçenekleri görebilirsiniz.',
+  },
+  {
+    S: 'Şanlıurfa mekanları nasıl filtrelenir?',
+    C: 'Kategori kartlarına girerek kebapçı, ciğerci, kahvaltı ve diğer alt kategorileri ayrı ayrı listeleyebilirsiniz.',
+  },
+  {
+    S: 'Mekan puanları güncel mi?',
+    C: 'Listeler aktif kayıtlar üzerinden güncellenir ve öne çıkan mekanlar puan ve görünürlük kriterlerine göre sıralanır.',
+  },
+];
 ---
 
 <Layout seo={seo}>
@@ -32,12 +52,19 @@ const seo = {
       <div class="container mx-auto px-4">
         <h1 class="text-4xl md:text-5xl font-bold mb-4">Şanlıurfa Mekanlar</h1>
         <p class="text-xl text-red-100 max-w-2xl">
-          Kebapçılardan ciğercilere, kafelerden tatlıcılara Şanlıurfa'nın en sevilen mekanları
+          Kebapçılardan ciğercilere, kafelerden tatlıcılara Şanlıurfa’nın en sevilen mekanları
         </p>
       </div>
     </div>
 
     <div class="container mx-auto px-4 py-12">
+      <div class="rounded-2xl border border-red-100 bg-red-50 p-5 mb-8">
+        <h2 class="text-lg font-bold text-red-900">Hızlı Cevap</h2>
+        <p class="text-sm text-red-800 mt-1">
+          Şanlıurfa mekanlarını kategori bazında keşfedebilir, öne çıkan işletmeleri puan ve yorum bilgileriyle karşılaştırabilirsiniz.
+        </p>
+      </div>
+
       <!-- Kategoriler Grid -->
       <h2 class="text-2xl font-bold text-gray-900 mb-8">Kategoriler</h2>
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-12">
@@ -50,7 +77,9 @@ const seo = {
               cat.slug === 'kebapcilar' ? '🍖' :
               cat.slug === 'cigerciler' ? '🥩' :
               cat.slug === 'lahmacuncular' ? '🫓' :
+              cat.slug === 'pideciler' ? '🥙' :
               cat.slug === 'cig-kofteciler' ? '🧆' :
+              cat.slug === 'yoresel-yemekler' ? '🥘' :
               cat.slug === 'kahvalti-mekanlari' ? '🍳' :
               cat.slug === 'tatlicilar' ? '🍮' :
               cat.slug === 'kafeler' ? '☕' :
@@ -71,7 +100,7 @@ const seo = {
           <h2 class="text-2xl font-bold text-gray-900 mb-6">Öne Çıkan Mekanlar</h2>
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {featuredPlaces.map((place) => (
-              <a href={`/places/${place.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow group">
+              <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow group">
                 <div class="h-48 bg-gradient-to-br from-red-100 to-orange-100 flex items-center justify-center text-5xl">
                   🍽️
                 </div>
@@ -96,8 +125,20 @@ const seo = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: 'https://sanliurfa.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: 'https://sanliurfa.com/mekanlar' },
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: `${baseUrl}/mekanlar` },
     ]
-  })} />
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.C,
+      },
+    })),
+  })} is:inline />
 </Layout>

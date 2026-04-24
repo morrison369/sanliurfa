@@ -5,14 +5,19 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserDetails, flagUserAccount, changeUserRole, logAdminAction } from '../../../../lib/admin/admin-users';
-import { query } from '../../../../lib/postgres';
+import {
+  changeUserRole,
+  flagUserAccount,
+  getUserDetails,
+  logAdminAction,
+  updateAdminUserStatus,
+} from '../../../../lib/admin/admin-users';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -56,7 +61,7 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -83,15 +88,9 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     }
 
     if (action === 'suspend') {
-      await query(
-        `UPDATE users SET status = 'suspended', updated_at = NOW() WHERE id = $1`,
-        [params.id]
-      );
+      await updateAdminUserStatus(params.id as string, user.id, 'suspend');
     } else if (action === 'activate') {
-      await query(
-        `UPDATE users SET status = 'active', updated_at = NOW() WHERE id = $1`,
-        [params.id]
-      );
+      await updateAdminUserStatus(params.id as string, user.id, 'activate');
     } else if (action === 'flag') {
       if (!flagType || !reason) {
         recordRequest('POST', `/api/admin/users/${params.id}`, HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);

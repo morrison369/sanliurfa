@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 // List promotions
 export const GET: APIRoute = async (context) => {
@@ -50,9 +51,12 @@ export const GET: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('List promotions error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Promosyonlar Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/promotions-get-failed',
+      instance: '/api/promotions',
     });
   }
 };
@@ -62,9 +66,12 @@ export const POST: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/promotions-create-unauthorized',
+        instance: '/api/promotions',
       });
     }
 
@@ -86,11 +93,12 @@ export const POST: APIRoute = async (context) => {
 
     // Validation
     if (!placeId || !title || !description || !promotionType || !startDate || !endDate) {
-      return new Response(JSON.stringify({ 
-        error: 'Missing required fields' 
-      }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Zorunlu alanlar eksik',
+        type: '/problems/promotions-create-validation',
+        instance: '/api/promotions',
       });
     }
 
@@ -101,9 +109,12 @@ export const POST: APIRoute = async (context) => {
         [placeId, auth.user.id]
       );
       if (placeCheck.rows.length === 0) {
-        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        return problemJson({
           status: 403,
-          headers: { 'Content-Type': 'application/json' }
+          title: 'Forbidden',
+          detail: 'Bu işletme için yetkiniz yok',
+          type: '/problems/promotions-create-forbidden',
+          instance: '/api/promotions',
         });
       }
     }
@@ -134,9 +145,12 @@ export const POST: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Create promotion error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Promosyon Oluşturulamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/promotions-create-failed',
+      instance: '/api/promotions',
     });
   }
 };

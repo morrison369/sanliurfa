@@ -3,7 +3,7 @@
  * Browse, redeem, and track rewards
  */
 
-import { query, queryOne, queryMany, insert, update } from '../postgres';
+import { queryOne, queryMany, insert, update } from '../postgres';
 import { getCache, setCache, deleteCache, deleteCachePattern } from '../cache';
 import { redeemPoints } from '../loyalty/loyalty-system';
 import { createNotification } from '../notification/notifications-queue';
@@ -372,5 +372,4 @@ export async function useDiscountCode(code: string): Promise<{ discount_percenta
     throw error;
   }
 }
-
 

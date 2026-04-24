@@ -1,11 +1,18 @@
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ locals, url }) => {
   try {
     if (!locals.user?.id) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/users-points-history-unauthorized',
+        instance: '/api/users/points-history',
+      });
     }
 
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
@@ -36,6 +43,12 @@ export const GET: APIRoute = async ({ locals, url }) => {
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (error) {
     logger.error('Points history error', error);
-    return new Response(JSON.stringify({ error: 'Failed' }), { status: 500 });
+    return problemJson({
+      status: 500,
+      title: 'Puan Geçmişi Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/users-points-history-failed',
+      instance: '/api/users/points-history',
+    });
   }
 };

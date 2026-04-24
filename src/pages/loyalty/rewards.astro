@@ -8,7 +8,7 @@ if (!Astro.locals.user) {
 }
 ---
 
-<Layout title="Ödüller - Sadakat Programı">
+<Layout seo={{ title: "Ödüller - Sadakat Programı", noIndex: true }}>
   <div class="container mx-auto px-4 py-8">
     <div class="mb-8">
       <a href="/loyalty" class="text-blue-600 hover:underline mb-4 inline-block">← Geri Dön</a>
@@ -16,7 +16,7 @@ if (!Astro.locals.user) {
       <p class="text-gray-600">Puanlarınızı harika ödüllere dönüştürün</p>
     </div>
 
-    <RewardsCatalog client:load />
+    <RewardsCatalog client:visible={{ rootMargin: '140px' }} />
 
     <div class="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
       <h2 class="font-semibold text-lg mb-4">❓ Sıkça Sorulan Sorular</h2>

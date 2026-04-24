@@ -274,8 +274,7 @@ export class ExtensionPointManager {
 // ==================== EXPORTS ====================
 
 const pluginRegistry = new PluginRegistry();
-export type { pluginRegistry };
-
+export { pluginRegistry };
 export const pluginLifecycle = new PluginLifecycle(pluginRegistry);
 export const extensionPointManager = new ExtensionPointManager();
 

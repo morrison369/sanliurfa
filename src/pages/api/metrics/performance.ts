@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Performance Metrics Collection
  * POST: Collect client-side performance metrics
@@ -17,9 +16,39 @@ interface ClientPerformanceMetric {
   connection: string;
 }
 
+export const GET: APIRoute = async () => {
+  return apiError(
+    ErrorCode.INVALID_INPUT,
+    'Method not allowed',
+    HttpStatus.BAD_REQUEST
+  );
+};
+
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const body: ClientPerformanceMetric = await request.json();
+    const rawBody = await request.text();
+    if (!rawBody || !rawBody.trim()) {
+      return apiResponse(
+        {
+          success: false,
+          warning: 'Empty metrics payload'
+        },
+        HttpStatus.ACCEPTED
+      );
+    }
+
+    let body: ClientPerformanceMetric;
+    try {
+      body = JSON.parse(rawBody) as ClientPerformanceMetric;
+    } catch {
+      return apiResponse(
+        {
+          success: false,
+          warning: 'Invalid metrics payload'
+        },
+        HttpStatus.ACCEPTED
+      );
+    }
 
     // Validate required fields
     if (!body.timestamp || !body.metrics || !body.url) {
@@ -55,7 +84,10 @@ export const POST: APIRoute = async ({ request }) => {
       HttpStatus.ACCEPTED
     );
   } catch (error) {
-    logger.error('Performance metrics collection failed', error instanceof Error ? error : new Error(String(error)));
+    logger.error(
+      'Performance metrics collection failed',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return apiResponse(
       {
         success: false,

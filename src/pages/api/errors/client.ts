@@ -6,6 +6,7 @@
 import type { APIRoute } from 'astro';
 import { insert } from '../../../lib/postgres';
 import { logger } from '../../../lib/logger';
+import { problemJson } from '../../../lib/api';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
@@ -13,8 +14,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { message, stack, url, line, column, userAgent, context } = body;
 
     if (!message) {
-      return new Response(JSON.stringify({ error: 'message required' }), {
-        status: 400, headers: { 'Content-Type': 'application/json' }
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'message required',
+        type: '/problems/client-errors-validation',
+        instance: '/api/errors/client',
       });
     }
 

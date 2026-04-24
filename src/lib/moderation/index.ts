@@ -44,7 +44,7 @@ const SPAM_PATTERNS = [
  */
 export async function checkContent(
   content: string,
-  type: 'place' | 'review' | 'comment'
+  _type: 'place' | 'review' | 'comment'
 ): Promise<{
   clean: boolean;
   violations: string[];
@@ -119,9 +119,10 @@ export async function submitForModeration(
   reporterId?: string
 ): Promise<void> {
   await query(
-    `INSERT INTO moderation_queue (type, content_id, content, reason, reporter_id, status, created_at)
-     VALUES ($1, $2, $3, $4, $5, 'pending', NOW())`,
-    [type, contentId, content, reason || 'Otomatik tespit', reporterId]
+    `INSERT INTO moderation_queue (content_type, content_id, reason, status, created_at)
+     VALUES ($1, $2, $3, 'pending', NOW())
+     ON CONFLICT (content_type, content_id) DO NOTHING`,
+    [type, contentId, reason || 'Otomatik tespit']
   );
 
   // Notify admins
@@ -139,7 +140,7 @@ export async function autoModerate(
   content: string,
   contentId: string,
   type: 'place' | 'review' | 'comment',
-  userId: string
+  _userId: string
 ): Promise<{ approved: boolean; reason?: string }> {
   const check = await checkContent(content, type);
 
@@ -199,27 +200,28 @@ export async function approveContent(
   moderatorId: string
 ): Promise<void> {
   const result = await query(
-    `UPDATE moderation_queue 
-     SET status = 'approved', moderator_id = $2, moderated_at = NOW()
+    `UPDATE moderation_queue
+     SET status = 'resolved', moderator_id = $2, moderated_at = NOW()
      WHERE id = $1
-     RETURNING type, content_id`,
+     RETURNING content_type as type, content_id`,
     [queueId, moderatorId]
   );
 
   if (result.rows.length > 0) {
     const { type, content_id } = result.rows[0];
     
-    // Update actual content status
-    const tableMap = {
-      place: 'places',
-      review: 'reviews',
-      comment: 'blog_comments',
-      user: 'users',
+    // Update actual content status — use table-specific approved value
+    const tableMap: Record<string, { table: string; status: string }> = {
+      place:   { table: 'places',        status: 'active' },
+      review:  { table: 'reviews',       status: 'active' },
+      comment: { table: 'blog_comments', status: 'approved' },
+      user:    { table: 'users',         status: 'active' },
     };
-    
-    if (tableMap[type]) {
+
+    const mapping = tableMap[type];
+    if (mapping) {
       await query(
-        `UPDATE ${tableMap[type]} SET status = 'approved' WHERE id = $1`,
+        `UPDATE ${mapping.table} SET status = '${mapping.status}' WHERE id = $1`,
         [content_id]
       );
     }
@@ -235,24 +237,23 @@ export async function rejectContent(
   rejectReason: string
 ): Promise<void> {
   const result = await query(
-    `UPDATE moderation_queue 
-     SET status = 'rejected', moderator_id = $2, moderated_at = NOW(), reject_reason = $3
+    `UPDATE moderation_queue
+     SET status = 'resolved', moderator_id = $2, moderated_at = NOW(), reject_reason = $3
      WHERE id = $1
-     RETURNING type, content_id`,
+     RETURNING content_type as type, content_id`,
     [queueId, moderatorId, rejectReason]
   );
 
   if (result.rows.length > 0) {
     const { type, content_id } = result.rows[0];
-    
-    // Update actual content status
-    const tableMap = {
+
+    const tableMap: Record<string, string> = {
       place: 'places',
       review: 'reviews',
       comment: 'blog_comments',
       user: 'users',
     };
-    
+
     if (tableMap[type]) {
       await query(
         `UPDATE ${tableMap[type]} SET status = 'rejected' WHERE id = $1`,
@@ -278,8 +279,8 @@ export async function reportContent(
     const result = await query('SELECT name, description FROM places WHERE id = $1', [contentId]);
     content = result.rows[0]?.name + ' - ' + result.rows[0]?.description;
   } else if (type === 'review') {
-    const result = await query('SELECT comment FROM reviews WHERE id = $1', [contentId]);
-    content = result.rows[0]?.comment;
+    const result = await query('SELECT content FROM reviews WHERE id = $1', [contentId]);
+    content = result.rows[0]?.content;
   } else if (type === 'comment') {
     const result = await query('SELECT content FROM blog_comments WHERE id = $1', [contentId]);
     content = result.rows[0]?.content;
@@ -311,8 +312,8 @@ export async function submitReport(
     const result = await query('SELECT name, description FROM places WHERE id = $1', [contentId]);
     content = result.rows[0]?.name + ' - ' + result.rows[0]?.description;
   } else if (type === 'review') {
-    const result = await query('SELECT comment FROM reviews WHERE id = $1', [contentId]);
-    content = result.rows[0]?.comment;
+    const result = await query('SELECT content FROM reviews WHERE id = $1', [contentId]);
+    content = result.rows[0]?.content;
   } else if (type === 'comment') {
     const result = await query('SELECT content FROM blog_comments WHERE id = $1', [contentId]);
     content = result.rows[0]?.content;
@@ -340,8 +341,8 @@ export async function getModerationStats(): Promise<{
   const result = await query(`
     SELECT 
       COUNT(*) FILTER (WHERE status = 'pending') as pending,
-      COUNT(*) FILTER (WHERE status = 'approved') as approved,
-      COUNT(*) FILTER (WHERE status = 'rejected') as rejected,
+      COUNT(*) FILTER (WHERE status = 'resolved') as approved,
+      0 as rejected,
       AVG(EXTRACT(EPOCH FROM (moderated_at - created_at))) as avg_process_time
     FROM moderation_queue
     WHERE created_at > CURRENT_DATE - INTERVAL '30 days'
@@ -543,7 +544,7 @@ export async function getReports(
 export async function updateReportStatus(
   reportId: string,
   status: 'open' | 'investigating' | 'resolved' | 'dismissed',
-  moderatorId: string,
+  _moderatorId: string,
   notes?: string
 ): Promise<void> {
   await query(

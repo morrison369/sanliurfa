@@ -14,10 +14,10 @@ import tarfile
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 REMOTE_PATH = "/home/sanliur/public_html"
 APP_NAME = "sanliurfa"
-NODE_PORT = 6000
+NODE_PORT = 4321
 
 NVM_PREFIX = 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '
 

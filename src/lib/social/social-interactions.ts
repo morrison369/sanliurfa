@@ -4,7 +4,7 @@
  */
 import { query, queryOne, queryMany, insert } from '../postgres';
 import { logger } from '../logger';
-import { deleteCache, deleteCachePattern } from '../cache';
+import { deleteCachePattern } from '../cache';
 
 export async function likePlace(placeId: string, userId: string): Promise<boolean> {
   try {
@@ -187,5 +187,4 @@ export async function getUserPreferences(userId: string): Promise<any> {
     return null;
   }
 }
-
 

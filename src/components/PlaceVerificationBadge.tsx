@@ -2,9 +2,6 @@
  * Place Verification Badge Component
  * Displays verification status badge with icon and tooltip
  */
-
-import React from 'react';
-
 interface PlaceVerificationBadgeProps {
   status?: 'pending' | 'verified' | 'rejected' | null;
   verifiedAt?: string;

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import type { QuotaFeature } from '../lib/usage-tracking';
+type QuotaFeature = string;
 
 export interface QuotaStatus {
   canUse: boolean;

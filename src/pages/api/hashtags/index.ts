@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Hashtags API
  * Get trending hashtags with usage counts
@@ -12,7 +11,7 @@ import { getCache, setCache } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -42,7 +41,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       return apiResponse(
         {
           success: true,
-          data: JSON.parse(cached),
+          data: JSON.parse(cached as string),
           count: limit,
           period
         },

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface Activity {
   id: string;
   user_id: string;
@@ -36,8 +35,9 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
     try {
       setIsLoading(true);
       setError(null);
+      const userParam = encodeURIComponent(userId);
       const response = await fetch(
-        `/api/feed/activity?filter=${filter}&limit=20&offset=${newOffset}`
+        `/api/feed/activity?userId=${userParam}&filter=${filter}&limit=20&offset=${newOffset}`
       );
 
       if (!response.ok) {
@@ -184,7 +184,7 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
           {activities.map((activity) => (
             <a
               key={activity.id}
-              href={`/kullanıcı/${activity.user_id}`}
+              href={`/kullanici/${activity.user_id}`}
               className="block p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all"
             >
               <div className="flex gap-4">

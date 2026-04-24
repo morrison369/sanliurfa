@@ -1,7 +1,7 @@
 ---
 /**
- * UserLevelCard Component
- * Displays user level, XP progress, and badges
+ * Kullanıcı seviye kartı.
+ * Seviye, puan ilerlemesi ve rozetleri gösterir.
  */
 
 interface Props {
@@ -11,9 +11,9 @@ interface Props {
   username?: string;
 }
 
-const { level = 1, points = 0, badges = [], username = 'User' } = Astro.props;
+const { level = 1, points = 0, badges = [], username = 'Kullanıcı' } = Astro.props;
 
-// Calculate level progress
+// Seviye ilerlemesini hesapla
 const LEVEL_THRESHOLDS = [0, 100, 300, 700, 1500, 3000, 6000, 12000, 25000, 50000];
 const currentThreshold = LEVEL_THRESHOLDS[level - 1] || 0;
 const nextThreshold = LEVEL_THRESHOLDS[level] || LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] + 50000;
@@ -21,7 +21,7 @@ const pointsInLevel = points - currentThreshold;
 const pointsNeeded = nextThreshold - currentThreshold;
 const progressPercent = Math.min(100, (pointsInLevel / pointsNeeded) * 100);
 
-// Level colors
+// Seviye renkleri
 const levelColors: Record<number, string> = {
   1: 'from-gray-400 to-gray-500',
   2: 'from-green-400 to-green-500',
@@ -39,23 +39,23 @@ const colorGradient = levelColors[level] || levelColors[1];
 ---
 
 <div class="w-full max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-  <!-- Level Badge -->
+  <!-- Seviye rozeti -->
   <div class="flex items-center justify-center mb-6">
     <div class={`w-24 h-24 rounded-full bg-gradient-to-br ${colorGradient} flex items-center justify-center shadow-lg`}>
       <div class="text-center">
         <div class="text-4xl font-bold text-white">{level}</div>
-        <div class="text-xs text-white opacity-90">Level</div>
+        <div class="text-xs text-white opacity-90">Seviye</div>
       </div>
     </div>
   </div>
 
-  <!-- Username -->
+  <!-- Kullanıcı adı -->
   <h3 class="text-center text-xl font-semibold text-gray-900 dark:text-white mb-4">{username}</h3>
 
-  <!-- Points Display -->
+  <!-- Puan gösterimi -->
   <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
     <div class="flex justify-between items-center mb-2">
-      <span class="text-sm text-gray-600 dark:text-gray-300">Total Points</span>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Toplam Puan</span>
       <span class="text-lg font-bold text-gray-900 dark:text-white">{points.toLocaleString()}</span>
     </div>
     <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
@@ -63,7 +63,7 @@ const colorGradient = levelColors[level] || levelColors[1];
       <span>{Math.round(progressPercent)}%</span>
     </div>
 
-    <!-- Progress Bar -->
+    <!-- İlerleme çubuğu -->
     <div class="mt-3 w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
       <div
         class={`bg-gradient-to-r ${colorGradient} h-full transition-all duration-300`}
@@ -71,18 +71,18 @@ const colorGradient = levelColors[level] || levelColors[1];
       ></div>
     </div>
 
-    <!-- Next Level Info -->
+    <!-- Sonraki seviye bilgisi -->
     <div class="mt-3 text-center text-xs text-gray-600 dark:text-gray-300">
-      Next level: {(nextThreshold - points).toLocaleString()} points needed
+      Sonraki seviye için {(nextThreshold - points).toLocaleString()} puan gerekli
     </div>
   </div>
 
-  <!-- Badges Section -->
+  <!-- Rozetler -->
   {badges && badges.length > 0 && (
     <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-      <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Badges ({badges.length})</h4>
+      <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Rozetler ({badges.length})</h4>
 
-      <!-- Recent 3 Badges -->
+      <!-- Son 3 rozet -->
       <div class="flex flex-wrap gap-2 mb-3">
         {badges.slice(0, 3).map((badge) => (
           <div class="group relative">
@@ -98,7 +98,7 @@ const colorGradient = levelColors[level] || levelColors[1];
 
       {badges.length > 3 && (
         <div class="text-xs text-gray-600 dark:text-gray-300 text-center">
-          +{badges.length - 3} more badge{badges.length - 3 !== 1 ? 's' : ''}
+          +{badges.length - 3} rozet daha
         </div>
       )}
     </div>

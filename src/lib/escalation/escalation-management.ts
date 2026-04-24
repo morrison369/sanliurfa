@@ -238,7 +238,7 @@ export class SLAManager {
   /**
    * Check SLA compliance
    */
-  checkSLACompliance(issueId: string): boolean {
+  checkSLACompliance(_issueId: string): boolean {
     // In a real implementation, this would check against actual issue and SLA data
     return Math.random() > 0.1; // 90% compliance
   }

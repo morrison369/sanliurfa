@@ -3,12 +3,12 @@
  * Helper functions for SEO optimization
  */
 
-import { slugify } from '../utils';
+import { getPublicAppUrl } from '../public-app-url';
 
 /**
  * Generate canonical URL
  */
-export function getCanonicalUrl(path: string, siteUrl = 'https://sanliurfa.com'): string {
+export function getCanonicalUrl(path: string, siteUrl = getPublicAppUrl()): string {
   // Remove trailing slash except for root
   const cleanPath = path === '/' ? '/' : path.replace(/\/$/, '');
   return `${siteUrl}${cleanPath}`;
@@ -45,7 +45,7 @@ export function getOgImageUrl(type: string, data?: { title?: string; image?: str
   if (data?.title) params.set('title', data.title);
   params.set('type', type);
   
-  return `https://sanliurfa.com/api/og?${params.toString()}`;
+  return `${getPublicAppUrl()}/api/og?${params.toString()}`;
 }
 
 /**
@@ -208,7 +208,7 @@ export function generateAlternateUrls(
   _languages: string[] = ['tr']
 ): Array<{ lang: string; url: string }> {
   // Return only Turkish (single language policy)
-  return [{ lang: 'tr', url: `https://sanliurfa.com${path}` }];
+  return [{ lang: 'tr', url: `${getPublicAppUrl()}${path}` }];
 }
 
 /**

@@ -78,7 +78,7 @@ export class DemandForecaster {
   /**
    * Detect demand trend
    */
-  detectTrend(sku: string, days: number): 'up' | 'down' | 'stable' {
+  detectTrend(_sku: string, _days: number): 'up' | 'down' | 'stable' {
     const rand = Math.random();
     if (rand > 0.66) return 'up';
     if (rand > 0.33) return 'down';
@@ -141,7 +141,7 @@ export class StockPlanner {
    * Schedule replenishment
    */
   scheduleReplenishment(plan: StockPlan): string {
-    const planId = 'plan-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const planId = 'plan-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
     this.plans.set(planId, plan);
     logger.debug('Replenishment scheduled', { planId, warehouseId: plan.warehouseId, sku: plan.sku });
     return planId;
@@ -172,21 +172,21 @@ export class CapacityPlanner {
   /**
    * Project warehouse usage
    */
-  projectUsage(warehouseId: string, forecastPeriod: string): number {
+  projectUsage(_warehouseId: string, _forecastPeriod: string): number {
     return Math.round(Math.random() * 5000 + 1000);
   }
 
   /**
    * Calculate required capacity
    */
-  calculateRequiredCapacity(warehouseId: string): number {
+  calculateRequiredCapacity(_warehouseId: string): number {
     return Math.round(Math.random() * 10000 + 5000);
   }
 
   /**
    * Identify bottlenecks
    */
-  identifyBottlenecks(warehouseId: string): string[] {
+  identifyBottlenecks(_warehouseId: string): string[] {
     const bottlenecks = [];
     if (Math.random() > 0.5) bottlenecks.push('Receiving dock congestion');
     if (Math.random() > 0.6) bottlenecks.push('Picking zone capacity');
@@ -197,7 +197,7 @@ export class CapacityPlanner {
   /**
    * Recommend expansion
    */
-  recommendExpansion(warehouseId: string): { needed: boolean; size: number; timeframe: string } {
+  recommendExpansion(_warehouseId: string): { needed: boolean; size: number; timeframe: string } {
     const needed = Math.random() > 0.5;
     return {
       needed,

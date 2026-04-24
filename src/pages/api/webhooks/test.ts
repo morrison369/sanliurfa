@@ -9,7 +9,7 @@ import { logger } from '../../../lib/logging';
  * Test a webhook by sending a test event
  */
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {

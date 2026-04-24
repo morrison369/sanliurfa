@@ -4,7 +4,7 @@
  */
 
 import { query, queryMany, queryOne } from '../postgres';
-import { getCache, setCache, deleteCache } from '../cache';
+import { getCache, setCache } from '../cache';
 import { logger } from '../logger';
 
 export interface OLAPQuery {
@@ -69,7 +69,7 @@ export async function populatePlaceDimension(): Promise<number> {
         p.category,
         p.category,
         'Şanlıurfa' as city,
-        COALESCE(p.district, 'Merkez') as district,
+        COALESCE(d.name, 'Merkez') as district,
         CASE
           WHEN p.rating >= 4.5 THEN 'excellent'
           WHEN p.rating >= 3.5 THEN 'good'
@@ -82,6 +82,7 @@ export async function populatePlaceDimension(): Promise<number> {
         END as size_band,
         p.verified = true as is_verified
       FROM places p
+      LEFT JOIN districts d ON d.id = p.district_id
       ON CONFLICT(place_key) DO UPDATE SET
         category = EXCLUDED.category,
         rating_band = EXCLUDED.rating_band,
@@ -389,5 +390,6 @@ export function getAvailableMeasures() {
     { name: 'interaction_sum', label: 'Interactions', type: 'sum' }
   ];
 }
+
 
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 
 interface Promotion {
   id: string;
@@ -26,7 +26,7 @@ const PROMOTION_TYPES = [
   { value: 'percentage_off', label: 'Yüzde İndirim', icon: '%' },
   { value: 'bogo', label: 'Alana Bedava', icon: '🎁' },
   { value: 'free_item', label: 'Hediye Ürün', icon: '🆓' },
-  { value: 'happy_hour', label: 'Happy Hour', icon: '🍻' },
+  { value: 'happy_hour', label: 'Mutlu Saatler', icon: '🍻' },
   { value: 'special_offer', label: 'Özel Teklif', icon: '⭐' },
 ];
 
@@ -67,17 +67,17 @@ export default function PromotionManager({ placeId }: PromotionManagerProps) {
   const loadPromotions = async () => {
     try {
       const response = await fetch(`/api/promotions?placeId=${placeId}`);
-      if (!response.ok) throw new Error('Failed to load');
+      if (!response.ok) throw new Error('Kampanyalar yüklenemedi.');
       const data = await response.json();
       setPromotions(data.promotions || []);
     } catch (err) {
-      console.error('Error loading promotions:', err);
+      console.error('Kampanyalar yüklenemedi:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     try {
@@ -100,7 +100,7 @@ export default function PromotionManager({ placeId }: PromotionManagerProps) {
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to create');
+      if (!response.ok) throw new Error('Kampanya oluşturulamadı.');
 
       await loadPromotions();
       setShowModal(false);
@@ -134,7 +134,7 @@ export default function PromotionManager({ placeId }: PromotionManagerProps) {
         body: JSON.stringify({ status }),
       });
 
-      if (!response.ok) throw new Error('Failed to update');
+      if (!response.ok) throw new Error('Kampanya durumu güncellenemedi.');
       await loadPromotions();
     } catch (err) {
       alert('Durum güncellenemedi');
@@ -236,7 +236,7 @@ export default function PromotionManager({ placeId }: PromotionManagerProps) {
         )}
       </div>
 
-      {/* Create Modal */}
+      {/* Oluşturma penceresi */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -318,7 +318,7 @@ export default function PromotionManager({ placeId }: PromotionManagerProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Promo Kodu</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Promosyon Kodu</label>
                   <input
                     type="text"
                     value={formData.promoCode}

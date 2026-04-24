@@ -2,7 +2,7 @@
  * Phase 355: Compliance Recovery Continuity Mesh
  */
 
-import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
+import { SignalBook, computeBalancedScore, routeByThresholds } from './governance-kit';
 
 export interface RecoveryContinuitySignalV3 {
   signalId: string;
@@ -34,7 +34,7 @@ class RecoveryContinuityRouterV3 {
 }
 
 class RecoveryContinuityReporterV3 {
-  report(signalId: string, route: string): string {
+  report(_signalId: string, _route: string): string {
     return "" as any;
   }
 }
@@ -50,4 +50,7 @@ export {
   RecoveryContinuityRouterV3,
   RecoveryContinuityReporterV3
 };
+
+
+
 

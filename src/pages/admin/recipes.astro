@@ -1,0 +1,278 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Yemek Tarifleri Yönetimi">
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-950">Yemek Tarifleri</h1>
+        <p class="text-sm text-slate-500 mt-1">Şanlıurfa yöresel tariflerini yönetin</p>
+      </div>
+      <button id="add-btn" class="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-500 transition-colors">
+        + Yeni Tarif
+      </button>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div id="recipe-list" class="divide-y divide-slate-100">
+        <p class="p-6 text-slate-500 text-sm text-center">Yükleniyor...</p>
+      </div>
+    </div>
+
+    <div id="form-modal" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/50 overflow-y-auto py-8">
+      <div class="w-full max-w-2xl mx-4 rounded-2xl bg-white shadow-xl">
+        <div class="flex items-center justify-between p-5 border-b">
+          <h2 id="form-title" class="text-lg font-bold text-slate-900">Yeni Tarif</h2>
+          <button id="close-modal" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+        </div>
+        <form id="recipe-form" class="p-5 space-y-4">
+          <input type="hidden" id="f-slug" name="slug" />
+          <div class="grid grid-cols-2 gap-4">
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-slate-700 mb-1">Tarif Adı *</label>
+              <input id="f-name" type="text" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">URL Slug *</label>
+              <input id="f-slug-input" type="text" required placeholder="urfa-kebabi" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Zorluk</label>
+              <select id="f-difficulty" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400">
+                <option>Kolay</option>
+                <option selected>Orta</option>
+                <option>Zor</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Hazırlık (dk)</label>
+              <input id="f-prep" type="number" min="0" value="0" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Pişirme (dk)</label>
+              <input id="f-cook" type="number" min="0" value="0" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Porsiyon</label>
+              <input id="f-servings" type="number" min="1" value="4" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Görsel URL</label>
+              <input id="f-image" type="text" placeholder="/images/..." class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
+            </div>
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-slate-700 mb-1">Kısa Açıklama</label>
+              <textarea id="f-desc" rows="2" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400"></textarea>
+            </div>
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-slate-700 mb-1">Malzemeler (her satıra bir malzeme)</label>
+              <textarea id="f-ingredients" rows="5" placeholder="500g kuzu kıyması&#10;1 soğan" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono focus:outline-none focus:border-amber-400"></textarea>
+            </div>
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-slate-700 mb-1">Yapılışı (her satıra bir adım)</label>
+              <textarea id="f-instructions" rows="5" placeholder="Kıymayı hazırlayın.&#10;Baharatları ekleyin." class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono focus:outline-none focus:border-amber-400"></textarea>
+            </div>
+            <div class="flex items-center gap-6">
+              <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input id="f-spicy" type="checkbox" class="rounded" /> Acılı
+              </label>
+              <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input id="f-vegetarian" type="checkbox" class="rounded" /> Vejetaryen
+              </label>
+              <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input id="f-featured" type="checkbox" class="rounded" /> Öne Çıkar
+              </label>
+            </div>
+          </div>
+          <p id="form-error" class="hidden rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700"></p>
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" id="cancel-btn" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">İptal</button>
+            <button type="submit" class="rounded-lg bg-amber-600 px-5 py-2 text-sm font-semibold text-white hover:bg-amber-500">Kaydet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let recipes: any[] = [];
+
+    function esc(str: string) {
+      const d = document.createElement('div');
+      d.textContent = str ?? '';
+      return d.textContent;
+    }
+
+    function makeRow(r: any) {
+      const row = document.createElement('div');
+      row.className = 'flex items-center justify-between p-4 hover:bg-slate-50';
+
+      // Left: image + info
+      const left = document.createElement('div');
+      left.className = 'flex items-center gap-4';
+
+      const thumb = document.createElement(r.cover_image ? 'img' : 'div');
+      thumb.className = 'w-12 h-12 rounded-lg object-cover shrink-0';
+      if (r.cover_image) {
+        (thumb as HTMLImageElement).src = r.cover_image;
+        (thumb as HTMLImageElement).alt = r.name;
+        thumb.className += ' bg-amber-100';
+      } else {
+        thumb.className += ' bg-amber-100 flex items-center justify-center text-2xl';
+        thumb.textContent = '🍽️';
+      }
+
+      const info = document.createElement('div');
+      const nameEl = document.createElement('p');
+      nameEl.className = 'font-semibold text-slate-800';
+      nameEl.textContent = r.name;
+      const meta = document.createElement('p');
+      meta.className = 'text-xs text-slate-500';
+      meta.textContent = `${r.slug} · ${r.difficulty || 'Orta'} · ${(r.prep_time||0)+(r.cook_time||0)} dk · ${r.view_count||0} görüntülenme`;
+      info.append(nameEl, meta);
+      left.append(thumb, info);
+
+      // Right: badges + actions
+      const right = document.createElement('div');
+      right.className = 'flex items-center gap-2';
+
+      if (r.is_featured) {
+        const badge = document.createElement('span');
+        badge.className = 'text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full';
+        badge.textContent = '⭐ Öne Çıkan';
+        right.append(badge);
+      }
+
+      const statusBadge = document.createElement('span');
+      statusBadge.className = `text-xs px-2 py-0.5 rounded-full ${r.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`;
+      statusBadge.textContent = r.status === 'published' ? 'Yayında' : 'Taslak';
+      right.append(statusBadge);
+
+      const actions = [
+        { label: 'Düzenle', cls: 'text-blue-600', fn: () => editRecipe(r.slug) },
+        { label: r.status === 'published' ? 'Taslağa Al' : 'Yayınla', cls: 'text-slate-500', fn: () => toggleStatus(r.id) },
+        { label: r.is_featured ? 'Öne Çıkarmayı Kaldır' : 'Öne Çıkar', cls: 'text-amber-600', fn: () => toggleFeatured(r.id) },
+        { label: 'Sil', cls: 'text-red-500', fn: () => deleteRecipe(r.id, r.name) },
+      ];
+
+      for (const a of actions) {
+        const btn = document.createElement('button');
+        btn.className = `text-xs ${a.cls} hover:underline px-2`;
+        btn.textContent = a.label;
+        btn.addEventListener('click', a.fn);
+        right.append(btn);
+      }
+
+      row.append(left, right);
+      return row;
+    }
+
+    async function loadRecipes() {
+      const res = await fetch('/api/admin/recipes');
+      const data = await res.json();
+      recipes = data.data?.recipes || [];
+      renderList();
+    }
+
+    function renderList() {
+      const el = document.getElementById('recipe-list')!;
+      el.replaceChildren();
+      if (!recipes.length) {
+        const p = document.createElement('p');
+        p.className = 'p-6 text-slate-500 text-sm text-center';
+        p.textContent = 'Henüz tarif yok.';
+        el.append(p);
+        return;
+      }
+      for (const r of recipes) el.append(makeRow(r));
+    }
+
+    function openModal(data: any = null) {
+      (document.getElementById('form-title') as HTMLElement).textContent = data ? 'Tarifi Düzenle' : 'Yeni Tarif';
+      (document.getElementById('f-slug') as HTMLInputElement).value = data?.slug || '';
+      (document.getElementById('f-name') as HTMLInputElement).value = data?.name || '';
+      (document.getElementById('f-slug-input') as HTMLInputElement).value = data?.slug || '';
+      (document.getElementById('f-difficulty') as HTMLSelectElement).value = data?.difficulty || 'Orta';
+      (document.getElementById('f-prep') as HTMLInputElement).value = data?.prep_time ?? 0;
+      (document.getElementById('f-cook') as HTMLInputElement).value = data?.cook_time ?? 0;
+      (document.getElementById('f-servings') as HTMLInputElement).value = data?.servings ?? 4;
+      (document.getElementById('f-image') as HTMLInputElement).value = data?.cover_image || '';
+      (document.getElementById('f-desc') as HTMLTextAreaElement).value = data?.description || '';
+      (document.getElementById('f-ingredients') as HTMLTextAreaElement).value = (data?.ingredients || []).join('\n');
+      (document.getElementById('f-instructions') as HTMLTextAreaElement).value = (data?.instructions || []).join('\n');
+      (document.getElementById('f-spicy') as HTMLInputElement).checked = data?.is_spicy || false;
+      (document.getElementById('f-vegetarian') as HTMLInputElement).checked = data?.is_vegetarian || false;
+      (document.getElementById('f-featured') as HTMLInputElement).checked = data?.is_featured || false;
+      (document.getElementById('form-error') as HTMLElement).classList.add('hidden');
+      document.getElementById('form-modal')!.classList.remove('hidden');
+    }
+
+    async function editRecipe(slug: string) {
+      const res = await fetch('/api/admin/recipes?slug=' + slug);
+      const data = await res.json();
+      openModal(data.data);
+    }
+
+    async function toggleStatus(id: string) {
+      await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'toggle_status', id }) });
+      loadRecipes();
+    }
+
+    async function toggleFeatured(id: string) {
+      await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'toggle_featured', id }) });
+      loadRecipes();
+    }
+
+    async function deleteRecipe(id: string, name: string) {
+      if (!confirm(`"${esc(name)}" tarifini silmek istediğinizden emin misiniz?`)) return;
+      await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'delete', id }) });
+      loadRecipes();
+    }
+
+    document.getElementById('add-btn')!.addEventListener('click', () => openModal());
+    document.getElementById('close-modal')!.addEventListener('click', () => document.getElementById('form-modal')!.classList.add('hidden'));
+    document.getElementById('cancel-btn')!.addEventListener('click', () => document.getElementById('form-modal')!.classList.add('hidden'));
+
+    document.getElementById('recipe-form')!.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('form-error') as HTMLElement;
+      errEl.classList.add('hidden');
+
+      const existingSlug = (document.getElementById('f-slug') as HTMLInputElement).value;
+      const newSlug = (document.getElementById('f-slug-input') as HTMLInputElement).value.trim().toLowerCase().replace(/\s+/g, '-');
+
+      const body = {
+        action: 'upsert',
+        slug: existingSlug || newSlug,
+        name: (document.getElementById('f-name') as HTMLInputElement).value.trim(),
+        description: (document.getElementById('f-desc') as HTMLTextAreaElement).value.trim(),
+        difficulty: (document.getElementById('f-difficulty') as HTMLSelectElement).value,
+        prep_time: parseInt((document.getElementById('f-prep') as HTMLInputElement).value) || 0,
+        cook_time: parseInt((document.getElementById('f-cook') as HTMLInputElement).value) || 0,
+        servings: parseInt((document.getElementById('f-servings') as HTMLInputElement).value) || 4,
+        cover_image: (document.getElementById('f-image') as HTMLInputElement).value.trim() || null,
+        ingredients: (document.getElementById('f-ingredients') as HTMLTextAreaElement).value.split('\n').map((s: string) => s.trim()).filter(Boolean),
+        instructions: (document.getElementById('f-instructions') as HTMLTextAreaElement).value.split('\n').map((s: string) => s.trim()).filter(Boolean),
+        is_spicy: (document.getElementById('f-spicy') as HTMLInputElement).checked,
+        is_vegetarian: (document.getElementById('f-vegetarian') as HTMLInputElement).checked,
+        is_featured: (document.getElementById('f-featured') as HTMLInputElement).checked,
+        status: 'published',
+      };
+
+      const res = await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const data = await res.json();
+
+      if (!res.ok) {
+        errEl.textContent = data.error?.message || 'Kaydetme hatası.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('form-modal')!.classList.add('hidden');
+      loadRecipes();
+    });
+
+    loadRecipes();
+  </script>
+</AdminLayout>

@@ -1,4 +1,5 @@
 ---
+import { actions, isInputError } from 'astro:actions';
 import Layout from '../../../layouts/Layout.astro';
 import { queryOne } from '../../../lib/postgres';
 
@@ -8,15 +9,27 @@ if (!user) {
 }
 
 let profile: any = null;
-let errorMessage: any = null;
-let successMessage: any = null;
-let errorMessages: any[] = [];
-let successMessages: any[] = [];
-let icons: any = {};
+let errorMessage: string | null = null;
+let successMessage: string | null = null;
+let errorMessages: Record<string, string> = {};
+let successMessages: Record<string, string> = {};
+let icons: Record<string, string> = {};
+const profileResult = Astro.getActionResult(actions.updateProfileSettings);
+const passwordResult = Astro.getActionResult(actions.changeAccountPassword);
+const profileInputErrors = isInputError(profileResult?.error) ? profileResult.error.fields : {};
+const passwordInputErrors = isInputError(passwordResult?.error) ? passwordResult.error.fields : {};
+const profileSubmitError =
+  !isInputError(profileResult?.error) && profileResult?.error?.message
+    ? profileResult.error.message
+    : null;
+const passwordSubmitError =
+  !isInputError(passwordResult?.error) && passwordResult?.error?.message
+    ? passwordResult.error.message
+    : null;
 const seo = {
-    title: 'Ayarlar - Şanlıurfa.com',
+    title: 'Ayarlar - Sanliurfa.com',
     description: 'Hesap ayarlarınızı yönetin',
-    noindex: true
+    noIndex: true
   };
 
 try {
@@ -26,19 +39,21 @@ try {
   errorMessage = Astro.url.searchParams.get('error');
   successMessage = Astro.url.searchParams.get('success');
 
-  const errorMessages: Record<string, string> = {
+  errorMessages = {
     'update_failed': 'Profil güncellenirken bir hata oluştu.',
+    'missing_fields': 'Lütfen zorunlu alanları doldurun.',
     'password_mismatch': 'Yeni şifreler eşleşmiyor.',
+    'password_too_short': 'Yeni şifre en az 6 karakter olmalıdır.',
     'wrong_password': 'Mevcut şifre yanlış.',
   };
 
-  const successMessages: Record<string, string> = {
+  successMessages = {
     'profile_updated': 'Profil bilgileriniz başarıyla güncellendi.',
     'password_changed': 'Şifreniz başarıyla değiştirildi.',
   };
 
   // SVG ikonlar
-  const icons = {
+  icons = {
     user: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
     lock: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
     save: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
@@ -107,6 +122,18 @@ try {
         </div>
       )}
 
+      {profileResult?.data?.success && (
+        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg mb-6">
+          {profileResult.data.message}
+        </div>
+      )}
+
+      {passwordResult?.data?.success && (
+        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg mb-6">
+          {passwordResult.data.message}
+        </div>
+      )}
+
       <div class="space-y-6">
         <!-- Profil Bilgileri -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -115,15 +142,27 @@ try {
             Profil Bilgileri
           </h2>
 
-          <form action="/api/profile/update" method="POST" class="space-y-4">
+          {profileSubmitError && (
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-4">
+              {profileSubmitError}
+            </div>
+          )}
+
+          <form action={actions.updateProfileSettings} method="POST" class="space-y-4">
             <div class="grid md:grid-cols-2 gap-4">
               <div>
                 <label for="full_name" class="label">Ad Soyad</label>
                 <input type="text" id="full_name" name="full_name" value={profile?.full_name || ''} class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                {profileInputErrors.full_name && (
+                  <p class="mt-2 text-sm text-red-600 dark:text-red-400">{profileInputErrors.full_name.join(', ')}</p>
+                )}
               </div>
               <div>
                 <label for="username" class="label">Kullanıcı Adı</label>
                 <input type="text" id="username" name="username" value={profile?.username || ''} class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                {profileInputErrors.username && (
+                  <p class="mt-2 text-sm text-red-600 dark:text-red-400">{profileInputErrors.username.join(', ')}</p>
+                )}
               </div>
             </div>
 
@@ -135,6 +174,9 @@ try {
             <div>
               <label for="bio" class="label">Hakkımda</label>
               <textarea id="bio" name="bio" rows="3" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none">{profile?.bio || ''}</textarea>
+              {profileInputErrors.bio && (
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{profileInputErrors.bio.join(', ')}</p>
+              )}
             </div>
 
             <div class="flex justify-end">
@@ -153,20 +195,35 @@ try {
             Şifre Değiştir
           </h2>
 
-          <form action="/api/profile/change-password" method="POST" class="space-y-4">
+          {passwordSubmitError && (
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-4">
+              {passwordSubmitError}
+            </div>
+          )}
+
+          <form action={actions.changeAccountPassword} method="POST" class="space-y-4">
             <div>
               <label for="current_password" class="label">Mevcut Şifre</label>
               <input type="password" id="current_password" name="current_password" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              {passwordInputErrors.current_password && (
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{passwordInputErrors.current_password.join(', ')}</p>
+              )}
             </div>
 
             <div>
               <label for="new_password" class="label">Yeni Şifre</label>
-              <input type="password" id="new_password" name="new_password" required minlength="8" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              <input type="password" id="new_password" name="new_password" required minlength="6" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              {passwordInputErrors.new_password && (
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{passwordInputErrors.new_password.join(', ')}</p>
+              )}
             </div>
 
             <div>
               <label for="confirm_password" class="label">Yeni Şifre (Tekrar)</label>
               <input type="password" id="confirm_password" name="confirm_password" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              {passwordInputErrors.confirm_password && (
+                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{passwordInputErrors.confirm_password.join(', ')}</p>
+              )}
             </div>
 
             <div class="flex justify-end">

@@ -5,8 +5,8 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
-DB_PASSWORD = "Urfa_2024_Secure!"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
+DB_PASSWORD = "CHANGE_ME_DB_PASSWORD"
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -67,7 +67,7 @@ print("   ✅ Uygulama yeniden başlatıldı")
 # 6. Test
 print("\n6️⃣ HTTP Test...")
 time.sleep(2)
-stdin, stdout, stderr = ssh.exec_command("curl -m 3 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")
+stdin, stdout, stderr = ssh.exec_command("curl -m 3 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/")
 code = stdout.read().decode().strip()
 if code == "200":
     print(f"   ✅ HTTP 200 - Site çalışıyor!")

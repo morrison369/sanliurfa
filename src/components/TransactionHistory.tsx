@@ -50,13 +50,13 @@ export function TransactionHistory() {
       }
 
       const res = await fetch(`/api/loyalty/transactions?${params}`);
-      if (!res.ok) throw new Error('Failed to fetch transactions');
+      if (!res.ok) throw new Error('İşlem geçmişi yüklenemedi.');
 
       const data = await res.json();
       setTransactions(data.data?.transactions || []);
       setPagination(data.data?.pagination || { limit: 20, offset: 0, total: 0 });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load transactions');
+      setError(err instanceof Error ? err.message : 'İşlem geçmişi yüklenemedi.');
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ export function TransactionHistory() {
 
   return (
     <div className="space-y-6">
-      {/* Type Filter */}
+      {/* Tür filtresi */}
       {types.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <button
@@ -141,7 +141,7 @@ export function TransactionHistory() {
         </div>
       )}
 
-      {/* Transactions List */}
+      {/* İşlem listesi */}
       {loading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
@@ -192,7 +192,7 @@ export function TransactionHistory() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Sayfalama */}
       {pageCount > 1 && (
         <div className="flex items-center justify-between">
           <button

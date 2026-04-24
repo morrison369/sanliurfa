@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Scheduled Tasks Sistemi - Otomatik işlemler
  * Daily stats, cache cleanup, webhook retry'ları, vb.
@@ -165,7 +164,7 @@ export function registerDefaultTasks(): void {
     handler: async () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      await calculateDailyStats(yesterday);
+      await calculateDailyStats(yesterday.toISOString().split('T')[0]);
     }
   });
 
@@ -187,8 +186,8 @@ export function registerDefaultTasks(): void {
     enabled: true,
     handler: async () => {
       const retried = await retryFailedDeliveries();
-      if (retried > 0) {
-        logger.debug('Webhook retry tamamlandı', { retriedCount: retried });
+      if (retried.retried > 0) {
+        logger.debug('Webhook retry tamamlandı', { retriedCount: retried.retried });
       }
     }
   });

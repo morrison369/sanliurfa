@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import {  useState, useEffect  } from 'react';
 import { realtimeManager } from '../lib/realtime/realtime-sse';
 
 interface MetricsData {

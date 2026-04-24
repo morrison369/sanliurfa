@@ -225,7 +225,7 @@ async function getContentBasedRecommendations(
  * Get trending items in user's area
  */
 async function getTrendingInArea(
-  profile: UserProfile,
+  _profile: UserProfile,
   limit: number
 ): Promise<Recommendation[]> {
   // Get trending places based on recent activity
@@ -262,7 +262,7 @@ async function getTrendingInArea(
  * Get popular recommendations (for new users)
  */
 async function getPopularRecommendations(
-  type: string,
+  _type: string,
   limit: number
 ): Promise<Recommendation[]> {
   const result = await query(
@@ -392,7 +392,7 @@ async function updateModelWeights(
  */
 export async function getSimilarItems(
   itemId: string,
-  itemType: 'place' | 'blog' | 'event',
+  _itemType: 'place' | 'blog' | 'event',
   limit: number = 5
 ): Promise<Recommendation[]> {
   // Get item details

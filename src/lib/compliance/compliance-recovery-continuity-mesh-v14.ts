@@ -2,7 +2,7 @@
  * Phase 427: Compliance Recovery Continuity Mesh V14
  */
 
-import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
+import { SignalBook, computeBalancedScore, routeByThresholds } from './governance-kit';
 
 export interface ComplianceRecoveryContinuitySignalV14 {
   signalId: string;
@@ -34,7 +34,7 @@ class ComplianceRecoveryContinuityRouterV14 {
 }
 
 class ComplianceRecoveryContinuityReporterV14 {
-  report(signalId: string, route: string): string {
+  report(_signalId: string, _route: string): string {
     return "" as any;
   }
 }
@@ -50,4 +50,7 @@ export {
   ComplianceRecoveryContinuityRouterV14,
   ComplianceRecoveryContinuityReporterV14
 };
+
+
+
 

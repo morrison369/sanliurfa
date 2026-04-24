@@ -6,7 +6,7 @@ import time
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 REMOTE_PATH = "/home/sanliur/public_html"
 
 ssh = paramiko.SSHClient()
@@ -50,7 +50,7 @@ time.sleep(3)
 # 4. Test
 print("\n🌐 Test:")
 time.sleep(3)
-stdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")
+stdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/")
 code = stdout.read().decode()
 print(f"HTTP: {code}")
 

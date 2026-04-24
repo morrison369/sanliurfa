@@ -1,4 +1,5 @@
 ---
+import Image from './Image.astro';
 const icons = {
   Search: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
   MapPin: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
@@ -6,12 +7,10 @@ const icons = {
   Users: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
 };
 
-;
-
 const heroFeatures = [
-  { icon: MapPin, label: '500+ Mekan', description: 'Onaylanmış mekan' },
-  { icon: Star, label: '4.8/5', description: 'Ortalama puan' },
-  { icon: Users, label: '50K+', description: 'Aktif kullanıcı' },
+  { icon: icons.MapPin, label: '500+ Mekan', description: 'Onaylanmış mekan' },
+  { icon: icons.Star, label: '4.8/5', description: 'Ortalama puan' },
+  { icon: icons.Users, label: '50K+', description: 'Aktif kullanıcı' },
 ];
 
 const popularSearches = [
@@ -27,11 +26,13 @@ const popularSearches = [
 <section class="relative min-h-[90vh] flex items-center overflow-hidden">
   <!-- Background Image with Overlay -->
   <div class="absolute inset-0">
-    <img 
+    <Image 
       src="/images/hero-gobeklitepe.jpg" 
       alt="Göbeklitepe - Tarihin Sıfır Noktası"
       class="w-full h-full object-cover"
       loading="eager"
+      width={1920}
+      height={1080}
     />
     <div class="absolute inset-0 bg-gradient-to-r from-urfa-900/95 via-urfa-900/80 to-urfa-900/40" />
   </div>
@@ -47,7 +48,7 @@ const popularSearches = [
       
       <!-- Main Heading -->
       <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-display font-bold text-white leading-tight">
-        Şanlıurfa'yı
+        Şanlıurfa’yı
         <span class="block text-urfa-200">Keşfetmenin</span>
         <span class="block">En İyi Yolu</span>
       </h1>
@@ -55,7 +56,7 @@ const popularSearches = [
       <!-- Subtitle -->
       <p class="mt-6 text-lg sm:text-xl text-urfa-100 max-w-2xl leading-relaxed">
         12.000 yıllık tarih, eşsiz lezzetler ve büyüleyici atmosfer. 
-        Şanlıurfa'nın en iyi mekanlarını, tarihi yerlerini ve gastronomik deneyimlerini keşfedin.
+        Şanlıurfa’nın en iyi mekanlarını, tarihi yerlerini ve gastronomik deneyimlerini keşfedin.
       </p>
       
       <!-- Search Box -->
@@ -108,7 +109,7 @@ const popularSearches = [
       {heroFeatures.map((feature) => (
         <div class="text-center sm:text-left">
           <div class="inline-flex items-center justify-center w-12 h-12 bg-white/10 rounded-xl mb-3">
-            <feature.icon className="w-6 h-6 text-white" />
+            <span set:html={feature.icon} class="text-white"></span>
           </div>
           <div class="text-2xl font-bold text-white">{feature.label}</div>
           <div class="text-sm text-urfa-200">{feature.description}</div>
@@ -127,3 +128,5 @@ const popularSearches = [
     </a>
   </div>
 </section>
+
+

@@ -10,6 +10,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 env:
   NODE_VERSION: '22'
   REGISTRY: ghcr.io
@@ -22,6 +25,7 @@ jobs:
   lint-and-format:
     name: 🔍 Lint & Format Check
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,9 +48,35 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Env gate (no dynamic import.meta.env)
+        run: npm run env:gate
+
+      - name: Runtime single-process gate
+        run: npm run runtime:single-process:gate
+
+      - name: Workflow standards verify
+        run: npm run workflow:standards:verify
+
+      - name: Append workflow standards summary
+        shell: bash
+        run: |
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Workflow Standards" >> "$GITHUB_STEP_SUMMARY"
+          cat docs/workflow-standards-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload workflow standards report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workflow-standards-report-${{ github.job }}
+          path: |
+            docs/workflow-standards-report.json
+            docs/workflow-standards-report.md
+
   security-audit:
     name: 🔒 Security Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -84,6 +114,7 @@ jobs:
   unit-tests:
     name: 🧪 Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:15-alpine
@@ -116,6 +147,10 @@ jobs:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
 
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         if: always()
@@ -130,6 +165,7 @@ jobs:
   build-and-analyze:
     name: 📦 Build & Bundle Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -165,6 +201,10 @@ jobs:
           du -sh dist/
           du -sh dist/client/_astro/*.js | sort -rh | head -10
 
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
+
   # ========================================
   # Lighthouse CI
   # ========================================
@@ -173,6 +213,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-analyze
     if: github.event_name == 'pull_request'
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -203,6 +244,7 @@ jobs:
     name: 🐳 Docker Build
     runs-on: ubuntu-latest
     needs: [lint-and-format, unit-tests]
+    timeout-minutes: 35
     permissions:
       contents: read
       packages: write
@@ -250,6 +292,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker-build]
     if: github.ref == 'refs/heads/develop'
+    timeout-minutes: 15
     environment:
       name: staging
       url: https://staging.sanliurfa.com
@@ -273,6 +316,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker-build, lighthouse]
     if: github.ref == 'refs/heads/main'
+    timeout-minutes: 15
     environment:
       name: production
       url: https://sanliurfa.com

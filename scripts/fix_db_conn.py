@@ -5,7 +5,7 @@ import time
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 def main():
     ssh = paramiko.SSHClient()
@@ -19,7 +19,7 @@ def main():
     print("Fixing database connection...")
     
     # Create .pgpass
-    pgpass = "localhost:5432:sanliur_sanliurfa:sanliur_sanliurfa:vyD7l4kGFtnw"
+    pgpass = "localhost:5432:sanliur_sanliurfa:sanliur_sanliurfa:CHANGE_ME_DB_PASSWORD"
     channel.send(f"echo '{pgpass}' > ~/.pgpass\n")
     time.sleep(1)
     channel.send("chmod 600 ~/.pgpass\n")
@@ -32,7 +32,7 @@ def main():
     # Create new env
     env = """SITE_URL=https://sanliurfa.com
 NODE_ENV=production
-PORT=6000
+PORT=4321
 HOST=127.0.0.1
 DATABASE_URL=postgresql://sanliur_sanliurfa@localhost:5432/sanliur_sanliurfa
 JWT_SECRET=change-this-secret-key-32chars-long

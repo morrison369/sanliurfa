@@ -1,48 +1,33 @@
-# Şanlıurfa.com Documentation
+# Şanlıurfa.com Dokümantasyon
 
-Welcome to the Şanlıurfa.com project documentation.
+Bu klasör, Şanlıurfa.com projesinin teknik operasyon, API, içerik ve yayın süreç dokümantasyonunu içerir.
 
-## Table of Contents
+## Önemli Dokümanlar
 
-- [Getting Started](./getting-started.md)
-- [API Reference](./api/README.md)
-- [Architecture](./architecture.md)
-- [Deployment](./deployment.md)
-- [Contributing](./contributing.md)
+- [DB-First Site Yönetimi](./DB_FIRST_SITE_MANAGEMENT.md)
+- [Detaylı Öneriler ve Uygulama Planı](./DETAYLI_PROJE_ONERILERI_VE_UYGULAMA_PLANI.md)
+- [Ücretsiz API Rehberi](./FREE_APIS_GUIDE.md)
+- [API Rehberi](./API_GUIDE.md)
+- [Güvenlik](./SECURITY.md)
+- [Deployment](./DEPLOYMENT.md)
+- [Isolated Runtime](./isolated-runtime.md)
+- [Content Cluster Quality Report](./content-cluster-quality-report.md)
+- [Content Programmatic Quality Report](./content-programmatic-quality-report.md)
+- [Image Moderation Report](./image-moderation-report.md)
+- [Problem JSON Report](./problem-json-report.json)
+- [Runtime Health Report](./runtime-health-report.md)
 
-## Project Overview
+## Proje Prensipleri
 
-Şanlıurfa.com is a comprehensive travel guide platform for Şanlıurfa city, featuring:
+- Site tek dil Türkçe çalışır.
+- Yönetilebilir içerikler DB-first modelinde admin panelden yönetilir.
+- Ücretli servis bağımlılığı yerine ücretsiz/açık alternatifler tercih edilir.
+- Geliştirme sürecinde port ve runtime izolasyonu korunur.
 
-- **Places**: Discover historical sites, restaurants, hotels
-- **Events**: Find local events and festivals
-- **Blog**: Read articles about Şanlıurfa culture and history
-- **User Features**: Reviews, favorites, collections
-- **Mobile App**: React Native mobile application
+## Temel Yığın
 
-## Quick Links
-
-- [Local Development Setup](./getting-started.md#local-development)
-- [API Documentation](./api/README.md)
-- [Environment Variables](./getting-started.md#environment-variables)
-- [Deployment Guide](./deployment.md)
-
-## Tech Stack
-
-- **Frontend**: Astro 6.1, React 19, Tailwind CSS
-- **Backend**: Node.js, Express (via Astro adapters)
-- **Database**: PostgreSQL 16
-- **Cache**: Redis 7
-- **Search**: Elasticsearch-like implementation
-- **Payments**: Stripe, iyzico
-- **Email**: SendGrid, AWS SES
-
-## Getting Help
-
-- [FAQ](./faq.md)
-- [Troubleshooting](./troubleshooting.md)
-- [GitHub Issues](https://github.com/sanliurfa/sanliurfa/issues)
-
----
-
-**License**: MIT
+- Frontend: Astro 6.x, React 19, Tailwind CSS
+- Backend: Astro SSR (Node adapter)
+- Veritabanı: PostgreSQL (standart port 5432)
+- Cache: Redis (standart port 6379)
+- Medya: Unsplash + Pexels API (slug bazlı yerel dosya + DB metadata)

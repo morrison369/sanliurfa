@@ -1,14 +1,47 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import LeaderboardsDisplay from "../../components/LeaderboardsDisplay";
+import { getSiteBranding } from "../../lib/site-branding";
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'Sıralamalar - Sanliurfa.com',
+  description: "Şanlıurfa topluluğunun en aktif ve başarılı kullanıcılarının sıralaması.",
+  keywords: ['sıralamalar', 'şanlıurfa kullanıcı sıralaması', 'topluluk puanı', 'başarılı üyeler'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/siralamalar',
+};
+
+const faqItems = [
+  { S: 'Sıralamalar nasıl hesaplanır?', C: "Sıralamalar yorum sayısı, puan, rozet ve topluluk katkıları baz alınarak hesaplanır." },
+  { S: 'Sıralamada yükselmek için ne yapmalıyım?', C: "Mekan değerlendirmesi yapın, fotoğraf yükleyin ve toplulukta aktif olun. Her aktivite puana katkı sağlar." },
+  { S: 'Sıralamalar ne sıklıkla güncelleniyor?', C: "Sıralamalar kullanıcı aktivitelerine bağlı olarak anlık güncellenir." },
+];
 ---
 
-<Layout title="Sıralamalar - Şanlıurfa.com">
+<Layout seo={seo}>
   <div class="max-w-4xl mx-auto px-4 py-8">
     <div class="mb-8">
       <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Sıralamalar</h1>
       <p class="text-gray-600 dark:text-gray-400">En aktif ve başarılı kullanıcılar</p>
     </div>
-    <LeaderboardsDisplay client:load />
+    <LeaderboardsDisplay client:visible={{ rootMargin: '120px' }} />
   </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Sıralamalar', item: `${baseUrl}/siralamalar` },
+    ],
+  })} is:inline />
 </Layout>

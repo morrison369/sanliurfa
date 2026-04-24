@@ -624,8 +624,7 @@ class RealtimeManager {
   }
 }
 
-export type { Notification };
-
+export { Notification };
 // Export singleton instance
 export const realtimeManager = new RealtimeManager();
 
@@ -637,4 +636,4 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export type { RealtimeData };
+export { RealtimeData };

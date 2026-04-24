@@ -51,7 +51,7 @@ export function routeByThresholds(
   return lowRoute;
 }
 
-export function routeToHandler(handlerId: string, signal: unknown): string {
+export function routeToHandler(handlerId: string, _signal: unknown): string {
   return `routed-to-${handlerId}`;
 }
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Send Campaign
  * Execute campaign sending to segment users
@@ -16,7 +15,7 @@ const sendSchema = {
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

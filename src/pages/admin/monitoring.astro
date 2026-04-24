@@ -2,9 +2,9 @@
 import Layout from '../../layouts/Layout.astro';
 
 const seo = {
-  title: 'Sistem Monitoring - Admin Panel',
+  title: 'Sistem İzleme - Yönetim Paneli',
   description: 'Sistem durumu ve loglar',
-  noindex: true,
+  noIndex: true,
 };
 ---
 <Layout seo={seo}>
@@ -12,7 +12,7 @@ const seo = {
     <div class="container mx-auto px-4">
       {/* Header */}
       <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Sistem Monitoring</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Sistem İzleme</h1>
         <p class="text-gray-500 mt-1">Gerçek zamanlı sistem durumu ve loglar</p>
       </div>
 
@@ -41,16 +41,59 @@ const seo = {
         <div class="bg-white rounded-xl shadow-sm p-6">
           <h2 class="text-lg font-bold text-gray-900 mb-4">Son 24 Saat Loglari</h2>
           <div id="errorStats" class="space-y-3">
-            <p class="text-gray-400">Yukleniyor...</p>
+            <p class="text-gray-400">Yükleniyor...</p>
           </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm p-6">
           <h2 class="text-lg font-bold text-gray-900 mb-4">İstek İstatistikleri</h2>
           <div id="requestStats" class="space-y-3">
-            <p class="text-gray-400">Yukleniyor...</p>
+            <p class="text-gray-400">Yükleniyor...</p>
           </div>
         </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h2 class="text-lg font-bold text-gray-900 mb-4">SLO Paneli (24 Saat)</h2>
+          <div id="sloPanel" class="space-y-3">
+            <p class="text-gray-400">Yükleniyor...</p>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h2 class="text-lg font-bold text-gray-900 mb-4">Drift & Alarm</h2>
+          <div class="mb-3 flex items-center gap-2">
+            <input id="maintenanceMinutes" class="border rounded px-2 py-1 text-xs w-28" value="60" />
+            <button id="maintenanceBtn" class="rounded border px-2 py-1 text-xs">Bakım Penceresi</button>
+            <button id="maintenanceClearBtn" class="rounded border px-2 py-1 text-xs">Bakımı Kaldır</button>
+          </div>
+          <div id="alarmPanel" class="space-y-3">
+            <p class="text-gray-400">Yükleniyor...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h2 class="text-lg font-bold text-gray-900 mb-4">Upstream Sağlık (Transport/Weather)</h2>
+          <div id="upstreamHealth" class="space-y-3">
+            <p class="text-gray-400">Yükleniyor...</p>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h2 class="text-lg font-bold text-gray-900 mb-4">Review Anti-Spam Sağlık</h2>
+          <div id="reviewHealth" class="space-y-3">
+            <p class="text-gray-400">Yükleniyor...</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Job Health (Retention / SLA / Report)</h2>
+        <div id="jobHealth" class="grid md:grid-cols-4 gap-3">
+          <p class="text-gray-400">Yükleniyor...</p>
+        </div>
+        <div id="cronTrend" class="mt-4"></div>
       </div>
 
       {/* Recent Errors */}
@@ -68,7 +111,7 @@ const seo = {
               </tr>
             </thead>
             <tbody id="recentErrors" class="divide-y">
-              <tr><td colspan="3" class="px-6 py-8 text-center text-gray-400">Yukleniyor...</td></tr>
+              <tr><td colspan="3" class="px-6 py-8 text-center text-gray-400">Yükleniyor...</td></tr>
             </tbody>
           </table>
         </div>
@@ -84,8 +127,33 @@ const seo = {
     </div>
   </div>
 
-  <script>
+  <script is:inline>
     let autoRefreshInterval;
+    const SLO_THRESHOLDS = {
+      apiP95Ms: { greenMax: 600, yellowMax: 900 },
+      errorRatio: { greenMax: 0.01, yellowMax: 0.03 },
+      cacheHitRatio: { greenMin: 0.7, yellowMin: 0.5 },
+      unreadDrift: { greenMax: 0, yellowMax: 3 },
+      reviewFlagged24h: { greenMax: 10, yellowMax: 40 },
+    };
+
+    function severityByMax(value, greenMax, yellowMax) {
+      if (value <= greenMax) return 'green';
+      if (value <= yellowMax) return 'yellow';
+      return 'red';
+    }
+
+    function severityByMin(value, greenMin, yellowMin) {
+      if (value >= greenMin) return 'green';
+      if (value >= yellowMin) return 'yellow';
+      return 'red';
+    }
+
+    function cardClassBySeverity(level) {
+      if (level === 'green') return 'bg-emerald-50 text-emerald-800';
+      if (level === 'yellow') return 'bg-amber-50 text-amber-800';
+      return 'bg-red-50 text-red-800';
+    }
 
     async function loadMonitoring() {
       try {
@@ -97,6 +165,12 @@ const seo = {
           updateErrorStats(data.errors);
           updateRequestStats(data.requests);
           updateRecentErrors(data.recentErrors);
+          updateUpstreamHealth(data.upstreamHealth);
+          updateReviewHealth(data.reviews);
+          updateJobHealth(data.jobs);
+          updateSloPanel(data.slo);
+          updateAlarmPanel(data.alarms);
+          updateCronHealth(data.cronHealth);
         }
       } catch (err) {
         console.error('Monitoring load error:', err);
@@ -184,6 +258,223 @@ const seo = {
       `).join('');
     }
 
+    function updateUpstreamHealth(upstream) {
+      const container = document.getElementById('upstreamHealth');
+      const transport = upstream?.transport || {};
+      const weather = upstream?.weather || {};
+      container.innerHTML = `
+        <div class="p-3 bg-gray-50 rounded-lg">
+          <div class="text-sm font-semibold text-gray-800">Transport</div>
+          <div class="text-xs text-gray-600">updatedAt: ${transport.updatedAt || '-'}</div>
+          <div class="text-xs text-gray-600">healthyProviders: ${transport.healthyProviders ?? '-'}</div>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-lg">
+          <div class="text-sm font-semibold text-gray-800">Hava Durumu</div>
+          <div class="text-xs text-gray-600">güncelleme: ${weather.updatedAt || '-'}</div>
+          <div class="text-xs text-gray-600">kaynak: ${weather.source || '-'}</div>
+          <div class="text-xs text-gray-600">cache: ${weather.fromCache ? 'evet' : 'hayır'}</div>
+        </div>
+      `;
+    }
+
+    function updateReviewHealth(reviews) {
+      const container = document.getElementById('reviewHealth');
+      const antiSpam = reviews?.antiSpam || {};
+      const statusCounts = reviews?.statusCounts || {};
+      container.innerHTML = `
+        <div class="p-3 bg-gray-50 rounded-lg">
+          <div class="text-sm font-semibold text-gray-800">Durum Dağılımı</div>
+          <div class="text-xs text-gray-600">aktif: ${statusCounts.active || 0} / beklemede: ${statusCounts.pending || 0}</div>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-lg">
+          <div class="text-sm font-semibold text-gray-800">Anti-Spam Eşikler</div>
+          <div class="text-xs text-gray-600">aktif: ${antiSpam.enabled ? 'evet' : 'hayır'}</div>
+          <div class="text-xs text-gray-600">otomatik moderasyon: ${antiSpam.autoModerateThreshold ?? '-'} / kesin blok: ${antiSpam.hardBlockThreshold ?? '-'}</div>
+        </div>
+      `;
+    }
+
+    function updateJobHealth(jobs) {
+      const container = document.getElementById('jobHealth');
+      const jobList = [
+        { key: 'socialRetention', label: 'Sosyal Retention' },
+        { key: 'placesSlaAlert', label: 'Mekan SLA Alarmı' },
+        { key: 'socialLifecycleReport', label: 'Sosyal Yaşam Döngüsü Raporu' },
+        { key: 'socialArchivePartitions', label: 'Arşiv Partitionları' },
+        { key: 'socialArchivePartitionsDaily', label: 'Günlük Arşiv Wrapper' },
+      ];
+      container.innerHTML = jobList.map((x) => {
+        const row = jobs?.[x.key] || null;
+        const updatedAt = row?.at || row?.generatedAt || row?.finishedAt || '-';
+        const ok = !!row?.success;
+        const stale = updatedAt !== '-' ? (Date.now() - new Date(updatedAt).getTime()) > 36 * 60 * 60 * 1000 : true;
+        const cls = !ok ? 'bg-red-50 text-red-800' : stale ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-800';
+        return `
+          <div class="p-3 rounded-lg ${cls}">
+            <div class="text-sm font-semibold">${x.label}</div>
+            <div class="text-xs">başarılı: ${ok ? 'evet' : 'hayır'}</div>
+            <div class="text-xs">stale: ${stale ? 'evet' : 'hayır'}</div>
+            <div class="text-xs">updatedAt: ${updatedAt}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateSloPanel(slo) {
+      const container = document.getElementById('sloPanel');
+      const p95 = Math.round(slo?.apiP95Ms || 0);
+      const errorRatio = Number(slo?.errorRatio || 0);
+      const cacheHitRatio = slo?.cacheHitRatio === null || slo?.cacheHitRatio === undefined ? null : Number(slo.cacheHitRatio);
+      const p95Severity = severityByMax(p95, SLO_THRESHOLDS.apiP95Ms.greenMax, SLO_THRESHOLDS.apiP95Ms.yellowMax);
+      const errorSeverity = severityByMax(
+        errorRatio,
+        SLO_THRESHOLDS.errorRatio.greenMax,
+        SLO_THRESHOLDS.errorRatio.yellowMax
+      );
+      const cacheSeverity =
+        cacheHitRatio === null
+          ? 'yellow'
+          : severityByMin(cacheHitRatio, SLO_THRESHOLDS.cacheHitRatio.greenMin, SLO_THRESHOLDS.cacheHitRatio.yellowMin);
+
+      container.innerHTML = `
+        <div class="p-3 rounded-lg ${cardClassBySeverity(p95Severity)}">
+          <div class="text-sm font-semibold">API p95</div>
+          <div class="text-xs">${p95} ms</div>
+          <div class="text-[11px]">hedef: ≤ ${SLO_THRESHOLDS.apiP95Ms.greenMax} ms</div>
+        </div>
+        <div class="p-3 rounded-lg ${cardClassBySeverity(errorSeverity)}">
+          <div class="text-sm font-semibold">Hata Oranı</div>
+          <div class="text-xs">${(errorRatio * 100).toFixed(2)}%</div>
+          <div class="text-[11px]">hedef: ≤ ${(SLO_THRESHOLDS.errorRatio.greenMax * 100).toFixed(2)}%</div>
+        </div>
+        <div class="p-3 rounded-lg ${cardClassBySeverity(cacheSeverity)}">
+          <div class="text-sm font-semibold">Önbellek İsabet Oranı</div>
+          <div class="text-xs">${
+            cacheHitRatio === null
+              ? '-'
+              : `${(cacheHitRatio * 100).toFixed(2)}%`
+          }</div>
+          <div class="text-[11px]">hedef: ≥ ${(SLO_THRESHOLDS.cacheHitRatio.greenMin * 100).toFixed(0)}%</div>
+        </div>
+      `;
+    }
+
+    function updateAlarmPanel(alarms) {
+      const container = document.getElementById('alarmPanel');
+      const unreadDrift = Number(alarms?.unreadDriftConversations || 0);
+      const reviewFlagged = Number(alarms?.reviewFlaggedLast24h || 0);
+      const cronFailureCount = Number(alarms?.cronFailureCount || 0);
+      const cronStaleCount = Number(alarms?.cronStaleCount || 0);
+      const driftSeverity = severityByMax(
+        unreadDrift,
+        SLO_THRESHOLDS.unreadDrift.greenMax,
+        SLO_THRESHOLDS.unreadDrift.yellowMax
+      );
+      const reviewSeverity = severityByMax(
+        reviewFlagged,
+        SLO_THRESHOLDS.reviewFlagged24h.greenMax,
+        SLO_THRESHOLDS.reviewFlagged24h.yellowMax
+      );
+      const cronFailureSeverity = severityByMax(cronFailureCount, 0, 1);
+      const cronStaleSeverity = severityByMax(cronStaleCount, 0, 2);
+      const ack = alarms?.acknowledged || {};
+      const suppressed = alarms?.suppressed || {};
+      container.innerHTML = `
+        <div class="p-3 rounded-lg ${cardClassBySeverity(driftSeverity)}">
+          <div class="text-sm font-semibold">Okunmamış Mesaj Sapması</div>
+          <div class="text-xs">${unreadDrift} konuşma</div>
+          <div class="text-[11px]">hedef: ≤ ${SLO_THRESHOLDS.unreadDrift.greenMax}</div>
+          <button class="ack-btn mt-2 rounded border border-current px-2 py-1 text-[11px]" data-key="unreadDriftConversations">Onayla</button>
+          <button class="snooze-btn mt-2 ml-1 rounded border border-current px-2 py-1 text-[11px]" data-key="unreadDriftConversations">30 dk ertele</button>
+          <div class="text-[10px] mt-1">${suppressed.unreadDriftConversations ? 'ertelendi' : ''}</div>
+          <div class="text-[10px] mt-1">${ack.unreadDrift?.at ? `onay: ${new Date(ack.unreadDrift.at).toLocaleString('tr-TR')}` : ''}</div>
+          <div class="text-[10px]">${ack.unreadDrift?.resolvedAt ? `çözüldü: ${new Date(ack.unreadDrift.resolvedAt).toLocaleString('tr-TR')}` : ''}</div>
+        </div>
+        <div class="p-3 rounded-lg ${cardClassBySeverity(reviewSeverity)}">
+          <div class="text-sm font-semibold">İşaretlenen Yorum (24s)</div>
+          <div class="text-xs">${reviewFlagged} olay</div>
+          <div class="text-[11px]">hedef: ≤ ${SLO_THRESHOLDS.reviewFlagged24h.greenMax}</div>
+          <button class="ack-btn mt-2 rounded border border-current px-2 py-1 text-[11px]" data-key="reviewFlaggedLast24h">Onayla</button>
+          <button class="snooze-btn mt-2 ml-1 rounded border border-current px-2 py-1 text-[11px]" data-key="reviewFlaggedLast24h">30 dk ertele</button>
+          <div class="text-[10px] mt-1">${suppressed.reviewFlaggedLast24h ? 'ertelendi' : ''}</div>
+          <div class="text-[10px] mt-1">${ack.reviewFlagged?.at ? `onay: ${new Date(ack.reviewFlagged.at).toLocaleString('tr-TR')}` : ''}</div>
+          <div class="text-[10px]">${ack.reviewFlagged?.resolvedAt ? `çözüldü: ${new Date(ack.reviewFlagged.resolvedAt).toLocaleString('tr-TR')}` : ''}</div>
+        </div>
+        <div class="p-3 rounded-lg ${cardClassBySeverity(cronFailureSeverity)}">
+          <div class="text-sm font-semibold">Cron Hataları</div>
+          <div class="text-xs">${cronFailureCount} görev</div>
+          <div class="text-[11px]">hedef: 0</div>
+          <button class="ack-btn mt-2 rounded border border-current px-2 py-1 text-[11px]" data-key="cronFailureCount">Onayla</button>
+          <button class="snooze-btn mt-2 ml-1 rounded border border-current px-2 py-1 text-[11px]" data-key="cronFailureCount">30 dk ertele</button>
+          <div class="text-[10px] mt-1">${suppressed.cronFailureCount ? 'ertelendi' : ''}</div>
+          <div class="text-[10px] mt-1">${ack.cronFailure?.at ? `onay: ${new Date(ack.cronFailure.at).toLocaleString('tr-TR')}` : ''}</div>
+          <div class="text-[10px]">${ack.cronFailure?.resolvedAt ? `çözüldü: ${new Date(ack.cronFailure.resolvedAt).toLocaleString('tr-TR')}` : ''}</div>
+        </div>
+        <div class="p-3 rounded-lg ${cardClassBySeverity(cronStaleSeverity)}">
+          <div class="text-sm font-semibold">Cron Gecikmesi</div>
+          <div class="text-xs">${cronStaleCount} görev</div>
+          <div class="text-[11px]">hedef: 0-2</div>
+          <button class="ack-btn mt-2 rounded border border-current px-2 py-1 text-[11px]" data-key="cronStaleCount">Onayla</button>
+          <button class="snooze-btn mt-2 ml-1 rounded border border-current px-2 py-1 text-[11px]" data-key="cronStaleCount">30 dk ertele</button>
+          <div class="text-[10px] mt-1">${suppressed.cronStaleCount ? 'ertelendi' : ''}</div>
+          <div class="text-[10px] mt-1">${ack.cronStale?.at ? `onay: ${new Date(ack.cronStale.at).toLocaleString('tr-TR')}` : ''}</div>
+          <div class="text-[10px]">${ack.cronStale?.resolvedAt ? `çözüldü: ${new Date(ack.cronStale.resolvedAt).toLocaleString('tr-TR')}` : ''}</div>
+        </div>
+      `;
+      container.querySelectorAll('.ack-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const alarmKey = btn.getAttribute('data-key');
+          await fetch('/api/admin/monitoring/ack', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ alarmKey }),
+          });
+          await loadMonitoring();
+        });
+      });
+      container.querySelectorAll('.snooze-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const alarmKey = btn.getAttribute('data-key');
+          await fetch('/api/admin/monitoring/ack', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ alarmKey, mode: 'snooze', snoozeMinutes: 30 }),
+          });
+          await loadMonitoring();
+        });
+      });
+    }
+
+    function updateCronHealth(cronHealth) {
+      const trend = document.getElementById('cronTrend');
+      const days = Array.isArray(cronHealth?.history) ? cronHealth.history : [];
+      if (!days.length) {
+        trend.innerHTML = '<p class="text-xs text-gray-400">7 günlük trend yok</p>';
+        return;
+      }
+      trend.innerHTML = `
+        <div class="text-xs font-semibold text-gray-700 mb-2">Cron Health Trend (7 gün)</div>
+        <div class="flex items-end gap-2">
+          ${days.map((d) => {
+            const total = Math.max(1, (d.green || 0) + (d.yellow || 0) + (d.red || 0));
+            const green = Math.round(((d.green || 0) / total) * 40);
+            const yellow = Math.round(((d.yellow || 0) / total) * 40);
+            const red = Math.round(((d.red || 0) / total) * 40);
+            return `
+              <div class="flex flex-col items-center gap-1">
+                <div class="w-6 h-12 rounded border border-gray-200 overflow-hidden flex flex-col justify-end">
+                  <div style="height:${green}px" class="bg-emerald-400"></div>
+                  <div style="height:${yellow}px" class="bg-amber-400"></div>
+                  <div style="height:${red}px" class="bg-red-400"></div>
+                </div>
+                <div class="text-[10px] text-gray-500">${d.date.slice(5)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
     function startAutoRefresh() {
       if (autoRefreshInterval) clearInterval(autoRefreshInterval);
       autoRefreshInterval = setInterval(loadMonitoring, 10000);
@@ -203,6 +494,23 @@ const seo = {
         stopAutoRefresh();
       }
     });
+    document.getElementById('maintenanceBtn').addEventListener('click', async () => {
+      const maintenanceMinutes = Number(document.getElementById('maintenanceMinutes').value || 60);
+      await fetch('/api/admin/monitoring/ack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'maintenance', maintenanceMinutes }),
+      });
+      await loadMonitoring();
+    });
+    document.getElementById('maintenanceClearBtn').addEventListener('click', async () => {
+      await fetch('/api/admin/monitoring/ack', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'clear', clearMaintenance: true }),
+      });
+      await loadMonitoring();
+    });
 
     // Initial load
     loadMonitoring();
@@ -212,3 +520,6 @@ const seo = {
     window.addEventListener('beforeunload', stopAutoRefresh);
   </script>
 </Layout>
+
+
+

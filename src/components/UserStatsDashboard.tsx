@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface UserStats {
   userId: string;
   reviewsWritten: number;
@@ -53,7 +52,7 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
       setIsLoading(true);
       setError(null);
 
-      // Fetch stats
+      // İstatistikleri al
       const statsResponse = await fetch(`/api/users/stats?userId=${userId}`);
       if (!statsResponse.ok) {
         throw new Error('İstatistikleri yüklenemedi');
@@ -61,7 +60,7 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
       const statsData = await statsResponse.json();
       setStats(statsData.data);
 
-      // Calculate contribution score (same formula as backend)
+      // Katkı puanını backend ile aynı formülle hesapla
       if (statsData.data) {
         let score = 0;
         score += statsData.data.reviewsWritten * 10;
@@ -73,14 +72,14 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
         setContributionScore(score);
       }
 
-      // Fetch badges
+      // Rozetleri al
       const badgesResponse = await fetch(`/api/users/stats/badges?userId=${userId}`);
       if (badgesResponse.ok) {
         const badgesData = await badgesResponse.json();
         setBadges(badgesData.data || []);
       }
 
-      // Calculate ranking percentile (mock for now, would come from API)
+      // Sıralama yüzdesi API hazır olana kadar geçici hesaplanır
       setRankingPercentile(Math.floor(Math.random() * 100) + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -111,9 +110,9 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
 
   return (
     <div className="space-y-6">
-      {/* Main Stats Grid */}
+      {/* Ana istatistik alanı */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Reviews */}
+        {/* Yorumlar */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600 dark:text-gray-400">Yorumlar</p>
@@ -127,7 +126,7 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
           )}
         </div>
 
-        {/* Followers */}
+        {/* Takipçiler */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600 dark:text-gray-400">Takipçiler</p>
@@ -139,7 +138,7 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
           </p>
         </div>
 
-        {/* Favorites */}
+        {/* Favoriler */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600 dark:text-gray-400">Favoriler</p>
@@ -153,10 +152,10 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
           )}
         </div>
 
-        {/* Level */}
+        {/* Seviye */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Level</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Seviye</p>
             <span className="text-lg">🎖️</span>
           </div>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.level}</p>
@@ -166,28 +165,28 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
         </div>
       </div>
 
-      {/* Secondary Stats */}
+      {/* İkincil istatistikler */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {/* Collections */}
+        {/* Koleksiyonlar */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Koleksiyonlar</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.collectionsCreated}</p>
         </div>
 
-        {/* Contribution Score */}
+        {/* Katkı puanı */}
         <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
           <p className="text-sm text-blue-600 dark:text-blue-400 mb-2">Katkı Puanı</p>
           <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{contributionScore}</p>
         </div>
 
-        {/* Ranking Percentile */}
+        {/* Sıralama yüzdesi */}
         <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
           <p className="text-sm text-purple-600 dark:text-purple-400 mb-2">Sıralama</p>
           <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">İlk %{rankingPercentile}</p>
         </div>
       </div>
 
-      {/* Activity Trends */}
+      {/* Aktivite eğilimleri */}
       {stats.trends && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Aktivite Eğilimi</h3>
@@ -212,7 +211,7 @@ export default function UserStatsDashboard({ userId }: UserStatsDashboardProps) 
         </div>
       )}
 
-      {/* Badges */}
+      {/* Rozetler */}
       {badges.length > 0 && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">

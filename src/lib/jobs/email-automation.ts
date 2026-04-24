@@ -49,7 +49,7 @@ export async function getPendingSequences(): Promise<EmailSequence[]> {
 /**
  * Process a single sequence
  */
-export async function processSequence(sequenceId: string): Promise<{ success: boolean; sent: number }> {
+export async function processSequence(_sequenceId: string): Promise<{ success: boolean; sent: number }> {
   return Promise.resolve({
     success: true,
     sent: 0
@@ -60,20 +60,20 @@ export async function processSequence(sequenceId: string): Promise<{ success: bo
  * Schedule sequence for recipient
  */
 export async function scheduleSequence(
-  sequenceId: string,
-  recipientId: string,
-  startAt?: Date
+  _sequenceId: string,
+  _recipientId: string,
+  _startAt?: Date
 ): Promise<{ scheduled: boolean; jobId?: string }> {
   return Promise.resolve({
     scheduled: true,
-    jobId: `seq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    jobId: `seq_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
   });
 }
 
 /**
  * Cancel scheduled sequence
  */
-export async function cancelScheduledSequence(jobId: string): Promise<boolean> {
+export async function cancelScheduledSequence(_jobId: string): Promise<boolean> {
   return Promise.resolve(true);
 }
 

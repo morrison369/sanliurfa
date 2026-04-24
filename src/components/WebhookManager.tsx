@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 
 interface Webhook {
   id: string;
@@ -10,11 +10,10 @@ interface Webhook {
 }
 
 interface WebhookManagerProps {
-  userId: string;
   token: string;
 }
 
-export default function WebhookManager({ userId, token }: WebhookManagerProps) {
+export default function WebhookManager({ token }: WebhookManagerProps) {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,18 +39,18 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
         }
       });
 
-      if (!res.ok) throw new Error('Failed to load webhooks');
+      if (!res.ok) throw new Error('Webhook listesi yüklenemedi.');
       const data = await res.json();
       setWebhooks(data.data || []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'Bilinmeyen hata oluştu.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
@@ -65,13 +64,13 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
         body: JSON.stringify(formData)
       });
 
-      if (!res.ok) throw new Error('Failed to create webhook');
+      if (!res.ok) throw new Error('Webhook oluşturulamadı.');
 
       setFormData({ event: '', url: '', secret: '' });
       setShowForm(false);
       await loadWebhooks();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'Bilinmeyen hata oluştu.');
     } finally {
       setLoading(false);
     }
@@ -88,10 +87,10 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
         }
       });
 
-      if (!res.ok) throw new Error('Failed to delete webhook');
+      if (!res.ok) throw new Error('Webhook silinemedi.');
       await loadWebhooks();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'Bilinmeyen hata oluştu.');
     }
   };
 
@@ -159,13 +158,13 @@ export default function WebhookManager({ userId, token }: WebhookManagerProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Secret (İsteğe Bağlı)
+              Gizli Anahtar (İsteğe Bağlı)
             </label>
             <input
               type="password"
               value={formData.secret}
               onChange={(e) => setFormData({ ...formData, secret: e.target.value })}
-              placeholder="Webhook imzalaması için secret"
+              placeholder="Webhook imzalaması için gizli anahtar"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

@@ -15,31 +15,31 @@ export const GET: APIRoute = async (context) => {
 
     // If userId parameter, get that user's collections
     if (userId) {
-      const collections = await getUserCollections(userId, limit ? parseInt(limit) : 50);
+      const result = await getUserCollections(userId, { limit: limit ? parseInt(limit) : 50 });
       return apiResponse({
         success: true,
-        data: collections,
-        count: collections.length
+        data: result.collections,
+        count: result.total
       }, HttpStatus.OK);
     }
 
     // If public flag, get public collections
     if (isPublic === 'true') {
-      const collections = await getPublicCollections(limit ? parseInt(limit) : 20, offset ? parseInt(offset) : 0);
+      const result = await getPublicCollections(limit ? parseInt(limit) : 20, offset ? parseInt(offset) : 0);
       return apiResponse({
         success: true,
-        data: collections,
-        count: collections.length
+        data: result.collections,
+        count: result.total
       }, HttpStatus.OK);
     }
 
     // Default: if authenticated, get user's collections
     if (context.locals.user) {
-      const collections = await getUserCollections(context.locals.user.id);
+      const result = await getUserCollections(context.locals.user.id);
       return apiResponse({
         success: true,
-        data: collections,
-        count: collections.length
+        data: result.collections,
+        count: result.total
       }, HttpStatus.OK);
     }
 
@@ -86,3 +86,4 @@ export const POST: APIRoute = async (context) => {
     return apiError('INTERNAL_ERROR', 'Failed to create collection', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
+

@@ -36,7 +36,7 @@ const TIERS: LoyaltyTier[] = [
 export async function awardPoints(
   userId: string,
   points: number,
-  reason: string
+  _reason: string
 ): Promise<void> {
   await query(
     `UPDATE users 

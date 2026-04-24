@@ -6,7 +6,7 @@ import sys
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 NVM_PREFIX = 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '
 
 def check():
@@ -23,12 +23,12 @@ def check():
     print("\n📊 PM2:", "✅ Running" if "sanliurfa" in pm2 else "❌ Not found")
     
     # Port
-    _, o, _ = ssh.exec_command("ss -tlnp 2>/dev/null | grep 6000 || netstat -tlnp 2>/dev/null | grep 6000")
+    _, o, _ = ssh.exec_command("ss -tlnp 2>/dev/null | grep 4321 || netstat -tlnp 2>/dev/null | grep 4321")
     port = o.read().decode().strip()
-    print("🔌 Port 6000:", "✅ Listening" if port else "❌ Not listening")
+    print("🔌 Port 4321:", "✅ Listening" if port else "❌ Not listening")
     
     # HTTP
-    _, o, _ = ssh.exec_command("curl -s --max-time 3 -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/ 2>/dev/null")
+    _, o, _ = ssh.exec_command("curl -s --max-time 3 -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/ 2>/dev/null")
     http = o.read().decode().strip()
     print("🌐 HTTP Status:", f"✅ {http}" if http == "200" else f"⚠️ {http}")
     

@@ -1,46 +1,77 @@
 ---
+
 import Layout from "../../layouts/Layout.astro";
 import TrendingPlaces from "../../components/TrendingPlaces";
 import UserRecommendations from "../../components/UserRecommendations";
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const { locals } = Astro;
-if (!locals.user) {
-  return redirect("/giris?redirect=/kesfet");
-}
+const isAuthenticated = Boolean(locals.user);
+
+const seo = {
+  title: 'Keşfet | Şanlıurfa Mekanlar ve Topluluk Önerileri',
+  description: 'Şanlıurfa\'nın trend mekanlarını ve topluluk önerilerini keşfedin. Popüler restoranlar, tarihi yerler ve yerel favoriteler.',
+  keywords: ['şanlıurfa keşfet', 'urfa popüler mekanlar', 'şanlıurfa trend', 'urfa topluluk önerileri', 'şanlıurfa yeni mekanlar'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/kesfet',
+};
+const faqItems = [
+  { S: "Şanlıurfa'da en popüler mekanlar hangileri?", C: 'Balıklıgöl çevresi, Göbeklitepe, Harran ve Halfeti bölgesi en çok ziyaret edilen rotalar arasındadır.' },
+  { S: 'Keşfet sayfasında hangi içerikler yer alır?', C: 'Kullanıcı puanlamasına göre öne çıkan mekanlar, güncel yorumlar ve topluluk önerileri listelenir.' },
+  { S: "Şanlıurfa'da yeni açılan mekanları nasıl takip edebilirim?", C: 'Keşfet sayfası düzenli olarak güncellenir; yeni eklenen mekanlar ve öneriler burada öne çıkar.' },
+];
 ---
 
-<Layout title="Kesfet - Sanliurfa.com">
+<Layout seo={seo}>
   <div class="max-w-6xl mx-auto px-4 py-8">
     <div class="mb-12">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Kesfet</h1>
-      <p class="text-gray-600 dark:text-gray-400">Yeni mekanlar ve kullanicilar bul</p>
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Keşfet</h1>
+      <p class="text-gray-600 dark:text-gray-400">Yeni mekanlar ve kullanıcılar bul</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div class="lg:col-span-2">
         <div class="mb-12">
-          <TrendingPlaces client:load />
+          <TrendingPlaces client:visible={{ rootMargin: '160px' }} />
         </div>
       </div>
 
       <div class="space-y-6">
         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-          <UserRecommendations client:load />
+          {isAuthenticated ? (
+            <UserRecommendations client:visible={{ rootMargin: '140px' }} />
+          ) : (
+            <div class="space-y-3">
+              <h2 class="text-lg font-bold text-gray-900 dark:text-white">Topluluk önerileri</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                Üye olduğunuzda Şanlıurfa’daki kullanıcıları takip edebilir, mesajlaşabilir ve eşleşme özelliğini kullanabilirsiniz.
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <a href="/kayit" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700">
+                  Ücretsiz Katıl
+                </a>
+                <a href="/topluluk" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-red-200 hover:text-red-700 dark:border-gray-700 dark:text-gray-200">
+                  Topluluğu İncele
+                </a>
+              </div>
+            </div>
+          )}
         </div>
 
         <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
-          <h3 class="font-bold text-gray-900 dark:text-white mb-4">Hizli Baglantilar</h3>
+          <h3 class="font-bold text-gray-900 dark:text-white mb-4">Hızlı Bağlantılar</h3>
           <div class="space-y-2">
             <a href="/siralamalar" class="block text-sm text-blue-600 hover:text-blue-700">
-              - Siralamalar
+              - Sıralamalar
             </a>
             <a href="/arama" class="block text-sm text-blue-600 hover:text-blue-700">
-              - Gelismis Arama
+              - Gelişmiş Arama
             </a>
-            <a href="/bildirimler" class="block text-sm text-blue-600 hover:text-blue-700">
+            <a href={isAuthenticated ? '/bildirimler' : '/giris?redirect=/bildirimler'} class="block text-sm text-blue-600 hover:text-blue-700">
               - Bildirimler
             </a>
-            <a href="/mesajlar" class="block text-sm text-blue-600 hover:text-blue-700">
+            <a href={isAuthenticated ? '/mesajlar' : '/giris?redirect=/mesajlar'} class="block text-sm text-blue-600 hover:text-blue-700">
               - Mesajlar
             </a>
           </div>
@@ -48,4 +79,30 @@ if (!locals.user) {
       </div>
     </div>
   </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Şanlıurfa\'yı Keşfet',
+    url: `${baseUrl}/kesfet`,
+    description: 'Şanlıurfa\'nın popüler mekanlarını, trend içeriklerini ve kişisel önerileri keşfedin.',
+    about: { '@type': 'City', name: 'Şanlıurfa', url: `${baseUrl}` },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Keşfet', item: `${baseUrl}/kesfet` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

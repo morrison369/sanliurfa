@@ -1,23 +1,53 @@
 ---
+
 import Layout from '../layouts/Layout.astro';
 import PricingPlans from '../components/PricingPlans';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'Fiyatlandırma - Şanlıurfa.com',
+  description: 'Şanlıurfa.com üyelik planları ve fiyatlandırma. Tüm özellikler faz 1 döneminde ücretsizdir.',
+  keywords: ['şanlıurfa.com fiyatlandırma', 'premium üyelik', 'abonelik planı', 'ücretsiz üyelik'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/fiyatlandirma',
+};
+
+const faqItems = [
+  {
+    S: 'Planı ne zaman değiştirebilirim?',
+    C: 'Faz 1 döneminde plan değişikliği gerekmiyor; tüm özellikler açık ve ücretsizdir.',
+  },
+  {
+    S: 'Ödeme yöntemi nedir?',
+    C: 'Faz 1 açık erişimde ücretlendirme aktif değildir.',
+  },
+  {
+    S: 'Aboneliği iptal edebilir miyim?',
+    C: 'Bu aşamada faturalama olmadığı için iptal süreci uygulanmaz.',
+  },
+  {
+    S: 'Ücretsiz plan limitlemesi var mı?',
+    C: 'Hayır. Faz 1 kapsamında tüm özellikler sınırsız ve ücretsizdir.',
+  },
+];
 ---
 
-<Layout title="Fiyatlandırma - Şanlıurfa">
+<Layout seo={seo}>
   <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="text-center mb-12">
         <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-          Şanlıurfa'nın Gücünü Keşfet
+          Şanlıurfa’nın Gücünü Keşfet
         </h1>
         <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Tüm kullanıcılar ücretsiz başlayabilir. Premium planlar daha fazla özellik açar.
+          Faz 1 açık erişim aktif. Tüm özellikler şu anda ücretsiz ve tam erişimle kullanılabilir.
         </p>
       </div>
 
       <!-- Pricing Plans Component -->
-      <PricingPlans client:load />
+      <PricingPlans client:visible={{ rootMargin: '160px' }} />
 
       <!-- FAQ Section -->
       <div class="mt-20">
@@ -31,7 +61,7 @@ import PricingPlans from '../components/PricingPlans';
               Planı ne zaman değiştirebilirim?
             </h3>
             <p class="text-gray-600 dark:text-gray-400">
-              İstediğiniz zaman plan yükseltebilir veya düşürebilirsiniz. Değişiklik hemen uygulanır.
+              Faz 1 döneminde plan yükseltme gerekmez, tüm özellikler açıktır.
             </p>
           </div>
 
@@ -40,7 +70,7 @@ import PricingPlans from '../components/PricingPlans';
               Ödeme yöntemi nedir?
             </h3>
             <p class="text-gray-600 dark:text-gray-400">
-              Tüm ödemeler güvenli şekilde işlenir. Kredi kartı ve başka yöntemleri kabul ederiz.
+              Faz 1 döneminde ödeme adımı bulunmaz.
             </p>
           </div>
 
@@ -49,7 +79,7 @@ import PricingPlans from '../components/PricingPlans';
               Aboneliği iptal edebilir miyim?
             </h3>
             <p class="text-gray-600 dark:text-gray-400">
-              Evet, dilediğiniz zaman aboneliği iptal edebilirsiniz. Ek ücret yoktur.
+              Faturalama aktif olmadığından iptal işlemi gerekmez.
             </p>
           </div>
 
@@ -58,11 +88,35 @@ import PricingPlans from '../components/PricingPlans';
               Ücretsiz plan limitlemesi var mı?
             </h3>
             <p class="text-gray-600 dark:text-gray-400">
-              Ücretsiz planda temel özelliklere erişebilirsiniz. Premium özellikler sınırlıdır.
+              Hayır. Faz 1 kapsamında tüm özellikler sınırsızdır.
             </p>
           </div>
         </div>
       </div>
     </div>
   </div>
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqItems.map((item) => ({
+        '@type': 'Question',
+        name: item.S,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.C,
+        },
+      })),
+    })}
+    is:inline
+  />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Fiyatlandırma', item: `${baseUrl}/fiyatlandirma` },
+    ],
+  })} is:inline />
 </Layout>

@@ -1,4 +1,6 @@
 ---
+import { getSiteBranding } from '../lib/site-branding';
+
 interface BreadcrumbItem {
   label: string;
   href?: string;
@@ -9,6 +11,21 @@ interface Props {
 }
 
 const { items } = Astro.props;
+const { baseUrl } = await getSiteBranding();
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+    ...items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 2,
+      name: item.label,
+      item: item.href ? `${baseUrl}${item.href}` : undefined,
+    })),
+  ],
+};
 ---
 
 <nav aria-label="Breadcrumb" class="py-4">
@@ -35,23 +52,4 @@ const { items } = Astro.props;
   </ol>
 </nav>
 
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {
-      "@type": "ListItem",
-      "position": 1,
-      "name": "Ana Sayfa",
-      "item": "https://sanliurfa.com"
-    }
-    {items.map((item, index) => `,{
-      "@type": "ListItem",
-      "position": ${index + 2},
-      "name": "${item.label}",
-      "item": "https://sanliurfa.com${item.href || ''}"
-    }`).join('')}
-  ]
-}
-</script>
+<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} is:inline />

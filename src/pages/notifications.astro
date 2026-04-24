@@ -10,10 +10,10 @@ if (!locals.user) {
 }
 ---
 
-<Layout title="Bildirimler | Şanlıurfa.com">
+<Layout title="Bildirimler | Sanliurfa.com">
   <div class="min-h-screen bg-gray-50">
     <div class="max-w-2xl mx-auto px-4 py-8">
-      <NotificationCenter client:load />
+      <NotificationCenter client:visible={{ rootMargin: '120px' }} />
     </div>
   </div>
 </Layout>

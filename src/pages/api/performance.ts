@@ -1,27 +1,28 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../lib/api';
 import { metricsCollector } from '../../lib/metrics';
 import { updatePoolStatus } from '../../lib/postgres';
 import { logger } from '../../lib/logging';
 
-// @ts-nocheck
 /**
  * GET /api/performance - Get detailed performance metrics (admin only)
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   // Only admin can access performance metrics
   if (!locals.isAdmin) {
-    logger.warn('Unauthorized performance metrics access attempt', { userId: locals.user?.id });
+    // Avoid noisy logs from anonymous probes during smoke/E2E runs.
+    if (locals.user?.id) {
+      logger.warn('Unauthorized performance metrics access attempt', { userId: locals.user.id });
+    }
     return apiError(ErrorCode.FORBIDDEN, 'Unauthorized', HttpStatus.FORBIDDEN, undefined, requestId);
   }
 
   try {
     // Update pool status before retrieving stats
-    updatePoolStatus();
+    updatePoolStatus('ok');
 
     const perfStats = metricsCollector.getPerformanceStats();
     const metrics = metricsCollector.getMetrics();

@@ -121,7 +121,7 @@ export class InventoryOptimizer {
   /**
    * Calculate safety stock
    */
-  calculateSafetyStock(sku: string, variability: number): number {
+  calculateSafetyStock(_sku: string, variability: number): number {
     return Math.ceil(50 * variability); // Simplified: base 50 units × variability factor
   }
 
@@ -143,7 +143,7 @@ export class InventoryOptimizer {
   /**
    * Analyze inventory turnover
    */
-  analyzeTurnover(sku: string, period: string): { turnover: number; daysInStock: number } {
+  analyzeTurnover(_sku: string, _period: string): { turnover: number; daysInStock: number } {
     const turnover = Math.random() * 10 + 1; // Simulated turnover rate
     const daysInStock = Math.round(365 / turnover);
 

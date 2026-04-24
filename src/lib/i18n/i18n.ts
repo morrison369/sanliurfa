@@ -164,7 +164,6 @@ export const TEXTS = {
 } as const;
 
 // Metin tipi
-type TextsType = typeof TEXTS;
 
 /**
  * Get Turkish text by dot-notation key

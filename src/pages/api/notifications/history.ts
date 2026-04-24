@@ -8,7 +8,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logger';
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     if (!locals.isAdmin) {
@@ -19,29 +19,30 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
     // Try notification_broadcasts table; fall back to notifications table if missing
-    let result;
-    try {
-      result = await query(
-        `SELECT nb.*, u.full_name as sender_name
-         FROM notification_broadcasts nb
-         LEFT JOIN users u ON u.id = nb.sent_by
-         ORDER BY nb.created_at DESC
-         LIMIT $1 OFFSET $2`,
-        [limit, offset]
-      );
-    } catch {
-      // Fallback: recent system notifications from notifications table
-      result = await query(
-        `SELECT id, title, message, created_at, type
-         FROM notifications
-         WHERE user_id IS NULL OR type = 'broadcast'
-         ORDER BY created_at DESC
-         LIMIT $1 OFFSET $2`,
-        [limit, offset]
-      );
-    }
+    const history = await (async () => {
+      try {
+        return await query(
+          `SELECT nb.*, u.full_name as sender_name
+           FROM notification_broadcasts nb
+           LEFT JOIN users u ON u.id = nb.sent_by
+           ORDER BY nb.created_at DESC
+           LIMIT $1 OFFSET $2`,
+          [limit, offset]
+        );
+      } catch {
+        // Fallback: recent system notifications from notifications table
+        return await query(
+          `SELECT id, title, message, created_at, type
+           FROM notifications
+           WHERE user_id IS NULL OR type = 'broadcast'
+           ORDER BY created_at DESC
+           LIMIT $1 OFFSET $2`,
+          [limit, offset]
+        );
+      }
+    })();
 
-    return apiResponse({ history: result.rows, limit, offset }, HttpStatus.OK, requestId);
+    return apiResponse({ history: history.rows, limit, offset }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Notification history failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(ErrorCode.INTERNAL_ERROR, 'Geçmiş alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);

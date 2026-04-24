@@ -97,8 +97,8 @@ async function getUserMetrics(timeRange: TimeRange): Promise<UserMetrics> {
     `SELECT 
       COUNT(*) as total_users,
       COUNT(*) FILTER (WHERE created_at >= $1 AND created_at <= $2) as new_users,
-      COUNT(*) FILTER (WHERE last_active >= $1) as active_users,
-      COUNT(*) FILTER (WHERE created_at < $1 AND last_active >= $1) as returning_users
+      COUNT(*) FILTER (WHERE last_login_at >= $1) as active_users,
+      COUNT(*) FILTER (WHERE created_at < $1 AND last_login_at >= $1) as returning_users
     FROM users
     WHERE deleted_at IS NULL`,
     [timeRange.start, timeRange.end]
@@ -153,7 +153,7 @@ async function getUserMetrics(timeRange: TimeRange): Promise<UserMetrics> {
   const churnResult = await query(
     `SELECT COUNT(*) as churned
     FROM users
-    WHERE last_active < $1 AND created_at < $1 AND deleted_at IS NULL`,
+    WHERE last_login_at < $1 AND created_at < $1 AND deleted_at IS NULL`,
     [new Date(timeRange.start.getTime() - 30 * 24 * 60 * 60 * 1000)]
   );
 
@@ -251,7 +251,7 @@ async function getContentMetrics(timeRange: TimeRange): Promise<ContentMetrics> 
       (SELECT COUNT(*) FROM reviews) as total_reviews,
       (SELECT COUNT(*) FROM reviews WHERE created_at >= $1 AND created_at <= $2) as new_reviews,
       (SELECT COUNT(*) FROM blog_comments) as total_comments,
-      (SELECT COUNT(*) FROM place_images) as total_photos,
+      (SELECT COUNT(*) FROM place_photos) as total_photos,
       (SELECT AVG(rating) FROM reviews) as avg_rating,
       (SELECT COUNT(*) FROM moderation_queue WHERE status = 'pending') as flagged_content`,
     [timeRange.start, timeRange.end]
@@ -390,7 +390,7 @@ export async function getRealtimeMetrics(): Promise<RealtimeMetrics> {
   const activeResult = await query(
     `SELECT COUNT(DISTINCT user_id) as active_users
     FROM user_sessions
-    WHERE last_active >= $1`,
+    WHERE last_activity_at >= $1`,
     [fiveMinutesAgo]
   );
 
@@ -398,7 +398,7 @@ export async function getRealtimeMetrics(): Promise<RealtimeMetrics> {
   const sessionsResult = await query(
     `SELECT COUNT(*) as active_sessions
     FROM user_sessions
-    WHERE last_active >= $1`,
+    WHERE last_activity_at >= $1`,
     [fiveMinutesAgo]
   );
 
@@ -425,7 +425,7 @@ export async function getRealtimeMetrics(): Promise<RealtimeMetrics> {
   const geoResult = await query(
     `SELECT country, COUNT(DISTINCT user_id) as users
     FROM user_sessions
-    WHERE last_active >= $1 AND country IS NOT NULL
+    WHERE last_activity_at >= $1 AND country IS NOT NULL
     GROUP BY country
     ORDER BY users DESC
     LIMIT 10`,
@@ -449,13 +449,6 @@ export async function getTimeSeriesData(
   timeRange: TimeRange,
   granularity: 'hour' | 'day' | 'week' | 'month' = 'day'
 ): Promise<Array<{ timestamp: Date; value: number }>> {
-  const intervalMap = {
-    hour: '1 hour',
-    day: '1 day',
-    week: '1 week',
-    month: '1 month',
-  };
-
   let query_str = '';
 
   switch (metric) {

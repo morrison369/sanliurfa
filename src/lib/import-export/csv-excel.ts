@@ -2,8 +2,6 @@
  * CSV/Excel import/export service
  */
 
-import { generateId } from '../utils';
-
 export type ExportFormat = 'csv' | 'xlsx' | 'json';
 
 export interface ImportResult {
@@ -150,3 +148,4 @@ export function generateCSVTemplate(type: 'places' | 'users' | 'events'): string
       return '';
   }
 }
+

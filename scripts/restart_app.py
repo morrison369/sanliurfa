@@ -3,7 +3,7 @@ import paramiko
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='BcqH7t5zNKfw', allow_agent=False, look_for_keys=False)
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', allow_agent=False, look_for_keys=False)
 
 print("🔄 Uygulama Yeniden Başlatılıyor")
 print("=" * 50)
@@ -23,7 +23,7 @@ print(stdout.read().decode())
 
 # Test
 print("\n🌐 HTTP Test:")
-stdin, stdout, stderr = ssh.exec_command('curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/')
+stdin, stdout, stderr = ssh.exec_command('curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:4321/')
 code = stdout.read().decode()
 if code == "200":
     print(f"✅ HTTP {code} - Site çalışıyor!")

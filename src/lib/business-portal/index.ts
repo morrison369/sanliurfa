@@ -54,16 +54,16 @@ export async function getBusinessDashboard(
   const stats = await query(
     `SELECT 
       (SELECT COUNT(*) FROM page_views WHERE path LIKE $1) as total_views,
-      (SELECT COUNT(*) FROM reviews WHERE place_id = $2 AND status = 'approved') as total_reviews,
-      (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE place_id = $2 AND status = 'approved') as avg_rating,
+      (SELECT COUNT(*) FROM reviews WHERE place_id = $2 AND status = 'active') as total_reviews,
+      (SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE place_id = $2 AND status = 'active') as avg_rating,
       (SELECT COUNT(*) FROM favorites WHERE place_id = $2) as total_favorites,
-      (SELECT COUNT(DISTINCT visitor_id) FROM page_views WHERE path LIKE $1 AND created_at >= NOW() - INTERVAL '30 days') as monthly_visitors`,
+      (SELECT COUNT(DISTINCT COALESCE(user_id::text, session_id)) FROM page_views WHERE path LIKE $1 AND created_at >= NOW() - INTERVAL '30 days') as monthly_visitors`,
     [`%/place/${placeId}%`, placeId]
   );
 
   const [recentReviews, topDays, demographics] = await Promise.all([
     query(
-      `SELECT r.*, u.name as user_name
+      `SELECT r.*, u.full_name as user_name
        FROM reviews r
        LEFT JOIN users u ON r.user_id = u.id
        WHERE r.place_id = $1

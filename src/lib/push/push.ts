@@ -35,7 +35,7 @@ export async function subscribeUser(
   ipAddress?: string
 ): Promise<boolean> {
   try {
-    const result = await pool.query(
+    await pool.query(
       `INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent, ip_address)
        VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (endpoint) DO UPDATE

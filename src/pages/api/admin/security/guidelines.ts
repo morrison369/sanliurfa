@@ -15,7 +15,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -28,17 +28,14 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const category = url.searchParams.get('category');
     const filter = url.searchParams.get('filter'); // 'all', 'unimplemented', 'critical'
 
-    let data;
-
-    if (filter === 'unimplemented') {
-      data = getUnimplementedGuidelines();
-    } else if (filter === 'critical') {
-      data = getCriticalItems();
-    } else if (category) {
-      data = getGuidelinesByCategory(category);
-    } else {
-      data = getAllGuidelines();
-    }
+    const data =
+      filter === 'unimplemented'
+        ? getUnimplementedGuidelines()
+        : filter === 'critical'
+          ? getCriticalItems()
+          : category
+            ? getGuidelinesByCategory(category)
+            : getAllGuidelines();
 
     const score = calculateSecurityScore();
 

@@ -6,8 +6,8 @@ lon: 38.7969
 category: "dini"
 type: "gol"
 tags: ["tarihi", "dini", "göl", "Hz. İbrahim", "efsane"]
-image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=1200"
-thumb: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400"
+image: "/images/places/balikligol.jpg"
+thumb: "/images/places/balikligol-thumb.jpg"
 address: "Balıklıgöl Mahallesi, Eski Şanlıurfa, Haliliye/Şanlıurfa"
 hours: "24 saat açık"
 price: "Ücretsiz"
@@ -20,7 +20,7 @@ reviewCount: 2847
 
 **Balıklıgöl**, Şanlıurfa'nın en önemli sembolü ve dünyanın en eski kutsal göllerinden biridir. Hz. İbrahim'in ateşe atıldığında düştüğü yer olarak bilinen bu göl, binlerce yıldır ziyaretçileri büyülemektedir.
 
-![Balıklıgöl](https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800)
+![Balıklıgöl](/images/places/balikligol.jpg)
 
 ## Tarihçe ve Efsane
 

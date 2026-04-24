@@ -2,9 +2,9 @@
 import Layout from '../../layouts/Layout.astro';
 
 const seo = {
-  title: 'Admin Dashboard - Şanlıurfa.com',
+  title: 'Yönetim Paneli - Sanliurfa.com',
   description: 'Yönetim paneli',
-  noindex: true,
+  noIndex: true,
 };
 ---
 
@@ -13,7 +13,7 @@ const seo = {
     <div class="container mx-auto px-4">
       {/* Header */}
       <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Yönetim Paneli</h1>
         <p class="text-gray-500 mt-1">Platform genel görünümü</p>
       </div>
 
@@ -106,11 +106,179 @@ const seo = {
                 <div class="text-sm text-gray-500">İçerik yönetimi</div>
               </div>
             </a>
+            <a href="/admin/site-content" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">🎛️</span>
+              <div>
+                <div class="font-medium text-gray-900">Site İçerik Yönetimi</div>
+                <div class="text-sm text-gray-500">Hero ve landing alanlarını DB'den yönet</div>
+              </div>
+            </a>
+            <a href="/admin/site-audit" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">🧾</span>
+              <div>
+                <div class="font-medium text-gray-900">Site Denetim Zaman Çizelgesi</div>
+                <div class="text-sm text-gray-500">İçerik ve sosyal abuse loglarını izle</div>
+              </div>
+            </a>
+            <a href="/admin/social-policies" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">🛡️</span>
+              <div>
+                <div class="font-medium text-gray-900">Sosyal Policy</div>
+                <div class="text-sm text-gray-500">Tenant bazlı abuse/rate limit yönetimi</div>
+              </div>
+            </a>
+            <a href="/admin/social-events" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">📡</span>
+              <div>
+                <div class="font-medium text-gray-900">Sosyal Olaylar</div>
+                <div class="text-sm text-gray-500">Canlı social event timeline</div>
+              </div>
+            </a>
+            <a href="/admin/social-risk" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">📈</span>
+              <div>
+                <div class="font-medium text-gray-900">Sosyal Risk</div>
+                <div class="text-sm text-gray-500">Trend ve anomali paneli</div>
+              </div>
+            </a>
+            <a href="/admin/export-tokens" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">🔐</span>
+              <div>
+                <div class="font-medium text-gray-900">Dışa Aktarma Tokenları</div>
+                <div class="text-sm text-gray-500">Token listeleme ve iptal</div>
+              </div>
+            </a>
+            <a href="/admin/places/lifecycle" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">🧭</span>
+              <div>
+                <div class="font-medium text-gray-900">Mekan Yaşam Döngüsü</div>
+                <div class="text-sm text-gray-500">Geçiş zaman akışı ve SLA paneli</div>
+              </div>
+            </a>
             <a href="/admin/tickets" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
               <span class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">🎫</span>
               <div>
                 <div class="font-medium text-gray-900">Destek Talepleri</div>
-                <div class="text-sm text-gray-500">Ticketları yönet</div>
+                <div class="text-sm text-gray-500">Destek kayıtlarını yönet</div>
+              </div>
+            </a>
+            <a href="/admin/ulasim" class="flex items-center gap-3 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors border border-blue-200">
+              <span class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">🚌</span>
+              <div>
+                <div class="font-medium text-gray-900">Otobüs Hatları</div>
+                <div class="text-sm text-gray-500">Hat ve sefer saati yönetimi</div>
+              </div>
+            </a>
+            <a href="/admin/pharmacies" class="flex items-center gap-3 p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors border border-green-200">
+              <span class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">💊</span>
+              <div>
+                <div class="font-medium text-gray-900">Nöbetçi Eczaneler</div>
+                <div class="text-sm text-gray-500">Günlük nöbet atama ve eczane yönetimi</div>
+              </div>
+            </a>
+            <a href="/admin/events" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">🎉</span>
+              <div>
+                <div class="font-medium text-gray-900">Etkinlikler</div>
+                <div class="text-sm text-gray-500">Etkinlik oluştur ve yönet</div>
+              </div>
+            </a>
+            <a href="/admin/historical-sites" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-stone-100 rounded-lg flex items-center justify-center">🏛️</span>
+              <div>
+                <div class="font-medium text-gray-900">Tarihi Yerler</div>
+                <div class="text-sm text-gray-500">Tarihi yer ekle ve düzenle</div>
+              </div>
+            </a>
+            <a href="/admin/recipes" class="flex items-center gap-3 p-3 rounded-lg bg-amber-50 hover:bg-amber-100 transition-colors border border-amber-200">
+              <span class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">🍽️</span>
+              <div>
+                <div class="font-medium text-gray-900">Yemek Tarifleri</div>
+                <div class="text-sm text-gray-500">Yöresel tarifleri yönet</div>
+              </div>
+            </a>
+            <a href="/admin/integrations" class="flex items-center gap-3 p-3 rounded-lg bg-yellow-50 hover:bg-yellow-100 transition-colors border border-yellow-200">
+              <span class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">🔑</span>
+              <div>
+                <div class="font-medium text-gray-900">Entegrasyon Ayarları</div>
+                <div class="text-sm text-gray-500">Resend API key, Google Analytics ID</div>
+              </div>
+            </a>
+            <a href="/admin/reviews" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">⭐</span>
+              <div>
+                <div class="font-medium text-gray-900">Yorumlar</div>
+                <div class="text-sm text-gray-500">Yorum onay ve moderasyon</div>
+              </div>
+            </a>
+            <a href="/admin/moderation" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">🚨</span>
+              <div>
+                <div class="font-medium text-gray-900">Moderasyon</div>
+                <div class="text-sm text-gray-500">İçerik şikâyetleri ve raporlar</div>
+              </div>
+            </a>
+            <a href="/admin/analytics" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">📊</span>
+              <div>
+                <div class="font-medium text-gray-900">Analitik</div>
+                <div class="text-sm text-gray-500">Trafik ve kullanım istatistikleri</div>
+              </div>
+            </a>
+            <a href="/admin/revenue" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">💰</span>
+              <div>
+                <div class="font-medium text-gray-900">Gelir</div>
+                <div class="text-sm text-gray-500">Abonelik ve ödeme raporları</div>
+              </div>
+            </a>
+            <a href="/admin/subscriptions" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">💳</span>
+              <div>
+                <div class="font-medium text-gray-900">Abonelikler</div>
+                <div class="text-sm text-gray-500">Premium üye yönetimi</div>
+              </div>
+            </a>
+            <a href="/admin/loyalty" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">🏆</span>
+              <div>
+                <div class="font-medium text-gray-900">Sadakat & Ödüller</div>
+                <div class="text-sm text-gray-500">Puan, rozet ve ödül yönetimi</div>
+              </div>
+            </a>
+            <a href="/admin/monitoring" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">🖥️</span>
+              <div>
+                <div class="font-medium text-gray-900">Sistem İzleme</div>
+                <div class="text-sm text-gray-500">Sunucu sağlığı ve performans</div>
+              </div>
+            </a>
+            <a href="/admin/webhooks" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">🔗</span>
+              <div>
+                <div class="font-medium text-gray-900">Webhooklar</div>
+                <div class="text-sm text-gray-500">Webhook abonelikleri ve loglar</div>
+              </div>
+            </a>
+            <a href="/admin/verifications" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">✅</span>
+              <div>
+                <div class="font-medium text-gray-900">Doğrulama Talepleri</div>
+                <div class="text-sm text-gray-500">İşletme doğrulama onayları</div>
+              </div>
+            </a>
+            <a href="/admin/audit-logs" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">📋</span>
+              <div>
+                <div class="font-medium text-gray-900">Denetim Logları</div>
+                <div class="text-sm text-gray-500">Admin işlem geçmişi</div>
+              </div>
+            </a>
+            <a href="/admin/import" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+              <span class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">📥</span>
+              <div>
+                <div class="font-medium text-gray-900">Veri Aktarımı</div>
+                <div class="text-sm text-gray-500">CSV/JSON toplu veri yükleme</div>
               </div>
             </a>
           </div>
@@ -163,7 +331,7 @@ const seo = {
       }
     }
 
-    function updateStats(stats) {
+    function updateStats(stats: any) {
       document.getElementById('totalUsers').textContent = stats.users.total;
       document.getElementById('newUsers').textContent = stats.users.new_this_month;
       document.getElementById('totalPlaces').textContent = stats.places.total;
@@ -174,12 +342,12 @@ const seo = {
       document.getElementById('newTickets').textContent = stats.tickets.new_today;
     }
 
-    function renderChart(dailyStats) {
+    function renderChart(dailyStats: any[]) {
       if (!dailyStats || dailyStats.length === 0) return;
 
-      const max = Math.max(...dailyStats.map(d => parseInt(d.views) || 0), 1);
+      const max = Math.max(...dailyStats.map((d: any) => parseInt(d.views) || 0), 1);
       
-      const chartHtml = dailyStats.map(day => {
+      const chartHtml = dailyStats.map((day: any) => {
         const height = ((parseInt(day.views) || 0) / max) * 100;
         const date = new Date(day.date);
         const label = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
@@ -199,8 +367,8 @@ const seo = {
       document.getElementById('chartContainer').innerHTML = chartHtml;
     }
 
-    function renderRecent(recent) {
-      const usersHtml = recent.users.map(user => `
+    function renderRecent(recent: any) {
+      const usersHtml = recent.users.map((user: any) => `
         <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
           <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-medium text-gray-600">
             ${user.name ? user.name.charAt(0).toUpperCase() : '?'}
@@ -216,7 +384,7 @@ const seo = {
       `).join('');
       document.getElementById('recentUsers').innerHTML = usersHtml || '<p class="text-gray-400 text-center">Kullanıcı yok</p>';
 
-      const placesHtml = recent.places.map(place => `
+      const placesHtml = recent.places.map((place: any) => `
         <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
           <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-xl">
             🏪
@@ -233,8 +401,8 @@ const seo = {
       document.getElementById('recentPlaces').innerHTML = placesHtml || '<p class="text-gray-400 text-center">İşletme yok</p>';
     }
 
-    function renderTopPlaces(places) {
-      const html = places.map((place, i) => `
+    function renderTopPlaces(places: any[]) {
+      const html = places.map((place: any, i: number) => `
         <div class="bg-gray-50 rounded-xl p-4 text-center">
           <div class="text-2xl mb-2">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</div>
           ${place.image_url ? 

@@ -6,8 +6,7 @@
 import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { getCache, setCache, deleteCache } from '../cache';
-import { batchInsert, fireAndForget } from '../performance/performance-optimizations';
-import crypto from 'crypto';
+import { batchInsert } from '../performance/performance-optimizations';
 
 // ===== HASHTAG FUNCTIONS =====
 
@@ -380,5 +379,4 @@ export async function getShareStats(contentType: string, contentId: string): Pro
     return null;
   }
 }
-
 

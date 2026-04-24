@@ -4,8 +4,8 @@
  * Abone sistemi, analytics, sosyal medya entegrasyonu için
  */
 
-import { queryMany } from '../postgres';
 import { logger } from '../logger';
+import { getPublicAppUrl } from '../public-app-url';
 
 export interface WebhookEvent {
   type: 'post.published' | 'post.updated' | 'post.deleted' | 'comment.approved';
@@ -18,6 +18,7 @@ export interface WebhookEvent {
  * Örnek: https://example.com/webhooks/blog
  */
 const REGISTERED_WEBHOOKS = process.env.BLOG_WEBHOOKS?.split(',') || [];
+const PUBLIC_APP_URL = getPublicAppUrl();
 
 /**
  * Yeni yazı webhook'unu gönder
@@ -40,7 +41,7 @@ export async function triggerPostPublished(
       categoryId,
       excerpt,
       featuredImage,
-      url: `https://sanliurfa.com/blog/${slug}`
+      url: `${PUBLIC_APP_URL}/blog/${slug}`
     }
   };
 
@@ -66,7 +67,7 @@ export async function triggerCommentApproved(
       postSlug,
       authorName,
       content,
-      url: `https://sanliurfa.com/blog/${postSlug}#comment-${commentId}`
+      url: `${PUBLIC_APP_URL}/blog/${postSlug}#comment-${commentId}`
     }
   };
 
@@ -152,7 +153,10 @@ async function sendWebhook(url: string, event: WebhookEvent, retries = 3): Promi
  * Webhook imzası oluştur (doğrulama için)
  */
 function generateSignature(event: WebhookEvent): string {
-  const secret = process.env.BLOG_WEBHOOK_SECRET || 'default-secret';
+  const secret = process.env.BLOG_WEBHOOK_SECRET;
+  if (!secret) {
+    throw new Error('BLOG_WEBHOOK_SECRET environment variable is required');
+  }
   const payload = JSON.stringify(event);
 
   // SHA256 hash oluştur
@@ -164,7 +168,7 @@ function generateSignature(event: WebhookEvent): string {
  * Webhook ID oluştur
  */
 function generateId(): string {
-  return `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `wh_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
 /**

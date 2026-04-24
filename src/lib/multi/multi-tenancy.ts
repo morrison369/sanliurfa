@@ -262,7 +262,7 @@ export class ComplianceManager {
   /**
    * Audit tenant access
    */
-  auditTenantAccess(tenantId: string): Record<string, any>[] {
+  auditTenantAccess(_tenantId: string): Record<string, any>[] {
     return [
       {
         timestamp: Date.now() - 3600000,

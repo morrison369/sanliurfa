@@ -1,6 +1,9 @@
 ---
+
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const { kategori } = Astro.params;
 
@@ -32,7 +35,15 @@ try {
 const seo = {
   title: `Şanlıurfa ${meta.name} | Konaklama Rehberi`,
   description: `Şanlıurfa'da en iyi ${meta.name.toLowerCase()}. Fiyatlar, adresler ve bilgiler.`,
+  keywords: ['şanlıurfa ' + meta.name.toLowerCase(), 'urfa ' + meta.name.toLowerCase(), meta.name + ' şanlıurfa', 'şanlıurfa konaklama'],
+  ogImage: '/images/hero/hero-hotel.webp',
+  canonical: `/konaklama/${kategori}`,
 };
+const faqItems = [
+  { S: `Şanlıurfa'da ${meta.name.toLowerCase()} seçenekleri nelerdir?`, C: `Şanlıurfa'da ${meta.name.toLowerCase()} için güncel liste ve değerlendirmeler rehberimizde yer almaktadır.` },
+  { S: `${meta.name} için hangi ilçeler öne çıkıyor?`, C: `Eyyübiye, Haliliye ve Karaköprü ilçeleri hizmet yoğunluğu açısından öne çıkan bölgeler arasındadır.` },
+  { S: `${meta.name} bilgilerini nasıl güncelleyebilirim?`, C: `Mekan sayfasına giriş yaparak güncelleme talebinde bulunabilir veya iletişim formu üzerinden bildirimde bulunabilirsiniz.` },
+];
 ---
 
 <Layout seo={seo}>
@@ -65,7 +76,7 @@ const seo = {
       {places.length > 0 ? (
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {places.map((place) => (
-            <a href={`/places/${place.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group">
+            <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group">
               <div class="h-44 bg-gradient-to-br from-amber-100 to-yellow-100 flex items-center justify-center">
                 <span class="text-5xl opacity-50">{meta.icon}</span>
               </div>
@@ -97,4 +108,42 @@ const seo = {
       )}
     </div>
   </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `Şanlıurfa ${meta.name}`,
+    description: `Şanlıurfa’da en iyi ${meta.name.toLowerCase()}. Fiyatlar, adresler ve bilgiler.`,
+    url: `${baseUrl}/konaklama/${kategori}`,
+    about: { '@type': 'City', name: 'Şanlıurfa' },
+    itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'LodgingBusiness',
+        name: p.name,
+        url: `${baseUrl}/isletme/${p.slug}`,
+        ...(p.address ? { address: p.address } : {}),
+        ...(p.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: p.rating, bestRating: 5 } } : {}),
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Konaklama', item: `${baseUrl}/konaklama` },
+      { '@type': 'ListItem', position: 3, name: meta.name, item: `${baseUrl}/konaklama/${kategori}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

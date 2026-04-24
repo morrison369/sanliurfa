@@ -29,11 +29,11 @@ export interface EnvVars {
 
 export function getEnv(): EnvVars {
   return {
-    PORT: process.env.PORT || '3000',
+    PORT: process.env.PORT || '4321',
     DATABASE_URL: process.env.DATABASE_URL || '',
     DATABASE_POOL_SIZE: process.env.DATABASE_POOL_SIZE,
     REDIS_URL: process.env.REDIS_URL,
-    JWT_SECRET: process.env.JWT_SECRET || 'default-secret',
+    JWT_SECRET: process.env.JWT_SECRET || '',
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
     BCRYPT_ROUNDS: process.env.BCRYPT_ROUNDS,
     ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,

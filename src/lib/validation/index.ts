@@ -8,7 +8,6 @@ import { z } from 'zod';
 // Common validators
 const uuidSchema = z.string().uuid();
 const emailSchema = z.string().email('Geçerli bir email adresi giriniz');
-const slugSchema = z.string().regex(/^[a-z0-9-]+$/, 'Sadece küçük harf, rakam ve tire kullanılabilir');
 
 // User schemas
 export const userRegistrationSchema = z.object({

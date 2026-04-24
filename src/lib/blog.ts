@@ -4,7 +4,9 @@
  */
 
 import { getCollection } from 'astro:content';
-import { query } from './postgres';
+import type { CollectionEntry } from 'astro:content';
+import { query as dbQuery } from './postgres';
+import { getPublicAppUrl } from './public-app-url';
 
 export interface BlogPost {
   id: string;
@@ -31,6 +33,32 @@ export interface BlogCategory {
   description?: string;
 }
 
+type BlogCollectionEntry = CollectionEntry<'blog'>;
+
+function resolveBlogSlug(post: BlogCollectionEntry): string {
+  return post.data.slug ?? post.id.replace(/\.md$/i, '');
+}
+
+function mapCollectionPost(post: BlogCollectionEntry): BlogPost {
+  return {
+    id: post.id,
+    slug: resolveBlogSlug(post),
+    title: post.data.title,
+    excerpt: post.data.excerpt,
+    content: post.body,
+    category: post.data.category,
+    tags: post.data.tags,
+    author: post.data.author,
+    authorAvatar: post.data.authorAvatar,
+    publishedAt: post.data.publishedAt,
+    updatedAt: post.data.updatedAt ?? post.data.updatedDate,
+    readingTime: post.data.readingTime,
+    image: post.data.image ?? post.data.heroImage ?? post.data.thumb,
+    featured: post.data.featured,
+    views: post.data.views,
+  };
+}
+
 /**
  * Get all blog posts
  */
@@ -38,24 +66,9 @@ export async function getAllPosts(): Promise<BlogPost[]> {
   const posts = await getCollection('blog');
   
   return posts
-    .map(post => ({
-      id: post.id,
-      slug: post.slug,
-      title: post.data.title,
-      excerpt: post.data.excerpt,
-      content: post.body,
-      category: post.data.category,
-      tags: post.data.tags || [],
-      author: post.data.author,
-      authorAvatar: post.data.authorAvatar,
-      publishedAt: new Date(post.data.publishedAt),
-      updatedAt: post.data.updatedAt ? new Date(post.data.updatedAt) : undefined,
-      readingTime: post.data.readingTime || 5,
-      image: post.data.image,
-      featured: post.data.featured || false,
-      views: post.data.views || 0,
-    }))
-    .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+    .filter((post: BlogCollectionEntry) => !post.data.draft)
+    .map(mapCollectionPost)
+    .sort((a: BlogPost, b: BlogPost) => b.publishedAt.getTime() - a.publishedAt.getTime());
 }
 
 /**
@@ -79,8 +92,9 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
  */
 export async function getPostsByCategory(category: string): Promise<BlogPost[]> {
   const posts = await getAllPosts();
+  const lowerCategory = (category || '').toLowerCase();
   return posts.filter(p => 
-    p.category.toLowerCase() === category.toLowerCase()
+    (p.category || '').toLowerCase() === lowerCategory
   );
 }
 
@@ -89,8 +103,9 @@ export async function getPostsByCategory(category: string): Promise<BlogPost[]> 
  */
 export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
   const posts = await getAllPosts();
+  const lowerTag = (tag || '').toLowerCase();
   return posts.filter(p => 
-    p.tags.some(t => t.toLowerCase() === tag.toLowerCase())
+    (p.tags || []).some(t => (t || '').toLowerCase() === lowerTag)
   );
 }
 
@@ -117,12 +132,12 @@ export async function getRelatedPosts(
  */
 export async function searchPosts(query: string): Promise<BlogPost[]> {
   const posts = await getAllPosts();
-  const lowerQuery = query.toLowerCase();
+  const lowerQuery = (query || '').toLowerCase();
   
   return posts.filter(p =>
-    p.title.toLowerCase().includes(lowerQuery) ||
-    p.excerpt.toLowerCase().includes(lowerQuery) ||
-    p.tags.some(t => t.toLowerCase().includes(lowerQuery))
+    (p.title || '').toLowerCase().includes(lowerQuery) ||
+    (p.excerpt || '').toLowerCase().includes(lowerQuery) ||
+    (p.tags || []).some(t => (t || '').toLowerCase().includes(lowerQuery))
   );
 }
 
@@ -179,21 +194,22 @@ export function calculateReadingTime(content: string): number {
 export async function generateRSS(): Promise<string> {
   const posts = await getAllPosts();
   const latest = posts[0];
+  const publicAppUrl = getPublicAppUrl();
   
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Şanlıurfa Rehberi Blog</title>
-    <link>https://sanliurfa.com/blog</link>
+    <link>${publicAppUrl}/blog</link>
     <description>Şanlıurfa hakkında en güncel bilgiler, rehberler ve öneriler</description>
     <language>tr</language>
     <lastBuildDate>${latest?.publishedAt.toUTCString() || new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="https://sanliurfa.com/blog/rss.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="${publicAppUrl}/blog/rss.xml" rel="self" type="application/rss+xml"/>
     ${posts.slice(0, 20).map(post => `
     <item>
       <title>${escapeXml(post.title)}</title>
-      <link>https://sanliurfa.com/blog/${post.slug}</link>
-      <guid isPermaLink="true">https://sanliurfa.com/blog/${post.slug}</guid>
+      <link>${publicAppUrl}/blog/${post.slug}</link>
+      <guid isPermaLink="true">${publicAppUrl}/blog/${post.slug}</guid>
       <pubDate>${post.publishedAt.toUTCString()}</pubDate>
       <description>${escapeXml(post.excerpt)}</description>
       ${post.tags.map(tag => `<category>${escapeXml(tag)}</category>`).join('')}
@@ -266,7 +282,7 @@ export async function getBlogComments(
 ): Promise<BlogComment[]> {
   const { approved = true, limit = 50, offset = 0 } = options;
   
-  const result = await query(
+  const result = await dbQuery(
     `SELECT * FROM blog_comments 
      WHERE post_id = $1 ${approved ? "AND status = 'approved'" : ''}
      ORDER BY created_at DESC
@@ -299,8 +315,8 @@ export async function addBlogComment(data: {
   content: string;
   parent_id?: string;
 }): Promise<BlogComment> {
-  const result = await query(
-    `INSERT INTO blog_comments (post_id, user_id, author_name, author_email, content, parent_id, status, created_at)
+  const result = await dbQuery(
+    `INSERT INTO blog_comments (post_id, user_id, author_name, author_email, content, parent_comment_id, status, created_at)
      VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW())
      RETURNING *`,
     [data.post_id, data.user_id || null, data.author_name, data.author_email, data.content, data.parent_id || null]
@@ -325,7 +341,7 @@ export async function addBlogComment(data: {
  * Approve a comment
  */
 export async function approveComment(commentId: string): Promise<void> {
-  await query(
+  await dbQuery(
     `UPDATE blog_comments SET status = 'approved', updated_at = NOW() WHERE id = $1`,
     [commentId]
   );
@@ -335,7 +351,7 @@ export async function approveComment(commentId: string): Promise<void> {
  * Reject a comment
  */
 export async function rejectComment(commentId: string): Promise<void> {
-  await query(
+  await dbQuery(
     `UPDATE blog_comments SET status = 'rejected', updated_at = NOW() WHERE id = $1`,
     [commentId]
   );
@@ -345,7 +361,7 @@ export async function rejectComment(commentId: string): Promise<void> {
  * Delete a comment
  */
 export async function deleteComment(commentId: string): Promise<void> {
-  await query(
+  await dbQuery(
     `DELETE FROM blog_comments WHERE id = $1`,
     [commentId]
   );
@@ -355,7 +371,7 @@ export async function deleteComment(commentId: string): Promise<void> {
  * Get pending comments (for admin)
  */
 export async function getPendingComments(limit = 20): Promise<BlogComment[]> {
-  const result = await query(
+  const result = await dbQuery(
     `SELECT * FROM blog_comments 
      WHERE status = 'pending'
      ORDER BY created_at DESC
@@ -395,7 +411,7 @@ export interface BlogPostRevision {
  * Get blog post revisions
  */
 export async function getBlogPostRevisions(postId: string): Promise<BlogPostRevision[]> {
-  const result = await query(
+  const result = await dbQuery(
     `SELECT r.*, u.full_name as editor_name
      FROM blog_post_revisions r
      LEFT JOIN users u ON r.editor_id = u.id
@@ -428,7 +444,7 @@ export async function createBlogPostRevision(data: {
   editor_id: string;
   change_summary?: string;
 }): Promise<BlogPostRevision> {
-  const result = await query(
+  const result = await dbQuery(
     `INSERT INTO blog_post_revisions (post_id, title, content, excerpt, editor_id, change_summary, created_at)
      VALUES ($1, $2, $3, $4, $5, $6, NOW())
      RETURNING *`,
@@ -454,7 +470,7 @@ export async function createBlogPostRevision(data: {
  */
 export async function restoreBlogPostRevision(revisionId: string, postId: string): Promise<void> {
   // Get the revision
-  const revisionResult = await query(
+  const revisionResult = await dbQuery(
     `SELECT * FROM blog_post_revisions WHERE id = $1`,
     [revisionId]
   );
@@ -466,7 +482,7 @@ export async function restoreBlogPostRevision(revisionId: string, postId: string
   const revision = revisionResult.rows[0];
   
   // Update the post with revision content
-  await query(
+  await dbQuery(
     `UPDATE blog_posts 
      SET title = $1, content = $2, excerpt = $3, updated_at = NOW()
      WHERE id = $4`,
@@ -478,7 +494,7 @@ export async function restoreBlogPostRevision(revisionId: string, postId: string
  * Delete old revisions (cleanup)
  */
 export async function deleteOldRevisions(postId: string, keepCount = 10): Promise<void> {
-  await query(
+  await dbQuery(
     `DELETE FROM blog_post_revisions 
      WHERE id NOT IN (
        SELECT id FROM blog_post_revisions 
@@ -513,7 +529,7 @@ export interface DBBlogPost {
  * Get blog post by slug (from database)
  */
 export async function getBlogPostBySlug(slug: string): Promise<DBBlogPost | null> {
-  const result = await query(
+  const result = await dbQuery(
     `SELECT * FROM blog_posts WHERE slug = $1`,
     [slug]
   );
@@ -552,7 +568,7 @@ export async function createBlogPost(data: {
   status?: 'draft' | 'published';
   cover_image?: string;
 }): Promise<DBBlogPost> {
-  const result = await query(
+  const result = await dbQuery(
     `INSERT INTO blog_posts (slug, title, excerpt, content, category, tags, author_id, status, cover_image, published_at, created_at, updated_at)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CASE WHEN $8 = 'published' THEN NOW() ELSE NULL END, NOW(), NOW())
      RETURNING *`,
@@ -632,7 +648,7 @@ export async function updateBlogPost(
   updates.push(`updated_at = NOW()`);
   values.push(slug); // For WHERE clause
   
-  const result = await query(
+  const result = await dbQuery(
     `UPDATE blog_posts SET ${updates.join(', ')} WHERE slug = $${paramCount} RETURNING *`,
     values
   );
@@ -661,7 +677,7 @@ export async function updateBlogPost(
  * Delete a blog post
  */
 export async function deleteBlogPost(slug: string): Promise<void> {
-  await query(
+  await dbQuery(
     `DELETE FROM blog_posts WHERE slug = $1`,
     [slug]
   );
@@ -695,7 +711,7 @@ export async function getAllDBPosts(options: {
   sql += ` ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT $${paramCount++} OFFSET $${paramCount++}`;
   params.push(limit, offset);
   
-  const result = await query(sql, params);
+  const result = await dbQuery(sql, params);
   
   return result.rows.map(row => ({
     id: row.id,
@@ -778,14 +794,14 @@ export async function getBlogPosts(options: {
   }
   
   // Get total count
-  const countResult = await query(countSql, countParams);
+  const countResult = await dbQuery(countSql, countParams);
   const total = parseInt(countResult.rows[0].total);
   
   // Add ordering and pagination
   sql += ` ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
   params.push(limit, offset);
   
-  const result = await query(sql, params);
+  const result = await dbQuery(sql, params);
   
   let posts = result.rows.map(row => ({
     id: row.id,
@@ -816,7 +832,7 @@ export async function getBlogPosts(options: {
  */
 export async function getRelatedDBPosts(postId: string, limit = 3): Promise<DBBlogPost[]> {
   // First get the current post to find category and tags
-  const currentResult = await query(
+  const currentResult = await dbQuery(
     `SELECT category, tags FROM blog_posts WHERE id = $1`,
     [postId]
   );
@@ -825,7 +841,7 @@ export async function getRelatedDBPosts(postId: string, limit = 3): Promise<DBBl
   
   const { category, tags } = currentResult.rows[0];
   
-  const result = await query(
+  const result = await dbQuery(
     `SELECT * FROM blog_posts 
      WHERE id != $1 
      AND status = 'published'
@@ -856,8 +872,8 @@ export async function getRelatedDBPosts(postId: string, limit = 3): Promise<DBBl
  * Increment post views
  */
 export async function incrementPostViews(postId: string): Promise<void> {
-  await query(
-    `UPDATE blog_posts SET views = COALESCE(views, 0) + 1 WHERE id = $1`,
+  await dbQuery(
+    `UPDATE blog_posts SET view_count = COALESCE(view_count, 0) + 1 WHERE id = $1`,
     [postId]
   );
 }
@@ -874,7 +890,7 @@ export async function searchBlogPosts(query: string, options: {
   const searchTerm = `%${query}%`;
   
   // Get total count
-  const countResult = await query(
+  const countResult = await dbQuery(
     `SELECT COUNT(*) as total FROM blog_posts 
      WHERE status = 'published'
      AND (title ILIKE $1 OR content ILIKE $1 OR excerpt ILIKE $1 OR category ILIKE $1 OR tags::text ILIKE $1)`,
@@ -884,7 +900,7 @@ export async function searchBlogPosts(query: string, options: {
   const total = parseInt(countResult.rows[0].total);
   
   // Get posts
-  const result = await query(
+  const result = await dbQuery(
     `SELECT * FROM blog_posts 
      WHERE status = 'published'
      AND (title ILIKE $1 OR content ILIKE $1 OR excerpt ILIKE $1 OR category ILIKE $1 OR tags::text ILIKE $1)
@@ -925,3 +941,4 @@ export async function getPosts(options: {
 } = {}): Promise<{ posts: DBBlogPost[]; total: number }> {
   return getBlogPosts({ ...options, status: 'published' });
 }
+

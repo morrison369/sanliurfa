@@ -3,7 +3,7 @@
  */
 
 import { logger } from '../logger';
-import { SignalBook, computeBalancedScore, scorePasses } from './governance-kit';
+import { SignalBook, computeBalancedScore } from './governance-kit';
 
 export interface AssuranceConfidenceSignal {
   signalId: string;
@@ -47,6 +47,9 @@ export {
   AssuranceConfidenceRoute,
   AssuranceConfidenceReporter
 };
+
+
+
 
 
 

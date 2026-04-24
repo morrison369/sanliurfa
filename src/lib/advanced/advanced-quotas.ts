@@ -33,7 +33,6 @@ export interface QuotaThreshold {
 export class TieredQuotaManager {
   private allocations = new Map<string, QuotaAllocation>();
   private tiers = new Map<SubscriptionTier, Record<string, QuotaLimit>>();
-  private allocationCount = 0;
 
   constructor() {
     this.initializeTiers();
@@ -197,7 +196,6 @@ export class TieredQuotaManager {
 
 export class QuotaAllocationManager {
   private pooledQuotas = new Map<string, number>();
-  private allocationCount = 0;
 
   /**
    * Create pool
@@ -244,7 +242,6 @@ export class QuotaAllocationManager {
 
 export class BurstController {
   private burst = new Map<string, { available: number; refillRate: number; lastRefill: number }>();
-  private burstCount = 0;
 
   /**
    * Initialize burst
@@ -322,7 +319,6 @@ export class BurstController {
 
 export class QuotaMetrics {
   private metrics = new Map<string, Record<string, any>>();
-  private metricsCount = 0;
 
   /**
    * Record metric

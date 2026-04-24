@@ -46,6 +46,16 @@ export const migration_070_review_sentiment = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE review_analytics ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE review_analytics ADD COLUMN IF NOT EXISTS helpful_count INT DEFAULT 0;
+      ALTER TABLE review_analytics ADD COLUMN IF NOT EXISTS unhelpful_count INT DEFAULT 0;
+      ALTER TABLE review_analytics ADD COLUMN IF NOT EXISTS sentiment_score DECIMAL(3, 2) DEFAULT 0.0;
+      ALTER TABLE review_analytics ADD COLUMN IF NOT EXISTS sentiment_label VARCHAR(50);
+      ALTER TABLE review_analytics ADD COLUMN IF NOT EXISTS quality_score DECIMAL(3, 2) DEFAULT 0.0;
+      ALTER TABLE review_analytics ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_review_analytics_place
       ON review_analytics(place_id, quality_score DESC)
     `);

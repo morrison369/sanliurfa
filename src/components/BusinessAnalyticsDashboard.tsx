@@ -58,7 +58,7 @@ export function BusinessAnalyticsDashboard() {
       ]);
 
       if (!analyticsRes.ok || !insightsRes.ok) {
-        throw new Error('Failed to fetch data');
+        throw new Error('Analitik verileri alınamadı');
       }
 
       const analyticsData = await analyticsRes.json();
@@ -76,7 +76,7 @@ export function BusinessAnalyticsDashboard() {
       setMetrics(analyticsData.data?.metrics || []);
       setInsights(insightsData.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load analytics');
+      setError(err instanceof Error ? err.message : 'Analitik verileri yüklenemedi');
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export function BusinessAnalyticsDashboard() {
         setInsights(insights.filter((i) => i.id !== insightId));
       }
     } catch (err) {
-      console.error('Failed to acknowledge insight', err);
+      console.error('İçgörü onaylanamadı', err);
     }
   };
 
@@ -125,6 +125,20 @@ export function BusinessAnalyticsDashboard() {
     reviews: (acc.reviews || 0) + (m.review_count || 0),
     followers: (acc.followers || 0) + (m.new_followers || 0)
   }), { views: 0, reviews: 0, followers: 0 });
+  const chartMax = Math.max(
+    1,
+    ...metrics.flatMap((m) => [
+      Number(m.view_count || 0),
+      Number(m.review_count || 0) * 20,
+      Number(m.new_followers || 0) * 20,
+    ]),
+  );
+  const chartPoints = metrics.map((m, index) => {
+    const x = metrics.length <= 1 ? 0 : (index / (metrics.length - 1)) * 100;
+    const y = 38 - (Number(m.view_count || 0) / chartMax) * 36;
+    return `${x.toFixed(2)},${y.toFixed(2)}`;
+  }).join(' ');
+  const recentMetrics = metrics.slice(-7);
 
   return (
     <div className="space-y-6">
@@ -217,13 +231,46 @@ export function BusinessAnalyticsDashboard() {
         </div>
       )}
 
-      {/* Daily Metrics Chart Placeholder */}
+      {/* Daily Metrics Chart */}
       {metrics.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold mb-4">Günlük Trendler</h3>
-          <div className="space-y-2 text-sm">
-            <p>📊 {metrics.length} günlük veri bulunmaktadır</p>
-            <p className="text-gray-500">Grafik görüntülemesi yakında eklenecek</p>
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+            <svg viewBox="0 0 100 42" role="img" aria-label="Günlük görüntülenme trendi" className="h-48 w-full overflow-visible">
+              <line x1="0" y1="40" x2="100" y2="40" stroke="#d1d5db" strokeWidth="0.5" />
+              <polyline
+                fill="none"
+                stroke="#2563eb"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+                points={chartPoints}
+              />
+              {metrics.map((m, index) => {
+                const x = metrics.length <= 1 ? 0 : (index / (metrics.length - 1)) * 100;
+                const y = 38 - (Number(m.view_count || 0) / chartMax) * 36;
+                return (
+                  <circle
+                    key={`${m.date}-${index}`}
+                    cx={x}
+                    cy={y}
+                    r="1.4"
+                    fill="#2563eb"
+                  >
+                    <title>{`${new Date(m.date).toLocaleDateString('tr-TR')}: ${m.view_count || 0} görüntülenme`}</title>
+                  </circle>
+                );
+              })}
+            </svg>
+            <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-gray-600 md:grid-cols-7">
+              {recentMetrics.map((m) => (
+                <div key={m.date} className="rounded border border-gray-200 bg-white px-2 py-2">
+                  <div className="font-semibold text-gray-900">{new Date(m.date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })}</div>
+                  <div>{m.view_count || 0} görüntülenme</div>
+                  <div>{m.review_count || 0} yorum</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import type { Migration } from '../lib/migrations/migration-system';
 
 const migration: Migration = {
-  version: 128,
+  version: '128',
   name: 'reservation_system',
   description: 'Add reservation system for restaurants and cafes',
   
@@ -32,13 +32,24 @@ const migration: Migration = {
       );
     `);
 
+    await client.query(`
+      ALTER TABLE reservations
+      ADD COLUMN IF NOT EXISTS place_id UUID,
+      ADD COLUMN IF NOT EXISTS reservation_date DATE,
+      ADD COLUMN IF NOT EXISTS reservation_time TIME,
+      ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending',
+      ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS confirmation_code VARCHAR(10),
+      ADD COLUMN IF NOT EXISTS party_size INTEGER;
+    `);
+
     // İndeksler
     await client.query(`
-      CREATE INDEX idx_reservations_place_id ON reservations(place_id);
-      CREATE INDEX idx_reservations_date ON reservations(reservation_date);
-      CREATE INDEX idx_reservations_status ON reservations(status);
-      CREATE INDEX idx_reservations_customer_phone ON reservations(customer_phone);
-      CREATE INDEX idx_reservations_confirmation_code ON reservations(confirmation_code);
+      CREATE INDEX IF NOT EXISTS idx_reservations_place_id ON reservations(place_id);
+      CREATE INDEX IF NOT EXISTS idx_reservations_date ON reservations(reservation_date);
+      CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status);
+      CREATE INDEX IF NOT EXISTS idx_reservations_customer_phone ON reservations(customer_phone);
+      CREATE INDEX IF NOT EXISTS idx_reservations_confirmation_code ON reservations(confirmation_code);
     `);
 
     // Places tablosuna rezervasyon alma özelliği ekle
@@ -87,9 +98,14 @@ const migration: Migration = {
 
     // Rezervasyon bildirim ayarları
     await client.query(`
-      ALTER TABLE email_preferences
-      ADD COLUMN IF NOT EXISTS reservation_notifications BOOLEAN DEFAULT true,
-      ADD COLUMN IF NOT EXISTS daily_reservation_summary BOOLEAN DEFAULT true;
+      DO $$
+      BEGIN
+        IF to_regclass('public.email_preferences') IS NOT NULL THEN
+          ALTER TABLE email_preferences
+          ADD COLUMN IF NOT EXISTS reservation_notifications BOOLEAN DEFAULT true,
+          ADD COLUMN IF NOT EXISTS daily_reservation_summary BOOLEAN DEFAULT true;
+        END IF;
+      END $$;
     `);
 
     // Rezervasyon istatistikleri görünümü
@@ -133,3 +149,4 @@ const migration: Migration = {
 };
 
 export default migration;
+

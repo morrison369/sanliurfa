@@ -49,14 +49,11 @@ export interface CursorPosition {
 export class PresenceManager {
   private presenceMap = new Map<string, UserPresence>();
   private locationPresence = new Map<string, Set<string>>();
-  private presenceCount = 0;
 
   /**
    * Set user presence
    */
   setUserPresence(userId: string, presence: Partial<UserPresence>): UserPresence {
-    const existing = this.presenceMap.get(userId);
-
     const userPresence: UserPresence = {
       userId,
       status: presence.status || 'online',

@@ -5,6 +5,84 @@
 import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 
+export type AdminUserStatusAction = 'activate' | 'suspend' | 'delete';
+
+const ADMIN_USER_STATUS_MAP: Record<AdminUserStatusAction, string> = {
+  activate: 'active',
+  suspend: 'suspended',
+  delete: 'deleted',
+};
+
+export function normalizeAdminUserStatusAction(action: string): AdminUserStatusAction {
+  if (action === 'activate' || action === 'suspend' || action === 'delete') {
+    return action;
+  }
+
+  throw new Error('Geçersiz kullanıcı işlemi.');
+}
+
+export async function updateAdminUserStatus(
+  userId: string,
+  adminId: string,
+  action: AdminUserStatusAction,
+): Promise<{ success: true; action: AdminUserStatusAction; count: number; message: string }> {
+  if (!userId) {
+    throw new Error('Kullanıcı bilgisi eksik.');
+  }
+
+  if (userId === adminId) {
+    throw new Error('Kendi hesabınız üzerinde bu işlemi yapamazsınız.');
+  }
+
+  const status = ADMIN_USER_STATUS_MAP[action];
+  const result = await queryOne<{ id: string }>(
+    `UPDATE users SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING id`,
+    [status, userId],
+  );
+
+  if (!result) {
+    throw new Error('Kullanıcı bulunamadı.');
+  }
+
+  await logAdminAction(adminId, userId, `user_${action}`, { status });
+
+  return {
+    success: true,
+    action,
+    count: 1,
+    message: 'Kullanıcı işlemi tamamlandı.',
+  };
+}
+
+export async function updateAdminUsersStatusBulk(
+  userIds: string[],
+  adminId: string,
+  action: AdminUserStatusAction,
+): Promise<{ success: true; action: AdminUserStatusAction; count: number; skippedSelf: boolean }> {
+  const uniqueUserIds = [...new Set(userIds.filter(Boolean))].filter(id => id !== adminId);
+
+  if (uniqueUserIds.length === 0) {
+    throw new Error('İşlem yapılacak kullanıcı bulunamadı.');
+  }
+
+  const status = ADMIN_USER_STATUS_MAP[action];
+  const result = await queryMany<{ id: string }>(
+    `UPDATE users SET status = $1, updated_at = NOW() WHERE id = ANY($2::uuid[]) RETURNING id`,
+    [status, uniqueUserIds],
+  );
+
+  await Promise.all(
+    result.map(user => logAdminAction(adminId, user.id, `bulk_user_${action}`, { status })),
+  );
+
+  return {
+    success: true,
+    action,
+    count: result.length,
+    skippedSelf: uniqueUserIds.length !== userIds.filter(Boolean).length,
+  };
+}
+
 export async function getAllUsers(limit: number = 50, offset: number = 0, searchQuery?: string): Promise<any[]> {
   try {
     let query = `

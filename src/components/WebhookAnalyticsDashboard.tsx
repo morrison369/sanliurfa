@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface WebhookMetrics {
   totalWebhooks: number;
   totalEvents: number;
@@ -25,7 +24,7 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
 
   useEffect(() => {
     loadMetrics();
-    const interval = setInterval(loadMetrics, 30000); // Refresh every 30 seconds
+    const interval = setInterval(loadMetrics, 30000); // Her 30 saniyede yenile.
     return () => clearInterval(interval);
   }, []);
 
@@ -37,12 +36,12 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
         }
       });
 
-      if (!res.ok) throw new Error('Failed to load metrics');
+      if (!res.ok) throw new Error('Webhook metrikleri yüklenemedi.');
       const data = await res.json();
       setMetrics(data.data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'Bilinmeyen hata oluştu.');
     } finally {
       setLoading(false);
     }
@@ -55,7 +54,7 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
   if (error || !metrics) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-700">{error || 'Failed to load metrics'}</p>
+        <p className="text-red-700">{error || 'Webhook metrikleri yüklenemedi.'}</p>
       </div>
     );
   }
@@ -78,10 +77,10 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
         </button>
       </div>
 
-      {/* Overview Stats */}
+      {/* Genel istatistikler */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg shadow-md p-4">
-          <p className="text-gray-600 text-sm">Toplam Webhooks</p>
+          <p className="text-gray-600 text-sm">Toplam Webhook</p>
           <p className="text-3xl font-bold text-gray-900">{metrics.totalWebhooks}</p>
         </div>
 
@@ -108,7 +107,7 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Sekmeler */}
       <div className="bg-white rounded-lg shadow-md">
         <div className="flex border-b">
           {(['overview', 'events', 'failed'] as const).map(tab => (

@@ -10,7 +10,7 @@ interface TwoFactorSetupProps {
   onSetupComplete?: () => void;
 }
 
-export function TwoFactorSetup({ userId, onSetupComplete }: TwoFactorSetupProps) {
+export function TwoFactorSetup({ userId: _userId, onSetupComplete }: TwoFactorSetupProps) {
   const [step, setStep] = useState<'method-select' | 'setup' | 'verify'>('method-select');
   const [methodType, setMethodType] = useState<'totp' | 'email' | 'sms'>('totp');
   const [methodId, setMethodId] = useState('');

@@ -36,7 +36,6 @@ export class JobQueue {
   private jobs = new Map<string, Job>();
   private queue: Job[] = [];
   private handlers = new Map<string, (payload: any) => Promise<any>>();
-  private results = new Map<string, JobResult>();
 
   /**
    * Register handler for job type
@@ -50,7 +49,7 @@ export class JobQueue {
    * Enqueue job
    */
   enqueue(type: string, payload: any, options?: { priority?: JobPriority; delay?: number; maxAttempts?: number }): string {
-    const jobId = 'job-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const jobId = 'job-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
 
     const job: Job = {
       id: jobId,
@@ -142,7 +141,7 @@ export class JobQueue {
   /**
    * Complete job
    */
-  completeJob(jobId: string, output?: any): void {
+  completeJob(jobId: string, _output?: any): void {
     const job = this.jobs.get(jobId);
     if (job) {
       job.status = 'completed';
@@ -152,7 +151,7 @@ export class JobQueue {
   /**
    * Fail job
    */
-  failJob(jobId: string, error: string): void {
+  failJob(jobId: string, _error: string): void {
     const job = this.jobs.get(jobId);
     if (job) {
       job.attempts++;
@@ -230,14 +229,12 @@ export class JobScheduler {
 // ==================== JOB WORKER ====================
 
 export class JobWorker {
-  private running = false;
   private results = new Map<string, JobResult>();
 
   /**
    * Start worker
    */
   start(concurrency: number = 1): void {
-    this.running = true;
     logger.info('Job worker started', { concurrency });
   }
 
@@ -245,7 +242,6 @@ export class JobWorker {
    * Stop worker
    */
   stop(): void {
-    this.running = false;
     logger.info('Job worker stopped');
   }
 
@@ -304,4 +300,5 @@ export class JobWorker {
 export const jobQueue = new JobQueue();
 export const jobScheduler = new JobScheduler();
 export const jobWorker = new JobWorker();
+
 

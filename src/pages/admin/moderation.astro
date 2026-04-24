@@ -15,6 +15,77 @@ if (!Astro.locals.isAdmin) {
       <p class="text-gray-600 dark:text-gray-400">Raporları inceleyin ve moderasyon işlemleri gerçekleştirin</p>
     </div>
 
-    <ModerationDashboard client:load />
+    <ModerationDashboard client:visible />
+
+    <div class="mt-8 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <h2 class="text-xl font-bold text-gray-900 mb-2">Social Abuse Kayıtları</h2>
+      <p class="text-sm text-gray-600 mb-4">
+        Swipe/follow/messages uçlarında yakalanan abuse ihlallerini gösterir.
+      </p>
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <button id="loadSocialAbuse" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-black">
+          Social Abuse Yükle
+        </button>
+        <a
+          id="exportSocialAbuse"
+          href="/api/admin/site/audit/export?action=social_abuse&limit=2000"
+          class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+        >
+          CSV Dışa Aktar
+        </a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-200 text-left text-gray-600">
+              <th class="px-2 py-2">Tarih</th>
+              <th class="px-2 py-2">Key</th>
+              <th class="px-2 py-2">Action</th>
+              <th class="px-2 py-2">Email</th>
+              <th class="px-2 py-2">IP</th>
+              <th class="px-2 py-2">Metadata</th>
+            </tr>
+          </thead>
+          <tbody id="socialAbuseBody">
+            <tr><td colspan="6" class="px-2 py-6 text-center text-gray-400">Henüz yüklenmedi</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
+
+  <script>
+    const btn = document.getElementById('loadSocialAbuse');
+    const body = document.getElementById('socialAbuseBody');
+
+    async function loadSocialAbuse() {
+      try {
+        const res = await fetch('/api/admin/site/audit?action=social_abuse&limit=80');
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          body.innerHTML = `<tr><td colspan="6" class="px-2 py-6 text-center text-red-600">${data.error || 'Hata'}</td></tr>`;
+          return;
+        }
+        const rows: any[] = Array.isArray(data.items) ? data.items : [];
+        if (rows.length === 0) {
+          body.innerHTML = '<tr><td colspan="6" class="px-2 py-6 text-center text-gray-400">Kayıt bulunamadı</td></tr>';
+          return;
+        }
+        body.innerHTML = rows.map((r: any) => `
+          <tr class="border-b border-gray-100">
+            <td class="px-2 py-2 text-xs">${new Date(r.created_at).toLocaleString('tr-TR')}</td>
+            <td class="px-2 py-2 text-xs font-mono">${r.setting_key || '-'}</td>
+            <td class="px-2 py-2 text-xs text-blue-700">${r.action || '-'}</td>
+            <td class="px-2 py-2 text-xs">${r.actor_email || '-'}</td>
+            <td class="px-2 py-2 text-xs">${r.ip_address || '-'}</td>
+            <td class="px-2 py-2 text-xs font-mono">${JSON.stringify(r.metadata || {}).slice(0, 140)}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        body.innerHTML = '<tr><td colspan="6" class="px-2 py-6 text-center text-red-600">Yükleme hatası</td></tr>';
+      }
+    }
+
+    btn?.addEventListener('click', loadSocialAbuse);
+  </script>
 </Layout>

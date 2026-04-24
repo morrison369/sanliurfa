@@ -10,15 +10,34 @@ Sitemap: https://sanliurfa.com/sitemap.xml
 # Özel sayfalar - indekslenmemeli
 Disallow: /admin/
 Disallow: /profil/
+Disallow: /ayarlar
 Disallow: /giris
 Disallow: /kayit
+Disallow: /cikis
 Disallow: /sifremi-unuttum
+Disallow: /sifre-sifirla
+Disallow: /verify-email
+Disallow: /mesajlar
+Disallow: /bildirimler
+Disallow: /abonelik
+Disallow: /akis
+Disallow: /sosyal
+Disallow: /koleksiyonlar
+Disallow: /loyalty
+Disallow: /aktivitelerim
+Disallow: /takip-edilenler
+Disallow: /takipciler
+Disallow: /webhooks
+Disallow: /raporlar
+Disallow: /canli-analitik
+Disallow: /veri-ambar
 Disallow: /api/
 Disallow: /_astro/
 
-# Arama sonuçları - indekslenmemeli
-Disallow: /ara?q=
-Disallow: /arama/
+# Arama sonuçları - indekslenmemeli (gelismis arama UI sayfası hariç)
+Disallow: /ara
+Disallow: /arama
+Allow: /arama/gelismis
 
 # Geçici ve test sayfaları
 Disallow: /test/
@@ -40,12 +59,24 @@ User-agent: YandexBot
 Allow: /
 Crawl-delay: 2
 
-# AI botlar (opsiyonel - içerik koruması için)
+# AI botlar ve cevap motorları
 User-agent: GPTBot
-Disallow: /
+Allow: /
 
 User-agent: ChatGPT-User
-Disallow: /
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
 
 User-agent: Google-Extended
 Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+# llms.txt - AI için yapılandırılmış site haritası
+# https://sanliurfa.com/llms.txt

@@ -41,7 +41,6 @@ export interface EnrichmentConfig {
 
 export class TransformationEngine {
   private transformations = new Map<string, Record<string, any>>();
-  private transformationCount = 0;
 
   /**
    * Transform data
@@ -105,10 +104,10 @@ export class TransformationEngine {
     const template = this.transformations.get(templateId);
     if (!template) return data;
 
-    const rules = template.rules.reduce((acc, rule) => {
+    const rules = (template.rules as TransformationRule[]).reduce((acc: Record<string, any>, rule: TransformationRule) => {
       acc[rule.target || ''] = rule;
       return acc;
-    }, {} as Record<string, any>);
+    }, {});
 
     return this.transform(data, rules);
   }
@@ -324,7 +323,7 @@ export class RulesEngine {
   /**
    * Evaluate condition
    */
-  private evaluateCondition(data: Record<string, any>, condition: string): boolean {
+  private evaluateCondition(_data: Record<string, any>, condition: string): boolean {
     // Simplified condition evaluation
     return condition.includes('true') ? true : false;
   }
@@ -332,7 +331,7 @@ export class RulesEngine {
   /**
    * Execute custom function
    */
-  private executeCustomFunction(data: Record<string, any>, func: string): any {
+  private executeCustomFunction(_data: Record<string, any>, func: string): any {
     // Simplified custom function execution
     return `function_${func}_result`;
   }
@@ -340,7 +339,7 @@ export class RulesEngine {
   /**
    * Execute aggregate
    */
-  private executeAggregate(data: Record<string, any>, params: Record<string, any>): any {
+  private executeAggregate(data: Record<string, any>, _params: Record<string, any>): any {
     return Object.values(data).length;
   }
 

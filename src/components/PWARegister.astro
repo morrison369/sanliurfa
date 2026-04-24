@@ -1,9 +1,9 @@
 ---
 // PWA Service Worker kayıt bileşeni
-import PWAPrompt from './PWAPrompt';
+import PWAPrompt from './PWAPrompt.tsx';
 ---
 
-<PWAPrompt client:idle />
+<PWAPrompt client:only="react" />
 
 <script>
   // Service Worker kaydı
@@ -11,7 +11,9 @@ import PWAPrompt from './PWAPrompt';
     window.addEventListener('load', async () => {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js');
-        console.log('[PWA] Service Worker registered:', registration.scope);
+        if (import.meta.env.DEV) {
+          console.debug('[PWA] Service Worker registered:', registration.scope);
+        }
         
         // Güncelleme kontrolü
         registration.addEventListener('updatefound', () => {
@@ -61,8 +63,8 @@ import PWAPrompt from './PWAPrompt';
       installBtn.addEventListener('click', async () => {
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-          console.log('[PWA] User accepted install');
+        if (outcome === 'accepted' && import.meta.env.DEV) {
+          console.debug('[PWA] User accepted install');
         }
         deferredPrompt = null;
       });
@@ -71,18 +73,22 @@ import PWAPrompt from './PWAPrompt';
   
   // App installed
   window.addEventListener('appinstalled', () => {
-    console.log('[PWA] App installed');
+    if (import.meta.env.DEV) {
+      console.debug('[PWA] App installed');
+    }
     deferredPrompt = null;
     
     const toast = (window as any).toast;
     if (toast) {
-      toast.success('Şanlıurfa.com ana ekranınıza eklendi!');
+      toast.success('Sanliurfa.com ana ekranınıza eklendi!');
     }
   });
   
   // Online/Offline durumu
   window.addEventListener('online', () => {
-    console.log('[PWA] Online');
+    if (import.meta.env.DEV) {
+      console.debug('[PWA] Online');
+    }
     const toast = (window as any).toast;
     if (toast) {
       toast.success('İnternet bağlantısı geri geldi');
@@ -90,7 +96,9 @@ import PWAPrompt from './PWAPrompt';
   });
   
   window.addEventListener('offline', () => {
-    console.log('[PWA] Offline');
+    if (import.meta.env.DEV) {
+      console.debug('[PWA] Offline');
+    }
     const toast = (window as any).toast;
     if (toast) {
       toast.warning('Çevrimdışı moddasınız. Bazı özellikler sınırlı olabilir.');

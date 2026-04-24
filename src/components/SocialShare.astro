@@ -2,18 +2,15 @@
 interface Props {
   url?: string;
   title?: string;
-  description?: string;
 }
 
 const { 
   url = Astro.url.href,
-  title = '',
-  description = ''
+  title = ''
 } = Astro.props;
 
 const encodedUrl = encodeURIComponent(url);
 const encodedTitle = encodeURIComponent(title);
-const encodedDesc = encodeURIComponent(description);
 
 const shareLinks = [
   {

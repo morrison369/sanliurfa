@@ -13,6 +13,7 @@ export interface Place {
   category_id: string;
   category_slug: string;
   category_name: string;
+  district_id?: string;
   short_description: string;
   description?: string;
   meta_description?: string;
@@ -33,7 +34,7 @@ export interface Place {
   opening_hours?: Record<string, string>;
   is_verified: boolean;
   is_featured: boolean;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'active' | 'pending' | 'rejected';
   view_count: number;
   created_at: string;
   updated_at: string;
@@ -68,7 +69,7 @@ export async function getPlaces(filters: PlaceFilters = {}): Promise<{ places: P
 
   const {
     category,
-    status = 'approved',
+    status = 'active',
     featured,
     verified,
     search,
@@ -191,7 +192,7 @@ export async function searchPlaces(query_str: string): Promise<{ places: Place[]
       c.name as category_name
     FROM places p
     LEFT JOIN place_categories c ON c.id = p.category_id
-    WHERE p.status = 'approved'
+    WHERE p.status = 'active'
       AND (p.name ILIKE $1 OR p.short_description ILIKE $1 OR p.description ILIKE $1)
     ORDER BY p.rating DESC, p.review_count DESC
     LIMIT 20`,
@@ -212,12 +213,12 @@ export async function getRelatedPlaces(place: Place, limit = 4): Promise<Place[]
       c.name as category_name
     FROM places p
     LEFT JOIN place_categories c ON c.id = p.category_id
-    WHERE p.status = 'approved'
+    WHERE p.status = 'active'
       AND p.id != $1
-      AND (p.category_id = $2 OR p.district = $3)
+      AND (p.category_id = $2 OR p.district_id = $3)
     ORDER BY p.rating DESC, p.review_count DESC
     LIMIT $4`,
-    [place.id, place.category_id, place.district, limit]
+    [place.id, place.category_id, place.district_id, limit]
   );
 
   return result.rows;
@@ -238,7 +239,7 @@ export async function getFeaturedPlaces(limit = 8): Promise<Place[]> {
       c.name as category_name
     FROM places p
     LEFT JOIN place_categories c ON c.id = p.category_id
-    WHERE p.status = 'approved' AND p.is_featured = true
+    WHERE p.status = 'active' AND p.is_featured = true
     ORDER BY p.view_count DESC
     LIMIT $1`,
     [limit]
@@ -262,9 +263,9 @@ export async function getPlaceReviews(
       r.*,
       u.full_name as user_name,
       u.avatar_url as user_avatar
-    FROM place_reviews r
+    FROM reviews r
     LEFT JOIN users u ON u.id = r.user_id
-    WHERE r.place_id = $1 AND r.status = 'approved'
+    WHERE r.place_id = $1 AND r.status = 'active'
     ORDER BY r.created_at DESC
     LIMIT $2 OFFSET $3`,
     [placeId, limit, offset]
@@ -298,8 +299,8 @@ export async function getPlaceRatingBreakdown(placeId: string): Promise<{
       COUNT(*) FILTER (WHERE rating = 3)::int as three,
       COUNT(*) FILTER (WHERE rating = 2)::int as two,
       COUNT(*) FILTER (WHERE rating = 1)::int as one
-    FROM place_reviews
-    WHERE place_id = $1 AND status = 'approved'`,
+    FROM reviews
+    WHERE place_id = $1 AND status = 'active'`,
     [placeId]
   );
 
@@ -393,3 +394,4 @@ export async function deletePlace(id: string): Promise<boolean> {
   await deleteCache(CACHE_KEYS.places);
   return (result.rowCount || 0) > 0;
 }
+

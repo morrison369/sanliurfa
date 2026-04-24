@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import { useState, useEffect } from 'react';
 interface HashtagItem {
   id: string;
   tag_name: string;
@@ -179,7 +178,7 @@ export default function HashtagExplorer({ initialSlug }: Props) {
                     {taggedContent.places.map((place) => (
                       <a
                         key={place.id}
-                        href={`/mekan/${place.slug}`}
+                        href={`/isletme/${place.slug}`}
                         className="block p-3 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 transition-colors"
                       >
                         <div className="font-semibold text-gray-900 dark:text-white text-sm">
@@ -216,7 +215,7 @@ export default function HashtagExplorer({ initialSlug }: Props) {
                           {review.content}
                         </p>
                         <a
-                          href={`/mekan/${review.place_slug}`}
+                          href={`/isletme/${review.place_slug}`}
                           className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                         >
                           {review.place_name}

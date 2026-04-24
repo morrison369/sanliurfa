@@ -6,11 +6,20 @@
 import type { APIRoute } from 'astro';
 import { getFollowers, getFollowing, getPendingRequests, acceptFollowRequest, declineFollowRequest } from '../../../lib/social/friendship-db';
 import { requireAuth } from '../../../lib/auth';
+import { problemJson } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ request, url }) => {
   try {
     const auth = await requireAuth(request);
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Giriş yapmalısınız',
+        type: '/problems/social-followers-unauthorized',
+        instance: '/api/social/followers',
+      });
+    }
 
     const searchParams = url.searchParams;
     const type = searchParams.get('type') || 'followers';
@@ -40,10 +49,13 @@ export const GET: APIRoute = async ({ request, url }) => {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to get followers';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Takip Listesi Alınamadı',
+      detail: message,
+      type: '/problems/social-followers-fetch-failed',
+      instance: '/api/social/followers',
+    });
   }
 };
 
@@ -54,16 +66,27 @@ export const GET: APIRoute = async ({ request, url }) => {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const auth = await requireAuth(request);
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Giriş yapmalısınız',
+        type: '/problems/social-followers-unauthorized',
+        instance: '/api/social/followers',
+      });
+    }
 
     const body = await request.json();
     const { requestId, action } = body;
 
     if (!requestId || !action) {
-      return new Response(
-        JSON.stringify({ error: 'Request ID and action are required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'requestId ve action zorunludur',
+        type: '/problems/social-followers-validation',
+        instance: '/api/social/followers',
+      });
     }
 
     if (action === 'accept') {
@@ -82,15 +105,21 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    return new Response(
-      JSON.stringify({ error: 'Invalid action' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 400,
+      title: 'Geçersiz Aksiyon',
+      detail: 'action değeri accept veya decline olmalıdır',
+      type: '/problems/social-followers-invalid-action',
+      instance: '/api/social/followers',
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to process request';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 400,
+      title: 'İstek İşlenemedi',
+      detail: message,
+      type: '/problems/social-followers-process-failed',
+      instance: '/api/social/followers',
+    });
   }
 };

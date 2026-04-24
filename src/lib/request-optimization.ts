@@ -165,12 +165,12 @@ export function buildCursorWhereClause(
  * Example: Cursor-based pagination for API endpoints
  */
 export async function paginateWithCursor<T>(
-  query: string,
-  totalCount: number,
+  _query: string,
+  _totalCount: number,
   rows: T[],
   options: CursorPaginationOptions
 ): Promise<CursorPaginationResult<T>> {
-  const { limit, cursor, sortBy = 'created_at' } = options;
+  const { limit, sortBy = 'created_at' } = options;
 
   // If we got more rows than requested, we have a next page
   const hasMore = rows.length > limit;
@@ -211,7 +211,7 @@ export function selectCompression(acceptEncoding: string): 'gzip' | 'br' | 'defl
  * Phase 6: Calculate optimal batch size for streaming responses
  * Larger batches = more throughput, smaller = lower latency
  */
-export function getOptimalBatchSize(dataSize: number, targetLatencyMs: number = 50): number {
+export function getOptimalBatchSize(dataSize: number, _targetLatencyMs: number = 50): number {
   // For ~50ms target latency:
   // - Small data (< 1MB): batch size 100
   // - Medium data (1-10MB): batch size 500

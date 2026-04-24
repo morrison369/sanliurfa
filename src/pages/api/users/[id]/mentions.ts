@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * User Mentions API
  * Get mentions for a user
@@ -12,7 +11,7 @@ import { getCache, setCache } from '../../../../lib/cache';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -53,7 +52,7 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', `/api/users/${userId}/mentions`, HttpStatus.OK, duration);
-      return apiResponse(JSON.parse(cached), HttpStatus.OK, requestId);
+      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
     }
 
     // Build query

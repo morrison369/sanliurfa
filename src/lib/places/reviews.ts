@@ -337,7 +337,7 @@ export function getUserReviewForPlace(placeId: string, userId: string): Review |
 function updatePlaceRating(placeId: string): void {
   // In production: update database
   // emit event for real-time updates
-  const breakdown = getRatingBreakdown(placeId);
+  getRatingBreakdown(placeId);
   
   // Emit to WebSocket/SSE
   // events.emit('place.rating.updated', { placeId, breakdown });
@@ -357,8 +357,8 @@ export function getPendingReviews(): Review[] {
  */
 export function reportReview(
   reviewId: string,
-  reporterId: string,
-  reason: string
+  _reporterId: string,
+  _reason: string
 ): void {
   const review = reviews.get(reviewId);
   if (!review) return;

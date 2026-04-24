@@ -5,7 +5,7 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 DOMAIN = "sanliurfa.com"
 
 ssh = paramiko.SSHClient()
@@ -61,14 +61,14 @@ for line in stdout.read().decode().split('\n'):
     if line.strip():
         print(f"   {line.strip()}")
 
-# 5. Port 6000
-print("\n5️⃣ Port 6000:")
-stdin, stdout, stderr = ssh.exec_command("netstat -tlnp 2>/dev/null | grep 6000 || ss -tlnp | grep 6000")
+# 5. Port 4321
+print("\n5️⃣ Port 4321:")
+stdin, stdout, stderr = ssh.exec_command("netstat -tlnp 2>/dev/null | grep 4321 || ss -tlnp | grep 4321")
 print(f"   {stdout.read().decode().strip()[:70]}")
 
 # 6. HTTP Test (localhost)
-print("\n6️⃣ HTTP Test (localhost → 6000):")
-stdin, stdout, stderr = ssh.exec_command("curl -m 3 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")
+print("\n6️⃣ HTTP Test (localhost → 4321):")
+stdin, stdout, stderr = ssh.exec_command("curl -m 3 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/")
 code = stdout.read().decode().strip()
 status = "✅" if code == "200" else "❌"
 print(f"   {status} HTTP {code}")
@@ -94,5 +94,5 @@ print(f"""
    • Sunucu: 168.119.79.238
    
 🔗 Trafiğin akışı:
-   Kullanıcı → Cloudflare (SSL) → Sunucu:443 → Apache → Node.js:6000
+   Kullanıcı → Cloudflare (SSL) → Sunucu:443 → Apache → Node.js:4321
 """)

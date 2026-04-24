@@ -1,12 +1,24 @@
 ---
+
 import Layout from '../layouts/Layout.astro';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const seo = {
-  title: 'Gizlilik Politikası - Şanlıurfa.com',
-  description: 'Şanlıurfa.com gizlilik politikası ve kişisel verilerin korunması hakkında bilgiler.',
+  title: 'Gizlilik Politikası - Sanliurfa.com',
+  description: 'Sanliurfa.com gizlilik politikası ve kişisel verilerin korunması hakkında bilgiler.',
+  keywords: ['şanlıurfa.com gizlilik politikası', 'kişisel verilerin korunması', 'kvkk'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/gizlilik-politikasi',
 };
 
 const lastUpdated = '1 Nisan 2025';
+const faqItems = [
+  { S: "Sanliurfa.com hangi kişisel verileri toplar?", C: "Ad, e-posta adresi, konum bilgisi ve kullanım verileri toplanabilmektedir. Detaylar için gizlilik politikamızı inceleyiniz." },
+  { S: "Kişisel verilerimi nasıl silebilirim?", C: "Hesap silme talebini profil ayarlarından veya iletişim formu üzerinden yapabilirsiniz." },
+  { S: "Verilerim üçüncü taraflarla paylaşılıyor mu?", C: "Sanliurfa.com, kişisel verilerinizi açık rızanız olmaksızın üçüncü taraflarla paylaşmaz." },
+];
+
 ---
 
 <Layout seo={seo}>
@@ -28,7 +40,7 @@ const lastUpdated = '1 Nisan 2025';
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 md:p-12">
           <div class="prose dark:prose-invert max-w-none">
             <p class="lead">
-              Şanlıurfa.com olarak kullanıcılarımızın gizliliğini ciddiye alıyoruz. Bu gizlilik politikası, 
+              Sanliurfa.com olarak kullanıcılarımızın gizliliğini ciddiye alıyoruz. Bu gizlilik politikası, 
               kişisel verilerinizin nasıl toplandığını, kullanıldığını ve korunduğunu açıklamaktadır.
             </p>
             
@@ -113,4 +125,38 @@ const lastUpdated = '1 Nisan 2025';
       </div>
     </div>
   </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Gizlilik Politikası',
+    url: `${baseUrl}/gizlilik-politikasi`,
+    description: 'Sanliurfa.com gizlilik politikası ve kişisel verilerin korunması hakkında bilgiler.',
+    dateModified: lastUpdated,
+    inLanguage: 'tr',
+    isPartOf: { '@type': 'WebSite', name: 'Sanliurfa.com', url: `${baseUrl}` },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Sanliurfa.com',
+      url: `${baseUrl}`,
+      logo: { '@type': 'ImageObject', url: `${baseUrl}/favicon.svg`, width: 200, height: 200 },
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Gizlilik Politikası', item: `${baseUrl}/gizlilik-politikasi` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

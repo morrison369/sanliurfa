@@ -5,18 +5,40 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import crypto from 'crypto';
 import { logger } from '../../../lib/logging';
+import { resolveContentImage } from '../../../lib/content-images';
+import { problemJson } from '../../../lib/api';
 
 // Maximum file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
+function normalizePlacePhotoUrls(photo: any, placeSlug?: string | null) {
+  const image_url = resolveContentImage({
+    category: 'places',
+    slug: placeSlug,
+    explicit: photo?.file_path,
+    placeholder: '/images/placeholder-place.jpg',
+  });
+  const thumbnail_url = resolveContentImage({
+    category: 'places',
+    slug: placeSlug,
+    explicit: photo?.file_path,
+    placeholder: '/images/placeholder-place.jpg',
+    thumb: true,
+  });
+  return { image_url, thumbnail_url };
+}
+
 export const POST: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
     if (!auth) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Giriş yapmalısınız',
+        type: '/problems/upload-unauthorized',
+        instance: '/api/upload',
       });
     }
 
@@ -26,16 +48,22 @@ export const POST: APIRoute = async (context) => {
     const type = formData.get('type') as string || 'gallery';
 
     if (!file) {
-      return new Response(JSON.stringify({ error: 'No file provided' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Dosya yüklenmedi',
+        type: '/problems/upload-file-missing',
+        instance: '/api/upload',
       });
     }
 
     if (!placeId) {
-      return new Response(JSON.stringify({ error: 'placeId is required' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'placeId zorunludur',
+        type: '/problems/upload-place-required',
+        instance: '/api/upload',
       });
     }
 
@@ -46,29 +74,34 @@ export const POST: APIRoute = async (context) => {
         [placeId, auth.user.id]
       );
       if (placeCheck.rows.length === 0) {
-        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        return problemJson({
           status: 403,
-          headers: { 'Content-Type': 'application/json' }
+          title: 'Forbidden',
+          detail: 'Bu mekana yükleme yetkiniz yok',
+          type: '/problems/upload-forbidden',
+          instance: '/api/upload',
         });
       }
     }
 
     // File validation
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return new Response(JSON.stringify({ 
-        error: 'Invalid file type. Allowed: JPEG, PNG, WebP, GIF' 
-      }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz Dosya Türü',
+        detail: 'Sadece JPEG, PNG, WebP, GIF yüklenebilir',
+        type: '/problems/upload-invalid-file-type',
+        instance: '/api/upload',
       });
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      return new Response(JSON.stringify({ 
-        error: 'File too large. Maximum size: 10MB' 
-      }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Dosya Çok Büyük',
+        detail: 'Maksimum dosya boyutu 10MB',
+        type: '/problems/upload-file-too-large',
+        instance: '/api/upload',
       });
     }
 
@@ -90,26 +123,21 @@ export const POST: APIRoute = async (context) => {
 
     // Generate URLs
     const baseUrl = '/uploads/places/' + placeId;
-    const originalUrl = `${baseUrl}/${filename}`;
     const webpUrl = `${baseUrl}/${webpFilename}`;
 
     // Save to database
     const result = await query(
       `INSERT INTO place_photos (
-        place_id, url, thumbnail_url, caption, photo_type, 
-        file_size, mime_type, width, height, uploaded_by, is_primary
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        place_id, file_path, caption,
+        file_size, mime_type, uploaded_by, is_featured
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *`,
       [
         placeId,
         webpUrl,
-        `${baseUrl}/thumb_${webpFilename}`,
         formData.get('caption') || null,
-        type,
         file.size,
         file.type,
-        null,
-        null,
         auth.user.id,
         type === 'cover'
       ]
@@ -120,19 +148,23 @@ export const POST: APIRoute = async (context) => {
     // If cover, update place image
     if (type === 'cover') {
       await query(
-        'UPDATE places SET image_url = $1, updated_at = NOW() WHERE id = $2',
+        'UPDATE places SET thumbnail_url = $1, updated_at = NOW() WHERE id = $2',
         [webpUrl, placeId]
       );
     }
+
+    const normalized = normalizePlacePhotoUrls(photo);
 
     return new Response(JSON.stringify({
       success: true,
       photo: {
         id: photo.id,
-        url: webpUrl,
-        thumbnailUrl: photo.thumbnail_url,
-        type: photo.photo_type,
+        url: normalized.image_url,
+        thumbnailUrl: normalized.thumbnail_url,
+        image_url: normalized.image_url,
+        thumbnail_url: normalized.thumbnail_url,
         caption: photo.caption,
+        is_featured: photo.is_featured,
       }
     }), {
       status: 201,
@@ -141,9 +173,12 @@ export const POST: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('Upload error:', error);
-    return new Response(JSON.stringify({ error: 'Upload failed' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Yükleme Başarısız',
+      detail: error instanceof Error ? error.message : 'upload_failed',
+      type: '/problems/upload-failed',
+      instance: '/api/upload',
     });
   }
 };
@@ -155,24 +190,39 @@ export const GET: APIRoute = async (context) => {
     const placeId = url.searchParams.get('placeId');
 
     if (!placeId) {
-      return new Response(JSON.stringify({ error: 'placeId is required' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'placeId zorunludur',
+        type: '/problems/upload-place-required',
+        instance: '/api/upload',
       });
     }
 
     const result = await query(
-      `SELECT id, url, thumbnail_url, caption, photo_type, 
-              is_primary, created_at, file_size
-       FROM place_photos 
-       WHERE place_id = $1 AND is_active = true
-       ORDER BY is_primary DESC, created_at DESC`,
+      `SELECT pp.id, pp.file_path, pp.caption,
+              pp.is_featured, pp.created_at, pp.file_size,
+              p.slug as place_slug
+       FROM place_photos pp
+       LEFT JOIN places p ON p.id = pp.place_id
+       WHERE pp.place_id = $1
+       ORDER BY pp.is_featured DESC, pp.created_at DESC`,
       [placeId]
     );
 
+    const photos = result.rows.map((row: any) => {
+      const normalized = normalizePlacePhotoUrls(row, row.place_slug);
+      return {
+        ...row,
+        url: normalized.image_url,
+        thumbnail_url: normalized.thumbnail_url,
+        image_url: normalized.image_url,
+      };
+    });
+
     return new Response(JSON.stringify({
       success: true,
-      photos: result.rows
+      photos
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -180,9 +230,12 @@ export const GET: APIRoute = async (context) => {
 
   } catch (error) {
     logger.error('List photos error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Fotoğraflar Alınamadı',
+      detail: error instanceof Error ? error.message : 'server_error',
+      type: '/problems/upload-list-failed',
+      instance: '/api/upload',
     });
   }
 };

@@ -1,10 +1,22 @@
 ---
+
 import Layout from '../layouts/Layout.astro';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const seo = {
-  title: 'KVKK Aydınlatma Metni - Şanlıurfa.com',
+  title: 'KVKK Aydınlatma Metni - Sanliurfa.com',
   description: 'Kişisel Verilerin Korunması Kanunu kapsamında aydınlatma metni.',
+  keywords: ['kvkk', 'kişisel verilerin korunması', 'veri gizliliği', 'şanlıurfa.com kvkk'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/kvkk',
 };
+const faqItems = [
+  { S: "KVKK kapsamında haklarım nelerdir?", C: "Kişisel verilerinize erişim, düzeltme, silme ve işlemeye itiraz etme haklarına sahipsiniz." },
+  { S: "Veri sorumlusu kimdir?", C: "Sanliurfa.com platformu adına veri sorumlusu olarak bilgiler gizlilik politikamızda yer almaktadır." },
+  { S: "KVKK başvurusu nasıl yapılır?", C: "KVKK başvurularınızı kvkk@sanliurfa.com adresine yazılı olarak iletebilirsiniz." },
+];
+
 ---
 
 <Layout seo={seo}>
@@ -28,7 +40,7 @@ const seo = {
             <h2>Veri Sorumlusu</h2>
             <p>
               6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, kişisel verileriniz; 
-              veri sorumlusu olarak Şanlıurfa.com ("Şirket") tarafından aşağıda açıklanan kapsamda işlenebilecektir.
+              veri sorumlusu olarak Sanliurfa.com ("Şirket") tarafından aşağıda açıklanan kapsamda işlenebilecektir.
             </p>
             
             <h2>Kişisel Verilerin İşlenme Amaçları</h2>
@@ -106,4 +118,33 @@ const seo = {
       </div>
     </div>
   </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'KVKK Aydınlatma Metni',
+    url: `${baseUrl}/kvkk`,
+    publisher: {
+      '@type': 'Organization',
+      name: 'Sanliurfa.com',
+      url: `${baseUrl}`,
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'KVKK', item: `${baseUrl}/kvkk` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

@@ -1,33 +1,41 @@
 // API: Update contact message status (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { query } from '../../../../../lib/postgres';
 import { logger } from '../../../../../lib/logging';
+import { problemJson } from '../../../../../lib/api';
+import { updateAdminMessageStatus } from '../../../../../lib/admin/message-status';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
   try {
     const { id } = params;
     
     if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-messages-status-unauthorized',
+        instance: '/api/admin/messages/{id}/status',
+      });
     }
 
     const formData = await request.formData();
     const status = formData.get('status')?.toString();
 
-    if (!status || !['new', 'read', 'replied', 'archived'].includes(status)) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid status' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+    if (!status) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz Durum',
+        detail: 'status zorunludur',
+        type: '/problems/admin-messages-status-validation',
+        instance: '/api/admin/messages/{id}/status',
+      });
     }
 
-    await query(
-      'UPDATE contact_messages SET status = $1, updated_at = $2 WHERE id = $3',
-      [status, new Date().toISOString(), id]
-    );
+    await updateAdminMessageStatus({
+      id: String(id || ''),
+      status,
+      adminId: locals.user?.id || null,
+    });
 
     return new Response(
       JSON.stringify({ success: true }),
@@ -35,9 +43,12 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     );
   } catch (err) {
     logger.error('Message status update error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Mesaj Durumu Güncellenemedi',
+      detail: err instanceof Error ? err.message : 'server_error',
+      type: '/problems/admin-messages-status-failed',
+      instance: '/api/admin/messages/{id}/status',
+    });
   }
 };

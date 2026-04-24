@@ -262,7 +262,7 @@ async function createWelcomeSequenceSteps(sequenceId: number): Promise<void> {
       subject: 'Şanlıurfa\'ya Hoşgeldin! 🎉',
       html_content: `
         <h1>Hoşgeldin!</h1>
-        <p>Şanlıurfa.com topluluğuna hoş geldin.</p>
+        <p>Sanliurfa.com topluluğuna hoş geldin.</p>
         <p>Platformumuzda binlerce yerin özelliğini keşfedebilir ve yorumlarını paylaşabilirsin.</p>
       `,
       delay_minutes: 0
@@ -273,7 +273,7 @@ async function createWelcomeSequenceSteps(sequenceId: number): Promise<void> {
       subject: 'Şanlıurfa\'nın En İyi Yerlerini Keşfet',
       html_content: `
         <h1>Keşfet</h1>
-        <p>Şanlıurfa'nın en popüler yerlerini görmek için liderlik tablosunu ziyaret et.</p>
+        <p>Şanlıurfa’nın en popüler yerlerini görmek için liderlik tablosunu ziyaret et.</p>
       `,
       delay_minutes: 3 * 24 * 60 // 3 days
     },
@@ -283,7 +283,7 @@ async function createWelcomeSequenceSteps(sequenceId: number): Promise<void> {
       subject: 'Katıl ve Önerileri Paylaş',
       html_content: `
         <h1>Katıl</h1>
-        <p>Şanlıurfa'nın kültürüne katkı sağla. Yorum yaz, fotoğraf paylaş ve puanlama yap.</p>
+        <p>Şanlıurfa’nın kültürüne katkı sağla. Yorum yaz, fotoğraf paylaş ve puanlama yap.</p>
       `,
       delay_minutes: 7 * 24 * 60 // 7 days
     }

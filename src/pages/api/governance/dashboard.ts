@@ -1,12 +1,46 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
+
+interface GovernanceSummaryRow {
+  total: string | number;
+  last_24h: string | number;
+  last_7d: string | number;
+  sensitive: string | number;
+  pii_access: string | number;
+}
+
+interface GovernanceEntryRow {
+  id: string;
+  timestamp: string | Date;
+  entity: string;
+  entity_id: string | null;
+  action: string;
+  actor: string;
+  actor_type: string;
+}
+
+interface GovernanceMetricRow {
+  entity?: string;
+  action?: string;
+  count: string | number;
+}
+
+function toInteger(value: string | number | null | undefined): number {
+  if (typeof value === 'number') return Math.trunc(value);
+  if (typeof value === 'string') return parseInt(value, 10) || 0;
+  return 0;
+}
 
 export const GET: APIRoute = async ({ locals }) => {
   if (!locals.user || locals.user.role !== 'admin') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 401,
+      title: 'Yetkisiz İşlem',
+      detail: 'Admin yetkisi gerekli',
+      type: '/problems/governance-dashboard-unauthorized',
+      instance: '/api/governance/dashboard',
     });
   }
 
@@ -16,7 +50,7 @@ export const GET: APIRoute = async ({ locals }) => {
     const last7d  = new Date(now.getTime() - 86400000 * 7);
 
     const [summaryResult, recentResult, byEntityResult, byActionResult] = await Promise.all([
-      query(`
+      query<GovernanceSummaryRow>(`
         SELECT
           COUNT(*)                                                        AS total,
           COUNT(*) FILTER (WHERE created_at > $1)                        AS last_24h,
@@ -26,7 +60,7 @@ export const GET: APIRoute = async ({ locals }) => {
         FROM audit_logs
       `, [last24h, last7d]),
 
-      query(`
+      query<GovernanceEntryRow>(`
         SELECT a.id, a.created_at AS timestamp, a.resource_type AS entity,
                a.resource_id AS entity_id, a.action,
                COALESCE(u.email, 'system') AS actor,
@@ -37,7 +71,7 @@ export const GET: APIRoute = async ({ locals }) => {
         LIMIT 10
       `),
 
-      query(`
+      query<GovernanceMetricRow>(`
         SELECT resource_type AS entity, COUNT(*) AS count
         FROM audit_logs
         GROUP BY resource_type
@@ -45,7 +79,7 @@ export const GET: APIRoute = async ({ locals }) => {
         LIMIT 10
       `),
 
-      query(`
+      query<GovernanceMetricRow>(`
         SELECT action, COUNT(*) AS count
         FROM audit_logs
         GROUP BY action
@@ -58,13 +92,13 @@ export const GET: APIRoute = async ({ locals }) => {
 
     const dashboard = {
       summary: {
-        totalAuditEntries:   parseInt(s.total       || '0'),
-        entriesLast24h:      parseInt(s.last_24h    || '0'),
-        entriesLast7d:       parseInt(s.last_7d     || '0'),
-        sensitiveOperations: parseInt(s.sensitive   || '0'),
-        piiAccessEvents:     parseInt(s.pii_access  || '0'),
+        totalAuditEntries:   toInteger(s.total),
+        entriesLast24h:      toInteger(s.last_24h),
+        entriesLast7d:       toInteger(s.last_7d),
+        sensitiveOperations: toInteger(s.sensitive),
+        piiAccessEvents:     toInteger(s.pii_access),
       },
-      recentEntries: recentResult.rows.map((r: any) => ({
+      recentEntries: recentResult.rows.map((r) => ({
         id:        r.id,
         timestamp: r.timestamp,
         entity:    r.entity,
@@ -74,8 +108,8 @@ export const GET: APIRoute = async ({ locals }) => {
         actorType: r.actor_type,
       })),
       metrics: {
-        byEntity:    byEntityResult.rows.map((r: any) => ({ entity: r.entity, count: parseInt(r.count) })),
-        byAction:    byActionResult.rows.map((r: any) => ({ action: r.action, count: parseInt(r.count) })),
+        byEntity:    byEntityResult.rows.map((r) => ({ entity: r.entity, count: parseInt(String(r.count)) })),
+        byAction:    byActionResult.rows.map((r) => ({ action: r.action, count: parseInt(String(r.count)) })),
         byActorType: [],
       },
       compliance: {
@@ -96,8 +130,12 @@ export const GET: APIRoute = async ({ locals }) => {
     });
   } catch (error) {
     logger.error('Governance dashboard error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 500,
+      title: 'Governance Dashboard Alınamadı',
+      detail: 'Sunucu hatası',
+      type: '/problems/governance-dashboard-failed',
+      instance: '/api/governance/dashboard',
     });
   }
 };

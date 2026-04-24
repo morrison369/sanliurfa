@@ -296,6 +296,4 @@ export const consumerLagMonitor = new ConsumerLagMonitor();
 export const eventTracer = new EventTracer();
 export const debugDashboard = new DebugDashboard();
 
-export type { EventMetric, ConsumerLag, EventTrace, LatencyPercentiles };
-
-
+export { EventMetric, ConsumerLag, EventTrace, LatencyPercentiles };

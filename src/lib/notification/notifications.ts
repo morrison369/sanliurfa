@@ -80,7 +80,7 @@ export class NotificationSystem {
     if (!template) return null;
 
     // Render template
-    const rendered = this.renderTemplate(template, notification.variables);
+    this.renderTemplate(template, notification.variables);
 
     // Record delivery
     const delivery: NotificationDelivery = {

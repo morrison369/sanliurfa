@@ -279,6 +279,4 @@ const taxCalculator = new TaxCalculator();
 const taxReporting = new TaxReporting();
 const complianceMonitor = new ComplianceMonitor();
 
-export type { taxCalculator, taxReporting, complianceMonitor };
-
-
+export { taxCalculator, taxReporting, complianceMonitor };

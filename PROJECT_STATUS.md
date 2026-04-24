@@ -192,6 +192,10 @@ npm run lint
 - ✅ Bildirimler (real-time)
 - ✅ Favoriler & koleksiyonlar
 - ✅ Mobil app API
+- ✅ Üyeler arası mesajlaşma
+- ✅ Arkadaş ekleme / takip
+- ✅ Üye profili için 4 fotoğraf + swipe eşleşme
+- ✅ Üyelerin mekan ekleme ve değerlendirme akışı
 
 ### Admin Özellikleri
 - ✅ Dashboard analytics
@@ -208,6 +212,9 @@ npm run lint
 - ✅ Rate limiting
 - ✅ Error tracking
 - ✅ Automated backups
+
+### Ürün Politikası (Aktif)
+- ✅ Faz 1: Tüm özellikler ücretsiz ve tam açık
 
 ---
 

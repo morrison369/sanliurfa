@@ -2,7 +2,7 @@
  * Phase 397: Compliance Stability Trust Mesh V9
  */
 
-import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
+import { SignalBook, computeBalancedScore, routeByThresholds } from './governance-kit';
 
 export interface ComplianceStabilityTrustSignalV9 {
   signalId: string;
@@ -34,7 +34,7 @@ class ComplianceStabilityTrustRouterV9 {
 }
 
 class ComplianceStabilityTrustReporterV9 {
-  report(signalId: string, route: string): string {
+  report(_signalId: string, _route: string): string {
     return "" as any;
   }
 }
@@ -50,4 +50,7 @@ export {
   ComplianceStabilityTrustRouterV9,
   ComplianceStabilityTrustReporterV9
 };
+
+
+
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * API: Advanced Search
  * GET - AI-powered search with ranking and personalization
@@ -10,6 +9,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { getCache, setCache } from '../../../lib/cache';
+import { resolveContentImage } from '../../../lib/content-images';
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
   const requestId = getRequestId(request as any);
@@ -45,21 +45,20 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     let searchSql = `
       SELECT
         p.id,
-        p.title,
-        p.description,
+        p.slug,
+        p.name,
+        COALESCE(p.short_description, p.description) as description,
         p.category,
-        p.average_rating,
-        p.review_count,
-        p.latitude,
-        p.longitude,
-        p.image_url,
+        COALESCE(p.rating, 0) as average_rating,
+        COALESCE(p.review_count, p.rating_count, 0) as review_count,
+        COALESCE(p.thumbnail_url, p.images[1]) as image_url,
         p.updated_at,
         COUNT(DISTINCT f.id) as favorite_count
       FROM places p
       LEFT JOIN favorites f ON p.id = f.place_id
-      WHERE p.is_active = true
-      AND (p.title ILIKE $1 OR p.description ILIKE $1)
-      AND p.average_rating >= $2
+      WHERE p.status = 'active'
+      AND (p.name ILIKE $1 OR COALESCE(p.short_description, p.description, '') ILIKE $1)
+      AND COALESCE(p.rating, 0) >= $2
     `;
 
     const params: any[] = [`%${query}%`, minRating];
@@ -71,7 +70,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     searchSql += `
       GROUP BY p.id
-      ORDER BY p.average_rating DESC
+      ORDER BY COALESCE(p.rating, 0) DESC
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
     params.push(limit, offset);
@@ -79,10 +78,20 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const results = await queryMany(searchSql, params);
 
     // Apply AI ranking
-    const rankedResults = await rankSearchResults(results, locals.user?.id, query);
+    const normalizedResults = results.map((row: any) => ({
+      ...row,
+      image_url: resolveContentImage({
+        category: 'places',
+        slug: row.slug,
+        explicit: row.image_url,
+        placeholder: '/images/placeholder-place.jpg',
+      }),
+    }));
+
+    const rankedResults = rankSearchResults(normalizedResults);
 
     // Record search
-    await recordSearchQuery(locals.user?.id || null, query, results.length, { category, minRating });
+    recordSearchQuery(query, results.length);
 
     // Cache results
     await setCache(cacheKey, JSON.stringify(rankedResults), 300);

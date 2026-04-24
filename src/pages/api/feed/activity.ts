@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Personalized Activity Feed API
  * GET: Retrieve activity from followed users (social feed)
@@ -11,8 +10,36 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { getCache, setCache } from '../../../lib/cache';
 
+interface FeedActivityRow {
+  id: string;
+  user_id: string;
+  action_type: string;
+  reference_type: string | null;
+  reference_id: string | null;
+  metadata: string | Record<string, unknown> | null;
+  created_at: string | Date;
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  level: string | number | null;
+}
+
+interface FeedActivityItem {
+  id: string;
+  user_id: string;
+  user_name: string | null;
+  user_username: string | null;
+  user_avatar: string | null;
+  user_level: string | number | null;
+  action_type: string;
+  reference_type: string | null;
+  reference_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string | Date;
+}
+
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -38,7 +65,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     // Check cache
     const cacheKey = `feed:${user.id}:${filter}:${sortBy}`;
-    const cached = await getCache<any[]>(cacheKey);
+    const cached = await getCache<FeedActivityItem[]>(cacheKey);
 
     if (cached) {
       const duration = Date.now() - startTime;
@@ -52,8 +79,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
           offset
         },
         HttpStatus.OK,
-        requestId,
-        { 'X-Cache': 'HIT' }
+        requestId
       );
     }
 
@@ -78,7 +104,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
         AND ua.created_at > NOW() - INTERVAL '30 days'
     `;
 
-    const params: any[] = [user.id];
+    const params: Array<string | number> = [user.id];
 
     // Apply filter
     if (filter !== 'all') {
@@ -100,10 +126,10 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       params.push(0);
     }
 
-    const result = await queryMany(sql, params);
+    const result = await queryMany<FeedActivityRow>(sql, params);
 
     // Format response
-    const activities = result.map((row: any) => ({
+    const activities: FeedActivityItem[] = result.map((row) => ({
       id: row.id,
       user_id: row.user_id,
       user_name: row.full_name,
@@ -113,7 +139,9 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       action_type: row.action_type,
       reference_type: row.reference_type,
       reference_id: row.reference_id,
-      metadata: row.metadata ? (typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata) : null,
+      metadata: row.metadata
+        ? (typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata)
+        : null,
       created_at: row.created_at
     }));
 

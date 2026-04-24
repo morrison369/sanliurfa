@@ -118,7 +118,6 @@ export class ReverseLogistics {
 
 export class ReturnAnalytics {
   private items: ReturnItem[] = [];
-  private reasonCounts = new Map<ReturnReason, number>();
 
   /**
    * Record return item
@@ -133,14 +132,14 @@ export class ReturnAnalytics {
   /**
    * Get return rate
    */
-  getReturnRate(period: string): number {
+  getReturnRate(_period: string): number {
     return Math.round(Math.random() * 10 + 2); // 2-12%
   }
 
   /**
    * Get return reasons breakdown
    */
-  getReturnReasons(period?: string): Record<ReturnReason, number> {
+  getReturnReasons(_period?: string): Record<ReturnReason, number> {
     return {
       defective: Math.floor(Math.random() * 30),
       wrong_item: Math.floor(Math.random() * 20),
@@ -154,7 +153,7 @@ export class ReturnAnalytics {
   /**
    * Analyze quality issues
    */
-  analyzeQuality(sku: string): { defectRate: number; commonIssues: string[] } {
+  analyzeQuality(_sku: string): { defectRate: number; commonIssues: string[] } {
     const issues = [];
     if (Math.random() > 0.7) issues.push('Manufacturing defect');
     if (Math.random() > 0.8) issues.push('Missing components');
@@ -169,7 +168,7 @@ export class ReturnAnalytics {
   /**
    * Predict return likelihood
    */
-  predictReturns(sku: string): { expectedRate: number; confidence: number } {
+  predictReturns(_sku: string): { expectedRate: number; confidence: number } {
     return {
       expectedRate: Math.round(Math.random() * 15 * 100) / 100,
       confidence: 0.7 + Math.random() * 0.2
@@ -181,14 +180,11 @@ export class ReturnAnalytics {
 
 export class RefurbRecovery {
   private refurbRecords: RefurbRecord[] = [];
-  private recoveryInventory = new Map<string, number>();
 
   /**
    * Plan recovery action
    */
   planRecovery(returnItem: ReturnItem): RecoveryAction {
-    const actions: RecoveryAction[] = ['restock', 'refurbish', 'donation', 'disposal', 'resale'];
-
     if (returnItem.condition === 'new') {
       return 'restock';
     } else if (returnItem.condition === 'used') {
@@ -209,7 +205,7 @@ export class RefurbRecovery {
   /**
    * Get recovery value
    */
-  getRecoveryValue(sku: string): number {
+  getRecoveryValue(_sku: string): number {
     return Math.round(Math.random() * 100 + 10);
   }
 
@@ -227,7 +223,7 @@ export class RefurbRecovery {
   /**
    * List refurbished items
    */
-  listRefurbItems(status?: string): RefurbRecord[] {
+  listRefurbItems(_status?: string): RefurbRecord[] {
     return this.refurbRecords;
   }
 }

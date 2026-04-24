@@ -31,6 +31,13 @@ export const migration_115_s3_file_storage = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE s3_files ADD COLUMN IF NOT EXISTS uploaded_by_user_id UUID;
+      ALTER TABLE s3_files ADD COLUMN IF NOT EXISTS file_type VARCHAR(50);
+      ALTER TABLE s3_files ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE s3_files ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT false;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_s3_files_user
       ON s3_files(uploaded_by_user_id, created_at DESC)
     `);
@@ -56,6 +63,12 @@ export const migration_115_s3_file_storage = async (pool: Pool) => {
         user_agent VARCHAR(500),
         accessed_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE file_access_logs ADD COLUMN IF NOT EXISTS file_id UUID;
+      ALTER TABLE file_access_logs ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE file_access_logs ADD COLUMN IF NOT EXISTS accessed_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`
@@ -87,6 +100,10 @@ export const migration_115_s3_file_storage = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE cdn_cache_settings ADD COLUMN IF NOT EXISTS file_id UUID;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_cdn_cache_file
       ON cdn_cache_settings(file_id)
     `);
@@ -103,6 +120,11 @@ export const migration_115_s3_file_storage = async (pool: Pool) => {
         file_size_bytes INT,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE file_variants ADD COLUMN IF NOT EXISTS original_file_id UUID;
+      ALTER TABLE file_variants ADD COLUMN IF NOT EXISTS variant_type VARCHAR(50);
     `);
 
     await pool.query(`

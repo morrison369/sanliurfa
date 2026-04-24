@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Photo/Media management library
  * Handles photo uploads, voting, and gallery management for places
@@ -49,7 +48,7 @@ export async function getPlacePhotos(placeId: string, limit = 20): Promise<any[]
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached as string);
     }
 
     const photos = await queryMany(

@@ -5,7 +5,7 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 NVM_PREFIX = 'export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '
 
 def main():
@@ -46,13 +46,13 @@ def main():
     print(ps if ps else "No node processes found")
     
     # 6. Port check
-    print("\n6️⃣ Port 6000:")
-    _, o, _ = ssh.exec_command("ss -tlnp 2>/dev/null | grep 6000 || netstat -tlnp 2>/dev/null | grep 6000 || echo 'Port 6000 not listening'")
+    print("\n6️⃣ Port 4321:")
+    _, o, _ = ssh.exec_command("ss -tlnp 2>/dev/null | grep 4321 || netstat -tlnp 2>/dev/null | grep 4321 || echo 'Port 4321 not listening'")
     print(o.read().decode().strip())
     
     # 7. Try manual start to see errors
     print("\n7️⃣ Manual Start Test (5 sec timeout):")
-    _, o, e = ssh.exec_command("cd /home/sanliur/public_html && timeout 5 " + NVM_PREFIX + "node dist/server/entry.mjs --port 6000 2>&1 || true")
+    _, o, e = ssh.exec_command("cd /home/sanliur/public_html && timeout 5 " + NVM_PREFIX + "node dist/server/entry.mjs --port 4321 2>&1 || true")
     output = o.read().decode()
     error = e.read().decode()
     if output:
@@ -66,7 +66,7 @@ def main():
     print("💡 Recommendations:")
     print("   - If 'dist/server/' missing: Run 'npm run build'")
     print("   - If .env missing: Check .env.production exists")
-    print("   - If port error: Check if port 6000 is in use")
+    print("   - If port error: Check if port 4321 is in use")
     print("   - If module error: Run 'npm install'")
 
 if __name__ == "__main__":

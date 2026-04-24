@@ -8,7 +8,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logger';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   try {
     if (!locals.user?.id) {
@@ -17,8 +17,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const user = await queryOne(
       `SELECT id, email, full_name, username, role, avatar_url, bio,
-              email_verified, is_active, created_at, updated_at
-       FROM users WHERE id = $1 AND is_active = true`,
+              email_verified, status, created_at, updated_at
+       FROM users WHERE id = $1 AND status != 'deleted'`,
       [locals.user.id]
     );
 

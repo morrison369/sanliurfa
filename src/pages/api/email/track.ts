@@ -13,7 +13,7 @@ const PIXEL = Buffer.from(
   'base64'
 );
 
-export const GET: APIRoute = async ({ url, request }) => {
+export const GET: APIRoute = async ({ url }) => {
   try {
     const campaignId = url.searchParams.get('cid');
     const userId = url.searchParams.get('uid');

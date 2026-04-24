@@ -1,7 +1,7 @@
 import type { Migration } from '../lib/migrations/migration-system';
 
 const migration: Migration = {
-  version: 133,
+  version: '133',
   name: 'logging_system',
   description: 'Add system logs table for structured logging',
   
@@ -63,3 +63,4 @@ const migration: Migration = {
 };
 
 export default migration;
+

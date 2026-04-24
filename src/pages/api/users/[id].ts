@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * User Profile API
  * GET: Retrieve user profile information
@@ -12,7 +11,7 @@ import { logger } from '../../../lib/logging';
 import { getCache, setCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

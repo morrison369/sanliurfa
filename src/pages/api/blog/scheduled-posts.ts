@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Blog API - Planlanmış Yazılar
  * GET /api/blog/scheduled-posts - Planlanmış yazıları getir (admin)
@@ -6,15 +5,31 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, queryOne, update } from '../../../lib/postgres';
+import { queryMany, update } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
-import { deleteCache, deleteCachePattern } from '../../../lib/cache';
+import { deleteCachePattern } from '../../../lib/cache';
+
+type ScheduleStatus = 'scheduled' | 'ready_to_publish' | 'published';
+
+type ScheduledPostRow = {
+  id: string;
+  title: string;
+  slug: string;
+  status: 'draft' | 'published' | string;
+  published_at: string | Date | null;
+  schedule_status: ScheduleStatus;
+};
+
+type SchedulePostBody = {
+  postId?: string;
+  publishAt?: string;
+};
 
 // Planlanmış yazıları getir
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -33,7 +48,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Planlanmış yazıları getir
-    const scheduled = await queryMany(`
+    const scheduled = await queryMany<ScheduledPostRow>(`
       SELECT
         id, title, slug, status, published_at,
         CASE
@@ -47,7 +62,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     `);
 
     // Otomatik yayınla
-    const ready = scheduled.filter((p: any) => p.schedule_status === 'ready_to_publish');
+    const ready = scheduled.filter((p) => p.schedule_status === 'ready_to_publish');
     if (ready.length > 0) {
       for (const post of ready) {
         await update('blog_posts', { id: post.id }, { status: 'published' });
@@ -63,10 +78,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: {
-          scheduled: scheduled.filter((p: any) => p.schedule_status === 'scheduled'),
+          scheduled: scheduled.filter((p) => p.schedule_status === 'scheduled'),
           autoPublished: ready.length,
-          total: scheduled.length
-        }
+          total: scheduled.length,
+        },
       },
       HttpStatus.OK,
       requestId
@@ -88,7 +103,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
 // POST - Yazıyı planla
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -99,7 +114,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.UNAUTHORIZED, 'Yönetici yetkisi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as SchedulePostBody;
     const { postId, publishAt } = body;
 
     if (!postId || !publishAt) {
@@ -116,14 +131,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/blog/scheduled-posts', HttpStatus.OK, duration);
-    logger.logMutation('schedule', 'blog_posts', postId, locals.user?.id, { publishAt });
+    logger.logMutation('schedule', 'blog_posts', postId, locals.user?.id);
 
     await deleteCachePattern('blog:*');
 
     return apiResponse(
       {
         success: true,
-        message: `Yazı ${publishDate.toLocaleDateString('tr-TR')} tarihinde yayınlanacak`
+        message: `Yazı ${publishDate.toLocaleDateString('tr-TR')} tarihinde yayınlanacak`,
       },
       HttpStatus.OK,
       requestId

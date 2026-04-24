@@ -211,7 +211,7 @@ export class AnalyticsEngine {
   /**
    * Run diagnostic analysis
    */
-  runDiagnosticAnalysis(datasetId: string, targetMetric: string): string[] {
+  runDiagnosticAnalysis(_datasetId: string, targetMetric: string): string[] {
     return [
       `Root cause analysis for ${targetMetric} completed`,
       'Primary driver: Variable X accounts for 45% of variance',
@@ -223,7 +223,7 @@ export class AnalyticsEngine {
   /**
    * Run predictive analysis
    */
-  runPredictiveAnalysis(datasetId: string, targetVariable: string): number[] {
+  runPredictiveAnalysis(_datasetId: string, _targetVariable: string): number[] {
     const predictions: number[] = [];
     for (let i = 0; i < 12; i++) {
       predictions.push(Math.round(Math.random() * 100));
@@ -234,7 +234,7 @@ export class AnalyticsEngine {
   /**
    * Identify anomalies
    */
-  identifyAnomalies(datasetId: string, threshold: number): string[] {
+  identifyAnomalies(_datasetId: string, _threshold: number): string[] {
     return [
       'record-001: Value 156 exceeds threshold by 30%',
       'record-045: Value -5 below expected range',
@@ -245,7 +245,7 @@ export class AnalyticsEngine {
   /**
    * Correlation analysis
    */
-  correlationAnalysis(datasetId: string): Record<string, number> {
+  correlationAnalysis(_datasetId: string): Record<string, number> {
     return {
       'variable_a_vs_b': 0.85,
       'variable_a_vs_c': 0.32,
@@ -295,7 +295,7 @@ export class MLModelManager {
   /**
    * Train model
    */
-  trainModel(modelId: string, trainingData: string): void {
+  trainModel(modelId: string, _trainingData: string): void {
     const model = this.models.get(modelId);
     if (model) {
       model.status = 'trained';
@@ -308,7 +308,7 @@ export class MLModelManager {
   /**
    * Evaluate model
    */
-  evaluateModel(modelId: string, testData: string): number {
+  evaluateModel(modelId: string, _testData: string): number {
     const model = this.getModel(modelId);
     if (!model) return 0;
 
@@ -331,7 +331,7 @@ export class MLModelManager {
   /**
    * Predict with model
    */
-  predictWithModel(modelId: string, input: Record<string, any>): number {
+  predictWithModel(modelId: string, _input: Record<string, any>): number {
     const model = this.getModel(modelId);
     if (!model || model.status !== 'deployed') {
       return 0;

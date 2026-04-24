@@ -5,7 +5,7 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 def main():
     ssh = paramiko.SSHClient()
@@ -42,7 +42,7 @@ INSERT INTO site_settings (key, value, type, description, is_public) VALUES
 ('meta_keywords', 'Şanlıurfa, Göbeklitepe, Balıklıgöl, turizm, gezi', 'string', 'Meta keywords', true),
 ('meta_author', 'Şanlıurfa.com', 'string', 'Meta author', true),
 ('og_image', '/images/og-default.jpg', 'string', 'Varsayılan sosyal medya görseli', true),
-('twitter_handle', '@sanliurfa', 'string', 'Twitter kullanıcı adı', true),
+('twitter_handle', '', 'string', 'X/Twitter kullanıcı adı (opsiyonel)', true),
 ('facebook_page', '', 'string', 'Facebook sayfa URL', true),
 ('instagram_page', '', 'string', 'Instagram sayfa URL', true),
 ('contact_email', 'info@sanliurfa.com', 'string', 'İletişim e-posta', true),

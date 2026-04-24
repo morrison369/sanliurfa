@@ -62,7 +62,7 @@
 🖥️ SSH: ssh -p 77 sanliur@168.119.79.238
 🔧 CWP: https://168.119.79.238:2083
    Kullanıcı: sanliur
-   Şifre: BcqH7t5zNKfw
+   Şifre: CHANGE_ME_CWP_SSH_PASSWORD
 ```
 
 ### Veritabanı
@@ -72,7 +72,7 @@
    Port: 5432
    Database: sanliur_sanliurfa
    User: sanliur_sanliurfa
-   Pass: vyD7l4kGFtnw
+   Pass: CHANGE_ME_DB_PASSWORD
 ```
 
 ---
@@ -191,7 +191,7 @@ pm2 logs sanliurfa --lines 50
 sudo systemctl status postgresql-16
 
 # Bağlantı testi
-PGPASSWORD='vyD7l4kGFtnw' psql -h localhost -U sanliur_sanliurfa -d sanliur_sanliurfa -c 'SELECT 1;'
+PGPASSWORD='CHANGE_ME_DB_PASSWORD' psql -h localhost -U sanliur_sanliurfa -d sanliur_sanliurfa -c 'SELECT 1;'
 ```
 
 ### Disk Dolu

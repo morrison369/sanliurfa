@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Report Export API
  * Download reports in CSV/JSON/Excel format
@@ -11,7 +10,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -66,7 +65,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       body = result.buffer;
     }
 
-    return new Response(body, {
+    return new Response(body as any, {
       status: 200,
       headers: {
         'Content-Type': result.contentType,

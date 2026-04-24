@@ -47,7 +47,7 @@ export class AuditLogger {
     }
   ): AuditLog {
     const log: AuditLog = {
-      id: `AUDIT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `AUDIT-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
       timestamp: Date.now(),
       userId,
       action,

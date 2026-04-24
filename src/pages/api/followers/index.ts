@@ -11,8 +11,8 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+export const GET: APIRoute = async ({ request, url }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -45,20 +45,12 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       );
     }
 
-    let data;
-
-    switch (type) {
-      case 'following':
-        data = await getFollowing(userId, limit);
-        break;
-      case 'mutual':
-        data = await getMutualFriends(userId, limit);
-        break;
-      case 'followers':
-      default:
-        data = await getFollowers(userId, limit);
-        break;
-    }
+    const data =
+      type === 'following'
+        ? await getFollowing(userId, limit)
+        : type === 'mutual'
+          ? await getMutualFriends(userId, limit)
+          : await getFollowers(userId, limit);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/followers', HttpStatus.OK, duration);
@@ -88,7 +80,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -150,7 +142,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

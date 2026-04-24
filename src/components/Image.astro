@@ -29,20 +29,18 @@ const {
 
 // Remote image kontrolü
 const isRemote = src.startsWith('http');
+const authorizedRemoteHosts = new Set(['images.pexels.com', 'images.unsplash.com', 'source.unsplash.com']);
+const shouldUseAstroPicture = (() => {
+  if (!isRemote) return true;
+  try {
+    return authorizedRemoteHosts.has(new URL(src).hostname);
+  } catch {
+    return false;
+  }
+})();
 ---
 
-{isRemote ? (
-  <img
-    src={src}
-    alt={alt}
-    width={width}
-    height={height}
-    class={className}
-    loading={loading}
-    decoding={decoding}
-    onerror="this.src='/images/placeholder.jpg'"
-  />
-) : (
+{shouldUseAstroPicture ? (
   <Picture
     src={src}
     alt={alt}
@@ -54,5 +52,16 @@ const isRemote = src.startsWith('http');
     quality={quality}
     loading={loading}
     decoding={decoding}
+  />
+) : (
+  <img
+    src={src}
+    alt={alt}
+    width={width}
+    height={height}
+    class={className}
+    loading={loading}
+    decoding={decoding}
+    onerror="this.setAttribute('src','/images/placeholder.jpg')"
   />
 )}

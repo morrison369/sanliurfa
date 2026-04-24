@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+function extractAuthTokenFromSetCookie(header: string | null): string {
+  if (!header) return '';
+  const match = header.match(/(?:^|,\s*)auth-token=([^;,\s]+)/i);
+  return match?.[1] ?? '';
+}
+
 test.describe('Real-time Features - Feed SSE', () => {
   test('GET /api/realtime/feed - SSE connection', async ({ request }) => {
     const registerRes = await request.post('/api/auth/register', {
@@ -9,11 +15,12 @@ test.describe('Real-time Features - Feed SSE', () => {
         fullName: 'Feed User'
       }
     });
-    const { data: user } = await registerRes.json();
+    const token = extractAuthTokenFromSetCookie(registerRes.headers()['set-cookie'] ?? null);
+    expect(token).toBeTruthy();
 
-    const response = await request.get('/api/realtime/feed', {
+    const response = await request.get('/api/realtime/feed?once=1', {
       headers: {
-        'Cookie': `auth-token=${user.token}`,
+        'Cookie': `auth-token=${token}`,
         'Accept': 'text/event-stream'
       }
     });
@@ -27,7 +34,7 @@ test.describe('Real-time Features - Feed SSE', () => {
   });
 
   test('GET /api/realtime/feed - requires authentication', async ({ request }) => {
-    const response = await request.get('/api/realtime/feed', {
+    const response = await request.get('/api/realtime/feed?once=1', {
       headers: { 'Accept': 'text/event-stream' }
     });
 
@@ -42,10 +49,11 @@ test.describe('Real-time Features - Feed SSE', () => {
         fullName: 'Headers Test'
       }
     });
-    const { data: user } = await registerRes.json();
+    const token = extractAuthTokenFromSetCookie(registerRes.headers()['set-cookie'] ?? null);
+    expect(token).toBeTruthy();
 
-    const response = await request.get('/api/realtime/feed', {
-      headers: { 'Cookie': `auth-token=${user.token}` }
+    const response = await request.get('/api/realtime/feed?once=1', {
+      headers: { 'Cookie': `auth-token=${token}` }
     });
 
     const headers = response.headers();

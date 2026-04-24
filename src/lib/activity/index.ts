@@ -120,11 +120,11 @@ export async function getUserActivityFeed(
       u.avatar_url as user_avatar,
       CASE 
         WHEN a.entity_type = 'place' THEN (SELECT name FROM places WHERE id = a.entity_id)
-        WHEN a.entity_type = 'collection' THEN (SELECT name FROM collections WHERE id = a.entity_id::int)
+        WHEN a.entity_type = 'collection' THEN (SELECT name FROM collections WHERE id = a.entity_id::uuid)
         ELSE NULL
       END as entity_name,
       CASE
-        WHEN a.entity_type = 'place' THEN (SELECT url FROM place_images WHERE place_id = a.entity_id LIMIT 1)
+        WHEN a.entity_type = 'place' THEN (SELECT file_path FROM place_photos WHERE place_id = a.entity_id LIMIT 1)
         ELSE NULL
       END as entity_image
     FROM user_activities a

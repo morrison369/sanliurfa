@@ -49,7 +49,7 @@ export async function createComment(
     await deleteCache(`comments:${targetType}:${targetId}`);
 
     // Get user info
-    const user = await queryOne('SELECT full_name, avatar FROM users WHERE id = $1', [userId]);
+    const user = await queryOne('SELECT full_name, avatar_url as avatar FROM users WHERE id = $1', [userId]);
 
     return {
       id: comment.id,
@@ -99,7 +99,7 @@ export async function getComments(
         c.id,
         c.user_id,
         u.full_name as user_name,
-        u.avatar as user_avatar,
+        u.avatar_url as avatar as user_avatar,
         c.target_type,
         c.target_id,
         c.parent_comment_id,
@@ -226,7 +226,7 @@ export async function updateComment(
     // Clear cache
     await deleteCache(`comments:${comment.target_type}:${comment.target_id}`);
 
-    const user = await queryOne('SELECT full_name, avatar FROM users WHERE id = $1', [userId]);
+    const user = await queryOne('SELECT full_name, avatar_url as avatar FROM users WHERE id = $1', [userId]);
 
     return {
       id: comment.id,

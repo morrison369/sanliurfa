@@ -2,9 +2,7 @@
  * Subscription Admin Dashboard Component
  * Dashboard for managing subscriptions and viewing analytics
  */
-
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface Analytics {
   subscriptions: {
     totalSubscriptions: number;
@@ -38,14 +36,14 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
         const response = await fetch('/api/admin/subscriptions/analytics');
 
         if (!response.ok) {
-          throw new Error('Failed to fetch analytics');
+          throw new Error('Abonelik analitiği yüklenemedi.');
         }
 
         const data = await response.json() as any;
         setAnalytics(data.subscriptions || null);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load analytics');
+        setError(err instanceof Error ? err.message : 'Abonelik analitiği yüklenemedi.');
       } finally {
         setLoading(false);
       }
@@ -86,7 +84,7 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
+      {/* Sekmeler */}
       <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setActiveTab('overview')}
@@ -122,7 +120,7 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
 
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Key Metrics */}
+          {/* Ana metrikler */}
           <div className="grid md:grid-cols-4 gap-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
               <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Toplam Abonelik</h3>
@@ -149,7 +147,7 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
             </div>
           </div>
 
-          {/* Plan Distribution */}
+          {/* Plan dağılımı */}
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Plan Dağılımı</h3>
             <div className="space-y-3">
@@ -172,7 +170,7 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
             </div>
           </div>
 
-          {/* Revenue Summary */}
+          {/* Gelir özeti */}
           <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-6 border border-green-200 dark:border-green-800">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Gelir Özeti</h3>
             <div className="grid md:grid-cols-2 gap-6">
@@ -238,7 +236,7 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
 
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-800 dark:text-blue-300">
-              💡 Webhook delivery status'ını izleyin. Başarısız webhook'lar işleniyor ve otomatik olarak yeniden deniyor.
+              Webhook teslimat durumunu izleyin. Başarısız webhook'lar işleniyor ve otomatik olarak yeniden deneniyor.
             </p>
           </div>
         </div>

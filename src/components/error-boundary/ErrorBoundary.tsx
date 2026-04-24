@@ -3,7 +3,7 @@
  * Catches JavaScript errors and displays fallback UI
  */
 
-import { Component, type ReactNode } from 'react';
+import { Component, type ReactNode, useCallback, useState } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -126,8 +126,6 @@ export function useAsyncError() {
 
   return { error, handleError, clearError };
 }
-
-import { useState, useCallback } from 'react';
 
 /**
  * Section Error Boundary - For smaller sections

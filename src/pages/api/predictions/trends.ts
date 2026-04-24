@@ -1,11 +1,22 @@
 import type { APIRoute } from 'astro';
-import { 
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
+import {
   analyzeVisitTrends, 
   predictSearchTrends,
   detectAnomalies,
   type TimeSeriesPoint,
 } from '../../../lib/predictions';
+
+type RequestBody = {
+  data?: unknown;
+  threshold?: unknown;
+};
+
+type TimeSeriesInput = {
+  date?: unknown;
+  value?: unknown;
+};
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -13,20 +24,25 @@ export const GET: APIRoute = async ({ request }) => {
     const type = url.searchParams.get('type') || 'visits';
     const days = parseInt(url.searchParams.get('days') || '30');
 
-    let result;
+    const result = await (async () => {
+      switch (type) {
+        case 'visits':
+          return analyzeVisitTrends(days);
+        case 'searches':
+          return predictSearchTrends(days);
+        default:
+          return null;
+      }
+    })();
 
-    switch (type) {
-      case 'visits':
-        result = await analyzeVisitTrends(days);
-        break;
-      case 'searches':
-        result = await predictSearchTrends(days);
-        break;
-      default:
-        return new Response(JSON.stringify({ error: 'Invalid type' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
+    if (!result) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Invalid type',
+        type: '/problems/predictions-trends-type-invalid',
+        instance: '/api/predictions/trends',
+      });
     }
 
     return new Response(JSON.stringify({ 
@@ -40,29 +56,67 @@ export const GET: APIRoute = async ({ request }) => {
 
   } catch (error) {
     logger.error('Predictions error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      title: 'Trend Tahmini Başarısız',
+      detail: 'Internal server error',
+      type: '/problems/predictions-trends-failed',
+      instance: '/api/predictions/trends',
     });
   }
 };
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
-    const { data, threshold = 2 } = body;
+    const body = (await request.json()) as RequestBody;
+    const data = body.data;
+    const thresholdValue = body.threshold;
+    const parsedThreshold = Number(thresholdValue);
+    const threshold = Number.isFinite(parsedThreshold) ? parsedThreshold : 2;
 
     if (!Array.isArray(data)) {
-      return new Response(JSON.stringify({ error: 'Invalid data format' }), {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        title: 'Geçersiz İstek',
+        detail: 'Invalid data format',
+        type: '/problems/predictions-trends-data-invalid',
+        instance: '/api/predictions/trends',
       });
     }
 
-    const timeSeries: TimeSeriesPoint[] = data.map((d: any) => ({
-      date: new Date(d.date),
-      value: d.value,
-    }));
+    const timeSeries: TimeSeriesPoint[] = [];
+
+    for (const row of data) {
+      if (!row || typeof row !== 'object') {
+        return problemJson({
+          status: 400,
+          title: 'Geçersiz İstek',
+          detail: 'Invalid data format',
+          type: '/problems/predictions-trends-data-invalid',
+          instance: '/api/predictions/trends',
+        });
+      }
+
+      const point = row as TimeSeriesInput;
+      const parsedValue = Number(point.value);
+      const dateValue = point.date;
+      const parsedDate = dateValue instanceof Date ? dateValue : new Date(String(dateValue || ''));
+
+      if (!Number.isFinite(parsedValue) || Number.isNaN(parsedDate.getTime())) {
+        return problemJson({
+          status: 400,
+          title: 'Geçersiz İstek',
+          detail: 'Invalid data format',
+          type: '/problems/predictions-trends-data-invalid',
+          instance: '/api/predictions/trends',
+        });
+      }
+
+      timeSeries.push({
+        date: parsedDate,
+        value: parsedValue,
+      });
+    }
 
     const anomalies = detectAnomalies(timeSeries, threshold);
 
@@ -77,9 +131,12 @@ export const POST: APIRoute = async ({ request }) => {
 
   } catch (error) {
     logger.error('Anomaly detection error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      title: 'Anomali Analizi Başarısız',
+      detail: 'Internal server error',
+      type: '/problems/predictions-anomaly-failed',
+      instance: '/api/predictions/trends',
     });
   }
 };

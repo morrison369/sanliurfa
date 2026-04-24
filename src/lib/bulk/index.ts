@@ -231,7 +231,7 @@ export async function bulkExport(
 export async function executeBulkOperation(
   operation: Omit<BulkOperation, 'id' | 'startedAt' | 'completedAt'>
 ): Promise<BulkOperation> {
-  const id = `bulk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const id = `bulk_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
   const bulkOp: BulkOperation = {
     ...operation,

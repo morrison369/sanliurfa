@@ -1,0 +1,200 @@
+---
+
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'Şanlıurfa Otobüs Saatleri | Güncel Toplu Taşıma Rehberi',
+  description: 'Şanlıurfa otobüs saatleri, yoğun saat aralıkları, aktarma noktaları ve ulaşım önerileri. Güncel şehir içi toplu taşıma rehberi.',
+  keywords: ['Şanlıurfa otobüs saatleri', 'Şanlıurfa toplu taşıma', 'Şanlıurfa ulaşım', 'Şanlıurfa EGO'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/ulasim/otobus-saatleri',
+};
+
+let dbRoutes: any[] = [];
+try {
+  const result = await query(
+    `SELECT r.id, r.route_no, r.name, r.start_stop, r.end_stop, r.notes,
+            array_agg(s.departure_time::TEXT ORDER BY s.departure_time) FILTER (WHERE s.day_type = 'weekday' AND s.direction = 'outbound') as weekday_times
+     FROM bus_routes r
+     LEFT JOIN bus_schedules s ON s.route_id = r.id
+     WHERE r.is_active = true
+     GROUP BY r.id
+     ORDER BY r.route_no`,
+    [],
+  );
+  dbRoutes = result.rows;
+} catch { /* migration henüz çalışmamış olabilir, fallback göster */ }
+
+const timeBands = [
+  { label: 'Sabah', range: '06:00 - 09:00', note: 'İşe / okula gidiş yoğunluğu' },
+  { label: 'Öğle', range: '12:00 - 14:00', note: 'Orta seviye yoğunluk' },
+  { label: 'Akşam', range: '17:00 - 20:00', note: 'Dönüş saatlerinde yoğunluk' },
+  { label: 'Gece', range: '21:00 - 23:30', note: 'Seyrek sefer aralığı' },
+];
+
+const keyStops = [
+  'Topçu Meydanı',
+  'Abide Kavşağı',
+  'Balıklıgöl Çevresi',
+  'Karaköprü Merkez',
+  'Haliliye Devlet Hastanesi',
+  'GAP Otogarı',
+];
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa otobüs saatleri nasıl takip edilir?',
+    C: 'Hat bazlı saatleri ilgili ulaşım sayfalarından kontrol ederek en güncel planı görebilirsiniz.',
+  },
+  {
+    S: 'Yoğun saatlerde sefer aralığı nasıl değişir?',
+    C: 'Sabah ve akşam yoğun saatlerinde sefer aralıkları sıklaşabilir, gece saatlerinde seyrekleşir.',
+  },
+  {
+    S: 'Otobüs saatleri mevsime göre değişir mi?',
+    C: 'Evet, yaz-kış dönemleri ve resmi günlerde sefer planları güncellenebilir; son tabloyu hat sayfasından doğrulayın.',
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-gray-50">
+    <section class="bg-gradient-to-br from-slate-800 to-slate-900 text-white py-14">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold mb-3">Şanlıurfa Otobüs Saatleri</h1>
+        <p class="text-slate-300 max-w-2xl">
+          Şanlıurfa şehir içi toplu taşıma için saat aralıkları, yoğunluk bilgileri ve ana aktarma noktaları.
+        </p>
+        <p id="transport-freshness" class="mt-2 text-xs text-slate-300">Veri tazeliği kontrol ediliyor...</p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <a href="/ulasim/otobus-hatlari" class="px-4 py-2 rounded-lg bg-white text-slate-800 font-semibold hover:bg-slate-100">
+            Otobüs Hatları
+          </a>
+          <a href="/ulasim" class="px-4 py-2 rounded-lg border border-white/40 hover:bg-white/10">
+            Ulaşım Rehberi
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-10">
+      <div class="container mx-auto px-4 grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p class="text-sm font-semibold uppercase tracking-wide text-slate-600">Hızlı Cevap</p>
+          <h2 class="mt-1 text-xl font-bold text-gray-950">Şanlıurfa otobüs saatleri nereden takip edilir?</h2>
+          <p class="mt-2 text-sm leading-6 text-gray-700">
+            Şanlıurfa otobüs saatleri için yoğun saat aralıklarını, ana aktarma noktalarını ve ulaşım bağlantılarını
+            bu sayfadan kontrol edebilirsiniz. Kesin hat saatleri değişebileceği için son tazelik bilgisi ayrıca gösterilir.
+          </p>
+        </div>
+
+        {dbRoutes.length > 0 && (
+          <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm mb-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Hat Saatleri (DB)</h2>
+            <div class="space-y-4">
+              {dbRoutes.map((route: any) => (
+                <div class="border border-gray-100 rounded-xl p-4">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="font-bold text-lg text-red-600">{route.route_no}</span>
+                    <span class="font-medium text-gray-800">{route.name}</span>
+                    <span class="text-xs text-gray-500 ml-auto">{route.start_stop} → {route.end_stop}</span>
+                  </div>
+                  {route.weekday_times?.length > 0 && (
+                    <div class="flex flex-wrap gap-1.5 mt-1">
+                      {route.weekday_times.slice(0, 12).map((t: string) => (
+                        <span class="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono">{t.slice(0,5)}</span>
+                      ))}
+                      {route.weekday_times.length > 12 && (
+                        <span class="text-xs text-gray-400">+{route.weekday_times.length - 12} daha…</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm">
+          <h2 class="text-2xl font-bold text-gray-900 mb-4">Yoğunluk ve Saat Aralıkları</h2>
+          <div class="space-y-3">
+            {timeBands.map((item) => (
+              <div class="border border-gray-100 rounded-xl p-4">
+                <div class="flex items-center justify-between gap-4">
+                  <p class="font-semibold text-gray-900">{item.label}</p>
+                  <span class="text-sm text-slate-700 bg-slate-100 px-3 py-1 rounded-full">{item.range}</span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">{item.note}</p>
+              </div>
+            ))}
+          </div>
+          <p class="text-xs text-gray-500 mt-4">
+            Not: Hat bazlı kesin sefer saatleri dönemsel olarak güncellenebilir. Son doğrulama için ilgili hat sayfasını kontrol edin.
+          </p>
+        </div>
+
+        <aside class="space-y-4">
+          <div class="bg-white rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-gray-900 mb-3">Ana Aktarma Noktaları</h3>
+            <ul class="space-y-2 text-sm text-gray-700">
+              {keyStops.map((stop) => (
+                <li class="flex items-center gap-2"><span>📍</span><span>{stop}</span></li>
+              ))}
+            </ul>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+            <h3 class="font-bold text-emerald-800">Hızlı Erişim</h3>
+            <div class="mt-3 space-y-2 text-sm">
+              <a href="/saglik/nobetci-eczaneler" class="block text-emerald-700 hover:underline">Nöbetçi Eczaneler</a>
+              <a href="/etkinlikler" class="block text-emerald-700 hover:underline">Etkinlik Takvimi</a>
+              <a href="/mekanlar" class="block text-emerald-700 hover:underline">Mekan Rehberi</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqItems.map((item) => ({
+        '@type': 'Question',
+        name: item.S,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.C,
+        },
+      })),
+    })} is:inline />
+  </div>
+  <script is:inline>
+    async function loadTransportFreshness() {
+      try {
+        const res = await fetch('/api/transport/status');
+        if (!res.ok) return;
+        const json = await res.json();
+        const el = document.getElementById('transport-freshness');
+        if (!el || !json?.success) return;
+        const updatedAt = json?.data?.updatedAt;
+        const stale = Boolean(json?.data?.stale);
+        el.textContent = updatedAt
+          ? `Son güncelleme: ${new Date(updatedAt).toLocaleString('tr-TR')} (${stale ? 'eski veri' : 'güncel'})`
+          : 'Son güncelleme bilgisi yok';
+      } catch {
+        // silent
+      }
+    }
+    void loadTransportFreshness();
+  </script>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Ulaşım', item: `${baseUrl}/ulasim` },
+      { '@type': 'ListItem', position: 3, name: 'Otobüs Saatleri', item: `${baseUrl}/ulasim/otobus-saatleri` },
+    ],
+  })} is:inline />
+</Layout>

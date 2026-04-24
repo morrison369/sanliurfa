@@ -6,8 +6,8 @@ lon: 38.9222
 category: "tarihi"
 type: "arkeolojik_alan"
 tags: ["UNESCO", "arkeoloji", "tarih", "Neolitik", "tapınak"]
-image: "https://images.unsplash.com/photo-1599579787574-29c39985f9bb?w=1200"
-thumb: "https://images.unsplash.com/photo-1599579787574-29c39985f9bb?w=400"
+image: "/images/places/gobeklitepe.jpg"
+thumb: "/images/places/gobeklitepe-thumb.jpg"
 address: "Örencik Köyü, Haliliye/Şanlıurfa (Şehir merkezine 18 km)"
 hours: "08:00-18:00 (Yaz), 08:00-16:00 (Kış)"
 price: "300 TL (Müzekart: 60 TL)"
@@ -20,7 +20,7 @@ reviewCount: 4521
 
 **Göbeklitepe**, dünya arkeolojisinin en önemli keşiflerinden biri olarak kabul edilir. **MÖ 9600-8200** yıllarına tarihlenen bu yapı, insanlık tarihinin bilinen en eski tapınak kompleksidir.
 
-![Göbeklitepe](https://images.unsplash.com/photo-1599579787574-29c39985f9bb?w=800)
+![Göbeklitepe](/images/places/gobeklitepe.jpg)
 
 ## 🏆 UNESCO Dünya Mirası
 

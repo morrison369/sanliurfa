@@ -4,14 +4,19 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSearchSuggestions, getGlobalSuggestions, getPersonalizedSuggestions } from '../../../lib/search/search-suggestions';
+import {
+  getSearchSuggestions,
+  getGlobalSuggestions,
+  getPersonalizedSuggestions,
+  getFuzzySuggestions,
+} from '../../../lib/search/search-suggestions';
 import { getRecentSearches } from '../../../lib/search/search-history';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -47,6 +52,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
       getSearchSuggestions(prefix, searchType, limit),
       getGlobalSuggestions(prefix, Math.min(limit, 5))
     ]);
+    const fuzzySuggestions =
+      localSuggestions.length === 0 && prefix.length >= 2
+        ? await getFuzzySuggestions(prefix, searchType, Math.min(limit, 5))
+        : [];
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/search/suggestions', HttpStatus.OK, duration);
@@ -56,6 +65,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
         success: true,
         data: {
           suggestions: localSuggestions.slice(0, limit),
+          fuzzy: fuzzySuggestions,
           global: globalSuggestions.slice(0, Math.min(limit, 3)),
           type: 'autocomplete'
         }

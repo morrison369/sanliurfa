@@ -10,7 +10,7 @@ import { recordRequest } from '../../lib/metrics';
 import { logger } from '../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       recordRequest('GET', '/api/activity', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Login required',
+        'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -34,13 +34,13 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     // Get activity
-    const activity = await getUserActivity(userId, limit);
+    const activity = await getUserActivity(userId, { limit });
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/activity', HttpStatus.OK, duration);
 
     return apiResponse(
-      { success: true, data: activity, count: activity.length },
+      { success: true, data: activity.activities, count: activity.total },
       HttpStatus.OK,
       requestId
     );
@@ -50,10 +50,11 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     logger.error('Get activity failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Internal server error',
+      'İç sunucu hatası',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
     );
   }
 };
+

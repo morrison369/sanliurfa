@@ -6,7 +6,7 @@
 
 ```bash
 ssh -p 77 sanliur@176.9.138.254
-# Şifre: BcqH7t5zNKfw
+# Şifre: CHANGE_ME_CWP_SSH_PASSWORD
 ```
 
 **Bağlanamazsan:**

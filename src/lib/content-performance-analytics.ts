@@ -188,4 +188,4 @@ export const contentEngagementTracker = new ContentEngagementTracker();
 export const contentROIAnalyzer = new ContentROIAnalyzer();
 export const seoPerformanceTracker = new SEOPerformanceTracker();
 
-export { ContentAsset, ContentEngagementMetric, ContentROI, SEOPerformanceMetric };
+export {ContentAsset, ContentEngagementMetric, ContentROI, SEOPerformanceMetric};

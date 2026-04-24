@@ -181,7 +181,7 @@ export class NPSManager {
   /**
    * Calculate NPS
    */
-  calculateNPS(accountId: string, period: string): number {
+  calculateNPS(_accountId: string, _period: string): number {
     // In a real implementation, filter by period
     const responses = Array.from(this.responses.values());
 

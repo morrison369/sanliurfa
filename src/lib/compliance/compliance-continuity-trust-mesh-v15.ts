@@ -2,7 +2,7 @@
  * Phase 433: Compliance Continuity Trust Mesh V15
  */
 
-import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
+import { SignalBook, computeBalancedScore, routeByThresholds } from './governance-kit';
 
 export interface ComplianceContinuityTrustSignalV15 {
   signalId: string;
@@ -34,7 +34,7 @@ class ComplianceContinuityTrustRouterV15 {
 }
 
 class ComplianceContinuityTrustReporterV15 {
-  report(signalId: string, route: string): string {
+  report(_signalId: string, _route: string): string {
     return "" as any;
   }
 }
@@ -50,4 +50,7 @@ export {
   ComplianceContinuityTrustRouterV15,
   ComplianceContinuityTrustReporterV15
 };
+
+
+
 

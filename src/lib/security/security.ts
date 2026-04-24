@@ -115,7 +115,7 @@ async function checkSuspiciousPattern(userId: string | null, eventType: string, 
   }
 }
 
-async function isIPGeographicallyDistant(ip1: string, ip2: string): Promise<boolean> {
+async function isIPGeographicallyDistant(_ip1: string, _ip2: string): Promise<boolean> {
   // In production, use a real GeoIP service
   // For now, return false (not distant)
   return false;
@@ -472,5 +472,4 @@ export async function getLoginHistory(userId: string, limit: number = 20): Promi
     return [];
   }
 }
-
 

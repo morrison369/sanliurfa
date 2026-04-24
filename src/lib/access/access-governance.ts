@@ -250,6 +250,4 @@ export const accessReviewOrchestrator = new AccessReviewOrchestrator();
 export const privilegeEscalationMonitor = new PrivilegeEscalationMonitor();
 export const roleHierarchyManager = new RoleHierarchyManager();
 
-export type { Entitlement, AccessReview, RoleHierarchy };
-
-
+export { Entitlement, AccessReview, RoleHierarchy };

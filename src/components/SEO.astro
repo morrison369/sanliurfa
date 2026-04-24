@@ -1,9 +1,9 @@
 ---
-import type { SEOMetadata, OpenGraph, TwitterCard } from '../types/seo';
+import { getSiteSetting } from '../lib/site-content';
 
 interface Props {
   title: string;
-  description: string;
+  description?: string;
   canonical?: string;
   ogImage?: string;
   noIndex?: boolean;
@@ -17,27 +17,34 @@ interface Props {
 
 const {
   title,
-  description,
+  description = '',
   canonical,
   ogImage = '/og-image.png',
   noIndex = false,
   noFollow = false,
   keywords = [],
-  author = 'Şanlıurfa.com',
+  author = 'Sanliurfa.com',
   publishedTime,
   modifiedTime,
   type = 'website',
 } = Astro.props;
 
-const siteUrl = import.meta.env.SITE_URL || 'https://sanliurfa.com';
-const fullTitle = title.includes('Şanlıurfa') ? title : `${title} | Şanlıurfa.com`;
+const homepageSchemaFallback = {
+  siteName: 'Sanliurfa.com',
+  baseUrl: 'https://sanliurfa.com',
+};
+const homepageSchema = await getSiteSetting('homepage.schema', homepageSchemaFallback);
+const siteName = String((homepageSchema as any)?.siteName || homepageSchemaFallback.siteName);
+const siteUrl = String((homepageSchema as any)?.baseUrl || import.meta.env.SITE_URL || homepageSchemaFallback.baseUrl);
+const fullTitle = title.includes('Şanlıurfa') ? title : `${title} | ${siteName}`;
 const canonicalUrl = canonical ? `${siteUrl}${canonical.replace(/\/$/, '')}` : `${siteUrl}${Astro.url.pathname.replace(/\/$/, '')}`;
 const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`;
+const ogImageExt = ogImageUrl.split('?')[0].split('.').pop()?.toLowerCase() || 'jpeg';
+const ogImageType = ogImageExt === 'webp' ? 'image/webp' : ogImageExt === 'png' ? 'image/png' : ogImageExt === 'gif' ? 'image/gif' : 'image/jpeg';
 ---
 
 <!-- Primary Meta Tags -->
 <title>{fullTitle}</title>
-<meta name="title" content={fullTitle} />
 <meta name="description" content={description} />
 {keywords.length > 0 && <meta name="keywords" content={keywords.join(', ')} />}
 <meta name="author" content={author} />
@@ -50,7 +57,11 @@ const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`
 <meta property="og:title" content={fullTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={ogImageUrl} />
-<meta property="og:site_name" content="Şanlıurfa.com" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:type" content={ogImageType} />
+<meta property="og:image:alt" content={fullTitle} />
+<meta property="og:site_name" content={siteName} />
 <meta property="og:locale" content="tr_TR" />
 {publishedTime && <meta property="article:published_time" content={publishedTime} />}
 {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
@@ -61,54 +72,13 @@ const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`
 <meta property="twitter:title" content={fullTitle} />
 <meta property="twitter:description" content={description} />
 <meta property="twitter:image" content={ogImageUrl} />
-<meta property="twitter:site" content="@sanliurfa" />
-<meta property="twitter:creator" content="@sanliurfa" />
+<meta property="twitter:image:alt" content={fullTitle} />
 
 <!-- Article specific -->
 {type === 'article' && (
   <>
     <meta property="article:author" content={author} />
-    <meta property="article:publisher" content="https://facebook.com/sanliurfa" />
   </>
 )}
 
-<!-- Structured Data - Local Business -->
-<script type="application/ld+json" set:html={JSON.stringify({
-  '@context': 'https://schema.org',
-  '@type': 'TravelAgency',
-  name: 'Şanlıurfa.com',
-  description: 'Şanlıurfa gezi rehberi - Balıklıgöl, Göbeklitepe ve daha fazlası',
-  url: siteUrl,
-  logo: `${siteUrl}/logo.png`,
-  sameAs: [
-    'https://facebook.com/sanliurfa',
-    'https://twitter.com/sanliurfa',
-    'https://instagram.com/sanliurfa',
-  ],
-  address: {
-    '@type': 'PostalAddress',
-    addressLocality: 'Şanlıurfa',
-    addressRegion: 'Şanlıurfa',
-    addressCountry: 'TR',
-  },
-  geo: {
-    '@type': 'GeoCoordinates',
-    latitude: 37.1591,
-    longitude: 38.7969,
-  },
-})} />
 
-<!-- Favicon -->
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-
-<!-- PWA -->
-<link rel="manifest" href="/manifest.json" />
-<meta name="theme-color" content="#0d9488" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="Şanlıurfa" />
-
-<!-- Viewport -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />

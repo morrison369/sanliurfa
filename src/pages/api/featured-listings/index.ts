@@ -15,7 +15,7 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -25,17 +25,18 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const offset = parseInt(url.searchParams.get('offset') || '0');
     const myListings = url.searchParams.get('my') === 'true';
 
-    let data;
+    const data = myListings
+      ? await (async () => {
+          if (!locals.user?.id) {
+            return null;
+          }
+          return getUserFeaturedListings(locals.user.id);
+        })()
+      : await getActiveFeaturedListings(limit, offset);
 
-    if (myListings) {
-      if (!locals.user?.id) {
-        recordRequest('GET', '/api/featured-listings', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-        return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
-      }
-      data = await getUserFeaturedListings(locals.user.id);
-    } else {
-      const result = await getActiveFeaturedListings(limit, offset);
-      data = result;
+    if (myListings && !locals.user?.id) {
+      recordRequest('GET', '/api/featured-listings', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const duration = Date.now() - startTime;
@@ -61,7 +62,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

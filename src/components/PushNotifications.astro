@@ -1,6 +1,8 @@
 ---
 interface Props {
-  user?: any;
+  user?: {
+    id?: string;
+  } | null;
 }
 
 const { user } = Astro.props;
@@ -40,7 +42,7 @@ const { user } = Astro.props;
   </div>
 )}
 
-<script>
+<script is:inline>
   const prompt = document.getElementById('push-notification-prompt');
   const enableBtn = document.getElementById('enable-push');
   const dismissBtn = document.getElementById('dismiss-push');
@@ -97,7 +99,7 @@ const { user } = Astro.props;
     prompt?.classList.add('hidden');
   });
 
-  function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
     const rawData = window.atob(base64);
@@ -110,3 +112,6 @@ const { user } = Astro.props;
     return outputArray;
   }
 </script>
+
+
+

@@ -9,9 +9,9 @@ import PhotoUpload from '../../components/PhotoUpload';
 import { query } from '../../lib/postgres';
 
 const seo = {
-  title: 'İşletme Paneli - Şanlıurfa.com',
+  title: 'İşletme Paneli - Sanliurfa.com',
   description: 'İşletme bilgilerinizi yönetin, yorumları yanıtlayın ve performansınızı takip edin.',
-  noindex: true,
+  noIndex: true,
 };
 
 if (!Astro.locals.user) {
@@ -60,7 +60,7 @@ const vendor = {
             </span>
             {vendor.firstPlace && (
               <a
-                href={`/places/${vendor.firstPlace.slug}`}
+                href={`/isletme/${vendor.firstPlace.slug}`}
                 target="_blank"
                 class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm"
               >
@@ -101,14 +101,14 @@ const vendor = {
         <div class="lg:col-span-2 space-y-6">
           {vendor.firstPlace ? (
             <>
-              <PlaceManager placeId={vendor.firstPlace.id} client:load />
+              <PlaceManager placeId={vendor.firstPlace.id} client:visible />
               <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 class="text-xl font-semibold text-gray-900 mb-4">Fotoğraflar</h2>
-                <PhotoUpload placeId={vendor.firstPlace.id} photos={[]} client:load />
+                <PhotoUpload placeId={vendor.firstPlace.id} photos={[]} client:visible />
               </div>
-              <ReservationManager placeId={vendor.firstPlace.id} client:load />
-              <PromotionManager placeId={vendor.firstPlace.id} client:load />
-              <ReviewManager placeId={vendor.firstPlace.id} client:load />
+              <ReservationManager placeId={vendor.firstPlace.id} client:visible />
+              <PromotionManager placeId={vendor.firstPlace.id} client:visible />
+              <ReviewManager placeId={vendor.firstPlace.id} client:visible />
             </>
           ) : (
             <div class="bg-white rounded-xl shadow-sm p-12 text-center text-gray-500">

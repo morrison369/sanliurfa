@@ -8,7 +8,7 @@ import time
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 def main():
     print("🔧 Complete CWP Setup")
@@ -22,7 +22,7 @@ def main():
     
     # 1. Stop existing
     print("\n1️⃣ Stopping existing app...")
-    ssh.exec_command(NVM + "pm2 stop sanliurfa 2>/dev/null; pm2 delete sanliurfa 2>/dev/null; fuser -k 6000/tcp 2>/dev/null; echo 'OK'")
+    ssh.exec_command(NVM + "pm2 stop sanliurfa 2>/dev/null; pm2 delete sanliurfa 2>/dev/null; fuser -k 4321/tcp 2>/dev/null; echo 'OK'")
     time.sleep(2)
     
     # 2. Fix Apache vhost
@@ -33,13 +33,13 @@ def main():
     DocumentRoot /home/sanliur/public_html
     
     ProxyPreserveHost On
-    ProxyPass / http://127.0.0.1:6000/
-    ProxyPassReverse / http://127.0.0.1:6000/
+    ProxyPass / http://127.0.0.1:4321/
+    ProxyPassReverse / http://127.0.0.1:4321/
     
     RewriteEngine On
     RewriteCond %{HTTP:Upgrade} websocket [NC]
     RewriteCond %{HTTP:Connection} upgrade [NC]
-    RewriteRule ^/?(.*) "ws://127.0.0.1:6000/$1" [P,L]
+    RewriteRule ^/?(.*) "ws://127.0.0.1:4321/$1" [P,L]
     
     <Directory /home/sanliur/public_html>
         Options -Indexes +FollowSymLinks
@@ -63,24 +63,24 @@ def main():
     
     # Önce test et
     stdin, stdout, stderr = ssh.exec_command(
-        f"cd /home/sanliur/public_html && {NVM} timeout 5 node dist/server/entry.mjs --port 6000 2>&1 &"
+        f"cd /home/sanliur/public_html && {NVM} timeout 5 node dist/server/entry.mjs --port 4321 2>&1 &"
     )
     time.sleep(3)
     
     # Test HTTP
-    stdin, stdout, stderr = ssh.exec_command("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/ 2>/dev/null || echo 'FAIL'")
+    stdin, stdout, stderr = ssh.exec_command("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/ 2>/dev/null || echo 'FAIL'")
     test_result = stdout.read().decode().strip()
     
     if test_result == "200":
         print("   ✅ App working!")
         # PM2'ye kaydet
-        ssh.exec_command(f"cd /home/sanliur/public_html && {NVM} pm2 start dist/server/entry.mjs --name sanliurfa -- --port 6000")
+        ssh.exec_command(f"cd /home/sanliur/public_html && {NVM} pm2 start dist/server/entry.mjs --name sanliurfa -- --port 4321")
         time.sleep(2)
         ssh.exec_command(NVM + "pm2 save")
     else:
         print(f"   ⚠️ App test failed: {test_result}")
         print("   Checking logs...")
-        stdin, stdout, stderr = ssh.exec_command(f"cd /home/sanliur/public_html && {NVM} node dist/server/entry.mjs --port 6000 2>&1 &")
+        stdin, stdout, stderr = ssh.exec_command(f"cd /home/sanliur/public_html && {NVM} node dist/server/entry.mjs --port 4321 2>&1 &")
         time.sleep(3)
     
     # 4. Final status
@@ -88,7 +88,7 @@ def main():
     stdin, stdout, _ = ssh.exec_command(NVM + "pm2 list 2>/dev/null | grep sanliurfa || echo 'Not in PM2'")
     print("   PM2:", stdout.read().decode().strip()[:100])
     
-    stdin, stdout, _ = ssh.exec_command("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/ 2>/dev/null || echo '000'")
+    stdin, stdout, _ = ssh.exec_command("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/ 2>/dev/null || echo '000'")
     http = stdout.read().decode().strip()
     print("   HTTP:", http)
     

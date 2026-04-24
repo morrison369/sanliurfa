@@ -1,7 +1,8 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
-import {
 import { logger } from '../../../lib/logging';
+import {
+  type ImageFormat,
+  type OptimizeOptions,
   generateCacheKey,
   getOptimalFormat,
   parseSize,
@@ -12,13 +13,42 @@ import { logger } from '../../../lib/logging';
   validateImageSource,
   optimizeImage,
   getImageMetadata,
-  IMAGE_SIZES,
 } from '../../../lib/image-optimizer';
+
+type ImageFit = Exclude<OptimizeOptions['fit'], undefined>;
+
+const IMAGE_CACHE_TTL_SECONDS = 31536000;
+const DEFAULT_IMAGE_QUALITY = 80;
+
+const parseNumber = (value: string | null): number | undefined => {
+  if (!value) return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const parseImageFit = (value: string | null): ImageFit | undefined => {
+  if (!value) return undefined;
+  return value === 'cover' ||
+    value === 'contain' ||
+    value === 'fill' ||
+    value === 'inside' ||
+    value === 'outside'
+    ? value
+    : undefined;
+};
+
+const parseImageFormat = (value: string | null, acceptHeader: string): ImageFormat => {
+  if (value === 'webp' || value === 'jpeg' || value === 'png' || value === 'avif') {
+    return value;
+  }
+
+  return getOptimalFormat(acceptHeader);
+};
 
 export const GET: APIRoute = async ({ request, params }) => {
   try {
     const url = new URL(request.url);
-    const imagePath = params.path?.join('/') || '';
+    const imagePath = params.path || '';
     
     // Validate source
     if (!validateImageSource(imagePath)) {
@@ -26,21 +56,15 @@ export const GET: APIRoute = async ({ request, params }) => {
     }
     
     // Parse options from query params
-    const width = url.searchParams.get('w')
-      ? parseInt(url.searchParams.get('w')!)
-      : undefined;
-    const height = url.searchParams.get('h')
-      ? parseInt(url.searchParams.get('h')!)
-      : undefined;
+    const width = parseNumber(url.searchParams.get('w'));
+    const height = parseNumber(url.searchParams.get('h'));
     const size = url.searchParams.get('size') || undefined;
-    const quality = url.searchParams.get('q')
-      ? parseInt(url.searchParams.get('q')!)
-      : 80;
-    const fit = (url.searchParams.get('fit') as any) || 'inside';
+    const quality = parseNumber(url.searchParams.get('q')) || DEFAULT_IMAGE_QUALITY;
+    const fit = parseImageFit(url.searchParams.get('fit'));
     
     // Get optimal format from Accept header
     const acceptHeader = request.headers.get('accept') || '';
-    const format = url.searchParams.get('f') || getOptimalFormat(acceptHeader);
+    const format = parseImageFormat(url.searchParams.get('f'), acceptHeader);
     
     // Handle size preset
     let targetWidth = width;
@@ -58,7 +82,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     const cacheKey = generateCacheKey(imagePath, {
       width: targetWidth,
       height: targetHeight,
-      format: format as any,
+      format,
       quality,
       fit,
     });
@@ -66,7 +90,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     // Check cache
     const cached = getFromCache(cacheKey);
     if (cached) {
-      return new Response(cached.buffer, {
+      return new Response(cached.buffer as any, {
         headers: {
           'Content-Type': cached.contentType,
           'Cache-Control': 'public, max-age=31536000, immutable',
@@ -106,13 +130,13 @@ export const GET: APIRoute = async ({ request, params }) => {
     const optimizedBuffer = await optimizeImage(sourceBuffer, {
       width: dimensions.width,
       height: dimensions.height,
-      format: format as any,
+      format,
       quality,
       fit,
     });
     
     // Store in cache
-    const contentType = getContentType(format as any);
+    const contentType = getContentType(format);
     storeInCache(cacheKey, {
       buffer: optimizedBuffer,
       contentType,
@@ -121,10 +145,10 @@ export const GET: APIRoute = async ({ request, params }) => {
     });
     
     // Return optimized image
-    return new Response(optimizedBuffer, {
+    return new Response(optimizedBuffer as any, {
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': `public, max-age=${IMAGE_CACHE_TTL_SECONDS}, immutable`,
         'X-Cache': 'MISS',
         'X-Image-Width': dimensions.width.toString(),
         'X-Image-Height': dimensions.height.toString(),
@@ -146,3 +170,4 @@ export const OPTIONS: APIRoute = async () => {
     },
   });
 };
+

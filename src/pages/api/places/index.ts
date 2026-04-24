@@ -1,11 +1,11 @@
 // API: Mekan listesi (PostgreSQL + Redis cache)
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { query, insert } from '../../../lib/postgres';
 import { getCache, setCache, deleteCache } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
+import { resolveContentImage } from '../../../lib/content-images';
+import { problemJson } from '../../../lib/api';
 
-// @ts-nocheck
 /**
  * Generate cache key for places list query
  */
@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     // Build query
     // Optimized: SELECT only necessary columns instead of SELECT * (reduces data transfer)
-    let sql = `SELECT id, name, category, rating, review_count, is_featured, latitude, longitude,
+    let sql = `SELECT id, slug, name, category, rating, review_count, is_featured, latitude, longitude,
                       thumbnail_url, avg_rating, status, created_at
                FROM places WHERE status = $1`;
     let countSql = 'SELECT COUNT(*) FROM places WHERE status = $1';
@@ -79,8 +79,25 @@ export const GET: APIRoute = async ({ url }) => {
 
     const count = parseInt(countResult.rows[0]?.count || '0');
 
+    const data = dataResult.rows.map((row: any) => ({
+      ...row,
+      thumbnail_url: resolveContentImage({
+        category: 'places',
+        slug: row.slug,
+        explicit: row.thumbnail_url,
+        placeholder: '/images/placeholder-place.jpg',
+        thumb: true,
+      }),
+      image_url: resolveContentImage({
+        category: 'places',
+        slug: row.slug,
+        explicit: row.thumbnail_url,
+        placeholder: '/images/placeholder-place.jpg',
+      }),
+    }));
+
     const responseData = {
-      data: dataResult.rows,
+      data,
       count,
       pagination: {
         limit,
@@ -100,10 +117,13 @@ export const GET: APIRoute = async ({ url }) => {
     });
   } catch (err) {
     logger.error('Places fetch error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Mekanlar getirilirken bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Mekanlar Alınamadı',
+      detail: 'Mekanlar getirilirken bir hata oluştu',
+      type: '/problems/places-index-get-failed',
+      instance: '/api/places',
+    });
   }
 };
 
@@ -137,10 +157,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Check authentication
     if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/places-index-post-unauthorized',
+        instance: '/api/places',
+      });
     }
 
     const data = await insert('places', {
@@ -159,9 +182,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   } catch (err) {
     logger.error('Place create error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Mekan eklenirken bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Mekan Eklenemedi',
+      detail: 'Mekan eklenirken bir hata oluştu',
+      type: '/problems/places-index-post-failed',
+      instance: '/api/places',
+    });
   }
 };

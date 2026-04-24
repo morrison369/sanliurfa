@@ -51,7 +51,7 @@ const { user } = Astro.props;
       </div>
       
       <div class="p-3 border-t border-gray-100 bg-gray-50">
-        <a href="/notifications" class="block text-center text-sm text-gray-600 hover:text-gray-900">
+        <a href="/bildirimler" class="block text-center text-sm text-gray-600 hover:text-gray-900">
           Tüm Bildirimleri Gör →
         </a>
       </div>
@@ -74,7 +74,9 @@ const { user } = Astro.props;
       const data = JSON.parse(event.data);
       
       if (data.type === 'connected') {
-        console.log('SSE Connected:', data.userId);
+        if (import.meta.env.DEV) {
+          console.debug('SSE Connected:', data.userId);
+        }
         loadNotifications();
       } else {
         // New notification received
@@ -239,6 +241,9 @@ const { user } = Astro.props;
       console.error('Failed to mark all as read:', error);
     }
   }
+
+  void toggleNotifications;
+  void markAllAsRead;
 
   // Initialize on page load
   if (document.getElementById('notification-center')) {

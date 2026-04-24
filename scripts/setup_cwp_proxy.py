@@ -5,8 +5,8 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
-APP_PORT = 6000
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
+APP_PORT = 4321
 DOMAIN = "168.119.79.238"  # IP adresi
 
 ssh = paramiko.SSHClient()

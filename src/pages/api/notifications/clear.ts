@@ -1,14 +1,18 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 // Tüm bildirimleri sil
 export const DELETE: APIRoute = async ({ locals }) => {
   const user = locals.user;
   if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    return problemJson({
       status: 401,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Unauthorized',
+      detail: 'Giriş yapmalısınız',
+      type: '/problems/notifications-clear-unauthorized',
+      instance: '/api/notifications/clear',
     });
   }
 
@@ -24,9 +28,12 @@ export const DELETE: APIRoute = async ({ locals }) => {
     });
   } catch (error: any) {
     logger.error('Clear notifications error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Bildirimler Temizlenemedi',
+      detail: error instanceof Error ? error.message : 'server_error',
+      type: '/problems/notifications-clear-failed',
+      instance: '/api/notifications/clear',
     });
   }
 };

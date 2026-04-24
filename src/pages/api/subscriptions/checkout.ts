@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Create Subscription Checkout Session
  * POST /api/subscriptions/checkout - Create Stripe checkout session for tier upgrade
@@ -12,6 +11,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { validateWithSchema } from '../../../lib/validation';
+import { PHASE1_FREE_MODE } from '../../../lib/runtime/phase-policy';
 
 const checkoutSchema = {
   tierId: {
@@ -36,11 +36,24 @@ const checkoutSchema = {
 } as any;
 
 export const POST: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
+    if (PHASE1_FREE_MODE) {
+      return apiResponse(
+        {
+          success: true,
+          phase1FreeMode: true,
+          checkoutDisabled: true,
+          message: 'Faz 1 döneminde tüm özellikler ücretsizdir. Checkout devre dışıdır.',
+        },
+        HttpStatus.OK,
+        requestId
+      );
+    }
+
     // Check authentication
     if (!locals.user) {
       recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.UNAUTHORIZED, Date.now() - startTime);

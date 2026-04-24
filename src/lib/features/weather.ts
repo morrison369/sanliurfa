@@ -4,9 +4,6 @@ import { logger } from '../logging';
  * Şanlıurfa hava durumu entegrasyonu
  */
 
-const WEATHER_CACHE_KEY = 'weather:sanliurfa';
-const CACHE_TTL = 1800; // 30 dakika
-
 interface WeatherData {
   temp: number;
   feelsLike: number;

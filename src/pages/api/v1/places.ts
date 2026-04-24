@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * API v1 - Places Endpoint
  * Stable API version with backward compatibility
@@ -7,6 +6,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
@@ -84,20 +84,27 @@ export const GET: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     logger.error('API v1 places error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Server error', api_version: 'v1' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', 'X-API-Version': 'v1' } }
-    );
+    const response = problemJson({
+      status: 500,
+      title: 'Mekanlar Alınamadı',
+      detail: 'Server error',
+      type: '/problems/v1-places-get-failed',
+      instance: '/api/v1/places',
+    });
+    response.headers.set('X-API-Version', 'v1');
+    return response;
   }
 };
 
 // POST: Create place — redirect to the proper apply endpoint
 export const POST: APIRoute = async ({ request }) => {
-  return new Response(
-    JSON.stringify({
-      error: 'Use /api/places/apply to submit a new place',
-      api_version: 'v1',
-    }),
-    { status: 405, headers: { 'Content-Type': 'application/json', 'X-API-Version': 'v1' } }
-  );
+  const response = problemJson({
+    status: 405,
+    title: 'Method Not Allowed',
+    detail: 'Use /api/places/apply to submit a new place',
+    type: '/problems/v1-places-post-not-allowed',
+    instance: '/api/v1/places',
+  });
+  response.headers.set('X-API-Version', 'v1');
+  return response;
 };

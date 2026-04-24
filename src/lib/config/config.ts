@@ -4,6 +4,7 @@
  */
 
 import { getEnv } from './env-validator';
+import { getPublicAppUrl } from '../public-app-url';
 
 export type Environment = 'development' | 'staging' | 'production' | 'test';
 
@@ -80,6 +81,7 @@ function getEnvironment(): Environment {
 function loadConfig(): Config {
   const env = getEnvironment();
   const envVars = getEnv();
+  const publicAppUrl = getPublicAppUrl();
   
   // Environment-specific defaults
   const defaults: Record<Environment, Partial<Config>> = {
@@ -88,7 +90,7 @@ function loadConfig(): Config {
         jwtSecret: '',
         jwtExpiresIn: '7d',
         bcryptRounds: 10,
-        allowedOrigins: ['*'],
+        allowedOrigins: ['https://sanliurfa.com'],
         rateLimitEnabled: false,
       },
       features: {
@@ -106,7 +108,7 @@ function loadConfig(): Config {
         jwtSecret: '',
         jwtExpiresIn: '7d',
         bcryptRounds: 12,
-        allowedOrigins: ['*'],
+        allowedOrigins: ['https://sanliurfa.com'],
         rateLimitEnabled: true,
       },
       features: {
@@ -124,7 +126,7 @@ function loadConfig(): Config {
         jwtSecret: '',
         jwtExpiresIn: '7d',
         bcryptRounds: 12,
-        allowedOrigins: ['*'],
+        allowedOrigins: ['https://sanliurfa.com'],
         rateLimitEnabled: true,
       },
       features: {
@@ -142,7 +144,7 @@ function loadConfig(): Config {
         jwtSecret: '',
         jwtExpiresIn: '7d',
         bcryptRounds: 4, // Faster for tests
-        allowedOrigins: ['*'],
+        allowedOrigins: ['https://sanliurfa.com'],
         rateLimitEnabled: false,
       },
       features: {
@@ -165,7 +167,7 @@ function loadConfig(): Config {
     isProduction: env === 'production',
     isTest: env === 'test',
     
-    port: parseInt(envVars.PORT || '3000', 10),
+    port: parseInt(envVars.PORT || '4321', 10),
     host: process.env.HOST || '0.0.0.0',
     
     database: {
@@ -183,7 +185,7 @@ function loadConfig(): Config {
       jwtSecret: envVars.JWT_SECRET,
       jwtExpiresIn: envVars.JWT_EXPIRES_IN || '7d',
       bcryptRounds: defaultConfig.security?.bcryptRounds || 10,
-      allowedOrigins: envVars.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || ['*'],
+      allowedOrigins: envVars.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || ['https://sanliurfa.com'],
       rateLimitEnabled: envVars.RATE_LIMIT_ENABLED === 'true' || defaultConfig.security?.rateLimitEnabled || false,
     },
     
@@ -207,7 +209,7 @@ function loadConfig(): Config {
     
     api: {
       version: 'v1',
-      baseUrl: envVars.API_BASE_URL || (env === 'production' ? 'https://sanliurfa.com/api' : 'http://localhost:3000/api'),
+      baseUrl: envVars.API_BASE_URL || (env === 'production' ? `${publicAppUrl}/api` : 'http://localhost:4321/api'),
       timeout: parseInt(envVars.API_TIMEOUT || '30000', 10),
     },
   };

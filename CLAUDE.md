@@ -21,6 +21,10 @@ npm run test             # Unit + E2E
 npm run db:migrate       # Run pending migrations (npx tsx scripts/migrate.ts)
 npm run db:migrate:status # Show migration status
 npm run db:seed          # Load SQL seed files (npx tsx scripts/seed.ts)
+npm run type-check       # astro check (TypeScript validation)
+npm run lint:ci          # Full CI: astro check + lint + images + validation
+npm run test:api-contract # API contract tests (Vitest, separate config)
+npm run load:test        # k6 load tests (requires k6 CLI)
 ```
 
 Single test file: `npx vitest run src/lib/__tests__/specific.test.ts`
@@ -193,6 +197,63 @@ Branch naming: `feature/`, `fix/`, `docs/`, `refactor/`, `test/`
 
 ---
 
+## SEO & Structured Data Architecture
+
+### Bileşenler
+- **`src/components/SEO.astro`** — Tüm meta tag'leri (`<title>`, OG, Twitter Card, robots), hepsinin `<head>`'e Layout.astro üzerinden eklenmesi yeterli. Favicon/manifest/viewport bu dosyada YOKTUR (Layout.astro'dadır).
+- **`src/components/SchemaOrg.astro`** — Yeniden kullanılabilir JSON-LD bileşeni. `places/[slug].astro`'da `LocalBusiness`, `BreadcrumbList`, `FAQPage` tipleri için kullanılır. Desteklenen tipler: `Organization | LocalBusiness | Place | Article | Event | BreadcrumbList | WebSite | FAQPage`.
+- **`src/lib/seo-helpers.ts`** — `generateCanonicalUrl`, `generateOGTags`, `generateSchemaOrg` yardımcı fonksiyonlar. `SITE` constant'ına bağımlı.
+- **`src/components/Image.astro`** — Astro native `<Picture>` wrapper (avif/webp, lazy load). Yetkili remote host'lar: `images.pexels.com`, `images.unsplash.com`. Tüm yerel ve izinli remote görseller için kullan.
+
+### AI & GEO Görünürlüğü
+- **`public/llms.txt`** — AI crawler'lar (Claude, GPT, Perplexity) için yapılandırılmış site haritası. Site içeriği ve bölümleri açıklar.
+- **`public/robots.txt`** — Tüm büyük AI botlara (`GPTBot`, `ClaudeBot`, `PerplexityBot`, `Google-Extended`, `Amazonbot`) izin verilmiş.
+- Yeni sayfa/bölüm eklenince `llms.txt`'i güncelle.
+
+### Astro 6.1 Aktif Entegrasyonlar (astro.config.mjs)
+- `@astrojs/react` — React 19 islands (`client:load`, `client:idle`, `client:visible`)
+- `@astrojs/mdx` — MDX blog desteği
+- `@astrojs/partytown` — GA ve 3. taraf scriptleri web worker'a taşır
+- `@astrojs/node` — Standalone SSR adapter (PM2 ile production)
+- `astro-compress` — Prod build'da HTML/CSS/JS/SVG sıkıştırma
+- TailwindCSS — `tailwind.config.js` + PostCSS üzerinden çalışır, ayrı `@astrojs/tailwind` paketi GEREKMEZ
+- **`@astrojs/sitemap` package.json'da var ama integrations'a EKLENMEMİŞTİR** — SSR mode'da dynamic route'ları keşfedemez. Sitemap `src/pages/sitemap.xml.ts` custom SSR endpoint ile sağlanır (DB-populated). Entegrasyona ekleme.
+
+### Astro 6.1 Kullanılan Native Özellikler
+- **`<ClientRouter fallback="animate">`** (`astro:transitions`) — Layout.astro'da `<head>`'de. SPA-benzeri sayfa geçişleri, Astro prefetch ile entegre çalışır. Import: `import { ClientRouter } from 'astro:transitions'`
+- **`astro:env` / `envField`** — astro.config.mjs'de type-safe env schema. `import.meta.env.VAR` yerine bu kullanılır.
+- **`prefetch: { prefetchAll: true, defaultStrategy: 'hover' }`** — Tüm dahili linkler hover'da prefetch edilir.
+- **Content Layer API** (`src/content.config.ts`) — `glob` loader ile `src/content/` koleksiyonları tanımlar.
+- **`Astro.site`** — `astro.config.mjs`'deki `site` değeri; `new URL(Astro.url.pathname, Astro.site)` ile canonical URL üretilebilir (SEO.astro bunu `Astro.url.pathname` fallback ile otomatik yapar).
+
+### Canonical URL Davranışı
+`SEO.astro` line 40: canonical, verilmezse `Astro.url.pathname` (query string YOK) ile otomatik oluşturulur. SSR mode'da `pathname` query parametresiz doğru canonical üretir. Sayfa seo objesine `canonical` eklemek opsiyonel — sadece alias/redirect durumlarında gereklidir.
+
+### Sitemap
+- **Endpoint**: `src/pages/sitemap.xml.ts` → `/sitemap.xml` (DB-populated, SSR)
+- **Layout referansı**: `<link rel="sitemap" href="/sitemap.xml" />`
+- `/sitemap-index.xml` yok — `@astrojs/sitemap` entegrasyona eklenmemiş (bilerek).
+
+### Dikkat Edilecekler
+- JSON-LD'yi inline `<script type="application/ld+json" set:html={JSON.stringify(...)} is:inline />` veya `<SchemaOrg>` bileşeni ile ekle — ikisi eşdeğer
+- `SchemaOrg.astro`'ya yeni tip eklenirse burayı güncelle
+- `<Image src="..." alt="..." />` — `src/components/Image.astro`'yu import et, ham `<img>` kullanma
+- `transition:persist` direktifi ile navigasyon boyunca korunması gereken elementleri işaretle (örn. header, müzik player)
+
+### Astro Actions (`src/actions/index.ts`)
+Form işlemleri için `astro:actions` kullanılır — REST API endpoint'e ihtiyaç yoktur:
+```astro
+const result = Astro.getActionResult(actions.submitContactRequest);
+```
+Mevcut action'lar: `login`, `register`, `submitContactRequest`, `submitPlaceReview`, `submitPlaceApplication`, `requestPasswordReset`, `resetPassword`, `subscribeBlogNewsletter`, `updateProfileSettings`, `changeAccountPassword`, admin event/tarihi yer CRUD.
+
+### Önemli env Değişkenleri
+- `ADMIN_EMAIL` — İletişim formu bildirim e-postası (default: `admin@sanliurfa.com`)
+- `RESEND_API_KEY` veya admin paneli `integrations.email` — e-posta gönderimi
+- `GA_TRACKING_ID` veya admin paneli `integrations.analytics.ga_id` — Google Analytics
+
+---
+
 ## Strict Prohibitions
 
 ### Turkish Only — NO i18n
@@ -222,4 +283,7 @@ Branch naming: `feature/`, `fix/`, `docs/`, `refactor/`, `test/`
 
 tsconfig extends `astro/tsconfigs/strict` but **strict mode is disabled** (`strict: false`). All strict sub-options (noImplicitAny, strictNullChecks, etc.) are also off. JSX configured for React (`react-jsx`).
 
-Pre-existing TS errors in `src/lib/advanced/`, `src/lib/affiliate/`, `src/lib/ai-moderation/`, and similar deep lib modules are from legacy drizzle-orm imports and do NOT block the Astro build — ignore them.
+Pre-existing TS errors in `src/lib/advanced/`, `src/lib/affiliate/`, `src/lib/ai-moderation/`, and similar deep lib modules are from legacy drizzle-orm imports and do NOT block the Astro build — ignore them. Note: `drizzle-orm` is listed in package.json but is **not used** — all DB access goes through the raw `pg` pool in `src/lib/postgres.ts`.
+
+### Read Replica
+`postgres.ts` exports both `pool` (write) and `readReplicaPool` (read). Currently both point to the same database. Use `readReplicaPool` for SELECT-only queries in read-heavy endpoints to be forward-compatible when a replica is configured.

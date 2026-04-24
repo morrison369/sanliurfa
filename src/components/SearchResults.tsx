@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-
+import { useState, useEffect } from 'react';
 interface Place {
   id: string;
+  slug?: string;
   name: string;
   category: string;
   image_url?: string;
@@ -42,11 +42,11 @@ export default function SearchResults({ query }: { query?: string }) {
     setIsLoading(true);
     try {
       const response = await fetch('/api/search?q=' + encodeURIComponent(searchQuery) + '&limit=50');
-      if (!response.ok) throw new Error('Search failed');
+      if (!response.ok) throw new Error('Arama tamamlanamadı.');
       const data = await response.json();
       setResults(data.data);
     } catch (err) {
-      console.error('Search error', err);
+      console.error('Arama hatası:', err);
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +77,7 @@ export default function SearchResults({ query }: { query?: string }) {
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Mekanlar ({results.places.length})</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {results.places.map((place) => (
-                  <a key={place.id} href={'/yerler/' + place.id} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                  <a key={place.id} href={place.slug ? `/isletme/${place.slug}` : '/mekanlar'} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     {place.image_url && <img src={place.image_url} alt={place.name} className="w-full h-32 object-cover rounded mb-2" />}
                     <p className="font-medium text-gray-900 dark:text-white">{place.name}</p>
                     <p className="text-sm text-gray-600">{place.category}</p>

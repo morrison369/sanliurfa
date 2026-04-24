@@ -100,7 +100,7 @@ export async function createSubscription(
   }
 
   const subscription: Subscription = {
-    id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    id: `sub_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
     userId,
     plan,
     status: 'pending',

@@ -60,21 +60,21 @@ export class SupplyChainMetrics {
   /**
    * Calculate average lead time
    */
-  calculateLeadTime(sku: string): number {
+  calculateLeadTime(_sku: string): number {
     return Math.round(Math.random() * 14 + 2); // 2-16 days
   }
 
   /**
    * Get inventory turnover
    */
-  getInventoryTurnover(sku: string, period: string): number {
+  getInventoryTurnover(_sku: string, _period: string): number {
     return Math.round(Math.random() * 10 * 100) / 100;
   }
 
   /**
    * Get fulfillment rate
    */
-  getFulfillmentRate(period: string): number {
+  getFulfillmentRate(_period: string): number {
     return Math.round((Math.random() * 5 + 95) * 100) / 100; // 95-100%
   }
 }
@@ -110,7 +110,7 @@ export class SupplierAnalytics {
   /**
    * Compare suppliers for SKU
    */
-  compareSuppliers(skuId: string): { supplierId: string; score: number }[] {
+  compareSuppliers(_skuId: string): { supplierId: string; score: number }[] {
     return Array.from(this.supplierMetrics.entries())
       .map(([id, _]) => ({
         supplierId: id,
@@ -156,7 +156,7 @@ export class OptimizationEngine {
   /**
    * Analyze costs
    */
-  analyzeCosts(period: string): OptimizationRecommendation[] {
+  analyzeCosts(_period: string): OptimizationRecommendation[] {
     const recommendations: OptimizationRecommendation[] = [];
 
     if (Math.random() > 0.5) {
@@ -221,7 +221,7 @@ export class OptimizationEngine {
   /**
    * Simulate scenario
    */
-  simulateScenario(changes: Record<string, any>): { costSavings: number; riskLevel: number } {
+  simulateScenario(_changes: Record<string, any>): { costSavings: number; riskLevel: number } {
     return {
       costSavings: Math.round(Math.random() * 20000 + 5000),
       riskLevel: Math.round(Math.random() * 50)

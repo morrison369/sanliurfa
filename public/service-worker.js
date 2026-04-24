@@ -130,8 +130,8 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: data.body || 'Yeni bir bildiriminiz var!',
-    icon: '/icon-192x192.png',
-    badge: '/badge-72x72.png',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/badge-72x72.png',
     data: data.data || {},
     actions: data.actions || [],
   };

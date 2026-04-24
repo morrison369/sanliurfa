@@ -4,7 +4,7 @@ import time
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='BcqH7t5zNKfw')
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD')
 
 print("🔄 Tamamen Yeniden Başlatma")
 print("=" * 60)
@@ -39,14 +39,14 @@ stdin, stdout, stderr = ssh.exec_command("head -20 /home/sanliur/.pm2/logs/sanli
 print(stdout.read().decode())
 
 # 6. Port kontrol
-print("\n📋 Port 6000:")
-stdin, stdout, stderr = ssh.exec_command("netstat -tlnp 2>/dev/null | grep 6000 || ss -tlnp | grep 6000")
+print("\n📋 Port 4321:")
+stdin, stdout, stderr = ssh.exec_command("netstat -tlnp 2>/dev/null | grep 4321 || ss -tlnp | grep 4321")
 print(stdout.read().decode())
 
 # 7. Test
 print("\n🌐 Test:")
 time.sleep(2)
-stdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")
+stdin, stdout, stderr = ssh.exec_command("curl -m 5 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/")
 code = stdout.read().decode()
 print(f"HTTP: {code}")
 

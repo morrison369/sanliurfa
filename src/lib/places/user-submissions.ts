@@ -447,7 +447,7 @@ export function findPotentialDuplicates(name: string, address: string): PlaceSub
 /**
  * Check if similar place exists
  */
-export function checkSimilarPlaces(name: string, lat?: number, lon?: number): boolean {
+export function checkSimilarPlaces(_name: string, _lat?: number, _lon?: number): boolean {
   // In production: check against actual places database
   // Check within 100m radius if coordinates provided
   // Check name similarity

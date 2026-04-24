@@ -81,7 +81,7 @@ export async function captureError(
     url?: string;
   } = {}
 ): Promise<string> {
-  const errorId = `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const errorId = `err_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   
   const errorEvent: ErrorEvent = {
     id: errorId,
@@ -444,3 +444,4 @@ export async function cleanOldErrors(retentionDays: number = 90): Promise<number
 
   return result.rows.length;
 }
+

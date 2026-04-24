@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-
+import {  useState  } from 'react';
 export default function VendorDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'listings' | 'reviews' | 'ads'>('overview');
 

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface HistoryItem {
   id: string;
   action_type: string;
@@ -39,8 +38,8 @@ export default function PointsHistory() {
     }
   };
 
-  if (isLoading) return <div className="text-center py-8">Yukleniyor...</div>;
-  if (!history) return <div>Veri yuklenemedi</div>;
+  if (isLoading) return <div className="text-center py-8">Yükleniyor...</div>;
+  if (!history) return <div>Veri yüklenemedi</div>;
 
   const getActivityIcon = (type: string) => {
     const icons: Record<string, string> = { 'review_created': '⭐', 'comment_posted': '💬', 'favorite_added': '❤️' };
@@ -48,13 +47,13 @@ export default function PointsHistory() {
   };
 
   const getActivityLabel = (type: string) => {
-    const labels: Record<string, string> = { 'review_created': 'Inceleme', 'comment_posted': 'Yorum', 'favorite_added': 'Favori' };
+    const labels: Record<string, string> = { 'review_created': 'İnceleme', 'comment_posted': 'Yorum', 'favorite_added': 'Favori' };
     return labels[type] || 'Aktivite';
   };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Puan Gecmisi</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Puan Geçmişi</h2>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         {history.summary.map((item) => (

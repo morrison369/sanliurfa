@@ -7,10 +7,10 @@ import time
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 DB_NAME = "sanliurfa"
 DB_USER = "sanliurfa_user"
-DB_PASSWORD = "Urfa_2024_Secure!"
+DB_PASSWORD = "CHANGE_ME_DB_PASSWORD"
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())

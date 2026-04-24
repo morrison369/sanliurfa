@@ -6,7 +6,6 @@
 
 import Layout from '../../layouts/Layout.astro';
 import { getAllCampaigns } from '../../lib/email/email-campaigns';
-import { getSequence, getSequenceSteps } from '../../lib/email-automation';
 
 // Check auth
 if (!Astro.locals.isAdmin) {
@@ -66,12 +65,12 @@ const campaigns = await getAllCampaigns(100);
                 <div class="flex gap-2">
                   <span class={`px-3 py-1 rounded-full text-xs font-semibold ${
                     campaign.status === 'completed' ? 'bg-green-100 text-green-800' :
-                    campaign.status === 'sending' ? 'bg-blue-100 text-blue-800' :
+                    campaign.status === 'active' ? 'bg-blue-100 text-blue-800' :
                     campaign.status === 'scheduled' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
                     {campaign.status === 'draft' ? 'Taslak' :
-                     campaign.status === 'sending' ? 'Gönderiliyor' :
+                     campaign.status === 'active' ? 'Gönderiliyor' :
                      campaign.status === 'scheduled' ? 'Planlandı' :
                      campaign.status === 'completed' ? 'Tamamlandı' :
                      campaign.status}
@@ -99,19 +98,13 @@ const campaigns = await getAllCampaigns(100);
               </div>
 
               <div class="flex gap-2">
-                <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-                  onclick="sendCampaign({campaign.id})"
-                >
+                <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm" onclick={`sendCampaign(${JSON.stringify(campaign.id)})`}>
                   Hemen Gönder
                 </button>
-                <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm"
-                  onclick="testCampaign({campaign.id})"
-                >
+                <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm" onclick={`testCampaign(${JSON.stringify(campaign.id)})`}>
                   Test Gönder
                 </button>
-                <button class="px-4 py-2 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 text-sm"
-                  onclick="editCampaign({campaign.id})"
-                >
+                <button class="px-4 py-2 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 text-sm" onclick={`editCampaign(${JSON.stringify(campaign.id)})`}>
                   Düzenle
                 </button>
               </div>
@@ -131,7 +124,11 @@ const campaigns = await getAllCampaigns(100);
     <!-- Create Campaign Tab -->
     <div id="create-tab" class="tab-content hidden">
       <form id="campaign-form" class="bg-white p-6 rounded-lg shadow max-w-2xl">
+        <input type="hidden" name="campaignId" value="" />
         <div class="space-y-4">
+          <div id="edit-mode-banner" class="hidden rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            Kampanya düzenleniyor. Kaydettiğinizde mevcut taslak güncellenecek.
+          </div>
           <div>
             <label class="block text-sm font-medium mb-1">Kampanya Adı</label>
             <input
@@ -162,7 +159,7 @@ const campaigns = await getAllCampaigns(100);
                 name="fromName"
                 required
                 class="w-full px-4 py-2 border border-gray-300 rounded"
-                placeholder="ör: Şanlıurfa.com"
+                placeholder="ör: Sanliurfa.com"
               />
             </div>
             <div>
@@ -209,7 +206,7 @@ const campaigns = await getAllCampaigns(100);
 
           <div class="flex gap-2">
             <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-              Kampanya Oluştur
+              <span id="campaign-submit-label">Kampanya Oluştur</span>
             </button>
             <button type="reset" class="px-6 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
               Temizle
@@ -265,9 +262,11 @@ const campaigns = await getAllCampaigns(100);
   </div>
 </Layout>
 
-<script>
+<script is:inline define:vars={{ campaignsJson: JSON.stringify(campaigns) }}>
+  const campaigns = JSON.parse(campaignsJson);
+
   // Tab switching
-  function switchTab(tabName: string) {
+  function switchTab(tabName) {
     // Hide all tabs
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active', 'border-blue-500', 'text-blue-600'));
@@ -289,13 +288,13 @@ const campaigns = await getAllCampaigns(100);
   // Tab button click handlers
   document.querySelectorAll('.tab-button').forEach(btn => {
     btn.addEventListener('click', () => {
-      const tabName = (btn as HTMLElement).getAttribute('data-tab');
+      const tabName = btn.getAttribute('data-tab');
       if (tabName) switchTab(tabName);
     });
   });
 
   // Campaign actions
-  function sendCampaign(campaignId: number) {
+  function sendCampaign(campaignId) {
     if (confirm('Kampanyayı gönder?')) {
       // Send to API
       fetch(`/api/marketing/campaigns/${campaignId}/send`, { method: 'POST' })
@@ -311,7 +310,7 @@ const campaigns = await getAllCampaigns(100);
     }
   }
 
-  function testCampaign(campaignId: number) {
+  function testCampaign(campaignId) {
     fetch(`/api/marketing/campaigns/${campaignId}/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -327,36 +326,61 @@ const campaigns = await getAllCampaigns(100);
       });
   }
 
-  function editCampaign(campaignId: number) {
-    alert('Kampanya düzenleme yakında gelecek');
+  function editCampaign(campaignId) {
+    const campaign = campaigns.find((item) => String(item.id) === String(campaignId));
+    const form = document.getElementById('campaign-form');
+    if (!campaign || !(form instanceof HTMLFormElement)) return;
+    const field = (name) => form.elements.namedItem(name);
+
+    field('campaignId').value = campaign.id || '';
+    field('name').value = campaign.name || '';
+    field('subject').value = campaign.subject || '';
+    field('fromName').value = campaign.fromName || '';
+    field('fromEmail').value = campaign.fromEmail || '';
+    field('segment').value = campaign.segment || 'all_users';
+    field('htmlContent').value = campaign.htmlContent || '';
+    field('timing').value = campaign.scheduledAt ? 'schedule' : 'now';
+
+    document.getElementById('edit-mode-banner')?.classList.remove('hidden');
+    const label = document.getElementById('campaign-submit-label');
+    if (label) label.textContent = 'Kampanyayı Güncelle';
+    switchTab('create');
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+  window.sendCampaign = sendCampaign;
+  window.testCampaign = testCampaign;
+  window.editCampaign = editCampaign;
 
   // Form submission
   document.getElementById('campaign-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target;
+    if (!(form instanceof HTMLFormElement)) return;
     const data = new FormData(form);
 
     const payload = {
-      name: data.get('token'),
-      subject: data.get('token'),
-      fromName: data.get('token'),
-      fromEmail: data.get('token'),
-      segment: data.get('token'),
-      htmlContent: data.get('token'),
+      id: String(data.get('campaignId') || ''),
+      name: String(data.get('name') || ''),
+      subject: String(data.get('subject') || ''),
+      fromName: String(data.get('fromName') || ''),
+      fromEmail: String(data.get('fromEmail') || ''),
+      segment: String(data.get('segment') || ''),
+      htmlContent: String(data.get('htmlContent') || ''),
       textContent: '',
-      status: 'draft'
+      status: 'draft',
+      timing: String(data.get('timing') || 'now')
     };
+    const isEdit = Boolean(payload.id);
 
-    const response = await fetch('/api/marketing/campaigns', {
-      method: 'POST',
+    const response = await fetch(isEdit ? `/api/marketing/campaigns?id=${encodeURIComponent(payload.id)}` : '/api/marketing/campaigns', {
+      method: isEdit ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
     const result = await response.json();
     if (result.success) {
-      alert('Kampanya oluşturuldu!');
+      alert(isEdit ? 'Kampanya güncellendi!' : 'Kampanya oluşturuldu!');
       form.reset();
       location.reload();
     } else {
@@ -388,3 +412,6 @@ const campaigns = await getAllCampaigns(100);
     }
   }
 </style>
+
+
+

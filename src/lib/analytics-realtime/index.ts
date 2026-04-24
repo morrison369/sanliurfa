@@ -43,7 +43,7 @@ export function trackActivity(sessionId: string, data: any): void {
 /**
  * Track page view
  */
-export function trackPageView(path: string, referrer?: string): void {
+export function trackPageView(path: string, _referrer?: string): void {
   metricsStore.pageViews.push({
     timestamp: Date.now(),
     path
@@ -162,20 +162,24 @@ export async function getTimeSeries(
     '1h': '1 hour'
   };
 
-  const table = metric === 'pageviews' ? 'page_views' : 'tracked_events';
   const truncUnit = intervalMap[interval] || '5 minutes';
   const params: any[] = [hours];
-  let sql = `
-    SELECT
-      date_trunc('${truncUnit}', created_at) as timestamp,
-      COUNT(*) as value
-    FROM ${table}
-    WHERE created_at >= NOW() - ($1 * INTERVAL '1 hour')`;
-  if (metric !== 'pageviews') {
+  let sql: string;
+  if (metric === 'pageviews') {
+    sql = `
+      SELECT date_trunc('${truncUnit}', created_at) as timestamp, COUNT(*) as value
+      FROM page_views
+      WHERE created_at >= NOW() - ($1 * INTERVAL '1 hour')
+      GROUP BY 1 ORDER BY 1 ASC`;
+  } else {
     params.push(metric);
-    sql += ` AND type = $${params.length}`;
+    sql = `
+      SELECT date_trunc('${truncUnit}', created_at) as timestamp, COUNT(*) as value
+      FROM engagement_events
+      WHERE created_at >= NOW() - ($1 * INTERVAL '1 hour')
+      AND event_type = $${params.length}
+      GROUP BY 1 ORDER BY 1 ASC`;
   }
-  sql += ' GROUP BY 1 ORDER BY 1 ASC';
   const result = await query(sql, params);
 
   return result.rows.map(r => ({
@@ -197,9 +201,9 @@ export async function getConversionFunnel(steps: string[]): Promise<Array<{
 
   for (let i = 0; i < steps.length; i++) {
     const result = await query(`
-      SELECT COUNT(DISTINCT visitor_id) as count
-      FROM tracked_events
-      WHERE action = $1
+      SELECT COUNT(DISTINCT COALESCE(user_id::text, session_id)) as count
+      FROM engagement_events
+      WHERE event_type = $1
       AND created_at >= NOW() - INTERVAL '7 days'
     `, [steps[i]]);
 

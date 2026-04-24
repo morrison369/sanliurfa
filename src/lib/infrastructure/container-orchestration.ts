@@ -370,6 +370,4 @@ export const nodeManager = new NodeManager();
 export const podManager = new PodManager();
 export const serviceRegistry = new ServiceRegistry();
 
-export type { Node, Pod, PodEvent, ReplicaSet };
-
-
+export { Node, Pod, PodEvent, ReplicaSet };

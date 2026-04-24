@@ -202,4 +202,4 @@ export const auditFindingManager = new AuditFindingManager();
 export const controlTestingEngine = new ControlTestingEngine();
 export const auditAnalyticsEngine = new AuditAnalyticsEngine();
 
-export { AuditEngagement, AuditFinding, ControlTestResult, AuditAnalyticInsight };
+export {AuditEngagement, AuditFinding, ControlTestResult, AuditAnalyticInsight};

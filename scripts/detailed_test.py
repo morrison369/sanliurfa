@@ -5,7 +5,7 @@ import time
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 def test_url(channel, url, name):
     channel.send(f'curl -s -o /dev/null -w "{name}: %{{http_code}}\n" {url}\n')

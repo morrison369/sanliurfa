@@ -5,7 +5,7 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -38,13 +38,13 @@ stdin, stdout, stderr = ssh.exec_command(NVM + "pm2 show sanliurfa | head -20")
 print(stdout.read().decode())
 
 # 5. Port kontrol
-print("\n5️⃣ Port 6000:")
-stdin, stdout, stderr = ssh.exec_command("netstat -tlnp 2>/dev/null | grep 6000 || ss -tlnp | grep 6000")
+print("\n5️⃣ Port 4321:")
+stdin, stdout, stderr = ssh.exec_command("netstat -tlnp 2>/dev/null | grep 4321 || ss -tlnp | grep 4321")
 print(stdout.read().decode())
 
 # 6. Direkt test
 print("\n6️⃣ Direkt localhost test:")
-stdin, stdout, stderr = ssh.exec_command("curl -m 3 -s http://127.0.0.1:6000/ 2>&1 | head -100")
+stdin, stdout, stderr = ssh.exec_command("curl -m 3 -s http://127.0.0.1:4321/ 2>&1 | head -100")
 result = stdout.read().decode()
 if "Error" in result or "500" in result:
     print("❌ HATA:", result[:500])

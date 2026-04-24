@@ -5,19 +5,21 @@
 
 // Framework-agnostic - can be used with any framework
 
+const dialogCleanupHandlers = new WeakMap<HTMLElement, () => void>();
+
 // Focus management
 /**
  * Trap focus within an element (for modals, dialogs)
  */
-export function trapFocus(element: HTMLElement, enabled: boolean = true) {
+export function trapFocus(element: HTMLElement, enabled: boolean = true): () => void {
   if (!enabled) return () => {};
 
-  const focusableElements = element.querySelectorAll(
+  const focusableElements = element.querySelectorAll<HTMLElement>(
     'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
   );
-  
-  const firstElement = focusableElements[0] as HTMLElement;
-  const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key !== 'Tab') return;
@@ -85,7 +87,7 @@ export function createSkipLink(targetId: string): HTMLAnchorElement {
 /**
  * Announce to screen readers
  */
-export function announce(message: string, priority: 'polite' | 'assertive' = 'polite') {
+export function announce(message: string, priority: 'polite' | 'assertive' = 'polite'): void {
   const announcer = document.createElement('div');
   announcer.setAttribute('role', 'status');
   announcer.setAttribute('aria-live', priority);
@@ -143,7 +145,7 @@ export function createLiveRegion(id: string, priority: 'polite' | 'assertive' = 
 /**
  * Manage page title for accessibility
  */
-export function setPageTitle(title: string, siteName: string = 'Şanlıurfa.com') {
+export function setPageTitle(title: string, siteName: string = 'Sanliurfa.com'): void {
   document.title = title ? `${title} | ${siteName}` : siteName;
 }
 
@@ -182,9 +184,9 @@ export function getColorSchemePreference(): 'light' | 'dark' | 'no-preference' {
 /**
  * Accordion pattern
  */
-export function createAccordion(container: HTMLElement) {
-  const buttons = container.querySelectorAll('[data-accordion-trigger]');
-  const panels = container.querySelectorAll('[data-accordion-panel]');
+export function createAccordion(container: HTMLElement): void {
+  const buttons = container.querySelectorAll<HTMLElement>('[data-accordion-trigger]');
+  const panels = container.querySelectorAll<HTMLElement>('[data-accordion-panel]');
 
   buttons.forEach((button, index) => {
     const panel = panels[index];
@@ -228,10 +230,10 @@ export function createAccordion(container: HTMLElement) {
 /**
  * Tabs pattern
  */
-export function createTabs(container: HTMLElement) {
+export function createTabs(container: HTMLElement): void {
   const tabList = container.querySelector('[role="tablist"]');
-  const tabs = container.querySelectorAll('[role="tab"]');
-  const panels = container.querySelectorAll('[role="tabpanel"]');
+  const tabs = container.querySelectorAll<HTMLElement>('[role="tab"]');
+  const panels = container.querySelectorAll<HTMLElement>('[role="tabpanel"]');
 
   if (!tabList) return;
 
@@ -257,7 +259,7 @@ export function createTabs(container: HTMLElement) {
       if (newIndex !== index) {
         e.preventDefault();
         activateTab(newIndex);
-        (tabs[newIndex] as HTMLElement).focus();
+        tabs[newIndex]?.focus();
       }
     });
   });
@@ -285,8 +287,8 @@ export function createTabs(container: HTMLElement) {
 /**
  * Modal/Dialog pattern
  */
-export function createDialog(dialog: HTMLElement, trigger: HTMLElement) {
-  const closeButton = dialog.querySelector('[data-dialog-close]');
+export function createDialog(dialog: HTMLElement, trigger: HTMLElement): { open: () => void; close: () => void } {
+  const closeButton = dialog.querySelector<HTMLElement>('[data-dialog-close]');
   let previousActiveElement: Element | null = null;
 
   function open() {
@@ -315,19 +317,18 @@ export function createDialog(dialog: HTMLElement, trigger: HTMLElement) {
     dialog.addEventListener('click', handleOutsideClick);
 
     // Store cleanup
-    (dialog as any)._cleanup = () => {
+    dialogCleanupHandlers.set(dialog, () => {
       cleanup();
       dialog.removeEventListener('keydown', handleEscape);
       dialog.removeEventListener('click', handleOutsideClick);
-    };
+    });
 
     announce('Dialog açıldı');
   }
 
   function close() {
-    if ((dialog as any)._cleanup) {
-      (dialog as any)._cleanup();
-    }
+    dialogCleanupHandlers.get(dialog)?.();
+    dialogCleanupHandlers.delete(dialog);
     
     dialog.setAttribute('hidden', '');
     dialog.removeAttribute('aria-modal');
@@ -353,7 +354,9 @@ export function validateFormAccessibility(form: HTMLFormElement): string[] {
   const issues: string[] = [];
 
   // Check for labels
-  const inputs = form.querySelectorAll('input, select, textarea');
+  const inputs = form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+    'input, select, textarea'
+  );
   inputs.forEach(input => {
     const id = input.id;
     const ariaLabel = input.getAttribute('aria-label');
@@ -397,7 +400,7 @@ export function handleKeyboardNavigation(
     onSelect: (element: HTMLElement) => void;
   }
 ) {
-  const items = Array.from(container.querySelectorAll(options.selector));
+  const items = Array.from(container.querySelectorAll<HTMLElement>(options.selector));
   let currentIndex = -1;
 
   container.addEventListener('keydown', (e) => {
@@ -406,24 +409,24 @@ export function handleKeyboardNavigation(
     if (key === 'ArrowDown' || key === 'ArrowRight') {
       e.preventDefault();
       currentIndex = (currentIndex + 1) % items.length;
-      (items[currentIndex] as HTMLElement).focus();
+      items[currentIndex]?.focus();
     } else if (key === 'ArrowUp' || key === 'ArrowLeft') {
       e.preventDefault();
       currentIndex = (currentIndex - 1 + items.length) % items.length;
-      (items[currentIndex] as HTMLElement).focus();
+      items[currentIndex]?.focus();
     } else if (key === 'Enter' || key === ' ') {
       e.preventDefault();
       if (currentIndex >= 0) {
-        options.onSelect(items[currentIndex] as HTMLElement);
+        options.onSelect(items[currentIndex]);
       }
     } else if (key === 'Home') {
       e.preventDefault();
       currentIndex = 0;
-      (items[0] as HTMLElement).focus();
+      items[0]?.focus();
     } else if (key === 'End') {
       e.preventDefault();
       currentIndex = items.length - 1;
-      (items[currentIndex] as HTMLElement).focus();
+      items[currentIndex]?.focus();
     }
   });
 }
@@ -542,3 +545,4 @@ export function runAccessibilityAudit(): { issues: string[]; score: number } {
 
   return { issues, score: Math.round(score) };
 }
+

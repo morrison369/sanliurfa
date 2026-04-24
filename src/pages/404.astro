@@ -2,9 +2,9 @@
 import Layout from '../layouts/Layout.astro';
 
 const seo = {
-  title: 'Sayfa Bulunamadı - Şanlıurfa.com',
+  title: 'Sayfa Bulunamadı - Sanliurfa.com',
   description: 'Aradığınız sayfa bulunamadı',
-  noindex: true,
+  noIndex: true,
 };
 ---
 <Layout seo={seo}>
@@ -20,7 +20,7 @@ const seo = {
         <a href="/" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
           Ana Sayfaya Dön
         </a>
-        <a href="/places" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+        <a href="/mekanlar" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
           Mekanları Keşfet
         </a>
       </div>
@@ -29,8 +29,8 @@ const seo = {
       <div class="mt-12">
         <p class="text-gray-400 text-sm mb-4">Popüler Sayfalar</p>
         <div class="flex flex-wrap justify-center gap-2">
-          <a href="/places?category=restaurant" class="px-4 py-2 bg-white rounded-full text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors">Restoranlar</a>
-          <a href="/places?category=hotel" class="px-4 py-2 bg-white rounded-full text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors">Oteller</a>
+          <a href="/mekanlar?category=restaurant" class="px-4 py-2 bg-white rounded-full text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors">Restoranlar</a>
+          <a href="/mekanlar?category=hotel" class="px-4 py-2 bg-white rounded-full text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors">Oteller</a>
           <a href="/tarihi-yerler" class="px-4 py-2 bg-white rounded-full text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors">Göbeklitepe</a>
           <a href="/blog" class="px-4 py-2 bg-white rounded-full text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors">Blog</a>
           <a href="/iletisim" class="px-4 py-2 bg-white rounded-full text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors">İletişim</a>

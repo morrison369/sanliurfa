@@ -1,269 +1,189 @@
-# Deployment Rehberi
+# Deployment Rehberi (CWP Shared Hosting)
 
-Bu dokümanda Sanliurfa.com'un production ortamına nasıl deploy edileceği anlatılmaktadır.
+Bu proje production'da **CWP (CentOS Web Panel) shared hosting** ve
+**domain kullanıcısı (root olmayan)** ile çalıştırılır.
 
-## Hızlı Başlangıç
+## Model
+
+- Panel: CWP
+- Çalıştıran kullanıcı: domain hesabı (ör. `sanliurfa`)
+- Uygulama dizini: `$HOME/public_html`
+- Process manager: PM2 (user-level)
+- App port: `4321` (localhost)
+- Public erişim: CWP webserver reverse proxy (80/443 -> 127.0.0.1:4321)
+
+## 1) CWP panel hazırlığı
+
+1. Domain ve hesap oluştur.
+2. Domain hesabı için shell erişimini aç (`/bin/bash` gerekiyorsa, sadece ilgili kullanıcıya).
+3. SSL'i CWP AutoSSL ile kur.
+4. Domain webserver ayarında custom port proxy hedefini `127.0.0.1:4321` yap.
+
+Not: CWP'de varsayılan shell birçok kurulumda kapalı olabilir; SSH/SFTP için kullanıcıya uygun shell
+atanmalıdır.
+
+## 2) Domain kullanıcısı ile sunucu adımları
 
 ```bash
-# 1. Repoyu klonla
-git clone https://github.com/username/sanliurfa.git
-cd sanliurfa
-
-# 2. Ortam değişkenlerini ayarla
-cp .env.example .env
-# .env dosyasını düzenle
-
-# 3. Ortam kontrolü
-node scripts/check-env.js
-
-# 4. Başlat
-./scripts/deploy.sh
+ssh <domain_user>@<server_or_domain>
+cd "$HOME/public_html"
 ```
 
-## Gereksinimler
-
-### Sunucu
-- **OS**: Ubuntu 22.04 LTS (önerilen)
-- **RAM**: En az 2GB
-- **CPU**: 1 vCPU (2 önerilen)
-- **Disk**: 20GB SSD
-- **Ports**: 80, 443 açık
-
-### Yazılım
-- Docker 24.x+
-- Docker Compose 2.x+
-- Git
-- Node.js 20+ (opsiyonel - build için)
-
-## Adım Adım Deployment
-
-### 1. Sunucu Hazırlığı
+Kod yükleme:
 
 ```bash
-# Sunucuya bağlan
-ssh root@your-server-ip
-
-# Sistem güncelle
-apt update && apt upgrade -y
-
-# Docker kur
-apt install -y docker.io docker-compose git
-
-# Docker'ı başlat
-systemctl enable --now docker
-
-# Docker user ekle (opsiyonel)
-usermod -aG docker $USER
-```
-
-### 2. Proje Kurulumu
-
-```bash
-# Dizin oluştur
-mkdir -p /opt/sanliurfa
-cd /opt/sanliurfa
-
-# Repoyu klonla
-git clone https://github.com/username/sanliurfa.git .
-
-# Ortam değişkenlerini ayarla
-cp .env.example .env
-nano .env  # Düzenle ve kaydet
-
-# Kontrol et
-node scripts/check-env.js
-```
-
-### 3. Veritabanı Migration
-
-```bash
-# Container'ları başlat (ilk başta sadece db)
-docker-compose up -d db
-
-# 10 saniye bekle
-echo "Veritabanı başlatılıyor..."
-sleep 10
-
-# Migration'ları çalıştır
-docker-compose run --rm app npm run db:migrate
-
-# Seed data (opsiyonel)
-docker-compose run --rm app npm run db:seed
-```
-
-### 4. SSL Sertifikası
-
-```bash
-# Domain'i ayarla
-export DOMAIN=sanliurfa.com
-export EMAIL=admin@sanliurfa.com
-
-# SSL scriptini çalıştır
-chmod +x scripts/init-ssl.sh
-./scripts/init-ssl.sh
-```
-
-### 5. Uygulamayı Başlat
-
-```bash
-# Tüm servisleri başlat
-docker-compose up -d
-
-# Logları kontrol et
-docker-compose logs -f app
-```
-
-### 6. Otomatik Yenileme (SSL)
-
-```bash
-# Cron job ekle
-crontab -e
-
-# Şu satırı ekle:
-0 0 * * * cd /opt/sanliurfa && docker-compose run --rm certbot renew --quiet && docker-compose exec nginx nginx -s reload
-```
-
-## Güncelleme
-
-```bash
-# Dizine git
-cd /opt/sanliurfa
-
-# Son değişiklikleri çek
+# Git ile
+git clone <repo_url> .
+# veya mevcut repoda
 git pull origin main
-
-# Yeni migration varsa çalıştır
-docker-compose run --rm app npm run db:migrate
-
-# Container'ları yeniden başlat
-docker-compose down
-docker-compose up -d --build
-
-# Eski imageları temizle
-docker system prune -f
 ```
 
-## Monitoring
+Ortam:
 
 ```bash
-# Container durumları
-docker-compose ps
-
-# Loglar
-docker-compose logs -f app
-docker-compose logs -f db
-docker-compose logs -f nginx
-
-# Sistem kaynakları
-docker stats
-
-# Database bağlantısı kontrol
-docker-compose exec db psql -U postgres -d sanliurfa -c "SELECT 1"
+cp .env.production .env
+chmod 600 .env
 ```
 
-## Yedekleme
-
-### Otomatik Yedekleme
+Kurulum/build:
 
 ```bash
-# Yedek scriptini çalıştır
-docker-compose exec db pg_dump -U postgres sanliurfa > backup_$(date +%Y%m%d_%H%M%S).sql
-
-# S3'e upload (opsiyonel)
-aws s3 cp backup_*.sql s3://sanliurfa-backups/
+npm install --legacy-peer-deps --production
+npm run build
 ```
 
-### Cron ile Otomatik Yedek
+PM2 başlatma:
 
 ```bash
-# Günde bir yedek al
-0 2 * * * cd /opt/sanliurfa && docker-compose exec -T db pg_dump -U postgres sanliurfa > /backups/sanliurfa_$(date +\%Y\%m\%d).sql
+bash scripts/pm2-cwp-start.sh
 ```
 
-## Sorun Giderme
-
-### Container başlamıyor
+## 3) Deploy (güncelleme)
 
 ```bash
-# Logları kontrol et
-docker-compose logs app
-
-# Port çakışması var mı?
-netstat -tlnp | grep :3000
-
-# Container'ı manuel başlat
-docker-compose up app
+cd "$HOME/public_html"
+bash scripts/deploy-cwp.sh
 ```
 
-### Veritabanı bağlantı hatası
+Alternatif (önerilen tek komut akışı):
 
 ```bash
-# DB container'ı çalışıyor mu?
-docker-compose ps db
-
-# Logları kontrol et
-docker-compose logs db
-
-# Manuel bağlantı testi
-docker-compose exec db psql -U postgres -c "\l"
+cd "$HOME/public_html"
+npm run ops:cwp:preflight
+npm run ops:cwp:env-check
+npm run ops:cwp:safe-deploy
 ```
 
-### SSL hatası
+`ops:cwp:deploy`, başarısız deploy senaryosunda son predeploy snapshot'a otomatik rollback dener.
+`ops:cwp:safe-deploy`, deploy öncesi `doctor + smoke` kontrollerini zorunlu çalıştırır.
+
+Desteklenen env değişkenleri:
+
+- `APP_DIR` (default: `$HOME/public_html`)
+- `PM2_NAME` (default: `sanliurfa-app`)
+- `PORT` (default: `4321`)
+- `BRANCH` (default: `main`)
+
+## 4) Reboot sonrası otomatik kalkış
+
+`pm2 startup` shared hosting'de çoğunlukla root istediği için user-cron kullan:
 
 ```bash
-# Sertifika var mı?
-ls -la ssl/
-
-# Certbot logları
-docker-compose logs certbot
-
-# Manuel yenileme
-docker-compose run --rm certbot renew
+crontab -e
 ```
 
-## Güvenlik Kontrol Listesi
+Ekleyin:
 
-- [ ] `.env` dosyası `.gitignore`'da
-- [ ] `JWT_SECRET` güçlü ve rastgele
-- [ ] `NODE_ENV=production`
-- [ ] SSL sertifikası aktif
-- [ ] Firewall yapılandırılmış (sadece 80, 443 açık)
-- [ ] Otomatik güncellemeler aktif (Docker, OS)
-- [ ] Yedekleme test edilmiş
-- [ ] Log rotasyonu yapılandırılmış
-
-## Performans İyileştirmeleri
-
-### CDN Kullanımı (Cloudflare)
-
-1. Cloudflare hesabı oluştur
-2. Domain'i ekle
-3. DNS kayıtlarını yapılandır
-4. SSL/TLS modunu "Full (strict)" yap
-5. Caching kurallarını ayarla
-
-### Redis Cache
-
-```yaml
-# docker-compose.yml'da zaten var
-# Sadece REDIS_URL'i .env'e ekle
-REDIS_URL=redis://redis:6379
+```cron
+@reboot cd $HOME/public_html && pm2 resurrect
 ```
 
-### Database Optimizasyonu
+## 5) Doğrulama
 
-```sql
--- PostgreSQL konfigürasyonu (postgresql.conf)
-shared_buffers = 256MB
-effective_cache_size = 768MB
-maintenance_work_mem = 64MB
-work_mem = 4MB
+```bash
+pm2 status
+pm2 logs sanliurfa-app --lines 100
+curl -I http://127.0.0.1:4321/api/health
 ```
 
-## Destek
+Ops durum raporu:
 
-Sorun yaşarsanız:
-1. Logları kontrol edin: `docker-compose logs`
-2. Health check yapın: `curl http://localhost/api/health`
-3. Monitoring panelini kontrol edin: `/admin/monitoring`
-4. GitHub Issues'a bakın
+```bash
+npm run ops:cwp:status
+npm run ops:cwp:smoke
+```
+
+Not: `ops:cwp:report` çıktısı artık `bootstrap_audit`, `daily_ops`, `weekly_audit` ve
+`release_readiness` özetlerini de içerir.
+
+Release yönetimi:
+
+```bash
+npm run ops:cwp:releases
+npm run ops:cwp:cleanup
+npm run ops:cwp:report
+npm run ops:cwp:cron:doctor
+npm run ops:cwp:cron:freshness
+npm run ops:cwp:cron:freshness:strict
+npm run ops:cwp:unlock
+npm run ops:cwp:pipeline
+npm run ops:cwp:pipeline:strict
+npm run ops:cwp:audit
+npm run ops:cwp:incident-bundle
+npm run ops:cwp:triage
+npm run ops:cwp:incident-cleanup
+```
+
+Not: `ops:cwp:pipeline:strict` ve `ops:cwp:audit` cron freshness kontrolünü strict modda
+(`CRON_FRESHNESS_STRICT=1`) çalıştırır.
+
+Not: Managed cron planı artık `daily-ops`, `weekly-audit` ve `release-readiness` joblarını da
+otomatik kurar.
+
+Cron otomasyonu:
+
+```bash
+npm run ops:cwp:cron:install
+npm run ops:cwp:cron:install:if-needed
+npm run ops:cwp:cron:show
+npm run ops:cwp:cron:preview
+npm run ops:cwp:cron:diff
+npm run ops:cwp:cron:apply-safe
+npm run ops:cwp:bootstrap
+npm run ops:cwp:bootstrap:audit
+npm run ops:cwp:bootstrap:audit:summary
+npm run ops:cwp:daily
+npm run ops:cwp:weekly
+npm run ops:cwp:release-readiness
+```
+
+## 6) Sorun giderme
+
+Port dinleniyor mu:
+
+```bash
+ss -ltnp | grep 4321
+```
+
+Node/PM2 kullanıcı PATH kontrolü:
+
+```bash
+node -v
+npm -v
+pm2 -v
+```
+
+Proxy çalışmıyorsa CWP panelde domain webserver config içinden custom port mapping'i tekrar doğrula.
+
+Hızlı rollback:
+
+```bash
+npm run ops:cwp:rollback
+```
+
+## Referans dokümanlar
+
+- `SHARED-HOSTING-DEPLOY.md`
+- `CWP-DEPLOYMENT-GUIDE.md`
+- `scripts/deploy-cwp.sh`
+- `scripts/deploy-shared.sh`

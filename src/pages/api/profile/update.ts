@@ -1,7 +1,7 @@
 // API: Update user profile (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { update } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { updateProfileSettings } from '../../../lib/user/profile-settings';
 
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
   try {
@@ -16,12 +16,14 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     const username = formData.get('username')?.toString();
     const bio = formData.get('bio')?.toString();
 
-    await update('users', user.id, {
-      full_name: fullName,
-      username: username,
-      bio: bio,
-      updated_at: new Date().toISOString(),
-    });
+    await updateProfileSettings(
+      { id: user.id },
+      {
+        fullName,
+        username,
+        bio,
+      },
+    );
 
     return redirect('/profil/ayarlar?success=profile_updated');
   } catch (err) {

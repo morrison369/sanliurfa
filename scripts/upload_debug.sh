@@ -5,7 +5,7 @@ python3 -c "
 import paramiko, os
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh.connect('168.119.79.238', port=77, username='sanliur', password='BcqH7t5zNKfw', timeout=30)
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', timeout=30)
 sftp = ssh.open_sftp()
 local = 'scripts/server_debug.sh'
 remote = '/home/sanliur/public_html/scripts/server_debug.sh'

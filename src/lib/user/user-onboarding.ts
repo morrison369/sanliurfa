@@ -22,7 +22,7 @@ export interface UserOnboardingStatus {
 export async function getUserOnboardingStatus(userId: string): Promise<UserOnboardingStatus | null> {
   try {
     const user = await queryOne(
-      `SELECT id, email_verified, full_name, avatar, bio FROM users WHERE id = $1`,
+      `SELECT id, email_verified, full_name, avatar_url as avatar, bio FROM users WHERE id = $1`,
       [userId]
     );
 

@@ -1,7 +1,7 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
 
 // Map Web Vitals metric names to table columns
 const METRIC_COLUMN: Record<string, string> = {
@@ -12,15 +12,48 @@ const METRIC_COLUMN: Record<string, string> = {
   Load: 'load',
 };
 
-export const POST: APIRoute = async ({ request, locals }) => {
+interface PerformanceMetricPayload {
+  name?: string;
+  value?: number;
+  url?: string;
+}
+
+interface PerformanceMetricAggregateRow {
+  lcp_avg?: number | string | null;
+  lcp_p75?: number | string | null;
+  lcp_p95?: number | string | null;
+  fcp_avg?: number | string | null;
+  fcp_p75?: number | string | null;
+  fcp_p95?: number | string | null;
+  ttfb_avg?: number | string | null;
+  ttfb_p75?: number | string | null;
+  ttfb_p95?: number | string | null;
+  dcl_avg?: number | string | null;
+  dcl_p75?: number | string | null;
+  dcl_p95?: number | string | null;
+  load_avg?: number | string | null;
+  load_p75?: number | string | null;
+  load_p95?: number | string | null;
+}
+
+function roundedMetric(value: number | string | null | undefined): number {
+  if (typeof value === 'number') return Math.round(value);
+  if (typeof value === 'string') return Math.round(parseFloat(value) || 0);
+  return 0;
+}
+
+export const POST: APIRoute = async ({ request }) => {
   try {
-    const data = await request.json();
+    const data = (await request.json()) as PerformanceMetricPayload;
 
     if (!data.name || typeof data.value !== 'number') {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'name ve value alanları zorunludur',
+        type: '/problems/analytics-performance-validation',
+        instance: '/api/analytics/performance',
+      });
     }
 
     const col = METRIC_COLUMN[data.name];
@@ -49,18 +82,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Analytics performance POST error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Performans Metriği Kaydedilemedi',
+      detail: error instanceof Error ? error.message : 'internal_server_error',
+      type: '/problems/analytics-performance-write-failed',
+      instance: '/api/analytics/performance',
+    });
   }
 };
 
 // GET: Aggregate performance metrics (admin only)
 export const GET: APIRoute = async ({ request, locals }) => {
   if (!locals.user || locals.user.role !== 'admin') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
+    return problemJson({
+      status: 401,
+      title: 'Unauthorized',
+      detail: 'Admin yetkisi gerekli',
+      type: '/problems/analytics-performance-unauthorized',
+      instance: '/api/analytics/performance',
     });
   }
 
@@ -76,7 +116,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (from) { where += ` AND timestamp >= $${idx++}`; params.push(new Date(from)); }
     if (to)   { where += ` AND timestamp <= $${idx++}`; params.push(new Date(to)); }
 
-    const result = await query(
+    const result = await query<PerformanceMetricAggregateRow>(
       `SELECT
          AVG(lcp)  AS lcp_avg,  PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY lcp)  AS lcp_p75,  PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY lcp)  AS lcp_p95,
          AVG(fcp)  AS fcp_avg,  PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY fcp)  AS fcp_p75,  PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY fcp)  AS fcp_p95,
@@ -90,11 +130,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const r = result.rows[0] || {};
 
     const allMetrics = [
-      { name: 'LCP',  avg: Math.round(r.lcp_avg  || 0), p75: Math.round(r.lcp_p75  || 0), p95: Math.round(r.lcp_p95  || 0) },
-      { name: 'FCP',  avg: Math.round(r.fcp_avg  || 0), p75: Math.round(r.fcp_p75  || 0), p95: Math.round(r.fcp_p95  || 0) },
-      { name: 'TTFB', avg: Math.round(r.ttfb_avg || 0), p75: Math.round(r.ttfb_p75 || 0), p95: Math.round(r.ttfb_p95 || 0) },
-      { name: 'DCL',  avg: Math.round(r.dcl_avg  || 0), p75: Math.round(r.dcl_p75  || 0), p95: Math.round(r.dcl_p95  || 0) },
-      { name: 'Load', avg: Math.round(r.load_avg || 0), p75: Math.round(r.load_p75 || 0), p95: Math.round(r.load_p95 || 0) },
+      { name: 'LCP',  avg: roundedMetric(r.lcp_avg), p75: roundedMetric(r.lcp_p75), p95: roundedMetric(r.lcp_p95) },
+      { name: 'FCP',  avg: roundedMetric(r.fcp_avg), p75: roundedMetric(r.fcp_p75), p95: roundedMetric(r.fcp_p95) },
+      { name: 'TTFB', avg: roundedMetric(r.ttfb_avg), p75: roundedMetric(r.ttfb_p75), p95: roundedMetric(r.ttfb_p95) },
+      { name: 'DCL',  avg: roundedMetric(r.dcl_avg), p75: roundedMetric(r.dcl_p75), p95: roundedMetric(r.dcl_p95) },
+      { name: 'Load', avg: roundedMetric(r.load_avg), p75: roundedMetric(r.load_p75), p95: roundedMetric(r.load_p95) },
     ];
 
     return new Response(
@@ -107,9 +147,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Analytics performance GET error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Performans Metriği Alınamadı',
+      detail: error instanceof Error ? error.message : 'internal_server_error',
+      type: '/problems/analytics-performance-read-failed',
+      instance: '/api/analytics/performance',
+    });
   }
 };

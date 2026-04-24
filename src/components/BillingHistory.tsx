@@ -2,9 +2,7 @@
  * Billing History Component
  * Display user's billing history and invoices
  */
-
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface BillingRecord {
   id: string;
   subscriptionId: string;
@@ -33,14 +31,14 @@ export default function BillingHistory({}: BillingHistoryProps) {
         const response = await fetch('/api/user/subscription/billing');
 
         if (!response.ok) {
-          throw new Error('Failed to fetch billing history');
+          throw new Error('Ödeme geçmişi yüklenemedi.');
         }
 
         const data = await response.json();
         setBilling(data.billing || []);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Ödeme geçmişi yüklenemedi');
+        setError(err instanceof Error ? err.message : 'Ödeme geçmişi yüklenemedi.');
         setBilling([]);
       } finally {
         setLoading(false);

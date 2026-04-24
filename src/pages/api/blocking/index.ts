@@ -25,8 +25,13 @@ const blockSchema = {
   }
 };
 
+interface BlockRequestBody {
+  blocked_id?: string;
+  reason?: string;
+}
+
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -78,7 +83,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -96,7 +101,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as BlockRequestBody;
     const validation = validateWithSchema(body, blockSchema);
 
     if (!validation.valid) {
@@ -110,7 +115,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    if (user.id === validation.data.blocked_id) {
+    const validated = validation.data as BlockRequestBody;
+
+    if (!validated.blocked_id) {
+      recordRequest('POST', '/api/blocking', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Engellenecek kullanıcı ID gereklidir',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        undefined,
+        requestId
+      );
+    }
+
+    if (user.id === validated.blocked_id) {
       recordRequest('POST', '/api/blocking', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
@@ -121,11 +139,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const block = await blockUser(user.id, validation.data.blocked_id, validation.data.reason);
+    const block = await blockUser(user.id, validated.blocked_id, validated.reason);
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/blocking', HttpStatus.CREATED, duration);
-    logger.logMutation('create', 'user_blocks', block.id, user.id, { blocked_id: validation.data.blocked_id });
+    logger.logMutation('create', 'user_blocks', block.id, user.id);
 
     return apiResponse(
       {
@@ -151,7 +169,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -197,7 +215,7 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/blocking', HttpStatus.OK, duration);
-    logger.logMutation('delete', 'user_blocks', blockedId, user.id, { action: 'unblock' });
+    logger.logMutation('delete', 'user_blocks', blockedId, user.id);
 
     return apiResponse(
       {
@@ -220,3 +238,4 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
     );
   }
 };
+

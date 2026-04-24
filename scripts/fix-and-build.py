@@ -11,7 +11,7 @@ import os
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "zIT7Y9yrJZRV"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 REMOTE_DIR = "/home/sanliur/public_html"
 LOCAL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -67,7 +67,7 @@ def main():
     
     time.sleep(5)
     print_green("\n🏥 Saglik kontrolu...")
-    run_command(ssh, "curl -s http://127.0.0.1:6000/api/health | python3 -m json.tool 2>/dev/null || curl -s http://127.0.0.1:6000/api/health")
+    run_command(ssh, "curl -s http://127.0.0.1:4321/api/health | python3 -m json.tool 2>/dev/null || curl -s http://127.0.0.1:4321/api/health")
 
     print_green("\n" + "=" * 60)
     print_green("✅ ISLEM TAMAMLANDI!")

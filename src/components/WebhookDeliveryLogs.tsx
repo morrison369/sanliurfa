@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface Log {
   id: string;
   event: string;
@@ -41,7 +40,7 @@ export default function WebhookDeliveryLogs({ webhookId, token }: LogsProps) {
         setSummary(data.data);
       }
     } catch (err) {
-      console.error('Failed to load summary:', err);
+      console.error('Teslimat özeti yüklenemedi:', err);
     }
   };
 
@@ -53,12 +52,12 @@ export default function WebhookDeliveryLogs({ webhookId, token }: LogsProps) {
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
 
-      if (!res.ok) throw new Error('Failed to load logs');
+      if (!res.ok) throw new Error('Teslimat kayıtları yüklenemedi.');
       const data = await res.json();
       setLogs(data.data);
       setTotal(data.pagination.total);
     } catch (err) {
-      console.error('Failed to load logs:', err);
+      console.error('Teslimat kayıtları yüklenemedi:', err);
     } finally {
       setLoading(false);
     }
@@ -77,7 +76,7 @@ export default function WebhookDeliveryLogs({ webhookId, token }: LogsProps) {
     switch (status) {
       case 'delivered': return '✅ Teslim Edildi';
       case 'failed': return '❌ Başarısız';
-      case 'pending': return '⏳ Bekleme';
+      case 'pending': return 'Beklemede';
       default: return status;
     }
   };
@@ -88,7 +87,7 @@ export default function WebhookDeliveryLogs({ webhookId, token }: LogsProps) {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Teslimat Geçmişi</h2>
 
-      {/* Summary Cards */}
+      {/* Özet kartları */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-white rounded-lg shadow p-4">
@@ -116,7 +115,7 @@ export default function WebhookDeliveryLogs({ webhookId, token }: LogsProps) {
         </div>
       )}
 
-      {/* Logs Table */}
+      {/* Kayıt tablosu */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -179,7 +178,7 @@ export default function WebhookDeliveryLogs({ webhookId, token }: LogsProps) {
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Sayfalama */}
         {pages > 1 && (
           <div className="flex justify-between items-center px-4 py-3 border-t">
             <p className="text-sm text-gray-600">

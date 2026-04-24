@@ -9,14 +9,14 @@ import { queryOne } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
-import { saveFile } from '../../../lib/file/file-storage';
+import { saveFile, validateImageSignature, validateFileExtension } from '../../../lib/file/file-storage';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const UPLOAD_DIR = process.env.PHOTO_UPLOAD_DIR || 'public/uploads/photos';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -66,7 +66,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Validate MIME type
+    // Validate MIME type (Content-Type header)
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       recordRequest('POST', '/api/photos/upload', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
@@ -76,6 +76,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
         undefined,
         requestId
       );
+    }
+
+    // Validate file extension
+    if (!validateFileExtension(file.name)) {
+      recordRequest('POST', '/api/photos/upload', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz dosya uzantısı', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+
+    // Validate magic bytes — verify actual file content matches declared MIME type
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (!validateImageSignature(buffer, file.type)) {
+      recordRequest('POST', '/api/photos/upload', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Dosya içeriği geçersiz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     // Verify place exists
@@ -107,7 +120,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Save file to storage
     let fileResult;
     try {
-      fileResult = await saveFile(file, placeId);
+      fileResult = await saveFile(file, placeId, undefined, buffer);
     } catch (storageError) {
       recordRequest('POST', '/api/photos/upload', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       logger.error('File storage failed', storageError instanceof Error ? storageError : new Error(String(storageError)));
@@ -156,3 +169,4 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 };
+

@@ -11,6 +11,7 @@ import { updateUserQuotas } from '../../../lib/usage/usage-tracking';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { emailOnSubscriptionCreated, emailOnPaymentSuccess, emailOnSubscriptionCancelled } from '../../../lib/subscription/subscription-email-integration';
+import { problemJson } from '../../../lib/api';
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   try {
@@ -233,12 +234,12 @@ export const POST: APIRoute = async ({ request }) => {
     recordRequest('POST', '/api/webhooks/stripe', 400, duration);
     logger.error('Webhook verification failed', error instanceof Error ? error : new Error(String(error)));
 
-    return new Response(
-      JSON.stringify({ error: 'Webhook signature verification failed' }),
-      {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    return problemJson({
+      status: 400,
+      title: 'Webhook Doğrulanamadı',
+      detail: 'Webhook signature verification failed',
+      type: '/problems/webhook-stripe-signature-invalid',
+      instance: '/api/webhooks/stripe',
+    });
   }
 };

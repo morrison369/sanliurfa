@@ -1,33 +1,45 @@
 // Astro Middleware - PostgreSQL JWT Authentication
-// @ts-nocheck
 import { defineMiddleware } from 'astro:middleware';
 import { verifyToken } from './lib/auth';
 import { queryOne } from './lib/postgres';
 import { checkRateLimit } from './lib/cache';
+import { getRedisClient, prefixKey } from './lib/cache/cache';
+function getCanonicalDomain(): string {
+  return process.env.SITE_URL || process.env.PUBLIC_SITE_URL || 'https://sanliurfa.com';
+}
+function getAllowedOriginsFromEnv(raw?: string): string[] {
+  if (!raw) return [];
+  return raw.split(',').map(o => o.trim()).filter(Boolean);
+}
 
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
   '/', '/giris', '/kayit', '/places', '/tarihi-yerler', '/blog',
   '/gastronomi', '/arama', '/hakkinda', '/iletisim', '/etkinlikler',
   '/gizlilik-politikasi', '/kullanim-kosullari', '/kvkk', '/hakkimizda',
-  '/fiyatlandirma', '/404', '/500', '/loading',
+  '/fiyatlandirma', '/sss', '/cerez-politikasi', '/404', '/500', '/loading',
   '/mekanlar', '/ilceler', '/gezilecek-yerler', '/saglik', '/mahalleler', '/yeme-icme',
+  '/topluluk', '/eslesme', '/yemek-tarifleri',
   '/egitim', '/ulasim', '/alisveris', '/hizmetler', '/emlak', '/konaklama', '/etkinlikler', '/isletme',
+  '/harita', '/kesfet',
   '/en-iyi-kebapcilar', '/en-iyi-cigerciler', '/sanliurfa-kahvalti-mekanlari',
   '/sanliurfa-sira-gecesi-mekanlari', '/sanliurfa-gece-acik-mekanlar',
   '/sanliurfada-ne-yenir', '/bugun-sanliurfada-ne-yapilir',
-  '/api/auth/login', '/api/auth/register', '/api/places', '/api/health',
+  '/api/auth/login', '/api/auth/register', '/api/auth/forgot-password',
+  '/api/auth/reset-password', '/api/auth/callback',
+  '/api/places', '/api/health',
   '/api/contact', '/api/reviews', '/api/hashtags', '/api/leaderboards',
   '/api/saglik/nobetci', '/api/places/apply',
   '/isletme-kayit', '/ara',
-  '/sitemap.xml', '/sitemap-dynamic.xml', '/rss.xml', '/robots.txt',
+  '/kullanicilar', '/trend', '/siralamalar', '/liderlik-tablosu', '/oneriler',
+  '/sitemap.xml', '/sitemap-dynamic.xml', '/sitemap-index.xml', '/rss.xml', '/robots.txt', '/llms.txt',
 ];
 
 // Admin only paths
 const ADMIN_PATHS = ['/admin'];
 
 // CORS configuration
-const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'https://sanliurfa.com').split(',').map(o => o.trim());
+const CORS_ORIGINS = getAllowedOriginsFromEnv(process.env.CORS_ORIGINS);
 const RATE_LIMIT = 100;
 const RATE_LIMIT_WINDOW = 15 * 60; // 15 minutes in seconds
 
@@ -40,7 +52,6 @@ const securityHeaders = {
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
 };
 
-// @ts-nocheck
 /**
  * Extract client IP from request headers
  * Handles proxy headers and prevents IP spoofing by using rightmost IP
@@ -61,6 +72,66 @@ function getClientIP(request: Request): string {
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, cookies, request } = context;
   const pathname = url.pathname;
+  const canonicalHost = getCanonicalDomain();
+  const requestId =
+    request.headers.get('x-request-id') ||
+    `req-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+
+  // Health endpointleri her koşulda hızlı ve fail-open çalışmalı.
+  if (pathname === '/api/health' || pathname === '/api/health/schema-ready') {
+    const response = await next();
+    response.headers.set('X-Request-ID', requestId);
+    return response;
+  }
+
+  // Canonical domain and URL aliases (SEO-safe 301 redirects)
+  const aliasRedirects: Record<string, string> = {
+    '/ara': '/arama',
+    '/gizlilik': '/gizlilik-politikasi',
+    '/kosullar': '/kullanim-kosullari',
+    '/mekan': '/mekanlar',
+    '/places': '/mekanlar',
+    '/places/ekle': '/isletme-kayit',
+    '/yerler': '/mekanlar',
+    '/messages': '/mesajlar',
+    '/notifications': '/bildirimler',
+    '/profile': '/profil',
+    '/isletme/': '/isletme',
+    '/işletme': '/isletme',
+  };
+
+  const normalizedPath = pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+  const prefixRedirects: Array<[string, string]> = [
+    ['/places/', '/isletme/'],
+    ['/yerler/', '/isletme/'],
+    ['/mekan/', '/isletme/'],
+    ['/kategori/', '/mekanlar/'],
+  ];
+  const mappedPath =
+    aliasRedirects[normalizedPath] ||
+    prefixRedirects.reduce<string | undefined>((mapped, [from, to]) => {
+      if (mapped || !normalizedPath.startsWith(from)) return mapped;
+      return `${to}${normalizedPath.slice(from.length)}`;
+    }, undefined);
+
+  const incomingHost = request.headers.get('x-forwarded-host') || request.headers.get('host') || url.hostname;
+  const hostWithoutPort = (incomingHost || '').split(':')[0].toLowerCase();
+  const forwardedProto = (request.headers.get('x-forwarded-proto') || url.protocol.replace(':', '')).split(',')[0].trim().toLowerCase();
+  const isProd = (process.env.NODE_ENV || '').toLowerCase() === 'production';
+  const shouldHttpsRedirect =
+    isProd &&
+    hostWithoutPort === canonicalHost &&
+    forwardedProto === 'http';
+  const shouldCanonicalHostRedirect =
+    hostWithoutPort === `www.${canonicalHost}` || hostWithoutPort === 'www.sanliurfa.com';
+
+  if (mappedPath || shouldCanonicalHostRedirect || shouldHttpsRedirect) {
+    const target = new URL(url.toString());
+    if (mappedPath) target.pathname = mappedPath;
+    if (shouldCanonicalHostRedirect) target.host = canonicalHost;
+    if (shouldHttpsRedirect) target.protocol = 'https:';
+    return context.redirect(target.toString(), 301);
+  }
 
   // Check if path is public
   const isPublicPath = PUBLIC_PATHS.some(path => pathname === path || pathname.startsWith(path + '/'));
@@ -81,6 +152,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       corsHeaders['Access-Control-Max-Age'] = '86400';
     }
 
+    corsHeaders['X-Request-ID'] = requestId;
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
@@ -92,7 +164,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (!isAllowed) {
       return new Response(JSON.stringify({ error: 'Rate limit exceeded', retryAfter: RATE_LIMIT_WINDOW }), {
         status: 429,
-        headers: { 'Content-Type': 'application/json', 'Retry-After': String(RATE_LIMIT_WINDOW) }
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(RATE_LIMIT_WINDOW),
+          'X-Request-ID': requestId
+        }
       });
     }
   }
@@ -126,6 +202,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
           context.locals.isAdmin = user.role === 'admin' || user.role === 'moderator';
           context.locals.isAuthenticated = true;
 
+          // Sliding window: her aktif istekte session TTL'yi uzat
+          const sessionTtl = parseInt(process.env.SESSION_TIMEOUT || '86400', 10);
+          getRedisClient().then(redis => redis.expire(prefixKey(`session:${token}`), sessionTtl)).catch(() => null);
+
           // Check admin access
           if (isAdminPath && !context.locals.isAdmin) {
             return context.redirect('/?error=unauthorized');
@@ -148,6 +228,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const response = await next();
+  response.headers.set('X-Request-ID', requestId);
 
   // Add security headers
   Object.entries(securityHeaders).forEach(([key, value]) => {
@@ -161,7 +242,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
     "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self'",
+    "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -195,9 +276,14 @@ declare global {
         role: 'user' | 'admin' | 'moderator';
         avatar: string | null;
         points: number;
+        isAdmin?: boolean;
+        subscriptionTier?: string;
       } | null;
       isAdmin: boolean;
       isAuthenticated: boolean;
+      requestId?: string;
+      rateLimit?: Record<string, any>;
+      tenant?: Record<string, any>;
     }
   }
 }

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Phase 7: Advanced Caching Strategy
  * Multi-level caching: L1 in-memory (fast), L2 Redis (persistent)
@@ -93,7 +92,7 @@ export class MultiLevelCache {
     const l2Hit = await getCache(key);
     if (l2Hit) {
       try {
-        const value = JSON.parse(l2Hit) as T;
+        const value = JSON.parse(l2Hit as string) as T;
         // Promote to L1
         this.setL1(key, value, l1Ttl);
         return value;

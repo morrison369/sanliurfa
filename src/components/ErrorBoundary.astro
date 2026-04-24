@@ -11,9 +11,9 @@ interface Props {
 const { fallback = 'Bir hata oluştu. Lütfen sayfayı yenileyin.' } = Astro.props;
 ---
 
-<div class="error-boundary" data-fallback={fallback}>
+<error-boundary class="error-boundary" data-fallback={fallback}>
   <slot />
-</div>
+</error-boundary>
 
 <script>
   import * as Sentry from '@sentry/browser';
@@ -36,9 +36,9 @@ const { fallback = 'Bir hata oluştu. Lütfen sayfayı yenileyin.' } = Astro.pro
       });
     }
     
-    showError(message: string) {
-      this.innerHTML = `
-        <div class="error-fallback p-6 bg-red-50 border border-red-200 rounded-lg text-center">
+      showError(message: string) {
+        this.innerHTML = `
+          <div class="error-fallback p-6 bg-red-50 border border-red-200 rounded-lg text-center">
           <svg class="w-12 h-12 mx-auto mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
           </svg>
@@ -52,7 +52,9 @@ const { fallback = 'Bir hata oluştu. Lütfen sayfayı yenileyin.' } = Astro.pro
     }
   }
 
-  customElements.define('error-boundary', ErrorBoundary);
+  if (!customElements.get('error-boundary')) {
+    customElements.define('error-boundary', ErrorBoundary);
+  }
 </script>
 
 <style>

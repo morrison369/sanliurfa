@@ -9,8 +9,14 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
+function toBoundedInt(value: string | null, fallback: number, max: number): number {
+  const parsed = Number.parseInt(value || '', 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.min(parsed, max);
+}
+
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -30,14 +36,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     const url = new URL(request.url);
-    const days = Math.min(parseInt(url.searchParams.get('days') || '30'), 365);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
+    const days = toBoundedInt(url.searchParams.get('days'), 30, 365);
+    const limit = toBoundedInt(url.searchParams.get('limit'), 10, 50);
 
     // Get analytics data
     const [platformStats, trendingPlaces, searchTrends] = await Promise.all([
-      getPlatformStats(days),
-      getTrendingPlacesByViews(7, limit),
-      getSearchTrends(7, limit)
+      getPlatformStats(),
+      getTrendingPlacesByViews(limit),
+      getSearchTrends()
     ]);
 
     const duration = Date.now() - startTime;
@@ -49,7 +55,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
         data: {
           platformStats,
           trendingPlaces,
-          searchTrends,
+          searchTrends: searchTrends.slice(0, limit),
           period: days
         }
       },
@@ -62,10 +68,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
     logger.error('Get analytics failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Analitiğer alınırken bir hata oluştu',
+      'Analitik verileri alınırken bir hata oluştu',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
     );
   }
 };
+

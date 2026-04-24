@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-
+import { useState, useEffect } from 'react';
 interface CollectionItem {
   id: string;
   place_id: string;
+  place_slug?: string;
   place_name: string;
   place_image?: string;
   place_category?: string;
@@ -33,8 +33,7 @@ interface CollectionDetailProps {
 
 export default function CollectionDetail({
   collectionId,
-  currentUserId,
-  isAdmin
+  currentUserId
 }: CollectionDetailProps) {
   const [collection, setCollection] = useState<Collection | null>(null);
   const [items, setItems] = useState<CollectionItem[]>([]);
@@ -237,7 +236,7 @@ export default function CollectionDetail({
                 {/* Content */}
                 <div className="p-4">
                   <a
-                    href={`/mekan/${item.place_id}`}
+                    href={item.place_slug ? `/isletme/${item.place_slug}` : '/mekanlar'}
                     className="text-lg font-bold text-blue-600 hover:text-blue-700 block mb-2"
                   >
                     {item.place_name}
@@ -259,7 +258,7 @@ export default function CollectionDetail({
                   {/* Actions */}
                   <div className="flex gap-2">
                     <a
-                      href={`/mekan/${item.place_id}`}
+                      href={item.place_slug ? `/isletme/${item.place_slug}` : '/mekanlar'}
                       className="flex-1 text-center bg-blue-100 text-blue-700 px-3 py-2 rounded text-sm font-medium hover:bg-blue-200 transition"
                     >
                       Mekanı Gör

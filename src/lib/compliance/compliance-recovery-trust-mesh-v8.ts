@@ -2,7 +2,7 @@
  * Phase 391: Compliance Recovery Trust Mesh V8
  */
 
-import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
+import { SignalBook, computeBalancedScore, routeByThresholds } from './governance-kit';
 
 export interface ComplianceRecoveryTrustSignalV8 {
   signalId: string;
@@ -34,7 +34,7 @@ class ComplianceRecoveryTrustRouterV8 {
 }
 
 class ComplianceRecoveryTrustReporterV8 {
-  report(signalId: string, route: string): string {
+  report(_signalId: string, _route: string): string {
     return "" as any;
   }
 }
@@ -50,4 +50,7 @@ export {
   ComplianceRecoveryTrustRouterV8,
   ComplianceRecoveryTrustReporterV8
 };
+
+
+
 

@@ -2,7 +2,7 @@
  * Phase 349: Compliance Resilience Settlement Mesh
  */
 
-import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
+import { SignalBook, computeBalancedScore, routeByThresholds } from './governance-kit';
 
 export interface ResilienceSettlementSignalV2 {
   signalId: string;
@@ -34,7 +34,7 @@ class ResilienceSettlementRouteV2 {
 }
 
 class ResilienceSettlementReporterV2 {
-  report(signalId: string, route: string): string {
+  report(_signalId: string, _route: string): string {
     return "" as any;
   }
 }
@@ -50,4 +50,7 @@ export {
   ResilienceSettlementRouteV2,
   ResilienceSettlementReporterV2
 };
+
+
+
 

@@ -12,8 +12,13 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
+type BlockUserBody = {
+  blockedUserId?: unknown;
+  reason?: unknown;
+};
+
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -58,7 +63,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -74,10 +79,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const body = await request.json();
+    const body = await request.json() as BlockUserBody;
     const { blockedUserId, reason } = body;
 
-    if (!blockedUserId) {
+    if (typeof blockedUserId !== 'string' || blockedUserId.trim().length === 0) {
       recordRequest('POST', '/api/users/privacy/block', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
@@ -88,8 +93,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    if (reason !== undefined && typeof reason !== 'string') {
+      recordRequest('POST', '/api/users/privacy/block', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Engelleme sebebi string olmalıdır',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        undefined,
+        requestId
+      );
+    }
+
+    const normalizedBlockedUserId = blockedUserId.trim();
+    const normalizedReason = typeof reason === 'string' && reason.trim().length > 0
+      ? reason.trim()
+      : undefined;
+
     // Verify target user exists
-    const targetUser = await queryOne('SELECT id FROM users WHERE id = $1', [blockedUserId]);
+    const targetUser = await queryOne<{ id: string }>('SELECT id FROM users WHERE id = $1', [normalizedBlockedUserId]);
     if (!targetUser) {
       recordRequest('POST', '/api/users/privacy/block', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
@@ -101,11 +122,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    await blockUser(locals.user.id, blockedUserId, reason);
+    await blockUser(locals.user.id, normalizedBlockedUserId, normalizedReason);
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/users/privacy/block', HttpStatus.CREATED, duration);
-    logger.logMutation('create', 'blocked_users', blockedUserId, locals.user.id, { reason });
+    logger.logMutation('create', 'blocked_users', normalizedBlockedUserId, locals.user.id);
 
     return apiResponse(
       {
@@ -141,7 +162,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -170,11 +191,12 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
       );
     }
 
-    await unblockUser(locals.user.id, blockedUserId);
+    const normalizedBlockedUserId = blockedUserId.trim();
+    await unblockUser(locals.user.id, normalizedBlockedUserId);
 
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/users/privacy/block', HttpStatus.OK, duration);
-    logger.logMutation('delete', 'blocked_users', blockedUserId, locals.user.id);
+    logger.logMutation('delete', 'blocked_users', normalizedBlockedUserId, locals.user.id);
 
     return apiResponse(
       {
@@ -197,3 +219,4 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
     );
   }
 };
+

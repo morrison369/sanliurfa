@@ -3,7 +3,7 @@
  * Trending algorithms, recommendation engine, content discovery
  */
 
-import { queryOne, queryMany, insert, update, query } from '../postgres';
+import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { getCache, setCache, deleteCache } from '../cache';
 
@@ -49,9 +49,9 @@ export interface UserInterest {
 // ===== TRENDING SCORES =====
 
 export async function calculateTrendingScore(
-  entityType: string,
-  entityId: string,
-  period: 'hourly' | 'daily' | 'weekly',
+  _entityType: string,
+  _entityId: string,
+  _period: 'hourly' | 'daily' | 'weekly',
   viewCount: number,
   interactionCount: number,
   shareCount: number
@@ -529,5 +529,6 @@ export async function addToDiscoveryFeed(
     return false;
   }
 }
+
 
 

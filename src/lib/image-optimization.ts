@@ -105,7 +105,7 @@ export function generateSrcSet(
  * Farklı viewport'lar için ideal genişlik tanımları döner.
  */
 export function generateSizes(
-  breakpoints: { maxWidth: number; size: string }[] = [
+  breakpoints: { maxWidth?: number; size: string }[] = [
     { maxWidth: 640, size: '100vw' },
     { maxWidth: 1024, size: '50vw' },
     { maxWidth: 1280, size: '33vw' },
@@ -355,3 +355,4 @@ export function getLoadingAttributes(priority: 'high' | 'low'): {
   }
   return { loading: 'lazy', fetchPriority: 'low' };
 }
+

@@ -5,8 +5,8 @@ import time
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
-DB_PASS = "vyD7l4kGFtnw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
+DB_PASS = "CHANGE_ME_DB_PASSWORD"
 
 def main():
     ssh = paramiko.SSHClient()
@@ -32,7 +32,7 @@ def main():
     
     env_content = f"""SITE_URL=https://sanliurfa.com
 NODE_ENV=production
-PORT=6000
+PORT=4321
 HOST=127.0.0.1
 DATABASE_URL=postgresql://sanliur_sanliurfa@localhost:5432/sanliur_sanliurfa
 JWT_SECRET=change-this-secret-key

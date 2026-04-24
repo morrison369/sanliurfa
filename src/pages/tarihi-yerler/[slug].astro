@@ -1,6 +1,11 @@
 ---
+
 import Layout from '../../layouts/Layout.astro';
+import Image from '../../components/Image.astro';
 import { query, queryOne } from '../../lib/postgres';
+import { resolveContentImage } from '../../lib/content-images';
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 // SVG ikonlar
 const icons = {
@@ -17,6 +22,14 @@ const icons = {
 
 let site: any = null;
 let nearbySites: any[] = [];
+const getHistoricalImage = (item: any, thumb = false) =>
+  resolveContentImage({
+    category: 'tarihi-yerler',
+    slug: item?.slug,
+    explicit: item?.images?.[0],
+    placeholder: '/images/placeholder-historical.jpg',
+    thumb,
+  });
 
 try {
   const { slug } = Astro.params;
@@ -27,6 +40,10 @@ try {
   );
 
   if (!site) {
+    const knownPlaceSlugs = new Set(['gobeklitepe', 'balikligol', 'harran', 'halfeti', 'urfa-kalesi', 'ayna-carsi', 'kapali-carsi']);
+    if (knownPlaceSlugs.has(String(slug))) {
+      return Astro.redirect(`/isletme/${slug}`);
+    }
     return Astro.redirect('/tarihi-yerler');
   }
 
@@ -42,15 +59,28 @@ try {
 const seo = {
   title: site ? `${site.name} - Tarihi Yer` : 'Tarihi Yer - Şanlıurfa',
   description: site?.description || 'Şanlıurfa tarihi yerleri',
-  image: site?.images?.[0],
+  ogImage: site ? getHistoricalImage(site) : '/images/placeholder-historical.jpg',
+  keywords: [site.name, site.name + ' şanlıurfa', 'şanlıurfa tarihi yerler', 'urfa ' + site.name.toLowerCase()],
+  canonical: `/tarihi-yerler/${Astro.params.slug}`,
 };
+const faqItems = [
+  { S: `${site.name} nerede?`, C: `${site.name}, ${site.location || 'Şanlıurfa'} konumunda yer almaktadır.` },
+  { S: `${site.name} ziyaret saatleri nedir?`, C: site.visiting_hours || `${site.name} için ziyaret saatlerini sayfamızdan veya ilgili kurumdan öğrenebilirsiniz.` },
+  { S: `${site.name} giriş ücreti var mı?`, C: site.entrance_fee || `${site.name} giriş ücreti için güncel bilgiyi sayfamızdan takip edebilirsiniz.` },
+];
 ---
 
 <Layout seo={seo}>
   <div class="dark:bg-gray-900">
     <div class="relative h-[70vh] min-h-[600px]">
       <div class="absolute inset-0">
-        <img src={site.images?.[0] || '/images/placeholder-historical.jpg'} alt={site.name} class="w-full h-full object-cover" />
+        <Image
+          src={getHistoricalImage(site)}
+          alt={site.name}
+          width={1920}
+          height={1080}
+          class="w-full h-full object-cover"
+        />
         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       </div>
       
@@ -105,7 +135,13 @@ const seo = {
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {site.images.slice(1).map((img: string, i: number) => (
                   <div class={`${i === 0 ? 'col-span-2 row-span-2' : ''} rounded-xl overflow-hidden`}>
-                    <img src={img} alt={`${site.name} ${i + 1}`} class="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                    <Image
+                      src={img}
+                      alt={`${site.name} ${i + 1}`}
+                      width={960}
+                      height={720}
+                      class="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                    />
                   </div>
                 ))}
               </div>
@@ -182,4 +218,45 @@ const seo = {
       </div>
     </div>
   </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'LandmarksOrHistoricalBuildings',
+    name: site.name,
+    description: site.short_description || site.description,
+    url: `${baseUrl}/tarihi-yerler/${site.slug}`,
+    image: (site.cover_image || site.images?.[0]) ? `${baseUrl}${site.cover_image || site.images[0]}` : `${baseUrl}/images/hero/hero-home.webp`,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Şanlıurfa',
+      addressRegion: 'Şanlıurfa',
+      addressCountry: 'TR',
+    },
+    geo: site.latitude && site.longitude ? {
+      '@type': 'GeoCoordinates',
+      latitude: site.latitude,
+      longitude: site.longitude,
+    } : undefined,
+    containedInPlace: { '@type': 'City', name: 'Şanlıurfa', url: `${baseUrl}` },
+    openingHours: site.visiting_hours || undefined,
+    publicAccess: true,
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Tarihi Yerler', item: `${baseUrl}/tarihi-yerler` },
+      { '@type': 'ListItem', position: 3, name: site.name, item: `${baseUrl}/tarihi-yerler/${site.slug}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

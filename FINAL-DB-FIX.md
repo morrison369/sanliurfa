@@ -31,7 +31,7 @@ Kaydet: `Ctrl+X`, `Y`, `Enter`
 sudo systemctl restart postgresql
 ```
 
-Eğer sudo şifresi isterse: `BcqH7t5zNKfw`
+Eğer sudo şifresi isterse: `CHANGE_ME_CWP_SSH_PASSWORD`
 
 ### Adım 4: Uygulamayı Yeniden Başlat
 ```bash
@@ -56,7 +56,7 @@ Başarılı olursa:
 1. CWP Panel'e giriş: https://168.119.79.238:2083
 2. `PostgreSQL Manager` veya `Database` bölümüne git
 3. `sanliur_sanliurfa` veritabanı kullanıcısının şifresini kontrol et
-4. Gerekirse şifreyi sıfırla: `vyD7l4kGFtnw`
+4. Gerekirse şifreyi sıfırla: `CHANGE_ME_DB_PASSWORD`
 
 ---
 

@@ -12,7 +12,7 @@ source ~/.nvm/nvm.sh
 echo "1. Stopping existing app..."
 pm2 stop sanliurfa 2>/dev/null
 pm2 delete sanliurfa 2>/dev/null
-fuser -k 6000/tcp 2>/dev/null || true
+fuser -k 4321/tcp 2>/dev/null || true
 sleep 2
 
 # 2. Check environment
@@ -32,18 +32,18 @@ fi
 echo "   ✅ Build exists"
 
 # 4. Start application
-echo "4. Starting application on port 6000..."
+echo "4. Starting application on port 4321..."
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-node dist/server/entry.mjs --port 6000 &
+node dist/server/entry.mjs --port 4321 &
 APP_PID=$!
 echo "   PID: $APP_PID"
 sleep 5
 
 # 5. Test
 echo "5. Testing..."
-HTTP=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/ 2>/dev/null)
+HTTP=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/ 2>/dev/null)
 if [ "$HTTP" = "200" ]; then
     echo "   ✅ HTTP 200 - Application is working!"
 else
@@ -54,7 +54,7 @@ fi
 
 # 6. Save to PM2
 echo "6. Saving to PM2..."
-pm2 start dist/server/entry.mjs --name sanliurfa -- --port 6000
+pm2 start dist/server/entry.mjs --name sanliurfa -- --port 4321
 pm2 save
 
 echo ""

@@ -25,6 +25,11 @@ export const migration_105_user_segments = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_segments ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+      ALTER TABLE user_segments ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_user_segments_active
       ON user_segments(is_active, created_at DESC)
     `);
@@ -38,6 +43,12 @@ export const migration_105_user_segments = async (pool: Pool) => {
         added_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(segment_id, user_id)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE segment_members ADD COLUMN IF NOT EXISTS segment_id UUID;
+      ALTER TABLE segment_members ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE segment_members ADD COLUMN IF NOT EXISTS added_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`
@@ -68,6 +79,11 @@ export const migration_105_user_segments = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE segment_analytics ADD COLUMN IF NOT EXISTS segment_id UUID;
+      ALTER TABLE segment_analytics ADD COLUMN IF NOT EXISTS analytics_date DATE;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_segment_analytics_date
       ON segment_analytics(segment_id, analytics_date DESC)
     `);
@@ -76,7 +92,7 @@ export const migration_105_user_segments = async (pool: Pool) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS ab_test_variants (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        campaign_id UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+        campaign_id INTEGER NOT NULL,
         variant_name VARCHAR(255) NOT NULL,
         variant_type VARCHAR(50),
         subject_line VARCHAR(500),
@@ -90,6 +106,10 @@ export const migration_105_user_segments = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(campaign_id, variant_name)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE ab_test_variants ADD COLUMN IF NOT EXISTS campaign_id INTEGER;
     `);
 
     await pool.query(`

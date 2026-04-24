@@ -229,6 +229,4 @@ export const attackSurfaceAnalyzer = new AttackSurfaceAnalyzer();
 export const riskAssessment = new RiskAssessment();
 export const mitigationPlanner = new MitigationPlanner();
 
-export type { Threat, AttackSurface, RiskMatrix, Mitigation };
-
-
+export { Threat, AttackSurface, RiskMatrix, Mitigation };

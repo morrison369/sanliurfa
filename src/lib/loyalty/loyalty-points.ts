@@ -2,7 +2,7 @@
  * Loyalty Points Library
  * Points earning, spending, and transaction management
  */
-import { query, queryOne, queryMany, insert, update } from '../postgres';
+import { queryOne, queryMany, insert, update } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
 
@@ -177,5 +177,6 @@ export async function expirePoints(): Promise<number> {
     return 0;
   }
 }
+
 
 

@@ -5,12 +5,12 @@ import paramiko
 HOST = "168.119.79.238"
 PORT = 77
 USERNAME = "sanliur"
-PASSWORD = "BcqH7t5zNKfw"
+PASSWORD = "CHANGE_ME_CWP_SSH_PASSWORD"
 
 # Yeni bilgiler
 DB_NAME = "sanliur_sanliurfa"
 DB_USER = "sanliur_sanliurfa"
-DB_PASS = "vyD7l4kGFtnw"
+DB_PASS = "CHANGE_ME_DB_PASSWORD"
 
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -38,7 +38,7 @@ SUPABASE_SERVICE_ROLE_KEY={DB_USER}:{DB_PASS}
 # Site
 SITE_URL=https://sanliurfa.com
 NODE_ENV=production
-PORT=6000
+PORT=4321
 
 # Security
 JWT_SECRET=change-this-to-a-secure-random-string-min-32-chars
@@ -260,7 +260,7 @@ else:
 # 6. HTTP Test
 print("\n6️⃣ HTTP Test...")
 time.sleep(2)
-stdin, stdout, stderr = ssh.exec_command("curl -m 3 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6000/")
+stdin, stdout, stderr = ssh.exec_command("curl -m 3 -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/")
 code = stdout.read().decode().strip()
 if code == "200":
     print(f"   ✅ HTTP 200 - Site çalışıyor!")

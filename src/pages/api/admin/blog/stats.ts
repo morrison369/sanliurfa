@@ -7,11 +7,20 @@ import type { APIRoute } from 'astro';
 import { requireRole } from '../../../../lib/auth';
 import { getBlogStats } from '../../../../lib/blog/db';
 import { query } from '../../../../lib/postgres';
+import { problemJson } from '../../../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
     const auth = await requireRole(request, 'admin');
-    if (!auth.user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/admin-blog-stats-unauthorized',
+        instance: '/api/admin/blog/stats',
+      });
+    }
 
     // Get basic stats
     const stats = await getBlogStats();
@@ -74,9 +83,12 @@ export const GET: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to get stats' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Blog İstatistikleri Alınamadı',
+      detail: error instanceof Error ? error.message : 'İstatistikler alınamadı',
+      type: '/problems/admin-blog-stats-failed',
+      instance: '/api/admin/blog/stats',
+    });
   }
 };

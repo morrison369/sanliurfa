@@ -252,7 +252,7 @@ export class QuotaManager {
   getOverQuota(feature: string): string[] {
     const users: string[] = [];
 
-    for (const [key, quota] of this.quotas) {
+    for (const [_key, quota] of this.quotas) {
       if (quota.feature === feature && quota.used > quota.limit) {
         users.push(quota.userId);
       }

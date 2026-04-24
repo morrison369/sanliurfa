@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Place Badges
  * GET /api/places/[id]/badges - Get place badges
@@ -13,7 +12,7 @@ import { queryOne } from '../../../../lib/postgres';
 import { getCache, setCache } from '../../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -27,7 +26,7 @@ export const GET: APIRoute = async ({ request, params }) => {
       recordRequest('GET', '/api/places/[id]/badges', HttpStatus.OK, Date.now() - startTime);
       return apiResponse({
         success: true,
-        badges: JSON.parse(cached)
+        badges: JSON.parse(cached as string)
       }, HttpStatus.OK, requestId);
     }
 

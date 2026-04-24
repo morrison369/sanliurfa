@@ -7,10 +7,10 @@
 import { queryOne } from '../postgres';
 import { logger } from '../logger';
 import { sendEmail } from './email';
+import { getPublicAppUrl } from '../public-app-url';
 
-// Resend API (production'da ayarlanacak)
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
-const FROM_EMAIL = 'noreply@sanliurfa.com';
+// sendEmail() kendi içinde DB'den veya env'den key okur
+const PUBLIC_APP_URL = getPublicAppUrl();
 
 export interface EmailNotificationPayload {
   type: 'new_comment' | 'comment_reply' | 'new_post';
@@ -18,7 +18,7 @@ export interface EmailNotificationPayload {
   postTitle: string;
   postSlug: string;
   recipientEmail: string;
-  recipientName: string;
+  _recipientName: string;
   commentAuthor: string;
   commentContent: string;
   authorEmail?: string;
@@ -28,11 +28,6 @@ export interface EmailNotificationPayload {
  * Email gönder
  */
 export async function sendEmailNotification(payload: EmailNotificationPayload): Promise<boolean> {
-  if (!RESEND_API_KEY) {
-    logger.warn('RESEND_API_KEY tanımlanmamış, email gönderilemedi', Object.assign(new Error('RESEND_API_KEY tanımlanmamış'), { payload }));
-    return false;
-  }
-
   try {
     let subject = '';
     let htmlContent = '';
@@ -47,7 +42,7 @@ export async function sendEmailNotification(payload: EmailNotificationPayload): 
             ${escapeHtml(payload.commentContent)}
           </blockquote>
           <p>
-            <a href="https://sanliurfa.com/blog/${payload.postSlug}#comments" style="background-color: #3b82f6; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">
+            <a href="${PUBLIC_APP_URL}/blog/${payload.postSlug}#comments" style="background-color: #3b82f6; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">
               Yorumu Görüntüle
             </a>
           </p>
@@ -63,7 +58,7 @@ export async function sendEmailNotification(payload: EmailNotificationPayload): 
             ${escapeHtml(payload.commentContent)}
           </blockquote>
           <p>
-            <a href="https://sanliurfa.com/blog/${payload.postSlug}#comments" style="background-color: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">
+            <a href="${PUBLIC_APP_URL}/blog/${payload.postSlug}#comments" style="background-color: #10b981; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">
               Yanıtı Görüntüle
             </a>
           </p>
@@ -78,7 +73,7 @@ export async function sendEmailNotification(payload: EmailNotificationPayload): 
           <h3>${payload.postTitle}</h3>
           <p>${payload.commentContent}</p>
           <p>
-            <a href="https://sanliurfa.com/blog/${payload.postSlug}" style="background-color: #3b82f6; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">
+            <a href="${PUBLIC_APP_URL}/blog/${payload.postSlug}" style="background-color: #3b82f6; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">
               Yazıyı Oku
             </a>
           </p>
@@ -86,30 +81,10 @@ export async function sendEmailNotification(payload: EmailNotificationPayload): 
         break;
     }
 
-    // Resend API'ye istek gönder
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: FROM_EMAIL,
-        to: payload.recipientEmail,
-        subject,
-        html: htmlContent,
-        reply_to: payload.authorEmail || FROM_EMAIL
-      })
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      logger.error('Email gönderilemedi', new Error(JSON.stringify(error)), { payload });
-      return false;
-    }
-
-    logger.info('Email gönderildi', { type: payload.type, recipient: payload.recipientEmail });
-    return true;
+    // sendEmail() DB'den veya env'den key okur
+    const ok = await sendEmail({ to: payload.recipientEmail, subject, html: htmlContent });
+    if (ok) logger.info('Email gönderildi', { type: payload.type, recipient: payload.recipientEmail });
+    return ok;
   } catch (err) {
     logger.error('Email gönderimi başarısız', err instanceof Error ? err : new Error(String(err)), { payload });
     return false;
@@ -123,7 +98,7 @@ export async function notifyNewComment(
   postId: number,
   commentAuthor: string,
   commentContent: string,
-  commentAuthorEmail?: string
+  _commentAuthorEmail?: string
 ): Promise<void> {
   try {
     // Yazıyı getir
@@ -166,7 +141,7 @@ export async function notifyCommentReply(
   originalCommentId: number,
   replyAuthor: string,
   replyContent: string,
-  postSlug: string,
+  _postSlug: string,
   postTitle: string
 ): Promise<void> {
   try {
@@ -182,8 +157,6 @@ export async function notifyCommentReply(
     }
 
     let recipientEmail = originalComment.author_email;
-    let recipientName = 'Kullanıcı';
-
     // Eğer kullanıcı oturum açmışsa, onun emailini kullan
     if (originalComment.user_id && !recipientEmail) {
       const user = await queryOne(
@@ -193,7 +166,6 @@ export async function notifyCommentReply(
 
       if (user && user.email) {
         recipientEmail = user.email;
-        recipientName = user.full_name || 'Kullanıcı';
       }
     }
 
@@ -219,8 +191,8 @@ export async function notifyCommentReply(
 export async function notifyNewPost(
   postId: number,
   postTitle: string,
-  postSlug: string,
-  excerpt: string,
+  _postSlug: string,
+  _excerpt: string,
   categoryId: number
 ): Promise<number> {
   try {
@@ -264,5 +236,6 @@ function escapeHtml(text: string): string {
   };
   return text.replace(/[&<>"']/g, (m) => map[m]);
 }
+
 
 

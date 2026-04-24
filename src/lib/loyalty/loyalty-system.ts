@@ -3,7 +3,7 @@
  * Points management, tier progression, and balance tracking
  */
 
-import { query, queryOne, queryMany, insert, update } from '../postgres';
+import { queryOne, queryMany, insert, update } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { createNotification } from '../notification/notifications-queue';
 import { logger } from '../logger';
@@ -371,5 +371,6 @@ export async function getActiveBonusCampaigns(): Promise<any[]> {
     throw error;
   }
 }
+
 
 

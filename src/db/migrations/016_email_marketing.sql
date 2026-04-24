@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS email_campaigns (
   html_content TEXT NOT NULL, text_content TEXT,
   type TEXT NOT NULL CHECK (type IN ('newsletter', 'promotional', 'transactional', 'automation', 'abandoned_cart')),
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'scheduled', 'sending', 'sent', 'paused', 'cancelled')),
-  segment_id TEXT, from_name TEXT NOT NULL DEFAULT 'Şanlıurfa.com',
+  segment_id TEXT, from_name TEXT NOT NULL DEFAULT 'Sanliurfa.com',
   from_email TEXT NOT NULL DEFAULT 'noreply@sanliurfa.com', reply_to TEXT,
   scheduled_at TIMESTAMP, sent_at TIMESTAMP, total_recipients INTEGER DEFAULT 0,
   sent_count INTEGER DEFAULT 0, open_count INTEGER DEFAULT 0, click_count INTEGER DEFAULT 0,

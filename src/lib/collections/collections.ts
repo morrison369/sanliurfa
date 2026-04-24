@@ -4,7 +4,7 @@
  */
 
 import { query, queryOne, queryMany } from '../postgres';
-import { deleteCache, deleteCachePattern } from '../cache';
+import { deleteCache } from '../cache';
 import { logger } from '../logger';
 
 export interface PlaceCollection {
@@ -213,7 +213,7 @@ export async function getCollectionWithItems(
 
     // Get items
     const items = await queryMany(
-      `SELECT ci.*, p.name as place_name, p.image as place_image, p.category as place_category, p.average_rating as place_rating
+      `SELECT ci.*, p.name as place_name, COALESCE(p.thumbnail_url, p.images[1]) as place_image, p.category as place_category, COALESCE(p.rating, p.avg_rating, 0) as place_rating
        FROM collection_items ci
        JOIN places p ON ci.place_id = p.id
        WHERE ci.collection_id = $1
@@ -421,5 +421,4 @@ export async function getPublicCollections(limit: number = 20, offset: number = 
     throw error;
   }
 }
-
 

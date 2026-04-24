@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Get user badges and achievements
  * GET /api/users/stats/badges?userId=...
@@ -19,11 +18,7 @@ export const GET: APIRoute = async (context) => {
 
     const badges = await getUserBadges(userId);
 
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      data: badges,
-      count: badges.length
-    });
+    return apiResponse({ success: true, data: badges, count: badges.length }, HttpStatus.OK);
   } catch (error) {
     logger.error('Failed to get user badges', error instanceof Error ? error : new Error(String(error)));
     return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to get user badges');

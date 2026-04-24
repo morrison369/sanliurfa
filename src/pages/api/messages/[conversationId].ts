@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Conversation Messages API
  * GET: Retrieve messages in a conversation
@@ -8,21 +7,27 @@
 
 import type { APIRoute } from 'astro';
 import { getMessages, sendMessage, markConversationRead } from '../../../lib/message/messages';
-import { queryOne, query } from '../../../lib/postgres';
+import { queryOne } from '../../../lib/postgres';
 import { isUserBlocked } from '../../../lib/block/blocking';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
 
+type ConversationRow = {
+  id: string;
+  participant_a: string;
+  participant_b: string;
+};
+
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const user = locals.user;
-    const { conversationId } = params;
+    const conversationId = params.conversationId;
 
     if (!user) {
       recordRequest('GET', `/api/messages/${conversationId}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
@@ -35,14 +40,23 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
+    if (!conversationId) {
+      recordRequest('GET', '/api/messages/unknown', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Konuşma kimliği gereklidir',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
     // Get URL parameters
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
-    const before = url.searchParams.get('before') || undefined;
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
 
     // Get messages (includes access control check)
-    // @ts-expect-error - getMessages arguments mismatch
-    const messages = await getMessages(conversationId, user.id, limit, before);
+    const messages = await getMessages(conversationId, user.id, limit);
 
     // Auto-mark as read when fetching
     await markConversationRead(conversationId, user.id);
@@ -97,13 +111,13 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const user = locals.user;
-    const { conversationId } = params;
+    const conversationId = params.conversationId;
 
     if (!user) {
       recordRequest('POST', `/api/messages/${conversationId}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
@@ -116,7 +130,18 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    const body = await request.json();
+    if (!conversationId) {
+      recordRequest('POST', '/api/messages/unknown', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Konuşma kimliği gereklidir',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
+    const body = await request.json() as { content?: unknown };
     const { content } = body;
 
     // Validate input
@@ -154,7 +179,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     }
 
     // Get conversation to find recipient (optimized: select only needed columns)
-    const conversation = await queryOne(
+    const conversation = await queryOne<ConversationRow>(
       'SELECT id, participant_a, participant_b FROM conversations WHERE id = $1',
       [conversationId]
     );
@@ -238,19 +263,17 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const user = locals.user;
-    const { conversationId } = params;
+    const conversationId = params.conversationId;
 
     if (!user) {
-      // @ts-expect-error - UNAUTHORIZED used instead of AUTH_REQUIRED
       recordRequest('DELETE', `/api/messages/${conversationId}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        // @ts-expect-error - UNAUTHORIZED used instead of AUTH_REQUIRED
         ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
@@ -259,9 +282,20 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
+    if (!conversationId) {
+      recordRequest('DELETE', '/api/messages/unknown', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Konuşma kimliği gereklidir',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
     // Verify user is participant (soft delete via archive table concept)
-    const conversation = await queryOne(
-      'SELECT * FROM conversations WHERE id = $1',
+    const conversation = await queryOne<ConversationRow>(
+      'SELECT id, participant_a, participant_b FROM conversations WHERE id = $1',
       [conversationId]
     );
 

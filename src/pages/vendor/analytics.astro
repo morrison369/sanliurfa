@@ -28,7 +28,7 @@ const vendor = {
 const seo = {
   title: 'Analitikler - İşletme Paneli',
   description: 'İşletmenizin performans istatistiklerini görüntüleyin',
-  noindex: true,
+  noIndex: true,
 };
 ---
 
@@ -52,7 +52,7 @@ const seo = {
       </div>
 
       {/* Analytics Dashboard */}
-      <AnalyticsDashboard placeId={vendor.placeId} client:load />
+      <AnalyticsDashboard placeId={vendor.placeId} client:visible />
     </div>
   </div>
 </Layout>

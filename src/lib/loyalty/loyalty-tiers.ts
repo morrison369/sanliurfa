@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Loyalty Tiers Library
  * Tier system management, progression, and benefits
@@ -162,7 +161,7 @@ export async function getTierBenefits(tierId: string): Promise<any | null> {
 export async function getTierList(): Promise<any[]> {
   try {
     const cacheKey = 'tiers:list';
-    let tiers = await getCache(cacheKey);
+    let tiers = await getCache<any[]>(cacheKey);
 
     if (!tiers) {
       tiers = await queryMany(`

@@ -2,24 +2,31 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { logger } from '../../../../lib/logging';
+import { problemJson } from '../../../../lib/api';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
   try {
     const { id } = params;
     
     if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/users-ban-unauthorized',
+        instance: `/api/users/${id}/ban`,
+      });
     }
 
     // Admin kendini banlayamasın
     if (id === locals.user?.id) {
-      return new Response(
-        JSON.stringify({ error: 'Cannot ban yourself' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Kendi hesabınızı banlayamazsınız',
+        type: '/problems/users-ban-self',
+        instance: `/api/users/${id}/ban`,
+      });
     }
 
     const formData = await request.formData();
@@ -48,9 +55,12 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     );
   } catch (err) {
     logger.error('Ban user error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Kullanıcı Ban Durumu Güncellenemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/users-ban-failed',
+      instance: `/api/users/${params.id}/ban`,
+    });
   }
 };

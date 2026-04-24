@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Lightbulb, Star } from 'lucide-react';
 
 interface Recommendation {
   id: string;
   recommended_place_id: string;
+  slug?: string;
   name: string;
   category: string;
   rating: number;
@@ -50,7 +51,12 @@ export default function PersonalizedRecommendations() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
         {recs.map(rec => (
-          <a key={rec.id} onClick={() => handleClick(rec.id)} href={`/mekanlari-bul/${rec.recommended_place_id}`} className="p-3 border rounded-lg hover:bg-blue-50 transition cursor-pointer">
+          <a
+            key={rec.id}
+            onClick={() => handleClick(rec.id)}
+            href={rec.slug ? `/isletme/${rec.slug}` : '/mekanlar'}
+            className="p-3 border rounded-lg hover:bg-blue-50 transition cursor-pointer"
+          >
             <h3 className="font-semibold truncate">{rec.name}</h3>
             <p className="text-sm text-gray-600">{rec.category}</p>
             <div className="flex items-center gap-2 mt-2">

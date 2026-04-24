@@ -83,8 +83,6 @@ export async function analyzePageBudget(
   }
 
   const resources = performance.getEntriesByType('resource');
-  const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
-
   const totals: Record<string, { size: number; files: string[] }> = {
     javascript: { size: 0, files: [] },
     css: { size: 0, files: [] },
@@ -361,4 +359,4 @@ export function createBudgetReportHTML(report: BudgetReport): string {
 }
 
 // Export default budget for reference
-export { defaultBudget };
+export {defaultBudget};

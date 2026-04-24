@@ -23,7 +23,7 @@ export function useApiError(options: UseApiErrorOptions = {}) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleError = useCallback(
-    (err: unknown, context?: string) => {
+    (err: unknown, _context?: string) => {
       const appError = unknownToAppError(err);
       setError(appError);
 

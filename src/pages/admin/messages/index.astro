@@ -1,4 +1,5 @@
 ---
+import { actions } from 'astro:actions';
 import Layout from '../../../layouts/Layout.astro';
 import { query } from '../../../lib/postgres';
 
@@ -9,12 +10,29 @@ if (!user || !Astro.locals.isAdmin) {
 }
 
 let messages: any[] = [];
-const seo = { title: 'İletişim Mesajları - Admin' };
+const seo = {
+  title: 'İletişim Mesajları - Admin',
+  description: 'Admin iletişim talepleri yönetim ekranı',
+  noIndex: true,
+};
+const statusResult = Astro.getActionResult(actions.updateAdminMessageStatus);
 
 try {
 
   const result = await query(
-    'SELECT * FROM contact_messages ORDER BY created_at DESC'
+    `SELECT
+       id,
+       COALESCE(name, 'İsimsiz') as name,
+       email,
+       COALESCE(subject, title, 'Konu yok') as subject,
+       COALESCE(message, description, '') as message,
+       status,
+       priority,
+       type,
+       ticket_number,
+       created_at
+     FROM support_tickets
+     ORDER BY created_at DESC`
   );
   messages = result.rows;
 
@@ -28,8 +46,20 @@ try {
     <div class="container-custom">
       <div class="flex items-center justify-between mb-8">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">İletişim Mesajları</h1>
-        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">← Admin Panel</a>
+        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">← Yönetim Paneli</a>
       </div>
+
+      {statusResult?.data?.success && (
+        <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          Mesaj durumu güncellendi.
+        </div>
+      )}
+
+      {statusResult?.error && (
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {statusResult.error.message || 'Mesaj durumu güncellenemedi.'}
+        </div>
+      )}
       
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
         <table class="w-full">
@@ -52,21 +82,30 @@ try {
                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{msg.subject}</td>
                 <td class="px-6 py-4">
                   <span class={`inline-flex px-2 py-1 text-xs rounded-full ${
-                    msg.status === 'new' ? 'bg-red-100 text-red-800' :
-                    msg.status === 'read' ? 'bg-yellow-100 text-yellow-800' :
+                    msg.status === 'open' ? 'bg-red-100 text-red-800' :
+                    msg.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                    msg.status === 'spam' ? 'bg-gray-100 text-gray-700' :
                     'bg-green-100 text-green-800'
                   }`}>
-                    {msg.status === 'new' ? 'Yeni' : msg.status === 'read' ? 'Okundu' : 'Yanıtlandı'}
+                    {msg.status === 'open' ? 'Yeni' : msg.status === 'in_progress' ? 'İşlemde' : msg.status === 'spam' ? 'Spam' : msg.status === 'closed' ? 'Kapalı' : 'Çözüldü'}
                   </span>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                   {new Date(msg.created_at).toLocaleDateString('tr-TR')}
                 </td>
                 <td class="px-6 py-4">
-                  {msg.status === 'new' && (
-                    <form method="POST" action={`/api/admin/messages/${msg.id}/status`} class="inline">
-                      <input type="hidden" name="status" value="read" />
-                      <button type="submit" class="text-sm text-urfa-600">Okundu İşaretle</button>
+                  {msg.status === 'open' && (
+                    <form method="POST" action={actions.updateAdminMessageStatus} class="inline">
+                      <input type="hidden" name="id" value={msg.id} />
+                      <input type="hidden" name="status" value="in_progress" />
+                      <button type="submit" class="text-sm text-urfa-600">İşleme Al</button>
+                    </form>
+                  )}
+                  {msg.status === 'in_progress' && (
+                    <form method="POST" action={actions.updateAdminMessageStatus} class="inline">
+                      <input type="hidden" name="id" value={msg.id} />
+                      <input type="hidden" name="status" value="resolved" />
+                      <button type="submit" class="text-sm text-green-600">Çözüldü İşaretle</button>
                     </form>
                   )}
                 </td>
@@ -84,3 +123,5 @@ try {
     </div>
   </div>
 </Layout>
+
+

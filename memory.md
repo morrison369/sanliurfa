@@ -1,8 +1,19 @@
 # Memory
 
 ## Current Phase
-- Active window: `Phase 443-448` (planned)
-- Last completed: `Phase 437-442 Governance Stability & Continuity V16`
+- Active window: Platform özellikleri (2026-04-23 yeniden odaklanma)
+- Governance phase döngüsü durduruldu: Phase 443-448 iptal, gerçek platform ihtiyaçlarına geçildi
+
+## Platform Geliştirme — Tamamlanan (2026-04-23)
+- Admin entegrasyon ayarları: RESEND_API_KEY + GA ID admin panelinden girilebilir (`/admin/integrations`)
+- Email runtime: `site_settings.integrations.email` üzerinden key okunur, rebuild gerekmez
+- GA runtime: `site_settings.integrations.analytics` üzerinden ID okunur, rebuild gerekmez
+- SEO: blog sayfaları article meta eklendi, mekan listesi keywords eklendi
+- Sitemap: ilçe sayfaları eklendi (`/ilceler/{slug}`)
+- Fotoğraf yükleme: çoklu dosya + gerçek XHR progress + önizleme
+- Migration 162: bus_routes + bus_schedules tabloları
+- Admin eczane API: `/api/admin/pharmacies` (GET nöbetçi, POST nöbet ata/ekle)
+- Otobüs sayfası: DB'den hat ve saat çeker
 
 ## Completed Phases (Recent)
 - `Phase 137-142 Advanced DevOps & Infrastructure`: complete

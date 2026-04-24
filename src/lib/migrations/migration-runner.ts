@@ -4,6 +4,7 @@
  */
 
 import { query, transaction } from '../db/postgres-client';
+import { logger } from '../logger';
 
 // Migration types
 export type MigrationType = 'schema' | 'data' | 'seed';
@@ -179,7 +180,7 @@ async function runMigration(migration: Migration): Promise<boolean> {
     `, [migration.id, migration.version, migration.name, migration.checksum]);
     
     // Run migration in transaction
-    await transaction(async (client) => {
+    await transaction(async (_client) => {
       await migration.up();
     });
     
@@ -259,7 +260,7 @@ export async function rollback(
       logger.info(`[Migrations] Rolling back: ${migration.version}`);
       
       try {
-        await transaction(async (client) => {
+        await transaction(async (_client) => {
           await migration.down();
         });
         
