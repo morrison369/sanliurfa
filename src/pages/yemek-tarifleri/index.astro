@@ -97,8 +97,8 @@ try {
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.status = 'active'
         AND c.slug IN (
-          "kebapcilar', 'cigerciler', 'lahmacuncular', 'pideciler",
-          "cig-kofteciler', 'yoresel-yemekler', 'tatlicilar"
+          'kebapcilar', 'cigerciler', 'lahmacuncular', 'pideciler',
+          'cig-kofteciler', 'yoresel-yemekler', 'tatlicilar'
         )
       ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
       LIMIT 8
