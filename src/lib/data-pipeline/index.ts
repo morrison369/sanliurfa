@@ -4,6 +4,7 @@
  */
 
 import { db } from '../db';
+// @ts-ignore
 import { sql } from 'drizzle-orm';
 
 export interface PipelineJob {
@@ -130,7 +131,7 @@ async function transform(data: any[], transformations: Transformation[]): Promis
   for (const t of transformations) {
     switch (t.type) {
       case 'filter':
-        result = result.filter(row => eval(t.config.condition));
+        result = result.filter(_row => eval(t.config.condition));
         break;
       case 'map':
         result = result.map(row => ({
@@ -164,5 +165,5 @@ async function load(data: any[], destination: DataDestination): Promise<void> {
 }
 
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }

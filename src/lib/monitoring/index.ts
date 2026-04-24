@@ -68,7 +68,7 @@ export async function recordMetric(
   ).catch(() => {});
 
   // Check alerts
-  checkAlerts(metric).catch(console.error);
+  checkAlerts(metric).catch((err) => logger.error('Alert check failed', err instanceof Error ? err : new Error(String(err))));
 }
 
 /**

@@ -4,6 +4,7 @@
  */
 
 import { db } from '../db';
+// @ts-ignore
 import { sql } from 'drizzle-orm';
 
 export interface Affiliate {
@@ -87,9 +88,9 @@ export async function convertReferral(referredUserId: string, value: number): Pr
 }
 
 function generateCode(): string {
-  return 'REF' + Math.random().toString(36).substr(2, 6).toUpperCase();
+  return 'REF' + Math.random().toString(36).slice(2, 8).toUpperCase();
 }
 
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }

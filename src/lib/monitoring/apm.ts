@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Phase 34: APM & Error Budget Management
  * Distributed tracing, SLO tracking, error budgets, performance baselines
@@ -38,7 +37,7 @@ export interface ErrorBudget {
   badEvents: number;
 }
 
-export interface PerformanceBaseline {
+export interface PerformanceBaselineData {
   mean: number;
   p50: number;
   p95: number;
@@ -63,8 +62,8 @@ export class TraceCollector {
    * Start a new span
    */
   startSpan(name: string, parentSpanId?: string): Span {
-    const traceId = this.currentContext?.traceId || 'trace-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-    const spanId = 'span-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const traceId = this.currentContext?.traceId || 'trace-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+    const spanId = 'span-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
 
     const span: Span = {
       traceId,
@@ -245,7 +244,7 @@ export class PerformanceBaseline {
   /**
    * Get baseline statistics
    */
-  getBaseline(metricName: string): PerformanceBaseline | null {
+  getBaseline(metricName: string): PerformanceBaselineData | null {
     const samples = this.samples.get(metricName);
     if (!samples || samples.length === 0) {
       return null;

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Sentry Error Tracking Initialization
  * Monitors errors, performance, and user sessions
@@ -62,7 +61,7 @@ export function captureException(error: Error, context?: Record<string, any>): v
  */
 export function captureMessage(message: string, level: 'fatal' | 'error' | 'warning' | 'info' = 'info'): void {
   try {
-    logger.log(`${level.toUpperCase()}: ${message}`);
+    logger.info(`${level.toUpperCase()}: ${message}`);
     // Sentry.captureMessage(message, level);
   } catch (e) {
     logger.error('Failed to capture message', e instanceof Error ? e : new Error(String(e)));

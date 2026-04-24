@@ -1,7 +1,7 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "strict": false,
     "noImplicitAny": false,
     "strictNullChecks": false,
@@ -24,6 +24,8 @@
     "strictBindCallApply": false,
     "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": false,
+    "isolatedModules": false,
+    "verbatimModuleSyntax": false,
     "jsx": "react-jsx",
     "jsxImportSource": "react"
   },

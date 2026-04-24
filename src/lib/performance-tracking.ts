@@ -161,7 +161,7 @@ export function getResourceTiming(limit = 20): ResourceTimingSummary[] {
     .map((entry) => ({
       name: entry.name,
       duration: Math.round(entry.duration),
-      transferSize: entry.transferSize,
+      transferSize: (entry as any).transferSize,
       initiatorType: (entry as PerformanceResourceTiming).initiatorType,
     }))
     .sort((a, b) => b.duration - a.duration);
@@ -302,7 +302,7 @@ export function observeWebVitals(
     let clsValue = 0;
     const clsObserver = new PerformanceObserver((entryList) => {
       for (const entry of entryList.getEntries()) {
-        const layoutShiftEntry = entry as LayoutShift;
+        const layoutShiftEntry = entry as any;
         if (!layoutShiftEntry.hadRecentInput) {
           clsValue += layoutShiftEntry.value;
         }
@@ -530,9 +530,7 @@ export function initPerformanceTracking(
       const color = getMetricColor(metric.rating);
       const unit = getMetricUnit(metric.name);
       logger.info(
-        `[Performans] %c${metric.name}: ${metric.value.toFixed(metric.name === 'CLS' ? 3 : 0)}${unit}`,
-        `color: ${color}; font-weight: bold`,
-        `(${metric.rating})`,
+        `[Performans] ${metric.name}: ${metric.value.toFixed(metric.name === 'CLS' ? 3 : 0)}${unit} (${metric.rating})`,
       );
     }
   });
@@ -542,3 +540,4 @@ export function initPerformanceTracking(
     cleanupObserver?.();
   };
 }
+

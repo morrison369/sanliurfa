@@ -125,7 +125,6 @@ export function getCriticalAlerts(): Alert[] {
  */
 export function calculateUptimeMetrics(timeWindow: number = 3600000): UptimeMetric {
   const now = Date.now();
-  const periodStart = new Date(now - timeWindow);
 
   const relevantChecks = healthChecks.filter(
     check => new Date(check.timestamp).getTime() >= now - timeWindow
@@ -160,7 +159,7 @@ export async function checkDatabase(): Promise<HealthCheck> {
   const start = Date.now();
 
   try {
-    const result = await pool.query('SELECT NOW()');
+    await pool.query('SELECT NOW()');
     const latency = Date.now() - start;
 
     return {

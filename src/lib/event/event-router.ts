@@ -191,7 +191,6 @@ class EventTransformer {
   transform(event: any, transformerName: string): any {
     const transformer = this.transformers.get(transformerName);
     if (!transformer) {
-      // @ts-expect-error - logger signature mismatch
       logger.warn('Transformer not found', { name: transformerName });
       return event;
     }
@@ -264,6 +263,4 @@ export const contentFilter = new ContentFilter();
 export const eventTransformer = new EventTransformer();
 export const routingRuleManager = new RoutingRuleManager();
 
-export type { RoutingRule as RoutingRuleType, RoutingResult, FilterMetrics };
-
-
+export { RoutingRule as RoutingRuleType, RoutingResult, FilterMetrics };

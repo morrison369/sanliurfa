@@ -57,7 +57,7 @@ export async function queueForSync(
 ): Promise<void> {
   const queueItem: SyncQueueItem = {
     ...item,
-    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
     timestamp: Date.now(),
     retries: 0,
   };
@@ -342,13 +342,19 @@ export async function offlineFetch<T>(
  * Network status hook helper
  */
 export function createNetworkStatus() {
-  let status = {
+  type ConnectionStatus = {
+    online: boolean;
+    type: ConnectionType;
+    effectiveType: EffectiveConnectionType;
+  };
+
+  let status: ConnectionStatus = {
     online: isOnline(),
     type: 'unknown' as ConnectionType,
     effectiveType: '4g' as EffectiveConnectionType,
   };
 
-  const listeners = new Set<(status: typeof status) => void>();
+  const listeners = new Set<(status: ConnectionStatus) => void>();
 
   const update = () => {
     const connection = (navigator as any).connection;
@@ -372,7 +378,7 @@ export function createNetworkStatus() {
 
   return {
     get status() { return status; },
-    subscribe(fn: (status: typeof status) => void) {
+    subscribe(fn: (status: ConnectionStatus) => void) {
       listeners.add(fn);
       return () => listeners.delete(fn);
     },
@@ -382,3 +388,4 @@ export function createNetworkStatus() {
 // Types for connection API
 type ConnectionType = 'bluetooth' | 'cellular' | 'ethernet' | 'mixed' | 'none' | 'other' | 'unknown' | 'wifi' | 'wimax';
 type EffectiveConnectionType = '2g' | '3g' | '4g' | 'slow-2g';
+

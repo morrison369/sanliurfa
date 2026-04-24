@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Phase 132: Message Broker Integration (Redis Streams)
  * Redis Streams as message broker for distributed event delivery with consumer groups
@@ -31,7 +30,7 @@ interface ConsumerState {
   lastMessageTime: number;
 }
 
-interface StreamMetrics {
+interface StreamTopicMetrics {
   topic: string;
   messageCount: number;
   throughput: number;
@@ -58,7 +57,7 @@ class MessageBroker {
 
     const streamKey = `sanliurfa:stream:${topic}`;
     redis.lpush(streamKey, JSON.stringify(message));
-    redis.expire(streamKey, 604800); // 7 days retention
+    (redis as any).expire?.(streamKey, 604800); // 7 days retention
 
     logger.debug('Message published', { id, topic });
     return id;
@@ -93,8 +92,8 @@ class MessageBroker {
     }
   }
 
-  getMetrics(): Record<string, StreamMetrics> {
-    const result: Record<string, StreamMetrics> = {};
+  getMetrics(): Record<string, StreamTopicMetrics> {
+    const result: Record<string, StreamTopicMetrics> = {};
 
     for (const message of this.messages.values()) {
       if (!result[message.topic]) {
@@ -269,7 +268,4 @@ export const streamConsumer = StreamConsumer;
 export const consumerGroup = new ConsumerGroup();
 export const streamMetrics = new StreamMetrics();
 
-export type { Message, ConsumerGroupConfig, ConsumerState, StreamMetrics as StreamMetricsType };
-
-
-
+export { Message, ConsumerGroupConfig, ConsumerState, StreamMetrics as StreamMetricsType };

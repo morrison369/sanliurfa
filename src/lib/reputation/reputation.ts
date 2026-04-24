@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Reputation System Library
  * User reputation calculation and management
@@ -68,7 +67,7 @@ export async function addReputationScore(userId: string, scoreType: string, poin
   }
 }
 
-export async function getRepuationTier(totalScore: number): string {
+export async function getRepuationTier(totalScore: number): Promise<string> {
   if (totalScore < 100) return 'Yeni Üye';
   if (totalScore < 500) return 'Aktif Üye';
   if (totalScore < 1000) return 'Katkıda Bulunan';

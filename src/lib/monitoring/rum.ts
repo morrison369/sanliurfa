@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Real User Monitoring (RUM)
  * Performance metrics collection from actual users
@@ -94,7 +93,7 @@ class RealUserMonitoring {
         let clsValue = 0;
         const clsObserver = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
-            const layoutShift = entry as LayoutShift;
+            const layoutShift = entry as any;
             if (!layoutShift.hadRecentInput) {
               clsValue += layoutShift.value;
             }
@@ -137,7 +136,7 @@ class RealUserMonitoring {
         
         if (navEntry) {
           this.metrics.ttfb = navEntry.responseStart - navEntry.requestStart;
-          this.metrics.domLoad = navEntry.domComplete - navEntry.domLoading;
+          this.metrics.domLoad = navEntry.domComplete - navEntry.startTime;
           this.metrics.windowLoad = navEntry.loadEventEnd - navEntry.loadEventStart;
           
           // Estimate TTI

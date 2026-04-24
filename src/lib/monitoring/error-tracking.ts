@@ -80,3 +80,4 @@ export function getErrorStats(): { total: number; bySeverity: Record<ErrorSeveri
   
   return { total: errorStore.length, bySeverity, last24h };
 }
+

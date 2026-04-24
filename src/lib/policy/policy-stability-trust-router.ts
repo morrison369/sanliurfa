@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Phase 354: Policy Stability Trust Router
  */
@@ -36,7 +35,7 @@ class StabilityTrustRouterV3 {
 
 class StabilityTrustReporterV3 {
   report(signalId: string, route: string): string {
-    return buildGovernanceReport('Policy stability trust', signalId, 'route', route, 'Policy stability trust routed');
+    return buildGovernanceReport('Policy stability trust', signalId, 'route', route as any, 'Policy stability trust routed');
   }
 }
 
@@ -51,3 +50,5 @@ export {
   StabilityTrustRouterV3,
   StabilityTrustReporterV3
 };
+
+

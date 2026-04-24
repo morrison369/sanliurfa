@@ -197,12 +197,12 @@ export async function verifyMigrations(
   const applied = await getAppliedMigrations();
   const issues: string[] = [];
 
-  for (const applied of applied) {
-    const available = migrations.find(m => m.version === applied.version);
+  for (const appliedMig of applied) {
+    const available = migrations.find(m => m.version === appliedMig.version);
     if (!available) {
-      issues.push(`Migration ${applied.version} is applied but not available`);
-    } else if (available.checksum !== applied.checksum) {
-      issues.push(`Migration ${applied.version} checksum mismatch - do not modify applied migrations`);
+      issues.push(`Migration ${appliedMig.version} is applied but not available`);
+    } else if (available.checksum !== appliedMig.checksum) {
+      issues.push(`Migration ${appliedMig.version} checksum mismatch - do not modify applied migrations`);
     }
   }
 
@@ -431,3 +431,4 @@ export async function getMigrationStatus(): Promise<{
     latest: latestResult.rows[0]?.version
   };
 }
+

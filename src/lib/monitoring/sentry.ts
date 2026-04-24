@@ -1,8 +1,8 @@
-// @ts-nocheck
 /**
  * Sentry Error Tracking and Performance Monitoring
  */
 
+// @ts-ignore - @sentry/astro may not be installed; Sentry is optional
 import * as Sentry from '@sentry/astro';
 import { logger } from '../logging';
 

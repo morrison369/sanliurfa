@@ -144,7 +144,7 @@ export async function exportData(config: ExportConfig): Promise<{
 
   switch (config.format) {
     case 'csv':
-      output = await generateCSV(result.rows, config.fields);
+      output = await generateCSV(result.rows);
       extension = 'csv';
       break;
     case 'json':
@@ -287,7 +287,8 @@ function getTableName(entityType: string): string {
     categories: 'categories',
     blog_posts: 'blog_posts'
   };
-  return mapping[entityType] || entityType;
+  if (!mapping[entityType]) throw new Error(`Unknown entity type: ${entityType}`);
+  return mapping[entityType];
 }
 
 /**
@@ -458,3 +459,4 @@ export async function bulkDelete(
   const result = await query(sql, params);
   return { deleted: result.rowCount };
 }
+

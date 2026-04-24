@@ -3,9 +3,12 @@
  * Task 121: Email Marketing Automation
  */
 
+// @ts-ignore - drizzle-orm is declared but not actively used; queries use raw pg
 import { db } from '../db';
+// @ts-ignore
 import { sql } from 'drizzle-orm';
-import { sendEmailMessage } from '../email/email-service';
+import { sendEmail } from '../email/index';
+import { logger } from '../logging';
 
 export type AutomationTrigger = 
   | 'user_registered' | 'user_inactive' | 'birthday' | 'place_visited' 
@@ -209,7 +212,7 @@ async function processEntry(entryId: string, workflow: AutomationWorkflow): Prom
 async function sendStepEmail(config: EmailStepConfig, user: any): Promise<void> {
   const html = personalizeContent(config.htmlContent, { name: user.full_name, email: user.email });
   const text = config.textContent ? personalizeContent(config.textContent, { name: user.full_name, email: user.email }) : undefined;
-  await sendEmailMessage({ to: user.email, subject: config.subject, html, text });
+  await sendEmail({ to: user.email, subject: config.subject, html, text });
 }
 
 async function scheduleDelay(entryId: string, config: DelayStepConfig, workflow: AutomationWorkflow, currentStep: AutomationStep): Promise<void> {
@@ -317,7 +320,7 @@ function mapWorkflowFromRow(row: any): AutomationWorkflow {
 }
 
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
 export async function processAutomationQueue(): Promise<void> {
@@ -343,5 +346,3 @@ export async function getWorkflowStats(workflowId: string): Promise<{ entries: n
   return { entries, completed, conversionRate: entries > 0 ? (completed / entries) * 100 : 0 };
 }
 
-import { sendEmailMessage } from '../email/email-service';
-import { logger } from '../logging';

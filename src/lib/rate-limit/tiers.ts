@@ -64,6 +64,7 @@ export const TIER_LIMITS: Record<UserTier, TierLimits> = {
 
 // Redis key prefix
 const RATE_LIMIT_PREFIX = 'ratelimit:tier:';
+let tierRateLimitRedisWarned = false;
 
 export interface TierRateLimitResult {
   allowed: boolean;
@@ -150,7 +151,24 @@ export async function checkTierRateLimit(
     return result;
   } catch (error) {
     // Fail open if Redis error
-    logger.error('Rate limit check error:', error);
+    const message = error instanceof Error ? `${error.name} ${error.message}` : String(error);
+    const lowered = message.toLowerCase();
+    const redisIssue =
+      lowered.includes('redis') ||
+      lowered.includes('socket') ||
+      lowered.includes('econnrefused') ||
+      lowered.includes('closed') ||
+      lowered.includes('connect') ||
+      lowered.includes('not open');
+
+    if (redisIssue) {
+      if (!tierRateLimitRedisWarned) {
+        logger.warn('Tier rate limit Redis unavailable, allowing requests (logging once)');
+        tierRateLimitRedisWarned = true;
+      }
+    } else {
+      logger.error('Rate limit check error', error instanceof Error ? error : new Error(message));
+    }
     return {
       allowed: true,
       limit: config.requests,
@@ -165,11 +183,11 @@ export async function checkTierRateLimit(
  * Get tier from user context
  */
 export function getUserTier(context: APIContext): UserTier {
-  const user = context.locals.user;
-  
+  const user = context.locals.user as any;
+
   if (!user) return 'free';
-  if (user.isAdmin) return 'admin';
-  
+  if (user.isAdmin || user.role === 'admin') return 'admin';
+
   return (user.subscriptionTier as UserTier) || 'free';
 }
 
@@ -280,3 +298,4 @@ export async function getTierUsageStats(
   
   return { tier, limits: stats };
 }
+

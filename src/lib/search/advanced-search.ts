@@ -85,10 +85,10 @@ export function initSearch(): void {
  * Index a document
  */
 export async function indexDocument(document: Omit<SearchDocument, 'updatedAt'>): Promise<void> {
-  const fullDoc: SearchDocument = {
+  const fullDoc = {
     ...document,
     updatedAt: new Date().toISOString(),
-  };
+  } as SearchDocument;
 
   // Store document
   documentStore.set(document.id, fullDoc);
@@ -486,3 +486,4 @@ export function getSearchStats(): {
 
 // Initialize on module load
 initSearch();
+

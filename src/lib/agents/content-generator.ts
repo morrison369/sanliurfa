@@ -136,25 +136,25 @@ const CATEGORY_TEMPLATES: Record<string, {
 const BLOG_TEMPLATES = {
   guide: {
     title: (topic: string) => [
-      `Şanlıurfa'da ${topic}: 2025 Güncel Rehber`,
-      `${topic} Rehberi - Şanlıurfa'da Mutlaka Görülmesi Gerekenler`,
+      `Şanlıurfa’da ${topic}: 2025 Güncel Rehber`,
+      `${topic} Rehberi - Şanlıurfa’da Mutlaka Görülmesi Gerekenler`,
       `Şanlıurfa ${topic} - En İyi Yerler ve Tavsiyeler`
     ],
     sections: ['Giriş', 'Nerede Kalınır?', 'Nasıl Gidilir?', 'En İyi Zaman', 'Tavsiyeler', 'Sonuç']
   },
   list: {
     title: (count: number, topic: string) => [
-      `Şanlıurfa'da ${count} En İyi ${topic}`,
-      `${topic} Arayanlara: Şanlıurfa'daki En İyi ${count} Adres`,
-      `2025 Güncel: Şanlıurfa'da Mutlaka Uğranması Gereken ${count} ${topic}`
+      `Şanlıurfa’da ${count} En İyi ${topic}`,
+      `${topic} Arayanlara: Şanlıurfa’daki En İyi ${count} Adres`,
+      `2025 Güncel: Şanlıurfa’da Mutlaka Uğranması Gereken ${count} ${topic}`
     ],
     sections: ['Giriş', 'Sıralama Kriterleri', 'Liste', 'Tavsiyeler', 'Sonuç']
   },
   food: {
     title: (dish: string) => [
-      `Şanlıurfa'nın Meşhur ${dish}'si - Tarihçesi ve En İyi Adresler`,
+      `Şanlıurfa’nın Meşhur ${dish}'si - Tarihçesi ve En İyi Adresler`,
       `${dish} Nerede Yenir? Şanlıurfa Lezzet Rehberi`,
-      `Gerçek ${dish} Tadı İçin Şanlıurfa'ya Gidin!`
+      `Gerçek ${dish} Tadı İçin Şanlıurfa’ya Gidin!`
     ],
     sections: ['Tarihçe', 'Malzemeler', 'Yapılışı', 'Nerede Yenir?', 'Püf Noktaları']
   }
@@ -209,7 +209,7 @@ export function generateCategoryBlogPost(
   postType: 'guide' | 'list' | 'food' = 'guide'
 ): BlogPost {
   const templates = BLOG_TEMPLATES[postType];
-  const title = pick(templates.title(places.length, category));
+  const title = pick<string>((templates.title as any)(places.length, category));
   const slug = slugify(title);
   
   const now = new Date();
@@ -220,13 +220,13 @@ export function generateCategoryBlogPost(
   
   // Intro
   sections.push(`# ${title}\n`);
-  sections.push(`${category} kategorisinde Şanlıurfa'da görülmesi gereken en önemli yerleri sizin için derledik. Bu rehber, 2025 yılı güncel bilgileriyle hazırlanmıştır.\n`);
+  sections.push(`${category} kategorisinde Şanlıurfa’da görülmesi gereken en önemli yerleri sizin için derledik. Bu rehber, 2025 yılı güncel bilgileriyle hazırlanmıştır.\n`);
   
   // Places list
   sections.push(`## ${category} Listesi\n`);
   places.forEach((place, index) => {
     sections.push(`### ${index + 1}. ${place.name}\n`);
-    sections.push(`${place.description || `${place.name}, Şanlıurfa'nın önemli ${category} mekanlarından biridir.`}\n`);
+    sections.push(`${place.description || `${place.name}, Şanlıurfa’nın önemli ${category} mekanlarından biridir.`}\n`);
     if (place.features) {
       sections.push('**Öne Çıkanlar:**\n');
       place.features.forEach(f => sections.push(`- ${f}`));
@@ -242,7 +242,7 @@ export function generateCategoryBlogPost(
   
   // Closing
   sections.push(`## Sonuç\n`);
-  sections.push(`Şanlıurfa'da ${category} deneyimi yaşamak için bu rehberi kullanabilirsiniz. Daha fazla bilgi için sitemizi takip etmeye devam edin.\n`);
+  sections.push(`Şanlıurfa’da ${category} deneyimi yaşamak için bu rehberi kullanabilirsiniz. Daha fazla bilgi için sitemizi takip etmeye devam edin.\n`);
   
   const content = sections.join('\n');
   const readingTime = Math.ceil(content.length / 1000);
@@ -250,7 +250,7 @@ export function generateCategoryBlogPost(
   return {
     title,
     slug,
-    excerpt: `Şanlıurfa'da ${category} kategorisinde ${places.length} mekan hakkında detaylı bilgi ve tavsiyeler.`,
+    excerpt: `Şanlıurfa’da ${category} kategorisinde ${places.length} mekan hakkında detaylı bilgi ve tavsiyeler.`,
     content,
     category,
     tags: ['şanlıurfa', category, 'rehber', '2025'],
@@ -266,9 +266,9 @@ export function generateCategoryBlogPost(
  */
 export function generateMetaDescription(title: string, category: string): string {
   const templates = [
-    `${title} - Şanlıurfa'da ${category} kategorisinde en iyi adresler. 2025 güncel bilgiler ve tavsiyeler.`,
+    `${title} - Şanlıurfa’da ${category} kategorisinde en iyi adresler. 2025 güncel bilgiler ve tavsiyeler.`,
     `Şanlıurfa ${title} hakkında detaylı bilgi. ${category} mekanları, ulaşım ve ziyaret ipuçları.`,
-    `${title} rehberi. Şanlıurfa'da ${category} deneyimi yaşamak için bilmeniz gerekenler.`
+    `${title} rehberi. Şanlıurfa’da ${category} deneyimi yaşamak için bilmeniz gerekenler.`
   ];
   return pick(templates);
 }
@@ -374,3 +374,4 @@ export default {
   batchGeneratePlaceContent,
   generateWeeklyContentPlan
 };
+

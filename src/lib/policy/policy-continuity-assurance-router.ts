@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Phase 342: Policy Continuity Assurance Router
  */
@@ -36,7 +35,7 @@ class ContinuityAssuranceRouterV2 {
 
 class ContinuityAssuranceReporterV2 {
   report(signalId: string, route: string): string {
-    return buildGovernanceReport('Continuity assurance', signalId, 'route', route, 'Continuity assurance routed');
+    return buildGovernanceReport('Continuity assurance', signalId, 'route', route as any, 'Continuity assurance routed');
   }
 }
 
@@ -51,3 +50,5 @@ export {
   ContinuityAssuranceRouterV2,
   ContinuityAssuranceReporterV2
 };
+
+

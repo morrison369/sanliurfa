@@ -11,20 +11,20 @@ describe('Auth Integration Tests', () => {
       expect(token).toContain('jwt-token-test-123');
     });
 
-    it('should verify token returns null for now (stub)', () => {
-      const result = verifyToken('any-token');
+    it('should verify token returns null for now (stub)', async () => {
+      const result = await verifyToken('any-token');
       expect(result).toBeNull();
     });
   });
 
   describe('Password Management', () => {
-    it('should hash password (stub)', () => {
-      const hash = hashPassword('password123');
+    it('should hash password (stub)', async () => {
+      const hash = await hashPassword('password123');
       expect(typeof hash).toBe('string');
     });
 
-    it('should compare password (stub)', () => {
-      const result = comparePassword('password', 'hash');
+    it('should compare password (stub)', async () => {
+      const result = await comparePassword('password', 'hash');
       expect(result).toBe(false);
     });
   });

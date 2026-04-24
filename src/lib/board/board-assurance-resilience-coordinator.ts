@@ -2,7 +2,6 @@
  * Phase 345: Board Assurance Resilience Coordinator
  */
 
-// @ts-nocheck
 import { SignalBook, computeBalancedScore, routeByThresholds, buildGovernanceReport } from './governance-kit';
 
 export interface BoardResilienceSignal {
@@ -36,7 +35,7 @@ class BoardResilienceRoute {
 
 class BoardResilienceReporter {
   report(signalId: string, route: string): string {
-    return buildGovernanceReport('Board resilience', signalId, route, 'Board resilience coordinated');
+    return buildGovernanceReport('Board resilience', signalId, route, 0, 'Board resilience coordinated');
   }
 }
 
@@ -51,4 +50,6 @@ export {
   BoardResilienceRoute,
   BoardResilienceReporter
 };
+
+
 

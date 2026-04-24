@@ -427,7 +427,7 @@ export function setupGlobalErrorHandler(): void {
 
   // Promise redlerini yakala
   const originalOnUnhandledRejection = window.onunhandledrejection;
-  window.onunhandledrejection = function (event: PromiseRejectionEvent) {
+  (window as any).onunhandledrejection = function (event: PromiseRejectionEvent) {
     errorStats.totalErrors++;
     errorStats.lastErrorTime = new Date();
 
@@ -443,7 +443,7 @@ export function setupGlobalErrorHandler(): void {
 
     // Orijinal handler'ı da çağır
     if (originalOnUnhandledRejection) {
-      originalOnUnhandledRejection(event);
+      (originalOnUnhandledRejection as Function)(event);
     }
   };
 }
@@ -453,3 +453,4 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
   initErrorTracking();
   setupGlobalErrorHandler();
 }
+

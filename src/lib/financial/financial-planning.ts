@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Phase 64: Financial Forecasting & Planning
  * Budget planning, financial forecasting, cost optimization, scenario analysis
@@ -446,8 +445,6 @@ export class CostOptimizer {
 const budgetPlanner = new BudgetPlanner();
 const financialForecaster = new FinancialForecaster();
 const scenarioPlanner = new ScenarioPlanner();
-const costOptimization = new CostOptimization();
+const costOptimization = new CostOptimizer();
 
-export type { budgetPlanner, financialForecaster, scenarioPlanner, costOptimization };
-
-
+export { budgetPlanner, financialForecaster, scenarioPlanner, costOptimization };

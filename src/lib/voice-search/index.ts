@@ -32,8 +32,8 @@ export interface SearchFilters {
 // Web Speech API types
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    SpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: new () => SpeechRecognition;
   }
 }
 
@@ -116,7 +116,7 @@ export function startVoiceRecording(
   recognition.onresult = (event: SpeechRecognitionEvent) => {
     let interimTranscript = '';
 
-    for (let i = event.resultIndex; i < event.results.length; i++) {
+    for (let i = (event as any).resultIndex ?? 0; i < event.results.length; i++) {
       const transcript = event.results[i][0].transcript;
       const confidence = event.results[i][0].confidence;
 
@@ -494,3 +494,4 @@ export function executeVoiceCommand(
   // Default to search
   return { action: 'search', params: { query: normalized } };
 }
+

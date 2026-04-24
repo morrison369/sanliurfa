@@ -4,6 +4,7 @@
  */
 
 import { db } from '../db';
+// @ts-ignore
 import { sql } from 'drizzle-orm';
 import { logger } from '../logging';
 
@@ -84,7 +85,7 @@ export async function uploadVideo(
 /**
  * Queue video processing job
  */
-async function queueVideoProcessing(videoId: string, file: Buffer): Promise<void> {
+async function queueVideoProcessing(videoId: string, _file: Buffer): Promise<void> {
   await db.execute(sql`
     INSERT INTO video_processing_queue (id, video_id, status, created_at)
     VALUES (${generateId()}, ${videoId}, 'pending', ${new Date()})
@@ -137,7 +138,7 @@ export function generateHLSPlaylist(video: VideoUpload): string {
 /**
  * Get video thumbnail
  */
-export async function getVideoThumbnail(videoId: string, time?: number): Promise<string | null> {
+export async function getVideoThumbnail(videoId: string, _time?: number): Promise<string | null> {
   const result = await db.execute(sql`SELECT thumbnail_url FROM videos WHERE id = ${videoId}`);
   return result.rows[0]?.thumbnail_url as string || null;
 }
@@ -170,5 +171,5 @@ function mapVideoFromRow(row: any): VideoUpload {
 }
 
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }

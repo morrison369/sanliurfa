@@ -133,7 +133,7 @@ describe('SEO Utils', () => {
       const schema = generateLocalBusinessSchema();
       
       expect(schema['@type']).toBe('TravelAgency');
-      expect(schema.name).toBe('Şanlıurfa.com');
+      expect(schema.name).toBe('Sanliurfa.com');
       expect(schema.geo).toBeDefined();
     });
   });

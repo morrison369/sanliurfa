@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Webhook System
  * Event-driven webhooks for external integrations
@@ -128,8 +127,8 @@ async function deliverWebhook(event: any): Promise<void> {
         'X-Webhook-Signature': generateSignature(event.data, event.secret)
       },
       body: event.data,
-      timeout: 5000
-    });
+      signal: AbortSignal.timeout(5000),
+    } as RequestInit);
 
     if (response.ok) {
       await query(

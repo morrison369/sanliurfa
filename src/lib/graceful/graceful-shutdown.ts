@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Graceful Shutdown Handler
  * Ensures clean shutdown on SIGTERM/SIGINT signals
@@ -141,7 +140,7 @@ export function registerDefaultCleanupHandlers(): void {
   // Message brokers
   gracefulShutdown.register('Message Brokers', async () => {
     try {
-      const { messageBroker } = await import('./index');
+      const { messageBroker } = await import('./index') as any;
       if (messageBroker) {
         await messageBroker.disconnect();
         logger.info('   Message brokers disconnected');
@@ -154,7 +153,7 @@ export function registerDefaultCleanupHandlers(): void {
   // WebSocket connections
   gracefulShutdown.register('WebSocket Server', async () => {
     try {
-      const { websocketManager } = await import('./index');
+      const { websocketManager } = await import('./index') as any;
       if (websocketManager) {
         websocketManager.closeAll();
         logger.info('   WebSocket connections closed');

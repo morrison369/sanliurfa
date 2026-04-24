@@ -1,9 +1,5 @@
 import { vi } from 'vitest';
 
-// Redis mock for tests
-const mockRedisData = new Map<string, any>();
-const mockRedisLists = new Map<string, string[]>();
-
 vi.mock('../cache', async () => {
   return {
     getRedisClient: vi.fn().mockResolvedValue({

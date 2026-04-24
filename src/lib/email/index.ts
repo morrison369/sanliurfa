@@ -8,15 +8,22 @@ import { getCache, setCache } from '../cache';
 import { query } from '../postgres';
 import { logger } from '../logging';
 
-interface EmailData {
+export interface EmailData {
   to: string;
+  from?: string;
   subject: string;
   html: string;
   text?: string;
+  replyTo?: string;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer | string;
+    contentType?: string;
+  }>;
 }
 
 const FROM_ADDRESS = process.env.SMTP_FROM || 'noreply@sanliurfa.com';
-const FROM_NAME = process.env.SMTP_FROM_NAME || 'Şanlıurfa.com';
+const FROM_NAME = process.env.SMTP_FROM_NAME || 'Sanliurfa.com';
 
 function createTransport() {
   if (
@@ -58,9 +65,10 @@ export async function sendEmail(data: EmailData): Promise<{ success: boolean; er
         subject: data.subject,
         html: data.html,
         text: data.text,
+        attachments: data.attachments,
       });
     } else {
-      logger.info('📧 [DEV] Email to:', data.to, '| Subject:', data.subject);
+      logger.info(`📧 [DEV] Email to: ${data.to} | Subject: ${data.subject}`);
     }
 
     await setCache(rateKey, sentToday + 1, 86400);
@@ -76,11 +84,11 @@ export async function sendEmail(data: EmailData): Promise<{ success: boolean; er
  */
 export async function sendWelcomeEmail(to: string, name: string): Promise<void> {
   const html = welcomeTemplate(name);
-  const text = `Hoşgeldiniz ${name}! Şanlıurfa.com'a üye olduğunuz için teşekkür ederiz.`;
+  const text = `Hoşgeldiniz ${name}! Sanliurfa.com'a üye olduğunuz için teşekkür ederiz.`;
   
   await sendEmail({
     to,
-    subject: 'Hoşgeldiniz! Şanlıurfa.com',
+    subject: 'Hoşgeldiniz! Sanliurfa.com',
     html,
     text,
   });
@@ -99,7 +107,7 @@ export async function sendPasswordResetEmail(
   
   await sendEmail({
     to,
-    subject: 'Şifre Sıfırlama - Şanlıurfa.com',
+    subject: 'Şifre Sıfırlama - Sanliurfa.com',
     html,
     text: `Merhaba ${name}, şifrenizi sıfırlamak için bu linke tıklayın: ${resetUrl}`,
   });
@@ -118,7 +126,7 @@ export async function sendVerificationEmail(
   
   await sendEmail({
     to,
-    subject: 'E-posta Doğrulama - Şanlıurfa.com',
+    subject: 'E-posta Doğrulama - Sanliurfa.com',
     html,
     text: `Merhaba ${name}, e-posta adresinizi doğrulamak için bu linke tıklayın: ${verifyUrl}`,
   });
@@ -163,18 +171,18 @@ function welcomeTemplate(name: string): string {
 <body>
   <div class="container">
     <div class="header">
-      <h1>Şanlıurfa.com'a Hoşgeldiniz!</h1>
+      <h1>Sanliurfa.com'a Hoşgeldiniz!</h1>
     </div>
     <div class="content">
       <p>Merhaba <strong>${escapeHtml(name)}</strong>,</p>
-      <p>Şanlıurfa.com'a üye olduğunuz için teşekkür ederiz. Şimdi şehrimizin tarihi yerlerini, lezzetli yemeklerini ve daha fazlasını keşfedebilirsiniz.</p>
+      <p>Sanliurfa.com'a üye olduğunuz için teşekkür ederiz. Şimdi şehrimizin tarihi yerlerini, lezzetli yemeklerini ve daha fazlasını keşfedebilirsiniz.</p>
       <p style="text-align: center; margin: 30px 0;">
         <a href="${process.env.PUBLIC_APP_URL}/kesfet" class="button">Keşfetmeye Başla</a>
       </p>
       <p>Yardıma ihtiyacınız olursa bizimle iletişime geçmekten çekinmeyin.</p>
     </div>
     <div class="footer">
-      <p>© ${new Date().getFullYear()} Şanlıurfa.com - Tüm hakları saklıdır.</p>
+      <p>© ${new Date().getFullYear()} Sanliurfa.com - Tüm hakları saklıdır.</p>
     </div>
   </div>
 </body>
@@ -542,7 +550,7 @@ export async function requestEmailVerification(userId: string, email: string, na
   const html = getVerificationEmailHTML(name, verifyUrl);
   await queueEmail({
     to: email,
-    subject: 'E-posta Doğrulama - Şanlıurfa.com',
+    subject: 'E-posta Doğrulama - Sanliurfa.com',
     html,
     text: `Merhaba ${name}, e-posta adresinizi doğrulamak için bu linke tıklayın: ${verifyUrl}`,
   });
@@ -597,3 +605,4 @@ export async function verifyEmail(token: string): Promise<boolean> {
 export async function verifyEmailWithToken(token: string): Promise<boolean> {
   return verifyEmail(token);
 }
+

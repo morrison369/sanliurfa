@@ -2,6 +2,12 @@
  * Email Marketing Module
  * Task 121: Email Marketing Automation
  */
+// @ts-ignore
+import { sql } from 'drizzle-orm';
+// @ts-ignore
+import { db } from '../db';
+import { getPublicAppUrl } from '../public-app-url';
+const PUBLIC_APP_URL = getPublicAppUrl();
 
 // Campaign exports
 export {
@@ -58,14 +64,14 @@ export {
 export const EMAIL_TEMPLATES = {
   welcome: {
     name: 'Hoş Geldiniz',
-    subject: 'Şanlıurfa.com\'a Hoş Geldiniz! 🎉',
+    subject: 'Sanliurfa.com\'a Hoş Geldiniz! 🎉',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #e63946;">Hoş Geldiniz, {{name}}! 👋</h1>
-        <p>Şanlıurfa.com ailesine katıldığınız için teşekkür ederiz.</p>
+        <p>Sanliurfa.com ailesine katıldığınız için teşekkür ederiz.</p>
         <p>Şanlıurfa\'nın en iyi restoranlarını, mekanlarını ve etkinliklerini keşfetmeye başlayın.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="https://sanliurfa.com/mekanlar" style="background: #e63946; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+          <a href="${PUBLIC_APP_URL}/mekanlar" style="background: #e63946; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
             Mekanları Keşfet
           </a>
         </div>
@@ -85,7 +91,7 @@ export const EMAIL_TEMPLATES = {
         <p>Etkinlik biletlerinizi tamamlamayı unuttunuz gibi görünüyor.</p>
         <p>Rezervasyonunuzu şimdi tamamlayın ve bu harika etkinliği kaçırmayın!</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="https://sanliurfa.com/etkinlikler" style="background: #e63946; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+          <a href="${PUBLIC_APP_URL}/etkinlikler" style="background: #e63946; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
             Biletlerimi Tamamla
           </a>
         </div>
@@ -111,22 +117,22 @@ export const EMAIL_TEMPLATES = {
   
   monthlyNewsletter: {
     name: 'Aylık Bülten',
-    subject: 'Şanlıurfa.com Aylık Bülten - {{month}}',
+    subject: 'Sanliurfa.com Aylık Bülten - {{month}}',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <header style="background: #e63946; color: white; padding: 20px; text-align: center;">
-          <h1>Şanlıurfa.com Bülten</h1>
+          <h1>Sanliurfa.com Bülten</h1>
           <p>{{month}} Ayının Öne Çıkanları</p>
         </header>
         <div style="padding: 20px;">
           <h2>🍽️ Bu Ayın En İyi Restoranları</h2>
-          <p>Şanlıurfa'nın en çok tercih edilen lezzet duraklarını keşfedin.</p>
+          <p>Şanlıurfa’nın en çok tercih edilen lezzet duraklarını keşfedin.</p>
           
           <h2>🎭 Yaklaşan Etkinlikler</h2>
           <p>Bu ay kaçırmamanız gereken etkinlikler...</p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://sanliurfa.com" style="background: #e63946; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            <a href="${PUBLIC_APP_URL}" style="background: #e63946; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
               Daha Fazla Keşfet
             </a>
           </div>
@@ -147,7 +153,7 @@ export const EMAIL_TEMPLATES = {
         <p>Yakın zamanda ziyaret ettiğiniz mekan hakkında düşüncelerinizi öğrenmek istiyoruz.</p>
         <p>Deneyiminizi paylaşarak diğer kullanıcılara yardımcı olabilirsiniz.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="https://sanliurfa.com/degerlendir?place={{placeId}}" style="background: #e63946; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+          <a href="${PUBLIC_APP_URL}/degerlendir?place={{placeId}}" style="background: #e63946; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
             Değerlendirme Yaz
           </a>
         </div>
@@ -166,7 +172,7 @@ export const PREBUILT_AUTOMATIONS = {
       {
         type: 'email' as const,
         config: {
-          subject: 'Şanlıurfa.com\'a Hoş Geldiniz!',
+          subject: 'Sanliurfa.com\'a Hoş Geldiniz!',
           htmlContent: EMAIL_TEMPLATES.welcome.html,
         },
       },
@@ -334,4 +340,3 @@ export async function cleanEmailList(): Promise<{
   return stats;
 }
 
-import { db } from '../db';

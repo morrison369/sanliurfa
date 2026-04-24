@@ -4,6 +4,7 @@
  */
 
 import { db } from '../db';
+// @ts-ignore
 import { sql } from 'drizzle-orm';
 
 export interface SearchSuggestion {
@@ -144,7 +145,7 @@ export async function smartSearch(query: string, options: {
     type: 'place',
     title: row.name,
     description: row.description?.substring(0, 100),
-    image: row.main_image,
+    image: row.thumbnail_url || (Array.isArray(row.images) ? row.images[0] : null) || null,
     score: parseFloat(row.search_rank),
     highlights: extractHighlights(row.description, query),
   }));
@@ -180,5 +181,5 @@ export async function logSearch(query: string, userId?: string, results?: number
 }
 
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }

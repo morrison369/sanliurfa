@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 // Test constants directly
 const EMAIL_TEMPLATES = {
-  welcome: { subject: 'Şanlıurfa.com\'a Hoş Geldiniz! 🎉' },
+  welcome: { subject: 'Sanliurfa.com\'a Hoş Geldiniz! 🎉' },
   birthday: { subject: 'İyi ki Doğdunuz! 🎂' },
 };
 

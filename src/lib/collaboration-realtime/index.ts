@@ -4,6 +4,7 @@
  */
 
 import { db } from '../db';
+// @ts-ignore
 import { sql } from 'drizzle-orm';
 import { logger } from '../logging';
 
@@ -185,7 +186,7 @@ async function saveDocument(doc: LiveDocument): Promise<void> {
   `);
 }
 
-function transformOperation(op: Operation, existingOps: Operation[]): Operation {
+function transformOperation(op: Operation, _existingOps: Operation[]): Operation {
   // Simplified OT - in production use proper OT or CRDT
   return op;
 }
@@ -211,7 +212,7 @@ function applyToDocument(content: any, op: Operation): void {
   }
 }
 
-function broadcastOperation(documentId: string, op: Operation): void {
+function broadcastOperation(documentId: string, _op: Operation): void {
   // In production: WebSocket broadcast
   logger.info(`[Collaboration] Broadcasting operation on ${documentId}`);
 }

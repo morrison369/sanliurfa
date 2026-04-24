@@ -3,7 +3,7 @@
  * High availability Redis configuration
  */
 
-import Redis from 'ioredis';
+import Redis, { Cluster, type ClusterOptions } from 'ioredis';
 import { logger } from '../logging';
 
 export interface RedisNode {
@@ -13,44 +13,45 @@ export interface RedisNode {
 }
 
 export class RedisCluster {
-  private cluster: Redis.Cluster | null = null;
+  private cluster: Cluster | null = null;
   private nodes: RedisNode[] = [];
 
   constructor(nodes: RedisNode[]) {
     this.nodes = nodes;
   }
 
-  connect(): Redis.Cluster {
+  connect(): Cluster {
     const startupNodes = this.nodes.map(n => ({ host: n.host, port: n.port }));
 
-    this.cluster = new Redis.Cluster(startupNodes, {
+    const opts: ClusterOptions = {
       scaleReads: 'slave',
-      maxRetriesPerRequest: 3,
       retryDelayOnFailover: 100,
       retryDelayOnClusterDown: 300,
       enableReadyCheck: true,
-    });
+    };
+
+    this.cluster = new Cluster(startupNodes, opts);
 
     this.cluster.on('connect', () => logger.info('[RedisCluster] Connected'));
-    this.cluster.on('error', (err) => logger.error('[RedisCluster] Error:', err));
-    this.cluster.on('node error', (err, node) => logger.error(`[RedisCluster] Node ${node.options.host} error:`, err));
+    this.cluster.on('error', (err: Error) => logger.error('[RedisCluster] Error:', err));
+    this.cluster.on('node error', (err: Error, node: any) => logger.error(`[RedisCluster] Node ${node.options?.host} error:`, err));
 
     return this.cluster;
   }
 
-  getClient(): Redis.Cluster {
+  getClient(): Cluster {
     if (!this.cluster) return this.connect();
     return this.cluster;
   }
 
   async getInfo(): Promise<Record<string, any>> {
     if (!this.cluster) return {};
-    return this.cluster.cluster('INFO');
+    return (this.cluster as any).cluster('INFO');
   }
 
   async getNodes(): Promise<string[]> {
     if (!this.cluster) return [];
-    return this.cluster.nodes('all').map(n => `${n.options.host}:${n.options.port}`);
+    return this.cluster.nodes('all').map((n: any) => `${n.options?.host}:${n.options?.port}`);
   }
 
   async disconnect(): Promise<void> {
@@ -77,7 +78,7 @@ export class RedisSentinel {
       sentinels: this.sentinels,
       name: this.masterName,
       retryDelayOnFailover: 100,
-    });
+    } as any);
 
     return this.redis;
   }

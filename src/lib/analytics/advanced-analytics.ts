@@ -508,9 +508,10 @@ export function clearOldData(daysToKeep: number = 30): number {
   cutoff.setDate(cutoff.getDate() - daysToKeep);
 
   const initialLength = eventStore.length;
-  const toRemove = eventStore.filterIndex(
-    e => new Date(e.timestamp) < cutoff
-  );
+  const toRemove: number[] = [];
+  eventStore.forEach((e, i) => {
+    if (new Date(e.timestamp) < cutoff) toRemove.push(i);
+  });
 
   for (let i = toRemove.length - 1; i >= 0; i--) {
     eventStore.splice(toRemove[i], 1);
@@ -521,3 +522,4 @@ export function clearOldData(daysToKeep: number = 30): number {
 
 // Initialize
 logger.info('[Analytics] Advanced analytics initialized');
+

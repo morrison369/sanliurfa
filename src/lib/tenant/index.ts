@@ -62,7 +62,7 @@ export interface TenantMember {
 let tenantContext: any;
 try {
   const { AsyncLocalStorage } = require('async_hooks');
-  tenantContext = new AsyncLocalStorage<string>();
+  tenantContext = new AsyncLocalStorage();
 } catch {
   // Fallback for older Node versions
   tenantContext = {
@@ -502,3 +502,4 @@ export function getDefaultLimits(plan: Tenant['plan']): TenantLimits {
   
   return defaults[plan];
 }
+

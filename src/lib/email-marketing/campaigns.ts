@@ -3,14 +3,17 @@
  * Task 121: Email Marketing Automation
  */
 
-import { sendEmailMessage, type EmailData } from '../email/email-service';
+import { sendEmail, type EmailData } from '../email/index';
 import { db } from '../db';
+// @ts-ignore
 import { sql } from 'drizzle-orm';
 import { logger } from '../logging';
+import { getPublicAppUrl } from '../public-app-url';
 
 // Campaign types
 export type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
 export type CampaignType = 'newsletter' | 'promotional' | 'transactional' | 'automation' | 'abandoned_cart';
+const PUBLIC_APP_URL = getPublicAppUrl();
 
 // Campaign interface
 export interface EmailCampaign {
@@ -151,7 +154,7 @@ export async function createCampaign(data: CreateCampaignData): Promise<EmailCam
     type: data.type,
     status: 'draft',
     segmentId: data.segmentId,
-    fromName: data.fromName || 'Şanlıurfa.com',
+    fromName: data.fromName || 'Sanliurfa.com',
     fromEmail: data.fromEmail || 'noreply@sanliurfa.com',
     replyTo: data.replyTo,
     scheduledAt: data.scheduledAt,
@@ -490,7 +493,7 @@ async function processCampaignQueue(campaignId: string): Promise<void> {
             })
           : undefined;
 
-        await sendEmailMessage({
+        await sendEmail({
           to: recipient.email as string,
           subject: campaign.subject,
           html: htmlContent,
@@ -544,7 +547,7 @@ function personalizeContent(template: string, data: {
     .replace(/\{\{name\}\}/g, data.name || 'Değerli Kullanıcı')
     .replace(/\{\{email\}\}/g, data.email)
     .replace(/\{\{user_id\}\}/g, data.userId)
-    .replace(/\{\{unsubscribe_url\}\}/g, `https://sanliurfa.com/abonelik-iptal?user=${data.userId}`);
+    .replace(/\{\{unsubscribe_url\}\}/g, `${PUBLIC_APP_URL}/abonelik-iptal?user=${data.userId}`);
 }
 
 /**
@@ -704,7 +707,7 @@ function mapCampaignFromRow(row: any): EmailCampaign {
  * Generate unique ID
  */
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
 /**
@@ -810,3 +813,4 @@ export async function getDashboardStats(): Promise<{
     recentCampaigns: recentResult.rows.map(mapCampaignFromRow),
   };
 }
+

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Request ID Middleware
  * Distributed tracing and request correlation
@@ -21,7 +20,7 @@ export interface RequestContext {
 let asyncLocalStorage: any;
 try {
   const { AsyncLocalStorage } = require('async_hooks');
-  asyncLocalStorage = new AsyncLocalStorage<RequestContext>();
+  asyncLocalStorage = new AsyncLocalStorage();
 } catch {
   // Fallback for older Node versions
   asyncLocalStorage = null;

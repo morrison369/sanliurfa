@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Phase 59: Invoicing & Billing System
  * Invoice generation, billing cycles, payment tracking, reconciliation
@@ -60,7 +59,7 @@ export class InvoiceGenerator {
     const invoiceNumber = `INV-${this.invoiceCounter++}`;
     const fullInvoice: Invoice = {
       ...invoice,
-      id: 'inv-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+      id: 'inv-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11),
       number: invoiceNumber,
       createdAt: Date.now()
     };
@@ -114,13 +113,13 @@ export class InvoiceGenerator {
 
 // ==================== BILLING CYCLE ====================
 
-export class BillingCycle {
+export class BillingCycleManager {
   private cycles = new Map<string, BillingCycle>();
 
   createCycle(cycle: Omit<BillingCycle, 'id'>): BillingCycle {
     const fullCycle: BillingCycle = {
       ...cycle,
-      id: 'cycle-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9)
+      id: 'cycle-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11)
     };
 
     this.cycles.set(fullCycle.id, fullCycle);
@@ -206,6 +205,6 @@ export class PaymentReconciliation {
 // ==================== EXPORTS ====================
 
 export const invoiceGenerator = new InvoiceGenerator();
-export const billingCycle = new BillingCycle();
+export const billingCycle = new BillingCycleManager();
 export const paymentReconciliation = new PaymentReconciliation();
 

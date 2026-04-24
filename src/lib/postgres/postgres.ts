@@ -1,4 +1,3 @@
-// @ts-nocheck
 import pg from 'pg';
 const { Pool } = pg;
 import { metricsCollector, performanceThresholds } from '../metrics';
@@ -14,7 +13,6 @@ if (!DATABASE_URL) {
 
 // ==================== CONNECTION POOL CONFIGURATION ====================
 
-// @ts-nocheck
 /**
  * Adaptive pool configuration based on environment
  * - Development: smaller pool (2-5 connections)
@@ -88,7 +86,7 @@ export function updatePoolStatus(): void {
   // Phase 5: Log replica pool status if available
   if (replicaStats) {
     metricsCollector.recordSlowOperation(
-      'pool',
+      'query',
       `Replica pool utilization: ${replicaStats.utilization}%`,
       0,
       replicaStats
@@ -329,7 +327,8 @@ const ALLOWED_TABLES = new Set([
   // Phase 28D: Real-time Analytics
   'request_metrics',
   'query_metrics',
-  'performance_metrics'
+  'performance_metrics',
+  'client_performance_metrics'
 ]);
 
 /**
@@ -420,8 +419,7 @@ export async function remove(table: string, id: string) {
 }
 
 // Compatibility alias for modules importing `delete` from this file.
-export type { remove as delete };
-
+export { remove as delete };
 // ==================== BACKWARD COMPATIBILITY ====================
 
 /**

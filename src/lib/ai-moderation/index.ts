@@ -4,6 +4,7 @@
  */
 
 import { db } from '../db';
+// @ts-ignore
 import { sql } from 'drizzle-orm';
 
 export interface ModerationResult {
@@ -78,7 +79,7 @@ export async function moderateContent(
   return result;
 }
 
-export async function moderateImage(imageUrl: string): Promise<{
+export async function moderateImage(_imageUrl: string): Promise<{
   safe: boolean;
   adult: number;
   violence: number;
@@ -89,5 +90,5 @@ export async function moderateImage(imageUrl: string): Promise<{
 }
 
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
