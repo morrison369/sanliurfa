@@ -39,7 +39,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     let idx = 1;
 
     if (search) {
-      where += ` AND (u.name ILIKE $${idx} OR u.email ILIKE $${idx})`;
+      where += ` AND (u.full_name ILIKE $${idx} OR u.email ILIKE $${idx})`;
       params.push(`%${search}%`);
       idx++;
     }
@@ -62,7 +62,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const dataResult = await query(
       `SELECT
-         u.id, u.name, u.email, u.role, u.status, u.created_at,
+         u.id, u.full_name AS name, u.email, u.role, u.status, u.created_at,
+         u.is_banned, u.ban_reason, u.ban_expires_at, u.is_suspended, u.suspension_reason,
          COUNT(DISTINCT r.id) AS review_count,
          COUNT(DISTINCT p.id) AS place_count
        FROM users u
