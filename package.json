@@ -359,7 +359,7 @@
     "@astrojs/partytown": "^2.1.7",
     "@astrojs/react": "^5.0.4",
     "@astrojs/rss": "^4.0.18",
-    "@sentry/astro": "^10.49.0",
+    "@sentry/astro": "^10.50.0",
     "@supabase/supabase-js": "^2.49.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/pg": "^8.20.0",
