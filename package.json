@@ -376,7 +376,7 @@
     "redis": "^4.7.0",
     "schema-dts": "^2.0.0",
     "sharp": "^0.34.5",
-    "stripe": "^22.0.2",
+    "stripe": "^22.1.0",
     "swagger-ui-dist": "^5.32.1",
     "web-push": "^3.6.7",
     "write-excel-file": "^4.0.2"
