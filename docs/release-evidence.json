@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-28T22:55:25.132Z",
+  "generatedAt": "2026-04-28T22:59:55.272Z",
   "status": "ready",
   "maxAgeHours": 72,
   "checks": [
@@ -7,7 +7,7 @@
       "id": "release-status",
       "artifact": "docs/release-status.json",
       "reportedStatus": "ready",
-      "generatedAt": "2026-04-28T22:55:13.664Z",
+      "generatedAt": "2026-04-28T22:59:49.429Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready"
@@ -16,7 +16,7 @@
       "id": "local-gate-summary",
       "artifact": "docs/local-gate-summary.json",
       "reportedStatus": "ready",
-      "generatedAt": "2026-04-28T22:55:12.634Z",
+      "generatedAt": "2026-04-28T22:59:48.515Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready"
@@ -25,7 +25,7 @@
       "id": "release-readiness",
       "artifact": "docs/release-readiness.json",
       "reportedStatus": "ready",
-      "generatedAt": "2026-04-28T22:55:11.698Z",
+      "generatedAt": "2026-04-28T22:59:47.624Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready"
@@ -34,8 +34,8 @@
       "id": "site-doctor",
       "artifact": "docs/site-doctor-report.json",
       "reportedStatus": "ready",
-      "generatedAt": "2026-04-28T22:54:02.815Z",
-      "ageHours": 0.02,
+      "generatedAt": "2026-04-28T22:58:16.581Z",
+      "ageHours": 0.03,
       "status": "ok",
       "expectation": "status=ready"
     },
@@ -43,7 +43,7 @@
       "id": "openapi-p0",
       "artifact": "docs/openapi-p0-closure-report.json",
       "reportedStatus": "metric-only",
-      "generatedAt": "2026-04-28T22:53:42.187Z",
+      "generatedAt": "2026-04-28T22:57:55.541Z",
       "ageHours": 0.03,
       "status": "ok",
       "expectation": "totalMissing=0"
@@ -52,7 +52,7 @@
       "id": "openapi-tiers",
       "artifact": "docs/openapi-route-tiers.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T22:53:44.146Z",
+      "generatedAt": "2026-04-28T22:57:57.456Z",
       "ageHours": 0.03,
       "status": "ok",
       "expectation": "status=ok"
@@ -61,7 +61,7 @@
       "id": "problem-json",
       "artifact": "docs/problem-json-report.json",
       "reportedStatus": "metric-only",
-      "generatedAt": "2026-04-28T22:55:09.812Z",
+      "generatedAt": "2026-04-28T22:59:45.514Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "offenders=0"
@@ -70,8 +70,8 @@
       "id": "auth-log-standard",
       "artifact": "docs/auth-log-standard-report.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T22:52:23.414Z",
-      "ageHours": 0.05,
+      "generatedAt": "2026-04-28T22:56:33.943Z",
+      "ageHours": 0.06,
       "status": "ok",
       "expectation": "status=ok"
     },
@@ -79,8 +79,8 @@
       "id": "env-doctor",
       "artifact": "docs/env-doctor-report.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T22:52:20.759Z",
-      "ageHours": 0.05,
+      "generatedAt": "2026-04-28T22:56:31.353Z",
+      "ageHours": 0.06,
       "status": "ok",
       "expectation": "status=ok"
     },
@@ -88,7 +88,7 @@
       "id": "migration-debt",
       "artifact": "docs/migration-debt-report.json",
       "reportedStatus": "clear",
-      "generatedAt": "2026-04-28T22:55:12.103Z",
+      "generatedAt": "2026-04-28T22:59:48.061Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=clear"
@@ -97,8 +97,8 @@
       "id": "critical-pages-quality",
       "artifact": "docs/critical-pages-quality-report.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T22:54:02.402Z",
-      "ageHours": 0.02,
+      "generatedAt": "2026-04-28T22:58:16.179Z",
+      "ageHours": 0.03,
       "status": "ok",
       "expectation": "status=ok"
     },
@@ -106,8 +106,8 @@
       "id": "image-moderation",
       "artifact": "docs/image-moderation-report.json",
       "reportedStatus": "metric-only",
-      "generatedAt": "2026-04-28T22:54:01.106Z",
-      "ageHours": 0.02,
+      "generatedAt": "2026-04-28T22:58:14.964Z",
+      "ageHours": 0.03,
       "status": "ok",
       "expectation": "issueCount=0"
     },
@@ -115,7 +115,7 @@
       "id": "prod-evidence",
       "artifact": "docs/prod-evidence.json",
       "reportedStatus": "ready_without_live_probe",
-      "generatedAt": "2026-04-28T22:55:23.714Z",
+      "generatedAt": "2026-04-28T22:59:54.370Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready|ready_without_live_probe"
@@ -124,7 +124,7 @@
       "id": "backup-restore-evidence",
       "artifact": "docs/backup-restore-evidence.json",
       "reportedStatus": "ready",
-      "generatedAt": "2026-04-28T22:55:22.727Z",
+      "generatedAt": "2026-04-28T22:59:53.906Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready|advisory"
@@ -133,7 +133,7 @@
       "id": "runtime-prod-doctor",
       "artifact": "docs/runtime-prod-doctor.json",
       "reportedStatus": "ready_with_advisories",
-      "generatedAt": "2026-04-28T22:55:21.208Z",
+      "generatedAt": "2026-04-28T22:59:53.443Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready|ready_with_advisories"
@@ -142,7 +142,7 @@
       "id": "security-headers",
       "artifact": "docs/security-headers-snapshot.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T22:55:10.871Z",
+      "generatedAt": "2026-04-28T22:59:46.716Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ok"
@@ -151,8 +151,8 @@
       "id": "admin-turkish-ui",
       "artifact": "docs/admin-turkish-ui-report.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T22:52:23.019Z",
-      "ageHours": 0.05,
+      "generatedAt": "2026-04-28T22:56:33.553Z",
+      "ageHours": 0.06,
       "status": "ok",
       "expectation": "status=ok"
     },
@@ -160,7 +160,7 @@
       "id": "openapi-contract-gaps",
       "artifact": "docs/openapi-contract-gap-report.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T22:55:24.289Z",
+      "generatedAt": "2026-04-28T22:59:54.813Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ok"
