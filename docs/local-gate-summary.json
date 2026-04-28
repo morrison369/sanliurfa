@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-28T23:14:49.318Z",
+  "generatedAt": "2026-04-28T23:19:17.402Z",
   "status": "ready",
   "checks": [
     {
@@ -53,7 +53,7 @@
     {
       "id": "sdk-generated",
       "status": "ok",
-      "value": "2026-04-28T23:13:12.879Z",
+      "value": "2026-04-28T23:17:20.832Z",
       "artifact": "sdk/generated/openapi-summary.json"
     },
     {

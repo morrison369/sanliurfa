@@ -1,17 +1,81 @@
 {
-  "generatedAt": "2026-04-28T23:14:55.810Z",
+  "generatedAt": "2026-04-28T23:19:23.894Z",
   "status": "ok",
   "totals": {
     "P1": 65,
     "P2": 310,
     "coveredP1": 65,
-    "coveredP2": 46,
+    "coveredP2": 76,
     "gapP1": 0,
-    "gapP2": 264
+    "gapP2": 234
   },
   "topPriority": [
     {
-      "route": "/admin/reports/schedule",
+      "route": "/analytics/events",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/analytics/funnels",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/analytics/journeys",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/analytics/performance",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/analytics/predictions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/audit/log",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/badges",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/badges/definitions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/billing/checkout",
       "tier": "P2",
       "methods": [
         "POST"
@@ -19,7 +83,7 @@
       "contract": null
     },
     {
-      "route": "/admin/reports/social-lifecycle",
+      "route": "/billing/webhook",
       "tier": "P2",
       "methods": [
         "GET"
@@ -27,7 +91,7 @@
       "contract": null
     },
     {
-      "route": "/admin/revenue",
+      "route": "/blocking",
       "tier": "P2",
       "methods": [
         "GET"
@@ -35,7 +99,7 @@
       "contract": null
     },
     {
-      "route": "/admin/reviews/antispam-events",
+      "route": "/blocking/check",
       "tier": "P2",
       "methods": [
         "GET"
@@ -43,7 +107,7 @@
       "contract": null
     },
     {
-      "route": "/admin/security/audit",
+      "route": "/blog/{id}/admin",
       "tier": "P2",
       "methods": [
         "GET"
@@ -51,7 +115,7 @@
       "contract": null
     },
     {
-      "route": "/admin/security/guidelines",
+      "route": "/blog/admin",
       "tier": "P2",
       "methods": [
         "GET"
@@ -59,7 +123,7 @@
       "contract": null
     },
     {
-      "route": "/admin/social/events",
+      "route": "/blog/analytics",
       "tier": "P2",
       "methods": [
         "GET"
@@ -67,7 +131,7 @@
       "contract": null
     },
     {
-      "route": "/admin/social/events/export",
+      "route": "/blog/categories",
       "tier": "P2",
       "methods": [
         "GET"
@@ -75,7 +139,7 @@
       "contract": null
     },
     {
-      "route": "/admin/social/events/stream",
+      "route": "/blog/comments",
       "tier": "P2",
       "methods": [
         "GET"
@@ -83,7 +147,7 @@
       "contract": null
     },
     {
-      "route": "/admin/social/policies",
+      "route": "/blog/comments/{id}",
       "tier": "P2",
       "methods": [
         "GET"
@@ -91,7 +155,7 @@
       "contract": null
     },
     {
-      "route": "/admin/social/policies/simulate",
+      "route": "/blog/comments/{id}/approve",
       "tier": "P2",
       "methods": [
         "GET"
@@ -99,7 +163,7 @@
       "contract": null
     },
     {
-      "route": "/admin/social/risk",
+      "route": "/blog/comments/{id}/reject",
       "tier": "P2",
       "methods": [
         "GET"
@@ -107,7 +171,7 @@
       "contract": null
     },
     {
-      "route": "/admin/social/risk/webhook-log",
+      "route": "/blog/posts",
       "tier": "P2",
       "methods": [
         "GET"
@@ -115,7 +179,7 @@
       "contract": null
     },
     {
-      "route": "/admin/social/risk/webhook-metrics",
+      "route": "/blog/posts/{id}/revisions",
       "tier": "P2",
       "methods": [
         "GET"
@@ -123,15 +187,7 @@
       "contract": null
     },
     {
-      "route": "/admin/social/risk/webhook-test",
-      "tier": "P2",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/subscriptions/analytics",
+      "route": "/blog/posts/{slug}",
       "tier": "P2",
       "methods": [
         "GET"
@@ -139,7 +195,7 @@
       "contract": null
     },
     {
-      "route": "/admin/subscriptions/users",
+      "route": "/blog/reading-history",
       "tier": "P2",
       "methods": [
         "GET"
@@ -147,7 +203,7 @@
       "contract": null
     },
     {
-      "route": "/admin/users",
+      "route": "/blog/scheduled-posts",
       "tier": "P2",
       "methods": [
         "GET"
@@ -155,7 +211,7 @@
       "contract": null
     },
     {
-      "route": "/admin/users/{id}",
+      "route": "/blog/search",
       "tier": "P2",
       "methods": [
         "GET"
@@ -163,23 +219,7 @@
       "contract": null
     },
     {
-      "route": "/admin/vendor/{id}/approve",
-      "tier": "P2",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/vendor/{id}/reject",
-      "tier": "P2",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/vendor/pending",
+      "route": "/blog/subscribe",
       "tier": "P2",
       "methods": [
         "GET"
@@ -187,7 +227,7 @@
       "contract": null
     },
     {
-      "route": "/admin/verifications",
+      "route": "/business-metrics",
       "tier": "P2",
       "methods": [
         "GET"
@@ -195,23 +235,7 @@
       "contract": null
     },
     {
-      "route": "/admin/verifications/{id}/approve",
-      "tier": "P2",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/verifications/{id}/reject",
-      "tier": "P2",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/ai/recommendations",
+      "route": "/business/analytics",
       "tier": "P2",
       "methods": [
         "GET"
@@ -219,31 +243,7 @@
       "contract": null
     },
     {
-      "route": "/ai/similar",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/analytics",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/analytics/cohorts",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/analytics/dashboard",
+      "route": "/business/insights",
       "tier": "P2",
       "methods": [
         "GET"
