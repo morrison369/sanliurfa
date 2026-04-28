@@ -38,7 +38,7 @@ Bu durum aktif working tree'de high-risk secret oldugu anlamina gelmez; `securit
 
 1. Yeni key/secret uret.
 2. Yeni secret'i sadece guvenli secret store'a ekle:
-   - GitHub Actions secrets
+   - GitHub repository/environment secrets kullanılacaksa manuel operasyonla doğrulanır; Actions workflow'u kullanılmaz
    - hosting env paneli
    - deployment secret manager
 3. Uygulama ve deploy akisini yeni credential ile smoke et.

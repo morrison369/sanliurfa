@@ -10,7 +10,7 @@ Sanliurfa'nin en kapsamli mekan rehberi platformu.
 - **Database**: PostgreSQL (`pg` direct pool, no ORM)
 - **Cache**: Redis (`sanliurfa:` namespace, sliding session)
 - **Container**: Docker + Docker Compose (dev), PM2 (prod)
-- **CI/CD**: GitHub Actions
+- **CI/CD**: Yerel gate komutlari + manuel deploy
 - **Email**: 3-tier (Resend → SMTP → dev log), admin-managed
 - **Payments**: Stripe (admin-managed credentials)
 - **Auth**: bcrypt (12 rounds) + JWT + Redis sessions; OAuth (Google/Facebook/Twitter)
@@ -319,10 +319,10 @@ Son basarili build: **~9 saniye**
 
 ## CI/CD
 
-GitHub Actions ile otomatik build ve deploy:
-- Her PR'da test calisir
-- Main branch'e push'ta Docker image build edilir
-- VPS'e otomatik deploy (SSH ile)
+GitHub Actions kullanılmaz. Build, test, güvenlik ve deploy kontrolleri yerel gate komutlarıyla manuel yürütülür:
+- PR veya merge öncesi ilgili `npm run ...` gate komutları yerelde çalıştırılır.
+- Üretim build'i `npm run build` ile alınır.
+- Deploy işlemleri manuel operasyon akışıyla yapılır.
 
 ## Production Deployment
 
@@ -384,12 +384,6 @@ npm run load:test
 # OpenAPI + endpoint contract + smoke gate (onerilen)
 npm run api:release:gate
 
-# Workflow dosyalari standart/hijyen dogrulamasi (onerilen)
-npm run workflow:standards:verify
-
-# Workflow standard otomatik duzeltme kontrolu
-npm run workflow:standards:autofix:check
-
 # API contract suite (coverage threshold dahil)
 npm run test:api-contract:coverage
 
@@ -415,8 +409,8 @@ npm run db:migrate:check-duplicates
 Not: `docs/openapi-route-gap-baseline.json` dosyasi mevcut dokumante edilmemis route setini sabitler.
 Yeni bir route dosyasi eklenip OpenAPI'ye eklenmezse gate fail olur.
 
-CI notu: API degisikliklerinde hizli kontrol icin `.github/workflows/api-contract-gate.yml`
-workflow'u otomatik calisir ve PR'a OpenAPI gap ozeti yorumu yazar.
+CI notu: GitHub Actions kullanılmaz. API değişikliklerinde hızlı kontrol için
+`npm run api:release:gate` ve ilgili OpenAPI gate komutları yerelde çalıştırılır.
 
 Guvenlik notu: key rotation adimlari icin `docs/security-key-rotation-runbook.md` dosyasini izleyin.
 PR parcalama plani icin `docs/pr-split-plan.md` dosyasini kullanin.

@@ -72,4 +72,4 @@ Redis ve dev server izolasyonu tamamlanmıştır. Bundan sonra bu katmana yalnı
 - Public şehir bitiş kontrolü için varsayılan tek komut `npm run public:city:gate` olmalıdır; bu komut dev server açmaz.
 - Build dahil kapanış kontrolü gerektiğinde `npm run public:city:gate:build` kullanılmalıdır; bu da dev server açmaz.
 - `npm run ops:next:bulk` public şehir gate'ini ilk adımda çalıştırır; public site kırıkken geniş operasyon zinciri başlatılmaz.
-- GitHub bütünlüğü `.github/workflows/public-city-gate.yml` ile korunur; ilgili public/site dosyaları değişince GitHub Actions `npm run public:city:gate:build` çalıştırır.
+- GitHub Actions kullanılmaz; ilgili public/site dosyaları değişince `npm run public:city:gate:build` yerelde çalıştırılır.

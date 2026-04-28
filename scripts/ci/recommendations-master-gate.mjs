@@ -117,12 +117,10 @@ requireToken('package.json', '"jobs:content:quality"');
 // 11) Public city MVP acceptance
 requireFile('scripts/ci/public-city-acceptance-gate.mjs');
 requireFile('scripts/smoke/city-content-acceptance.mjs');
-requireFile('.github/workflows/public-city-gate.yml');
 requireToken('scripts/ci/next-bulk-ops.mjs', 'npm run public:city:gate');
 requireToken('docs/MVP_PUBLIC_ACCEPTANCE.md', 'npm run public:city:gate');
 requireToken('docs/MVP_BITIRME_MODU.md', 'npm run public:city:gate');
-requireToken('.github/workflows/public-city-gate.yml', 'npm run public:city:gate:build');
-requireToken('.github/workflows/public-city-gate.yml', 'branches: [master, main, develop]');
+requireToken('package.json', '"public:city:gate:build"');
 
 if (errors.length) {
   console.error('[recommendations-master-gate] FAILED');

@@ -1,93 +1,27 @@
 # Branch Protection Checklist
 
-`master` dalinda asgari zorunlu kontroller:
+`master` dalinda GitHub Actions zorunlu status check olarak kullanilmaz.
 
-1. `Public City Acceptance` workflow status check
-2. `Security Audit / security` workflow status check
-3. `Security Audit / dependency-review` workflow status check
-4. `CI/CD Pipeline` workflow status check
-5. `Workflow Standards` workflow status check
-6. `CI/CD Pipeline / Workflow standards verify` stepinin zorunlu gecmesi
-7. `CI/CD Pipeline / Quality gate (gate:done)` stepinin zorunlu gecmesi
-8. `CI/CD Pipeline / Recommendations master gate (required)` stepinin zorunlu gecmesi
-9. `npm run security:scan-secrets` zorunlu gecmesi
-10. `npm run security:public-readiness` public yapmadan once temiz olmasi
-11. Force-push yasagi
-12. En az 1 review zorunlulugu
-13. Up-to-date branch zorunlulugu
+## Zorunlu Yerel Gate'ler
 
-## Team Plan Notu
+Merge veya deploy oncesi asgari yerel kontroller:
 
-2026-04-21 itibariyle GitHub API bu repo icin branch protection ve ruleset endpointlerinde hala su 403 cevabini donduruyor:
+1. `npm run type-check`
+2. `npm run lint`
+3. `npm run security:scan-secrets`
+4. `npm run security:defaults:gate`
+5. `npm run security:public-readiness`
+6. `npm run public:city:gate:build`
+7. `npm audit --audit-level=moderate`
 
-```text
-Upgrade to GitHub Pro or make this repository public to enable this feature.
-```
+## Branch Kurallari
 
-Team uyeligi satin alindiysa bu repo Team organizasyonu altinda degilse veya plan henuz bu owner icin aktiflesmediyse branch protection uygulanamaz. Public yapmak cozum gibi gorunse de git gecmisindeki `deploy_key` ve eski credential izleri temizlenmeden repo public yapilmayacak.
+1. Force-push `master` icin kapali kalir.
+2. En az 1 review tercih edilir.
+3. GitHub Actions workflow dosyasi eklenmez.
+4. Secret, `.env`, deploy key veya canli credential tracked dosyaya girmez.
 
-Hazir uygulama komutu:
+## Not
 
-```powershell
-.\scripts\github\set-branch-protection.ps1 -Owner morrison369 -Repo sanliurfa -Branch master
-```
-
-## Workflow Standards Gate Kapsami
-
-`npm run workflow:standards:verify` kontrolu tum `.github/workflows/*` dosyalarinda su kurallari zorunlu tutar:
-
-1. `concurrency` tanimi
-2. `permissions` tanimi
-3. En az bir `timeout-minutes`
-4. En az bir `npm run workflow:standards:verify` adimi
-5. Standalone `workflow:standards:gate` / `workflow:standards:report` adimlari kullanilmamali
-6. `docs/workflow-standards-report.md` artifact yolunun yuklenmesi
-7. Workflow standards report artifact adinin `workflow-standards-report-${{ github.job }}` formatinda olmasi
-8. En az bir `npm run dev:isolated:check-no-orphan` adimi
-9. `npx playwright test` kullanimi yasak (yerine `npm run test:e2e:clean`)
-10. `actions/upload-artifact` ve `actions/download-artifact` icin `@v4` zorunlu (`@v3` yasak)
-11. `actions/cache` icin `@v4` zorunlu (`@v3` yasak)
-12. `actions/setup-node@v4` kullaniliyorsa Node surumu 22'ye pinli olmali (`node-version: '22'` veya `env.NODE_VERSION='22'`)
-
-Rapor uretimi:
-
-```bash
-npm run workflow:standards:report
-```
-
-CI, bu raporu `workflow-standards-report-${{ github.job }}` formatinda artifact olarak yukler.
-
-Hizli otomatik duzeltme:
-
-```bash
-# Sadece kontrol et (degisiklik yazmaz)
-npm run workflow:standards:autofix:check
-
-# Uygula
-npm run workflow:standards:autofix
-```
-
-Not: `workflow:standards:autofix:check` drift bulursa non-zero exit code ile fail eder.
-
-Tek komutla dogrulama (onerilen):
-
-```bash
-npm run workflow:standards:verify
-```
-
-## GitHub CLI Ornegi
-```bash
-gh api \
-  -X PUT \
-  repos/morrison369/sanliurfa/branches/master/protection \
-  -f required_status_checks.strict=true \
-  -f required_status_checks.contexts[]="API Contract Gate" \
-  -f required_status_checks.contexts[]="CI/CD Pipeline" \
-  -f required_status_checks.contexts[]="Workflow Standards" \
-  -f required_status_checks.contexts[]="CI/CD Pipeline / Workflow standards verify" \
-  -f enforce_admins=true \
-  -f required_pull_request_reviews.required_approving_review_count=1 \
-  -f restrictions=
-```
-
-Not: Bu ayar repository admin yetkisi gerektirir.
+Eski workflow standards gate modeli kaldirildi. `.github/workflows` dizini bos veya yok
+olmalidir; kontroller yerelde calistirilir ve sonuc PR/operasyon notuna yazilir.

@@ -33,7 +33,7 @@ Related to #
 
 - [ ] `.env`, `.env.production`, `deploy_key` veya gerçek secret eklenmedi
 - [ ] Public yapılacaksa `npm run security:public-readiness` temiz
-- [ ] GitHub Actions environment secret gerektiren job sadece izinli branch üzerinde çalışıyor
+- [ ] GitHub Actions workflow'u eklenmedi veya yeniden etkinleştirilmedi
 - [ ] Şanlıurfa odağı, Türkçe-only kuralı ve canonical `https://sanliurfa.com` korundu
 
 ## Ekran Görüntüsü
