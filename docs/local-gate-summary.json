@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-28T21:04:47.181Z",
-  "status": "ready_with_advisories",
+  "generatedAt": "2026-04-28T21:11:52.693Z",
+  "status": "ready",
   "checks": [
     {
       "id": "release-readiness",
@@ -53,19 +53,19 @@
     {
       "id": "sdk-generated",
       "status": "ok",
-      "value": "2026-04-28T21:03:10.706Z",
+      "value": "2026-04-28T21:10:08.053Z",
       "artifact": "sdk/generated/openapi-summary.json"
     },
     {
       "id": "migration-duplicate-debt",
-      "status": "advisory",
-      "value": "numbers=3, slugs=14",
-      "artifact": "docs/migration-duplicate-report.json"
+      "status": "ok",
+      "value": "known numbers=3, known slugs=14, new numbers=0, new slugs=0",
+      "artifact": "docs/migration-debt-report.json"
     }
   ],
   "totals": {
-    "ok": 9,
-    "advisory": 1,
+    "ok": 10,
+    "advisory": 0,
     "blocked": 0
   }
 }

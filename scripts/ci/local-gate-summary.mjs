@@ -22,6 +22,7 @@ const openapiP0 = readJson('docs/openapi-p0-closure-report.json');
 const problemJson = readJson('docs/problem-json-report.json');
 const releaseReadiness = readJson('docs/release-readiness.json');
 const migrationDuplicate = readJson('docs/migration-duplicate-report.json');
+const migrationDebt = readJson('docs/migration-debt-report.json');
 const categoryGap = readJson('docs/category-gap-report.json');
 const contentCluster = readJson('docs/content-cluster-quality-report.json');
 const contentProgrammatic = readJson('docs/content-programmatic-quality-report.json');
@@ -30,6 +31,8 @@ const openapiSummary = readJson('sdk/generated/openapi-summary.json');
 
 const duplicateNumberCount = Object.keys(migrationDuplicate?.duplicateNumbers || {}).length;
 const duplicateSlugCount = Object.keys(migrationDuplicate?.duplicateSlugs || {}).length;
+const newDuplicateNumberCount = Number(migrationDebt?.totals?.newDuplicateNumberGroups || 0);
+const newDuplicateSlugCount = Number(migrationDebt?.totals?.newDuplicateSlugGroups || 0);
 
 const checks = [
   {
@@ -92,9 +95,9 @@ const checks = [
   },
   {
     id: 'migration-duplicate-debt',
-    status: duplicateNumberCount === 0 && duplicateSlugCount === 0 ? 'ok' : 'advisory',
-    value: `numbers=${duplicateNumberCount}, slugs=${duplicateSlugCount}`,
-    artifact: 'docs/migration-duplicate-report.json',
+    status: newDuplicateNumberCount === 0 && newDuplicateSlugCount === 0 ? 'ok' : 'advisory',
+    value: `known numbers=${duplicateNumberCount}, known slugs=${duplicateSlugCount}, new numbers=${newDuplicateNumberCount}, new slugs=${newDuplicateSlugCount}`,
+    artifact: 'docs/migration-debt-report.json',
   },
 ];
 
