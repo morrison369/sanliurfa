@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2026-04-28T21:56:53.278Z",
+  "startedAt": "2026-04-28T21:45:44.900Z",
+  "finishedAt": "2026-04-28T21:56:53.278Z",
+  "status": "ok",
+  "results": [
+    {
+      "step": "npm run public:city:gate",
+      "status": "ok",
+      "startedAt": "2026-04-28T21:45:44.900Z",
+      "finishedAt": "2026-04-28T21:46:26.253Z"
+    },
+    {
+      "step": "npm run recommendations:apply",
+      "status": "ok",
+      "startedAt": "2026-04-28T21:46:26.253Z",
+      "finishedAt": "2026-04-28T21:50:10.147Z"
+    },
+    {
+      "step": "npm run ops:agency:all",
+      "status": "ok",
+      "startedAt": "2026-04-28T21:50:10.147Z",
+      "finishedAt": "2026-04-28T21:54:02.989Z"
+    },
+    {
+      "step": "npm run gate:isolated",
+      "status": "ok",
+      "startedAt": "2026-04-28T21:54:02.989Z",
+      "finishedAt": "2026-04-28T21:56:46.424Z"
+    },
+    {
+      "step": "npm run -s dev:isolated:stop",
+      "status": "ok",
+      "cleanup": true,
+      "finishedAt": "2026-04-28T21:56:47.856Z"
+    },
+    {
+      "step": "npm run -s runtime:cleanup:listeners",
+      "status": "ok",
+      "cleanup": true,
+      "finishedAt": "2026-04-28T21:56:52.424Z"
+    },
+    {
+      "step": "npm run -s dev:isolated:check-no-orphan",
+      "status": "ok",
+      "cleanup": true,
+      "finishedAt": "2026-04-28T21:56:53.278Z"
+    }
+  ]
+}

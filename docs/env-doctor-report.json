@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-04-28T21:57:19.158Z",
+  "status": "ok",
+  "checks": [
+    {
+      "id": "DATABASE_URL",
+      "status": "optional_missing",
+      "required": false
+    },
+    {
+      "id": "JWT_SECRET",
+      "status": "optional_missing",
+      "required": false
+    },
+    {
+      "id": "REDIS_URL",
+      "status": "optional_missing",
+      "required": false
+    },
+    {
+      "id": "PEXELS_API_KEY",
+      "status": "configured",
+      "required": false
+    },
+    {
+      "id": "UNSPLASH_ACCESS_KEY",
+      "status": "configured",
+      "required": false
+    },
+    {
+      "id": "STRIPE_SECRET_KEY",
+      "status": "optional_missing",
+      "required": false
+    },
+    {
+      "id": "RESEND_API_KEY",
+      "status": "optional_missing",
+      "required": false
+    },
+    {
+      "id": "IMAGE_PROVIDER",
+      "status": "configured",
+      "required": false
+    }
+  ],
+  "note": "Secret degerleri loglanmaz; sadece configured/missing durumu raporlanir."
+}
