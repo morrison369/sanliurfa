@@ -15,6 +15,21 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     <div id="health-grid" class="grid gap-4 md:grid-cols-3"></div>
 
     <div class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-5 shadow-sm">
+      <h2 class="font-bold text-[#1A1008]">Rapor Bağlantıları</h2>
+      <p class="mt-1 text-sm text-[#9A8470]">Operasyon kanıt dosyalarına hızlı erişim.</p>
+      <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <a class="rounded-sm bg-[rgba(200,160,100,0.06)] px-3 py-2 text-sm font-semibold text-[#6B5540] hover:bg-[rgba(200,160,100,0.12)]" href="/docs/RELEASE_EVIDENCE.md">Yayın Kanıtı</a>
+        <a class="rounded-sm bg-[rgba(200,160,100,0.06)] px-3 py-2 text-sm font-semibold text-[#6B5540] hover:bg-[rgba(200,160,100,0.12)]" href="/docs/PROD_EVIDENCE.md">Üretim Kanıtı</a>
+        <a class="rounded-sm bg-[rgba(200,160,100,0.06)] px-3 py-2 text-sm font-semibold text-[#6B5540] hover:bg-[rgba(200,160,100,0.12)]" href="/docs/SECURITY_HEADERS_SNAPSHOT.md">Güvenlik Başlıkları</a>
+        <a class="rounded-sm bg-[rgba(200,160,100,0.06)] px-3 py-2 text-sm font-semibold text-[#6B5540] hover:bg-[rgba(200,160,100,0.12)]" href="/docs/openapi-contract-gap-report.md">OpenAPI Borcu</a>
+        <a class="rounded-sm bg-[rgba(200,160,100,0.06)] px-3 py-2 text-sm font-semibold text-[#6B5540] hover:bg-[rgba(200,160,100,0.12)]" href="/docs/BACKUP_RESTORE_EVIDENCE.md">Yedek Kanıtı</a>
+        <a class="rounded-sm bg-[rgba(200,160,100,0.06)] px-3 py-2 text-sm font-semibold text-[#6B5540] hover:bg-[rgba(200,160,100,0.12)]" href="/docs/RUNTIME_PROD_DOCTOR.md">Runtime Kontrolü</a>
+        <a class="rounded-sm bg-[rgba(200,160,100,0.06)] px-3 py-2 text-sm font-semibold text-[#6B5540] hover:bg-[rgba(200,160,100,0.12)]" href="/docs/MIGRATION_BASELINE_DECISION.md">Migration Kararı</a>
+        <a class="rounded-sm bg-[rgba(200,160,100,0.06)] px-3 py-2 text-sm font-semibold text-[#6B5540] hover:bg-[rgba(200,160,100,0.12)]" href="/docs/OPERATIONS_INDEX.md">Operasyon İndeksi</a>
+      </div>
+    </div>
+
+    <div class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-5 shadow-sm">
       <h2 class="font-bold text-[#1A1008]">Detaylı Durum Tablosu</h2>
       <p class="mt-1 text-sm text-[#9A8470]">Yayın, güvenlik, OpenAPI, görsel ve operasyon sinyalleri tek tabloda gösterilir.</p>
       <div class="mt-4 overflow-auto">
@@ -75,6 +90,9 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       grid.append(
         card('Yayın', release.releaseStatus?.status, `blocked=${release.releaseStatus?.blocked ?? '-'}, advisory=${release.releaseStatus?.advisory ?? '-'}`),
         card('Yayın Kanıtı', release.releaseEvidence?.status, `ok=${release.releaseEvidence?.totals?.ok ?? '-'}, blocked=${release.releaseEvidence?.totals?.blocked ?? '-'}`),
+        card('Üretim Kanıtı', release.prodEvidence?.status, `ok=${release.prodEvidence?.totals?.ok ?? '-'}, blocked=${release.prodEvidence?.totals?.blocked ?? '-'}`),
+        card('Yedek Kanıtı', release.backupRestoreEvidence?.status, release.backupRestoreEvidence?.smokeCommand || ''),
+        card('Runtime Kontrolü', release.runtimeProdDoctor?.status, `advisory=${release.runtimeProdDoctor?.totals?.advisory ?? '-'}`),
         card('Ortam Kontrolü', release.envDoctor?.status, 'Yerel yapılandırma raporu'),
         card('Son Operasyon', release.opsLastRun?.status, release.opsLastRun?.finishedAt || ''),
         card('Site Kontrolü', release.siteDoctor?.status, 'DB-first artefact kontrolü'),
@@ -84,6 +102,9 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const rows = [
         ['Yayın', release.releaseStatus?.status, `OpenAPI=${release.releaseStatus?.openapiRoutes || '-'}, blocked=${release.releaseStatus?.blocked ?? '-'}`],
         ['Yayın Kanıtı', release.releaseEvidence?.status, `ok=${release.releaseEvidence?.totals?.ok ?? '-'}, blocked=${release.releaseEvidence?.totals?.blocked ?? '-'}`],
+        ['Üretim Kanıtı', release.prodEvidence?.status, `ok=${release.prodEvidence?.totals?.ok ?? '-'}, blocked=${release.prodEvidence?.totals?.blocked ?? '-'}`],
+        ['Yedek Kanıtı', release.backupRestoreEvidence?.status, release.backupRestoreEvidence?.smokeCommand || '-'],
+        ['Runtime Kontrolü', release.runtimeProdDoctor?.status, `advisory=${release.runtimeProdDoctor?.totals?.advisory ?? '-'}`],
         ['OpenAPI Tier', release.releaseStatus?.openapiTiers, JSON.stringify(release.releaseStatus?.openapiTierTotals || {})],
         ['Güvenlik', release.releaseStatus?.authLogStandard, `env=${release.releaseStatus?.envDoctor || '-'}`],
         ['Görseller', provider.success ? 'ok' : 'failing', `Pexels=${provider.providers?.pexels || '-'}, Unsplash=${provider.providers?.unsplash || '-'}`],

@@ -27,6 +27,7 @@ const config = readText('vitest.api-contract.config.ts');
 const rows = Array.isArray(tiers?.rows) ? tiers.rows : [];
 
 const coverageRules = [
+  [/^\/collections(\/|$)/, 'openapi-p1-collections-contract.test.ts'],
   [/^\/places(\/|$)/, 'places-* api contract tests'],
   [/^\/social\/capabilities$/, 'social-capabilities-api.test.ts'],
   [/^\/social\/match-profile$/, 'social-match-profile-api.test.ts'],

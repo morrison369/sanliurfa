@@ -1,55 +1,15 @@
 {
-  "generatedAt": "2026-04-28T22:39:33.712Z",
+  "generatedAt": "2026-04-28T22:45:04.283Z",
   "status": "ok",
   "totals": {
     "P1": 65,
     "P2": 310,
-    "coveredP1": 2,
+    "coveredP1": 7,
     "coveredP2": 1,
-    "gapP1": 63,
+    "gapP1": 58,
     "gapP2": 309
   },
   "topPriority": [
-    {
-      "route": "/collections",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/collections/{id}",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/collections/{id}/follow",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/collections/{id}/followers/check",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/collections/{id}/items",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
     {
       "route": "/events/{id}/delete",
       "tier": "P1",
@@ -247,6 +207,46 @@
       "tier": "P1",
       "methods": [
         "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/messages/{conversationId}/read",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/messages/unread-count",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/{id}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/{id}/read",
+      "tier": "P1",
+      "methods": [
+        "POST"
       ],
       "contract": null
     }

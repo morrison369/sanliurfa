@@ -22,6 +22,9 @@ describe('GET /api/admin/system/release-status', () => {
     expect(payload.releaseEvidence.status).toBe('ready');
     expect(payload.releaseEvidence.totals.blocked).toBe(0);
     expect(payload.releaseEvidence.totals.ok).toBeGreaterThan(0);
+    expect(payload.prodEvidence.status).toBeDefined();
+    expect(payload.backupRestoreEvidence.status).toBeDefined();
+    expect(payload.runtimeProdDoctor.status).toBeDefined();
     expect(payload.siteDoctor.status).toBe('ready');
     expect(payload.criticalPages.status).toBe('ok');
   });
