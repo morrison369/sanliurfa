@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-04-28T21:57:19.556Z",
+  "generatedAt": "2026-04-28T22:08:50.671Z",
   "status": "ready",
   "advisory": 0,
   "blocked": 0,
-  "openapiRoutes": "456/456",
+  "openapiRoutes": "458/458",
   "problemJsonOffenders": 0,
-  "imageRecords": 5,
+  "imageRecords": 10,
   "envDoctor": "ok",
   "opsLastRun": "ok"
 }

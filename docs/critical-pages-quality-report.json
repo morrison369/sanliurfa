@@ -1,0 +1,110 @@
+{
+  "generatedAt": "2026-04-28T22:07:27.986Z",
+  "status": "ok",
+  "checks": [
+    {
+      "route": "/",
+      "file": "src/pages/index.astro",
+      "status": "ok",
+      "fileExists": true,
+      "turkishSignal": true,
+      "seoSignal": true,
+      "requiredImageSlug": "gobeklitepe",
+      "imageOk": true
+    },
+    {
+      "route": "/mekanlar",
+      "file": "src/pages/mekanlar/index.astro",
+      "status": "ok",
+      "fileExists": true,
+      "turkishSignal": true,
+      "seoSignal": true,
+      "requiredImageSlug": "balikligol",
+      "imageOk": true
+    },
+    {
+      "route": "/saglik/nobetci-eczaneler",
+      "file": "src/pages/saglik/nobetci-eczaneler.astro",
+      "status": "ok",
+      "fileExists": true,
+      "turkishSignal": true,
+      "seoSignal": true,
+      "requiredImageSlug": null,
+      "imageOk": true
+    },
+    {
+      "route": "/ulasim/otobus-saatleri",
+      "file": "src/pages/ulasim/otobus-saatleri.astro",
+      "status": "ok",
+      "fileExists": true,
+      "turkishSignal": true,
+      "seoSignal": true,
+      "requiredImageSlug": null,
+      "imageOk": true
+    },
+    {
+      "route": "/ulasim/ucak-saatleri",
+      "file": "src/pages/ulasim/ucak-saatleri.astro",
+      "status": "ok",
+      "fileExists": true,
+      "turkishSignal": true,
+      "seoSignal": true,
+      "requiredImageSlug": null,
+      "imageOk": true
+    },
+    {
+      "route": "/yemek-tarifleri",
+      "file": "src/pages/yemek-tarifleri/index.astro",
+      "status": "ok",
+      "fileExists": true,
+      "turkishSignal": true,
+      "seoSignal": true,
+      "requiredImageSlug": "cigerci-aziz-usta",
+      "imageOk": true
+    },
+    {
+      "route": "/etkinlikler",
+      "file": "src/pages/etkinlikler/index.astro",
+      "status": "ok",
+      "fileExists": true,
+      "turkishSignal": true,
+      "seoSignal": true,
+      "requiredImageSlug": "sanliurfa-kultur-festivali",
+      "imageOk": true
+    },
+    {
+      "route": "/ilceler",
+      "file": "src/pages/ilceler/index.astro",
+      "status": "ok",
+      "fileExists": true,
+      "turkishSignal": true,
+      "seoSignal": true,
+      "requiredImageSlug": "harran",
+      "imageOk": true
+    },
+    {
+      "route": "/blog",
+      "file": "src/pages/blog/index.astro",
+      "status": "ok",
+      "fileExists": true,
+      "turkishSignal": true,
+      "seoSignal": true,
+      "requiredImageSlug": "tarihi-yerler-rehberi",
+      "imageOk": true
+    },
+    {
+      "route": "/topluluk",
+      "file": "src/pages/topluluk.astro",
+      "status": "ok",
+      "fileExists": true,
+      "turkishSignal": true,
+      "seoSignal": true,
+      "requiredImageSlug": null,
+      "imageOk": true
+    }
+  ],
+  "totals": {
+    "ok": 10,
+    "blocked": 0
+  }
+}

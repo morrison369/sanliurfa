@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-28T21:56:39.028Z",
+  "generatedAt": "2026-04-28T22:08:39.803Z",
   "status": "ready",
   "checks": [
     {
@@ -17,7 +17,7 @@
     {
       "id": "openapi-route-count",
       "status": "ok",
-      "value": "456/456",
+      "value": "458/458",
       "artifact": "docs/openapi-p0-closure-report.json"
     },
     {
@@ -53,7 +53,7 @@
     {
       "id": "sdk-generated",
       "status": "ok",
-      "value": "2026-04-28T21:55:10.931Z",
+      "value": "2026-04-28T22:07:00.019Z",
       "artifact": "sdk/generated/openapi-summary.json"
     },
     {

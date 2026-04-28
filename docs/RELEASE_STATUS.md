@@ -1,12 +1,12 @@
 # Release Status
 
-- Generated At: 2026-04-28T21:57:19.556Z
+- Generated At: 2026-04-28T22:08:50.671Z
 - Status: ready
 - Advisory: 0
 - Blocked: 0
-- OpenAPI Routes: 456/456
+- OpenAPI Routes: 458/458
 - Problem JSON Offenders: 0
-- Image Manifest Records: 5
+- Image Manifest Records: 10
 - Env Doctor: ok
 - Ops Last Run: ok
 - GitHub Actions: not used

@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-04-28T22:07:28.542Z",
+  "status": "ready",
+  "checks": [
+    {
+      "id": "release-status",
+      "artifact": "docs/release-status.json",
+      "status": "ok"
+    },
+    {
+      "id": "local-gate-summary",
+      "artifact": "docs/local-gate-summary.json",
+      "status": "ok"
+    },
+    {
+      "id": "critical-pages-policy",
+      "artifact": "docs/CRITICAL_PAGES.md",
+      "status": "ok"
+    },
+    {
+      "id": "image-manifest",
+      "artifact": "public/images/image-manifest.json",
+      "status": "ok"
+    },
+    {
+      "id": "site-content-admin",
+      "artifact": "src/pages/admin/site-content.astro",
+      "status": "ok"
+    },
+    {
+      "id": "db-first-doc",
+      "artifact": "docs/DB_FIRST_SITE_MANAGEMENT.md",
+      "status": "ok"
+    },
+    {
+      "id": "critical-image-count",
+      "artifact": "public/images/image-manifest.json",
+      "status": "ok",
+      "value": 10
+    }
+  ],
+  "totals": {
+    "ok": 7,
+    "advisory": 0,
+    "blocked": 0
+  }
+}
