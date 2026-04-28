@@ -27,9 +27,28 @@ loadEnvFile('.env');
 
 const unsplash = (process.env.UNSPLASH_ACCESS_KEY || '').trim();
 const pexels = (process.env.PEXELS_API_KEY || '').trim();
+const manifestPath = join(process.cwd(), 'public', 'images', 'image-manifest.json');
+
+function hasExistingManifest() {
+  if (!existsSync(manifestPath)) return false;
+  try {
+    const parsed = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    return Array.isArray(parsed) && parsed.length > 0;
+  } catch {
+    return false;
+  }
+}
 
 if (!unsplash && !pexels) {
-  console.error('Image API key missing: UNSPLASH_ACCESS_KEY veya PEXELS_API_KEY gereklidir.');
+  if (hasExistingManifest()) {
+    console.log(
+      `Image keys missing, using existing manifest mode | manifest=${manifestPath}`,
+    );
+    process.exit(0);
+  }
+  console.error(
+    'Image API key missing and no existing manifest found: UNSPLASH_ACCESS_KEY veya PEXELS_API_KEY gereklidir.',
+  );
   process.exit(1);
 }
 
