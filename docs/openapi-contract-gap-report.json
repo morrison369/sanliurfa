@@ -1,199 +1,15 @@
 {
-  "generatedAt": "2026-04-28T22:55:24.289Z",
+  "generatedAt": "2026-04-28T22:59:54.813Z",
   "status": "ok",
   "totals": {
     "P1": 65,
     "P2": 310,
-    "coveredP1": 30,
+    "coveredP1": 53,
     "coveredP2": 1,
-    "gapP1": 35,
+    "gapP1": 12,
     "gapP2": 309
   },
   "topPriority": [
-    {
-      "route": "/messages",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/messages/{conversationId}",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/messages/{conversationId}/read",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/messages/unread-count",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/{id}",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/{id}/read",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/center",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/clear",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/draft",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/drafts",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/drafts/{id}",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/history",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/mark-all-read",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/preferences",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/push/subscribe",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/read-all",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/send",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/sse",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/stats",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/subscribe",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/unsubscribe",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/notifications/vapid-key",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
     {
       "route": "/social/events/stream",
       "tier": "P1",
@@ -245,6 +61,192 @@
     {
       "route": "/social/matches",
       "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/messages",
+      "tier": "P1",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/messages/receipts",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/messages/stream",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/swipe",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/trending",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/achievements",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/activity",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/alerts",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/audit-logs",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/badges/award",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/blog",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/blog/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/blog/categories",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/blog/stats",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/blog/tags",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/bulk-action",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/bus-routes",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/city-content-agents",
+      "tier": "P2",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/content-bot/generate",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/dashboard",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/dashboard/overview",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/deployment/status",
+      "tier": "P2",
       "methods": [
         "GET"
       ],

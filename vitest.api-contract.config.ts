@@ -14,6 +14,7 @@ export default defineConfig({
       'src/lib/__tests__/openapi-p1-collections-contract.test.ts',
       'src/lib/__tests__/openapi-p1-events-favorites-contract.test.ts',
       'src/lib/__tests__/openapi-p1-social-discovery-contract.test.ts',
+      'src/lib/__tests__/openapi-p1-messages-notifications-contract.test.ts',
       'src/lib/__tests__/admin-release-status-api.test.ts',
       'src/lib/__tests__/admin-provider-health-api.test.ts',
       'src/lib/__tests__/places-detail-api.test.ts',

@@ -35,6 +35,8 @@ const coverageRules = [
   [/^\/following(\/|$)/, 'openapi-p1-social-discovery-contract.test.ts'],
   [/^\/leaderboard$/, 'openapi-p1-social-discovery-contract.test.ts'],
   [/^\/leaderboards(\/|$)/, 'openapi-p1-social-discovery-contract.test.ts'],
+  [/^\/messages(\/|$)/, 'openapi-p1-messages-notifications-contract.test.ts'],
+  [/^\/notifications(\/|$)/, 'openapi-p1-messages-notifications-contract.test.ts'],
   [/^\/places(\/|$)/, 'places-* api contract tests'],
   [/^\/social\/capabilities$/, 'social-capabilities-api.test.ts'],
   [/^\/social\/match-profile$/, 'social-match-profile-api.test.ts'],
