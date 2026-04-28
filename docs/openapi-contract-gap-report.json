@@ -1,95 +1,15 @@
 {
-  "generatedAt": "2026-04-28T22:45:04.283Z",
+  "generatedAt": "2026-04-28T22:51:10.834Z",
   "status": "ok",
   "totals": {
     "P1": 65,
     "P2": 310,
-    "coveredP1": 7,
+    "coveredP1": 17,
     "coveredP2": 1,
-    "gapP1": 58,
+    "gapP1": 48,
     "gapP2": 309
   },
   "topPriority": [
-    {
-      "route": "/events/{id}/delete",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/events/{id}/details",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/events/{id}/rsvp",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/events/{id}/update",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/events/create",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/events/list",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/events/search",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/favorites",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/favorites/{id}",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/favorites/bulk",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
     {
       "route": "/feed",
       "tier": "P1",
@@ -244,6 +164,86 @@
     },
     {
       "route": "/notifications/{id}/read",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/center",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/clear",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/draft",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/drafts",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/drafts/{id}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/history",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/mark-all-read",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/preferences",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/push/subscribe",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/read-all",
       "tier": "P1",
       "methods": [
         "POST"

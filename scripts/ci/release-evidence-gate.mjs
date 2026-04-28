@@ -21,6 +21,12 @@ const required = [
   ['migration-debt', 'docs/migration-debt-report.json', (json) => json?.status === 'clear', 'status=clear'],
   ['critical-pages-quality', 'docs/critical-pages-quality-report.json', (json) => json?.status === 'ok', 'status=ok'],
   ['image-moderation', 'docs/image-moderation-report.json', (json) => Number(json?.issueCount || 0) === 0, 'issueCount=0'],
+  ['prod-evidence', 'docs/prod-evidence.json', (json) => ['ready', 'ready_without_live_probe'].includes(json?.status), 'status=ready|ready_without_live_probe'],
+  ['backup-restore-evidence', 'docs/backup-restore-evidence.json', (json) => ['ready', 'advisory'].includes(json?.status), 'status=ready|advisory'],
+  ['runtime-prod-doctor', 'docs/runtime-prod-doctor.json', (json) => ['ready', 'ready_with_advisories'].includes(json?.status), 'status=ready|ready_with_advisories'],
+  ['security-headers', 'docs/security-headers-snapshot.json', (json) => json?.status === 'ok', 'status=ok'],
+  ['admin-turkish-ui', 'docs/admin-turkish-ui-report.json', (json) => json?.status === 'ok', 'status=ok'],
+  ['openapi-contract-gaps', 'docs/openapi-contract-gap-report.json', (json) => json?.status === 'ok', 'status=ok'],
 ];
 
 function readJson(rel) {
