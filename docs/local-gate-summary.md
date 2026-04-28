@@ -1,6 +1,6 @@
 # Local Gate Summary
 
-- Generated At: 2026-04-28T22:08:39.803Z
+- Generated At: 2026-04-28T22:13:50.539Z
 - Status: ready
 - OK: 10
 - Advisory: 0
@@ -18,7 +18,7 @@
 | content-cluster-quality | ok | 0 | `docs/content-cluster-quality-report.json` |
 | content-programmatic-quality | ok | 0 | `docs/content-programmatic-quality-report.json` |
 | image-moderation | ok | 0 | `docs/image-moderation-report.json` |
-| sdk-generated | ok | 2026-04-28T22:07:00.019Z | `sdk/generated/openapi-summary.json` |
+| sdk-generated | ok | 2026-04-28T22:12:11.074Z | `sdk/generated/openapi-summary.json` |
 | migration-duplicate-debt | ok | known numbers=3, known slugs=14, new numbers=0, new slugs=0 | `docs/migration-debt-report.json` |
 
 Summary: Yerel gate ozeti hazir.

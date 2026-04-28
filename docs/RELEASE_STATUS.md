@@ -1,6 +1,6 @@
 # Release Status
 
-- Generated At: 2026-04-28T22:08:50.671Z
+- Generated At: 2026-04-28T22:13:50.940Z
 - Status: ready
 - Advisory: 0
 - Blocked: 0
@@ -9,6 +9,8 @@
 - Image Manifest Records: 10
 - Env Doctor: ok
 - Ops Last Run: ok
+- OpenAPI Tiers: ok
+- Auth Log Standard: ok
 - GitHub Actions: not used
 
 Summary: Yerel release kanitlari tek dosyada toplandi.

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-28T22:08:50.671Z",
+  "generatedAt": "2026-04-28T22:13:50.940Z",
   "status": "ready",
   "advisory": 0,
   "blocked": 0,
@@ -7,5 +7,12 @@
   "problemJsonOffenders": 0,
   "imageRecords": 10,
   "envDoctor": "ok",
-  "opsLastRun": "ok"
+  "opsLastRun": "ok",
+  "openapiTiers": "ok",
+  "openapiTierTotals": {
+    "P0": 83,
+    "P1": 65,
+    "P2": 310
+  },
+  "authLogStandard": "ok"
 }
