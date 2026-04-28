@@ -1,6 +1,6 @@
 # Local Gate Summary
 
-- Generated At: 2026-04-28T20:57:18.890Z
+- Generated At: 2026-04-28T21:04:47.181Z
 - Status: ready_with_advisories
 - OK: 9
 - Advisory: 1
@@ -18,7 +18,7 @@
 | content-cluster-quality | ok | 0 | `docs/content-cluster-quality-report.json` |
 | content-programmatic-quality | ok | 0 | `docs/content-programmatic-quality-report.json` |
 | image-moderation | ok | 0 | `docs/image-moderation-report.json` |
-| sdk-generated | ok | 2026-04-28T20:55:38.807Z | `sdk/generated/openapi-summary.json` |
+| sdk-generated | ok | 2026-04-28T21:03:10.706Z | `sdk/generated/openapi-summary.json` |
 | migration-duplicate-debt | advisory | numbers=3, slugs=14 | `docs/migration-duplicate-report.json` |
 
 Summary: Release gate hazir; advisory teknik borclar takip edilmeli.
