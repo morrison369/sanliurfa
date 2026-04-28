@@ -4,6 +4,7 @@ import path from 'node:path';
 import { spawn, execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createClient } from 'redis';
+import { resolveProjectRedisPort, resolveProjectRedisUrl } from './project-redis-env.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..', '..');
@@ -12,7 +13,7 @@ const dataDir = path.join(runtimeDir, 'data');
 const pidFile = path.join(runtimeDir, 'redis.pid');
 const confFile = path.join(runtimeDir, 'redis.conf');
 const logFile = path.join(runtimeDir, 'redis.log');
-const defaultRedisPort = process.env.REDIS_PORT || (path.basename(root) === 'public-worktree-sync' ? '6382' : '6381');
+const defaultRedisPort = resolveProjectRedisPort(root);
 
 function loadDotEnv() {
   const envFile = path.join(root, '.env');
@@ -30,11 +31,7 @@ function loadDotEnv() {
 }
 
 function getRedisUrl() {
-  if (process.env.REDIS_URL) return process.env.REDIS_URL;
-  if (process.env.REDIS_PASSWORD) {
-    return `redis://:${encodeURIComponent(process.env.REDIS_PASSWORD)}@127.0.0.1:${defaultRedisPort}`;
-  }
-  return `redis://127.0.0.1:${defaultRedisPort}`;
+  return resolveProjectRedisUrl(root);
 }
 
 function getRedisTarget() {
@@ -58,7 +55,7 @@ function toRedisPath(value) {
 function writeConfig() {
   const target = getRedisTarget();
   if (target.port === 6379) {
-    throw new Error('Project Redis must not use global port 6379. Use REDIS_PORT=6381 and REDIS_URL on 127.0.0.1:6381.');
+    throw new Error('Project Redis must not use global port 6379. Use PROJECT_REDIS_PORT/REDIS_PORT with a project-local port such as 6381 or 6382.');
   }
 
   const lines = [

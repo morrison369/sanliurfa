@@ -2,6 +2,7 @@
 import { mkdirSync, openSync, closeSync, unlinkSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
+import { resolveProjectRedisEnv } from './project-redis-env.mjs';
 
 const root = process.cwd();
 const runtimeRoot = join(root, '.project-runtime');
@@ -23,6 +24,7 @@ const cmd = incoming.length > 0 ? incoming : defaultCmd;
 const lockName = process.env.ISOLATED_LOCK_NAME || 'task';
 const lockPath = join(dirs.run, `${lockName}.lock`);
 const lockDisabled = process.env.ISOLATED_NO_LOCK === '1';
+const redisEnv = resolveProjectRedisEnv(root);
 let lockFd = -1;
 
 if (!lockDisabled) {
@@ -42,7 +44,7 @@ const env = {
   APP_PORT: process.env.APP_PORT || '4321',
   PREVIEW_PORT: process.env.PREVIEW_PORT || '4322',
   DB_PORT: process.env.DB_PORT || '5432',
-  REDIS_PORT: process.env.REDIS_PORT || '6379',
+  ...redisEnv,
   npm_config_cache: dirs.npmCache,
   NPM_CONFIG_CACHE: dirs.npmCache,
   TMP: dirs.tmp,
