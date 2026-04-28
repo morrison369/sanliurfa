@@ -155,8 +155,8 @@
     "smoke:social-place:phase1": "node scripts/smoke/social-place-phase1.mjs",
     "test:e2e:social:phase1": "npm run test:e2e:preflight && node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts e2e/social-phase1.spec.ts --project=chromium",
     "test:e2e:social:phase1:clean": "node scripts/runtime/run-with-cleanup.mjs \"npm run test:e2e:social:phase1\"",
-    "api:release:gate": "npm run test:api-contract:coverage && npm run openapi:sync:routes:gate && npm run openapi:city-services:gate && npm run sdk:generate:check && npm run smoke:api:critical && npm run smoke:site-settings:schema && npm run openapi:p0:report && npm run openapi:tiers && npm run openapi:p0:regression-gate && npm run problemjson:strict",
-    "gate:done": "npm run env:doctor && npm run env:gate && npm run security:no-github-actions:gate && npm run security:no-sentry:gate && npm run content:turkish:gate && npm run auth:log-standard:gate && npm run runtime:single-process:gate && npm run canonical:domain:gate && npm run phase1:free:gate && npm run admin:db:first:gate && npm run social:safety:gate && npm run social:db:first:gate && npm run lifecycle:standard:gate && npm run landing:agency:gate && npm run recommendations:master:gate && npm run hosting:panel:gate && npm run type-check && npm run build && npm run db:migrate:check-duplicates && npm run api:release:gate && npm run smoke:pages:critical && npm run smoke:images:critical && npm run smoke:db:backup-restore && npm run images:check-external && npm run images:validate && npm run images:quality && npm run images:moderate && npm run images:slug:gate && npm run images:critical:ensure && npm run critical-pages:quality && npm run site:doctor && npm run categories:coverage:gate && npm run public:city:gate && npm run seo:geo:gate && npm run content:cluster:quality && npm run content:programmatic:quality && npm run social:core:gate:strict && npm run problemjson:strict && npm run security:scan-secrets && npm run security:defaults:gate && npm run release:readiness:report && npm run migration:debt:report && npm run release:local-gate:summary && npm run release:evidence && npm run release:status",
+    "api:release:gate": "npm run test:api-contract:coverage && npm run openapi:sync:routes:gate && npm run openapi:city-services:gate && npm run sdk:generate:check && npm run smoke:api:critical && npm run smoke:site-settings:schema && npm run openapi:p0:report && npm run openapi:tiers && npm run openapi:contract:gaps && npm run openapi:p0:regression-gate && npm run problemjson:strict",
+    "gate:done": "npm run env:doctor && npm run env:gate && npm run security:no-github-actions:gate && npm run security:no-sentry:gate && npm run content:turkish:gate && npm run content:admin-turkish:gate && npm run auth:log-standard:gate && npm run runtime:single-process:gate && npm run canonical:domain:gate && npm run phase1:free:gate && npm run admin:db:first:gate && npm run social:safety:gate && npm run social:db:first:gate && npm run lifecycle:standard:gate && npm run landing:agency:gate && npm run recommendations:master:gate && npm run hosting:panel:gate && npm run type-check && npm run build && npm run db:migrate:check-duplicates && npm run api:release:gate && npm run smoke:pages:critical && npm run smoke:images:critical && npm run smoke:db:backup-restore && npm run images:check-external && npm run images:validate && npm run images:quality && npm run images:moderate && npm run images:slug:gate && npm run images:critical:ensure && npm run critical-pages:quality && npm run site:doctor && npm run categories:coverage:gate && npm run public:city:gate && npm run seo:geo:gate && npm run content:cluster:quality && npm run content:programmatic:quality && npm run social:core:gate:strict && npm run problemjson:strict && npm run security:scan-secrets && npm run security:headers:snapshot && npm run security:defaults:gate && npm run release:readiness:report && npm run migration:debt:report && npm run release:local-gate:summary && npm run release:evidence && npm run release:status",
     "gate:agency": "node scripts/runtime/run-with-cleanup.mjs npm run gate:done",
     "jobs:transit:refresh": "npx tsx scripts/jobs/transit-refresh.ts",
     "jobs:weather:refresh": "npx tsx scripts/jobs/weather-refresh.ts",
@@ -221,7 +221,7 @@
     "images:pipeline:offline": "node scripts/content-scraper/image-pipeline-mode.mjs offline && npm run images:critical:ensure",
     "images:pipeline:auto": "node scripts/content-scraper/image-pipeline-mode.mjs auto && npm run images:critical:ensure",
     "release:status": "node scripts/ci/release-status.mjs",
-    "release:quick": "npm run env:doctor && npm run security:no-github-actions:gate && npm run security:no-sentry:gate && npm run content:turkish:gate && npm run auth:log-standard:gate && npm run release:evidence && npm run release:status",
+    "release:quick": "npm run env:doctor && npm run security:no-github-actions:gate && npm run security:no-sentry:gate && npm run content:turkish:gate && npm run content:admin-turkish:gate && npm run auth:log-standard:gate && npm run security:headers:snapshot && npm run release:evidence && npm run release:status",
     "release:full": "npm run release:local",
     "release:prod-preflight": "npm run release:full && npm run prod:evidence",
     "release:local": "npm run env:doctor && npm run security:no-github-actions:gate && npm run security:no-sentry:gate && npm run content:turkish:gate && npm run auth:log-standard:gate && npm run openapi:tiers && npm run images:critical:ensure && npm run critical-pages:quality && npm run site:doctor && npm run gate:done && npm run release:evidence && npm run release:status",
@@ -232,7 +232,10 @@
     "openapi:tiers": "npx tsx scripts/openapi/route-tiers.mjs",
     "auth:log-standard:gate": "node scripts/ci/auth-log-standard-gate.mjs",
     "release:evidence": "node scripts/ci/release-evidence-gate.mjs",
-    "prod:evidence": "node scripts/ci/prod-evidence.mjs"
+    "prod:evidence": "node scripts/ci/prod-evidence.mjs",
+    "openapi:contract:gaps": "node scripts/openapi/contract-gap-report.mjs",
+    "content:admin-turkish:gate": "node scripts/ci/admin-turkish-ui-gate.mjs",
+    "security:headers:snapshot": "node scripts/security/headers-snapshot.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^5.0.3",

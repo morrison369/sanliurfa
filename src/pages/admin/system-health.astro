@@ -15,6 +15,23 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     <div id="health-grid" class="grid gap-4 md:grid-cols-3"></div>
 
     <div class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-5 shadow-sm">
+      <h2 class="font-bold text-[#1A1008]">Detaylı Durum Tablosu</h2>
+      <p class="mt-1 text-sm text-[#9A8470]">Yayın, güvenlik, OpenAPI, görsel ve operasyon sinyalleri tek tabloda gösterilir.</p>
+      <div class="mt-4 overflow-auto">
+        <table class="w-full min-w-[720px] text-left text-sm">
+          <thead class="text-xs uppercase tracking-widest text-[#9A8470]">
+            <tr>
+              <th class="border-b border-[rgba(200,160,100,0.18)] py-2">Alan</th>
+              <th class="border-b border-[rgba(200,160,100,0.18)] py-2">Durum</th>
+              <th class="border-b border-[rgba(200,160,100,0.18)] py-2">Detay</th>
+            </tr>
+          </thead>
+          <tbody id="health-detail-rows" class="text-[#6B5540]"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-5 shadow-sm">
       <div class="flex items-center justify-between gap-3">
         <div>
           <h2 class="font-bold text-[#1A1008]">Release Kanıtları</h2>
@@ -56,14 +73,29 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const grid = document.getElementById('health-grid');
       grid.innerHTML = '';
       grid.append(
-        card('Release', release.releaseStatus?.status, `blocked=${release.releaseStatus?.blocked ?? '-'}, advisory=${release.releaseStatus?.advisory ?? '-'}`),
-        card('Release Evidence', release.releaseEvidence?.status, `ok=${release.releaseEvidence?.totals?.ok ?? '-'}, blocked=${release.releaseEvidence?.totals?.blocked ?? '-'}`),
-        card('Env Doctor', release.envDoctor?.status, 'Yerel yapılandırma raporu'),
-        card('Ops Last Run', release.opsLastRun?.status, release.opsLastRun?.finishedAt || ''),
-        card('Site Doctor', release.siteDoctor?.status, 'DB-first artefact kontrolü'),
-        card('Critical Pages', release.criticalPages?.status, 'Kritik sayfa kalite kontrolü'),
-        card('Image Providers', provider.success ? 'ok' : 'failing', `Pexels=${provider.providers?.pexels || '-'}, Unsplash=${provider.providers?.unsplash || '-'}`),
+        card('Yayın', release.releaseStatus?.status, `blocked=${release.releaseStatus?.blocked ?? '-'}, advisory=${release.releaseStatus?.advisory ?? '-'}`),
+        card('Yayın Kanıtı', release.releaseEvidence?.status, `ok=${release.releaseEvidence?.totals?.ok ?? '-'}, blocked=${release.releaseEvidence?.totals?.blocked ?? '-'}`),
+        card('Ortam Kontrolü', release.envDoctor?.status, 'Yerel yapılandırma raporu'),
+        card('Son Operasyon', release.opsLastRun?.status, release.opsLastRun?.finishedAt || ''),
+        card('Site Kontrolü', release.siteDoctor?.status, 'DB-first artefact kontrolü'),
+        card('Kritik Sayfalar', release.criticalPages?.status, 'Kritik sayfa kalite kontrolü'),
+        card('Görsel Sağlayıcılar', provider.success ? 'ok' : 'failing', `Pexels=${provider.providers?.pexels || '-'}, Unsplash=${provider.providers?.unsplash || '-'}`),
       );
+      const rows = [
+        ['Yayın', release.releaseStatus?.status, `OpenAPI=${release.releaseStatus?.openapiRoutes || '-'}, blocked=${release.releaseStatus?.blocked ?? '-'}`],
+        ['Yayın Kanıtı', release.releaseEvidence?.status, `ok=${release.releaseEvidence?.totals?.ok ?? '-'}, blocked=${release.releaseEvidence?.totals?.blocked ?? '-'}`],
+        ['OpenAPI Tier', release.releaseStatus?.openapiTiers, JSON.stringify(release.releaseStatus?.openapiTierTotals || {})],
+        ['Güvenlik', release.releaseStatus?.authLogStandard, `env=${release.releaseStatus?.envDoctor || '-'}`],
+        ['Görseller', provider.success ? 'ok' : 'failing', `Pexels=${provider.providers?.pexels || '-'}, Unsplash=${provider.providers?.unsplash || '-'}`],
+        ['Operasyon', release.opsLastRun?.status, release.opsLastRun?.finishedAt || '-'],
+      ];
+      document.getElementById('health-detail-rows').innerHTML = rows.map(([label, status, detail]) => `
+        <tr>
+          <td class="border-b border-[rgba(200,160,100,0.10)] py-2 font-semibold text-[#1A1008]">${label}</td>
+          <td class="border-b border-[rgba(200,160,100,0.10)] py-2">${status || 'unknown'}</td>
+          <td class="border-b border-[rgba(200,160,100,0.10)] py-2">${detail || '-'}</td>
+        </tr>
+      `).join('');
       document.getElementById('release-json').textContent = JSON.stringify({ release, provider }, null, 2);
     }
 

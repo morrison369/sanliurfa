@@ -9,3 +9,5 @@
 - Üretim öncesi en az şu sinyaller `ok/ready` olmalıdır: release status, OpenAPI route coverage, problem+json strict, critical pages quality, site doctor, security gates.
 - Kanıt tazeliği `npm run release:evidence` ile doğrulanır; varsayılan maksimum yaş 72 saattir.
 - Canlı probe kanıtı `npm run prod:evidence` ile `docs/PROD_EVIDENCE.md` dosyasına yazılır; `PROD_BASE_URL` yoksa probe atlanır ve secret basılmaz.
+- Security header snapshot `npm run security:headers:snapshot` ile korunur.
+- Migration duplicate geçmişi `docs/MIGRATION_BASELINE_DECISION.md` kararına göre baseline olarak izlenir; yeni duplicate regresyonu blocker kabul edilir.
