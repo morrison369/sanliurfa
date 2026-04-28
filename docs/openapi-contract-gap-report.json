@@ -1,178 +1,15 @@
 {
-  "generatedAt": "2026-04-28T23:05:12.955Z",
+  "generatedAt": "2026-04-28T23:10:54.457Z",
   "status": "ok",
   "totals": {
     "P1": 65,
     "P2": 310,
     "coveredP1": 65,
-    "coveredP2": 1,
+    "coveredP2": 21,
     "gapP1": 0,
-    "gapP2": 309
+    "gapP2": 289
   },
   "topPriority": [
-    {
-      "route": "/achievements",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/activity",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/alerts",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/analytics",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/audit-logs",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/badges/award",
-      "tier": "P2",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/blog",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/blog/{id}",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/blog/categories",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/blog/stats",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/blog/tags",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/bulk-action",
-      "tier": "P2",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/bus-routes",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/city-content-agents",
-      "tier": "P2",
-      "methods": [
-        "GET",
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/content-bot/generate",
-      "tier": "P2",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/dashboard",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/dashboard/overview",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/deployment/status",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/exports/token",
-      "tier": "P2",
-      "methods": [
-        "DELETE",
-        "GET",
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/admin/exports/token/clipboard",
-      "tier": "P2",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
     {
       "route": "/admin/flags",
       "tier": "P2",
@@ -247,6 +84,166 @@
     },
     {
       "route": "/admin/moderation/reports",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/moderation/stats",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/monitoring",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/monitoring/ack",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/monitoring/dashboard",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/performance/recommendations",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/performance/summary",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/pharmacies",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/places",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/places/create",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/places/lifecycle",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/places/lifecycle/export",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/places/lifecycle/sla",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/quotas/{userId}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/recipes",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/reports/generate",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/reports/schedule",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/reports/social-lifecycle",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/revenue",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/reviews/antispam-events",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/security/audit",
       "tier": "P2",
       "methods": [
         "GET"
