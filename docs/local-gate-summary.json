@@ -1,0 +1,71 @@
+{
+  "generatedAt": "2026-04-28T20:47:03.796Z",
+  "status": "ready_with_advisories",
+  "checks": [
+    {
+      "id": "release-readiness",
+      "status": "ok",
+      "value": "ready",
+      "artifact": "docs/release-readiness.json"
+    },
+    {
+      "id": "openapi-p0",
+      "status": "ok",
+      "value": 0,
+      "artifact": "docs/openapi-p0-closure-report.json"
+    },
+    {
+      "id": "openapi-route-count",
+      "status": "ok",
+      "value": "456/456",
+      "artifact": "docs/openapi-p0-closure-report.json"
+    },
+    {
+      "id": "problem-json",
+      "status": "ok",
+      "value": 0,
+      "artifact": "docs/problem-json-report.json"
+    },
+    {
+      "id": "category-coverage",
+      "status": "ok",
+      "value": "db=0, homepage=0",
+      "artifact": "docs/category-gap-report.json"
+    },
+    {
+      "id": "content-cluster-quality",
+      "status": "ok",
+      "value": 0,
+      "artifact": "docs/content-cluster-quality-report.json"
+    },
+    {
+      "id": "content-programmatic-quality",
+      "status": "ok",
+      "value": 0,
+      "artifact": "docs/content-programmatic-quality-report.json"
+    },
+    {
+      "id": "image-moderation",
+      "status": "ok",
+      "value": 0,
+      "artifact": "docs/image-moderation-report.json"
+    },
+    {
+      "id": "sdk-generated",
+      "status": "ok",
+      "value": "2026-04-28T20:45:26.319Z",
+      "artifact": "sdk/generated/openapi-summary.json"
+    },
+    {
+      "id": "migration-duplicate-debt",
+      "status": "advisory",
+      "value": "numbers=3, slugs=14",
+      "artifact": "docs/migration-duplicate-report.json"
+    }
+  ],
+  "totals": {
+    "ok": 9,
+    "advisory": 1,
+    "blocked": 0
+  }
+}

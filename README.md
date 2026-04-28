@@ -321,6 +321,8 @@ Son basarili build: **~9 saniye**
 
 GitHub Actions kullanılmaz. Build, test, güvenlik ve deploy kontrolleri yerel gate komutlarıyla manuel yürütülür:
 - PR veya merge öncesi ilgili `npm run ...` gate komutları yerelde çalıştırılır.
+- Tam release kontrolü için tek kaynak komut: `npm run gate:done`.
+- Gate kanıt özeti: `npm run release:local-gate:summary`.
 - Üretim build'i `npm run build` ile alınır.
 - Deploy işlemleri manuel operasyon akışıyla yapılır.
 
@@ -404,6 +406,12 @@ npm run security:scan-secrets
 
 # Migration duplicate kontrolu
 npm run db:migrate:check-duplicates
+
+# Migration duplicate teknik borç raporu
+npm run migration:debt:report
+
+# Tek yerel gate kanıt özeti
+npm run release:local-gate:summary
 ```
 
 Not: `docs/openapi-route-gap-baseline.json` dosyasi mevcut dokumante edilmemis route setini sabitler.

@@ -16,7 +16,7 @@ Her madde doğrudan kod/deployment/test akışına bağlanmıştır.
 ## 2) Teknik Güvenilirlik ve İzolasyon (P0)
 
 - [x] İzole runtime komutları (`dev:isolated:*`) ve tek proje port standardı (4321)
-- [x] DB port standardı 5432, Redis 6379 `.env.example` standardizasyonu
+- [x] DB port standardı 5432, Redis izolasyonu: ana repo 6381, public worktree 6382
 - [x] Dev server kapatma standardı (`npm run dev:isolated:stop`)
 - [x] CI’de zorunlu “no orphan dev process” kontrolü
 - [x] Runtime health cron + otomatik restart raporu (`dev:isolated:health:report:fix`)
@@ -68,11 +68,12 @@ Her madde doğrudan kod/deployment/test akışına bağlanmıştır.
 ## 8) Release Operasyonları (P0)
 
 - [x] Kısa release readiness raporu üretimi (`release:readiness:report`)
-- [x] CI summary + artifact olarak readiness raporu yayınlama
-- [x] Nightly workflow'a kritik smoke ve readiness raporu eklenmesi
-- [x] Nightly'de ayrı API smoke job (API gate + artefakt)
+- [x] Yerel gate summary artefaktı (`release:local-gate:summary`)
+- [x] Actions'sız release modeli: `gate:done` + manuel PR evidence
+- [x] API smoke artefaktları yerel gate içinde yenilenir
 - [x] Schema readiness gate (`smoke:schema:ready`) + nightly migration/seed sonrası zorunlu kontrol
 - [x] DB backup/restore smoke gate (`smoke:db:backup-restore`) + nightly zorunlu adım
+- [x] Migration duplicate teknik borç raporu (`migration:debt:report`)
 
 ## Hemen Çalıştırılacak Toplu Komut Seti
 

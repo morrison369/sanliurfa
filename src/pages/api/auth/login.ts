@@ -26,11 +26,16 @@ export const POST: APIRoute = async (context) => {
     }, HttpStatus.OK);
 
   } catch (error) {
-    logger.error('Login error:', error);
+    const detail = safeErrorDetail(error, 'Giriş işlemi başarısız');
+    if (detail === 'E-posta veya şifre hatalı.') {
+      logger.warn('Login rejected: invalid credentials');
+    } else {
+      logger.error('Login error:', error);
+    }
     return problemJson({
       status: 400,
       title: 'Giriş Yapılamadı',
-      detail: safeErrorDetail(error, 'Giriş işlemi başarısız'),
+      detail,
       type: '/problems/auth-login-failed',
       instance: '/api/auth/login',
     });
