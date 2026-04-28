@@ -449,7 +449,6 @@ export const getSearchSuggestions = (client, options = {}) => client.request("/s
 export const getSearchTrending = (client, options = {}) => client.request("/search/trending", { method: "GET", headers: options.headers, body: options.body ? JSON.stringify(options.body) : undefined });
 export const getSecurityEvents = (client, options = {}) => client.request("/security/events", { method: "GET", headers: options.headers, body: options.body ? JSON.stringify(options.body) : undefined });
 export const getSecuritySessions = (client, options = {}) => client.request("/security/sessions", { method: "GET", headers: options.headers, body: options.body ? JSON.stringify(options.body) : undefined });
-export const getSentryTest = (client, options = {}) => client.request("/sentry-test", { method: "GET", headers: options.headers, body: options.body ? JSON.stringify(options.body) : undefined });
 export const getSeoAnalyze = (client, options = {}) => client.request("/seo/analyze", { method: "GET", headers: options.headers, body: options.body ? JSON.stringify(options.body) : undefined });
 export const getSeoMetrics = (client, options = {}) => client.request("/seo/metrics", { method: "GET", headers: options.headers, body: options.body ? JSON.stringify(options.body) : undefined });
 export const getSitemapDynamic = (client, options = {}) => client.request("/sitemap/dynamic", { method: "GET", headers: options.headers, body: options.body ? JSON.stringify(options.body) : undefined });

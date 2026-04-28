@@ -1,9 +1,9 @@
 # OpenAPI P0 Closure Report
 
-- Generated At: 2026-04-28T18:23:13.286Z
+- Generated At: 2026-04-28T20:29:19.146Z
 - Baseline: 2026-04-28T15:11:59.710Z
-- Documented Paths: 457
-- File Routes: 457
+- Documented Paths: 456
+- File Routes: 456
 - Total Missing: 0
 - Resolved vs Baseline: 0
 - Newly Missing vs Baseline: 0
