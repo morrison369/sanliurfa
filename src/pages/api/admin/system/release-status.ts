@@ -24,6 +24,7 @@ export const GET: APIRoute = async ({ locals }) => {
     success: true,
     releaseStatus: await readJson('docs/release-status.json'),
     localGate: await readJson('docs/local-gate-summary.json'),
+    releaseEvidence: await readJson('docs/release-evidence.json'),
     envDoctor: await readJson('docs/env-doctor-report.json'),
     opsLastRun: await readJson('docs/ops-last-run.json'),
     siteDoctor: await readJson('docs/site-doctor-report.json'),
