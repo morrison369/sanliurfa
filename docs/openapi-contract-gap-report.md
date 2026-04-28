@@ -1,21 +1,16 @@
 # OpenAPI Contract Gap Report
 
-- Generated At: 2026-04-28T22:39:33.712Z
+- Generated At: 2026-04-28T22:45:04.283Z
 - Status: ok
 - P1 Routes: 65
-- P1 Covered: 2
-- P1 Gap: 63
+- P1 Covered: 7
+- P1 Gap: 58
 - P2 Routes: 310
 - P2 Covered: 1
 - P2 Gap: 309
 
 | Tier | Route | Methods |
 |---|---|---|
-| P1 | `/collections` | GET |
-| P1 | `/collections/{id}` | GET |
-| P1 | `/collections/{id}/follow` | GET |
-| P1 | `/collections/{id}/followers/check` | GET |
-| P1 | `/collections/{id}/items` | GET |
 | P1 | `/events/{id}/delete` | GET |
 | P1 | `/events/{id}/details` | GET |
 | P1 | `/events/{id}/rsvp` | GET |
@@ -41,5 +36,10 @@
 | P1 | `/leaderboards/users` | GET |
 | P1 | `/messages` | GET |
 | P1 | `/messages/{conversationId}` | GET |
+| P1 | `/messages/{conversationId}/read` | GET |
+| P1 | `/messages/unread-count` | GET |
+| P1 | `/notifications` | GET |
+| P1 | `/notifications/{id}` | GET |
+| P1 | `/notifications/{id}/read` | POST |
 
 Not: P0 kapalıdır; bu rapor P1/P2 contract test planlaması içindir.

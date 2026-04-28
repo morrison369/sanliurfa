@@ -1,0 +1,10 @@
+{
+  "generatedAt": "2026-04-28T22:46:49.934Z",
+  "status": "ready",
+  "smokeCommand": "npm run smoke:db:backup-restore",
+  "gateCommand": "npm run gate:done",
+  "localGateStatus": "ready",
+  "localGateMentionsBackup": false,
+  "releaseEvidence": "ready",
+  "note": "Gerçek backup/restore smoke gate:done içinde çalışır; bu dosya deploy kanıtını görünür yapar."
+}

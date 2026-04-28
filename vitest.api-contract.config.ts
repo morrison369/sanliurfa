@@ -11,6 +11,7 @@ export default defineConfig({
       'src/lib/__tests__/openapi-route-gap-baseline.test.ts',
       'src/lib/__tests__/openapi-success-schema-guard.test.ts',
       'src/lib/__tests__/openapi-social-lifecycle-contract.test.ts',
+      'src/lib/__tests__/openapi-p1-collections-contract.test.ts',
       'src/lib/__tests__/admin-release-status-api.test.ts',
       'src/lib/__tests__/admin-provider-health-api.test.ts',
       'src/lib/__tests__/places-detail-api.test.ts',

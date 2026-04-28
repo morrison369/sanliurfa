@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-04-28T22:46:49.190Z",
+  "status": "ready_with_advisories",
+  "checks": [
+    {
+      "id": "REDIS_URL",
+      "status": "advisory",
+      "detail": "production Redis URL tanımlı değil"
+    },
+    {
+      "id": "REDIS_GLOBAL_PORT",
+      "status": "ok",
+      "detail": "project/global port çakışması görünmüyor"
+    },
+    {
+      "id": "SESSION_TTL",
+      "status": "ok",
+      "detail": "ttl=86400"
+    },
+    {
+      "id": "NODE_ENV",
+      "status": "advisory",
+      "detail": "tanımlı değil"
+    }
+  ],
+  "totals": {
+    "ok": 2,
+    "advisory": 2
+  },
+  "note": "Secret değerleri yazılmaz; sadece yapılandırma durumu raporlanır."
+}
